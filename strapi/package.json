@@ -1,0 +1,23 @@
+{
+  "name": "elewen-strapi",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Elewen CMS — Strapi v5",
+  "scripts": {
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "build": "strapi build",
+    "strapi": "strapi"
+  },
+  "dependencies": {
+    "@strapi/strapi": "^5.0.0",
+    "@strapi/plugin-users-permissions": "^5.0.0",
+    "esbuild": "^0.25.11",
+    "pg": "^8.11.3",
+    "better-sqlite3": "^9.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0 <=22.x.x",
+    "npm": ">=6.0.0"
+  }
+}

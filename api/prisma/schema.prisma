@@ -1,0 +1,622 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTE: This schema covers ONLY the custom Express API tables.
+// Strapi manages its own tables (users, packages, events, services, vendors,
+// coupons, addresses, budget_levels, etc.) with auto-increment integer PKs.
+// References to Strapi-managed tables are plain String (UUID) fields with no
+// formal Prisma @relation — FK integrity is enforced at the application layer.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum BookingStatus {
+  new
+  confirmed
+  info_collection
+  planning
+  pre_event
+  execution
+  completed
+  cancelled
+}
+
+enum InfoStatus {
+  waiting
+  submitted
+  verified
+}
+
+enum SampleTasteStatus {
+  new
+  assigned
+  delivered
+  completed
+}
+
+enum SampleDecision {
+  convert_full
+  save
+  cancel
+  expired
+}
+
+enum PaymentType {
+  advance
+  remaining
+  full
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+  refunded
+}
+
+enum PaymentProvider {
+  razorpay
+  stripe
+  manual
+}
+
+enum PaymentMethod {
+  card
+  upi
+  netbanking
+  offline
+}
+
+enum RefundStatus {
+  requested
+  processing
+  completed
+  rejected
+}
+
+enum VendorAssignmentStatus {
+  assigned
+  confirmed
+  completed
+  reassigned
+}
+
+enum VendorPayoutStatus {
+  pending
+  paid
+  failed
+}
+
+enum VendorPayoutMethod {
+  portal
+  offline
+}
+
+enum CancellationStatus {
+  requested
+  approved
+  rejected
+}
+
+enum MessageType {
+  text
+  system
+  status_update
+}
+
+enum SupportTicketStatus {
+  open
+  in_progress
+  resolved
+  closed
+}
+
+enum Priority {
+  low
+  medium
+  high
+}
+
+enum AlertSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum AlertStatus {
+  new
+  acknowledged
+  resolved
+  snoozed
+}
+
+// ─── AUTH (custom tables) ────────────────────────────────────────────────────
+
+// JWT refresh token tracking. userId references Strapi up_users.id
+model UserSession {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  refreshToken String
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@map("user_sessions")
+}
+
+// Third-party OAuth provider links. userId references Strapi up_users.id
+model OAuthAccount {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  provider       String   @db.VarChar(50)
+  providerUserId String   @db.VarChar(255)
+  accessToken    String?
+  refreshToken   String?
+  createdAt      DateTime @default(now())
+
+  @@map("oauth_accounts")
+}
+
+// ─── CART ─────────────────────────────────────────────────────────────────────
+
+model Cart {
+  id             String     @id @default(uuid()) @db.Uuid
+  userId         String?    @db.Uuid                     // FK → strapi up_users (null = guest cart)
+  sessionId      String?    @db.VarChar(255)
+  couponId       String?    @db.Uuid                     // FK → strapi coupons
+  eventDate      DateTime?  @db.Date
+  eventCity      String?    @db.VarChar(100)
+  guestCount     Int?
+  subtotal       Decimal    @default(0) @db.Decimal(12, 2)
+  discountAmount Decimal    @default(0) @db.Decimal(12, 2)
+  total          Decimal    @default(0) @db.Decimal(12, 2)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  items          CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id               String   @id @default(uuid()) @db.Uuid
+  cartId           String   @db.Uuid
+  packageId        String   @db.Uuid                     // FK → strapi packages
+  packageElementId String?  @db.Uuid
+  addonId          String?  @db.Uuid
+  title            String   @db.VarChar(255)
+  quantity         Int      @default(1)
+  unitPrice        Decimal  @db.Decimal(10, 2)
+  totalPrice       Decimal  @db.Decimal(12, 2)
+  createdAt        DateTime @default(now())
+
+  cart             Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  @@map("cart_items")
+}
+
+// ─── BOOKINGS ─────────────────────────────────────────────────────────────────
+
+model Booking {
+  id               String        @id @default(uuid()) @db.Uuid
+  userId           String        @db.Uuid               // FK → strapi up_users
+  packageId        String        @db.Uuid               // FK → strapi packages
+  eventId          String?       @db.Uuid               // FK → strapi events
+  eventDate        DateTime      @db.Date
+  guestCount       Int
+  eventAddressId   String?       @db.Uuid               // FK → strapi addresses
+  status           BookingStatus @default(new)
+  totalPrice       Decimal       @db.Decimal(12, 2)
+  advanceAmount    Decimal       @db.Decimal(12, 2)
+  remainingAmount  Decimal       @db.Decimal(12, 2)
+  couponId         String?       @db.Uuid               // FK → strapi coupons
+  discountAmount   Decimal       @default(0) @db.Decimal(12, 2)
+  infoStatus       InfoStatus?
+  feedbackSubmitted Boolean      @default(false)
+  expiryDate       DateTime?     @db.Date
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  items             BookingItem[]
+  statusLogs        BookingStatusLog[]
+  timeline          BookingTimeline[]
+  notes             BookingNote[]
+  cancellation      Cancellation?
+  files             BookingFile[]
+  vendorAssignments VendorAssignment[]
+  couponUsage       CouponUsage?
+  payments          Payment[]
+  messageThread     MessageThread?
+  supportTickets    SupportTicket[]
+  sampleBookings    SampleTasteBooking[]
+
+  @@map("bookings")
+}
+
+model BookingItem {
+  id               String   @id @default(uuid()) @db.Uuid
+  bookingId        String   @db.Uuid
+  packageElementId String?  @db.Uuid
+  addonId          String?  @db.Uuid
+  title            String   @db.VarChar(255)
+  quantity         Int
+  unitPrice        Decimal  @db.Decimal(10, 2)
+  totalPrice       Decimal  @db.Decimal(12, 2)
+  createdAt        DateTime @default(now())
+
+  booking          Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_items")
+}
+
+model BookingStatusLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  bookingId      String   @db.Uuid
+  previousStatus String?  @db.VarChar(50)
+  newStatus      String   @db.VarChar(50)
+  changedBy      String?  @db.Uuid                     // FK → strapi up_users
+  note           String?
+  createdAt      DateTime @default(now())
+
+  booking        Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_status_logs")
+}
+
+model BookingTimeline {
+  id           String    @id @default(uuid()) @db.Uuid
+  bookingId    String    @db.Uuid
+  title        String    @db.VarChar(255)
+  description  String?
+  timelineDate DateTime?
+  status       String    @default("pending") @db.VarChar(50)
+  createdAt    DateTime  @default(now())
+
+  booking      Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_timeline")
+}
+
+model BookingNote {
+  id         String   @id @default(uuid()) @db.Uuid
+  bookingId  String   @db.Uuid
+  adminId    String   @db.Uuid                         // FK → strapi up_users (admin)
+  note       String
+  isInternal Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_notes")
+}
+
+model Cancellation {
+  id                 String             @id @default(uuid()) @db.Uuid
+  bookingId          String             @unique @db.Uuid
+  requestedBy        String?            @db.Uuid              // FK → strapi up_users
+  reason             String?
+  policyAcknowledged Boolean            @default(false)
+  status             CancellationStatus @default(requested)
+  createdAt          DateTime           @default(now())
+
+  booking            Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("cancellations")
+}
+
+model BookingFile {
+  id         String   @id @default(uuid()) @db.Uuid
+  bookingId  String   @db.Uuid
+  fileUrl    String
+  fileType   String?  @db.VarChar(50)                  // document / contract / image
+  uploadedBy String?  @db.Uuid                         // FK → strapi up_users
+  createdAt  DateTime @default(now())
+
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_files")
+}
+
+// ─── SAMPLE TASTE ─────────────────────────────────────────────────────────────
+
+model SampleTasteBooking {
+  id                String            @id @default(uuid()) @db.Uuid
+  userId            String            @db.Uuid               // FK → strapi up_users
+  packageId         String?           @db.Uuid               // FK → strapi packages
+  eventId           String?           @db.Uuid               // FK → strapi events
+  bookingId         String?           @db.Uuid               // set when converted to full booking
+  guestCount        Int?
+  bookingDate       DateTime?         @db.Date
+  deliveryDate      DateTime?         @db.Date
+  status            SampleTasteStatus @default(new)
+  feedbackSubmitted Boolean           @default(false)
+  decision          SampleDecision?
+  decisionNotes     String?
+  expiryDate        DateTime?         @db.Date
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  vendors           SampleTasteVendor[]
+  booking           Booking?          @relation(fields: [bookingId], references: [id])
+
+  @@map("sample_taste_bookings")
+}
+
+model SampleTasteVendor {
+  id              String             @id @default(uuid()) @db.Uuid
+  sampleBookingId String             @db.Uuid
+  vendorId        String             @db.Uuid               // FK → strapi vendors
+  menuItems       Json?
+  rating          Int?
+  feedbackText    String?
+  createdAt       DateTime           @default(now())
+
+  sampleBooking   SampleTasteBooking @relation(fields: [sampleBookingId], references: [id], onDelete: Cascade)
+
+  @@map("sample_taste_vendors")
+}
+
+// ─── PAYMENTS ─────────────────────────────────────────────────────────────────
+
+model Payment {
+  id                String           @id @default(uuid()) @db.Uuid
+  bookingId         String           @db.Uuid
+  paymentType       PaymentType
+  amount            Decimal          @db.Decimal(12, 2)
+  status            PaymentStatus    @default(pending)
+  provider          PaymentProvider?
+  providerOrderId   String?          @db.VarChar(255)
+  providerPaymentId String?          @db.VarChar(255)
+  paymentMethod     PaymentMethod?
+  createdAt         DateTime         @default(now())
+
+  booking           Booking          @relation(fields: [bookingId], references: [id])
+  transactions      PaymentTransaction[]
+  refunds           Refund[]
+  logs              PaymentLog[]
+
+  @@map("payments")
+}
+
+model PaymentTransaction {
+  id              String   @id @default(uuid()) @db.Uuid
+  paymentId       String   @db.Uuid
+  gatewayResponse Json
+  status          String   @db.VarChar(50)
+  createdAt       DateTime @default(now())
+
+  payment         Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@map("payment_transactions")
+}
+
+model Refund {
+  id              String       @id @default(uuid()) @db.Uuid
+  paymentId       String       @db.Uuid
+  bookingId       String?      @db.Uuid                     // denormalized ref for easier queries
+  amount          Decimal      @db.Decimal(10, 2)
+  reason          String?
+  status          RefundStatus @default(requested)
+  processedBy     String?      @db.Uuid                     // FK → strapi up_users (admin)
+  gatewayRefundId String?      @db.VarChar(255)
+  createdAt       DateTime     @default(now())
+
+  payment         Payment      @relation(fields: [paymentId], references: [id])
+
+  @@map("refunds")
+}
+
+model PaymentLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  paymentId   String   @db.Uuid
+  action      String   @db.VarChar(100)                     // created / verified / failed / refund_initiated
+  performedBy String?  @db.Uuid                             // FK → strapi up_users
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@map("payment_logs")
+}
+
+// ─── VENDOR (custom tables) ───────────────────────────────────────────────────
+
+model VendorAssignment {
+  id         String                 @id @default(uuid()) @db.Uuid
+  bookingId  String                 @db.Uuid
+  vendorId   String                 @db.Uuid               // FK → strapi vendors
+  serviceId  String?                @db.Uuid               // FK → strapi services
+  assignedBy String?                @db.Uuid               // FK → strapi up_users (admin)
+  status     VendorAssignmentStatus @default(assigned)
+  assignedAt DateTime               @default(now())
+
+  booking    Booking                @relation(fields: [bookingId], references: [id])
+
+  @@map("vendor_assignments")
+}
+
+model VendorPayout {
+  id            String              @id @default(uuid()) @db.Uuid
+  vendorId      String              @db.Uuid               // FK → strapi vendors
+  bookingId     String              @db.Uuid
+  amount        Decimal             @db.Decimal(12, 2)
+  status        VendorPayoutStatus  @default(pending)
+  paymentMethod VendorPayoutMethod?
+  referenceId   String?             @db.VarChar(255)
+  paidAt        DateTime?
+  createdAt     DateTime            @default(now())
+
+  @@map("vendor_payouts")
+}
+
+model VendorBankInfo {
+  id                String   @id @default(uuid()) @db.Uuid
+  vendorId          String   @unique @db.Uuid              // FK → strapi vendors (one-to-one)
+  bankName          String?  @db.VarChar(255)
+  accountNumber     String?  @db.VarChar(50)               // should be encrypted at application layer
+  ifscCode          String?  @db.VarChar(20)
+  accountHolderName String?  @db.VarChar(255)
+  paymentPreference String?  @db.VarChar(50)               // portal / offline
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("vendor_bank_info")
+}
+
+// ─── COUPONS (usage tracking only — coupon definitions are in Strapi) ─────────
+
+model CouponUsage {
+  id        String   @id @default(uuid()) @db.Uuid
+  couponId  String   @db.Uuid                              // FK → strapi coupons
+  bookingId String   @unique @db.Uuid
+  userId    String   @db.Uuid                              // FK → strapi up_users
+  usedAt    DateTime @default(now())
+
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+
+  @@map("coupon_usage")
+}
+
+// ─── MESSAGING ────────────────────────────────────────────────────────────────
+
+model MessageThread {
+  id        String    @id @default(uuid()) @db.Uuid
+  bookingId String    @unique @db.Uuid
+  createdBy String?   @db.Uuid                             // FK → strapi up_users
+  createdAt DateTime  @default(now())
+
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+  messages  Message[]
+
+  @@map("message_threads")
+}
+
+model Message {
+  id          String      @id @default(uuid()) @db.Uuid
+  threadId    String      @db.Uuid
+  senderId    String      @db.Uuid                         // FK → strapi up_users
+  messageText String?
+  messageType MessageType @default(text)
+  createdAt   DateTime    @default(now())
+
+  thread      MessageThread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  readStatus  MessageReadStatus[]
+  attachments MessageAttachment[]
+
+  @@map("messages")
+}
+
+model MessageReadStatus {
+  id        String   @id @default(uuid()) @db.Uuid
+  messageId String   @db.Uuid
+  userId    String   @db.Uuid                              // FK → strapi up_users
+  readAt    DateTime @default(now())
+
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_read_status")
+}
+
+model MessageAttachment {
+  id        String   @id @default(uuid()) @db.Uuid
+  messageId String   @db.Uuid
+  fileUrl   String
+  fileType  String?  @db.VarChar(50)                       // image / document / media
+  createdAt DateTime @default(now())
+
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("message_attachments")
+}
+
+// ─── SUPPORT ──────────────────────────────────────────────────────────────────
+
+model SupportTicket {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @db.Uuid                   // FK → strapi up_users
+  bookingId String?             @db.Uuid
+  subject   String              @db.VarChar(255)
+  status    SupportTicketStatus @default(open)
+  priority  Priority            @default(medium)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  booking   Booking?            @relation(fields: [bookingId], references: [id])
+  messages  SupportMessage[]
+
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id             String        @id @default(uuid()) @db.Uuid
+  ticketId       String        @db.Uuid
+  senderId       String        @db.Uuid                    // FK → strapi up_users
+  message        String
+  isInternalNote Boolean       @default(false)
+  attachmentUrl  String?
+  createdAt      DateTime      @default(now())
+
+  ticket         SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("support_messages")
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid                              // FK → strapi up_users
+  type      String   @db.VarChar(100)                      // booking_update / payment / vendor / system / message
+  title     String   @db.VarChar(255)
+  message   String?
+  linkUrl   String?  @db.VarChar(500)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+// ─── ALERTS ───────────────────────────────────────────────────────────────────
+
+model Alert {
+  id                String        @id @default(uuid()) @db.Uuid
+  alertType         String        @db.VarChar(100)          // failed_payment / vendor_unassigned / high_volume / overdue_action / system_health
+  severity          AlertSeverity @default(medium)
+  message           String
+  metadata          Json?                                   // {booking_id, vendor_id, payment_id, reason}
+  relatedEntityType String?       @db.VarChar(50)           // booking / payment / vendor / system
+  relatedEntityId   String?       @db.Uuid
+  status            AlertStatus   @default(new)
+  resolvedBy        String?       @db.Uuid                  // FK → strapi up_users
+  resolvedAt        DateTime?
+  createdAt         DateTime      @default(now())
+
+  @@map("alerts")
+}
+
+// ─── FINANCE ──────────────────────────────────────────────────────────────────
+
+// Periodic snapshots generated by cron job
+model FinanceSnapshot {
+  id                 String   @id @default(uuid()) @db.Uuid
+  snapshotDate       DateTime @unique @db.Date
+  totalRevenue       Decimal  @default(0) @db.Decimal(14, 2)
+  totalBookings      Int      @default(0)
+  advanceCollected   Decimal  @default(0) @db.Decimal(14, 2)
+  remainingPending   Decimal  @default(0) @db.Decimal(14, 2)
+  vendorPayoutsTotal Decimal  @default(0) @db.Decimal(14, 2)
+  refundsTotal       Decimal  @default(0) @db.Decimal(14, 2)
+  createdAt          DateTime @default(now())
+
+  @@map("finance_snapshots")
+}

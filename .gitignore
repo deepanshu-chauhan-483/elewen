@@ -1,0 +1,30 @@
+# ─── Environment (never commit secrets) ─────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Node ────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ─── Strapi ──────────────────────────────────────────────────────────
+strapi/.tmp/
+strapi/build/
+strapi/dist/
+strapi/public/uploads/
+
+# ─── Frontend build ──────────────────────────────────────────────────
+frontend/dist/
+frontend/.vite/
+
+# ─── Prisma ──────────────────────────────────────────────────────────
+# Keep migrations — they are the source of truth for the DB schema
+# Only ignore generated client
+api/node_modules/
+
+# ─── Docker ──────────────────────────────────────────────────────────
+*.log
+
+# ─── OS ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
