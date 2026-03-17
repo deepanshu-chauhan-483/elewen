@@ -1,9 +1,27 @@
-function App() {
+import HeroSection from './landing-page/HeroSection'
+import PlanEventSection from './landing-page/PlanEventSection'
+import WhatToPlanSection from './landing-page/WhatToPlanSection'
+import ChecklistSection from './landing-page/ChecklistSection'
+import PackagesSection from './landing-page/PackagesSection'
+import CelebrationFeelingSection from './landing-page/CelebrationFeelingSection'
+import PlanningGuidesSection from './landing-page/PlanningGuidesSection'
+import TestimonialsSection from './landing-page/TestimonialsSection'
+import SplitInfoSection from './landing-page/SplitInfoSection'
+import FooterSection from './landing-page/FooterSection'
+
+export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-gray-900">Elewen</h1>
-    </div>
+    <>
+      <HeroSection />
+      <PlanEventSection />
+      <WhatToPlanSection />
+      <ChecklistSection />
+      <PackagesSection />
+      <CelebrationFeelingSection />
+      <PlanningGuidesSection />
+      <TestimonialsSection />
+      <SplitInfoSection />
+      <FooterSection />
+    </>
   )
 }
-
-export default App
