@@ -37,6 +37,12 @@
       "relation": "manyToMany",
       "target": "api::blog.blog",
       "mappedBy": "related_services"
+    },
+    "vendor_services": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::vendor-service.vendor-service",
+      "mappedBy": "service"
     }
   }
 }

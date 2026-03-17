@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "vendor_services",
+  "info": {
+    "singularName": "vendor-service",
+    "pluralName": "vendor-services",
+    "displayName": "Vendor Service"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "vendor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::vendor.vendor",
+      "inversedBy": "vendor_services"
+    },
+    "service": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::service.service",
+      "inversedBy": "vendor_services"
+    }
+  }
+}

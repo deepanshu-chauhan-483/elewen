@@ -1,0 +1,62 @@
+{
+  "kind": "collectionType",
+  "collectionName": "planner_leads",
+  "info": {
+    "singularName": "planner-lead",
+    "pluralName": "planner-leads",
+    "displayName": "Planner Lead"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "lead_type": {
+      "type": "enumeration",
+      "enum": [
+        "planner",
+        "consultation"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "event_date": {
+      "type": "date"
+    },
+    "guest_count": {
+      "type": "integer"
+    },
+    "location": {
+      "type": "string"
+    },
+    "budget_range": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "text"
+    },
+    "custom_fields": {
+      "type": "json"
+    },
+    "planner_lead_status": {
+      "type": "enumeration",
+      "enum": [
+        "new",
+        "contacted",
+        "converted",
+        "closed"
+      ]
+    }
+  }
+}

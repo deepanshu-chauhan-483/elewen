@@ -97,6 +97,18 @@
       "relation": "oneToMany",
       "target": "api::saved-package.saved-package",
       "mappedBy": "user"
+    },
+    "vendor": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::vendor.vendor",
+      "mappedBy": "user"
+    },
+    "addresses": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::address.address",
+      "mappedBy": "user"
     }
   }
 }
