@@ -57,6 +57,12 @@
       "relation": "manyToMany",
       "target": "api::package.package",
       "inversedBy": "events"
+    },
+    "blogs": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::blog.blog",
+      "mappedBy": "related_events"
     }
   }
 }

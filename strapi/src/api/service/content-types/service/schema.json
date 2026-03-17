@@ -31,6 +31,12 @@
       "relation": "manyToOne",
       "target": "api::service-category.service-category",
       "inversedBy": "services"
+    },
+    "blogs": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::blog.blog",
+      "mappedBy": "related_services"
     }
   }
 }

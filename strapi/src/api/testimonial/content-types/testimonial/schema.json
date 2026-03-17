@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "testimonials",
+  "info": {
+    "singularName": "testimonial",
+    "pluralName": "testimonials",
+    "displayName": "Testimonial"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "customer_name": {
+      "type": "string",
+      "required": true
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "testimonial_text": {
+      "type": "text",
+      "required": true
+    },
+    "visibility": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}
