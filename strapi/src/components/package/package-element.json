@@ -1,0 +1,47 @@
+{
+  "collectionName": "components_package_package_elements",
+  "info": {
+    "displayName": "Package Element"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "base_quantity": {
+      "type": "integer"
+    },
+    "unit": {
+      "type": "enumeration",
+      "enum": [
+        "pax",
+        "sqft",
+        "piece"
+      ]
+    },
+    "base_price": {
+      "type": "decimal"
+    },
+    "is_included": {
+      "type": "boolean",
+      "default": true
+    },
+    "quantity_editable": {
+      "type": "boolean",
+      "default": false
+    },
+    "visibility": {
+      "type": "boolean",
+      "default": true
+    },
+    "service": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::service.service"
+    }
+  },
+  "config": {}
+}

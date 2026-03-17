@@ -91,6 +91,12 @@
     },
     "date_of_birth": {
       "type": "date"
+    },
+    "saved_packages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::saved-package.saved-package",
+      "mappedBy": "user"
     }
   }
 }

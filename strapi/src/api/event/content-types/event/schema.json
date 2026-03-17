@@ -51,6 +51,12 @@
       "relation": "manyToOne",
       "target": "api::event.event",
       "inversedBy": "events"
+    },
+    "packages": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::package.package",
+      "inversedBy": "events"
     }
   }
 }

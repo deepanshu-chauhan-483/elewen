@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_package_package_pricing_rules",
+  "info": {
+    "displayName": "Package Pricing Rule"
+  },
+  "options": {},
+  "attributes": {
+    "rule_type": {
+      "type": "enumeration",
+      "enum": [
+        "guest_count",
+        "area_size",
+        "seasonal"
+      ]
+    },
+    "value": {
+      "type": "string"
+    },
+    "modifier_type": {
+      "type": "enumeration",
+      "enum": [
+        "percentage",
+        "flat_amount"
+      ]
+    },
+    "modifier_value": {
+      "type": "decimal"
+    }
+  },
+  "config": {}
+}
