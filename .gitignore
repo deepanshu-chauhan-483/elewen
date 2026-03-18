@@ -17,6 +17,15 @@ strapi/public/uploads/
 frontend/dist/
 frontend/.vite/
 
+# ─── Frontend (Vite/React) ───────────────────────────────────────────
+frontend/node_modules/
+frontend/coverage/
+frontend/.eslintcache
+frontend/.stylelintcache
+frontend/.cache/
+frontend/.turbo/
+frontend/.vercel/
+
 # ─── Prisma ──────────────────────────────────────────────────────────
 # Keep migrations — they are the source of truth for the DB schema
 # Only ignore generated client
