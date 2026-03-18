@@ -37,6 +37,7 @@ services:
       API_TOKEN_SALT: ${STRAPI_API_TOKEN_SALT}
       TRANSFER_TOKEN_SALT: ${STRAPI_TRANSFER_TOKEN_SALT}
       NODE_ENV: ${NODE_ENV:-development}
+      PORT: 1337
     ports:
       - "1337:1337"
     volumes:

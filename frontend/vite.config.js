@@ -8,13 +8,13 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://api:3000',
+        target: process.env.VITE_API_URL || 'http://localhost:3000',
         changeOrigin: true,
       },
       '/cms': {
-        target: 'http://strapi:1337',
+        target: process.env.VITE_STRAPI_URL || 'http://localhost:1337',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/cms/, ''),
+        rewrite: path => path.replace(/^\/cms/, ''),
       },
     },
   },

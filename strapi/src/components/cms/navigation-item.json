@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_cms_navigation_items",
+  "info": {
+    "displayName": "Navigation Item"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "url": {
+      "type": "string",
+      "required": true
+    },
+    "order_index": {
+      "type": "integer"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "config": {}
+}

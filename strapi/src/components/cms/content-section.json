@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_cms_content_sections",
+  "info": {
+    "displayName": "Content Section"
+  },
+  "options": {},
+  "attributes": {
+    "section_key": {
+      "type": "string"
+    },
+    "content_json": {
+      "type": "json"
+    },
+    "display_order": {
+      "type": "integer"
+    }
+  },
+  "config": {}
+}
