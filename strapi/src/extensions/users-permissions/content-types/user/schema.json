@@ -109,6 +109,12 @@
       "relation": "oneToMany",
       "target": "api::address.address",
       "mappedBy": "user"
+    },
+    "booking_reviews": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::booking-review.booking-review",
+      "mappedBy": "user"
     }
   }
 }
