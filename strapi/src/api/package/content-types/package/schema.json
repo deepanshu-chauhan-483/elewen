@@ -99,6 +99,12 @@
       "type": "component",
       "component": "package.package-pricing-rule",
       "repeatable": true
+    },
+    "booking_reviews": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::booking-review.booking-review",
+      "mappedBy": "package"
     }
   }
 }
