@@ -1,9 +1,13 @@
-import LandingPage from './landing-page/LandingPage'
+// import LandingPage from './components/landing-page/LandingPage'
+// import InHousePlannerSection from './components/InHousePlannerSection'
+import About from './components/About'
 
 export default function App() {
   return (
     <>
-      <LandingPage />
+      {/* <LandingPage /> */}
+      {/* <InHousePlannerSection /> */}
+      <About />
     </>
   )
 }
