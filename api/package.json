@@ -10,7 +10,9 @@
     "start": "node src/server.js",
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "migrate:dev": "prisma migrate dev --schema=prisma/schema.prisma",
-    "migrate:deploy": "prisma migrate deploy --schema=prisma/schema.prisma"
+    "migrate:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -23,7 +25,8 @@
     "prisma": "^6.15.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "prettier": "^3.3.3"
   },
   "engines": {
     "node": ">=20"

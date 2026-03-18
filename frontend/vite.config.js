@@ -14,7 +14,7 @@ export default defineConfig({
       '/cms': {
         target: process.env.VITE_STRAPI_URL || 'http://localhost:1337',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/cms/, ''),
+        rewrite: path => path.replace(/^\/cms/, ''),
       },
     },
   },

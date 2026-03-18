@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.strapi
+strapi/build
+strapi/.tmp
+api/prisma/migrations
+coverage
+*.min.js
