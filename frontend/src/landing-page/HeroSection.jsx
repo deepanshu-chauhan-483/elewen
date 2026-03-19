@@ -54,7 +54,7 @@ const renderBand = tokens => {
   for (let r = 0; r < 8; r++) {
     tokens.forEach((token, ti) => {
       // every phrase+separator pair alternates: pair 0 solid, pair 1 outline, …
-      const style = Math.floor(ti / 2) % 2 === 0 ? OUTLINE : SOLID
+      const style = Math.floor(ti / 2) % 2 === 0 ? SOLID : OUTLINE
       items.push(
         <span key={idx} style={style}>
           {token}
