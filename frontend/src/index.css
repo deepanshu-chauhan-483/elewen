@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Import Poppins from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
 
 * {
   box-sizing: border-box;
@@ -10,7 +12,8 @@ html {
 }
 
 :root {
-  --font-body: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  /* Updated to Poppins for body text */
+  --font-body: 'Poppins', sans-serif;
   --font-display: Malgin, 'DM Serif Display', 'Playfair Display', Georgia, 'Times New Roman', serif;
 }
 
@@ -23,15 +26,22 @@ body,
 }
 
 body {
-  font-family: var(--font-display);
+  /* Sets the default for the page to Poppins */
+  font-family: var(--font-body);
+}
+
+/* Explicit configuration for p tags based on "Body/regular/b3" */
+p {
+  font-family: var(--font-body);
+  font-weight: 400;
 }
 
 .font-display {
   font-family: var(--font-display);
 }
 
-/* Force Malgin across the entire app (overrides component-level fontFamily styles). */
-body * {
-  font-family: var(--font-display) !important;
-}
-
+/* NOTE: I removed the "body *" !important override. 
+   If you keep that rule, your <p> tags will be forced to use Malgin 
+   instead of Poppins. Use the .font-display class on specific 
+   headings instead.
+*/

@@ -30,32 +30,99 @@ const Img = ({ src, alt = '', className = '', style, ...rest }) => (
   />
 )
 
-const LanternLong = ({ left }) => (
-  <div className="absolute" style={{ left: `${left}px`, top: '7px', width: '76px', height: '180px' }}>
-    <div className="absolute left-[22px] top-0 w-[32px] h-[105px] bg-[#FCD768]/80 rounded-b-full" />
-    <div className="absolute top-[102px] w-[76px] h-[78px] bg-gradient-to-b from-[#FCD768] to-[#A5A687] opacity-40 blur-[4px]" />
-  </div>
-)
-
-const LanternShort = ({ left }) => (
-  <div className="absolute" style={{ left: `${left}px`, top: '0px', width: '76px', height: '149px' }}>
-    <div className="absolute left-[20px] top-0 w-[37px] h-[92px] bg-[#FCE6A4]/80 rounded-b-full" />
-    <div className="absolute top-[90px] w-[76px] h-[59px] bg-gradient-to-b from-[#FCE6A4] to-[#A5A687] opacity-40 blur-[4px]" />
-  </div>
-)
-
-const AboutStorySection = () => {
-  const story1Src = aboutAssetSrc('story-1.jpg')
-  const story2Src = aboutAssetSrc('story-2.jpg')
-  const mokshaSrc = aboutAssetSrc('moksha.jpg')
+const About = () => {
+  const story1Src = aboutAssetSrc('story-1.png')
+  const story2Src = aboutAssetSrc('story-2.png')
+  const mokshaSrc = aboutAssetSrc('moksha_portrait.jpg')
   const gauriSrc = aboutAssetSrc('gauri.jpg')
   const iconSrc = aboutAssetSrc('image.png')
   const scallopCount = [...Array(15)]
 
   return (
+    <>
+    <section className="w-full bg-[#F8F4ED] flex flex-col items-center font-sans overflow-x-hidden">
+      
+    <div className="relative w-[1440px] h-[1100px] shrink-0">
+      
+      {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
+      <div 
+        className="absolute left-0 top-0 w-full h-[880px] bg-[#591902] overflow-hidden z-0"
+        style={{ borderRadius: '0px 0px 1000px 1000px' }}
+      >
+        {/* --- MAIN TEXT CONTENT --- */}
+        
+        {/* Left Heading */}
+        <h2 
+          className="absolute left-[100px] top-[223px] w-[564px] text-[#FFFFFF] text-[61px] leading-[1] font-serif m-0"
+          
+        >
+          When we saw Excitement Turning Into Overthinking
+        </h2>
+
+        {/* Right Descriptive Paragraphs */}
+        <div className="absolute left-[936px] top-[253px] w-[404px] flex flex-col gap-[20px]">
+          <p className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
+            Elewen was born from noticing a simple truth: many people love the idea of hosting, but hesitate because planning an event often feels like too much to manage.
+          </p>
+          <p className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
+            Finding reliable vendors, understanding fair pricing, and coordinating everything usually means relying on social media, referrals, and endless back-and-forth.
+          </p>
+        </div>
+      </div>
+
+
+      {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
+      {/* This helper div has the exact same borderRadius as the brown background 
+          to ensure the pill gets chopped off along that same curved line.
+      */}
+      <div 
+        className="absolute left-0 top-0 w-full h-[880px] overflow-hidden pointer-events-none z-10"
+        style={{ borderRadius: '0px 0px 1000px 1000px' }}
+      >
+        {/* The Actual Pill background */}
+        <div className="absolute left-[528px] top-[440px] w-[400px] h-[600px] bg-[#BFAC9B] rounded-[500px] border-[4px] border-[#591902] shadow-lg">
+        </div>
+      </div>
+
+
+      {/* --- 3. THE GIRL (NOT CLIPPED BY THE CURVE) --- */}
+      {/* Placed in a container with NO overflow-hidden, so her hands can break out 
+          into the beige section below the brown curve.
+      */}
+      <div className="absolute left-[528px] top-[440px] w-[400px] h-[600px] z-20 pointer-events-none">
+        <img 
+          src={tangledIllustration} 
+          alt="Person tangled in lights" 
+          className="absolute left-1/2 -translate-x-1/2 top-[9px] w-[384px] h-[529px] object-cover"
+        />
+      </div>
+
+    </div>
+
+    {/* --- 4. Celebrations Don’t Have to Be Big to Matter --- */}
+    <div className="relative w-full max-w-[1440px] h-[350px] shrink-0 mx-auto px-6 py-24 overflow-hidden">
+      <h2
+        className="absolute left-[20px] md:left-[100px] top-[20px] md:top-[0px] w-full max-w-[546px] text-[#591902] text-[40px] md:text-[61px] leading-[1] font-normal font-serif"
+        style={{ fontFamily: "'Malgin', serif" }}
+      >
+        Celebrations Don’t Have to Be Big to Matter
+      </h2>
+
+      <div className="absolute left-[20px] md:left-auto md:right-[100px] top-[180px] md:top-[30px] flex flex-col gap-[20px] w-full max-w-[463px]">
+        <p className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal">
+          Hosting a party, celebrating with close friends and family, and taking a pause from everyday life truly matters.
+        </p>
+
+        <p className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal">
+          Elewen exists to protect that feeling. We focus on the little details and personal touches that turn simple gatherings into meaningful moments.
+        </p>
+      </div>
+    </div>
+
+    {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
     <section className="relative w-full bg-[#A5A687] flex justify-center overflow-hidden font-sans">
       <div className="relative w-[1440px] h-[4628px] shrink-0">
-        {/* --- SUB-TASK 1: SCALLOPED HEADER & LANTERNS --- */}
+        {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
         <div
           className="absolute hidden md:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
           style={{ left: '-10%', top: '5%', transform: 'rotate(-37.82deg)' }}
@@ -149,7 +216,6 @@ const AboutStorySection = () => {
           Meet the Founders
         </h2>
 
-        {/* Moksha */}
         <div className="absolute left-0 top-[1600px] w-[600px] h-[700px] bg-[#222815] overflow-hidden">
           {mokshaSrc && <Img src={mokshaSrc} alt="Moksha" className="w-full h-full object-cover" />}
         </div>
@@ -163,7 +229,6 @@ const AboutStorySection = () => {
           </div>
         </div>
 
-        {/* Gauri */}
         <div className="absolute right-0 top-[2397px] w-[600px] h-[700px] bg-[#080808] overflow-hidden">
           {gauriSrc && <Img src={gauriSrc} alt="Gauri" className="w-full h-full object-cover" />}
         </div>
@@ -184,149 +249,209 @@ const AboutStorySection = () => {
           Everything you need for a beautiful celebration, thoughtfully brought together.
         </p>
 
-        {/* Iconic Circles Grid */}
-        <div className="absolute left-0 top-[3514px] w-full px-[100px] flex gap-[40px]">
+        {/* --- Group 75 (exact layout) --- */}
+        <div className="absolute left-[100px] top-[3514px] w-[837px] h-[281px]">
           {[
-            { img: 'e47', text: 'Little details that lift your party' },
-            { img: 'e49', text: 'A few clicks and you’re done planning' },
-            { img: 'e48', text: 'One complete look. Zero running around.' },
-            { img: 'e50', text: 'Behind the scenes? That’s on us.' },
-          ].map((item) => (
-            <div key={item.img} className="flex flex-col items-center gap-[20px] w-[177px]">
-              <div className="w-[177px] h-[177px] bg-[#F8F4ED] rounded-full flex items-center justify-center p-6">
-                {aboutAssetSrc(`${item.img}.png`) && (
-                  <Img
-                    src={aboutAssetSrc(`${item.img}.png`)}
-                    alt=""
-                    className="w-[140px] object-contain"
-                  />
-                )}
+            { key: 'e47', left: 0, iconW: 145.02, iconH: 150.97, iconLeft: 35, iconTop: -10, labelW: 174, labelH: 50, label: 'Little details that lift your party' },
+            { key: 'e49', left: 217, iconW: 160, iconH: 134, iconLeft: 0, iconTop: 45, labelW: 174, labelH: 75, label: 'A few clicks and you’re done planning' },
+            { key: 'e48', left: 434, iconW: 149, iconH: 152, iconLeft: 14, iconTop: 9, labelW: 174, labelH: 75, label: 'One complete look. Zero running around.' },
+            { key: 'e50', left: 660, iconW: 237, iconH: 146, iconLeft: -30, iconTop: 36, labelW: 174, labelH: 75, label: 'Behind the scenes? That’s on us.' },
+          ].map((item) => {
+            const src = aboutAssetSrc(`${item.key}.png`)
+            return (
+              <div key={item.key} className="absolute" style={{ left: `${item.left}px`, top: 0, width: '177px', height: '281px' }}>
+                {/* Circle (clip everything inside) */}
+                <div className={`absolute left-0 top-[9px] w-[177px] h-[177px] bg-[#F8F4ED] rounded-full ${item.key === 'e47' ? '' : 'overflow-hidden relative'}`}>
+                  {/* Icon must be INSIDE this circle to clip */}
+                  {src && (
+                    <div
+                      className="absolute"
+                      style={{
+                        width: `${item.iconW}px`,
+                        height: `${item.iconH}px`,
+                        left: `${item.iconLeft}px`,
+                        top: `${item.key === 'e47' ? item.iconTop : item.iconTop - 9}px`,
+                      }}
+                    >
+                      <Img src={src} alt="" className="w-full h-full object-cover object-center" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Label */}
+                <p
+                  className="absolute left-0 top-[206px] text-white font-normal font-poppins"
+                  style={{
+                    width: `${item.labelW}px`,
+                    height: `${item.labelH}px`,
+                    fontSize: '21px',
+                    lineHeight: '120%',
+                  }}
+                >
+                  {item.label}
+                </p>
               </div>
-              <p className="text-white text-[21px] leading-[1.2] text-center font-normal">{item.text}</p>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        {/* --- SUB-TASK 6: VENDOR QUALITY & CARDS --- */}
-        <h2 className="absolute right-[100px] top-[3995px] w-[487px] text-white text-[61px] leading-[1] text-right font-serif" style={{ fontFamily: "'Malgin', serif" }}>
+ {/* --- SUB-TASK 6: VENDOR QUALITY & CARDS --- */}
+ <h2 className="absolute right-[100px] top-[3995px] w-[487px] text-white text-[61px] leading-[1] text-right font-serif" style={{ fontFamily: "'Malgin', serif" }}>
           Our approach to vendor quality
         </h2>
-        <p className="absolute right-[100px] top-[4145px] w-[517px] text-white text-[16px] leading-[1.5] text-right opacity-80">
+        <p className="absolute right-[100px] top-[4145px] w-[517px] text-white text-[16px] leading-[1.5] text-right opacity-80" style={{ fontFamily: "'Poppins', sans-serif" }}>
           We stand by the people behind every celebration, creating steady work, clear processes, and timely payments for vendors.
         </p>
 
-        <div className="absolute bottom-[100px] left-0 w-full px-[100px] flex justify-between gap-6">
+        {/* Card Container - Restored to justify-end with gap-[20px] to cluster on the right */}
+        <div className="absolute bottom-[100px] left-0 w-full px-[100px] flex justify-end gap-[20px]">
           {[
-            { title: 'Quality you can trust', desc: 'Every partner in the Elewen Network is quality-checked for skill, reliability, and consistency.' },
-            { title: 'Built for everyone involved', desc: 'By removing middlemen, we give customers better value and help our partners work in a more organised system.' },
-            { title: 'Clear tiers. Simple Choices', desc: 'Our partners are grouped into three levels. You choose your package, and we take care of the rest.' },
-          ].map((card) => (
-            <div key={card.title} className="w-[316px] h-[275px] bg-white rounded-[20px] flex flex-col items-center p-10 text-center gap-5">
-              <div className="w-[80px] h-[80px] bg-[#591902] rounded-md flex items-center justify-center overflow-hidden">
-                {iconSrc && <Img src={iconSrc} alt="" className="w-full h-full object-cover" />}
+            { 
+              title: 'Quality you can trust', 
+              desc: 'Every partner in the Elewen Network is quality-checked for skill, reliability, and consistency.',
+              iconName: 'quality-icon.png', 
+              titleWidth: '218px'
+            },
+            { 
+              title: 'Built for everyone involved', 
+              desc: 'By removing middlemen, we give customers better value and help our partners work in a more organised, digital, and timely system.',
+              iconName: 'everyone-icon.png', 
+              titleWidth: '275px'
+            },
+            { 
+              title: 'Clear tiers. Simple Choices', 
+              desc: 'Our partners are grouped into three levels. You choose your package, and we take care of the rest.',
+              iconName: 'tiers-icon.png', 
+              titleWidth: '279px'
+            },
+          ].map((card, index) => {
+            // Dynamically resolve the specific image for this card
+            const currentIconSrc = aboutAssetSrc(card.iconName) || iconSrc;
+
+            return (
+              <div 
+                key={index} 
+                className="w-[316px] h-[275px] bg-[#FFFFFF] rounded-[20px] relative shrink-0"
+              >
+                {/* Frame 281: Top 40px, centered horizontally with 20px gap */}
+                <div className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[276px] flex flex-col items-center gap-[20px]">
+                  
+                  {/* Group 68: Dynamic Icon colored to #591902 using CSS Mask */}
+                  <div className="w-[80px] h-[80px] shrink-0">
+                    {currentIconSrc && (
+                      <div 
+                        className="w-full h-full bg-[#591902]"
+                        style={{
+                          WebkitMaskImage: `url(${currentIconSrc})`,
+                          WebkitMaskSize: 'contain',
+                          WebkitMaskPosition: 'center',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskImage: `url(${currentIconSrc})`,
+                          maskSize: 'contain',
+                          maskPosition: 'center',
+                          maskRepeat: 'no-repeat',
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Frame 261: Text Content with 16px gap */}
+                  <div className="flex flex-col items-center gap-[16px] w-[276px]">
+                    <h5 
+                      className="text-[#2D2D2D] text-[21px] font-normal text-center"
+                      style={{ 
+                        fontFamily: "'Poppins', sans-serif",
+                        lineHeight: '120%',
+                        width: card.titleWidth 
+                      }}
+                    >
+                      {card.title}
+                    </h5>
+                    <p 
+                      className="text-[#767676] text-[12px] font-normal text-center"
+                      style={{ 
+                        fontFamily: "'Poppins', sans-serif",
+                        lineHeight: '150%',
+                        width: '276px'
+                      }}
+                    >
+                      {card.desc}
+                    </p>
+                  </div>
+
+                </div>
               </div>
-              <div className="flex flex-col gap-4">
-                <h5 className="text-[#2D2D2D] text-[21px] leading-[1.2]">{card.title}</h5>
-                <p className="text-[#767676] text-[12px] leading-[1.5]">{card.desc}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
-  )
-}
 
-const About = () => {
-  return (
-    <>
-    <section className="w-full bg-[#F8F4ED] flex justify-center font-sans overflow-x-hidden">
-      
-    <div className="relative w-[1440px] h-[1100px] shrink-0">
-      
-      {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
-      <div 
-        className="absolute left-0 top-0 w-full h-[880px] bg-[#591902] overflow-hidden z-0"
-        style={{ borderRadius: '0px 0px 1000px 1000px' }}
-      >
-        {/* --- MAIN TEXT CONTENT --- */}
-        
-        {/* Left Heading */}
-        <h2 
-          className="absolute left-[100px] top-[223px] w-[564px] text-[#FFFFFF] text-[61px] leading-[1] font-serif m-0"
-          
+    {/* --- Call To Action Section --- */}
+    {/* Frame 271 */}
+    <div className="relative w-[1440px] h-[334px] bg-[#591902] shrink-0 overflow-hidden">
+      {/* Frame 272 (Text Content) */}
+      <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-[871px] flex flex-col items-center gap-[16px]">
+        {/* Heading/h3 */}
+        <h3
+          className="text-[#FFFFFF] text-[47px] font-normal leading-none text-center m-0"
+          style={{ fontFamily: "'Malgin', serif" }}
         >
-          When we saw Excitement Turning Into Overthinking
-        </h2>
+          Not a part of the Elewen Network yet?
+        </h3>
 
-        {/* Right Descriptive Paragraphs */}
-        <div className="absolute left-[936px] top-[253px] w-[404px] flex flex-col gap-[20px]">
-          <p className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
-            Elewen was born from noticing a simple truth: many people love the idea of hosting, but hesitate because planning an event often feels like too much to manage.
-          </p>
-          <p className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
-            Finding reliable vendors, understanding fair pricing, and coordinating everything usually means relying on social media, referrals, and endless back-and-forth.
-          </p>
-        </div>
+        {/* Heading/h5 */}
+        <h5
+          className="text-[#FFFFFF] text-[27px] font-normal leading-none text-center m-0"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          Come join the fam.
+        </h5>
       </div>
 
+      {/* Frame 151 (Button Group) */}
+      <div className="absolute top-[210px] left-1/2 -translate-x-1/2 flex flex-row items-center gap-[16px]">
+        {/* Frame 114: Customer Login Button */}
+        <button className="flex flex-row items-center justify-between w-[208px] h-[44px] bg-[#CDB17E] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#c2a472] transition-colors">
+          <span
+            className="text-[#591902] text-[16px] font-medium leading-[150%]"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
+            Customer Login
+          </span>
 
-      {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
-      {/* This helper div has the exact same borderRadius as the brown background 
-          to ensure the pill gets chopped off along that same curved line.
-      */}
-      <div 
-        className="absolute left-0 top-0 w-full h-[880px] overflow-hidden pointer-events-none z-10"
-        style={{ borderRadius: '0px 0px 1000px 1000px' }}
-      >
-        {/* The Actual Pill background */}
-        <div className="absolute left-[528px] top-[440px] w-[400px] h-[600px] bg-[#BFAC9B] rounded-[500px] border-[4px] border-[#591902] shadow-lg">
-        </div>
+          {/* Frame 4: Arrow Icon Wrapper */}
+          <div className="flex flex-row justify-center items-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-full shrink-0">
+            {/* lucide/arrow-up-right */}
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#591902"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M7 17L17 7" />
+              <path d="M7 7h10v10" />
+            </svg>
+          </div>
+        </button>
+
+        {/* Frame 150: Join as Vendor Button */}
+        <button className="flex flex-row items-center justify-center w-[169px] h-[44px] bg-[#FAFAFA] rounded-[56px] px-[24px] py-[4px] hover:bg-[#eaeaea] transition-colors">
+          <span
+            className="text-[#591902] text-[16px] font-medium leading-[150%]"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
+            Join as Vendor
+          </span>
+        </button>
       </div>
-
-
-      {/* --- 3. THE GIRL (NOT CLIPPED BY THE CURVE) --- */}
-      {/* Placed in a container with NO overflow-hidden, so her hands can break out 
-          into the beige section below the brown curve.
-      */}
-      <div className="absolute left-[528px] top-[440px] w-[400px] h-[600px] z-20 pointer-events-none">
-        <img 
-          src={tangledIllustration} 
-          alt="Person tangled in lights" 
-          className="absolute left-1/2 -translate-x-1/2 top-[9px] w-[384px] h-[529px] object-cover"
-        />
-      </div>
-
     </div>
 
-    
   </section>
-  {/* --- 4. Celebrations Don’t Have to Be Big to Matter --- */}
-  <section className="relative w-full bg-[#F8F4ED] flex justify-center overflow-hidden font-sans py-24">
-  {/* 1440px Wrapper for Pixel-Perfect Figma Alignment */}
-  <div className="relative w-full max-w-[1440px] h-[350px] shrink-0 mx-auto px-6">
-    {/* --- LEFT HEADING --- */}
-    <h2
-      className="absolute left-[20px] md:left-[100px] top-[20px] md:top-[0px] w-full max-w-[546px] text-[#591902] text-[40px] md:text-[61px] leading-[1] font-normal font-serif"
-      style={{ fontFamily: "'Malgin', serif" }}
-    >
-      Celebrations Don’t Have to Be Big to Matter
-    </h2>
-
-    {/* --- RIGHT CONTENT BLOCK (Frame 243) --- */}
-    <div className="absolute left-[20px] md:left-auto md:right-[100px] top-[180px] md:top-[30px] flex flex-col gap-[20px] w-full max-w-[463px]">
-      <p className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal">
-        Hosting a party, celebrating with close friends and family, and taking a pause from everyday life truly matters.
-      </p>
-
-      <p className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal">
-        Elewen exists to protect that feeling. We focus on the little details and personal touches that turn simple gatherings into meaningful moments.
-      </p>
-    </div>
-  </div>
-</section>
-
-      <AboutStorySection />
     </>
   
   )
