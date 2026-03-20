@@ -10,7 +10,7 @@ export default function SmoothScroll({ children }) {
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       touchMultiplier: 2,
       anchors: true,
@@ -18,7 +18,7 @@ export default function SmoothScroll({ children }) {
 
     lenis.on('scroll', ScrollTrigger.update)
 
-    const raf = (time) => lenis.raf(time * 1000)
+    const raf = time => lenis.raf(time * 1000)
     gsap.ticker.add(raf)
     gsap.ticker.lagSmoothing(0)
 

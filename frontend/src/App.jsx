@@ -1,27 +1,18 @@
-import HeroSection from './landing-page/HeroSection'
-import PlanEventSection from './landing-page/PlanEventSection'
-import WhatToPlanSection from './landing-page/WhatToPlanSection'
-import ChecklistSection from './landing-page/ChecklistSection'
-import PackagesSection from './landing-page/PackagesSection'
-import CelebrationFeelingSection from './landing-page/CelebrationFeelingSection'
-import PlanningGuidesSection from './landing-page/PlanningGuidesSection'
-import TestimonialsSection from './landing-page/TestimonialsSection'
-import SplitInfoSection from './landing-page/SplitInfoSection'
-import FooterSection from './landing-page/FooterSection'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import NavHeader from './components/NavHeader'
+import LandingPage from './pages/LandingPage'
+import InHousePlannerPage from './pages/InHousePlannerPage'
+import About from './pages/About'
 
 export default function App() {
   return (
-    <>
-      <HeroSection />
-      <PlanEventSection />
-      <WhatToPlanSection />
-      <ChecklistSection />
-      <PackagesSection />
-      <CelebrationFeelingSection />
-      <PlanningGuidesSection />
-      <TestimonialsSection />
-      <SplitInfoSection />
-      <FooterSection />
-    </>
+    <BrowserRouter>
+      <NavHeader />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/in-house-planner" element={<InHousePlannerPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
