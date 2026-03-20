@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css'
@@ -38,7 +39,7 @@ import img5 from '../assets/images/img6a98.jpg'
 import bulb1 from '../assets/lightbulb_images/bulb1.png'
 import bulb2 from '../assets/lightbulb_images/bulb2.png'
 
-gsap.registerPlugin(ScrollTrigger)
+gsap.registerPlugin(ScrollTrigger, MotionPathPlugin)
 
 const PlanEventSection = () => {
   // CMS: Strapi `events` top-level categories + featured sub-type cards
@@ -883,6 +884,7 @@ const ChecklistSection = () => {
     const doorFill = gate.querySelector('#door-fill')
     const doorTable = gate.querySelector('#door-table')
     const doorLights = gate.querySelector('#door-lights')
+    const doorCurvedText = gate.querySelector('#door-curved-text')
 
     const isMobile = window.innerWidth < 768
     const scaleEnd = isMobile ? 3 : 4
@@ -901,23 +903,49 @@ const ChecklistSection = () => {
       },
     })
 
+    // Phase 1 (0–1): door zooms in, parts separate, curved text orbits along the arch
     tl.to(gate, { scale: scaleEnd, ease: 'power2.in', duration: 1 }, 0)
     if (doorTable) tl.to(doorTable, { x: 120, ease: 'power2.in', duration: 1 }, 0)
     if (doorLights) tl.to(doorLights, { y: -60, ease: 'power2.in', duration: 1 }, 0)
-    if (doorFill) tl.to(doorFill, { opacity: 0, duration: 0.5, ease: 'power2.in' }, 0.4)
+    const archPath = gate.querySelector('#door-arch-path')
+    if (doorCurvedText && archPath)
+      tl.to(
+        doorCurvedText,
+        {
+          motionPath: {
+            path: archPath,
+            align: archPath,
+            alignOrigin: [0.5, 0.5],
+            autoRotate: false,
+            start: 0,
+            end: 0.5,
+          },
+          ease: 'power2.in',
+          duration: 1,
+        },
+        0
+      )
+
+    // Phase 2 (0.5–0.9): door fill fades — clears the arch before section appears
+    if (doorFill) tl.to(doorFill, { opacity: 0, duration: 0.4, ease: 'power2.in' }, 0.5)
+
+    // Phase 3 (0.7–0.9): entire gate wrapper fades out
+    tl.to(gate, { opacity: 0, duration: 0.2, ease: 'power2.out' }, 0.7)
+
+    // Phase 4 (0.85–1.25): how-it-works section fades in only after gate is gone
     tl.to(
       howItWorks,
       {
         opacity: 1,
-        duration: 0.5,
+        duration: 0.4,
         ease: 'power2.in',
         onComplete: () => {
           setHowItWorksVisible(true)
           setTimeout(() => ScrollTrigger.refresh(), 100)
         },
       },
-      0.4
-    ).to(gate, { opacity: 0, duration: 0.25, ease: 'power2.out' }, 0.85)
+      0.85
+    )
 
     return () => {
       tl.scrollTrigger?.kill()

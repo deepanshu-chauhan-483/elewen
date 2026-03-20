@@ -14,24 +14,21 @@ const NavHeader = () => {
   // On other pages, show immediately.
   const { pathname } = useLocation()
   const isHome = pathname === '/'
-  const [visible, setVisible] = useState(!isHome)
+  const preloaderDone = !!sessionStorage.getItem('elewen-preloader-done')
+  const [visible, setVisible] = useState(!isHome || preloaderDone)
   const [hidden, setHidden] = useState(false) // hide on scroll-down, reveal on scroll-up
   const lastScrollY = useRef(0)
 
-  // Show after preloader on home; show immediately on other pages
+  // Show after preloader on home; show immediately on other pages or if already done
   useEffect(() => {
-    if (!isHome) {
+    if (!isHome || preloaderDone) {
       const t = setTimeout(() => setVisible(true), 0)
       return () => clearTimeout(t)
     }
-    const t = setTimeout(() => setVisible(false), 0)
     const onDone = () => setVisible(true)
     window.addEventListener('hero-preloader-done', onDone, { once: true })
-    return () => {
-      clearTimeout(t)
-      window.removeEventListener('hero-preloader-done', onDone)
-    }
-  }, [isHome])
+    return () => window.removeEventListener('hero-preloader-done', onDone)
+  }, [isHome, preloaderDone])
 
   // Hide on scroll-down, reveal on scroll-up
   useEffect(() => {

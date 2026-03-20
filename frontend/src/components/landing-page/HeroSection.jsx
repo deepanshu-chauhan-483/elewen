@@ -1,15 +1,14 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import navLogo from '../../assets/images/navbar.png'
 import HeroVideo from '../../assets/HeroVideo.mp4'
+import HeroPreloader from './HeroPreloader'
 
 gsap.registerPlugin(ScrollTrigger)
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const c01 = v => Math.max(0, Math.min(1, v))
 const lerp = (a, b, t) => a + (b - a) * t
-// progress of a sub-phase inside the full 0→1 range
 const sub = (p, start, end) => c01((p - start) / (end - start))
 
 // ── banner text content ───────────────────────────────────────────────────────
@@ -48,12 +47,12 @@ const BAND3_TOKENS = [
   '*',
 ]
 
-const renderBand = tokens => {
+// Render one copy of a band's tokens — called twice per band for seamless loop
+const renderBandCopy = tokens => {
   const items = []
   let idx = 0
-  for (let r = 0; r < 8; r++) {
+  for (let r = 0; r < 4; r++) {
     tokens.forEach((token, ti) => {
-      // every phrase+separator pair alternates: pair 0 solid, pair 1 outline, …
       const style = Math.floor(ti / 2) % 2 === 0 ? SOLID : OUTLINE
       items.push(
         <span key={idx} style={style}>
@@ -69,33 +68,23 @@ const renderBand = tokens => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const PRELOADER_DONE_KEY = 'elewen-preloader-done'
+
 const HeroSection = () => {
   const wrapperRef = useRef(null)
-  const logoContainerRef = useRef(null)
-  const logoImgRef = useRef(null)
+  const preloaderRef = useRef(null) // HeroPreloader imperative handle
   const darkOverlayRef = useRef(null)
   const videoWrapperRef = useRef(null)
   const contentRef = useRef(null)
-  const band1Ref = useRef(null)
-  const band2Ref = useRef(null)
-  const band3Ref = useRef(null)
 
   useEffect(() => {
-    // Poppins for banner text
-    const link = document.createElement('link')
-    link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap'
-    link.rel = 'stylesheet'
-    document.head.appendChild(link)
-
-    const lc = logoContainerRef.current
-    const li = logoImgRef.current
     const dk = darkOverlayRef.current
     const vw = videoWrapperRef.current
     const cr = contentRef.current
-    const b1 = band1Ref.current
-    const b2 = band2Ref.current
-    const b3 = band3Ref.current
-    if (!lc || !li || !dk || !vw || !cr || !b1 || !b2 || !b3) return
+    if (!dk || !vw || !cr) return
+
+    const lc = preloaderRef.current?.containerEl()
+    const li = preloaderRef.current?.imgEl()
 
     // ── end-state values for the small video at bottom ──────────────────────
     const getEnd = () => {
@@ -109,77 +98,82 @@ const HeroSection = () => {
     const W0 = window.innerWidth
     const H0 = window.innerHeight
 
-    // ── animState: written by preloader + ScrollTrigger, read by RAF ─────────
     const s = {
       logoScale: 1,
       logoOpacity: 1,
       darkAlpha: 1,
-      vidTop: H0, // starts below viewport — preloader animates to 0
+      vidTop: H0,
       vidLeft: 0,
       vidW: W0,
       vidH: H0,
-      vidTopR: 1200, // large rounded top during slide-in, flattens to 0
-      vidR: 0, // corner radius used when video shrinks on scroll
+      vidTopR: 1200,
+      vidR: 0,
       contentOpacity: 0,
-      contentY: 50, // px — starts below, rises to 0 on fade-in, lifts to -50 on fade-out
-      shift: 0,
+      contentY: 50,
     }
 
-    // ── Preloader: logo zoom → fade → video slides up ────────────────────────
-    let preloaderDone = false
-    const tl = gsap.timeline()
-    tl.to(s, { logoScale: 2.5, duration: 1.8, ease: 'power2.out' })
-      .to(s, { logoOpacity: 0, duration: 0.6, ease: 'power2.in' }, '+=0.1')
-      // video rises with rounded top; radius flattens as it reaches top=0
-      .to(s, { vidTop: 0, vidTopR: 0, duration: 1.2, ease: 'power3.inOut' }, '-=0.45')
-      // hero content expands up + fades in once video is fullscreen
-      .to(s, { contentOpacity: 1, contentY: 0, duration: 0.7, ease: 'power2.out' }, '-=0.1')
-      .eventCallback('onComplete', () => {
-        preloaderDone = true
-        window.dispatchEvent(new Event('hero-preloader-done'))
-      })
+    const alreadyDone = sessionStorage.getItem(PRELOADER_DONE_KEY)
+    let tl = null
 
-    // ── ScrollTrigger: phases 2-4 only (video already fullscreen at scroll=0) ─
+    if (alreadyDone) {
+      // Skip preloader: jump straight to post-intro state
+      if (lc) lc.style.opacity = '0'
+      s.logoOpacity = 0
+      s.vidTop = 0
+      s.vidTopR = 0
+      s.contentOpacity = 1
+      s.contentY = 0
+      s.darkAlpha = 1 // ScrollTrigger will fade this out
+      window.dispatchEvent(new Event('hero-preloader-done'))
+    } else {
+      // ── Preloader: logo zoom → fade → video slides up ──────────────────
+      tl = gsap.timeline()
+      tl.to(s, { logoScale: 2.5, duration: 1.8, ease: 'power2.out' })
+        .to(s, { logoOpacity: 0, duration: 0.6, ease: 'power2.in' }, '+=0.1')
+        .to(s, { vidTop: 0, vidTopR: 0, duration: 1.2, ease: 'power3.inOut' }, '-=0.45')
+        .to(s, { contentOpacity: 1, contentY: 0, duration: 0.7, ease: 'power2.out' }, '-=0.1')
+        .eventCallback('onComplete', () => {
+          sessionStorage.setItem(PRELOADER_DONE_KEY, '1')
+          window.dispatchEvent(new Event('hero-preloader-done'))
+        })
+    }
+
+    // ── ScrollTrigger: phases 2-3 ───────────────────────────────────────────
     const st = ScrollTrigger.create({
       trigger: wrapperRef.current,
       start: 'top top',
       end: 'bottom bottom',
       scrub: 1.5,
       onUpdate({ progress: p }) {
-        if (!preloaderDone) return
         const { eW, eH, eL, eT } = getEnd()
         const W = window.innerWidth
         const H = window.innerHeight
 
-        // ── Phase 2: content collapses up + fades OUT (0.00 → 0.20) ────────────
-        s.contentOpacity = lerp(1, 0, sub(p, 0.0, 0.2))
-        s.contentY = lerp(0, -50, sub(p, 0.0, 0.2))
+        // Phase 2: content fades out (0.00 → 0.18)
+        s.contentOpacity = lerp(1, 0, sub(p, 0.0, 0.18))
+        s.contentY = lerp(0, -50, sub(p, 0.0, 0.18))
 
-        // ── Phase 3: video shrinks to bottom (0.15 → 0.55) ───────────────────
-        const shrinkP = sub(p, 0.15, 0.55)
+        // Phase 3: video shrinks to bottom (0.12 → 0.85)
+        const shrinkP = sub(p, 0.12, 0.85)
         s.vidTop = lerp(0, eT, shrinkP)
         s.vidLeft = lerp(0, eL, shrinkP)
         s.vidW = lerp(W, eW, shrinkP)
         s.vidH = lerp(H, eH, shrinkP)
         s.vidR = lerp(0, 16, shrinkP)
 
-        // ── dark overlay fades out (0.15 → 0.45) — reveals #bfac9b ───────────
-        s.darkAlpha = lerp(1, 0, sub(p, 0.15, 0.45))
-
-        // ── Phase 4: banner text slides (0.55 → 1.00) ────────────────────────
-        s.shift = lerp(0, 340, sub(p, 0.55, 1.0))
+        // dark overlay fades out (0.12 → 0.40)
+        s.darkAlpha = lerp(1, 0, sub(p, 0.12, 0.4))
       },
     })
 
-    // ── RAF render loop (Vucko pattern) ──────────────────────────────────────
+    // ── RAF render loop ───────────────────────────────────────────────────────
     let rafId
     const render = () => {
-      li.style.transform = `scale(${s.logoScale})`
-      lc.style.opacity = s.logoOpacity
+      if (lc) lc.style.opacity = s.logoOpacity
+      if (li) li.style.transform = `scale(${s.logoScale})`
 
       dk.style.opacity = s.darkAlpha
 
-      // top radius: preloader slide-in (vidTopR) + scroll shrink corner (vidR)
       const topR = s.vidTopR + s.vidR
       vw.style.top = `${s.vidTop}px`
       vw.style.left = `${s.vidLeft}px`
@@ -191,87 +185,88 @@ const HeroSection = () => {
       cr.style.transform = `translateY(${s.contentY}px)`
       cr.style.pointerEvents = s.contentOpacity > 0.05 ? 'auto' : 'none'
 
-      b1.style.transform = `rotate(-20deg) translateX(${-s.shift}px)`
-      b2.style.transform = `rotate(-20deg) translateX(${+s.shift}px)`
-      b3.style.transform = `rotate(-20deg) translateX(${-s.shift}px)`
-
       rafId = requestAnimationFrame(render)
     }
     render()
 
     return () => {
-      tl.kill()
+      tl?.kill()
       st.kill()
       cancelAnimationFrame(rafId)
     }
   }, [])
 
-  // ── band style factory ────────────────────────────────────────────────────
-  const bandStyle = top => ({
+  // ── band wrapper style: rotation + position only ──────────────────────────
+  const bandWrap = top => ({
     position: 'absolute',
     top,
-    left: '-100%',
-    width: '300%',
-    whiteSpace: 'nowrap',
-    fontFamily: "'Poppins', sans-serif",
-    fontWeight: 600,
-    fontSize: '120px',
-    lineHeight: '120%',
-    letterSpacing: 0,
-    color: 'inherit',
-    opacity: 1,
-    transformOrigin: 'center center',
+    left: '-10%',
+    width: '160%',
+    overflow: 'hidden',
     transform: 'rotate(-10deg)',
+    transformOrigin: 'center center',
     pointerEvents: 'none',
     userSelect: 'none',
   })
 
+  const bandFont = {
+    fontFamily: "'Poppins', sans-serif",
+    fontWeight: 600,
+    fontSize: '120px',
+    lineHeight: '120%',
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    /*
-      600vh wrapper → 500vh scroll range → progress 0→1.
-      Sticky container pins at top for the full duration.
-    */
-    <div ref={wrapperRef} style={{ height: '600vh' }}>
+    <div ref={wrapperRef} style={{ height: '420vh' }}>
       <div
         style={{
           position: 'sticky',
           top: 0,
           height: '100vh',
-          backgroundColor: '#bfac9b', // revealed in Phase 3
+          backgroundColor: '#bfac9b',
           overflow: 'hidden',
         }}
       >
-        {/* ── z-10: diagonal banner text (hidden by dark overlay until Phase 3) */}
+        {/* ── z-10: diagonal infinite-scrolling banner text ─────────────────── */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 10, overflow: 'hidden' }}>
-          <div ref={band1Ref} style={bandStyle('10%')}>
-            {renderBand(BAND1_TOKENS)}
+          {/* Band 1 — scrolls left */}
+          <div style={bandWrap('10%')}>
+            <div className="band-scroll dir-left" style={bandFont}>
+              {renderBandCopy(BAND1_TOKENS)}
+              {renderBandCopy(BAND1_TOKENS)}
+            </div>
           </div>
-          <div ref={band2Ref} style={bandStyle('25%')}>
-            {renderBand(BAND2_TOKENS)}
+
+          {/* Band 2 — scrolls right */}
+          <div style={bandWrap('27%')}>
+            <div className="band-scroll dir-right" style={bandFont}>
+              {renderBandCopy(BAND2_TOKENS)}
+              {renderBandCopy(BAND2_TOKENS)}
+            </div>
           </div>
-          <div ref={band3Ref} style={bandStyle('40%')}>
-            {renderBand(BAND3_TOKENS)}
+
+          {/* Band 3 — scrolls left */}
+          <div style={bandWrap('44%')}>
+            <div className="band-scroll dir-left" style={bandFont}>
+              {renderBandCopy(BAND3_TOKENS)}
+              {renderBandCopy(BAND3_TOKENS)}
+            </div>
           </div>
         </div>
 
-        {/* ── z-15: dark overlay — covers #bfac9b + text in Phases 1 & 2 ───── */}
+        {/* ── z-15: dark overlay ───────────────────────────────────────────── */}
         <div
           ref={darkOverlayRef}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 15,
-            backgroundColor: '#bfac9b',
-          }}
+          style={{ position: 'absolute', inset: 0, zIndex: 15, backgroundColor: '#bfac9b' }}
         />
 
-        {/* ── z-20: video — starts below, swipes up, then shrinks to bottom ── */}
+        {/* ── z-20: video ──────────────────────────────────────────────────── */}
         <div
           ref={videoWrapperRef}
           style={{
             position: 'absolute',
-            top: '100vh', // initial: below viewport
+            top: '100vh',
             left: 0,
             width: '100vw',
             height: '100vh',
@@ -296,11 +291,10 @@ const HeroSection = () => {
           >
             <source src={HeroVideo} type="video/mp4" />
           </video>
-          {/* overlay darkens video — shrinks with it, never covers #bfac9b */}
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.22)' }} />
         </div>
 
-        {/* ── z-30: hero content — fades in (Phase 2) and out (Phase 3) ───── */}
+        {/* ── z-30: hero content ───────────────────────────────────────────── */}
         <div
           ref={contentRef}
           style={{
@@ -312,9 +306,8 @@ const HeroSection = () => {
             color: '#FAFAFA',
           }}
         >
-          {/* Main Center Content */}
           <main className="absolute inset-0 flex flex-col justify-center items-start md:items-center z-10 pt-14 md:pt-24 px-4 md:px-0">
-            <div className="w-full max-w-[997px] text-left md:text-right flex flex-col pr-0 md:pr-8 lg:pr-0">
+            <div className="w-full max-w-249.25 text-left md:text-right flex flex-col pr-0 md:pr-8 lg:pr-0">
               <span
                 className="text-[38px] md:text-[48px] leading-none"
                 style={{ fontFamily: "'Malgin', serif" }}
@@ -328,9 +321,9 @@ const HeroSection = () => {
                 PLAN DIFFERENTLY
               </span>
             </div>
-            <div className="w-full max-w-[997px] flex flex-col md:flex-row justify-start md:justify-end items-start md:items-center mt-8 md:mt-12 pr-0 md:pr-12 gap-8 md:gap-0">
+            <div className="w-full max-w-249.25 flex flex-col md:flex-row justify-start md:justify-end items-start md:items-center mt-8 md:mt-12 pr-0 md:pr-12 gap-8 md:gap-0">
               <div className="flex items-center">
-                <button className="w-16 h-16 md:w-18 md:h-18 rounded-full border border-2 border-white flex items-center justify-center mr-4 md:mr-6 hover:bg-white/20 transition-colors backdrop-blur-sm shrink-0">
+                <button className="w-16 h-16 md:w-18 md:h-18 rounded-full border-2 border-white flex items-center justify-center mr-4 md:mr-6 hover:bg-white/20 transition-colors backdrop-blur-sm shrink-0">
                   <svg
                     className="w-8 h-8 text-[#FAFAFA]"
                     fill="none"
@@ -345,7 +338,7 @@ const HeroSection = () => {
                     />
                   </svg>
                 </button>
-                <p className="max-w-[250px] text-[15px] md:text-sm font-light leading-relaxed opacity-90 text-left">
+                <p className="max-w-62.5 text-[15px] md:text-sm font-light leading-relaxed opacity-90 text-left">
                   Explore the collection. Your seamless event is just a few clicks away!
                 </p>
               </div>
@@ -356,7 +349,7 @@ const HeroSection = () => {
                 >
                   W
                 </span>
-                <div className="flex flex-col justify-center text-[12px] font-medium tracking-wide space-y-[2px] mt-2">
+                <div className="flex flex-col justify-center text-[12px] font-medium tracking-wide space-y-0.5 mt-2">
                   <p>ork made easy</p>
                   <p>orth the spend</p>
                   <p>ell-vetted vendors</p>
@@ -365,7 +358,6 @@ const HeroSection = () => {
             </div>
           </main>
 
-          {/* Bottom Footer Section */}
           <footer className="absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20">
             <div className="hidden md:flex items-center px-10 pb-12">
               <span
@@ -396,9 +388,9 @@ const HeroSection = () => {
               ].map(({ label, desc, extra }) => (
                 <div
                   key={label}
-                  className={`col-span-1 md:w-[220px] h-[90px] md:h-[124px] md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
+                  className={`col-span-1 md:w-55 h-22.5 md:h-31 md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
                 >
-                  <div className="absolute top-[16px] md:top-[20px] left-[12px] md:left-[20px] right-[8px] md:right-auto md:w-[180px] flex flex-col gap-[6px] md:gap-[12px]">
+                  <div className="absolute top-4 md:top-5 left-3 md:left-5 right-2 md:right-auto md:w-45 flex flex-col gap-1.5 md:gap-3">
                     <h3
                       className="text-[10px] sm:text-[11px] md:text-sm font-bold tracking-widest uppercase truncate"
                       style={{ fontFamily: "'Malgin', serif" }}
@@ -415,32 +407,8 @@ const HeroSection = () => {
           </footer>
         </div>
 
-        {/* ── z-40: logo — only visible at scroll=0, grows then fades ─────── */}
-        <div
-          ref={logoContainerRef}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 40,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-          }}
-        >
-          <img
-            ref={logoImgRef}
-            src={navLogo}
-            alt="Elewen"
-            style={{
-              width: '380px',
-              height: 'auto',
-              objectFit: 'contain',
-              filter: 'brightness(0) invert(1) drop-shadow(0 18px 16px rgba(89,25,2,0.5))',
-              willChange: 'transform',
-            }}
-          />
-        </div>
+        {/* ── z-40: preloader overlay (swap HeroPreloader to change intro) ─── */}
+        <HeroPreloader ref={preloaderRef} />
       </div>
     </div>
   )

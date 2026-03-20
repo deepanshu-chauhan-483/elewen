@@ -40,6 +40,35 @@ p {
   font-family: var(--font-display);
 }
 
+/* ── Infinite marquee bands (HeroSection) ─────────────────────────────── */
+@keyframes band-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes band-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.band-scroll {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+}
+.band-scroll.dir-left {
+  animation: band-left 60s linear infinite;
+}
+.band-scroll.dir-right {
+  animation: band-right 60s linear infinite;
+}
+
 /* NOTE: I removed the "body *" !important override. 
    If you keep that rule, your <p> tags will be forced to use Malgin 
    instead of Poppins. Use the .font-display class on specific 
