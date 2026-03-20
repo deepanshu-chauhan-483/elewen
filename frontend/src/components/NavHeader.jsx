@@ -21,13 +21,16 @@ const NavHeader = () => {
   // Show after preloader on home; show immediately on other pages
   useEffect(() => {
     if (!isHome) {
-      setVisible(true)
-      return
+      const t = setTimeout(() => setVisible(true), 0)
+      return () => clearTimeout(t)
     }
-    setVisible(false)
+    const t = setTimeout(() => setVisible(false), 0)
     const onDone = () => setVisible(true)
     window.addEventListener('hero-preloader-done', onDone, { once: true })
-    return () => window.removeEventListener('hero-preloader-done', onDone)
+    return () => {
+      clearTimeout(t)
+      window.removeEventListener('hero-preloader-done', onDone)
+    }
   }, [isHome])
 
   // Hide on scroll-down, reveal on scroll-up
@@ -49,10 +52,13 @@ const NavHeader = () => {
 
   // Close sidebar and reset on route change
   useEffect(() => {
-    setOpen(false)
-    setHidden(false)
+    const t = setTimeout(() => {
+      setOpen(false)
+      setHidden(false)
+    }, 0)
     lastScrollY.current = 0
     window.scrollTo(0, 0)
+    return () => clearTimeout(t)
   }, [pathname])
 
   // Lock body scroll when sidebar open

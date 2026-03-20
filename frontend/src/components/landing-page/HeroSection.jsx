@@ -319,7 +319,7 @@ const HeroSection = () => {
                 className="text-[38px] md:text-[48px] leading-none"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                IT'S TIME TO
+                IT&apos;S TIME TO
               </span>
               <span
                 className="text-[54px] md:text-[96px] leading-[1.05] md:leading-none mt-2"
