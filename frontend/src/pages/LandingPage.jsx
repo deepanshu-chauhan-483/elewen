@@ -40,7 +40,6 @@ import bulb2 from '../assets/lightbulb_images/bulb2.png'
 
 gsap.registerPlugin(ScrollTrigger)
 
-
 const PlanEventSection = () => {
   // CMS: Strapi `events` top-level categories + featured sub-type cards
   const { data: categories } = useEventCategories()

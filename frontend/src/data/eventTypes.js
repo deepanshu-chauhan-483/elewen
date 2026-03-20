@@ -58,8 +58,7 @@ export const SERVICE_CARDS_FALLBACK = [
     id: 2,
     documentId: null,
     title: 'Sound & Setup',
-    description:
-      'Clear audio arrangements for music, announcements, and seamless coordination.',
+    description: 'Clear audio arrangements for music, announcements, and seamless coordination.',
     category: 'Tech',
   },
 ]

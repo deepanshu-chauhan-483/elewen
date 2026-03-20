@@ -21,8 +21,8 @@ export function useTestimonials() {
     queryFn: async () => {
       const { data } = await strapiGet('/testimonials', {
         'filters[is_featured][$eq]': 'true',
-        'sort': 'createdAt:desc',
-        'populate': 'author_image',
+        sort: 'createdAt:desc',
+        populate: 'author_image',
       })
 
       return data.map((t, i) => ({

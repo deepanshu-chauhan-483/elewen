@@ -24,10 +24,10 @@ async function request(method, path, body) {
   return res.json()
 }
 
-export const apiGet  = (path)        => request('GET',    path)
-export const apiPost = (path, body)  => request('POST',   path, body)
-export const apiPut  = (path, body)  => request('PUT',    path, body)
-export const apiDel  = (path)        => request('DELETE', path)
+export const apiGet = path => request('GET', path)
+export const apiPost = (path, body) => request('POST', path, body)
+export const apiPut = (path, body) => request('PUT', path, body)
+export const apiDel = path => request('DELETE', path)
 
 /* ── Planner Lead ─────────────────────────────────────────────────────────── */
 

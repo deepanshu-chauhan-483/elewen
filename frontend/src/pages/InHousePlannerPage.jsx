@@ -486,9 +486,21 @@ const CelebrationFormSection = () => {
                   onChange={e => set('event_type', e.target.value)}
                   className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
                 >
-                  <option value="" disabled>Type of Event</option>
-                  {['Birthday', 'Anniversary', 'House Party', 'Baby Shower', 'Corporate', 'Wedding', 'Other'].map(o => (
-                    <option key={o} value={o}>{o}</option>
+                  <option value="" disabled>
+                    Type of Event
+                  </option>
+                  {[
+                    'Birthday',
+                    'Anniversary',
+                    'House Party',
+                    'Baby Shower',
+                    'Corporate',
+                    'Wedding',
+                    'Other',
+                  ].map(o => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -506,9 +518,13 @@ const CelebrationFormSection = () => {
                   onChange={e => set('guest_count', e.target.value)}
                   className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
                 >
-                  <option value="" disabled>Estimated Guest Count</option>
+                  <option value="" disabled>
+                    Estimated Guest Count
+                  </option>
                   {['1–15', '15–30', '30–50', '50–100', '100+'].map(o => (
-                    <option key={o} value={o}>{o}</option>
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -518,9 +534,20 @@ const CelebrationFormSection = () => {
                   onChange={e => set('venue_type', e.target.value)}
                   className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
                 >
-                  <option value="" disabled>Venue Type</option>
-                  {['Home', 'Banquet Hall', 'Terrace / Rooftop', 'Garden / Outdoor', 'Office', 'Other'].map(o => (
-                    <option key={o} value={o}>{o}</option>
+                  <option value="" disabled>
+                    Venue Type
+                  </option>
+                  {[
+                    'Home',
+                    'Banquet Hall',
+                    'Terrace / Rooftop',
+                    'Garden / Outdoor',
+                    'Office',
+                    'Other',
+                  ].map(o => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -540,12 +567,20 @@ const CelebrationFormSection = () => {
                       <div
                         onClick={() => toggleSupport(opt)}
                         className={`w-[19px] h-[19px] border rounded-[4px] transition-colors flex items-center justify-center shrink-0 cursor-pointer
-                          ${form.support_types.includes(opt)
-                            ? 'bg-[#591902] border-[#591902]'
-                            : 'border-[#2D2D2D] group-hover:bg-[#2D2D2D]/10'}`}
+                          ${
+                            form.support_types.includes(opt)
+                              ? 'bg-[#591902] border-[#591902]'
+                              : 'border-[#2D2D2D] group-hover:bg-[#2D2D2D]/10'
+                          }`}
                       >
                         {form.support_types.includes(opt) && (
-                          <svg className="w-3 h-3" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="2.5"
+                            viewBox="0 0 24 24"
+                          >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
@@ -658,7 +693,11 @@ const CelebrationFormSection = () => {
                 className={`flex items-center gap-4 bg-[#CDB17E] rounded-[56px] pl-6 pr-1 py-1 hover:bg-[#bfa06b] transition-colors group ${currentStep === 3 && isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <span className="text-[#FAFAFA] text-[16px] font-medium leading-[1.5]">
-                  {currentStep === 3 && isPending ? 'Submitting...' : currentStep === 3 ? 'Submit' : 'Next'}
+                  {currentStep === 3 && isPending
+                    ? 'Submitting...'
+                    : currentStep === 3
+                      ? 'Submit'
+                      : 'Next'}
                 </span>
                 <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#CDB17E] transition-transform group-hover:scale-105">
                   <svg

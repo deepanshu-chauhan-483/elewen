@@ -22,8 +22,8 @@ export function useBlogs({ limit = 3, category } = {}) {
     queryFn: async () => {
       const params = {
         'filters[post_status][$eq]': 'published',
-        'sort': 'post_published_at:desc',
-        'populate': 'cover_image',
+        sort: 'post_published_at:desc',
+        populate: 'cover_image',
         'pagination[pageSize]': String(limit),
       }
       if (category) params['filters[category][$eq]'] = category

@@ -19,7 +19,7 @@ export function usePackages() {
         'populate[elements][populate]': 'service',
         'populate[addons]': '*',
         'populate[images]': '*',
-        'sort': 'createdAt:asc',
+        sort: 'createdAt:asc',
       })
 
       // Normalise Strapi v5 flat response → UI shape
@@ -45,8 +45,8 @@ export function usePackages() {
       }))
     },
     initialData: PACKAGES_FALLBACK,
-    staleTime: 5 * 60 * 1000,    // 5 min — CMS content rarely changes live
-    gcTime:    15 * 60 * 1000,   // 15 min cache
+    staleTime: 5 * 60 * 1000, // 5 min — CMS content rarely changes live
+    gcTime: 15 * 60 * 1000, // 15 min cache
     retry: 1,
   })
 }
