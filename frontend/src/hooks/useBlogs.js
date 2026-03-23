@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { strapiGet } from '../lib/strapi'
+import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { BLOGS_FALLBACK, BLOG_CATEGORIES_FALLBACK } from '../data/blogs'
 
 /**
@@ -20,6 +20,7 @@ export function useBlogs({ limit = 3, category } = {}) {
   return useQuery({
     queryKey: ['blogs', { limit, category }],
     queryFn: async () => {
+      if (USE_FALLBACK) return BLOGS_FALLBACK
       const params = {
         'filters[post_status][$eq]': 'published',
         sort: 'post_published_at:desc',
@@ -44,7 +45,7 @@ export function useBlogs({ limit = 3, category } = {}) {
           : null,
       }))
     },
-    initialData: BLOGS_FALLBACK,
+    placeholderData: BLOGS_FALLBACK,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   })
@@ -54,6 +55,7 @@ export function useBlogCategories() {
   return useQuery({
     queryKey: ['blog-categories'],
     queryFn: async () => {
+      if (USE_FALLBACK) return BLOG_CATEGORIES_FALLBACK
       // Strapi doesn't have a separate categories collection — derive from blogs
       const { data } = await strapiGet('/blogs', {
         'filters[post_status][$eq]': 'published',
@@ -61,7 +63,7 @@ export function useBlogCategories() {
       })
       return [...new Set(data.map(b => b.category).filter(Boolean))]
     },
-    initialData: BLOG_CATEGORIES_FALLBACK,
+    placeholderData: BLOG_CATEGORIES_FALLBACK,
     staleTime: 10 * 60 * 1000,
     retry: 1,
   })

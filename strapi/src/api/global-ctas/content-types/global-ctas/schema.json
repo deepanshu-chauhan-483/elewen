@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "global_ctas",
+  "info": {
+    "singularName": "global-ctas",
+    "pluralName": "global-ctas-list",
+    "displayName": "Global CTAs & Copy"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sections": {
+      "type": "component",
+      "component": "cms.content-section",
+      "repeatable": true
+    }
+  }
+}

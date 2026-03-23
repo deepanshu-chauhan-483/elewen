@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { strapiGet } from '../lib/strapi'
+import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import {
   EVENT_CATEGORIES_FALLBACK,
   EVENT_CARDS_FALLBACK,
@@ -8,19 +8,21 @@ import {
 
 /**
  * Top-level event categories (Social, Corporate, Religious).
- * Strapi: GET /api/events?filters[parent][id][$null]=true&sort=name:asc
+ * Strapi: GET /api/events?filters[parent_event][id][$null]=true&filters[is_active][$eq]=true&sort=name:asc
  */
 export function useEventCategories() {
   return useQuery({
     queryKey: ['event-categories'],
     queryFn: async () => {
+      if (USE_FALLBACK) return EVENT_CATEGORIES_FALLBACK
       const { data } = await strapiGet('/events', {
-        'filters[parent][id][$null]': 'true',
+        'filters[parent_event][id][$null]': 'true',
+        'filters[is_active][$eq]': 'true',
         sort: 'name:asc',
       })
       return data.map(e => e.name)
     },
-    initialData: EVENT_CATEGORIES_FALLBACK,
+    placeholderData: EVENT_CATEGORIES_FALLBACK,
     staleTime: 10 * 60 * 1000,
     retry: 1,
   })
@@ -28,27 +30,35 @@ export function useEventCategories() {
 
 /**
  * Featured event sub-types for the Plan Your Event cards.
- * Strapi: GET /api/events?filters[parent][id][$null]=false&filters[is_featured][$eq]=true&populate=parent
+ * Strapi: GET /api/events?filters[parent_event][id][$null]=false&filters[is_featured][$eq]=true&filters[is_active][$eq]=true&populate=parent_event
  */
 export function useEventCards() {
   return useQuery({
     queryKey: ['event-cards'],
     queryFn: async () => {
+      if (USE_FALLBACK) return EVENT_CARDS_FALLBACK
       const { data } = await strapiGet('/events', {
-        'filters[parent][id][$null]': 'false',
+        'filters[parent_event][id][$null]': 'false',
         'filters[is_featured][$eq]': 'true',
-        populate: 'parent',
+        'filters[is_active][$eq]': 'true',
+        populate: 'parent_event',
         sort: 'name:asc',
       })
       return data.map(e => ({
         id: e.id,
         documentId: e.documentId,
         title: e.name?.toUpperCase() ?? '',
-        description: e.description ?? '',
-        category: e.parent?.name ?? '',
+        description: (() => {
+          const d = e.description
+          if (!d) return ''
+          if (typeof d === 'string') return d
+          if (Array.isArray(d)) return d.flatMap(b => b.children ?? []).map(c => c.text ?? '').join('')
+          return ''
+        })(),
+        category: e.parent_event?.name ?? '',
       }))
     },
-    initialData: EVENT_CARDS_FALLBACK,
+    placeholderData: EVENT_CARDS_FALLBACK,
     staleTime: 10 * 60 * 1000,
     retry: 1,
   })
@@ -56,14 +66,21 @@ export function useEventCards() {
 
 /**
  * Featured service categories for the What To Plan section.
- * Strapi: GET /api/service-categories?filters[is_featured][$eq]=true&sort=name:asc
+ * Strapi: GET /api/service-categories?filters[is_featured][$eq]=true&filters[is_active][$eq]=true&populate=parent_category&sort=name:asc
+ *
+ * NOTE: Strapi `service-category` has no `category` string field.
+ * Category is derived from `parent_category.name` (the parent service category,
+ * e.g. "Decor", "Food & Beverage", "Tech").
  */
 export function useServiceCards() {
   return useQuery({
     queryKey: ['service-cards'],
     queryFn: async () => {
+      if (USE_FALLBACK) return SERVICE_CARDS_FALLBACK
       const { data } = await strapiGet('/service-categories', {
         'filters[is_featured][$eq]': 'true',
+        'filters[is_active][$eq]': 'true',
+        populate: 'parent_category',
         sort: 'name:asc',
       })
       return data.map(s => ({
@@ -71,10 +88,10 @@ export function useServiceCards() {
         documentId: s.documentId,
         title: s.name ?? '',
         description: s.description ?? '',
-        category: s.category ?? '',
+        category: s.parent_category?.name ?? '',
       }))
     },
-    initialData: SERVICE_CARDS_FALLBACK,
+    placeholderData: SERVICE_CARDS_FALLBACK,
     staleTime: 10 * 60 * 1000,
     retry: 1,
   })

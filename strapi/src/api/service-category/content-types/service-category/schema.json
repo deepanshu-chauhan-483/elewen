@@ -36,6 +36,10 @@
       "type": "boolean",
       "default": true
     },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    },
     "parent_category": {
       "type": "relation",
       "relation": "manyToOne",

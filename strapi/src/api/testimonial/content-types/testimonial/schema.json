@@ -11,16 +11,33 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "customer_name": {
+    "author_name": {
       "type": "string",
       "required": true
     },
-    "event_type": {
+    "event_category": {
       "type": "string"
     },
-    "testimonial_text": {
+    "body": {
       "type": "text",
       "required": true
+    },
+    "star_rating": {
+      "type": "integer",
+      "min": 1,
+      "max": 5,
+      "default": 5
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "author_image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
     },
     "visibility": {
       "type": "boolean",

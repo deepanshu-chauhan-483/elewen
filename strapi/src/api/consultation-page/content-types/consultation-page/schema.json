@@ -1,0 +1,26 @@
+{
+  "kind": "singleType",
+  "collectionName": "consultation_page",
+  "info": {
+    "singularName": "consultation-page",
+    "pluralName": "consultation-pages",
+    "displayName": "Book a Consultation Page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "meta_title": {
+      "type": "string"
+    },
+    "meta_description": {
+      "type": "text"
+    },
+    "sections": {
+      "type": "component",
+      "component": "cms.content-section",
+      "repeatable": true
+    }
+  }
+}

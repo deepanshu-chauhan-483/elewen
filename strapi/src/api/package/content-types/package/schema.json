@@ -22,6 +22,9 @@
     "description": {
       "type": "blocks"
     },
+    "category": {
+      "type": "string"
+    },
     "base_price": {
       "type": "decimal",
       "required": true
@@ -50,6 +53,12 @@
     "visibility": {
       "type": "boolean",
       "default": true
+    },
+    "meta_title": {
+      "type": "string"
+    },
+    "meta_description": {
+      "type": "text"
     },
     "images": {
       "type": "media",

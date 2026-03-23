@@ -12,6 +12,12 @@
 const BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
 /**
+ * When VITE_USE_FALLBACK=true, all hooks skip the Strapi fetch and return
+ * placeholder data immediately. Useful for UI dev without a running CMS.
+ */
+export const USE_FALLBACK = import.meta.env.VITE_USE_FALLBACK === 'true'
+
+/**
  * GET /api/<path> with optional query params.
  * Throws on non-2xx.
  */

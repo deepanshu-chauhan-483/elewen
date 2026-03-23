@@ -19,6 +19,12 @@
       "type": "uid",
       "targetField": "title"
     },
+    "excerpt": {
+      "type": "text"
+    },
+    "category": {
+      "type": "string"
+    },
     "content": {
       "type": "richtext"
     },
@@ -48,6 +54,12 @@
     },
     "post_published_at": {
       "type": "datetime"
+    },
+    "meta_title": {
+      "type": "string"
+    },
+    "meta_description": {
+      "type": "text"
     },
     "visibility": {
       "type": "boolean",
