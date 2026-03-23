@@ -19,7 +19,14 @@ export function useTestimonials() {
   return useQuery({
     queryKey: ['testimonials'],
     queryFn: async () => {
-      if (USE_FALLBACK) return TESTIMONIALS_FALLBACK.map(t => ({ ...t, author: t.author_name, category: t.event_category, text: t.body, stars: t.star_rating }))
+      if (USE_FALLBACK)
+        return TESTIMONIALS_FALLBACK.map(t => ({
+          ...t,
+          author: t.author_name,
+          category: t.event_category,
+          text: t.body,
+          stars: t.star_rating,
+        }))
       const { data } = await strapiGet('/testimonials', {
         'filters[is_featured][$eq]': 'true',
         sort: 'createdAt:desc',

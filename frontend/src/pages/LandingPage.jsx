@@ -64,7 +64,7 @@ const PlanEventSection = () => {
   const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
 
   // Reset page when category changes
-  const handleCategorySelect = (cat) => {
+  const handleCategorySelect = cat => {
     setSelectedCategory(cat)
     setPage(0)
   }
@@ -200,7 +200,14 @@ const PlanEventSection = () => {
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -222,7 +229,14 @@ const PlanEventSection = () => {
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -251,7 +265,7 @@ const WhatToPlanSection = () => {
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / CARDS_PER_PAGE))
   const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
 
-  const handleCategorySelect = (cat) => {
+  const handleCategorySelect = cat => {
     setSelectedCategory(cat)
     setPage(0)
   }
@@ -318,7 +332,14 @@ const WhatToPlanSection = () => {
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -340,7 +361,14 @@ const WhatToPlanSection = () => {
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -1247,7 +1275,12 @@ const PackagesSection = () => {
   // Merge: use Strapi images when available, fall back to local assets
   const packagesData = cmsPackages.map((pkg, i) => ({
     ...pkg,
-    desc: typeof pkg.description === 'string' ? pkg.description : typeof pkg.desc === 'string' ? pkg.desc : '',
+    desc:
+      typeof pkg.description === 'string'
+        ? pkg.description
+        : typeof pkg.desc === 'string'
+          ? pkg.desc
+          : '',
     images: pkg.images?.length ? pkg.images : (PKG_LOCAL_IMAGES[i] ?? []),
   }))
 
@@ -1719,7 +1752,7 @@ const PlanningGuidesSection = () => {
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / CARDS_PER_PAGE))
   const visibleBlogs = filteredBlogs.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
 
-  const handleCategorySelect = (cat) => {
+  const handleCategorySelect = cat => {
     setSelectedCategory(cat)
     setPage(0)
   }
@@ -1812,7 +1845,14 @@ const PlanningGuidesSection = () => {
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -1834,7 +1874,14 @@ const PlanningGuidesSection = () => {
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>

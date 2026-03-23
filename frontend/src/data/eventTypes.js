@@ -39,7 +39,8 @@ export const EVENT_CARDS_FALLBACK = [
     id: 3,
     documentId: null,
     title: 'CORPORATE EVENTS',
-    description: 'Professional setups designed for seamless corporate gatherings and team celebrations.',
+    description:
+      'Professional setups designed for seamless corporate gatherings and team celebrations.',
     category: 'Corporate',
   },
   {
@@ -60,7 +61,8 @@ export const EVENT_CARDS_FALLBACK = [
     id: 6,
     documentId: null,
     title: 'PUJAS & FESTIVALS',
-    description: 'Traditional setups with floral arrangements, décor, and catering for religious gatherings.',
+    description:
+      'Traditional setups with floral arrangements, décor, and catering for religious gatherings.',
     category: 'Religious',
   },
   {
@@ -74,7 +76,8 @@ export const EVENT_CARDS_FALLBACK = [
     id: 8,
     documentId: null,
     title: 'NAMING CEREMONIES',
-    description: 'Intimate and elegant setups for welcoming your little one with family and loved ones.',
+    description:
+      'Intimate and elegant setups for welcoming your little one with family and loved ones.',
     category: 'Religious',
   },
 ]

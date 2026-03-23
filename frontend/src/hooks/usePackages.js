@@ -3,7 +3,7 @@ import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { PACKAGES_FALLBACK } from '../data/packages'
 
 // Strapi v5 rich text (blocks) → plain string
-const blocksToText = (blocks) => {
+const blocksToText = blocks => {
   if (!blocks) return ''
   if (typeof blocks === 'string') return blocks
   if (!Array.isArray(blocks)) return ''

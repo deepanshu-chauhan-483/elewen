@@ -52,7 +52,11 @@ export function useEventCards() {
           const d = e.description
           if (!d) return ''
           if (typeof d === 'string') return d
-          if (Array.isArray(d)) return d.flatMap(b => b.children ?? []).map(c => c.text ?? '').join('')
+          if (Array.isArray(d))
+            return d
+              .flatMap(b => b.children ?? [])
+              .map(c => c.text ?? '')
+              .join('')
           return ''
         })(),
         category: e.parent_event?.name ?? '',
