@@ -55,4 +55,15 @@ export const BLOGS_FALLBACK = [
     post_status: 'published',
     cover_image: null,
   },
+  {
+    id: 3,
+    documentId: null,
+    title: 'The Perfect Hosting Checklist for House Parties',
+    slug: 'hosting-checklist-house-parties',
+    excerpt:
+      'Everything you need before, during, and after your party — from setup and prep to post-event cleanup.',
+    category: 'Hosting Guide',
+    post_status: 'published',
+    cover_image: null,
+  },
 ]

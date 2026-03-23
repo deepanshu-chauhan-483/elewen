@@ -41,11 +41,33 @@ import bulb2 from '../assets/lightbulb_images/bulb2.png'
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin)
 
+const CARDS_PER_PAGE = 3
+
 const PlanEventSection = () => {
   // CMS: Strapi `events` top-level categories + featured sub-type cards
   const { data: categories } = useEventCategories()
   const { data: eventCards } = useEventCards()
-  const cards = eventCards.map(c => ({ title: c.title, desc: c.description }))
+
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [page, setPage] = useState(0)
+
+  // Derive active category — default to first category once loaded
+  const activeCategory = selectedCategory ?? categories[0] ?? null
+
+  // Filter cards by selected category
+  const filteredCards = activeCategory
+    ? eventCards.filter(c => c.category === activeCategory)
+    : eventCards
+
+  // Paginate: show CARDS_PER_PAGE at a time
+  const totalPages = Math.max(1, Math.ceil(filteredCards.length / CARDS_PER_PAGE))
+  const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
+
+  // Reset page when category changes
+  const handleCategorySelect = (cat) => {
+    setSelectedCategory(cat)
+    setPage(0)
+  }
 
   const scallopCount = [...Array(15)]
 
@@ -134,27 +156,34 @@ const PlanEventSection = () => {
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         <aside className="w-full md:w-[320px] py-12 md:py-20 px-6 md:px-16 flex flex-col items-start shrink-0 md:border-r border-[#3D4035]/15">
           <div className="flex flex-col gap-6 md:gap-8">
-            <div className="border-b-[1.5px] border-[#3D4035] pb-1.5 w-fit cursor-pointer">
-              <span className="text-[#3D4035] font-bold text-[16px] tracking-wide">
-                {categories[0]}
-              </span>
-            </div>
-
-            {categories.slice(1).map(cat => (
-              <div key={cat} className="cursor-pointer group">
-                <span className="text-[#A3A3A3] font-medium text-[16px] tracking-wide group-hover:text-[#3D4035] transition-colors">
-                  {cat}
-                </span>
-              </div>
-            ))}
+            {categories.map(cat => {
+              const isActive = cat === activeCategory
+              return (
+                <div
+                  key={cat}
+                  className={`cursor-pointer group w-fit ${isActive ? 'border-b-[1.5px] border-[#3D4035] pb-1.5' : ''}`}
+                  onClick={() => handleCategorySelect(cat)}
+                >
+                  <span
+                    className={`font-medium text-[16px] tracking-wide transition-colors ${
+                      isActive
+                        ? 'text-[#3D4035] font-bold'
+                        : 'text-[#A3A3A3] group-hover:text-[#3D4035]'
+                    }`}
+                  >
+                    {cat}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </aside>
 
         <div className="flex-1 py-12 md:py-16 px-6 md:px-12 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {cards.map(card => (
+            {visibleCards.map(card => (
               <div
-                key={card.title}
+                key={card.id ?? card.title}
                 className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
               >
                 <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-white relative overflow-hidden min-h-[140px] md:min-h-0" />
@@ -164,44 +193,43 @@ const PlanEventSection = () => {
                     {card.title}
                   </h3>
                   <p className="text-white/80 text-[12px] md:text-[13px] leading-relaxed font-light pr-2">
-                    {card.desc}
+                    {card.description}
                   </p>
                 </div>
               </div>
             ))}
           </div>
 
+          {/* Pagination */}
           <div className="w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto flex justify-between items-center gap-[25px]">
-            <button className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0">
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
 
-            <div className="flex items-center gap-[4px] w-[100px] h-[8px] justify-center">
-              <div className="w-[52px] h-[8px] bg-[#D4BA8E] rounded-[8px]" />
-              <div className="w-[8px] h-[8px] bg-[#D4D4D4] rounded-[8px]" />
-              <div className="w-[8px] h-[8px] bg-[#D4D4D4] rounded-[8px]" />
-              <div className="w-[8px] h-[8px] bg-[#D4D4D4] rounded-[8px]" />
-              <div className="w-[8px] h-[8px] bg-[#D4D4D4] rounded-[8px]" />
+            <div className="flex items-center gap-[4px] justify-center">
+              {[...Array(totalPages)].map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setPage(i)}
+                  className={`cursor-pointer rounded-[8px] transition-all ${
+                    i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                  }`}
+                />
+              ))}
             </div>
 
-            <button className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0">
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -215,7 +243,25 @@ const PlanEventSection = () => {
 const WhatToPlanSection = () => {
   // CMS: Strapi `service-categories` featured items
   const { data: serviceCards } = useServiceCards()
-  const cards = serviceCards.map(s => ({ title: s.title, desc: s.description }))
+
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [page, setPage] = useState(0)
+
+  // Derive categories from service cards
+  const categories = [...new Set(serviceCards.map(s => s.category).filter(Boolean))]
+  const activeCategory = selectedCategory ?? categories[0] ?? null
+
+  const filteredCards = activeCategory
+    ? serviceCards.filter(s => s.category === activeCategory)
+    : serviceCards
+
+  const totalPages = Math.max(1, Math.ceil(filteredCards.length / CARDS_PER_PAGE))
+  const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
+
+  const handleCategorySelect = (cat) => {
+    setSelectedCategory(cat)
+    setPage(0)
+  }
 
   return (
     <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden">
@@ -254,9 +300,9 @@ const WhatToPlanSection = () => {
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
         <div className="flex-1 order-last lg:order-none py-12 md:py-16 px-6 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {cards.map(card => (
+            {visibleCards.map(card => (
               <div
-                key={card.title}
+                key={card.id ?? card.title}
                 className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
               >
                 <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-white relative overflow-hidden min-h-[140px] md:min-h-0" />
@@ -266,42 +312,42 @@ const WhatToPlanSection = () => {
                     {card.title}
                   </h3>
                   <p className="text-white/80 text-[12px] md:text-[13px] leading-relaxed font-light pr-2">
-                    {card.desc}
+                    {card.description}
                   </p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center justify-center gap-10 md:gap-14 mt-12 md:mt-16">
-            <button className="w-12 h-12 rounded-full bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+          <div className="w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto flex justify-between items-center gap-[25px]">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
 
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-1.5 bg-[#D4BA8E] rounded-full" />
-              <div className="w-1.5 h-1.5 bg-[#D4D4D4] rounded-full" />
-              <div className="w-1.5 h-1.5 bg-[#D4D4D4] rounded-full" />
-              <div className="w-1.5 h-1.5 bg-[#D4D4D4] rounded-full" />
-              <div className="w-1.5 h-1.5 bg-[#D4D4D4] rounded-full" />
+            <div className="flex items-center gap-[4px] justify-center">
+              {[...Array(totalPages)].map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setPage(i)}
+                  className={`cursor-pointer rounded-[8px] transition-all ${
+                    i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                  }`}
+                />
+              ))}
             </div>
 
-            <button className="w-12 h-12 rounded-full bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -310,15 +356,26 @@ const WhatToPlanSection = () => {
 
         <aside className="w-full lg:w-[320px] order-first lg:order-none py-12 md:py-20 px-6 md:px-16 flex flex-col items-start shrink-0 border-b lg:border-b-0 border-[#3D4035]/15">
           <div className="flex flex-col gap-6 md:gap-8">
-            <div className="border-b-[1.5px] border-[#3D4035] pb-1.5 w-fit cursor-pointer">
-              <span className="text-[#3D4035] font-bold text-[16px] tracking-wide">Decore</span>
-            </div>
-
-            <div className="cursor-pointer group">
-              <span className="text-[#A3A3A3] font-medium text-[16px] tracking-wide group-hover:text-[#3D4035] transition-colors">
-                Food &amp; Beverage
-              </span>
-            </div>
+            {categories.map(cat => {
+              const isActive = cat === activeCategory
+              return (
+                <div
+                  key={cat}
+                  className={`cursor-pointer group w-fit ${isActive ? 'border-b-[1.5px] border-[#3D4035] pb-1.5' : ''}`}
+                  onClick={() => handleCategorySelect(cat)}
+                >
+                  <span
+                    className={`font-medium text-[16px] tracking-wide transition-colors ${
+                      isActive
+                        ? 'text-[#3D4035] font-bold'
+                        : 'text-[#A3A3A3] group-hover:text-[#3D4035]'
+                    }`}
+                  >
+                    {cat}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </aside>
       </div>
@@ -1735,8 +1792,24 @@ const CelebrationFeelingSection = () => {
 const PlanningGuidesSection = () => {
   // CMS: Strapi `blogs` published posts + derived categories
   const { data: categories } = useBlogCategories()
-  const { data: blogsData } = useBlogs({ limit: 3 })
-  const guides = blogsData.map(b => ({ title: b.title, desc: b.excerpt }))
+  const { data: allBlogs } = useBlogs({ limit: 50 })
+
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [page, setPage] = useState(0)
+
+  const activeCategory = selectedCategory ?? categories[0] ?? null
+
+  const filteredBlogs = activeCategory
+    ? allBlogs.filter(b => b.category === activeCategory)
+    : allBlogs
+
+  const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / CARDS_PER_PAGE))
+  const visibleBlogs = filteredBlogs.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
+
+  const handleCategorySelect = (cat) => {
+    setSelectedCategory(cat)
+    setPage(0)
+  }
 
   return (
     <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden">
@@ -1776,40 +1849,44 @@ const PlanningGuidesSection = () => {
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
         <aside className="w-full lg:w-[320px] py-16 lg:py-20 px-12 lg:px-16 flex flex-col items-start shrink-0 border-b lg:border-b-0 lg:border-r border-[#3D4035]/15">
           <div className="flex flex-col gap-8">
-            {categories.map((cat, i) => (
-              <div
-                key={cat}
-                className={
-                  i === 0
-                    ? 'border-b-[1.5px] border-[#3D4035] pb-1.5 w-fit cursor-pointer'
-                    : 'cursor-pointer group'
-                }
-              >
-                <span
-                  className={`text-[16px] tracking-wide ${i === 0 ? 'text-[#3D4035] font-bold' : 'text-[#A3A3A3] font-medium group-hover:text-[#3D4035] transition-colors'}`}
+            {categories.map(cat => {
+              const isActive = cat === activeCategory
+              return (
+                <div
+                  key={cat}
+                  className={`cursor-pointer group w-fit ${isActive ? 'border-b-[1.5px] border-[#3D4035] pb-1.5' : ''}`}
+                  onClick={() => handleCategorySelect(cat)}
                 >
-                  {cat}
-                </span>
-              </div>
-            ))}
+                  <span
+                    className={`text-[16px] tracking-wide transition-colors ${
+                      isActive
+                        ? 'text-[#3D4035] font-bold'
+                        : 'text-[#A3A3A3] font-medium group-hover:text-[#3D4035]'
+                    }`}
+                  >
+                    {cat}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </aside>
 
         <div className="flex-1 py-16 px-12 lg:px-8 flex flex-col">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {guides.map(guide => (
+            {visibleBlogs.map(blog => (
               <div
-                key={guide.title}
+                key={blog.id ?? blog.title}
                 className="bg-white p-2.5 rounded-[24px] shadow-sm flex flex-col h-[460px] group cursor-pointer"
               >
                 <div className="flex-1 rounded-t-[16px] bg-white relative overflow-hidden" />
 
                 <div className="bg-[#787A5E] rounded-[16px] p-7 h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
                   <h3 className="text-white font-semibold text-[17px] mb-2.5 tracking-wide">
-                    {guide.title}
+                    {blog.title}
                   </h3>
                   <p className="text-white/80 text-[13px] leading-relaxed font-light pr-2">
-                    {guide.desc}
+                    {blog.excerpt}
                   </p>
                 </div>
               </div>
@@ -1817,36 +1894,34 @@ const PlanningGuidesSection = () => {
           </div>
 
           <div className="w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto flex justify-between items-center gap-[25px]">
-            <button className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0">
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
 
-            <div className="flex items-center gap-[4px] w-[100px] h-[8px] justify-center">
-              <div className="w-[52px] h-[8px] bg-[#D4BA8E] rounded-[8px]" />
-              <div className="w-[8px] h-[8px] bg-[#D4D4D4] rounded-[8px]" />
-              <div className="w-[8px] h-[8px] bg-[#D4D4D4] rounded-[8px]" />
-              <div className="w-[8px] h-[8px] bg-[#D4D4D4] rounded-[8px]" />
-              <div className="w-[8px] h-[8px] bg-[#D4D4D4] rounded-[8px]" />
+            <div className="flex items-center gap-[4px] justify-center">
+              {[...Array(totalPages)].map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setPage(i)}
+                  className={`cursor-pointer rounded-[8px] transition-all ${
+                    i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                  }`}
+                />
+              ))}
             </div>
 
-            <button className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0">
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>

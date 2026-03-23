@@ -1,6 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { strapiGet } from '../lib/strapi'
+import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { PACKAGES_FALLBACK } from '../data/packages'
+
+// Strapi v5 rich text (blocks) → plain string
+const blocksToText = (blocks) => {
+  if (!blocks) return ''
+  if (typeof blocks === 'string') return blocks
+  if (!Array.isArray(blocks)) return ''
+  return blocks
+    .flatMap(b => b.children ?? [])
+    .map(c => c.text ?? '')
+    .join('')
+}
 
 /**
  * Fetches published packages from Strapi.
@@ -15,10 +26,11 @@ export function usePackages() {
   return useQuery({
     queryKey: ['packages'],
     queryFn: async () => {
+      if (USE_FALLBACK) return PACKAGES_FALLBACK
       const { data } = await strapiGet('/packages', {
         'populate[elements][populate]': 'service',
-        'populate[addons]': '*',
-        'populate[images]': '*',
+        'populate[addons]': 'true',
+        'populate[images]': 'true',
         sort: 'createdAt:asc',
       })
 
@@ -28,7 +40,7 @@ export function usePackages() {
         documentId: pkg.documentId,
         title: pkg.title,
         category: pkg.category ?? '',
-        description: pkg.description ?? '',
+        description: blocksToText(pkg.description),
         price: pkg.base_price ? `Starting from ₹${pkg.base_price.toLocaleString('en-IN')}` : '',
         base_price: pkg.base_price ?? 0,
         tags: (pkg.elements ?? [])
@@ -44,9 +56,9 @@ export function usePackages() {
         _index: i,
       }))
     },
-    initialData: PACKAGES_FALLBACK,
-    staleTime: 5 * 60 * 1000, // 5 min — CMS content rarely changes live
-    gcTime: 15 * 60 * 1000, // 15 min cache
+    placeholderData: PACKAGES_FALLBACK,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     retry: 1,
   })
 }

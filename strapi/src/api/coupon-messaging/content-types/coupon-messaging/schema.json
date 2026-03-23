@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "coupon_messaging",
+  "info": {
+    "singularName": "coupon-messaging",
+    "pluralName": "coupon-messagings",
+    "displayName": "Coupon & Discount Messaging"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sections": {
+      "type": "component",
+      "component": "cms.content-section",
+      "repeatable": true
+    }
+  }
+}
