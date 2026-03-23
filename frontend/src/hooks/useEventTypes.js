@@ -63,7 +63,9 @@ export function useEventCards() {
         })(),
         category: e.parent_event?.name ?? '',
         image: e.icon?.url
-          ? e.icon.url.startsWith('http') ? e.icon.url : `${base}${e.icon.url}`
+          ? e.icon.url.startsWith('http')
+            ? e.icon.url
+            : `${base}${e.icon.url}`
           : null,
       }))
     },
@@ -101,7 +103,9 @@ export function useServiceCards() {
         description: s.description ?? '',
         category: s.parent_category?.name ?? '',
         image: s.icon?.url
-          ? s.icon.url.startsWith('http') ? s.icon.url : `${base}${s.icon.url}`
+          ? s.icon.url.startsWith('http')
+            ? s.icon.url
+            : `${base}${s.icon.url}`
           : null,
       }))
     },

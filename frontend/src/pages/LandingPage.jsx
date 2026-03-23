@@ -46,8 +46,20 @@ const CARDS_PER_PAGE = 3
 // Local placeholder images for event, service, and blog cards.
 // Used when Strapi hasn't provided a real image yet.
 const CARD_LOCAL_IMAGES = [
-  pkgImg3, pkgImg1, pkgImg5, pkgImg4, pkgImg6, pkgImg2,
-  pkgImg7, pkgImg8, pkgImg9, img1, img2, img3, img4, img5,
+  pkgImg3,
+  pkgImg1,
+  pkgImg5,
+  pkgImg4,
+  pkgImg6,
+  pkgImg2,
+  pkgImg7,
+  pkgImg8,
+  pkgImg9,
+  img1,
+  img2,
+  img3,
+  img4,
+  img5,
 ]
 
 const PlanEventSection = () => {
