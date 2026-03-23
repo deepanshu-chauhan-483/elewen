@@ -48,16 +48,19 @@ const PlanEventSection = () => {
   const { data: categories } = useEventCategories()
   const { data: eventCards } = useEventCards()
 
+  const safeCategories = Array.isArray(categories) ? categories : []
+  const safeEventCards = Array.isArray(eventCards) ? eventCards : []
+
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
 
   // Derive active category — default to first category once loaded
-  const activeCategory = selectedCategory ?? categories[0] ?? null
+  const activeCategory = selectedCategory ?? safeCategories[0] ?? null
 
   // Filter cards by selected category
   const filteredCards = activeCategory
-    ? eventCards.filter(c => c.category === activeCategory)
-    : eventCards
+    ? safeEventCards.filter(c => c?.category === activeCategory)
+    : safeEventCards
 
   // Paginate: show CARDS_PER_PAGE at a time
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / CARDS_PER_PAGE))
@@ -122,23 +125,33 @@ const PlanEventSection = () => {
 
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 pb-8 md:pb-12 flex flex-col md:flex-row justify-between items-start md:items-end relative z-10">
         <h1
-          className="text-[48px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal"
+          className="text-[48px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Plan Your Event, <br /> Differently.
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Plan Your Event, </span>
+          </span>
+          <br />
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Differently.</span>
+          </span>
         </h1>
 
         <div className="max-w-[340px] mt-6 md:mt-0">
-          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium">
-            Choose your event type and explore curated décor and catering packages designed to
-            simplify planning.
+          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium reveal-on-scroll">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">
+                Choose your event type and explore curated décor and catering packages designed to
+                simplify planning.
+              </span>
+            </span>
           </p>
 
           <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
             <span className="text-white font-medium text-[15px] mr-5">View All</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
-                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors"
+                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -156,7 +169,7 @@ const PlanEventSection = () => {
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         <aside className="w-full md:w-[320px] py-12 md:py-20 px-6 md:px-16 flex flex-col items-start shrink-0 md:border-r border-[#3D4035]/15">
           <div className="flex flex-col gap-6 md:gap-8">
-            {categories.map(cat => {
+            {safeCategories.map(cat => {
               const isActive = cat === activeCategory
               return (
                 <div
@@ -244,16 +257,18 @@ const WhatToPlanSection = () => {
   // CMS: Strapi `service-categories` featured items
   const { data: serviceCards } = useServiceCards()
 
+  const safeServiceCards = Array.isArray(serviceCards) ? serviceCards : []
+
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
 
   // Derive categories from service cards
-  const categories = [...new Set(serviceCards.map(s => s.category).filter(Boolean))]
+  const categories = [...new Set(safeServiceCards.map(s => s?.category).filter(Boolean))]
   const activeCategory = selectedCategory ?? categories[0] ?? null
 
   const filteredCards = activeCategory
-    ? serviceCards.filter(s => s.category === activeCategory)
-    : serviceCards
+    ? safeServiceCards.filter(s => s?.category === activeCategory)
+    : safeServiceCards
 
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / CARDS_PER_PAGE))
   const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
@@ -267,15 +282,19 @@ const WhatToPlanSection = () => {
     <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden">
       <div className="w-full max-w-[1440px] mx-auto pt-16 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-start md:items-center">
         <div className="max-w-[340px] order-last md:order-first mb-6 md:mb-0">
-          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium">
-            Choose a service category to explore curated packages designed for your event.
+          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium reveal-on-scroll">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">
+                Choose a service category to explore curated packages designed for your event.
+              </span>
+            </span>
           </p>
 
           <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
             <span className="text-white font-medium text-[15px] mr-5">View All</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
-                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors"
+                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -288,10 +307,16 @@ const WhatToPlanSection = () => {
         </div>
 
         <h2
-          className="font-display text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal order-first md:order-last"
+          className="font-display text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal order-first md:order-last reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          What Would You <br /> Like To Plan?
+          <span className="reveal-wrapper">
+            <span className="reveal-text">What Would You </span>
+          </span>
+          <br />
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Like To Plan?</span>
+          </span>
         </h2>
       </div>
 
@@ -546,6 +571,9 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     const progressLine = container.querySelector('.progress-line')
     const stepElements = gsap.utils.toArray('.step-item', stepsWrap)
 
+    // Variable to ensure the line only grows and never shrinks
+    let maxProgress = 0
+
     const updateStepHighlights = () => {
       const stepItems = container.querySelectorAll('.step-item')
       const vh = window.innerHeight
@@ -559,8 +587,14 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         const firstCenter = firstRect.top + firstRect.height / 2
         const lastCenter = lastRect.top + lastRect.height / 2
         const range = lastCenter - firstCenter
-        const progress = range > 0 ? Math.max(0, Math.min(1, (center - firstCenter) / range)) : 1
-        progressLine.style.transform = `translateX(-50%) scaleY(${progress})`
+
+        const currentProgress =
+          range > 0 ? Math.max(0, Math.min(1, (center - firstCenter) / range)) : 1
+
+        // Lock the maximum progress so the line doesn't reverse
+        maxProgress = Math.max(maxProgress, currentProgress)
+
+        progressLine.style.transform = `translateX(-50%) scaleY(${maxProgress})`
         progressLine.style.transformOrigin = 'top center'
       }
     }
@@ -584,39 +618,64 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         onUpdate: updateStepHighlights,
       })
 
-      stepElements.forEach(step => {
+      stepElements.forEach((step) => {
         const leftContent = step.querySelector('.left-content')
         const rightContent = step.querySelector('.right-content')
-        if (leftContent) gsap.set(leftContent, { x: -50, opacity: 0 })
-        if (rightContent) gsap.set(rightContent, { x: 50, opacity: 0 })
-      })
 
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: stepsWrap,
-          start: 'top 98%',
-          end: 'bottom 5%',
-          scrub: 1,
-          invalidateOnRefresh: true,
-        },
-      })
+        // 1. Text Reveal Trigger - earlier trigger to remove the delay
+        ScrollTrigger.create({
+          trigger: step,
+          start: "top center+=15%",
+          once: true, // Ensures the text reveal only happens once
+          onEnter: () => {
+            const texts = step.querySelectorAll('.reveal-text');
+            texts.forEach((span, index) => {
+              if (!span.classList.contains('is-visible')) {
+                span.style.animationDelay = `${index * 0.05}s`;
+                span.classList.add('is-visible');
+              }
+            });
+          }
+        });
 
-      const getStartPos = i => {
-        if (i < 3) return i * 0.15
-        return 0.4 + (i - 3) * 0.12
-      }
-      const duration = 0.18
-      stepElements.forEach((step, i) => {
-        const leftContent = step.querySelector('.left-content')
-        const rightContent = step.querySelector('.right-content')
-        if (!leftContent || !rightContent) return
+        // 2. Containers - Strict fromTo guarantees elements stay hidden until scrolled
+        if (leftContent) {
+          gsap.fromTo(
+            leftContent,
+            { x: -50, opacity: 0 },
+            {
+              scrollTrigger: {
+                trigger: step,
+                start: "top center+=15%",
+                end: "center center",
+                scrub: 1,
+                once: true, // Locks the element in place once the animation finishes
+              },
+              x: 0,
+              opacity: 1,
+              ease: "none",
+            }
+          )
+        }
 
-        const startPos = getStartPos(i)
-        tl.to(
-          [leftContent, rightContent],
-          { x: 0, opacity: 1, duration, ease: 'power2.out', overwrite: 'auto', force3D: true },
-          startPos
-        )
+        if (rightContent) {
+          gsap.fromTo(
+            rightContent,
+            { x: 50, opacity: 0 },
+            {
+              scrollTrigger: {
+                trigger: step,
+                start: "top center+=15%",
+                end: "center center",
+                scrub: 1,
+                once: true, // Locks the element in place once the animation finishes
+              },
+              x: 0,
+              opacity: 1,
+              ease: "none",
+            }
+          )
+        }
       })
     }, container)
 
@@ -639,6 +698,8 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     )
     observer.observe(container)
 
+    ScrollTrigger.refresh()
+    updateStepHighlights()
     const t1 = setTimeout(() => {
       ScrollTrigger.refresh()
       updateStepHighlights()
@@ -660,9 +721,12 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     <section
       ref={containerRef}
       className="relative w-full bg-[#591902] py-40 overflow-hidden font-sans text-white"
+      style={{ scrollMarginTop: '100px' }}
     >
-      <h2 className="text-[61px] text-center mb-32 tracking-wide font-serif font-display">
-        HOW 11 WORKS
+      <h2 className="text-[61px] text-center mb-32 tracking-wide font-serif font-display reveal-heading">
+        <span className="reveal-wrapper">
+          <span className="reveal-text">HOW 11 WORKS</span>
+        </span>
       </h2>
 
       <div
@@ -688,60 +752,78 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
             >
               {step.side === 'right' ? (
                 <>
-                  <div
-                    className="left-content w-1/2 pr-20 flex justify-end items-start mt-8"
-                    style={!disableScrollAnimations && !isVisible ? { opacity: 0 } : undefined}
-                  >
-                    <IconComponent />
+                  <div className="left-content w-1/2 pr-20 flex justify-end items-start mt-8 step-reveal opacity-0">
+                    <span className="reveal-wrapper">
+                      <span className="reveal-text reveal-text-x-left">
+                        <IconComponent />
+                      </span>
+                    </span>
                   </div>
-                  <div
-                    className="right-content w-1/2 pl-20 flex flex-col items-start text-left relative z-20"
-                    style={!disableScrollAnimations && !isVisible ? { opacity: 0 } : undefined}
-                  >
+                  <div className="right-content w-1/2 pl-20 flex flex-col items-start text-left relative z-20 opacity-0">
                     <div
-                      className="w-[60px] h-[60px] bg-[#CDB17E] rounded-full flex items-center justify-center text-[22px] font-serif mb-6"
-                      style={{
-                        boxShadow:
-                          '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
-                      }}
+                      className="reveal-wrapper reveal-wrapper-circle step-reveal mb-6"
+                      style={{ display: 'inline-flex' }}
                     >
-                      {step.id}
+                      <div className="reveal-text reveal-text-x-right reveal-circle-text">
+                        <div
+                          className="w-[60px] h-[60px] bg-[#CDB17E] rounded-full flex items-center justify-center text-[22px] font-serif"
+                          style={{
+                            boxShadow:
+                              '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
+                          }}
+                        >
+                          {step.id}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100">
-                      {step.title}
+                    <h3 className="text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{step.title}</span>
+                      </span>
                     </h3>
-                    <p className="text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100">
-                      {step.desc}
+                    <p className="text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{step.desc}</span>
+                      </span>
                     </p>
                   </div>
                 </>
               ) : (
                 <>
-                  <div
-                    className="left-content w-1/2 pr-20 flex flex-col items-end text-right relative z-20"
-                    style={!disableScrollAnimations && !isVisible ? { opacity: 0 } : undefined}
-                  >
+                  <div className="left-content w-1/2 pr-20 flex flex-col items-end text-right relative z-20 step-reveal opacity-0">
                     <div
-                      className="w-[60px] h-[60px] bg-[#CDB17E] rounded-full flex items-center justify-center text-[22px] font-serif mb-6"
-                      style={{
-                        boxShadow:
-                          '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
-                      }}
+                      className="reveal-wrapper reveal-wrapper-circle step-reveal mb-6"
+                      style={{ display: 'inline-flex' }}
                     >
-                      {step.id}
+                      <div className="reveal-text reveal-text-x-left reveal-circle-text">
+                        <div
+                          className="w-[60px] h-[60px] bg-[#CDB17E] rounded-full flex items-center justify-center text-[22px] font-serif"
+                          style={{
+                            boxShadow:
+                              '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
+                          }}
+                        >
+                          {step.id}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100">
-                      {step.title}
+                    <h3 className="text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{step.title}</span>
+                      </span>
                     </h3>
-                    <p className="text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100">
-                      {step.desc}
+                    <p className="text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{step.desc}</span>
+                      </span>
                     </p>
                   </div>
-                  <div
-                    className="right-content w-1/2 pl-20 flex justify-start items-start mt-8"
-                    style={!disableScrollAnimations && !isVisible ? { opacity: 0 } : undefined}
-                  >
-                    <IconComponent />
+                  <div className="right-content w-1/2 pl-20 flex justify-start items-start mt-8 step-reveal opacity-0">
+                    <span className="reveal-wrapper">
+                      <span className="reveal-text reveal-text-x-right">
+                        <IconComponent />
+                      </span>
+                    </span>
                   </div>
                 </>
               )}
@@ -758,15 +840,21 @@ const CTASection = () => {
     <section className="w-full flex justify-center bg-[#591902] font-sans">
       <div className="w-full max-w-[1440px] h-[360px] flex flex-col items-center py-[80px] px-6">
         <h2
-          className="text-[#FFFFFF] text-[36px] font-normal leading-none text-center font-serif"
+          className="text-[#FFFFFF] text-[36px] font-normal leading-none text-center font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Still confused, excited, or somewhere in between?
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Still confused, excited, or somewhere in between?</span>
+          </span>
         </h2>
 
-        <p className="text-[#FFFFFF] opacity-50 text-[16px] font-normal leading-[1.5] text-center max-w-[723px] mt-[32px]">
-          Drop your details and we&apos;ll get in touch. You&apos;re just one call away from turning
-          the confusion into a clear, sorted plan.
+        <p className="text-[#FFFFFF] opacity-50 text-[16px] font-normal leading-[1.5] text-center max-w-[723px] mt-[32px] reveal-on-scroll">
+          <span className="reveal-wrapper">
+            <span className="reveal-text">
+              Drop your details and we&apos;ll get in touch. You&apos;re just one call away from turning
+              the confusion into a clear, sorted plan.
+            </span>
+          </span>
         </p>
 
         <button className="group mt-[40px] flex items-center justify-between bg-[#CDB17E] rounded-[56px] w-[243px] h-[44px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#bfa06b] transition-colors">
@@ -776,6 +864,7 @@ const CTASection = () => {
 
           <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
             <svg
+              className="transition-transform duration-300 ease-out group-hover:rotate-45"
               width="20"
               height="20"
               viewBox="0 0 24 24"
@@ -844,15 +933,25 @@ const BetterWaySection = () => {
         </div>
 
         <h2
-          className="absolute w-[679px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[253px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif"
+          className="absolute w-[679px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[253px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          A Better Way Between <br /> Event and DIY
+          <span className="reveal-wrapper">
+            <span className="reveal-text">A Better Way Between </span>
+          </span>
+          <br />
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Event and DIY</span>
+          </span>
         </h2>
 
-        <p className="absolute w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[403px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center">
-          Event planners can feel expensive and overwhelming. Doing everything yourself can quickly
-          become stressful. Elewen brings the best of both, thoughtful styling without the chaos.
+        <p className="absolute w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[403px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center reveal-on-scroll">
+          <span className="reveal-wrapper">
+            <span className="reveal-text">
+              Event planners can feel expensive and overwhelming. Doing everything yourself can quickly
+              become stressful. Elewen brings the best of both, thoughtful styling without the chaos.
+            </span>
+          </span>
         </p>
 
         <div className="absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]">
@@ -921,6 +1020,7 @@ const ChecklistSection = () => {
   const scallopCount = [...Array(15)]
   const sectionRef = useRef(null)
   const [howItWorksVisible, setHowItWorksVisible] = useState(false)
+  const [isLayoutVisible, setIsLayoutVisible] = useState(false) // Tracks when the grid is in view
   const gateAreaRef = useRef(null)
   const gateRef = useRef(null)
   const howItWorksRef = useRef(null)
@@ -944,6 +1044,26 @@ const ChecklistSection = () => {
     return () => ro.disconnect()
   }, [])
 
+  // Native Intersection Observer to trigger CSS animations on scroll (run once)
+  useEffect(() => {
+    const wrap = layoutWrapRef.current
+    if (!wrap) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsLayoutVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.2 }
+    )
+
+    observer.observe(wrap)
+
+    return () => observer.disconnect()
+  }, [])
+
   useEffect(() => {
     const gateArea = gateAreaRef.current
     const gate = gateRef.current
@@ -959,20 +1079,20 @@ const ChecklistSection = () => {
     const scaleEnd = isMobile ? 3 : 4
     const scrollEnd = isMobile ? 800 : 1500
     const scrubVal = isMobile ? 1.5 : 1
-    const startTrigger = isMobile ? 'top center' : 'center center'
+    const startTrigger = 'top top'
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: gateArea,
+        trigger: gate,
         start: startTrigger,
         end: `+=${scrollEnd}`,
         scrub: scrubVal,
-        pin: true,
+        pin: gateArea,
         pinSpacing: true,
+        invalidateOnRefresh: true,
       },
     })
 
-    // Phase 1 (0–1): door zooms in, parts separate, curved text orbits along the arch
     tl.to(gate, { scale: scaleEnd, ease: 'power2.in', duration: 1 }, 0)
     if (doorTable) tl.to(doorTable, { x: 120, ease: 'power2.in', duration: 1 }, 0)
     if (doorLights) tl.to(doorLights, { y: -60, ease: 'power2.in', duration: 1 }, 0)
@@ -995,13 +1115,9 @@ const ChecklistSection = () => {
         0
       )
 
-    // Phase 2 (0.5–0.9): door fill fades — clears the arch before section appears
     if (doorFill) tl.to(doorFill, { opacity: 0, duration: 0.4, ease: 'power2.in' }, 0.5)
-
-    // Phase 3 (0.7–0.9): entire gate wrapper fades out
     tl.to(gate, { opacity: 0, duration: 0.2, ease: 'power2.out' }, 0.7)
 
-    // Phase 4 (0.85–1.25): how-it-works section fades in only after gate is gone
     tl.to(
       howItWorks,
       {
@@ -1081,11 +1197,16 @@ const ChecklistSection = () => {
       </div>
 
       <h2
-        className="text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10"
+        className="text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
-        Somewhere along the way, <br />
-        Hosting turned into checklists.
+        <span className="reveal-wrapper">
+          <span className="reveal-text">Somewhere along the way, </span>
+        </span>
+        <br />
+        <span className="reveal-wrapper">
+          <span className="reveal-text">Hosting turned into checklists.</span>
+        </span>
       </h2>
 
       <div
@@ -1101,42 +1222,60 @@ const ChecklistSection = () => {
             className="relative"
             style={{ width: `${LAYOUT_W}px`, height: `${LAYOUT_H}px`, transformOrigin: 'top left' }}
           >
+            {/* STEP 1: Too much scrolling (Starts immediately) */}
             <div className="absolute left-[283px] top-[19px] w-[211px] h-[211px]">
-              <div className="absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0 shadow-sm"></div>
+              <div
+                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0 shadow-sm`}
+                style={{ '--delay': '0s' }}
+              ></div>
               <img
                 src={imgScrolling}
-                className="absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none"
+                className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
                 alt="Scrolling"
+                style={{ '--delay': '0.4s' }}
               />
             </div>
-            <div className="absolute left-[196px] top-[170px] w-[113px] text-right z-20">
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too much scrolling.
-              </h3>
+            <div
+              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
+              style={{ '--delay': '0.7s' }}
+            >
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">Too much scrolling.</h3>
             </div>
-            <div className="absolute left-[0px] top-[232px] w-[273px] text-right z-20">
+            <div
+              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
+              style={{ '--delay': '0.8s' }}
+            >
               <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                 What was once simple now means endless scrolling — and still no confidence.
               </p>
             </div>
 
+            {/* STEP 2: Too many calls (Starts at 1.4s) */}
             <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
-              <div className="absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0"></div>
+              <div
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
+                style={{ '--delay': '1.4s' }}
+              ></div>
               <img
                 src={imgCalls}
                 alt="Calls"
-                className="absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none"
+                className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
                 style={{
+                  '--delay': '1.8s',
                   filter:
                     'drop-shadow(33px 41px 32px rgba(109, 57, 8, 0.16)) drop-shadow(15px 18px 24px rgba(109, 57, 8, 0.28)) drop-shadow(4px 5px 13px rgba(109, 57, 8, 0.32))',
                 }}
               />
-              <div className="absolute left-[157px] top-[83px] w-[113px] text-left z-20">
-                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
-                  Too many calls.
-                </h3>
+              <div
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
+                style={{ '--delay': '2.1s' }}
+              >
+                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">Too many calls.</h3>
               </div>
-              <div className="absolute left-[251px] top-[145px] w-[273px] text-left z-20">
+              <div
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
+                style={{ '--delay': '2.2s' }}
+              >
                 <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
                   Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns
                   into a coordination hub, and excitement becomes stress.
@@ -1144,43 +1283,61 @@ const ChecklistSection = () => {
               </div>
             </div>
 
+            {/* STEP 3: Too many vendors (Starts at 2.8s) */}
             <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
-              <div className="absolute inset-0 bg-[#BFAC9B] z-0 shadow-sm"></div>
+              <div
+                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0 shadow-sm`}
+                style={{ '--delay': '2.8s' }}
+              ></div>
               <img
                 src={imgVendors}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none"
+                className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
                 alt="Vendors"
+                style={{ '--delay': '3.2s' }}
               />
             </div>
-            <div className="absolute left-[400px] top-[337px] w-[113px] text-right z-20">
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too many vendors.
-              </h3>
+            <div
+              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
+              style={{ '--delay': '3.5s' }}
+            >
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">Too many vendors.</h3>
             </div>
-            <div className="absolute left-[225px] top-[399px] w-[273px] text-right z-20">
+            <div
+              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
+              style={{ '--delay': '3.6s' }}
+            >
               <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                 One decorator, one caterer, one supplier, different prices, different chaos.
                 You&apos;re not planning a celebration; you&apos;re managing a team.
               </p>
             </div>
 
+            {/* STEP 4: Too many decisions (Starts at 4.2s) */}
             <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
-              <div className="absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0 shadow-sm"></div>
+              <div
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0 shadow-sm`}
+                style={{ '--delay': '4.2s' }}
+              ></div>
               <img
                 src={imgDecisions}
                 alt="Decisions"
-                className="absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none"
+                className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
+                style={{ '--delay': '4.6s' }}
               />
             </div>
-            <div className="absolute left-[662px] top-[551px] w-[122px] text-left z-20">
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too many decisions.
-              </h3>
+            <div
+              className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[662px] top-[551px] w-[122px] text-left z-20`}
+              style={{ '--delay': '4.9s' }}
+            >
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">Too many decisions.</h3>
             </div>
-            <div className="absolute left-[721px] top-[613px] w-[273px] text-left z-20">
+            <div
+              className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
+              style={{ '--delay': '5.0s' }}
+            >
               <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more
-                freedom, just more pressure.
+                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more freedom,
+                just more pressure.
               </p>
             </div>
           </div>
@@ -1189,37 +1346,51 @@ const ChecklistSection = () => {
 
       <div className="flex flex-col items-center gap-6 md:gap-8 mb-8 md:mb-32 z-10 text-center mt-8 md:mt-[40px] px-6">
         <h3
-          className="text-[28px] md:text-[36px] text-[#591902] leading-[1] font-serif"
+          className="text-[28px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Stop take a deep breath
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Stop take a deep breath</span>
+          </span>
         </h3>
 
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans">
-            You don&apos;t have to manage people.
+          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">You don&apos;t have to manage people.</span>
+            </span>
           </p>
-          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans">
-            You don&apos;t have to manage logistics
+          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">You don&apos;t have to manage logistics</span>
+            </span>
           </p>
-          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans">
-            No chasing vendors.
+          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">No chasing vendors.</span>
+            </span>
           </p>
-          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans">
-            No waiting anxiously.
+          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">No waiting anxiously.</span>
+            </span>
           </p>
         </div>
 
         <h4
-          className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2"
+          className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2 reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          11 takes the chaos out so you can stay in the moment
+          <span className="reveal-wrapper">
+            <span className="reveal-text">
+              11 takes the chaos out so you can stay in the moment
+            </span>
+          </span>
         </h4>
       </div>
 
       <div className="relative w-full z-10 mt-0 md:mt-10 overflow-visible md:overflow-hidden min-h-[50vh] md:min-h-[100vh]">
-        <div ref={gateAreaRef} className="relative w-full h-[50vh] md:h-[100vh] z-20">
+        <div ref={gateAreaRef} className="relative w-full h-[50vh] md:h-[100vh] z-20" style={{ position: 'relative' }}>
           <div className="absolute inset-0 flex justify-center items-start md:items-center pt-20 md:pt-0">
             <div
               ref={gateRef}
@@ -1365,22 +1536,33 @@ const PackagesSection = () => {
       {/* --- 1. Top Headings --- */}
       <div className="flex flex-col items-center text-center px-6 z-20 relative pt-16">
         <h2
-          className="text-[#2D2D2D] text-[48px] md:text-[61px] leading-[1] max-w-[1050px] mb-6 font-serif"
+          className="text-[#2D2D2D] text-[48px] md:text-[61px] leading-[1] max-w-[1050px] mb-6 font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Somewhere Between Moodboards <br className="hidden md:block" /> and Reality, the Feeling
-          Got Lost.
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Somewhere Between Moodboards </span>
+          </span>
+          <br className="hidden md:block" />
+          <span className="reveal-wrapper">
+            <span className="reveal-text">and Reality, the Feeling Got Lost.</span>
+          </span>
         </h2>
-        <p className="text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] max-w-[809px] mb-20">
-          Celebrations became louder and bigger, but less personal. Eleven exists to bring that
-          feeling back, not through more, but through meaning.
+        <p className="text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] max-w-[809px] mb-20 reveal-on-scroll">
+          <span className="reveal-wrapper">
+            <span className="reveal-text">
+              Celebrations became louder and bigger, but less personal. Eleven exists to bring that
+              feeling back, not through more, but through meaning.
+            </span>
+          </span>
         </p>
 
         <h3
-          className="text-[#2D2D2D] text-[32px] leading-[1] font-serif"
+          className="text-[#2D2D2D] text-[32px] leading-[1] font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Our Most Loved Packages
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Our Most Loved Packages</span>
+          </span>
         </h3>
       </div>
 
@@ -1752,15 +1934,25 @@ const CelebrationFeelingSection = () => {
 
         <div className="sticky top-[250px] z-10 flex flex-col items-center">
           <h2
-            className="w-[1148px] max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[48px] md:text-[96px] leading-[0.9] text-center font-serif drop-shadow-sm px-4"
+            className="w-[1148px] max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[48px] md:text-[96px] leading-[0.9] text-center font-serif drop-shadow-sm px-4 reveal-heading"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            Every celebration <br /> deserves its own feeling.
+            <span className="reveal-wrapper">
+              <span className="reveal-text">Every celebration </span>
+            </span>
+            <br />
+            <span className="reveal-wrapper">
+              <span className="reveal-text">deserves its own feeling.</span>
+            </span>
           </h2>
 
-          <p className="mt-8 w-[522px] max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] text-center drop-shadow-sm px-4">
-            Want a professional to handle your event end to end? Fill the form and let our in-house
-            planners plan it with you.
+          <p className="mt-8 w-[522px] max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] text-center drop-shadow-sm px-4 reveal-on-scroll">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">
+                Want a professional to handle your event end to end? Fill the form and let our in-house
+                planners plan it with you.
+              </span>
+            </span>
           </p>
 
           <button className="mt-10 w-[213px] h-[44px] group flex items-center justify-between bg-[#FFFFFF] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg">
@@ -1769,6 +1961,7 @@ const CelebrationFeelingSection = () => {
             </span>
             <div className="w-[36px] h-[36px] bg-[#CDB17E] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 border-[1.5px] border-[#FFFFFF]">
               <svg
+                className="transition-transform duration-300 ease-out group-hover:rotate-45"
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
@@ -1794,14 +1987,17 @@ const PlanningGuidesSection = () => {
   const { data: categories } = useBlogCategories()
   const { data: allBlogs } = useBlogs({ limit: 50 })
 
+  const safeCategories = Array.isArray(categories) ? categories : []
+  const safeAllBlogs = Array.isArray(allBlogs) ? allBlogs : []
+
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
 
-  const activeCategory = selectedCategory ?? categories[0] ?? null
+  const activeCategory = selectedCategory ?? safeCategories[0] ?? null
 
   const filteredBlogs = activeCategory
-    ? allBlogs.filter(b => b.category === activeCategory)
-    : allBlogs
+    ? safeAllBlogs.filter(b => b?.category === activeCategory)
+    : safeAllBlogs
 
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / CARDS_PER_PAGE))
   const visibleBlogs = filteredBlogs.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
@@ -1815,23 +2011,33 @@ const PlanningGuidesSection = () => {
     <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden">
       <div className="w-full max-w-[1440px] mx-auto pt-24 pb-12 px-12 lg:px-20 flex flex-col md:flex-row justify-between items-start md:items-center">
         <h2
-          className="font-display text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal text-left mb-10 md:mb-0"
+          className="font-display text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal text-left mb-10 md:mb-0 reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Planning Guides &amp; <br /> Celebration Ideas
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Planning Guides &amp; </span>
+          </span>
+          <br />
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Celebration Ideas</span>
+          </span>
         </h2>
 
         <div className="max-w-[340px]">
-          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium">
-            Helpful tips, inspiration, and practical guides to make planning your next celebration
-            simpler.
+          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium reveal-on-scroll">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">
+                Helpful tips, inspiration, and practical guides to make planning your next celebration
+                simpler.
+              </span>
+            </span>
           </p>
 
           <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
             <span className="text-white font-medium text-[15px] mr-5">View All</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
-                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors"
+                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -1849,7 +2055,7 @@ const PlanningGuidesSection = () => {
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
         <aside className="w-full lg:w-[320px] py-16 lg:py-20 px-12 lg:px-16 flex flex-col items-start shrink-0 border-b lg:border-b-0 lg:border-r border-[#3D4035]/15">
           <div className="flex flex-col gap-8">
-            {categories.map(cat => {
+            {safeCategories.map(cat => {
               const isActive = cat === activeCategory
               return (
                 <div
@@ -1938,16 +2144,36 @@ const TestimonialsSection = () => {
 
   // CMS: Strapi `testimonials` featured + sorted by date
   const { data: testimonialsData } = useTestimonials()
-  const SLIDE_COUNT = testimonialsData.length
-  const slides = [...testimonialsData, ...testimonialsData]
+
+  const safeTestimonials = Array.isArray(testimonialsData) ? testimonialsData : []
+  const SLIDE_COUNT = safeTestimonials.length || 1
+  const slides = safeTestimonials.length ? [...safeTestimonials, ...safeTestimonials] : []
+
+  // Avoid initializing Swiper with empty/undefined data.
+  if (safeTestimonials.length === 0) {
+    return (
+      <section className="relative w-full min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center">
+        <h2
+          className="text-[#FFFFFF] text-[61px] leading-[1] text-center font-serif mt-[80px] z-10 px-4 reveal-heading"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          <span className="reveal-wrapper">
+            <span className="reveal-text">Real Celebrations. Real Experiences.</span>
+          </span>
+        </h2>
+      </section>
+    )
+  }
 
   return (
     <section className="relative w-full min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center">
       <h2
-        className="text-[#FFFFFF] text-[61px] leading-[1] text-center font-serif mt-[80px] z-10 px-4"
+        className="text-[#FFFFFF] text-[61px] leading-[1] text-center font-serif mt-[80px] z-10 px-4 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
-        Real Celebrations. Real Experiences.
+        <span className="reveal-wrapper">
+          <span className="reveal-text">Real Celebrations. Real Experiences.</span>
+        </span>
       </h2>
 
       <div className="w-full max-w-[1377.5px] mt-[80px]">
@@ -1984,7 +2210,7 @@ const TestimonialsSection = () => {
                   onClick={() => swiperRef.current?.slideToLoop(index)}
                 >
                   <div className="flex justify-between w-[151.5px] h-[25.82px]">
-                    {[...Array(item.stars)].map((_, i) => (
+                    {[...Array(Number(item?.stars) || 0)].map((_, i) => (
                       <svg
                         key={i}
                         className="w-[27.55px] h-[25.82px]"
@@ -2041,7 +2267,7 @@ const TestimonialsSection = () => {
         </button>
 
         <div className="flex items-center gap-[4px] w-[100px] h-[8px] justify-center">
-          {testimonialsData.map((_, idx) => (
+          {safeTestimonials.map((_, idx) => (
             <div
               key={idx}
               className={`h-[8px] rounded-[8px] transition-all duration-300 ${activeIndex === idx ? 'w-[52px] bg-[#CDB17E]' : 'w-[8px] bg-[#C8C8C8]'}`}
@@ -2081,15 +2307,21 @@ const SplitInfoSection = () => {
         <div className="relative w-full lg:w-[880px] h-auto lg:h-[511px] bg-[#FFFFFF] px-8 py-12 lg:p-0 flex flex-col items-center lg:items-start lg:block">
           <div className="lg:absolute lg:left-[100px] lg:top-[80px] flex flex-col items-start text-left w-full max-w-[400px]">
             <h2
-              className="text-[#2D2D2D] text-[27px] leading-[100%] w-full lg:w-[400px] font-serif m-0"
+              className="text-[#2D2D2D] text-[27px] leading-[100%] w-full lg:w-[400px] font-serif m-0 reveal-heading"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              Inspiration, Behind the Scenes, and Real Celebrations.
+              <span className="reveal-wrapper">
+                <span className="reveal-text">Inspiration, Behind the Scenes, and Real Celebrations.</span>
+              </span>
             </h2>
 
-            <p className="text-[#2D2D2D] opacity-50 text-[16px] leading-[150%] w-full lg:w-[339px] mt-[20px] font-sans m-0">
-              See how celebrations come together, discover new ideas, and follow along as we bring
-              events to life.
+            <p className="text-[#2D2D2D] opacity-50 text-[16px] leading-[150%] w-full lg:w-[339px] mt-[20px] font-sans m-0 reveal-on-scroll">
+              <span className="reveal-wrapper">
+                <span className="reveal-text">
+                  See how celebrations come together, discover new ideas, and follow along as we bring
+                  events to life.
+                </span>
+              </span>
             </p>
 
             <button className="box-border flex flex-row items-center justify-center pl-[16px] pr-[8px] py-[8px] gap-[16px] w-[177px] h-[36px] mt-[16px] border border-[#591902] rounded-[56px] hover:bg-gray-50 transition-colors">
@@ -2124,16 +2356,22 @@ const SplitInfoSection = () => {
 
           <div className="flex flex-col items-start w-full max-w-[420px] mt-10 lg:mt-0 lg:absolute lg:left-[40px] lg:top-[290px]">
             <h2
-              className="text-[#FFFFFF] text-[27px] leading-[100%] w-full lg:w-[420px] font-serif m-0"
+              className="text-[#FFFFFF] text-[27px] leading-[100%] w-full lg:w-[420px] font-serif m-0 reveal-heading"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              Partner With Elewen
+              <span className="reveal-wrapper">
+                <span className="reveal-text">Partner With Elewen</span>
+              </span>
             </h2>
 
             <div className="flex flex-col items-start gap-[16px] mt-[20px] w-full lg:w-[420px]">
-              <p className="text-[#FFFFFF] opacity-50 text-[16px] leading-[150%] w-full lg:w-[420px] font-sans m-0">
-                We collaborate with experienced decorators, caterers, and event professionals who
-                care about quality, reliability, and beautiful execution.
+              <p className="text-[#FFFFFF] opacity-50 text-[16px] leading-[150%] w-full lg:w-[420px] font-sans m-0 reveal-on-scroll">
+                <span className="reveal-wrapper">
+                  <span className="reveal-text">
+                    We collaborate with experienced decorators, caterers, and event professionals who
+                    care about quality, reliability, and beautiful execution.
+                  </span>
+                </span>
               </p>
 
               <button className="box-border flex flex-row items-center justify-center pl-[24px] pr-[4px] py-[4px] gap-[16px] w-[228px] h-[44px] bg-[#CDB17E] rounded-[56px] hover:bg-[#bfa06b] transition-colors group">
@@ -2141,8 +2379,9 @@ const SplitInfoSection = () => {
                   Apply as a Vendor
                 </span>
 
-                <div className="flex items-center justify-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-[60px] p-[8px] shrink-0">
+                <div className="flex items-center justify-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-[60px] p-[8px] shrink-0 transition-transform group-hover:scale-105">
                   <svg
+                    className="transition-transform duration-300 ease-out group-hover:rotate-45"
                     width="20"
                     height="20"
                     viewBox="0 0 24 24"
@@ -2166,8 +2405,70 @@ const SplitInfoSection = () => {
 }
 
 export default function LandingPage() {
+  const rootRef = useRef(null)
+
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root || typeof window === 'undefined') return
+
+    const targets = Array.from(root.querySelectorAll('.reveal-heading, .reveal-on-scroll'))
+    if (targets.length === 0) return
+
+    const animated = new Set()
+    const pending = new Set()
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+
+          const el = entry.target
+          if (animated.has(el)) return
+          if (pending.has(el)) return
+
+          // Some sections (like the door/timeline) start with opacity: 0.
+          // If we reveal while hidden, it may look like the animation never happened.
+          const tryReveal = (attempt = 0) => {
+            const opacity = window.getComputedStyle(el).opacity
+            if (opacity === '0') {
+              if (attempt < 20) {
+                setTimeout(() => tryReveal(attempt + 1), 80)
+              }
+              return
+            }
+
+            pending.delete(el)
+            animated.add(el)
+
+            Array.from(el.querySelectorAll('.reveal-text')).forEach((span, i) => {
+              const isTimelineReveal = !!el.closest('.step-item')
+              // Base delay so the reveal feels intentional (user-requested),
+              // but keep timeline reveals snappy for smoother scroll start.
+              const baseDelay = isTimelineReveal ? 0 : 0.5
+              const stagger = isTimelineReveal ? 0 : i * 0.04
+              span.style.animationDelay = `${baseDelay + stagger}s`
+              span.classList.add('is-visible')
+            })
+
+            observer.unobserve(el)
+          }
+
+          tryReveal()
+        })
+      },
+      {
+        threshold: 0.25,
+        rootMargin: '0px 0px -60px 0px',
+      }
+    )
+
+    targets.forEach((el) => observer.observe(el))
+
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <>
+    <div ref={rootRef} className="relative">
       <HeroSection />
       <PlanEventSection />
       <WhatToPlanSection />
@@ -2177,6 +2478,6 @@ export default function LandingPage() {
       <PlanningGuidesSection />
       <TestimonialsSection />
       <SplitInfoSection />
-    </>
+    </div>
   )
 }

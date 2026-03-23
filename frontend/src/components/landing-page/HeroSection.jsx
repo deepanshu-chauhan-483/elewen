@@ -574,10 +574,12 @@ const HeroSection = () => {
                 >
                   <div className="absolute top-4 md:top-5 left-3 md:left-5 right-2 md:right-auto md:w-45 flex flex-col gap-1.5 md:gap-3">
                     <h3
-                      className="text-[10px] sm:text-[11px] md:text-sm font-bold tracking-widest uppercase truncate"
+                      className="text-[10px] sm:text-[11px] md:text-sm font-bold tracking-widest uppercase truncate reveal-heading"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
-                      {label}
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{label}</span>
+                      </span>
                     </h3>
                     <p className="text-[9px] md:text-xs font-light opacity-90 leading-[1.3] line-clamp-3">
                       {desc}
