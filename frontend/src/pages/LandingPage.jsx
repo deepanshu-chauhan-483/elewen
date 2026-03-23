@@ -43,13 +43,29 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin)
 
 const CARDS_PER_PAGE = 3
 
+// Local placeholder images for event, service, and blog cards.
+// Used when Strapi hasn't provided a real image yet.
+const CARD_LOCAL_IMAGES = [
+  pkgImg3,
+  pkgImg1,
+  pkgImg5,
+  pkgImg4,
+  pkgImg6,
+  pkgImg2,
+  pkgImg7,
+  pkgImg8,
+  pkgImg9,
+  img1,
+  img2,
+  img3,
+  img4,
+  img5,
+]
+
 const PlanEventSection = () => {
   // CMS: Strapi `events` top-level categories + featured sub-type cards
   const { data: categories } = useEventCategories()
   const { data: eventCards } = useEventCards()
-
-  const safeCategories = Array.isArray(categories) ? categories : []
-  const safeEventCards = Array.isArray(eventCards) ? eventCards : []
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -67,7 +83,7 @@ const PlanEventSection = () => {
   const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
 
   // Reset page when category changes
-  const handleCategorySelect = (cat) => {
+  const handleCategorySelect = cat => {
     setSelectedCategory(cat)
     setPage(0)
   }
@@ -199,7 +215,13 @@ const PlanEventSection = () => {
                 key={card.id ?? card.title}
                 className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
               >
-                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-white relative overflow-hidden min-h-[140px] md:min-h-0" />
+                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden min-h-[140px] md:min-h-0">
+                  <img
+                    src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
                 <div className="bg-[#787A5E] rounded-[12px] md:rounded-[16px] p-3 md:p-7 h-[130px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
                   <h3 className="text-white font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide">
@@ -220,7 +242,14 @@ const PlanEventSection = () => {
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -242,7 +271,14 @@ const PlanEventSection = () => {
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -256,8 +292,6 @@ const PlanEventSection = () => {
 const WhatToPlanSection = () => {
   // CMS: Strapi `service-categories` featured items
   const { data: serviceCards } = useServiceCards()
-
-  const safeServiceCards = Array.isArray(serviceCards) ? serviceCards : []
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -273,7 +307,7 @@ const WhatToPlanSection = () => {
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / CARDS_PER_PAGE))
   const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
 
-  const handleCategorySelect = (cat) => {
+  const handleCategorySelect = cat => {
     setSelectedCategory(cat)
     setPage(0)
   }
@@ -330,7 +364,13 @@ const WhatToPlanSection = () => {
                 key={card.id ?? card.title}
                 className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
               >
-                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-white relative overflow-hidden min-h-[140px] md:min-h-0" />
+                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden min-h-[140px] md:min-h-0">
+                  <img
+                    src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
                 <div className="bg-[#787A5E] rounded-[12px] md:rounded-[16px] p-3 md:p-7 h-[130px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
                   <h3 className="text-white font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide">
@@ -350,7 +390,14 @@ const WhatToPlanSection = () => {
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -372,7 +419,14 @@ const WhatToPlanSection = () => {
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -1436,49 +1490,12 @@ const PackagesSection = () => {
 
   // CMS: Strapi `packages` with elements, addons, images
   const { data: cmsPackages } = usePackages()
-  const packagesData = useMemo(
-    () =>
-      (cmsPackages ?? []).map((pkg, i) => ({
-        ...pkg,
-        desc: pkg.description ?? pkg.desc ?? '',
-        images: pkg.images?.length ? pkg.images : (PKG_LOCAL_IMAGES[i] ?? []),
-      })),
-    [cmsPackages]
-  )
-
-  const count = packagesData.length
-  const totalCards = count * 3
-  const middleStart = count
-
-  useEffect(() => {
-    if (count === 0) return
-    setVirtualIndex(middleStart)
-  }, [count, middleStart])
-
-  const handleTransitionEnd = () => {
-    if (count === 0) return
-    const v = virtualIndex
-    const dir = lastDirectionRef.current
-    if (v === count * 2 && dir === 'next') {
-      setDisableTransition(true)
-      setVirtualIndex(middleStart)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setDisableTransition(false))
-      })
-    } else if (v === middleStart - 1 && dir === 'prev') {
-      setDisableTransition(true)
-      setVirtualIndex(count * 2 - 1)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setDisableTransition(false))
-      })
-    } else if (v === totalCards - 1 && dir === 'prev') {
-      setDisableTransition(true)
-      setVirtualIndex(count * 2 - 1)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setDisableTransition(false))
-      })
-    }
-  }
+  // Merge: use Strapi images when available, fall back to local assets
+  const packagesData = cmsPackages.map((pkg, i) => ({
+    ...pkg,
+    desc: typeof pkg.description === 'string' ? pkg.description : typeof pkg.desc === 'string' ? pkg.desc : '',
+    images: pkg.images?.length ? pkg.images : (PKG_LOCAL_IMAGES[i] ?? []),
+  }))
 
   const handleNext = () => {
     if (count === 0) return
@@ -1987,9 +2004,6 @@ const PlanningGuidesSection = () => {
   const { data: categories } = useBlogCategories()
   const { data: allBlogs } = useBlogs({ limit: 50 })
 
-  const safeCategories = Array.isArray(categories) ? categories : []
-  const safeAllBlogs = Array.isArray(allBlogs) ? allBlogs : []
-
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
 
@@ -2002,7 +2016,7 @@ const PlanningGuidesSection = () => {
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / CARDS_PER_PAGE))
   const visibleBlogs = filteredBlogs.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
 
-  const handleCategorySelect = (cat) => {
+  const handleCategorySelect = cat => {
     setSelectedCategory(cat)
     setPage(0)
   }
@@ -2085,7 +2099,13 @@ const PlanningGuidesSection = () => {
                 key={blog.id ?? blog.title}
                 className="bg-white p-2.5 rounded-[24px] shadow-sm flex flex-col h-[460px] group cursor-pointer"
               >
-                <div className="flex-1 rounded-t-[16px] bg-white relative overflow-hidden" />
+                <div className="flex-1 rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden">
+                  <img
+                    src={blog.cover_image ?? CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]}
+                    alt={blog.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
                 <div className="bg-[#787A5E] rounded-[16px] p-7 h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
                   <h3 className="text-white font-semibold text-[17px] mb-2.5 tracking-wide">
@@ -2105,7 +2125,14 @@ const PlanningGuidesSection = () => {
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -2127,7 +2154,14 @@ const PlanningGuidesSection = () => {
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
