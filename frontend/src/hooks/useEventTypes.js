@@ -41,9 +41,11 @@ export function useEventCards() {
         'filters[parent_event][id][$null]': 'false',
         'filters[is_featured][$eq]': 'true',
         'filters[is_active][$eq]': 'true',
-        populate: 'parent_event',
+        'populate[0]': 'parent_event',
+        'populate[1]': 'icon',
         sort: 'name:asc',
       })
+      const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
       return data.map(e => ({
         id: e.id,
         documentId: e.documentId,
@@ -60,6 +62,9 @@ export function useEventCards() {
           return ''
         })(),
         category: e.parent_event?.name ?? '',
+        image: e.icon?.url
+          ? e.icon.url.startsWith('http') ? e.icon.url : `${base}${e.icon.url}`
+          : null,
       }))
     },
     placeholderData: EVENT_CARDS_FALLBACK,
@@ -84,15 +89,20 @@ export function useServiceCards() {
       const { data } = await strapiGet('/service-categories', {
         'filters[is_featured][$eq]': 'true',
         'filters[is_active][$eq]': 'true',
-        populate: 'parent_category',
+        'populate[0]': 'parent_category',
+        'populate[1]': 'icon',
         sort: 'name:asc',
       })
+      const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
       return data.map(s => ({
         id: s.id,
         documentId: s.documentId,
         title: s.name ?? '',
         description: s.description ?? '',
         category: s.parent_category?.name ?? '',
+        image: s.icon?.url
+          ? s.icon.url.startsWith('http') ? s.icon.url : `${base}${s.icon.url}`
+          : null,
       }))
     },
     placeholderData: SERVICE_CARDS_FALLBACK,

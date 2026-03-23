@@ -43,10 +43,17 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin)
 
 const CARDS_PER_PAGE = 3
 
+// Local placeholder images for event, service, and blog cards.
+// Used when Strapi hasn't provided a real image yet.
+const CARD_LOCAL_IMAGES = [
+  pkgImg3, pkgImg1, pkgImg5, pkgImg4, pkgImg6, pkgImg2,
+  pkgImg7, pkgImg8, pkgImg9, img1, img2, img3, img4, img5,
+]
+
 const PlanEventSection = () => {
   // CMS: Strapi `events` top-level categories + featured sub-type cards
-  const { data: categories } = useEventCategories()
-  const { data: eventCards } = useEventCards()
+  const { data: categories = [] } = useEventCategories()
+  const { data: eventCards = [] } = useEventCards()
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -179,7 +186,13 @@ const PlanEventSection = () => {
                 key={card.id ?? card.title}
                 className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
               >
-                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-white relative overflow-hidden min-h-[140px] md:min-h-0" />
+                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden min-h-[140px] md:min-h-0">
+                  <img
+                    src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
                 <div className="bg-[#787A5E] rounded-[12px] md:rounded-[16px] p-3 md:p-7 h-[130px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
                   <h3 className="text-white font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide">
@@ -249,7 +262,7 @@ const PlanEventSection = () => {
 
 const WhatToPlanSection = () => {
   // CMS: Strapi `service-categories` featured items
-  const { data: serviceCards } = useServiceCards()
+  const { data: serviceCards = [] } = useServiceCards()
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -312,7 +325,13 @@ const WhatToPlanSection = () => {
                 key={card.id ?? card.title}
                 className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
               >
-                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-white relative overflow-hidden min-h-[140px] md:min-h-0" />
+                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden min-h-[140px] md:min-h-0">
+                  <img
+                    src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
                 <div className="bg-[#787A5E] rounded-[12px] md:rounded-[16px] p-3 md:p-7 h-[130px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
                   <h3 className="text-white font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide">
@@ -1737,8 +1756,8 @@ const CelebrationFeelingSection = () => {
 
 const PlanningGuidesSection = () => {
   // CMS: Strapi `blogs` published posts + derived categories
-  const { data: categories } = useBlogCategories()
-  const { data: allBlogs } = useBlogs({ limit: 50 })
+  const { data: categories = [] } = useBlogCategories()
+  const { data: allBlogs = [] } = useBlogs({ limit: 50 })
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -1825,7 +1844,13 @@ const PlanningGuidesSection = () => {
                 key={blog.id ?? blog.title}
                 className="bg-white p-2.5 rounded-[24px] shadow-sm flex flex-col h-[460px] group cursor-pointer"
               >
-                <div className="flex-1 rounded-t-[16px] bg-white relative overflow-hidden" />
+                <div className="flex-1 rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden">
+                  <img
+                    src={blog.cover_image ?? CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]}
+                    alt={blog.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
                 <div className="bg-[#787A5E] rounded-[16px] p-7 h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
                   <h3 className="text-white font-semibold text-[17px] mb-2.5 tracking-wide">
