@@ -64,8 +64,8 @@ const CARD_LOCAL_IMAGES = [
 
 const PlanEventSection = () => {
   // CMS: Strapi `events` top-level categories + featured sub-type cards
-  const { data: categories } = useEventCategories()
-  const { data: eventCards } = useEventCards()
+  const { data: categories = [] } = useEventCategories()
+  const { data: eventCards = [] } = useEventCards()
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -291,7 +291,7 @@ const PlanEventSection = () => {
 
 const WhatToPlanSection = () => {
   // CMS: Strapi `service-categories` featured items
-  const { data: serviceCards } = useServiceCards()
+  const { data: serviceCards = [] } = useServiceCards()
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -1493,7 +1493,12 @@ const PackagesSection = () => {
   // Merge: use Strapi images when available, fall back to local assets
   const packagesData = cmsPackages.map((pkg, i) => ({
     ...pkg,
-    desc: typeof pkg.description === 'string' ? pkg.description : typeof pkg.desc === 'string' ? pkg.desc : '',
+    desc:
+      typeof pkg.description === 'string'
+        ? pkg.description
+        : typeof pkg.desc === 'string'
+          ? pkg.desc
+          : '',
     images: pkg.images?.length ? pkg.images : (PKG_LOCAL_IMAGES[i] ?? []),
   }))
 
@@ -2001,8 +2006,8 @@ const CelebrationFeelingSection = () => {
 
 const PlanningGuidesSection = () => {
   // CMS: Strapi `blogs` published posts + derived categories
-  const { data: categories } = useBlogCategories()
-  const { data: allBlogs } = useBlogs({ limit: 50 })
+  const { data: categories = [] } = useBlogCategories()
+  const { data: allBlogs = [] } = useBlogs({ limit: 50 })
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
