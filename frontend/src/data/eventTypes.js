@@ -103,31 +103,48 @@ export const SERVICE_CARDS_FALLBACK = [
     id: 2,
     documentId: null,
     title: 'Sound & Setup',
-    description: 'Clear audio arrangements for music, announcements, and seamless coordination.',
-    category: 'Tech',
+    description:
+      'Clear audio arrangements for music, announcements, and seamless event coordination.',
+    category: 'Decor',
   },
   {
     id: 3,
     documentId: null,
-    title: 'Catering & Food Setup',
+    title: 'Floral & Balloon Decor',
     description:
-      'Full-service catering arrangements for parties, corporate events, and celebrations of all sizes.',
-    category: 'Food & Beverage',
+      'Custom floral arrangements and balloon styling that bring colour and elegance to any celebration.',
+    category: 'Decor',
   },
   {
     id: 4,
     documentId: null,
-    title: 'Bar & Beverages',
+    title: 'Catering & Food Setup',
     description:
-      'Curated bar setups with mocktail and cocktail options tailored to your event theme.',
-    category: 'Food & Beverage',
+      'Full-service catering arrangements for parties, corporate events, and celebrations of all sizes.',
+    category: 'Food & Beverages',
   },
   {
     id: 5,
     documentId: null,
+    title: 'Bar & Beverages',
+    description:
+      'Curated bar setups with mocktail and cocktail options tailored to your event theme.',
+    category: 'Food & Beverages',
+  },
+  {
+    id: 6,
+    documentId: null,
     title: 'Dessert & Cake Setup',
     description:
       'Custom dessert tables, cake arrangements, and sweet setups to sweeten your celebration.',
-    category: 'Food & Beverage',
+    category: 'Food & Beverages',
+  },
+  {
+    id: 7,
+    documentId: null,
+    title: 'Live Food Stations',
+    description:
+      'Interactive live cooking stations — from chaat counters to pasta bars — for a memorable guest experience.',
+    category: 'Food & Beverages',
   },
 ]
