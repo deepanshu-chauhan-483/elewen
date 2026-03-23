@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -78,9 +78,16 @@ const PlanEventSection = () => {
                   />
 
                   <div
-                    className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] md:w-[76px] md:h-[78px] opacity-40 blur-[6px] md:blur-[8px] pointer-events-none"
+                    className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
+                      i % 2 === 0
+                        ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
+                        : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
+                    }`}
                     style={{
-                      background: 'linear-gradient(180deg, #FCD768 0%, #F2F2F2 100%)',
+                      background:
+                        i % 2 === 0
+                          ? 'linear-gradient(180deg, #FCD768 0%, #F7F7F5 100%)'
+                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F7F7F5 100%)',
                       clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
                     }}
                   />
@@ -761,9 +768,14 @@ const BetterWaySection = () => {
                       className="w-[32px] h-auto relative z-10"
                     />
                     <div
-                      className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-2 w-[76px] h-[78px] opacity-40 blur-[8px] pointer-events-none"
+                      className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-2 w-[76px] opacity-40 pointer-events-none ${
+                        i % 2 === 0 ? 'h-[78px] blur-[8px]' : 'h-[59px] blur-[4px]'
+                      }`}
                       style={{
-                        background: 'linear-gradient(180deg, #FCD768 0%, #F2F2F2 100%)',
+                        background:
+                          i % 2 === 0
+                            ? 'linear-gradient(180deg, #FCD768 0%, #F7F7F5 100%)'
+                            : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F7F7F5 100%)',
                         clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
                       }}
                     />
@@ -991,9 +1003,16 @@ const ChecklistSection = () => {
                     className="w-[20px] md:w-[32px] h-auto relative z-10"
                   />
                   <div
-                    className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] md:w-[76px] md:h-[78px] opacity-40 blur-[6px] md:blur-[8px] pointer-events-none"
+                    className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
+                      i % 2 === 0
+                        ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
+                        : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
+                    }`}
                     style={{
-                      background: 'linear-gradient(180deg, #FCD768 0%, #F2F2F2 100%)',
+                      background:
+                        i % 2 === 0
+                          ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
+                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
                       clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
                     }}
                   />
@@ -1183,31 +1202,88 @@ const PKG_LOCAL_IMAGES = [
 ]
 
 const PackagesSection = () => {
-  const [activeIndex, setActiveIndex] = useState(1)
+  const [virtualIndex, setVirtualIndex] = useState(0)
+  const [disableTransition, setDisableTransition] = useState(false)
+  const lastDirectionRef = useRef('next')
 
   // CMS: Strapi `packages` with elements, addons, images
   const { data: cmsPackages } = usePackages()
-  // Merge: use Strapi images when available, fall back to local assets
-  const packagesData = cmsPackages.map((pkg, i) => ({
-    ...pkg,
-    desc: pkg.description ?? pkg.desc ?? '',
-    images: pkg.images?.length ? pkg.images : (PKG_LOCAL_IMAGES[i] ?? []),
-  }))
+  const packagesData = useMemo(
+    () =>
+      (cmsPackages ?? []).map((pkg, i) => ({
+        ...pkg,
+        desc: pkg.description ?? pkg.desc ?? '',
+        images: pkg.images?.length ? pkg.images : (PKG_LOCAL_IMAGES[i] ?? []),
+      })),
+    [cmsPackages]
+  )
+
+  const count = packagesData.length
+  const totalCards = count * 3
+  const middleStart = count
+
+  useEffect(() => {
+    if (count === 0) return
+    setVirtualIndex(middleStart)
+  }, [count, middleStart])
+
+  const handleTransitionEnd = () => {
+    if (count === 0) return
+    const v = virtualIndex
+    const dir = lastDirectionRef.current
+    if (v === count * 2 && dir === 'next') {
+      setDisableTransition(true)
+      setVirtualIndex(middleStart)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setDisableTransition(false))
+      })
+    } else if (v === middleStart - 1 && dir === 'prev') {
+      setDisableTransition(true)
+      setVirtualIndex(count * 2 - 1)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setDisableTransition(false))
+      })
+    } else if (v === totalCards - 1 && dir === 'prev') {
+      setDisableTransition(true)
+      setVirtualIndex(count * 2 - 1)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setDisableTransition(false))
+      })
+    }
+  }
 
   const handleNext = () => {
-    setActiveIndex(prev => Math.min(prev + 1, packagesData.length - 1))
+    if (count === 0) return
+    lastDirectionRef.current = 'next'
+    setVirtualIndex(prev => Math.min(prev + 1, count * 2))
   }
 
   const handlePrev = () => {
-    setActiveIndex(prev => Math.max(prev - 1, 0))
+    if (count === 0) return
+    lastDirectionRef.current = 'prev'
+    setVirtualIndex(prev => (prev <= 0 ? totalCards - 1 : prev - 1))
   }
+
+  const displayIndex = count > 0 ? virtualIndex % count : 0
+
+  const sortedCards = useMemo(() => {
+    if (count === 0) return []
+    const extended = [...packagesData, ...packagesData, ...packagesData]
+    return extended
+      .map((pkg, index) => ({ pkg, index }))
+      .sort((a, b) => {
+        if (a.index === virtualIndex) return 1
+        if (b.index === virtualIndex) return -1
+        return a.index - b.index
+      })
+  }, [packagesData, virtualIndex, count])
 
   return (
     <section
       className="relative w-full min-h-screen bg-[#F4F4F2] pt-8 pb-28 -mt-4"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* Global Styles JUST for Pagination Dots now */}
+      {/* Global Styles for inner Swiper + fix arrow click blocking */}
       <style>{`
         .inner-card-swiper .swiper-pagination-bullet {
           background-color: white;
@@ -1222,6 +1298,11 @@ const PackagesSection = () => {
           border-radius: 8px;
           opacity: 1;
         }
+        /* Swiper container: do not capture clicks - lets arrows receive them */
+        .inner-card-swiper { pointer-events: none !important; }
+        /* Only the slide area and pagination capture events when card is active */
+        .card-swiper-active .inner-card-swiper .swiper-wrapper,
+        .card-swiper-active .inner-card-swiper .swiper-pagination { pointer-events: auto; }
       `}</style>
 
       {/* --- 1. Top Headings --- */}
@@ -1257,7 +1338,7 @@ const PackagesSection = () => {
         />
 
         <div
-          className="relative min-h-[700px] w-full grid place-content-center overflow-hidden px-0"
+          className="relative min-h-[790px] w-full grid place-content-center overflow-hidden px-0"
           style={{
             perspective: '80em',
             maskImage:
@@ -1267,99 +1348,107 @@ const PackagesSection = () => {
           }}
         >
           <div
-            className="grid place-self-center w-full max-w-[100vw]"
+            className="grid place-self-center w-full max-w-[100vw] pointer-events-none"
             style={{
               transformStyle: 'preserve-3d',
-              transform: `rotateY(${-activeIndex * 36}deg)`,
-              transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: `rotateY(${-virtualIndex * 36}deg)`,
+              transition: disableTransition ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+              willChange: disableTransition ? 'auto' : 'transform',
             }}
+            onTransitionEnd={handleTransitionEnd}
           >
-            {packagesData
-              .map((pkg, index) => ({ pkg, index }))
-              .sort((a, b) => {
-                if (a.index === activeIndex) return 1
-                if (b.index === activeIndex) return -1
-                return a.index - b.index
-              })
-              .map(({ pkg, index }) => {
+            {sortedCards.map(({ pkg, index }) => {
                 const baseAngle = 36
                 const halfAngleDeg = baseAngle / 2
                 const halfAngleRad = (halfAngleDeg * Math.PI) / 180
                 const cardWidth = 640
                 const gap = 8
                 const radius = (cardWidth / 2 + gap / 2) / Math.tan(halfAngleRad)
-                const isActive = index === activeIndex
+                const isActive = index === virtualIndex
 
                 return (
                   <div
-                    key={pkg.id}
-                    onClick={() => !isActive && setActiveIndex(index)}
-                    className="w-[640px] relative flex flex-col cursor-pointer bg-white overflow-hidden gap-6"
+                    key={`pkg-${index}`}
+                    onClick={() => !isActive && setVirtualIndex(index)}
+                    className={`w-[640px] relative flex flex-col bg-white overflow-hidden gap-6 pointer-events-auto ${isActive ? 'cursor-default' : 'cursor-pointer'}`}
                     style={{
                       gridArea: '1/1',
-                      height: '700px',
+                      height: '770px',
                       backfaceVisibility: 'hidden',
                       WebkitFontSmoothing: 'antialiased',
                       MozOsxFontSmoothing: 'grayscale',
                       transform: `rotateY(${index * 36}deg) translateZ(${-radius}px)`,
-                      transformStyle: 'preserve-3d',
                       boxShadow: isActive
                         ? '0 12px 32px rgba(0,0,0,0.15)'
                         : '0 6px 20px rgba(0,0,0,0.1)',
                       opacity: isActive ? 1 : 0.9,
+                      zIndex: isActive ? 50 : 0,
                     }}
                   >
                     {/* Image area */}
                     <div className="px-5 pt-5 shrink-0">
-                      <div className="relative w-full h-[330px] bg-[#EAEAEA] overflow-hidden rounded-lg">
-                        {/* Swiper setup with custom navigation elements */}
-                        <Swiper
-                          modules={[Navigation, Pagination]}
-                          navigation={{
-                            prevEl: `.custom-prev-${pkg.id}`,
-                            nextEl: `.custom-next-${pkg.id}`,
-                          }}
-                          pagination={{ clickable: true }}
-                          loop={true}
-                          className={`inner-card-swiper w-full h-full ${isActive ? 'pointer-events-auto' : 'pointer-events-none'}`}
-                        >
-                          {pkg.images.map((imgSrc, i) => (
-                            <SwiperSlide key={i}>
-                              <img
-                                src={imgSrc}
-                                alt={`${pkg.title} - view ${i + 1}`}
-                                className="w-full h-full object-cover object-center"
-                              />
-                            </SwiperSlide>
-                          ))}
-                        </Swiper>
+                      <div className={`relative w-full h-[450px] bg-[#EAEAEA] overflow-hidden ${isActive ? 'card-swiper-active' : ''}`}>
+                        {isActive ? (
+                          <Swiper
+                              modules={[Navigation, Pagination]}
+                              navigation={{
+                                prevEl: `.custom-prev-btn-${index}`,
+                                nextEl: `.custom-next-btn-${index}`,
+                              }}
+                              pagination={{ clickable: true }}
+                              loop={true}
+                              className="inner-card-swiper w-full h-full"
+                            >
+                              {pkg.images.map((imgSrc, i) => (
+                                <SwiperSlide key={i}>
+                                  <img
+                                    src={imgSrc}
+                                    alt={`${pkg.title} - view ${i + 1}`}
+                                    className="w-full h-full object-cover object-center"
+                                    loading="eager"
+                                  />
+                                </SwiperSlide>
+                              ))}
+                            </Swiper>
+                        ) : (
+                          <img
+                            src={pkg.images?.[0] ?? ''}
+                            alt={pkg.title}
+                            className="w-full h-full object-cover object-center"
+                            loading="lazy"
+                          />
+                        )}
 
-                        {/* CUSTOM LEFT ARROW */}
-                        <button
-                          className={`custom-prev-${pkg.id} absolute left-0 top-1/2 -translate-y-1/2 z-20 w-[24px] h-[40px] bg-[#2D2D2D] hover:bg-black rounded-r-full flex items-center justify-center transition-all duration-300 pr-[2px] ${isActive ? 'opacity-100 cursor-pointer pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-                        >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                        {/* Arrow overlay: pointer-events-none so it doesn't block; buttons have pointer-events-auto */}
+                        <div className="absolute inset-0 pointer-events-none z-[100] flex items-center justify-between">
+                          {/* CUSTOM LEFT ARROW */}
+                          <button
+                            type="button"
+                            className={`custom-prev-btn-${index} pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 w-[36px] h-[56px] bg-[#2D2D2D] hover:bg-black rounded-r-full flex items-center justify-center transition-all duration-300 pr-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
                           >
-                            <path d="M19 12H5" />
-                            <path d="m12 19-7-7 7-7" />
-                          </svg>
-                        </button>
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M19 12H5" />
+                              <path d="m12 19-7-7 7-7" />
+                            </svg>
+                          </button>
 
-                        {/* CUSTOM RIGHT ARROW */}
-                        <button
-                          className={`custom-next-${pkg.id} absolute right-0 top-1/2 -translate-y-1/2 z-20 w-[24px] h-[40px] bg-[#2D2D2D] hover:bg-black rounded-l-full flex items-center justify-center transition-all duration-300 pl-[2px] ${isActive ? 'opacity-100 cursor-pointer pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-                        >
+                          {/* CUSTOM RIGHT ARROW */}
+                          <button
+                            type="button"
+                            className={`custom-next-btn-${index} pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 w-[36px] h-[56px] bg-[#2D2D2D] hover:bg-black rounded-l-full flex items-center justify-center transition-all duration-300 pl-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
+                          >
                           <svg
-                            width="12"
-                            height="12"
+                            width="18"
+                            height="18"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="white"
@@ -1371,6 +1460,7 @@ const PackagesSection = () => {
                             <path d="m12 5 7 7-7 7" />
                           </svg>
                         </button>
+                        </div>
 
                         {/* Price tag */}
                         {isActive && (
@@ -1391,7 +1481,6 @@ const PackagesSection = () => {
                       className="flex flex-col items-start flex-1 min-h-0 px-8 pb-6"
                       style={{
                         gap: '20px',
-                        transform: 'translateZ(0)',
                         WebkitFontSmoothing: 'antialiased',
                         MozOsxFontSmoothing: 'grayscale',
                       }}
@@ -1498,8 +1587,7 @@ const PackagesSection = () => {
         <button
           type="button"
           onClick={handlePrev}
-          disabled={activeIndex === 0}
-          className={`w-12 h-12 rounded-[96px] flex items-center justify-center transition-all shrink-0 ${activeIndex === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#2D2D2D] hover:bg-black cursor-pointer'}`}
+          className="w-12 h-12 rounded-[96px] flex items-center justify-center transition-all shrink-0 bg-[#2D2D2D] hover:bg-black cursor-pointer"
         >
           <svg
             width="28"
@@ -1519,7 +1607,7 @@ const PackagesSection = () => {
           {packagesData.map((_, idx) => (
             <div
               key={idx}
-              className={`h-[8px] rounded-[8px] transition-all duration-500 ${activeIndex === idx ? 'w-[52px] bg-[#591902]' : 'w-[8px] bg-[#ADADAD]'}`}
+              className={`h-[8px] rounded-[8px] transition-all duration-500 ${displayIndex === idx ? 'w-[52px] bg-[#591902]' : 'w-[8px] bg-[#ADADAD]'}`}
             />
           ))}
         </div>
@@ -1527,8 +1615,7 @@ const PackagesSection = () => {
         <button
           type="button"
           onClick={handleNext}
-          disabled={activeIndex === packagesData.length - 1}
-          className={`w-12 h-12 rounded-[96px] flex items-center justify-center transition-all shrink-0 ${activeIndex === packagesData.length - 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#2D2D2D] hover:bg-black cursor-pointer'}`}
+          className="w-12 h-12 rounded-[96px] flex items-center justify-center transition-all shrink-0 bg-[#2D2D2D] hover:bg-black cursor-pointer"
         >
           <svg
             width="28"
@@ -2003,84 +2090,6 @@ const SplitInfoSection = () => {
   )
 }
 
-const footerNav = [
-  {
-    label: 'LEGAL',
-    labelWidth: 'w-[46px]',
-    links: ['Terms & Conditions', 'Cancellation Policy'],
-  },
-  {
-    label: 'COMMUNITY',
-    labelWidth: 'w-[97px]',
-    links: ['Vendor Registration', 'Instagram'],
-  },
-  {
-    label: 'HELP',
-    labelWidth: 'w-[36px]',
-    links: ['Contact Us', "FAQ's", 'Order Updates'],
-  },
-  {
-    label: 'SHOP BY',
-    labelWidth: 'w-[66px]',
-    links: ['Events', 'Services'],
-  },
-]
-
-const FooterSection = () => {
-  return (
-    <footer className="w-full flex justify-center bg-[#F2F2F2] overflow-hidden font-sans">
-      <div className="relative w-full max-w-[1440px] md:h-[645px] shrink-0 px-6 md:px-0 py-12 md:py-0">
-        <h1
-          className="text-center text-[#2D2D2D] leading-[1] md:absolute md:left-1/2 md:-translate-x-1/2 md:top-[80px] md:w-[1434px]"
-          style={{
-            fontFamily: "'Malgin', serif",
-            fontSize: 'clamp(72px, 18vw, 341px)',
-          }}
-        >
-          ELEWEN
-        </h1>
-
-        <div className="mt-10 md:mt-0 md:absolute md:left-[100px] md:top-[401px] md:right-[100px] md:flex md:items-start md:justify-between md:gap-10">
-          <div className="flex flex-col gap-4">
-            {footerNav.map(row => (
-              <div key={row.label} className="flex items-start md:items-center gap-6 md:gap-[60px]">
-                <span
-                  className={`${row.labelWidth} text-[#2D2D2D] text-[16px] leading-[1.5] shrink-0`}
-                >
-                  {row.label}
-                </span>
-                <div className="flex flex-wrap items-center gap-x-7 gap-y-2 opacity-50">
-                  {row.links.map(link => (
-                    <a
-                      key={link}
-                      href="#"
-                      className="text-[#2D2D2D] text-[16px] leading-[1.5] hover:text-[#591902] transition-colors"
-                    >
-                      {link}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-10 md:mt-0 md:w-[611px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5]">
-            Elewen simplifies event planning with curated décor, catering, and personal
-            coordination. From intimate gatherings to meaningful celebrations, we bring everything
-            together so you can focus on the moment.
-          </p>
-        </div>
-
-        <div className="mt-10 md:mt-0 md:absolute md:right-[0px] md:top-[493px] md:w-[720px] border-t border-[#000000] opacity-20" />
-
-        <p className="mt-5 md:mt-0 md:absolute md:right-[100px] md:top-[513px] text-[#2D2D2D] opacity-50 text-[12px] leading-[1.5]">
-          © 2025 Elewen. All rights reserved.
-        </p>
-      </div>
-    </footer>
-  )
-}
-
 export default function LandingPage() {
   return (
     <>
@@ -2093,7 +2102,6 @@ export default function LandingPage() {
       <PlanningGuidesSection />
       <TestimonialsSection />
       <SplitInfoSection />
-      <FooterSection />
     </>
   )
 }

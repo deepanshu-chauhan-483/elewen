@@ -24,11 +24,12 @@ const HeroPreloader = forwardRef(function HeroPreloader(_, ref) {
       style={{
         position: 'absolute',
         inset: 0,
-        zIndex: 40,
+        zIndex: 99999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         pointerEvents: 'none',
+        backgroundColor: '#bfac9b',
       }}
     >
       <img

@@ -14,21 +14,20 @@ const NavHeader = () => {
   // On other pages, show immediately.
   const { pathname } = useLocation()
   const isHome = pathname === '/'
-  const preloaderDone = !!sessionStorage.getItem('elewen-preloader-done')
-  const [visible, setVisible] = useState(!isHome || preloaderDone)
+
+  // On home: always start hidden; show only after preloader is done (event fires).
+  // On other pages: show immediately.
+  const [entered, setEntered] = useState(!isHome)
   const [hidden, setHidden] = useState(false) // hide on scroll-down, reveal on scroll-up
   const lastScrollY = useRef(0)
 
-  // Show after preloader on home; show immediately on other pages or if already done
+  // Show navbar only after preloader finishes (home) or immediately (other pages)
   useEffect(() => {
-    if (!isHome || preloaderDone) {
-      const t = setTimeout(() => setVisible(true), 0)
-      return () => clearTimeout(t)
-    }
-    const onDone = () => setVisible(true)
+    if (!isHome) return
+    const onDone = () => setEntered(true)
     window.addEventListener('hero-preloader-done', onDone, { once: true })
     return () => window.removeEventListener('hero-preloader-done', onDone)
-  }, [isHome, preloaderDone])
+  }, [isHome])
 
   // Hide on scroll-down, reveal on scroll-up
   useEffect(() => {
@@ -70,13 +69,16 @@ const NavHeader = () => {
   // On other pages: dark brown icons (light page bg behind).
   const iconColor = isHome ? '#FAFAFA' : '#591902'
 
-  const translateY = !visible || hidden ? '-translate-y-full' : 'translate-y-0'
+  // During preloader: fully hidden (invisible + no pointer events).
+  // After preloader: visible; hide on scroll-down with -translate-y-full.
+  const visibilityClass = !entered ? 'invisible pointer-events-none' : ''
+  const transformClass = !entered ? '-translate-y-4' : hidden ? '-translate-y-full' : 'translate-y-0'
 
   return (
     <>
-      {/* ── Fixed header bar ───────────────────────────────────────────────── */}
+      {/* ── Fixed header bar (hidden during preloader) ──────────────────────── */}
       <header
-        className={`fixed top-0 left-0 right-0 w-full flex items-center justify-between px-4 md:px-8 py-2 md:py-8 z-60 h-16.5 md:h-25 bg-transparent transition-transform duration-500 ease-[cubic-bezier(0.32,0,0.15,1)] ${translateY}`}
+        className={`fixed top-0 left-0 right-0 w-full flex items-center justify-between px-4 md:px-8 py-2 md:py-8 z-[60] h-16.5 md:h-25 bg-transparent transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] ${visibilityClass} ${transformClass}`}
       >
         {/* Left: hamburger (mobile) / search bar (desktop) */}
         <div className="flex items-center w-14 md:w-65 shrink-0">

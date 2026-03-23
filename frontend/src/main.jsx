@@ -5,6 +5,14 @@ import App from './App'
 import SmoothScroll from './SmoothScroll'
 import './index.css'
 
+// Prevent browser from restoring scroll on reload — ensures page always starts from top
+if (typeof window !== 'undefined') {
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+  window.scrollTo(0, 0)
+  document.documentElement.scrollTop = 0
+  document.body.scrollTop = 0
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
