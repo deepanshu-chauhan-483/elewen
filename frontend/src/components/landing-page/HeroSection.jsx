@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import HeroVideo from '../../assets/HeroVideo.mp4'
 import HeroPreloader from './HeroPreloader'
-import { useLenis } from '../../SmoothScroll'
+import { useLenis } from '../../useLenis'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -70,12 +69,6 @@ const renderBandCopy = tokens => {
 
 const PRELOADER_DONE_KEY = 'elewen-preloader-done'
 
-// Force full animation (including preloader) when ?preload=0 in URL — useful for testing
-const forceFullAnim = () => {
-  if (typeof window === 'undefined') return false
-  return new URLSearchParams(window.location.search).get('preload') === '0'
-}
-
 const HeroSection = () => {
   const wrapperRef = useRef(null)
   const preloaderRef = useRef(null)
@@ -97,62 +90,6 @@ const HeroSection = () => {
   const leftLine3Refs = useRef([])
 
   const cardRefs = useRef([])
-
-  useEffect(() => {
-    const scrollToTop = () => {
-      window.scrollTo(0, 0)
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-      const lenis = lenisRef?.current
-      if (lenis) lenis.scrollTo(0, { immediate: true })
-    }
-
-    const getScrollY = () =>
-      window.scrollY ?? document.documentElement.scrollTop ?? document.body.scrollTop ?? 0
-
-    let cancelled = false
-    let teardown = () => {}
-    let timeoutIds = []
-
-    const runSetup = () => {
-      if (cancelled) return
-      scrollToTop()
-      ScrollTrigger.refresh()
-      teardown = initHeroAnimations()
-    }
-
-    const waitForScrollZero = (attempt = 0, maxAttempts = 30) => {
-      if (cancelled) return
-      scrollToTop()
-      const y = getScrollY()
-      if (y < 5 || attempt >= maxAttempts) {
-        runSetup()
-        const t = setTimeout(() => {
-          if (cancelled) return
-          scrollToTop()
-          ScrollTrigger.refresh()
-        }, 200)
-        timeoutIds.push(t)
-        return
-      }
-      const t = setTimeout(() => waitForScrollZero(attempt + 1, maxAttempts), 50)
-      timeoutIds.push(t)
-    }
-
-    scrollToTop()
-    const frameId = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        waitForScrollZero()
-      })
-    })
-
-    return () => {
-      cancelled = true
-      cancelAnimationFrame(frameId)
-      timeoutIds.forEach(id => clearTimeout(id))
-      teardown()
-    }
-  }, [lenisRef])
 
   function initHeroAnimations() {
     const dk = darkOverlayRef.current
@@ -489,6 +426,62 @@ const HeroSection = () => {
     }
   }
 
+  useEffect(() => {
+    const scrollToTop = () => {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      const lenis = lenisRef?.current
+      if (lenis) lenis.scrollTo(0, { immediate: true })
+    }
+
+    const getScrollY = () =>
+      window.scrollY ?? document.documentElement.scrollTop ?? document.body.scrollTop ?? 0
+
+    let cancelled = false
+    let teardown = () => {}
+    let timeoutIds = []
+
+    const runSetup = () => {
+      if (cancelled) return
+      scrollToTop()
+      ScrollTrigger.refresh()
+      teardown = initHeroAnimations()
+    }
+
+    const waitForScrollZero = (attempt = 0, maxAttempts = 30) => {
+      if (cancelled) return
+      scrollToTop()
+      const y = getScrollY()
+      if (y < 5 || attempt >= maxAttempts) {
+        runSetup()
+        const t = setTimeout(() => {
+          if (cancelled) return
+          scrollToTop()
+          ScrollTrigger.refresh()
+        }, 200)
+        timeoutIds.push(t)
+        return
+      }
+      const t = setTimeout(() => waitForScrollZero(attempt + 1, maxAttempts), 50)
+      timeoutIds.push(t)
+    }
+
+    scrollToTop()
+    const frameId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        waitForScrollZero()
+      })
+    })
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(frameId)
+      timeoutIds.forEach(id => clearTimeout(id))
+      teardown()
+    }
+  }, [lenisRef])
+
   // ── band wrapper style ────────────────────────────────────────────────────
   const bandWrap = top => ({
     position: 'absolute',
@@ -569,6 +562,7 @@ const HeroSection = () => {
             muted
             loop
             playsInline
+            preload="auto"
             style={{
               position: 'absolute',
               inset: 0,
@@ -577,7 +571,7 @@ const HeroSection = () => {
               objectFit: 'cover',
             }}
           >
-            <source src={HeroVideo} type="video/mp4" />
+            <source src="/HeroVideo.mp4" type="video/mp4" />
           </video>
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.22)' }} />
           

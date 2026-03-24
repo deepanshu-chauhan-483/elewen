@@ -1,16 +1,11 @@
-import { createContext, useContext, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import Lenis from 'lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import 'lenis/dist/lenis.css'
+import LenisContext from './LenisContext'
 
 gsap.registerPlugin(ScrollTrigger)
-
-const LenisContext = createContext(null)
-
-export function useLenis() {
-  return useContext(LenisContext)
-}
 
 export default function SmoothScroll({ children }) {
   const lenisRef = useRef(null)

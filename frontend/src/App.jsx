@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { useLenis } from './SmoothScroll'
+import { useLenis } from './useLenis'
 import NavHeader from './components/NavHeader'
 import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
@@ -23,7 +23,7 @@ function ScrollToTop() {
     scrollTop()
     const t = setTimeout(scrollTop, 150)
     return () => clearTimeout(t)
-  }, [pathname])
+  }, [pathname, lenisRef])
 
   return null
 }
