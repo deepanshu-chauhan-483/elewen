@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import HeroVideo from '../../assets/HeroVideo.mp4'
 import HeroPreloader from './HeroPreloader'
 import { useLenis } from '../../useLenis'
 
@@ -567,6 +566,7 @@ const HeroSection = () => {
             muted
             loop
             playsInline
+            preload="auto"
             style={{
               position: 'absolute',
               inset: 0,
@@ -575,7 +575,7 @@ const HeroSection = () => {
               objectFit: 'cover',
             }}
           >
-            <source src={HeroVideo} type="video/mp4" />
+            <source src="/HeroVideo.mp4" type="video/mp4" />
           </video>
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.22)' }} />
         </div>
