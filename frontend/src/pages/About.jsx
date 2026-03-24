@@ -200,7 +200,7 @@ const About = () => {
             style={{ fontFamily: "'Malgin', serif" }}
           >
             <span className="reveal-wrapper block">
-              <span className="reveal-text">Celebrations Don't Have to Be Big to Matter</span>
+              <span className="reveal-text">Celebrations Don&apos;t Have to Be Big to Matter</span>
             </span>
           </h2>
 
@@ -374,22 +374,22 @@ const About = () => {
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block">
-                  <span className="reveal-text">Hi! I'm Moksha</span>
+                  <span className="reveal-text">Hi! I&apos;m Moksha</span>
                 </span>
               </h4>
               <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
                 <p>
-                  I still don't fully know how a formerly shy kid has turned into an adult who now
+                  I still don&apos;t fully know how a formerly shy kid has turned into an adult who now
                   builds experiences around people, conversations, and connection, but here we are.
                 </p>
                 <p>
-                  I've lived a large part of my life at boarding school, The Lawrence School,
+                  I&apos;ve lived a large part of my life at boarding school, The Lawrence School,
                   Sanawar, which has shaped me into an independent person obsessed with structure.
                   An obsession that turned out to be a superpower in the events world.
                 </p>
                 <p>
                   After doing a Msc. In International Events from the UK, and spending years in the
-                  industry, I knew I didn't want to build just another event management company.
+                  industry, I knew I didn&apos;t want to build just another event management company.
                 </p>
                 <p>So, I took a leap of faith and Elewen was born.</p>
               </div>
@@ -406,12 +406,12 @@ const About = () => {
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block">
-                  <span className="reveal-text">Hey! I'm Gauri</span>
+                  <span className="reveal-text">Hey! I&apos;m Gauri</span>
                 </span>
               </h4>
               <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
                 <p>
-                  I'm a dancer, reader, dreamer, and a believer that every little step eventually
+                  I&apos;m a dancer, reader, dreamer, and a believer that every little step eventually
                   leads to the right place.
                 </p>
                 <p>
