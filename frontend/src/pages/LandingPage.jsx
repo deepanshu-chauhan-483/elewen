@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -72,6 +72,15 @@ const PlanEventSection = () => {
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Track window size to toggle cards per page natively
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    handleResize() // init
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Derive active category — default to first category once loaded
   const activeCategory = selectedCategory ?? safeCategories[0] ?? null
@@ -81,9 +90,10 @@ const PlanEventSection = () => {
     ? safeEventCards.filter(c => c?.category === activeCategory)
     : safeEventCards
 
-  // Paginate: show CARDS_PER_PAGE at a time
-  const totalPages = Math.max(1, Math.ceil(filteredCards.length / CARDS_PER_PAGE))
-  const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
+  // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
+  const currentCardsPerPage = isMobile ? 1 : (typeof CARDS_PER_PAGE !== 'undefined' ? CARDS_PER_PAGE : 3)
+  const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
+  const visibleCards = filteredCards.slice(page * currentCardsPerPage, (page + 1) * currentCardsPerPage)
 
   // Reset page when category changes
   const handleCategorySelect = cat => {
@@ -94,33 +104,29 @@ const PlanEventSection = () => {
   const scallopCount = [...Array(15)]
 
   return (
-    <section className="relative w-full min-h-screen bg-[#F7F7F5] pt-32 md:pt-52 flex flex-col overflow-hidden font-sans">
-      <div className="absolute top-0 left-0 w-full flex pointer-events-none z-0">
+    <section className="relative w-full min-h-screen bg-[#F2F2F2] md:bg-[#F7F7F5] pt-[40px] md:pt-52 flex flex-col overflow-hidden font-sans">
+      
+      {/* Background Decor (Desktop predominantly) */}
+      <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
         {scallopCount.map((_, i) => (
           <div key={i} className="relative shrink-0 w-[72px] md:w-[144px] h-[45px] md:h-[90px]">
             <div
               className="absolute top-0 left-0 w-full h-full bg-[#727355]"
               style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
             ></div>
-
             <div
               className="absolute top-0 left-0 w-full h-[36px] md:h-[72px] bg-[#BFAC9B]"
               style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
             ></div>
-
             {i !== scallopCount.length - 1 && (
               <div className="absolute top-0 right-0 translate-x-1/2 flex flex-col items-center z-20">
-                <div
-                  className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#3D4035]/60`}
-                ></div>
-
+                <div className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#3D4035]/60`}></div>
                 <div className="relative flex flex-col items-center">
                   <img
                     src={i % 2 === 0 ? bulb1 : bulb2}
                     alt="Pendant Light"
                     className="w-[20px] md:w-[32px] h-auto relative z-10"
                   />
-
                   <div
                     className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
                       i % 2 === 0
@@ -128,8 +134,7 @@ const PlanEventSection = () => {
                         : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
                     }`}
                     style={{
-                      background:
-                        i % 2 === 0
+                      background: i % 2 === 0
                           ? 'linear-gradient(180deg, #FCD768 0%, #F7F7F5 100%)'
                           : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F7F7F5 100%)',
                       clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
@@ -142,40 +147,30 @@ const PlanEventSection = () => {
         ))}
       </div>
 
-      <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 pb-8 md:pb-12 flex flex-col md:flex-row justify-between items-start md:items-end relative z-10">
+      {/* Header Info */}
+      <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 pb-8 md:pb-12 flex flex-col md:flex-row justify-between items-center md:items-end relative z-10">
         <h1
-          className="text-[48px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal reveal-heading"
+          className="text-[24px] md:text-[61px] leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Plan Your Event, </span>
-          </span>
-          <br />
-          <span className="reveal-wrapper">
-            <span className="reveal-text">Differently.</span>
+            <span className="reveal-text">Plan Your Event, <br className="hidden md:block"/> Differently.</span>
           </span>
         </h1>
 
-        <div className="max-w-[340px] mt-6 md:mt-0">
-          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium reveal-on-scroll">
+        <div className="max-w-[353px] md:max-w-[340px] mt-5 md:mt-0 flex flex-col items-center md:items-start">
+          <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Choose your event type and explore curated décor and catering packages designed to
-                simplify planning.
+                Choose your event type and explore curated décor and catering packages designed to simplify planning.
               </span>
             </span>
           </p>
 
-          <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
             <span className="text-white font-medium text-[15px] mr-5">View All</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <svg
-                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
+              <svg className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
               </svg>
             </div>
@@ -183,80 +178,117 @@ const PlanEventSection = () => {
         </div>
       </div>
 
-      <hr className="relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15 z-10" />
+      <hr className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15 z-10" />
 
+      {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
-        <aside className="w-full md:w-[320px] py-12 md:py-20 px-6 md:px-16 flex flex-col items-start shrink-0 md:border-r border-[#3D4035]/15">
-          <div className="flex flex-col gap-6 md:gap-8">
-            {safeCategories.map(cat => {
+        
+        {/* Categories Bar */}
+        <aside className="w-full md:w-[320px] pt-8 pb-10 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 md:border-r border-[#3D4035]/15">
+          <div className="flex flex-row md:flex-col items-center md:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
+            {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
-                <div
-                  key={cat}
-                  className={`cursor-pointer group w-fit ${isActive ? 'border-b-[1.5px] border-[#3D4035] pb-1.5' : ''}`}
-                  onClick={() => handleCategorySelect(cat)}
-                >
-                  <span
-                    className={`font-medium text-[16px] tracking-wide transition-colors ${
-                      isActive
-                        ? 'text-[#3D4035] font-bold'
-                        : 'text-[#A3A3A3] group-hover:text-[#3D4035]'
+                <React.Fragment key={cat}>
+                  <div
+                    className={`cursor-pointer group w-fit flex flex-col ${
+                      isActive 
+                        ? 'opacity-100 border-b border-[#364022] pb-1 md:border-b-[1.5px] md:border-[#3D4035] md:pb-1.5' 
+                        : 'opacity-50 md:opacity-100'
                     }`}
+                    onClick={() => handleCategorySelect(cat)}
                   >
-                    {cat}
-                  </span>
-                </div>
+                    <span
+                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
+                        isActive
+                          ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
+                          : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
+                      }`}
+                    >
+                      {cat}
+                    </span>
+                  </div>
+                  {/* Vertical Separator for Mobile */}
+                  {index < safeCategories.length - 1 && (
+                    <div className="block md:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
+                  )}
+                </React.Fragment>
               )
             })}
           </div>
         </aside>
 
-        <div className="flex-1 py-12 md:py-16 px-6 md:px-12 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {visibleCards.map(card => (
-              <div
-                key={card.id ?? card.title}
-                className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
+        {/* Cards Carousel Area */}
+        <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden">
+          
+          <div className="relative w-full flex justify-center md:block">
+            
+            {/* Mobile Left Navigation Arrow */}
+            <div className="absolute top-1/2 -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+              <button
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
               >
-                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden min-h-[140px] md:min-h-0">
-                  <img
-                    src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                    alt={card.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <svg className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
 
-                <div className="bg-[#787A5E] rounded-[12px] md:rounded-[16px] p-3 md:p-7 h-[130px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
-                  <h3 className="text-white font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide">
-                    {card.title}
-                  </h3>
-                  <p className="text-white/80 text-[12px] md:text-[13px] leading-relaxed font-light pr-2">
-                    {card.description}
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-4 md:px-0 w-[289px] md:w-auto relative">
+              {visibleCards.map(card => (
+                <div
+                  key={card.id ?? card.title}
+                  className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                >
+                  <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                    <img
+                      src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                      alt={card.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                    <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide uppercase font-['Poppins']">
+                      {card.title}
+                    </h3>
+                    <p className="text-white/50 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light font-['Poppins']">
+                      {card.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Mobile Right Navigation Arrow */}
+            <div className="absolute top-1/2 -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+              <button
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+              >
+                <svg className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          {/* Pagination */}
-          <div className="w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto flex justify-between items-center gap-[25px]">
+          {/* Pagination Controls */}
+
+          {/* Desktop Pagination Block */}
+          <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-
             <div className="flex items-center gap-[4px] justify-center">
               {[...Array(totalPages)].map((_, i) => (
                 <div
@@ -268,24 +300,48 @@ const PlanEventSection = () => {
                 />
               ))}
             </div>
-
             <button
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
+
+          {/* Mobile Pagination Dots */}
+          <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            {[...Array(totalPages)].map((_, i) => (
+              <div
+                key={i}
+                onClick={() => setPage(i)}
+                className={`cursor-pointer rounded-[12px] transition-all ${
+                  i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Mobile View All Button */}
+          <div className="flex md:hidden justify-center pb-12">
+            <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+              <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">View All</span>
+              <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                <svg
+                  className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                </svg>
+              </div>
+            </button>
+          </div>
+
         </div>
       </div>
     </section>
@@ -300,6 +356,15 @@ const WhatToPlanSection = () => {
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Track window size to toggle cards per page natively
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024) // Using 1024px since original code uses lg: for sidebar
+    handleResize() // init
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Derive categories from service cards
   const categories = [...new Set(safeServiceCards.map(s => s?.category).filter(Boolean))]
@@ -309,8 +374,10 @@ const WhatToPlanSection = () => {
     ? safeServiceCards.filter(s => s?.category === activeCategory)
     : safeServiceCards
 
-  const totalPages = Math.max(1, Math.ceil(filteredCards.length / CARDS_PER_PAGE))
-  const visibleCards = filteredCards.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
+  // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
+  const currentCardsPerPage = isMobile ? 1 : (typeof CARDS_PER_PAGE !== 'undefined' ? CARDS_PER_PAGE : 3)
+  const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
+  const visibleCards = filteredCards.slice(page * currentCardsPerPage, (page + 1) * currentCardsPerPage)
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -318,10 +385,13 @@ const WhatToPlanSection = () => {
   }
 
   return (
-    <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden">
-      <div className="w-full max-w-[1440px] mx-auto pt-16 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-start md:items-center">
-        <div className="max-w-[340px] order-last md:order-first mb-6 md:mb-0">
-          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium reveal-on-scroll">
+    <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden font-sans">
+      
+      {/* Header Info */}
+      <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center">
+        
+        <div className="max-w-[353px] md:max-w-[340px] order-last md:order-first mt-5 md:mt-0 flex flex-col items-center md:items-start">
+          <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 Choose a service category to explore curated packages designed for your event.
@@ -329,7 +399,7 @@ const WhatToPlanSection = () => {
             </span>
           </p>
 
-          <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
             <span className="text-white font-medium text-[15px] mr-5">View All</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
@@ -346,63 +416,86 @@ const WhatToPlanSection = () => {
         </div>
 
         <h2
-          className="font-display text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal order-first md:order-last reveal-heading"
+          className="font-display text-[28px] md:text-[61px] leading-[1] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left order-first md:order-last reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">What Would You </span>
-          </span>
-          <br />
-          <span className="reveal-wrapper">
-            <span className="reveal-text">Like To Plan?</span>
+            <span className="reveal-text">What Would You <br className="hidden md:block" /> Like To <br className="block md:hidden"/> Plan?</span>
           </span>
         </h2>
       </div>
 
-      <hr className="relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15" />
+      <hr className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15" />
 
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
-        <div className="flex-1 order-last lg:order-none py-12 md:py-16 px-6 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {visibleCards.map(card => (
-              <div
-                key={card.id ?? card.title}
-                className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
+      {/* Main Content */}
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
+        
+        {/* Cards Carousel Area */}
+        <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15 w-full overflow-hidden">
+          
+          <div className="relative w-full flex justify-center md:block">
+            
+            {/* Mobile Left Navigation Arrow */}
+            <div className="absolute top-1/2 -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
+              <button
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
               >
-                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden min-h-[140px] md:min-h-0">
-                  <img
-                    src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                    alt={card.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <svg className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
 
-                <div className="bg-[#787A5E] rounded-[12px] md:rounded-[16px] p-3 md:p-7 h-[130px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
-                  <h3 className="text-white font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide">
-                    {card.title}
-                  </h3>
-                  <p className="text-white/80 text-[12px] md:text-[13px] leading-relaxed font-light pr-2">
-                    {card.description}
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-4 md:px-0 w-[289px] md:w-auto relative">
+              {visibleCards.map(card => (
+                <div
+                  key={card.id ?? card.title}
+                  className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                >
+                  <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                    <img
+                      src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                      alt={card.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                    <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide font-['Poppins']">
+                      {card.title}
+                    </h3>
+                    <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
+                      {card.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Mobile Right Navigation Arrow */}
+            <div className="absolute top-1/2 -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
+              <button
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+              >
+                <svg className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <div className="w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto flex justify-between items-center gap-[25px]">
+          {/* Desktop Pagination Block */}
+          <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px]">
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -424,44 +517,80 @@ const WhatToPlanSection = () => {
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
+
+          {/* Mobile Pagination Dots */}
+          <div className="flex lg:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            {[...Array(totalPages)].map((_, i) => (
+              <div
+                key={i}
+                onClick={() => setPage(i)}
+                className={`cursor-pointer rounded-[12px] transition-all ${
+                  i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Mobile View All Button */}
+          <div className="flex lg:hidden justify-center pb-12">
+            <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+              <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">View All</span>
+              <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                <svg
+                  className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                </svg>
+              </div>
+            </button>
+          </div>
+
         </div>
 
-        <aside className="w-full lg:w-[320px] order-first lg:order-none py-12 md:py-20 px-6 md:px-16 flex flex-col items-start shrink-0 border-b lg:border-b-0 border-[#3D4035]/15">
-          <div className="flex flex-col gap-6 md:gap-8">
-            {categories.map(cat => {
+        {/* Categories Bar */}
+        <aside className="w-full lg:w-[320px] order-first lg:order-none pt-8 pb-10 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 lg:border-none border-[#3D4035]/15">
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
+            {categories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
-                <div
-                  key={cat}
-                  className={`cursor-pointer group w-fit ${isActive ? 'border-b-[1.5px] border-[#3D4035] pb-1.5' : ''}`}
-                  onClick={() => handleCategorySelect(cat)}
-                >
-                  <span
-                    className={`font-medium text-[16px] tracking-wide transition-colors ${
-                      isActive
-                        ? 'text-[#3D4035] font-bold'
-                        : 'text-[#A3A3A3] group-hover:text-[#3D4035]'
+                <React.Fragment key={cat}>
+                  <div
+                    className={`cursor-pointer group w-fit flex flex-col ${
+                      isActive 
+                        ? 'opacity-100 border-b border-[#364022] pb-1 lg:border-b-[1.5px] lg:border-[#3D4035] lg:pb-1.5' 
+                        : 'opacity-50 lg:opacity-100'
                     }`}
+                    onClick={() => handleCategorySelect(cat)}
                   >
-                    {cat}
-                  </span>
-                </div>
+                    <span
+                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
+                        isActive
+                          ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
+                          : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
+                      }`}
+                    >
+                      {cat}
+                    </span>
+                  </div>
+                  {/* Vertical Separator for Mobile */}
+                  {index < categories.length - 1 && (
+                    <div className="block lg:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
+                  )}
+                </React.Fragment>
               )
             })}
           </div>
         </aside>
+
       </div>
     </section>
   )
@@ -788,7 +917,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       className="relative w-full bg-[#591902] py-40 overflow-hidden font-sans text-white"
       style={{ scrollMarginTop: '100px' }}
     >
-      <h2 className="text-[61px] text-center mb-32 tracking-wide font-serif font-display reveal-heading">
+      <h2 className="text-[24px] md:text-[61px] text-center mb-32 tracking-wide font-serif font-display reveal-heading">
         <span className="reveal-wrapper">
           <span className="reveal-text">HOW 11 WORKS</span>
         </span>
@@ -817,21 +946,21 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
             >
               {step.side === 'right' ? (
                 <>
-                  <div className="left-content w-1/2 pr-20 flex justify-end items-start mt-8 step-reveal opacity-0">
+                  <div className="left-content w-1/2 pr-6 md:pr-20 flex justify-end items-start mt-8 step-reveal opacity-0">
                     <span className="reveal-wrapper">
                       <span className="reveal-text reveal-text-x-left">
                         <IconComponent />
                       </span>
                     </span>
                   </div>
-                  <div className="right-content w-1/2 pl-20 flex flex-col items-start text-left relative z-20 opacity-0">
+                  <div className="right-content w-1/2 pl-6 md:pl-20 flex flex-col items-start text-left relative z-20 opacity-0">
                     <div
-                      className="reveal-wrapper reveal-wrapper-circle step-reveal mb-6"
+                      className="reveal-wrapper reveal-wrapper-circle reveal-wrapper-circle-right step-reveal mb-6"
                       style={{ display: 'inline-flex' }}
                     >
                       <div className="reveal-text reveal-text-x-right reveal-circle-text">
                         <div
-                          className="w-[60px] h-[60px] bg-[#CDB17E] rounded-full flex items-center justify-center text-[22px] font-serif"
+                          className="w-[40px] h-[40px] md:w-[60px] md:h-[60px] bg-[#CDB17E] rounded-[40px] md:rounded-full flex items-center justify-center text-[18px] md:text-[22px] font-serif"
                           style={{
                             boxShadow:
                               '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
@@ -841,12 +970,12 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
                         </div>
                       </div>
                     </div>
-                    <h3 className="text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                    <h3 className="text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{step.title}</span>
                       </span>
                     </h3>
-                    <p className="text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                    <p className="text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{step.desc}</span>
                       </span>
@@ -855,14 +984,14 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
                 </>
               ) : (
                 <>
-                  <div className="left-content w-1/2 pr-20 flex flex-col items-end text-right relative z-20 step-reveal opacity-0">
+                  <div className="left-content w-1/2 pr-6 md:pr-20 flex flex-col items-end text-right relative z-20 step-reveal opacity-0">
                     <div
                       className="reveal-wrapper reveal-wrapper-circle step-reveal mb-6"
                       style={{ display: 'inline-flex' }}
                     >
                       <div className="reveal-text reveal-text-x-left reveal-circle-text">
                         <div
-                          className="w-[60px] h-[60px] bg-[#CDB17E] rounded-full flex items-center justify-center text-[22px] font-serif"
+                          className="w-[40px] h-[40px] md:w-[60px] md:h-[60px] bg-[#CDB17E] rounded-[40px] md:rounded-full flex items-center justify-center text-[18px] md:text-[22px] font-serif"
                           style={{
                             boxShadow:
                               '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
@@ -872,18 +1001,18 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
                         </div>
                       </div>
                     </div>
-                    <h3 className="text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                    <h3 className="text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{step.title}</span>
                       </span>
                     </h3>
-                    <p className="text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                    <p className="text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{step.desc}</span>
                       </span>
                     </p>
                   </div>
-                  <div className="right-content w-1/2 pl-20 flex justify-start items-start mt-8 step-reveal opacity-0">
+                  <div className="right-content w-1/2 pl-6 md:pl-20 flex justify-start items-start mt-8 step-reveal opacity-0">
                     <span className="reveal-wrapper">
                       <span className="reveal-text reveal-text-x-right">
                         <IconComponent />
@@ -905,7 +1034,7 @@ const CTASection = () => {
     <section className="w-full flex justify-center bg-[#591902] font-sans">
       <div className="w-full max-w-[1440px] h-[360px] flex flex-col items-center py-[80px] px-6">
         <h2
-          className="text-[#FFFFFF] text-[36px] font-normal leading-none text-center font-serif reveal-heading"
+          className="text-[#FFFFFF] text-[24px] md:text-[36px] font-normal leading-none text-center font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
@@ -913,7 +1042,7 @@ const CTASection = () => {
           </span>
         </h2>
 
-        <p className="text-[#FFFFFF] opacity-50 text-[16px] font-normal leading-[1.5] text-center max-w-[723px] mt-[32px] reveal-on-scroll">
+        <p className="text-[#FFFFFF] opacity-50 text-[12px] md:text-[16px] font-normal leading-[1.5] text-center max-w-[723px] mt-[32px] reveal-on-scroll">
           <span className="reveal-wrapper">
             <span className="reveal-text">
               Drop your details and we&apos;ll get in touch. You&apos;re just one call away from
@@ -922,20 +1051,18 @@ const CTASection = () => {
           </span>
         </p>
 
-        <button className="group mt-[40px] flex items-center justify-between bg-[#CDB17E] rounded-[56px] w-[243px] h-[44px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#bfa06b] transition-colors">
-          <span className="text-[#FAFAFA] text-[16px] font-medium leading-[1.5] tracking-wide">
+        <button className="group mt-[40px] flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] h-[33.54px] pl-[18.2948px] pr-[3.04913px] py-[3.04913px] md:rounded-[56px] md:w-[243px] md:h-[44px] md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors">
+          <span className="text-[#FAFAFA] text-[12px] md:text-[16px] font-medium leading-[150%] tracking-wide w-[120px] h-[18px] md:w-auto md:h-auto whitespace-nowrap">
             Book a Consultation
           </span>
 
-          <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+          <div className="w-[27.44px] h-[27.44px] p-[6.09826px] bg-[#FAFAFA] rounded-[45.7369px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 md:w-[36px] md:h-[36px] md:p-0 md:rounded-full">
             <svg
-              className="transition-transform duration-300 ease-out group-hover:rotate-45"
-              width="20"
-              height="20"
+              className="w-[15.25px] h-[15.25px] transition-transform duration-300 ease-out group-hover:rotate-45 md:w-[20px] md:h-[20px]"
               viewBox="0 0 24 24"
               fill="none"
               stroke="#CDB17E"
-              strokeWidth="1.5"
+              strokeWidth="1.14342"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
@@ -957,30 +1084,32 @@ const BetterWaySection = () => {
       <div className="relative w-[1440px] max-w-full min-w-0 mx-auto h-[1171px] shrink-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10">
           {scallopCount.map((_, i) => (
-            <div key={i} className="relative shrink-0 w-[144px] h-[90px]">
+            <div key={i} className="relative shrink-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px]">
               <div
-                className="absolute top-0 left-0 w-[144px] h-[90px] bg-[#CDB17E]"
+                className="absolute top-0 left-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px] bg-[#CDB17E]"
                 style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
               ></div>
               <div
-                className="absolute top-0 left-0 w-[144px] h-[72px] bg-[#591902]"
+                className="absolute top-0 left-0 w-[65.5px] h-[32.75px] md:w-[144px] md:h-[72px] bg-[#591902]"
                 style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
               ></div>
 
               {i !== scallopCount.length - 1 && (
                 <div className="absolute top-0 right-0 translate-x-1/2 flex flex-col items-center z-20">
                   <div
-                    className={`w-[1px] ${i % 2 === 0 ? 'h-[-15px]' : 'h-[-5px]'} bg-[#591902]/40`}
+                    className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-14px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`}
                   ></div>
                   <div className="relative flex flex-col items-center">
                     <img
                       src={i % 2 === 0 ? bulb1 : bulb2}
                       alt="Light"
-                      className="w-[32px] h-auto relative z-10"
+                      className="w-[20px] md:w-[32px] h-auto relative z-10"
                     />
                     <div
-                      className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-2 w-[76px] opacity-40 pointer-events-none ${
-                        i % 2 === 0 ? 'h-[78px] blur-[8px]' : 'h-[59px] blur-[4px]'
+                      className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
+                        i % 2 === 0
+                          ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
+                          : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
                       }`}
                       style={{
                         background:
@@ -997,28 +1126,30 @@ const BetterWaySection = () => {
           ))}
         </div>
 
-        <h2
-          className="absolute w-[679px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[253px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif reveal-heading"
-          style={{ fontFamily: "'Malgin', serif" }}
-        >
-          <span className="reveal-wrapper">
-            <span className="reveal-text">A Better Way Between </span>
-          </span>
-          <br />
-          <span className="reveal-wrapper">
-            <span className="reveal-text">Event and DIY</span>
-          </span>
-        </h2>
-
-        <p className="absolute w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[403px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center reveal-on-scroll">
-          <span className="reveal-wrapper">
-            <span className="reveal-text">
-              Event planners can feel expensive and overwhelming. Doing everything yourself can
-              quickly become stressful. Elewen brings the best of both, thoughtful styling without
-              the chaos.
+        <div className="absolute w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[253px] flex flex-col items-center gap-[10px] md:static md:block md:w-full md:max-w-none md:translate-x-0">
+          <h2
+            className="w-full text-[#2D2D2D] text-[24px] md:text-[61px] leading-[1] text-center font-serif reveal-heading md:absolute md:w-[679px] md:left-1/2 md:-translate-x-1/2 md:top-[253px]"
+            style={{ fontFamily: "'Malgin', serif" }}
+          >
+            <span className="reveal-wrapper">
+              <span className="reveal-text">A Better Way Between </span>
             </span>
-          </span>
-        </p>
+            <br />
+            <span className="reveal-wrapper">
+              <span className="reveal-text">Event and DIY</span>
+            </span>
+          </h2>
+
+          <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[1.5] text-center reveal-on-scroll md:absolute md:w-[809px] md:left-1/2 md:-translate-x-1/2 md:top-[403px]">
+            <span className="reveal-wrapper">
+              <span className="reveal-text">
+                Event planners can feel expensive and overwhelming. Doing everything yourself can
+                quickly become stressful. Elewen brings the best of both, thoughtful styling without
+                the chaos.
+              </span>
+            </span>
+          </p>
+        </div>
 
         <div className="absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]">
           <svg
@@ -1142,10 +1273,14 @@ const ChecklistSection = () => {
     const doorCurvedText = gate.querySelector('#door-curved-text')
 
     const isMobile = window.innerWidth < 768
-    const scaleEnd = isMobile ? 3 : 4
-    const scrollEnd = isMobile ? 800 : 1500
-    const scrubVal = isMobile ? 1.5 : 1
-    const startTrigger = 'top top'
+    const scaleEnd = isMobile ? 4 : 4
+    const gateLiftY = isMobile ? -280 : -220
+    const scrollEnd = isMobile ? 1300 : 1500
+    const scrubVal = isMobile ? 1 : 1
+    
+    // UPDATED: Trigger earlier on mobile so the user doesn't have to scroll as far
+    // 'top 45%' means the animation starts when the top of the element hits 45% down from the top of the viewport.
+    const startTrigger = isMobile ? 'top 65%' : 'top top'
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -1159,7 +1294,7 @@ const ChecklistSection = () => {
       },
     })
 
-    tl.to(gate, { scale: scaleEnd, ease: 'power2.in', duration: 1 }, 0)
+    tl.to(gate, { scale: scaleEnd, y: gateLiftY, ease: 'power2.in', duration: 1 }, 0)
     if (doorTable) tl.to(doorTable, { x: 120, ease: 'power2.in', duration: 1 }, 0)
     if (doorLights) tl.to(doorLights, { y: -60, ease: 'power2.in', duration: 1 }, 0)
     const archPath = gate.querySelector('#door-arch-path')
@@ -1181,8 +1316,8 @@ const ChecklistSection = () => {
         0
       )
 
-    if (doorFill) tl.to(doorFill, { opacity: 0, duration: 0.4, ease: 'power2.in' }, 0.5)
-    tl.to(gate, { opacity: 0, duration: 0.2, ease: 'power2.out' }, 0.7)
+    if (doorFill) tl.to(doorFill, { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.78)
+    tl.to(gate, { opacity: 0, duration: 0.15, ease: 'power2.out' }, 0.88)
 
     tl.to(
       howItWorks,
@@ -1233,13 +1368,13 @@ const ChecklistSection = () => {
 
       <div className="absolute top-0 left-0 w-full flex pointer-events-none z-10">
         {scallopCount.map((_, i) => (
-          <div key={i} className="relative shrink-0 w-[72px] md:w-[144px] h-[45px] md:h-[90px]">
+          <div key={i} className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]">
             <div
-              className="absolute top-0 left-0 w-full h-[36px] md:h-[72px] bg-[#CDB17E]"
+              className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
               style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
             ></div>
             <div
-              className="absolute top-0 left-0 w-full h-[30px] md:h-[60px] bg-[#F2F2F2]"
+              className="absolute top-0 left-0 w-full h-[32.75px] md:h-[60px] bg-[#F2F2F2]"
               style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
             ></div>
 
@@ -1276,7 +1411,7 @@ const ChecklistSection = () => {
       </div>
 
       <h2
-        className="text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
+        className="text-[24px] md:text-[61px] leading-[1.1] md:leading-[1] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
         <span className="reveal-wrapper">
@@ -1433,7 +1568,7 @@ const ChecklistSection = () => {
 
       <div className="flex flex-col items-center gap-6 md:gap-8 mb-8 md:mb-32 z-10 text-center mt-8 md:mt-[40px] px-6">
         <h3
-          className="text-[28px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading"
+          className="text-[20px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
@@ -1442,22 +1577,22 @@ const ChecklistSection = () => {
         </h3>
 
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">You don&apos;t have to manage people.</span>
             </span>
           </p>
-          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">You don&apos;t have to manage logistics</span>
             </span>
           </p>
-          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">No chasing vendors.</span>
             </span>
           </p>
-          <p className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">No waiting anxiously.</span>
             </span>
@@ -2067,6 +2202,15 @@ const PlanningGuidesSection = () => {
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Track window size to toggle cards per page natively
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    handleResize() // init
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const activeCategory = selectedCategory ?? safeCategories[0] ?? null
 
@@ -2074,8 +2218,10 @@ const PlanningGuidesSection = () => {
     ? safeAllBlogs.filter(b => b?.category === activeCategory)
     : safeAllBlogs
 
-  const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / CARDS_PER_PAGE))
-  const visibleBlogs = filteredBlogs.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE)
+  // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
+  const currentCardsPerPage = isMobile ? 1 : (typeof CARDS_PER_PAGE !== 'undefined' ? CARDS_PER_PAGE : 3)
+  const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / currentCardsPerPage))
+  const visibleBlogs = filteredBlogs.slice(page * currentCardsPerPage, (page + 1) * currentCardsPerPage)
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -2083,32 +2229,30 @@ const PlanningGuidesSection = () => {
   }
 
   return (
-    <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden">
-      <div className="w-full max-w-[1440px] mx-auto pt-24 pb-12 px-12 lg:px-20 flex flex-col md:flex-row justify-between items-start md:items-center">
+    <section className="w-full min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans">
+      
+      {/* Header Info */}
+      <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center relative z-10">
+        
         <h2
-          className="font-display text-[40px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#3D4035] font-normal tracking-normal text-left mb-10 md:mb-0 reveal-heading"
+          className="font-display text-[28px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left mb-5 md:mb-0 reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Planning Guides &amp; </span>
-          </span>
-          <br />
-          <span className="reveal-wrapper">
-            <span className="reveal-text">Celebration Ideas</span>
+            <span className="reveal-text">Planning Guides &amp; <br className="hidden md:block" /> Celebration Ideas</span>
           </span>
         </h2>
 
-        <div className="max-w-[340px]">
-          <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium reveal-on-scroll">
+        <div className="max-w-[353px] md:max-w-[340px] flex flex-col items-center md:items-start">
+          <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Helpful tips, inspiration, and practical guides to make planning your next
-                celebration simpler.
+                Helpful tips, inspiration, and practical guides to make planning your next celebration simpler.
               </span>
             </span>
           </p>
 
-          <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
             <span className="text-white font-medium text-[15px] mr-5">View All</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
@@ -2125,79 +2269,115 @@ const PlanningGuidesSection = () => {
         </div>
       </div>
 
-      <hr className="relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15" />
+      <hr className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15 z-10" />
 
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
-        <aside className="w-full lg:w-[320px] py-16 lg:py-20 px-12 lg:px-16 flex flex-col items-start shrink-0 border-b lg:border-b-0 lg:border-r border-[#3D4035]/15">
-          <div className="flex flex-col gap-8">
-            {safeCategories.map(cat => {
+      {/* Main Content */}
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
+        
+        {/* Categories Bar */}
+        <aside className="w-full lg:w-[320px] pt-8 pb-10 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b lg:border-b-0 lg:border-r border-[#3D4035]/15">
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] lg:gap-8 flex-wrap justify-center w-full">
+            {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
-                <div
-                  key={cat}
-                  className={`cursor-pointer group w-fit ${isActive ? 'border-b-[1.5px] border-[#3D4035] pb-1.5' : ''}`}
-                  onClick={() => handleCategorySelect(cat)}
-                >
-                  <span
-                    className={`text-[16px] tracking-wide transition-colors ${
-                      isActive
-                        ? 'text-[#3D4035] font-bold'
-                        : 'text-[#A3A3A3] font-medium group-hover:text-[#3D4035]'
+                <React.Fragment key={cat}>
+                  <div
+                    className={`cursor-pointer group w-fit flex flex-col ${
+                      isActive 
+                        ? 'opacity-100 border-b border-[#364022] pb-1 lg:border-b-[1.5px] lg:border-[#3D4035] lg:pb-1.5' 
+                        : 'opacity-50 lg:opacity-100'
                     }`}
+                    onClick={() => handleCategorySelect(cat)}
                   >
-                    {cat}
-                  </span>
-                </div>
+                    <span
+                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
+                        isActive
+                          ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
+                          : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
+                      }`}
+                    >
+                      {cat}
+                    </span>
+                  </div>
+                  {/* Vertical Separator for Mobile/Tablet */}
+                  {index < safeCategories.length - 1 && (
+                    <div className="block lg:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
+                  )}
+                </React.Fragment>
               )
             })}
           </div>
         </aside>
 
-        <div className="flex-1 py-16 px-12 lg:px-8 flex flex-col">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {visibleBlogs.map(blog => (
-              <div
-                key={blog.id ?? blog.title}
-                className="bg-white p-2.5 rounded-[24px] shadow-sm flex flex-col h-[460px] group cursor-pointer"
+        {/* Cards Carousel Area */}
+        <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden">
+          
+          <div className="relative w-full flex justify-center md:block">
+            
+            {/* Mobile Left Navigation Arrow */}
+            <div className="absolute top-1/2 -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+              <button
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
               >
-                <div className="flex-1 rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden">
-                  <img
-                    src={blog.cover_image ?? CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]}
-                    alt={blog.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <svg className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
 
-                <div className="bg-[#787A5E] rounded-[16px] p-7 h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
-                  <h3 className="text-white font-semibold text-[17px] mb-2.5 tracking-wide">
-                    {blog.title}
-                  </h3>
-                  <p className="text-white/80 text-[13px] leading-relaxed font-light pr-2">
-                    {blog.excerpt}
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-4 md:px-0 w-[289px] md:w-auto relative">
+              {visibleBlogs.map(blog => (
+                <div
+                  key={blog.id ?? blog.title}
+                  className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                >
+                  <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                    <img
+                      src={blog.cover_image ?? CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]}
+                      alt={blog.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                    <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
+                      {blog.title}
+                    </h3>
+                    <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins'] line-clamp-2">
+                      {blog.excerpt}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Mobile Right Navigation Arrow */}
+            <div className="absolute top-1/2 -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+              <button
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+              >
+                <svg className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <div className="w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto flex justify-between items-center gap-[25px]">
+          {/* Desktop Pagination Block */}
+          <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-
             <div className="flex items-center gap-[4px] justify-center">
               {[...Array(totalPages)].map((_, i) => (
                 <div
@@ -2209,24 +2389,48 @@ const PlanningGuidesSection = () => {
                 />
               ))}
             </div>
-
             <button
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
               className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg
-                width="28"
-                height="28"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
+
+          {/* Mobile Pagination Dots */}
+          <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            {[...Array(totalPages)].map((_, i) => (
+              <div
+                key={i}
+                onClick={() => setPage(i)}
+                className={`cursor-pointer rounded-[12px] transition-all ${
+                  i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Mobile View All Button */}
+          <div className="flex md:hidden justify-center pb-12">
+            <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+              <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">View All</span>
+              <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                <svg
+                  className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                </svg>
+              </div>
+            </button>
+          </div>
+
         </div>
       </div>
     </section>
@@ -2263,7 +2467,7 @@ const TestimonialsSection = () => {
   return (
     <section className="relative w-full min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center">
       <h2
-        className="text-[#FFFFFF] text-[61px] leading-[1] text-center font-serif mt-[80px] z-10 px-4 reveal-heading"
+        className="text-[#FFFFFF] text-[24px] md:text-[61px] leading-[1] text-center font-serif mt-[80px] z-10 px-4 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
         <span className="reveal-wrapper">
@@ -2402,7 +2606,7 @@ const SplitInfoSection = () => {
         <div className="relative w-full lg:w-[880px] h-auto lg:h-[511px] bg-[#FFFFFF] px-8 py-12 lg:p-0 flex flex-col items-center lg:items-start lg:block">
           <div className="lg:absolute lg:left-[100px] lg:top-[80px] flex flex-col items-start text-left w-full max-w-[400px]">
             <h2
-              className="text-[#2D2D2D] text-[27px] leading-[100%] w-full lg:w-[400px] font-serif m-0 reveal-heading"
+              className="text-[#2D2D2D] text-[20px] md:text-[27px] leading-[100%] w-full lg:w-[400px] font-serif m-0 reveal-heading"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper">
@@ -2412,7 +2616,7 @@ const SplitInfoSection = () => {
               </span>
             </h2>
 
-            <p className="text-[#2D2D2D] opacity-50 text-[16px] leading-[150%] w-full lg:w-[339px] mt-[20px] font-sans m-0 reveal-on-scroll">
+            <p className="text-[#2D2D2D] opacity-50 text-[12px] md:text-[16px] leading-[150%] w-full lg:w-[339px] mt-[20px] font-sans m-0 reveal-on-scroll">
               <span className="reveal-wrapper">
                 <span className="reveal-text">
                   See how celebrations come together, discover new ideas, and follow along as we
@@ -2453,7 +2657,7 @@ const SplitInfoSection = () => {
 
           <div className="flex flex-col items-start w-full max-w-[420px] mt-10 lg:mt-0 lg:absolute lg:left-[40px] lg:top-[290px]">
             <h2
-              className="text-[#FFFFFF] text-[27px] leading-[100%] w-full lg:w-[420px] font-serif m-0 reveal-heading"
+              className="text-[#FFFFFF] text-[20px] md:text-[27px] leading-[100%] w-full lg:w-[420px] font-serif m-0 reveal-heading"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper">
@@ -2462,7 +2666,7 @@ const SplitInfoSection = () => {
             </h2>
 
             <div className="flex flex-col items-start gap-[16px] mt-[20px] w-full lg:w-[420px]">
-              <p className="text-[#FFFFFF] opacity-50 text-[16px] leading-[150%] w-full lg:w-[420px] font-sans m-0 reveal-on-scroll">
+              <p className="text-[#FFFFFF] opacity-50 text-[12px] md:text-[16px] leading-[150%] w-full lg:w-[420px] font-sans m-0 reveal-on-scroll">
                 <span className="reveal-wrapper">
                   <span className="reveal-text">
                     We collaborate with experienced decorators, caterers, and event professionals
