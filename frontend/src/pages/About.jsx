@@ -379,8 +379,9 @@ const About = () => {
               </h4>
               <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
                 <p>
-                  I still don&apos;t fully know how a formerly shy kid has turned into an adult who now
-                  builds experiences around people, conversations, and connection, but here we are.
+                  I still don&apos;t fully know how a formerly shy kid has turned into an adult who
+                  now builds experiences around people, conversations, and connection, but here we
+                  are.
                 </p>
                 <p>
                   I&apos;ve lived a large part of my life at boarding school, The Lawrence School,
@@ -389,7 +390,8 @@ const About = () => {
                 </p>
                 <p>
                   After doing a Msc. In International Events from the UK, and spending years in the
-                  industry, I knew I didn&apos;t want to build just another event management company.
+                  industry, I knew I didn&apos;t want to build just another event management
+                  company.
                 </p>
                 <p>So, I took a leap of faith and Elewen was born.</p>
               </div>
@@ -411,8 +413,8 @@ const About = () => {
               </h4>
               <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
                 <p>
-                  I&apos;m a dancer, reader, dreamer, and a believer that every little step eventually
-                  leads to the right place.
+                  I&apos;m a dancer, reader, dreamer, and a believer that every little step
+                  eventually leads to the right place.
                 </p>
                 <p>
                   I graduated from Ashoka university with an honours in economics and finance.

@@ -1,15 +1,9 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useLayoutEffect } from 'react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { usePlannerLead } from '../hooks/usePlannerLead'
+import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
 
-// Placeholders for your masonry collage images
-import img1 from '../assets/images/IMG_9814.jpg' // Left tall
-import img2 from '../assets/images/IMG_3148.jpg' // Top mid-left
-import img3 from '../assets/images/IMG_8625.png' // Mid left square
-import img4 from '../assets/images/6f6af066.jpg' // Top mid-right
-import img5 from '../assets/images/IMG_0658.jpg' // Top right
-import img6 from '../assets/images/IMG_7025.jpg' // Bottom mid-right
-import img7 from '../assets/images/IMG_0749.jpg' // Bottom mid-left
-import img8 from '../assets/images/IMG_3903.jpg' // Bottom right
 import plannerImg from '../assets/images/moksha_portrait.jpg'
 
 import celebrationImg1 from '../assets/images/citroen.png'
@@ -21,6 +15,8 @@ import everyDayImg1 from '../assets/images/IMG_3010.jpg' // Top Right
 import everyDayImg2 from '../assets/images/IMG_2017.jpg' // Bottom Right
 import everyDayImg3 from '../assets/images/IMG_7768.jpg' // Bottom Left
 import everyDayImg4 from '../assets/images/IMG_3001.jpg' // Top Center
+
+gsap.registerPlugin(ScrollTrigger)
 
 const celebrationData = [
   {
@@ -51,98 +47,329 @@ const celebrationData = [
     image: celebrationImg4,
     tall: false,
   },
+  {
+    id: '05',
+    title: 'CITROEN',
+    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+    image: celebrationImg1,
+    tall: false,
+  },
+  {
+    id: '06',
+    title: 'DANUBE',
+    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+    image: celebrationImg2,
+    tall: true,
+  },
+  {
+    id: '07',
+    title: 'GUNS & GULAABS',
+    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+    image: celebrationImg3,
+    tall: false,
+  },
+  {
+    id: '08',
+    title: 'USHA',
+    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+    image: celebrationImg4,
+    tall: true,
+  },
 ]
 
-const GrandCelebrationsSection = () => {
-  const scrollRef = useRef(null)
+// Defined at module level so React never treats it as a new component type on re-render
+const GCTextReveal = ({ children, className = '' }) => (
+  <span className="reveal-wrapper overflow-hidden inline-block">
+    <span
+      className={`gc-reveal-text inline-block ${className}`}
+      style={{ willChange: 'transform' }}
+    >
+      {children}
+    </span>
+  </span>
+)
 
-  const scroll = direction => {
-    if (!scrollRef.current) return
-    // Scroll 95% of the screen on mobile, or exactly one card + gap (322px) on desktop
-    const scrollAmount = window.innerWidth < 768 ? window.innerWidth * 0.95 : 322
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
+const GrandCelebrationsSection = () => {
+  const sectionRef = useRef(null)
+
+  const titleRef = useRef(null)
+  const noteRef = useRef(null)
+  const arrowLeftRef = useRef(null)
+  const arrowRightRef = useRef(null)
+
+  const activeCardRefs = useRef([])
+  const activeImgWrapRefs = useRef([])
+
+  const incomingCardRefs = useRef([])
+  const incomingImgWrapRefs = useRef([])
+  const incomingLayerRef = useRef(null)
+
+  const [perPage, setPerPage] = useState(4)
+  const [page, setPage] = useState(0)
+  const [incomingPage, setIncomingPage] = useState(null)
+  const [isAnimating, setIsAnimating] = useState(false)
+
+  const totalPages = Math.max(1, Math.ceil(celebrationData.length / perPage))
+
+  const getItems = pageIndex => {
+    const start = pageIndex * perPage
+    return celebrationData.slice(start, start + perPage)
+  }
+
+  const getRevealTexts = cards =>
+    cards.flatMap(card => Array.from(card.querySelectorAll('.gc-reveal-text')))
+
+  const go = dir => {
+    if (isAnimating || totalPages <= 1) return
+
+    const next = (page + dir + totalPages) % totalPages
+    setIsAnimating(true)
+    setIncomingPage(next)
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const outCards = activeCardRefs.current.filter(Boolean)
+        const outWraps = activeImgWrapRefs.current.filter(Boolean)
+        const inCards = incomingCardRefs.current.filter(Boolean)
+        const inWraps = incomingImgWrapRefs.current.filter(Boolean)
+
+        const outTexts = getRevealTexts(outCards)
+        const inTexts = getRevealTexts(inCards)
+
+        // Reveal the incoming layer only after setting hidden initial states (prevents flash)
+        gsap.set(incomingLayerRef.current, { opacity: 1 })
+        gsap.set(inTexts, { yPercent: 100, autoAlpha: 1 })
+        gsap.set(inWraps, { clipPath: 'inset(100% 0% 0% 0%)' })
+
+        const tl = gsap.timeline({
+          defaults: { ease: 'power2.inOut' },
+          onComplete: () => {
+            setPage(next)
+            setIncomingPage(null)
+            setIsAnimating(false)
+
+            activeCardRefs.current = []
+            activeImgWrapRefs.current = []
+            incomingCardRefs.current = []
+            incomingImgWrapRefs.current = []
+          },
+        })
+
+        tl.to(
+          outTexts,
+          { yPercent: -100, autoAlpha: 0, duration: 0.34, stagger: 0.015, ease: 'power2.in' },
+          0
+        ).to(
+          outWraps,
+          { clipPath: 'inset(0% 0% 100% 0%)', duration: 0.38, stagger: 0.03, ease: 'power2.in' },
+          0
+        )
+
+        tl.to(inWraps, {
+          clipPath: 'inset(0% 0% 0% 0%)',
+          duration: 0.55,
+          stagger: 0.045,
+          ease: 'power3.out',
+        }).to(
+          inTexts,
+          { yPercent: 0, autoAlpha: 1, duration: 0.55, stagger: 0.02, ease: 'power3.out' },
+          '<+=0.02'
+        )
+      })
     })
   }
 
+  useLayoutEffect(() => {
+    const updatePerPage = () => setPerPage(window.innerWidth >= 768 ? 4 : 1)
+    updatePerPage()
+    window.addEventListener('resize', updatePerPage)
+    return () => window.removeEventListener('resize', updatePerPage)
+  }, [])
+
+  useLayoutEffect(() => {
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion) return
+
+    const ctx = gsap.context(() => {
+      const cards = activeCardRefs.current.filter(Boolean)
+      const wraps = activeImgWrapRefs.current.filter(Boolean)
+      const arrows = [arrowLeftRef.current, arrowRightRef.current].filter(Boolean)
+      const bottomTexts = [titleRef.current, noteRef.current].filter(Boolean)
+      const cardTexts = getRevealTexts(cards)
+
+      gsap.set(cardTexts, { yPercent: 100, autoAlpha: 1 })
+      gsap.set(wraps, { clipPath: 'inset(100% 0% 0% 0%)' })
+      gsap.set(bottomTexts, { yPercent: 100, autoAlpha: 1 })
+      gsap.set(arrows, { autoAlpha: 0, y: 10, scale: 0.98 })
+
+      gsap
+        .timeline({
+          defaults: { ease: 'power3.out' },
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 72%',
+            toggleActions: 'play none none reverse',
+          },
+        })
+        .to(wraps, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.8, stagger: 0.06 })
+        .to(cardTexts, { yPercent: 0, duration: 0.55, stagger: 0.02 }, 0.1)
+        .to(bottomTexts, { yPercent: 0, duration: 0.65, stagger: 0.08 }, 0.18)
+        .to(arrows, { autoAlpha: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.06 }, 0.22)
+    }, sectionRef)
+
+    return () => ctx.revert()
+  }, [perPage])
+
+  const activeItems = getItems(page)
+  const incomingItems = incomingPage === null ? [] : getItems(incomingPage)
+
   return (
-    <section className="relative w-full bg-[#FFFFFF] flex justify-center overflow-hidden font-sans">
+    <section
+      ref={sectionRef}
+      className="relative w-full bg-[#FFFFFF] flex justify-center overflow-hidden font-sans"
+    >
       <div className="relative w-full max-w-[1440px] h-[845px] mx-auto">
-        <div
-          ref={scrollRef}
-          className="absolute top-[80px] w-full flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-10"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}
-        >
-          <style>{`::-webkit-scrollbar { display: none; }`}</style>
-
-          {/* FRONT SPACER */}
-          <div className="shrink-0 w-[54px] md:w-[76px]"></div>
-
-          {celebrationData.map(item => (
-            <div
-              key={item.id}
-              // FIXED: Changed from 80vw to 95vw for mobile sizing
-              className="relative w-[95vw] sm:w-[298px] shrink-0 snap-start flex flex-col"
-            >
-              {/* Image Container */}
-              <div
-                className={`w-full bg-[#F5F5F5] overflow-hidden ${item.tall ? 'h-[320px] md:h-[400px]' : 'h-[220px] md:h-[300px]'}`}
-              >
-                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-              </div>
-
-              {/* Text Content */}
-              <div className="mt-6 w-full flex flex-col gap-[12px] pr-4">
-                <div className="flex gap-[12px] items-start">
-                  <span
-                    className="text-[#000000] text-[27px] leading-[1] font-serif shrink-0"
-                    style={{ fontFamily: "'Malgin', serif" }}
+        {/* Cards area (active + incoming layers) */}
+        <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-full px-[5%] lg:px-[76px]">
+          <div className="relative">
+            {/* Active layer */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+              {activeItems.map((item, index) => (
+                <div
+                  key={`active-${item.id}`}
+                  ref={el => {
+                    activeCardRefs.current[index] = el
+                  }}
+                  className="relative w-full flex flex-col"
+                >
+                  <div
+                    ref={el => {
+                      activeImgWrapRefs.current[index] = el
+                    }}
+                    className={`w-full bg-[#F5F5F5] overflow-hidden ${
+                      item.tall ? 'h-[320px] md:h-[400px]' : 'h-[220px] md:h-[300px]'
+                    }`}
+                    style={{ willChange: 'clip-path' }}
                   >
-                    {item.id}
-                  </span>
-                  <div className="flex flex-col gap-[12px] mt-[5px]">
-                    <h4
-                      className="text-[#000000] text-[20px] leading-[1] font-serif uppercase tracking-wide"
-                      style={{ fontFamily: "'Malgin', serif" }}
-                    >
-                      {item.title}
-                    </h4>
-                    <p className="text-[#2D2D2D] opacity-50 text-[12px] leading-[1.5]">
-                      {item.desc}
-                    </p>
+                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                  </div>
+
+                  <div className="mt-6 w-full flex flex-col gap-[12px] pr-4">
+                    <div className="flex gap-[12px] items-start">
+                      <span
+                        className="text-[#000000] text-[27px] leading-[1] font-serif shrink-0"
+                        style={{ fontFamily: "'Malgin', serif" }}
+                      >
+                        <GCTextReveal>{item.id}</GCTextReveal>
+                      </span>
+                      <div className="flex flex-col gap-[12px] mt-[5px]">
+                        <h4
+                          className="text-[#000000] text-[20px] leading-[1] font-serif uppercase tracking-wide"
+                          style={{ fontFamily: "'Malgin', serif" }}
+                        >
+                          <GCTextReveal>{item.title}</GCTextReveal>
+                        </h4>
+                        <p className="text-[#2D2D2D] opacity-50 text-[12px] leading-[1.5]">
+                          <GCTextReveal>{item.desc}</GCTextReveal>
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
 
-          {/* BACK SPACER */}
-          <div className="shrink-0 w-[54px] md:w-[76px]"></div>
+            {/* Incoming layer (only during click animation) */}
+            {incomingPage !== null && (
+              <div
+                ref={incomingLayerRef}
+                className="absolute inset-0 pointer-events-none"
+                style={{ opacity: 0 }}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+                  {incomingItems.map((item, index) => (
+                    <div
+                      key={`incoming-${item.id}`}
+                      ref={el => {
+                        incomingCardRefs.current[index] = el
+                      }}
+                      className="relative w-full flex flex-col"
+                    >
+                      <div
+                        ref={el => {
+                          incomingImgWrapRefs.current[index] = el
+                        }}
+                        className={`w-full bg-[#F5F5F5] overflow-hidden ${
+                          item.tall ? 'h-[320px] md:h-[400px]' : 'h-[220px] md:h-[300px]'
+                        }`}
+                        style={{ willChange: 'clip-path' }}
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="mt-6 w-full flex flex-col gap-[12px] pr-4">
+                        <div className="flex gap-[12px] items-start">
+                          <span
+                            className="text-[#000000] text-[27px] leading-[1] font-serif shrink-0"
+                            style={{ fontFamily: "'Malgin', serif" }}
+                          >
+                            <GCTextReveal>{item.id}</GCTextReveal>
+                          </span>
+                          <div className="flex flex-col gap-[12px] mt-[5px]">
+                            <h4
+                              className="text-[#000000] text-[20px] leading-[1] font-serif uppercase tracking-wide"
+                              style={{ fontFamily: "'Malgin', serif" }}
+                            >
+                              <GCTextReveal>{item.title}</GCTextReveal>
+                            </h4>
+                            <p className="text-[#2D2D2D] opacity-50 text-[12px] leading-[1.5]">
+                              <GCTextReveal>{item.desc}</GCTextReveal>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* --- BOTTOM TEXT --- */}
+        {/* Bottom text */}
         <div className="absolute w-full bottom-[40px] lg:bottom-[80px] px-[5%] lg:px-[100px] flex flex-col-reverse md:flex-row justify-between items-start md:items-end gap-8 pointer-events-none z-0">
           <p className="text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[1.5] text-left md:pb-2 max-w-[631px]">
-            Executed during my tenure at Wizcraft and/ or as a freelance project manager.
+            <span ref={noteRef} className="reveal-text gc-reveal-text">
+              Executed during my tenure at Wizcraft and/ or as a freelance project manager.
+            </span>
           </p>
 
           <h3
             className="text-[#2D2D2D] text-[32px] md:text-[47px] leading-[1] text-left md:text-right font-serif shrink-0"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            Experience Across <br className="hidden md:block" /> Grand Celebrations
+            <span className="reveal-wrapper">
+              <span ref={titleRef} className="reveal-text gc-reveal-text">
+                Experience Across <br className="hidden md:block" /> Grand Celebrations
+              </span>
+            </span>
           </h3>
         </div>
 
-        {/* --- NAVIGATION ARROWS --- */}
+        {/* Navigation arrows */}
         <button
+          ref={arrowLeftRef}
           type="button"
-          onClick={() => scroll('left')}
-          className="absolute left-0 top-[228px] w-[40px] md:w-[52px] h-[80px] md:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md"
+          onClick={() => go(-1)}
+          disabled={isAnimating}
+          className="absolute left-0 top-[228px] w-[40px] md:w-[52px] h-[80px] md:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md disabled:opacity-60"
           style={{ borderRadius: '0 104px 104px 0' }}
           aria-label="Previous celebrations"
         >
@@ -163,9 +390,11 @@ const GrandCelebrationsSection = () => {
         </button>
 
         <button
+          ref={arrowRightRef}
           type="button"
-          onClick={() => scroll('right')}
-          className="absolute right-0 top-[228px] w-[40px] md:w-[52px] h-[80px] md:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md"
+          onClick={() => go(1)}
+          disabled={isAnimating}
+          className="absolute right-0 top-[228px] w-[40px] md:w-[52px] h-[80px] md:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md disabled:opacity-60"
           style={{ borderRadius: '104px 0 0 104px' }}
           aria-label="Next celebrations"
         >
@@ -189,18 +418,298 @@ const GrandCelebrationsSection = () => {
   )
 }
 
+const EveryDayImgBox = ({ src, alt, className, setRef }) => (
+  <div
+    ref={setRef}
+    className={`${className} overflow-hidden`}
+    style={{ willChange: 'transform, clip-path', clipPath: 'inset(0% 0% 0% 0%)' }}
+  >
+    <img
+      src={src}
+      alt={alt}
+      className="w-full h-full object-cover"
+      style={{ willChange: 'transform' }}
+    />
+  </div>
+)
+
 const CelebrationsEveryDaySection = () => {
-  const categories = [
-    { name: 'Anniversaries', active: true },
-    { name: 'Birthday Parties', active: false },
-    { name: 'Engagement', active: false },
-    { name: 'Haldi', active: false },
-    { name: 'Mehendi', active: false },
-    { name: 'Weddings', active: false },
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  const CATEGORY_DATA = [
+    {
+      name: 'Anniversaries',
+      heading: 'ANNIVERSARIES',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+      images: {
+        topLeft: everyDayImg4,
+        topRight: everyDayImg1,
+        bottomLeft: everyDayImg3,
+        bottomRight: everyDayImg2,
+      },
+    },
+    {
+      name: 'Birthday Parties',
+      heading: 'BIRTHDAY PARTIES',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      images: {
+        topLeft: everyDayImg1,
+        topRight: everyDayImg4,
+        bottomLeft: everyDayImg2,
+        bottomRight: everyDayImg3,
+      },
+    },
+    {
+      name: 'Engagement',
+      heading: 'ENGAGEMENT',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      images: {
+        topLeft: everyDayImg2,
+        topRight: everyDayImg1,
+        bottomLeft: everyDayImg4,
+        bottomRight: everyDayImg3,
+      },
+    },
+    {
+      name: 'Haldi',
+      heading: 'HALDI',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      images: {
+        topLeft: everyDayImg3,
+        topRight: everyDayImg2,
+        bottomLeft: everyDayImg1,
+        bottomRight: everyDayImg4,
+      },
+    },
+    {
+      name: 'Mehendi',
+      heading: 'MEHENDI',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      images: {
+        topLeft: everyDayImg4,
+        topRight: everyDayImg2,
+        bottomLeft: everyDayImg3,
+        bottomRight: everyDayImg1,
+      },
+    },
+    {
+      name: 'Weddings',
+      heading: 'WEDDINGS',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      images: {
+        topLeft: everyDayImg1,
+        topRight: everyDayImg3,
+        bottomLeft: everyDayImg2,
+        bottomRight: everyDayImg4,
+      },
+    },
   ]
 
+  const [activeName, setActiveName] = useState(CATEGORY_DATA[0]?.name ?? '')
+  const [incomingName, setIncomingName] = useState(null)
+  const [isAnimating, setIsAnimating] = useState(false)
+
+  const sectionRef = useRef(null)
+  const incomingLayerRef = useRef(null)
+
+  const activeWrapsRef = useRef({
+    topLeft: null,
+    topRight: null,
+    bottomLeft: null,
+    bottomRight: null,
+  })
+  const incomingWrapsRef = useRef({
+    topLeft: null,
+    topRight: null,
+    bottomLeft: null,
+    bottomRight: null,
+  })
+
+  const headingRef = useRef(null)
+  const descRef = useRef(null)
+  const incomingHeadingRef = useRef(null)
+  const incomingDescRef = useRef(null)
+
+  const active = CATEGORY_DATA.find(c => c.name === activeName) ?? CATEGORY_DATA[0]
+  const incoming = incomingName ? (CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
+
+  const animateSwap = nextName => {
+    if (prefersReducedMotion) {
+      setActiveName(nextName)
+      return
+    }
+    if (isAnimating) return
+    if (nextName === activeName) return
+
+    setIsAnimating(true)
+    setIncomingName(nextName)
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const outTop = [activeWrapsRef.current.topLeft, activeWrapsRef.current.topRight].filter(
+          Boolean
+        )
+        const outBottom = [
+          activeWrapsRef.current.bottomLeft,
+          activeWrapsRef.current.bottomRight,
+        ].filter(Boolean)
+
+        const inTop = [incomingWrapsRef.current.topLeft, incomingWrapsRef.current.topRight].filter(
+          Boolean
+        )
+        const inBottom = [
+          incomingWrapsRef.current.bottomLeft,
+          incomingWrapsRef.current.bottomRight,
+        ].filter(Boolean)
+
+        const outText = [headingRef.current, descRef.current].filter(Boolean)
+        const inText = [incomingHeadingRef.current, incomingDescRef.current].filter(Boolean)
+
+        if (incomingLayerRef.current) gsap.set(incomingLayerRef.current, { opacity: 0 })
+        gsap.set(inTop, { y: 46, autoAlpha: 1, clipPath: 'inset(0% 0% 100% 0%)' })
+        gsap.set(inBottom, { y: -46, autoAlpha: 1, clipPath: 'inset(0% 0% 100% 0%)' })
+        gsap.set(inText, { yPercent: 100, autoAlpha: 1 })
+        if (incomingLayerRef.current) gsap.set(incomingLayerRef.current, { opacity: 1 })
+
+        const tl = gsap.timeline({
+          defaults: { ease: 'power2.inOut' },
+          onComplete: () => {
+            const nextActiveWraps = [
+              activeWrapsRef.current.topLeft,
+              activeWrapsRef.current.topRight,
+              activeWrapsRef.current.bottomLeft,
+              activeWrapsRef.current.bottomRight,
+            ].filter(Boolean)
+            const nextActiveText = [headingRef.current, descRef.current].filter(Boolean)
+
+            // Reset base layer to a visible settled state before dropping incoming overlay.
+            gsap.set(nextActiveWraps, { y: 0, autoAlpha: 1, clipPath: 'inset(0% 0% 0% 0%)' })
+            gsap.set(nextActiveText, { yPercent: 0, autoAlpha: 1 })
+            if (incomingLayerRef.current) gsap.set(incomingLayerRef.current, { opacity: 0 })
+
+            setActiveName(nextName)
+            setIncomingName(null)
+            setIsAnimating(false)
+            incomingWrapsRef.current = {
+              topLeft: null,
+              topRight: null,
+              bottomLeft: null,
+              bottomRight: null,
+            }
+          },
+        })
+
+        tl.to(
+          outTop,
+          {
+            y: -46,
+            autoAlpha: 0,
+            duration: 0.55,
+            stagger: 0.03,
+            ease: 'power2.in',
+          },
+          0
+        ).to(
+          outTop,
+          {
+            clipPath: 'inset(0% 0% 100% 0%)',
+            duration: 0.55,
+            stagger: 0.03,
+            ease: 'power2.in',
+          },
+          0
+        )
+
+        tl.to(
+          outBottom,
+          {
+            y: 46,
+            autoAlpha: 0,
+            duration: 0.55,
+            stagger: 0.03,
+            ease: 'power2.in',
+          },
+          0
+        ).to(
+          outBottom,
+          {
+            clipPath: 'inset(100% 0% 0% 0%)',
+            duration: 0.55,
+            stagger: 0.03,
+            ease: 'power2.in',
+          },
+          0
+        )
+
+        tl.to(
+          outText,
+          {
+            yPercent: 100,
+            autoAlpha: 0,
+            duration: 0.34,
+            stagger: 0.04,
+            ease: 'power2.in',
+          },
+          0.02
+        )
+
+        tl.to(inTop, {
+          y: 0,
+          autoAlpha: 1,
+          duration: 0.8,
+          stagger: 0.04,
+          ease: 'power3.out',
+        }).to(
+          inTop,
+          {
+            clipPath: 'inset(0% 0% 0% 0%)',
+            duration: 0.8,
+            stagger: 0.04,
+            ease: 'power3.out',
+          },
+          '<'
+        )
+
+        tl.to(
+          inBottom,
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.8,
+            stagger: 0.04,
+            ease: 'power3.out',
+          },
+          '<'
+        ).to(
+          inBottom,
+          {
+            clipPath: 'inset(0% 0% 0% 0%)',
+            duration: 0.8,
+            stagger: 0.04,
+            ease: 'power3.out',
+          },
+          '<'
+        )
+
+        tl.to(inText, {
+          yPercent: 0,
+          autoAlpha: 1,
+          duration: 0.5,
+          stagger: 0.05,
+          ease: 'power3.out',
+        })
+      })
+    })
+  }
+
   return (
-    <section className="relative w-full bg-[#F8F4ED] flex justify-center overflow-hidden font-sans pb-20">
+    <section
+      ref={sectionRef}
+      className="relative w-full bg-[#F8F4ED] flex justify-center overflow-hidden font-sans pb-20"
+    >
       <div className="relative w-[1440px] h-[1097px] shrink-0">
         <h2
           className="absolute left-1/2 -translate-x-1/2 top-[80px] w-[967px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif"
@@ -218,61 +727,138 @@ const CelebrationsEveryDaySection = () => {
           <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#EBEBEB] z-0" />
           <div className="absolute left-[0px] top-[400px] w-[640px] h-[200px] bg-[#CDB17E] z-10" />
 
-          <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#F8F4ED] z-10">
+          <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#F8F4ED] z-20">
             <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
-              {categories.map(cat => (
-                <div
-                  key={cat.name}
-                  className={`py-2 pr-4 cursor-pointer w-fit ${
-                    cat.active
-                      ? 'border-b border-[#2D2D2D]'
-                      : 'opacity-50 hover:opacity-100 transition-opacity'
-                  }`}
-                >
-                  <span className="text-[#2D2D2D] text-[16px] font-medium leading-[1.5]">
-                    {cat.name}
-                  </span>
-                </div>
-              ))}
+              {CATEGORY_DATA.map(cat => {
+                const isActive = cat.name === activeName
+                return (
+                  <div
+                    key={cat.name}
+                    onClick={() => animateSwap(cat.name)}
+                    className={`py-2 pr-4 cursor-pointer w-fit ${
+                      isActive
+                        ? 'border-b border-[#2D2D2D]'
+                        : 'opacity-50 hover:opacity-100 transition-opacity'
+                    }`}
+                  >
+                    <span className="text-[#2D2D2D] text-[16px] font-medium leading-[1.5]">
+                      {cat.name}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
-          <img
-            src={everyDayImg4}
-            alt="Anniversary Decor"
-            className="absolute left-[440px] top-[0px] w-[500px] h-[400px] object-cover z-10"
+          <EveryDayImgBox
+            key={`${active.name}-topLeft`}
+            src={active.images.topLeft}
+            alt={`${active.name} image`}
+            className="absolute left-[440px] top-[0px] w-[500px] h-[400px] z-10"
+            setRef={el => (activeWrapsRef.current.topLeft = el)}
           />
-
-          <img
-            src={everyDayImg1}
-            alt="Event Setup"
-            className="absolute left-[940px] top-[0px] w-[500px] h-[400px] object-cover z-10"
+          <EveryDayImgBox
+            key={`${active.name}-topRight`}
+            src={active.images.topRight}
+            alt={`${active.name} image`}
+            className="absolute left-[940px] top-[0px] w-[500px] h-[400px] z-10"
+            setRef={el => (activeWrapsRef.current.topRight = el)}
           />
-
-          <img
-            src={everyDayImg3}
-            alt="Welcome Board"
-            className="absolute left-[0px] top-[600px] w-[640px] h-[200px] object-cover z-10"
+          <EveryDayImgBox
+            key={`${active.name}-bottomLeft`}
+            src={active.images.bottomLeft}
+            alt={`${active.name} image`}
+            className="absolute left-[0px] top-[600px] w-[640px] h-[200px] z-10"
+            setRef={el => (activeWrapsRef.current.bottomLeft = el)}
           />
-
-          <img
-            src={everyDayImg2}
-            alt="Night Setup"
-            className="absolute left-[640px] top-[400px] w-[800px] h-[400px] object-cover z-10"
+          <EveryDayImgBox
+            key={`${active.name}-bottomRight`}
+            src={active.images.bottomRight}
+            alt={`${active.name} image`}
+            className="absolute left-[640px] top-[400px] w-[800px] h-[400px] z-10"
+            setRef={el => (activeWrapsRef.current.bottomRight = el)}
           />
 
           <h3
-            className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase"
+            className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase overflow-hidden"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
-            ANNIVERSARIES
+            <span
+              key={active.name}
+              ref={headingRef}
+              className="inline-block"
+              style={{ willChange: 'transform' }}
+            >
+              {active.heading}
+            </span>
           </h3>
 
-          <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
+            <span
+              key={active.name}
+              ref={descRef}
+              className="inline-block"
+              style={{ willChange: 'transform' }}
+            >
+              {active.desc}
+            </span>
           </p>
+
+          {incoming && (
+            <div
+              ref={incomingLayerRef}
+              className="absolute inset-0 pointer-events-none z-30"
+              style={{ opacity: 0 }}
+            >
+              <EveryDayImgBox
+                src={incoming.images.topLeft}
+                alt={`${incoming.name} image`}
+                className="absolute left-[440px] top-[0px] w-[500px] h-[400px]"
+                setRef={el => (incomingWrapsRef.current.topLeft = el)}
+              />
+              <EveryDayImgBox
+                src={incoming.images.topRight}
+                alt={`${incoming.name} image`}
+                className="absolute left-[940px] top-[0px] w-[500px] h-[400px]"
+                setRef={el => (incomingWrapsRef.current.topRight = el)}
+              />
+              <EveryDayImgBox
+                src={incoming.images.bottomLeft}
+                alt={`${incoming.name} image`}
+                className="absolute left-[0px] top-[600px] w-[640px] h-[200px]"
+                setRef={el => (incomingWrapsRef.current.bottomLeft = el)}
+              />
+              <EveryDayImgBox
+                src={incoming.images.bottomRight}
+                alt={`${incoming.name} image`}
+                className="absolute left-[640px] top-[400px] w-[800px] h-[400px]"
+                setRef={el => (incomingWrapsRef.current.bottomRight = el)}
+              />
+
+              <h3
+                className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
+                <span
+                  ref={incomingHeadingRef}
+                  className="inline-block"
+                  style={{ willChange: 'transform' }}
+                >
+                  {incoming.heading}
+                </span>
+              </h3>
+
+              <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] overflow-hidden">
+                <span
+                  ref={incomingDescRef}
+                  className="inline-block"
+                  style={{ willChange: 'transform' }}
+                >
+                  {incoming.desc}
+                </span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -437,7 +1023,7 @@ const CelebrationFormSection = () => {
         <div className="absolute top-[230px] left-[30px] right-[30px] md:left-[60px] md:right-[60px]">
           {/* STEP 1: Basic Details */}
           {currentStep === 1 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-[40px] animate-fadeIn">
+            <div className="flex flex-col gap-y-[32px] animate-fadeIn">
               <div className="border-b border-[#2D2D2D]/50 pb-2">
                 <input
                   type="text"
@@ -479,7 +1065,7 @@ const CelebrationFormSection = () => {
 
           {/* STEP 2: Event Details */}
           {currentStep === 2 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-[40px] animate-fadeIn">
+            <div className="flex flex-col gap-y-[32px] animate-fadeIn">
               <div className="border-b border-[#2D2D2D]/50 pb-2">
                 <select
                   value={form.event_type}
@@ -724,68 +1310,7 @@ const CelebrationFormSection = () => {
 const InHousePlannerSection = () => {
   return (
     <>
-      <section className="w-full bg-[#FFFFFF] flex justify-center overflow-hidden font-sans">
-        {/* 1438px Fixed Wrapper for Pixel-Perfect Figma Alignment */}
-        <div className="relative w-[1438px] h-[802px] shrink-0">
-          {/* --- IMAGE COLLAGE --- */}
-
-          {/* Rectangle 41 (Left Tall) */}
-          <img
-            src={img1}
-            alt="Event Setup"
-            className="absolute left-[124px] top-[125px] w-[264px] h-[360px] object-cover shadow-md z-0 bg-gray-200"
-          />
-
-          {/* Rectangle 43 (Top Mid-Left) */}
-          <img
-            src={img2}
-            alt="Event Decor"
-            className="absolute left-[404px] top-[67px] w-[252px] h-[168px] object-cover shadow-md z-0 bg-gray-200"
-          />
-
-          {/* Rectangle 42 (Mid Left Square) */}
-          <img
-            src={img3}
-            alt="Stage Setup"
-            className="absolute left-[404px] top-[251px] w-[252px] h-[234px] object-cover shadow-md z-0 bg-gray-200"
-          />
-
-          {/* Rectangle 46 (Top Mid-Right) */}
-          <img
-            src={img4}
-            alt="Event Lighting"
-            className="absolute left-[672px] top-[125px] w-[235px] h-[235px] object-cover shadow-md z-0 bg-gray-200"
-          />
-
-          {/* Rectangle 47 (Top Right) */}
-          <img
-            src={img5}
-            alt="Group Photo"
-            className="absolute left-[923px] top-[125px] w-[287px] h-[235px] object-cover shadow-md z-0 bg-gray-200"
-          />
-
-          {/* Rectangle 45 (Bottom Mid-Right) */}
-          <img
-            src={img6}
-            alt="Panel Discussion"
-            className="absolute left-[672px] top-[374px] w-[373px] h-[311px] object-cover shadow-md z-0 bg-gray-200"
-          />
-
-          {/* Rectangle 44 (Bottom Mid-Left) */}
-          <img
-            src={img7}
-            alt="DJ Setup"
-            className="absolute left-[256px] top-[501px] w-[400px] h-[234px] object-cover shadow-md z-0 bg-gray-200"
-          />
-
-          {/* Rectangle 48 (Bottom Right) */}
-          <img
-            src={img8}
-            alt="Car Launch Event"
-            className="absolute left-[1061px] top-[374px] w-[253px] h-[226px] object-cover shadow-md z-0 bg-gray-200"
-          />
-        </div>
-      </section>
+      <ScrollImageSpreadSection />
 
       <section className="w-full bg-[#957960] flex justify-center overflow-hidden font-sans">
         <div className="relative w-[1440px] h-[660px] shrink-0">
