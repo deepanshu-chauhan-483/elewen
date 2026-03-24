@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "budget_levels",
+  "info": {
+    "singularName": "budget-level",
+    "pluralName": "budget-levels",
+    "displayName": "Budget Level"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name"
+    },
+    "description": {
+      "type": "text"
+    },
+    "display_order": {
+      "type": "integer"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "packages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::package.package",
+      "mappedBy": "budget_level"
+    }
+  }
+}

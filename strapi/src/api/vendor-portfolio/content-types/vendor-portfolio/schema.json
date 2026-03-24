@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "vendor_portfolios",
+  "info": {
+    "singularName": "vendor-portfolio",
+    "pluralName": "vendor-portfolios",
+    "displayName": "Vendor Portfolio"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "vendor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::vendor.vendor",
+      "inversedBy": "vendor_portfolios"
+    }
+  }
+}

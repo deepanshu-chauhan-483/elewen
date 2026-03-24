@@ -37,6 +37,7 @@ services:
       API_TOKEN_SALT: ${STRAPI_API_TOKEN_SALT}
       TRANSFER_TOKEN_SALT: ${STRAPI_TRANSFER_TOKEN_SALT}
       NODE_ENV: ${NODE_ENV:-development}
+      PORT: 1337
     ports:
       - "1337:1337"
     volumes:
@@ -57,7 +58,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: ["npm", "run", "migrate:deploy"]
+    command: ["node_modules/.bin/prisma", "migrate", "deploy", "--schema=prisma/schema.prisma"]
     restart: "no"
 
   api:
@@ -96,6 +97,7 @@ services:
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
       VITE_STRAPI_URL: ${VITE_STRAPI_URL:-http://localhost:1337}
+      VITE_USE_FALLBACK: ${VITE_USE_FALLBACK:-false}
     ports:
       - "5173:5173"
     volumes:

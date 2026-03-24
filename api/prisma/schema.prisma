@@ -25,6 +25,7 @@ enum BookingStatus {
   pre_event
   execution
   completed
+  post_event   
   cancelled
 }
 

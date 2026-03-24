@@ -1,3 +1,255 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+/* Import Poppins from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+:root {
+  /* Updated to Poppins for body text */
+  --font-body: 'Poppins', sans-serif;
+  --font-display: Malgin, 'DM Serif Display', 'Playfair Display', Georgia, 'Times New Roman', serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  /* Sets the default for the page to Poppins */
+  font-family: var(--font-body);
+}
+
+/* Explicit configuration for p tags based on "Body/regular/b3" */
+p {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ── Infinite marquee bands (HeroSection) ─────────────────────────────── */
+@keyframes band-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes band-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.band-scroll {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+}
+.band-scroll.dir-left {
+  animation: band-left 60s linear infinite;
+}
+.band-scroll.dir-right {
+  animation: band-right 60s linear infinite;
+}
+
+/* NOTE: I removed the "body *" !important override. 
+   If you keep that rule, your <p> tags will be forced to use Malgin 
+   instead of Poppins. Use the .font-display class on specific 
+   headings instead.
+*/
+
+/* ── Heading reveal animation (Landing page) ───────────────────────────── */
+.reveal-wrapper {
+  overflow: hidden; /* Hides text initially */
+  display: inline-flex; /* Keep tight around text */
+  vertical-align: top;
+}
+
+.reveal-text {
+  display: inline-block;
+  transform: translateY(100%); /* Hidden below */
+  will-change: transform;
+}
+
+.reveal-text.is-visible:not(.reveal-text-x-left):not(.reveal-text-x-right) {
+  animation: slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Horizontal reveal variants for the timeline */
+.reveal-text-x-left {
+  transform: translateX(-100%); /* Hidden to the left */
+}
+
+.reveal-text-x-right {
+  transform: translateX(100%); /* Hidden to the right */
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* Override vertical animation when horizontal variant is used */
+.reveal-text-x-left.is-visible {
+  animation: slideInFromLeft 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.reveal-text-x-right.is-visible {
+  animation: slideInFromRight 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Extra padding for circle reveal so box-shadow isn't clipped by overflow:hidden */
+.reveal-wrapper-circle {
+  padding: 4px 8px 28px 32px;
+  box-sizing: content-box;
+}
+
+/* Circle-only reveal: start farther offscreen so the padded wrapper
+   doesn't cause a "peek" before the animation begins. */
+.reveal-circle-text.reveal-text-x-left {
+  transform: translateX(-140%);
+}
+
+.reveal-circle-text.reveal-text-x-right {
+  transform: translateX(140%);
+}
+
+@keyframes slideInFromLeftCircle {
+  0% {
+    transform: translateX(-140%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRightCircle {
+  0% {
+    transform: translateX(140%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.reveal-circle-text.reveal-text-x-left.is-visible {
+  animation: slideInFromLeftCircle 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.reveal-circle-text.reveal-text-x-right.is-visible {
+  animation: slideInFromRightCircle 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Layout Grid Continuous Floating (Checklist Section) ── */
+@keyframes subtle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.hover-float {
+  animation: subtle-float 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.hover-float-delayed {
+  animation: subtle-float 5s ease-in-out 2.5s infinite;
+  will-change: transform;
+}
+
+/* ── Sequential Scroll Animations (Checklist Section) ── */
+.anim-element {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.anim-element.is-visible.slide-from-left {
+  animation: slideInLeft 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+.anim-element.is-visible.slide-from-right {
+  animation: slideInRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+.anim-element.is-visible.slide-from-bottom {
+  animation: slideInBottom 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInBottom {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

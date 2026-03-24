@@ -1,0 +1,87 @@
+{
+  "kind": "collectionType",
+  "collectionName": "vendors",
+  "info": {
+    "singularName": "vendor",
+    "pluralName": "vendors",
+    "displayName": "Vendor"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "company_name": {
+      "type": "string",
+      "required": true
+    },
+    "contact_person": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "phone": {
+      "type": "string"
+    },
+    "location_city": {
+      "type": "string"
+    },
+    "service_area": {
+      "type": "string"
+    },
+    "experience_years": {
+      "type": "integer"
+    },
+    "team_size": {
+      "type": "integer"
+    },
+    "minimum_price": {
+      "type": "decimal"
+    },
+    "lead_time_days": {
+      "type": "integer"
+    },
+    "vendor_status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "inactive"
+      ]
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": true
+    },
+    "registration_data": {
+      "type": "json"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "vendor"
+    },
+    "vendor_services": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::vendor-service.vendor-service",
+      "mappedBy": "vendor"
+    },
+    "vendor_documents": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::vendor-document.vendor-document",
+      "mappedBy": "vendor"
+    },
+    "vendor_portfolios": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::vendor-portfolio.vendor-portfolio",
+      "mappedBy": "vendor"
+    }
+  }
+}

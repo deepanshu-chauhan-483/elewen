@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "booking_confirmation_messaging",
+  "info": {
+    "singularName": "booking-confirmation-messaging",
+    "pluralName": "booking-confirmation-messagings",
+    "displayName": "Booking Confirmation Messaging"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sections": {
+      "type": "component",
+      "component": "cms.content-section",
+      "repeatable": true
+    }
+  }
+}

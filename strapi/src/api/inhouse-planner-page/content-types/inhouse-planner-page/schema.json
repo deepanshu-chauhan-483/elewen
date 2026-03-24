@@ -1,0 +1,26 @@
+{
+  "kind": "singleType",
+  "collectionName": "inhouse_planner_page",
+  "info": {
+    "singularName": "inhouse-planner-page",
+    "pluralName": "inhouse-planner-pages",
+    "displayName": "In-House Planner Page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "meta_title": {
+      "type": "string"
+    },
+    "meta_description": {
+      "type": "text"
+    },
+    "sections": {
+      "type": "component",
+      "component": "cms.content-section",
+      "repeatable": true
+    }
+  }
+}
