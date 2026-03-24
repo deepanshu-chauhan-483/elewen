@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import HeroVideo from '../../assets/HeroVideo.mp4'
 import HeroPreloader from './HeroPreloader'
-import { useLenis } from '../../SmoothScroll'
+import { useLenis } from '../../useLenis'
 
 gsap.registerPlugin(ScrollTrigger)
 
