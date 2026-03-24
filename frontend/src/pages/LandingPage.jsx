@@ -16,6 +16,7 @@ import { useEventCategories, useEventCards, useServiceCards } from '../hooks/use
 import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
 
+import { preloadImages, usePreloadOnApproach } from '../utils/preloadAssets'
 import inspirationImg from '../assets/images/inspiration.png'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -119,6 +120,7 @@ const PlanEventSection = () => {
                     src={i % 2 === 0 ? bulb1 : bulb2}
                     alt="Pendant Light"
                     className="w-[20px] md:w-[32px] h-auto relative z-10"
+                    loading="eager"
                   />
 
                   <div
@@ -223,6 +225,7 @@ const PlanEventSection = () => {
                     src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                     alt={card.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
 
@@ -374,6 +377,7 @@ const WhatToPlanSection = () => {
                     src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                     alt={card.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
 
@@ -1056,7 +1060,12 @@ const BetterWaySection = () => {
         </h5>
 
         <div className="absolute left-1/2 top-[742px] w-[320px] h-[320px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
-          <img src={centerLogo} alt="11 Logo" className="w-full h-full object-contain" />
+          <img
+            src={centerLogo}
+            alt="11 Logo"
+            className="w-full h-full object-contain"
+            loading="lazy"
+          />
         </div>
 
         <p className="absolute w-[200px] left-[30px] top-[688px] text-[#957960] text-[12px] leading-[1.5]">
@@ -1253,6 +1262,7 @@ const ChecklistSection = () => {
                     src={i % 2 === 0 ? bulb1 : bulb2}
                     alt="Light"
                     className="w-[20px] md:w-[32px] h-auto relative z-10"
+                    loading="lazy"
                   />
                   <div
                     className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
@@ -1312,6 +1322,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
                 alt="Scrolling"
                 style={{ '--delay': '0.15s' }}
+                loading="lazy"
               />
             </div>
             <div
@@ -1346,6 +1357,7 @@ const ChecklistSection = () => {
                   filter:
                     'drop-shadow(33px 41px 32px rgba(109, 57, 8, 0.16)) drop-shadow(15px 18px 24px rgba(109, 57, 8, 0.28)) drop-shadow(4px 5px 13px rgba(109, 57, 8, 0.32))',
                 }}
+                loading="lazy"
               />
               <div
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
@@ -1377,6 +1389,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
                 alt="Vendors"
                 style={{ '--delay': '1.15s' }}
+                loading="lazy"
               />
             </div>
             <div
@@ -1408,6 +1421,7 @@ const ChecklistSection = () => {
                 alt="Decisions"
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
                 style={{ '--delay': '1.65s' }}
+                loading="lazy"
               />
             </div>
             <div
@@ -1951,6 +1965,8 @@ const PackagesSection = () => {
 
 const CelebrationFeelingSection = () => {
   const containerRef = useRef(null)
+  // Preload all 5 parallax images 2 viewports before this section scrolls into view
+  const preloadRef = usePreloadOnApproach([img1, img2, img3, img4, img5], '200% 0px')
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -1968,7 +1984,10 @@ const CelebrationFeelingSection = () => {
 
   return (
     <section
-      ref={containerRef}
+      ref={el => {
+        containerRef.current = el
+        preloadRef.current = el
+      }}
       className="w-full bg-[#BFAC9B] overflow-hidden flex justify-center font-sans relative h-[900px]"
     >
       <div className="relative w-[1440px] max-w-full h-full shrink-0">
@@ -1977,6 +1996,7 @@ const CelebrationFeelingSection = () => {
           src={img1}
           alt="Event Decor"
           className="absolute left-[0px] top-[100px] w-[347px] h-[280px] object-cover pointer-events-none z-0"
+          loading="lazy"
         />
 
         <motion.img
@@ -1984,6 +2004,7 @@ const CelebrationFeelingSection = () => {
           src={img2}
           alt="Event Decor"
           className="absolute left-[42px] top-[450px] w-[249px] h-[375px] object-cover pointer-events-none z-0"
+          loading="lazy"
         />
 
         <motion.img
@@ -1991,6 +2012,7 @@ const CelebrationFeelingSection = () => {
           src={img3}
           alt="Event Decor"
           className="absolute left-[497px] top-[700px] w-[290px] h-[316px] object-cover pointer-events-none z-0"
+          loading="lazy"
         />
 
         <motion.img
@@ -1998,6 +2020,7 @@ const CelebrationFeelingSection = () => {
           src={img4}
           alt="Event Decor"
           className="absolute left-[1034px] top-[400px] w-[312px] h-[318px] object-cover pointer-events-none z-0"
+          loading="lazy"
         />
 
         <motion.img
@@ -2005,6 +2028,7 @@ const CelebrationFeelingSection = () => {
           src={img5}
           alt="Event Decor"
           className="absolute left-[909px] top-[50px] w-[505px] h-[265px] object-cover pointer-events-none z-0"
+          loading="lazy"
         />
 
         <div className="sticky top-[250px] z-10 flex flex-col items-center">
@@ -2165,6 +2189,7 @@ const PlanningGuidesSection = () => {
                     src={blog.cover_image ?? CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]}
                     alt={blog.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
 
@@ -2396,8 +2421,14 @@ const TestimonialsSection = () => {
 }
 
 const SplitInfoSection = () => {
+  // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
+  const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
+
   return (
-    <section className="w-full flex justify-center bg-[#FFFFFF] font-sans overflow-visible">
+    <section
+      ref={sectionRef}
+      className="w-full flex justify-center bg-[#FFFFFF] font-sans overflow-visible"
+    >
       <div className="relative w-full max-w-[1440px] h-auto lg:h-[511px] flex flex-col lg:flex-row mx-auto">
         <div className="relative w-full lg:w-[880px] h-auto lg:h-[511px] bg-[#FFFFFF] px-8 py-12 lg:p-0 flex flex-col items-center lg:items-start lg:block">
           <div className="lg:absolute lg:left-[100px] lg:top-[80px] flex flex-col items-start text-left w-full max-w-[400px]">
@@ -2445,6 +2476,7 @@ const SplitInfoSection = () => {
             src={inspirationImg}
             alt="Behind the scenes setup"
             className="w-full max-w-[240px] h-auto lg:w-[240px] lg:h-[351px] rounded-[8px] mt-10 lg:mt-0 lg:absolute lg:left-[540px] lg:top-[80px] object-cover object-[20%_center]"
+            loading="lazy"
           />
         </div>
 
@@ -2503,6 +2535,34 @@ const SplitInfoSection = () => {
 
 export default function LandingPage() {
   const rootRef = useRef(null)
+
+  // ── Tiered asset preloading ───────────────────────────────────────────────
+  // Tier 1 (on mount, during 2s preloader): only the images that appear the
+  //   instant the preloader fades — the scallop bulbs at the top of section 1.
+  // Tier 2 (hero-preloader-done, ~3s in): checklist illustrations, first 3
+  //   package images, and the centre logo — sections 3–5.
+  // Tier 3: IntersectionObserver hooks inside CelebrationFeelingSection and
+  //   SplitInfoSection handle img1-5 and inspirationImg 2 viewports ahead.
+  // All remaining img tags carry loading="lazy" so the browser fetches them
+  //   when they naturally scroll into range.
+  useEffect(() => {
+    preloadImages([bulb1, bulb2])
+
+    const onPreloaderDone = () =>
+      preloadImages([
+        imgScrolling,
+        imgCalls,
+        imgVendors,
+        imgDecisions,
+        pkgImg1,
+        pkgImg2,
+        pkgImg3,
+        centerLogo,
+      ])
+
+    window.addEventListener('hero-preloader-done', onPreloaderDone, { once: true })
+    return () => window.removeEventListener('hero-preloader-done', onPreloaderDone)
+  }, [])
 
   useEffect(() => {
     const root = rootRef.current
