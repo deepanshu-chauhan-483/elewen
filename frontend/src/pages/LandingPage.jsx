@@ -221,27 +221,13 @@ const PlanEventSection = () => {
         </aside>
 
         <div className="flex-1 py-12 md:py-16 px-6 md:px-12 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {visibleCards.map(card => (
-              <div
-                key={card.id ?? card.title}
-                className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
-              >
-                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden min-h-[140px] md:min-h-0">
-                  <img
-                    src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                    alt={card.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-        {/* Cards Carousel Area */}
-        <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden">
+          {/* Cards Carousel Area */}
+          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
           
-          <div className="relative w-full flex justify-center md:block">
+          <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] md:min-h-0">
             
-            {/* Mobile Left Navigation Arrow */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+            {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
+            <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
@@ -253,7 +239,8 @@ const PlanEventSection = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-4 md:px-0 w-[289px] md:w-auto relative">
+            <div className="flex justify-center md:block">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
               {visibleCards.map(card => (
                 <div
                   key={card.id ?? card.title}
@@ -278,9 +265,10 @@ const PlanEventSection = () => {
                 </div>
               ))}
             </div>
+            </div>
 
             {/* Mobile Right Navigation Arrow */}
-            <div className="absolute top-1/2 -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+            <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
@@ -359,6 +347,7 @@ const PlanEventSection = () => {
             </button>
           </div>
 
+        </div>
         </div>
       </div>
     </section>
@@ -446,30 +435,13 @@ const WhatToPlanSection = () => {
 
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
         <div className="flex-1 order-last lg:order-none py-12 md:py-16 px-6 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {visibleCards.map(card => (
-              <div
-                key={card.id ?? card.title}
-                className="bg-white p-2 md:p-2.5 rounded-[20px] md:rounded-[24px] shadow-sm flex flex-col h-[340px] md:h-[460px] group cursor-pointer"
-              >
-                <div className="flex-1 rounded-t-[12px] md:rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden min-h-[140px] md:min-h-0">
-                  <img
-                    src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                    alt={card.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-      {/* Main Content */}
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
-        
-        {/* Cards Carousel Area */}
-        <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15 w-full overflow-hidden">
+          {/* Cards Carousel Area */}
+          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15 w-full overflow-visible lg:overflow-hidden">
           
-          <div className="relative w-full flex justify-center md:block">
+          <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] lg:min-h-0">
             
             {/* Mobile Left Navigation Arrow */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
+            <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
@@ -481,7 +453,8 @@ const WhatToPlanSection = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-4 md:px-0 w-[289px] md:w-auto relative">
+            <div className="flex justify-center lg:block">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] lg:max-w-none lg:w-auto relative">
               {visibleCards.map(card => (
                 <div
                   key={card.id ?? card.title}
@@ -506,9 +479,10 @@ const WhatToPlanSection = () => {
                 </div>
               ))}
             </div>
+            </div>
 
             {/* Mobile Right Navigation Arrow */}
-            <div className="absolute top-1/2 -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
+            <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
@@ -587,6 +561,7 @@ const WhatToPlanSection = () => {
             </button>
           </div>
 
+        </div>
         </div>
 
         {/* Categories Bar */}
@@ -2363,27 +2338,13 @@ const PlanningGuidesSection = () => {
         </aside>
 
         <div className="flex-1 py-16 px-12 lg:px-8 flex flex-col">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {visibleBlogs.map(blog => (
-              <div
-                key={blog.id ?? blog.title}
-                className="bg-white p-2.5 rounded-[24px] shadow-sm flex flex-col h-[460px] group cursor-pointer"
-              >
-                <div className="flex-1 rounded-t-[16px] bg-[#E8E4DC] relative overflow-hidden">
-                  <img
-                    src={blog.cover_image ?? CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]}
-                    alt={blog.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-        {/* Cards Carousel Area */}
-        <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden">
+          {/* Cards Carousel Area */}
+          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
           
-          <div className="relative w-full flex justify-center md:block">
+          <div className="relative -mx-12 md:mx-0 min-h-[400px] md:min-h-0">
             
             {/* Mobile Left Navigation Arrow */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+            <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
@@ -2395,7 +2356,8 @@ const PlanningGuidesSection = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-4 md:px-0 w-[289px] md:w-auto relative">
+            <div className="flex justify-center md:block">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
               {visibleBlogs.map(blog => (
                 <div
                   key={blog.id ?? blog.title}
@@ -2420,9 +2382,10 @@ const PlanningGuidesSection = () => {
                 </div>
               ))}
             </div>
+            </div>
 
             {/* Mobile Right Navigation Arrow */}
-            <div className="absolute top-1/2 -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+            <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
@@ -2499,6 +2462,7 @@ const PlanningGuidesSection = () => {
             </button>
           </div>
 
+        </div>
         </div>
       </div>
     </section>
