@@ -40,9 +40,5 @@ export default function SmoothScroll({ children }) {
     }
   }, [])
 
-  return (
-    <LenisContext.Provider value={lenisRef}>
-      {children}
-    </LenisContext.Provider>
-  )
+  return <LenisContext.Provider value={lenisRef}>{children}</LenisContext.Provider>
 }

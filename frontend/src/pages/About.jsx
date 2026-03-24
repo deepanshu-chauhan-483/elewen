@@ -1,7 +1,9 @@
 // Add these files to: src/assets/images/
 // - tangled-lights.png
 // - logo-placeholder.png
+import { useRef, useEffect, useState } from 'react'
 import tangledIllustration from '../assets/images/tangled-lights.png'
+import objectImg from '../assets/Object.png'
 import bulb1 from '../assets/lightbulb_images/bulb1.png'
 import bulb2 from '../assets/lightbulb_images/bulb2.png'
 
@@ -28,6 +30,11 @@ const Img = ({ src, alt = '', className = '', style, ...rest }) => (
   />
 )
 
+// SVG layout constants — must match the inline SVG's style values below
+const SVG_LEFT = 55
+const SVG_TOP = 450
+const SECTION_HEIGHT = 4628
+
 const About = () => {
   const story1Src = aboutAssetSrc('story-1.png')
   const story2Src = aboutAssetSrc('story-2.png')
@@ -36,10 +43,89 @@ const About = () => {
   const iconSrc = aboutAssetSrc('image.png')
   const scallopCount = [...Array(15)]
 
+  const pageRef = useRef(null)
+  const sectionRef = useRef(null)
+  const pathRef = useRef(null)
+  const animRef = useRef(null)
+  const [objStyle, setObjStyle] = useState({ display: 'none' })
+
+  // Trigger reveal animations on scroll
+  useEffect(() => {
+    const page = pageRef.current
+    if (!page) return
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          const el = entry.target
+          if (el.classList.contains('reveal-wrapper')) {
+            // reveal-text is visually outside overflow:hidden so observe the wrapper instead
+            el.querySelectorAll('.reveal-text').forEach(t => t.classList.add('is-visible'))
+          } else {
+            el.classList.add('is-visible')
+          }
+          observer.unobserve(el)
+        })
+      },
+      { threshold: 0.1 }
+    )
+    page.querySelectorAll('.reveal-wrapper, .anim-element').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current)
+      animRef.current = requestAnimationFrame(() => {
+        const path = pathRef.current
+        const section = sectionRef.current
+        if (!path || !section) return
+
+        const rect = section.getBoundingClientRect()
+        const vh = window.innerHeight
+        const totalLength = path.getTotalLength()
+
+        // Map section scroll through viewport to 0→1 progress
+        const progress = Math.max(0, Math.min(1, -rect.top / (SECTION_HEIGHT - vh)))
+
+        const dist = progress * totalLength
+        const pt = path.getPointAtLength(dist)
+
+        // SVG origin in viewport = section origin + SVG offset
+        const viewX = rect.left + SVG_LEFT + pt.x
+        const viewY = rect.top + SVG_TOP + pt.y
+
+        const inView = rect.top < vh && rect.top + SECTION_HEIGHT > 0
+
+        setObjStyle({
+          display: inView ? 'block' : 'none',
+          position: 'fixed',
+          left: `${viewX}px`,
+          top: `${viewY}px`,
+          transform: `translate(-50%, -50%)`,
+          width: '80px',
+          height: '80px',
+          pointerEvents: 'none',
+          zIndex: 9999,
+        })
+      })
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (animRef.current) cancelAnimationFrame(animRef.current)
+    }
+  }, [])
+
   return (
     <>
-      <section className="w-full bg-[#F8F4ED] flex flex-col items-center font-sans overflow-x-hidden">
-        <div className="relative w-[1440px] h-[1100px] shrink-0">
+      <section
+        ref={pageRef}
+        className="w-full bg-[#F8F4ED] flex flex-col items-center font-sans overflow-x-hidden"
+      >
+        <div className="relative w-full h-[1100px] shrink-0">
           {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
           <div
             className="absolute left-0 top-0 w-full h-[880px] bg-[#591902] overflow-hidden z-0"
@@ -49,54 +135,73 @@ const About = () => {
 
             {/* Left Heading */}
             <h2 className="absolute left-[100px] top-[223px] w-[564px] text-[#FFFFFF] text-[61px] leading-[1] font-serif m-0">
-              When we saw Excitement Turning Into Overthinking
+              <span className="reveal-wrapper block">
+                <span className="reveal-text" style={{ animationDelay: '0s' }}>
+                  When we saw Excitement
+                </span>
+              </span>
+              <span className="reveal-wrapper block">
+                <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
+                  Turning Into Overthinking
+                </span>
+              </span>
             </h2>
 
             {/* Right Descriptive Paragraphs */}
             <div className="absolute left-[936px] top-[253px] w-[404px] flex flex-col gap-[20px]">
               <p className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
-                Elewen was born from noticing a simple truth: many people love the idea of hosting,
-                but hesitate because planning an event often feels like too much to manage.
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.1s' }}>
+                    Elewen was born from noticing a simple truth: many people love the idea of
+                    hosting, but hesitate because planning an event often feels like too much to
+                    manage.
+                  </span>
+                </span>
               </p>
               <p className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
-                Finding reliable vendors, understanding fair pricing, and coordinating everything
-                usually means relying on social media, referrals, and endless back-and-forth.
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.18s' }}>
+                    Finding reliable vendors, understanding fair pricing, and coordinating
+                    everything usually means relying on social media, referrals, and endless
+                    back-and-forth.
+                  </span>
+                </span>
               </p>
             </div>
           </div>
 
           {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
-          {/* This helper div has the exact same borderRadius as the brown background 
-          to ensure the pill gets chopped off along that same curved line.
-      */}
           <div
             className="absolute left-0 top-0 w-full h-[880px] overflow-hidden pointer-events-none z-10"
             style={{ borderRadius: '0px 0px 1000px 1000px' }}
           >
             {/* The Actual Pill background */}
-            <div className="absolute left-[528px] top-[440px] w-[400px] h-[600px] bg-[#BFAC9B] rounded-[500px] border-[4px] border-[#591902] shadow-lg"></div>
+            <div
+              className="anim-element slide-from-bottom absolute left-[528px] top-[440px] w-[400px] h-[600px] bg-[#BFAC9B] rounded-[500px] border-[4px] border-[#591902] shadow-lg"
+              style={{ '--delay': '0.1s' }}
+            ></div>
           </div>
 
           {/* --- 3. THE GIRL (NOT CLIPPED BY THE CURVE) --- */}
-          {/* Placed in a container with NO overflow-hidden, so her hands can break out 
-          into the beige section below the brown curve.
-      */}
           <div className="absolute left-[528px] top-[440px] w-[400px] h-[600px] z-20 pointer-events-none">
             <img
               src={tangledIllustration}
               alt="Person tangled in lights"
-              className="absolute left-1/2 -translate-x-1/2 top-[9px] w-[384px] h-[529px] object-cover"
+              className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 top-[9px] w-[384px] h-[529px] object-cover"
+              style={{ '--delay': '0.3s' }}
             />
           </div>
         </div>
 
-        {/* --- 4. Celebrations Don’t Have to Be Big to Matter --- */}
+        {/* --- 4. Celebrations Don't Have to Be Big to Matter --- */}
         <div className="relative w-full max-w-[1440px] h-[350px] shrink-0 mx-auto px-6 py-24 overflow-hidden">
           <h2
             className="absolute left-[20px] md:left-[100px] top-[20px] md:top-[0px] w-full max-w-[546px] text-[#591902] text-[40px] md:text-[61px] leading-[1] font-normal font-serif"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            Celebrations Don’t Have to Be Big to Matter
+            <span className="reveal-wrapper block">
+              <span className="reveal-text">Celebrations Don't Have to Be Big to Matter</span>
+            </span>
           </h2>
 
           <div className="absolute left-[20px] md:left-auto md:right-[100px] top-[180px] md:top-[30px] flex flex-col gap-[20px] w-full max-w-[463px]">
@@ -113,8 +218,8 @@ const About = () => {
         </div>
 
         {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
-        <section className="relative w-full bg-[#A5A687] flex justify-center overflow-hidden font-sans">
-          <div className="relative w-[1440px] h-[4628px] shrink-0">
+        <section className="relative w-full bg-[#A5A687] overflow-hidden font-sans">
+          <div ref={sectionRef} className="relative w-full h-[4628px]">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
               className="absolute hidden md:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
@@ -173,12 +278,33 @@ const About = () => {
               ))}
             </div>
 
+            {/* --- SNAKE LINE SVG --- */}
+            <svg
+              width="1331"
+              height="3986"
+              viewBox="0 0 1331 3986"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+              className="absolute pointer-events-none z-1"
+              style={{ left: '55px', top: '450px' }}
+            >
+              <path
+                ref={pathRef}
+                d="M1025.66 0.255077C1025.66 0.255077 1129.61 -1.10623 1171.16 40.7551C1241.72 111.84 1027.17 245.305 1116.16 291.255C1164.72 316.326 1223.76 324.627 1255.66 280.255C1274.36 254.242 1268.89 231.292 1268.66 199.255C1267.29 8.19533 845.493 236.088 786.16 280.255C726.826 324.422 662.444 472.296 571.66 497.755C440.176 534.628 335.494 453.088 228.66 429.755C121.827 406.422 358.807 383.822 435.66 408.255C604.744 462.011 -36.4323 426.44 21.16 594.255C50.7982 680.616 194.729 594.329 213.16 683.755C233.616 783.008 58.6484 805.122 77.1596 904.755C93.4084 992.211 246.16 1033.76 236.16 1063.76C226.16 1093.76 131.136 1075.78 62.1596 1061.26C-91.2256 1028.94 298.411 911.791 449.16 954.755C542.557 981.373 594.16 1050.26 653.66 1096.26C713.16 1142.26 853.835 900.756 843.16 985.755C836.39 1039.66 809.929 1114.21 758.66 1096.26C711.246 1079.65 574.725 939.77 738.16 969.255C901.594 998.74 1156.66 1044.76 1156.66 1044.76C1320.09 1074.24 1338.07 1137.95 1327.66 1238.26C1317.69 1334.32 1142.16 1417.26 1136.16 1394.76C1125.52 1354.86 1153.55 1320.65 1191.66 1304.76C1321.16 1250.76 1321.27 1650.86 1173.16 1761.76C1080.88 1830.85 1106.73 1730.31 1001.66 1777.76C934.873 1807.92 923.939 1871.37 854.16 1893.76C779.407 1917.74 732.124 1876.73 653.66 1879.26C387.415 1887.82 -25.1063 2402.64 23.6596 2140.76C29.6993 2108.32 34.6077 2090.06 47.6596 2059.76C61.6591 2027.26 122.489 2000.95 153.16 2059.76C180.159 2111.52 46.66 2553.26 3.16003 2477.76C-14.0594 2447.87 96.064 2411.76 3.16003 2440.26C-43.882 2454.69 246.212 2447.84 269.16 2565.76C291.613 2681.13 250.518 2780.09 137.66 2747.26C110.16 2739.26 109.733 2700.86 132.16 2650.76C200.515 2498.05 374.529 2793.27 541.16 2778.26C632.81 2770 678.452 2754.86 770.16 2747.26C993.218 2728.76 1168.88 3166.19 1276.16 2969.76C1303.9 2918.96 1336.85 2877.61 1311.16 2825.76C1275.36 2753.5 1174.82 2786 1104.66 2825.76C987.642 2892.06 1240.29 2967.47 1261.66 3100.26C1280.46 3217.07 1077.88 3499.05 1185.66 3450.26C1392.19 3356.77 1281.73 3346.07 1240.16 3346.26C948.385 3347.56 -118.841 3749.65 33.6595 3624.76C186.16 3499.86 253.721 3536.47 174.66 3463.26C109.815 3403.21 264.497 3596.71 237.16 3680.76C204.882 3779.99 96.6079 3680.86 59.1592 3778.26C32.195 3848.38 13.6948 3930.34 77.6592 3969.76C134.152 4004.57 191.16 3969.76 191.16 3969.76"
+                stroke="white"
+                strokeOpacity="0.9"
+                strokeWidth="0.5"
+                strokeDasharray="6 6"
+              />
+            </svg>
+
             {/* --- SUB-TASK 2: SIMPLE QUESTION BLOCK --- */}
             {story1Src && (
               <Img
                 src={story1Src}
                 alt="Atmosphere"
-                className="absolute left-0 top-[260px] w-[470px] h-[470px] object-cover rounded-r-[120px]"
+                className="anim-element slide-from-left absolute left-0 top-[260px] w-[470px] h-[470px] object-cover rounded-r-[120px]"
               />
             )}
             <div className="absolute left-[510px] top-[370px] w-[486px] flex flex-col gap-[28px]">
@@ -186,11 +312,17 @@ const About = () => {
                 className="text-white text-[61px] leading-[1] font-serif"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                We Asked a Simple Question
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text">We Asked a Simple Question</span>
+                </span>
               </h2>
               <p className="text-white text-[21px] leading-[1.2]">
-                Almost everything else in our lives has moved online. We book cabs and holidays in
-                minutes, so why does event planning still feel complicated?
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ '--delay': '0.1s' }}>
+                    Almost everything else in our lives has moved online. We book cabs and holidays
+                    in minutes, so why does event planning still feel complicated?
+                  </span>
+                </span>
               </p>
             </div>
 
@@ -200,18 +332,24 @@ const About = () => {
                 className="text-white text-[61px] leading-[1] font-serif"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                Thoughtful Gatherings Over Loud Distractions?
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text">Thoughtful Gatherings Over Loud Distractions?</span>
+                </span>
               </h2>
               <p className="text-white text-[21px] leading-[1.2]">
-                Almost everything else in our lives has moved online. We book cabs and holidays in
-                minutes, so why does event planning still feel complicated?
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ '--delay': '0.1s' }}>
+                    Almost everything else in our lives has moved online. We book cabs and holidays
+                    in minutes, so why does event planning still feel complicated?
+                  </span>
+                </span>
               </p>
             </div>
             {story2Src && (
               <Img
                 src={story2Src}
                 alt="Details"
-                className="absolute right-0 top-[930px] w-[470px] h-[470px] object-cover rounded-l-[120px]"
+                className="anim-element slide-from-right absolute right-0 top-[930px] w-[470px] h-[470px] object-cover rounded-l-[120px]"
               />
             )}
 
@@ -220,10 +358,12 @@ const About = () => {
               className="absolute left-[640px] top-[1600px] text-white text-[61px] leading-[1] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              Meet the Founders
+              <span className="reveal-wrapper block">
+                <span className="reveal-text">Meet the Founders</span>
+              </span>
             </h2>
 
-            <div className="absolute left-0 top-[1600px] w-[600px] h-[700px] bg-[#222815] overflow-hidden">
+            <div className="anim-element slide-from-left absolute left-0 top-[1600px] w-[600px] h-[700px] bg-[#222815] overflow-hidden">
               {mokshaSrc && (
                 <Img src={mokshaSrc} alt="Moksha" className="w-full h-full object-cover" />
               )}
@@ -233,27 +373,29 @@ const About = () => {
                 className="text-white text-[36px] font-serif"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                Hi! I’m Moksha
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text">Hi! I'm Moksha</span>
+                </span>
               </h4>
               <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
                 <p>
-                  I still don’t fully know how a formerly shy kid has turned into an adult who now
+                  I still don't fully know how a formerly shy kid has turned into an adult who now
                   builds experiences around people, conversations, and connection, but here we are.
                 </p>
                 <p>
-                  I’ve lived a large part of my life at boarding school, The Lawrence School,
+                  I've lived a large part of my life at boarding school, The Lawrence School,
                   Sanawar, which has shaped me into an independent person obsessed with structure.
                   An obsession that turned out to be a superpower in the events world.
                 </p>
                 <p>
                   After doing a Msc. In International Events from the UK, and spending years in the
-                  industry, I knew I didn’t want to build just another event management company.
+                  industry, I knew I didn't want to build just another event management company.
                 </p>
                 <p>So, I took a leap of faith and Elewen was born.</p>
               </div>
             </div>
 
-            <div className="absolute right-0 top-[2397px] w-[600px] h-[700px] bg-[#080808] overflow-hidden">
+            <div className="anim-element slide-from-right absolute right-0 top-[2397px] w-[600px] h-[700px] bg-[#080808] overflow-hidden">
               {gauriSrc && (
                 <Img src={gauriSrc} alt="Gauri" className="w-full h-full object-cover" />
               )}
@@ -263,11 +405,13 @@ const About = () => {
                 className="text-white text-[36px] font-serif"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                Hey! I’m Gauri
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text">Hey! I'm Gauri</span>
+                </span>
               </h4>
               <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
                 <p>
-                  I’m a dancer, reader, dreamer, and a believer that every little step eventually
+                  I'm a dancer, reader, dreamer, and a believer that every little step eventually
                   leads to the right place.
                 </p>
                 <p>
@@ -287,10 +431,16 @@ const About = () => {
               className="absolute left-[100px] top-[3297px] text-white text-[61px] leading-[1] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              Why Choose Elewen
+              <span className="reveal-wrapper block">
+                <span className="reveal-text">Why Choose Elewen</span>
+              </span>
             </h2>
             <p className="absolute left-[100px] top-[3386px] w-[520px] text-white text-[16px] leading-[1.5]">
-              Everything you need for a beautiful celebration, thoughtfully brought together.
+              <span className="reveal-wrapper block">
+                <span className="reveal-text" style={{ '--delay': '0.1s' }}>
+                  Everything you need for a beautiful celebration, thoughtfully brought together.
+                </span>
+              </span>
             </p>
 
             {/* --- Group 75 (exact layout) --- */}
@@ -316,7 +466,7 @@ const About = () => {
                   iconTop: 45,
                   labelW: 174,
                   labelH: 75,
-                  label: 'A few clicks and you’re done planning',
+                  label: "A few clicks and you're done planning",
                 },
                 {
                   key: 'e48',
@@ -338,15 +488,21 @@ const About = () => {
                   iconTop: 36,
                   labelW: 174,
                   labelH: 75,
-                  label: 'Behind the scenes? That’s on us.',
+                  label: "Behind the scenes? That's on us.",
                 },
               ].map(item => {
                 const src = aboutAssetSrc(`${item.key}.png`)
                 return (
                   <div
                     key={item.key}
-                    className="absolute"
-                    style={{ left: `${item.left}px`, top: 0, width: '177px', height: '281px' }}
+                    className="anim-element slide-from-bottom absolute"
+                    style={{
+                      left: `${item.left}px`,
+                      top: 0,
+                      width: '177px',
+                      height: '281px',
+                      '--delay': `${(item.left / 660) * 0.2}s`,
+                    }}
                   >
                     {/* Circle (clip everything inside) */}
                     <div
@@ -394,7 +550,9 @@ const About = () => {
               className="absolute right-[100px] top-[3995px] w-[487px] text-white text-[61px] leading-[1] text-right font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              Our approach to vendor quality
+              <span className="reveal-wrapper block">
+                <span className="reveal-text">Our approach to vendor quality</span>
+              </span>
             </h2>
             <p
               className="absolute right-[100px] top-[4145px] w-[517px] text-white text-[16px] leading-[1.5] text-right opacity-80"
@@ -488,7 +646,7 @@ const About = () => {
 
         {/* --- Call To Action Section --- */}
         {/* Frame 271 */}
-        <div className="relative w-[1440px] h-[334px] bg-[#591902] shrink-0 overflow-hidden">
+        <div className="relative w-full h-[334px] bg-[#591902] shrink-0 overflow-hidden">
           {/* Frame 272 (Text Content) */}
           <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-[871px] flex flex-col items-center gap-[16px]">
             {/* Heading/h3 */}
@@ -511,7 +669,7 @@ const About = () => {
           {/* Frame 151 (Button Group) */}
           <div className="absolute top-[210px] left-1/2 -translate-x-1/2 flex flex-row items-center gap-[16px]">
             {/* Frame 114: Customer Login Button */}
-            <button className="flex flex-row items-center justify-between w-[208px] h-[44px] bg-[#CDB17E] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#c2a472] transition-colors">
+            <button className="flex flex-row items-center justify-between w-[208px] h-[44px] bg-[#CDB17E] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#c2a472] transition-colors group">
               <span
                 className="text-[#591902] text-[16px] font-medium leading-[150%]"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
@@ -531,6 +689,7 @@ const About = () => {
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  className="transition-transform duration-300 ease-out group-hover:rotate-45"
                 >
                   <path d="M7 17L17 7" />
                   <path d="M7 7h10v10" />
@@ -550,6 +709,9 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      {/* --- SCROLL-TRACED OBJECT --- */}
+      <img src={objectImg} alt="" style={objStyle} />
     </>
   )
 }

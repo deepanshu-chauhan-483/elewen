@@ -65,14 +65,20 @@ const NavHeader = () => {
     }
   }, [open])
 
-  // On home: always white icons (dark video/overlay behind).
+  const isAbout = pathname === '/about'
+
+  // On home/about: white icons (dark bg behind).
   // On other pages: dark brown icons (light page bg behind).
-  const iconColor = isHome ? '#FAFAFA' : '#591902'
+  const iconColor = isHome || isAbout ? '#FAFAFA' : '#591902'
 
   // During preloader: fully hidden (invisible + no pointer events).
   // After preloader: visible; hide on scroll-down with -translate-y-full.
   const visibilityClass = !entered ? 'invisible pointer-events-none' : ''
-  const transformClass = !entered ? '-translate-y-4' : hidden ? '-translate-y-full' : 'translate-y-0'
+  const transformClass = !entered
+    ? '-translate-y-4'
+    : hidden
+      ? '-translate-y-full'
+      : 'translate-y-0'
 
   return (
     <>
@@ -120,7 +126,7 @@ const NavHeader = () => {
               src={navLogo}
               alt="Elewen"
               className="w-full h-full object-contain"
-              style={{ filter: isHome ? 'brightness(0) invert(1)' : 'none' }}
+              style={{ filter: isHome || isAbout ? 'brightness(0) invert(1)' : 'none' }}
             />
           </Link>
         </div>

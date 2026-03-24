@@ -67,6 +67,9 @@ const PlanEventSection = () => {
   const { data: categories = [] } = useEventCategories()
   const { data: eventCards = [] } = useEventCards()
 
+  const safeCategories = Array.isArray(categories) ? categories : []
+  const safeEventCards = Array.isArray(eventCards) ? eventCards : []
+
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
 
@@ -292,6 +295,8 @@ const PlanEventSection = () => {
 const WhatToPlanSection = () => {
   // CMS: Strapi `service-categories` featured items
   const { data: serviceCards = [] } = useServiceCards()
+
+  const safeServiceCards = Array.isArray(serviceCards) ? serviceCards : []
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -672,42 +677,54 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         onUpdate: updateStepHighlights,
       })
 
-      stepElements.forEach((step) => {
+      // Heading reveal ("HOW 11 WORKS")
+      ScrollTrigger.create({
+        trigger: container,
+        start: 'top 85%',
+        once: true,
+        onEnter: () => {
+          container.querySelectorAll('h2 .reveal-text').forEach((t, i) => {
+            t.style.animationDelay = `${i * 0.05}s`
+            t.classList.add('is-visible')
+          })
+        },
+      })
+
+      stepElements.forEach(step => {
         const leftContent = step.querySelector('.left-content')
         const rightContent = step.querySelector('.right-content')
 
-        // 1. Text Reveal Trigger - earlier trigger to remove the delay
+        // 1. Text Reveal Trigger
         ScrollTrigger.create({
           trigger: step,
-          start: "top center+=15%",
-          once: true, // Ensures the text reveal only happens once
+          start: 'top 82%',
+          once: true,
           onEnter: () => {
-            const texts = step.querySelectorAll('.reveal-text');
+            const texts = step.querySelectorAll('.reveal-text')
             texts.forEach((span, index) => {
               if (!span.classList.contains('is-visible')) {
-                span.style.animationDelay = `${index * 0.05}s`;
-                span.classList.add('is-visible');
+                span.style.animationDelay = `${index * 0.04}s`
+                span.classList.add('is-visible')
               }
-            });
-          }
-        });
+            })
+          },
+        })
 
-        // 2. Containers - Strict fromTo guarantees elements stay hidden until scrolled
+        // 2. Containers — instant play on enter, no scrub
         if (leftContent) {
           gsap.fromTo(
             leftContent,
-            { x: -50, opacity: 0 },
+            { x: -40, opacity: 0 },
             {
               scrollTrigger: {
                 trigger: step,
-                start: "top center+=15%",
-                end: "center center",
-                scrub: 1,
-                once: true, // Locks the element in place once the animation finishes
+                start: 'top 82%',
+                once: true,
               },
               x: 0,
               opacity: 1,
-              ease: "none",
+              duration: 0.55,
+              ease: 'power2.out',
             }
           )
         }
@@ -715,18 +732,17 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         if (rightContent) {
           gsap.fromTo(
             rightContent,
-            { x: 50, opacity: 0 },
+            { x: 40, opacity: 0 },
             {
               scrollTrigger: {
                 trigger: step,
-                start: "top center+=15%",
-                end: "center center",
-                scrub: 1,
-                once: true, // Locks the element in place once the animation finishes
+                start: 'top 82%',
+                once: true,
               },
               x: 0,
               opacity: 1,
-              ease: "none",
+              duration: 0.55,
+              ease: 'power2.out',
             }
           )
         }
@@ -754,10 +770,6 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 
     ScrollTrigger.refresh()
     updateStepHighlights()
-    const t1 = setTimeout(() => {
-      ScrollTrigger.refresh()
-      updateStepHighlights()
-    }, 600)
 
     return () => {
       window.removeEventListener('scroll', onScroll)
@@ -767,7 +779,6 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       highlightTrigger?.kill()
       ctx.revert()
       observer.disconnect()
-      clearTimeout(t1)
     }
   }, [disableScrollAnimations, isVisible])
 
@@ -905,8 +916,8 @@ const CTASection = () => {
         <p className="text-[#FFFFFF] opacity-50 text-[16px] font-normal leading-[1.5] text-center max-w-[723px] mt-[32px] reveal-on-scroll">
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Drop your details and we&apos;ll get in touch. You&apos;re just one call away from turning
-              the confusion into a clear, sorted plan.
+              Drop your details and we&apos;ll get in touch. You&apos;re just one call away from
+              turning the confusion into a clear, sorted plan.
             </span>
           </span>
         </p>
@@ -1002,8 +1013,9 @@ const BetterWaySection = () => {
         <p className="absolute w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[403px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center reveal-on-scroll">
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Event planners can feel expensive and overwhelming. Doing everything yourself can quickly
-              become stressful. Elewen brings the best of both, thoughtful styling without the chaos.
+              Event planners can feel expensive and overwhelming. Doing everything yourself can
+              quickly become stressful. Elewen brings the best of both, thoughtful styling without
+              the chaos.
             </span>
           </span>
         </p>
@@ -1179,8 +1191,21 @@ const ChecklistSection = () => {
         duration: 0.4,
         ease: 'power2.in',
         onComplete: () => {
+          // Directly reveal texts in view — bypasses React re-render + GSAP setup delay
+          const hSection = howItWorksRef.current
+          if (hSection) {
+            let delay = 0
+            hSection.querySelectorAll('.reveal-wrapper').forEach(wrapper => {
+              wrapper.querySelectorAll('.reveal-text').forEach(t => {
+                if (!t.classList.contains('is-visible')) {
+                  t.style.animationDelay = `${delay}s`
+                  t.classList.add('is-visible')
+                  delay += 0.04
+                }
+              })
+            })
+          }
           setHowItWorksVisible(true)
-          setTimeout(() => ScrollTrigger.refresh(), 100)
         },
       },
       0.85
@@ -1286,18 +1311,20 @@ const ChecklistSection = () => {
                 src={imgScrolling}
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
                 alt="Scrolling"
-                style={{ '--delay': '0.4s' }}
+                style={{ '--delay': '0.15s' }}
               />
             </div>
             <div
               className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
-              style={{ '--delay': '0.7s' }}
+              style={{ '--delay': '0.25s' }}
             >
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">Too much scrolling.</h3>
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                Too much scrolling.
+              </h3>
             </div>
             <div
               className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
-              style={{ '--delay': '0.8s' }}
+              style={{ '--delay': '0.3s' }}
             >
               <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                 What was once simple now means endless scrolling — and still no confidence.
@@ -1308,27 +1335,29 @@ const ChecklistSection = () => {
             <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
               <div
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
-                style={{ '--delay': '1.4s' }}
+                style={{ '--delay': '0.5s' }}
               ></div>
               <img
                 src={imgCalls}
                 alt="Calls"
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
                 style={{
-                  '--delay': '1.8s',
+                  '--delay': '0.65s',
                   filter:
                     'drop-shadow(33px 41px 32px rgba(109, 57, 8, 0.16)) drop-shadow(15px 18px 24px rgba(109, 57, 8, 0.28)) drop-shadow(4px 5px 13px rgba(109, 57, 8, 0.32))',
                 }}
               />
               <div
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
-                style={{ '--delay': '2.1s' }}
+                style={{ '--delay': '0.8s' }}
               >
-                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">Too many calls.</h3>
+                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
+                  Too many calls.
+                </h3>
               </div>
               <div
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
-                style={{ '--delay': '2.2s' }}
+                style={{ '--delay': '0.85s' }}
               >
                 <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
                   Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns
@@ -1341,24 +1370,26 @@ const ChecklistSection = () => {
             <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
               <div
                 className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0 shadow-sm`}
-                style={{ '--delay': '2.8s' }}
+                style={{ '--delay': '1.0s' }}
               ></div>
               <img
                 src={imgVendors}
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
                 alt="Vendors"
-                style={{ '--delay': '3.2s' }}
+                style={{ '--delay': '1.15s' }}
               />
             </div>
             <div
               className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
-              style={{ '--delay': '3.5s' }}
+              style={{ '--delay': '1.25s' }}
             >
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">Too many vendors.</h3>
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                Too many vendors.
+              </h3>
             </div>
             <div
               className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
-              style={{ '--delay': '3.6s' }}
+              style={{ '--delay': '1.3s' }}
             >
               <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                 One decorator, one caterer, one supplier, different prices, different chaos.
@@ -1370,28 +1401,30 @@ const ChecklistSection = () => {
             <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
               <div
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0 shadow-sm`}
-                style={{ '--delay': '4.2s' }}
+                style={{ '--delay': '1.5s' }}
               ></div>
               <img
                 src={imgDecisions}
                 alt="Decisions"
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
-                style={{ '--delay': '4.6s' }}
+                style={{ '--delay': '1.65s' }}
               />
             </div>
             <div
               className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[662px] top-[551px] w-[122px] text-left z-20`}
-              style={{ '--delay': '4.9s' }}
+              style={{ '--delay': '1.75s' }}
             >
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">Too many decisions.</h3>
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                Too many decisions.
+              </h3>
             </div>
             <div
               className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
-              style={{ '--delay': '5.0s' }}
+              style={{ '--delay': '1.8s' }}
             >
               <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more freedom,
-                just more pressure.
+                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more
+                freedom, just more pressure.
               </p>
             </div>
           </div>
@@ -1444,7 +1477,11 @@ const ChecklistSection = () => {
       </div>
 
       <div className="relative w-full z-10 mt-0 md:mt-10 overflow-visible md:overflow-hidden min-h-[50vh] md:min-h-[100vh]">
-        <div ref={gateAreaRef} className="relative w-full h-[50vh] md:h-[100vh] z-20" style={{ position: 'relative' }}>
+        <div
+          ref={gateAreaRef}
+          className="relative w-full h-[50vh] md:h-[100vh] z-20"
+          style={{ position: 'relative' }}
+        >
           <div className="absolute inset-0 flex justify-center items-start md:items-center pt-20 md:pt-0">
             <div
               ref={gateRef}
@@ -1489,7 +1526,7 @@ const PackagesSection = () => {
   const lastDirectionRef = useRef('next')
 
   // CMS: Strapi `packages` with elements, addons, images
-  const { data: cmsPackages } = usePackages()
+  const { data: cmsPackages = [] } = usePackages()
   // Merge: use Strapi images when available, fall back to local assets
   const packagesData = cmsPackages.map((pkg, i) => ({
     ...pkg,
@@ -1501,6 +1538,18 @@ const PackagesSection = () => {
           : '',
     images: pkg.images?.length ? pkg.images : (PKG_LOCAL_IMAGES[i] ?? []),
   }))
+
+  const count = packagesData.length
+  const totalCards = count * 3
+
+  const handleTransitionEnd = () => {
+    if (count === 0) return
+    if (virtualIndex >= count * 2) {
+      setDisableTransition(true)
+      setVirtualIndex(count)
+      requestAnimationFrame(() => setDisableTransition(false))
+    }
+  }
 
   const handleNext = () => {
     if (count === 0) return
@@ -1613,100 +1662,104 @@ const PackagesSection = () => {
             style={{
               transformStyle: 'preserve-3d',
               transform: `rotateY(${-virtualIndex * 36}deg)`,
-              transition: disableTransition ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: disableTransition
+                ? 'none'
+                : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
               willChange: disableTransition ? 'auto' : 'transform',
             }}
             onTransitionEnd={handleTransitionEnd}
           >
             {sortedCards.map(({ pkg, index }) => {
-                const baseAngle = 36
-                const halfAngleDeg = baseAngle / 2
-                const halfAngleRad = (halfAngleDeg * Math.PI) / 180
-                const cardWidth = 640
-                const gap = 8
-                const radius = (cardWidth / 2 + gap / 2) / Math.tan(halfAngleRad)
-                const isActive = index === virtualIndex
+              const baseAngle = 36
+              const halfAngleDeg = baseAngle / 2
+              const halfAngleRad = (halfAngleDeg * Math.PI) / 180
+              const cardWidth = 640
+              const gap = 8
+              const radius = (cardWidth / 2 + gap / 2) / Math.tan(halfAngleRad)
+              const isActive = index === virtualIndex
 
-                return (
-                  <div
-                    key={`pkg-${index}`}
-                    onClick={() => !isActive && setVirtualIndex(index)}
-                    className={`w-[640px] relative flex flex-col bg-white overflow-hidden gap-6 pointer-events-auto ${isActive ? 'cursor-default' : 'cursor-pointer'}`}
-                    style={{
-                      gridArea: '1/1',
-                      height: '770px',
-                      backfaceVisibility: 'hidden',
-                      WebkitFontSmoothing: 'antialiased',
-                      MozOsxFontSmoothing: 'grayscale',
-                      transform: `rotateY(${index * 36}deg) translateZ(${-radius}px)`,
-                      boxShadow: isActive
-                        ? '0 12px 32px rgba(0,0,0,0.15)'
-                        : '0 6px 20px rgba(0,0,0,0.1)',
-                      opacity: isActive ? 1 : 0.9,
-                      zIndex: isActive ? 50 : 0,
-                    }}
-                  >
-                    {/* Image area */}
-                    <div className="px-5 pt-5 shrink-0">
-                      <div className={`relative w-full h-[450px] bg-[#EAEAEA] overflow-hidden ${isActive ? 'card-swiper-active' : ''}`}>
-                        {isActive ? (
-                          <Swiper
-                              modules={[Navigation, Pagination]}
-                              navigation={{
-                                prevEl: `.custom-prev-btn-${index}`,
-                                nextEl: `.custom-next-btn-${index}`,
-                              }}
-                              pagination={{ clickable: true }}
-                              loop={true}
-                              className="inner-card-swiper w-full h-full"
-                            >
-                              {pkg.images.map((imgSrc, i) => (
-                                <SwiperSlide key={i}>
-                                  <img
-                                    src={imgSrc}
-                                    alt={`${pkg.title} - view ${i + 1}`}
-                                    className="w-full h-full object-cover object-center"
-                                    loading="eager"
-                                  />
-                                </SwiperSlide>
-                              ))}
-                            </Swiper>
-                        ) : (
-                          <img
-                            src={pkg.images?.[0] ?? ''}
-                            alt={pkg.title}
-                            className="w-full h-full object-cover object-center"
-                            loading="lazy"
-                          />
-                        )}
+              return (
+                <div
+                  key={`pkg-${index}`}
+                  onClick={() => !isActive && setVirtualIndex(index)}
+                  className={`w-[640px] relative flex flex-col bg-white overflow-hidden gap-6 pointer-events-auto ${isActive ? 'cursor-default' : 'cursor-pointer'}`}
+                  style={{
+                    gridArea: '1/1',
+                    height: '770px',
+                    backfaceVisibility: 'hidden',
+                    WebkitFontSmoothing: 'antialiased',
+                    MozOsxFontSmoothing: 'grayscale',
+                    transform: `rotateY(${index * 36}deg) translateZ(${-radius}px)`,
+                    boxShadow: isActive
+                      ? '0 12px 32px rgba(0,0,0,0.15)'
+                      : '0 6px 20px rgba(0,0,0,0.1)',
+                    opacity: isActive ? 1 : 0.9,
+                    zIndex: isActive ? 50 : 0,
+                  }}
+                >
+                  {/* Image area */}
+                  <div className="px-5 pt-5 shrink-0">
+                    <div
+                      className={`relative w-full h-[450px] bg-[#EAEAEA] overflow-hidden ${isActive ? 'card-swiper-active' : ''}`}
+                    >
+                      {isActive ? (
+                        <Swiper
+                          modules={[Navigation, Pagination]}
+                          navigation={{
+                            prevEl: `.custom-prev-btn-${index}`,
+                            nextEl: `.custom-next-btn-${index}`,
+                          }}
+                          pagination={{ clickable: true }}
+                          loop={true}
+                          className="inner-card-swiper w-full h-full"
+                        >
+                          {pkg.images.map((imgSrc, i) => (
+                            <SwiperSlide key={i}>
+                              <img
+                                src={imgSrc}
+                                alt={`${pkg.title} - view ${i + 1}`}
+                                className="w-full h-full object-cover object-center"
+                                loading="eager"
+                              />
+                            </SwiperSlide>
+                          ))}
+                        </Swiper>
+                      ) : (
+                        <img
+                          src={pkg.images?.[0] ?? ''}
+                          alt={pkg.title}
+                          className="w-full h-full object-cover object-center"
+                          loading="lazy"
+                        />
+                      )}
 
-                        {/* Arrow overlay: pointer-events-none so it doesn't block; buttons have pointer-events-auto */}
-                        <div className="absolute inset-0 pointer-events-none z-[100] flex items-center justify-between">
-                          {/* CUSTOM LEFT ARROW */}
-                          <button
-                            type="button"
-                            className={`custom-prev-btn-${index} pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 w-[36px] h-[56px] bg-[#2D2D2D] hover:bg-black rounded-r-full flex items-center justify-center transition-all duration-300 pr-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
+                      {/* Arrow overlay: pointer-events-none so it doesn't block; buttons have pointer-events-auto */}
+                      <div className="absolute inset-0 pointer-events-none z-[100] flex items-center justify-between">
+                        {/* CUSTOM LEFT ARROW */}
+                        <button
+                          type="button"
+                          className={`custom-prev-btn-${index} pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 w-[36px] h-[56px] bg-[#2D2D2D] hover:bg-black rounded-r-full flex items-center justify-center transition-all duration-300 pr-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                           >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="white"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M19 12H5" />
-                              <path d="m12 19-7-7 7-7" />
-                            </svg>
-                          </button>
+                            <path d="M19 12H5" />
+                            <path d="m12 19-7-7 7-7" />
+                          </svg>
+                        </button>
 
-                          {/* CUSTOM RIGHT ARROW */}
-                          <button
-                            type="button"
-                            className={`custom-next-btn-${index} pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 w-[36px] h-[56px] bg-[#2D2D2D] hover:bg-black rounded-l-full flex items-center justify-center transition-all duration-300 pl-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
-                          >
+                        {/* CUSTOM RIGHT ARROW */}
+                        <button
+                          type="button"
+                          className={`custom-next-btn-${index} pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 w-[36px] h-[56px] bg-[#2D2D2D] hover:bg-black rounded-l-full flex items-center justify-center transition-all duration-300 pl-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
+                        >
                           <svg
                             width="18"
                             height="18"
@@ -1721,47 +1774,93 @@ const PackagesSection = () => {
                             <path d="m12 5 7 7-7 7" />
                           </svg>
                         </button>
-                        </div>
-
-                        {/* Price tag */}
-                        {isActive && (
-                          <div
-                            className="absolute right-4 top-4 flex items-center justify-center px-3 py-1 gap-1 bg-white rounded-[36px] z-10 pointer-events-none"
-                            style={{ padding: '4px 12px' }}
-                          >
-                            <span className="text-[#364022] text-[18px] font-medium leading-[1.5]">
-                              {pkg.price}
-                            </span>
-                          </div>
-                        )}
                       </div>
-                    </div>
 
-                    {/* Content area */}
-                    <div
-                      className="flex flex-col items-start flex-1 min-h-0 px-8 pb-6"
-                      style={{
-                        gap: '20px',
-                        WebkitFontSmoothing: 'antialiased',
-                        MozOsxFontSmoothing: 'grayscale',
-                      }}
-                    >
-                      <div className="flex flex-col items-start w-full" style={{ gap: '24px' }}>
-                        <div className="flex flex-col items-start w-full" style={{ gap: '12px' }}>
-                          <div className="flex flex-row justify-between items-center w-full gap-1">
-                            <h4
-                              className="text-[#2D2D2D] truncate"
+                      {/* Price tag */}
+                      {isActive && (
+                        <div
+                          className="absolute right-4 top-4 flex items-center justify-center px-3 py-1 gap-1 bg-white rounded-[36px] z-10 pointer-events-none"
+                          style={{ padding: '4px 12px' }}
+                        >
+                          <span className="text-[#364022] text-[18px] font-medium leading-[1.5]">
+                            {pkg.price}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content area */}
+                  <div
+                    className="flex flex-col items-start flex-1 min-h-0 px-8 pb-6"
+                    style={{
+                      gap: '20px',
+                      WebkitFontSmoothing: 'antialiased',
+                      MozOsxFontSmoothing: 'grayscale',
+                    }}
+                  >
+                    <div className="flex flex-col items-start w-full" style={{ gap: '24px' }}>
+                      <div className="flex flex-col items-start w-full" style={{ gap: '12px' }}>
+                        <div className="flex flex-row justify-between items-center w-full gap-1">
+                          <h4
+                            className="text-[#2D2D2D] truncate"
+                            style={{
+                              fontFamily: "'Poppins', sans-serif",
+                              fontWeight: 500,
+                              fontSize: '28px',
+                              lineHeight: '150%',
+                            }}
+                          >
+                            {pkg.title}
+                          </h4>
+                          <div
+                            className="flex justify-center items-center rounded-[48px] shrink-0"
+                            style={{ background: 'rgba(0, 0, 0, 0.05)', padding: '2px 12px' }}
+                          >
+                            <span
+                              className="text-[#2D2D2D]"
                               style={{
                                 fontFamily: "'Poppins', sans-serif",
                                 fontWeight: 500,
-                                fontSize: '28px',
+                                fontSize: '18px',
                                 lineHeight: '150%',
                               }}
                             >
-                              {pkg.title}
-                            </h4>
+                              {pkg.category}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p
+                          className="text-[#767676] line-clamp-2 w-full"
+                          style={{
+                            fontFamily: "'Poppins', sans-serif",
+                            fontWeight: 400,
+                            fontSize: '18px',
+                            lineHeight: '150%',
+                          }}
+                        >
+                          {pkg.desc}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-start w-full" style={{ gap: '8px' }}>
+                        <p
+                          className="text-[#2D2D2D] w-full"
+                          style={{
+                            fontFamily: "'Poppins', sans-serif",
+                            fontWeight: 500,
+                            fontSize: '18px',
+                            lineHeight: '150%',
+                          }}
+                        >
+                          Includes :
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {pkg.tags.map((tag, i) => (
                             <div
-                              className="flex justify-center items-center rounded-[48px] shrink-0"
+                              key={i}
+                              className="flex justify-center items-center rounded-[48px]"
                               style={{ background: 'rgba(0, 0, 0, 0.05)', padding: '2px 12px' }}
                             >
                               <span
@@ -1773,63 +1872,17 @@ const PackagesSection = () => {
                                   lineHeight: '150%',
                                 }}
                               >
-                                {pkg.category}
+                                {tag}
                               </span>
                             </div>
-                          </div>
-
-                          <p
-                            className="text-[#767676] line-clamp-2 w-full"
-                            style={{
-                              fontFamily: "'Poppins', sans-serif",
-                              fontWeight: 400,
-                              fontSize: '18px',
-                              lineHeight: '150%',
-                            }}
-                          >
-                            {pkg.desc}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-col items-start w-full" style={{ gap: '8px' }}>
-                          <p
-                            className="text-[#2D2D2D] w-full"
-                            style={{
-                              fontFamily: "'Poppins', sans-serif",
-                              fontWeight: 500,
-                              fontSize: '18px',
-                              lineHeight: '150%',
-                            }}
-                          >
-                            Includes :
-                          </p>
-                          <div className="flex flex-wrap gap-1">
-                            {pkg.tags.map((tag, i) => (
-                              <div
-                                key={i}
-                                className="flex justify-center items-center rounded-[48px]"
-                                style={{ background: 'rgba(0, 0, 0, 0.05)', padding: '2px 12px' }}
-                              >
-                                <span
-                                  className="text-[#2D2D2D]"
-                                  style={{
-                                    fontFamily: "'Poppins', sans-serif",
-                                    fontWeight: 500,
-                                    fontSize: '18px',
-                                    lineHeight: '150%',
-                                  }}
-                                >
-                                  {tag}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+                          ))}
                         </div>
                       </div>
                     </div>
                   </div>
-                )
-              })}
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -1971,8 +2024,8 @@ const CelebrationFeelingSection = () => {
           <p className="mt-8 w-[522px] max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] text-center drop-shadow-sm px-4 reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Want a professional to handle your event end to end? Fill the form and let our in-house
-                planners plan it with you.
+                Want a professional to handle your event end to end? Fill the form and let our
+                in-house planners plan it with you.
               </span>
             </span>
           </p>
@@ -2008,6 +2061,9 @@ const PlanningGuidesSection = () => {
   // CMS: Strapi `blogs` published posts + derived categories
   const { data: categories = [] } = useBlogCategories()
   const { data: allBlogs = [] } = useBlogs({ limit: 50 })
+
+  const safeCategories = Array.isArray(categories) ? categories : []
+  const safeAllBlogs = Array.isArray(allBlogs) ? allBlogs : []
 
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
@@ -2046,8 +2102,8 @@ const PlanningGuidesSection = () => {
           <p className="text-[#3D4035]/70 text-[15px] leading-relaxed mb-6 font-medium reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Helpful tips, inspiration, and practical guides to make planning your next celebration
-                simpler.
+                Helpful tips, inspiration, and practical guides to make planning your next
+                celebration simpler.
               </span>
             </span>
           </p>
@@ -2350,15 +2406,17 @@ const SplitInfoSection = () => {
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper">
-                <span className="reveal-text">Inspiration, Behind the Scenes, and Real Celebrations.</span>
+                <span className="reveal-text">
+                  Inspiration, Behind the Scenes, and Real Celebrations.
+                </span>
               </span>
             </h2>
 
             <p className="text-[#2D2D2D] opacity-50 text-[16px] leading-[150%] w-full lg:w-[339px] mt-[20px] font-sans m-0 reveal-on-scroll">
               <span className="reveal-wrapper">
                 <span className="reveal-text">
-                  See how celebrations come together, discover new ideas, and follow along as we bring
-                  events to life.
+                  See how celebrations come together, discover new ideas, and follow along as we
+                  bring events to life.
                 </span>
               </span>
             </p>
@@ -2407,8 +2465,8 @@ const SplitInfoSection = () => {
               <p className="text-[#FFFFFF] opacity-50 text-[16px] leading-[150%] w-full lg:w-[420px] font-sans m-0 reveal-on-scroll">
                 <span className="reveal-wrapper">
                   <span className="reveal-text">
-                    We collaborate with experienced decorators, caterers, and event professionals who
-                    care about quality, reliability, and beautiful execution.
+                    We collaborate with experienced decorators, caterers, and event professionals
+                    who care about quality, reliability, and beautiful execution.
                   </span>
                 </span>
               </p>
@@ -2457,8 +2515,8 @@ export default function LandingPage() {
     const pending = new Set()
 
     const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
+      entries => {
+        entries.forEach(entry => {
           if (!entry.isIntersecting) return
 
           const el = entry.target
@@ -2501,7 +2559,7 @@ export default function LandingPage() {
       }
     )
 
-    targets.forEach((el) => observer.observe(el))
+    targets.forEach(el => observer.observe(el))
 
     return () => observer.disconnect()
   }, [])
