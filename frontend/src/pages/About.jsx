@@ -125,16 +125,13 @@ const About = () => {
         ref={pageRef}
         className="w-full bg-[#F8F4ED] flex flex-col items-center font-sans overflow-x-hidden"
       >
-        <div className="relative w-full h-[1100px] shrink-0">
+        <div className="relative w-full h-[700px] md:h-[1100px] shrink-0">
           {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
-          <div
-            className="absolute left-0 top-0 w-full h-[880px] bg-[#591902] overflow-hidden z-0"
-            style={{ borderRadius: '0px 0px 1000px 1000px' }}
-          >
+          <div className="absolute left-0 top-0 w-full h-[660px] md:h-[880px] bg-[#591902] overflow-hidden z-0 rounded-b-[500px] md:rounded-b-[1000px]">
             {/* --- MAIN TEXT CONTENT --- */}
 
             {/* Left Heading */}
-            <h2 className="absolute left-[100px] top-[223px] w-[564px] text-[#FFFFFF] text-[61px] leading-[1] font-serif m-0">
+            <h2 className="absolute left-[20px] md:left-[100px] top-[40px] md:top-[223px] w-[228px] md:w-[564px] text-[#FFFFFF] text-[24px] md:text-[61px] leading-[1] font-serif m-0">
               <span className="reveal-wrapper block">
                 <span className="reveal-text" style={{ animationDelay: '0s' }}>
                   When we saw Excitement
@@ -148,8 +145,8 @@ const About = () => {
             </h2>
 
             {/* Right Descriptive Paragraphs */}
-            <div className="absolute left-[936px] top-[253px] w-[404px] flex flex-col gap-[20px]">
-              <p className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
+            <div className="absolute left-1/2 md:left-[936px] -translate-x-1/2 md:-translate-x-0 top-[124px] md:top-[253px] w-[353px] md:w-[404px] flex flex-col gap-[8px] md:gap-[20px]">
+              <p className="text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] font-normal m-0 opacity-70 md:opacity-100">
                 <span className="reveal-wrapper block">
                   <span className="reveal-text" style={{ animationDelay: '0.1s' }}>
                     Elewen was born from noticing a simple truth: many people love the idea of
@@ -158,7 +155,7 @@ const About = () => {
                   </span>
                 </span>
               </p>
-              <p className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
+              <p className="text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] font-normal m-0 opacity-70 md:opacity-100">
                 <span className="reveal-wrapper block">
                   <span className="reveal-text" style={{ animationDelay: '0.18s' }}>
                     Finding reliable vendors, understanding fair pricing, and coordinating
@@ -171,23 +168,20 @@ const About = () => {
           </div>
 
           {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
-          <div
-            className="absolute left-0 top-0 w-full h-[880px] overflow-hidden pointer-events-none z-10"
-            style={{ borderRadius: '0px 0px 1000px 1000px' }}
-          >
+          <div className="absolute left-0 top-0 w-full h-[660px] md:h-[880px] overflow-hidden pointer-events-none z-10 rounded-b-[500px] md:rounded-b-[1000px]">
             {/* The Actual Pill background */}
             <div
-              className="anim-element slide-from-bottom absolute left-[528px] top-[440px] w-[400px] h-[600px] bg-[#BFAC9B] rounded-[500px] border-[4px] border-[#591902] shadow-lg"
+              className="anim-element slide-from-bottom absolute left-1/2 md:left-[528px] -translate-x-1/2 md:-translate-x-0 top-[360px] md:top-[440px] w-[200px] md:w-[400px] h-[300px] md:h-[600px] bg-[#BFAC9B] rounded-t-[500px] md:rounded-[500px] border-[2px] md:border-[4px] border-[#591902] shadow-lg"
               style={{ '--delay': '0.1s' }}
             ></div>
           </div>
 
           {/* --- 3. THE GIRL (NOT CLIPPED BY THE CURVE) --- */}
-          <div className="absolute left-[528px] top-[440px] w-[400px] h-[600px] z-20 pointer-events-none">
+          <div className="absolute left-1/2 md:left-[528px] -translate-x-1/2 md:-translate-x-0 top-[360px] md:top-[440px] w-[200px] md:w-[400px] h-[300px] md:h-[600px] z-20 pointer-events-none">
             <img
               src={tangledIllustration}
               alt="Person tangled in lights"
-              className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 top-[9px] w-[384px] h-[529px] object-cover"
+              className="anim-element slide-from-bottom absolute left-1/2 -translate-x-[calc(50%+25px)] md:-translate-x-1/2 top-[-15px] md:top-[9px] w-[284px] md:w-[384px] h-[392px] md:h-[529px] object-cover max-w-none"
               style={{ '--delay': '0.3s' }}
             />
           </div>

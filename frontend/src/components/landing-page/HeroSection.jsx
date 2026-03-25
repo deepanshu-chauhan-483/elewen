@@ -3,6 +3,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import HeroPreloader from './HeroPreloader'
 import { useLenis } from '../../useLenis'
+import HeroVideo from '../../assets/HeroVideo.mp4'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -69,6 +70,9 @@ const renderBandCopy = tokens => {
 
 const PRELOADER_DONE_KEY = 'elewen-preloader-done'
 
+// Use a Vite import so the URL is generated correctly.
+const HERO_VIDEO_SRC = HeroVideo
+
 const HeroSection = () => {
   const wrapperRef = useRef(null)
   const preloaderRef = useRef(null)
@@ -103,9 +107,15 @@ const HeroSection = () => {
     const getEnd = () => {
       const W = window.innerWidth
       const H = window.innerHeight
-      const eW = W * 0.4
-      const eH = H * 0.6
-      return { eW, eH, eL: (W - eW) / 2, eT: H - eH - 40 }
+      const isMobile = W < 768
+
+      // Mobile gets 85% width to avoid skinny rectangles. Desktop keeps 40%.
+      const eW = isMobile ? W * 0.85 : W * 0.4
+      // Keep height proportional to the new width on mobile
+      const eH = isMobile ? eW * 1.2 : H * 0.6
+      const eT = H - eH - (isMobile ? 60 : 40)
+
+      return { eW, eH, eL: (W - eW) / 2, eT }
     }
 
     const W0 = window.innerWidth
@@ -563,6 +573,10 @@ const HeroSection = () => {
             loop
             playsInline
             preload="auto"
+            onError={() => {
+              // Helps diagnose "video not showing" vs "video offscreen" during hero animations.
+              console.error('Hero video failed to load:', HERO_VIDEO_SRC)
+            }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -571,7 +585,7 @@ const HeroSection = () => {
               objectFit: 'cover',
             }}
           >
-            <source src="/HeroVideo.mp4" type="video/mp4" />
+            <source src={HERO_VIDEO_SRC} type="video/mp4" />
           </video>
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.22)' }} />
           
