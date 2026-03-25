@@ -143,6 +143,11 @@ p {
   box-sizing: content-box;
 }
 
+/* Right column circles need mirrored padding so the bubble sits to the left side */
+.reveal-wrapper-circle-right {
+  padding: 4px 32px 28px 8px;
+}
+
 /* Circle-only reveal: start farther offscreen so the padded wrapper
    doesn't cause a "peek" before the animation begins. */
 .reveal-circle-text.reveal-text-x-left {
