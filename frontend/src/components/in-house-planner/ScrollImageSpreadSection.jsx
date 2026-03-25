@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -16,6 +16,12 @@ gsap.registerPlugin(ScrollTrigger)
 // ── Figma collage data ──────────────────────────────────────────────────────
 const CANVAS_W = 1438
 const CANVAS_H = 802
+const MOBILE_QUERY = '(max-width: 540px)'
+
+const getMode = () => {
+  if (typeof window === 'undefined') return 'desktop'
+  return window.matchMedia?.(MOBILE_QUERY)?.matches ? 'mobile' : 'desktop'
+}
 
 const IMAGE_DATA = [
   { src: img1, w: 264, h: 360, left: 124, top: 125, alt: 'Event Setup' },
@@ -26,6 +32,25 @@ const IMAGE_DATA = [
   { src: img6, w: 373, h: 311, left: 672, top: 374, alt: 'Panel Discussion' },
   { src: img7, w: 400, h: 234, left: 256, top: 501, alt: 'DJ Setup' },
   { src: img8, w: 253, h: 226, left: 1061, top: 374, alt: 'Car Launch Event' },
+]
+
+// Mobile collage (393px-ish) — matches the simple 2-column mosaic shown in designs.
+// This is intentionally separate from the desktop Figma-canvas animation.
+const MOBILE_SLIDES = [
+  {
+    id: 'a',
+    leftTop: { src: img6, alt: 'Panel Discussion' },
+    leftBottom: { src: img7, alt: 'DJ Setup' },
+    rightTop: { src: img2, alt: 'Event Decor' },
+    rightBottom: { src: img8, alt: 'Car Launch Event' },
+  },
+  {
+    id: 'b',
+    leftTop: { src: img1, alt: 'Event Setup' },
+    leftBottom: { src: img5, alt: 'Group Photo' },
+    rightTop: { src: img3, alt: 'Stage Setup' },
+    rightBottom: { src: img4, alt: 'Event Lighting' },
+  },
 ]
 
 // ── Fly-by images: burst through camera and vanish ──────────────────────────
@@ -67,7 +92,70 @@ const ScrollImageSpreadSection = () => {
   const whiteRef = useRef(null)
   const labelRef = useRef(null)
 
+  const collageWrapRef = useRef(null)
+  const mobileCarouselRef = useRef(null)
+  const mobileScrollRafRef = useRef(0)
+  const [mobileSlide, setMobileSlide] = useState(0)
+
+  const [mode, setMode] = useState(getMode)
+
   useLayoutEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+
+    const mq = window.matchMedia(MOBILE_QUERY)
+    const onChange = e => setMode(e.matches ? 'mobile' : 'desktop')
+
+    // Set initial value and subscribe
+    setMode(mq.matches ? 'mobile' : 'desktop')
+    if (mq.addEventListener) mq.addEventListener('change', onChange)
+    else mq.addListener(onChange)
+
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange)
+      else mq.removeListener(onChange)
+    }
+  }, [])
+
+  // Mobile: static scaled collage, no pinning (desktop animation remains untouched)
+  useLayoutEffect(() => {
+    if (mode !== 'mobile') return
+
+    const root = flowRef.current
+    const wrap = collageWrapRef.current
+    if (!root || !wrap) return
+
+    const ctx = gsap.context(() => {
+      if (whiteRef.current) gsap.set(whiteRef.current, { opacity: 0 })
+    }, flowRef)
+
+    return () => {
+      ctx.revert()
+    }
+  }, [mode])
+
+  useLayoutEffect(() => {
+    if (mode !== 'mobile') return
+
+    const el = mobileCarouselRef.current
+    if (!el) return
+
+    const update = () => {
+      const w = el.clientWidth || 1
+      const next = Math.round(el.scrollLeft / w)
+      setMobileSlide(Math.max(0, Math.min(MOBILE_SLIDES.length - 1, next)))
+    }
+
+    update()
+    return () => {
+      if (mobileScrollRafRef.current) cancelAnimationFrame(mobileScrollRafRef.current)
+      mobileScrollRafRef.current = 0
+    }
+  }, [mode])
+
+  // Desktop: existing pinned animation (kept as-is, but gated by mode)
+  useLayoutEffect(() => {
+    if (mode !== 'desktop') return
+
     let st
     const ctx = gsap.context(() => {
       const flowEl = flowRef.current
@@ -158,81 +246,198 @@ const ScrollImageSpreadSection = () => {
       st?.kill()
       ctx.revert()
     }
-  }, [])
+  }, [mode])
 
   return (
-    <section ref={flowRef} className="w-full h-screen relative overflow-hidden font-sans">
+    <section
+      ref={flowRef}
+      className={
+        mode === 'mobile'
+          ? 'relative w-full overflow-hidden font-sans pt-8 pb-14 bg-[#F7F7F5]'
+          : 'w-full h-screen relative overflow-hidden font-sans'
+      }
+    >
       {/* Background */}
-      <div ref={bgRef} className="absolute inset-0 bg-[#bfac9b]" />
+      <div
+        ref={bgRef}
+        className={mode === 'mobile' ? 'absolute inset-0 bg-[#F7F7F5]' : 'absolute inset-0 bg-[#bfac9b]'}
+      />
       {/* White overlay — fades in at end to bridge smoothly to next section */}
-      <div ref={whiteRef} className="absolute inset-0 bg-white opacity-0" style={{ zIndex: 1 }} />
-
-      {/* Centre label — fades on scroll */}
       <div
-        ref={labelRef}
-        className="absolute inset-0 z-20 flex items-center justify-center text-center pointer-events-none px-6"
-      >
-        <p
-          className="text-white opacity-80 text-[clamp(1.5rem,5vw,2rem)] leading-[1.2] tracking-[0.05em] font-serif"
-          style={{ fontFamily: "'Malgin', serif" }}
-        >
-          In House Event Planner
-          <br />
-          <span className="text-[clamp(0.9rem,2vw,1.1rem)] opacity-60 tracking-widest uppercase">
-            scroll to discover
-          </span>
-        </p>
-      </div>
+        ref={whiteRef}
+        className="absolute inset-0 bg-white opacity-0 pointer-events-none"
+        style={{ zIndex: mode === 'mobile' ? 20 : 1 }}
+      />
 
-      {/* 3D perspective stage (no preserve-3d → DOM order determines painting) */}
-      <div
-        className="absolute inset-0 z-10"
-        style={{ perspective: '800px', perspectiveOrigin: '50% 50%' }}
-      >
-        {/* ── Fly-by images: painted first (behind) ─── */}
-        {FLY_POS.map((_, i) => (
-          <div
-            key={`fly-${i}`}
-            ref={el => {
-              flyRefs.current[i] = el
-            }}
-            className="absolute left-1/2 top-1/2 shadow-lg"
-            style={{
-              width: '500px',
-              height: '350px',
-              marginLeft: '-250px',
-              marginTop: '-175px',
-              willChange: 'transform',
-            }}
-          >
-            <img
-              src={BASE_IMAGES[i % BASE_IMAGES.length]}
-              alt={`Event photo ${i + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ))}
+      {mode === 'mobile' ? (
+        <div className="relative z-10 px-4">
+          <div ref={collageWrapRef} className="w-full max-w-[540px] mx-auto">
+            <div
+              ref={mobileCarouselRef}
+              className="[&::-webkit-scrollbar]:hidden flex overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [scroll-snap-stop:always]"
+              onScroll={() => {
+                if (mobileScrollRafRef.current) return
+                mobileScrollRafRef.current = requestAnimationFrame(() => {
+                  mobileScrollRafRef.current = 0
+                  const el = mobileCarouselRef.current
+                  if (!el) return
+                  const w = el.clientWidth || 1
+                  const next = Math.round(el.scrollLeft / w)
+                  setMobileSlide(Math.max(0, Math.min(MOBILE_SLIDES.length - 1, next)))
+                })
+              }}
+            >
+              {MOBILE_SLIDES.map((s, idx) => (
+                <div key={s.id} className="w-full shrink-0 snap-center px-2 mt-4">
+                  <div className="w-full rounded-[15px] overflow-hidden shadow-lg">
+                    <div className="grid grid-cols-[2fr_1fr] grid-rows-3 gap-1 h-[min(78vw,370px)]">
+                      {/* Big (top-left) */}
+                      <div className="relative overflow-hidden rounded-[16px] bg-white/5 ring-1 ring-white/10 row-span-2 row-start-1 col-start-1">
+                        <img
+                          src={s.leftTop.src}
+                          alt={s.leftTop.alt}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
+                      {/* Small (top-right) */}
+                      <div className="relative overflow-hidden rounded-[16px] bg-white/5 ring-1 ring-white/10 row-start-1 col-start-2">
+                        <img
+                          src={s.rightTop.src}
+                          alt={s.rightTop.alt}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
+                      {/* Small (bottom-left) */}
+                      <div className="relative overflow-hidden rounded-[16px] bg-white/5 ring-1 ring-white/10 row-start-3 col-start-1">
+                        <img
+                          src={s.leftBottom.src}
+                          alt={s.leftBottom.alt}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
+                      {/* Big (bottom-right) */}
+                      <div className="relative overflow-hidden rounded-[16px] bg-white/5 ring-1 ring-white/10 row-span-2 row-start-2 col-start-2">
+                        <img
+                          src={s.rightBottom.src}
+                          alt={s.rightBottom.alt}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-        {/* ── Figma landing images: painted last (always on top) ─── */}
-        {IMAGE_DATA.map((img, i) => (
-          <div
-            key={`figma-${i}`}
-            ref={el => {
-              figmaRefs.current[i] = el
-            }}
-            className="absolute left-1/2 top-1/2 shadow-md"
-            style={{
-              width: `${img.w}px`,
-              height: `${img.h}px`,
-              marginLeft: `${-img.w / 2}px`,
-              marginTop: `${-img.h / 2}px`,
-              willChange: 'transform',
-            }}
-          >
-            <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+            {/* Slide indicator (matches the small bars shown under the collage) */}
+            <div className="flex justify-center gap-2 mt-4">
+              {MOBILE_SLIDES.map((s, idx) => (
+                <button
+                  key={`dot-${s.id}`}
+                  type="button"
+                  aria-label={`Go to collage ${idx + 1}`}
+                  onClick={() => {
+                    const el = mobileCarouselRef.current
+                    if (!el) return
+                    const w = el.clientWidth || 1
+                    el.scrollTo({ left: w * idx, behavior: 'smooth' })
+                  }}
+                  className={
+                    idx === mobileSlide
+                      ? 'w-[26px] h-[6px] rounded-full bg-[#CDB17E] opacity-100'
+                      : 'w-[10px] h-[6px] rounded-full bg-[#D9D9D9] opacity-70'
+                  }
+                />
+              ))}
+            </div>
+
+            {/* Mobile text (as per screenshot) */}
+            <div className="mt-10">
+              <h2
+                className="text-[#2D2D2D] text-[32px] leading-[1.05] font-serif"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                What we do as your In-House Planner
+              </h2>
+              <p className="mt-4 text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7]">
+                We handle everything from the first conversation to the final wrap-up, understanding
+                your vision, planning the concept and showflow, coordinating vendors and production,
+                guiding styling and creative direction, and managing timelines, approvals, and
+                execution so you can simply be present and enjoy the event.
+              </p>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <>
+          {/* Centre label — fades on scroll */}
+          <div
+            ref={labelRef}
+            className="absolute inset-0 z-20 flex items-center justify-center text-center pointer-events-none px-6"
+          >
+            <p
+              className="text-white opacity-80 text-[clamp(1.5rem,5vw,2rem)] leading-[1.2] tracking-[0.05em] font-serif"
+              style={{ fontFamily: "'Malgin', serif" }}
+            >
+              In House Event Planner
+              <br />
+              <span className="text-[clamp(0.9rem,2vw,1.1rem)] opacity-60 tracking-widest uppercase">
+                scroll to discover
+              </span>
+            </p>
+          </div>
+
+          {/* 3D perspective stage (no preserve-3d → DOM order determines painting) */}
+          <div
+            className="absolute inset-0 z-10"
+            style={{ perspective: '800px', perspectiveOrigin: '50% 50%' }}
+          >
+            {/* ── Fly-by images: painted first (behind) ─── */}
+            {FLY_POS.map((_, i) => (
+              <div
+                key={`fly-${i}`}
+                ref={el => {
+                  flyRefs.current[i] = el
+                }}
+                className="absolute left-1/2 top-1/2 shadow-lg"
+                style={{
+                  width: '500px',
+                  height: '350px',
+                  marginLeft: '-250px',
+                  marginTop: '-175px',
+                  willChange: 'transform',
+                }}
+              >
+                <img
+                  src={BASE_IMAGES[i % BASE_IMAGES.length]}
+                  alt={`Event photo ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+
+            {/* ── Figma landing images: painted last (always on top) ─── */}
+            {IMAGE_DATA.map((img, i) => (
+              <div
+                key={`figma-${i}`}
+                ref={el => {
+                  figmaRefs.current[i] = el
+                }}
+                className="absolute left-1/2 top-1/2 shadow-md"
+                style={{
+                  width: `${img.w}px`,
+                  height: `${img.h}px`,
+                  marginLeft: `${-img.w / 2}px`,
+                  marginTop: `${-img.h / 2}px`,
+                  willChange: 'transform',
+                }}
+              >
+                <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   )
 }
