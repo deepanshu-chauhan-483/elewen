@@ -63,9 +63,8 @@ const Footer = () => {
     >
       {/* Container: 339px tall on mobile, 645px tall on desktop */}
       <div className="relative w-full max-w-[1440px] h-[339px] md:h-[645px] shrink-0 py-0 md:py-0">
-        
-{/* ELEWEN Title */}
-<h1
+        {/* ELEWEN Title */}
+        <h1
           className="absolute left-1/2 -translate-x-1/2 top-[20px] w-full px-2 text-center text-[#2D2D2D] leading-[1] md:top-[80px] md:w-[1434px]"
           style={{
             fontFamily: "'Malgin', serif",
@@ -80,10 +79,12 @@ const Footer = () => {
 
         {/* Links & About Text Container */}
         <div className="absolute left-1/2 -translate-x-1/2 top-[133px] w-[347px] flex flex-col gap-[16px] md:mt-0 md:left-[100px] md:top-[401px] md:right-[100px] md:translate-x-0 md:w-auto md:flex-row md:items-start md:justify-between md:gap-10">
-          
           <div className="flex flex-col gap-[16px] md:gap-4">
             {footerNav.map((row, i) => (
-              <div key={row.label} className="flex items-center pl-2 md:pl-0 md:items-start lg:items-center gap-[5px] md:gap-[60px]">
+              <div
+                key={row.label}
+                className="flex items-center pl-2 md:pl-0 md:items-start lg:items-center gap-[5px] md:gap-[60px]"
+              >
                 <span
                   className={`anim-element slide-from-left ${row.labelWidth} text-[#2D2D2D] text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] shrink-0 font-['Poppins'] md:font-sans`}
                   style={{ '--delay': `${i * 0.06}s` }}
@@ -124,7 +125,6 @@ const Footer = () => {
         <p className="absolute right-[20px] top-[313px] text-[#2D2D2D] opacity-50 text-[12px] leading-[150%] font-['Poppins'] md:right-[100px] md:top-[513px] md:leading-[1.5] md:font-sans">
           © 2025 Elewen. All rights reserved.
         </p>
-
       </div>
     </footer>
   )

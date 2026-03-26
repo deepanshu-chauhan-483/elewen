@@ -588,12 +588,12 @@ const HeroSection = () => {
             <source src={HERO_VIDEO_SRC} type="video/mp4" />
           </video>
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.22)' }} />
-          
+
           {/* Mobile Gradients for text readability */}
           <div
             className="absolute inset-0 md:hidden pointer-events-none"
             style={{
-              background: `linear-gradient(180deg, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.4) 100%), linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(255, 255, 255, 0) 50%)`
+              background: `linear-gradient(180deg, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.4) 100%), linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(255, 255, 255, 0) 50%)`,
             }}
           />
         </div>
@@ -609,9 +609,7 @@ const HeroSection = () => {
             color: '#FAFAFA',
           }}
         >
-
           <main className="absolute inset-0 flex flex-col justify-center items-center md:items-center z-10 pt-14 md:pt-24 px-0">
-            
             {/* Desktop original classes fully preserved via md:, mobile mapped to Figma spec */}
             <div className="w-[353px] md:w-full md:max-w-249.25 text-right md:text-right flex flex-col pr-0 md:pr-8 lg:pr-0 pointer-events-auto">
               <span
@@ -651,9 +649,16 @@ const HeroSection = () => {
                     />
                   </svg>
                 </button>
-                <div className="w-[265px] md:max-w-62.5 text-[16px] md:text-[15px] lg:text-sm font-normal md:font-light leading-[150%] md:leading-relaxed opacity-90 text-left overflow-hidden text-[#FAFAFA]" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                  <p ref={ctaLine1Ref} className="m-0">Explore the collection. Your seamless</p>
-                  <p ref={ctaLine2Ref} className="m-0">event is just a few clicks away!</p>
+                <div
+                  className="w-[265px] md:max-w-62.5 text-[16px] md:text-[15px] lg:text-sm font-normal md:font-light leading-[150%] md:leading-relaxed opacity-90 text-left overflow-hidden text-[#FAFAFA]"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                >
+                  <p ref={ctaLine1Ref} className="m-0">
+                    Explore the collection. Your seamless
+                  </p>
+                  <p ref={ctaLine2Ref} className="m-0">
+                    event is just a few clicks away!
+                  </p>
                 </div>
               </div>
             </div>
@@ -669,10 +674,19 @@ const HeroSection = () => {
               >
                 W
               </span>
-              <div className="flex flex-col justify-center text-[14px] font-medium tracking-wide space-y-[4px] mt-1 overflow-hidden leading-[150%] text-[#FFFFFF]" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                <p ref={el => (leftLine1Refs.current[1] = el)} className="m-0">ork made easy</p>
-                <p ref={el => (leftLine2Refs.current[1] = el)} className="m-0">orth the spend</p>
-                <p ref={el => (leftLine3Refs.current[1] = el)} className="m-0">ell-vetted vendors</p>
+              <div
+                className="flex flex-col justify-center text-[14px] font-medium tracking-wide space-y-[4px] mt-1 overflow-hidden leading-[150%] text-[#FFFFFF]"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
+                <p ref={el => (leftLine1Refs.current[1] = el)} className="m-0">
+                  ork made easy
+                </p>
+                <p ref={el => (leftLine2Refs.current[1] = el)} className="m-0">
+                  orth the spend
+                </p>
+                <p ref={el => (leftLine3Refs.current[1] = el)} className="m-0">
+                  ell-vetted vendors
+                </p>
               </div>
             </div>
 
@@ -686,9 +700,15 @@ const HeroSection = () => {
                 W
               </span>
               <div className="flex flex-col justify-center text-sm font-medium tracking-wide space-y-1 mt-3 overflow-hidden text-[#FFFFFF]">
-                <p ref={el => (leftLine1Refs.current[0] = el)} className="m-0">ork made easy</p>
-                <p ref={el => (leftLine2Refs.current[0] = el)} className="m-0">orth the spend</p>
-                <p ref={el => (leftLine3Refs.current[0] = el)} className="m-0">ell-vetted vendors</p>
+                <p ref={el => (leftLine1Refs.current[0] = el)} className="m-0">
+                  ork made easy
+                </p>
+                <p ref={el => (leftLine2Refs.current[0] = el)} className="m-0">
+                  orth the spend
+                </p>
+                <p ref={el => (leftLine3Refs.current[0] = el)} className="m-0">
+                  ell-vetted vendors
+                </p>
               </div>
             </div>
 

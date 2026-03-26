@@ -128,10 +128,8 @@ const About = () => {
         <div className="relative w-full h-[820px] md:h-[1100px] shrink-0">
           {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
           <div className="absolute left-0 top-0 w-full h-[760px] md:h-[880px] bg-[#591902] overflow-hidden z-0 rounded-b-[500px] md:rounded-b-[1000px]">
-            
             {/* --- MAIN TEXT CONTENT WRAPPER --- */}
             <div className="absolute top-[80px] md:top-0 left-[20px] md:left-0 w-[calc(100%-40px)] md:w-full flex flex-col gap-[24px] md:block z-10">
-              
               {/* Left Heading */}
               <h2 className="relative md:absolute md:left-[100px] md:top-[223px] w-[320px] md:w-[564px] text-[#FFFFFF] text-[28px] md:text-[61px] leading-[1.1] md:leading-[1] font-serif m-0">
                 <span className="reveal-wrapper block">
@@ -167,7 +165,6 @@ const About = () => {
                   </span>
                 </p>
               </div>
-              
             </div>
           </div>
 

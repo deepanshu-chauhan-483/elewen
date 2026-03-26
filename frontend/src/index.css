@@ -258,3 +258,99 @@ p {
     transform: translateY(0);
   }
 }
+/* =========================================
+   Lightbulb Animations (Pendant & Realistic Beam)
+   ========================================= */
+
+@keyframes organic-swing {
+  0% {
+    transform: translateX(50%) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateX(50%) rotate(2.5deg);
+  }
+  100% {
+    transform: translateX(50%) rotate(-2.5deg);
+  }
+}
+
+@keyframes realistic-flicker {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translateX(-50%) scale(1);
+    filter: brightness(1);
+  }
+  /* Quick electrical stutter */
+  3% {
+    opacity: 0.5;
+    filter: brightness(1.1);
+  }
+  6% {
+    opacity: 0.35;
+    filter: brightness(0.9);
+  }
+  7% {
+    opacity: 0.65;
+    transform: translateX(-50%) scale(1.02);
+    filter: brightness(1.25);
+  }
+  8% {
+    opacity: 0.4;
+    transform: translateX(-50%) scale(1);
+    filter: brightness(1);
+  }
+
+  /* Smooth slow burn phase */
+  40% {
+    opacity: 0.6;
+    transform: translateX(-50%) scale(1.03);
+    filter: brightness(1.1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translateX(-50%) scale(1.05);
+    filter: brightness(1.2);
+  }
+
+  /* Another tiny micro-surge */
+  52% {
+    opacity: 0.45;
+    filter: brightness(0.95);
+  }
+  53% {
+    opacity: 0.75;
+    filter: brightness(1.2);
+  }
+
+  /* Cooling down phase */
+  85% {
+    opacity: 0.45;
+    transform: translateX(-50%) scale(1.01);
+    filter: brightness(1.05);
+  }
+  90% {
+    opacity: 0.35;
+    filter: brightness(0.95);
+  }
+  92% {
+    opacity: 0.55;
+    filter: brightness(1.1);
+  }
+}
+
+.animate-swing {
+  transform-origin: top center;
+  animation-name: organic-swing;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.animate-beam {
+  transform-origin: top center;
+  animation-name: realistic-flicker;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: opacity, transform, filter;
+}
