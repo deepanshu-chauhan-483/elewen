@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import SmoothScroll from './SmoothScroll'
+import { strapiGet } from './lib/strapi'
 import './index.css'
 
 // Prevent browser from restoring scroll on reload — ensures page always starts from top
@@ -27,6 +28,37 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+// Prefetch all 3 public pages + global settings on app init.
+// By the time user navigates to any page, CMS content is already cached.
+const prefetchCmsPages = async () => {
+  const populate = { 'populate[sections][populate]': '*' }
+  await Promise.allSettled([
+    queryClient.prefetchQuery({
+      queryKey: ['cms-page', 'landing'],
+      queryFn: () => strapiGet('/landing-page', populate).then(r => r.data),
+      staleTime: 10 * 60 * 1000,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ['cms-page', 'about'],
+      queryFn: () => strapiGet('/about-page', populate).then(r => r.data),
+      staleTime: 10 * 60 * 1000,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ['cms-page', 'in-house-planner'],
+      queryFn: () => strapiGet('/inhouse-planner-page', populate).then(r => r.data),
+      staleTime: 10 * 60 * 1000,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ['global-settings'],
+      queryFn: () => strapiGet('/global-setting').then(r => r.data),
+      staleTime: 30 * 60 * 1000,
+    }),
+  ])
+}
+
+// Fire prefetch immediately — don't await, don't block render
+prefetchCmsPages()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
