@@ -154,8 +154,8 @@ const PlanEventSection = () => {
                       animationDelay: `${(i % 5) * 0.2}s`,
                       background:
                         i % 2 === 0
-                          ? 'linear-gradient(180deg, #FCD768 0%, #F7F7F5 100%)'
-                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F7F7F5 100%)',
+                          ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
+                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, rgba(247,247,245,0) 100%)',
                       clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
                     }}
                   />
