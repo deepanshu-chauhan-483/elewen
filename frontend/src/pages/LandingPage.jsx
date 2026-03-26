@@ -186,7 +186,7 @@ const PlanEventSection = () => {
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         
         {/* Categories Bar */}
-        <aside className="w-full md:w-[320px] pt-8 pb-10 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 md:border-r border-[#3D4035]/15">
+        <aside className="w-full md:w-[320px] pt-8 pb-0 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 md:border-r border-[#3D4035]/15">
           <div className="flex flex-row md:flex-col items-center md:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
@@ -220,7 +220,7 @@ const PlanEventSection = () => {
           </div>
         </aside>
 
-        <div className="flex-1 py-12 md:py-16 px-6 md:px-12 lg:px-8">
+        <div className="flex-1 py-4 md:py-16 px-6 md:px-12 lg:px-8">
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
           
@@ -434,7 +434,7 @@ const WhatToPlanSection = () => {
       <hr className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15" />
 
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
-        <div className="flex-1 order-last lg:order-none py-12 md:py-16 px-6 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15">
+        <div className="flex-1 order-last lg:order-none py-4 md:py-16 px-6 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15">
           {/* Cards Carousel Area */}
           <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15 w-full overflow-visible lg:overflow-hidden">
           
@@ -565,7 +565,7 @@ const WhatToPlanSection = () => {
         </div>
 
         {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] order-first lg:order-none pt-8 pb-10 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 lg:border-none border-[#3D4035]/15">
+        <aside className="w-full lg:w-[320px] order-first lg:order-none pt-8 pb-0 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 lg:border-none border-[#3D4035]/15">
           <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
             {categories.map((cat, index) => {
               const isActive = cat === activeCategory
@@ -1268,17 +1268,21 @@ const ChecklistSection = () => {
   const gateRef = useRef(null)
   const howItWorksRef = useRef(null)
   const layoutWrapRef = useRef(null)
-  const layoutInnerRef = useRef(null)
+  const [layoutScale, setLayoutScale] = useState(1)
 
   useEffect(() => {
     const wrap = layoutWrapRef.current
-    const inner = layoutInnerRef.current
-    if (!wrap || !inner) return
+    if (!wrap) return
 
     const resize = () => {
       const available = wrap.clientWidth
-      const scale = Math.min(available / LAYOUT_W, 1)
-      inner.style.transform = `scale(${scale})`
+      const isMobile = window.innerWidth < 768
+      // Mobile: nudge scale up slightly so the collage feels larger. Art is centered (translateX -50%),
+      // so a little horizontal crop from overflow-hidden is symmetric; height still matches scale.
+      // Higher = larger on phone (more horizontal crop at the sides; stays vertically sized via height).
+      const mobileBoost = isMobile ? 1.62 : 1
+      const scale = Math.min((available / LAYOUT_W) * mobileBoost, 1)
+      setLayoutScale(scale)
     }
 
     const ro = new ResizeObserver(resize)
@@ -1323,7 +1327,7 @@ const ChecklistSection = () => {
     const gateLiftY = isMobile ? -280 : -220
     const scrollEnd = isMobile ? 1300 : 1500
     const scrubVal = isMobile ? 1 : 1
-    
+   
     // UPDATED: Trigger earlier on mobile so the user doesn't have to scroll as far
     // 'top 45%' means the animation starts when the top of the element hits 45% down from the top of the viewport.
     const startTrigger = isMobile ? 'top 65%' : 'top top'
@@ -1475,13 +1479,21 @@ const ChecklistSection = () => {
         className="w-full max-w-[1034px] mx-auto mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
       >
         <div
-          className="w-full overflow-hidden mx-auto"
-          style={{ maxWidth: `${LAYOUT_W}px`, aspectRatio: `${LAYOUT_W}/${LAYOUT_H}` }}
+          className="relative w-full overflow-hidden mx-auto"
+          style={{
+            maxWidth: `${LAYOUT_W}px`,
+            // Reserve height for the *scaled* artwork so nothing is clipped vertically.
+            height: `${LAYOUT_H * layoutScale}px`,
+          }}
         >
           <div
-            ref={layoutInnerRef}
-            className="relative"
-            style={{ width: `${LAYOUT_W}px`, height: `${LAYOUT_H}px`, transformOrigin: 'top left' }}
+            className="absolute top-0 left-[calc(50%+18px)] md:left-1/2"
+            style={{
+              width: `${LAYOUT_W}px`,
+              height: `${LAYOUT_H}px`,
+              transform: `translateX(-50%) scale(${layoutScale})`,
+              transformOrigin: 'top center',
+            }}
           >
             {/* STEP 1: Too much scrolling (Starts immediately) */}
             <div className="absolute left-[283px] top-[19px] w-[211px] h-[211px]">
@@ -1509,7 +1521,7 @@ const ChecklistSection = () => {
               className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
               style={{ '--delay': '0.3s' }}
             >
-              <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                 What was once simple now means endless scrolling — and still no confidence.
               </p>
             </div>
@@ -1543,7 +1555,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
                 style={{ '--delay': '0.85s' }}
               >
-                <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
+                <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
                   Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns
                   into a coordination hub, and excitement becomes stress.
                 </p>
@@ -1576,7 +1588,7 @@ const ChecklistSection = () => {
               className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
               style={{ '--delay': '1.3s' }}
             >
-              <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                 One decorator, one caterer, one supplier, different prices, different chaos.
                 You&apos;re not planning a celebration; you&apos;re managing a team.
               </p>
@@ -1608,7 +1620,7 @@ const ChecklistSection = () => {
               className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
               style={{ '--delay': '1.8s' }}
             >
-              <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                 Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more
                 freedom, just more pressure.
               </p>
@@ -1627,7 +1639,7 @@ const ChecklistSection = () => {
           </span>
         </h3>
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center">
           <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">You don&apos;t have to manage people.</span>
@@ -1882,7 +1894,7 @@ const PackagesSection = () => {
         <div
           className="relative min-h-[480px] md:min-h-[790px] w-full grid place-content-center overflow-hidden px-0 z-10"
           style={{
-            perspective: '80em',
+            perspective: isMobile ? '130em' : '80em',
             maskImage: isMobile ? 'none' : 'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
             WebkitMaskImage: isMobile ? 'none' : 'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
           }}
@@ -2142,6 +2154,15 @@ const PackagesSection = () => {
 
 const CelebrationFeelingSection = () => {
   const containerRef = useRef(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    handleResize() // init
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   // Preload all 5 parallax images 2 viewports before this section scrolls into view
   const preloadRef = usePreloadOnApproach([img1, img2, img3, img4, img5], '200% 0px')
 
@@ -2150,11 +2171,14 @@ const CelebrationFeelingSection = () => {
     offset: ['start end', 'end start'],
   })
 
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -150])
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, -80])
-  const y3 = useTransform(scrollYProgress, [0, 1], [0, -120])
-  const y4 = useTransform(scrollYProgress, [0, 1], [0, -60])
-  const y5 = useTransform(scrollYProgress, [0, 1], [0, -200])
+  // Stronger parallax on both breakpoints.
+  // Negative y moves the images upward as the section scrolls.
+  const intensity = isMobile ? 1.7 : 1.45
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, -150 * intensity])
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, -80 * intensity])
+  const y3 = useTransform(scrollYProgress, [0, 1], [0, -120 * intensity])
+  const y4 = useTransform(scrollYProgress, [0, 1], [0, -60 * intensity])
+  const y5 = useTransform(scrollYProgress, [0, 1], [0, -200 * intensity])
 
   const imageShadow =
     '-54px 121px 37px rgba(0, 0, 0, 0.01), -34px 77px 34px rgba(0, 0, 0, 0.04), -19px 43px 29px rgba(0, 0, 0, 0.14), -9px 19px 21px rgba(0, 0, 0, 0.24), -2px 5px 12px rgba(0, 0, 0, 0.28)'
@@ -2347,7 +2371,7 @@ const PlanningGuidesSection = () => {
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         
         {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] pt-8 pb-10 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b lg:border-b-0 lg:border-r border-[#3D4035]/15">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b lg:border-b-0 lg:border-r border-[#3D4035]/15">
           <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] lg:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
@@ -2381,7 +2405,7 @@ const PlanningGuidesSection = () => {
           </div>
         </aside>
 
-        <div className="flex-1 py-16 px-12 lg:px-8 flex flex-col">
+        <div className="flex-1 py-4 md:py-16 px-12 lg:px-8 flex flex-col">
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
           

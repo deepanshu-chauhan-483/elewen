@@ -83,7 +83,7 @@ const Footer = () => {
           
           <div className="flex flex-col gap-[16px] md:gap-4">
             {footerNav.map((row, i) => (
-              <div key={row.label} className="flex items-center md:items-start lg:items-center gap-[20px] md:gap-[60px]">
+              <div key={row.label} className="flex items-center pl-2 md:pl-0 md:items-start lg:items-center gap-[5px] md:gap-[60px]">
                 <span
                   className={`anim-element slide-from-left ${row.labelWidth} text-[#2D2D2D] text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] shrink-0 font-['Poppins'] md:font-sans`}
                   style={{ '--delay': `${i * 0.06}s` }}
