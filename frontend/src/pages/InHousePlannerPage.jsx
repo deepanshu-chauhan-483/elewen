@@ -2,6 +2,7 @@ import { useRef, useState, useLayoutEffect } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { usePlannerLead } from '../hooks/usePlannerLead'
+import { useInHousePlannerPage } from '../hooks/useCmsPages'
 import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
 
 import plannerImg from '../assets/images/moksha_portrait.jpg'
@@ -90,6 +91,9 @@ const GCTextReveal = ({ children, className = '' }) => (
 )
 
 const GrandCelebrationsSection = () => {
+  const { data: cms = {} } = useInHousePlannerPage()
+  const gc = cms.grand_celebrations_intro ?? {}
+
   const sectionRef = useRef(null)
 
   const titleRef = useRef(null)
@@ -347,7 +351,8 @@ const GrandCelebrationsSection = () => {
         <div className="absolute w-full bottom-[40px] lg:bottom-[80px] px-[5%] lg:px-[100px] flex flex-col-reverse md:flex-row justify-between items-start md:items-end gap-8 pointer-events-none z-0">
           <p className="text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[1.5] text-left md:pb-2 max-w-[631px]">
             <span ref={noteRef} className="reveal-text gc-reveal-text">
-              Executed during my tenure at Wizcraft and/ or as a freelance project manager.
+              {gc.note ??
+                'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
             </span>
           </p>
 
@@ -357,7 +362,7 @@ const GrandCelebrationsSection = () => {
           >
             <span className="reveal-wrapper">
               <span ref={titleRef} className="reveal-text gc-reveal-text">
-                Experience Across <br className="hidden md:block" /> Grand Celebrations
+                {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
               </span>
             </span>
           </h3>
@@ -434,6 +439,10 @@ const EveryDayImgBox = ({ src, alt, className, setRef }) => (
 )
 
 const CelebrationsEveryDaySection = () => {
+  const { data: cms = {} } = useInHousePlannerPage()
+  const ced = cms.celebrations_every_day ?? {}
+  const cmsCats = ced.categories ?? []
+
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia &&
@@ -535,6 +544,11 @@ const CelebrationsEveryDaySection = () => {
 
   const active = CATEGORY_DATA.find(c => c.name === activeName) ?? CATEGORY_DATA[0]
   const incoming = incomingName ? (CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
+  const activeIdx = CATEGORY_DATA.findIndex(c => c.name === activeName)
+  const incomingIdx = incomingName ? CATEGORY_DATA.findIndex(c => c.name === incomingName) : -1
+  const activeHeading = cmsCats[activeIdx]?.heading ?? active.heading
+  const incomingHeading =
+    incomingIdx >= 0 ? (cmsCats[incomingIdx]?.heading ?? incoming?.heading) : ''
 
   const animateSwap = nextName => {
     if (prefersReducedMotion) {
@@ -715,12 +729,12 @@ const CelebrationsEveryDaySection = () => {
           className="absolute left-1/2 -translate-x-1/2 top-[80px] w-[967px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Celebrations We Plan Every Day
+          {ced.heading ?? 'Celebrations We Plan Every Day'}
         </h2>
 
         <p className="absolute left-1/2 -translate-x-1/2 top-[169px] w-[809px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center">
-          From intimate birthdays to joyful wedding functions, our in-house planner helps bring
-          thoughtful structure and creative detail to social celebrations that matter most.
+          {ced.description ??
+            'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
         </p>
 
         <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
@@ -729,7 +743,7 @@ const CelebrationsEveryDaySection = () => {
 
           <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#F8F4ED] z-20">
             <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
-              {CATEGORY_DATA.map(cat => {
+              {CATEGORY_DATA.map((cat, idx) => {
                 const isActive = cat.name === activeName
                 return (
                   <div
@@ -742,7 +756,7 @@ const CelebrationsEveryDaySection = () => {
                     }`}
                   >
                     <span className="text-[#2D2D2D] text-[16px] font-medium leading-[1.5]">
-                      {cat.name}
+                      {cmsCats[idx]?.tab_label ?? cat.name}
                     </span>
                   </div>
                 )
@@ -789,7 +803,7 @@ const CelebrationsEveryDaySection = () => {
               className="inline-block"
               style={{ willChange: 'transform' }}
             >
-              {active.heading}
+              {activeHeading}
             </span>
           </h3>
 
@@ -844,7 +858,7 @@ const CelebrationsEveryDaySection = () => {
                   className="inline-block"
                   style={{ willChange: 'transform' }}
                 >
-                  {incoming.heading}
+                  {incomingHeading}
                 </span>
               </h3>
 
@@ -874,6 +888,9 @@ const SUPPORT_OPTIONS = [
 ]
 
 const CelebrationFormSection = () => {
+  const { data: cms = {} } = useInHousePlannerPage()
+  const cta = cms.closing_cta ?? {}
+
   const [currentStep, setCurrentStep] = useState(1)
   const { mutate: submitLead, isPending, isError, error } = usePlannerLead()
 
@@ -937,11 +954,11 @@ const CelebrationFormSection = () => {
           className="text-[#2D2D2D] text-[40px] md:text-[61px] leading-[1] font-serif mb-6"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Tell Us About Your Celebration
+          {cta.heading ?? 'Tell Us About Your Celebration'}
         </h2>
         <p className="text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[1.5] max-w-[727px] mx-auto">
-          If you’d like me to plan your event end to end, leave your details and we’ll take it from
-          there.
+          {cta.body ??
+            'If you’d like me to plan your event end to end, leave your details and we’ll take it from there.'}
         </p>
       </div>
 
@@ -1308,6 +1325,9 @@ const CelebrationFormSection = () => {
 }
 
 const InHousePlannerSection = () => {
+  const { data: cms = {} } = useInHousePlannerPage()
+  const bio = cms.moksha_bio ?? {}
+
   return (
     <>
       <ScrollImageSpreadSection />
@@ -1331,20 +1351,18 @@ const InHousePlannerSection = () => {
 
           <div className="absolute left-[760px] top-[202px] w-[461px] flex flex-col gap-[20px]">
             <h3 className="w-full text-[#FFFFFF] text-[21px] font-medium leading-[1.2]">
-              Hi, I&apos;m Moksha.
+              {bio.greeting ?? "Hi, I'm Moksha."}
             </h3>
 
             <div className="w-full flex flex-col gap-[20px]">
               <p className="w-full text-[#FFFFFF] opacity-80 text-[16px] leading-[1.5] font-normal">
-                Co-founder at Elewen and a professional event planner with 6+ years of industry
-                experience. Trained in International Events in the UK, I bring structure,
-                creativity, and calm to every celebration.
+                {bio.intro ??
+                  'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.'}
               </p>
 
               <p className="w-full text-[#FFFFFF] opacity-80 text-[16px] leading-[1.5] font-normal">
-                Some events call for personal attention and thoughtful detailing. They need
-                intention, detail, and a planner who truly cares, that&apos;s exactly why the
-                In-House Planner was created.
+                {bio.personal_note ??
+                  "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created."}
               </p>
             </div>
           </div>

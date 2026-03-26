@@ -8,19 +8,34 @@ const blocksToText = blocks => {
   if (typeof blocks === 'string') return blocks
   if (!Array.isArray(blocks)) return ''
   return blocks
-    .flatMap(b => b.children ?? [])
-    .map(c => c.text ?? '')
-    .join('')
+    .map(b => (b.children ?? []).map(c => c.text ?? '').join(''))
+    .filter(Boolean)
+    .join(' ')
+}
+
+function normaliseMediaArray(media) {
+  // Strapi responses can vary by version/plugins:
+  // - v5 populated media often is an array of objects
+  // - v4 style can be { data: [...] }
+  // - some seeds may store strings/urls directly
+  if (!media) return []
+  if (Array.isArray(media)) return media
+  if (Array.isArray(media?.data)) return media.data
+  return []
+}
+
+function toAbsoluteStrapiUrl(url) {
+  if (!url || typeof url !== 'string') return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 /**
  * Fetches published packages from Strapi.
+ * No placeholderData: static PACKAGES_FALLBACK must not appear while the real fetch runs.
  *
- * Strapi endpoint:
- *   GET /api/packages?populate[elements][populate]=service&populate[addons]=*&populate[images]=*&sort=createdAt:asc
- *
- * Returns packages shaped like PACKAGES_FALLBACK until Strapi responds.
- * Never blocks the UI — initialData serves immediately.
+ * GET /api/packages?populate[elements][populate]=service&populate[addons]=*&populate[images]=*&sort=createdAt:asc
  */
 export function usePackages() {
   return useQuery({
@@ -41,22 +56,25 @@ export function usePackages() {
         title: pkg.title,
         category: pkg.category ?? '',
         description: blocksToText(pkg.description),
-        price: pkg.base_price ? `Starting from ₹${pkg.base_price.toLocaleString('en-IN')}` : '',
+        // Badge line in UI is "Starting from {price}" — store amount only (matches PACKAGES_FALLBACK)
+        price: pkg.base_price
+          ? `₹${Number(pkg.base_price).toLocaleString('en-IN')}`
+          : '',
         base_price: pkg.base_price ?? 0,
         tags: (pkg.elements ?? [])
           .map(el => el.service?.name)
           .filter(Boolean)
           .concat('More'),
         // Strapi image URL: prepend VITE_STRAPI_URL to relative paths
-        images: (pkg.images ?? []).map(img =>
-          img.url?.startsWith('http')
-            ? img.url
-            : `${import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'}${img.url}`
-        ),
+        images: normaliseMediaArray(pkg.images)
+          .map(img => {
+            if (typeof img === 'string') return toAbsoluteStrapiUrl(img)
+            return toAbsoluteStrapiUrl(img?.url)
+          })
+          .filter(Boolean),
         _index: i,
       }))
     },
-    placeholderData: PACKAGES_FALLBACK,
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     retry: 1,

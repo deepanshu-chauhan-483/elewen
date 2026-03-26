@@ -2,6 +2,7 @@
 // - tangled-lights.png
 // - logo-placeholder.png
 import { useRef, useEffect, useState } from 'react'
+import { useAboutPage } from '../hooks/useCmsPages'
 import tangledIllustration from '../assets/images/tangled-lights.png'
 import objectImg from '../assets/Object.png'
 import bulb1 from '../assets/lightbulb_images/bulb1.png'
@@ -36,6 +37,16 @@ const SVG_TOP = 450
 const SECTION_HEIGHT = 4628
 
 const About = () => {
+  const { data: cms = {} } = useAboutPage()
+  const so = cms.story_opening ?? {}
+  const cm = cms.celebrations_matter ?? {}
+  const sq = cms.simple_question ?? {}
+  const tg = cms.thoughtful_gatherings ?? {}
+  const founders = cms.founders ?? {}
+  const wc = cms.why_choose ?? {}
+  const vq = cms.vendor_quality ?? {}
+  const vc = cms.vendor_cta ?? {}
+
   const story1Src = aboutAssetSrc('story-1.png')
   const story2Src = aboutAssetSrc('story-2.png')
   const mokshaSrc = aboutAssetSrc('moksha_portrait.jpg')
@@ -134,36 +145,38 @@ const About = () => {
               <h2 className="relative md:absolute md:left-[100px] md:top-[223px] w-[320px] md:w-[564px] text-[#FFFFFF] text-[28px] md:text-[61px] leading-[1.1] md:leading-[1] font-serif m-0">
                 <span className="reveal-wrapper block">
                   <span className="reveal-text" style={{ animationDelay: '0s' }}>
-                    When we saw Excitement
+                    {so.heading_1 ?? 'When we saw Excitement'}
                   </span>
                 </span>
                 <span className="reveal-wrapper block">
                   <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
-                    Turning Into Overthinking
+                    {so.heading_2 ?? 'Turning Into Overthinking'}
                   </span>
                 </span>
               </h2>
 
               {/* Right Descriptive Paragraphs */}
               <div className="relative md:absolute md:left-[936px] md:top-[253px] w-full md:w-[404px] max-w-[353px] flex flex-col gap-[16px] md:gap-[20px]">
-                <p className="text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] font-normal m-0 opacity-70 md:opacity-100">
-                  <span className="reveal-wrapper block">
-                    <span className="reveal-text" style={{ animationDelay: '0.1s' }}>
-                      Elewen was born from noticing a simple truth: many people love the idea of
-                      hosting, but hesitate because planning an event often feels like too much to
-                      manage.
+                {(
+                  so.paragraphs ?? [
+                    'Elewen was born from noticing a simple truth: many people love the idea of hosting, but hesitate because planning an event often feels like too much to manage.',
+                    'Finding reliable vendors, understanding fair pricing, and coordinating everything usually means relying on social media, referrals, and endless back-and-forth.',
+                  ]
+                ).map((para, i) => (
+                  <p
+                    key={i}
+                    className="text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] font-normal m-0 opacity-70 md:opacity-100"
+                  >
+                    <span className="reveal-wrapper block">
+                      <span
+                        className="reveal-text"
+                        style={{ animationDelay: `${0.1 + i * 0.08}s` }}
+                      >
+                        {para}
+                      </span>
                     </span>
-                  </span>
-                </p>
-                <p className="text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] font-normal m-0 opacity-70 md:opacity-100">
-                  <span className="reveal-wrapper block">
-                    <span className="reveal-text" style={{ animationDelay: '0.18s' }}>
-                      Finding reliable vendors, understanding fair pricing, and coordinating
-                      everything usually means relying on social media, referrals, and endless
-                      back-and-forth.
-                    </span>
-                  </span>
-                </p>
+                  </p>
+                ))}
               </div>
             </div>
           </div>
@@ -196,20 +209,26 @@ const About = () => {
             style={{ fontFamily: "'Malgin', serif" }}
           >
             <span className="reveal-wrapper block">
-              <span className="reveal-text">Celebrations Don&apos;t Have to Be Big to Matter</span>
+              <span className="reveal-text">
+                {cm.heading ?? "Celebrations Don't Have to Be Big to Matter"}
+              </span>
             </span>
           </h2>
 
           <div className="absolute left-[20px] md:left-auto md:right-[100px] top-[180px] md:top-[30px] flex flex-col gap-[20px] w-full max-w-[463px]">
-            <p className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal">
-              Hosting a party, celebrating with close friends and family, and taking a pause from
-              everyday life truly matters.
-            </p>
-
-            <p className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal">
-              Elewen exists to protect that feeling. We focus on the little details and personal
-              touches that turn simple gatherings into meaningful moments.
-            </p>
+            {(
+              cm.paragraphs ?? [
+                'Hosting a party, celebrating with close friends and family, and taking a pause from everyday life truly matters.',
+                'Elewen exists to protect that feeling. We focus on the little details and personal touches that turn simple gatherings into meaningful moments.',
+              ]
+            ).map((para, i) => (
+              <p
+                key={i}
+                className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal"
+              >
+                {para}
+              </p>
+            ))}
           </div>
         </div>
 
@@ -309,14 +328,14 @@ const About = () => {
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block">
-                  <span className="reveal-text">We Asked a Simple Question</span>
+                  <span className="reveal-text">{sq.heading ?? 'We Asked a Simple Question'}</span>
                 </span>
               </h2>
               <p className="text-white text-[21px] leading-[1.2]">
                 <span className="reveal-wrapper block">
                   <span className="reveal-text" style={{ '--delay': '0.1s' }}>
-                    Almost everything else in our lives has moved online. We book cabs and holidays
-                    in minutes, so why does event planning still feel complicated?
+                    {sq.body ??
+                      'Almost everything else in our lives has moved online. We book cabs and holidays in minutes, so why does event planning still feel complicated?'}
                   </span>
                 </span>
               </p>
@@ -329,17 +348,24 @@ const About = () => {
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block">
-                  <span className="reveal-text">Thoughtful Gatherings Over Loud Distractions?</span>
-                </span>
-              </h2>
-              <p className="text-white text-[21px] leading-[1.2]">
-                <span className="reveal-wrapper block">
-                  <span className="reveal-text" style={{ '--delay': '0.1s' }}>
-                    Almost everything else in our lives has moved online. We book cabs and holidays
-                    in minutes, so why does event planning still feel complicated?
+                  <span className="reveal-text">
+                    {tg.heading ?? 'Thoughtful Gatherings Over Loud Distractions?'}
                   </span>
                 </span>
-              </p>
+              </h2>
+              {(
+                tg.paragraphs ?? [
+                  'With house parties becoming the new way to celebrate, it felt like the right time to bring digitalisation, organisation, and standardisation to the events space.',
+                ]
+              ).map((para, i) => (
+                <p key={i} className="text-white text-[21px] leading-[1.2]">
+                  <span className="reveal-wrapper block">
+                    <span className="reveal-text" style={{ '--delay': `${0.1 + i * 0.08}s` }}>
+                      {para}
+                    </span>
+                  </span>
+                </p>
+              ))}
             </div>
             {story2Src && (
               <Img
@@ -355,7 +381,7 @@ const About = () => {
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper block">
-                <span className="reveal-text">Meet the Founders</span>
+                <span className="reveal-text">{founders.heading ?? 'Meet the Founders'}</span>
               </span>
             </h2>
 
@@ -370,26 +396,22 @@ const About = () => {
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block">
-                  <span className="reveal-text">Hi! I&apos;m Moksha</span>
+                  <span className="reveal-text">
+                    {founders.founders?.[0]?.name ?? "Hi! I'm Moksha"}
+                  </span>
                 </span>
               </h4>
               <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
-                <p>
-                  I still don&apos;t fully know how a formerly shy kid has turned into an adult who
-                  now builds experiences around people, conversations, and connection, but here we
-                  are.
-                </p>
-                <p>
-                  I&apos;ve lived a large part of my life at boarding school, The Lawrence School,
-                  Sanawar, which has shaped me into an independent person obsessed with structure.
-                  An obsession that turned out to be a superpower in the events world.
-                </p>
-                <p>
-                  After doing a Msc. In International Events from the UK, and spending years in the
-                  industry, I knew I didn&apos;t want to build just another event management
-                  company.
-                </p>
-                <p>So, I took a leap of faith and Elewen was born.</p>
+                {(
+                  founders.founders?.[0]?.paragraphs ?? [
+                    "I still don't fully know how a formerly shy kid has turned into an adult who now builds experiences around people, conversations, and connection, but here we are.",
+                    "I've lived a large part of my life at boarding school, The Lawrence School, Sanawar, which has shaped me into an independent person obsessed with structure. An obsession that turned out to be a superpower in the events world.",
+                    "After doing a Msc. In International Events from the UK, and spending years in the industry, I knew I didn't want to build just another event management company.",
+                    'So, I took a leap of faith and Elewen was born.',
+                  ]
+                ).map((para, i) => (
+                  <p key={i}>{para}</p>
+                ))}
               </div>
             </div>
 
@@ -404,23 +426,21 @@ const About = () => {
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block">
-                  <span className="reveal-text">Hey! I&apos;m Gauri</span>
+                  <span className="reveal-text">
+                    {founders.founders?.[1]?.name ?? "Hey! I'm Gauri"}
+                  </span>
                 </span>
               </h4>
               <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
-                <p>
-                  I&apos;m a dancer, reader, dreamer, and a believer that every little step
-                  eventually leads to the right place.
-                </p>
-                <p>
-                  I graduated from Ashoka university with an honours in economics and finance.
-                  Post-graduation, I was set to be buried in financial spreadsheets, but life had
-                  different plans.
-                </p>
-                <p>
-                  Elewen began as an idea my co-founder and I developed while exploring the
-                  opportunity to build a thoughtful, design-driven brand.
-                </p>
+                {(
+                  founders.founders?.[1]?.paragraphs ?? [
+                    "I'm a dancer, reader, dreamer, and a believer that every little step eventually leads to the right place.",
+                    'I graduated from Ashoka university with an honours in economics and finance. Post-graduation, I was set to be buried in financial spreadsheets, but life had different plans.',
+                    'Elewen began as an idea my co-founder and I developed while exploring the opportunity to build a thoughtful, design-driven brand.',
+                  ]
+                ).map((para, i) => (
+                  <p key={i}>{para}</p>
+                ))}
               </div>
             </div>
 
@@ -430,13 +450,14 @@ const About = () => {
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper block">
-                <span className="reveal-text">Why Choose Elewen</span>
+                <span className="reveal-text">{wc.heading ?? 'Why Choose Elewen'}</span>
               </span>
             </h2>
             <p className="absolute left-[100px] top-[3386px] w-[520px] text-white text-[16px] leading-[1.5]">
               <span className="reveal-wrapper block">
                 <span className="reveal-text" style={{ '--delay': '0.1s' }}>
-                  Everything you need for a beautiful celebration, thoughtfully brought together.
+                  {wc.subheading ??
+                    'Everything you need for a beautiful celebration, thoughtfully brought together.'}
                 </span>
               </span>
             </p>
@@ -453,7 +474,7 @@ const About = () => {
                   iconTop: -10,
                   labelW: 174,
                   labelH: 50,
-                  label: 'Little details that lift your party',
+                  label: wc.features?.[0]?.label ?? 'Little details that lift your party',
                 },
                 {
                   key: 'e49',
@@ -464,7 +485,7 @@ const About = () => {
                   iconTop: 45,
                   labelW: 174,
                   labelH: 75,
-                  label: "A few clicks and you're done planning",
+                  label: wc.features?.[1]?.label ?? 'One complete look. Zero running around.',
                 },
                 {
                   key: 'e48',
@@ -475,7 +496,7 @@ const About = () => {
                   iconTop: 9,
                   labelW: 174,
                   labelH: 75,
-                  label: 'One complete look. Zero running around.',
+                  label: wc.features?.[2]?.label ?? "A few clicks and you're done planning",
                 },
                 {
                   key: 'e50',
@@ -486,7 +507,7 @@ const About = () => {
                   iconTop: 36,
                   labelW: 174,
                   labelH: 75,
-                  label: "Behind the scenes? That's on us.",
+                  label: wc.features?.[3]?.label ?? "Behind the scenes? That's on us.",
                 },
               ].map(item => {
                 const src = aboutAssetSrc(`${item.key}.png`)
@@ -549,35 +570,43 @@ const About = () => {
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper block">
-                <span className="reveal-text">Our approach to vendor quality</span>
+                <span className="reveal-text">
+                  {vq.heading ?? 'Our approach to vendor quality'}
+                </span>
               </span>
             </h2>
             <p
               className="absolute right-[100px] top-[4145px] w-[517px] text-white text-[16px] leading-[1.5] text-right opacity-80"
               style={{ fontFamily: "'Poppins', sans-serif" }}
             >
-              We stand by the people behind every celebration, creating steady work, clear
-              processes, and timely payments for vendors.
+              {vq.body ??
+                'We stand by the people behind every celebration, creating steady work, clear processes, and timely payments for vendors.'}
             </p>
 
             {/* Card Container - Restored to justify-end with gap-[20px] to cluster on the right */}
             <div className="absolute bottom-[100px] left-0 w-full px-[100px] flex justify-end gap-[20px]">
               {[
                 {
-                  title: 'Quality you can trust',
-                  desc: 'Every partner in the Elewen Network is quality-checked for skill, reliability, and consistency.',
+                  title: vq.cards?.[0]?.title ?? 'Quality you can trust',
+                  desc:
+                    vq.cards?.[0]?.description ??
+                    'Every partner in the Elewen Network is quality-checked for skill, reliability, and consistency.',
                   iconName: 'quality-icon.png',
                   titleWidth: '218px',
                 },
                 {
-                  title: 'Built for everyone involved',
-                  desc: 'By removing middlemen, we give customers better value and help our partners work in a more organised, digital, and timely system.',
+                  title: vq.cards?.[1]?.title ?? 'Built for everyone involved',
+                  desc:
+                    vq.cards?.[1]?.description ??
+                    'By removing middlemen, we give customers better value and help our partners work in a more organised, digital, and timely system.',
                   iconName: 'everyone-icon.png',
                   titleWidth: '275px',
                 },
                 {
-                  title: 'Clear tiers. Simple Choices',
-                  desc: 'Our partners are grouped into three levels. You choose your package, and we take care of the rest.',
+                  title: vq.cards?.[2]?.title ?? 'Clear tiers. Simple Choices',
+                  desc:
+                    vq.cards?.[2]?.description ??
+                    'Our partners are grouped into three levels. You choose your package, and we take care of the rest.',
                   iconName: 'tiers-icon.png',
                   titleWidth: '279px',
                 },
@@ -652,7 +681,7 @@ const About = () => {
               className="text-[#FFFFFF] text-[47px] font-normal leading-none text-center m-0"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              Not a part of the Elewen Network yet?
+              {vc.heading ?? 'Not a part of the Elewen Network yet?'}
             </h3>
 
             {/* Heading/h5 */}
@@ -660,7 +689,7 @@ const About = () => {
               className="text-[#FFFFFF] text-[27px] font-normal leading-none text-center m-0"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              Come join the fam.
+              {vc.subheading ?? 'Come join the fam.'}
             </h5>
           </div>
 
@@ -672,7 +701,7 @@ const About = () => {
                 className="text-[#591902] text-[16px] font-medium leading-[150%]"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
-                Customer Login
+                {vc.ctas?.[0]?.label ?? 'Customer Login'}
               </span>
 
               {/* Frame 4: Arrow Icon Wrapper */}
@@ -701,7 +730,7 @@ const About = () => {
                 className="text-[#591902] text-[16px] font-medium leading-[150%]"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
-                Join as Vendor
+                {vc.ctas?.[1]?.label ?? 'Join as Vendor'}
               </span>
             </button>
           </div>

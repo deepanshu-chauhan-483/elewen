@@ -15,6 +15,7 @@ import { usePackages } from '../hooks/usePackages'
 import { useEventCategories, useEventCards, useServiceCards } from '../hooks/useEventTypes'
 import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
+import { useLandingPage } from '../hooks/useCmsPages'
 
 import { preloadImages, usePreloadOnApproach } from '../utils/preloadAssets'
 import inspirationImg from '../assets/images/inspiration.png'
@@ -64,6 +65,9 @@ const CARD_LOCAL_IMAGES = [
 ]
 
 const PlanEventSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.plan_event_intro ?? {}
+
   // CMS: Strapi `events` top-level categories + featured sub-type cards
   const { data: categories = [] } = useEventCategories()
   const { data: eventCards = [] } = useEventCards()
@@ -174,7 +178,11 @@ const PlanEventSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Plan Your Event, <br className="hidden md:block" /> Differently.
+              {s.heading ?? (
+                <>
+                  Plan Your Event, <br className="hidden md:block" /> Differently.
+                </>
+              )}
             </span>
           </span>
         </h1>
@@ -183,14 +191,14 @@ const PlanEventSection = () => {
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Choose your event type and explore curated décor and catering packages designed to
-                simplify planning.
+                {s.description ??
+                  'Choose your event type and explore curated décor and catering packages designed to simplify planning.'}
               </span>
             </span>
           </p>
 
           <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">View All</span>
+            <span className="text-white font-medium text-[15px] mr-5">{s.cta_label ?? 'View All'}</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
@@ -287,6 +295,7 @@ const PlanEventSection = () => {
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                       </div>
 
@@ -393,7 +402,7 @@ const PlanEventSection = () => {
             <div className="flex md:hidden justify-center pb-12">
               <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
                 <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
-                  View All
+                  {s.cta_label ?? 'View All'}
                 </span>
                 <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
                   <svg
@@ -420,6 +429,9 @@ const PlanEventSection = () => {
 }
 
 const WhatToPlanSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.what_to_plan_intro ?? {}
+
   // CMS: Strapi `service-categories` featured items
   const { data: serviceCards = [] } = useServiceCards()
 
@@ -470,13 +482,14 @@ const WhatToPlanSection = () => {
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Choose a service category to explore curated packages designed for your event.
+                {s.description ??
+                  'Choose a service category to explore curated packages designed for your event.'}
               </span>
             </span>
           </p>
 
           <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">View All</span>
+            <span className="text-white font-medium text-[15px] mr-5">{s.cta_label ?? 'View All'}</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
@@ -497,8 +510,12 @@ const WhatToPlanSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              What Would You <br className="hidden md:block" /> Like To{' '}
-              <br className="block md:hidden" /> Plan?
+              {s.heading ?? (
+                <>
+                  What Would You <br className="hidden md:block" /> Like To{' '}
+                  <br className="block md:hidden" /> Plan?
+                </>
+              )}
             </span>
           </span>
         </h2>
@@ -652,7 +669,7 @@ const WhatToPlanSection = () => {
             <div className="flex lg:hidden justify-center pb-12">
               <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
                 <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
-                  View All
+                  {s.cta_label ?? 'View All'}
                 </span>
                 <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
                   <svg
@@ -1156,6 +1173,9 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 }
 
 const CTASection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.consultation_cta ?? {}
+
   return (
     <section className="w-full flex justify-center bg-[#591902] font-sans">
       <div className="w-full max-w-[1440px] h-[360px] flex flex-col items-center py-[80px] px-6">
@@ -1164,27 +1184,31 @@ const CTASection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Still confused, excited, or somewhere in between?</span>
+            <span className="reveal-text">
+              {s.heading ?? 'Confused, Excited or somewhere in between?'}
+            </span>
           </span>
         </h2>
 
         <p className="text-[#FFFFFF] opacity-50 text-[12px] md:text-[16px] font-normal leading-[1.5] text-center max-w-[723px] mt-[32px] reveal-on-scroll">
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Drop your details and we&apos;ll get in touch. You&apos;re just one call away from
-              turning the confusion into a clear, sorted plan.
+              {s.body ??
+                "Drop your details, and we'll get in touch. You're just one call away from turning the confusion into a clear, sorted plan."}
             </span>
           </span>
         </p>
 
         <button className="group mt-[40px] flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] h-[33.54px] pl-[18.2948px] pr-[3.04913px] py-[3.04913px] md:rounded-[56px] md:w-[243px] md:h-[44px] md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors">
           <span className="text-[#FAFAFA] text-[12px] md:text-[16px] font-medium leading-[150%] tracking-wide w-[120px] h-[18px] md:w-auto md:h-auto whitespace-nowrap">
-            Book a Consultation
+            {s.cta_label ?? 'Book a Consultation'}
           </span>
 
-          <div className="w-[27.44px] h-[27.44px] p-[6.09826px] bg-[#FAFAFA] rounded-[45.7369px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 md:w-[36px] md:h-[36px] md:p-0 md:rounded-full">
+          <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
             <svg
-              className="w-[15.25px] h-[15.25px] transition-transform duration-300 ease-out group-hover:rotate-45 md:w-[20px] md:h-[20px]"
+              className="transition-transform duration-300 ease-out group-hover:rotate-45"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="#CDB17E"
@@ -1203,6 +1227,9 @@ const CTASection = () => {
 }
 
 const BetterWaySection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.better_way ?? {}
+
   const scallopCount = [...Array(15)]
 
   return (
@@ -1270,13 +1297,21 @@ const BetterWaySection = () => {
             className="w-full text-[#2D2D2D] text-[24px] md:text-[61px] leading-[1] text-center font-serif reveal-heading md:absolute md:w-[679px] md:left-1/2 md:-translate-x-1/2 md:top-[253px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            <span className="reveal-wrapper">
-              <span className="reveal-text">A Better Way Between </span>
-            </span>
-            <br className="hidden md:block" />
-            <span className="reveal-wrapper">
-              <span className="reveal-text">Event and DIY</span>
-            </span>
+            {s.heading ? (
+              <span className="reveal-wrapper">
+                <span className="reveal-text">{s.heading}</span>
+              </span>
+            ) : (
+              <>
+                <span className="reveal-wrapper">
+                  <span className="reveal-text">A Better Way Between </span>
+                </span>
+                <br className="hidden md:block" />
+                <span className="reveal-wrapper">
+                  <span className="reveal-text">Event and DIY</span>
+                </span>
+              </>
+            )}
           </h2>
 
           <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] text-center reveal-on-scroll md:absolute md:w-[809px] md:left-1/2 md:-translate-x-1/2 md:top-[403px] font-['Poppins'] md:font-sans">
@@ -1350,14 +1385,14 @@ const BetterWaySection = () => {
           className="absolute left-[calc(50%-73px)] md:left-[calc(50%-150.5px)] top-[474px] md:top-[742px] w-[95.31px] md:w-[185px] -translate-x-1/2 -translate-y-1/2 text-left md:text-center text-[#591902] text-[24.7px] md:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          Event Planner
+          {s.left_label ?? 'Event Planner'}
         </h5>
 
         <h5
           className="absolute left-[calc(50%+130px)] md:left-[calc(50%+150.5px)] top-[474px] md:top-[742px] w-[46px] md:w-[80px] -translate-x-1/2 -translate-y-1/2 text-left md:text-center text-[#CDB17E] text-[24.7px] md:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          DIY
+          {s.right_label ?? 'DIY'}
         </h5>
 
         {/* --- LOGO --- */}
@@ -1373,24 +1408,22 @@ const BetterWaySection = () => {
         {/* --- MOBILE DASHED LINE --- */}
         <div className="block md:hidden absolute left-1/2 top-[558px] -translate-x-1/2 w-[1px] h-[145px] border-l-[0.5px] border-dashed border-[#000000]"></div>
 
-        {/* --- DESKTOP DASHED LINE (assuming it's present in original, hidden here for mobile) --- */}
+        {/* --- DESKTOP DASHED LINE --- */}
         <div className="hidden md:block absolute left-1/2 top-[900px] -translate-x-1/2 w-[1px] h-[145px] border-l-[1px] border-dashed border-[#000000]/30"></div>
 
         {/* --- SUB TEXTS --- */}
         <p className="absolute w-[120px] md:w-[200px] left-[20px] md:left-[30px] top-[597px] md:top-[688px] text-[#957960] text-[12px] leading-[150%] md:leading-[1.5] font-['Poppins'] md:font-sans">
           <span className="hidden md:inline">
-            Full-service planning often comes with high costs and long coordination cycles. You rely
-            on large teams, multiple approvals, and a process that can feel heavier than the event
-            itself.
+            {s.left_body ??
+              'Full-service planning often comes with high costs and long coordination cycles. You rely on large teams, multiple approvals, and a process that can feel heavier than the event itself.'}
           </span>
           <span className="md:hidden">Costly and slow, with too many layers.</span>
         </p>
 
         <p className="absolute w-[120px] md:w-[200px] right-[20px] md:right-[30px] top-[597px] md:top-[688px] text-[#591902] text-[12px] leading-[150%] md:leading-[1.5] text-right font-['Poppins'] md:font-sans">
           <span className="hidden md:inline">
-            Planning everything yourself means juggling vendors, comparing prices, managing
-            logistics, and making countless decisions. It quickly turns a celebration into a
-            checklist.
+            {s.right_body ??
+              'Planning everything yourself means juggling vendors, comparing prices, managing logistics, and making countless decisions. It quickly turns a celebration into a checklist.'}
           </span>
           <span className="md:hidden">
             Too many vendors, too many choices, DIY planning turns joy into work.
@@ -1399,8 +1432,8 @@ const BetterWaySection = () => {
 
         <p className="absolute w-[200px] md:w-[285px] left-1/2 -translate-x-1/2 top-[711px] md:top-[993px] text-[#2D2D2D] text-[12px] leading-[150%] md:leading-[1.5] text-center font-['Poppins'] md:font-sans">
           <span className="hidden md:inline">
-            The balance between structure and simplicity. You get curated décor, trusted vendors,
-            and guided planning, without the pressure or the price of full-scale event management.
+            {s.center_body ??
+              'The balance between structure and simplicity. You get curated décor, trusted vendors, and guided planning, without the pressure or the price of full-scale event management.'}
           </span>
           <span className="md:hidden">
             The perfect balance of structure and simplicity. curated décor, trusted vendors, guided
@@ -1416,6 +1449,21 @@ const LAYOUT_W = 1034
 const LAYOUT_H = 684
 
 const ChecklistSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.checklist ?? {}
+  const chaosItems = s.chaos_items ?? [
+    { title: 'Too much scrolling.' },
+    { title: 'Too many calls.' },
+    { title: 'Too many vendors.' },
+    { title: 'Too many decisions.' },
+  ]
+  const reliefItems = s.relief_items ?? [
+    "You don't manage people",
+    "You don't manage logistics",
+    'No chasing vendors',
+    'No waiting anxiously!',
+  ]
+
   const scallopCount = [...Array(15)]
   const sectionRef = useRef(null)
   const [howItWorksVisible, setHowItWorksVisible] = useState(false)
@@ -1639,11 +1687,11 @@ const ChecklistSection = () => {
         style={{ fontFamily: "'Malgin', serif" }}
       >
         <span className="reveal-wrapper">
-          <span className="reveal-text">Somewhere along the way, </span>
+          <span className="reveal-text">{s.heading_1 ?? 'Somewhere along the way,'} </span>
         </span>
         <br />
         <span className="reveal-wrapper">
-          <span className="reveal-text">Hosting turned into checklists.</span>
+          <span className="reveal-text">{s.heading_2 ?? 'Hosting turned into Checklists.'}</span>
         </span>
       </h2>
 
@@ -1686,7 +1734,7 @@ const ChecklistSection = () => {
               style={{ '--delay': '0.25s' }}
             >
               <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too much scrolling.
+                {chaosItems[0]?.title ?? 'Too much scrolling.'}
               </h3>
             </div>
             <div
@@ -1720,7 +1768,7 @@ const ChecklistSection = () => {
                 style={{ '--delay': '0.8s' }}
               >
                 <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
-                  Too many calls.
+                  {chaosItems[1]?.title ?? 'Too many calls.'}
                 </h3>
               </div>
               <div
@@ -1753,7 +1801,7 @@ const ChecklistSection = () => {
               style={{ '--delay': '1.25s' }}
             >
               <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too many vendors.
+                {chaosItems[2]?.title ?? 'Too many vendors.'}
               </h3>
             </div>
             <div
@@ -1785,7 +1833,7 @@ const ChecklistSection = () => {
               style={{ '--delay': '1.75s' }}
             >
               <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too many decisions.
+                {chaosItems[3]?.title ?? 'Too many decisions.'}
               </h3>
             </div>
             <div
@@ -1807,31 +1855,21 @@ const ChecklistSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Stop take a deep breath</span>
+            <span className="reveal-text">{s.relief_heading ?? 'Stop take a deep breath'}</span>
           </span>
         </h3>
 
         <div className="flex flex-col items-center">
-          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">You don&apos;t have to manage people.</span>
-            </span>
-          </p>
-          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">You don&apos;t have to manage logistics</span>
-            </span>
-          </p>
-          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">No chasing vendors.</span>
-            </span>
-          </p>
-          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">No waiting anxiously.</span>
-            </span>
-          </p>
+          {reliefItems.map((item, i) => (
+            <p
+              key={i}
+              className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll"
+            >
+              <span className="reveal-wrapper">
+                <span className="reveal-text">{item}</span>
+              </span>
+            </p>
+          ))}
         </div>
 
         {/* RESTORED: The missing text block is back! */}
@@ -1841,7 +1879,7 @@ const ChecklistSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              11 takes the chaos out so you can stay in the moment
+              {s.tagline ?? '11 takes the chaos out so you can stay in the moment'}
             </span>
           </span>
         </h4>
@@ -1894,6 +1932,9 @@ const PKG_LOCAL_IMAGES = [
 ]
 
 const PackagesSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.packages_intro ?? {}
+
   const [virtualIndex, setVirtualIndex] = useState(0)
   const [disableTransition, setDisableTransition] = useState(false)
   const lastDirectionRef = useRef('next')
@@ -1927,9 +1968,11 @@ const PackagesSection = () => {
 
   const count = packagesData.length
   const totalCards = count * 3
+  /** 3D ring needs ≥2 packages; with 1 CMS item the triple-buffer showed 3 identical cards */
+  const usePackageCylinder = count > 1
 
   const handleTransitionEnd = () => {
-    if (count === 0) return
+    if (count === 0 || !usePackageCylinder) return
     if (virtualIndex >= count * 2) {
       setDisableTransition(true)
       setVirtualIndex(count)
@@ -1938,13 +1981,13 @@ const PackagesSection = () => {
   }
 
   const handleNext = () => {
-    if (count === 0) return
+    if (count === 0 || !usePackageCylinder) return
     lastDirectionRef.current = 'next'
     setVirtualIndex(prev => Math.min(prev + 1, count * 2))
   }
 
   const handlePrev = () => {
-    if (count === 0) return
+    if (count === 0 || !usePackageCylinder) return
     lastDirectionRef.current = 'prev'
     setVirtualIndex(prev => (prev <= 0 ? totalCards - 1 : prev - 1))
   }
@@ -1969,8 +2012,16 @@ const PackagesSection = () => {
 
   const displayIndex = count > 0 ? virtualIndex % count : 0
 
+  useEffect(() => {
+    if (count === 1) setVirtualIndex(0)
+  }, [count])
+
   const sortedCards = useMemo(() => {
     if (count === 0) return []
+    if (count === 1) {
+      const pkg = packagesData[0]
+      return [{ pkg, index: 0 }]
+    }
     const extended = [...packagesData, ...packagesData, ...packagesData]
     return extended
       .map((pkg, index) => ({ pkg, index }))
@@ -2028,13 +2079,9 @@ const PackagesSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">
-              Somewhere Between Moodboards <br className="block md:hidden" />
-            </span>
+            <span className="reveal-text">Somewhere Between Moodboards </span>
           </span>
-          <span className="hidden md:inline">
-            <br />
-          </span>
+          <br className="hidden md:block" />
           <span className="reveal-wrapper">
             <span className="reveal-text">and Reality, the Feeling Got Lost.</span>
           </span>
@@ -2042,8 +2089,8 @@ const PackagesSection = () => {
         <p className="text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[150%] max-w-[353px] md:max-w-[809px] mb-[24px] md:mb-20 reveal-on-scroll">
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Celebrations became louder and bigger, but less personal. Eleven exists to bring that
-              feeling back, not through more, but through meaning.
+              {s.body ??
+                'They became louder and Bigger, but less personal. Elewen exists to bring that feeling back. Not through more, but through meaning.'}
             </span>
           </span>
         </p>
@@ -2053,7 +2100,7 @@ const PackagesSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Our Most Loved Packages</span>
+            <span className="reveal-text">{s.section_heading ?? 'OUR MOST LOVED PACKAGES'}</span>
           </span>
         </h3>
       </div>
@@ -2082,7 +2129,9 @@ const PackagesSection = () => {
           }}
         >
           {/* --- Mobile Only Navigation Arrows (Half Circles on Edges) --- */}
-          <div className="absolute inset-y-0 left-0 right-0 md:hidden z-[100] flex items-center justify-between pointer-events-none">
+          <div
+            className={`absolute inset-y-0 left-0 right-0 md:hidden z-[100] flex items-center justify-between pointer-events-none ${usePackageCylinder ? '' : 'hidden'}`}
+          >
             <button
               type="button"
               onClick={handlePrev}
@@ -2125,15 +2174,15 @@ const PackagesSection = () => {
             className="grid place-self-center w-full max-w-[100vw] pointer-events-none"
             style={{
               transformStyle: 'preserve-3d',
-              transform: `rotateY(${-virtualIndex * 36}deg)`,
+              transform: `rotateY(${usePackageCylinder ? -virtualIndex * 36 : 0}deg)`,
               transition: disableTransition
                 ? 'none'
                 : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
               willChange: disableTransition ? 'auto' : 'transform',
             }}
             onTransitionEnd={handleTransitionEnd}
-            onTouchStart={isMobile ? handleTouchStart : undefined}
-            onTouchEnd={isMobile ? handleTouchEnd : undefined}
+            onTouchStart={isMobile && usePackageCylinder ? handleTouchStart : undefined}
+            onTouchEnd={isMobile && usePackageCylinder ? handleTouchEnd : undefined}
           >
             {sortedCards.map(({ pkg, index }) => {
               const baseAngle = 36
@@ -2143,11 +2192,13 @@ const PackagesSection = () => {
               const gap = isMobile ? 12 : 8
               const radius = (cardWidth / 2 + gap / 2) / Math.tan(halfAngleRad)
               const isActive = index === virtualIndex
+              const imageCount = pkg.images?.length ?? 0
+              const useInnerSwiper = imageCount > 1
 
               return (
                 <div
-                  key={`pkg-${index}`}
-                  onClick={() => !isActive && setVirtualIndex(index)}
+                  key={`pkg-${pkg.id ?? pkg.documentId ?? index}`}
+                  onClick={() => usePackageCylinder && !isActive && setVirtualIndex(index)}
                   className={`relative flex flex-col bg-white overflow-hidden pointer-events-auto 
                     ${isActive ? 'cursor-default' : 'cursor-pointer'} 
                     w-[289px] md:w-[640px] h-[474px] md:h-[770px]
@@ -2174,27 +2225,37 @@ const PackagesSection = () => {
                       className={`relative w-full h-[240px] md:h-[450px] bg-[#EAEAEA] overflow-hidden rounded-[8px] md:rounded-none ${isActive ? 'card-swiper-active' : ''}`}
                     >
                       {isActive ? (
-                        <Swiper
-                          modules={[Navigation, Pagination]}
-                          navigation={{
-                            prevEl: `.custom-prev-btn-${index}`,
-                            nextEl: `.custom-next-btn-${index}`,
-                          }}
-                          pagination={{ clickable: true }}
-                          loop={true}
-                          className="inner-card-swiper w-full h-full"
-                        >
-                          {pkg.images.map((imgSrc, i) => (
-                            <SwiperSlide key={i}>
-                              <img
-                                src={imgSrc}
-                                alt={`${pkg.title} - view ${i + 1}`}
-                                className="w-full h-full object-cover object-center"
-                                loading="eager"
-                              />
-                            </SwiperSlide>
-                          ))}
-                        </Swiper>
+                        useInnerSwiper ? (
+                          <Swiper
+                            key={`inner-${pkg.id ?? index}-${imageCount}`}
+                            modules={[Navigation, Pagination]}
+                            navigation={{
+                              prevEl: `.custom-prev-btn-${index}`,
+                              nextEl: `.custom-next-btn-${index}`,
+                            }}
+                            pagination={{ clickable: true }}
+                            loop
+                            className="inner-card-swiper w-full h-full"
+                          >
+                            {pkg.images.map((imgSrc, i) => (
+                              <SwiperSlide key={i}>
+                                <img
+                                  src={imgSrc}
+                                  alt={`${pkg.title} - view ${i + 1}`}
+                                  className="w-full h-full object-cover object-center"
+                                  loading="eager"
+                                />
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                        ) : (
+                          <img
+                            src={pkg.images?.[0] ?? ''}
+                            alt={pkg.title}
+                            className="w-full h-full object-cover object-center"
+                            loading="eager"
+                          />
+                        )
                       ) : (
                         <img
                           src={pkg.images?.[0] ?? ''}
@@ -2205,7 +2266,9 @@ const PackagesSection = () => {
                       )}
 
                       {/* Inner Arrow overlay (Now visible on Mobile & Desktop) */}
-                      <div className="flex absolute inset-0 pointer-events-none z-[100] items-center justify-between">
+                      <div
+                        className={`flex absolute inset-0 pointer-events-none z-[100] items-center justify-between ${useInnerSwiper && isActive ? '' : 'opacity-0 pointer-events-none'}`}
+                      >
                         {/* CUSTOM LEFT ARROW */}
                         <button
                           type="button"
@@ -2332,7 +2395,9 @@ const PackagesSection = () => {
       {/* --- 3. Bottom Carousel Controls --- */}
 
       {/* Desktop Controls */}
-      <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mx-auto justify-between items-center gap-[25px] z-20 relative -mt-20">
+      <div
+        className={`${usePackageCylinder ? 'hidden md:flex' : 'hidden'} w-[611px] max-w-[90vw] h-[48px] mx-auto justify-between items-center gap-[25px] z-20 relative -mt-20`}
+      >
         <button
           type="button"
           onClick={handlePrev}
@@ -2382,7 +2447,9 @@ const PackagesSection = () => {
       </div>
 
       {/* Mobile Main Pagination Dots */}
-      <div className="flex md:hidden items-center justify-center gap-[6px] mt-[16px] z-20 relative">
+      <div
+        className={`${usePackageCylinder ? 'flex md:hidden' : 'hidden'} items-center justify-center gap-[6px] mt-[16px] z-20 relative`}
+      >
         {packagesData.map((_, idx) => (
           <div
             key={idx}
@@ -2395,6 +2462,9 @@ const PackagesSection = () => {
 }
 
 const CelebrationFeelingSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.planner_cta ?? {}
+
   const containerRef = useRef(null)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -2500,17 +2570,16 @@ const CelebrationFeelingSection = () => {
           <p className="mt-[20px] md:mt-8 w-[353px] md:w-[522px] max-w-[calc(100%-2rem)] text-[#FFFFFF] opacity-90 md:opacity-100 text-[14px] md:text-[16px] leading-[150%] text-center drop-shadow-sm px-4 reveal-on-scroll font-['Poppins'] md:font-sans">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Want a professional to handle your event end to end? Fill the form and let our
-                in-house planners plan it with you.
+                {s.body ??
+                  'Want a professional to handle your event end to end? Fill the form and let our in-house planners plan it with you.'}
               </span>
             </span>
           </p>
 
           <button className="mt-[32px] md:mt-10 w-[181px] md:w-[213px] h-[33.5px] md:h-[44px] group flex items-center justify-between bg-[#FAFAFA] md:bg-[#FFFFFF] rounded-[42.7px] md:rounded-[56px] pl-[18.3px] md:pl-[24px] pr-[3px] md:pr-[4px] py-[3px] md:py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg">
             <span className="text-[#CDB17E] text-[12px] md:text-[16px] font-medium leading-[1.5] tracking-wide font-['Poppins'] md:font-sans">
-              {/* Conditional text matching Figma specs */}
-              <span className="md:hidden">Book a consultation</span>
-              <span className="hidden md:inline">Plan with Elewen</span>
+              <span className="md:hidden">{s.cta_label ?? 'Book a consultation'}</span>
+              <span className="hidden md:inline">{s.cta_label ?? 'Plan with Elewen'}</span>
             </span>
             <div className="w-[27.4px] h-[27.4px] md:w-[36px] md:h-[36px] bg-[#CDB17E] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 border-[1.1px] md:border-[1.5px] border-[#FAFAFA] md:border-[#FFFFFF]">
               <svg
@@ -2534,6 +2603,9 @@ const CelebrationFeelingSection = () => {
 }
 
 const PlanningGuidesSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.blogs_intro ?? {}
+
   // CMS: Strapi `blogs` published posts + derived categories
   const { data: categories = [] } = useBlogCategories()
   const { data: allBlogs = [] } = useBlogs({ limit: 50 })
@@ -2586,7 +2658,8 @@ const PlanningGuidesSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Planning Guides &amp; <br className="hidden md:block" /> Celebration Ideas
+              {s.heading_1 ?? 'Planning Guides &'} <br className="hidden md:block" />{' '}
+              {s.heading_2 ?? 'Celebration Ideas'}
             </span>
           </span>
         </h2>
@@ -2595,14 +2668,14 @@ const PlanningGuidesSection = () => {
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Helpful tips, inspiration, and practical guides to make planning your next
-                celebration simpler.
+                {s.body ??
+                  'Helpful tips, inspiration, and practical guides to make planning your next celebration simpler.'}
               </span>
             </span>
           </p>
 
           <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">View All</span>
+            <span className="text-white font-medium text-[15px] mr-5">{s.cta_label ?? 'View All'}</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
@@ -2806,7 +2879,7 @@ const PlanningGuidesSection = () => {
             <div className="flex md:hidden justify-center pb-12">
               <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
                 <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
-                  View All
+                  {s.cta_label ?? 'View All'}
                 </span>
                 <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
                   <svg
@@ -2833,6 +2906,10 @@ const PlanningGuidesSection = () => {
 }
 
 const TestimonialsSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const testimonialsHeading =
+    cms.testimonials_intro?.heading ?? 'Real celebrations. Real experiences.'
+
   const swiperRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -2861,7 +2938,7 @@ const TestimonialsSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Real Celebrations. Real Experiences.</span>
+            <span className="reveal-text">{testimonialsHeading}</span>
           </span>
         </h2>
       </section>
@@ -3018,6 +3095,10 @@ const TestimonialsSection = () => {
 }
 
 const SplitInfoSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const ig = cms.instagram_section ?? {}
+  const vp = cms.vendor_partner ?? {}
+
   // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
   const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
 
@@ -3039,24 +3120,22 @@ const SplitInfoSection = () => {
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper">
-                <span className="reveal-text">
-                  Inspiration, Behind the Scenes, and Real Celebrations.
-                </span>
+                <span className="reveal-text">{ig.heading ?? 'Behind the Scenes'}</span>
               </span>
             </h2>
 
             <p className="text-[#2D2D2D] opacity-50 text-[12px] md:text-[16px] leading-[150%] w-full lg:w-[339px] mt-[12px] lg:mt-[20px] font-sans m-0 reveal-on-scroll font-['Poppins'] lg:font-sans">
               <span className="reveal-wrapper">
                 <span className="reveal-text">
-                  See how celebrations come together, discover new ideas, and follow along as we
-                  bring events to life.
+                  {ig.body ??
+                    'Follow along for real celebrations, styling ideas, and behind-the-scenes moments from the events we love creating.'}
                 </span>
               </span>
             </p>
 
             <button className="box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] mt-[20px] lg:mt-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] hover:bg-gray-50 transition-colors">
               <span className="text-[#591902] font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
-                Join Our Instagram
+                {ig.cta_label ?? 'Join Our Instagram'}
               </span>
               <svg
                 className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0"
@@ -3095,28 +3174,30 @@ const SplitInfoSection = () => {
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper">
-                <span className="reveal-text">Partner With Elewen</span>
+                <span className="reveal-text">{vp.heading ?? 'Partner with Elewen'}</span>
               </span>
             </h2>
 
-            <div className="flex flex-col items-start mt-[12px] lg:mt-[20px] w-full">
-              <p className="text-[#FFFFFF] opacity-50 text-[12px] md:text-[16px] leading-[150%] w-full font-sans m-0 reveal-on-scroll font-['Poppins'] lg:font-sans">
+            <div className="flex flex-col items-start gap-[16px] mt-[20px] w-full lg:w-[420px]">
+              <p className="text-[#FFFFFF] opacity-50 text-[16px] leading-[150%] w-full lg:w-[420px] font-sans m-0 reveal-on-scroll">
                 <span className="reveal-wrapper">
                   <span className="reveal-text">
-                    We collaborate with experienced decorators, caterers, and event professionals
-                    who care about quality, reliability, and beautiful execution.
+                    {vp.body ??
+                      "Great events are never created alone. We work with a trusted circle of florists, decorators, caterers, bartenders, and production houses who help bring celebrations to life. If you'd like to be part of our vendor network, we'd love to hear from you."}
                   </span>
                 </span>
               </p>
 
               <button className="box-border flex flex-row items-center justify-between pl-[18px] lg:pl-[24px] pr-[4px] lg:pr-[4px] py-[4px] lg:py-[4px] gap-[12px] lg:gap-[16px] w-max lg:w-[228px] h-[33.54px] lg:h-[44px] mt-[32px] lg:mt-[16px] bg-[#CDB17E] rounded-[42px] lg:rounded-[56px] hover:bg-[#bfa06b] transition-colors group">
                 <span className="text-[#FAFAFA] font-medium text-[12px] lg:text-[16px] leading-[150%] font-['Poppins'] lg:font-sans text-left">
-                  Apply as Vendor
+                  {vp.cta_label ?? 'Apply as Vendor'}
                 </span>
 
-                <div className="flex items-center justify-center w-[27px] lg:w-[36px] h-[27px] lg:h-[36px] bg-[#FAFAFA] rounded-[60px] p-[6px] lg:p-[8px] shrink-0 transition-transform group-hover:scale-105">
+                <div className="flex items-center justify-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-[60px] p-[8px] shrink-0 transition-transform group-hover:scale-105">
                   <svg
-                    className="transition-transform duration-300 ease-out group-hover:rotate-45 w-[15.25px] h-[15.25px] lg:w-[20px] lg:h-[20px]"
+                    className="transition-transform duration-300 ease-out group-hover:rotate-45"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="#CDB17E"
