@@ -57,9 +57,7 @@ export function usePackages() {
         category: pkg.category ?? '',
         description: blocksToText(pkg.description),
         // Badge line in UI is "Starting from {price}" — store amount only (matches PACKAGES_FALLBACK)
-        price: pkg.base_price
-          ? `₹${Number(pkg.base_price).toLocaleString('en-IN')}`
-          : '',
+        price: pkg.base_price ? `₹${Number(pkg.base_price).toLocaleString('en-IN')}` : '',
         base_price: pkg.base_price ?? 0,
         tags: (pkg.elements ?? [])
           .map(el => el.service?.name)

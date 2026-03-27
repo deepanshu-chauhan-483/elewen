@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 
@@ -9,15 +8,21 @@ export default function LoginPage() {
       title="Welcome back"
       subtitle="Explore the collection. Your seamless event is just a few clicks away!"
       footer={
-        <p className="text-[#364022] text-[12px] leading-[150%]" style={{ fontFamily: "'Poppins', sans-serif" }}>
-          Don't have an account?{' '}
+        <p
+          className="text-[#364022] text-[12px] leading-[150%]"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
+          Don&apos;t have an account?{' '}
           <Link to="/signup" className="font-bold hover:underline">
             Sign up.
           </Link>
         </p>
       }
     >
-      <div className="flex flex-col w-full gap-[24px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      <div
+        className="flex flex-col w-full gap-[24px]"
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
         <div className="flex flex-col gap-[8px] w-full">
           <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
           <input
@@ -51,7 +56,13 @@ export default function LoginPage() {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BFAC9B] hover:text-[#364022] transition-colors"
               aria-label="Toggle password visibility"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <path
                   d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z"
                   fill="currentColor"
@@ -69,22 +80,36 @@ export default function LoginPage() {
               />
               <span className="text-[#364022] text-[12px] leading-[150%]">Remember me</span>
             </label>
-            <Link to="/forgot-password" className="text-[#364022] text-[12px] leading-[150%] hover:underline">
+            <Link
+              to="/forgot-password"
+              className="text-[#364022] text-[12px] leading-[150%] hover:underline"
+            >
               Forgot password
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col items-center w-full gap-[16px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      <div
+        className="flex flex-col items-center w-full gap-[16px]"
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
         <button className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors">
           Sign in
         </button>
 
-        <span className="text-[#364022] text-[12px] leading-[150%] uppercase tracking-widest">OR</span>
+        <span className="text-[#364022] text-[12px] leading-[150%] uppercase tracking-widest">
+          OR
+        </span>
 
         <button className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <path
               d="M22.56 12.25C22.56 11.47 22.49 10.72 22.36 10H12V14.26H17.92C17.66 15.63 16.88 16.8 15.71 17.58V20.34H19.28C21.36 18.42 22.56 15.6 22.56 12.25Z"
               fill="#4285F4"

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 
@@ -95,7 +95,13 @@ function RequirementRow({ ok, error, text }) {
       {ok ? (
         <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#2E7D32]">
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden>
-            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M1 4L3.5 6.5L9 1"
+              stroke="white"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </span>
       ) : error ? (
@@ -105,7 +111,10 @@ function RequirementRow({ ok, error, text }) {
           </span>
         </span>
       ) : (
-        <span className="mt-0.5 h-[18px] w-[18px] shrink-0 rounded-full border border-[rgba(45,45,45,0.25)]" aria-hidden />
+        <span
+          className="mt-0.5 h-[18px] w-[18px] shrink-0 rounded-full border border-[rgba(45,45,45,0.25)]"
+          aria-hidden
+        />
       )}
       <span
         className={`text-[12px] leading-[150%] ${error ? 'text-[#C62828]' : 'text-[#364022]'}`}
@@ -154,7 +163,14 @@ export default function NewPasswordPage() {
               to="/login"
               className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] leading-[150%]"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="-rotate-90" aria-hidden>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="-rotate-90"
+                aria-hidden
+              >
                 <path
                   d="M12 4L12 20M12 20L6 14M12 20L18 14"
                   stroke="currentColor"
@@ -178,7 +194,10 @@ export default function NewPasswordPage() {
         subtitle="The link you are trying to open has expired, please re-enter your email to get another password reset link."
         footer={null}
       >
-        <div className="flex min-w-0 w-full flex-col gap-[24px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+        <div
+          className="flex min-w-0 w-full flex-col gap-[24px]"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
           <div className="flex flex-col gap-[8px] w-full min-w-0">
             <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
             <input
@@ -191,7 +210,10 @@ export default function NewPasswordPage() {
           </div>
         </div>
 
-        <div className="flex min-w-0 w-full flex-col items-stretch gap-[16px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+        <div
+          className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
           <button
             type="button"
             onClick={() => setEmailSent(true)}
@@ -205,7 +227,14 @@ export default function NewPasswordPage() {
             to="/login"
             className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] leading-[150%]"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="-rotate-90" aria-hidden>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="-rotate-90"
+              aria-hidden
+            >
               <path
                 d="M12 4L12 20M12 20L6 14M12 20L18 14"
                 stroke="currentColor"
@@ -253,7 +282,10 @@ export default function NewPasswordPage() {
       subtitle="Your new password must be different from previously used passwords."
       footer={null}
     >
-      <div className="flex min-w-0 w-full flex-col gap-[24px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      <div
+        className="flex min-w-0 w-full flex-col gap-[24px]"
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
         <div className="flex flex-col gap-[8px] w-full min-w-0">
           <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Password</label>
           <div className="relative w-full min-w-0">
@@ -277,7 +309,9 @@ export default function NewPasswordPage() {
         </div>
 
         <div className="flex flex-col gap-[8px] w-full min-w-0">
-          <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Confirm password</label>
+          <label className="text-[#364022] text-[16px] font-medium leading-[150%]">
+            Confirm password
+          </label>
           <div className="relative w-full min-w-0">
             <input
               type={showConfirm ? 'text' : 'password'}
@@ -300,11 +334,18 @@ export default function NewPasswordPage() {
 
         <div className="flex w-full flex-col gap-[10px] pt-[2px]">
           <RequirementRow ok={hasLength} error={false} text="Must be at least 8 characters" />
-          <RequirementRow ok={hasSpecial} error={password.length > 0 && !hasSpecial} text="Must contain one special character" />
+          <RequirementRow
+            ok={hasSpecial}
+            error={password.length > 0 && !hasSpecial}
+            text="Must contain one special character"
+          />
         </div>
       </div>
 
-      <div className="flex min-w-0 w-full flex-col items-stretch gap-[16px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      <div
+        className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
         <button
           type="button"
           onClick={() => setResetComplete(true)}
@@ -318,7 +359,14 @@ export default function NewPasswordPage() {
           to="/login"
           className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] leading-[150%]"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="-rotate-90" aria-hidden>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="-rotate-90"
+            aria-hidden
+          >
             <path
               d="M12 4L12 20M12 20L6 14M12 20L18 14"
               stroke="currentColor"

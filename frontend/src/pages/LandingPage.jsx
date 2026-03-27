@@ -198,7 +198,9 @@ const PlanEventSection = () => {
           </p>
 
           <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">{s.cta_label ?? 'View All'}</span>
+            <span className="text-white font-medium text-[15px] mr-5">
+              {s.cta_label ?? 'View All'}
+            </span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
@@ -489,7 +491,9 @@ const WhatToPlanSection = () => {
           </p>
 
           <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">{s.cta_label ?? 'View All'}</span>
+            <span className="text-white font-medium text-[15px] mr-5">
+              {s.cta_label ?? 'View All'}
+            </span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
@@ -2010,11 +2014,8 @@ const PackagesSection = () => {
     }
   }
 
-  const displayIndex = count > 0 ? virtualIndex % count : 0
-
-  useEffect(() => {
-    if (count === 1) setVirtualIndex(0)
-  }, [count])
+  const effectiveVirtualIndex = count === 1 ? 0 : virtualIndex
+  const displayIndex = count > 0 ? effectiveVirtualIndex % count : 0
 
   const sortedCards = useMemo(() => {
     if (count === 0) return []
@@ -2026,11 +2027,11 @@ const PackagesSection = () => {
     return extended
       .map((pkg, index) => ({ pkg, index }))
       .sort((a, b) => {
-        if (a.index === virtualIndex) return 1
-        if (b.index === virtualIndex) return -1
+        if (a.index === effectiveVirtualIndex) return 1
+        if (b.index === effectiveVirtualIndex) return -1
         return a.index - b.index
       })
-  }, [packagesData, virtualIndex, count])
+  }, [packagesData, effectiveVirtualIndex, count])
 
   return (
     <section
@@ -2174,7 +2175,7 @@ const PackagesSection = () => {
             className="grid place-self-center w-full max-w-[100vw] pointer-events-none"
             style={{
               transformStyle: 'preserve-3d',
-              transform: `rotateY(${usePackageCylinder ? -virtualIndex * 36 : 0}deg)`,
+              transform: `rotateY(${usePackageCylinder ? -effectiveVirtualIndex * 36 : 0}deg)`,
               transition: disableTransition
                 ? 'none'
                 : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -2191,7 +2192,7 @@ const PackagesSection = () => {
               const cardWidth = isMobile ? 289 : 640
               const gap = isMobile ? 12 : 8
               const radius = (cardWidth / 2 + gap / 2) / Math.tan(halfAngleRad)
-              const isActive = index === virtualIndex
+              const isActive = index === effectiveVirtualIndex
               const imageCount = pkg.images?.length ?? 0
               const useInnerSwiper = imageCount > 1
 
@@ -2675,7 +2676,9 @@ const PlanningGuidesSection = () => {
           </p>
 
           <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">{s.cta_label ?? 'View All'}</span>
+            <span className="text-white font-medium text-[15px] mr-5">
+              {s.cta_label ?? 'View All'}
+            </span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"

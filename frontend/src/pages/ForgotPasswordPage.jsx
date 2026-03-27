@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 
@@ -56,7 +56,14 @@ export default function ForgotPasswordPage() {
             to="/login"
             className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] leading-[150%]"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="-rotate-90" aria-hidden>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="-rotate-90"
+              aria-hidden
+            >
               <path
                 d="M12 4L12 20M12 20L6 14M12 20L18 14"
                 stroke="currentColor"
@@ -70,7 +77,10 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <>
-          <div className="flex min-w-0 w-full flex-col gap-[24px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+          <div
+            className="flex min-w-0 w-full flex-col gap-[24px]"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
             <div className="flex flex-col gap-[8px] w-full min-w-0">
               <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
               <input
@@ -81,7 +91,10 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
 
-          <div className="flex min-w-0 w-full flex-col items-stretch gap-[16px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+          <div
+            className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
             <button
               type="button"
               onClick={() => setEmailSent(true)}
