@@ -9,9 +9,7 @@ const options = {
       description:
         'REST API for the Elewen event management platform. Handles authentication, vendor registration, planner leads, and consultation enquiries.',
     },
-    servers: [
-      { url: 'http://localhost:3000', description: 'Local development' },
-    ],
+    servers: [{ url: 'http://localhost:3000', description: 'Local development' }],
     components: {
       securitySchemes: {
         bearerAuth: {

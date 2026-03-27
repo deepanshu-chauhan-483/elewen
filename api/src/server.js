@@ -17,14 +17,13 @@ const PORT = Number(process.env.PORT || 3000)
 
 // ─── Security & parsing ────────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false })) // CSP disabled so Swagger UI loads
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || [
-    'http://localhost:5173',
-    'http://localhost:80',
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-}))
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173', 'http://localhost:80'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  })
+)
 app.use(express.json())
 app.use(cookieParser())
 

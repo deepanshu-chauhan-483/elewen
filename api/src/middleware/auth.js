@@ -14,7 +14,7 @@ export const requireAuth = (req, res, next) => {
   const token = header.slice(7)
   try {
     const payload = jwt.verify(token, process.env.STRAPI_JWT_SECRET)
-    req.user = payload   // { id: <int>, iat, exp }
+    req.user = payload // { id: <int>, iat, exp }
     req.token = token
     next()
   } catch {

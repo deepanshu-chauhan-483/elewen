@@ -1,7 +1,13 @@
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import prisma from '../lib/prisma.js'
-import { strapiPost, strapiGetMe, strapiAdminPut, strapiFindUserByEmail, strapiCreateUser } from '../lib/strapi.js'
+import {
+  strapiPost,
+  strapiGetMe,
+  strapiAdminPut,
+  strapiFindUserByEmail,
+  strapiCreateUser,
+} from '../lib/strapi.js'
 
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 const REFRESH_COOKIE = 'elewen_refresh'
@@ -15,7 +21,7 @@ const cookieOpts = {
 }
 
 /** Strip internal Strapi fields before sending user to frontend */
-const sanitizeUser = (user) => ({
+const sanitizeUser = user => ({
   id: user.id,
   email: user.email,
   first_name: user.first_name ?? null,
@@ -52,11 +58,11 @@ export const register = async (req, res, next) => {
       return res.status(400).json({
         error: 'All fields are required',
         fields: {
-          ...((!email) && { email: 'Required' }),
-          ...((!password) && { password: 'Required' }),
-          ...((!first_name) && { first_name: 'Required' }),
-          ...((!last_name) && { last_name: 'Required' }),
-          ...((!phone) && { phone: 'Required' }),
+          ...(!email && { email: 'Required' }),
+          ...(!password && { password: 'Required' }),
+          ...(!first_name && { first_name: 'Required' }),
+          ...(!last_name && { last_name: 'Required' }),
+          ...(!phone && { phone: 'Required' }),
         },
       })
     }
@@ -129,11 +135,9 @@ export const refresh = async (req, res, next) => {
     }
 
     // Sign a fresh Strapi-compatible JWT using the same secret
-    const newJwt = jwt.sign(
-      { id: parseInt(session.userId, 10) },
-      process.env.STRAPI_JWT_SECRET,
-      { expiresIn: '7d' }
-    )
+    const newJwt = jwt.sign({ id: parseInt(session.userId, 10) }, process.env.STRAPI_JWT_SECRET, {
+      expiresIn: '7d',
+    })
 
     // Rotate the refresh token
     const newRefreshToken = crypto.randomBytes(40).toString('hex')
@@ -202,7 +206,9 @@ export const resetPassword = async (req, res, next) => {
     const { code, password, passwordConfirmation } = req.body
 
     if (!code || !password || !passwordConfirmation) {
-      return res.status(400).json({ error: 'code, password, and passwordConfirmation are required' })
+      return res
+        .status(400)
+        .json({ error: 'code, password, and passwordConfirmation are required' })
     }
 
     if (password !== passwordConfirmation) {
@@ -270,11 +276,7 @@ export const googleSession = async (req, res, next) => {
       }
 
       // Sign a Strapi-compatible JWT
-      strapiJwt = jwt.sign(
-        { id: user.id },
-        process.env.STRAPI_JWT_SECRET,
-        { expiresIn: '7d' }
-      )
+      strapiJwt = jwt.sign({ id: user.id }, process.env.STRAPI_JWT_SECRET, { expiresIn: '7d' })
     }
 
     // Store OAuthAccount record (idempotent)

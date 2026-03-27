@@ -29,7 +29,7 @@ export const registerVendor = async (req, res, next) => {
     if (missing.length) {
       return res.status(400).json({
         error: 'Required fields missing',
-        fields: Object.fromEntries(missing.map((f) => [f, 'Required'])),
+        fields: Object.fromEntries(missing.map(f => [f, 'Required'])),
       })
     }
 

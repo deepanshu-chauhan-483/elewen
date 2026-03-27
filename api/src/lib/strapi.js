@@ -23,7 +23,7 @@ export const strapiPost = async (path, body) => {
  * Find a Strapi user by email using the API token.
  * Returns the user object or null if not found.
  */
-export const strapiFindUserByEmail = async (email) => {
+export const strapiFindUserByEmail = async email => {
   const res = await fetch(
     `${STRAPI_URL}/api/users?filters[email][$eq]=${encodeURIComponent(email)}&populate=role`,
     { headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` } }
@@ -37,7 +37,7 @@ export const strapiFindUserByEmail = async (email) => {
  * Create a Strapi user via the admin API token.
  * Automatically fetches and assigns the Authenticated role.
  */
-export const strapiCreateUser = async (userData) => {
+export const strapiCreateUser = async userData => {
   // Get the Authenticated role ID
   const rolesRes = await fetch(`${STRAPI_URL}/api/users-permissions/roles`, {
     headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` },
@@ -70,7 +70,7 @@ export const strapiCreateUser = async (userData) => {
 /**
  * GET from Strapi with a user JWT (used to verify tokens and fetch user data)
  */
-export const strapiGetMe = async (jwt) => {
+export const strapiGetMe = async jwt => {
   const res = await fetch(`${STRAPI_URL}/api/users/me`, {
     headers: { Authorization: `Bearer ${jwt}` },
   })
