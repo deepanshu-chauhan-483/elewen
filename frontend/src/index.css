@@ -9,6 +9,8 @@
 html {
   -webkit-tap-highlight-color: transparent;
   scroll-behavior: smooth;
+  /* Keeps layout width stable when vertical scrollbar appears/disappears between routes */
+  scrollbar-gutter: stable;
 }
 
 :root {

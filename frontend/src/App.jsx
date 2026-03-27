@@ -6,6 +6,10 @@ import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
 import InHousePlannerPage from './pages/InHousePlannerPage'
 import About from './pages/About'
+import LoginPage from './pages/LoginPage'
+import SignUpPage from './pages/SignUpPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import NewPasswordPage from './pages/NewPasswordPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -28,17 +32,36 @@ function ScrollToTop() {
   return null
 }
 
-export default function App() {
+function AppLayout() {
+  const { pathname } = useLocation()
+  const hideGlobalChrome =
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/forgot-password' ||
+    pathname === '/new-password'
+
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
-      <NavHeader />
+      {!hideGlobalChrome && <NavHeader />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/in-house-planner" element={<InHousePlannerPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/new-password" element={<NewPasswordPage />} />
       </Routes>
-      <Footer />
+      {!hideGlobalChrome && <Footer />}
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
     </BrowserRouter>
   )
 }
