@@ -141,11 +141,11 @@ enum AlertStatus {
 
 // ─── AUTH (custom tables) ────────────────────────────────────────────────────
 
-// JWT refresh token tracking. userId references Strapi up_users.id
+// JWT refresh token tracking. userId stores Strapi up_users.id (integer PK, stored as string)
 model UserSession {
   id           String   @id @default(uuid()) @db.Uuid
-  userId       String   @db.Uuid
-  refreshToken String
+  userId       String   @db.VarChar(50)
+  refreshToken String   @unique
   ipAddress    String?
   userAgent    String?
   expiresAt    DateTime
@@ -154,16 +154,17 @@ model UserSession {
   @@map("user_sessions")
 }
 
-// Third-party OAuth provider links. userId references Strapi up_users.id
+// Third-party OAuth provider links. userId stores Strapi up_users.id (integer PK, stored as string)
 model OAuthAccount {
   id             String   @id @default(uuid()) @db.Uuid
-  userId         String   @db.Uuid
+  userId         String   @db.VarChar(50)
   provider       String   @db.VarChar(50)
   providerUserId String   @db.VarChar(255)
   accessToken    String?
   refreshToken   String?
   createdAt      DateTime @default(now())
 
+  @@unique([provider, providerUserId])
   @@map("oauth_accounts")
 }
 

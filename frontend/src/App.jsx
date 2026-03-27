@@ -6,6 +6,8 @@ import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
 import InHousePlannerPage from './pages/InHousePlannerPage'
 import About from './pages/About'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -37,6 +39,8 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/in-house-planner" element={<InHousePlannerPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>
