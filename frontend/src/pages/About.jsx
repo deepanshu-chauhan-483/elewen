@@ -136,65 +136,67 @@ const About = () => {
         ref={pageRef}
         className="w-full bg-[#F8F4ED] flex flex-col items-center font-sans overflow-x-hidden"
       >
-        <div className="relative w-full h-[1100px] shrink-0">
+        <div className="relative w-full h-[820px] md:h-[1100px] shrink-0">
           {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
-          <div
-            className="absolute left-0 top-0 w-full h-[880px] bg-[#591902] overflow-hidden z-0"
-            style={{ borderRadius: '0px 0px 1000px 1000px' }}
-          >
-            {/* --- MAIN TEXT CONTENT --- */}
-
-            {/* Left Heading */}
-            <h2 className="absolute left-[100px] top-[223px] w-[564px] text-[#FFFFFF] text-[61px] leading-[1] font-serif m-0">
-              <span className="reveal-wrapper block">
-                <span className="reveal-text" style={{ animationDelay: '0s' }}>
-                  {so.heading_1 ?? 'When we saw Excitement'}
-                </span>
-              </span>
-              <span className="reveal-wrapper block">
-                <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
-                  {so.heading_2 ?? 'Turning Into Overthinking'}
-                </span>
-              </span>
-            </h2>
-
-            {/* Right Descriptive Paragraphs */}
-            <div className="absolute left-[936px] top-[253px] w-[404px] flex flex-col gap-[20px]">
-              {(
-                so.paragraphs ?? [
-                  'Elewen was born from noticing a simple truth: many people love the idea of hosting, but hesitate because planning an event often feels like too much to manage.',
-                  'Finding reliable vendors, understanding fair pricing, and coordinating everything usually means relying on social media, referrals, and endless back-and-forth.',
-                ]
-              ).map((para, i) => (
-                <p key={i} className="text-[#FFFFFF] text-[16px] leading-[1.5] font-normal m-0">
-                  <span className="reveal-wrapper block">
-                    <span className="reveal-text" style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
-                      {para}
-                    </span>
+          <div className="absolute left-0 top-0 w-full h-[760px] md:h-[880px] bg-[#591902] overflow-hidden z-0 rounded-b-[500px] md:rounded-b-[1000px]">
+            {/* --- MAIN TEXT CONTENT WRAPPER --- */}
+            <div className="absolute top-[80px] md:top-0 left-[20px] md:left-0 w-[calc(100%-40px)] md:w-full flex flex-col gap-[24px] md:block z-10">
+              {/* Left Heading */}
+              <h2 className="relative md:absolute md:left-[100px] md:top-[223px] w-[320px] md:w-[564px] text-[#FFFFFF] text-[28px] md:text-[61px] leading-[1.1] md:leading-[1] font-serif m-0">
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0s' }}>
+                    {so.heading_1 ?? 'When we saw Excitement'}
                   </span>
-                </p>
-              ))}
+                </span>
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
+                    {so.heading_2 ?? 'Turning Into Overthinking'}
+                  </span>
+                </span>
+              </h2>
+
+              {/* Right Descriptive Paragraphs */}
+              <div className="relative md:absolute md:left-[936px] md:top-[253px] w-full md:w-[404px] max-w-[353px] flex flex-col gap-[16px] md:gap-[20px]">
+                {(
+                  so.paragraphs ?? [
+                    'Elewen was born from noticing a simple truth: many people love the idea of hosting, but hesitate because planning an event often feels like too much to manage.',
+                    'Finding reliable vendors, understanding fair pricing, and coordinating everything usually means relying on social media, referrals, and endless back-and-forth.',
+                  ]
+                ).map((para, i) => (
+                  <p
+                    key={i}
+                    className="text-[#FFFFFF] text-[14px] md:text-[16px] leading-[1.5] font-normal m-0 opacity-70 md:opacity-100"
+                  >
+                    <span className="reveal-wrapper block">
+                      <span
+                        className="reveal-text"
+                        style={{ animationDelay: `${0.1 + i * 0.08}s` }}
+                      >
+                        {para}
+                      </span>
+                    </span>
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
-          <div
-            className="absolute left-0 top-0 w-full h-[880px] overflow-hidden pointer-events-none z-10"
-            style={{ borderRadius: '0px 0px 1000px 1000px' }}
-          >
+          <div className="absolute left-0 top-0 w-full h-[760px] md:h-[880px] overflow-hidden pointer-events-none z-10 rounded-b-[500px] md:rounded-b-[1000px]">
             {/* The Actual Pill background */}
             <div
-              className="anim-element slide-from-bottom absolute left-[528px] top-[440px] w-[400px] h-[600px] bg-[#BFAC9B] rounded-[500px] border-[4px] border-[#591902] shadow-lg"
+              className="anim-element slide-from-bottom absolute left-1/2 md:left-[528px] -translate-x-1/2 md:-translate-x-0 top-[420px] md:top-[440px] w-[240px] md:w-[400px] h-[340px] md:h-[600px] bg-[#BFAC9B] rounded-t-[500px] md:rounded-[500px] border-0 md:border-[4px] border-[#591902] shadow-none md:shadow-lg"
               style={{ '--delay': '0.1s' }}
             ></div>
           </div>
 
-          {/* --- 3. THE GIRL (NOT CLIPPED BY THE CURVE) --- */}
-          <div className="absolute left-[528px] top-[440px] w-[400px] h-[600px] z-20 pointer-events-none">
+          {/* --- 3. THE GIRL (OVERFLOW VISIBLE TO BREAK OUT OF CURVE) --- */}
+          {/* Un-clipped wrapper that precisely matches the position/size of the Pill */}
+          <div className="absolute left-1/2 md:left-[528px] -translate-x-1/2 md:-translate-x-0 top-[420px] md:top-[440px] w-[240px] md:w-[400px] h-[340px] md:h-[600px] z-20 pointer-events-none">
             <img
               src={tangledIllustration}
               alt="Person tangled in lights"
-              className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 top-[9px] w-[384px] h-[529px] object-cover"
+              className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 top-[5px] md:top-[9px] w-[370px] md:w-[384px] h-auto md:h-[529px] object-cover max-w-none"
               style={{ '--delay': '0.3s' }}
             />
           </div>

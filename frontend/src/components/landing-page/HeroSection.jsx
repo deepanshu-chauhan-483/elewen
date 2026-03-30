@@ -3,6 +3,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import HeroPreloader from './HeroPreloader'
 import { useLenis } from '../../useLenis'
+import HeroVideo from '../../assets/HeroVideo.mp4'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -69,6 +70,9 @@ const renderBandCopy = tokens => {
 
 const PRELOADER_DONE_KEY = 'elewen-preloader-done'
 
+// Use a Vite import so the URL is generated correctly.
+const HERO_VIDEO_SRC = HeroVideo
+
 const HeroSection = () => {
   const wrapperRef = useRef(null)
   const preloaderRef = useRef(null)
@@ -103,9 +107,15 @@ const HeroSection = () => {
     const getEnd = () => {
       const W = window.innerWidth
       const H = window.innerHeight
-      const eW = W * 0.4
-      const eH = H * 0.6
-      return { eW, eH, eL: (W - eW) / 2, eT: H - eH - 40 }
+      const isMobile = W < 768
+
+      // Mobile gets 85% width to avoid skinny rectangles. Desktop keeps 40%.
+      const eW = isMobile ? W * 0.85 : W * 0.4
+      // Keep height proportional to the new width on mobile
+      const eH = isMobile ? eW * 1.2 : H * 0.6
+      const eT = H - eH - (isMobile ? 60 : 40)
+
+      return { eW, eH, eL: (W - eW) / 2, eT }
     }
 
     const W0 = window.innerWidth
@@ -147,9 +157,6 @@ const HeroSection = () => {
 
     // ── React 18 Strict Mode Fix: Wrap in gsap.context() ──
     let ctx = gsap.context(() => {
-      // Temporarily ignoring sessionStorage so the preloader is always visible during development
-      // const alreadyDone = sessionStorage.getItem(PRELOADER_DONE_KEY)
-      // const skipPreloader = alreadyDone && !forceFullAnim()
       const skipPreloader = false
 
       // Gather elements for initial state setup (filter nulls — refs may not be ready on first paint)
@@ -307,7 +314,6 @@ const HeroSection = () => {
       }
 
       // Config: reverse of load animation. Order = scroll-out order (last to appear = first to disappear).
-      // Each gets 1/12 of the 0–textCardsEnd range (expanded for slower, smoother scroll-out).
       const scrollOutConfig = [
         { key: 'card2', start: 0, end: 0.021, y: 40 },
         { key: 'card1', start: 0.021, end: 0.042, y: 40 },
@@ -567,6 +573,10 @@ const HeroSection = () => {
             loop
             playsInline
             preload="auto"
+            onError={() => {
+              // Helps diagnose "video not showing" vs "video offscreen" during hero animations.
+              console.error('Hero video failed to load:', HERO_VIDEO_SRC)
+            }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -575,9 +585,17 @@ const HeroSection = () => {
               objectFit: 'cover',
             }}
           >
-            <source src="/HeroVideo.mp4" type="video/mp4" />
+            <source src={HERO_VIDEO_SRC} type="video/mp4" />
           </video>
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.22)' }} />
+
+          {/* Mobile Gradients for text readability */}
+          <div
+            className="absolute inset-0 md:hidden pointer-events-none"
+            style={{
+              background: `linear-gradient(180deg, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.4) 100%), linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(255, 255, 255, 0) 50%)`,
+            }}
+          />
         </div>
 
         {/* ── z-30: hero content ───────────────────────────────────────────── */}
@@ -591,32 +609,34 @@ const HeroSection = () => {
             color: '#FAFAFA',
           }}
         >
-          <main className="absolute inset-0 flex flex-col justify-center items-start md:items-center z-10 pt-14 md:pt-24 px-4 md:px-0">
-            <div className="w-full max-w-249.25 text-left md:text-right flex flex-col pr-0 md:pr-8 lg:pr-0">
+          <main className="absolute inset-0 flex flex-col justify-center items-center md:items-center z-10 pt-14 md:pt-24 px-0">
+            {/* Desktop original classes fully preserved via md:, mobile mapped to Figma spec */}
+            <div className="w-[353px] md:w-full md:max-w-249.25 text-right md:text-right flex flex-col pr-0 md:pr-8 lg:pr-0 pointer-events-auto">
               <span
                 ref={eyebrowRef}
-                className="text-[38px] md:text-[48px] leading-none"
+                className="text-[20px] md:text-[38px] lg:text-[48px] leading-[100%] md:leading-none text-[#FAFAFA]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 IT&apos;S TIME TO
               </span>
               <span
                 ref={headingRef}
-                className="text-[54px] md:text-[96px] leading-[1.05] md:leading-none mt-2"
-                style={{ fontFamily: "'Malgin', serif" }}
+                className="text-[36px] md:text-[54px] lg:text-[96px] leading-[100%] md:leading-[1.05] mt-1 md:mt-2 text-[#FAFAFA] uppercase"
+                style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
               >
                 PLAN DIFFERENTLY
               </span>
             </div>
 
-            <div className="w-full max-w-249.25 flex flex-col md:flex-row justify-start md:justify-end items-start md:items-center mt-8 md:mt-12 pr-0 md:pr-12 gap-8 md:gap-0">
-              <div className="flex items-center">
+            {/* Desktop CTA fully preserved via md:, mobile mapped to Figma spec */}
+            <div className="w-[353px] md:w-full md:max-w-249.25 flex flex-row md:flex-row justify-start md:justify-end items-center mt-[40px] md:mt-8 lg:mt-12 pr-0 md:pr-12 gap-[20px] md:gap-8 lg:gap-0 pointer-events-auto">
+              <div className="flex flex-row md:flex-row items-center gap-[20px] md:gap-0">
                 <button
                   ref={ctaArrowRef}
-                  className="w-16 h-16 md:w-18 md:h-18 rounded-full border-2 border-white flex items-center justify-center mr-4 md:mr-6 hover:bg-white/20 transition-colors backdrop-blur-sm shrink-0"
+                  className="w-[68px] h-[68px] min-w-[68px] md:w-16 md:h-16 lg:w-18 lg:h-18 md:min-w-0 rounded-[80px] md:rounded-full border-[2px] md:border-2 border-white flex items-center justify-center md:mr-4 lg:mr-6 hover:bg-white/20 transition-colors backdrop-blur-sm shrink-0 pointer-events-auto"
                 >
                   <svg
-                    className="w-8 h-8 text-[#FAFAFA]"
+                    className="w-[28px] h-[28px] md:w-8 md:h-8 text-[#FAFAFA]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -629,49 +649,71 @@ const HeroSection = () => {
                     />
                   </svg>
                 </button>
-                <div className="max-w-62.5 text-[15px] md:text-sm font-light leading-relaxed opacity-90 text-left overflow-hidden">
-                  <p ref={ctaLine1Ref}>Explore the collection. Your seamless</p>
-                  <p ref={ctaLine2Ref}>event is just a few clicks away!</p>
-                </div>
-              </div>
-
-              {/* Mobile W Left Block */}
-              <div className="flex md:hidden items-center mt-2">
-                <span
-                  ref={el => (leftWRefs.current[1] = el)}
-                  className="text-[72px] leading-[0.7] font-serif mr-2"
-                  style={{ fontFamily: "'Malgin', serif" }}
+                <div
+                  className="w-[265px] md:max-w-62.5 text-[16px] md:text-[15px] lg:text-sm font-normal md:font-light leading-[150%] md:leading-relaxed opacity-90 text-left overflow-hidden text-[#FAFAFA]"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
-                  W
-                </span>
-                <div className="flex flex-col justify-center text-[12px] font-medium tracking-wide space-y-0.5 mt-2 overflow-hidden">
-                  <p ref={el => (leftLine1Refs.current[1] = el)}>ork made easy</p>
-                  <p ref={el => (leftLine2Refs.current[1] = el)}>orth the spend</p>
-                  <p ref={el => (leftLine3Refs.current[1] = el)}>ell-vetted vendors</p>
+                  <p ref={ctaLine1Ref} className="m-0">
+                    Explore the collection. Your seamless
+                  </p>
+                  <p ref={ctaLine2Ref} className="m-0">
+                    event is just a few clicks away!
+                  </p>
                 </div>
               </div>
             </div>
           </main>
 
-          <footer className="absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20">
-            {/* Desktop W Left Block */}
-            <div className="hidden md:flex items-center px-10 pb-12">
+          <footer className="absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20 pointer-events-auto">
+            {/* Mobile EXACT Bottom-Left 'W' Block extracted from center */}
+            <div className="flex md:hidden items-start px-6 pb-8 w-full z-20">
               <span
-                ref={el => (leftWRefs.current[0] = el)}
-                className="text-[90px] leading-[0.7] font-serif mr-1"
+                ref={el => (leftWRefs.current[1] = el)}
+                className="text-[80px] leading-[80%] font-serif mr-3 text-[#FFFFFF]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 W
               </span>
-              <div className="flex flex-col justify-center text-sm font-medium tracking-wide space-y-1 mt-3 overflow-hidden">
-                <p ref={el => (leftLine1Refs.current[0] = el)}>ork made easy</p>
-                <p ref={el => (leftLine2Refs.current[0] = el)}>orth the spend</p>
-                <p ref={el => (leftLine3Refs.current[0] = el)}>ell-vetted vendors</p>
+              <div
+                className="flex flex-col justify-center text-[14px] font-medium tracking-wide space-y-[4px] mt-1 overflow-hidden leading-[150%] text-[#FFFFFF]"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
+                <p ref={el => (leftLine1Refs.current[1] = el)} className="m-0">
+                  ork made easy
+                </p>
+                <p ref={el => (leftLine2Refs.current[1] = el)} className="m-0">
+                  orth the spend
+                </p>
+                <p ref={el => (leftLine3Refs.current[1] = el)} className="m-0">
+                  ell-vetted vendors
+                </p>
               </div>
             </div>
 
-            {/* Cards section */}
-            <div className="grid grid-cols-3 md:flex w-full md:w-auto border-t md:border-t-0 border-white/20 bg-black/20 md:bg-transparent backdrop-blur-md md:backdrop-blur-none">
+            {/* Desktop W Left Block */}
+            <div className="hidden md:flex items-center px-10 pb-12">
+              <span
+                ref={el => (leftWRefs.current[0] = el)}
+                className="text-[90px] leading-[0.7] font-serif mr-1 text-[#FFFFFF]"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                W
+              </span>
+              <div className="flex flex-col justify-center text-sm font-medium tracking-wide space-y-1 mt-3 overflow-hidden text-[#FFFFFF]">
+                <p ref={el => (leftLine1Refs.current[0] = el)} className="m-0">
+                  ork made easy
+                </p>
+                <p ref={el => (leftLine2Refs.current[0] = el)} className="m-0">
+                  orth the spend
+                </p>
+                <p ref={el => (leftLine3Refs.current[0] = el)} className="m-0">
+                  ell-vetted vendors
+                </p>
+              </div>
+            </div>
+
+            {/* Cards section - strictly hidden on Mobile using hidden md:flex */}
+            <div className="hidden md:flex w-full md:w-auto border-t md:border-t-0 border-white/20 bg-black/20 md:bg-transparent backdrop-blur-md md:backdrop-blur-none">
               {[
                 {
                   label: 'Birthday',
@@ -692,14 +734,14 @@ const HeroSection = () => {
                 >
                   <div className="absolute top-4 md:top-5 left-3 md:left-5 right-2 md:right-auto md:w-45 flex flex-col gap-1.5 md:gap-3">
                     <h3
-                      className="text-[10px] sm:text-[11px] md:text-sm font-bold tracking-widest uppercase truncate reveal-heading"
+                      className="text-[10px] sm:text-[11px] md:text-sm font-bold tracking-widest uppercase truncate reveal-heading text-[#FAFAFA]"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{label}</span>
                       </span>
                     </h3>
-                    <p className="text-[9px] md:text-xs font-light opacity-90 leading-[1.3] line-clamp-3">
+                    <p className="text-[9px] md:text-xs font-light opacity-90 leading-[1.3] line-clamp-3 text-[#FAFAFA]">
                       {desc}
                     </p>
                   </div>
