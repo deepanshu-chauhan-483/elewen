@@ -1,57 +1,86 @@
 import express from 'express'
-import pkg from 'pg'
+import cors from 'cors'
+import helmet from 'helmet'
+import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
+import authRoutes from './routes/auth.js'
+import vendorRoutes from './routes/vendor.js'
+import plannerLeadRoutes from './routes/plannerLead.js'
+import consultationRoutes from './routes/consultation.js'
+import cartRoutes from './routes/cart.js'
+import bookingRoutes from './routes/booking.js'
+import { swaggerSpec } from './swagger.js'
+import { errorHandler } from './middleware/errorHandler.js'
 
 dotenv.config()
 
-const { Pool } = pkg
-
 const app = express()
-app.use(express.json())
-
 const PORT = Number(process.env.PORT || 3000)
 
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT || 5432),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+// ─── Security & parsing ────────────────────────────────────────────────────────
+app.use(helmet({ contentSecurityPolicy: false })) // CSP disabled so Swagger UI loads
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173', 'http://localhost:80'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  })
+)
+app.use(express.json())
+app.use(cookieParser())
+
+// ─── Swagger UI (CDN-served, no package dependency) ───────────────────────────
+app.get('/api-docs.json', (_req, res) => res.json(swaggerSpec))
+app.get('/api-docs', (_req, res) => {
+  res.setHeader('Content-Type', 'text/html')
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Elewen API Docs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: '/api-docs.json',
+      dom_id: '#swagger-ui',
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+      layout: 'BaseLayout',
+      deepLinking: true,
+      persistAuthorization: true,
+    })
+  </script>
+</body>
+</html>`)
 })
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true })
-})
+// ─── Routes ───────────────────────────────────────────────────────────────────
+app.use('/auth', authRoutes)
+app.use('/vendor', vendorRoutes)
+app.use('/planner-leads', plannerLeadRoutes)
+app.use('/consultations', consultationRoutes)
+app.use('/cart', cartRoutes)
+app.use('/bookings', bookingRoutes)
 
-app.get('/healthz', (req, res) => {
-  res.json({ ok: true })
-})
+// ─── Health ───────────────────────────────────────────────────────────────────
+app.get('/health', (_req, res) => res.json({ ok: true }))
+app.get('/healthz', (_req, res) => res.json({ ok: true }))
 
-app.get('/', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT NOW()')
-    res.json(result.rows)
-  } catch (err) {
-    console.error('DB query failed', err)
-    res.status(500).json({ error: 'Database query failed' })
-  }
-})
+// ─── Error handler (must be last) ─────────────────────────────────────────────
+app.use(errorHandler)
 
+// ─── Start ────────────────────────────────────────────────────────────────────
 const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  console.log(`API running on port ${PORT}`)
+  console.log(`Swagger docs: http://localhost:${PORT}/api-docs`)
 })
 
 const shutdown = async () => {
-  console.log('Shutting down...')
-  server.close(async () => {
-    try {
-      await pool.end()
-    } catch (err) {
-      console.error('Error closing DB pool', err)
-    }
-    process.exit(0)
-  })
+  server.close(() => process.exit(0))
 }
-
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)

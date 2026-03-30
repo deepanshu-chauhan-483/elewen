@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { authForgotPassword, authResetPassword } from '../lib/api'
 
 /** 56×56 — padlock in circle + four dots (matches auth icon scale / #727355) */
 const NewPasswordIcon = () => (
@@ -128,16 +129,50 @@ function RequirementRow({ ok, error, text }) {
 
 export default function NewPasswordPage() {
   const { search } = useLocation()
-  const token = useMemo(() => new URLSearchParams(search).get('token'), [search])
+  const token = useMemo(() => {
+    const p = new URLSearchParams(search)
+    return p.get('code') || p.get('token')
+  }, [search])
   const linkExpired = !token
 
   const [email, setEmail] = useState('')
   const [emailSent, setEmailSent] = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailError, setEmailError] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [resetComplete, setResetComplete] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetError, setResetError] = useState('')
+
+  async function handleResendEmail(e) {
+    e.preventDefault()
+    setEmailError('')
+    setEmailLoading(true)
+    try {
+      await authForgotPassword(email)
+      setEmailSent(true)
+    } catch {
+      setEmailError('Failed to send reset email. Please try again.')
+    } finally {
+      setEmailLoading(false)
+    }
+  }
+
+  async function handleResetPassword() {
+    setResetError('')
+    setResetLoading(true)
+    try {
+      await authResetPassword({ code: token, password, passwordConfirmation: confirm })
+      setResetComplete(true)
+    } catch {
+      setResetError('Failed to reset password. The link may have expired.')
+    } finally {
+      setResetLoading(false)
+    }
+  }
 
   const { hasLength, hasSpecial } = useMemo(() => {
     const len = password.length >= 8
@@ -194,58 +229,62 @@ export default function NewPasswordPage() {
         subtitle="The link you are trying to open has expired, please re-enter your email to get another password reset link."
         footer={null}
       >
-        <div
-          className="flex min-w-0 w-full flex-col gap-[24px]"
-          style={{ fontFamily: "'Poppins', sans-serif" }}
-        >
-          <div className="flex flex-col gap-[8px] w-full min-w-0">
-            <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
-            />
-          </div>
-        </div>
-
-        <div
-          className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
-          style={{ fontFamily: "'Poppins', sans-serif" }}
-        >
-          <button
-            type="button"
-            onClick={() => setEmailSent(true)}
-            disabled={!email.trim()}
-            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        <form onSubmit={handleResendEmail} className="contents">
+          <div
+            className="flex min-w-0 w-full flex-col gap-[24px]"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
           >
-            Reset password
-          </button>
-
-          <Link
-            to="/login"
-            className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] leading-[150%]"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="-rotate-90"
-              aria-hidden
-            >
-              <path
-                d="M12 4L12 20M12 20L6 14M12 20L18 14"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <div className="flex flex-col gap-[8px] w-full min-w-0">
+              <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
               />
-            </svg>
-            Back to login
-          </Link>
-        </div>
+            </div>
+          </div>
+
+          <div
+            className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
+            {emailError && (
+              <p className="text-[#C62828] text-[12px] leading-[150%]">{emailError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={emailLoading || !email.trim()}
+              className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {emailLoading ? 'Sending…' : 'Reset password'}
+            </button>
+
+            <Link
+              to="/login"
+              className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] leading-[150%]"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="-rotate-90"
+                aria-hidden
+              >
+                <path
+                  d="M12 4L12 20M12 20L6 14M12 20L18 14"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Back to login
+            </Link>
+          </div>
+        </form>
       </AuthLayout>
     )
   }
@@ -346,13 +385,14 @@ export default function NewPasswordPage() {
         className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
+        {resetError && <p className="text-[#C62828] text-[12px] leading-[150%]">{resetError}</p>}
         <button
           type="button"
-          onClick={() => setResetComplete(true)}
+          onClick={handleResetPassword}
           className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
-          disabled={!hasLength || !hasSpecial || password !== confirm}
+          disabled={resetLoading || !hasLength || !hasSpecial || password !== confirm}
         >
-          Reset password
+          {resetLoading ? 'Resetting…' : 'Reset password'}
         </button>
 
         <Link
