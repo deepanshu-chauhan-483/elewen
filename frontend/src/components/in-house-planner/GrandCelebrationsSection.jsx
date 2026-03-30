@@ -204,44 +204,6 @@ const GrandCelebrationsSection = () => {
     return () => window.removeEventListener('resize', updatePerPage)
   }, [])
 
-  useLayoutEffect(() => {
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReducedMotion) return
-    if (perPage === 1) return
-
-    const ctx = gsap.context(() => {
-      const cards = activeCardRefs.current.filter(Boolean)
-      const wraps = activeImgWrapRefs.current.filter(Boolean)
-      const arrows = [arrowLeftRef.current, arrowRightRef.current].filter(Boolean)
-      const bottomTexts = [titleRef.current, noteRef.current].filter(Boolean)
-      const cardTexts = getRevealTexts(cards)
-
-      gsap.set(cardTexts, { yPercent: 100, autoAlpha: 1 })
-      gsap.set(wraps, { clipPath: 'inset(100% 0% 0% 0%)' })
-      gsap.set(bottomTexts, { yPercent: 100, autoAlpha: 1 })
-      gsap.set(arrows, { autoAlpha: 0, y: 10, scale: 0.98 })
-
-      gsap
-        .timeline({
-          defaults: { ease: 'power3.out' },
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 72%',
-            toggleActions: 'play none none reverse',
-          },
-        })
-        .to(wraps, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.8, stagger: 0.06 })
-        .to(cardTexts, { yPercent: 0, duration: 0.55, stagger: 0.02 }, 0.1)
-        .to(bottomTexts, { yPercent: 0, duration: 0.65, stagger: 0.08 }, 0.18)
-        .to(arrows, { autoAlpha: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.06 }, 0.22)
-    }, sectionRef)
-
-    return () => ctx.revert()
-  }, [perPage])
-
   const normalizedPage = ((page % totalPages) + totalPages) % totalPages
   const normalizedIncomingPage =
     incomingPage === null ? null : ((incomingPage % totalPages) + totalPages) % totalPages
@@ -304,7 +266,11 @@ const GrandCelebrationsSection = () => {
                     }}
                   >
                     <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[18px] shadow-[0_28px_70px_rgba(0,0,0,0.18)]">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </div>
                 )
@@ -369,7 +335,11 @@ const GrandCelebrationsSection = () => {
                       }`}
                       style={{ willChange: 'clip-path' }}
                     >
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
 
                     <div className="mt-6 w-full flex flex-col gap-[12px] pr-4">

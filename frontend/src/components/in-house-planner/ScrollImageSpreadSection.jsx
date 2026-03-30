@@ -105,8 +105,7 @@ const ScrollImageSpreadSection = () => {
     const mq = window.matchMedia(MOBILE_QUERY)
     const onChange = e => setMode(e.matches ? 'mobile' : 'desktop')
 
-    // Set initial value and subscribe
-    setMode(mq.matches ? 'mobile' : 'desktop')
+    // Subscribe (initial value is already derived from useState(getMode))
     if (mq.addEventListener) mq.addEventListener('change', onChange)
     else mq.addListener(onChange)
 
@@ -176,15 +175,15 @@ const ScrollImageSpreadSection = () => {
 
       // Figma images start overlapping with the last fly-bys (no dead gap)
       const FIGMA_START = 0.28
-      // Last image finishes when its delayed start plus animation duration reaches 1.0.
-      const FIGMA_SETTLE_PROGRESS = FIGMA_START + Math.max(...FIGMA_DELAYS) + 1 / 5
-      const WHITE_FADE_END = 0.85
-      const WHITE_FADE_RANGE = WHITE_FADE_END - FIGMA_SETTLE_PROGRESS
+      const WHITE_FADE_START = FIGMA_START
+      const WHITE_FADE_END = 0.92
+      const WHITE_FADE_RANGE = WHITE_FADE_END - WHITE_FADE_START
+      const easeWhite = gsap.parseEase('power2.out')
 
       st = ScrollTrigger.create({
         trigger: flowEl,
         start: 'top top',
-        end: () => `+=${window.innerHeight * 6}`,
+        end: () => `+=${window.innerHeight * 1}`,
         pin: true,
         pinSpacing: true,
         anticipatePin: 1,
@@ -234,9 +233,8 @@ const ScrollImageSpreadSection = () => {
 
           // ── Fade to white as soon as the final Figma image has settled ──
           if (whiteRef.current) {
-            gsap.set(whiteRef.current, {
-              opacity: gsap.utils.clamp(0, 1, (p - FIGMA_SETTLE_PROGRESS) / WHITE_FADE_RANGE),
-            })
+            const t = gsap.utils.clamp(0, 1, (p - WHITE_FADE_START) / WHITE_FADE_RANGE)
+            gsap.set(whiteRef.current, { opacity: easeWhite(t) })
           }
         },
       })
@@ -260,7 +258,9 @@ const ScrollImageSpreadSection = () => {
       {/* Background */}
       <div
         ref={bgRef}
-        className={mode === 'mobile' ? 'absolute inset-0 bg-[#F7F7F5]' : 'absolute inset-0 bg-[#bfac9b]'}
+        className={
+          mode === 'mobile' ? 'absolute inset-0 bg-[#F7F7F5]' : 'absolute inset-0 bg-[#bfac9b]'
+        }
       />
       {/* White overlay — fades in at end to bridge smoothly to next section */}
       <div
@@ -287,7 +287,7 @@ const ScrollImageSpreadSection = () => {
                 })
               }}
             >
-              {MOBILE_SLIDES.map((s, idx) => (
+              {MOBILE_SLIDES.map(s => (
                 <div key={s.id} className="w-full shrink-0 snap-center px-2 mt-4">
                   <div className="w-full rounded-[15px] overflow-hidden shadow-lg">
                     <div className="grid grid-cols-[2fr_1fr] grid-rows-3 gap-1 h-[min(78vw,370px)]">

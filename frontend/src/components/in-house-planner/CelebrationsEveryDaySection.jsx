@@ -6,6 +6,21 @@ import everyDayImg2 from '../../assets/images/IMG_2017.jpg' // Bottom Right
 import everyDayImg3 from '../../assets/images/IMG_7768.jpg' // Bottom Left
 import everyDayImg4 from '../../assets/images/IMG_3001.jpg' // Top Center
 
+const ImgBox = ({ src, alt, className, setRef }) => (
+  <div
+    ref={setRef}
+    className={`${className} overflow-hidden`}
+    style={{ willChange: 'transform, clip-path', clipPath: 'inset(0% 0% 0% 0%)' }}
+  >
+    <img
+      src={src}
+      alt={alt}
+      className="w-full h-full object-cover"
+      style={{ willChange: 'transform' }}
+    />
+  </div>
+)
+
 const CelebrationEveryDaySection = () => {
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
@@ -17,8 +32,7 @@ const CelebrationEveryDaySection = () => {
     {
       name: 'Anniversaries',
       heading: 'ANNIVERSARIES',
-      desc:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
       images: {
         topLeft: everyDayImg4,
         topRight: everyDayImg1,
@@ -29,8 +43,7 @@ const CelebrationEveryDaySection = () => {
     {
       name: 'Birthday Parties',
       heading: 'BIRTHDAY PARTIES',
-      desc:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       images: {
         topLeft: everyDayImg1,
         topRight: everyDayImg4,
@@ -41,8 +54,7 @@ const CelebrationEveryDaySection = () => {
     {
       name: 'Engagement',
       heading: 'ENGAGEMENT',
-      desc:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       images: {
         topLeft: everyDayImg2,
         topRight: everyDayImg1,
@@ -53,8 +65,7 @@ const CelebrationEveryDaySection = () => {
     {
       name: 'Haldi',
       heading: 'HALDI',
-      desc:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       images: {
         topLeft: everyDayImg3,
         topRight: everyDayImg2,
@@ -65,8 +76,7 @@ const CelebrationEveryDaySection = () => {
     {
       name: 'Mehendi',
       heading: 'MEHENDI',
-      desc:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       images: {
         topLeft: everyDayImg4,
         topRight: everyDayImg2,
@@ -77,8 +87,7 @@ const CelebrationEveryDaySection = () => {
     {
       name: 'Weddings',
       heading: 'WEDDINGS',
-      desc:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       images: {
         topLeft: everyDayImg1,
         topRight: everyDayImg3,
@@ -110,13 +119,76 @@ const CelebrationEveryDaySection = () => {
   const headingRef = useRef(null)
   const descRef = useRef(null)
 
+  const mobileWrapsRef = useRef({
+    topLeft: null,
+    topRight: null,
+    bottomLeft: null,
+    bottomRight: null,
+  })
+  const mobileHeadingRef = useRef(null)
+  const mobileDescRef = useRef(null)
+
   const incomingHeadingRef = useRef(null)
   const incomingDescRef = useRef(null)
   const activeAccentRef = useRef(null)
   const incomingAccentRef = useRef(null)
+  const incomingLayerRef = useRef(null)
 
   const active = CATEGORY_DATA.find(c => c.name === activeName) ?? CATEGORY_DATA[0]
-  const incoming = incomingName ? CATEGORY_DATA.find(c => c.name === incomingName) ?? null : null
+  const incoming = incomingName ? (CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
+
+  const animateSwapMobile = nextName => {
+    if (prefersReducedMotion) {
+      setActiveName(nextName)
+      return
+    }
+    if (isAnimating) return
+    if (nextName === activeName) return
+
+    setIsAnimating(true)
+
+    const top = [mobileWrapsRef.current.topLeft, mobileWrapsRef.current.topRight].filter(Boolean)
+    const bottom = [mobileWrapsRef.current.bottomLeft, mobileWrapsRef.current.bottomRight].filter(
+      Boolean
+    )
+    const text = [mobileHeadingRef.current, mobileDescRef.current].filter(Boolean)
+
+    const outTl = gsap.timeline({
+      defaults: { ease: 'power2.inOut' },
+      onComplete: () => {
+        setActiveName(nextName)
+
+        requestAnimationFrame(() => {
+          const inTop = [mobileWrapsRef.current.topLeft, mobileWrapsRef.current.topRight].filter(
+            Boolean
+          )
+          const inBottom = [
+            mobileWrapsRef.current.bottomLeft,
+            mobileWrapsRef.current.bottomRight,
+          ].filter(Boolean)
+          const inText = [mobileHeadingRef.current, mobileDescRef.current].filter(Boolean)
+
+          gsap.set(inTop, { y: 24, autoAlpha: 0 })
+          gsap.set(inBottom, { y: -24, autoAlpha: 0 })
+          gsap.set(inText, { yPercent: 100, autoAlpha: 0 })
+
+          gsap
+            .timeline({
+              defaults: { ease: 'power3.out' },
+              onComplete: () => setIsAnimating(false),
+            })
+            .to(inTop, { y: 0, autoAlpha: 1, duration: 0.7, stagger: 0.05 }, 0)
+            .to(inBottom, { y: 0, autoAlpha: 1, duration: 0.7, stagger: 0.05 }, 0)
+            .to(inText, { yPercent: 0, autoAlpha: 1, duration: 0.55 }, 0.82)
+        })
+      },
+    })
+
+    outTl
+      .to(top, { y: -24, autoAlpha: 0, duration: 0.45, stagger: 0.04, ease: 'power2.in' }, 0)
+      .to(bottom, { y: 24, autoAlpha: 0, duration: 0.45, stagger: 0.04, ease: 'power2.in' }, 0)
+      .to(text, { yPercent: -100, autoAlpha: 0, duration: 0.32, ease: 'power2.in' }, 0.03)
+  }
 
   const animateSwap = nextName => {
     if (prefersReducedMotion) {
@@ -136,24 +208,35 @@ const CelebrationEveryDaySection = () => {
           activeWrapsRef.current.topRight,
           activeAccentRef.current,
         ].filter(Boolean)
-        const outBottom = [activeWrapsRef.current.bottomLeft, activeWrapsRef.current.bottomRight].filter(Boolean)
+        const outBottom = [
+          activeWrapsRef.current.bottomLeft,
+          activeWrapsRef.current.bottomRight,
+        ].filter(Boolean)
 
         const inTop = [
           incomingWrapsRef.current.topLeft,
           incomingWrapsRef.current.topRight,
           incomingAccentRef.current,
         ].filter(Boolean)
-        const inBottom = [incomingWrapsRef.current.bottomLeft, incomingWrapsRef.current.bottomRight].filter(Boolean)
+        const inBottom = [
+          incomingWrapsRef.current.bottomLeft,
+          incomingWrapsRef.current.bottomRight,
+        ].filter(Boolean)
 
-        const outText = [headingRef.current, descRef.current].filter(Boolean)
-        const inText = [incomingHeadingRef.current, incomingDescRef.current].filter(Boolean)
+        const outHeading = headingRef.current
+        const outDesc = descRef.current
+        const inHeading = incomingHeadingRef.current
+        const inDesc = incomingDescRef.current
 
         // Prep incoming layer (TOP from below, BOTTOM from above)
         gsap.set(inTop, { y: 60, autoAlpha: 0 })
         gsap.set(inBottom, { y: -60, autoAlpha: 0 })
 
         // Text: out up, in from below (after images are in place).
-        gsap.set(inText, { yPercent: 100, autoAlpha: 0 })
+        if (inHeading) gsap.set(inHeading, { yPercent: 100, autoAlpha: 0 })
+        if (inDesc) gsap.set(inDesc, { yPercent: 120, autoAlpha: 0 })
+        // Keep incoming layer hidden until the IN phase starts (prevents any flash).
+        if (incomingLayerRef.current) gsap.set(incomingLayerRef.current, { opacity: 0 })
 
         const tl = gsap.timeline({
           defaults: { ease: 'power2.inOut' },
@@ -163,7 +246,12 @@ const CelebrationEveryDaySection = () => {
             setIsAnimating(false)
 
             // clear refs for the unmounted incoming layer
-            incomingWrapsRef.current = { topLeft: null, topRight: null, bottomLeft: null, bottomRight: null }
+            incomingWrapsRef.current = {
+              topLeft: null,
+              topRight: null,
+              bottomLeft: null,
+              bottomRight: null,
+            }
           },
         })
 
@@ -174,8 +262,8 @@ const CelebrationEveryDaySection = () => {
           {
             y: -60,
             autoAlpha: 0,
-            duration: 0.55,
-            stagger: 0.03,
+            duration: 0.75,
+            stagger: 0.04,
             ease: 'power2.in',
           },
           0
@@ -187,34 +275,42 @@ const CelebrationEveryDaySection = () => {
           {
             y: 60,
             autoAlpha: 0,
-            duration: 0.55,
-            stagger: 0.03,
+            duration: 0.75,
+            stagger: 0.04,
             ease: 'power2.in',
           },
           0
         )
 
         // Text: out UP (heading + paragraph together)
-        tl.to(
-          outText,
-          {
-            yPercent: -100,
-            autoAlpha: 0,
-            duration: 0.34,
-            ease: 'power2.in',
-          },
-          0.02
-        )
+        if (outHeading) {
+          tl.to(
+            outHeading,
+            { yPercent: -100, autoAlpha: 0, duration: 0.42, ease: 'power2.in' },
+            0.03
+          )
+        }
+        if (outDesc) {
+          tl.to(outDesc, { yPercent: -120, autoAlpha: 0, duration: 0.34, ease: 'power2.in' }, 0.09)
+        }
 
-        // IN (only AFTER OUT finishes)
+        // IN: start after OUT finishes (with a small pause) so the swap feels clean.
+        const OUT_END = 0.78
+        const IN_START = OUT_END + 0.14
+        if (incomingLayerRef.current)
+          tl.set(incomingLayerRef.current, { opacity: 1 }, IN_START - 0.01)
         // Top images: come from DOWN
-        tl.to(inTop, {
-          y: 0,
-          autoAlpha: 1,
-          duration: 0.8,
-          stagger: 0.04,
-          ease: 'power3.out',
-        })
+        tl.to(
+          inTop,
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 1.05,
+            stagger: 0.05,
+            ease: 'power3.out',
+          },
+          IN_START
+        )
 
         // Bottom images: come from UP (reverse)
         tl.to(
@@ -222,33 +318,33 @@ const CelebrationEveryDaySection = () => {
           {
             y: 0,
             autoAlpha: 1,
-            duration: 0.8,
-            stagger: 0.04,
+            duration: 1.05,
+            stagger: 0.05,
             ease: 'power3.out',
           },
-          '<'
+          IN_START
         )
 
-        // Text: in from below (heading + paragraph together), after images are set
-        tl.to(inText, {
-          yPercent: 0,
-          autoAlpha: 1,
-          duration: 0.55,
-          ease: 'power3.out',
-        })
+        // Text: in from below (heading first, paragraph after), after images are set
+        const IMAGE_IN_END = IN_START + 1.05 + 0.1
+        const TEXT_IN_START = IMAGE_IN_END + 0.12
+        if (inHeading) {
+          tl.to(
+            inHeading,
+            { yPercent: 0, autoAlpha: 1, duration: 0.65, ease: 'power3.out' },
+            TEXT_IN_START
+          )
+        }
+        if (inDesc) {
+          tl.to(
+            inDesc,
+            { yPercent: 0, autoAlpha: 1, duration: 0.55, ease: 'power2.out' },
+            TEXT_IN_START + 0.12
+          )
+        }
       })
     })
   }
-
-  const ImgBox = ({ src, alt, className, setRef }) => (
-    <div
-      ref={setRef}
-      className={`${className} overflow-hidden`}
-      style={{ willChange: 'transform, clip-path', clipPath: 'inset(0% 0% 0% 0%)' }}
-    >
-      <img src={src} alt={alt} className="w-full h-full object-cover" style={{ willChange: 'transform' }} />
-    </div>
-  )
 
   const DESKTOP_CANVAS_W = 1440
   const DESKTOP_CANVAS_H = 1097
@@ -289,15 +385,22 @@ const CelebrationEveryDaySection = () => {
   }, [])
 
   return (
-    <section ref={sectionRef} className="relative w-full bg-[#F8F4ED] flex justify-center overflow-hidden font-sans pb-20">
+    <section
+      ref={sectionRef}
+      className="relative w-full bg-[#F8F4ED] flex justify-center overflow-hidden font-sans pb-20"
+    >
       {/* Mobile layout (<= md) */}
-      <div className="w-full max-w-[540px] px-5 pt-12 md:hidden">
-        <h2 className="text-[#2D2D2D] text-[34px] leading-[1.05] text-center font-serif" style={{ fontFamily: "'Malgin', serif" }}>
+      <div className="w-full max-w-[540px] px-5 pt-12 min-[540px]:hidden">
+        <h2
+          className="text-[#2D2D2D] text-[34px] leading-[1.05] text-center font-serif"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
           Celebrations We Plan <br /> Every Day
         </h2>
 
         <p className="mt-5 text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7] text-center">
-          From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.
+          From intimate birthdays to joyful wedding functions, our in-house planner helps bring
+          thoughtful structure and creative detail to social celebrations that matter most.
         </p>
 
         {/* Category tabs (2 rows like screenshot) */}
@@ -311,11 +414,13 @@ const CelebrationEveryDaySection = () => {
                     type="button"
                     onClick={() => {
                       if (isAnimating) return
-                      setIncomingName(null)
-                      setIsAnimating(false)
-                      setActiveName(cat.name)
+                      animateSwapMobile(cat.name)
                     }}
-                    className={isActive ? 'text-[#2D2D2D] font-medium border-b border-[#2D2D2D] pb-1' : 'text-[#2D2D2D]/50 pb-1'}
+                    className={
+                      isActive
+                        ? 'text-[#2D2D2D] font-medium border-b border-[#2D2D2D] pb-1'
+                        : 'text-[#2D2D2D]/50 pb-1'
+                    }
                   >
                     {cat.name}
                   </button>
@@ -333,11 +438,13 @@ const CelebrationEveryDaySection = () => {
                     type="button"
                     onClick={() => {
                       if (isAnimating) return
-                      setIncomingName(null)
-                      setIsAnimating(false)
-                      setActiveName(cat.name)
+                      animateSwapMobile(cat.name)
                     }}
-                    className={isActive ? 'text-[#2D2D2D] font-medium border-b border-[#2D2D2D] pb-1' : 'text-[#2D2D2D]/50 pb-1'}
+                    className={
+                      isActive
+                        ? 'text-[#2D2D2D] font-medium border-b border-[#2D2D2D] pb-1'
+                        : 'text-[#2D2D2D]/50 pb-1'
+                    }
                   >
                     {cat.name}
                   </button>
@@ -352,7 +459,11 @@ const CelebrationEveryDaySection = () => {
         <div className="mt-10">
           <div className="grid grid-cols-[2fr_1fr] grid-rows-3 gap-1 h-[min(78vw,370px)]">
             {/* Big left */}
-            <div className="relative overflow-hidden rounded-[18px] row-span-2 col-start-1 row-start-1">
+            <div
+              ref={el => (mobileWrapsRef.current.topLeft = el)}
+              className="relative overflow-hidden rounded-[18px] row-span-2 col-start-1 row-start-1"
+              style={{ willChange: 'transform, opacity' }}
+            >
               <img
                 src={active.images.topLeft}
                 alt={`${active.name} left`}
@@ -361,7 +472,11 @@ const CelebrationEveryDaySection = () => {
             </div>
 
             {/* Right top */}
-            <div className="relative overflow-hidden rounded-[18px] col-start-2 row-start-1">
+            <div
+              ref={el => (mobileWrapsRef.current.topRight = el)}
+              className="relative overflow-hidden rounded-[18px] col-start-2 row-start-1"
+              style={{ willChange: 'transform, opacity' }}
+            >
               <img
                 src={active.images.topRight}
                 alt={`${active.name} right top`}
@@ -370,7 +485,11 @@ const CelebrationEveryDaySection = () => {
             </div>
 
             {/* Bottom left */}
-            <div className="relative overflow-hidden rounded-[18px] col-start-1 row-start-3">
+            <div
+              ref={el => (mobileWrapsRef.current.bottomLeft = el)}
+              className="relative overflow-hidden rounded-[18px] col-start-1 row-start-3"
+              style={{ willChange: 'transform, opacity' }}
+            >
               <img
                 src={active.images.bottomLeft}
                 alt={`${active.name} bottom left`}
@@ -379,7 +498,11 @@ const CelebrationEveryDaySection = () => {
             </div>
 
             {/* Big bottom right */}
-            <div className="relative overflow-hidden rounded-[18px] col-start-2 row-start-2 row-span-2">
+            <div
+              ref={el => (mobileWrapsRef.current.bottomRight = el)}
+              className="relative overflow-hidden rounded-[18px] col-start-2 row-start-2 row-span-2"
+              style={{ willChange: 'transform, opacity' }}
+            >
               <img
                 src={active.images.bottomRight}
                 alt={`${active.name} bottom right`}
@@ -388,17 +511,25 @@ const CelebrationEveryDaySection = () => {
             </div>
           </div>
 
-          <h3 className="mt-8 text-center text-[#2D2D2D] text-[22px] font-serif tracking-wide uppercase" style={{ fontFamily: "'Malgin', serif" }}>
+          <h3
+            ref={mobileHeadingRef}
+            className="mt-8 text-center text-[#2D2D2D] text-[22px] font-serif tracking-wide uppercase"
+            style={{ fontFamily: "'Malgin', serif", willChange: 'transform' }}
+          >
             {active.heading}
           </h3>
-          <p className="mt-3 text-center text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7]">
+          <p
+            ref={mobileDescRef}
+            className="mt-3 text-center text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7]"
+            style={{ willChange: 'transform' }}
+          >
             {active.desc}
           </p>
         </div>
       </div>
 
       {/* Desktop layout (md+) — existing animation layout kept as-is */}
-      <div className="hidden md:block w-full">
+      <div className="hidden min-[540px]:block w-full">
         <div
           ref={desktopWrapRef}
           className="relative w-full max-w-[1440px] mx-auto"
@@ -413,139 +544,174 @@ const CelebrationEveryDaySection = () => {
             }}
           >
             <div className="relative w-full h-full shrink-0">
-          <h2
-            className="absolute left-1/2 -translate-x-1/2 top-[80px] w-[967px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif"
-            style={{ fontFamily: "'Malgin', serif" }}
-          >
-            Celebrations We Plan Every Day
-          </h2>
+              <h2
+                className="absolute left-1/2 -translate-x-1/2 top-[80px] w-[967px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                Celebrations We Plan Every Day
+              </h2>
 
-          <p className="absolute left-1/2 -translate-x-1/2 top-[169px] w-[809px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center">
-            From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and
-            creative detail to social celebrations that matter most.
-          </p>
+              <p className="absolute left-1/2 -translate-x-1/2 top-[169px] w-[809px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center">
+                From intimate birthdays to joyful wedding functions, our in-house planner helps
+                bring thoughtful structure and creative detail to social celebrations that matter
+                most.
+              </p>
 
-          <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
-            <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#EBEBEB] z-0" />
-            <div
-              key={active.name}
-              ref={activeAccentRef}
-              className="absolute left-[0px] top-[400px] w-[640px] h-[200px] bg-[#CDB17E] z-10"
-              style={{ willChange: 'transform, opacity' }}
-            />
-
-            {/* Left categories (stays as-is) */}
-            <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#F8F4ED] z-20">
-              <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
-                {CATEGORY_DATA.map(cat => {
-                  const isActive = cat.name === activeName
-                  return (
-                    <div
-                      key={cat.name}
-                      onClick={() => animateSwap(cat.name)}
-                      className={`py-2 pr-4 cursor-pointer w-fit ${
-                        isActive ? 'border-b border-[#2D2D2D]' : 'opacity-50 hover:opacity-100 transition-opacity'
-                      }`}
-                    >
-                      <span className="text-[#2D2D2D] text-[16px] font-medium leading-[1.5]">{cat.name}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* ACTIVE images */}
-            <ImgBox
-              src={active.images.topLeft}
-              alt={`${active.name} image`}
-              className="absolute left-[440px] top-[0px] w-[500px] h-[400px] z-10"
-              setRef={el => (activeWrapsRef.current.topLeft = el)}
-            />
-            <ImgBox
-              src={active.images.topRight}
-              alt={`${active.name} image`}
-              className="absolute left-[940px] top-[0px] w-[500px] h-[400px] z-10"
-              setRef={el => (activeWrapsRef.current.topRight = el)}
-            />
-            <ImgBox
-              src={active.images.bottomLeft}
-              alt={`${active.name} image`}
-              className="absolute left-[0px] top-[600px] w-[640px] h-[200px] z-10"
-              setRef={el => (activeWrapsRef.current.bottomLeft = el)}
-            />
-            <ImgBox
-              src={active.images.bottomRight}
-              alt={`${active.name} image`}
-              className="absolute left-[640px] top-[400px] w-[800px] h-[400px] z-10"
-              setRef={el => (activeWrapsRef.current.bottomRight = el)}
-            />
-
-            {/* ACTIVE text */}
-            <h3
-              className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase overflow-hidden"
-              style={{ fontFamily: "'Poppins', sans-serif" }}
-            >
-              <span key={active.name} ref={headingRef} className="inline-block" style={{ willChange: 'transform' }}>
-                {active.heading}
-              </span>
-            </h3>
-
-            <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
-              <span key={active.name} ref={descRef} className="inline-block" style={{ willChange: 'transform' }}>
-                {active.desc}
-              </span>
-            </p>
-
-            {/* INCOMING layer (only during click animation) */}
-            {incoming && (
-              <div className="absolute inset-0 pointer-events-none z-30">
+              <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
+                <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#EBEBEB] z-0" />
                 <div
-                  ref={incomingAccentRef}
+                  key={active.name}
+                  ref={activeAccentRef}
                   className="absolute left-[0px] top-[400px] w-[640px] h-[200px] bg-[#CDB17E] z-10"
                   style={{ willChange: 'transform, opacity' }}
                 />
+
+                {/* Left categories (stays as-is) */}
+                <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#F8F4ED] z-20">
+                  <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
+                    {CATEGORY_DATA.map(cat => {
+                      const isActive = cat.name === activeName
+                      return (
+                        <div
+                          key={cat.name}
+                          onClick={() => animateSwap(cat.name)}
+                          className={`py-2 pr-4 cursor-pointer w-fit ${
+                            isActive
+                              ? 'border-b border-[#2D2D2D]'
+                              : 'opacity-50 hover:opacity-100 transition-opacity'
+                          }`}
+                        >
+                          <span className="text-[#2D2D2D] text-[16px] font-medium leading-[1.5]">
+                            {cat.name}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* ACTIVE images */}
                 <ImgBox
-                  src={incoming.images.topLeft}
-                  alt={`${incoming.name} image`}
-                  className="absolute left-[440px] top-[0px] w-[500px] h-[400px]"
-                  setRef={el => (incomingWrapsRef.current.topLeft = el)}
+                  key={`${active.name}-topLeft`}
+                  src={active.images.topLeft}
+                  alt={`${active.name} image`}
+                  className="absolute left-[440px] top-[0px] w-[500px] h-[400px] z-10"
+                  setRef={el => (activeWrapsRef.current.topLeft = el)}
                 />
                 <ImgBox
-                  src={incoming.images.topRight}
-                  alt={`${incoming.name} image`}
-                  className="absolute left-[940px] top-[0px] w-[500px] h-[400px]"
-                  setRef={el => (incomingWrapsRef.current.topRight = el)}
+                  key={`${active.name}-topRight`}
+                  src={active.images.topRight}
+                  alt={`${active.name} image`}
+                  className="absolute left-[940px] top-[0px] w-[500px] h-[400px] z-10"
+                  setRef={el => (activeWrapsRef.current.topRight = el)}
                 />
                 <ImgBox
-                  src={incoming.images.bottomLeft}
-                  alt={`${incoming.name} image`}
-                  className="absolute left-[0px] top-[600px] w-[640px] h-[200px]"
-                  setRef={el => (incomingWrapsRef.current.bottomLeft = el)}
+                  key={`${active.name}-bottomLeft`}
+                  src={active.images.bottomLeft}
+                  alt={`${active.name} image`}
+                  className="absolute left-[0px] top-[600px] w-[640px] h-[200px] z-10"
+                  setRef={el => (activeWrapsRef.current.bottomLeft = el)}
                 />
                 <ImgBox
-                  src={incoming.images.bottomRight}
-                  alt={`${incoming.name} image`}
-                  className="absolute left-[640px] top-[400px] w-[800px] h-[400px]"
-                  setRef={el => (incomingWrapsRef.current.bottomRight = el)}
+                  key={`${active.name}-bottomRight`}
+                  src={active.images.bottomRight}
+                  alt={`${active.name} image`}
+                  className="absolute left-[640px] top-[400px] w-[800px] h-[400px] z-10"
+                  setRef={el => (activeWrapsRef.current.bottomRight = el)}
                 />
 
+                {/* ACTIVE text */}
                 <h3
-                  className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
+                  className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase overflow-hidden"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
-                  <span ref={incomingHeadingRef} className="inline-block" style={{ willChange: 'transform' }}>
-                    {incoming.heading}
+                  <span
+                    key={active.name}
+                    ref={headingRef}
+                    className="inline-block"
+                    style={{ willChange: 'transform' }}
+                  >
+                    {active.heading}
                   </span>
                 </h3>
 
-                <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] overflow-hidden">
-                  <span ref={incomingDescRef} className="inline-block" style={{ willChange: 'transform' }}>
-                    {incoming.desc}
+                <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
+                  <span
+                    key={active.name}
+                    ref={descRef}
+                    className="inline-block"
+                    style={{ willChange: 'transform' }}
+                  >
+                    {active.desc}
                   </span>
                 </p>
+
+                {/* INCOMING layer (only during click animation) */}
+                {incoming && (
+                  <div
+                    ref={incomingLayerRef}
+                    className="absolute inset-0 pointer-events-none z-30"
+                    style={{ opacity: 0 }}
+                  >
+                    <div
+                      ref={incomingAccentRef}
+                      className="absolute left-[0px] top-[400px] w-[640px] h-[200px] bg-[#CDB17E] z-10"
+                      style={{ willChange: 'transform, opacity' }}
+                    />
+                    <ImgBox
+                      key={`${incoming.name}-topLeft`}
+                      src={incoming.images.topLeft}
+                      alt={`${incoming.name} image`}
+                      className="absolute left-[440px] top-[0px] w-[500px] h-[400px]"
+                      setRef={el => (incomingWrapsRef.current.topLeft = el)}
+                    />
+                    <ImgBox
+                      key={`${incoming.name}-topRight`}
+                      src={incoming.images.topRight}
+                      alt={`${incoming.name} image`}
+                      className="absolute left-[940px] top-[0px] w-[500px] h-[400px]"
+                      setRef={el => (incomingWrapsRef.current.topRight = el)}
+                    />
+                    <ImgBox
+                      key={`${incoming.name}-bottomLeft`}
+                      src={incoming.images.bottomLeft}
+                      alt={`${incoming.name} image`}
+                      className="absolute left-[0px] top-[600px] w-[640px] h-[200px]"
+                      setRef={el => (incomingWrapsRef.current.bottomLeft = el)}
+                    />
+                    <ImgBox
+                      key={`${incoming.name}-bottomRight`}
+                      src={incoming.images.bottomRight}
+                      alt={`${incoming.name} image`}
+                      className="absolute left-[640px] top-[400px] w-[800px] h-[400px]"
+                      setRef={el => (incomingWrapsRef.current.bottomRight = el)}
+                    />
+
+                    <h3
+                      className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase overflow-hidden"
+                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                    >
+                      <span
+                        ref={incomingHeadingRef}
+                        className="inline-block"
+                        style={{ willChange: 'transform' }}
+                      >
+                        {incoming.heading}
+                      </span>
+                    </h3>
+
+                    <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
+                      <span
+                        ref={incomingDescRef}
+                        className="inline-block"
+                        style={{ willChange: 'transform' }}
+                      >
+                        {incoming.desc}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
             </div>
           </div>
         </div>
@@ -555,4 +721,3 @@ const CelebrationEveryDaySection = () => {
 }
 
 export default CelebrationEveryDaySection
-

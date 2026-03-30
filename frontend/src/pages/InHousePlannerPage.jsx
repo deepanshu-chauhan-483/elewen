@@ -17,7 +17,7 @@ const InHousePlannerSection = () => {
             <img
               src={plannerImg}
               alt="Moksha - In-House Event Planner"
-              className="w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.30] origin-[50%_18%] min-[540px]:origin-top"
+              className="w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
             />
           </div>
 
@@ -39,14 +39,14 @@ const InHousePlannerSection = () => {
             {/* Paragraphs */}
             <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed mb-4">
               Co-founder at Elewen and a professional event planner with 6+ years of industry
-              experience. Trained in International Events in the UK, I bring structure,
-              creativity, and calm to every celebration.
+              experience. Trained in International Events in the UK, I bring structure, creativity,
+              and calm to every celebration.
             </p>
 
             <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed">
-              Some events call for personal attention and thoughtful detailing. They need
-              intention, detail, and a planner who truly cares, that&apos;s exactly why the
-              In-House Planner was created.
+              Some events call for personal attention and thoughtful detailing. They need intention,
+              detail, and a planner who truly cares, that&apos;s exactly why the In-House Planner
+              was created.
             </p>
           </div>
         </div>

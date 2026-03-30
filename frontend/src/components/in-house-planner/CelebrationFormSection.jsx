@@ -289,9 +289,10 @@ const CelebrationFormSection = () => {
                       <div
                         onClick={() => toggleSupport(opt)}
                         className={`w-[19px] h-[19px] border rounded-[4px] transition-colors flex items-center justify-center shrink-0 cursor-pointer
-                          ${form.support_types.includes(opt)
-                            ? 'bg-[#591902] border-[#591902]'
-                            : 'border-[#2D2D2D] group-hover:bg-[#2D2D2D]/10'
+                          ${
+                            form.support_types.includes(opt)
+                              ? 'bg-[#591902] border-[#591902]'
+                              : 'border-[#2D2D2D] group-hover:bg-[#2D2D2D]/10'
                           }`}
                       >
                         {form.support_types.includes(opt) && (
@@ -392,13 +393,25 @@ const CelebrationFormSection = () => {
                     </span>
                     <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#8C8C8C] transition-transform group-hover:scale-105">
                       <svg
+                        className="min-[540px]:hidden"
                         width="20"
                         height="20"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="#8C8C8C"
                         strokeWidth="1.5"
-                        className="rotate-180"
+                      >
+                        <path d="M19 12H5" />
+                        <path d="m12 19-7-7 7-7" />
+                      </svg>
+                      <svg
+                        className="hidden min-[540px]:block rotate-180"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#8C8C8C"
+                        strokeWidth="1.5"
                       >
                         <path d="M7 17L17 7" />
                         <path d="M7 7h10v10" />
@@ -449,6 +462,19 @@ const CelebrationFormSection = () => {
                 </span>
                 <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#CDB17E] transition-transform group-hover:scale-105">
                   <svg
+                    className="min-[540px]:hidden"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#CDB17E"
+                    strokeWidth="1.5"
+                  >
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                  <svg
+                    className="hidden min-[540px]:block"
                     width="20"
                     height="20"
                     viewBox="0 0 24 24"

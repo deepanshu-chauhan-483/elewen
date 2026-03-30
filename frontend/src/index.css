@@ -229,32 +229,32 @@ p {
 @keyframes slideInLeft {
   0% {
     opacity: 0;
-    transform: translateX(-40px);
+    translate: -40px 0;
   }
   100% {
     opacity: 1;
-    transform: translateX(0);
+    translate: 0 0;
   }
 }
 
 @keyframes slideInRight {
   0% {
     opacity: 0;
-    transform: translateX(40px);
+    translate: 40px 0;
   }
   100% {
     opacity: 1;
-    transform: translateX(0);
+    translate: 0 0;
   }
 }
 
 @keyframes slideInBottom {
   0% {
     opacity: 0;
-    transform: translateY(30px);
+    translate: 0 30px;
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    translate: 0 0;
   }
 }

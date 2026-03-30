@@ -92,9 +92,16 @@ const PlanEventSection = () => {
     : safeEventCards
 
   // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
-  const currentCardsPerPage = isMobile ? 1 : (typeof CARDS_PER_PAGE !== 'undefined' ? CARDS_PER_PAGE : 3)
+  const currentCardsPerPage = isMobile
+    ? 1
+    : typeof CARDS_PER_PAGE !== 'undefined'
+      ? CARDS_PER_PAGE
+      : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
-  const visibleCards = filteredCards.slice(page * currentCardsPerPage, (page + 1) * currentCardsPerPage)
+  const visibleCards = filteredCards.slice(
+    page * currentCardsPerPage,
+    (page + 1) * currentCardsPerPage
+  )
 
   // Reset page when category changes
   const handleCategorySelect = cat => {
@@ -106,7 +113,6 @@ const PlanEventSection = () => {
 
   return (
     <section className="relative w-full min-h-screen bg-[#F2F2F2] md:bg-[#F7F7F5] pt-[40px] md:pt-52 flex flex-col overflow-hidden font-sans">
-      
       {/* Background Decor (Desktop predominantly) */}
       <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
         {scallopCount.map((_, i) => (
@@ -121,7 +127,9 @@ const PlanEventSection = () => {
             ></div>
             {i !== scallopCount.length - 1 && (
               <div className="absolute top-0 right-0 translate-x-1/2 flex flex-col items-center z-20">
-                <div className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#3D4035]/60`}></div>
+                <div
+                  className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#3D4035]/60`}
+                ></div>
                 <div className="relative flex flex-col items-center">
                   <img
                     src={i % 2 === 0 ? bulb1 : bulb2}
@@ -136,7 +144,8 @@ const PlanEventSection = () => {
                         : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
                     }`}
                     style={{
-                      background: i % 2 === 0
+                      background:
+                        i % 2 === 0
                           ? 'linear-gradient(180deg, #FCD768 0%, #F7F7F5 100%)'
                           : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F7F7F5 100%)',
                       clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
@@ -156,7 +165,9 @@ const PlanEventSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Plan Your Event, <br className="hidden md:block"/> Differently.</span>
+            <span className="reveal-text">
+              Plan Your Event, <br className="hidden md:block" /> Differently.
+            </span>
           </span>
         </h1>
 
@@ -164,7 +175,8 @@ const PlanEventSection = () => {
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Choose your event type and explore curated décor and catering packages designed to simplify planning.
+                Choose your event type and explore curated décor and catering packages designed to
+                simplify planning.
               </span>
             </span>
           </p>
@@ -172,7 +184,13 @@ const PlanEventSection = () => {
           <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
             <span className="text-white font-medium text-[15px] mr-5">View All</span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <svg className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <svg
+                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
               </svg>
             </div>
@@ -184,7 +202,6 @@ const PlanEventSection = () => {
 
       {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
-        
         {/* Categories Bar */}
         <aside className="w-full md:w-[320px] pt-8 pb-10 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 md:border-r border-[#3D4035]/15">
           <div className="flex flex-row md:flex-col items-center md:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
@@ -194,8 +211,8 @@ const PlanEventSection = () => {
                 <React.Fragment key={cat}>
                   <div
                     className={`cursor-pointer group w-fit flex flex-col ${
-                      isActive 
-                        ? 'opacity-100 border-b border-[#364022] pb-1 md:border-b-[1.5px] md:border-[#3D4035] md:pb-1.5' 
+                      isActive
+                        ? 'opacity-100 border-b border-[#364022] pb-1 md:border-b-[1.5px] md:border-[#3D4035] md:pb-1.5'
                         : 'opacity-50 md:opacity-100'
                     }`}
                     onClick={() => handleCategorySelect(cat)}
@@ -223,131 +240,168 @@ const PlanEventSection = () => {
         <div className="flex-1 py-12 md:py-16 px-6 md:px-12 lg:px-8">
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
-          
-          <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] md:min-h-0">
-            
-            {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
-            <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+            <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] md:min-h-0">
+              {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
+              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                >
+                  <svg
+                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex justify-center md:block">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
+                  {visibleCards.map(card => (
+                    <div
+                      key={card.id ?? card.title}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                    >
+                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                        <img
+                          src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                          alt={card.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                        <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide uppercase font-['Poppins']">
+                          {card.title}
+                        </h3>
+                        <p className="text-white/50 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light font-['Poppins']">
+                          {card.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile Right Navigation Arrow */}
+              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                >
+                  <svg
+                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Pagination Controls */}
+
+            {/* Desktop Pagination Block */}
+            <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <svg className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <svg
+                  width="28"
+                  height="28"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-            </div>
-
-            <div className="flex justify-center md:block">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-              {visibleCards.map(card => (
-                <div
-                  key={card.id ?? card.title}
-                  className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
-                >
-                  <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
-                    <img
-                      src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                      alt={card.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
-                    <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide uppercase font-['Poppins']">
-                      {card.title}
-                    </h3>
-                    <p className="text-white/50 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light font-['Poppins']">
-                      {card.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </div>
-
-            {/* Mobile Right Navigation Arrow */}
-            <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+              <div className="flex items-center gap-[4px] justify-center">
+                {[...Array(totalPages)].map((_, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`cursor-pointer rounded-[8px] transition-all ${
+                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                    }`}
+                  />
+                ))}
+              </div>
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <svg className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <svg
+                  width="28"
+                  height="28"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
-          </div>
 
-          {/* Pagination Controls */}
-
-          {/* Desktop Pagination Block */}
-          <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
-            <button
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="flex items-center gap-[4px] justify-center">
+            {/* Mobile Pagination Dots */}
+            <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
                   onClick={() => setPage(i)}
-                  className={`cursor-pointer rounded-[8px] transition-all ${
-                    i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                  className={`cursor-pointer rounded-[12px] transition-all ${
+                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
             </div>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
 
-          {/* Mobile Pagination Dots */}
-          <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
-            {[...Array(totalPages)].map((_, i) => (
-              <div
-                key={i}
-                onClick={() => setPage(i)}
-                className={`cursor-pointer rounded-[12px] transition-all ${
-                  i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
-                }`}
-              />
-            ))}
+            {/* Mobile View All Button */}
+            <div className="flex md:hidden justify-center pb-12">
+              <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
+                  View All
+                </span>
+                <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                  <svg
+                    className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 17L17 7M17 7H9M17 7v8"
+                    />
+                  </svg>
+                </div>
+              </button>
+            </div>
           </div>
-
-          {/* Mobile View All Button */}
-          <div className="flex md:hidden justify-center pb-12">
-            <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
-              <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">View All</span>
-              <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
-                <svg
-                  className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
-                </svg>
-              </div>
-            </button>
-          </div>
-
-        </div>
         </div>
       </div>
     </section>
@@ -381,9 +435,16 @@ const WhatToPlanSection = () => {
     : safeServiceCards
 
   // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
-  const currentCardsPerPage = isMobile ? 1 : (typeof CARDS_PER_PAGE !== 'undefined' ? CARDS_PER_PAGE : 3)
+  const currentCardsPerPage = isMobile
+    ? 1
+    : typeof CARDS_PER_PAGE !== 'undefined'
+      ? CARDS_PER_PAGE
+      : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
-  const visibleCards = filteredCards.slice(page * currentCardsPerPage, (page + 1) * currentCardsPerPage)
+  const visibleCards = filteredCards.slice(
+    page * currentCardsPerPage,
+    (page + 1) * currentCardsPerPage
+  )
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -392,10 +453,8 @@ const WhatToPlanSection = () => {
 
   return (
     <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden font-sans">
-      
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center">
-        
         <div className="max-w-[353px] md:max-w-[340px] order-last md:order-first mt-5 md:mt-0 flex flex-col items-center md:items-start">
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
@@ -426,7 +485,10 @@ const WhatToPlanSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">What Would You <br className="hidden md:block" /> Like To <br className="block md:hidden"/> Plan?</span>
+            <span className="reveal-text">
+              What Would You <br className="hidden md:block" /> Like To{' '}
+              <br className="block md:hidden" /> Plan?
+            </span>
           </span>
         </h2>
       </div>
@@ -437,131 +499,168 @@ const WhatToPlanSection = () => {
         <div className="flex-1 order-last lg:order-none py-12 md:py-16 px-6 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15">
           {/* Cards Carousel Area */}
           <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15 w-full overflow-visible lg:overflow-hidden">
-          
-          <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] lg:min-h-0">
-            
-            {/* Mobile Left Navigation Arrow */}
-            <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
+            <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] lg:min-h-0">
+              {/* Mobile Left Navigation Arrow */}
+              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                >
+                  <svg
+                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex justify-center lg:block">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] lg:max-w-none lg:w-auto relative">
+                  {visibleCards.map(card => (
+                    <div
+                      key={card.id ?? card.title}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                    >
+                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                        <img
+                          src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                          alt={card.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                        <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide font-['Poppins']">
+                          {card.title}
+                        </h3>
+                        <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
+                          {card.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile Right Navigation Arrow */}
+              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                >
+                  <svg
+                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop Pagination Block */}
+            <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <svg className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <svg
+                  width="28"
+                  height="28"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-            </div>
 
-            <div className="flex justify-center lg:block">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] lg:max-w-none lg:w-auto relative">
-              {visibleCards.map(card => (
-                <div
-                  key={card.id ?? card.title}
-                  className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
-                >
-                  <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
-                    <img
-                      src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                      alt={card.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+              <div className="flex items-center gap-[4px] justify-center">
+                {[...Array(totalPages)].map((_, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`cursor-pointer rounded-[8px] transition-all ${
+                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                    }`}
+                  />
+                ))}
+              </div>
 
-                  <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
-                    <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide font-['Poppins']">
-                      {card.title}
-                    </h3>
-                    <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
-                      {card.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </div>
-
-            {/* Mobile Right Navigation Arrow */}
-            <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <svg className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <svg
+                  width="28"
+                  height="28"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
-          </div>
 
-          {/* Desktop Pagination Block */}
-          <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px]">
-            <button
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            <div className="flex items-center gap-[4px] justify-center">
+            {/* Mobile Pagination Dots */}
+            <div className="flex lg:hidden items-center justify-center gap-[4px] mt-6 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
                   onClick={() => setPage(i)}
-                  className={`cursor-pointer rounded-[8px] transition-all ${
-                    i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                  className={`cursor-pointer rounded-[12px] transition-all ${
+                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
             </div>
 
-            <button
-              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            {/* Mobile View All Button */}
+            <div className="flex lg:hidden justify-center pb-12">
+              <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
+                  View All
+                </span>
+                <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                  <svg
+                    className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 17L17 7M17 7H9M17 7v8"
+                    />
+                  </svg>
+                </div>
+              </button>
+            </div>
           </div>
-
-          {/* Mobile Pagination Dots */}
-          <div className="flex lg:hidden items-center justify-center gap-[4px] mt-6 mb-8">
-            {[...Array(totalPages)].map((_, i) => (
-              <div
-                key={i}
-                onClick={() => setPage(i)}
-                className={`cursor-pointer rounded-[12px] transition-all ${
-                  i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* Mobile View All Button */}
-          <div className="flex lg:hidden justify-center pb-12">
-            <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
-              <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">View All</span>
-              <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
-                <svg
-                  className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
-                </svg>
-              </div>
-            </button>
-          </div>
-
-        </div>
         </div>
 
         {/* Categories Bar */}
@@ -573,8 +672,8 @@ const WhatToPlanSection = () => {
                 <React.Fragment key={cat}>
                   <div
                     className={`cursor-pointer group w-fit flex flex-col ${
-                      isActive 
-                        ? 'opacity-100 border-b border-[#364022] pb-1 lg:border-b-[1.5px] lg:border-[#3D4035] lg:pb-1.5' 
+                      isActive
+                        ? 'opacity-100 border-b border-[#364022] pb-1 lg:border-b-[1.5px] lg:border-[#3D4035] lg:pb-1.5'
                         : 'opacity-50 lg:opacity-100'
                     }`}
                     onClick={() => handleCategorySelect(cat)}
@@ -598,7 +697,6 @@ const WhatToPlanSection = () => {
             })}
           </div>
         </aside>
-
       </div>
     </section>
   )
@@ -1090,11 +1188,13 @@ const BetterWaySection = () => {
   return (
     <section className="w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans relative">
       <div className="relative w-full max-w-[1440px] mx-auto h-[841px] md:h-[1171px] shrink-0">
-        
         {/* --- SCALLOP / BULB SECTION (Untouched) --- */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10">
           {scallopCount.map((_, i) => (
-            <div key={i} className="relative shrink-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px]">
+            <div
+              key={i}
+              className="relative shrink-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px]"
+            >
               <div
                 className="absolute top-0 left-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px] bg-[#CDB17E]"
                 style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
@@ -1145,7 +1245,7 @@ const BetterWaySection = () => {
             <span className="reveal-wrapper">
               <span className="reveal-text">A Better Way Between </span>
             </span>
-            <br className="hidden md:block"/>
+            <br className="hidden md:block" />
             <span className="reveal-wrapper">
               <span className="reveal-text">Event and DIY</span>
             </span>
@@ -1180,7 +1280,13 @@ const BetterWaySection = () => {
             </defs>
             <circle cx="211" cy="211" r="211" fill="#CDB17E" />
             <circle cx="512" cy="211" r="211" fill="#591902" />
-            <circle cx="512" cy="211" r="211" fill="#FFFFFF" clipPath="url(#intersectClipDesktop)" />
+            <circle
+              cx="512"
+              cy="211"
+              r="211"
+              fill="#FFFFFF"
+              clipPath="url(#intersectClipDesktop)"
+            />
           </svg>
         </div>
 
@@ -1201,7 +1307,13 @@ const BetterWaySection = () => {
             </defs>
             <circle cx="103.02" cy="103.02" r="103.02" fill="#CDB17E" />
             <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
-            <circle cx="249.98" cy="103.02" r="103.02" fill="#FFFFFF" clipPath="url(#intersectClipMobile)" />
+            <circle
+              cx="249.98"
+              cy="103.02"
+              r="103.02"
+              fill="#FFFFFF"
+              clipPath="url(#intersectClipMobile)"
+            />
           </svg>
         </div>
 
@@ -1238,18 +1350,34 @@ const BetterWaySection = () => {
 
         {/* --- SUB TEXTS --- */}
         <p className="absolute w-[120px] md:w-[200px] left-[20px] md:left-[30px] top-[597px] md:top-[688px] text-[#957960] text-[12px] leading-[150%] md:leading-[1.5] font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">Full-service planning often comes with high costs and long coordination cycles. You rely on large teams, multiple approvals, and a process that can feel heavier than the event itself.</span>
+          <span className="hidden md:inline">
+            Full-service planning often comes with high costs and long coordination cycles. You rely
+            on large teams, multiple approvals, and a process that can feel heavier than the event
+            itself.
+          </span>
           <span className="md:hidden">Costly and slow, with too many layers.</span>
         </p>
 
         <p className="absolute w-[120px] md:w-[200px] right-[20px] md:right-[30px] top-[597px] md:top-[688px] text-[#591902] text-[12px] leading-[150%] md:leading-[1.5] text-right font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">Planning everything yourself means juggling vendors, comparing prices, managing logistics, and making countless decisions. It quickly turns a celebration into a checklist.</span>
-          <span className="md:hidden">Too many vendors, too many choices, DIY planning turns joy into work.</span>
+          <span className="hidden md:inline">
+            Planning everything yourself means juggling vendors, comparing prices, managing
+            logistics, and making countless decisions. It quickly turns a celebration into a
+            checklist.
+          </span>
+          <span className="md:hidden">
+            Too many vendors, too many choices, DIY planning turns joy into work.
+          </span>
         </p>
 
         <p className="absolute w-[200px] md:w-[285px] left-1/2 -translate-x-1/2 top-[711px] md:top-[993px] text-[#2D2D2D] text-[12px] leading-[150%] md:leading-[1.5] text-center font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">The balance between structure and simplicity. You get curated décor, trusted vendors, and guided planning, without the pressure or the price of full-scale event management.</span>
-          <span className="md:hidden">The perfect balance of structure and simplicity. curated décor, trusted vendors, guided planning, without the cost or pressure.</span>
+          <span className="hidden md:inline">
+            The balance between structure and simplicity. You get curated décor, trusted vendors,
+            and guided planning, without the pressure or the price of full-scale event management.
+          </span>
+          <span className="md:hidden">
+            The perfect balance of structure and simplicity. curated décor, trusted vendors, guided
+            planning, without the cost or pressure.
+          </span>
         </p>
       </div>
     </section>
@@ -1323,7 +1451,7 @@ const ChecklistSection = () => {
     const gateLiftY = isMobile ? -280 : -220
     const scrollEnd = isMobile ? 1300 : 1500
     const scrubVal = isMobile ? 1 : 1
-    
+
     // UPDATED: Trigger earlier on mobile so the user doesn't have to scroll as far
     // 'top 45%' means the animation starts when the top of the element hits 45% down from the top of the viewport.
     const startTrigger = isMobile ? 'top 65%' : 'top top'
@@ -1414,7 +1542,10 @@ const ChecklistSection = () => {
 
       <div className="absolute top-0 left-0 w-full flex pointer-events-none z-10">
         {scallopCount.map((_, i) => (
-          <div key={i} className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]">
+          <div
+            key={i}
+            className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]"
+          >
             <div
               className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
               style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
@@ -1711,7 +1842,7 @@ const PackagesSection = () => {
   const [disableTransition, setDisableTransition] = useState(false)
   const lastDirectionRef = useRef('next')
   const [isMobile, setIsMobile] = useState(false)
-  
+
   // Touch handlers for mobile swiping of the main packages
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -1762,17 +1893,17 @@ const PackagesSection = () => {
     setVirtualIndex(prev => (prev <= 0 ? totalCards - 1 : prev - 1))
   }
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = e => {
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
   }
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = e => {
     const touchEndX = e.changedTouches[0].clientX
     const touchEndY = e.changedTouches[0].clientY
     const diffX = touchStartX.current - touchEndX
     const diffY = Math.abs(touchStartY.current - touchEndY)
-    
+
     // Swipe threshold of 30px, and must be a distinctly horizontal swipe (diffX > diffY)
     if (Math.abs(diffX) > 30 && Math.abs(diffX) > diffY) {
       if (diffX > 0) handleNext()
@@ -1841,9 +1972,13 @@ const PackagesSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Somewhere Between Moodboards <br className="block md:hidden"/></span>
+            <span className="reveal-text">
+              Somewhere Between Moodboards <br className="block md:hidden" />
+            </span>
           </span>
-          <span className="hidden md:inline"><br /></span>
+          <span className="hidden md:inline">
+            <br />
+          </span>
           <span className="reveal-wrapper">
             <span className="reveal-text">and Reality, the Feeling Got Lost.</span>
           </span>
@@ -1869,7 +2004,6 @@ const PackagesSection = () => {
 
       {/* --- 2. Carousel - 3D cylinder --- */}
       <div className="relative w-full overflow-x-hidden mt-[24px] md:-mt-10">
-        
         {/* Top curved edge (Hidden on mobile to save space, z-0 to stay behind cards) */}
         <div
           className="absolute left-1/2 -translate-x-1/2 top-0 w-[1440px] max-w-[100vw] h-[100px] z-0 pointer-events-none hidden md:block"
@@ -1883,8 +2017,12 @@ const PackagesSection = () => {
           className="relative min-h-[480px] md:min-h-[790px] w-full grid place-content-center overflow-hidden px-0 z-10"
           style={{
             perspective: '80em',
-            maskImage: isMobile ? 'none' : 'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
-            WebkitMaskImage: isMobile ? 'none' : 'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
+            maskImage: isMobile
+              ? 'none'
+              : 'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
+            WebkitMaskImage: isMobile
+              ? 'none'
+              : 'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
           }}
         >
           {/* --- Mobile Only Navigation Arrows (Half Circles on Edges) --- */}
@@ -1894,7 +2032,16 @@ const PackagesSection = () => {
               onClick={handlePrev}
               className="pointer-events-auto w-[34px] h-[68px] bg-[#1C1C1C] hover:bg-black rounded-r-full flex items-center justify-center transition-colors pr-[2px]"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FAFAFA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#FAFAFA"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
@@ -1903,7 +2050,16 @@ const PackagesSection = () => {
               onClick={handleNext}
               className="pointer-events-auto w-[34px] h-[68px] bg-[#1C1C1C] hover:bg-black rounded-l-full flex items-center justify-center transition-colors pl-[2px]"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FAFAFA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#FAFAFA"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </button>
@@ -1914,7 +2070,9 @@ const PackagesSection = () => {
             style={{
               transformStyle: 'preserve-3d',
               transform: `rotateY(${-virtualIndex * 36}deg)`,
-              transition: disableTransition ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: disableTransition
+                ? 'none'
+                : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
               willChange: disableTransition ? 'auto' : 'transform',
             }}
             onTransitionEnd={handleTransitionEnd}
@@ -1949,8 +2107,8 @@ const PackagesSection = () => {
                       ? '0 12px 32px rgba(0,0,0,0.15)'
                       : '0 6px 20px rgba(0,0,0,0.1)',
                     // Mobile: Hide inactive completely. Desktop: 90% opacity for side cards
-                    opacity: isActive ? 1 : (isMobile ? 0 : 0.9),
-                    pointerEvents: isActive ? 'auto' : (isMobile ? 'none' : 'auto'),
+                    opacity: isActive ? 1 : isMobile ? 0 : 0.9,
+                    pointerEvents: isActive ? 'auto' : isMobile ? 'none' : 'auto',
                     zIndex: isActive ? 50 : 0,
                   }}
                 >
@@ -1997,7 +2155,16 @@ const PackagesSection = () => {
                           type="button"
                           className={`custom-prev-btn-${index} pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 w-[30px] md:w-[36px] h-[60px] md:h-[56px] bg-white/20 md:bg-[#2D2D2D] backdrop-blur-[42px] md:backdrop-blur-none hover:bg-white/30 md:hover:bg-black rounded-r-full flex items-center justify-center transition-all duration-300 pr-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
                         >
-                          <svg width={isMobile ? "20" : "18"} height={isMobile ? "20" : "18"} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={isMobile ? "1.86" : "3"} strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            width={isMobile ? '20' : '18'}
+                            height={isMobile ? '20' : '18'}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth={isMobile ? '1.86' : '3'}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <path d="M19 12H5" />
                             <path d="m12 19-7-7 7-7" />
                           </svg>
@@ -2008,7 +2175,16 @@ const PackagesSection = () => {
                           type="button"
                           className={`custom-next-btn-${index} pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 w-[30px] md:w-[36px] h-[60px] md:h-[56px] bg-white/20 md:bg-[#2D2D2D] backdrop-blur-[42px] md:backdrop-blur-none hover:bg-white/30 md:hover:bg-black rounded-l-full flex items-center justify-center transition-all duration-300 pl-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
                         >
-                          <svg width={isMobile ? "20" : "18"} height={isMobile ? "20" : "18"} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={isMobile ? "1.86" : "3"} strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            width={isMobile ? '20' : '18'}
+                            height={isMobile ? '20' : '18'}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth={isMobile ? '1.86' : '3'}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <path d="M5 12h14" />
                             <path d="m12 5 7 7-7 7" />
                           </svg>
@@ -2036,14 +2212,16 @@ const PackagesSection = () => {
                   >
                     <div className="flex flex-col items-start w-full gap-[12px] md:gap-[24px]">
                       <div className="flex flex-col items-start w-full gap-[7.4px] md:gap-[12px]">
-                        
                         <div className="flex flex-row justify-between items-center w-full gap-[20px]">
                           <h4 className="text-[#2D2D2D] truncate font-medium text-[16px] md:text-[28px] leading-[150%] font-['Poppins'] md:font-sans">
                             {pkg.title}
                           </h4>
                           <div
                             className="flex justify-center items-center rounded-[29px] md:rounded-[48px] shrink-0"
-                            style={{ background: 'rgba(0, 0, 0, 0.05)', padding: isMobile ? '1.2px 7.4px' : '2px 12px' }}
+                            style={{
+                              background: 'rgba(0, 0, 0, 0.05)',
+                              padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                            }}
                           >
                             <span className="text-[#2D2D2D] font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
                               {pkg.category}
@@ -2065,7 +2243,10 @@ const PackagesSection = () => {
                             <div
                               key={i}
                               className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
-                              style={{ background: 'rgba(0, 0, 0, 0.05)', padding: isMobile ? '1.2px 7.4px' : '2px 12px' }}
+                              style={{
+                                background: 'rgba(0, 0, 0, 0.05)',
+                                padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                              }}
                             >
                               <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
                                 {tag}
@@ -2093,7 +2274,7 @@ const PackagesSection = () => {
       </div>
 
       {/* --- 3. Bottom Carousel Controls --- */}
-      
+
       {/* Desktop Controls */}
       <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mx-auto justify-between items-center gap-[25px] z-20 relative -mt-20">
         <button
@@ -2101,7 +2282,16 @@ const PackagesSection = () => {
           onClick={handlePrev}
           className="w-12 h-12 rounded-[96px] flex items-center justify-center transition-all shrink-0 bg-[#2D2D2D] hover:bg-black cursor-pointer"
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
@@ -2120,7 +2310,16 @@ const PackagesSection = () => {
           onClick={handleNext}
           className="w-12 h-12 rounded-[96px] flex items-center justify-center transition-all shrink-0 bg-[#2D2D2D] hover:bg-black cursor-pointer"
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>
@@ -2135,7 +2334,6 @@ const PackagesSection = () => {
           />
         ))}
       </div>
-
     </section>
   )
 }
@@ -2168,7 +2366,6 @@ const CelebrationFeelingSection = () => {
       className="w-full bg-[#BFAC9B] overflow-hidden flex justify-center font-sans relative h-[700px] md:h-[900px]"
     >
       <div className="relative w-[1440px] max-w-full h-full shrink-0">
-        
         {/* Img 1 (Mapped to Figma Rectangle 37 on Mobile) */}
         <motion.img
           style={{ y: y1, boxShadow: imageShadow }}
@@ -2220,9 +2417,13 @@ const CelebrationFeelingSection = () => {
             style={{ fontFamily: "'Malgin', serif" }}
           >
             <span className="reveal-wrapper">
-              <span className="reveal-text">Every celebration <br className="block md:hidden"/></span>
+              <span className="reveal-text">
+                Every celebration <br className="block md:hidden" />
+              </span>
             </span>
-            <span className="hidden md:inline"><br /></span>
+            <span className="hidden md:inline">
+              <br />
+            </span>
             <span className="reveal-wrapper">
               <span className="reveal-text">deserves its own feeling.</span>
             </span>
@@ -2291,9 +2492,16 @@ const PlanningGuidesSection = () => {
     : safeAllBlogs
 
   // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
-  const currentCardsPerPage = isMobile ? 1 : (typeof CARDS_PER_PAGE !== 'undefined' ? CARDS_PER_PAGE : 3)
+  const currentCardsPerPage = isMobile
+    ? 1
+    : typeof CARDS_PER_PAGE !== 'undefined'
+      ? CARDS_PER_PAGE
+      : 3
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / currentCardsPerPage))
-  const visibleBlogs = filteredBlogs.slice(page * currentCardsPerPage, (page + 1) * currentCardsPerPage)
+  const visibleBlogs = filteredBlogs.slice(
+    page * currentCardsPerPage,
+    (page + 1) * currentCardsPerPage
+  )
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -2302,16 +2510,16 @@ const PlanningGuidesSection = () => {
 
   return (
     <section className="w-full min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans">
-      
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center relative z-10">
-        
         <h2
           className="font-display text-[28px] md:text-[61px] leading-[1.1] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left mb-5 md:mb-0 reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Planning Guides &amp; <br className="hidden md:block" /> Celebration Ideas</span>
+            <span className="reveal-text">
+              Planning Guides &amp; <br className="hidden md:block" /> Celebration Ideas
+            </span>
           </span>
         </h2>
 
@@ -2319,7 +2527,8 @@ const PlanningGuidesSection = () => {
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Helpful tips, inspiration, and practical guides to make planning your next celebration simpler.
+                Helpful tips, inspiration, and practical guides to make planning your next
+                celebration simpler.
               </span>
             </span>
           </p>
@@ -2345,7 +2554,6 @@ const PlanningGuidesSection = () => {
 
       {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
-        
         {/* Categories Bar */}
         <aside className="w-full lg:w-[320px] pt-8 pb-10 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b lg:border-b-0 lg:border-r border-[#3D4035]/15">
           <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] lg:gap-8 flex-wrap justify-center w-full">
@@ -2355,8 +2563,8 @@ const PlanningGuidesSection = () => {
                 <React.Fragment key={cat}>
                   <div
                     className={`cursor-pointer group w-fit flex flex-col ${
-                      isActive 
-                        ? 'opacity-100 border-b border-[#364022] pb-1 lg:border-b-[1.5px] lg:border-[#3D4035] lg:pb-1.5' 
+                      isActive
+                        ? 'opacity-100 border-b border-[#364022] pb-1 lg:border-b-[1.5px] lg:border-[#3D4035] lg:pb-1.5'
                         : 'opacity-50 lg:opacity-100'
                     }`}
                     onClick={() => handleCategorySelect(cat)}
@@ -2384,129 +2592,169 @@ const PlanningGuidesSection = () => {
         <div className="flex-1 py-16 px-12 lg:px-8 flex flex-col">
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
-          
-          <div className="relative -mx-12 md:mx-0 min-h-[400px] md:min-h-0">
-            
-            {/* Mobile Left Navigation Arrow */}
-            <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+            <div className="relative -mx-12 md:mx-0 min-h-[400px] md:min-h-0">
+              {/* Mobile Left Navigation Arrow */}
+              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                >
+                  <svg
+                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex justify-center md:block">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
+                  {visibleBlogs.map(blog => (
+                    <div
+                      key={blog.id ?? blog.title}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                    >
+                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                        <img
+                          src={
+                            blog.cover_image ??
+                            CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]
+                          }
+                          alt={blog.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                        <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
+                          {blog.title}
+                        </h3>
+                        <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins'] line-clamp-2">
+                          {blog.excerpt}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile Right Navigation Arrow */}
+              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                >
+                  <svg
+                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop Pagination Block */}
+            <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <svg className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <svg
+                  width="28"
+                  height="28"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-            </div>
-
-            <div className="flex justify-center md:block">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-              {visibleBlogs.map(blog => (
-                <div
-                  key={blog.id ?? blog.title}
-                  className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
-                >
-                  <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
-                    <img
-                      src={blog.cover_image ?? CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]}
-                      alt={blog.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
-                    <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
-                      {blog.title}
-                    </h3>
-                    <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins'] line-clamp-2">
-                      {blog.excerpt}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </div>
-
-            {/* Mobile Right Navigation Arrow */}
-            <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+              <div className="flex items-center gap-[4px] justify-center">
+                {[...Array(totalPages)].map((_, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`cursor-pointer rounded-[8px] transition-all ${
+                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                    }`}
+                  />
+                ))}
+              </div>
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <svg className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <svg
+                  width="28"
+                  height="28"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
-          </div>
 
-          {/* Desktop Pagination Block */}
-          <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
-            <button
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="flex items-center gap-[4px] justify-center">
+            {/* Mobile Pagination Dots */}
+            <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
                   onClick={() => setPage(i)}
-                  className={`cursor-pointer rounded-[8px] transition-all ${
-                    i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                  className={`cursor-pointer rounded-[12px] transition-all ${
+                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
             </div>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
 
-          {/* Mobile Pagination Dots */}
-          <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
-            {[...Array(totalPages)].map((_, i) => (
-              <div
-                key={i}
-                onClick={() => setPage(i)}
-                className={`cursor-pointer rounded-[12px] transition-all ${
-                  i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
-                }`}
-              />
-            ))}
+            {/* Mobile View All Button */}
+            <div className="flex md:hidden justify-center pb-12">
+              <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
+                  View All
+                </span>
+                <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                  <svg
+                    className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 17L17 7M17 7H9M17 7v8"
+                    />
+                  </svg>
+                </div>
+              </button>
+            </div>
           </div>
-
-          {/* Mobile View All Button */}
-          <div className="flex md:hidden justify-center pb-12">
-            <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
-              <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">View All</span>
-              <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
-                <svg
-                  className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
-                </svg>
-              </div>
-            </button>
-          </div>
-
-        </div>
         </div>
       </div>
     </section>
@@ -2593,9 +2841,11 @@ const TestimonialsSection = () => {
                     h-[251px] md:h-[367.82px] 
                     p-[20px] md:p-[30px] 
                     gap-[20px] md:gap-[36px]
-                    ${isActive 
-                      ? 'opacity-100 shadow-xl scale-100' 
-                      : 'opacity-50 md:opacity-80 scale-[0.75] md:scale-[0.8]'}
+                    ${
+                      isActive
+                        ? 'opacity-100 shadow-xl scale-100'
+                        : 'opacity-50 md:opacity-80 scale-[0.75] md:scale-[0.8]'
+                    }
                   `}
                   onClick={() => swiperRef.current?.slideToLoop(index)}
                 >
@@ -2640,7 +2890,6 @@ const TestimonialsSection = () => {
 
       {/* Navigation Controls (Arrows + Dots) */}
       <div className="relative z-30 w-[289px] md:w-[611px] h-[40px] md:h-[48px] mt-[20px] md:mt-[40px] flex justify-between items-center gap-[14.44px] md:gap-[25px]">
-        
         {/* Previous Button */}
         <button
           type="button"
@@ -2653,7 +2902,7 @@ const TestimonialsSection = () => {
             viewBox="0 0 24 24"
             fill="none"
             stroke="white"
-            strokeWidth={isMobile ? "1.5" : "2"}
+            strokeWidth={isMobile ? '1.5' : '2'}
             strokeLinecap="round"
             strokeLinejoin="round"
           >
@@ -2684,7 +2933,7 @@ const TestimonialsSection = () => {
             viewBox="0 0 24 24"
             fill="none"
             stroke="white"
-            strokeWidth={isMobile ? "1.5" : "2"}
+            strokeWidth={isMobile ? '1.5' : '2'}
             strokeLinecap="round"
             strokeLinejoin="round"
           >
@@ -2697,8 +2946,6 @@ const TestimonialsSection = () => {
   )
 }
 
-
-
 const SplitInfoSection = () => {
   // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
   const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
@@ -2710,10 +2957,8 @@ const SplitInfoSection = () => {
     >
       {/* 880/560 split at max 1440px — use % widths so the row never exceeds the viewport (fixed px + shrink-0 caused horizontal scroll below 1440px). */}
       <div className="relative w-full max-w-[1440px] min-w-0 h-auto lg:h-[511px] flex flex-col lg:flex-row mx-auto">
-        
         {/* LEFT SECTION - Inspiration */}
         <div className="relative w-full lg:w-[61.111111%] min-w-0 h-[309px] lg:h-[511px] bg-[#FFFFFF] px-0 py-0 lg:p-0 flex flex-col items-start lg:block overflow-x-hidden">
-          
           <div className="absolute left-[20px] top-[40px] lg:left-[100px] lg:top-[80px] flex flex-col items-start text-left w-[181px] lg:w-[400px]">
             <h2
               className="text-[#2D2D2D] text-[20px] md:text-[27px] leading-[100%] w-full lg:w-[400px] font-serif m-0 reveal-heading"
@@ -2765,7 +3010,6 @@ const SplitInfoSection = () => {
 
         {/* RIGHT SECTION - Partner */}
         <div className="relative w-full lg:w-[38.888889%] min-w-0 h-[396px] lg:h-[511px] bg-[#591902] px-0 py-0 lg:p-0 flex flex-col items-center lg:block overflow-x-hidden">
-          
           <div className="absolute left-[20px] top-[20px] lg:left-[40px] lg:right-[40px] lg:top-[40px] w-[calc(100%-40px)] max-w-[353px] h-[152px] lg:w-auto lg:h-[210px] lg:max-w-[420px] bg-[#FFFFFF] rounded-[8px] overflow-hidden" />
 
           <div className="absolute left-[20px] top-[204px] lg:left-[40px] lg:right-[40px] lg:top-[290px] flex flex-col items-start w-[calc(100%-40px)] max-w-[353px] lg:max-w-[420px] lg:w-auto">
@@ -2815,7 +3059,6 @@ const SplitInfoSection = () => {
     </section>
   )
 }
-
 
 export default function LandingPage() {
   const rootRef = useRef(null)
