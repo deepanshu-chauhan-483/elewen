@@ -108,6 +108,24 @@ export const strapiServerPost = async (path, body) => {
 }
 
 /**
+ * GET from Strapi using the server API token.
+ * Used for fetching package details, coupon data, etc. from the Express API.
+ */
+export const strapiServerGet = async path => {
+  const res = await fetch(`${STRAPI_URL}${path}`, {
+    headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` },
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    const err = new Error(data?.error?.message || 'Strapi request failed')
+    err.status = res.status
+    err.strapiError = data?.error
+    throw err
+  }
+  return data
+}
+
+/**
  * PUT to Strapi with admin API token (used for server-side user updates)
  */
 export const strapiAdminPut = async (path, body) => {

@@ -71,23 +71,34 @@ export const register = async (req, res, next) => {
     const username = `${email.split('@')[0]}_${crypto.randomBytes(3).toString('hex')}`
 
     // Step 1: Register with Strapi — only accepts username/email/password
-    const { jwt: strapiJwt, user } = await strapiPost('/api/auth/local/register', {
+    // When email confirmation is enabled, Strapi sends the confirmation email and
+    // returns { user } with no jwt. When disabled, it returns { jwt, user }.
+    const result = await strapiPost('/api/auth/local/register', {
       username,
       email,
       password,
     })
 
     // Step 2: Update profile fields via admin API token — Strapi rejects these on /register
-    const updatedUser = await strapiAdminPut(`/api/users/${user.id}`, {
-      first_name,
-      last_name,
-      phone,
-    })
+    if (result.user?.id) {
+      await strapiAdminPut(`/api/users/${result.user.id}`, { first_name, last_name, phone })
+    }
 
-    await createSession(res, user.id, req.ip, req.headers['user-agent'])
+    // Email confirmation pending — no JWT yet
+    if (!result.jwt) {
+      return res.status(200).json({
+        pending: true,
+        message: 'Check your email to verify your account.',
+      })
+    }
 
-    res.status(201).json({ jwt: strapiJwt, user: sanitizeUser({ ...user, ...updatedUser }) })
+    // Email confirmation disabled — session created immediately
+    await createSession(res, result.user.id, req.ip, req.headers['user-agent'])
+    res.status(201).json({ jwt: result.jwt, user: sanitizeUser(result.user) })
   } catch (err) {
+    if (err.strapiError?.details?.errors?.some(e => e.path?.includes('email'))) {
+      return res.status(409).json({ error: 'An account with this email already exists' })
+    }
     next(err)
   }
 }
@@ -110,8 +121,11 @@ export const login = async (req, res, next) => {
 
     res.json({ jwt: strapiJwt, user: sanitizeUser(user) })
   } catch (err) {
-    // Map Strapi's generic "invalid credentials" to a safe message
     if (err.status === 400) {
+      const msg = err.message?.toLowerCase() ?? ''
+      if (msg.includes('confirmed')) {
+        return res.status(403).json({ error: 'Please confirm your email before logging in.' })
+      }
       return res.status(401).json({ error: 'Incorrect email or password' })
     }
     next(err)
@@ -183,7 +197,7 @@ export const me = async (req, res, next) => {
 }
 
 // ─── POST /auth/forgot-password ───────────────────────────────────────────────
-export const forgotPassword = async (req, res, next) => {
+export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body
     if (!email) return res.status(400).json({ error: 'Email is required' })
@@ -215,7 +229,12 @@ export const resetPassword = async (req, res, next) => {
       return res.status(400).json({ error: 'Passwords do not match' })
     }
 
-    await strapiPost('/api/auth/reset-password', { code, password, passwordConfirmation })
+    const result = await strapiPost('/api/auth/reset-password', { code, password, passwordConfirmation })
+
+    // Completing a password reset proves email ownership — confirm the user if not already
+    if (result?.user?.id) {
+      await strapiAdminPut(`/api/users/${result.user.id}`, { confirmed: true })
+    }
 
     res.json({ ok: true })
   } catch (err) {

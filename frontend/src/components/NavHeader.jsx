@@ -6,6 +6,8 @@ const LINKS = [
   { label: 'Home', to: '/' },
   { label: 'About', to: '/about' },
   { label: 'In-House Planner', to: '/in-house-planner' },
+  { label: 'Login', to: '/login' },
+  { label: 'Sign Up', to: '/signup' },
 ]
 
 const NavHeader = () => {

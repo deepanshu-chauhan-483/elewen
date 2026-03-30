@@ -1,0 +1,377 @@
+import prisma from '../lib/prisma.js'
+import { strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
+
+const DEFAULT_ADVANCE_PCT = 30
+
+// ─── Valid status transitions (customer-facing + system) ─────────────────────
+const ALLOWED_TRANSITIONS = {
+  new: ['confirmed', 'cancelled'],
+  confirmed: ['info_collection', 'cancelled'],
+  info_collection: ['planning', 'cancelled'],
+  planning: ['pre_event', 'cancelled'],
+  pre_event: ['execution', 'cancelled'],
+  execution: ['completed', 'post_event'],
+  post_event: ['completed'],
+  completed: [],
+  cancelled: [],
+}
+
+// ─── Helper: fetch advance payment percentage from Strapi global settings ─────
+const getAdvancePct = async () => {
+  try {
+    const { data } = await strapiServerGet('/api/global-setting')
+    return Number(data?.advance_payment_percentage ?? DEFAULT_ADVANCE_PCT)
+  } catch {
+    return DEFAULT_ADVANCE_PCT
+  }
+}
+
+// ─── Helper: re-validate coupon before booking ────────────────────────────────
+const validateCoupon = async (couponId, subtotal) => {
+  try {
+    const { data: coupons } = await strapiServerGet(`/api/coupons?filters[id][$eq]=${couponId}`)
+    const coupon = coupons?.[0]
+    if (!coupon?.is_active) return { valid: false, discount: 0, couponId: null }
+
+    const now = new Date()
+    if (coupon.valid_from && new Date(coupon.valid_from) > now) return { valid: false, discount: 0, couponId: null }
+    if (coupon.valid_to && new Date(coupon.valid_to) < now) return { valid: false, discount: 0, couponId: null }
+    if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) return { valid: false, discount: 0, couponId: null }
+
+    let discount = 0
+    if (coupon.discount_type === 'percentage') {
+      discount = (subtotal * Number(coupon.discount_value)) / 100
+    } else {
+      discount = Math.min(Number(coupon.discount_value), subtotal)
+    }
+
+    return { valid: true, discount, couponId: String(coupon.id) }
+  } catch {
+    return { valid: false, discount: 0, couponId: null }
+  }
+}
+
+// ─── POST /bookings ────────────────────────────────────────────────────────────
+// Creates a booking from the user's current cart.
+// Cart must have at least one item and eventDate + guestCount set.
+export const createBooking = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+
+    const cart = await prisma.cart.findFirst({
+      where: { userId },
+      include: { items: true },
+    })
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ error: 'Cart is empty' })
+    }
+    if (!cart.eventDate) {
+      return res.status(400).json({ error: 'Event date is required — update your cart first' })
+    }
+    if (!cart.guestCount) {
+      return res.status(400).json({ error: 'Guest count is required — update your cart first' })
+    }
+
+    // Use packageId from the first cart item (primary package)
+    const packageId = cart.items[0].packageId
+
+    const subtotal = Number(cart.subtotal)
+
+    // Re-validate coupon (race condition protection — someone else may have exhausted it)
+    let discountAmount = 0
+    let validCouponId = null
+    if (cart.couponId) {
+      const couponResult = await validateCoupon(cart.couponId, subtotal)
+      if (couponResult.valid) {
+        discountAmount = couponResult.discount
+        validCouponId = couponResult.couponId
+      }
+      // If coupon is now invalid, proceed without discount (don't block booking)
+    }
+
+    const totalPrice = Math.max(0, subtotal - discountAmount)
+
+    // Fetch advance payment percentage from global settings
+    const advancePct = await getAdvancePct()
+    const advanceAmount = (totalPrice * advancePct) / 100
+    const remainingAmount = totalPrice - advanceAmount
+
+    // Create booking + items + status log in a transaction
+    const booking = await prisma.$transaction(async tx => {
+      const newBooking = await tx.booking.create({
+        data: {
+          userId,
+          packageId,
+          eventDate: cart.eventDate,
+          guestCount: cart.guestCount,
+          status: 'new',
+          totalPrice: totalPrice.toFixed(2),
+          advanceAmount: advanceAmount.toFixed(2),
+          remainingAmount: remainingAmount.toFixed(2),
+          couponId: validCouponId,
+          discountAmount: discountAmount.toFixed(2),
+          infoStatus: 'waiting',
+        },
+      })
+
+      // Snapshot cart items into booking_items
+      await tx.bookingItem.createMany({
+        data: cart.items.map(item => ({
+          bookingId: newBooking.id,
+          packageElementId: item.packageElementId,
+          addonId: item.addonId,
+          title: item.title,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+        })),
+      })
+
+      // Initial status log
+      await tx.bookingStatusLog.create({
+        data: {
+          bookingId: newBooking.id,
+          previousStatus: null,
+          newStatus: 'new',
+          changedBy: userId,
+          note: 'Booking created',
+        },
+      })
+
+      // Record coupon usage if applicable
+      if (validCouponId) {
+        await tx.couponUsage.create({
+          data: {
+            couponId: validCouponId,
+            bookingId: newBooking.id,
+            userId,
+          },
+        })
+      }
+
+      return newBooking
+    })
+
+    // Increment coupon used_count in Strapi (outside transaction — non-critical)
+    if (validCouponId) {
+      try {
+        const { data: coupons } = await strapiServerGet(`/api/coupons?filters[id][$eq]=${validCouponId}`)
+        const coupon = coupons?.[0]
+        await strapiAdminPut(`/api/coupons/${coupon.documentId}`, {
+          data: { used_count: (coupon.used_count ?? 0) + 1 },
+        })
+      } catch {
+        // Non-critical — coupon usage still recorded in coupon_usage table
+      }
+    }
+
+    // Clear cart after successful booking
+    await prisma.cartItem.deleteMany({ where: { cartId: cart.id } })
+    await prisma.cart.update({
+      where: { id: cart.id },
+      data: { subtotal: 0, discountAmount: 0, total: 0, couponId: null, eventDate: null, guestCount: null },
+    })
+
+    // Return full booking with items
+    const fullBooking = await prisma.booking.findUnique({
+      where: { id: booking.id },
+      include: {
+        items: true,
+        statusLogs: { orderBy: { createdAt: 'asc' } },
+      },
+    })
+
+    res.status(201).json({ booking: fullBooking })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── GET /bookings ─────────────────────────────────────────────────────────────
+export const listBookings = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+
+    const bookings = await prisma.booking.findMany({
+      where: { userId },
+      include: {
+        items: true,
+        statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    res.json({ bookings })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── GET /bookings/:id ─────────────────────────────────────────────────────────
+export const getBooking = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        statusLogs: { orderBy: { createdAt: 'asc' } },
+        timeline: { orderBy: { timelineDate: 'asc' } },
+        vendorAssignments: true,
+        payments: { orderBy: { createdAt: 'desc' } },
+      },
+    })
+
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    res.json({ booking })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── PATCH /bookings/:id/status ────────────────────────────────────────────────
+// Enforces state machine transitions. Customers can only cancel.
+// Full admin transitions are handled here too — role check can be layered later.
+export const updateStatus = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+    const { status, note } = req.body
+
+    if (!status) return res.status(400).json({ error: 'status is required' })
+
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    const allowed = ALLOWED_TRANSITIONS[booking.status] ?? []
+    if (!allowed.includes(status)) {
+      return res.status(400).json({
+        error: `Cannot transition from '${booking.status}' to '${status}'`,
+        allowed,
+      })
+    }
+
+    const updated = await prisma.$transaction(async tx => {
+      const updatedBooking = await tx.booking.update({
+        where: { id },
+        data: { status },
+      })
+      await tx.bookingStatusLog.create({
+        data: {
+          bookingId: id,
+          previousStatus: booking.status,
+          newStatus: status,
+          changedBy: userId,
+          note: note ?? null,
+        },
+      })
+      return updatedBooking
+    })
+
+    res.json({ booking: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── POST /bookings/:id/cancel ─────────────────────────────────────────────────
+export const cancelBooking = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+    const { reason, policyAcknowledged = false } = req.body
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { cancellation: true },
+    })
+
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+    if (booking.status === 'cancelled') return res.status(400).json({ error: 'Booking is already cancelled' })
+    if (booking.status === 'completed') return res.status(400).json({ error: 'Completed bookings cannot be cancelled' })
+    if (booking.cancellation) return res.status(400).json({ error: 'A cancellation request already exists' })
+
+    await prisma.$transaction(async tx => {
+      await tx.cancellation.create({
+        data: {
+          bookingId: id,
+          requestedBy: userId,
+          reason: reason ?? null,
+          policyAcknowledged,
+          status: 'requested',
+        },
+      })
+      await tx.booking.update({ where: { id }, data: { status: 'cancelled' } })
+      await tx.bookingStatusLog.create({
+        data: {
+          bookingId: id,
+          previousStatus: booking.status,
+          newStatus: 'cancelled',
+          changedBy: userId,
+          note: reason ?? 'Cancelled by customer',
+        },
+      })
+    })
+
+    res.json({ ok: true, message: 'Cancellation request submitted' })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── POST /bookings/:id/timeline ───────────────────────────────────────────────
+export const addTimeline = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+    const { title, description, timelineDate, status = 'pending' } = req.body
+
+    if (!title) return res.status(400).json({ error: 'title is required' })
+
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    const entry = await prisma.bookingTimeline.create({
+      data: {
+        bookingId: id,
+        title,
+        description: description ?? null,
+        timelineDate: timelineDate ? new Date(timelineDate) : null,
+        status,
+      },
+    })
+
+    res.status(201).json({ timeline: entry })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── GET /bookings/:id/timeline ────────────────────────────────────────────────
+export const getTimeline = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    const timeline = await prisma.bookingTimeline.findMany({
+      where: { bookingId: id },
+      orderBy: { timelineDate: 'asc' },
+    })
+
+    res.json({ timeline })
+  } catch (err) {
+    next(err)
+  }
+}

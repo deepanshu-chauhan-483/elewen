@@ -908,19 +908,83 @@ const CelebrationFormSection = () => {
     vision_notes: '',
   })
 
-  const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+  const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
 
-  const toggleSupport = opt =>
-    setForm(prev => ({
-      ...prev,
-      support_types: prev.support_types.includes(opt)
-        ? prev.support_types.filter(o => o !== opt)
-        : [...prev.support_types, opt],
-    }))
+  const VALIDATORS = {
+    full_name: v => {
+      if (!v.trim()) return 'Full name is required'
+      if (!/^[a-zA-Z\s''-]+$/.test(v.trim())) return 'Only letters, spaces and hyphens allowed'
+      if (v.trim().length < 2) return 'Must be at least 2 characters'
+      return ''
+    },
+    email: v => {
+      if (!v.trim()) return 'Email is required'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())) return 'Enter a valid email address'
+      return ''
+    },
+    phone: v => {
+      if (!v.trim()) return 'Phone number is required'
+      if (!/^[+]?[\d\s\-().]{7,15}$/.test(v.trim())) return 'Enter a valid phone number'
+      return ''
+    },
+    city: v => {
+      if (!v.trim()) return 'City is required'
+      return ''
+    },
+    event_type: v => (!v ? 'Please select an event type' : ''),
+    event_date: v => {
+      if (!v) return 'Event date is required'
+      if (new Date(v) < new Date(new Date().toDateString()))
+        return 'Date must be today or in the future'
+      return ''
+    },
+    guest_count: v => (!v ? 'Please select estimated guest count' : ''),
+    venue_type: v => (!v ? 'Please select a venue type' : ''),
+    support_types: v => (v.length === 0 ? 'Select at least one support type' : ''),
+  }
+
+  const STEP_FIELDS = {
+    1: ['full_name', 'email', 'phone', 'city'],
+    2: ['event_type', 'event_date', 'guest_count', 'venue_type'],
+    3: ['support_types'],
+  }
+
+  const set = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }))
+    if (touched[field]) {
+      setErrors(prev => ({ ...prev, [field]: VALIDATORS[field]?.(value) ?? '' }))
+    }
+  }
+
+  const handleBlur = field => {
+    setTouched(prev => ({ ...prev, [field]: true }))
+    setErrors(prev => ({ ...prev, [field]: VALIDATORS[field]?.(form[field]) ?? '' }))
+  }
+
+  const toggleSupport = opt => {
+    const next = form.support_types.includes(opt)
+      ? form.support_types.filter(o => o !== opt)
+      : [...form.support_types, opt]
+    setForm(prev => ({ ...prev, support_types: next }))
+    if (touched.support_types) {
+      setErrors(prev => ({ ...prev, support_types: VALIDATORS.support_types(next) }))
+    }
+  }
 
   const handleNext = () => {
+    const fields = STEP_FIELDS[currentStep] ?? []
+    const stepErrors = {}
+    const stepTouched = {}
+    fields.forEach(f => {
+      stepTouched[f] = true
+      stepErrors[f] = VALIDATORS[f]?.(form[f]) ?? ''
+    })
+    setTouched(prev => ({ ...prev, ...stepTouched }))
+    setErrors(prev => ({ ...prev, ...stepErrors }))
+    if (fields.some(f => stepErrors[f])) return
+
     if (currentStep === 3) {
-      // Step 3 → submit then advance to success screen
       submitLead(form, {
         onSuccess: () => setCurrentStep(4),
         onError: () => setCurrentStep(4), // show success screen regardless — lead is best-effort
@@ -1040,119 +1104,178 @@ const CelebrationFormSection = () => {
         <div className="absolute top-[230px] left-[30px] right-[30px] md:left-[60px] md:right-[60px]">
           {/* STEP 1: Basic Details */}
           {currentStep === 1 && (
-            <div className="flex flex-col gap-y-[32px] animate-fadeIn">
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  value={form.full_name}
-                  onChange={e => set('full_name', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]"
-                />
+            <div className="flex flex-col gap-y-[24px] animate-fadeIn">
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.full_name ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={form.full_name}
+                    onChange={e => set('full_name', e.target.value)}
+                    onBlur={() => handleBlur('full_name')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]/50"
+                  />
+                </div>
+                {errors.full_name && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.full_name}</p>
+                )}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  value={form.email}
-                  onChange={e => set('email', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]"
-                />
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.email ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    value={form.email}
+                    onChange={e => set('email', e.target.value)}
+                    onBlur={() => handleBlur('email')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]/50"
+                  />
+                </div>
+                {errors.email && <p className="mt-1 text-[11px] text-[#C62828]">{errors.email}</p>}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={form.phone}
-                  onChange={e => set('phone', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]"
-                />
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.phone ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <input
+                    type="tel"
+                    placeholder="Phone Number"
+                    value={form.phone}
+                    onChange={e => set('phone', e.target.value)}
+                    onBlur={() => handleBlur('phone')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]/50"
+                  />
+                </div>
+                {errors.phone && <p className="mt-1 text-[11px] text-[#C62828]">{errors.phone}</p>}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="text"
-                  placeholder="City/Location of Event"
-                  value={form.city}
-                  onChange={e => set('city', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]"
-                />
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.city ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <input
+                    type="text"
+                    placeholder="City/Location of Event"
+                    value={form.city}
+                    onChange={e => set('city', e.target.value)}
+                    onBlur={() => handleBlur('city')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]/50"
+                  />
+                </div>
+                {errors.city && <p className="mt-1 text-[11px] text-[#C62828]">{errors.city}</p>}
               </div>
             </div>
           )}
 
           {/* STEP 2: Event Details */}
           {currentStep === 2 && (
-            <div className="flex flex-col gap-y-[32px] animate-fadeIn">
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <select
-                  value={form.event_type}
-                  onChange={e => set('event_type', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+            <div className="flex flex-col gap-y-[24px] animate-fadeIn">
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.event_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <option value="" disabled>
-                    Type of Event
-                  </option>
-                  {[
-                    'Birthday',
-                    'Anniversary',
-                    'House Party',
-                    'Baby Shower',
-                    'Corporate',
-                    'Wedding',
-                    'Other',
-                  ].map(o => (
-                    <option key={o} value={o}>
-                      {o}
+                  <select
+                    value={form.event_type}
+                    onChange={e => set('event_type', e.target.value)}
+                    onBlur={() => handleBlur('event_type')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      Type of Event
                     </option>
-                  ))}
-                </select>
+                    {[
+                      'Birthday',
+                      'Anniversary',
+                      'House Party',
+                      'Baby Shower',
+                      'Corporate',
+                      'Wedding',
+                      'Other',
+                    ].map(o => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.event_type && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.event_type}</p>
+                )}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="date"
-                  value={form.event_date}
-                  onChange={e => set('event_date', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none cursor-pointer"
-                />
-              </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <select
-                  value={form.guest_count}
-                  onChange={e => set('guest_count', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.event_date ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <option value="" disabled>
-                    Estimated Guest Count
-                  </option>
-                  {['1–15', '15–30', '30–50', '50–100', '100+'].map(o => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
+                  <input
+                    type="date"
+                    value={form.event_date}
+                    onChange={e => set('event_date', e.target.value)}
+                    onBlur={() => handleBlur('event_date')}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none cursor-pointer"
+                  />
+                </div>
+                {errors.event_date && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.event_date}</p>
+                )}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <select
-                  value={form.venue_type}
-                  onChange={e => set('venue_type', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.guest_count ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <option value="" disabled>
-                    Venue Type
-                  </option>
-                  {[
-                    'Home',
-                    'Banquet Hall',
-                    'Terrace / Rooftop',
-                    'Garden / Outdoor',
-                    'Office',
-                    'Other',
-                  ].map(o => (
-                    <option key={o} value={o}>
-                      {o}
+                  <select
+                    value={form.guest_count}
+                    onChange={e => set('guest_count', e.target.value)}
+                    onBlur={() => handleBlur('guest_count')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      Estimated Guest Count
                     </option>
-                  ))}
-                </select>
+                    {['1–15', '15–30', '30–50', '50–100', '100+'].map(o => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.guest_count && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.guest_count}</p>
+                )}
+              </div>
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.venue_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <select
+                    value={form.venue_type}
+                    onChange={e => set('venue_type', e.target.value)}
+                    onBlur={() => handleBlur('venue_type')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      Venue Type
+                    </option>
+                    {[
+                      'Home',
+                      'Banquet Hall',
+                      'Terrace / Rooftop',
+                      'Garden / Outdoor',
+                      'Office',
+                      'Other',
+                    ].map(o => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.venue_type && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.venue_type}</p>
+                )}
               </div>
             </div>
           )}
@@ -1192,6 +1315,9 @@ const CelebrationFormSection = () => {
                     </label>
                   ))}
                 </div>
+                {errors.support_types && (
+                  <p className="mt-2 text-[11px] text-[#C62828]">{errors.support_types}</p>
+                )}
               </div>
               <div>
                 <h4 className="text-[21px] text-[#2D2D2D] mb-4">

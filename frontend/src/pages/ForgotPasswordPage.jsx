@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { authForgotPassword } from '../lib/api'
 
 const ForgotPasswordIcon = () => (
   <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -33,7 +34,24 @@ const CheckEmailIcon = () => (
 )
 
 export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
   const [emailSent, setEmailSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await authForgotPassword(email)
+      setEmailSent(true)
+    } catch {
+      setError('Failed to send reset email. Please check the address and try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <AuthLayout
@@ -76,7 +94,7 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
       ) : (
-        <>
+        <form onSubmit={handleSubmit} className="contents">
           <div
             className="flex min-w-0 w-full flex-col gap-[24px]"
             style={{ fontFamily: "'Poppins', sans-serif" }}
@@ -85,10 +103,14 @@ export default function ForgotPasswordPage() {
               <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
               <input
                 type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="Enter your email"
+                required
                 className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
               />
             </div>
+            {error && <p className="text-[#C62828] text-[12px] leading-[150%]">{error}</p>}
           </div>
 
           <div
@@ -96,11 +118,11 @@ export default function ForgotPasswordPage() {
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             <button
-              type="button"
-              onClick={() => setEmailSent(true)}
-              className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors"
+              type="submit"
+              disabled={loading || !email.trim()}
+              className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
             >
-              Reset password
+              {loading ? 'Sending…' : 'Reset password'}
             </button>
 
             <Link
@@ -119,7 +141,7 @@ export default function ForgotPasswordPage() {
               Back to login
             </Link>
           </div>
-        </>
+        </form>
       )}
     </AuthLayout>
   )
