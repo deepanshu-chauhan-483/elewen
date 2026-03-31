@@ -8,6 +8,8 @@ import {
   forgotPassword,
   resetPassword,
   googleSession,
+  getProfile,
+  updateProfile,
 } from '../controllers/auth.js'
 import { requireAuth } from '../middleware/auth.js'
 
@@ -188,5 +190,55 @@ router.post('/reset-password', resetPassword)
  *         description: Invalid Google token
  */
 router.post('/google/session', googleSession)
+
+/**
+ * @openapi
+ * /auth/profile:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get current user's customer profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Customer profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 profile:
+ *                   $ref: '#/components/schemas/CustomerProfile'
+ *       404:
+ *         description: Profile not found
+ *   patch:
+ *     tags: [Auth]
+ *     summary: Update current user's customer profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name: { type: string }
+ *               last_name: { type: string }
+ *               date_of_birth: { type: string, format: date, example: "1995-06-15" }
+ *               preferred_language: { type: string, example: "en" }
+ *               profile_photo_url: { type: string, description: "External photo URL. Set to null to clear." }
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 profile:
+ *                   $ref: '#/components/schemas/CustomerProfile'
+ */
+router.get('/profile', requireAuth, getProfile)
+router.patch('/profile', requireAuth, updateProfile)
 
 export default router

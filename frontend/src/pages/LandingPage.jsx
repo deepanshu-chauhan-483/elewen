@@ -306,7 +306,7 @@ const PlanEventSection = () => {
                           {card.title}
                         </h3>
                         <p className="text-white/50 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light font-['Poppins']">
-                          {card.description}
+                          {card.tagline}
                         </p>
                       </div>
                     </div>

@@ -9,6 +9,7 @@ import plannerLeadRoutes from './routes/plannerLead.js'
 import consultationRoutes from './routes/consultation.js'
 import cartRoutes from './routes/cart.js'
 import bookingRoutes from './routes/booking.js'
+import sampleTasteRoutes from './routes/sampleTaste.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
@@ -65,6 +66,7 @@ app.use('/planner-leads', plannerLeadRoutes)
 app.use('/consultations', consultationRoutes)
 app.use('/cart', cartRoutes)
 app.use('/bookings', bookingRoutes)
+app.use('/sample-taste', sampleTasteRoutes)
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ ok: true }))

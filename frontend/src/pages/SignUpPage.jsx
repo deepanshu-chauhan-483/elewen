@@ -49,6 +49,7 @@ export default function SignUpPage() {
         return
       }
       localStorage.setItem('elewen_jwt', data.jwt)
+      window.dispatchEvent(new Event('elewen-auth-change'))
       navigate('/')
     } catch (err) {
       if (err.message?.includes('409')) {

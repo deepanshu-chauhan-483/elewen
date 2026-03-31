@@ -55,6 +55,23 @@ const options = {
             },
           },
         },
+        CustomerProfile: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            documentId: { type: 'string' },
+            first_name: { type: 'string', nullable: true },
+            last_name: { type: 'string', nullable: true },
+            date_of_birth: { type: 'string', format: 'date', nullable: true },
+            preferred_language: { type: 'string', example: 'en' },
+            photoUrl: {
+              type: 'string',
+              nullable: true,
+              description: 'Resolved photo URL: uploaded photo > Google CDN URL > null (frontend shows placeholder)',
+            },
+            hasUploadedPhoto: { type: 'boolean', description: 'True if user has uploaded a photo via Strapi media' },
+          },
+        },
         CartItem: {
           type: 'object',
           properties: {
@@ -80,6 +97,37 @@ const options = {
             discountAmount: { type: 'string', example: '0.00' },
             total: { type: 'string', example: '28000.00' },
             items: { type: 'array', items: { '$ref': '#/components/schemas/CartItem' } },
+          },
+        },
+        SampleTaste: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
+            packageId: { type: 'string', nullable: true },
+            eventId: { type: 'string', nullable: true },
+            bookingId: { type: 'string', format: 'uuid', nullable: true, description: 'Set when converted to full booking' },
+            guestCount: { type: 'integer', nullable: true },
+            bookingDate: { type: 'string', format: 'date', nullable: true },
+            deliveryDate: { type: 'string', format: 'date', nullable: true },
+            status: { type: 'string', enum: ['new', 'assigned', 'delivered', 'completed', 'cancelled'] },
+            decision: { type: 'string', enum: ['convert_full', 'save', 'cancel', 'expired'], nullable: true },
+            decisionNotes: { type: 'string', nullable: true },
+            feedbackSubmitted: { type: 'boolean' },
+            expiryDate: { type: 'string', format: 'date', nullable: true },
+            vendors: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  vendorId: { type: 'string' },
+                  menuItems: { type: 'object', nullable: true },
+                  rating: { type: 'integer', nullable: true },
+                  feedbackText: { type: 'string', nullable: true },
+                },
+              },
+            },
           },
         },
         Booking: {

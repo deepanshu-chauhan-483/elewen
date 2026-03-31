@@ -1,21 +1,55 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
+import { authLogout } from '../lib/api'
 
-const LINKS = [
+const BASE_LINKS = [
   { label: 'Home', to: '/' },
   { label: 'About', to: '/about' },
   { label: 'In-House Planner', to: '/in-house-planner' },
-  { label: 'Login', to: '/login' },
-  { label: 'Sign Up', to: '/signup' },
 ]
 
 const NavHeader = () => {
   const [open, setOpen] = useState(false)
-  // On home page, stay hidden until preloader fires the event.
-  // On other pages, show immediately.
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   const isHome = pathname === '/'
+
+  // Auth state — read from localStorage, re-sync on storage events (other tabs) and custom login/logout events
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('elewen_jwt'))
+
+  useEffect(() => {
+    const sync = () => setIsLoggedIn(!!localStorage.getItem('elewen_jwt'))
+    window.addEventListener('storage', sync)
+    window.addEventListener('elewen-auth-change', sync)
+    return () => {
+      window.removeEventListener('storage', sync)
+      window.removeEventListener('elewen-auth-change', sync)
+    }
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await authLogout()
+    } catch {
+      // ignore network errors — clear session locally regardless
+    }
+    localStorage.removeItem('elewen_jwt')
+    setIsLoggedIn(false)
+    setOpen(false)
+    window.dispatchEvent(new Event('elewen-auth-change'))
+    navigate('/')
+  }
+
+  const LINKS = [
+    ...BASE_LINKS,
+    ...(isLoggedIn
+      ? [{ label: 'My Account', to: '/account' }]
+      : [
+          { label: 'Login', to: '/login' },
+          { label: 'Sign Up', to: '/signup' },
+        ]),
+  ]
 
   // On home: always start hidden; show only after preloader is done (event fires).
   // On other pages: show immediately.
@@ -212,7 +246,7 @@ const NavHeader = () => {
             <Link
               key={l.to}
               to={l.to}
-              className={`group flex items-center justify-between py-4 border-b border-white/10 last:border-0 transition-colors hover:text-[#CDB17E] ${pathname === l.to ? 'text-[#CDB17E]' : 'text-white/80'}`}
+              className={`group flex items-center justify-between py-4 border-b border-white/10 transition-colors hover:text-[#CDB17E] ${pathname === l.to ? 'text-[#CDB17E]' : 'text-white/80'}`}
             >
               <span
                 className="text-[22px] md:text-[26px] font-normal tracking-wide"
@@ -223,6 +257,22 @@ const NavHeader = () => {
               <span className="text-[11px] text-white/30 mr-1 font-mono">0{i + 1}</span>
             </Link>
           ))}
+          {isLoggedIn && (
+            <button
+              onClick={handleLogout}
+              className="group flex items-center justify-between py-4 border-t border-white/10 text-white/80 hover:text-[#CDB17E] transition-colors w-full text-left"
+            >
+              <span
+                className="text-[22px] md:text-[26px] font-normal tracking-wide"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                Logout
+              </span>
+              <span className="text-[11px] text-white/30 mr-1 font-mono">
+                {String(LINKS.length + 1).padStart(2, '0')}
+              </span>
+            </button>
+          )}
         </nav>
 
         {/* Bottom tagline */}

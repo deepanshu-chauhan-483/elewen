@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "customer_profiles",
+  "info": {
+    "singularName": "customer-profile",
+    "pluralName": "customer-profiles",
+    "displayName": "Customer Profile"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "profile_photo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "profile_photo_url": {
+      "type": "string",
+      "comment": "External URL (e.g. Google CDN). Used when no uploaded profile_photo exists."
+    },
+    "date_of_birth": {
+      "type": "date"
+    },
+    "preferred_language": {
+      "type": "string",
+      "default": "en"
+    }
+  }
+}

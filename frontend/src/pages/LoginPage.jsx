@@ -22,6 +22,7 @@ export default function LoginPage() {
     try {
       const data = await authLogin({ email, password })
       localStorage.setItem('elewen_jwt', data.jwt)
+      window.dispatchEvent(new Event('elewen-auth-change'))
       navigate('/')
     } catch (err) {
       if (err.message?.includes('403')) {
