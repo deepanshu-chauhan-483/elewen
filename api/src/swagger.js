@@ -182,9 +182,15 @@ const options = {
           properties: {
             id: { type: 'string', format: 'uuid' },
             bookingId: { type: 'string', format: 'uuid' },
-            adminId: { type: 'string', description: 'ID of the author (customer or admin)' },
+            adminId: {
+              type: 'string',
+              description: 'ID of the author (customer or admin)',
+            },
             note: { type: 'string' },
-            isInternal: { type: 'boolean', description: 'Internal admin-only notes not returned to customer' },
+            isInternal: {
+              type: 'boolean',
+              description: 'Internal admin-only notes not returned to customer',
+            },
             createdAt: { type: 'string', format: 'date-time' },
           },
         },
@@ -193,8 +199,15 @@ const options = {
           properties: {
             id: { type: 'string', format: 'uuid' },
             bookingId: { type: 'string', format: 'uuid' },
-            fileUrl: { type: 'string', example: 'https://res.cloudinary.com/elewen/image/upload/...' },
-            fileType: { type: 'string', enum: ['document', 'contract', 'image'], nullable: true },
+            fileUrl: {
+              type: 'string',
+              example: 'https://res.cloudinary.com/elewen/image/upload/...',
+            },
+            fileType: {
+              type: 'string',
+              enum: ['document', 'contract', 'image'],
+              nullable: true,
+            },
             uploadedBy: { type: 'string', nullable: true },
             createdAt: { type: 'string', format: 'date-time' },
           },
