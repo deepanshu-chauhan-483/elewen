@@ -67,6 +67,9 @@
       "relation": "manyToMany",
       "target": "api::blog.blog",
       "mappedBy": "related_events"
+    },
+    "tagline": {
+      "type": "string"
     }
   }
 }

@@ -15,6 +15,7 @@ import { usePackages } from '../hooks/usePackages'
 import { useEventCategories, useEventCards, useServiceCards } from '../hooks/useEventTypes'
 import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
+import { useLandingPage } from '../hooks/useCmsPages'
 
 import { preloadImages, usePreloadOnApproach } from '../utils/preloadAssets'
 import inspirationImg from '../assets/images/inspiration.png'
@@ -64,6 +65,9 @@ const CARD_LOCAL_IMAGES = [
 ]
 
 const PlanEventSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.plan_event_intro ?? {}
+
   // CMS: Strapi `events` top-level categories + featured sub-type cards
   const { data: categories = [] } = useEventCategories()
   const { data: eventCards = [] } = useEventCards()
@@ -138,11 +142,10 @@ const PlanEventSection = () => {
                     loading="eager"
                   />
                   <div
-                    className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
-                      i % 2 === 0
+                    className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${i % 2 === 0
                         ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
                         : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                    }`}
+                      }`}
                     style={{
                       background:
                         i % 2 === 0
@@ -165,9 +168,7 @@ const PlanEventSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">
-              Plan Your Event, <br className="hidden md:block" /> Differently.
-            </span>
+            <span className="reveal-text">{s.heading ?? 'Lets Start Planning'}</span>
           </span>
         </h1>
 
@@ -175,14 +176,16 @@ const PlanEventSection = () => {
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Choose your event type and explore curated décor and catering packages designed to
-                simplify planning.
+                {s.description ??
+                  'Choose your event type and explore curated décor and catering packages designed to simplify planning.'}
               </span>
             </span>
           </p>
 
-          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">View All</span>
+          <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+            <span className="text-white font-medium text-[15px] mr-5">
+              {s.cta_label ?? 'View All'}
+            </span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
@@ -210,19 +213,17 @@ const PlanEventSection = () => {
               return (
                 <React.Fragment key={cat}>
                   <div
-                    className={`cursor-pointer group w-fit flex flex-col ${
-                      isActive
+                    className={`cursor-pointer group w-fit flex flex-col ${isActive
                         ? 'opacity-100 border-b border-[#364022] pb-1 md:border-b-[1.5px] md:border-[#3D4035] md:pb-1.5'
                         : 'opacity-50 md:opacity-100'
-                    }`}
+                      }`}
                     onClick={() => handleCategorySelect(cat)}
                   >
                     <span
-                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
-                        isActive
+                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${isActive
                           ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
                           : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
-                      }`}
+                        }`}
                     >
                       {cat}
                     </span>
@@ -264,143 +265,115 @@ const PlanEventSection = () => {
                 </button>
               </div>
 
-              <div className="flex justify-center md:block">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-                  {visibleCards.map(card => (
-                    <div
-                      key={card.id ?? card.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
-                    >
-                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
-                        <img
-                          src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                          alt={card.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
-                        <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide uppercase font-['Poppins']">
-                          {card.title}
-                        </h3>
-                        <p className="text-white/50 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light font-['Poppins']">
-                          {card.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
-                >
-                  <svg
-                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-              </div>
+            
             </div>
 
-            {/* Pagination Controls */}
-
-            {/* Desktop Pagination Block */}
-            <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
-              <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <svg
-                  width="28"
-                  height="28"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-[4px] justify-center">
-                {[...Array(totalPages)].map((_, i) => (
-                  <div
-                    key={i}
-                    onClick={() => setPage(i)}
-                    className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
-                    }`}
-                  />
-                ))}
-              </div>
+            {/* Mobile Right Navigation Arrow */}
+            <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
               >
                 <svg
-                  width="28"
-                  height="28"
+                  className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth="2"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
             </div>
+          </div>
 
-            {/* Mobile Pagination Dots */}
-            <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+          {/* Pagination Controls */}
+
+          {/* Desktop Pagination Block */}
+          <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="flex items-center gap-[4px] justify-center">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
                   onClick={() => setPage(i)}
-                  className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
-                  }`}
+                  className={`cursor-pointer rounded-[8px] transition-all ${i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                    }`}
                 />
               ))}
             </div>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
 
-            {/* Mobile View All Button */}
-            <div className="flex md:hidden justify-center pb-12">
-              <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
-                <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
-                  View All
-                </span>
-                <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
-                  <svg
-                    className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M7 17L17 7M17 7H9M17 7v8"
-                    />
-                  </svg>
-                </div>
-              </button>
-            </div>
+          {/* Mobile Pagination Dots */}
+          <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            {[...Array(totalPages)].map((_, i) => (
+              <div
+                key={i}
+                onClick={() => setPage(i)}
+                className={`cursor-pointer rounded-[12px] transition-all ${i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                  }`}
+              />
+            ))}
+          </div>
+
+          {/* Mobile View All Button */}
+          <div className="flex md:hidden justify-center pb-12">
+            <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+              <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
+                View All
+              </span>
+              <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                <svg
+                  className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M7 17L17 7M17 7H9M17 7v8"
+                  />
+                </svg>
+              </div>
+            </button>
           </div>
         </div>
       </div>
@@ -409,6 +382,9 @@ const PlanEventSection = () => {
 }
 
 const WhatToPlanSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.what_to_plan_intro ?? {}
+
   // CMS: Strapi `service-categories` featured items
   const { data: serviceCards = [] } = useServiceCards()
 
@@ -459,13 +435,16 @@ const WhatToPlanSection = () => {
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Choose a service category to explore curated packages designed for your event.
+                {s.description ??
+                  'Choose a service category to explore curated packages designed for your event.'}
               </span>
             </span>
           </p>
 
-          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">View All</span>
+          <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+            <span className="text-white font-medium text-[15px] mr-5">
+              {s.cta_label ?? 'View All'}
+            </span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
@@ -485,10 +464,7 @@ const WhatToPlanSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">
-              What Would You <br className="hidden md:block" /> Like To{' '}
-              <br className="block md:hidden" /> Plan?
-            </span>
+            <span className="reveal-text">{s.heading ?? 'What would you like to plan'}</span>
           </span>
         </h2>
       </div>
@@ -599,9 +575,8 @@ const WhatToPlanSection = () => {
                   <div
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
-                    }`}
+                    className={`cursor-pointer rounded-[8px] transition-all ${i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                      }`}
                   />
                 ))}
               </div>
@@ -630,9 +605,8 @@ const WhatToPlanSection = () => {
                 <div
                   key={i}
                   onClick={() => setPage(i)}
-                  className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
-                  }`}
+                  className={`cursor-pointer rounded-[12px] transition-all ${i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                    }`}
                 />
               ))}
             </div>
@@ -671,19 +645,17 @@ const WhatToPlanSection = () => {
               return (
                 <React.Fragment key={cat}>
                   <div
-                    className={`cursor-pointer group w-fit flex flex-col ${
-                      isActive
+                    className={`cursor-pointer group w-fit flex flex-col ${isActive
                         ? 'opacity-100 border-b border-[#364022] pb-1 lg:border-b-[1.5px] lg:border-[#3D4035] lg:pb-1.5'
                         : 'opacity-50 lg:opacity-100'
-                    }`}
+                      }`}
                     onClick={() => handleCategorySelect(cat)}
                   >
                     <span
-                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
-                        isActive
+                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${isActive
                           ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
                           : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
-                      }`}
+                        }`}
                     >
                       {cat}
                     </span>
@@ -1136,6 +1108,9 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 }
 
 const CTASection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.consultation_cta ?? {}
+
   return (
     <section className="w-full flex justify-center bg-[#591902] font-sans">
       <div className="w-full max-w-[1440px] h-[360px] flex flex-col items-center py-[80px] px-6">
@@ -1144,22 +1119,24 @@ const CTASection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Still confused, excited, or somewhere in between?</span>
+            <span className="reveal-text">
+              {s.heading ?? 'Confused, Excited or somewhere in between?'}
+            </span>
           </span>
         </h2>
 
         <p className="text-[#FFFFFF] opacity-50 text-[12px] md:text-[16px] font-normal leading-[1.5] text-center max-w-[723px] mt-[32px] reveal-on-scroll">
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Drop your details and we&apos;ll get in touch. You&apos;re just one call away from
-              turning the confusion into a clear, sorted plan.
+              {s.body ??
+                "Drop your details, and we'll get in touch. You're just one call away from turning the confusion into a clear, sorted plan."}
             </span>
           </span>
         </p>
 
-        <button className="group mt-[40px] flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] h-[33.54px] pl-[18.2948px] pr-[3.04913px] py-[3.04913px] md:rounded-[56px] md:w-[243px] md:h-[44px] md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors">
-          <span className="text-[#FAFAFA] text-[12px] md:text-[16px] font-medium leading-[150%] tracking-wide w-[120px] h-[18px] md:w-auto md:h-auto whitespace-nowrap">
-            Book a Consultation
+        <button className="group mt-[40px] flex items-center justify-between bg-[#CDB17E] rounded-[56px] w-[243px] h-[44px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#bfa06b] transition-colors">
+          <span className="text-[#FAFAFA] text-[16px] font-medium leading-[1.5] tracking-wide">
+            {s.cta_label ?? 'Book a Consultation'}
           </span>
 
           <div className="w-[27.44px] h-[27.44px] p-[6.09826px] bg-[#FAFAFA] rounded-[45.7369px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 md:w-[36px] md:h-[36px] md:p-0 md:rounded-full">
@@ -1183,6 +1160,9 @@ const CTASection = () => {
 }
 
 const BetterWaySection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.better_way ?? {}
+
   const scallopCount = [...Array(15)]
 
   return (
@@ -1216,11 +1196,10 @@ const BetterWaySection = () => {
                       className="w-[20px] md:w-[32px] h-auto relative z-10"
                     />
                     <div
-                      className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
-                        i % 2 === 0
+                      className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${i % 2 === 0
                           ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
                           : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                      }`}
+                        }`}
                       style={{
                         background:
                           i % 2 === 0
@@ -1236,151 +1215,135 @@ const BetterWaySection = () => {
           ))}
         </div>
 
-        {/* --- HEADINGS --- */}
-        <div className="absolute w-[353px] md:w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[179px] md:top-[253px] flex flex-col items-center gap-[20px] md:gap-[10px] md:static md:block md:w-full md:max-w-none md:translate-x-0">
-          <h2
-            className="w-full text-[#2D2D2D] text-[24px] md:text-[61px] leading-[1] text-center font-serif reveal-heading md:absolute md:w-[679px] md:left-1/2 md:-translate-x-1/2 md:top-[253px]"
-            style={{ fontFamily: "'Malgin', serif" }}
-          >
-            <span className="reveal-wrapper">
-              <span className="reveal-text">A Better Way Between </span>
+        <h2
+          className="absolute w-[679px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[253px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif reveal-heading"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          <span className="reveal-wrapper">
+            <span className="reveal-text">{s.heading ?? 'The Perfect In-Between'}</span>
+          </span>
+        </h2>
+
+        <p className="absolute w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[403px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center reveal-on-scroll">
+          <span className="reveal-wrapper">
+            <span className="reveal-text">
+              Sometimes all you wanted was help making things look beautiful and knowing which
+              vendors to trust. That&apos;s exactly where we come in.
             </span>
             <br className="hidden md:block" />
             <span className="reveal-wrapper">
               <span className="reveal-text">Event and DIY</span>
             </span>
-          </h2>
+          </span>
+        </p>
 
-          <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] text-center reveal-on-scroll md:absolute md:w-[809px] md:left-1/2 md:-translate-x-1/2 md:top-[403px] font-['Poppins'] md:font-sans">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">
-                Event planners can feel expensive and overwhelming. Doing everything yourself can
-                quickly become stressful. Elewen brings the best of both, thoughtful styling without
-                the chaos.
-              </span>
+        <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] text-center reveal-on-scroll md:absolute md:w-[809px] md:left-1/2 md:-translate-x-1/2 md:top-[403px] font-['Poppins'] md:font-sans">
+          <span className="reveal-wrapper">
+            <span className="reveal-text">
+              Event planners can feel expensive and overwhelming. Doing everything yourself can
+              quickly become stressful. Elewen brings the best of both, thoughtful styling without
+              the chaos.
             </span>
-          </p>
-        </div>
-
-        {/* --- VENN DIAGRAM (MOBILE & DESKTOP) --- */}
-        {/* Desktop Version */}
-        <div className="hidden md:block absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]">
-          <svg
-            width="723"
-            height="422"
-            viewBox="0 0 723 422"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full"
-          >
-            <defs>
-              <clipPath id="intersectClipDesktop">
-                <circle cx="211" cy="211" r="211" />
-              </clipPath>
-            </defs>
-            <circle cx="211" cy="211" r="211" fill="#CDB17E" />
-            <circle cx="512" cy="211" r="211" fill="#591902" />
-            <circle
-              cx="512"
-              cy="211"
-              r="211"
-              fill="#FFFFFF"
-              clipPath="url(#intersectClipDesktop)"
-            />
-          </svg>
-        </div>
-
-        {/* Mobile Version */}
-        <div className="block md:hidden absolute w-[353px] h-[206.04px] left-1/2 -translate-x-1/2 top-[371px]">
-          <svg
-            width="353"
-            height="207"
-            viewBox="0 0 353 207"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full"
-          >
-            <defs>
-              <clipPath id="intersectClipMobile">
-                <circle cx="103.02" cy="103.02" r="103.02" />
-              </clipPath>
-            </defs>
-            <circle cx="103.02" cy="103.02" r="103.02" fill="#CDB17E" />
-            <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
-            <circle
-              cx="249.98"
-              cy="103.02"
-              r="103.02"
-              fill="#FFFFFF"
-              clipPath="url(#intersectClipMobile)"
-            />
-          </svg>
-        </div>
-
-        {/* --- DIAGRAM TEXTS --- */}
-        <h5
-          className="absolute left-[calc(50%-73px)] md:left-[calc(50%-150.5px)] top-[474px] md:top-[742px] w-[95.31px] md:w-[185px] -translate-x-1/2 -translate-y-1/2 text-left md:text-center text-[#591902] text-[24.7px] md:text-[27px] leading-[1] font-serif"
-          style={{ fontFamily: "'Malgin', serif" }}
-        >
-          Event Planner
-        </h5>
-
-        <h5
-          className="absolute left-[calc(50%+130px)] md:left-[calc(50%+150.5px)] top-[474px] md:top-[742px] w-[46px] md:w-[80px] -translate-x-1/2 -translate-y-1/2 text-left md:text-center text-[#CDB17E] text-[24.7px] md:text-[27px] leading-[1] font-serif"
-          style={{ fontFamily: "'Malgin', serif" }}
-        >
-          DIY
-        </h5>
-
-        {/* --- LOGO --- */}
-        <div className="absolute left-1/2 top-[474px] md:top-[742px] w-[37.71px] md:w-[320px] h-[44px] md:h-[320px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
-          <img
-            src={centerLogo}
-            alt="11 Logo"
-            className="w-full h-full object-contain"
-            loading="lazy"
-          />
-        </div>
-
-        {/* --- MOBILE DASHED LINE --- */}
-        <div className="block md:hidden absolute left-1/2 top-[558px] -translate-x-1/2 w-[1px] h-[145px] border-l-[0.5px] border-dashed border-[#000000]"></div>
-
-        {/* --- DESKTOP DASHED LINE (assuming it's present in original, hidden here for mobile) --- */}
-        <div className="hidden md:block absolute left-1/2 top-[900px] -translate-x-1/2 w-[1px] h-[145px] border-l-[1px] border-dashed border-[#000000]/30"></div>
-
-        {/* --- SUB TEXTS --- */}
-        <p className="absolute w-[120px] md:w-[200px] left-[20px] md:left-[30px] top-[597px] md:top-[688px] text-[#957960] text-[12px] leading-[150%] md:leading-[1.5] font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">
-            Full-service planning often comes with high costs and long coordination cycles. You rely
-            on large teams, multiple approvals, and a process that can feel heavier than the event
-            itself.
-          </span>
-          <span className="md:hidden">Costly and slow, with too many layers.</span>
-        </p>
-
-        <p className="absolute w-[120px] md:w-[200px] right-[20px] md:right-[30px] top-[597px] md:top-[688px] text-[#591902] text-[12px] leading-[150%] md:leading-[1.5] text-right font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">
-            Planning everything yourself means juggling vendors, comparing prices, managing
-            logistics, and making countless decisions. It quickly turns a celebration into a
-            checklist.
-          </span>
-          <span className="md:hidden">
-            Too many vendors, too many choices, DIY planning turns joy into work.
-          </span>
-        </p>
-
-        <p className="absolute w-[200px] md:w-[285px] left-1/2 -translate-x-1/2 top-[711px] md:top-[993px] text-[#2D2D2D] text-[12px] leading-[150%] md:leading-[1.5] text-center font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">
-            The balance between structure and simplicity. You get curated décor, trusted vendors,
-            and guided planning, without the pressure or the price of full-scale event management.
-          </span>
-          <span className="md:hidden">
-            The perfect balance of structure and simplicity. curated décor, trusted vendors, guided
-            planning, without the cost or pressure.
           </span>
         </p>
       </div>
-    </section>
+
+
+      {/* --- VENN DIAGRAM (MOBILE & DESKTOP) --- */}
+      {/* Desktop Version */}
+      <div className="hidden md:block absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]">
+        <svg
+          width="723"
+          height="422"
+          viewBox="0 0 723 422"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full"
+        >
+          <defs>
+            <clipPath id="intersectClipDesktop">
+              <circle cx="211" cy="211" r="211" />
+            </clipPath>
+          </defs>
+          <circle cx="211" cy="211" r="211" fill="#CDB17E" />
+          <circle cx="512" cy="211" r="211" fill="#591902" />
+          <circle
+            cx="512"
+            cy="211"
+            r="211"
+            fill="#FFFFFF"
+            clipPath="url(#intersectClipDesktop)"
+          />
+        </svg>
+      </div>
+
+      {/* Mobile Version */}
+      <div className="block md:hidden absolute w-[353px] h-[206.04px] left-1/2 -translate-x-1/2 top-[371px]">
+        <svg
+          width="353"
+          height="207"
+          viewBox="0 0 353 207"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full"
+        >
+          <defs>
+            <clipPath id="intersectClipMobile">
+              <circle cx="103.02" cy="103.02" r="103.02" />
+            </clipPath>
+          </defs>
+          <circle cx="103.02" cy="103.02" r="103.02" fill="#CDB17E" />
+          <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
+          <circle
+            cx="249.98"
+            cy="103.02"
+            r="103.02"
+            fill="#FFFFFF"
+            clipPath="url(#intersectClipMobile)"
+          />
+        </svg>
+      </div>
+
+      {/* --- DIAGRAM TEXTS --- */}
+      <h5
+        className="absolute left-[calc(50%-73px)] md:left-[calc(50%-150.5px)] top-[474px] md:top-[742px] w-[95.31px] md:w-[185px] -translate-x-1/2 -translate-y-1/2 text-left md:text-center text-[#591902] text-[24.7px] md:text-[27px] leading-[1] font-serif"
+        style={{ fontFamily: "'Malgin', serif" }}
+      >
+        {s.left_label ?? 'when you hire a Planner'}
+      </h5>
+
+      <h5
+        className="absolute left-[calc(50%+130px)] md:left-[calc(50%+150.5px)] top-[474px] md:top-[742px] w-[46px] md:w-[80px] -translate-x-1/2 -translate-y-1/2 text-left md:text-center text-[#CDB17E] text-[24.7px] md:text-[27px] leading-[1] font-serif"
+        style={{ fontFamily: "'Malgin', serif" }}
+      >
+        {s.right_label ?? 'when you DIY'}
+      </h5>
+
+      {/* --- LOGO --- */}
+      <div className="absolute left-1/2 top-[474px] md:top-[742px] w-[37.71px] md:w-[320px] h-[44px] md:h-[320px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+        <img
+          src={centerLogo}
+          alt="11 Logo"
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
+      </div>
+
+      <p className="absolute w-[200px] left-[30px] top-[688px] text-[#957960] text-[12px] leading-[1.5]">
+        {s.left_body ??
+          'Sometimes, booking an event planner feels overwhelming. There are layers of decisions, multiple meetings, and a budget that keeps growing with every addition.'}
+      </p>
+
+      <p className="absolute w-[200px] right-[30px] top-[688px] text-[#591902] text-[12px] leading-[1.5] text-right">
+        {s.right_body ??
+          "Doing it yourself sounds simple at first. But soon you're juggling vendor calls, comparing prices, managing deliveries, and trying to style everything the night before the event."}
+      </p>
+
+      <p className="absolute w-[285px] left-1/2 -translate-x-1/2 top-[993px] text-[#2D2D2D] text-[12px] leading-[1.5] text-center">
+        {s.center_body ??
+          'Sometimes the solution is in between. We help you Plan Differently. You stay in control of your celebration.'}
+      </p>
+    </section >
   )
 }
 
@@ -1388,6 +1351,21 @@ const LAYOUT_W = 1034
 const LAYOUT_H = 684
 
 const ChecklistSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.checklist ?? {}
+  const chaosItems = s.chaos_items ?? [
+    { title: 'Too much scrolling.' },
+    { title: 'Too many calls.' },
+    { title: 'Too many vendors.' },
+    { title: 'Too many decisions.' },
+  ]
+  const reliefItems = s.relief_items ?? [
+    "You don't manage people",
+    "You don't manage logistics",
+    'No chasing vendors',
+    'No waiting anxiously!',
+  ]
+
   const scallopCount = [...Array(15)]
   const sectionRef = useRef(null)
   const [howItWorksVisible, setHowItWorksVisible] = useState(false)
@@ -1568,11 +1546,10 @@ const ChecklistSection = () => {
                     loading="lazy"
                   />
                   <div
-                    className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
-                      i % 2 === 0
+                    className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${i % 2 === 0
                         ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
                         : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                    }`}
+                      }`}
                     style={{
                       background:
                         i % 2 === 0
@@ -1593,11 +1570,11 @@ const ChecklistSection = () => {
         style={{ fontFamily: "'Malgin', serif" }}
       >
         <span className="reveal-wrapper">
-          <span className="reveal-text">Somewhere along the way, </span>
+          <span className="reveal-text">{s.heading_1 ?? 'Somewhere along the way,'} </span>
         </span>
         <br />
         <span className="reveal-wrapper">
-          <span className="reveal-text">Hosting turned into checklists.</span>
+          <span className="reveal-text">{s.heading_2 ?? 'Hosting turned into Checklists.'}</span>
         </span>
       </h2>
 
@@ -1633,7 +1610,7 @@ const ChecklistSection = () => {
               style={{ '--delay': '0.25s' }}
             >
               <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too much scrolling.
+                {chaosItems[0]?.title ?? 'Too much scrolling.'}
               </h3>
             </div>
             <div
@@ -1667,7 +1644,7 @@ const ChecklistSection = () => {
                 style={{ '--delay': '0.8s' }}
               >
                 <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
-                  Too many calls.
+                  {chaosItems[1]?.title ?? 'Too many calls.'}
                 </h3>
               </div>
               <div
@@ -1700,7 +1677,7 @@ const ChecklistSection = () => {
               style={{ '--delay': '1.25s' }}
             >
               <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too many vendors.
+                {chaosItems[2]?.title ?? 'Too many vendors.'}
               </h3>
             </div>
             <div
@@ -1732,7 +1709,7 @@ const ChecklistSection = () => {
               style={{ '--delay': '1.75s' }}
             >
               <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                Too many decisions.
+                {chaosItems[3]?.title ?? 'Too many decisions.'}
               </h3>
             </div>
             <div
@@ -1754,31 +1731,21 @@ const ChecklistSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Stop take a deep breath</span>
+            <span className="reveal-text">{s.relief_heading ?? 'Stop take a deep breath'}</span>
           </span>
         </h3>
 
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">You don&apos;t have to manage people.</span>
-            </span>
-          </p>
-          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">You don&apos;t have to manage logistics</span>
-            </span>
-          </p>
-          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">No chasing vendors.</span>
-            </span>
-          </p>
-          <p className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-            <span className="reveal-wrapper">
-              <span className="reveal-text">No waiting anxiously.</span>
-            </span>
-          </p>
+          {reliefItems.map((item, i) => (
+            <p
+              key={i}
+              className="text-[17px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll"
+            >
+              <span className="reveal-wrapper">
+                <span className="reveal-text">{item}</span>
+              </span>
+            </p>
+          ))}
         </div>
 
         <h4
@@ -1787,7 +1754,7 @@ const ChecklistSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              11 takes the chaos out so you can stay in the moment
+              {s.tagline ?? '11 takes the chaos out so you can stay in the moment'}
             </span>
           </span>
         </h4>
@@ -1838,6 +1805,9 @@ const PKG_LOCAL_IMAGES = [
 ]
 
 const PackagesSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.packages_intro ?? {}
+
   const [virtualIndex, setVirtualIndex] = useState(0)
   const [disableTransition, setDisableTransition] = useState(false)
   const lastDirectionRef = useRef('next')
@@ -1973,21 +1943,16 @@ const PackagesSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Somewhere Between Moodboards <br className="block md:hidden" />
+              {s.heading ??
+                'Somewhere between Moodboards and reality, celebrations lost their feeling.'}
             </span>
-          </span>
-          <span className="hidden md:inline">
-            <br />
-          </span>
-          <span className="reveal-wrapper">
-            <span className="reveal-text">and Reality, the Feeling Got Lost.</span>
           </span>
         </h2>
         <p className="text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[150%] max-w-[353px] md:max-w-[809px] mb-[24px] md:mb-20 reveal-on-scroll">
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              Celebrations became louder and bigger, but less personal. Eleven exists to bring that
-              feeling back, not through more, but through meaning.
+              {s.body ??
+                'They became louder and Bigger, but less personal. Elewen exists to bring that feeling back. Not through more, but through meaning.'}
             </span>
           </span>
         </p>
@@ -1997,7 +1962,7 @@ const PackagesSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Our Most Loved Packages</span>
+            <span className="reveal-text">{s.section_heading ?? 'OUR MOST LOVED PACKAGES'}</span>
           </span>
         </h3>
       </div>
@@ -2339,6 +2304,9 @@ const PackagesSection = () => {
 }
 
 const CelebrationFeelingSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.planner_cta ?? {}
+
   const containerRef = useRef(null)
   // Preload all 5 parallax images 2 viewports before this section scrolls into view
   const preloadRef = usePreloadOnApproach([img1, img2, img3, img4, img5], '200% 0px')
@@ -2418,31 +2386,23 @@ const CelebrationFeelingSection = () => {
           >
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Every celebration <br className="block md:hidden" />
+                {s.heading_1 ?? 'Every celebration deserves its own feeling.'}
               </span>
-            </span>
-            <span className="hidden md:inline">
-              <br />
-            </span>
-            <span className="reveal-wrapper">
-              <span className="reveal-text">deserves its own feeling.</span>
             </span>
           </h2>
 
           <p className="mt-[20px] md:mt-8 w-[353px] md:w-[522px] max-w-[calc(100%-2rem)] text-[#FFFFFF] opacity-90 md:opacity-100 text-[14px] md:text-[16px] leading-[150%] text-center drop-shadow-sm px-4 reveal-on-scroll font-['Poppins'] md:font-sans">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Want a professional to handle your event end to end? Fill the form and let our
-                in-house planners plan it with you.
+                {s.body ??
+                  'Want a professional to handle your event end to end? Fill the form and let our in-house planners plan it with you.'}
               </span>
             </span>
           </p>
 
-          <button className="mt-[32px] md:mt-10 w-[181px] md:w-[213px] h-[33.5px] md:h-[44px] group flex items-center justify-between bg-[#FAFAFA] md:bg-[#FFFFFF] rounded-[42.7px] md:rounded-[56px] pl-[18.3px] md:pl-[24px] pr-[3px] md:pr-[4px] py-[3px] md:py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg">
-            <span className="text-[#CDB17E] text-[12px] md:text-[16px] font-medium leading-[1.5] tracking-wide font-['Poppins'] md:font-sans">
-              {/* Conditional text matching Figma specs */}
-              <span className="md:hidden">Book a consultation</span>
-              <span className="hidden md:inline">Plan with Elewen</span>
+          <button className="mt-10 w-[213px] h-[44px] group flex items-center justify-between bg-[#FFFFFF] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg">
+            <span className="text-[#CDB17E] text-[16px] font-medium leading-[1.5] tracking-wide">
+              {s.cta_label ?? 'Plan with Elewen'}
             </span>
             <div className="w-[27.4px] h-[27.4px] md:w-[36px] md:h-[36px] bg-[#CDB17E] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 border-[1.1px] md:border-[1.5px] border-[#FAFAFA] md:border-[#FFFFFF]">
               <svg
@@ -2466,6 +2426,9 @@ const CelebrationFeelingSection = () => {
 }
 
 const PlanningGuidesSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const s = cms.blogs_intro ?? {}
+
   // CMS: Strapi `blogs` published posts + derived categories
   const { data: categories = [] } = useBlogCategories()
   const { data: allBlogs = [] } = useBlogs({ limit: 50 })
@@ -2517,9 +2480,11 @@ const PlanningGuidesSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">
-              Planning Guides &amp; <br className="hidden md:block" /> Celebration Ideas
-            </span>
+            <span className="reveal-text">{s.heading_1 ?? 'Planning Guides &'} </span>
+          </span>
+          <br />
+          <span className="reveal-wrapper">
+            <span className="reveal-text">{s.heading_2 ?? 'Celebration Ideas'}</span>
           </span>
         </h2>
 
@@ -2527,14 +2492,16 @@ const PlanningGuidesSection = () => {
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Helpful tips, inspiration, and practical guides to make planning your next
-                celebration simpler.
+                {s.body ??
+                  'Helpful tips, inspiration, and practical guides to make planning your next celebration simpler.'}
               </span>
             </span>
           </p>
 
-          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">View All</span>
+          <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+            <span className="text-white font-medium text-[15px] mr-5">
+              {s.cta_label ?? 'View All'}
+            </span>
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
               <svg
                 className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
@@ -2562,19 +2529,17 @@ const PlanningGuidesSection = () => {
               return (
                 <React.Fragment key={cat}>
                   <div
-                    className={`cursor-pointer group w-fit flex flex-col ${
-                      isActive
+                    className={`cursor-pointer group w-fit flex flex-col ${isActive
                         ? 'opacity-100 border-b border-[#364022] pb-1 lg:border-b-[1.5px] lg:border-[#3D4035] lg:pb-1.5'
                         : 'opacity-50 lg:opacity-100'
-                    }`}
+                      }`}
                     onClick={() => handleCategorySelect(cat)}
                   >
                     <span
-                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
-                        isActive
+                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${isActive
                           ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
                           : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
-                      }`}
+                        }`}
                     >
                       {cat}
                     </span>
@@ -2694,9 +2659,8 @@ const PlanningGuidesSection = () => {
                   <div
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
-                    }`}
+                    className={`cursor-pointer rounded-[8px] transition-all ${i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                      }`}
                   />
                 ))}
               </div>
@@ -2724,9 +2688,8 @@ const PlanningGuidesSection = () => {
                 <div
                   key={i}
                   onClick={() => setPage(i)}
-                  className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
-                  }`}
+                  className={`cursor-pointer rounded-[12px] transition-all ${i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                    }`}
                 />
               ))}
             </div>
@@ -2762,6 +2725,10 @@ const PlanningGuidesSection = () => {
 }
 
 const TestimonialsSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const testimonialsHeading =
+    cms.testimonials_intro?.heading ?? 'Real celebrations. Real experiences.'
+
   const swiperRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -2790,7 +2757,7 @@ const TestimonialsSection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">Real Celebrations. Real Experiences.</span>
+            <span className="reveal-text">{testimonialsHeading}</span>
           </span>
         </h2>
       </section>
@@ -2841,10 +2808,9 @@ const TestimonialsSection = () => {
                     h-[251px] md:h-[367.82px] 
                     p-[20px] md:p-[30px] 
                     gap-[20px] md:gap-[36px]
-                    ${
-                      isActive
-                        ? 'opacity-100 shadow-xl scale-100'
-                        : 'opacity-50 md:opacity-80 scale-[0.75] md:scale-[0.8]'
+                    ${isActive
+                      ? 'opacity-100 shadow-xl scale-100'
+                      : 'opacity-50 md:opacity-80 scale-[0.75] md:scale-[0.8]'
                     }
                   `}
                   onClick={() => swiperRef.current?.slideToLoop(index)}
@@ -2947,6 +2913,10 @@ const TestimonialsSection = () => {
 }
 
 const SplitInfoSection = () => {
+  const { data: cms = {} } = useLandingPage()
+  const ig = cms.instagram_section ?? {}
+  const vp = cms.vendor_partner ?? {}
+
   // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
   const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
 
@@ -2965,24 +2935,22 @@ const SplitInfoSection = () => {
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper">
-                <span className="reveal-text">
-                  Inspiration, Behind the Scenes, and Real Celebrations.
-                </span>
+                <span className="reveal-text">{ig.heading ?? 'Behind the Scenes'}</span>
               </span>
             </h2>
 
             <p className="text-[#2D2D2D] opacity-50 text-[12px] md:text-[16px] leading-[150%] w-[151.39px] lg:w-[339px] mt-[12px] lg:mt-[20px] font-sans m-0 reveal-on-scroll font-['Poppins'] lg:font-sans">
               <span className="reveal-wrapper">
                 <span className="reveal-text">
-                  See how celebrations come together, discover new ideas, and follow along as we
-                  bring events to life.
+                  {ig.body ??
+                    'Follow along for real celebrations, styling ideas, and behind-the-scenes moments from the events we love creating.'}
                 </span>
               </span>
             </p>
 
-            <button className="box-border flex flex-row items-center justify-center px-[8px] lg:pl-[16px] lg:pr-[8px] py-[4px] lg:py-[8px] gap-[4px] lg:gap-[16px] w-[154.86px] lg:w-[177px] h-[27.15px] lg:h-[36px] mt-[20px] lg:mt-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] hover:bg-gray-50 transition-colors">
-              <span className="text-[#591902] font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans w-auto lg:w-[117px] text-center lg:text-left">
-                Join Our Instagram
+            <button className="box-border flex flex-row items-center justify-center pl-[16px] pr-[8px] py-[8px] gap-[16px] w-[177px] h-[36px] mt-[16px] border border-[#591902] rounded-[56px] hover:bg-gray-50 transition-colors">
+              <span className="text-[#591902] font-medium text-[12px] leading-[150%] font-sans w-[117px] text-left">
+                {ig.cta_label ?? 'Join the instagram fam!'}
               </span>
               <svg
                 className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0"
@@ -3018,7 +2986,7 @@ const SplitInfoSection = () => {
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper">
-                <span className="reveal-text">Partner With Elewen</span>
+                <span className="reveal-text">{vp.heading ?? 'Partner with Elewen'}</span>
               </span>
             </h2>
 
@@ -3026,15 +2994,15 @@ const SplitInfoSection = () => {
               <p className="text-[#FFFFFF] opacity-50 text-[12px] md:text-[16px] leading-[150%] w-full lg:max-w-[420px] font-sans m-0 reveal-on-scroll font-['Poppins'] lg:font-sans">
                 <span className="reveal-wrapper">
                   <span className="reveal-text">
-                    We collaborate with experienced decorators, caterers, and event professionals
-                    who care about quality, reliability, and beautiful execution.
+                    {vp.body ??
+                      'Great events are never created alone. We work with a trusted circle of florists, decorators, caterers, bartenders, and production houses who help bring celebrations to life.'}
                   </span>
                 </span>
               </p>
 
-              <button className="box-border flex flex-row items-center justify-center pl-[18px] lg:pl-[24px] pr-[4px] lg:pr-[4px] py-[4px] lg:py-[4px] gap-[12px] lg:gap-[16px] w-[160.98px] lg:w-[228px] h-[33.54px] lg:h-[44px] mt-[32px] lg:mt-[0px] bg-[#CDB17E] rounded-[42px] lg:rounded-[56px] hover:bg-[#bfa06b] transition-colors group">
-                <span className="text-[#FAFAFA] font-medium text-[12px] lg:text-[16px] leading-[150%] font-['Poppins'] lg:font-sans w-auto lg:w-[148px] text-left">
-                  Apply as Vendor
+              <button className="box-border flex flex-row items-center justify-center pl-[24px] pr-[4px] py-[4px] gap-[16px] w-[228px] h-[44px] bg-[#CDB17E] rounded-[56px] hover:bg-[#bfa06b] transition-colors group">
+                <span className="text-[#FAFAFA] font-medium text-[16px] leading-[150%] font-sans w-[148px] text-left">
+                  {vp.cta_label ?? 'Apply as a Vendor'}
                 </span>
 
                 <div className="flex items-center justify-center w-[27px] lg:w-[36px] h-[27px] lg:h-[36px] bg-[#FAFAFA] rounded-[60px] p-[6px] lg:p-[8px] shrink-0 transition-transform group-hover:scale-105">

@@ -50,17 +50,7 @@ export function useEventCards() {
         id: e.id,
         documentId: e.documentId,
         title: e.name?.toUpperCase() ?? '',
-        description: (() => {
-          const d = e.description
-          if (!d) return ''
-          if (typeof d === 'string') return d
-          if (Array.isArray(d))
-            return d
-              .flatMap(b => b.children ?? [])
-              .map(c => c.text ?? '')
-              .join('')
-          return ''
-        })(),
+        tagline: e.tagline ?? '',
         category: e.parent_event?.name ?? '',
         image: e.icon?.url
           ? e.icon.url.startsWith('http')

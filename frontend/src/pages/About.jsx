@@ -2,6 +2,7 @@
 // - tangled-lights.png
 // - logo-placeholder.png
 import { useRef, useEffect, useState } from 'react'
+import { useAboutPage } from '../hooks/useCmsPages'
 import tangledIllustration from '../assets/images/tangled-lights.png'
 import objectImg from '../assets/Object.png'
 import bulb1 from '../assets/lightbulb_images/bulb1.png'
@@ -36,12 +37,25 @@ const SECTION_HEIGHT = 4628
 const OBJ_SIZE = 55
 
 const About = () => {
+  const { data: cms = {} } = useAboutPage()
+  const so = cms.story_opening ?? {}
+  const cm = cms.celebrations_matter ?? {}
+  const sq = cms.simple_question ?? {}
+  const tg = cms.thoughtful_gatherings ?? {}
+  const founders = cms.founders ?? {}
+  const wc = cms.why_choose ?? {}
+  const vq = cms.vendor_quality ?? {}
+  const vc = cms.vendor_cta ?? {}
+
   const story1Src = aboutAssetSrc('story-1.png')
   const story2Src = aboutAssetSrc('story-2.png')
   const mokshaSrc = aboutAssetSrc('moksha_portrait.jpg')
   const gauriSrc = aboutAssetSrc('gauri.jpg')
   const iconSrc = aboutAssetSrc('image.png')
   const scallopCount = [...Array(15)]
+  const mobileScallopCount = scallopCount.slice(0, 6)
+  const visibleScallops =
+    typeof window !== 'undefined' && window.innerWidth < 540 ? mobileScallopCount : scallopCount
 
   const pageRef = useRef(null)
   const sectionRef = useRef(null)
@@ -169,36 +183,32 @@ const About = () => {
                 <h2 className="min-[540px]:col-span-7 w-full max-w-[564px] text-[#FFFFFF] text-[40px] min-[540px]:text-[50px] lg:text-[61px] leading-[1.02] lg:leading-[1] font-serif m-0">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ animationDelay: '0s' }}>
-                      When we saw Excitement
+                      {so.heading_1 ?? 'When we saw Excitement'}
                     </span>
                   </span>
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
-                      Turning Into Overthinking
+                      {so.heading_2 ?? 'Turning Into Overthinking'}
                     </span>
                   </span>
                 </h2>
 
                 {/* Right Descriptive Paragraphs */}
                 <div className="min-[540px]:col-span-5 min-[540px]:justify-self-end w-full max-w-[404px] flex flex-col gap-3 min-[540px]:gap-5">
-                  <p className="text-[#FFFFFF] text-[14px] min-[540px]:text-[15px] lg:text-[16px] leading-[1.5] font-normal m-0 opacity-70 min-[540px]:opacity-100">
-                    <span className="reveal-wrapper block">
-                      <span className="reveal-text" style={{ animationDelay: '0.1s' }}>
-                        Elewen was born from noticing a simple truth: many people love the idea of
-                        hosting, but hesitate because planning an event often feels like too much to
-                        manage.
+                  {(
+                    so.paragraphs ?? [
+                      'Elewen was born from noticing a simple truth: many people love the idea of hosting, but hesitate because planning an event often feels like too much to manage.',
+                      'Finding reliable vendors, understanding fair pricing, and coordinating everything usually means relying on social media, referrals, and endless back-and-forth.',
+                    ]
+                  ).map((para, i) => (
+                    <p key={i} className="text-[#FFFFFF] text-[14px] min-[540px]:text-[15px] lg:text-[16px] leading-[1.5] font-normal m-0 opacity-70 min-[540px]:opacity-100">
+                      <span className="reveal-wrapper block">
+                        <span className="reveal-text" style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
+                          {para}
+                        </span>
                       </span>
-                    </span>
-                  </p>
-                  <p className="text-[#FFFFFF] text-[14px] min-[540px]:text-[15px] lg:text-[16px] leading-[1.5] font-normal m-0 opacity-70 min-[540px]:opacity-100">
-                    <span className="reveal-wrapper block">
-                      <span className="reveal-text" style={{ animationDelay: '0.18s' }}>
-                        Finding reliable vendors, understanding fair pricing, and coordinating
-                        everything usually means relying on social media, referrals, and endless
-                        back-and-forth.
-                      </span>
-                    </span>
-                  </p>
+                    </p>
+                  ))}
                 </div>
               </div>
             </div>
@@ -206,20 +216,22 @@ const About = () => {
             {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
             <div className="pointer-events-none absolute inset-0 z-10">
               <div
-                className="anim-element slide-from-bottom absolute inset-x-0 mx-auto bottom-[-100px] min-[540px]:bottom-[-170px] w-[240px] min-[540px]:w-[400px] h-[360px] min-[540px]:h-[600px] bg-[#BFAC9B] rounded-t-[500px] min-[540px]:rounded-[500px] border-[2px] min-[540px]:border-[4px] border-[#591902] shadow-lg"
+                className="anim-element slide-from-bottom absolute inset-x-0 mx-auto bottom-[-90px] min-[540px]:bottom-[-170px] w-[240px] min-[540px]:w-[400px] h-[360px] min-[540px]:h-[600px] bg-[#BFAC9B] rounded-t-[500px] min-[540px]:rounded-[500px] border-[2px] min-[540px]:border-[4px] border-[#591902] shadow-lg"
                 style={{ '--delay': '0.1s' }}
               />
             </div>
 
             {/* --- MOBILE ONLY: GIRL CLIPPED BY THE CURVE --- */}
-            <div className="min-[540px]:hidden pointer-events-none absolute inset-x-0 mx-auto bottom-[-110px] w-[240px] h-[360px] z-20">
+            <div className="min-[540px]:hidden pointer-events-none absolute mx-auto inset-x-0 bottom-[-90px] w-[240px] h-[360px] overflow-hidden z-20">
+        
               <img
                 src={tangledIllustration}
                 alt="Person tangled in lights"
-                className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 -ml-[120px] top-[-15px] w-[284px] h-[392px] object-cover max-w-none"
+                className="anim-element slide-from-bottom absolute left-1/2 top-[-15px] z-10 w-[284px] h-[392px] max-w-none -translate-x-1/2 -ml-[160px] object-cover"
                 style={{ '--delay': '0.3s' }}
               />
             </div>
+
           </div>
 
           {/* --- 3. THE GIRL (NOT CLIPPED BY THE CURVE) --- */}
@@ -228,7 +240,7 @@ const About = () => {
               <img
                 src={tangledIllustration}
                 alt="Person tangled in lights"
-                className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 -ml-0 min-[540px]:-ml-[170px] top-[9px] w-[384px] h-[529px] object-cover max-w-none"
+                className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 -ml-0 min-[540px]:-ml-[180px] top-[9px] w-[384px] h-[529px] object-cover max-w-none"
                 style={{ '--delay': '0.3s' }}
               />
             </div>
@@ -244,28 +256,29 @@ const About = () => {
             >
               <span className="reveal-wrapper block">
                 <span className="reveal-text">
-                  Celebrations Don&apos;t Have to Be Big to Matter
+                  {cm.heading ?? "Celebrations Don't Have to Be Big to Matter"}
                 </span>
               </span>
             </h2>
 
             <div className="min-[540px]:col-span-5 min-[540px]:justify-self-end w-full max-w-[463px] flex flex-col gap-5 mx-auto min-[540px]:mx-0">
-              <p className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal m-0">
-                Hosting a party, celebrating with close friends and family, and taking a pause from
-                everyday life truly matters.
-              </p>
-
-              <p className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal m-0">
-                Elewen exists to protect that feeling. We focus on the little details and personal
-                touches that turn simple gatherings into meaningful moments.
-              </p>
+              {(
+                cm.paragraphs ?? [
+                  'Hosting a party, celebrating with close friends and family, and taking a pause from everyday life truly matters.',
+                  'Elewen exists to protect that feeling. We focus on the little details and personal touches that turn simple gatherings into meaningful moments.',
+                ]
+              ).map((para, i) => (
+                <p key={i} className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal m-0">
+                  {para}
+                </p>
+              ))}
             </div>
           </div>
         </div>
 
         {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
         <section className="relative w-full bg-[#A5A687] overflow-hidden font-sans">
-          <div ref={sectionRef} className="relative w-full min-h-[4628px]">
+          <div ref={sectionRef} className="relative w-full min-h-[4550px]">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
               className="absolute hidden min-[540px]:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
@@ -276,11 +289,11 @@ const About = () => {
               style={{ right: '5%', top: '30%', transform: 'rotate(-37.82deg)' }}
             />
 
-            <div className="absolute top-0 left-0 w-full flex pointer-events-none z-10">
-              {scallopCount.map((_, i) => (
+            <div className="absolute top-0 left-0 flex w-full pointer-events-none z-10">
+              {visibleScallops.map((_, i, arr) => (
                 <div
                   key={i}
-                  className="relative shrink-0 w-[72px] min-[540px]:w-[144px] h-[45px] min-[540px]:h-[90px]"
+                  className="relative h-[45px] flex-1 min-[540px]:shrink-0 min-[540px]:flex-none min-[540px]:w-[144px] min-[540px]:h-[90px]"
                 >
                   <div
                     className="absolute top-0 left-0 w-full h-[36px] min-[540px]:h-[72px] bg-[#CDB17E]"
@@ -291,7 +304,7 @@ const About = () => {
                     style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
                   />
 
-                  {i !== scallopCount.length - 1 && (
+                  {i !== arr.length - 1 && (
                     <div className="absolute top-0 right-0 translate-x-1/2 flex flex-col items-center z-20">
                       <div
                         className={`w-[1px] ${i % 2 === 0 ? 'h-[10px] min-[540px]:h-[14px]' : 'h-[4px] min-[540px]:h-[5px]'} bg-[#591902]/40`}
@@ -304,11 +317,10 @@ const About = () => {
                         />
 
                         <div
-                          className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 min-[540px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
-                            i % 2 === 0
-                              ? 'min-[540px]:w-[76px] min-[540px]:h-[78px] blur-[4px]'
-                              : 'min-[540px]:w-[76px] min-[540px]:h-[59px] blur-[4px]'
-                          }`}
+                          className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 min-[540px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${i % 2 === 0
+                            ? 'min-[540px]:w-[76px] min-[540px]:h-[78px] blur-[4px]'
+                            : 'min-[540px]:w-[76px] min-[540px]:h-[59px] blur-[4px]'
+                            }`}
                           style={{
                             background:
                               i % 2 === 0
@@ -348,34 +360,39 @@ const About = () => {
                   strokeWidth="0.5"
                   strokeDasharray="6 6"
                 />
-              </svg>
-            </div>
+              </svg >
+            </div >
 
             <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[540px]:pt-24 lg:pt-28 pb-24 min-[540px]:pb-32 lg:pb-36">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
               <div className="min-[540px]:hidden mt-14">
                 <div
                   ref={mobileStoryCarouselRef}
-                  className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  className="flex items-stretch overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
-                  <div className="w-full shrink-0 snap-start px-2">
-                    <div className="flex flex-col items-center text-center gap-5">
+                  <div className="flex w-full shrink-0 snap-start px-2">
+                    <div className="flex w-full min-h-[390px] flex-col items-center text-center gap-4 mt-8">
                       <h2
                         className="text-white text-[30px] leading-[1.05] font-serif"
                         style={{ fontFamily: "'Malgin', serif" }}
                       >
                         <span className="reveal-wrapper block">
-                          <span className="reveal-text">We Asked a Simple Question</span>
+                          <span className="reveal-text">{sq.heading ?? 'We Asked a Simple Question'}</span>
                         </span>
                       </h2>
+
                       <p className="text-white text-[14px] leading-[1.45] opacity-90">
-                        Almost everything else in our lives has moved online. We book cabs and
-                        holidays in minutes, so why does event planning still feel complicated?
+                        <span className="reveal-wrapper block">
+                          <span className="reveal-text" style={{ '--delay': '0.1s' }}>
+                            {sq.body ??
+                              'Almost everything else in our lives has moved online. We book cabs and holidays in minutes, so why does event planning still feel complicated?'}
+                          </span>
+                        </span>
                       </p>
 
-                      {story1Src && (
+                      {story2Src && (
                         <Img
-                          src={story1Src}
+                          src={story2Src}
                           alt="Atmosphere"
                           className="anim-element slide-from-bottom w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
                           style={{ '--delay': '0.2s' }}
@@ -384,26 +401,36 @@ const About = () => {
                     </div>
                   </div>
 
-                  <div className="w-full shrink-0 snap-start px-2">
-                    <div className="flex flex-col items-center text-center gap-5">
+                  <div className="flex w-full shrink-0 snap-start px-2">
+                    <div className="flex w-full min-h-[500px] flex-col items-center text-center gap-4">
                       <h2
                         className="text-white text-[30px] leading-[1.05] font-serif"
                         style={{ fontFamily: "'Malgin', serif" }}
                       >
                         <span className="reveal-wrapper block">
                           <span className="reveal-text">
-                            Thoughtful Gatherings Over Loud Distractions?
+                            {tg.heading ?? 'Thoughtful Gatherings Over Loud Distractions?'}
                           </span>
                         </span>
                       </h2>
-                      <p className="text-white text-[14px] leading-[1.45] opacity-90">
-                        Almost everything else in our lives has moved online. We book cabs and
-                        holidays in minutes, so why does event planning still feel complicated?
-                      </p>
 
-                      {story2Src && (
+                      {(
+                        tg.paragraphs ?? [
+                          'With house parties becoming the new way to celebrate, it felt like the right time to bring digitalisation, organisation, and standardisation to the events space.',
+                        ]
+                      ).map((para, i) => (
+                        <p key={i} className="text-white text-[14px] leading-[1.45] opacity-90">
+                          <span className="reveal-wrapper block">
+                            <span className="reveal-text" style={{ '--delay': `${0.1 + i * 0.08}s` }}>
+                              {para}
+                            </span>
+                          </span>
+                        </p>
+                      ))}
+
+                      {story1Src && (
                         <Img
-                          src={story2Src}
+                          src={story1Src}
                           alt="Details"
                           className="anim-element slide-from-bottom w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
                           style={{ '--delay': '0.2s' }}
@@ -413,26 +440,37 @@ const About = () => {
                   </div>
                 </div>
 
-                <div className="mt-2 flex items-center justify-center gap-2">
-                  {[0, 1].map(idx => (
-                    <button
-                      key={idx}
-                      type="button"
-                      aria-label={idx === 0 ? 'Slide 1' : 'Slide 2'}
-                      className={`h-[6px] rounded-full transition-all ${
-                        mobileStorySlide === idx ? 'w-8 bg-white/90' : 'w-2 bg-white/40'
-                      }`}
-                      onClick={() => {
-                        const el = mobileStoryCarouselRef.current
-                        if (!el) return
-                        el.scrollTo({ left: el.clientWidth * idx, behavior: 'smooth' })
-                      }}
-                    />
-                  ))}
+                {/* White dash indicators */}
+                <div className="flex justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      mobileStoryCarouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' })
+                      setMobileStorySlide(0)
+                    }}
+                    className={`h-[5px] rounded-full transition-all duration-300 ${
+                      mobileStorySlide === 0 ? 'w-[26px] bg-white' : 'w-[14px] bg-white/40'
+                    }`}
+                    aria-label="Go to first slide"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileStorySlide(1)
+                      mobileStoryCarouselRef.current?.scrollTo({
+                        left: mobileStoryCarouselRef.current?.clientWidth || 0,
+                        behavior: 'smooth',
+                      })
+                    }}
+                    className={`h-[4px] rounded-full transition-all duration-300 ${
+                      mobileStorySlide === 1 ? 'w-[26px] bg-white' : 'w-[14px] bg-white/40'
+                    }`}
+                    aria-label="Go to second slide"
+                  />
                 </div>
 
-                {/* Persistent mobile caption under both slides */}
-                <div className="mt-10 flex flex-col items-center text-center gap-4">
+                {/* Text below image, visible for both slides */}
+                <div className="mt-8 flex flex-col items-center text-center gap-4 px-4">
                   <h2
                     className="text-white text-[30px] leading-[1.05] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
@@ -441,6 +479,7 @@ const About = () => {
                     <br />
                     Event planning didn&apos;t.
                   </h2>
+
                   <p className="text-white text-[14px] leading-[1.45] opacity-90 max-w-[28rem]">
                     Built on trust &amp; to save time, Elewen is a one-stop digital platform that
                     makes hosting simpler with genuine pricing and seamless planning.
@@ -451,7 +490,7 @@ const About = () => {
               {/* --- SUB-TASK 2: SIMPLE QUESTION BLOCK --- */}
               <div
                 ref={subTask2Ref}
-                className="hidden min-[540px]:flex mt-8 min-[540px]:mt-24 flex-col min-[540px]:flex-row items-start gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-4 lg:gap-x-6"
+                className="hidden min-[540px]:flex mt-8 min-[540px]:mt-28 flex-col min-[540px]:flex-row items-start gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-4 lg:gap-x-6"
               >
                 {story1Src && (
                   <Img
@@ -466,14 +505,14 @@ const About = () => {
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
-                      <span className="reveal-text">We Asked a Simple Question</span>
+                      <span className="reveal-text">{sq.heading ?? 'We Asked a Simple Question'}</span>
                     </span>
                   </h2>
                   <p className="text-white text-[12px] min-[540px]:text-[14px] lg:text-[16px] leading-[1.2]">
                     <span className="reveal-wrapper block">
                       <span className="reveal-text" style={{ '--delay': '0.1s' }}>
-                        Almost everything else in our lives has moved online. We book cabs and
-                        holidays in minutes, so why does event planning still feel complicated?
+                        {sq.body ??
+                          'Almost everything else in our lives has moved online. We book cabs and holidays in minutes, so why does event planning still feel complicated?'}
                       </span>
                     </span>
                   </p>
@@ -489,18 +528,23 @@ const About = () => {
                   >
                     <span className="reveal-wrapper block">
                       <span className="reveal-text">
-                        Thoughtful Gatherings Over Loud Distractions?
+                        {tg.heading ?? 'Thoughtful Gatherings Over Loud Distractions?'}
                       </span>
                     </span>
                   </h2>
-                  <p className="text-white text-[12px] min-[540px]:text-[14px] lg:text-[16px] leading-[1.2]">
-                    <span className="reveal-wrapper block">
-                      <span className="reveal-text" style={{ '--delay': '0.1s' }}>
-                        Almost everything else in our lives has moved online. We book cabs and
-                        holidays in minutes, so why does event planning still feel complicated?
+                  {(
+                    tg.paragraphs ?? [
+                      'With house parties becoming the new way to celebrate, it felt like the right time to bring digitalisation, organisation, and standardisation to the events space.',
+                    ]
+                  ).map((para, i) => (
+                    <p key={i} className="text-white text-[12px] min-[540px]:text-[14px] lg:text-[16px] leading-[1.2]">
+                      <span className="reveal-wrapper block">
+                        <span className="reveal-text" style={{ '--delay': `${0.1 + i * 0.08}s` }}>
+                          {para}
+                        </span>
                       </span>
-                    </span>
-                  </p>
+                    </p>
+                  ))}
                 </div>
 
                 {story2Src && (
@@ -520,18 +564,18 @@ const About = () => {
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
-                      <span className="reveal-text">Meet the Founders</span>
+                      <span className="reveal-text">{founders.heading ?? 'Meet the Founders'}</span>
                     </span>
                   </h2>
                 </div>
 
-                <div className="mt-16 min-[540px]:mt-36 flex flex-col min-[540px]:flex-row items-start min-[540px]:items-start gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-4 lg:gap-x-6 min-[540px]:pb-20">
+                <div className="mt-8 min-[540px]:mt-36 flex flex-col min-[540px]:flex-row items-start min-[540px]:items-start gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-4 lg:gap-x-6 min-[540px]:pb-20">
                   <div className="anim-element slide-from-left w-full max-w-[600px] mx-auto min-[540px]:mx-0 min-[540px]:w-1/2 shrink-0 h-[320px] min-[540px]:h-[420px] lg:h-[520px] xl:h-[600px] bg-[#222815] overflow-hidden min-[540px]:-ml-10 lg:-ml-20 xl:-ml-[100px]">
                     {mokshaSrc && (
                       <Img
                         src={mokshaSrc}
                         alt="Moksha"
-                        className="w-full h-full object-cover object-[center_15%]"
+                        className="w-full h-full object-cover object-[center_15%] rounded-[10px] min-[540px]:rounded-none"
                       />
                     )}
                   </div>
@@ -542,7 +586,7 @@ const About = () => {
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
-                        <span className="reveal-text">Meet the Founders</span>
+                        <span className="reveal-text">{founders.heading ?? 'Meet the Founders'}</span>
                       </span>
                     </h2>
                     <h4
@@ -550,27 +594,20 @@ const About = () => {
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
-                        <span className="reveal-text">Hi! I&apos;m Moksha</span>
+                        <span className="reveal-text">{founders.founders?.[0]?.name ?? "Hi! I'm Moksha"}</span>
                       </span>
                     </h4>
                     <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
-                      <p>
-                        I still don&apos;t fully know how a formerly shy kid has turned into an
-                        adult who now builds experiences around people, conversations, and
-                        connection, but here we are.
-                      </p>
-                      <p>
-                        I&apos;ve lived a large part of my life at boarding school, The Lawrence
-                        School, Sanawar, which has shaped me into an independent person obsessed
-                        with structure. An obsession that turned out to be a superpower in the
-                        events world.
-                      </p>
-                      <p>
-                        After doing a Msc. In International Events from the UK, and spending years
-                        in the industry, I knew I didn&apos;t want to build just another event
-                        management company.
-                      </p>
-                      <p>So, I took a leap of faith and Elewen was born.</p>
+                      {(
+                        founders.founders?.[0]?.paragraphs ?? [
+                          "I still don't fully know how a formerly shy kid has turned into an adult who now builds experiences around people, conversations, and connection, but here we are.",
+                          "I've lived a large part of my life at boarding school, The Lawrence School, Sanawar, which has shaped me into an independent person obsessed with structure. An obsession that turned out to be a superpower in the events world.",
+                          "After doing a Msc. In International Events from the UK, and spending years in the industry, I knew I didn't want to build just another event management company.",
+                          'So, I took a leap of faith and Elewen was born.',
+                        ]
+                      ).map((para, i) => (
+                        <p key={i}>{para}</p>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -582,32 +619,28 @@ const About = () => {
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
-                        <span className="reveal-text">Hey! I&apos;m Gauri</span>
+                        <span className="reveal-text">{founders.founders?.[1]?.name ?? "Hey! I'm Gauri"}</span>
                       </span>
                     </h4>
                     <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
-                      <p>
-                        I&apos;m a dancer, reader, dreamer, and a believer that every little step
-                        eventually leads to the right place.
-                      </p>
-                      <p>
-                        I graduated from Ashoka university with an honours in economics and finance.
-                        Post-graduation, I was set to be buried in financial spreadsheets, but life
-                        had different plans.
-                      </p>
-                      <p>
-                        Elewen began as an idea my co-founder and I developed while exploring the
-                        opportunity to build a thoughtful, design-driven brand.
-                      </p>
+                      {(
+                        founders.founders?.[1]?.paragraphs ?? [
+                          "I'm a dancer, reader, dreamer, and a believer that every little step eventually leads to the right place.",
+                          'I graduated from Ashoka university with an honours in economics and finance. Post-graduation, I was set to be buried in financial spreadsheets, but life had different plans.',
+                          'Elewen began as an idea my co-founder and I developed while exploring the opportunity to build a thoughtful, design-driven brand.',
+                        ]
+                      ).map((para, i) => (
+                        <p key={i}>{para}</p>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="anim-element slide-from-right w-full min-[540px]:w-1/2 max-w-[600px] shrink-0 h-[320px] min-[540px]:h-[420px] lg:h-[520px] xl:h-[600px] bg-[#080808] overflow-hidden mx-auto min-[540px]:mx-0 -mr-0 min-[540px]:-mr-10 lg:-mr-20 xl:-mr-[100px]">
+                  <div className="anim-element slide-from-right w-full min-[540px]:w-1/2 max-w-[600px] shrink-0 h-[320px] min-[540px]:h-[420px] lg:h-[520px] xl:h-[600px] bg-[#080808] overflow-hidden mx-auto min-[540px]:mx-0 -mr-0 min-[540px]:-mr-10 lg:-mr-20 xl:-mr-[100px] rounded-[10px] min-[540px]:rounded-none">
                     {gauriSrc && (
                       <Img
                         src={gauriSrc}
                         alt="Gauri"
-                        className="w-full h-full object-cover object-[center_15%]"
+                        className="w-full h-full object-cover object-[center_15%] rounded-[20px] min-[540px]:rounded-none"
                       />
                     )}
                   </div>
@@ -621,14 +654,14 @@ const About = () => {
                   style={{ fontFamily: "'Malgin', serif" }}
                 >
                   <span className="reveal-wrapper block">
-                    <span className="reveal-text">Why Choose Elewen</span>
+                    <span className="reveal-text">{wc.heading ?? 'Why Choose Elewen'}</span>
                   </span>
                 </h2>
                 <p className="mt-4 min-[540px]:mt-6 w-full max-w-[520px] mx-auto min-[540px]:mx-0 text-[#591902] min-[540px]:text-white text-[14px] min-[540px]:text-[16px] leading-[1.5] opacity-80 text-center min-[540px]:text-left">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ '--delay': '0.1s' }}>
-                      Everything you need for a beautiful celebration, thoughtfully brought
-                      together.
+                      {wc.subheading ??
+                        'Everything you need for a beautiful celebration, thoughtfully brought together.'}
                     </span>
                   </span>
                 </p>
@@ -637,39 +670,47 @@ const About = () => {
                   {[
                     {
                       key: 'e47',
+                      left: 0,
                       iconW: 145.02,
                       iconH: 150.97,
                       iconLeft: 35,
                       iconTop: -10,
                       labelW: 174,
-                      label: 'Little details that lift your party',
+                      labelH: 50,
+                      label: wc.features?.[0]?.label ?? 'Little details that lift your party',
                     },
                     {
                       key: 'e49',
+                      left: 217,
                       iconW: 160,
                       iconH: 134,
                       iconLeft: 0,
                       iconTop: 45,
                       labelW: 174,
-                      label: "A few clicks and you're done planning",
+                      labelH: 75,
+                      label: wc.features?.[1]?.label ?? 'One complete look. Zero running around.',
                     },
                     {
                       key: 'e48',
+                      left: 434,
                       iconW: 149,
                       iconH: 152,
                       iconLeft: 14,
                       iconTop: 9,
                       labelW: 174,
-                      label: 'One complete look. Zero running around.',
+                      labelH: 75,
+                      label: wc.features?.[2]?.label ?? "A few clicks and you're done planning",
                     },
                     {
                       key: 'e50',
+                      left: 660,
                       iconW: 237,
                       iconH: 146,
                       iconLeft: -30,
                       iconTop: 36,
                       labelW: 174,
-                      label: "Behind the scenes? That's on us.",
+                      labelH: 75,
+                      label: wc.features?.[3]?.label ?? "Behind the scenes? That's on us.",
                     },
                   ].map((item, index) => {
                     const src = aboutAssetSrc(`${item.key}.png`)
@@ -721,42 +762,51 @@ const About = () => {
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
-                      <span className="reveal-text">Our approach to vendor quality</span>
+                      <span className="reveal-text">{vq.heading ?? 'Our approach to vendor quality'}</span>
                     </span>
                   </h2>
                   <p
                     className="mt-6 w-full max-w-[517px] text-white text-[16px] leading-[1.5] opacity-80"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
-                    We stand by the people behind every celebration, creating steady work, clear
-                    processes, and timely payments for vendors.
+                    {vq.body ??
+                      'We stand by the people behind every celebration, creating steady work, clear processes, and timely payments for vendors.'}
                   </p>
                 </div>
 
-                <div className="mt-10 w-full min-[540px]:w-fit mx-auto min-[540px]:mx-0 min-[540px]:ml-auto grid grid-cols-1 min-[540px]:grid-cols-3 gap-[20px] justify-items-center min-[540px]:justify-items-end">
+                <div className="mt-10 px-3 min-[540px]:px-0 w-full min-[540px]:w-fit mx-auto min-[540px]:mx-0 min-[540px]:ml-auto grid grid-cols-1 min-[540px]:grid-cols-3 gap-[20px] justify-items-stretch min-[540px]:justify-items-end">
                   {[
                     {
-                      title: 'Quality you can trust',
-                      desc: 'Every partner in the Elewen Network is quality-checked for skill, reliability, and consistency.',
+                      title: vq.cards?.[0]?.title ?? 'Quality you can trust',
+                      desc:
+                        vq.cards?.[0]?.description ??
+                        'Every partner in the Elewen Network is quality-checked for skill, reliability, and consistency.',
                       iconName: 'quality-icon.png',
+                      titleWidth: '218px',
                     },
                     {
-                      title: 'Built for everyone involved',
-                      desc: 'By removing middlemen, we give customers better value and help our partners work in a more organised, digital, and timely system.',
+                      title: vq.cards?.[1]?.title ?? 'Built for everyone involved',
+                      desc:
+                        vq.cards?.[1]?.description ??
+                        'By removing middlemen, we give customers better value and help our partners work in a more organised, digital, and timely system.',
                       iconName: 'everyone-icon.png',
+                      titleWidth: '275px',
                     },
                     {
-                      title: 'Clear tiers. Simple Choices',
-                      desc: 'Our partners are grouped into three levels. You choose your package, and we take care of the rest.',
+                      title: vq.cards?.[2]?.title ?? 'Clear tiers. Simple Choices',
+                      desc:
+                        vq.cards?.[2]?.description ??
+                        'Our partners are grouped into three levels. You choose your package, and we take care of the rest.',
                       iconName: 'tiers-icon.png',
+                      titleWidth: '279px',
                     },
                   ].map((card, index) => {
+                    // Dynamically resolve the specific image for this card
                     const currentIconSrc = aboutAssetSrc(card.iconName) || iconSrc
-
                     return (
                       <div
                         key={index}
-                        className="w-full max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] p-6 flex flex-col items-center gap-5"
+                        className="w-full min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] p-6 flex flex-col items-center gap-5"
                       >
                         <div className="w-[80px] h-[80px] shrink-0">
                           {currentIconSrc && (
@@ -779,13 +829,21 @@ const About = () => {
                         <div className="flex flex-col items-center gap-4 w-full">
                           <h5
                             className="text-[#2D2D2D] text-[21px] font-normal text-center leading-[120%]"
-                            style={{ fontFamily: "'Poppins', sans-serif" }}
+                            style={{
+                              fontFamily: "'Poppins', sans-serif",
+                              lineHeight: '120%',
+                              width: card.titleWidth,
+                            }}
                           >
                             {card.title}
                           </h5>
                           <p
                             className="text-[#767676] text-[12px] font-normal text-center leading-[150%] w-full"
-                            style={{ fontFamily: "'Poppins', sans-serif" }}
+                            style={{
+                              fontFamily: "'Poppins', sans-serif",
+                              lineHeight: '150%',
+                              width: '276px',
+                            }}
                           >
                             {card.desc}
                           </p>
@@ -797,7 +855,7 @@ const About = () => {
               </div>
             </div>
           </div>
-        </section>
+        </section >
 
         {/* --- Call To Action Section --- */}
         {/* Frame 271 */}
@@ -808,14 +866,14 @@ const About = () => {
                 className="text-[#FFFFFF] text-[28px] min-[540px]:text-[40px] lg:text-[47px] font-normal leading-[1.05] m-0"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                Not a part of the Elewen Network yet?
+                {vc.heading ?? 'Not a part of the Elewen Network yet?'}
               </h3>
-
+              {/* Frame 151 (Button Group) */}
               <h5
                 className="text-[#FFFFFF] text-[18px] min-[540px]:text-[24px] lg:text-[27px] font-normal leading-[1.05] m-0"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                Come join the fam.
+                {vc.subheading ?? 'Come join the fam.'}
               </h5>
             </div>
 
@@ -825,7 +883,7 @@ const About = () => {
                   className="text-[#591902] text-[16px] font-medium leading-[150%]"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
-                  Customer Login
+                  {vc.ctas?.[0]?.label ?? 'Customer Login'}
                 </span>
 
                 <div className="flex flex-row justify-center items-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-full shrink-0">
@@ -851,16 +909,15 @@ const About = () => {
                   className="text-[#591902] text-[16px] font-medium leading-[150%]"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
-                  Join as Vendor
+                  {vc.ctas?.[1]?.label ?? 'Join as Vendor'}
                 </span>
               </button>
             </div>
           </div>
         </div>
       </section>
-
       {/* --- SCROLL-TRACED OBJECT --- */}
-      <img src={objectImg} alt="" style={objStyle} />
+      < img src={objectImg} alt="" style={objStyle} />
     </>
   )
 }

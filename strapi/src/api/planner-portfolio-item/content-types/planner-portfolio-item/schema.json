@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "planner_portfolio_items",
+  "info": {
+    "singularName": "planner-portfolio-item",
+    "pluralName": "planner-portfolio-items",
+    "displayName": "Planner Portfolio Item"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "serial_number": {
+      "type": "integer"
+    },
+    "description": {
+      "type": "blocks"
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "entertainment_media",
+        "corporate_networking",
+        "launches_brand",
+        "literary_cultural",
+        "social"
+      ]
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "display_order": {
+      "type": "integer"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

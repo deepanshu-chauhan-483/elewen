@@ -9,10 +9,11 @@
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
-async function request(method, path, body) {
+async function request(method, path, body, opts = {}) {
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // send/receive HttpOnly refresh cookie
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
     ...(body ? { body: JSON.stringify(body) } : {}),
   })
 
@@ -24,10 +25,42 @@ async function request(method, path, body) {
   return res.json()
 }
 
-export const apiGet = path => request('GET', path)
-export const apiPost = (path, body) => request('POST', path, body)
-export const apiPut = (path, body) => request('PUT', path, body)
-export const apiDel = path => request('DELETE', path)
+export const apiGet = (path, opts) => request('GET', path, null, opts)
+export const apiPost = (path, body, opts) => request('POST', path, body, opts)
+export const apiPut = (path, body, opts) => request('PUT', path, body, opts)
+export const apiDel = (path, opts) => request('DELETE', path, null, opts)
+
+/* ── Auth ─────────────────────────────────────────────────────────────────── */
+
+export const authRegister = body => apiPost('/auth/register', body)
+export const authLogin = body => apiPost('/auth/login', body)
+export const authLogout = () => apiPost('/auth/logout')
+export const authRefresh = () => apiPost('/auth/refresh')
+export const authMe = token => apiGet('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+export const authForgotPassword = email => apiPost('/auth/forgot-password', { email })
+export const authResetPassword = body => apiPost('/auth/reset-password', body)
+export const authGoogleSession = access_token => apiPost('/auth/google/session', { access_token })
+
+/* ── Consultation ─────────────────────────────────────────────────────────── */
+
+/**
+ * Submit a Book a Consultation enquiry.
+ * Maps to POST /consultations in the Express API.
+ *
+ * @param {Object} body
+ * @param {string} body.full_name
+ * @param {string} body.email
+ * @param {string} body.phone
+ * @param {string} [body.event_type]
+ * @param {string} [body.event_date]
+ * @param {string} [body.guest_count]
+ * @param {string} [body.city]
+ * @param {string} [body.budget_range]
+ * @param {string} [body.vision_notes]
+ */
+export function submitConsultation(body) {
+  return apiPost('/consultations', body)
+}
 
 /* ── Planner Lead ─────────────────────────────────────────────────────────── */
 
