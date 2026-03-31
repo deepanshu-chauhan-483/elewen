@@ -226,7 +226,7 @@ const PlanEventSection = () => {
             </span>
           </p>
 
-          <span className="hidden md:inline-flex reveal-wrapper reveal-on-scroll">
+          <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
               <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
                 <span className="text-white font-medium text-[15px] mr-5">
@@ -253,12 +253,15 @@ const PlanEventSection = () => {
         </div>
       </div>
 
-      <hr className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15 z-10" />
+      <div className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen h-[1px] z-10 reveal-border-x">
+        <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+      </div>
 
       {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         {/* Categories Bar */}
-        <aside className="w-full md:w-[320px] pt-8 pb-0 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 md:border-r border-[#3D4035]/15">
+        <aside className="w-full md:w-[320px] pt-8 pb-0 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 relative reveal-border-y">
+          <div className="hidden md:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           <div className="flex flex-row md:flex-col items-center md:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
@@ -441,27 +444,31 @@ const PlanEventSection = () => {
             </div>
 
             {/* Mobile View All Button */}
-            <div className="flex md:hidden justify-center pb-12">
-              <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
-                <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
-                  {s.cta_label ?? 'View All'}
+            <div className="flex md:hidden justify-center pb-12 reveal-on-scroll">
+              <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
+                <span className="reveal-text">
+                  <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                    <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
+                      {s.cta_label ?? 'View All'}
+                    </span>
+                    <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                      <svg
+                        className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M7 17L17 7M17 7H9M17 7v8"
+                        />
+                      </svg>
+                    </div>
+                  </button>
                 </span>
-                <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
-                  <svg
-                    className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M7 17L17 7M17 7H9M17 7v8"
-                    />
-                  </svg>
-                </div>
-              </button>
+              </span>
             </div>
           </div>
         </div>
@@ -571,7 +578,7 @@ const WhatToPlanSection = () => {
             </span>
           </p>
 
-          <span className="hidden md:inline-flex reveal-wrapper reveal-on-scroll">
+          <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
               <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
                 <span className="text-white font-medium text-[15px] mr-5">
@@ -614,12 +621,15 @@ const WhatToPlanSection = () => {
         </h2>
       </div>
 
-      <hr className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15" />
+      <div className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen h-[1px] reveal-border-x">
+        <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+      </div>
 
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
-        <div className="flex-1 order-last lg:order-none py-4 md:py-16 px-6 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15">
+        <div className="flex-1 order-last lg:order-none py-4 md:py-16 px-6 md:px-12 lg:px-8 relative reveal-border-y">
+          <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           {/* Cards Carousel Area */}
-          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 lg:border-r border-[#3D4035]/15 w-full overflow-visible lg:overflow-hidden">
+          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible lg:overflow-hidden">
             <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] lg:min-h-0">
               {/* Mobile Left Navigation Arrow */}
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
@@ -760,8 +770,8 @@ const WhatToPlanSection = () => {
             </div>
 
             {/* Mobile View All Button */}
-            <div className="flex lg:hidden justify-center pb-12 reveal-on-scroll">
-              <span className="reveal-wrapper">
+            <div className="flex md:hidden justify-center pb-12 reveal-on-scroll">
+              <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
                 <span className="reveal-text">
                   <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
                     <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
@@ -835,8 +845,7 @@ const WhatToPlanSection = () => {
 
 const ThoughtBubbleIcon = () => (
   <svg
-    width="80"
-    height="80"
+    className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px]"
     viewBox="0 0 80 80"
     fill="none"
     stroke="#FFFFFF"
@@ -852,8 +861,7 @@ const ThoughtBubbleIcon = () => (
 
 const ChecklistIcon = () => (
   <svg
-    width="80"
-    height="80"
+    className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px]"
     viewBox="0 0 80 80"
     fill="none"
     stroke="#FFFFFF"
@@ -872,8 +880,7 @@ const ChecklistIcon = () => (
 
 const GridIcon = () => (
   <svg
-    width="80"
-    height="80"
+    className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px]"
     viewBox="0 0 80 80"
     fill="none"
     stroke="#FFFFFF"
@@ -890,8 +897,7 @@ const GridIcon = () => (
 
 const PlusIcon = () => (
   <svg
-    width="80"
-    height="80"
+    className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px]"
     viewBox="0 0 80 80"
     fill="none"
     stroke="#FFFFFF"
@@ -906,8 +912,7 @@ const PlusIcon = () => (
 
 const LightbulbIcon = () => (
   <svg
-    width="80"
-    height="80"
+    className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px]"
     viewBox="0 0 80 80"
     fill="none"
     stroke="#FFFFFF"
@@ -923,8 +928,7 @@ const LightbulbIcon = () => (
 
 const CoinIcon = () => (
   <svg
-    width="80"
-    height="80"
+    className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px]"
     viewBox="0 0 80 80"
     fill="none"
     stroke="#FFFFFF"
@@ -934,7 +938,10 @@ const CoinIcon = () => (
   >
     <circle cx="40" cy="40" r="24" />
     <circle cx="40" cy="40" r="18" />
-    <path d="M40 30V50M36 34H42C44.2091 34 46 35.7909 46 38C46 40.2091 44.2091 42 42 42H38C35.7909 42 34 43.7909 34 46C34 48.2091 35.7909 50 38 50H44" />
+    <path
+      d="M40 30V50M36 34H42C44.2091 34 46 35.7909 46 38C46 40.2091 44.2091 42 42 42H38C35.7909 42 34 43.7909 34 46C34 48.2091 35.7909 50 38 50H44"
+      transform="translate(80, 0) scale(-1, 1)"
+    />
   </svg>
 )
 
@@ -1168,7 +1175,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 
       <div
         ref={stepsWrapRef}
-        className="relative w-full max-w-[1000px] mx-auto flex flex-col items-center"
+        className="relative w-full max-w-[1000px] mx-auto flex flex-col items-center px-4 md:px-0"
       >
         <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-white opacity-20 -translate-x-1/2" />
 
@@ -1189,16 +1196,16 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
             >
               {step.side === 'right' ? (
                 <>
-                  <div className="left-content w-1/2 pr-6 md:pr-20 flex justify-end items-start mt-8 step-reveal opacity-0">
+                  <div className="left-content w-1/2 pr-4 md:pr-20 flex justify-end items-start mt-8 step-reveal opacity-0 min-w-0">
                     <span className="reveal-wrapper">
                       <span className="reveal-text reveal-text-x-left">
                         <IconComponent />
                       </span>
                     </span>
                   </div>
-                  <div className="right-content w-1/2 pl-6 md:pl-20 flex flex-col items-start text-left relative z-20 opacity-0">
+                  <div className="right-content w-1/2 min-w-0 pl-4 md:pl-20 flex flex-col items-start self-stretch text-left relative z-20 opacity-0">
                     <div
-                      className="reveal-wrapper reveal-wrapper-circle reveal-wrapper-circle-right step-reveal mb-6"
+                      className="reveal-wrapper reveal-wrapper-circle reveal-wrapper-circle-right step-reveal mb-2 md:mb-6"
                       style={{ display: 'inline-flex' }}
                     >
                       <div className="reveal-text reveal-text-x-right reveal-circle-text">
@@ -1213,12 +1220,12 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
                         </div>
                       </div>
                     </div>
-                    <h3 className="text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                    <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{step.title}</span>
                       </span>
                     </h3>
-                    <p className="text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                    <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{step.desc}</span>
                       </span>
@@ -1227,9 +1234,9 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
                 </>
               ) : (
                 <>
-                  <div className="left-content w-1/2 pr-6 md:pr-20 flex flex-col items-end text-right relative z-20 step-reveal opacity-0">
+                  <div className="left-content w-1/2 min-w-0 pr-4 md:pr-20 flex flex-col items-start md:items-end text-left md:text-right relative z-20 step-reveal opacity-0 self-stretch">
                     <div
-                      className="reveal-wrapper reveal-wrapper-circle step-reveal mb-6"
+                      className="reveal-wrapper reveal-wrapper-circle reveal-wrapper-circle-left step-reveal mb-2 md:mb-6"
                       style={{ display: 'inline-flex' }}
                     >
                       <div className="reveal-text reveal-text-x-left reveal-circle-text">
@@ -1244,18 +1251,18 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
                         </div>
                       </div>
                     </div>
-                    <h3 className="text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                    <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{step.title}</span>
                       </span>
                     </h3>
-                    <p className="text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                    <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{step.desc}</span>
                       </span>
                     </p>
                   </div>
-                  <div className="right-content w-1/2 pl-6 md:pl-20 flex justify-start items-start mt-8 step-reveal opacity-0">
+                  <div className="right-content w-1/2 min-w-0 pl-4 md:pl-20 flex justify-start items-start mt-8 step-reveal opacity-0">
                     <span className="reveal-wrapper">
                       <span className="reveal-text reveal-text-x-right">
                         <IconComponent />
@@ -1299,28 +1306,32 @@ const CTASection = () => {
           </span>
         </p>
 
-        <button className="group mt-[40px] flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] h-[33.54px] pl-[18.2948px] pr-[3.04913px] py-[3.04913px] md:rounded-[56px] md:w-[243px] md:h-[44px] md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors">
-          <span className="text-[#FAFAFA] text-[12px] md:text-[16px] font-medium leading-[150%] tracking-wide w-[120px] h-[18px] md:w-auto md:h-auto whitespace-nowrap">
-            {s.cta_label ?? 'Book a Consultation'}
-          </span>
+        <span className="mt-[40px] reveal-wrapper reveal-wrapper--overflow-visible reveal-on-scroll">
+          <span className="reveal-text">
+            <button className="group flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] min-h-[36px] h-[36px] pl-[18.2948px] pr-[3.04913px] py-0 md:rounded-[56px] md:w-[243px] md:h-[44px] md:min-h-0 md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors">
+              <span className="text-[#FAFAFA] text-[12px] md:text-[16px] font-medium leading-[150%] tracking-wide w-[120px] h-[18px] md:w-auto md:h-auto whitespace-nowrap">
+                {s.cta_label ?? 'Book a Consultation'}
+              </span>
 
-          <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-            <svg
-              className="transition-transform duration-300 ease-out group-hover:rotate-45"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#CDB17E"
-              strokeWidth="1.14342"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M7 17L17 7" />
-              <path d="M7 7h10v10" />
-            </svg>
-          </div>
-        </button>
+              <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                <svg
+                  className="transition-transform duration-300 ease-out group-hover:rotate-45"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#CDB17E"
+                  strokeWidth="1.14342"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M7 17L17 7" />
+                  <path d="M7 7h10v10" />
+                </svg>
+              </div>
+            </button>
+          </span>
+        </span>
       </div>
     </section>
   )
@@ -1625,22 +1636,20 @@ const ChecklistSection = () => {
 
     const isMobile = window.innerWidth < 768
 
-    // UPDATED: Lift the door higher (-260) on mobile so the bottom isn't cut off
     const scaleEnd = isMobile ? 3.6 : 4
     const gateLiftY = isMobile ? -260 : -220
     const scrollEnd = isMobile ? 1300 : 1500
     const scrubVal = isMobile ? 1 : 1
-    // GSAP `pin` computes `top: ...px` dynamically at the moment `start` is reached.
-    // Using a viewport-height based start keeps the pinned element's `top` consistent
-    // across different mobile screen heights.
+
     const getMobileStartTrigger = () => {
-      const vh = window.innerHeight || 800
-      // Short phones: pin earlier (smaller %), tall phones: pin slightly later (bigger %).
-      if (vh <= 700) return 'top 45%'
-      if (vh <= 850) return 'top 50%'
-      return 'top 60%'
+      if (!gate) return 'bottom bottom'
+      // The door is scaled by 2.8 on mobile from the center.
+      // This means it extends 0.9 * height below its bounding box.
+      // We want to trigger when the visual bottom reaches the viewport bottom.
+      const extraHeight = gate.offsetHeight * 0.9
+      return `bottom+=${extraHeight}px bottom`
     }
-    const startTrigger = isMobile ? getMobileStartTrigger : 'top top'
+    const startTrigger = isMobile ? getMobileStartTrigger : 'bottom bottom'
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -1928,10 +1937,10 @@ const ChecklistSection = () => {
               </p>
             </div>
 
-            {/* STEP 4 */}
-            <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px]">
+            {/* STEP 4 — outer clip + img as direct child (260×211) matches original positioning */}
+            <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
               <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] rounded-br-full z-0`}
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0`}
                 style={{ '--delay': '1.5s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
               ></div>
               <img
@@ -2582,6 +2591,7 @@ const CelebrationFeelingSection = () => {
 
   const containerRef = useRef(null)
   const [isMobile, setIsMobile] = useState(false)
+  const revealRef = useRef(null)
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -2598,14 +2608,38 @@ const CelebrationFeelingSection = () => {
     offset: ['start end', 'end start'],
   })
 
-  // Stronger parallax on both breakpoints.
+  // Slightly stronger parallax on both breakpoints.
   // Negative y moves the images upward as the section scrolls.
-  const intensity = isMobile ? 1.7 : 1.45
+  const intensity = isMobile ? 1.95 : 1.7
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -150 * intensity])
   const y2 = useTransform(scrollYProgress, [0, 1], [0, -80 * intensity])
   const y3 = useTransform(scrollYProgress, [0, 1], [0, -120 * intensity])
   const y4 = useTransform(scrollYProgress, [0, 1], [0, -60 * intensity])
   const y5 = useTransform(scrollYProgress, [0, 1], [0, -200 * intensity])
+
+  useEffect(() => {
+    const root = revealRef.current
+    if (!root) return
+
+    const imgs = Array.from(root.querySelectorAll('.celebration-img-reveal')).filter(
+      el => !el.classList.contains('is-visible')
+    )
+    if (imgs.length === 0) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          io.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.18, rootMargin: '0px 0px -8% 0px' }
+    )
+
+    imgs.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [])
 
   const imageShadow =
     '-54px 121px 37px rgba(0, 0, 0, 0.01), -34px 77px 34px rgba(0, 0, 0, 0.04), -19px 43px 29px rgba(0, 0, 0, 0.14), -9px 19px 21px rgba(0, 0, 0, 0.24), -2px 5px 12px rgba(0, 0, 0, 0.28)'
@@ -2618,49 +2652,49 @@ const CelebrationFeelingSection = () => {
       }}
       className="w-full bg-[#BFAC9B] overflow-hidden flex justify-center font-sans relative h-[700px] md:h-[900px]"
     >
-      <div className="relative w-[1440px] max-w-full h-full shrink-0">
+      <div ref={revealRef} className="relative w-[1440px] max-w-full h-full shrink-0">
         {/* Img 1 (Mapped to Figma Rectangle 37 on Mobile) */}
         <motion.img
-          style={{ y: y1, boxShadow: imageShadow }}
+          style={{ y: y1, boxShadow: imageShadow, '--img-delay': '0.02s' }}
           src={img1}
           alt="Event Decor"
-          className="absolute w-[336px] md:w-[347px] h-[271px] md:h-[280px] -left-[103px] md:left-[0px] top-[5px] md:top-[100px] object-cover pointer-events-none z-0"
+          className="absolute w-[336px] md:w-[347px] h-[271px] md:h-[280px] -left-[103px] md:left-[0px] top-[5px] md:top-[100px] object-cover pointer-events-none z-0 celebration-img-reveal"
           loading="lazy"
         />
 
         {/* Img 2 (Mapped to Figma Rectangle 38 Bottom-Left on Mobile) */}
         <motion.img
-          style={{ y: y2, boxShadow: imageShadow }}
+          style={{ y: y2, boxShadow: imageShadow, '--img-delay': '0.10s' }}
           src={img2}
           alt="Event Decor"
-          className="absolute w-[246px] md:w-[249px] h-[268px] md:h-[375px] -left-[46px] md:left-[42px] top-[432px] md:top-[450px] object-cover pointer-events-none z-0"
+          className="absolute w-[246px] md:w-[249px] h-[268px] md:h-[375px] -left-[46px] md:left-[42px] top-[432px] md:top-[450px] object-cover pointer-events-none z-0 celebration-img-reveal"
           loading="lazy"
         />
 
         {/* Img 3 (Hidden on Mobile, visible on Desktop) */}
         <motion.img
-          style={{ y: y3, boxShadow: imageShadow }}
+          style={{ y: y3, boxShadow: imageShadow, '--img-delay': '0.18s' }}
           src={img3}
           alt="Event Decor"
-          className="absolute hidden md:block w-[290px] h-[316px] left-[497px] top-[700px] object-cover pointer-events-none z-0"
+          className="absolute hidden md:block w-[290px] h-[316px] left-[497px] top-[700px] object-cover pointer-events-none z-0 celebration-img-reveal"
           loading="lazy"
         />
 
         {/* Img 4 (Mapped to Figma Rectangle 38 Top-Right on Mobile) */}
         <motion.img
-          style={{ y: y4, boxShadow: imageShadow }}
+          style={{ y: y4, boxShadow: imageShadow, '--img-delay': '0.26s' }}
           src={img4}
           alt="Event Decor"
-          className="absolute w-[158px] md:w-[312px] h-[161px] md:h-[318px] left-[278px] md:left-[1034px] top-[391px] md:top-[400px] object-cover pointer-events-none z-0"
+          className="absolute w-[158px] md:w-[312px] h-[161px] md:h-[318px] left-[278px] md:left-[1034px] top-[391px] md:top-[400px] object-cover pointer-events-none z-0 celebration-img-reveal"
           loading="lazy"
         />
 
         {/* Img 5 (Mapped to Figma Rectangle 40 on Mobile) */}
         <motion.img
-          style={{ y: y5, boxShadow: imageShadow }}
+          style={{ y: y5, boxShadow: imageShadow, '--img-delay': '0.34s' }}
           src={img5}
           alt="Event Decor"
-          className="absolute w-[215px] md:w-[505px] h-[113px] md:h-[265px] left-[257px] md:left-[909px] top-[141px] md:top-[50px] object-cover pointer-events-none z-0"
+          className="absolute w-[215px] md:w-[505px] h-[113px] md:h-[265px] left-[257px] md:left-[909px] top-[141px] md:top-[50px] object-cover pointer-events-none z-0 celebration-img-reveal"
           loading="lazy"
         />
 
@@ -2691,26 +2725,30 @@ const CelebrationFeelingSection = () => {
             </span>
           </p>
 
-          <button className="mt-[32px] md:mt-10 w-[181px] md:w-[213px] h-[33.5px] md:h-[44px] group flex items-center justify-between bg-[#FAFAFA] md:bg-[#FFFFFF] rounded-[42.7px] md:rounded-[56px] pl-[18.3px] md:pl-[24px] pr-[3px] md:pr-[4px] py-[3px] md:py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg">
-            <span className="text-[#CDB17E] text-[12px] md:text-[16px] font-medium leading-[1.5] tracking-wide font-['Poppins'] md:font-sans">
-              <span className="md:hidden">{s.cta_label ?? 'Book a consultation'}</span>
-              <span className="hidden md:inline">{s.cta_label ?? 'Plan with Elewen'}</span>
+          <span className="mt-[32px] md:mt-10 reveal-wrapper reveal-on-scroll">
+            <span className="reveal-text">
+              <button className="w-[181px] md:w-[213px] h-[33.5px] md:h-[44px] group flex items-center justify-between bg-[#FAFAFA] md:bg-[#FFFFFF] rounded-[42.7px] md:rounded-[56px] pl-[18.3px] md:pl-[24px] pr-[3px] md:pr-[4px] py-[3px] md:py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg">
+                <span className="text-[#CDB17E] text-[12px] md:text-[16px] font-medium leading-[1.5] tracking-wide font-['Poppins'] md:font-sans">
+                  <span className="md:hidden">{s.cta_label ?? 'Book a consultation'}</span>
+                  <span className="hidden md:inline">{s.cta_label ?? 'Plan with Elewen'}</span>
+                </span>
+                <div className="w-[27.4px] h-[27.4px] md:w-[36px] md:h-[36px] bg-[#CDB17E] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 border-[1.1px] md:border-[1.5px] border-[#FAFAFA] md:border-[#FFFFFF]">
+                  <svg
+                    className="transition-transform duration-300 ease-out group-hover:rotate-45 w-[15.25px] h-[15.25px] md:w-[20px] md:h-[20px]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#FAFAFA"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M7 17L17 7" />
+                    <path d="M7 7h10v10" />
+                  </svg>
+                </div>
+              </button>
             </span>
-            <div className="w-[27.4px] h-[27.4px] md:w-[36px] md:h-[36px] bg-[#CDB17E] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 border-[1.1px] md:border-[1.5px] border-[#FAFAFA] md:border-[#FFFFFF]">
-              <svg
-                className="transition-transform duration-300 ease-out group-hover:rotate-45 w-[15.25px] h-[15.25px] md:w-[20px] md:h-[20px]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#FAFAFA"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M7 17L17 7" />
-                <path d="M7 7h10v10" />
-              </svg>
-            </div>
-          </button>
+          </span>
         </div>
       </div>
     </section>
@@ -2763,8 +2801,34 @@ const PlanningGuidesSection = () => {
     setPage(0)
   }
 
+  const sectionRef = useRef(null)
+
+  useEffect(() => {
+    const root = sectionRef.current
+    if (!root) return
+
+    const cards = Array.from(root.querySelectorAll('.card-reveal')).filter(
+      el => !el.classList.contains('is-visible')
+    )
+    if (cards.length === 0) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          io.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+    )
+
+    cards.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [visibleBlogs, page, activeCategory])
+
   return (
-    <section className="w-full min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans">
+    <section ref={sectionRef} className="w-full min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans">
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center relative z-10">
         <h2
@@ -2789,38 +2853,45 @@ const PlanningGuidesSection = () => {
             </span>
           </p>
 
-          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">
-              {s.cta_label ?? 'View All'}
+          <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
+            <span className="reveal-text">
+              <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+                <span className="text-white font-medium text-[15px] mr-5">
+                  {s.cta_label ?? 'View All'}
+                </span>
+                <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
+                  <svg
+                    className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                  </svg>
+                </div>
+              </button>
             </span>
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <svg
-                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
-              </svg>
-            </div>
-          </button>
+          </span>
         </div>
       </div>
 
-      <hr className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen border-t border-[#3D4035]/15 z-10" />
+      <div className="hidden md:block relative left-1/2 -translate-x-1/2 w-screen h-[1px] z-10 reveal-border-x">
+        <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+      </div>
 
       {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b lg:border-b-0 lg:border-r border-[#3D4035]/15">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b-0 relative reveal-border-y">
+          <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] lg:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
                 <React.Fragment key={cat}>
                   <div
-                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5"
+                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5 reveal-on-scroll"
                     onClick={() => handleCategorySelect(cat)}
                   >
                     <span
@@ -2830,7 +2901,9 @@ const PlanningGuidesSection = () => {
                           : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
                       }`}
                     >
-                      {cat}
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{cat}</span>
+                      </span>
                     </span>
 
                     {/* Animated Underline */}
@@ -2882,13 +2955,8 @@ const PlanningGuidesSection = () => {
                   {visibleBlogs.map((blog, i) => (
                     <div
                       key={blog.id ?? blog.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
-                      style={{
-                        opacity: 0,
-                        animation: 'slideInBottom 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        animationDelay: `${0.08 + i * 0.06}s`,
-                        willChange: 'transform, opacity',
-                      }}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
+                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
@@ -2999,27 +3067,31 @@ const PlanningGuidesSection = () => {
             </div>
 
             {/* Mobile View All Button */}
-            <div className="flex md:hidden justify-center pb-12">
-              <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
-                <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
-                  {s.cta_label ?? 'View All'}
+            <div className="flex md:hidden justify-center pb-12 reveal-on-scroll">
+              <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
+                <span className="reveal-text">
+                  <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                    <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
+                      {s.cta_label ?? 'View All'}
+                    </span>
+                    <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                      <svg
+                        className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M7 17L17 7M17 7H9M17 7v8"
+                        />
+                      </svg>
+                    </div>
+                  </button>
                 </span>
-                <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
-                  <svg
-                    className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M7 17L17 7M17 7H9M17 7v8"
-                    />
-                  </svg>
-                </div>
-              </button>
+              </span>
             </div>
           </div>
         </div>
@@ -3033,6 +3105,7 @@ const TestimonialsSection = () => {
   const testimonialsHeading =
     cms.testimonials_intro?.heading ?? 'Real celebrations. Real experiences.'
 
+  const sectionRef = useRef(null)
   const swiperRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -3052,6 +3125,30 @@ const TestimonialsSection = () => {
   const SLIDE_COUNT = safeTestimonials.length || 1
   const slides = safeTestimonials.length ? [...safeTestimonials, ...safeTestimonials] : []
 
+  useEffect(() => {
+    const root = sectionRef.current
+    if (!root) return
+
+    const cards = Array.from(root.querySelectorAll('.testimonial-card-reveal')).filter(
+      el => !el.classList.contains('is-visible')
+    )
+    if (cards.length === 0) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          io.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+    )
+
+    cards.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [slides.length])
+
   // Avoid initializing Swiper with empty/undefined data.
   if (safeTestimonials.length === 0) {
     return (
@@ -3069,7 +3166,10 @@ const TestimonialsSection = () => {
   }
 
   return (
-    <section className="relative w-full min-h-[479px] md:min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center">
+    <section
+      ref={sectionRef}
+      className="relative w-full min-h-[479px] md:min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center"
+    >
       <h2
         className="text-[#FAFAFA] md:text-[#FFFFFF] text-[24px] md:text-[61px] leading-[1] text-center font-serif mt-[40px] md:mt-[80px] w-[353px] md:w-auto z-10 px-4 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
@@ -3106,6 +3206,7 @@ const TestimonialsSection = () => {
               {({ isActive }) => (
                 <div
                   className={`bg-[#FFFFFF] flex flex-col items-start cursor-pointer origin-center
+                    testimonial-card-reveal
                     transition-all duration-500 ease-in-out shrink-0 
                     rounded-[6.7px] md:rounded-[12px]
                     w-[289px] md:w-[517.5px] 
@@ -3118,6 +3219,7 @@ const TestimonialsSection = () => {
                         : 'opacity-50 md:opacity-80 scale-[0.75] md:scale-[0.8]'
                     }
                   `}
+                  style={{ '--delay': `${0.04 + (index % 4) * 0.06}s` }}
                   onClick={() => swiperRef.current?.slideToLoop(index)}
                 >
                   {/* Stars */}
@@ -3162,56 +3264,68 @@ const TestimonialsSection = () => {
       {/* Navigation Controls (Arrows + Dots) */}
       <div className="relative z-30 w-[289px] md:w-[611px] h-[40px] md:h-[48px] mt-[20px] md:mt-[40px] flex justify-between items-center gap-[14.44px] md:gap-[25px]">
         {/* Previous Button */}
-        <button
-          type="button"
-          onClick={() => swiperRef.current?.slidePrev()}
-          aria-label="Previous testimonial"
-          className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] bg-[#CDB17E] rounded-[55px] md:rounded-[96px] flex items-center justify-center hover:bg-[#bfa06b] transition-colors shrink-0"
-        >
-          <svg
-            className="w-[16.18px] h-[16.18px] md:w-[18px] md:h-[18px]"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth={isMobile ? '1.5' : '2'}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 12H5" />
-            <path d="m12 19-7-7 7-7" />
-          </svg>
-        </button>
+        <span className="reveal-on-scroll reveal-wrapper">
+          <span className="reveal-text reveal-text-x-left">
+            <button
+              type="button"
+              onClick={() => swiperRef.current?.slidePrev()}
+              aria-label="Previous testimonial"
+              className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] bg-[#CDB17E] rounded-[55px] md:rounded-[96px] flex items-center justify-center hover:bg-[#bfa06b] transition-colors shrink-0"
+            >
+              <svg
+                className="w-[16.18px] h-[16.18px] md:w-[18px] md:h-[18px]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth={isMobile ? '1.5' : '2'}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 12H5" />
+                <path d="m12 19-7-7 7-7" />
+              </svg>
+            </button>
+          </span>
+        </span>
 
         {/* Pagination Dots */}
-        <div className="flex items-center gap-[4px] w-[80px] md:w-[100px] h-[4px] md:h-[8px] justify-center mx-auto">
-          {safeTestimonials.map((_, idx) => (
-            <div
-              key={idx}
-              className={`h-[4px] md:h-[8px] rounded-[12px] md:rounded-[8px] transition-all duration-300 ${activeIndex === idx ? 'w-[20px] md:w-[52px] bg-[#CDB17E]' : 'w-[8px] bg-[#BFBFBF] md:bg-[#C8C8C8]'}`}
-            />
-          ))}
-        </div>
+        <span className="reveal-on-scroll reveal-wrapper">
+          <span className="reveal-text">
+            <div className="flex items-center gap-[4px] w-[80px] md:w-[100px] h-[4px] md:h-[8px] justify-center mx-auto">
+              {safeTestimonials.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`h-[4px] md:h-[8px] rounded-[12px] md:rounded-[8px] transition-all duration-300 ${activeIndex === idx ? 'w-[20px] md:w-[52px] bg-[#CDB17E]' : 'w-[8px] bg-[#BFBFBF] md:bg-[#C8C8C8]'}`}
+                />
+              ))}
+            </div>
+          </span>
+        </span>
 
         {/* Next Button */}
-        <button
-          type="button"
-          onClick={() => swiperRef.current?.slideNext()}
-          aria-label="Next testimonial"
-          className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] bg-[#CDB17E] rounded-[55px] md:rounded-[96px] flex items-center justify-center hover:bg-[#bfa06b] transition-colors shrink-0"
-        >
-          <svg
-            className="w-[16.18px] h-[16.18px] md:w-[18px] md:h-[18px]"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth={isMobile ? '1.5' : '2'}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 12h14" />
-            <path d="m12 5 7 7-7 7" />
-          </svg>
-        </button>
+        <span className="reveal-on-scroll reveal-wrapper">
+          <span className="reveal-text reveal-text-x-right">
+            <button
+              type="button"
+              onClick={() => swiperRef.current?.slideNext()}
+              aria-label="Next testimonial"
+              className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] bg-[#CDB17E] rounded-[55px] md:rounded-[96px] flex items-center justify-center hover:bg-[#bfa06b] transition-colors shrink-0"
+            >
+              <svg
+                className="w-[16.18px] h-[16.18px] md:w-[18px] md:h-[18px]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth={isMobile ? '1.5' : '2'}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </button>
+          </span>
+        </span>
       </div>
     </section>
   )
@@ -3224,6 +3338,30 @@ const SplitInfoSection = () => {
 
   // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
   const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
+
+  useEffect(() => {
+    const root = sectionRef.current
+    if (!root) return
+
+    const cards = Array.from(root.querySelectorAll('.card-reveal')).filter(
+      el => !el.classList.contains('is-visible')
+    )
+    if (cards.length === 0) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          io.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+    )
+
+    cards.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [])
 
   return (
     <section
@@ -3256,31 +3394,36 @@ const SplitInfoSection = () => {
               </span>
             </p>
 
-            <button className="box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] mt-[20px] lg:mt-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] hover:bg-gray-50 transition-colors">
-              <span className="text-[#591902] font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
-                {ig.cta_label ?? 'Join Our Instagram'}
+            <span className="mt-[20px] lg:mt-[16px] reveal-wrapper reveal-on-scroll">
+              <span className="reveal-text">
+                <button className="box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] hover:bg-gray-50 transition-colors">
+                  <span className="text-[#591902] font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
+                    {ig.cta_label ?? 'Join Our Instagram'}
+                  </span>
+                  <svg
+                    className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#591902"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                </button>
               </span>
-              <svg
-                className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#591902"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-            </button>
+            </span>
           </div>
 
           {/* Image Block */}
           <img
             src={inspirationImg}
             alt="Behind the scenes setup"
-            className="w-[40%] max-w-[156px] lg:max-w-[240px] h-[229px] lg:h-[351px] rounded-[3.57px] lg:rounded-[8px] object-cover object-[20%_center]"
+            className="w-[40%] max-w-[156px] lg:max-w-[240px] h-[229px] lg:h-[351px] rounded-[3.57px] lg:rounded-[8px] object-cover object-[20%_center] card-reveal"
+            style={{ '--delay': '0.08s' }}
             loading="lazy"
           />
         </div>
@@ -3288,7 +3431,10 @@ const SplitInfoSection = () => {
         {/* RIGHT SECTION - Partner */}
         <div className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px]">
           {/* Placeholder/Top Box */}
-          <div className="w-full max-w-[353px] lg:max-w-[420px] h-[152px] lg:h-[210px] bg-[#FFFFFF] rounded-[8px] overflow-hidden shrink-0" />
+          <div
+            className="w-full max-w-[353px] lg:max-w-[420px] h-[152px] lg:h-[210px] bg-[#FFFFFF] rounded-[8px] overflow-hidden shrink-0 card-reveal"
+            style={{ '--delay': '0.14s' }}
+          />
 
           {/* Text Content Block */}
           <div className="flex flex-col items-start w-full max-w-[353px] lg:max-w-[420px] mt-[32px] lg:mt-[40px]">
@@ -3311,28 +3457,32 @@ const SplitInfoSection = () => {
                 </span>
               </p>
 
-              <button className="box-border flex flex-row items-center justify-between pl-[18px] lg:pl-[24px] pr-[4px] lg:pr-[4px] py-[4px] lg:py-[4px] gap-[12px] lg:gap-[16px] w-max lg:w-[228px] h-[33.54px] lg:h-[44px] mt-[32px] lg:mt-[16px] bg-[#CDB17E] rounded-[42px] lg:rounded-[56px] hover:bg-[#bfa06b] transition-colors group">
-                <span className="text-[#FAFAFA] font-medium text-[12px] lg:text-[16px] leading-[150%] font-['Poppins'] lg:font-sans text-left">
-                  {vp.cta_label ?? 'Apply as Vendor'}
-                </span>
+              <span className="mt-[32px] lg:mt-[16px] reveal-wrapper reveal-wrapper--overflow-visible !pb-1 reveal-on-scroll">
+                <span className="reveal-text">
+                  <button className="box-border flex flex-row items-center justify-between pl-[18px] lg:pl-[24px] pr-[4px] lg:pr-[4px] py-0 lg:py-[4px] gap-[12px] lg:gap-[16px] w-max lg:w-[228px] min-h-[36px] h-[36px] lg:h-[44px] bg-[#CDB17E] rounded-[42px] lg:rounded-[56px] hover:bg-[#bfa06b] transition-colors group">
+                    <span className="text-[#FAFAFA] font-medium text-[12px] lg:text-[16px] leading-[150%] font-['Poppins'] lg:font-sans text-left">
+                      {vp.cta_label ?? 'Apply as Vendor'}
+                    </span>
 
-                <div className="flex items-center justify-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-[60px] p-[8px] shrink-0 transition-transform group-hover:scale-105">
-                  <svg
-                    className="transition-transform duration-300 ease-out group-hover:rotate-45"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#CDB17E"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M7 17L17 7" />
-                    <path d="M7 7h10v10" />
-                  </svg>
-                </div>
-              </button>
+                    <div className="flex items-center justify-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-[60px] p-[8px] shrink-0 transition-transform group-hover:scale-105">
+                      <svg
+                        className="transition-transform duration-300 ease-out group-hover:rotate-45"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#CDB17E"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M7 17L17 7" />
+                        <path d="M7 7h10v10" />
+                      </svg>
+                    </div>
+                  </button>
+                </span>
+              </span>
             </div>
           </div>
         </div>
@@ -3376,7 +3526,7 @@ export default function LandingPage() {
     const root = rootRef.current
     if (!root || typeof window === 'undefined') return
 
-    const targets = Array.from(root.querySelectorAll('.reveal-heading, .reveal-on-scroll'))
+    const targets = Array.from(root.querySelectorAll('.reveal-heading, .reveal-on-scroll, .reveal-border-x, .reveal-border-y'))
     if (targets.length === 0) return
 
     const animated = new Set()
@@ -3404,6 +3554,8 @@ export default function LandingPage() {
 
             pending.delete(el)
             animated.add(el)
+
+            el.classList.add('is-visible')
 
             // `querySelectorAll` doesn't include the element itself, so if the target IS a `.reveal-text`
             // (e.g. button wrapper), include it manually.

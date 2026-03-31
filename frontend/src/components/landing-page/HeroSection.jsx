@@ -317,18 +317,17 @@ const HeroSection = () => {
       // Config: reverse of load animation. Order = scroll-out order (last to appear = first to disappear).
       const scrollOutConfig = [
         { key: 'card2', start: 0, end: 0.021, y: 40 },
-        { key: 'card1', start: 0.021, end: 0.042, y: 40 },
-        { key: 'leftLine3', start: 0.042, end: 0.063, y: 8 },
-        { key: 'card0', start: 0.063, end: 0.083, y: 40 },
-        { key: 'leftLine2', start: 0.083, end: 0.104, y: 8 },
-        { key: 'leftLine1', start: 0.104, end: 0.125, y: 8 },
-        { key: 'ctaLine2', start: 0.125, end: 0.146, y: 16 },
-        { key: 'leftW', start: 0.146, end: 0.167, x: -16 },
-        { key: 'ctaLine2', start: 0.125, end: 0.146, y: 16 },
-        { key: 'ctaLine1', start: 0.167, end: 0.188, y: 16 },
-        { key: 'ctaArrow', start: 0.188, end: 0.208, x: -16, scale: 0.95 },
-        { key: 'heading', start: 0.208, end: 0.229, y: 80 },
-        { key: 'eyebrow', start: 0.229, end: 0.25, y: 16 },
+        { key: 'card1', start: 0, end: 0.021, y: 40 },
+        { key: 'card0', start: 0, end: 0.021, y: 40 },
+        { key: 'leftLine3', start: 0, end: 0.021, y: 8 },
+        { key: 'leftLine2', start: 0, end: 0.021, y: 8 },
+        { key: 'leftLine1', start: 0, end: 0.021, y: 8 },
+        { key: 'leftW', start: 0, end: 0.021, x: -16 },
+        { key: 'ctaLine2', start: 0.021, end: 0.042, y: 16 },
+        { key: 'ctaLine1', start: 0.042, end: 0.063, y: 16 },
+        { key: 'ctaArrow', start: 0.063, end: 0.083, x: -16, scale: 0.95 },
+        { key: 'heading', start: 0.083, end: 0.104, y: 80 },
+        { key: 'eyebrow', start: 0.104, end: 0.125, y: 16 },
       ]
 
       const scrollOutLerp = (p, cfg) => {
@@ -342,7 +341,7 @@ const HeroSection = () => {
 
       // ── ScrollTrigger: phases 2-3 ───────────────────────────────────────────
       const scrubSmooth = 3.5
-      const textCardsEnd = 0.25
+      const textCardsEnd = 0.125
       ScrollTrigger.create({
         trigger: wrapperRef.current,
         start: 'top top',
