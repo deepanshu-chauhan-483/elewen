@@ -390,3 +390,109 @@ export const getTimeline = async (req, res, next) => {
     next(err)
   }
 }
+
+// ─── POST /bookings/:id/notes ──────────────────────────────────────────────────
+// Customers submit a note (isInternal: false). Admin notes set isInternal: true.
+export const addNote = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+    const { note } = req.body
+
+    if (!note?.trim()) return res.status(400).json({ error: 'note is required' })
+
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    const entry = await prisma.bookingNote.create({
+      data: {
+        bookingId: id,
+        adminId: userId,
+        note: note.trim(),
+        isInternal: false,
+      },
+    })
+
+    res.status(201).json({ note: entry })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── GET /bookings/:id/notes ───────────────────────────────────────────────────
+// Customers see only non-internal notes.
+export const getNotes = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    const notes = await prisma.bookingNote.findMany({
+      where: { bookingId: id, isInternal: false },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    res.json({ notes })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── POST /bookings/:id/files ──────────────────────────────────────────────────
+// Client pre-uploads to Strapi/Cloudinary and passes back the URL.
+export const addFile = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+    const { fileUrl, fileType } = req.body
+
+    if (!fileUrl?.trim()) return res.status(400).json({ error: 'fileUrl is required' })
+
+    const VALID_TYPES = ['document', 'contract', 'image']
+    if (fileType && !VALID_TYPES.includes(fileType)) {
+      return res.status(400).json({ error: `fileType must be one of: ${VALID_TYPES.join(', ')}` })
+    }
+
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    const file = await prisma.bookingFile.create({
+      data: {
+        bookingId: id,
+        fileUrl: fileUrl.trim(),
+        fileType: fileType ?? null,
+        uploadedBy: userId,
+      },
+    })
+
+    res.status(201).json({ file })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── GET /bookings/:id/files ───────────────────────────────────────────────────
+export const getFiles = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    const files = await prisma.bookingFile.findMany({
+      where: { bookingId: id },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    res.json({ files })
+  } catch (err) {
+    next(err)
+  }
+}

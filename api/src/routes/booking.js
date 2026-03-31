@@ -8,6 +8,10 @@ import {
   cancelBooking,
   addTimeline,
   getTimeline,
+  addNote,
+  getNotes,
+  addFile,
+  getFiles,
 } from '../controllers/booking.js'
 
 const router = Router()
@@ -171,5 +175,120 @@ router.post('/:id/cancel', cancelBooking)
  */
 router.post('/:id/timeline', addTimeline)
 router.get('/:id/timeline', getTimeline)
+
+/**
+ * @openapi
+ * /bookings/{id}/notes:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Add a note to a booking
+ *     description: Customer-submitted notes are stored with isInternal false and are readable by both customer and admin.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [note]
+ *             properties:
+ *               note: { type: string }
+ *     responses:
+ *       201:
+ *         description: Note created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 note:
+ *                   $ref: '#/components/schemas/BookingNote'
+ *       400:
+ *         description: note is required
+ *       403:
+ *         description: Forbidden
+ *   get:
+ *     tags: [Bookings]
+ *     summary: List non-internal notes for a booking
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+ *     responses:
+ *       200:
+ *         description: Array of notes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 notes:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/BookingNote'
+ */
+router.post('/:id/notes', addNote)
+router.get('/:id/notes', getNotes)
+
+/**
+ * @openapi
+ * /bookings/{id}/files:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Attach a file URL to a booking
+ *     description: Client pre-uploads to Strapi media library or Cloudinary, then passes the URL here.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fileUrl]
+ *             properties:
+ *               fileUrl: { type: string, example: 'https://res.cloudinary.com/elewen/image/upload/...' }
+ *               fileType: { type: string, enum: [document, contract, image] }
+ *     responses:
+ *       201:
+ *         description: File record created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 file:
+ *                   $ref: '#/components/schemas/BookingFile'
+ *       400:
+ *         description: fileUrl is required or invalid fileType
+ *       403:
+ *         description: Forbidden
+ *   get:
+ *     tags: [Bookings]
+ *     summary: List all files attached to a booking
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+ *     responses:
+ *       200:
+ *         description: Array of file records
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 files:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/BookingFile'
+ */
+router.post('/:id/files', addFile)
+router.get('/:id/files', getFiles)
 
 export default router
