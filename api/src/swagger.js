@@ -67,9 +67,13 @@ const options = {
             photoUrl: {
               type: 'string',
               nullable: true,
-              description: 'Resolved photo URL: uploaded photo > Google CDN URL > null (frontend shows placeholder)',
+              description:
+                'Resolved photo URL: uploaded photo > Google CDN URL > null (frontend shows placeholder)',
             },
-            hasUploadedPhoto: { type: 'boolean', description: 'True if user has uploaded a photo via Strapi media' },
+            hasUploadedPhoto: {
+              type: 'boolean',
+              description: 'True if user has uploaded a photo via Strapi media',
+            },
           },
         },
         CartItem: {
@@ -77,7 +81,10 @@ const options = {
           properties: {
             id: { type: 'string', format: 'uuid' },
             cartId: { type: 'string', format: 'uuid' },
-            packageId: { type: 'string', description: 'Strapi numeric package ID stored as string' },
+            packageId: {
+              type: 'string',
+              description: 'Strapi numeric package ID stored as string',
+            },
             title: { type: 'string' },
             quantity: { type: 'integer' },
             unitPrice: { type: 'string', example: '28000.00' },
@@ -96,7 +103,7 @@ const options = {
             subtotal: { type: 'string', example: '28000.00' },
             discountAmount: { type: 'string', example: '0.00' },
             total: { type: 'string', example: '28000.00' },
-            items: { type: 'array', items: { '$ref': '#/components/schemas/CartItem' } },
+            items: { type: 'array', items: { $ref: '#/components/schemas/CartItem' } },
           },
         },
         SampleTaste: {
@@ -106,12 +113,24 @@ const options = {
             userId: { type: 'string' },
             packageId: { type: 'string', nullable: true },
             eventId: { type: 'string', nullable: true },
-            bookingId: { type: 'string', format: 'uuid', nullable: true, description: 'Set when converted to full booking' },
+            bookingId: {
+              type: 'string',
+              format: 'uuid',
+              nullable: true,
+              description: 'Set when converted to full booking',
+            },
             guestCount: { type: 'integer', nullable: true },
             bookingDate: { type: 'string', format: 'date', nullable: true },
             deliveryDate: { type: 'string', format: 'date', nullable: true },
-            status: { type: 'string', enum: ['new', 'assigned', 'delivered', 'completed', 'cancelled'] },
-            decision: { type: 'string', enum: ['convert_full', 'save', 'cancel', 'expired'], nullable: true },
+            status: {
+              type: 'string',
+              enum: ['new', 'assigned', 'delivered', 'completed', 'cancelled'],
+            },
+            decision: {
+              type: 'string',
+              enum: ['convert_full', 'save', 'cancel', 'expired'],
+              nullable: true,
+            },
             decisionNotes: { type: 'string', nullable: true },
             feedbackSubmitted: { type: 'boolean' },
             expiryDate: { type: 'string', format: 'date', nullable: true },
@@ -138,7 +157,20 @@ const options = {
             packageId: { type: 'string' },
             eventDate: { type: 'string', format: 'date' },
             guestCount: { type: 'integer' },
-            status: { type: 'string', enum: ['new', 'confirmed', 'info_collection', 'planning', 'pre_event', 'execution', 'post_event', 'completed', 'cancelled'] },
+            status: {
+              type: 'string',
+              enum: [
+                'new',
+                'confirmed',
+                'info_collection',
+                'planning',
+                'pre_event',
+                'execution',
+                'post_event',
+                'completed',
+                'cancelled',
+              ],
+            },
             totalPrice: { type: 'string', example: '28000.00' },
             advanceAmount: { type: 'string', example: '8400.00' },
             remainingAmount: { type: 'string', example: '19600.00' },

@@ -95,7 +95,12 @@ export const addItem = async (req, res, next) => {
 
     // If same package already in cart, increment quantity
     const existing = await prisma.cartItem.findFirst({
-      where: { cartId: cart.id, packageId: String(packageId), packageElementId: null, addonId: null },
+      where: {
+        cartId: cart.id,
+        packageId: String(packageId),
+        packageElementId: null,
+        addonId: null,
+      },
     })
 
     if (existing) {
@@ -137,7 +142,8 @@ export const updateItem = async (req, res, next) => {
     const { itemId } = req.params
     const { quantity } = req.body
 
-    if (!quantity || quantity < 1) return res.status(400).json({ error: 'quantity must be at least 1' })
+    if (!quantity || quantity < 1)
+      return res.status(400).json({ error: 'quantity must be at least 1' })
 
     const item = await prisma.cartItem.findUnique({
       where: { id: itemId },
@@ -211,7 +217,9 @@ export const updateCart = async (req, res, next) => {
       data: {
         ...(eventDate !== undefined && { eventDate: eventDate ? new Date(eventDate) : null }),
         ...(eventCity !== undefined && { eventCity }),
-        ...(guestCount !== undefined && { guestCount: guestCount ? parseInt(guestCount, 10) : null }),
+        ...(guestCount !== undefined && {
+          guestCount: guestCount ? parseInt(guestCount, 10) : null,
+        }),
       },
       include: { items: { orderBy: { createdAt: 'asc' } } },
     })

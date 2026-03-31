@@ -17,9 +17,7 @@ export const createSampleTaste = async (req, res, next) => {
 
     // validate package exists if provided
     if (packageId) {
-      const { data: pkgs } = await strapiServerGet(
-        `/api/packages?filters[id][$eq]=${packageId}`
-      )
+      const { data: pkgs } = await strapiServerGet(`/api/packages?filters[id][$eq]=${packageId}`)
       if (!pkgs?.length) return res.status(400).json({ error: 'Package not found' })
     }
 
@@ -104,7 +102,8 @@ export const updateStatus = async (req, res, next) => {
 
     // when transitioning to 'assigned', a vendorId is required
     if (status === 'assigned') {
-      if (!vendorId) return res.status(400).json({ error: 'vendorId is required when assigning a vendor' })
+      if (!vendorId)
+        return res.status(400).json({ error: 'vendorId is required when assigning a vendor' })
       await prisma.sampleTasteVendor.create({
         data: {
           sampleBookingId: sample.id,
@@ -146,7 +145,9 @@ export const recordDecision = async (req, res, next) => {
     if (!sample) return res.status(404).json({ error: 'Sample taste booking not found' })
     if (sample.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
     if (sample.status !== 'delivered') {
-      return res.status(400).json({ error: 'Decision can only be recorded for delivered sample taste bookings' })
+      return res
+        .status(400)
+        .json({ error: 'Decision can only be recorded for delivered sample taste bookings' })
     }
 
     // update vendor feedback if provided

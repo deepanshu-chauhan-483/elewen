@@ -34,9 +34,12 @@ const validateCoupon = async (couponId, subtotal) => {
     if (!coupon?.is_active) return { valid: false, discount: 0, couponId: null }
 
     const now = new Date()
-    if (coupon.valid_from && new Date(coupon.valid_from) > now) return { valid: false, discount: 0, couponId: null }
-    if (coupon.valid_to && new Date(coupon.valid_to) < now) return { valid: false, discount: 0, couponId: null }
-    if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) return { valid: false, discount: 0, couponId: null }
+    if (coupon.valid_from && new Date(coupon.valid_from) > now)
+      return { valid: false, discount: 0, couponId: null }
+    if (coupon.valid_to && new Date(coupon.valid_to) < now)
+      return { valid: false, discount: 0, couponId: null }
+    if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses)
+      return { valid: false, discount: 0, couponId: null }
 
     let discount = 0
     if (coupon.discount_type === 'percentage') {
@@ -156,7 +159,9 @@ export const createBooking = async (req, res, next) => {
     // Increment coupon used_count in Strapi (outside transaction — non-critical)
     if (validCouponId) {
       try {
-        const { data: coupons } = await strapiServerGet(`/api/coupons?filters[id][$eq]=${validCouponId}`)
+        const { data: coupons } = await strapiServerGet(
+          `/api/coupons?filters[id][$eq]=${validCouponId}`
+        )
         const coupon = coupons?.[0]
         await strapiAdminPut(`/api/coupons/${coupon.documentId}`, {
           data: { used_count: (coupon.used_count ?? 0) + 1 },
@@ -170,7 +175,14 @@ export const createBooking = async (req, res, next) => {
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } })
     await prisma.cart.update({
       where: { id: cart.id },
-      data: { subtotal: 0, discountAmount: 0, total: 0, couponId: null, eventDate: null, guestCount: null },
+      data: {
+        subtotal: 0,
+        discountAmount: 0,
+        total: 0,
+        couponId: null,
+        eventDate: null,
+        guestCount: null,
+      },
     })
 
     // Return full booking with items
@@ -294,9 +306,12 @@ export const cancelBooking = async (req, res, next) => {
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
-    if (booking.status === 'cancelled') return res.status(400).json({ error: 'Booking is already cancelled' })
-    if (booking.status === 'completed') return res.status(400).json({ error: 'Completed bookings cannot be cancelled' })
-    if (booking.cancellation) return res.status(400).json({ error: 'A cancellation request already exists' })
+    if (booking.status === 'cancelled')
+      return res.status(400).json({ error: 'Booking is already cancelled' })
+    if (booking.status === 'completed')
+      return res.status(400).json({ error: 'Completed bookings cannot be cancelled' })
+    if (booking.cancellation)
+      return res.status(400).json({ error: 'A cancellation request already exists' })
 
     await prisma.$transaction(async tx => {
       await tx.cancellation.create({

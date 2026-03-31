@@ -70,8 +70,9 @@ const sanitizeUser = user => ({
  */
 const sanitizeProfile = profile => {
   if (!profile) return null
-  const attrs = profile.attributes ?? profile  // handle both Strapi v4 and v5 shapes
-  const uploadedPhoto = attrs.profile_photo?.data?.attributes?.url ?? attrs.profile_photo?.url ?? null
+  const attrs = profile.attributes ?? profile // handle both Strapi v4 and v5 shapes
+  const uploadedPhoto =
+    attrs.profile_photo?.data?.attributes?.url ?? attrs.profile_photo?.url ?? null
   return {
     id: profile.id,
     documentId: profile.documentId ?? null,
@@ -294,10 +295,9 @@ export const updateProfile = async (req, res, next) => {
       })
       updated = result.data
     } else {
-      const result = await strapiServerPut(
-        `/api/customer-profiles/${existing.documentId}`,
-        { data: profileData }
-      )
+      const result = await strapiServerPut(`/api/customer-profiles/${existing.documentId}`, {
+        data: profileData,
+      })
       updated = result.data
     }
 
@@ -348,7 +348,11 @@ export const resetPassword = async (req, res, next) => {
       return res.status(400).json({ error: 'Passwords do not match' })
     }
 
-    const result = await strapiPost('/api/auth/reset-password', { code, password, passwordConfirmation })
+    const result = await strapiPost('/api/auth/reset-password', {
+      code,
+      password,
+      passwordConfirmation,
+    })
 
     // Completing a password reset proves email ownership — confirm the user if not already
     if (result?.user?.id) {
@@ -382,7 +386,7 @@ export const googleSession = async (req, res, next) => {
 
     let user
     let strapiJwt
-    let googleName = {}   // { firstName, lastName, picture } — populated for raw token path
+    let googleName = {} // { firstName, lastName, picture } — populated for raw token path
 
     if (access_token.startsWith('eyJ')) {
       // Already a Strapi JWT — verify and get user directly
