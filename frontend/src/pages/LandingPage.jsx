@@ -115,8 +115,37 @@ const PlanEventSection = () => {
 
   const scallopCount = [...Array(15)]
 
+  const sectionRef = useRef(null)
+
+  useEffect(() => {
+    const root = sectionRef.current
+    if (!root) return
+
+    const cards = Array.from(root.querySelectorAll('.card-reveal')).filter(
+      el => !el.classList.contains('is-visible')
+    )
+    if (cards.length === 0) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          io.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+    )
+
+    cards.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [visibleCards, page, activeCategory])
+
   return (
-    <section className="relative w-full min-h-screen bg-[#F2F2F2] md:bg-[#F7F7F5] pt-[40px] md:pt-52 flex flex-col overflow-hidden font-sans">
+    <section
+      ref={sectionRef}
+      className="relative w-full min-h-screen bg-[#F2F2F2] pt-[40px] md:pt-52 flex flex-col overflow-hidden font-sans"
+    >
       {/* Background Decor (Desktop predominantly) */}
       <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
         {scallopCount.map((_, i) => (
@@ -140,7 +169,7 @@ const PlanEventSection = () => {
                 <div
                   className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#3D4035]/60`}
                 ></div>
-                <div className="relative flex flex-col items-center">
+                <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
                   <img
                     src={i % 2 === 0 ? bulb1 : bulb2}
                     alt="Pendant Light"
@@ -187,7 +216,7 @@ const PlanEventSection = () => {
           </span>
         </h1>
 
-        <div className="max-w-[353px] md:max-w-[340px] mt-5 md:mt-0 flex flex-col items-center md:items-start">
+        <div className="relative max-w-[353px] md:max-w-[340px] mt-5 md:mt-4 md:top-4 flex flex-col items-center md:items-start">
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
@@ -197,22 +226,30 @@ const PlanEventSection = () => {
             </span>
           </p>
 
-          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">
-              {s.cta_label ?? 'View All'}
+          <span className="hidden md:inline-flex reveal-wrapper reveal-on-scroll">
+            <span className="reveal-text">
+              <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+                <span className="text-white font-medium text-[15px] mr-5">
+                  {s.cta_label ?? 'View All'}
+                </span>
+                <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
+                  <svg
+                    className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 17L17 7M17 7H9M17 7v8"
+                    />
+                  </svg>
+                </div>
+              </button>
             </span>
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <svg
-                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
-              </svg>
-            </div>
-          </button>
+          </span>
         </div>
       </div>
 
@@ -228,7 +265,7 @@ const PlanEventSection = () => {
               return (
                 <React.Fragment key={cat}>
                   <div
-                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5"
+                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5 reveal-on-scroll"
                     onClick={() => handleCategorySelect(cat)}
                   >
                     <span
@@ -238,7 +275,9 @@ const PlanEventSection = () => {
                           : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
                       }`}
                     >
-                      {cat}
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{cat}</span>
+                      </span>
                     </span>
 
                     {/* Animated Underline */}
@@ -287,10 +326,11 @@ const PlanEventSection = () => {
 
               <div className="flex justify-center md:block">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-                  {visibleCards.map(card => (
+                  {visibleCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
@@ -476,8 +516,49 @@ const WhatToPlanSection = () => {
     setPage(0)
   }
 
+  const sectionRef = useRef(null)
+
+  // Simple, section-scoped reveal (no global mutation observers).
+  useEffect(() => {
+    const root = sectionRef.current
+    if (!root) return
+
+    const targets = Array.from(
+      root.querySelectorAll('.reveal-heading, .reveal-on-scroll, .card-reveal')
+    ).filter(el => !el.classList.contains('is-visible'))
+
+    if (targets.length === 0) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          const el = entry.target
+
+          // Full-card reveal
+          if (el.classList.contains('card-reveal')) el.classList.add('is-visible')
+
+          // Text reveal inside the element
+          Array.from(el.querySelectorAll('.reveal-text')).forEach((span, i) => {
+            span.style.animationDelay = `${0.08 + i * 0.04}s`
+            span.classList.add('is-visible')
+          })
+
+          io.unobserve(el)
+        })
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+    )
+
+    targets.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [categories.length, visibleCards.length, page, activeCategory])
+
   return (
-    <section className="w-full min-h-screen bg-[#F4F4F2] flex flex-col overflow-hidden font-sans">
+    <section
+      ref={sectionRef}
+      className="w-full min-h-screen bg-[#F2F2F2] flex flex-col overflow-hidden font-sans"
+    >
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center">
         <div className="max-w-[353px] md:max-w-[340px] order-last md:order-first mt-5 md:mt-0 flex flex-col items-center md:items-start">
@@ -490,22 +571,30 @@ const WhatToPlanSection = () => {
             </span>
           </p>
 
-          <button className="hidden md:flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
-            <span className="text-white font-medium text-[15px] mr-5">
-              {s.cta_label ?? 'View All'}
+          <span className="hidden md:inline-flex reveal-wrapper reveal-on-scroll">
+            <span className="reveal-text">
+              <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+                <span className="text-white font-medium text-[15px] mr-5">
+                  {s.cta_label ?? 'View All'}
+                </span>
+                <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
+                  <svg
+                    className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 17L17 7M17 7H9M17 7v8"
+                    />
+                  </svg>
+                </div>
+              </button>
             </span>
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <svg
-                className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
-              </svg>
-            </div>
-          </button>
+          </span>
         </div>
 
         <h2
@@ -557,10 +646,11 @@ const WhatToPlanSection = () => {
 
               <div className="flex justify-center lg:block">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] lg:max-w-none lg:w-auto relative">
-                  {visibleCards.map(card => (
+                  {visibleCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
+                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
@@ -670,27 +760,31 @@ const WhatToPlanSection = () => {
             </div>
 
             {/* Mobile View All Button */}
-            <div className="flex lg:hidden justify-center pb-12">
-              <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
-                <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
-                  {s.cta_label ?? 'View All'}
+            <div className="flex lg:hidden justify-center pb-12 reveal-on-scroll">
+              <span className="reveal-wrapper">
+                <span className="reveal-text">
+                  <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                    <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
+                      {s.cta_label ?? 'View All'}
+                    </span>
+                    <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
+                      <svg
+                        className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M7 17L17 7M17 7H9M17 7v8"
+                        />
+                      </svg>
+                    </div>
+                  </button>
                 </span>
-                <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
-                  <svg
-                    className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M7 17L17 7M17 7H9M17 7v8"
-                    />
-                  </svg>
-                </div>
-              </button>
+              </span>
             </div>
           </div>
         </div>
@@ -703,7 +797,7 @@ const WhatToPlanSection = () => {
               return (
                 <React.Fragment key={cat}>
                   <div
-                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5"
+                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5 reveal-on-scroll"
                     onClick={() => handleCategorySelect(cat)}
                   >
                     <span
@@ -713,7 +807,9 @@ const WhatToPlanSection = () => {
                           : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
                       }`}
                     >
-                      {cat}
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{cat}</span>
+                      </span>
                     </span>
 
                     {/* Animated Underline */}
@@ -1266,7 +1362,7 @@ const BetterWaySection = () => {
                   <div
                     className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-14px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`}
                   ></div>
-                  <div className="relative flex flex-col items-center">
+                  <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
                     <img
                       src={i % 2 === 0 ? bulb1 : bulb2}
                       alt="Light"
@@ -1511,7 +1607,9 @@ const ChecklistSection = () => {
     )
 
     observer.observe(wrap)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+    }
   }, [])
 
   useEffect(() => {
@@ -1616,7 +1714,7 @@ const ChecklistSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
+      className="checklist-section relative w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
     >
       <div
         className="absolute hidden md:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
@@ -1628,7 +1726,8 @@ const ChecklistSection = () => {
       />
 
       {/* Lightbulbs */}
-      <div className="absolute top-0 left-0 w-full flex pointer-events-none z-10">
+      <div className="absolute top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
+        <div className="absolute top-0 left-0 w-full flex">
         {scallopCount.map((_, i) => {
           return (
             <div
@@ -1653,9 +1752,11 @@ const ChecklistSection = () => {
                   }}
                 >
                   <div
-                    className={`w-[1px] ${i % 2 === 0 ? 'h-[10px] md:h-[14px]' : 'h-[4px] md:h-[5px]'} bg-[#591902]/40`}
+                    className={`w-[1px] ${
+                      i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'
+                    } bg-[#591902]/40`}
                   ></div>
-                  <div className="relative flex flex-col items-center">
+                  <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
                     <img
                       src={i % 2 === 0 ? bulb1 : bulb2}
                       alt="Light"
@@ -1684,6 +1785,7 @@ const ChecklistSection = () => {
             </div>
           )
         })}
+        </div>
       </div>
 
       <h2
@@ -1722,14 +1824,18 @@ const ChecklistSection = () => {
             {/* STEP 1 */}
             <div className="absolute left-[283px] top-[19px] w-[211px] h-[211px]">
               <div
-                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0 shadow-sm`}
-                style={{ '--delay': '0s' }}
+                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0`}
+                style={{ '--delay': '0s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
               ></div>
               <img
                 src={imgScrolling}
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
                 alt="Scrolling"
-                style={{ '--delay': '0.15s' }}
+                style={{
+                  '--delay': '0.15s',
+                  filter:
+                    'drop-shadow(12px 16px 18px rgba(68, 33, 4, 0.22)) drop-shadow(2px 4px 8px rgba(68, 33, 4, 0.18))',
+                }}
                 loading="lazy"
               />
             </div>
@@ -1754,7 +1860,7 @@ const ChecklistSection = () => {
             <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
               <div
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
-                style={{ '--delay': '0.5s' }}
+                style={{ '--delay': '0.5s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
               ></div>
               <img
                 src={imgCalls}
@@ -1763,7 +1869,7 @@ const ChecklistSection = () => {
                 style={{
                   '--delay': '0.65s',
                   filter:
-                    'drop-shadow(33px 41px 32px rgba(109, 57, 8, 0.16)) drop-shadow(15px 18px 24px rgba(109, 57, 8, 0.28)) drop-shadow(4px 5px 13px rgba(109, 57, 8, 0.32))',
+                    'drop-shadow(12px 16px 18px rgba(68, 33, 4, 0.22)) drop-shadow(2px 4px 8px rgba(68, 33, 4, 0.18))',
                 }}
                 loading="lazy"
               />
@@ -1789,14 +1895,18 @@ const ChecklistSection = () => {
             {/* STEP 3 */}
             <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
               <div
-                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0 shadow-sm`}
-                style={{ '--delay': '1.0s' }}
+                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0`}
+                style={{ '--delay': '1.0s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
               ></div>
               <img
                 src={imgVendors}
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
                 alt="Vendors"
-                style={{ '--delay': '1.15s' }}
+                style={{
+                  '--delay': '1.15s',
+                  filter:
+                    'drop-shadow(12px 16px 18px rgba(68, 33, 4, 0.22)) drop-shadow(2px 4px 8px rgba(68, 33, 4, 0.18))',
+                }}
                 loading="lazy"
               />
             </div>
@@ -1819,16 +1929,20 @@ const ChecklistSection = () => {
             </div>
 
             {/* STEP 4 */}
-            <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
+            <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px]">
               <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0 shadow-sm`}
-                style={{ '--delay': '1.5s' }}
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] rounded-br-full z-0`}
+                style={{ '--delay': '1.5s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
               ></div>
               <img
                 src={imgDecisions}
                 alt="Decisions"
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
-                style={{ '--delay': '1.65s' }}
+                style={{
+                  '--delay': '1.65s',
+                  filter:
+                    'drop-shadow(12px 16px 18px rgba(68, 33, 4, 0.22)) drop-shadow(2px 4px 8px rgba(68, 33, 4, 0.18))',
+                }}
                 loading="lazy"
               />
             </div>
@@ -2765,10 +2879,16 @@ const PlanningGuidesSection = () => {
 
               <div className="flex justify-center md:block">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-                  {visibleBlogs.map(blog => (
+                  {visibleBlogs.map((blog, i) => (
                     <div
                       key={blog.id ?? blog.title}
                       className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative"
+                      style={{
+                        opacity: 0,
+                        animation: 'slideInBottom 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        animationDelay: `${0.08 + i * 0.06}s`,
+                        willChange: 'transform, opacity',
+                      }}
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
@@ -3285,7 +3405,13 @@ export default function LandingPage() {
             pending.delete(el)
             animated.add(el)
 
-            Array.from(el.querySelectorAll('.reveal-text')).forEach((span, i) => {
+            // `querySelectorAll` doesn't include the element itself, so if the target IS a `.reveal-text`
+            // (e.g. button wrapper), include it manually.
+            const revealSpans = [
+              ...(el.classList.contains('reveal-text') ? [el] : []),
+              ...Array.from(el.querySelectorAll('.reveal-text')),
+            ]
+            revealSpans.forEach((span, i) => {
               const isTimelineReveal = !!el.closest('.step-item')
               // Base delay so the reveal feels intentional (user-requested),
               // but keep timeline reveals snappy for smoother scroll start.

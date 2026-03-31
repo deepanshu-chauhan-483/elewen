@@ -234,6 +234,31 @@ p {
   animation-delay: var(--delay, 0s);
 }
 
+/* Slower reveal only for ChecklistSection */
+.checklist-section .anim-element.is-visible.slide-from-left {
+  animation-duration: 0.9s;
+}
+
+.checklist-section .anim-element.is-visible.slide-from-right {
+  animation-duration: 0.9s;
+}
+
+.checklist-section .anim-element.is-visible.slide-from-bottom {
+  animation-duration: 0.7s;
+}
+
+/* ── Card reveal (simple, viewport-triggered) ────────────────────────────── */
+.card-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  will-change: transform, opacity;
+}
+
+.card-reveal.is-visible {
+  animation: slideInBottom 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
 @keyframes slideInLeft {
   0% {
     opacity: 0;
