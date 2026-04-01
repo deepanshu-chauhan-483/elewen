@@ -3384,7 +3384,7 @@ const SplitInfoSection = () => {
 
     cards.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [])
+  }, [sectionRef])
 
   return (
     <section
