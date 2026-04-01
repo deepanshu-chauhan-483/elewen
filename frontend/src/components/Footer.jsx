@@ -77,7 +77,7 @@ const Footer = () => {
       </div>
 
       {/* Rest of footer: centered column */}
-      <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 box-border md:px-[100px] md:pb-12 md:pt-24">
+      <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 box-border md:px-[100px] md:py-8">
         {/* Nav + about — flex row on desktop, centered column width on mobile */}
         <div className="flex w-full flex-1 flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-10">
           {/* Mobile: full width of column (no 347px cap) so each label+links stays one row */}
