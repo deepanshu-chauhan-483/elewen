@@ -73,6 +73,8 @@ const FLY_POS = [
 // Random-feeling arrival delays for the 8 Figma images (not evenly spaced)
 const FIGMA_DELAYS = [0.04, 0.11, 0.01, 0.08, 0.14, 0.06, 0.1, 0.02]
 
+const easeWhite = t => t * t * (3 - 2 * t)
+
 // Compute where each Figma image centre sits relative to viewport centre
 const getFinalPositions = () => {
   const s = Math.min(window.innerWidth / CANVAS_W, window.innerHeight / CANVAS_H)
@@ -175,15 +177,16 @@ const ScrollImageSpreadSection = () => {
 
       // Figma images start overlapping with the last fly-bys (no dead gap)
       const FIGMA_START = 0.28
-      const WHITE_FADE_START = FIGMA_START
-      const WHITE_FADE_END = 0.92
-      const WHITE_FADE_RANGE = WHITE_FADE_END - WHITE_FADE_START
-      const easeWhite = gsap.parseEase('power2.out')
+      // Last image finishes when its delayed start plus animation duration reaches 1.0.
+      const FIGMA_SETTLE_PROGRESS = FIGMA_START + Math.max(...FIGMA_DELAYS) + 1 / 5
+      const WHITE_FADE_START = FIGMA_SETTLE_PROGRESS
+      const WHITE_FADE_END = 1
+      const WHITE_FADE_RANGE = WHITE_FADE_END - FIGMA_SETTLE_PROGRESS
 
       st = ScrollTrigger.create({
         trigger: flowEl,
         start: 'top top',
-        end: () => `+=${window.innerHeight * 1}`,
+        end: () => `+=${window.innerHeight * 4}`,
         pin: true,
         pinSpacing: true,
         anticipatePin: 1,

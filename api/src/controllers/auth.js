@@ -7,9 +7,43 @@ import {
   strapiAdminPut,
   strapiFindUserByEmail,
   strapiCreateUser,
+  strapiServerGet,
+  strapiServerPost,
+  strapiServerPut,
 } from '../lib/strapi.js'
 
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+
+// ─── Customer profile helpers ─────────────────────────────────────────────────
+
+/** Find existing customer profile for a Strapi user ID */
+const findCustomerProfile = async userId => {
+  const { data } = await strapiServerGet(
+    `/api/customer-profiles?filters[user][id][$eq]=${userId}&populate=profile_photo`
+  )
+  return data?.[0] ?? null
+}
+
+/**
+ * Create a customer profile in Strapi.
+ * profile_photo_url: Google CDN URL (string) — used when no uploaded photo exists.
+ * If null, frontend shows a placeholder illustration.
+ */
+const createCustomerProfile = async ({ userId, firstName, lastName, profilePhotoUrl = null }) => {
+  try {
+    await strapiServerPost('/api/customer-profiles', {
+      data: {
+        user: userId,
+        first_name: firstName ?? null,
+        last_name: lastName ?? null,
+        profile_photo_url: profilePhotoUrl,
+        preferred_language: 'en',
+      },
+    })
+  } catch {
+    // Non-fatal — profile creation failure should not block login/register
+  }
+}
 const REFRESH_COOKIE = 'elewen_refresh'
 
 const cookieOpts = {
@@ -29,6 +63,28 @@ const sanitizeUser = user => ({
   phone: user.phone ?? null,
   confirmed: user.confirmed,
 })
+
+/**
+ * Shape customer profile for API responses.
+ * photoUrl priority: uploaded profile_photo (Strapi media) > profile_photo_url (Google CDN) > null (frontend shows placeholder)
+ */
+const sanitizeProfile = profile => {
+  if (!profile) return null
+  const attrs = profile.attributes ?? profile // handle both Strapi v4 and v5 shapes
+  const uploadedPhoto =
+    attrs.profile_photo?.data?.attributes?.url ?? attrs.profile_photo?.url ?? null
+  return {
+    id: profile.id,
+    documentId: profile.documentId ?? null,
+    first_name: attrs.first_name ?? null,
+    last_name: attrs.last_name ?? null,
+    date_of_birth: attrs.date_of_birth ?? null,
+    preferred_language: attrs.preferred_language ?? 'en',
+    // photoUrl: uploaded photo takes priority over Google CDN URL
+    photoUrl: uploadedPhoto ?? attrs.profile_photo_url ?? null,
+    hasUploadedPhoto: !!uploadedPhoto,
+  }
+}
 
 /** Create a UserSession row and set the refresh token cookie */
 const createSession = async (res, userId, ipAddress, userAgent) => {
@@ -71,23 +127,41 @@ export const register = async (req, res, next) => {
     const username = `${email.split('@')[0]}_${crypto.randomBytes(3).toString('hex')}`
 
     // Step 1: Register with Strapi — only accepts username/email/password
-    const { jwt: strapiJwt, user } = await strapiPost('/api/auth/local/register', {
+    // When email confirmation is enabled, Strapi sends the confirmation email and
+    // returns { user } with no jwt. When disabled, it returns { jwt, user }.
+    const result = await strapiPost('/api/auth/local/register', {
       username,
       email,
       password,
     })
 
     // Step 2: Update profile fields via admin API token — Strapi rejects these on /register
-    const updatedUser = await strapiAdminPut(`/api/users/${user.id}`, {
-      first_name,
-      last_name,
-      phone,
-    })
+    if (result.user?.id) {
+      await strapiAdminPut(`/api/users/${result.user.id}`, { first_name, last_name, phone })
+      // Create customer profile — no photo for email users (frontend shows placeholder)
+      await createCustomerProfile({
+        userId: result.user.id,
+        firstName: first_name,
+        lastName: last_name,
+        profilePhotoUrl: null,
+      })
+    }
 
-    await createSession(res, user.id, req.ip, req.headers['user-agent'])
+    // Email confirmation pending — no JWT yet
+    if (!result.jwt) {
+      return res.status(200).json({
+        pending: true,
+        message: 'Check your email to verify your account.',
+      })
+    }
 
-    res.status(201).json({ jwt: strapiJwt, user: sanitizeUser({ ...user, ...updatedUser }) })
+    // Email confirmation disabled — session created immediately
+    await createSession(res, result.user.id, req.ip, req.headers['user-agent'])
+    res.status(201).json({ jwt: result.jwt, user: sanitizeUser(result.user) })
   } catch (err) {
+    if (err.strapiError?.details?.errors?.some(e => e.path?.includes('email'))) {
+      return res.status(409).json({ error: 'An account with this email already exists' })
+    }
     next(err)
   }
 }
@@ -110,8 +184,11 @@ export const login = async (req, res, next) => {
 
     res.json({ jwt: strapiJwt, user: sanitizeUser(user) })
   } catch (err) {
-    // Map Strapi's generic "invalid credentials" to a safe message
     if (err.status === 400) {
+      const msg = err.message?.toLowerCase() ?? ''
+      if (msg.includes('confirmed')) {
+        return res.status(403).json({ error: 'Please confirm your email before logging in.' })
+      }
       return res.status(401).json({ error: 'Incorrect email or password' })
     }
     next(err)
@@ -172,18 +249,74 @@ export const logout = async (req, res, next) => {
 }
 
 // ─── GET /auth/me ──────────────────────────────────────────────────────────────
-// Returns current user from Strapi using the JWT in Authorization header
 export const me = async (req, res, next) => {
   try {
     const user = await strapiGetMe(req.token)
-    res.json({ user: sanitizeUser(user) })
+    const profile = await findCustomerProfile(user.id)
+    res.json({ user: sanitizeUser(user), profile: sanitizeProfile(profile) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── GET /auth/profile ────────────────────────────────────────────────────────
+export const getProfile = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const profile = await findCustomerProfile(userId)
+    if (!profile) return res.status(404).json({ error: 'Profile not found' })
+    res.json({ profile: sanitizeProfile(profile) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── PATCH /auth/profile ──────────────────────────────────────────────────────
+export const updateProfile = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { first_name, last_name, date_of_birth, preferred_language, profile_photo_url } = req.body
+
+    const existing = await findCustomerProfile(userId)
+
+    const profileData = {
+      ...(first_name !== undefined && { first_name }),
+      ...(last_name !== undefined && { last_name }),
+      ...(date_of_birth !== undefined && { date_of_birth }),
+      ...(preferred_language !== undefined && { preferred_language }),
+      ...(profile_photo_url !== undefined && { profile_photo_url }),
+    }
+
+    let updated
+    if (!existing) {
+      // Create profile if somehow missing (e.g. legacy accounts)
+      const result = await strapiServerPost('/api/customer-profiles', {
+        data: { user: parseInt(userId, 10), preferred_language: 'en', ...profileData },
+      })
+      updated = result.data
+    } else {
+      const result = await strapiServerPut(`/api/customer-profiles/${existing.documentId}`, {
+        data: profileData,
+      })
+      updated = result.data
+    }
+
+    // Also sync first_name / last_name back to Strapi user for consistency
+    if (first_name !== undefined || last_name !== undefined) {
+      await strapiAdminPut(`/api/users/${userId}`, {
+        ...(first_name !== undefined && { first_name }),
+        ...(last_name !== undefined && { last_name }),
+      })
+    }
+
+    res.json({ profile: sanitizeProfile(updated) })
   } catch (err) {
     next(err)
   }
 }
 
 // ─── POST /auth/forgot-password ───────────────────────────────────────────────
-export const forgotPassword = async (req, res, next) => {
+export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body
     if (!email) return res.status(400).json({ error: 'Email is required' })
@@ -215,7 +348,16 @@ export const resetPassword = async (req, res, next) => {
       return res.status(400).json({ error: 'Passwords do not match' })
     }
 
-    await strapiPost('/api/auth/reset-password', { code, password, passwordConfirmation })
+    const result = await strapiPost('/api/auth/reset-password', {
+      code,
+      password,
+      passwordConfirmation,
+    })
+
+    // Completing a password reset proves email ownership — confirm the user if not already
+    if (result?.user?.id) {
+      await strapiAdminPut(`/api/users/${result.user.id}`, { confirmed: true })
+    }
 
     res.json({ ok: true })
   } catch (err) {
@@ -244,6 +386,7 @@ export const googleSession = async (req, res, next) => {
 
     let user
     let strapiJwt
+    let googleName = {} // { firstName, lastName, picture } — populated for raw token path
 
     if (access_token.startsWith('eyJ')) {
       // Already a Strapi JWT — verify and get user directly
@@ -260,6 +403,19 @@ export const googleSession = async (req, res, next) => {
         return res.status(401).json({ error: 'Invalid or expired Google token' })
       }
 
+      // Fetch full Google profile (name + picture) — tokeninfo doesn't include these
+      const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${access_token}` },
+      })
+      if (userinfoRes.ok) {
+        const userinfo = await userinfoRes.json()
+        googleName = {
+          firstName: userinfo.given_name ?? null,
+          lastName: userinfo.family_name ?? null,
+          picture: userinfo.picture ?? null,
+        }
+      }
+
       // Find existing Strapi user by email
       user = await strapiFindUserByEmail(tokenInfo.email)
 
@@ -272,11 +428,24 @@ export const googleSession = async (req, res, next) => {
           provider: 'google',
           confirmed: true,
           password: crypto.randomBytes(20).toString('hex'),
+          first_name: googleName.firstName,
+          last_name: googleName.lastName,
         })
       }
 
       // Sign a Strapi-compatible JWT
       strapiJwt = jwt.sign({ id: user.id }, process.env.STRAPI_JWT_SECRET, { expiresIn: '7d' })
+    }
+
+    // Ensure customer profile exists — create on first login, skip if already present
+    const existingProfile = await findCustomerProfile(user.id)
+    if (!existingProfile) {
+      await createCustomerProfile({
+        userId: user.id,
+        firstName: googleName.firstName ?? user.first_name ?? null,
+        lastName: googleName.lastName ?? user.last_name ?? null,
+        profilePhotoUrl: googleName.picture ?? null,
+      })
     }
 
     // Store OAuthAccount record (idempotent)

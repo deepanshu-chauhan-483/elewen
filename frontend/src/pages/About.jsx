@@ -31,7 +31,7 @@ const Img = ({ src, alt = '', className = '', style, ...rest }) => (
   />
 )
 
-// SVG layout constants — must match the inline SVG's style values below
+// SVG layout constants â must match the inline SVG's style values below
 const SVG_TOP = 430
 const SECTION_HEIGHT = 4628
 const OBJ_SIZE = 55
@@ -131,7 +131,7 @@ const About = () => {
         const vh = window.innerHeight
         const totalLength = path.getTotalLength()
 
-        // Map section scroll through viewport to 0→1 progress
+        // Map section scroll through viewport to 0â1 progress
         const progress = Math.max(0, Math.min(1, -rect.top / (SECTION_HEIGHT - vh)))
 
         const dist = progress * totalLength
@@ -177,10 +177,10 @@ const About = () => {
           {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
           <div className="absolute left-0 top-0 w-full h-[660px] min-[540px]:h-[880px] bg-[#591902] overflow-hidden rounded-b-[500px] min-[540px]:rounded-b-[1000px]">
             {/* --- MAIN TEXT CONTENT (FLUID GRID) --- */}
-            <div className="relative z-30 max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-12 min-[540px]:pt-[120px] lg:pt-[223px]">
+            <div className="relative z-30 max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-22 min-[540px]:pt-[120px] lg:pt-[223px]">
               <div className="grid grid-cols-1 min-[540px]:grid-cols-12 items-start gap-y-6 min-[540px]:gap-y-0 min-[540px]:gap-x-10 lg:gap-x-[72px]">
                 {/* Left Heading */}
-                <h2 className="min-[540px]:col-span-7 w-full max-w-[564px] text-[#FFFFFF] text-[40px] min-[540px]:text-[50px] lg:text-[61px] leading-[1.02] lg:leading-[1] font-serif m-0">
+                <h2 className="min-[540px]:col-span-7 w-full max-w-[564px] text-[#FFFFFF] text-[24px] min-[540px]:text-[50px] lg:text-[61px] leading-[1.13] lg:leading-[1.15] font-serif m-0">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ animationDelay: '0s' }}>
                       {so.heading_1 ?? 'When we saw Excitement'}
@@ -201,9 +201,15 @@ const About = () => {
                       'Finding reliable vendors, understanding fair pricing, and coordinating everything usually means relying on social media, referrals, and endless back-and-forth.',
                     ]
                   ).map((para, i) => (
-                    <p key={i} className="text-[#FFFFFF] text-[14px] min-[540px]:text-[15px] lg:text-[16px] leading-[1.5] font-normal m-0 opacity-70 min-[540px]:opacity-100">
+                    <p
+                      key={i}
+                      className="text-[#FFFFFF] text-[14px] min-[540px]:text-[15px] lg:text-[16px] leading-[1.5] font-normal m-0 opacity-70 min-[540px]:opacity-100"
+                    >
                       <span className="reveal-wrapper block">
-                        <span className="reveal-text" style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
+                        <span
+                          className="reveal-text"
+                          style={{ animationDelay: `${0.1 + i * 0.08}s` }}
+                        >
                           {para}
                         </span>
                       </span>
@@ -222,31 +228,32 @@ const About = () => {
             </div>
 
             {/* --- MOBILE ONLY: GIRL CLIPPED BY THE CURVE --- */}
-            <div className="min-[540px]:hidden pointer-events-none absolute mx-auto inset-x-0 bottom-[-90px] w-[240px] h-[360px] overflow-hidden z-20">
-        
-              <img
-                src={tangledIllustration}
-                alt="Person tangled in lights"
-                className="anim-element slide-from-bottom absolute left-1/2 top-[-15px] z-10 w-[284px] h-[392px] max-w-none -translate-x-1/2 -ml-[160px] object-cover"
-                style={{ '--delay': '0.3s' }}
-              />
+            <div className="min-[540px]:hidden pointer-events-none absolute inset-x-0 bottom-[-90px] z-20 flex justify-center">
+              <div className="relative flex justify-center w-[240px] h-[360px]">
+                <img
+                  src={tangledIllustration}
+                  alt="Person tangled in lights"
+                  className="anim-element slide-from-bottom absolute top-[-15px] left-[-50px] z-10 w-[284px] h-[392px] max-w-none object-cover"
+                  style={{ '--delay': '0.3s' }}
+                />
+              </div>
             </div>
-
           </div>
 
           {/* --- 3. THE GIRL (NOT CLIPPED BY THE CURVE) --- */}
-          <div className="hidden min-[540px]:block pointer-events-none absolute left-0 top-0 w-full h-[660px] min-[540px]:h-[880px] z-20">
-            <div className="absolute inset-x-0 mx-auto bottom-[-160px] w-[400px] h-[600px]">
-              <img
-                src={tangledIllustration}
-                alt="Person tangled in lights"
-                className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 -ml-0 min-[540px]:-ml-[180px] top-[9px] w-[384px] h-[529px] object-cover max-w-none"
-                style={{ '--delay': '0.3s' }}
-              />
+          <div className="hidden min-[540px]:block pointer-events-none absolute inset-x-0 top-0 w-full h-[880px] z-20">
+            <div className="absolute inset-x-0 bottom-[-160px] flex justify-center">
+              <div className="relative flex justify-center w-[400px] h-[600px]">
+                <img
+                  src={tangledIllustration}
+                  alt="Person tangled in lights"
+                  className="anim-element slide-from-bottom absolute top-[9px] w-[384px] h-[529px] object-cover max-w-none"
+                  style={{ '--delay': '0.3s' }}
+                />
+              </div>
             </div>
           </div>
         </div>
-
         {/* --- 4. Celebrations Don't Have to Be Big to Matter --- */}
         <div className="w-full max-w-[1440px] shrink-0 mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pb-16 min-[540px]:pb-8">
           <div className="grid grid-cols-1 min-[540px]:grid-cols-12 items-center min-[540px]:items-start text-center min-[540px]:text-left gap-y-8 min-[540px]:gap-y-0 min-[540px]:gap-x-12 lg:gap-x-20">
@@ -268,7 +275,10 @@ const About = () => {
                   'Elewen exists to protect that feeling. We focus on the little details and personal touches that turn simple gatherings into meaningful moments.',
                 ]
               ).map((para, i) => (
-                <p key={i} className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal m-0">
+                <p
+                  key={i}
+                  className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal m-0"
+                >
                   {para}
                 </p>
               ))}
@@ -317,10 +327,11 @@ const About = () => {
                         />
 
                         <div
-                          className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 min-[540px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${i % 2 === 0
-                            ? 'min-[540px]:w-[76px] min-[540px]:h-[78px] blur-[4px]'
-                            : 'min-[540px]:w-[76px] min-[540px]:h-[59px] blur-[4px]'
-                            }`}
+                          className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 min-[540px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
+                            i % 2 === 0
+                              ? 'min-[540px]:w-[76px] min-[540px]:h-[78px] blur-[4px]'
+                              : 'min-[540px]:w-[76px] min-[540px]:h-[59px] blur-[4px]'
+                          }`}
                           style={{
                             background:
                               i % 2 === 0
@@ -360,8 +371,8 @@ const About = () => {
                   strokeWidth="0.5"
                   strokeDasharray="6 6"
                 />
-              </svg >
-            </div >
+              </svg>
+            </div>
 
             <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[540px]:pt-24 lg:pt-28 pb-24 min-[540px]:pb-32 lg:pb-36">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
@@ -377,7 +388,9 @@ const About = () => {
                         style={{ fontFamily: "'Malgin', serif" }}
                       >
                         <span className="reveal-wrapper block">
-                          <span className="reveal-text">{sq.heading ?? 'We Asked a Simple Question'}</span>
+                          <span className="reveal-text">
+                            {sq.heading ?? 'We Asked a Simple Question'}
+                          </span>
                         </span>
                       </h2>
 
@@ -421,7 +434,10 @@ const About = () => {
                       ).map((para, i) => (
                         <p key={i} className="text-white text-[14px] leading-[1.45] opacity-90">
                           <span className="reveal-wrapper block">
-                            <span className="reveal-text" style={{ '--delay': `${0.1 + i * 0.08}s` }}>
+                            <span
+                              className="reveal-text"
+                              style={{ '--delay': `${0.1 + i * 0.08}s` }}
+                            >
                               {para}
                             </span>
                           </span>
@@ -490,7 +506,7 @@ const About = () => {
               {/* --- SUB-TASK 2: SIMPLE QUESTION BLOCK --- */}
               <div
                 ref={subTask2Ref}
-                className="hidden min-[540px]:flex mt-8 min-[540px]:mt-28 flex-col min-[540px]:flex-row items-start gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-4 lg:gap-x-6"
+                className="hidden min-[540px]:flex mt-8 min-[540px]:mt-48 flex-col min-[540px]:flex-row items-start gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-4 lg:gap-x-6"
               >
                 {story1Src && (
                   <Img
@@ -505,7 +521,9 @@ const About = () => {
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
-                      <span className="reveal-text">{sq.heading ?? 'We Asked a Simple Question'}</span>
+                      <span className="reveal-text">
+                        {sq.heading ?? 'We Asked a Simple Question'}
+                      </span>
                     </span>
                   </h2>
                   <p className="text-white text-[12px] min-[540px]:text-[14px] lg:text-[16px] leading-[1.2]">
@@ -537,7 +555,10 @@ const About = () => {
                       'With house parties becoming the new way to celebrate, it felt like the right time to bring digitalisation, organisation, and standardisation to the events space.',
                     ]
                   ).map((para, i) => (
-                    <p key={i} className="text-white text-[12px] min-[540px]:text-[14px] lg:text-[16px] leading-[1.2]">
+                    <p
+                      key={i}
+                      className="text-white text-[12px] min-[540px]:text-[14px] lg:text-[16px] leading-[1.2]"
+                    >
                       <span className="reveal-wrapper block">
                         <span className="reveal-text" style={{ '--delay': `${0.1 + i * 0.08}s` }}>
                           {para}
@@ -586,7 +607,9 @@ const About = () => {
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
-                        <span className="reveal-text">{founders.heading ?? 'Meet the Founders'}</span>
+                        <span className="reveal-text">
+                          {founders.heading ?? 'Meet the Founders'}
+                        </span>
                       </span>
                     </h2>
                     <h4
@@ -594,7 +617,9 @@ const About = () => {
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
-                        <span className="reveal-text">{founders.founders?.[0]?.name ?? "Hi! I'm Moksha"}</span>
+                        <span className="reveal-text">
+                          {founders.founders?.[0]?.name ?? "Hi! I'm Moksha"}
+                        </span>
                       </span>
                     </h4>
                     <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
@@ -619,7 +644,9 @@ const About = () => {
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
-                        <span className="reveal-text">{founders.founders?.[1]?.name ?? "Hey! I'm Gauri"}</span>
+                        <span className="reveal-text">
+                          {founders.founders?.[1]?.name ?? "Hey! I'm Gauri"}
+                        </span>
                       </span>
                     </h4>
                     <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
@@ -762,7 +789,9 @@ const About = () => {
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
-                      <span className="reveal-text">{vq.heading ?? 'Our approach to vendor quality'}</span>
+                      <span className="reveal-text">
+                        {vq.heading ?? 'Our approach to vendor quality'}
+                      </span>
                     </span>
                   </h2>
                   <p
@@ -826,9 +855,9 @@ const About = () => {
                           )}
                         </div>
 
-                        <div className="flex flex-col items-center gap-4 w-full">
+                        <div className="flex flex-col items-center gap-4 w-full p-4">
                           <h5
-                            className="text-[#2D2D2D] text-[21px] font-normal text-center leading-[120%]"
+                            className="text-[#2D2D2D] text-[16px] sm:text-[21px] font-normal text-center leading-[120%]"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '120%',
@@ -838,7 +867,7 @@ const About = () => {
                             {card.title}
                           </h5>
                           <p
-                            className="text-[#767676] text-[12px] font-normal text-center leading-[150%] w-full"
+                            className="text-[#767676] text-[12px] font-normal text-center leading-[150%] w-auto text-wrap"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '150%',
@@ -855,7 +884,7 @@ const About = () => {
               </div>
             </div>
           </div>
-        </section >
+        </section>
 
         {/* --- Call To Action Section --- */}
         {/* Frame 271 */}
@@ -917,7 +946,7 @@ const About = () => {
         </div>
       </section>
       {/* --- SCROLL-TRACED OBJECT --- */}
-      < img src={objectImg} alt="" style={objStyle} />
+      <img src={objectImg} alt="" style={objStyle} />
     </>
   )
 }

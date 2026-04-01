@@ -8,6 +8,10 @@ import InHousePlannerSection from './pages/InHousePlannerPage'
 import About from './pages/About'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
+import LoginPage from './pages/LoginPage'
+import SignUpPage from './pages/SignUpPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import NewPasswordPage from './pages/NewPasswordPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -30,19 +34,40 @@ function ScrollToTop() {
   return null
 }
 
-export default function App() {
+function AppLayout() {
+  const { pathname } = useLocation()
+  const hideGlobalChrome =
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/forgot-password' ||
+    pathname === '/new-password' ||
+    pathname === '/reset-password' ||
+    pathname === '/auth/callback'
+
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
-      <NavHeader />
+      {!hideGlobalChrome && <NavHeader />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/in-house-planner" element={<InHousePlannerSection />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/new-password" element={<NewPasswordPage />} />
       </Routes>
-      <Footer />
+      {!hideGlobalChrome && <Footer />}
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
     </BrowserRouter>
   )
 }

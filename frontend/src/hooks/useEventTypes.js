@@ -6,6 +6,14 @@ import {
   SERVICE_CARDS_FALLBACK,
 } from '../data/eventTypes'
 
+const blocksToText = blocks => {
+  if (!blocks || !Array.isArray(blocks)) return ''
+  return blocks
+    .map(b => (b.children ?? []).map(c => c.text ?? '').join(''))
+    .filter(Boolean)
+    .join(' ')
+}
+
 /**
  * Top-level event categories (Social, Corporate, Religious).
  * Strapi: GET /api/events?filters[parent_event][id][$null]=true&filters[is_active][$eq]=true&sort=name:asc
@@ -51,6 +59,7 @@ export function useEventCards() {
         documentId: e.documentId,
         title: e.name?.toUpperCase() ?? '',
         tagline: e.tagline ?? '',
+        description: blocksToText(e.description),
         category: e.parent_event?.name ?? '',
         image: e.icon?.url
           ? e.icon.url.startsWith('http')

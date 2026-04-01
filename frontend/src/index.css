@@ -15,6 +15,8 @@
 html {
   -webkit-tap-highlight-color: transparent;
   scroll-behavior: smooth;
+  /* Keeps layout width stable when vertical scrollbar appears/disappears between routes */
+  scrollbar-gutter: stable;
 }
 
 :root {
@@ -88,10 +90,22 @@ p {
   vertical-align: top;
 }
 
+/* Tailwind `hidden` alone loses to the rule above (same specificity, later stylesheet).
+   Desktop-only blocks that use .reveal-wrapper must use `!hidden md:!inline-flex`. */
+
+/* Pill / icon buttons: avoid clipping rounded corners & circles during slide-up reveal */
+.reveal-wrapper.reveal-wrapper--overflow-visible {
+  overflow: visible;
+  /* Tiny vertical buffer prevents rounded CTA edges from looking cut during reveal */
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
 .reveal-text {
   display: inline-block;
   transform: translateY(100%); /* Hidden below */
-  will-change: transform;
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
 .reveal-text.is-visible:not(.reveal-text-x-left):not(.reveal-text-x-right) {
@@ -101,9 +115,11 @@ p {
 @keyframes slideUp {
   0% {
     transform: translateY(100%);
+    opacity: 0;
   }
   100% {
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
@@ -119,18 +135,22 @@ p {
 @keyframes slideInFromLeft {
   0% {
     transform: translateX(-100%);
+    opacity: 0;
   }
   100% {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 
 @keyframes slideInFromRight {
   0% {
     transform: translateX(100%);
+    opacity: 0;
   }
   100% {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 
@@ -145,13 +165,34 @@ p {
 
 /* Extra padding for circle reveal so box-shadow isn't clipped by overflow:hidden */
 .reveal-wrapper-circle {
-  padding: 4px 8px 28px 32px;
+  padding: 4px 8px 32px 40px;
   box-sizing: content-box;
 }
 
 /* Right column circles need mirrored padding so the bubble sits to the left side */
 .reveal-wrapper-circle-right {
-  padding: 4px 32px 28px 8px;
+  padding: 4px 32px 32px 40px;
+  margin-left: -40px;
+}
+
+/* Left column circles are right-aligned on desktop, so they need a negative right margin to align with the text */
+.reveal-wrapper-circle-left {
+  margin-right: -8px;
+}
+
+@media (max-width: 767px) {
+  .reveal-wrapper-circle {
+    padding: 4px 6px 8px 24px;
+  }
+  .reveal-wrapper-circle-right {
+    padding: 4px 18px 8px 22px;
+    margin-left: -22px;
+  }
+  .reveal-wrapper-circle-left {
+    padding: 4px 18px 8px 22px;
+    margin-left: -22px;
+    margin-right: 0;
+  }
 }
 
 /* Circle-only reveal: start farther offscreen so the padded wrapper
@@ -167,18 +208,22 @@ p {
 @keyframes slideInFromLeftCircle {
   0% {
     transform: translateX(-140%);
+    opacity: 0;
   }
   100% {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 
 @keyframes slideInFromRightCircle {
   0% {
     transform: translateX(140%);
+    opacity: 0;
   }
   100% {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 
@@ -211,6 +256,36 @@ p {
   will-change: transform;
 }
 
+/* Animated borders */
+.reveal-border-x {
+  overflow: hidden;
+}
+.border-fill-x {
+  transform: scaleX(0);
+  opacity: 0;
+  transform-origin: 0% 50%;
+  transition:
+    transform 2.5s cubic-bezier(0, 0, 0.2, 1) 0.5s,
+    opacity 0.45s ease 0.5s;
+}
+.reveal-border-x.is-visible .border-fill-x {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+.border-fill-y {
+  transform: scaleY(0);
+  opacity: 0;
+  transform-origin: 50% 0%;
+  transition:
+    transform 2.5s cubic-bezier(0, 0, 0.2, 1) 0.5s,
+    opacity 0.45s ease 0.5s;
+}
+.reveal-border-y.is-visible .border-fill-y {
+  transform: scaleY(1);
+  opacity: 1;
+}
+
 /* ── Sequential Scroll Animations (Checklist Section) ── */
 .anim-element {
   opacity: 0;
@@ -230,6 +305,57 @@ p {
 .anim-element.is-visible.slide-from-bottom {
   animation: slideInBottom 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   animation-delay: var(--delay, 0s);
+}
+
+/* Slower reveal only for ChecklistSection */
+.checklist-section .anim-element.is-visible.slide-from-left {
+  animation-duration: 0.9s;
+}
+
+.checklist-section .anim-element.is-visible.slide-from-right {
+  animation-duration: 0.9s;
+}
+
+.checklist-section .anim-element.is-visible.slide-from-bottom {
+  animation-duration: 0.7s;
+}
+
+/* ── Card reveal (simple, viewport-triggered) ────────────────────────────── */
+.card-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  will-change: transform, opacity;
+}
+
+.card-reveal.is-visible {
+  animation: slideInBottom 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Testimonials cards: viewport reveal without touching size/state classes */
+.testimonial-card-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  will-change: transform, opacity;
+}
+
+.testimonial-card-reveal.is-visible {
+  animation: slideInBottom 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Celebration collage images: fade + clarity reveal on viewport */
+.celebration-img-reveal {
+  opacity: 0;
+  filter: saturate(0.8) blur(1px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--img-delay, 0s),
+    filter 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--img-delay, 0s);
+}
+
+.celebration-img-reveal.is-visible {
+  opacity: 1;
+  filter: saturate(1) blur(0);
 }
 
 @keyframes slideInLeft {
@@ -263,4 +389,100 @@ p {
     opacity: 1;
     translate: 0 0;
   }
+}
+/* =========================================
+   Lightbulb Animations (Pendant & Realistic Beam)
+   ========================================= */
+
+@keyframes organic-swing {
+  0% {
+    transform: translateX(50%) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateX(50%) rotate(2.5deg);
+  }
+  100% {
+    transform: translateX(50%) rotate(-2.5deg);
+  }
+}
+
+@keyframes realistic-flicker {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translateX(-50%) scale(1);
+    filter: brightness(1);
+  }
+  /* Quick electrical stutter */
+  3% {
+    opacity: 0.5;
+    filter: brightness(1.1);
+  }
+  6% {
+    opacity: 0.35;
+    filter: brightness(0.9);
+  }
+  7% {
+    opacity: 0.65;
+    transform: translateX(-50%) scale(1.02);
+    filter: brightness(1.25);
+  }
+  8% {
+    opacity: 0.4;
+    transform: translateX(-50%) scale(1);
+    filter: brightness(1);
+  }
+
+  /* Smooth slow burn phase */
+  40% {
+    opacity: 0.6;
+    transform: translateX(-50%) scale(1.03);
+    filter: brightness(1.1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translateX(-50%) scale(1.05);
+    filter: brightness(1.2);
+  }
+
+  /* Another tiny micro-surge */
+  52% {
+    opacity: 0.45;
+    filter: brightness(0.95);
+  }
+  53% {
+    opacity: 0.75;
+    filter: brightness(1.2);
+  }
+
+  /* Cooling down phase */
+  85% {
+    opacity: 0.45;
+    transform: translateX(-50%) scale(1.01);
+    filter: brightness(1.05);
+  }
+  90% {
+    opacity: 0.35;
+    filter: brightness(0.95);
+  }
+  92% {
+    opacity: 0.55;
+    filter: brightness(1.1);
+  }
+}
+
+.animate-swing {
+  transform-origin: top center;
+  animation-name: organic-swing;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.animate-beam {
+  transform-origin: top center;
+  animation-name: realistic-flicker;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: opacity, transform, filter;
 }

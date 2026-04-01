@@ -31,6 +31,7 @@ export default function AuthCallbackPage() {
       .then(({ jwt, user }) => {
         // Store JWT for use in authenticated API calls
         localStorage.setItem('elewen_jwt', jwt)
+        window.dispatchEvent(new Event('elewen-auth-change'))
         localStorage.setItem('elewen_user', JSON.stringify(user))
         navigate('/', { replace: true })
       })

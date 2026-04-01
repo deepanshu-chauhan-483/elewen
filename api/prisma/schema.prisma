@@ -172,9 +172,9 @@ model OAuthAccount {
 
 model Cart {
   id             String     @id @default(uuid()) @db.Uuid
-  userId         String?    @db.Uuid                     // FK → strapi up_users (null = guest cart)
+  userId         String?    @db.VarChar(50)              // FK → strapi up_users (null = guest cart)
   sessionId      String?    @db.VarChar(255)
-  couponId       String?    @db.Uuid                     // FK → strapi coupons
+  couponId       String?    @db.VarChar(50)              // FK → strapi coupons
   eventDate      DateTime?  @db.Date
   eventCity      String?    @db.VarChar(100)
   guestCount     Int?
@@ -192,9 +192,9 @@ model Cart {
 model CartItem {
   id               String   @id @default(uuid()) @db.Uuid
   cartId           String   @db.Uuid
-  packageId        String   @db.Uuid                     // FK → strapi packages
-  packageElementId String?  @db.Uuid
-  addonId          String?  @db.Uuid
+  packageId        String   @db.VarChar(50)              // FK → strapi packages
+  packageElementId String?  @db.VarChar(50)
+  addonId          String?  @db.VarChar(50)
   title            String   @db.VarChar(255)
   quantity         Int      @default(1)
   unitPrice        Decimal  @db.Decimal(10, 2)
@@ -210,17 +210,17 @@ model CartItem {
 
 model Booking {
   id               String        @id @default(uuid()) @db.Uuid
-  userId           String        @db.Uuid               // FK → strapi up_users
-  packageId        String        @db.Uuid               // FK → strapi packages
-  eventId          String?       @db.Uuid               // FK → strapi events
+  userId           String        @db.VarChar(50)        // FK → strapi up_users
+  packageId        String        @db.VarChar(50)        // FK → strapi packages
+  eventId          String?       @db.VarChar(50)        // FK → strapi events
   eventDate        DateTime      @db.Date
   guestCount       Int
-  eventAddressId   String?       @db.Uuid               // FK → strapi addresses
+  eventAddressId   String?       @db.VarChar(50)        // FK → strapi addresses
   status           BookingStatus @default(new)
   totalPrice       Decimal       @db.Decimal(12, 2)
   advanceAmount    Decimal       @db.Decimal(12, 2)
   remainingAmount  Decimal       @db.Decimal(12, 2)
-  couponId         String?       @db.Uuid               // FK → strapi coupons
+  couponId         String?       @db.VarChar(50)        // FK → strapi coupons
   discountAmount   Decimal       @default(0) @db.Decimal(12, 2)
   infoStatus       InfoStatus?
   feedbackSubmitted Boolean      @default(false)
@@ -247,8 +247,8 @@ model Booking {
 model BookingItem {
   id               String   @id @default(uuid()) @db.Uuid
   bookingId        String   @db.Uuid
-  packageElementId String?  @db.Uuid
-  addonId          String?  @db.Uuid
+  packageElementId String?  @db.VarChar(50)
+  addonId          String?  @db.VarChar(50)
   title            String   @db.VarChar(255)
   quantity         Int
   unitPrice        Decimal  @db.Decimal(10, 2)
@@ -265,7 +265,7 @@ model BookingStatusLog {
   bookingId      String   @db.Uuid
   previousStatus String?  @db.VarChar(50)
   newStatus      String   @db.VarChar(50)
-  changedBy      String?  @db.Uuid                     // FK → strapi up_users
+  changedBy      String?  @db.VarChar(50)              // FK → strapi up_users
   note           String?
   createdAt      DateTime @default(now())
 
@@ -291,7 +291,7 @@ model BookingTimeline {
 model BookingNote {
   id         String   @id @default(uuid()) @db.Uuid
   bookingId  String   @db.Uuid
-  adminId    String   @db.Uuid                         // FK → strapi up_users (admin)
+  adminId    String   @db.VarChar(50)                  // FK → strapi up_users (admin)
   note       String
   isInternal Boolean  @default(true)
   createdAt  DateTime @default(now())
@@ -304,7 +304,7 @@ model BookingNote {
 model Cancellation {
   id                 String             @id @default(uuid()) @db.Uuid
   bookingId          String             @unique @db.Uuid
-  requestedBy        String?            @db.Uuid              // FK → strapi up_users
+  requestedBy        String?            @db.VarChar(50)       // FK → strapi up_users
   reason             String?
   policyAcknowledged Boolean            @default(false)
   status             CancellationStatus @default(requested)
@@ -320,7 +320,7 @@ model BookingFile {
   bookingId  String   @db.Uuid
   fileUrl    String
   fileType   String?  @db.VarChar(50)                  // document / contract / image
-  uploadedBy String?  @db.Uuid                         // FK → strapi up_users
+  uploadedBy String?  @db.VarChar(50)                  // FK → strapi up_users
   createdAt  DateTime @default(now())
 
   booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
@@ -332,9 +332,9 @@ model BookingFile {
 
 model SampleTasteBooking {
   id                String            @id @default(uuid()) @db.Uuid
-  userId            String            @db.Uuid               // FK → strapi up_users
-  packageId         String?           @db.Uuid               // FK → strapi packages
-  eventId           String?           @db.Uuid               // FK → strapi events
+  userId            String            @db.VarChar(50)        // FK → strapi up_users
+  packageId         String?           @db.VarChar(50)        // FK → strapi packages
+  eventId           String?           @db.VarChar(50)        // FK → strapi events
   bookingId         String?           @db.Uuid               // set when converted to full booking
   guestCount        Int?
   bookingDate       DateTime?         @db.Date
@@ -356,7 +356,7 @@ model SampleTasteBooking {
 model SampleTasteVendor {
   id              String             @id @default(uuid()) @db.Uuid
   sampleBookingId String             @db.Uuid
-  vendorId        String             @db.Uuid               // FK → strapi vendors
+  vendorId        String             @db.VarChar(50)        // FK → strapi vendors
   menuItems       Json?
   rating          Int?
   feedbackText    String?
@@ -408,7 +408,7 @@ model Refund {
   amount          Decimal      @db.Decimal(10, 2)
   reason          String?
   status          RefundStatus @default(requested)
-  processedBy     String?      @db.Uuid                     // FK → strapi up_users (admin)
+  processedBy     String?      @db.VarChar(50)              // FK → strapi up_users (admin)
   gatewayRefundId String?      @db.VarChar(255)
   createdAt       DateTime     @default(now())
 
@@ -421,7 +421,7 @@ model PaymentLog {
   id          String   @id @default(uuid()) @db.Uuid
   paymentId   String   @db.Uuid
   action      String   @db.VarChar(100)                     // created / verified / failed / refund_initiated
-  performedBy String?  @db.Uuid                             // FK → strapi up_users
+  performedBy String?  @db.VarChar(50)                      // FK → strapi up_users
   metadata    Json?
   createdAt   DateTime @default(now())
 
@@ -435,9 +435,9 @@ model PaymentLog {
 model VendorAssignment {
   id         String                 @id @default(uuid()) @db.Uuid
   bookingId  String                 @db.Uuid
-  vendorId   String                 @db.Uuid               // FK → strapi vendors
-  serviceId  String?                @db.Uuid               // FK → strapi services
-  assignedBy String?                @db.Uuid               // FK → strapi up_users (admin)
+  vendorId   String                 @db.VarChar(50)        // FK → strapi vendors
+  serviceId  String?                @db.VarChar(50)        // FK → strapi services
+  assignedBy String?                @db.VarChar(50)        // FK → strapi up_users (admin)
   status     VendorAssignmentStatus @default(assigned)
   assignedAt DateTime               @default(now())
 
@@ -448,7 +448,7 @@ model VendorAssignment {
 
 model VendorPayout {
   id            String              @id @default(uuid()) @db.Uuid
-  vendorId      String              @db.Uuid               // FK → strapi vendors
+  vendorId      String              @db.VarChar(50)        // FK → strapi vendors
   bookingId     String              @db.Uuid
   amount        Decimal             @db.Decimal(12, 2)
   status        VendorPayoutStatus  @default(pending)
@@ -462,7 +462,7 @@ model VendorPayout {
 
 model VendorBankInfo {
   id                String   @id @default(uuid()) @db.Uuid
-  vendorId          String   @unique @db.Uuid              // FK → strapi vendors (one-to-one)
+  vendorId          String   @unique @db.VarChar(50)       // FK → strapi vendors (one-to-one)
   bankName          String?  @db.VarChar(255)
   accountNumber     String?  @db.VarChar(50)               // should be encrypted at application layer
   ifscCode          String?  @db.VarChar(20)
@@ -478,9 +478,9 @@ model VendorBankInfo {
 
 model CouponUsage {
   id        String   @id @default(uuid()) @db.Uuid
-  couponId  String   @db.Uuid                              // FK → strapi coupons
+  couponId  String   @db.VarChar(50)                       // FK → strapi coupons
   bookingId String   @unique @db.Uuid
-  userId    String   @db.Uuid                              // FK → strapi up_users
+  userId    String   @db.VarChar(50)                       // FK → strapi up_users
   usedAt    DateTime @default(now())
 
   booking   Booking  @relation(fields: [bookingId], references: [id])
@@ -493,7 +493,7 @@ model CouponUsage {
 model MessageThread {
   id        String    @id @default(uuid()) @db.Uuid
   bookingId String    @unique @db.Uuid
-  createdBy String?   @db.Uuid                             // FK → strapi up_users
+  createdBy String?   @db.VarChar(50)                      // FK → strapi up_users
   createdAt DateTime  @default(now())
 
   booking   Booking   @relation(fields: [bookingId], references: [id])
@@ -505,7 +505,7 @@ model MessageThread {
 model Message {
   id          String      @id @default(uuid()) @db.Uuid
   threadId    String      @db.Uuid
-  senderId    String      @db.Uuid                         // FK → strapi up_users
+  senderId    String      @db.VarChar(50)                   // FK → strapi up_users
   messageText String?
   messageType MessageType @default(text)
   createdAt   DateTime    @default(now())
@@ -520,7 +520,7 @@ model Message {
 model MessageReadStatus {
   id        String   @id @default(uuid()) @db.Uuid
   messageId String   @db.Uuid
-  userId    String   @db.Uuid                              // FK → strapi up_users
+  userId    String   @db.VarChar(50)                       // FK → strapi up_users
   readAt    DateTime @default(now())
 
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
@@ -545,7 +545,7 @@ model MessageAttachment {
 
 model SupportTicket {
   id        String              @id @default(uuid()) @db.Uuid
-  userId    String              @db.Uuid                   // FK → strapi up_users
+  userId    String              @db.VarChar(50)            // FK → strapi up_users
   bookingId String?             @db.Uuid
   subject   String              @db.VarChar(255)
   status    SupportTicketStatus @default(open)
@@ -562,7 +562,7 @@ model SupportTicket {
 model SupportMessage {
   id             String        @id @default(uuid()) @db.Uuid
   ticketId       String        @db.Uuid
-  senderId       String        @db.Uuid                    // FK → strapi up_users
+  senderId       String        @db.VarChar(50)             // FK → strapi up_users
   message        String
   isInternalNote Boolean       @default(false)
   attachmentUrl  String?
@@ -577,7 +577,7 @@ model SupportMessage {
 
 model Notification {
   id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid                              // FK → strapi up_users
+  userId    String   @db.VarChar(50)                       // FK → strapi up_users
   type      String   @db.VarChar(100)                      // booking_update / payment / vendor / system / message
   title     String   @db.VarChar(255)
   message   String?
@@ -597,9 +597,9 @@ model Alert {
   message           String
   metadata          Json?                                   // {booking_id, vendor_id, payment_id, reason}
   relatedEntityType String?       @db.VarChar(50)           // booking / payment / vendor / system
-  relatedEntityId   String?       @db.Uuid
+  relatedEntityId   String?       @db.VarChar(50)
   status            AlertStatus   @default(new)
-  resolvedBy        String?       @db.Uuid                  // FK → strapi up_users
+  resolvedBy        String?       @db.VarChar(50)           // FK → strapi up_users
   resolvedAt        DateTime?
   createdAt         DateTime      @default(now())
 

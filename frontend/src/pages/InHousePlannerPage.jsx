@@ -1,20 +1,31 @@
-﻿import { useRef, useState, useLayoutEffect } from 'react'
+import { useRef, useState, useLayoutEffect } from 'react'
+
 import gsap from 'gsap'
+
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
 import { usePlannerLead } from '../hooks/usePlannerLead'
+
 import { useInHousePlannerPage } from '../hooks/useCmsPages'
+
 import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
 
 import plannerImg from '../assets/images/moksha_portrait.jpg'
 
 import celebrationImg1 from '../assets/images/citroen.png'
+
 import celebrationImg2 from '../assets/images/danube.jpg'
+
 import celebrationImg3 from '../assets/images/guns.jpg'
+
 import celebrationImg4 from '../assets/images/usha.jpg'
 
 import everyDayImg1 from '../assets/images/IMG_3010.jpg' // Top Right
+
 import everyDayImg2 from '../assets/images/IMG_2017.jpg' // Bottom Right
+
 import everyDayImg3 from '../assets/images/IMG_7768.jpg' // Bottom Left
+
 import everyDayImg4 from '../assets/images/IMG_3001.jpg' // Top Center
 
 gsap.registerPlugin(ScrollTrigger)
@@ -22,63 +33,103 @@ gsap.registerPlugin(ScrollTrigger)
 const celebrationData = [
   {
     id: '01',
+
     title: 'CITROEN',
+
     desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+
     image: celebrationImg1,
+
     tall: true,
   },
+
   {
     id: '02',
+
     title: 'DANUBE',
+
     desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+
     image: celebrationImg2,
+
     tall: false,
   },
+
   {
     id: '03',
+
     title: 'GUNS & GULAABS',
+
     desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+
     image: celebrationImg3,
+
     tall: true,
   },
+
   {
     id: '04',
+
     title: 'USHA',
+
     desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+
     image: celebrationImg4,
+
     tall: false,
   },
+
   {
     id: '05',
+
     title: 'CITROEN',
+
     desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+
     image: celebrationImg1,
+
     tall: false,
   },
+
   {
     id: '06',
+
     title: 'DANUBE',
+
     desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+
     image: celebrationImg2,
+
     tall: true,
   },
+
   {
     id: '07',
+
     title: 'GUNS & GULAABS',
+
     desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+
     image: celebrationImg3,
+
     tall: false,
   },
+
   {
     id: '08',
+
     title: 'USHA',
+
     desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+
     image: celebrationImg4,
+
     tall: true,
   },
 ]
 
 // Defined at module level so React never treats it as a new component type on re-render
+
 const GCTextReveal = ({ children, className = '' }) => (
   <span className="reveal-wrapper overflow-hidden inline-block">
     <span
@@ -92,36 +143,47 @@ const GCTextReveal = ({ children, className = '' }) => (
 
 const GrandCelebrationsSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
-    const gc = cms.grand_celebrations_intro ?? {}
-    
+
+  const gc = cms.grand_celebrations_intro ?? {}
+
   const sectionRef = useRef(null)
 
   const titleRef = useRef(null)
+
   const noteRef = useRef(null)
+
   const arrowLeftRef = useRef(null)
+
   const arrowRightRef = useRef(null)
 
   const activeCardRefs = useRef([])
+
   const activeImgWrapRefs = useRef([])
 
   const incomingCardRefs = useRef([])
+
   const incomingImgWrapRefs = useRef([])
+
   const incomingLayerRef = useRef(null)
 
   const [perPage, setPerPage] = useState(() => {
     if (typeof window === 'undefined') return 4
+
     return window.innerWidth >= 540 ? 4 : 1
   })
+
   const [page, setPage] = useState(0)
+
   const [incomingPage, setIncomingPage] = useState(null)
+
   const [isAnimating, setIsAnimating] = useState(false)
   const perPageRef = useRef(perPage)
 
   const totalPages = Math.max(1, Math.ceil(celebrationData.length / perPage))
   const isMobile = perPage === 1
-
   const getItems = pageIndex => {
     const start = pageIndex * perPage
+
     return celebrationData.slice(start, start + perPage)
   }
 
@@ -132,62 +194,90 @@ const GrandCelebrationsSection = () => {
     if (isAnimating || totalPages <= 1) return
 
     const current = ((page % totalPages) + totalPages) % totalPages
+
     const next = (current + dir + totalPages) % totalPages
+
     setIsAnimating(true)
+
     setIncomingPage(next)
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const outCards = activeCardRefs.current.filter(Boolean)
+
         const outWraps = activeImgWrapRefs.current.filter(Boolean)
+
         const inCards = incomingCardRefs.current.filter(Boolean)
+
         const inWraps = incomingImgWrapRefs.current.filter(Boolean)
 
         const outTexts = getRevealTexts(outCards)
+
         const inTexts = getRevealTexts(inCards)
 
         // Reveal the incoming layer only after setting hidden initial states (prevents flash)
+
         gsap.set(incomingLayerRef.current, { opacity: 1 })
+
         gsap.set(inTexts, { yPercent: 100, autoAlpha: 1 })
+
         gsap.set(inWraps, { clipPath: 'inset(100% 0% 0% 0%)' })
 
         const tl = gsap.timeline({
           defaults: { ease: 'power2.inOut' },
+
           onComplete: () => {
             setPage(next)
+
             setIncomingPage(null)
+
             setIsAnimating(false)
 
             activeCardRefs.current = []
+
             activeImgWrapRefs.current = []
+
             incomingCardRefs.current = []
+
             incomingImgWrapRefs.current = []
           },
         })
 
         tl.to(
           outTexts,
+
           { yPercent: -100, autoAlpha: 0, duration: 0.34, stagger: 0.015, ease: 'power2.in' },
+
           0
         ).to(
           outWraps,
+
           {
             clipPath: 'inset(0% 0% 100% 0%)',
+
             duration: 0.38,
+
             stagger: 0.03,
+
             ease: 'power2.in',
           },
+
           0
         )
 
         tl.to(inWraps, {
           clipPath: 'inset(0% 0% 0% 0%)',
+
           duration: 0.55,
+
           stagger: 0.045,
+
           ease: 'power3.out',
         }).to(
           inTexts,
+
           { yPercent: 0, autoAlpha: 1, duration: 0.55, stagger: 0.02, ease: 'power3.out' },
+
           '<+=0.02'
         )
       })
@@ -201,39 +291,57 @@ const GrandCelebrationsSection = () => {
   useLayoutEffect(() => {
     const updatePerPage = () => {
       const nextPerPage = window.innerWidth >= 540 ? 4 : 1
+
       if (perPageRef.current === nextPerPage) return
+
       perPageRef.current = nextPerPage
 
       setPerPage(nextPerPage)
+
       setIncomingPage(null)
+
       setIsAnimating(false)
 
       activeCardRefs.current = []
+
       activeImgWrapRefs.current = []
+
       incomingCardRefs.current = []
+
       incomingImgWrapRefs.current = []
     }
+
     window.addEventListener('resize', updatePerPage)
+
     return () => window.removeEventListener('resize', updatePerPage)
   }, [])
 
   const normalizedPage = ((page % totalPages) + totalPages) % totalPages
+
   const normalizedIncomingPage =
     incomingPage === null ? null : ((incomingPage % totalPages) + totalPages) % totalPages
 
   const activeItems = getItems(normalizedPage)
+
   const incomingItems = normalizedIncomingPage === null ? [] : getItems(normalizedIncomingPage)
+
   const mobileActiveItem = celebrationData[(normalizedPage * perPage) % celebrationData.length]
+
   const mobileStackItems = isMobile
     ? Array.from({ length: 4 }, (_, offset) => {
         const idx = (normalizedPage + offset) % celebrationData.length
+
         return celebrationData[idx]
       })
     : []
+
   const mobileStackTransforms = [
     { rotate: 0, x: 0, y: 0, scale: 1 },
+
     { rotate: -10, x: -26, y: 16, scale: 0.98 },
+
     { rotate: 10, x: 26, y: 22, scale: 0.96 },
+
     { rotate: -6, x: -8, y: 30, scale: 0.94 },
   ]
 
@@ -245,6 +353,7 @@ const GrandCelebrationsSection = () => {
       {isMobile ? (
         <div className="relative w-full max-w-[540px] mx-auto px-6 pt-14 pb-12 min-h-[820px] flex flex-col items-center">
           {/* Title + note (mobile) */}
+
           <div className="w-full flex flex-col items-center text-center">
             <h3
               className="text-[#2D2D2D] text-[32px] leading-[1.05] font-serif"
@@ -254,15 +363,17 @@ const GrandCelebrationsSection = () => {
                 {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
               </span>
             </h3>
+
             <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.5] max-w-[320px]">
               <span ref={noteRef}>
-                   {gc.note ??
-                'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+                {gc.note ??
+                  'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
               </span>
             </p>
           </div>
 
           {/* Stacked cards (mobile) */}
+
           <div className="mt-14 flex-1 w-full flex items-center justify-center">
             <div className="relative w-[260px] h-[360px]">
               {mobileStackItems.map((item, idx) => {
@@ -275,7 +386,9 @@ const GrandCelebrationsSection = () => {
                     className="absolute inset-0"
                     style={{
                       transform: `translate3d(${t.x}px, ${t.y}px, 0) rotate(${t.rotate}deg) scale(${t.scale})`,
+
                       zIndex: mobileStackItems.length - idx,
+
                       transformOrigin: 'center',
                     }}
                   >
@@ -326,9 +439,11 @@ const GrandCelebrationsSection = () => {
       ) : (
         <div className="relative w-full max-w-[1440px] h-[845px] mx-auto">
           {/* Cards area (active + incoming layers) */}
+
           <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-full px-[5%] lg:px-[76px]">
             <div className="relative">
               {/* Active layer */}
+
               <div className="grid grid-cols-1 min-[540px]:grid-cols-4 gap-4 min-[540px]:gap-6">
                 {activeItems.map((item, index) => (
                   <div
@@ -445,11 +560,12 @@ const GrandCelebrationsSection = () => {
           </div>
 
           {/* Bottom text */}
+
           <div className="absolute w-full bottom-[40px] lg:bottom-[80px] px-[5%] lg:px-[100px] flex flex-col-reverse min-[540px]:flex-row justify-between items-start min-[540px]:items-end gap-8 pointer-events-none z-0">
             <p className="text-[#2D2D2D] opacity-50 text-[14px] min-[540px]:text-[16px] leading-[1.5] text-left min-[540px]:pb-2 max-w-[631px]">
               <span ref={noteRef} className="reveal-text gc-reveal-text">
-                              {gc.note ??
-                'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+                {gc.note ??
+                  'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
               </span>
             </p>
 
@@ -457,10 +573,8 @@ const GrandCelebrationsSection = () => {
               className="text-[#2D2D2D] text-[32px] min-[540px]:text-[47px] leading-[1] text-left min-[540px]:text-right font-serif shrink-0"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              <span className="reveal-wrapper">
-                <span ref={titleRef} className="reveal-text gc-reveal-text">
-                  {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
-                </span>
+              <span ref={titleRef} className="block">
+                {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
               </span>
             </h3>
           </div>
@@ -537,10 +651,12 @@ const ImgBox = ({ src, alt, className, setRef }) => (
 )
 
 const CelebrationEveryDaySection = () => {
-   const { data: cms = {} } = useInHousePlannerPage()
-    const ced = cms.celebrations_every_day ?? {}
-    const cmsCats = ced.categories ?? []
-    
+  const { data: cms = {} } = useInHousePlannerPage()
+
+  const ced = cms.celebrations_every_day ?? {}
+
+  const cmsCats = ced.categories ?? []
+
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia &&
@@ -550,92 +666,143 @@ const CelebrationEveryDaySection = () => {
   const CATEGORY_DATA = [
     {
       name: 'Anniversaries',
+
       heading: 'ANNIVERSARIES',
+
       desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+
       images: {
         topLeft: everyDayImg4,
+
         topRight: everyDayImg1,
+
         bottomLeft: everyDayImg3,
+
         bottomRight: everyDayImg2,
       },
     },
+
     {
       name: 'Birthday Parties',
+
       heading: 'BIRTHDAY PARTIES',
+
       desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+
       images: {
         topLeft: everyDayImg1,
+
         topRight: everyDayImg4,
+
         bottomLeft: everyDayImg2,
+
         bottomRight: everyDayImg3,
       },
     },
+
     {
       name: 'Engagement',
+
       heading: 'ENGAGEMENT',
+
       desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+
       images: {
         topLeft: everyDayImg2,
+
         topRight: everyDayImg1,
+
         bottomLeft: everyDayImg4,
+
         bottomRight: everyDayImg3,
       },
     },
+
     {
       name: 'Haldi',
+
       heading: 'HALDI',
+
       desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+
       images: {
         topLeft: everyDayImg3,
+
         topRight: everyDayImg2,
+
         bottomLeft: everyDayImg1,
+
         bottomRight: everyDayImg4,
       },
     },
+
     {
       name: 'Mehendi',
+
       heading: 'MEHENDI',
+
       desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+
       images: {
         topLeft: everyDayImg4,
+
         topRight: everyDayImg2,
+
         bottomLeft: everyDayImg3,
+
         bottomRight: everyDayImg1,
       },
     },
+
     {
       name: 'Weddings',
+
       heading: 'WEDDINGS',
+
       desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+
       images: {
         topLeft: everyDayImg1,
+
         topRight: everyDayImg3,
+
         bottomLeft: everyDayImg2,
+
         bottomRight: everyDayImg4,
       },
     },
   ]
 
   const [activeName, setActiveName] = useState(CATEGORY_DATA[0]?.name ?? '')
+
   const [incomingName, setIncomingName] = useState(null)
+
   const [isAnimating, setIsAnimating] = useState(false)
 
   const sectionRef = useRef(null)
 
   const activeWrapsRef = useRef({
     topLeft: null,
+
     topRight: null,
+
     bottomLeft: null,
+
     bottomRight: null,
   })
+
   const incomingWrapsRef = useRef({
     topLeft: null,
+
     topRight: null,
+
     bottomLeft: null,
+
     bottomRight: null,
   })
 
   const headingRef = useRef(null)
+
   const descRef = useRef(null)
 
   const mobileWrapsRef = useRef({
@@ -648,28 +815,34 @@ const CelebrationEveryDaySection = () => {
   const mobileDescRef = useRef(null)
 
   const incomingHeadingRef = useRef(null)
+
   const incomingDescRef = useRef(null)
   const activeAccentRef = useRef(null)
   const incomingAccentRef = useRef(null)
   const incomingLayerRef = useRef(null)
-
   const active = CATEGORY_DATA.find(c => c.name === activeName) ?? CATEGORY_DATA[0]
+
   const incoming = incomingName ? (CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
 
   const animateSwapMobile = nextName => {
     if (prefersReducedMotion) {
       setActiveName(nextName)
+
       return
     }
+
     if (isAnimating) return
+
     if (nextName === activeName) return
 
     setIsAnimating(true)
 
     const top = [mobileWrapsRef.current.topLeft, mobileWrapsRef.current.topRight].filter(Boolean)
+
     const bottom = [mobileWrapsRef.current.bottomLeft, mobileWrapsRef.current.bottomRight].filter(
       Boolean
     )
+
     const text = [mobileHeadingRef.current, mobileDescRef.current].filter(Boolean)
 
     const outTl = gsap.timeline({
@@ -681,31 +854,44 @@ const CelebrationEveryDaySection = () => {
           const inTop = [mobileWrapsRef.current.topLeft, mobileWrapsRef.current.topRight].filter(
             Boolean
           )
+
           const inBottom = [
             mobileWrapsRef.current.bottomLeft,
+
             mobileWrapsRef.current.bottomRight,
           ].filter(Boolean)
+
           const inText = [mobileHeadingRef.current, mobileDescRef.current].filter(Boolean)
 
           gsap.set(inTop, { y: 24, autoAlpha: 0 })
+
           gsap.set(inBottom, { y: -24, autoAlpha: 0 })
+
           gsap.set(inText, { yPercent: 100, autoAlpha: 0 })
 
           gsap
+
             .timeline({
               defaults: { ease: 'power3.out' },
+
               onComplete: () => setIsAnimating(false),
             })
+
             .to(inTop, { y: 0, autoAlpha: 1, duration: 0.7, stagger: 0.05 }, 0)
+
             .to(inBottom, { y: 0, autoAlpha: 1, duration: 0.7, stagger: 0.05 }, 0)
+
             .to(inText, { yPercent: 0, autoAlpha: 1, duration: 0.55 }, 0.82)
         })
       },
     })
 
     outTl
+
       .to(top, { y: -24, autoAlpha: 0, duration: 0.45, stagger: 0.04, ease: 'power2.in' }, 0)
+
       .to(bottom, { y: 24, autoAlpha: 0, duration: 0.45, stagger: 0.04, ease: 'power2.in' }, 0)
+
       .to(text, { yPercent: -100, autoAlpha: 0, duration: 0.32, ease: 'power2.in' }, 0.03)
   }
 
@@ -714,57 +900,79 @@ const CelebrationEveryDaySection = () => {
       setActiveName(nextName)
       return
     }
-    if (isAnimating) return
-    if (nextName === activeName) return
+
+    if (isAnimating || nextName === activeName) return
 
     setIsAnimating(true)
     setIncomingName(nextName)
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const outTop = [
+        const outTopFrames = [
           activeWrapsRef.current.topLeft,
           activeWrapsRef.current.topRight,
-          activeAccentRef.current,
         ].filter(Boolean)
-        const outBottom = [
-          activeWrapsRef.current.bottomLeft,
-          activeWrapsRef.current.bottomRight,
-        ].filter(Boolean)
-
-        const inTop = [
+        const outBottomLeftFrame = activeWrapsRef.current.bottomLeft
+        const outBottomRightFrame = activeWrapsRef.current.bottomRight
+        const inTopFrames = [
           incomingWrapsRef.current.topLeft,
           incomingWrapsRef.current.topRight,
-          incomingAccentRef.current,
         ].filter(Boolean)
-        const inBottom = [
-          incomingWrapsRef.current.bottomLeft,
-          incomingWrapsRef.current.bottomRight,
-        ].filter(Boolean)
+        const inBottomLeftFrame = incomingWrapsRef.current.bottomLeft
+        const inBottomRightFrame = incomingWrapsRef.current.bottomRight
+
+        const outTop = outTopFrames.map(frame => frame.querySelector('img')).filter(Boolean)
+        const outBottomLeft = outBottomLeftFrame?.querySelector('img')
+        const outBottomRight = outBottomRightFrame?.querySelector('img')
+        const inTop = inTopFrames.map(frame => frame.querySelector('img')).filter(Boolean)
+        const inBottomLeft = inBottomLeftFrame?.querySelector('img')
+        const inBottomRight = inBottomRightFrame?.querySelector('img')
+        const outAccent = activeAccentRef.current
+        const inAccent = incomingAccentRef.current
 
         const outHeading = headingRef.current
         const outDesc = descRef.current
         const inHeading = incomingHeadingRef.current
         const inDesc = incomingDescRef.current
 
-        // Prep incoming layer (TOP from below, BOTTOM from above)
-        gsap.set(inTop, { y: 60, autoAlpha: 0 })
-        gsap.set(inBottom, { y: -60, autoAlpha: 0 })
-
-        // Text: out up, in from below (after images are in place).
-        if (inHeading) gsap.set(inHeading, { yPercent: 100, autoAlpha: 0 })
-        if (inDesc) gsap.set(inDesc, { yPercent: 120, autoAlpha: 0 })
-        // Keep incoming layer hidden until the IN phase starts (prevents any flash).
         if (incomingLayerRef.current) gsap.set(incomingLayerRef.current, { opacity: 0 })
 
+        gsap.set(inTop, {
+          y: '100%',
+          transformOrigin: 'center center',
+        })
+
+        if (inBottomLeft) gsap.set(inBottomLeft, { y: '-100%', transformOrigin: 'center center' })
+        if (inBottomRight) gsap.set(inBottomRight, { y: '-100%', transformOrigin: 'center center' })
+
+        gsap.set(outTop, { y: 0 })
+        if (outBottomLeft) gsap.set(outBottomLeft, { y: 0 })
+        if (outBottomRight) gsap.set(outBottomRight, { y: 0 })
+        if (inAccent) gsap.set(inAccent, { y: '100%' })
+        if (outAccent) gsap.set(outAccent, { y: 0 })
+
+        if (inHeading) {
+          gsap.set(inHeading, {
+            autoAlpha: 0,
+            y: 24,
+            letterSpacing: '0.18em',
+          })
+        }
+
+        if (inDesc) {
+          gsap.set(inDesc, {
+            autoAlpha: 0,
+            y: 24,
+          })
+        }
+
         const tl = gsap.timeline({
-          defaults: { ease: 'power2.inOut' },
+          defaults: { ease: 'power3.out' },
           onComplete: () => {
             setActiveName(nextName)
             setIncomingName(null)
             setIsAnimating(false)
 
-            // clear refs for the unmounted incoming layer
             incomingWrapsRef.current = {
               topLeft: null,
               topRight: null,
@@ -774,91 +982,152 @@ const CelebrationEveryDaySection = () => {
           },
         })
 
-        // OUT (hard cut first)
-        // Top images: go UP and disappear
         tl.to(
           outTop,
           {
-            y: -60,
-            autoAlpha: 0,
-            duration: 0.75,
-            stagger: 0.04,
-            ease: 'power2.in',
+            y: '-100%',
+            duration: 1.05,
+            stagger: 0,
+            ease: 'power3.inOut',
           },
           0
         )
 
-        // Bottom images: go DOWN and disappear (reverse)
-        tl.to(
-          outBottom,
-          {
-            y: 60,
-            autoAlpha: 0,
-            duration: 0.75,
-            stagger: 0.04,
-            ease: 'power2.in',
-          },
-          0
-        )
+        if (outBottomLeft) {
+          tl.to(
+            outBottomLeft,
+            {
+              y: '100%',
+              duration: 1.05,
+              ease: 'power3.inOut',
+            },
+            0
+          )
+        }
 
-        // Text: out UP (heading + paragraph together)
+        if (outBottomRight) {
+          tl.to(
+            outBottomRight,
+            {
+              y: '100%',
+              duration: 1.05,
+              ease: 'power3.inOut',
+            },
+            0
+          )
+        }
+
+        if (outAccent) {
+          tl.to(
+            outAccent,
+            {
+              y: '-100%',
+              duration: 1.05,
+              ease: 'power3.inOut',
+            },
+            0
+          )
+        }
+
         if (outHeading) {
           tl.to(
             outHeading,
-            { yPercent: -100, autoAlpha: 0, duration: 0.42, ease: 'power2.in' },
-            0.03
+            {
+              autoAlpha: 0,
+              y: -18,
+              duration: 0.42,
+              ease: 'power2.inOut',
+            },
+            0.05
           )
         }
+
         if (outDesc) {
-          tl.to(outDesc, { yPercent: -120, autoAlpha: 0, duration: 0.34, ease: 'power2.in' }, 0.09)
+          tl.to(
+            outDesc,
+            {
+              autoAlpha: 0,
+              y: -10,
+              duration: 0.36,
+              ease: 'power2.inOut',
+            },
+            0.1
+          )
         }
 
-        // IN: start after OUT finishes (with a small pause) so the swap feels clean.
-        const OUT_END = 0.78
-        const IN_START = OUT_END + 0.14
-        if (incomingLayerRef.current)
-          tl.set(incomingLayerRef.current, { opacity: 1 }, IN_START - 0.01)
-        // Top images: come from DOWN
+        tl.set(incomingLayerRef.current, { opacity: 1 }, 1.4)
+
         tl.to(
           inTop,
           {
             y: 0,
-            autoAlpha: 1,
-            duration: 1.05,
-            stagger: 0.05,
+            duration: 0.95,
+            stagger: 0,
             ease: 'power3.out',
           },
-          IN_START
+          1.45
         )
 
-        // Bottom images: come from UP (reverse)
-        tl.to(
-          inBottom,
-          {
-            y: 0,
-            autoAlpha: 1,
-            duration: 1.05,
-            stagger: 0.05,
-            ease: 'power3.out',
-          },
-          IN_START
-        )
+        if (inBottomLeft) {
+          tl.to(
+            inBottomLeft,
+            {
+              y: 0,
+              duration: 0.9,
+              ease: 'power3.out',
+            },
+            1.57
+          )
+        }
 
-        // Text: in from below (heading first, paragraph after), after images are set
-        const IMAGE_IN_END = IN_START + 1.05 + 0.1
-        const TEXT_IN_START = IMAGE_IN_END + 0.12
+        if (inBottomRight) {
+          tl.to(
+            inBottomRight,
+            {
+              y: 0,
+              duration: 0.9,
+              ease: 'power3.out',
+            },
+            1.57
+          )
+        }
+
+        if (inAccent) {
+          tl.to(
+            inAccent,
+            {
+              y: 0,
+              duration: 0.9,
+              ease: 'power3.out',
+            },
+            1.57
+          )
+        }
+
         if (inHeading) {
           tl.to(
             inHeading,
-            { yPercent: 0, autoAlpha: 1, duration: 0.65, ease: 'power3.out' },
-            TEXT_IN_START
+            {
+              autoAlpha: 1,
+              y: 0,
+              letterSpacing: '0.08em',
+              duration: 0.6,
+              ease: 'expo.out',
+            },
+            2.5
           )
         }
+
         if (inDesc) {
           tl.to(
             inDesc,
-            { yPercent: 0, autoAlpha: 1, duration: 0.55, ease: 'power2.out' },
-            TEXT_IN_START + 0.12
+            {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.45,
+              ease: 'power3.out',
+            },
+            2.5
           )
         }
       })
@@ -914,7 +1183,7 @@ const CelebrationEveryDaySection = () => {
           className="text-[#2D2D2D] text-[34px] leading-[1.05] text-center font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-           {ced.heading ?? 'Celebrations We Plan Every Day'}
+          {ced.heading ?? 'Celebrations We Plan Every Day'}
         </h2>
 
         <p className="mt-5 text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7] text-center">
@@ -948,10 +1217,13 @@ const CelebrationEveryDaySection = () => {
               )
             })}
           </div>
+
           <div className="mt-3 flex items-center justify-center flex-wrap gap-x-3 gap-y-3 text-[14px]">
             {CATEGORY_DATA.slice(3, 6).map((cat, i) => {
               const idx = i + 3
+
               const isActive = cat.name === activeName
+
               return (
                 <div key={cat.name} className="flex items-center gap-3">
                   <button
@@ -976,9 +1248,11 @@ const CelebrationEveryDaySection = () => {
         </div>
 
         {/* Mobile collage frame */}
+
         <div className="mt-10">
           <div className="grid grid-cols-[2fr_1fr] grid-rows-3 gap-1 h-[min(78vw,370px)]">
             {/* Big left */}
+
             <div
               ref={el => (mobileWrapsRef.current.topLeft = el)}
               className="relative overflow-hidden rounded-[18px] row-span-2 col-start-1 row-start-1"
@@ -1048,7 +1322,8 @@ const CelebrationEveryDaySection = () => {
         </div>
       </div>
 
-      {/* Desktop layout (md+) — existing animation layout kept as-is */}
+      {/* Desktop layout (md+) â existing animation layout kept as-is */}
+
       <div className="hidden min-[540px]:block w-full">
         <div
           ref={desktopWrapRef}
@@ -1059,7 +1334,9 @@ const CelebrationEveryDaySection = () => {
             className="absolute top-0 left-1/2 origin-top"
             style={{
               width: `${DESKTOP_CANVAS_W}px`,
+
               height: `${DESKTOP_CANVAS_H}px`,
+
               transform: `translateX(-50%) scale(${desktopScale})`,
             }}
           >
@@ -1068,25 +1345,29 @@ const CelebrationEveryDaySection = () => {
                 className="absolute left-1/2 -translate-x-1/2 top-[80px] w-[967px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                 {ced.heading ?? 'Celebrations We Plan Every Day'}
+                {ced.heading ?? 'Celebrations We Plan Every Day'}
               </h2>
 
               <p className="absolute left-1/2 -translate-x-1/2 top-[169px] w-[809px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center">
-               {ced.description ??
-            'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
+                {ced.description ??
+                  'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
               </p>
 
               <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
-                <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#EBEBEB] z-0" />
-                <div
-                  key={active.name}
-                  ref={activeAccentRef}
-                  className="absolute left-[0px] top-[400px] w-[640px] h-[200px] bg-[#CDB17E] z-10"
-                  style={{ willChange: 'transform, opacity' }}
-                />
+                <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#FFFFFF] z-0" />
+                <div className="absolute left-[0px] top-[399px] w-[1440px] h-px bg-[#D8D8D8] z-[15]" />
+                <div className="absolute left-[0px] top-[599px] w-[640px] h-px bg-[#D8D8D8] z-[15]" />
+                <div className="absolute left-[0px] top-[400px] w-[640px] h-[200px] overflow-hidden z-10">
+                  <div
+                    key={active.name}
+                    ref={activeAccentRef}
+                    className="absolute inset-0 bg-[#CDB17E]"
+                    style={{ willChange: 'transform' }}
+                  />
+                </div>
 
                 {/* Left categories (stays as-is) */}
-                <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#F8F4ED] z-20">
+                <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#EBEBEB] z-20">
                   <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
                     {CATEGORY_DATA.map((cat, idx) => {
                       const isActive = cat.name === activeName
@@ -1101,7 +1382,7 @@ const CelebrationEveryDaySection = () => {
                           }`}
                         >
                           <span className="text-[#2D2D2D] text-[16px] font-medium leading-[1.5]">
-                             {cmsCats[idx]?.tab_label ?? cat.name}
+                            {cmsCats[idx]?.tab_label ?? cat.name}
                           </span>
                         </div>
                       )
@@ -1172,11 +1453,13 @@ const CelebrationEveryDaySection = () => {
                     className="absolute inset-0 pointer-events-none z-30"
                     style={{ opacity: 0 }}
                   >
-                    <div
-                      ref={incomingAccentRef}
-                      className="absolute left-[0px] top-[400px] w-[640px] h-[200px] bg-[#CDB17E] z-10"
-                      style={{ willChange: 'transform, opacity' }}
-                    />
+                    <div className="absolute left-[0px] top-[400px] w-[640px] h-[200px] overflow-hidden z-10">
+                      <div
+                        ref={incomingAccentRef}
+                        className="absolute inset-0 bg-[#CDB17E]"
+                        style={{ willChange: 'transform' }}
+                      />
+                    </div>
                     <ImgBox
                       key={`${incoming.name}-topLeft`}
                       src={incoming.images.topLeft}
@@ -1241,52 +1524,167 @@ const CelebrationEveryDaySection = () => {
 
 const SUPPORT_OPTIONS = [
   'Decor & Styling',
+
   'Catering & Menu Planning',
+
   'Full Event Planning',
+
   'Vendor Coordination',
+
   'Not Sure Yet',
 ]
 
 const CelebrationFormSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
-    const cta = cms.closing_cta ?? {}
+
+  const cta = cms.closing_cta ?? {}
 
   const [currentStep, setCurrentStep] = useState(1)
+
   const { mutate: submitLead, isPending, isError, error } = usePlannerLead()
 
-  // Controlled form state — field names match Express API / Prisma schema
+  // Controlled form state â field names match Express API / Prisma schema
+
   const [form, setForm] = useState({
     full_name: '',
+
     email: '',
+
     phone: '',
+
     city: '',
+
     event_type: '',
+
     event_date: '',
+
     guest_count: '',
+
     venue_type: '',
+
     support_types: [],
+
     vision_notes: '',
   })
 
-  const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+  const [errors, setErrors] = useState({})
 
-  const toggleSupport = opt =>
-    setForm(prev => ({
-      ...prev,
-      support_types: prev.support_types.includes(opt)
-        ? prev.support_types.filter(o => o !== opt)
-        : [...prev.support_types, opt],
-    }))
+  const [touched, setTouched] = useState({})
+
+  const VALIDATORS = {
+    full_name: v => {
+      if (!v.trim()) return 'Full name is required'
+
+      if (!/^[a-zA-Z\s''-]+$/.test(v.trim())) return 'Only letters, spaces and hyphens allowed'
+
+      if (v.trim().length < 2) return 'Must be at least 2 characters'
+
+      return ''
+    },
+
+    email: v => {
+      if (!v.trim()) return 'Email is required'
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())) return 'Enter a valid email address'
+
+      return ''
+    },
+
+    phone: v => {
+      if (!v.trim()) return 'Phone number is required'
+
+      if (!/^[+]?[\d\s\-().]{7,15}$/.test(v.trim())) return 'Enter a valid phone number'
+
+      return ''
+    },
+
+    city: v => {
+      if (!v.trim()) return 'City is required'
+
+      return ''
+    },
+
+    event_type: v => (!v ? 'Please select an event type' : ''),
+
+    event_date: v => {
+      if (!v) return 'Event date is required'
+
+      if (new Date(v) < new Date(new Date().toDateString()))
+        return 'Date must be today or in the future'
+
+      return ''
+    },
+
+    guest_count: v => (!v ? 'Please select estimated guest count' : ''),
+
+    venue_type: v => (!v ? 'Please select a venue type' : ''),
+
+    support_types: v => (v.length === 0 ? 'Select at least one support type' : ''),
+  }
+
+  const STEP_FIELDS = {
+    1: ['full_name', 'email', 'phone', 'city'],
+
+    2: ['event_type', 'event_date', 'guest_count', 'venue_type'],
+
+    3: ['support_types'],
+  }
+
+  const set = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }))
+
+    if (touched[field]) {
+      setErrors(prev => ({ ...prev, [field]: VALIDATORS[field]?.(value) ?? '' }))
+    }
+  }
+
+  const handleBlur = field => {
+    setTouched(prev => ({ ...prev, [field]: true }))
+
+    setErrors(prev => ({ ...prev, [field]: VALIDATORS[field]?.(form[field]) ?? '' }))
+  }
+
+  const toggleSupport = opt => {
+    const next = form.support_types.includes(opt)
+      ? form.support_types.filter(o => o !== opt)
+      : [...form.support_types, opt]
+
+    setForm(prev => ({ ...prev, support_types: next }))
+
+    if (touched.support_types) {
+      setErrors(prev => ({ ...prev, support_types: VALIDATORS.support_types(next) }))
+    }
+  }
 
   const handleNext = () => {
+    const fields = STEP_FIELDS[currentStep] ?? []
+
+    const stepErrors = {}
+
+    const stepTouched = {}
+
+    fields.forEach(f => {
+      stepTouched[f] = true
+
+      stepErrors[f] = VALIDATORS[f]?.(form[f]) ?? ''
+    })
+
+    setTouched(prev => ({ ...prev, ...stepTouched }))
+
+    setErrors(prev => ({ ...prev, ...stepErrors }))
+
+    if (fields.some(f => stepErrors[f])) return
+
     if (currentStep === 3) {
-      // Step 3 → submit then advance to success screen
       submitLead(form, {
         onSuccess: () => setCurrentStep(4),
-        onError: () => setCurrentStep(4), // show success screen regardless — lead is best-effort
+
+        onError: () => setCurrentStep(4), // show success screen regardless â lead is best-effort
       })
+
       return
     }
+
     if (currentStep < 4) setCurrentStep(currentStep + 1)
   }
 
@@ -1295,14 +1693,18 @@ const CelebrationFormSection = () => {
   }
 
   // Helper for Stepper Colors
+
   const getStepColor = stepNum => {
     if (currentStep > stepNum) return 'bg-[#364022] text-white' // Completed
+
     if (currentStep === stepNum) return 'bg-[#591902] text-white' // Active
+
     return 'bg-[#D9D9D9] text-white' // Pending
   }
 
   const getLineColor = stepNum => {
     if (currentStep > stepNum) return 'border-[#364022]'
+
     return 'border-[#2D2D2D]/20'
   }
 
@@ -1316,15 +1718,17 @@ const CelebrationFormSection = () => {
         >
           {cta.heading ?? 'Tell Us About Your Celebration'}
         </h2>
+
         <p className="text-[#2D2D2D] opacity-50 text-[14px] min-[540px]:text-[16px] leading-[1.5] max-w-[727px] mx-auto">
-         {cta.body ??
-            'If you’d like me to plan your event end to end, leave your details and we’ll take it from there.'}
+          {cta.body ??
+            'If youâd like me to plan your event end to end, leave your details and weâll take it from there.'}
         </p>
       </div>
 
       {/* --- Form Container --- */}
       <div className="relative w-[calc(100%-32px)] max-w-[720px] h-auto min-[540px]:h-[701px] bg-[#F8F4ED] rounded-[20px] shadow-sm mx-auto p-6 min-[540px]:p-0">
         {/* --- ZONE 1: STEPPER (Top 60px) --- */}
+
         {currentStep < 4 && (
           <div className="relative min-[540px]:absolute min-[540px]:top-[60px] min-[540px]:left-[120px] min-[540px]:right-[120px] flex justify-between items-start z-10 mb-10 min-[540px]:mb-0">
             {/* Connecting Lines */}
@@ -1332,12 +1736,14 @@ const CelebrationFormSection = () => {
               <div
                 className={`w-1/2 border-t-[1.5px] transition-colors duration-300 ${getLineColor(1)}`}
               ></div>
+
               <div
                 className={`w-1/2 border-t-[1.5px] transition-colors duration-300 ${getLineColor(2)}`}
               ></div>
             </div>
 
             {/* Step 1 */}
+
             <div className="relative z-10 flex flex-col items-center">
               <div
                 className={`w-[60px] h-[60px] rounded-full flex items-center justify-center transition-colors duration-300 ${getStepColor(1)}`}
@@ -1349,6 +1755,7 @@ const CelebrationFormSection = () => {
                   1
                 </span>
               </div>
+
               <span
                 className={`mt-4 text-[10px] min-[540px]:text-[12px] whitespace-normal min-[540px]:whitespace-nowrap text-center max-w-[88px] min-[540px]:max-w-none transition-opacity duration-300 ${currentStep >= 1 ? 'text-[#2D2D2D] opacity-100' : 'text-[#2D2D2D] opacity-50'}`}
               >
@@ -1357,6 +1764,7 @@ const CelebrationFormSection = () => {
             </div>
 
             {/* Step 2 */}
+
             <div className="relative z-10 flex flex-col items-center">
               <div
                 className={`w-[60px] h-[60px] rounded-full flex items-center justify-center transition-colors duration-300 ${getStepColor(2)}`}
@@ -1368,6 +1776,7 @@ const CelebrationFormSection = () => {
                   2
                 </span>
               </div>
+
               <span
                 className={`mt-4 text-[10px] min-[540px]:text-[12px] whitespace-normal min-[540px]:whitespace-nowrap text-center max-w-[88px] min-[540px]:max-w-none transition-opacity duration-300 ${currentStep >= 2 ? 'text-[#2D2D2D] opacity-100' : 'text-[#2D2D2D] opacity-50'}`}
               >
@@ -1376,6 +1785,7 @@ const CelebrationFormSection = () => {
             </div>
 
             {/* Step 3 */}
+
             <div className="relative z-10 flex flex-col items-center">
               <div
                 className={`w-[60px] h-[60px] rounded-full flex items-center justify-center transition-colors duration-300 ${getStepColor(3)}`}
@@ -1387,6 +1797,7 @@ const CelebrationFormSection = () => {
                   3
                 </span>
               </div>
+
               <span
                 className={`mt-4 text-[10px] min-[540px]:text-[12px] whitespace-normal min-[540px]:whitespace-nowrap text-center max-w-[110px] min-[540px]:max-w-none transition-opacity duration-300 ${currentStep >= 3 ? 'text-[#2D2D2D] opacity-100' : 'text-[#2D2D2D] opacity-50'}`}
               >
@@ -1399,137 +1810,229 @@ const CelebrationFormSection = () => {
         {/* --- ZONE 2: FORM CONTENT (Top 230px) --- */}
         <div className="relative min-[540px]:absolute min-[540px]:top-[230px] min-[540px]:left-[60px] min-[540px]:right-[60px] mb-10 min-[540px]:mb-0">
           {/* STEP 1: Basic Details */}
+
           {currentStep === 1 && (
-            <div className="flex flex-col gap-y-[32px] animate-fadeIn">
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  value={form.full_name}
-                  onChange={e => set('full_name', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]"
-                />
+            <div className="flex flex-col gap-y-[24px] animate-fadeIn">
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.full_name ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={form.full_name}
+                    onChange={e => set('full_name', e.target.value)}
+                    onBlur={() => handleBlur('full_name')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]/50"
+                  />
+                </div>
+
+                {errors.full_name && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.full_name}</p>
+                )}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  value={form.email}
-                  onChange={e => set('email', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]"
-                />
+
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.email ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    value={form.email}
+                    onChange={e => set('email', e.target.value)}
+                    onBlur={() => handleBlur('email')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]/50"
+                  />
+                </div>
+
+                {errors.email && <p className="mt-1 text-[11px] text-[#C62828]">{errors.email}</p>}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={form.phone}
-                  onChange={e => set('phone', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]"
-                />
+
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.phone ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <input
+                    type="tel"
+                    placeholder="Phone Number"
+                    value={form.phone}
+                    onChange={e => set('phone', e.target.value)}
+                    onBlur={() => handleBlur('phone')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]/50"
+                  />
+                </div>
+
+                {errors.phone && <p className="mt-1 text-[11px] text-[#C62828]">{errors.phone}</p>}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="text"
-                  placeholder="City/Location of Event"
-                  value={form.city}
-                  onChange={e => set('city', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]"
-                />
+
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.city ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <input
+                    type="text"
+                    placeholder="City/Location of Event"
+                    value={form.city}
+                    onChange={e => set('city', e.target.value)}
+                    onBlur={() => handleBlur('city')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none placeholder:text-[#2D2D2D]/50"
+                  />
+                </div>
+
+                {errors.city && <p className="mt-1 text-[11px] text-[#C62828]">{errors.city}</p>}
               </div>
             </div>
           )}
 
           {/* STEP 2: Event Details */}
+
           {currentStep === 2 && (
-            <div className="flex flex-col gap-y-[32px] animate-fadeIn">
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <select
-                  value={form.event_type}
-                  onChange={e => set('event_type', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+            <div className="flex flex-col gap-y-[24px] animate-fadeIn">
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.event_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <option value="" disabled>
-                    Type of Event
-                  </option>
-                  {[
-                    'Birthday',
-                    'Anniversary',
-                    'House Party',
-                    'Baby Shower',
-                    'Corporate',
-                    'Wedding',
-                    'Other',
-                  ].map(o => (
-                    <option key={o} value={o}>
-                      {o}
+                  <select
+                    value={form.event_type}
+                    onChange={e => set('event_type', e.target.value)}
+                    onBlur={() => handleBlur('event_type')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      Type of Event
                     </option>
-                  ))}
-                </select>
+
+                    {[
+                      'Birthday',
+
+                      'Anniversary',
+
+                      'House Party',
+
+                      'Baby Shower',
+
+                      'Corporate',
+
+                      'Wedding',
+
+                      'Other',
+                    ].map(o => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {errors.event_type && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.event_type}</p>
+                )}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <input
-                  type="date"
-                  value={form.event_date}
-                  onChange={e => set('event_date', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none cursor-pointer"
-                />
-              </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <select
-                  value={form.guest_count}
-                  onChange={e => set('guest_count', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.event_date ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <option value="" disabled>
-                    Estimated Guest Count
-                  </option>
-                  {['1–15', '15–30', '30–50', '50–100', '100+'].map(o => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
+                  <input
+                    type="date"
+                    value={form.event_date}
+                    onChange={e => set('event_date', e.target.value)}
+                    onBlur={() => handleBlur('event_date')}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none cursor-pointer"
+                  />
+                </div>
+
+                {errors.event_date && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.event_date}</p>
+                )}
               </div>
-              <div className="border-b border-[#2D2D2D]/50 pb-2">
-                <select
-                  value={form.venue_type}
-                  onChange={e => set('venue_type', e.target.value)}
-                  className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.guest_count ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <option value="" disabled>
-                    Venue Type
-                  </option>
-                  {[
-                    'Home',
-                    'Banquet Hall',
-                    'Terrace / Rooftop',
-                    'Garden / Outdoor',
-                    'Office',
-                    'Other',
-                  ].map(o => (
-                    <option key={o} value={o}>
-                      {o}
+                  <select
+                    value={form.guest_count}
+                    onChange={e => set('guest_count', e.target.value)}
+                    onBlur={() => handleBlur('guest_count')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      Estimated Guest Count
                     </option>
-                  ))}
-                </select>
+
+                    {['1â15', '15â30', '30â50', '50â100', '100+'].map(o => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {errors.guest_count && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.guest_count}</p>
+                )}
+              </div>
+
+              <div>
+                <div
+                  className={`border-b pb-2 ${errors.venue_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
+                >
+                  <select
+                    value={form.venue_type}
+                    onChange={e => set('venue_type', e.target.value)}
+                    onBlur={() => handleBlur('venue_type')}
+                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      Venue Type
+                    </option>
+
+                    {[
+                      'Home',
+
+                      'Banquet Hall',
+
+                      'Terrace / Rooftop',
+
+                      'Garden / Outdoor',
+
+                      'Office',
+
+                      'Other',
+                    ].map(o => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {errors.venue_type && (
+                  <p className="mt-1 text-[11px] text-[#C62828]">{errors.venue_type}</p>
+                )}
               </div>
             </div>
           )}
 
           {/* STEP 3: Planning Preferences */}
+
           {currentStep === 3 && (
             <div className="flex flex-col gap-10 animate-fadeIn">
               <div>
                 <h4 className="text-[21px] text-[#2D2D2D] mb-5">
                   What kind of support are you looking for?
                 </h4>
+
                 <div className="flex flex-col gap-3">
                   {SUPPORT_OPTIONS.map(opt => (
                     <label key={opt} className="flex items-center gap-3 cursor-pointer group">
                       <div
                         onClick={() => toggleSupport(opt)}
                         className={`w-[19px] h-[19px] border rounded-[4px] transition-colors flex items-center justify-center shrink-0 cursor-pointer
+
                           ${
                             form.support_types.includes(opt)
                               ? 'bg-[#591902] border-[#591902]'
@@ -1548,15 +2051,22 @@ const CelebrationFormSection = () => {
                           </svg>
                         )}
                       </div>
+
                       <span className="text-[12px] text-[#2D2D2D]">{opt}</span>
                     </label>
                   ))}
                 </div>
+
+                {errors.support_types && (
+                  <p className="mt-2 text-[11px] text-[#C62828]">{errors.support_types}</p>
+                )}
               </div>
+
               <div>
                 <h4 className="text-[21px] text-[#2D2D2D] mb-4">
                   Tell us a little about your vision
                 </h4>
+
                 <div className="border-b border-[#2D2D2D]/50 pb-2">
                   <input
                     type="text"
@@ -1566,6 +2076,7 @@ const CelebrationFormSection = () => {
                     className="w-full bg-transparent text-[#2D2D2D] text-[12px] outline-none placeholder:text-[#2D2D2D]"
                   />
                 </div>
+
                 {isError && (
                   <p className="mt-3 text-[12px] text-red-500">
                     {error?.message ?? 'Something went wrong. Please try again.'}
@@ -1577,9 +2088,11 @@ const CelebrationFormSection = () => {
         </div>
 
         {/* STEP 4: Success Screen (Centered entirely) */}
+
         {currentStep === 4 && (
           <div className="relative min-[540px]:absolute min-[540px]:inset-0 flex flex-col items-center justify-center animate-fadeIn py-16 min-[540px]:py-0">
             {/* Group 62: Star 8 & Check Icon (Fixed with perfect inline SVG!) */}
+
             <div className="relative w-[116px] h-[116px] mb-10 flex items-center justify-center">
               <svg
                 width="116"
@@ -1592,6 +2105,7 @@ const CelebrationFormSection = () => {
                   d="M58 0L64.4449 7.4441L74.227 5.17646L78.6836 14.1378L88.6657 14.0754L90.9635 23.8541L100.177 26.3262L99.8804 36.3117L107.575 41.3435L104.708 50.9419L110.824 58L104.708 65.0581L107.575 74.6565L99.8804 79.6883L100.177 89.6738L90.9635 92.1459L88.6657 101.925L78.6836 101.862L74.227 110.824L64.4449 108.556L58 116L51.5551 108.556L41.773 110.824L37.3164 101.862L27.3343 101.925L25.0365 92.1459L15.8234 89.6738L16.1196 79.6883L8.42461 74.6565L11.2918 65.0581L5.17646 58L11.2918 50.9419L8.42461 41.3435L16.1196 36.3117L15.8234 26.3262L25.0365 23.8541L27.3343 14.0754L37.3164 14.1378L41.773 5.17646L51.5551 7.4441L58 0Z"
                   fill="#364022"
                 />
+
                 <path
                   d="M40 58 L52 70 L76 46"
                   stroke="white"
@@ -1609,6 +2123,7 @@ const CelebrationFormSection = () => {
               >
                 Thank you! Your request has been received.
               </h3>
+
               <p className="text-[16px] leading-[1.5] text-[#2D2D2D] opacity-50 text-center w-full max-w-[535px] m-0">
                 Our in-house planner will review your details and reach out within the next 24 hours
                 to discuss your celebration.
@@ -1618,6 +2133,7 @@ const CelebrationFormSection = () => {
         )}
 
         {/* --- ZONE 4: BOTTOM NAVIGATION BUTTONS (Bottom 60px) --- */}
+
         {currentStep < 4 && (
           <div className="relative min-[540px]:absolute min-[540px]:bottom-[60px] min-[540px]:left-[60px] min-[540px]:right-[60px] flex flex-col min-[540px]:flex-row min-[540px]:justify-between items-center gap-4 min-[540px]:gap-0">
             {/* Previous Button */}
@@ -1643,8 +2159,10 @@ const CelebrationFormSection = () => {
                         strokeWidth="1.5"
                       >
                         <path d="M19 12H5" />
+
                         <path d="m12 19-7-7 7-7" />
                       </svg>
+
                       <svg
                         className="hidden min-[540px]:block rotate-180"
                         width="20"
@@ -1676,9 +2194,11 @@ const CelebrationFormSection = () => {
                         className="rotate-180"
                       >
                         <path d="M7 17L17 7" />
+
                         <path d="M7 7h10v10" />
                       </svg>
                     </div>
+
                     <span className="text-[#8C8C8C] text-[16px] font-medium leading-[1.5]">
                       Previous
                     </span>
@@ -1701,6 +2221,7 @@ const CelebrationFormSection = () => {
                       ? 'Submit'
                       : 'Next'}
                 </span>
+
                 <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#CDB17E] transition-transform group-hover:scale-105">
                   <svg
                     className="min-[540px]:hidden"
@@ -1712,8 +2233,10 @@ const CelebrationFormSection = () => {
                     strokeWidth="1.5"
                   >
                     <path d="M5 12h14" />
+
                     <path d="m12 5 7 7-7 7" />
                   </svg>
+
                   <svg
                     className="hidden min-[540px]:block"
                     width="20"
@@ -1724,6 +2247,7 @@ const CelebrationFormSection = () => {
                     strokeWidth="1.5"
                   >
                     <path d="M7 17L17 7" />
+
                     <path d="M7 7h10v10" />
                   </svg>
                 </div>
@@ -1738,45 +2262,54 @@ const CelebrationFormSection = () => {
 
 const InHousePlannerSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
+
   const bio = cms.moksha_bio ?? {}
 
   return (
     <>
       <ScrollImageSpreadSection />
 
-      <section className="w-full bg-[#957960] flex justify-center overflow-hidden font-sans">
-        <div className="relative w-[1440px] h-[660px] shrink-0">
-          <div className="absolute left-[0px] top-[0px] w-[720px] h-[660px] bg-[#FFFFFF]">
+      <section className="w-full bg-[#957960] flex justify-center font-sans">
+        <div className="w-full max-w-[1440px] flex flex-col min-[540px]:flex-row">
+          {/* Image */}
+
+          <div className="w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">
             <img
               src={plannerImg}
               alt="Moksha - In-House Event Planner"
-              className="w-full h-full object-cover object-[center_15%]"
+              className="w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
             />
           </div>
 
-          <h2
-            className="absolute right-[114px] top-[40px] w-[566px] text-[#FFFFFF] text-[61px] leading-[1] font-serif"
-            style={{ fontFamily: "'Malgin', serif" }}
-          >
-            From Our In-House <br /> Event Planner
-          </h2>
+          {/* Content */}
 
-          <div className="absolute left-[760px] top-[202px] w-[461px] flex flex-col gap-[20px]">
-            <h3 className="w-full text-[#FFFFFF] text-[21px] font-medium leading-[1.2]">
+          <div className="w-full min-[540px]:w-1/2 flex flex-col justify-center px-6 py-8 min-[540px]:px-12 min-[540px]:py-0 text-white">
+            {/* Heading */}
+
+            <h2
+              className="text-[32px] min-[540px]:text-[61px] leading-tight font-serif mb-4"
+              style={{ fontFamily: "'Malgin', serif" }}
+            >
+              From Our In-House <br /> Event Planner
+            </h2>
+
+            {/* Subheading */}
+
+            <h3 className="text-[18px] min-[540px]:text-[21px] font-medium mb-4">
               {bio.greeting ?? "Hi, I'm Moksha."}
             </h3>
 
-            <div className="w-full flex flex-col gap-[20px]">
-              <p className="w-full text-[#FFFFFF] opacity-80 text-[16px] leading-[1.5] font-normal">
-                {bio.intro ??
-                  'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.'}
-              </p>
+            {/* Paragraphs */}
 
-              <p className="w-full text-[#FFFFFF] opacity-80 text-[16px] leading-[1.5] font-normal">
-                {bio.personal_note ??
-                  "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created."}
-              </p>
-            </div>
+            <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed mb-4">
+              {bio.intro ??
+                'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.'}
+            </p>
+
+            <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed">
+              {bio.personal_note ??
+                "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created."}
+            </p>
           </div>
         </div>
       </section>

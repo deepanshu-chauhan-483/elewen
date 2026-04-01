@@ -129,7 +129,8 @@ const HeroSection = () => {
       vidLeft: 0,
       vidW: W0,
       vidH: H0,
-      vidTopR: 1200,
+      // Keep initial full-screen video corners sharp (no rounded top corners on first load).
+      vidTopR: 0,
       vidR: 0,
       vidScale: 1.05,
       contentOpacity: 1,
@@ -316,17 +317,17 @@ const HeroSection = () => {
       // Config: reverse of load animation. Order = scroll-out order (last to appear = first to disappear).
       const scrollOutConfig = [
         { key: 'card2', start: 0, end: 0.021, y: 40 },
-        { key: 'card1', start: 0.021, end: 0.042, y: 40 },
-        { key: 'leftLine3', start: 0.042, end: 0.063, y: 8 },
-        { key: 'card0', start: 0.063, end: 0.083, y: 40 },
-        { key: 'leftLine2', start: 0.083, end: 0.104, y: 8 },
-        { key: 'leftLine1', start: 0.104, end: 0.125, y: 8 },
-        { key: 'ctaLine2', start: 0.125, end: 0.146, y: 16 },
-        { key: 'leftW', start: 0.146, end: 0.167, x: -16 },
-        { key: 'ctaLine1', start: 0.167, end: 0.188, y: 16 },
-        { key: 'ctaArrow', start: 0.188, end: 0.208, x: -16, scale: 0.95 },
-        { key: 'heading', start: 0.208, end: 0.229, y: 80 },
-        { key: 'eyebrow', start: 0.229, end: 0.25, y: 16 },
+        { key: 'card1', start: 0, end: 0.021, y: 40 },
+        { key: 'card0', start: 0, end: 0.021, y: 40 },
+        { key: 'leftLine3', start: 0, end: 0.021, y: 8 },
+        { key: 'leftLine2', start: 0, end: 0.021, y: 8 },
+        { key: 'leftLine1', start: 0, end: 0.021, y: 8 },
+        { key: 'leftW', start: 0, end: 0.021, x: -16 },
+        { key: 'ctaLine2', start: 0.021, end: 0.042, y: 16 },
+        { key: 'ctaLine1', start: 0.042, end: 0.063, y: 16 },
+        { key: 'ctaArrow', start: 0.063, end: 0.083, x: -16, scale: 0.95 },
+        { key: 'heading', start: 0.083, end: 0.104, y: 80 },
+        { key: 'eyebrow', start: 0.104, end: 0.125, y: 16 },
       ]
 
       const scrollOutLerp = (p, cfg) => {
@@ -340,7 +341,7 @@ const HeroSection = () => {
 
       // ── ScrollTrigger: phases 2-3 ───────────────────────────────────────────
       const scrubSmooth = 3.5
-      const textCardsEnd = 0.25
+      const textCardsEnd = 0.125
       ScrollTrigger.create({
         trigger: wrapperRef.current,
         start: 'top top',
@@ -374,9 +375,9 @@ const HeroSection = () => {
       })
     }, wrapperRef) // Scope context to this specific component
 
-    const applyScrollOut = (el, so) => {
+    const applyScrollOut = (el, so, opacityMul = 1) => {
       if (!el) return
-      el.style.opacity = so.opacity
+      el.style.opacity = so.opacity * opacityMul
       const parts = []
       if (so.y) parts.push(`translateY(${so.y}px)`)
       if (so.x) parts.push(`translateX(${so.x}px)`)
@@ -399,30 +400,33 @@ const HeroSection = () => {
       vw.style.transform = s.vidScale !== 1 ? `scale(${s.vidScale})` : 'none'
 
       cr.style.transform = `translateY(${s.contentY}px)`
+      cr.style.opacity = s.contentOpacity
       const anyVisible = Object.values(s.scrollOut).some(so => so.opacity > 0.05)
       cr.style.pointerEvents = anyVisible ? 'auto' : 'none'
 
       // Only apply scroll-out after load animation completes — avoids overwriting GSAP
       if (s.loadComplete) {
-        applyScrollOut(eyebrowRef.current, s.scrollOut.eyebrow)
-        applyScrollOut(headingRef.current, s.scrollOut.heading)
-        applyScrollOut(ctaArrowRef.current, s.scrollOut.ctaArrow)
-        applyScrollOut(ctaLine1Ref.current, s.scrollOut.ctaLine1)
-        applyScrollOut(ctaLine2Ref.current, s.scrollOut.ctaLine2)
+        applyScrollOut(eyebrowRef.current, s.scrollOut.eyebrow, s.contentOpacity)
+        applyScrollOut(headingRef.current, s.scrollOut.heading, s.contentOpacity)
+        applyScrollOut(ctaArrowRef.current, s.scrollOut.ctaArrow, s.contentOpacity)
+        applyScrollOut(ctaLine1Ref.current, s.scrollOut.ctaLine1, s.contentOpacity)
+        applyScrollOut(ctaLine2Ref.current, s.scrollOut.ctaLine2, s.contentOpacity)
         ;[leftWRefs.current[0], leftWRefs.current[1]]
           .filter(Boolean)
-          .forEach(el => applyScrollOut(el, s.scrollOut.leftW))
+          .forEach(el => applyScrollOut(el, s.scrollOut.leftW, s.contentOpacity))
         ;[leftLine1Refs.current[0], leftLine1Refs.current[1]]
           .filter(Boolean)
-          .forEach(el => applyScrollOut(el, s.scrollOut.leftLine1))
+          .forEach(el => applyScrollOut(el, s.scrollOut.leftLine1, s.contentOpacity))
         ;[leftLine2Refs.current[0], leftLine2Refs.current[1]]
           .filter(Boolean)
-          .forEach(el => applyScrollOut(el, s.scrollOut.leftLine2))
+          .forEach(el => applyScrollOut(el, s.scrollOut.leftLine2, s.contentOpacity))
         ;[leftLine3Refs.current[0], leftLine3Refs.current[1]]
           .filter(Boolean)
-          .forEach(el => applyScrollOut(el, s.scrollOut.leftLine3))
+          .forEach(el => applyScrollOut(el, s.scrollOut.leftLine3, s.contentOpacity))
         ;[0, 1, 2].forEach(
-          i => cardRefs.current?.[i] && applyScrollOut(cardRefs.current[i], s.scrollOut[`card${i}`])
+          i =>
+            cardRefs.current?.[i] &&
+            applyScrollOut(cardRefs.current[i], s.scrollOut[`card${i}`], s.contentOpacity)
         )
       }
 

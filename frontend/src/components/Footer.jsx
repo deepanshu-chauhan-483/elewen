@@ -3,22 +3,22 @@ import { useEffect, useRef, useState } from 'react'
 const footerNav = [
   {
     label: 'LEGAL',
-    labelWidth: 'w-[40px] md:w-[46px]',
+    labelWidth: 'min-w-[46px] shrink-0 md:w-[46px]',
     links: ['Terms & Conditions', 'Cancellation Policy'],
   },
   {
     label: 'COMMUNITY',
-    labelWidth: 'w-[85px] md:w-[97px]',
+    labelWidth: 'min-w-[85px] shrink-0 md:w-[97px]',
     links: ['Vendor Registration', 'Instagram'],
   },
   {
     label: 'HELP',
-    labelWidth: 'w-[32px] md:w-[36px]',
+    labelWidth: 'min-w-[36px] shrink-0 md:w-[36px]',
     links: ['Contact Us', "FAQ's", 'Order Updates'],
   },
   {
     label: 'SHOP BY',
-    labelWidth: 'w-[58px] md:w-[66px]',
+    labelWidth: 'min-w-[58px] shrink-0 md:w-[66px]',
     links: ['Events', 'Services'],
   },
 ]
@@ -59,44 +59,46 @@ const Footer = () => {
   return (
     <footer
       ref={footerRef}
-      className="w-full flex justify-center bg-[#F2F2F2] overflow-hidden font-sans"
+      className="flex min-h-[339px] w-full flex-col bg-[#F2F2F2] font-sans overflow-x-clip md:min-h-[645px]"
     >
-      {/* Container: 339px tall on mobile, 645px tall on desktop */}
-      <div className="relative w-full max-w-[1440px] h-[339px] md:h-[645px] shrink-0 py-0 md:py-0">
-        {/* ELEWEN Title */}
+      {/* Full-bleed title — not constrained by max-w-[1440px]; scales with viewport width */}
+      <div className="w-full min-w-0 shrink-0 px-2 pt-5 md:pt-20">
         <h1
-          className="absolute left-1/2 -translate-x-1/2 top-[20px] w-full px-2 text-center text-[#2D2D2D] leading-[1] md:top-[80px] md:w-[1434px]"
+          className="w-full min-w-0 max-w-full text-center leading-none text-[#2D2D2D]"
           style={{
             fontFamily: "'Malgin', serif",
-            // Use clamp to ensure it scales down perfectly on smaller phones but never exceeds the Figma 93.46px
             fontSize: isMobile ? 'clamp(40px, 23.5vw, 93.46px)' : 'clamp(56px, 24vw, 361px)',
           }}
         >
-          <span className="reveal-wrapper block">
+          <span className="reveal-wrapper block w-full max-w-full">
             <span className="reveal-text">ELEWEN</span>
           </span>
         </h1>
+      </div>
 
-        {/* Links & About Text Container */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-[133px] w-[347px] flex flex-col gap-[16px] md:mt-0 md:left-[100px] md:top-[401px] md:right-[100px] md:translate-x-0 md:w-auto md:flex-row md:items-start md:justify-between md:gap-10">
-          <div className="flex flex-col gap-[16px] md:gap-4">
+      {/* Rest of footer: centered column */}
+      <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 box-border md:px-[100px] md:py-8">
+        {/* Nav + about — flex row on desktop, centered column width on mobile */}
+        <div className="flex w-full flex-1 flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-10">
+          {/* Mobile: full width of column (no 347px cap) so each label+links stays one row */}
+          <div className="mx-auto flex w-full min-w-0 flex-col gap-[16px] md:mx-0 md:gap-4">
             {footerNav.map((row, i) => (
               <div
                 key={row.label}
-                className="flex items-center md:items-start lg:items-center gap-[20px] md:gap-[60px]"
+                className="flex flex-nowrap items-center gap-[5px] pl-2 md:items-start md:gap-[60px] md:pl-0 lg:items-center"
               >
                 <span
-                  className={`anim-element slide-from-left ${row.labelWidth} text-[#2D2D2D] text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] shrink-0 font-['Poppins'] md:font-sans`}
+                  className={`anim-element slide-from-left ${row.labelWidth} whitespace-nowrap text-[14px] font-['Poppins'] leading-[150%] text-[#2D2D2D] md:font-sans md:text-[16px] md:leading-[1.5]`}
                   style={{ '--delay': `${i * 0.06}s` }}
                 >
                   {row.label}
                 </span>
-                <div className="flex flex-wrap items-center gap-[16px] md:gap-x-7 md:gap-y-2 opacity-50">
+                <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-[16px] overflow-x-auto opacity-50 [-ms-overflow-style:none] [scrollbar-width:none] md:flex-wrap md:gap-x-7 md:gap-y-2 [&::-webkit-scrollbar]:hidden">
                   {row.links.map(link => (
                     <a
                       key={link}
                       href="#"
-                      className="text-[#2D2D2D] text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] hover:text-[#591902] transition-colors font-['Poppins'] md:font-sans"
+                      className="shrink-0 whitespace-nowrap text-[14px] font-['Poppins'] leading-[150%] text-[#2D2D2D] transition-colors hover:text-[#591902] md:font-sans md:whitespace-normal md:text-[16px] md:leading-[1.5]"
                     >
                       {link}
                     </a>
@@ -106,8 +108,7 @@ const Footer = () => {
             ))}
           </div>
 
-          {/* Desktop Only Text */}
-          <p className="hidden md:block md:w-[611px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5]">
+          <p className="hidden text-[16px] leading-[1.5] text-[#2D2D2D] opacity-50 md:block md:w-[611px] md:shrink-0">
             <span className="reveal-wrapper block">
               <span className="reveal-text" style={{ '--delay': '0.1s' }}>
                 Elewen simplifies event planning with curated décor, catering, and personal
@@ -118,13 +119,13 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* Divider Line */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-[305px] w-[353px] border-t border-[rgba(0,0,0,0.2)] md:left-auto md:translate-x-0 md:right-[0px] md:top-[493px] md:w-[720px] md:border-[#000000] md:opacity-20" />
-
-        {/* Copyright */}
-        <p className="absolute right-[20px] top-[313px] text-[#2D2D2D] opacity-50 text-[12px] leading-[150%] font-['Poppins'] md:right-[100px] md:top-[513px] md:leading-[1.5] md:font-sans">
-          © 2025 Elewen. All rights reserved.
-        </p>
+        {/* Divider + copyright — pinned to bottom of footer column */}
+        <div className="mt-auto flex w-full flex-col items-center gap-2 pt-6 md:items-end md:pt-12">
+          <div className="w-full max-w-[353px] border-t border-[rgba(0,0,0,0.2)] md:max-w-[720px] md:border-[#000000] md:opacity-20" />
+          <p className="w-full max-w-[353px] text-center text-[12px] font-['Poppins'] leading-[150%] text-[#2D2D2D] opacity-50 md:text-right md:max-w-[720px] md:font-sans md:leading-[1.5]">
+            © 2025 Elewen. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   )
