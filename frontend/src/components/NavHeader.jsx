@@ -157,7 +157,10 @@ const NavHeader = () => {
 
         {/* Center: logo */}
         <div className="flex justify-center items-center flex-1 min-w-0 h-full">
-          <Link to="/" className="w-100 h-35.5 md:w-120 md:h-63.5 flex items-center justify-center">
+          <Link
+            to="/"
+            className="w-110 h-40 md:w-130 md:h-70 flex items-center justify-center"
+          >
             <img
               src={navLogo}
               alt="Elewen"
@@ -235,7 +238,7 @@ const NavHeader = () => {
           <img
             src={navLogo}
             alt="Elewen"
-            className="h-8 w-auto"
+            className="h-10 w-auto"
             style={{ filter: 'brightness(0) invert(1)' }}
           />
         </div>

@@ -63,6 +63,9 @@ services:
       dockerfile: Dockerfile
     container_name: elewen_migrate
     env_file: .env
+    environment:
+      # Inside Docker, Postgres is reachable via the service name `postgres` (not 127.0.0.1).
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?schema=api
     volumes:
       - ./api/prisma:/app/prisma
     depends_on:
