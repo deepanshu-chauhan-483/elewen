@@ -94,11 +94,12 @@ const Footer = () => {
                   {row.label}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-[16px] overflow-x-auto opacity-50 [-ms-overflow-style:none] [scrollbar-width:none] md:flex-wrap md:gap-x-7 md:gap-y-2 [&::-webkit-scrollbar]:hidden">
-                  {row.links.map(link => (
+                  {row.links.map((link, linkIndex) => (
                     <a
                       key={link}
                       href="#"
-                      className="shrink-0 whitespace-nowrap text-[14px] font-['Poppins'] leading-[150%] text-[#2D2D2D] transition-colors hover:text-[#591902] md:font-sans md:whitespace-normal md:text-[16px] md:leading-[1.5]"
+                      className="anim-element slide-from-left shrink-0 whitespace-nowrap text-[14px] font-['Poppins'] leading-[150%] text-[#2D2D2D] transition-colors hover:text-[#591902] md:font-sans md:whitespace-normal md:text-[16px] md:leading-[1.5]"
+                      style={{ '--delay': `${i * 0.06 + 0.08 + linkIndex * 0.04}s` }}
                     >
                       {link}
                     </a>
@@ -122,7 +123,10 @@ const Footer = () => {
         {/* Divider + copyright — pinned to bottom of footer column */}
         <div className="mt-auto flex w-full flex-col items-center gap-2 pt-6 md:items-end md:pt-12">
           <div className="w-full max-w-[353px] border-t border-[rgba(0,0,0,0.2)] md:max-w-[720px] md:border-[#000000] md:opacity-20" />
-          <p className="w-full max-w-[353px] text-center text-[12px] font-['Poppins'] leading-[150%] text-[#2D2D2D] opacity-50 md:text-right md:max-w-[720px] md:font-sans md:leading-[1.5]">
+          <p
+            className="anim-element slide-from-bottom w-full max-w-[353px] text-center text-[12px] font-['Poppins'] leading-[150%] text-[#2D2D2D] opacity-50 md:text-right md:max-w-[720px] md:font-sans md:leading-[1.5]"
+            style={{ '--delay': '0.12s' }}
+          >
             © 2025 Elewen. All rights reserved.
           </p>
         </div>

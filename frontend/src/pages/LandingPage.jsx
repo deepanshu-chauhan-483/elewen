@@ -147,7 +147,7 @@ const PlanEventSection = () => {
       className="relative w-full min-h-screen bg-[#F2F2F2] pt-[40px] md:pt-52 flex flex-col overflow-hidden font-sans"
     >
       {/* Background Decor (Desktop predominantly) */}
-      <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
+      {/* <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
         {scallopCount.map((_, i) => (
           <div key={i} className="relative shrink-0 w-[72px] md:w-[144px] h-[45px] md:h-[90px]">
             <div
@@ -197,7 +197,7 @@ const PlanEventSection = () => {
             )}
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 pb-8 md:pb-12 flex flex-col md:flex-row justify-between items-center md:items-end relative z-10">
@@ -1438,58 +1438,116 @@ const BetterWaySection = () => {
 
         {/* --- VENN DIAGRAM (MOBILE & DESKTOP) --- */}
         {/* Desktop Version */}
-        <div className="hidden md:block absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]">
+        <motion.div
+          className="hidden md:block absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.45 }}
+        >
           <svg
             width="723"
             height="422"
             viewBox="0 0 723 422"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full"
+            className="w-full h-full overflow-visible"
           >
             <defs>
               <clipPath id="intersectClipDesktop">
                 <circle cx="211" cy="211" r="211" />
               </clipPath>
             </defs>
-            <circle cx="211" cy="211" r="211" fill="#CDB17E" />
-            <circle cx="512" cy="211" r="211" fill="#591902" />
-            <circle
-              cx="512"
+            <motion.circle
+              cx="211"
               cy="211"
               r="211"
-              fill="#FFFFFF"
-              clipPath="url(#intersectClipDesktop)"
+              fill="#CDB17E"
+              variants={{
+                hidden: { x: -120, opacity: 0 },
+                visible: {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 1.45, ease: [0.22, 1, 0.36, 1] },
+                },
+              }}
             />
+            <motion.g
+              variants={{
+                hidden: { x: 120, opacity: 0 },
+                visible: {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 1.45, ease: [0.22, 1, 0.36, 1], delay: 0.12 },
+                },
+              }}
+            >
+              <circle cx="512" cy="211" r="211" fill="#591902" />
+              <circle
+                cx="512"
+                cy="211"
+                r="211"
+                fill="#FFFFFF"
+                clipPath="url(#intersectClipDesktop)"
+              />
+            </motion.g>
           </svg>
-        </div>
+        </motion.div>
 
         {/* Mobile Version */}
-        <div className="block md:hidden absolute w-[353px] h-[206.04px] left-1/2 -translate-x-1/2 top-[371px]">
+        <motion.div
+          className="block md:hidden absolute w-[353px] h-[206.04px] left-1/2 -translate-x-1/2 top-[371px]"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.45 }}
+        >
           <svg
             width="353"
             height="207"
             viewBox="0 0 353 207"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full"
+            className="w-full h-full overflow-visible"
           >
             <defs>
               <clipPath id="intersectClipMobile">
                 <circle cx="103.02" cy="103.02" r="103.02" />
               </clipPath>
             </defs>
-            <circle cx="103.02" cy="103.02" r="103.02" fill="#CDB17E" />
-            <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
-            <circle
-              cx="249.98"
+            <motion.circle
+              cx="103.02"
               cy="103.02"
               r="103.02"
-              fill="#FFFFFF"
-              clipPath="url(#intersectClipMobile)"
+              fill="#CDB17E"
+              variants={{
+                hidden: { x: -56, opacity: 0 },
+                visible: {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1] },
+                },
+              }}
             />
+            <motion.g
+              variants={{
+                hidden: { x: 56, opacity: 0 },
+                visible: {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1], delay: 0.12 },
+                },
+              }}
+            >
+              <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
+              <circle
+                cx="249.98"
+                cy="103.02"
+                r="103.02"
+                fill="#FFFFFF"
+                clipPath="url(#intersectClipMobile)"
+              />
+            </motion.g>
           </svg>
-        </div>
+        </motion.div>
 
         {/* --- DIAGRAM TEXTS --- */}
         <h5
@@ -1507,7 +1565,7 @@ const BetterWaySection = () => {
         </h5>
 
         {/* --- LOGO --- */}
-        <div className="absolute left-1/2 top-[474px] md:top-[742px] w-[37.71px] md:w-[320px] h-[44px] md:h-[320px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+        <div className="absolute left-1/2 top-[474px] md:top-[742px] w-[58px] md:w-[320px] h-[68px] md:h-[320px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
           <img
             src={centerLogo}
             alt="11 Logo"
@@ -3358,9 +3416,30 @@ const SplitInfoSection = () => {
   const { data: cms = {} } = useLandingPage()
   const ig = cms.instagram_section ?? {}
   const vp = cms.vendor_partner ?? {}
+  const splitRevealRef = useRef(null)
+  const [isSplitVisible, setIsSplitVisible] = useState(false)
 
   // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
   const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
+
+  useEffect(() => {
+    const root = splitRevealRef.current
+    if (!root) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          setIsSplitVisible(true)
+          io.disconnect()
+        })
+      },
+      { threshold: 0.22, rootMargin: '0px 0px -8% 0px' }
+    )
+
+    io.observe(root)
+    return () => io.disconnect()
+  }, [])
 
   useEffect(() => {
     const root = sectionRef.current
@@ -3396,9 +3475,29 @@ const SplitInfoSection = () => {
       */}
       <div className="w-full max-w-[1440px] min-w-0 flex flex-col lg:flex-row mx-auto">
         {/* LEFT SECTION - Inspiration */}
-        <div className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px]">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={
+            isSplitVisible
+              ? { opacity: 1, transition: { duration: 0.8, delay: 1.3 } }
+              : { opacity: 0 }
+          }
+          className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px]"
+        >
           {/* Text Content Block */}
-          <div className="flex flex-col items-start text-left w-[55%] lg:w-[400px] shrink-0">
+          <motion.div
+            initial={{ y: 72, opacity: 0 }}
+            animate={
+              isSplitVisible
+                ? {
+                    y: 0,
+                    opacity: 1,
+                    transition: { duration: 1.65, delay: 1.55, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { y: 72, opacity: 0 }
+            }
+            className="flex flex-col items-start text-left w-[55%] lg:w-[400px] shrink-0"
+          >
             <h2
               className="text-[#2D2D2D] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0 reveal-heading"
               style={{ fontFamily: "'Malgin', serif" }}
@@ -3419,15 +3518,15 @@ const SplitInfoSection = () => {
 
             <span className="mt-[20px] lg:mt-[16px] reveal-wrapper reveal-on-scroll">
               <span className="reveal-text">
-                <button className="box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] hover:bg-gray-50 transition-colors">
-                  <span className="text-[#591902] font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
+                <button className="box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] bg-transparent text-[#591902] hover:bg-[#591902] hover:text-white transition-colors group">
+                  <span className="text-[#591902] group-hover:text-white transition-colors font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
                     {ig.cta_label ?? 'Join Our Instagram'}
                   </span>
                   <svg
-                    className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0"
+                    className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0 transition-colors"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#591902"
+                    stroke="currentColor"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -3439,28 +3538,73 @@ const SplitInfoSection = () => {
                 </button>
               </span>
             </span>
-          </div>
+          </motion.div>
 
           {/* Image Block */}
-          <img
+          <motion.img
+            initial={{ y: 88, opacity: 0 }}
+            animate={
+              isSplitVisible
+                ? {
+                    y: 0,
+                    opacity: 1,
+                    transition: { duration: 1.75, delay: 1.78, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { y: 88, opacity: 0 }
+            }
             src={inspirationImg}
             alt="Behind the scenes setup"
             className="w-[40%] max-w-[156px] lg:max-w-[240px] h-[229px] lg:h-[351px] rounded-[3.57px] lg:rounded-[8px] object-cover object-[20%_center] card-reveal"
             style={{ '--delay': '0.08s' }}
             loading="lazy"
           />
-        </div>
+        </motion.div>
 
         {/* RIGHT SECTION - Partner */}
-        <div className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px]">
+        <motion.div
+          ref={splitRevealRef}
+          initial={{ x: 220, opacity: 0 }}
+          animate={
+            isSplitVisible
+              ? {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 2.35, ease: [0.22, 1, 0.36, 1] },
+                }
+              : { x: 220, opacity: 0 }
+          }
+          className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px]"
+        >
           {/* Placeholder/Top Box */}
-          <div
+          <motion.div
+            initial={{ y: 70, opacity: 0 }}
+            animate={
+              isSplitVisible
+                ? {
+                    y: 0,
+                    opacity: 1,
+                    transition: { duration: 1.7, delay: 1.1, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { y: 70, opacity: 0 }
+            }
             className="w-full max-w-[353px] lg:max-w-[420px] h-[152px] lg:h-[210px] bg-[#FFFFFF] rounded-[8px] overflow-hidden shrink-0 card-reveal"
             style={{ '--delay': '0.14s' }}
           />
 
           {/* Text Content Block */}
-          <div className="flex flex-col items-start w-full max-w-[353px] lg:max-w-[420px] mt-[32px] lg:mt-[40px]">
+          <motion.div
+            initial={{ y: 86, opacity: 0 }}
+            animate={
+              isSplitVisible
+                ? {
+                    y: 0,
+                    opacity: 1,
+                    transition: { duration: 1.8, delay: 1.35, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { y: 86, opacity: 0 }
+            }
+            className="flex flex-col items-start w-full max-w-[353px] lg:max-w-[420px] mt-[32px] lg:mt-[40px]"
+          >
             <h2
               className="text-[#FFFFFF] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0 reveal-heading"
               style={{ fontFamily: "'Malgin', serif" }}
@@ -3507,8 +3651,8 @@ const SplitInfoSection = () => {
                 </span>
               </span>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   )
