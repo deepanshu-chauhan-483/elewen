@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
-import mobilenavlogo from "../assets/images/mobile_nav_logo_light.png"
+import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import { authLogout } from '../lib/api'
 
-const EVENT_IMAGE =
-  'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80'
+const EVENT_IMAGE = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80'
 
 const BASE_LINKS = [
   { label: 'Events', to: '/events' },
@@ -75,7 +74,7 @@ const NavHeader = () => {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const isHome = pathname === '/'
-  const isAbout = pathname === '/about'
+  // const isAbout = pathname === '/about'
   const lastScrollY = useRef(0)
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('elewen_jwt'))
@@ -131,7 +130,9 @@ const NavHeader = () => {
   const handleLogout = async () => {
     try {
       await authLogout()
-    } catch {}
+    } catch {
+      // Ignore logout API failures and continue clearing local session state.
+    }
     localStorage.removeItem('elewen_jwt')
     setIsLoggedIn(false)
     setOpen(false)
@@ -145,7 +146,11 @@ const NavHeader = () => {
   const iconColor = desktopTheme.iconColor
   const mobileIconColor = mobileTheme.iconColor
   const visibilityClass = !entered ? 'invisible pointer-events-none' : ''
-  const transformClass = !entered ? '-translate-y-4' : hidden ? '-translate-y-full' : 'translate-y-0'
+  const transformClass = !entered
+    ? '-translate-y-4'
+    : hidden
+      ? '-translate-y-full'
+      : 'translate-y-0'
   const desktopLogoStyle =
     desktopTheme.logoMode === 'light' ? { filter: 'brightness(0) invert(1)' } : {}
   const mobileLogoSrc = mobileTheme.logoMode === 'light' ? mobilenavlogo : navLogo
@@ -176,84 +181,84 @@ const NavHeader = () => {
         />
 
         <div className="relative z-10 flex w-full items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="md:hidden">
-            <img
-              src={mobileLogoSrc}
-              alt="Elewen"
-              className="h-auto w-[min(114px,32vw)] min-w-[92px] object-contain"
-              style={mobileTheme.logoMode === 'dark' ? { filter: 'none' } : undefined}
-            />
-          </Link>
+          <div className="flex items-center">
+            <Link to="/" className="md:hidden">
+              <img
+                src={mobileLogoSrc}
+                alt="Elewen"
+                className="h-auto w-[min(114px,32vw)] min-w-[92px] object-contain"
+                style={mobileTheme.logoMode === 'dark' ? { filter: 'none' } : undefined}
+              />
+            </Link>
 
-          <button
-            onClick={() => setOpen(true)}
-            type="button"
-            className="hidden w-64 items-center rounded-full px-4 py-2.5 backdrop-blur-lg transition-all md:flex"
-            style={{
-              border: `1px solid ${desktopTheme.searchBorder}`,
-              background: desktopTheme.searchBg,
-            }}
-          >
-            <svg
-              className="mr-3 h-4 w-4 shrink-0"
-              style={{ color: iconColor }}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <button
+              onClick={() => setOpen(true)}
+              type="button"
+              className="hidden w-64 items-center rounded-full px-4 py-2.5 backdrop-blur-lg transition-all md:flex"
+              style={{
+                border: `1px solid ${desktopTheme.searchBorder}`,
+                background: desktopTheme.searchBg,
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.5"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+              <svg
+                className="mr-3 h-4 w-4 shrink-0"
+                style={{ color: iconColor }}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                />
+              </svg>
+              <span className="text-sm font-medium tracking-wide" style={{ color: iconColor }}>
+                Search
+              </span>
+            </button>
+          </div>
+
+          <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
+            <Link to="/" className="flex h-40 w-110 items-center justify-center md:h-70 md:w-130">
+              <img
+                src={navLogo}
+                alt="Elewen"
+                className="h-full w-full object-contain"
+                style={desktopLogoStyle}
               />
-            </svg>
-            <span className="text-sm font-medium tracking-wide" style={{ color: iconColor }}>
-              Search
-            </span>
-          </button>
-        </div>
+            </Link>
+          </div>
 
-        <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
-          <Link to="/" className="flex h-40 w-110 items-center justify-center md:h-70 md:w-130">
-            <img
-              src={navLogo}
-              alt="Elewen"
-              className="h-full w-full object-contain"
-              style={desktopLogoStyle}
-            />
-          </Link>
-        </div>
+          <div className="flex items-center gap-4">
+            <button className="p-1 md:hidden" aria-label="Search" type="button">
+              <svg className="h-5 w-5" fill="none" stroke={mobileIconColor} viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                />
+              </svg>
+            </button>
 
-        <div className="flex items-center gap-4">
-          <button className="p-1 md:hidden" aria-label="Search" type="button">
-            <svg className="h-5 w-5" fill="none" stroke={mobileIconColor} viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+            <button
+              onClick={() => setOpen(true)}
+              aria-label="Open menu"
+              className="group flex flex-col gap-1.5 p-1"
+              type="button"
+            >
+              <div
+                className="h-0.5 w-7 transition-all duration-300 group-hover:opacity-60 md:w-9"
+                style={{ backgroundColor: window.innerWidth >= 768 ? iconColor : mobileIconColor }}
               />
-            </svg>
-          </button>
-
-          <button
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
-            className="group flex flex-col gap-1.5 p-1"
-            type="button"
-          >
-            <div
-              className="h-0.5 w-7 transition-all duration-300 group-hover:opacity-60 md:w-9"
-              style={{ backgroundColor: window.innerWidth >= 768 ? iconColor : mobileIconColor }}
-            />
-            <div
-              className="h-0.5 w-5 transition-all duration-300 group-hover:w-7 md:w-7 md:group-hover:w-9"
-              style={{ backgroundColor: window.innerWidth >= 768 ? iconColor : mobileIconColor }}
-            />
-          </button>
-        </div>
+              <div
+                className="h-0.5 w-5 transition-all duration-300 group-hover:w-7 md:w-7 md:group-hover:w-9"
+                style={{ backgroundColor: window.innerWidth >= 768 ? iconColor : mobileIconColor }}
+              />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -331,7 +336,12 @@ const NavHeader = () => {
             className="ml-auto hidden h-10 w-10 items-center justify-center  transition-colors  md:flex"
             type="button"
           >
-            <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="h-5 w-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -458,10 +468,14 @@ const NavHeader = () => {
                 transitionDelay: open ? '340ms' : '0ms',
                 transform: open ? 'translateY(0)' : 'translateY(20px)',
                 opacity: open ? 1 : 0,
-                transition: 'transform 0.5s cubic-bezier(0.32,0,0.15,1) 340ms, opacity 0.5s ease 340ms',
+                transition:
+                  'transform 0.5s cubic-bezier(0.32,0,0.15,1) 340ms, opacity 0.5s ease 340ms',
               }}
             >
-              <p className="mb-1 text-[15px] text-white/40" style={{ fontFamily: "'Malgin', serif" }}>
+              <p
+                className="mb-1 text-[15px] text-white/40"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
                 +91 7263587619
               </p>
               <p

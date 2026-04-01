@@ -113,7 +113,7 @@ const PlanEventSection = () => {
     setPage(0)
   }
 
-  const scallopCount = [...Array(15)]
+  // const scallopCount = [...Array(15)]
 
   const sectionRef = useRef(null)
 
