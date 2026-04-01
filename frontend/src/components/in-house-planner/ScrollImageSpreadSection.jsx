@@ -90,13 +90,13 @@ const ScrollImageSpreadSection = () => {
       const FIGMA_START = 0.28
       // Last image finishes when its delayed start plus animation duration reaches 1.0.
       const FIGMA_SETTLE_PROGRESS = FIGMA_START + Math.max(...FIGMA_DELAYS) + 1 / 5
-      const WHITE_FADE_END = 0.85
+      const WHITE_FADE_END = 1
       const WHITE_FADE_RANGE = WHITE_FADE_END - FIGMA_SETTLE_PROGRESS
 
       st = ScrollTrigger.create({
         trigger: flowEl,
         start: 'top top',
-        end: () => `+=${window.innerHeight * 6}`,
+        end: () => `+=${window.innerHeight * 4}`,
         pin: true,
         pinSpacing: true,
         anticipatePin: 1,
