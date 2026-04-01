@@ -1737,63 +1737,63 @@ const ChecklistSection = () => {
       {/* Lightbulbs */}
       <div className="absolute top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
         <div className="absolute top-0 left-0 w-full flex">
-        {scallopCount.map((_, i) => {
-          return (
-            <div
-              key={i}
-              className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]"
-            >
+          {scallopCount.map((_, i) => {
+            return (
               <div
-                className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              ></div>
-              <div
-                className="absolute top-0 left-0 w-full h-[32.75px] md:h-[60px] bg-[#F2F2F2]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              ></div>
-
-              {i !== scallopCount.length - 1 && (
+                key={i}
+                className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]"
+              >
                 <div
-                  className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
-                  style={{
-                    animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                    animationDelay: `${(i % 5) * 0.2}s`,
-                  }}
-                >
+                  className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
+                  style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+                ></div>
+                <div
+                  className="absolute top-0 left-0 w-full h-[32.75px] md:h-[60px] bg-[#F2F2F2]"
+                  style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+                ></div>
+
+                {i !== scallopCount.length - 1 && (
                   <div
-                    className={`w-[1px] ${
-                      i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'
-                    } bg-[#591902]/40`}
-                  ></div>
-                  <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
-                    <img
-                      src={i % 2 === 0 ? bulb1 : bulb2}
-                      alt="Light"
-                      className="w-[20px] md:w-[32px] h-auto relative z-10"
-                      loading="lazy"
-                    />
+                    className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
+                    style={{
+                      animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                      animationDelay: `${(i % 5) * 0.2}s`,
+                    }}
+                  >
                     <div
-                      className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
-                        i % 2 === 0
-                          ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
-                          : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                      }`}
-                      style={{
-                        animationDuration: `${4 + (i % 3) * 0.75}s`,
-                        animationDelay: `${(i % 5) * 0.2}s`,
-                        background:
+                      className={`w-[1px] ${
+                        i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'
+                      } bg-[#591902]/40`}
+                    ></div>
+                    <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
+                      <img
+                        src={i % 2 === 0 ? bulb1 : bulb2}
+                        alt="Light"
+                        className="w-[20px] md:w-[32px] h-auto relative z-10"
+                        loading="lazy"
+                      />
+                      <div
+                        className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
                           i % 2 === 0
-                            ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
-                            : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
-                        clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
-                      }}
-                    />
+                            ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
+                            : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
+                        }`}
+                        style={{
+                          animationDuration: `${4 + (i % 3) * 0.75}s`,
+                          animationDelay: `${(i % 5) * 0.2}s`,
+                          background:
+                            i % 2 === 0
+                              ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
+                              : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
+                          clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -1834,7 +1834,11 @@ const ChecklistSection = () => {
             <div className="absolute left-[283px] top-[19px] w-[211px] h-[211px]">
               <div
                 className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0`}
-                style={{ '--delay': '0s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
+                style={{
+                  '--delay': '0s',
+                  boxShadow:
+                    '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)',
+                }}
               ></div>
               <img
                 src={imgScrolling}
@@ -1869,7 +1873,11 @@ const ChecklistSection = () => {
             <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
               <div
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
-                style={{ '--delay': '0.5s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
+                style={{
+                  '--delay': '0.5s',
+                  boxShadow:
+                    '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)',
+                }}
               ></div>
               <img
                 src={imgCalls}
@@ -1905,7 +1913,11 @@ const ChecklistSection = () => {
             <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
               <div
                 className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0`}
-                style={{ '--delay': '1.0s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
+                style={{
+                  '--delay': '1.0s',
+                  boxShadow:
+                    '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)',
+                }}
               ></div>
               <img
                 src={imgVendors}
@@ -1941,7 +1953,11 @@ const ChecklistSection = () => {
             <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
               <div
                 className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0`}
-                style={{ '--delay': '1.5s', boxShadow: '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)' }}
+                style={{
+                  '--delay': '1.5s',
+                  boxShadow:
+                    '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)',
+                }}
               ></div>
               <img
                 src={imgDecisions}
@@ -2828,7 +2844,10 @@ const PlanningGuidesSection = () => {
   }, [visibleBlogs, page, activeCategory])
 
   return (
-    <section ref={sectionRef} className="w-full min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans">
+    <section
+      ref={sectionRef}
+      className="w-full min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans"
+    >
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center relative z-10">
         <h2
@@ -2867,7 +2886,11 @@ const PlanningGuidesSection = () => {
                     stroke="currentColor"
                     strokeWidth="2.5"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 17L17 7M17 7H9M17 7v8"
+                    />
                   </svg>
                 </div>
               </button>
@@ -3526,7 +3549,11 @@ export default function LandingPage() {
     const root = rootRef.current
     if (!root || typeof window === 'undefined') return
 
-    const targets = Array.from(root.querySelectorAll('.reveal-heading, .reveal-on-scroll, .reveal-border-x, .reveal-border-y'))
+    const targets = Array.from(
+      root.querySelectorAll(
+        '.reveal-heading, .reveal-on-scroll, .reveal-border-x, .reveal-border-y'
+      )
+    )
     if (targets.length === 0) return
 
     const animated = new Set()

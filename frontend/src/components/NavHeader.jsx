@@ -157,10 +157,7 @@ const NavHeader = () => {
 
         {/* Center: logo */}
         <div className="flex justify-center items-center flex-1 min-w-0 h-full">
-          <Link
-            to="/"
-            className="w-110 h-40 md:w-130 md:h-70 flex items-center justify-center"
-          >
+          <Link to="/" className="w-110 h-40 md:w-130 md:h-70 flex items-center justify-center">
             <img
               src={navLogo}
               alt="Elewen"
