@@ -37,8 +37,8 @@ export const LANDING_PAGE_FALLBACK = {
     heading_2: 'Hosting turned into Checklists.',
     chaos_items: [
       { title: 'Too much scrolling.' },
-      { title: 'Too many vendors.' },
       { title: 'Too many calls.' },
+      { title: 'Too many vendors.' },
       { title: 'Too many decisions.' },
     ],
     relief_heading: 'Stop take a deep breath',

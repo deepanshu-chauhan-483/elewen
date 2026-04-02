@@ -21,29 +21,33 @@ export function useBlogs({ limit = 3, category } = {}) {
     queryKey: ['blogs', { limit, category }],
     queryFn: async () => {
       if (USE_FALLBACK) return BLOGS_FALLBACK
-      const params = {
-        'filters[post_status][$eq]': 'published',
-        sort: 'post_published_at:desc',
-        populate: 'cover_image',
-        'pagination[pageSize]': String(limit),
+      try {
+        const params = {
+          'filters[post_status][$eq]': 'published',
+          sort: 'post_published_at:desc',
+          populate: 'cover_image',
+          'pagination[pageSize]': String(limit),
+        }
+        if (category) params['filters[category][$eq]'] = category
+
+        const { data } = await strapiGet('/blogs', params)
+
+        return data.map((b, i) => ({
+          id: b.id ?? i,
+          documentId: b.documentId,
+          title: b.title ?? '',
+          slug: b.slug ?? '',
+          excerpt: b.excerpt ?? '',
+          category: b.category ?? '',
+          cover_image: b.cover_image?.url
+            ? b.cover_image.url.startsWith('http')
+              ? b.cover_image.url
+              : `${import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'}${b.cover_image.url}`
+            : null,
+        }))
+      } catch {
+        return BLOGS_FALLBACK
       }
-      if (category) params['filters[category][$eq]'] = category
-
-      const { data } = await strapiGet('/blogs', params)
-
-      return data.map((b, i) => ({
-        id: b.id ?? i,
-        documentId: b.documentId,
-        title: b.title ?? '',
-        slug: b.slug ?? '',
-        excerpt: b.excerpt ?? '',
-        category: b.category ?? '',
-        cover_image: b.cover_image?.url
-          ? b.cover_image.url.startsWith('http')
-            ? b.cover_image.url
-            : `${import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'}${b.cover_image.url}`
-          : null,
-      }))
     },
     placeholderData: BLOGS_FALLBACK,
     staleTime: 5 * 60 * 1000,
@@ -56,12 +60,16 @@ export function useBlogCategories() {
     queryKey: ['blog-categories'],
     queryFn: async () => {
       if (USE_FALLBACK) return BLOG_CATEGORIES_FALLBACK
-      // Strapi doesn't have a separate categories collection — derive from blogs
-      const { data } = await strapiGet('/blogs', {
-        'filters[post_status][$eq]': 'published',
-        'fields[0]': 'category',
-      })
-      return [...new Set(data.map(b => b.category).filter(Boolean))]
+      try {
+        // Strapi doesn't have a separate categories collection — derive from blogs
+        const { data } = await strapiGet('/blogs', {
+          'filters[post_status][$eq]': 'published',
+          'fields[0]': 'category',
+        })
+        return [...new Set(data.map(b => b.category).filter(Boolean))]
+      } catch {
+        return BLOG_CATEGORIES_FALLBACK
+      }
     },
     placeholderData: BLOG_CATEGORIES_FALLBACK,
     staleTime: 10 * 60 * 1000,

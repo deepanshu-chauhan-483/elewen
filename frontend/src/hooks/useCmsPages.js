@@ -31,10 +31,14 @@ export function useLandingPage() {
     queryKey: ['cms-page', 'landing'],
     queryFn: async () => {
       if (USE_FALLBACK) return LANDING_PAGE_FALLBACK
-      const { data } = await strapiGet('/landing-page', {
-        'populate[sections][populate]': '*',
-      })
-      return parseSections(data?.sections ?? [])
+      try {
+        const { data } = await strapiGet('/landing-page', {
+          'populate[sections][populate]': '*',
+        })
+        return parseSections(data?.sections ?? [])
+      } catch {
+        return LANDING_PAGE_FALLBACK
+      }
     },
     placeholderData: LANDING_PAGE_FALLBACK,
     staleTime: 10 * 60 * 1000,
@@ -52,10 +56,14 @@ export function useAboutPage() {
     queryKey: ['cms-page', 'about'],
     queryFn: async () => {
       if (USE_FALLBACK) return ABOUT_PAGE_FALLBACK
-      const { data } = await strapiGet('/about-page', {
-        'populate[sections][populate]': '*',
-      })
-      return parseSections(data?.sections ?? [])
+      try {
+        const { data } = await strapiGet('/about-page', {
+          'populate[sections][populate]': '*',
+        })
+        return parseSections(data?.sections ?? [])
+      } catch {
+        return ABOUT_PAGE_FALLBACK
+      }
     },
     placeholderData: ABOUT_PAGE_FALLBACK,
     staleTime: 10 * 60 * 1000,
@@ -73,10 +81,14 @@ export function useInHousePlannerPage() {
     queryKey: ['cms-page', 'in-house-planner'],
     queryFn: async () => {
       if (USE_FALLBACK) return INHOUSE_PLANNER_PAGE_FALLBACK
-      const { data } = await strapiGet('/inhouse-planner-page', {
-        'populate[sections][populate]': '*',
-      })
-      return parseSections(data?.sections ?? [])
+      try {
+        const { data } = await strapiGet('/inhouse-planner-page', {
+          'populate[sections][populate]': '*',
+        })
+        return parseSections(data?.sections ?? [])
+      } catch {
+        return INHOUSE_PLANNER_PAGE_FALLBACK
+      }
     },
     placeholderData: INHOUSE_PLANNER_PAGE_FALLBACK,
     staleTime: 10 * 60 * 1000,
@@ -93,8 +105,12 @@ export function useGlobalSettings() {
     queryKey: ['global-settings'],
     queryFn: async () => {
       if (USE_FALLBACK) return null
-      const { data } = await strapiGet('/global-setting')
-      return data ?? null
+      try {
+        const { data } = await strapiGet('/global-setting')
+        return data ?? null
+      } catch {
+        return null
+      }
     },
     placeholderData: null,
     staleTime: 30 * 60 * 1000,
