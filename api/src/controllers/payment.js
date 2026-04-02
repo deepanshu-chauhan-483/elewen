@@ -141,11 +141,9 @@ export const verifyPayment = async (req, res, next) => {
     const userId = String(req.user.id)
 
     if (!paymentId || !razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-      return res
-        .status(400)
-        .json({
-          error: 'paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature are required',
-        })
+      return res.status(400).json({
+        error: 'paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature are required',
+      })
     }
 
     // Find the Payment record
