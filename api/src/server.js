@@ -3,6 +3,8 @@ import cors from 'cors'
 import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import authRoutes from './routes/auth.js'
 import vendorRoutes from './routes/vendor.js'
 import plannerLeadRoutes from './routes/plannerLead.js'
@@ -10,6 +12,8 @@ import consultationRoutes from './routes/consultation.js'
 import cartRoutes from './routes/cart.js'
 import bookingRoutes from './routes/booking.js'
 import sampleTasteRoutes from './routes/sampleTaste.js'
+import paymentRoutes from './routes/payment.js'
+import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
@@ -22,11 +26,21 @@ const PORT = Number(process.env.PORT || 3000)
 app.use(helmet({ contentSecurityPolicy: false })) // CSP disabled so Swagger UI loads
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173', 'http://localhost:80'],
+    origin: process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:80',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   })
 )
+
+// ─── Razorpay webhook (MUST be before express.json) ───────────────────────────
+// Razorpay signature verification requires the raw request body (Buffer).
+// express.json() would parse and discard the raw body, breaking HMAC verification.
+app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook)
+
 app.use(express.json())
 app.use(cookieParser())
 
@@ -67,6 +81,16 @@ app.use('/consultations', consultationRoutes)
 app.use('/cart', cartRoutes)
 app.use('/bookings', bookingRoutes)
 app.use('/sample-taste', sampleTasteRoutes)
+app.use('/payments', paymentRoutes)
+
+// ─── Dev-only test pages ──────────────────────────────────────────────────────
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/test-payment', (_req, res) => {
+    const html = readFileSync(join(process.cwd(), 'test-payment.html'), 'utf8')
+    res.setHeader('Content-Type', 'text/html')
+    res.send(html)
+  })
+}
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ ok: true }))
