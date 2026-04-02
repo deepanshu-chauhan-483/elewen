@@ -78,6 +78,7 @@ const PlanEventSection = () => {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
@@ -102,10 +103,9 @@ const PlanEventSection = () => {
       ? CARDS_PER_PAGE
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
-  const visibleCards = filteredCards.slice(
-    page * currentCardsPerPage,
-    (page + 1) * currentCardsPerPage
-  )
+  const safePage = Math.min(page, totalPages - 1)
+  const mobileCardWidth = 289
+  const mobileCardGap = 16
 
   // Reset page when category changes
   const handleCategorySelect = cat => {
@@ -116,6 +116,20 @@ const PlanEventSection = () => {
   // const scallopCount = [...Array(15)]
 
   const sectionRef = useRef(null)
+  const carouselViewportRef = useRef(null)
+
+  useEffect(() => {
+    const viewport = carouselViewportRef.current
+    if (!viewport) return
+
+    const updateWidth = () => setCarouselViewportWidth(viewport.clientWidth)
+
+    const ro = new ResizeObserver(updateWidth)
+    ro.observe(viewport)
+    updateWidth()
+
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const root = sectionRef.current
@@ -139,7 +153,7 @@ const PlanEventSection = () => {
 
     cards.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [visibleCards, page, activeCategory])
+  }, [filteredCards.length, page, activeCategory])
 
   return (
     <section
@@ -308,7 +322,7 @@ const PlanEventSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
+                  disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -327,24 +341,36 @@ const PlanEventSection = () => {
                 </button>
               </div>
 
-              <div className="flex justify-center md:block">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-                  {visibleCards.map((card, i) => (
+              <div ref={carouselViewportRef} className="overflow-hidden md:px-0">
+                <div
+                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{
+                    transform: isMobile
+                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                  }}
+                >
+                  {filteredCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${mobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                           loading="lazy"
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide uppercase font-['Poppins']">
                           {card.title}
                         </h3>
@@ -361,7 +387,7 @@ const PlanEventSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
+                  disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -387,7 +413,7 @@ const PlanEventSection = () => {
             <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
+                disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -405,16 +431,18 @@ const PlanEventSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(i)}
+                    onClick={() => setPage(Math.min(i, totalPages - 1))}
                     className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                      i === safePage
+                        ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
+                        : 'w-[8px] h-[8px] bg-[#D4D4D4]'
                     }`}
                   />
                 ))}
               </div>
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
+                disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -435,9 +463,11 @@ const PlanEventSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(i)}
+                  onClick={() => setPage(Math.min(i, totalPages - 1))}
                   className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                    i === safePage
+                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
+                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
@@ -489,6 +519,7 @@ const WhatToPlanSection = () => {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
@@ -513,10 +544,9 @@ const WhatToPlanSection = () => {
       ? CARDS_PER_PAGE
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
-  const visibleCards = filteredCards.slice(
-    page * currentCardsPerPage,
-    (page + 1) * currentCardsPerPage
-  )
+  const safePage = Math.min(page, totalPages - 1)
+  const mobileCardWidth = 289
+  const mobileCardGap = 16
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -524,6 +554,20 @@ const WhatToPlanSection = () => {
   }
 
   const sectionRef = useRef(null)
+  const carouselViewportRef = useRef(null)
+
+  useEffect(() => {
+    const viewport = carouselViewportRef.current
+    if (!viewport) return
+
+    const updateWidth = () => setCarouselViewportWidth(viewport.clientWidth)
+
+    const ro = new ResizeObserver(updateWidth)
+    ro.observe(viewport)
+    updateWidth()
+
+    return () => ro.disconnect()
+  }, [])
 
   // Simple, section-scoped reveal (no global mutation observers).
   useEffect(() => {
@@ -559,7 +603,7 @@ const WhatToPlanSection = () => {
 
     targets.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [categories.length, visibleCards.length, page, activeCategory])
+  }, [categories.length, filteredCards.length, page, activeCategory])
 
   return (
     <section
@@ -635,7 +679,7 @@ const WhatToPlanSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
+                  disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -654,23 +698,35 @@ const WhatToPlanSection = () => {
                 </button>
               </div>
 
-              <div className="flex justify-center lg:block">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] lg:max-w-none lg:w-auto relative">
-                  {visibleCards.map((card, i) => (
+              <div ref={carouselViewportRef} className="overflow-hidden lg:px-0">
+                <div
+                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{
+                    transform: isMobile
+                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                  }}
+                >
+                  {filteredCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
-                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${mobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide font-['Poppins']">
                           {card.title}
                         </h3>
@@ -687,7 +743,7 @@ const WhatToPlanSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
+                  disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -711,7 +767,7 @@ const WhatToPlanSection = () => {
             <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
+                disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -730,9 +786,11 @@ const WhatToPlanSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(i)}
+                    onClick={() => setPage(Math.min(i, totalPages - 1))}
                     className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                      i === safePage
+                        ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
+                        : 'w-[8px] h-[8px] bg-[#D4D4D4]'
                     }`}
                   />
                 ))}
@@ -740,7 +798,7 @@ const WhatToPlanSection = () => {
 
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
+                disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -761,9 +819,11 @@ const WhatToPlanSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(i)}
+                  onClick={() => setPage(Math.min(i, totalPages - 1))}
                   className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                    i === safePage
+                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
+                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
@@ -1164,6 +1224,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   return (
     <section
       ref={containerRef}
+      data-nav-theme="dark"
       className="relative w-full bg-[#591902] py-40 overflow-hidden font-sans text-white"
       style={{ scrollMarginTop: '100px' }}
     >
@@ -1284,7 +1345,7 @@ const CTASection = () => {
   const s = cms.consultation_cta ?? {}
 
   return (
-    <section className="w-full flex justify-center bg-[#591902] font-sans">
+    <section data-nav-theme="dark" className="w-full flex justify-center bg-[#591902] font-sans">
       <div className="w-full max-w-[1440px] h-[360px] flex flex-col items-center py-[80px] px-6">
         <h2
           className="text-[#FFFFFF] text-[24px] md:text-[36px] font-normal leading-none text-center font-serif reveal-heading"
@@ -1344,7 +1405,10 @@ const BetterWaySection = () => {
   const scallopCount = [...Array(15)]
 
   return (
-    <section className="w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans relative">
+    <section
+      data-nav-theme="glass"
+      className="w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans relative"
+    >
       <div className="relative w-full max-w-[1440px] mx-auto h-[841px] md:h-[1171px] shrink-0">
         {/* --- SCALLOP / BULB SECTION (Untouched) --- */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10">
@@ -1574,12 +1638,6 @@ const BetterWaySection = () => {
           />
         </div>
 
-        {/* --- MOBILE DASHED LINE --- */}
-        <div className="block md:hidden absolute left-1/2 top-[558px] -translate-x-1/2 w-[1px] h-[145px] border-l-[0.5px] border-dashed border-[#000000]"></div>
-
-        {/* --- DESKTOP DASHED LINE --- */}
-        <div className="hidden md:block absolute left-1/2 top-[900px] -translate-x-1/2 w-[1px] h-[145px] border-l-[1px] border-dashed border-[#000000]/30"></div>
-
         {/* --- SUB TEXTS --- */}
         <p className="absolute w-[120px] md:w-[200px] left-[20px] md:left-[30px] top-[597px] md:top-[688px] text-[#957960] text-[12px] leading-[150%] md:leading-[1.5] font-['Poppins'] md:font-sans">
           <span className="hidden md:inline">
@@ -1781,6 +1839,7 @@ const ChecklistSection = () => {
   return (
     <section
       ref={sectionRef}
+      data-nav-theme="glass"
       className="checklist-section relative w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
     >
       <div
@@ -2724,6 +2783,7 @@ const CelebrationFeelingSection = () => {
         containerRef.current = el
         preloadRef.current = el
       }}
+      data-nav-theme="glass"
       className="w-full bg-[#BFAC9B] overflow-hidden flex justify-center font-sans relative h-[700px] md:h-[900px]"
     >
       <div ref={revealRef} className="relative w-[1440px] max-w-full h-full shrink-0">
@@ -2843,6 +2903,7 @@ const PlanningGuidesSection = () => {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
@@ -2865,10 +2926,9 @@ const PlanningGuidesSection = () => {
       ? CARDS_PER_PAGE
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / currentCardsPerPage))
-  const visibleBlogs = filteredBlogs.slice(
-    page * currentCardsPerPage,
-    (page + 1) * currentCardsPerPage
-  )
+  const safePage = Math.min(page, totalPages - 1)
+  const mobileCardWidth = 289
+  const mobileCardGap = 16
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -2876,6 +2936,20 @@ const PlanningGuidesSection = () => {
   }
 
   const sectionRef = useRef(null)
+  const carouselViewportRef = useRef(null)
+
+  useEffect(() => {
+    const viewport = carouselViewportRef.current
+    if (!viewport) return
+
+    const updateWidth = () => setCarouselViewportWidth(viewport.clientWidth)
+
+    const ro = new ResizeObserver(updateWidth)
+    ro.observe(viewport)
+    updateWidth()
+
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const root = sectionRef.current
@@ -2899,7 +2973,7 @@ const PlanningGuidesSection = () => {
 
     cards.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [visibleBlogs, page, activeCategory])
+  }, [filteredBlogs.length, page, activeCategory])
 
   return (
     <section
@@ -3012,7 +3086,7 @@ const PlanningGuidesSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
+                  disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -3031,13 +3105,25 @@ const PlanningGuidesSection = () => {
                 </button>
               </div>
 
-              <div className="flex justify-center md:block">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-                  {visibleBlogs.map((blog, i) => (
+              <div ref={carouselViewportRef} className="overflow-hidden md:px-0">
+                <div
+                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{
+                    transform: isMobile
+                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                  }}
+                >
+                  {filteredBlogs.map((blog, i) => (
                     <div
                       key={blog.id ?? blog.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
-                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${mobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
@@ -3046,11 +3132,11 @@ const PlanningGuidesSection = () => {
                             CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]
                           }
                           alt={blog.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
                           {blog.title}
                         </h3>
@@ -3067,7 +3153,7 @@ const PlanningGuidesSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
+                  disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -3091,7 +3177,7 @@ const PlanningGuidesSection = () => {
             <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
+                disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -3109,16 +3195,18 @@ const PlanningGuidesSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(i)}
+                    onClick={() => setPage(Math.min(i, totalPages - 1))}
                     className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                      i === safePage
+                        ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
+                        : 'w-[8px] h-[8px] bg-[#D4D4D4]'
                     }`}
                   />
                 ))}
               </div>
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
+                disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -3139,9 +3227,11 @@ const PlanningGuidesSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(i)}
+                  onClick={() => setPage(Math.min(i, totalPages - 1))}
                   className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                    i === safePage
+                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
+                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
@@ -3233,7 +3323,10 @@ const TestimonialsSection = () => {
   // Avoid initializing Swiper with empty/undefined data.
   if (safeTestimonials.length === 0) {
     return (
-      <section className="relative w-full min-h-[479px] md:min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center">
+      <section
+        data-nav-theme="dark"
+        className="relative w-full min-h-[479px] md:min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center"
+      >
         <h2
           className="text-[#FFFFFF] text-[24px] md:text-[61px] leading-[1] text-center font-serif mt-[40px] md:mt-[80px] z-10 px-4 reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
@@ -3249,6 +3342,7 @@ const TestimonialsSection = () => {
   return (
     <section
       ref={sectionRef}
+      data-nav-theme="dark"
       className="relative w-full min-h-[479px] md:min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center"
     >
       <h2

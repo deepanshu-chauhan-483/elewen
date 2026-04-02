@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
+import ScallopBulbCurtain from './common/ScallopBulbCurtain'
 import { authLogout } from '../lib/api'
 
 const EVENT_IMAGE = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80'
@@ -19,54 +20,101 @@ const BASE_LINKS = [
 const SOCIALS = ['Instagram', 'Twitter', 'Youtube']
 
 const NAVBAR_THEMES = {
-  '/': {
+  light: {
     desktop: {
-      bgColor: 'transparent',
+      bgColor: '#FAFAFA',
       bgImage: null,
-      iconColor: '#FAFAFA',
-      searchBg: 'rgba(255,255,255,0.2)',
-      searchBorder: 'rgba(255,255,255,0.2)',
-      logoMode: 'light',
-    },
-    mobile: {
-      bgColor: 'transparent',
-      bgImage: null,
-      iconColor: '#FAFAFA',
-      logoMode: 'light',
-    },
-  },
-  '/about': {
-    desktop: {
-      bgColor: 'transparent',
-      bgImage: null,
-      iconColor: '#FAFAFA',
-      searchBg: 'rgba(255,255,255,0.2)',
-      searchBorder: 'rgba(255,255,255,0.2)',
-      logoMode: 'light',
-    },
-    mobile: {
-      bgColor: 'transparent',
-      bgImage: null,
-      iconColor: '#FAFAFA',
-      logoMode: 'light',
-    },
-  },
-  default: {
-    desktop: {
-      bgColor: 'rgba(255,255,255,0.92)',
-      bgImage: null,
-      iconColor: '#591902',
-      searchBg: 'rgba(89,25,2,0.06)',
-      searchBorder: 'rgba(89,25,2,0.08)',
+      iconColor: '#262626',
+      searchBg: 'rgba(0,0,0,0.06)',
+      searchBorder: 'rgba(0,0,0,0.08)',
       logoMode: 'dark',
     },
     mobile: {
-      bgColor: 'rgba(255,255,255,0.94)',
+      bgColor: '#FAFAFA',
       bgImage: null,
-      iconColor: '#591902',
+      iconColor: '#262626',
       logoMode: 'dark',
     },
   },
+  dark: {
+    desktop: {
+      bgColor: '#050505',
+      bgImage: null,
+      iconColor: '#FAFAFA',
+      searchBg: 'rgba(255,255,255,0.18)',
+      searchBorder: 'rgba(255,255,255,0.12)',
+      logoMode: 'light',
+    },
+    mobile: {
+      bgColor: '#050505',
+      bgImage: null,
+      iconColor: '#FAFAFA',
+      logoMode: 'light',
+    },
+  },
+  glass: {
+    desktop: {
+      bgColor: 'rgba(250,250,250,0.72)',
+      bgImage: null,
+      iconColor: '#262626',
+      searchBg: 'rgba(255,255,255,0.58)',
+      searchBorder: 'rgba(0,0,0,0.06)',
+      logoMode: 'dark',
+    },
+    mobile: {
+      bgColor: 'rgba(250,250,250,0.74)',
+      bgImage: null,
+      iconColor: '#262626',
+      logoMode: 'dark',
+    },
+  },
+}
+
+const TRANSPARENT_BG = 'rgba(0, 0, 0, 0)'
+
+const parseRgb = color => {
+  const match = color?.match(/rgba?\(([^)]+)\)/i)
+  if (!match) return null
+
+  const [r = 0, g = 0, b = 0, a = 1] = match[1].split(',').map(part => Number(part.trim()))
+  return { r, g, b, a: Number.isFinite(a) ? a : 1 }
+}
+
+const getLuminance = ({ r, g, b }) => {
+  const normalize = value => {
+    const channel = value / 255
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  }
+
+  return 0.2126 * normalize(r) + 0.7152 * normalize(g) + 0.0722 * normalize(b)
+}
+
+const resolveThemeFromPoint = (x, y) => {
+  const element = document.elementFromPoint(x, y)
+  if (!element) return 'light'
+
+  const explicitTheme = element.closest('[data-nav-theme]')?.getAttribute('data-nav-theme')
+  if (explicitTheme && NAVBAR_THEMES[explicitTheme]) return explicitTheme
+
+  let current = element
+  while (current && current !== document.body) {
+    const styles = window.getComputedStyle(current)
+    const parsed = parseRgb(styles.backgroundColor)
+    if (
+      parsed &&
+      styles.backgroundColor !== TRANSPARENT_BG &&
+      styles.backgroundColor !== 'transparent'
+    ) {
+      // Only semi-transparent section layers should produce the glass navbar.
+      // Decorative background images should not override a solid section color.
+      if (parsed.a > 0 && parsed.a < 0.92) return 'glass'
+      if (parsed.a >= 0.92) return getLuminance(parsed) < 0.34 ? 'dark' : 'light'
+    }
+
+    current = current.parentElement
+  }
+
+  return 'light'
 }
 
 const NavHeader = () => {
@@ -76,10 +124,13 @@ const NavHeader = () => {
   const isHome = pathname === '/'
   // const isAbout = pathname === '/about'
   const lastScrollY = useRef(0)
+  const headerRef = useRef(null)
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('elewen_jwt'))
   const [entered, setEntered] = useState(!isHome)
   const [hidden, setHidden] = useState(false)
+  const [navThemeName, setNavThemeName] = useState(isHome ? 'glass' : 'light')
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
 
   useEffect(() => {
     const sync = () => setIsLoggedIn(!!localStorage.getItem('elewen_jwt'))
@@ -97,6 +148,12 @@ const NavHeader = () => {
     window.addEventListener('hero-preloader-done', onDone, { once: true })
     return () => window.removeEventListener('hero-preloader-done', onDone)
   }, [isHome])
+
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     const onScroll = () => {
@@ -127,6 +184,56 @@ const NavHeader = () => {
     }
   }, [open])
 
+  useEffect(() => {
+    if (open) return
+
+    let rafId = null
+
+    const updateTheme = () => {
+      const header = headerRef.current
+      if (!header) return
+
+      if (pathname === '/' && window.scrollY < 80) {
+        setNavThemeName(prev => (prev === 'glass' ? prev : 'glass'))
+        return
+      }
+
+      const rect = header.getBoundingClientRect()
+      const sampleY = Math.min(Math.max(Math.round(rect.bottom + 16), 0), window.innerHeight - 1)
+      const samplePoints = [0.2, 0.5, 0.8].map(ratio => ({
+        x: Math.round(window.innerWidth * ratio),
+        y: sampleY,
+      }))
+
+      const themes = samplePoints.map(point => resolveThemeFromPoint(point.x, point.y))
+      const nextTheme =
+        themes.find(theme => theme === 'dark') ??
+        themes.find(theme => theme === 'light') ??
+        themes[0] ??
+        'light'
+
+      setNavThemeName(prev => (prev === nextTheme ? prev : nextTheme))
+    }
+
+    const scheduleUpdate = () => {
+      if (rafId != null) return
+      rafId = window.requestAnimationFrame(() => {
+        updateTheme()
+        rafId = null
+      })
+    }
+
+    scheduleUpdate()
+    window.addEventListener('scroll', scheduleUpdate, { passive: true })
+    window.addEventListener('resize', scheduleUpdate)
+
+    return () => {
+      window.removeEventListener('scroll', scheduleUpdate)
+      window.removeEventListener('resize', scheduleUpdate)
+      if (rafId != null) window.cancelAnimationFrame(rafId)
+    }
+  }, [pathname, open])
+
   const handleLogout = async () => {
     try {
       await authLogout()
@@ -140,7 +247,7 @@ const NavHeader = () => {
     navigate('/')
   }
 
-  const pageTheme = NAVBAR_THEMES[pathname] ?? NAVBAR_THEMES.default
+  const pageTheme = NAVBAR_THEMES[navThemeName] ?? NAVBAR_THEMES.light
   const desktopTheme = pageTheme.desktop
   const mobileTheme = pageTheme.mobile
   const iconColor = desktopTheme.iconColor
@@ -153,11 +260,13 @@ const NavHeader = () => {
       : 'translate-y-0'
   const desktopLogoStyle =
     desktopTheme.logoMode === 'light' ? { filter: 'brightness(0) invert(1)' } : {}
-  const mobileLogoSrc = mobileTheme.logoMode === 'light' ? mobilenavlogo : navLogo
+  const mobileLogoSrc = mobilenavlogo
+  const mobileLogoStyle = mobileTheme.logoMode === 'dark' ? { filter: 'brightness(0)' } : undefined
 
   return (
     <>
       <header
+        ref={headerRef}
         className={`fixed top-0 left-0 right-0 z-[60] overflow-hidden px-6 py-4 transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-6 ${visibilityClass} ${transformClass}`}
       >
         <div
@@ -167,6 +276,9 @@ const NavHeader = () => {
             backgroundImage: mobileTheme.bgImage ? `url(${mobileTheme.bgImage})` : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            backdropFilter: navThemeName === 'glass' ? 'blur(26px)' : 'none',
+            WebkitBackdropFilter: navThemeName === 'glass' ? 'blur(26px)' : 'none',
+            borderBottom: navThemeName === 'glass' ? '1px solid rgba(0,0,0,0.05)' : 'none',
           }}
         />
 
@@ -177,6 +289,9 @@ const NavHeader = () => {
             backgroundImage: desktopTheme.bgImage ? `url(${desktopTheme.bgImage})` : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            backdropFilter: navThemeName === 'glass' ? 'blur(30px)' : 'none',
+            WebkitBackdropFilter: navThemeName === 'glass' ? 'blur(30px)' : 'none',
+            borderBottom: navThemeName === 'glass' ? '1px solid rgba(0,0,0,0.05)' : 'none',
           }}
         />
 
@@ -187,7 +302,7 @@ const NavHeader = () => {
                 src={mobileLogoSrc}
                 alt="Elewen"
                 className="h-auto w-[min(114px,32vw)] min-w-[92px] object-contain"
-                style={mobileTheme.logoMode === 'dark' ? { filter: 'none' } : undefined}
+                style={mobileLogoStyle}
               />
             </Link>
 
@@ -251,11 +366,11 @@ const NavHeader = () => {
             >
               <div
                 className="h-0.5 w-7 transition-all duration-300 group-hover:opacity-60 md:w-9"
-                style={{ backgroundColor: window.innerWidth >= 768 ? iconColor : mobileIconColor }}
+                style={{ backgroundColor: isDesktop ? iconColor : mobileIconColor }}
               />
               <div
                 className="h-0.5 w-5 transition-all duration-300 group-hover:w-7 md:w-7 md:group-hover:w-9"
-                style={{ backgroundColor: window.innerWidth >= 768 ? iconColor : mobileIconColor }}
+                style={{ backgroundColor: isDesktop ? iconColor : mobileIconColor }}
               />
             </button>
           </div>
@@ -267,6 +382,7 @@ const NavHeader = () => {
           open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
         style={{
+          height: isDesktop ? '100vh' : 'auto',
           clipPath: open ? 'inset(0% 0% 0% 0%)' : 'inset(0% 0% 100% 0%)',
           transition: 'clip-path 0.72s cubic-bezier(0.32,0,0.15,1), opacity 0.32s ease',
         }}
@@ -352,14 +468,14 @@ const NavHeader = () => {
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-0 md:flex-row md:px-10 md:pb-6">
-          <nav className="relative flex flex-1 flex-col justify-start pt-10 md:justify-center md:pt-0">
+        <div className="flex min-h-0 flex-col overflow-hidden px-6 pb-0 md:flex-1 md:flex-row md:px-10 md:pb-4">
+          <nav className="relative flex flex-col justify-start pt-8 md:flex-1 md:pt-8">
             {BASE_LINKS.map((link, index) => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={() => setOpen(false)}
-                className={`group flex items-end justify-between py-5 md:py-4 ${
+                className={`group flex items-end justify-between py-3 md:py-3 ${
                   pathname === link.to ? 'text-[#CDB17E]' : 'text-white/85 hover:text-white'
                 }`}
                 style={{
@@ -369,9 +485,9 @@ const NavHeader = () => {
                   transition: `transform 0.5s cubic-bezier(0.32,0,0.15,1) ${index * 50 + 100}ms, opacity 0.5s ease ${index * 50 + 100}ms, color 0.2s ease`,
                 }}
               >
-                <span className="inline-block max-w-[72%]">
+                <span className="inline-block max-w-full md:max-w-[72%]">
                   <span
-                    className="inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat pb-1 text-[18px] font-normal uppercase leading-none tracking-wide transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] md:text-2xl lg:text-3xl"
+                    className="inline-block w-auto max-w-none whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[14px] font-normal uppercase leading-[1] tracking-[0em] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] md:h-auto md:w-auto md:pb-1 md:text-[22px] md:leading-none lg:text-[24px]"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {link.label}
@@ -381,7 +497,7 @@ const NavHeader = () => {
             ))}
 
             <div
-              className="absolute right-0 top-10 mt-0 md:static md:mt-8"
+              className="absolute right-0 top-4 mt-0 md:static md:mt-5"
               style={{
                 transitionDelay: open ? `${BASE_LINKS.length * 50 + 150}ms` : '0ms',
                 transform: open ? 'translateY(0)' : 'translateY(20px)',
@@ -463,7 +579,7 @@ const NavHeader = () => {
             </div>
 
             <div
-              className="mt-auto flex flex-col items-end pb-8 pt-12 text-right md:hidden"
+              className="mt-8 flex flex-col items-end pb-6 pt-4 text-right md:hidden"
               style={{
                 transitionDelay: open ? '340ms' : '0ms',
                 transform: open ? 'translateY(0)' : 'translateY(20px)',
@@ -510,7 +626,7 @@ const NavHeader = () => {
         </div>
 
         <div
-          className="mb-6 flex shrink-0 flex-col-reverse items-start justify-between gap-4 px-6 md:flex-row md:items-end md:px-10"
+          className="mb-0 flex shrink-0 flex-col-reverse items-start justify-between gap-4 px-6 pb-6 md:flex-row md:items-end md:px-10 md:pb-4"
           style={{
             transitionDelay: open ? '350ms' : '0ms',
             transform: open ? 'translateY(0)' : 'translateY(20px)',
@@ -558,6 +674,16 @@ const NavHeader = () => {
               </a>
             </div>
           </div>
+        </div>
+
+        <div className="pointer-events-none relative hidden h-[76px] overflow-hidden shrink-0 bg-white md:block">
+          <ScallopBulbCurtain
+            count={12}
+            outerColor="#CDB17E"
+            innerColor="#111110"
+            showBulbs={false}
+            className="absolute left-1/2 top-0 flex w-max -translate-x-1/2 pointer-events-none z-10"
+          />
         </div>
       </div>
     </>
