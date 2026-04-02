@@ -8,22 +8,32 @@ export default function ScallopBulbCurtain({
   wireColorClass = 'bg-[#591902]/40',
   className = 'absolute top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10',
   showBulbs = true,
+  fitToWidth = false,
 }) {
   const scallopCount = Array.from({ length: count })
+  const itemClass = fitToWidth
+    ? 'relative min-w-0 flex-1 h-[34px] md:h-[76px]'
+    : 'relative shrink-0 w-[60px] h-[34px] md:w-[136px] md:h-[76px]'
+  const outerArcClass = fitToWidth
+    ? 'absolute inset-x-0 top-0 h-[34px] md:h-[76px]'
+    : 'absolute top-0 left-0 w-[60px] h-[34px] md:w-[136px] md:h-[76px]'
+  const innerArcClass = fitToWidth
+    ? 'absolute inset-x-0 top-0 h-[27px] md:h-[61px]'
+    : 'absolute top-0 left-0 w-[60px] h-[27px] md:w-[136px] md:h-[61px]'
 
   return (
     <div className={className}>
       {scallopCount.map((_, i) => (
-        <div key={i} className="relative shrink-0 w-[60px] h-[34px] md:w-[136px] md:h-[76px]">
+        <div key={i} className={itemClass}>
           <div
-            className="absolute top-0 left-0 w-[60px] h-[34px] md:w-[136px] md:h-[76px]"
+            className={outerArcClass}
             style={{
               backgroundColor: outerColor,
               borderRadius: '0 0 50% 50% / 0 0 100% 100%',
             }}
           />
           <div
-            className="absolute top-0 left-0 w-[60px] h-[27px] md:w-[136px] md:h-[61px]"
+            className={innerArcClass}
             style={{
               backgroundColor: innerColor,
               borderRadius: '0 0 50% 50% / 0 0 100% 100%',

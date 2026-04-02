@@ -682,7 +682,8 @@ const NavHeader = () => {
             outerColor="#CDB17E"
             innerColor="#111110"
             showBulbs={false}
-            className="absolute left-1/2 top-0 flex w-max -translate-x-1/2 pointer-events-none z-10"
+            fitToWidth
+            className="absolute inset-x-0 top-0 flex pointer-events-none z-10"
           />
         </div>
       </div>
