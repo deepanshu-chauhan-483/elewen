@@ -1,26 +1,57 @@
 import { useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import AuthLayout from '../components/auth/AuthLayout'
 import { authResetPassword } from '../lib/api'
+
+const NewPasswordIcon = () => (
+  <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="28" cy="28" r="27" stroke="#727355" strokeWidth="1.5" />
+    <path
+      d="M20 26V21.5C20 17.91 22.91 15 26.5 15H29.5C33.09 15 36 17.91 36 21.5V26"
+      stroke="#727355"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <rect x="18" y="26" width="20" height="14" rx="2.5" stroke="#727355" strokeWidth="1.6" />
+    <circle cx="28" cy="33" r="2" fill="#727355" />
+    <circle cx="20.5" cy="42" r="1.8" fill="#727355" />
+    <circle cx="25.5" cy="42" r="1.8" fill="#727355" />
+    <circle cx="30.5" cy="42" r="1.8" fill="#727355" />
+    <circle cx="35.5" cy="42" r="1.8" fill="#727355" />
+  </svg>
+)
+
+const PasswordResetSuccessIcon = () => (
+  <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="28" cy="28" r="27" stroke="#727355" strokeWidth="1.5" />
+    <path
+      d="M14 28L23 37L42 18"
+      stroke="#727355"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   const code = searchParams.get('code')
 
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [status, setStatus] = useState('idle') // idle | loading | success | error
+  const [status, setStatus] = useState('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
-  const handleSubmit = async e => {
+  async function handleSubmit(e) {
     e.preventDefault()
 
     if (password !== confirm) {
-      setErrorMsg('Passwords do not match')
+      setErrorMsg('Passwords do not match.')
       return
     }
     if (password.length < 8) {
-      setErrorMsg('Password must be at least 8 characters')
+      setErrorMsg('Password must be at least 8 characters.')
       return
     }
     if (!code) {
@@ -34,7 +65,7 @@ export default function ResetPasswordPage() {
     try {
       await authResetPassword({ code, password, passwordConfirmation: confirm })
       setStatus('success')
-    } catch (err) {
+    } catch {
       setStatus('error')
       setErrorMsg('Reset link is invalid or has expired. Please request a new one.')
     }
@@ -42,120 +73,103 @@ export default function ResetPasswordPage() {
 
   if (status === 'success') {
     return (
-      <div style={styles.page}>
-        <div style={styles.card}>
-          <h2 style={styles.heading}>Password updated</h2>
-          <p style={styles.sub}>Your password has been changed successfully.</p>
-          <button style={styles.btn} onClick={() => navigate('/')}>
-            Back to home
-          </button>
+      <AuthLayout
+        activeTab="login"
+        headerPrefix={<PasswordResetSuccessIcon />}
+        title="Password reset!"
+        subtitle="You've successfully created a new password, click below to login."
+        footer={null}
+      >
+        <div
+          className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
+          <Link
+            to="/login"
+            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors"
+          >
+            Log in
+          </Link>
         </div>
-      </div>
+      </AuthLayout>
     )
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h2 style={styles.heading}>Set new password</h2>
-        <p style={styles.sub}>Enter your new password below.</p>
+    <AuthLayout
+      activeTab="login"
+      headerPrefix={<NewPasswordIcon />}
+      title="Set new password"
+      subtitle="Enter your new password below."
+      footer={null}
+    >
+      <form onSubmit={handleSubmit} className="contents">
+        <div
+          className="flex min-w-0 w-full flex-col gap-[24px]"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
+          <div className="flex flex-col gap-[8px] w-full min-w-0">
+            <label className="text-[#364022] text-[16px] font-medium leading-[150%]">
+              New password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Minimum 8 characters"
+              autoComplete="new-password"
+              required
+              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+            />
+          </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <label style={styles.label}>New password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="Minimum 8 characters"
-            required
-            style={styles.input}
-          />
+          <div className="flex flex-col gap-[8px] w-full min-w-0">
+            <label className="text-[#364022] text-[16px] font-medium leading-[150%]">
+              Confirm password
+            </label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+              placeholder="Repeat your password"
+              autoComplete="new-password"
+              required
+              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+            />
+          </div>
+        </div>
 
-          <label style={styles.label}>Confirm password</label>
-          <input
-            type="password"
-            value={confirm}
-            onChange={e => setConfirm(e.target.value)}
-            placeholder="Repeat your password"
-            required
-            style={styles.input}
-          />
+        <div
+          className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
+          {errorMsg && <p className="text-[#C62828] text-[12px] leading-[150%]">{errorMsg}</p>}
 
-          {errorMsg && <p style={styles.error}>{errorMsg}</p>}
-
-          <button type="submit" disabled={status === 'loading'} style={styles.btn}>
-            {status === 'loading' ? 'Updating…' : 'Update password'}
+          <button
+            type="submit"
+            disabled={status === 'loading'}
+            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {status === 'loading' ? 'Updating...' : 'Update password'}
           </button>
-        </form>
-      </div>
-    </div>
-  )
-}
 
-const styles = {
-  page: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#0a0a0a',
-    padding: '2rem',
-  },
-  card: {
-    background: '#141414',
-    border: '1px solid #2a2a2a',
-    borderRadius: '12px',
-    padding: '2.5rem',
-    width: '100%',
-    maxWidth: '420px',
-  },
-  heading: {
-    color: '#f5f0e8',
-    fontFamily: 'serif',
-    fontSize: '1.75rem',
-    marginBottom: '0.5rem',
-  },
-  sub: {
-    color: '#888',
-    fontSize: '0.95rem',
-    marginBottom: '1.75rem',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-  },
-  label: {
-    color: '#aaa',
-    fontSize: '0.85rem',
-    marginBottom: '0.2rem',
-  },
-  input: {
-    background: '#1e1e1e',
-    border: '1px solid #333',
-    borderRadius: '8px',
-    color: '#f5f0e8',
-    fontSize: '1rem',
-    padding: '0.75rem 1rem',
-    outline: 'none',
-    width: '100%',
-    boxSizing: 'border-box',
-  },
-  error: {
-    color: '#e57373',
-    fontSize: '0.88rem',
-    margin: '0.25rem 0',
-  },
-  btn: {
-    marginTop: '0.5rem',
-    background: '#c9a96e',
-    color: '#0a0a0a',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '0.85rem',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    width: '100%',
-  },
+          <Link
+            to="/login"
+            className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] leading-[150%]"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="-rotate-90">
+              <path
+                d="M12 4L12 20M12 20L6 14M12 20L18 14"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Back to login
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
+  )
 }
