@@ -23,12 +23,16 @@ export function useEventCategories() {
     queryKey: ['event-categories'],
     queryFn: async () => {
       if (USE_FALLBACK) return EVENT_CATEGORIES_FALLBACK
-      const { data } = await strapiGet('/events', {
-        'filters[parent_event][id][$null]': 'true',
-        'filters[is_active][$eq]': 'true',
-        sort: 'name:asc',
-      })
-      return data.map(e => e.name)
+      try {
+        const { data } = await strapiGet('/events', {
+          'filters[parent_event][id][$null]': 'true',
+          'filters[is_active][$eq]': 'true',
+          sort: 'name:asc',
+        })
+        return data.map(e => e.name)
+      } catch {
+        return EVENT_CATEGORIES_FALLBACK
+      }
     },
     placeholderData: EVENT_CATEGORIES_FALLBACK,
     staleTime: 10 * 60 * 1000,
@@ -45,28 +49,32 @@ export function useEventCards() {
     queryKey: ['event-cards'],
     queryFn: async () => {
       if (USE_FALLBACK) return EVENT_CARDS_FALLBACK
-      const { data } = await strapiGet('/events', {
-        'filters[parent_event][id][$null]': 'false',
-        'filters[is_featured][$eq]': 'true',
-        'filters[is_active][$eq]': 'true',
-        'populate[0]': 'parent_event',
-        'populate[1]': 'icon',
-        sort: 'name:asc',
-      })
-      const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
-      return data.map(e => ({
-        id: e.id,
-        documentId: e.documentId,
-        title: e.name?.toUpperCase() ?? '',
-        tagline: e.tagline ?? '',
-        description: blocksToText(e.description),
-        category: e.parent_event?.name ?? '',
-        image: e.icon?.url
-          ? e.icon.url.startsWith('http')
-            ? e.icon.url
-            : `${base}${e.icon.url}`
-          : null,
-      }))
+      try {
+        const { data } = await strapiGet('/events', {
+          'filters[parent_event][id][$null]': 'false',
+          'filters[is_featured][$eq]': 'true',
+          'filters[is_active][$eq]': 'true',
+          'populate[0]': 'parent_event',
+          'populate[1]': 'icon',
+          sort: 'name:asc',
+        })
+        const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+        return data.map(e => ({
+          id: e.id,
+          documentId: e.documentId,
+          title: e.name?.toUpperCase() ?? '',
+          tagline: e.tagline ?? '',
+          description: blocksToText(e.description),
+          category: e.parent_event?.name ?? '',
+          image: e.icon?.url
+            ? e.icon.url.startsWith('http')
+              ? e.icon.url
+              : `${base}${e.icon.url}`
+            : null,
+        }))
+      } catch {
+        return EVENT_CARDS_FALLBACK
+      }
     },
     placeholderData: EVENT_CARDS_FALLBACK,
     staleTime: 10 * 60 * 1000,
@@ -87,26 +95,30 @@ export function useServiceCards() {
     queryKey: ['service-cards'],
     queryFn: async () => {
       if (USE_FALLBACK) return SERVICE_CARDS_FALLBACK
-      const { data } = await strapiGet('/service-categories', {
-        'filters[is_featured][$eq]': 'true',
-        'filters[is_active][$eq]': 'true',
-        'populate[0]': 'parent_category',
-        'populate[1]': 'icon',
-        sort: 'name:asc',
-      })
-      const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
-      return data.map(s => ({
-        id: s.id,
-        documentId: s.documentId,
-        title: s.name ?? '',
-        description: s.description ?? '',
-        category: s.parent_category?.name ?? '',
-        image: s.icon?.url
-          ? s.icon.url.startsWith('http')
-            ? s.icon.url
-            : `${base}${s.icon.url}`
-          : null,
-      }))
+      try {
+        const { data } = await strapiGet('/service-categories', {
+          'filters[is_featured][$eq]': 'true',
+          'filters[is_active][$eq]': 'true',
+          'populate[0]': 'parent_category',
+          'populate[1]': 'icon',
+          sort: 'name:asc',
+        })
+        const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+        return data.map(s => ({
+          id: s.id,
+          documentId: s.documentId,
+          title: s.name ?? '',
+          description: s.description ?? '',
+          category: s.parent_category?.name ?? '',
+          image: s.icon?.url
+            ? s.icon.url.startsWith('http')
+              ? s.icon.url
+              : `${base}${s.icon.url}`
+            : null,
+        }))
+      } catch {
+        return SERVICE_CARDS_FALLBACK
+      }
     },
     placeholderData: SERVICE_CARDS_FALLBACK,
     staleTime: 10 * 60 * 1000,

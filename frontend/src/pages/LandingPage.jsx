@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -79,6 +79,8 @@ const PlanEventSection = () => {
   const [page, setPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
   const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
+  const [isCarouselSliding, setIsCarouselSliding] = useState(false)
+  const [slideDirection, setSlideDirection] = useState('next')
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
@@ -106,11 +108,29 @@ const PlanEventSection = () => {
   const safePage = Math.min(page, totalPages - 1)
   const mobileCardWidth = 289
   const mobileCardGap = 16
+  const edgeFadeMask =
+    slideDirection === 'prev'
+      ? 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 9%, black 22%, black 86%, rgba(0,0,0,0.5) 95%, transparent 100%)'
+      : 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 5%, black 14%, black 78%, rgba(0,0,0,0.3) 91%, transparent 100%)'
 
   // Reset page when category changes
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
+    setSlideDirection('next')
     setPage(0)
+  }
+  const goToPrevPage = () => {
+    setSlideDirection('prev')
+    setPage(p => Math.max(0, p - 1))
+  }
+  const goToNextPage = () => {
+    setSlideDirection('next')
+    setPage(p => Math.min(totalPages - 1, p + 1))
+  }
+  const goToPage = nextPage => {
+    if (nextPage === safePage) return
+    setSlideDirection(nextPage < safePage ? 'prev' : 'next')
+    setPage(Math.min(nextPage, totalPages - 1))
   }
 
   // const scallopCount = [...Array(15)]
@@ -130,6 +150,13 @@ const PlanEventSection = () => {
 
     return () => ro.disconnect()
   }, [])
+
+  useEffect(() => {
+    if (page === 0) return
+    setIsCarouselSliding(true)
+    const timer = setTimeout(() => setIsCarouselSliding(false), 560)
+    return () => clearTimeout(timer)
+  }, [page])
 
   useEffect(() => {
     const root = sectionRef.current
@@ -321,7 +348,7 @@ const PlanEventSection = () => {
               {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
                 <button
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  onClick={goToPrevPage}
                   disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
@@ -341,9 +368,17 @@ const PlanEventSection = () => {
                 </button>
               </div>
 
-              <div ref={carouselViewportRef} className="overflow-hidden md:px-0">
+              <div
+                ref={carouselViewportRef}
+                className="overflow-hidden md:px-0"
+                style={{
+                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                  WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                  transition: 'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+              >
                 <div
-                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
                       ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
@@ -386,7 +421,7 @@ const PlanEventSection = () => {
               {/* Mobile Right Navigation Arrow */}
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
                 <button
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
@@ -412,7 +447,7 @@ const PlanEventSection = () => {
             {/* Desktop Pagination Block */}
             <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
+                onClick={goToPrevPage}
                 disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -431,7 +466,7 @@ const PlanEventSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(Math.min(i, totalPages - 1))}
+                    onClick={() => goToPage(i)}
                     className={`cursor-pointer rounded-[8px] transition-all ${
                       i === safePage
                         ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
@@ -441,7 +476,7 @@ const PlanEventSection = () => {
                 ))}
               </div>
               <button
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -463,7 +498,7 @@ const PlanEventSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(Math.min(i, totalPages - 1))}
+                  onClick={() => goToPage(i)}
                   className={`cursor-pointer rounded-[12px] transition-all ${
                     i === safePage
                       ? 'w-[20px] h-[4px] bg-[#CDB17E]'
@@ -551,6 +586,16 @@ const WhatToPlanSection = () => {
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
     setPage(0)
+  }
+  const goToPrevPage = () => {
+    setPage(p => Math.max(0, p - 1))
+  }
+  const goToNextPage = () => {
+    setPage(p => Math.min(totalPages - 1, p + 1))
+  }
+  const goToPage = nextPage => {
+    if (nextPage === safePage) return
+    setPage(Math.min(nextPage, totalPages - 1))
   }
 
   const sectionRef = useRef(null)
@@ -678,7 +723,7 @@ const WhatToPlanSection = () => {
               {/* Mobile Left Navigation Arrow */}
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
                 <button
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  onClick={goToPrevPage}
                   disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
@@ -698,13 +743,17 @@ const WhatToPlanSection = () => {
                 </button>
               </div>
 
-              <div ref={carouselViewportRef} className="overflow-hidden lg:px-0">
+              <div
+                ref={carouselViewportRef}
+                className="overflow-hidden lg:px-0"
+              >
                 <div
-                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  className="flex gap-4 md:gap-6 transition-transform duration-[1250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   style={{
                     transform: isMobile
                       ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
                       : `translateX(-${safePage * carouselViewportWidth}px)`,
+                    willChange: 'transform',
                   }}
                 >
                   {filteredCards.map((card, i) => (
@@ -742,7 +791,7 @@ const WhatToPlanSection = () => {
               {/* Mobile Right Navigation Arrow */}
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
                 <button
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
@@ -766,7 +815,7 @@ const WhatToPlanSection = () => {
             {/* Desktop Pagination Block */}
             <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
+                onClick={goToPrevPage}
                 disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -786,7 +835,7 @@ const WhatToPlanSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(Math.min(i, totalPages - 1))}
+                    onClick={() => goToPage(i)}
                     className={`cursor-pointer rounded-[8px] transition-all ${
                       i === safePage
                         ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
@@ -797,7 +846,7 @@ const WhatToPlanSection = () => {
               </div>
 
               <button
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -819,7 +868,7 @@ const WhatToPlanSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(Math.min(i, totalPages - 1))}
+                  onClick={() => goToPage(i)}
                   className={`cursor-pointer rounded-[12px] transition-all ${
                     i === safePage
                       ? 'w-[20px] h-[4px] bg-[#CDB17E]'
@@ -1054,7 +1103,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   const containerRef = useRef(null)
   const stepsWrapRef = useRef(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (disableScrollAnimations || !isVisible) return
     const container = containerRef.current
     const stepsWrap = stepsWrapRef.current
@@ -1248,8 +1297,11 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         <div
           className="progress-line absolute top-0 bottom-0 left-1/2 w-[2px] bg-white -translate-x-1/2 z-30"
           style={{
+            transform: 'translate3d(-50%, 0, 0) scaleY(0)',
             transformOrigin: 'top center',
-            boxShadow: '0 0 12px rgba(255,255,255,0.9), 0 0 24px rgba(205,177,126,0.5)',
+            willChange: 'transform',
+            backfaceVisibility: 'hidden',
+            boxShadow: 'none',
           }}
         />
 
@@ -1757,15 +1809,19 @@ const ChecklistSection = () => {
     const doorCurvedText = gate.querySelector('#door-curved-text')
 
     const isMobile = window.innerWidth < 768
+    const frameHalfWidthRatio = 190 / 1440
+    const requiredScaleToClearViewport = gate.offsetWidth
+      ? (window.innerWidth / (2 * gate.offsetWidth * frameHalfWidthRatio)) * 1.28
+      : 6.4
 
-    const scaleEnd = isMobile ? 3.6 : 4
-    const gateLiftY = isMobile ? -260 : -220
-    const scrollEnd = isMobile ? 1300 : 1500
-    const scrubVal = isMobile ? 1 : 1
-    const doorOpenEnd = 1
-    const insideBgRevealStart = doorOpenEnd + 0.04
-    const gateFadeStart = doorOpenEnd + 0.08
-    const howItWorksStart = doorOpenEnd + 0.16
+    const scaleEnd = isMobile ? 4.85 : Math.max(5.9, requiredScaleToClearViewport)
+    const gateLiftY = isMobile ? -340 : -320
+    const scrollEnd = isMobile ? 1560 : 1830
+    const scrubVal = 1.15
+    const doorOpenEnd = 1.32
+    const insideBgRevealStart = doorOpenEnd - 0.08
+    const gateFadeStart = doorOpenEnd + 0.04
+    const howItWorksStart = doorOpenEnd + 0.1
 
     const getMobileStartTrigger = () => {
       if (!gate) return 'bottom bottom'
@@ -1786,7 +1842,7 @@ const ChecklistSection = () => {
     }
 
     gsap.set(insideBg, { opacity: 0 })
-    gsap.set(howItWorks, { yPercent: 100, opacity: 1 })
+    gsap.set(howItWorks, { yPercent: 112, opacity: 1 })
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -1800,9 +1856,11 @@ const ChecklistSection = () => {
       },
     })
 
-    tl.to(gate, { scale: scaleEnd, y: gateLiftY, ease: 'power2.in', duration: 1 }, 0)
-    if (doorTable) tl.to(doorTable, { x: 120, ease: 'power2.in', duration: 1 }, 0)
-    if (doorLights) tl.to(doorLights, { y: -60, ease: 'power2.in', duration: 1 }, 0)
+    tl.to(gate, { scale: scaleEnd, y: gateLiftY, ease: 'power2.in', duration: doorOpenEnd }, 0)
+    if (doorTable)
+      tl.to(doorTable, { x: 180, ease: 'power2.in', duration: doorOpenEnd }, 0)
+    if (doorLights)
+      tl.to(doorLights, { x: -120, y: -40, ease: 'power2.in', duration: doorOpenEnd }, 0)
     const archPath = gate.querySelector('#door-arch-path')
     if (doorCurvedText && archPath)
       tl.to(
@@ -1817,23 +1875,26 @@ const ChecklistSection = () => {
             end: 0.5,
           },
           ease: 'power2.in',
-          duration: 1,
+          duration: doorOpenEnd,
         },
         0
       )
 
-    // Let the door finish opening before the inside scene starts revealing.
-    tl.to(insideBg, { opacity: 1, duration: 0.24, ease: 'power2.out' }, insideBgRevealStart)
-    tl.to(gate, { opacity: 0, duration: 0.18, ease: 'power2.out' }, gateFadeStart)
+    // Start the inside background slightly before the depth animation fully
+    // completes so the handoff feels continuous instead of stopping first.
+    tl.to(insideBg, { opacity: 1, duration: 0.18, ease: 'power2.out' }, insideBgRevealStart)
+    tl.to(gate, { opacity: 0, duration: 0.12, ease: 'power2.out' }, gateFadeStart)
 
     tl.to(
       howItWorks,
       {
         yPercent: 0,
-        duration: 0.96,
-        ease: 'power3.out',
-        onStart: activateHowItWorks,
-        onComplete: () => ScrollTrigger.refresh(),
+        duration: 1.12,
+        ease: 'power2.out',
+        onComplete: () => {
+          activateHowItWorks()
+          ScrollTrigger.refresh()
+        },
       },
       howItWorksStart
     )
@@ -1953,7 +2014,7 @@ const ChecklistSection = () => {
                 style={{
                   '--delay': '0s',
                   boxShadow:
-                    '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)',
+                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.1)',
                 }}
               ></div>
               <img
@@ -1962,8 +2023,6 @@ const ChecklistSection = () => {
                 alt="Scrolling"
                 style={{
                   '--delay': '0.15s',
-                  filter:
-                    'drop-shadow(12px 16px 18px rgba(68, 33, 4, 0.22)) drop-shadow(2px 4px 8px rgba(68, 33, 4, 0.18))',
                 }}
                 loading="lazy"
               />
@@ -1992,7 +2051,7 @@ const ChecklistSection = () => {
                 style={{
                   '--delay': '0.5s',
                   boxShadow:
-                    '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)',
+                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
                 }}
               ></div>
               <img
@@ -2001,8 +2060,6 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
                 style={{
                   '--delay': '0.65s',
-                  filter:
-                    'drop-shadow(12px 16px 18px rgba(68, 33, 4, 0.22)) drop-shadow(2px 4px 8px rgba(68, 33, 4, 0.18))',
                 }}
                 loading="lazy"
               />
@@ -2032,7 +2089,7 @@ const ChecklistSection = () => {
                 style={{
                   '--delay': '1.0s',
                   boxShadow:
-                    '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)',
+                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
                 }}
               ></div>
               <img
@@ -2041,8 +2098,6 @@ const ChecklistSection = () => {
                 alt="Vendors"
                 style={{
                   '--delay': '1.15s',
-                  filter:
-                    'drop-shadow(12px 16px 18px rgba(68, 33, 4, 0.22)) drop-shadow(2px 4px 8px rgba(68, 33, 4, 0.18))',
                 }}
                 loading="lazy"
               />
@@ -2072,7 +2127,7 @@ const ChecklistSection = () => {
                 style={{
                   '--delay': '1.5s',
                   boxShadow:
-                    '8px 12px 28px rgba(109, 57, 8, 0.22), 3px 4px 12px rgba(109, 57, 8, 0.14)',
+                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
                 }}
               ></div>
               <img
@@ -2081,8 +2136,6 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
                 style={{
                   '--delay': '1.65s',
-                  filter:
-                    'drop-shadow(12px 16px 18px rgba(68, 33, 4, 0.22)) drop-shadow(2px 4px 8px rgba(68, 33, 4, 0.18))',
                 }}
                 loading="lazy"
               />
@@ -2907,6 +2960,8 @@ const PlanningGuidesSection = () => {
   const [page, setPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
   const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
+  const [isCarouselSliding, setIsCarouselSliding] = useState(false)
+  const [slideDirection, setSlideDirection] = useState('next')
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
@@ -2932,10 +2987,28 @@ const PlanningGuidesSection = () => {
   const safePage = Math.min(page, totalPages - 1)
   const mobileCardWidth = 289
   const mobileCardGap = 16
+  const edgeFadeMask =
+    slideDirection === 'prev'
+      ? 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 9%, black 22%, black 86%, rgba(0,0,0,0.5) 95%, transparent 100%)'
+      : 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 5%, black 14%, black 78%, rgba(0,0,0,0.3) 91%, transparent 100%)'
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
+    setSlideDirection('next')
     setPage(0)
+  }
+  const goToPrevPage = () => {
+    setSlideDirection('prev')
+    setPage(p => Math.max(0, p - 1))
+  }
+  const goToNextPage = () => {
+    setSlideDirection('next')
+    setPage(p => Math.min(totalPages - 1, p + 1))
+  }
+  const goToPage = nextPage => {
+    if (nextPage === safePage) return
+    setSlideDirection(nextPage < safePage ? 'prev' : 'next')
+    setPage(Math.min(nextPage, totalPages - 1))
   }
 
   const sectionRef = useRef(null)
@@ -2953,6 +3026,13 @@ const PlanningGuidesSection = () => {
 
     return () => ro.disconnect()
   }, [])
+
+  useEffect(() => {
+    if (page === 0) return
+    setIsCarouselSliding(true)
+    const timer = setTimeout(() => setIsCarouselSliding(false), 560)
+    return () => clearTimeout(timer)
+  }, [page])
 
   useEffect(() => {
     const root = sectionRef.current
@@ -3088,7 +3168,7 @@ const PlanningGuidesSection = () => {
               {/* Mobile Left Navigation Arrow */}
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
                 <button
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  onClick={goToPrevPage}
                   disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
@@ -3108,9 +3188,17 @@ const PlanningGuidesSection = () => {
                 </button>
               </div>
 
-              <div ref={carouselViewportRef} className="overflow-hidden md:px-0">
+              <div
+                ref={carouselViewportRef}
+                className="overflow-hidden md:px-0"
+                style={{
+                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                  WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                  transition: 'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+              >
                 <div
-                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
                       ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
@@ -3155,7 +3243,7 @@ const PlanningGuidesSection = () => {
               {/* Mobile Right Navigation Arrow */}
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
                 <button
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
@@ -3179,7 +3267,7 @@ const PlanningGuidesSection = () => {
             {/* Desktop Pagination Block */}
             <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
+                onClick={goToPrevPage}
                 disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -3198,7 +3286,7 @@ const PlanningGuidesSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(Math.min(i, totalPages - 1))}
+                    onClick={() => goToPage(i)}
                     className={`cursor-pointer rounded-[8px] transition-all ${
                       i === safePage
                         ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
@@ -3208,7 +3296,7 @@ const PlanningGuidesSection = () => {
                 ))}
               </div>
               <button
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -3230,7 +3318,7 @@ const PlanningGuidesSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(Math.min(i, totalPages - 1))}
+                  onClick={() => goToPage(i)}
                   className={`cursor-pointer rounded-[12px] transition-all ${
                     i === safePage
                       ? 'w-[20px] h-[4px] bg-[#CDB17E]'
@@ -3281,7 +3369,7 @@ const TestimonialsSection = () => {
 
   const sectionRef = useRef(null)
   const swiperRef = useRef(null)
-  const [activeIndex, setActiveIndex] = useState(1)
+  const [activeIndex, setActiveIndex] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
 
   // Track window size to toggle dimensions dynamically
@@ -3295,9 +3383,92 @@ const TestimonialsSection = () => {
   // CMS: Strapi `testimonials` featured + sorted by date
   const { data: testimonialsData } = useTestimonials()
 
-  const safeTestimonials = Array.isArray(testimonialsData) ? testimonialsData : []
+  const safeTestimonials = useMemo(
+    () => (Array.isArray(testimonialsData) ? testimonialsData : []),
+    [testimonialsData]
+  )
   const SLIDE_COUNT = safeTestimonials.length || 1
-  const slides = safeTestimonials.length ? [...safeTestimonials, ...safeTestimonials] : []
+  const shouldLoopTestimonials = safeTestimonials.length > 1
+  const TESTIMONIAL_LOOP_GROUPS = 21
+  const testimonialLoopStartGroup = Math.floor(TESTIMONIAL_LOOP_GROUPS / 2)
+  const carouselStartIndex = shouldLoopTestimonials ? testimonialLoopStartGroup * SLIDE_COUNT : 0
+  const slides = useMemo(() => {
+    if (!shouldLoopTestimonials) {
+      return safeTestimonials.map((item, index) => ({
+        ...item,
+        _renderIndex: index,
+        _sourceIndex: index,
+      }))
+    }
+
+    return Array.from({ length: TESTIMONIAL_LOOP_GROUPS }, (_, groupIndex) =>
+      safeTestimonials.map((item, sourceIndex) => ({
+        ...item,
+        _renderIndex: groupIndex * SLIDE_COUNT + sourceIndex,
+        _sourceIndex: sourceIndex,
+      }))
+    ).flat()
+  }, [SLIDE_COUNT, safeTestimonials, shouldLoopTestimonials])
+
+  const normalizeTestimonialLoopPosition = swiper => {
+    if (!shouldLoopTestimonials || SLIDE_COUNT <= 1) return
+
+    const sourceIndex = swiper.activeIndex % SLIDE_COUNT
+    const middleIndex = testimonialLoopStartGroup * SLIDE_COUNT + sourceIndex
+
+    if (swiper.activeIndex < SLIDE_COUNT * 2) {
+      swiper.slideTo(middleIndex, 0, false)
+      return
+    }
+
+    if (swiper.activeIndex >= SLIDE_COUNT * (TESTIMONIAL_LOOP_GROUPS - 2)) {
+      swiper.slideTo(middleIndex, 0, false)
+    }
+  }
+
+  const getNearestTestimonialIndex = sourceIndex => {
+    const swiper = swiperRef.current
+    if (!swiper || !shouldLoopTestimonials) return sourceIndex
+
+    const candidateIndexes = slides
+      .filter(item => item._sourceIndex === sourceIndex)
+      .map(item => item._renderIndex)
+
+    return candidateIndexes.reduce((nearestIndex, candidateIndex) =>
+      Math.abs(candidateIndex - swiper.activeIndex) < Math.abs(nearestIndex - swiper.activeIndex)
+        ? candidateIndex
+        : nearestIndex
+    )
+  }
+
+  const handlePrevTestimonial = () => {
+    const swiper = swiperRef.current
+    if (!swiper || SLIDE_COUNT <= 1) return
+    swiper.slideTo(swiper.activeIndex - 1)
+  }
+
+  const handleNextTestimonial = () => {
+    const swiper = swiperRef.current
+    if (!swiper || SLIDE_COUNT <= 1) return
+    swiper.slideTo(swiper.activeIndex + 1)
+  }
+
+  const handleTestimonialCardClick = (targetIndex, { isActive, isPrev, isNext }) => {
+    const swiper = swiperRef.current
+    if (!swiper || SLIDE_COUNT <= 1 || isActive) return
+
+    if (isPrev) {
+      swiper.slideTo(swiper.activeIndex - 1)
+      return
+    }
+
+    if (isNext) {
+      swiper.slideTo(swiper.activeIndex + 1)
+      return
+    }
+
+    swiper.slideTo(getNearestTestimonialIndex(targetIndex))
+  }
 
   useEffect(() => {
     const root = sectionRef.current
@@ -3353,52 +3524,66 @@ const TestimonialsSection = () => {
         style={{ fontFamily: "'Malgin', serif" }}
       >
         <span className="reveal-wrapper">
-          <span className="reveal-text">Real Celebrations. Real Experiences.</span>
+          <span className="reveal-text">{testimonialsHeading}</span>
         </span>
       </h2>
 
       <div className="w-full max-w-[1377.5px] mt-[40px] md:mt-[80px]">
         <Swiper
-          loop={true}
           centeredSlides={true}
-          slidesPerView={'auto'}
+          centerInsufficientSlides={true}
+          watchOverflow={true}
+          slidesPerView="auto"
           watchSlidesProgress={true}
-          className="flex items-center pb-4" // padding bottom prevents box-shadow clipping
+          allowTouchMove={SLIDE_COUNT > 1}
+          speed={820}
+          className="flex items-center !overflow-visible px-4 pb-4 md:px-6 lg:px-0"
           breakpoints={{
-            320: { spaceBetween: -24 }, // Negative margin pulls the scaled cards closer, matching Figma perfectly
-            768: { spaceBetween: -24 },
-            1024: { spaceBetween: -36 },
+            320: { spaceBetween: 12 },
+            768: { spaceBetween: 20 },
+            1200: { spaceBetween: 28 },
           }}
           onSwiper={swiper => {
             swiperRef.current = swiper
-            setActiveIndex(swiper.realIndex % SLIDE_COUNT)
           }}
-          onSlideChange={swiper => setActiveIndex(swiper.realIndex % SLIDE_COUNT)}
-          onInit={swiper => swiper.slideToLoop(1, 0)}
+          onSlideChange={swiper => setActiveIndex(swiper.activeIndex % SLIDE_COUNT)}
+          onSlideChangeTransitionEnd={normalizeTestimonialLoopPosition}
+          onInit={swiper => {
+            swiper.slideTo(carouselStartIndex, 0, false)
+            setActiveIndex(carouselStartIndex % SLIDE_COUNT)
+          }}
         >
           {slides.map((item, index) => (
             <SwiperSlide
-              key={`${item.id}-${index}`}
-              className="!w-auto flex items-center justify-center"
+              key={`${item.id ?? item._sourceIndex ?? index}-${item._renderIndex ?? index}`}
+              className="!h-auto !w-auto flex items-center justify-center py-4 md:py-6"
             >
-              {({ isActive }) => (
+              {({ isActive, isPrev, isNext }) => (
                 <div
                   className={`bg-[#FFFFFF] flex flex-col items-start cursor-pointer origin-center
                     testimonial-card-reveal
-                    transition-all duration-500 ease-in-out shrink-0 
+                    transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] shrink-0
                     rounded-[6.7px] md:rounded-[12px]
-                    w-[289px] md:w-[517.5px] 
+                    w-[289px] md:w-[517.5px]
                     h-[251px] md:h-[367.82px] 
                     p-[20px] md:p-[30px] 
                     gap-[20px] md:gap-[36px]
                     ${
                       isActive
-                        ? 'opacity-100 shadow-xl scale-100'
-                        : 'opacity-50 md:opacity-80 scale-[0.75] md:scale-[0.8]'
+                        ? 'z-10 opacity-100 shadow-[0_24px_60px_rgba(0,0,0,0.16)] scale-[1.02] md:scale-[1.06]'
+                        : isPrev || isNext
+                          ? 'opacity-65 md:opacity-80 scale-[0.92] md:scale-[0.88]'
+                          : 'opacity-40 md:opacity-55 scale-[0.84] md:scale-[0.78]'
                     }
                   `}
                   style={{ '--delay': `${0.04 + (index % 4) * 0.06}s` }}
-                  onClick={() => swiperRef.current?.slideToLoop(index)}
+                  onClick={() =>
+                    handleTestimonialCardClick(item._sourceIndex ?? index, {
+                      isActive,
+                      isPrev,
+                      isNext,
+                    })
+                  }
                 >
                   {/* Stars */}
                   <div className="flex justify-between w-[100px] md:w-[151.5px] h-[17px] md:h-[25.82px]">
@@ -3446,7 +3631,7 @@ const TestimonialsSection = () => {
           <span className="reveal-text reveal-text-x-left">
             <button
               type="button"
-              onClick={() => swiperRef.current?.slidePrev()}
+              onClick={handlePrevTestimonial}
               aria-label="Previous testimonial"
               className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] bg-[#CDB17E] rounded-[55px] md:rounded-[96px] flex items-center justify-center hover:bg-[#bfa06b] transition-colors shrink-0"
             >
@@ -3485,7 +3670,7 @@ const TestimonialsSection = () => {
           <span className="reveal-text reveal-text-x-right">
             <button
               type="button"
-              onClick={() => swiperRef.current?.slideNext()}
+              onClick={handleNextTestimonial}
               aria-label="Next testimonial"
               className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] bg-[#CDB17E] rounded-[55px] md:rounded-[96px] flex items-center justify-center hover:bg-[#bfa06b] transition-colors shrink-0"
             >
@@ -3565,12 +3750,10 @@ const SplitInfoSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="w-full flex justify-center bg-[#FFFFFF] font-sans overflow-x-hidden"
+      className="relative w-full bg-[#FFFFFF] font-sans overflow-x-clip overflow-y-hidden"
     >
-      {/* Parent Row: Uses flex-col for mobile, flex-row for desktop. 
-        Flexbox naturally stretches both columns to be equal height on desktop. 
-      */}
-      <div className="w-full max-w-[1440px] min-w-0 flex flex-col lg:flex-row mx-auto">
+      {/* Full-bleed split layout so the partner panel reaches the right edge on wide screens. */}
+      <div className="w-full min-w-0 flex flex-col lg:flex-row overflow-x-clip">
         {/* LEFT SECTION - Inspiration */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -3579,7 +3762,7 @@ const SplitInfoSection = () => {
               ? { opacity: 1, transition: { duration: 0.8, delay: 1.3 } }
               : { opacity: 0 }
           }
-          className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px]"
+          className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px] overflow-x-clip"
         >
           {/* Text Content Block */}
           <motion.div
@@ -3670,7 +3853,7 @@ const SplitInfoSection = () => {
                 }
               : { x: 220, opacity: 0 }
           }
-          className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px]"
+          className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px] overflow-x-clip"
         >
           {/* Placeholder/Top Box */}
           <motion.div

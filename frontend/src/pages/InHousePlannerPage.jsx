@@ -2348,7 +2348,7 @@ const InHousePlannerSection = () => {
               <img
                 src={plannerImg}
                 alt="Moksha - In-House Event Planner"
-                className="w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
+                className="about-page-hover-image w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
               />
             </div>
 

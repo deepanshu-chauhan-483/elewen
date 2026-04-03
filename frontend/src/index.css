@@ -163,14 +163,6 @@ p {
   animation: slideInFromRight 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.reveal-text-slow.reveal-text-x-left.is-visible {
-  animation: slideInFromLeft 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.reveal-text-slow.reveal-text-x-right.is-visible {
-  animation: slideInFromRight 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
 /* Extra padding for circle reveal so box-shadow isn't clipped by overflow:hidden */
 .reveal-wrapper-circle {
   padding: 4px 8px 32px 40px;
@@ -272,54 +264,26 @@ p {
   transform: scaleX(0);
   opacity: 0;
   transform-origin: 0% 50%;
-  will-change: transform, opacity;
+  transition:
+    transform 2.5s cubic-bezier(0, 0, 0.2, 1) 0.5s,
+    opacity 0.45s ease 0.5s;
 }
 .reveal-border-x.is-visible .border-fill-x {
-  animation: drawBorderX 10.2s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 .border-fill-y {
   transform: scaleY(0);
   opacity: 0;
   transform-origin: 50% 0%;
-  will-change: transform, opacity;
+  transition:
+    transform 2.5s cubic-bezier(0, 0, 0.2, 1) 0.5s,
+    opacity 0.45s ease 0.5s;
 }
 .reveal-border-y.is-visible .border-fill-y {
-  animation: drawBorderY 10.2s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
-}
-
-@keyframes drawBorderX {
-  0% {
-    transform: scaleX(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.2;
-  }
-  35% {
-    opacity: 0.65;
-  }
-  100% {
-    transform: scaleX(1);
-    opacity: 1;
-  }
-}
-
-@keyframes drawBorderY {
-  0% {
-    transform: scaleY(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.2;
-  }
-  35% {
-    opacity: 0.65;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
+  transform: scaleY(1);
+  opacity: 1;
 }
 
 /* ── Sequential Scroll Animations (Checklist Section) ── */
@@ -359,114 +323,24 @@ p {
 /* ── Card reveal (simple, viewport-triggered) ────────────────────────────── */
 .card-reveal {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(42px);
   will-change: transform, opacity;
 }
 
 .card-reveal.is-visible {
-  animation: slideInBottom 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: cardFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-delay: var(--delay, 0s);
-}
-
-/* Plan Event cards: stronger bottom-to-top reveal + clearer hover state */
-.plan-event-card {
-  opacity: 0;
-  transform: translateY(52px);
-  will-change: transform, opacity;
-}
-
-.plan-event-card.is-visible {
-  animation: slideInBottom 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--delay, 0s);
-}
-
-.plan-event-card-image {
-  transform: scale(1);
-  will-change: transform;
-}
-
-.plan-event-card:hover .plan-event-card-image {
-  transform: scale(1.1);
-}
-
-.plan-event-card-content {
-  box-shadow: 0 14px 28px rgba(61, 64, 53, 0.08);
-}
-
-.plan-event-card:hover .plan-event-card-content {
-  background-color: #4f533d;
-}
-
-/* About page cards: use the same soft reveal + clearer hover language as landing cards */
-.about-page-card {
-  transition:
-    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-    background-color 0.35s ease;
-  box-shadow: 0 16px 34px rgba(45, 45, 45, 0.08);
-}
-
-.about-page-card:hover {
-  transform: translateY(-8px);
-  background-color: #fcfaf5;
-  box-shadow: 0 24px 44px rgba(45, 45, 45, 0.14);
-}
-
-.about-page-card-icon {
-  transform: scale(1);
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-}
-
-.about-page-card:hover .about-page-card-icon {
-  transform: scale(1.08);
-}
-
-.about-page-card-title,
-.about-page-card-desc {
-  transition: color 0.3s ease;
-}
-
-.about-page-card:hover .about-page-card-title {
-  color: #1f1f1f;
-}
-
-.about-page-card:hover .about-page-card-desc {
-  color: #626262;
-}
-
-/* In-house planner: hover-only card motion, no layout changes */
-.planner-card-hover {
-  transition:
-    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.planner-card-hover:hover {
-  transform: translateY(-8px);
-  box-shadow: none;
-}
-
-.planner-card-image {
-  transform: scale(1);
-  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-}
-
-.planner-card-hover:hover .planner-card-image {
-  transform: scale(1.08);
 }
 
 /* Testimonials cards: viewport reveal without touching size/state classes */
 .testimonial-card-reveal {
-  opacity: 0;
-  transform: translateY(26px);
+  opacity: 1;
+  transform: translateY(0);
   will-change: transform, opacity;
 }
 
 .testimonial-card-reveal.is-visible {
-  animation: slideInBottom 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--delay, 0s);
+  animation: none;
 }
 
 /* Celebration collage images: fade + clarity reveal on viewport */
@@ -509,6 +383,17 @@ p {
   0% {
     opacity: 0;
     transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(42px);
   }
   100% {
     opacity: 1;
@@ -610,4 +495,15 @@ p {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
   will-change: opacity, transform, filter;
+}
+
+.planner-card-image,
+.about-page-hover-image {
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.planner-card-hover:hover .planner-card-image,
+.about-page-hover-image:hover {
+  transform: scale(1.06);
 }
