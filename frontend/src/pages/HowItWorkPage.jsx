@@ -142,7 +142,10 @@ const HowItWorkPage = () => {
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block lg:text-right">
-                      <span className="reveal-text reveal-text-x-right inline-block" style={{ animationDelay: '0.12s' }}>
+                      <span
+                        className="reveal-text reveal-text-x-right inline-block"
+                        style={{ animationDelay: '0.12s' }}
+                      >
                         - no chaos, no coordination stress
                       </span>
                     </span>

@@ -153,9 +153,12 @@ const PlanEventSection = () => {
 
   useEffect(() => {
     if (page === 0) return
-    setIsCarouselSliding(true)
+    const frameId = requestAnimationFrame(() => setIsCarouselSliding(true))
     const timer = setTimeout(() => setIsCarouselSliding(false), 560)
-    return () => clearTimeout(timer)
+    return () => {
+      cancelAnimationFrame(frameId)
+      clearTimeout(timer)
+    }
   }, [page])
 
   useEffect(() => {
@@ -374,7 +377,8 @@ const PlanEventSection = () => {
                 style={{
                   maskImage: isCarouselSliding ? edgeFadeMask : 'none',
                   WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                  transition: 'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+                  transition:
+                    'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
               >
                 <div
@@ -743,10 +747,7 @@ const WhatToPlanSection = () => {
                 </button>
               </div>
 
-              <div
-                ref={carouselViewportRef}
-                className="overflow-hidden lg:px-0"
-              >
+              <div ref={carouselViewportRef} className="overflow-hidden lg:px-0">
                 <div
                   className="flex gap-4 md:gap-6 transition-transform duration-[1250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   style={{
@@ -1857,8 +1858,7 @@ const ChecklistSection = () => {
     })
 
     tl.to(gate, { scale: scaleEnd, y: gateLiftY, ease: 'power2.in', duration: doorOpenEnd }, 0)
-    if (doorTable)
-      tl.to(doorTable, { x: 180, ease: 'power2.in', duration: doorOpenEnd }, 0)
+    if (doorTable) tl.to(doorTable, { x: 180, ease: 'power2.in', duration: doorOpenEnd }, 0)
     if (doorLights)
       tl.to(doorLights, { x: -120, y: -40, ease: 'power2.in', duration: doorOpenEnd }, 0)
     const archPath = gate.querySelector('#door-arch-path')
@@ -2223,10 +2223,7 @@ const ChecklistSection = () => {
           </div>
         </div>
 
-        <div
-          ref={howItWorksRef}
-          className="relative z-20 -mt-[50vh] md:-mt-[100vh]"
-        >
+        <div ref={howItWorksRef} className="relative z-20 -mt-[50vh] md:-mt-[100vh]">
           <HowItWorksSection isVisible={howItWorksVisible} />
         </div>
       </div>
@@ -3029,9 +3026,12 @@ const PlanningGuidesSection = () => {
 
   useEffect(() => {
     if (page === 0) return
-    setIsCarouselSliding(true)
+    const frameId = requestAnimationFrame(() => setIsCarouselSliding(true))
     const timer = setTimeout(() => setIsCarouselSliding(false), 560)
-    return () => clearTimeout(timer)
+    return () => {
+      cancelAnimationFrame(frameId)
+      clearTimeout(timer)
+    }
   }, [page])
 
   useEffect(() => {
@@ -3194,7 +3194,8 @@ const PlanningGuidesSection = () => {
                 style={{
                   maskImage: isCarouselSliding ? edgeFadeMask : 'none',
                   WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                  transition: 'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+                  transition:
+                    'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
               >
                 <div

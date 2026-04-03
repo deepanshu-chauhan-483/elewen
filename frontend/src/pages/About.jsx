@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from 'react'
 import { useAboutPage } from '../hooks/useCmsPages'
 import tangledIllustration from '../assets/images/tangled-lights.png'
