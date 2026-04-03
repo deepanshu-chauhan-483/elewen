@@ -1762,6 +1762,10 @@ const ChecklistSection = () => {
     const gateLiftY = isMobile ? -260 : -220
     const scrollEnd = isMobile ? 1300 : 1500
     const scrubVal = isMobile ? 1 : 1
+    const doorOpenEnd = 1
+    const insideBgRevealStart = doorOpenEnd + 0.04
+    const gateFadeStart = doorOpenEnd + 0.08
+    const howItWorksStart = doorOpenEnd + 0.16
 
     const getMobileStartTrigger = () => {
       if (!gate) return 'bottom bottom'
@@ -1818,8 +1822,9 @@ const ChecklistSection = () => {
         0
       )
 
-    tl.to(insideBg, { opacity: 1, duration: 0.24, ease: 'power2.out' }, 0.74)
-    tl.to(gate, { opacity: 0, duration: 0.18, ease: 'power2.out' }, 0.9)
+    // Let the door finish opening before the inside scene starts revealing.
+    tl.to(insideBg, { opacity: 1, duration: 0.24, ease: 'power2.out' }, insideBgRevealStart)
+    tl.to(gate, { opacity: 0, duration: 0.18, ease: 'power2.out' }, gateFadeStart)
 
     tl.to(
       howItWorks,
@@ -1830,7 +1835,7 @@ const ChecklistSection = () => {
         onStart: activateHowItWorks,
         onComplete: () => ScrollTrigger.refresh(),
       },
-      0.76
+      howItWorksStart
     )
 
     return () => {
