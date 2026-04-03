@@ -13,6 +13,9 @@ import cartRoutes from './routes/cart.js'
 import bookingRoutes from './routes/booking.js'
 import sampleTasteRoutes from './routes/sampleTaste.js'
 import paymentRoutes from './routes/payment.js'
+import vendorAssignmentRoutes from './routes/vendorAssignment.js'
+import messagingRoutes from './routes/messaging.js'
+import supportRoutes from './routes/support.js'
 import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -82,6 +85,9 @@ app.use('/cart', cartRoutes)
 app.use('/bookings', bookingRoutes)
 app.use('/sample-taste', sampleTasteRoutes)
 app.use('/payments', paymentRoutes)
+app.use('/vendor-assignments', vendorAssignmentRoutes)
+app.use('/messages', messagingRoutes)
+app.use('/support', supportRoutes)
 
 // ─── Dev-only test pages ──────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {
