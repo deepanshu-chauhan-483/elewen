@@ -102,9 +102,7 @@ const resolveNavAppearanceFromPoint = (x, y) => {
 
   const explicitSurface = element.closest('[data-nav-surface]')?.getAttribute('data-nav-surface')
   const surface =
-    explicitSurface === TRANSPARENT_NAV_SURFACE
-      ? TRANSPARENT_NAV_SURFACE
-      : DEFAULT_NAV_SURFACE
+    explicitSurface === TRANSPARENT_NAV_SURFACE ? TRANSPARENT_NAV_SURFACE : DEFAULT_NAV_SURFACE
 
   const explicitTheme = element.closest('[data-nav-theme]')?.getAttribute('data-nav-theme')
   if (explicitTheme && NAVBAR_THEMES[explicitTheme]) {
@@ -310,9 +308,7 @@ const NavHeader = () => {
             WebkitBackdropFilter:
               isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_MOBILE,
             borderBottom:
-              isTransparentNav || navThemeName !== 'glass'
-                ? 'none'
-                : '1px solid rgba(0,0,0,0.05)',
+              isTransparentNav || navThemeName !== 'glass' ? 'none' : '1px solid rgba(0,0,0,0.05)',
           }}
         />
 
@@ -321,9 +317,7 @@ const NavHeader = () => {
           style={{
             backgroundColor: isTransparentNav ? TRANSPARENT_BG : desktopTheme.bgColor,
             backgroundImage:
-              isTransparentNav || !desktopTheme.bgImage
-                ? 'none'
-                : `url(${desktopTheme.bgImage})`,
+              isTransparentNav || !desktopTheme.bgImage ? 'none' : `url(${desktopTheme.bgImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backdropFilter:
@@ -331,9 +325,7 @@ const NavHeader = () => {
             WebkitBackdropFilter:
               isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_DESKTOP,
             borderBottom:
-              isTransparentNav || navThemeName !== 'glass'
-                ? 'none'
-                : '1px solid rgba(0,0,0,0.05)',
+              isTransparentNav || navThemeName !== 'glass' ? 'none' : '1px solid rgba(0,0,0,0.05)',
           }}
         />
 

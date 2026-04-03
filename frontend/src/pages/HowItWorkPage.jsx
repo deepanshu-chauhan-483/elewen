@@ -197,8 +197,8 @@ const IdeaToCelebrationSection = () => {
             From Idea to Celebration.
           </h2>
           <p className="mx-auto mt-5 max-w-[760px] text-[14px] leading-[1.6] text-[#9A7A67] min-[540px]:text-[15px] lg:text-[16px]">
-            Choose your event, explore curated options, and move through each step with
-            clarity — from planning to final setup.
+            Choose your event, explore curated options, and move through each step with clarity —
+            from planning to final setup.
           </p>
         </div>
 
@@ -228,9 +228,7 @@ const IdeaToCelebrationSection = () => {
                   </div>
 
                   {showLine ? (
-                    <div
-                      className={`relative mt-3 h-px bg-[#D8B29B] ${item.lineClass}`}
-                    />
+                    <div className={`relative mt-3 h-px bg-[#D8B29B] ${item.lineClass}`} />
                   ) : null}
                 </div>
               )
@@ -247,7 +245,10 @@ const EventDashboardSection = () => {
     <section className="relative flex w-full justify-center overflow-hidden bg-[#FAFAFA] px-6 pb-16 pt-0 min-[540px]:px-10 min-[540px]:pb-20 lg:px-20 xl:px-[100px]">
       <div className="absolute inset-x-0 top-0 flex w-full pointer-events-none">
         {DASHBOARD_BULBS.map((_, index) => (
-          <div key={index} className="relative flex h-[92px] flex-1 justify-center overflow-visible">
+          <div
+            key={index}
+            className="relative flex h-[92px] flex-1 justify-center overflow-visible"
+          >
             <div
               className="absolute left-0 top-0 h-[62px] w-full bg-[#6C2205]"
               style={{ borderRadius: '0 0 999px 999px / 0 0 100% 100%' }}
@@ -286,8 +287,8 @@ const EventDashboardSection = () => {
           </h2>
 
           <p className="mt-8 max-w-[396px] text-[16px] leading-[1.5] text-[#B29078] min-[540px]:text-[18px]">
-            Once your booking is confirmed, you get access to your personal event
-            dashboard — where everything lives, from order details to vendor updates.
+            Once your booking is confirmed, you get access to your personal event dashboard — where
+            everything lives, from order details to vendor updates.
           </p>
 
           <div className="mt-10 flex flex-col gap-4">
@@ -373,9 +374,9 @@ const InHousePlannerHighlightSection = () => {
           </h2>
 
           <p className="mt-8 max-w-[620px] text-[18px] leading-[1.5] text-[#A78974]">
-            Every booking comes with a dedicated in-house planner — a real person who
-            knows your event inside-out. They coordinate with vendors, manage timelines,
-            and are available for last-minute questions.
+            Every booking comes with a dedicated in-house planner — a real person who knows your
+            event inside-out. They coordinate with vendors, manage timelines, and are available for
+            last-minute questions.
           </p>
 
           <p className="mt-6 max-w-[620px] text-[18px] leading-[1.5] text-[#A78974]">
@@ -397,9 +398,7 @@ const InHousePlannerHighlightSection = () => {
             to="/in-house-planner"
             className="group mt-14 flex min-h-[56px] w-full max-w-[280px] items-center justify-between rounded-full bg-[#D4BA8E] pl-6 pr-2 text-white transition-colors hover:bg-[#c9ad7f]"
           >
-            <span className="text-[16px] font-medium leading-[1.3]">
-              Book an In-House Planner
-            </span>
+            <span className="text-[16px] font-medium leading-[1.3]">Book an In-House Planner</span>
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#D4BA8E]">
               <svg
                 viewBox="0 0 24 24"
@@ -520,8 +519,8 @@ const FinalCtaSection = () => {
         </h2>
 
         <p className="mt-8 max-w-[760px] text-[18px] leading-[1.55] text-[#D6B8A7] min-[540px]:text-[22px]">
-          No stress. No juggling. Just a beautiful, well-planned event — handled by
-          people who care about getting it right.
+          No stress. No juggling. Just a beautiful, well-planned event — handled by people who care
+          about getting it right.
         </p>
 
         <div className="mt-10 flex w-full flex-col items-center justify-center gap-4 min-[540px]:flex-row">

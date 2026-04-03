@@ -2170,10 +2170,7 @@ const ChecklistSection = () => {
           </div>
         </div>
 
-        <div
-          ref={howItWorksRef}
-          className="relative z-20 -mt-[50vh] md:-mt-[100vh]"
-        >
+        <div ref={howItWorksRef} className="relative z-20 -mt-[50vh] md:-mt-[100vh]">
           <HowItWorksSection isVisible={howItWorksVisible} />
         </div>
       </div>
