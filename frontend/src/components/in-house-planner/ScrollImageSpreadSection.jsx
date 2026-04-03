@@ -161,7 +161,12 @@ const ScrollImageSpreadSection = () => {
   }, [])
 
   return (
-    <section ref={flowRef} className="w-full h-screen relative overflow-hidden font-sans">
+    <section
+      ref={flowRef}
+      data-nav-theme="glass"
+      data-nav-surface="transparent"
+      className="w-full h-screen relative overflow-hidden font-sans"
+    >
       {/* Background */}
       <div ref={bgRef} className="absolute inset-0 bg-[#bfac9b]" />
       {/* White overlay — fades in at end to bridge smoothly to next section */}

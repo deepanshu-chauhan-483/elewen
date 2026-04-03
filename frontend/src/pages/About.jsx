@@ -1,6 +1,3 @@
-// Add these files to: src/assets/images/
-// - tangled-lights.png
-// - logo-placeholder.png
 import { useRef, useEffect, useState } from 'react'
 import { useAboutPage } from '../hooks/useCmsPages'
 import tangledIllustration from '../assets/images/tangled-lights.png'
@@ -88,7 +85,9 @@ const About = () => {
       },
       { threshold: 0.1 }
     )
-    page.querySelectorAll('.reveal-wrapper, .anim-element').forEach(el => observer.observe(el))
+    page
+      .querySelectorAll('.reveal-wrapper, .anim-element, .card-reveal')
+      .forEach(el => observer.observe(el))
     return () => observer.disconnect()
   }, [])
 
@@ -173,14 +172,17 @@ const About = () => {
         ref={pageRef}
         className="w-full bg-[#F8F4ED] flex flex-col items-center font-sans overflow-x-hidden"
       >
-        <div className="relative w-full shrink-0 h-[750px] min-[540px]:h-[1000px]">
+        <div
+          data-nav-surface="transparent"
+          className="relative w-full shrink-0 h-[750px] min-[540px]:h-[1000px]"
+        >
           {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
           <div className="absolute left-0 top-0 w-full h-[660px] min-[540px]:h-[880px] bg-[#591902] overflow-hidden rounded-b-[500px] min-[540px]:rounded-b-[1000px]">
             {/* --- MAIN TEXT CONTENT (FLUID GRID) --- */}
             <div className="relative z-30 max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-22 min-[540px]:pt-[120px] lg:pt-[223px]">
               <div className="grid grid-cols-1 min-[540px]:grid-cols-12 items-start gap-y-6 min-[540px]:gap-y-0 min-[540px]:gap-x-10 lg:gap-x-[72px]">
                 {/* Left Heading */}
-                <h2 className="min-[540px]:col-span-7 w-full max-w-[564px] text-[#FFFFFF] text-[24px] min-[540px]:text-[50px] lg:text-[61px] leading-[1.02] lg:leading-[1] font-serif m-0">
+                <h2 className="min-[540px]:col-span-7 w-full max-w-[564px] text-[#FFFFFF] text-[24px] min-[540px]:text-[50px] lg:text-[61px] leading-[1.13] lg:leading-[1.15] font-serif m-0">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ animationDelay: '0s' }}>
                       {so.heading_1 ?? 'When we saw Excitement'}
@@ -228,25 +230,29 @@ const About = () => {
             </div>
 
             {/* --- MOBILE ONLY: GIRL CLIPPED BY THE CURVE --- */}
-            <div className="min-[540px]:hidden pointer-events-none absolute mx-auto inset-x-0 bottom-[-90px] w-[240px] h-[360px]  z-20">
-              <img
-                src={tangledIllustration}
-                alt="Person tangled in lights"
-                className="anim-element slide-from-bottom absolute left-1/2 -translate-x-3/5 sm:-translate-x-1/2 top-[-15px] z-10 w-[284px] h-[392px] max-w-none object-cover"
-                style={{ '--delay': '0.3s' }}
-              />
+            <div className="min-[540px]:hidden pointer-events-none absolute inset-x-0 bottom-[-90px] z-20 flex justify-center">
+              <div className="relative flex justify-center w-[240px] h-[360px]">
+                <img
+                  src={tangledIllustration}
+                  alt="Person tangled in lights"
+                  className="anim-element slide-from-bottom absolute top-[-15px] left-[-50px] z-10 w-[284px] h-[392px] max-w-none object-cover"
+                  style={{ '--delay': '0.3s' }}
+                />
+              </div>
             </div>
           </div>
 
           {/* --- 3. THE GIRL (NOT CLIPPED BY THE CURVE) --- */}
-          <div className="hidden min-[540px]:block pointer-events-none absolute left-0 top-0 w-full h-[660px] min-[540px]:h-[880px] z-20">
-            <div className="absolute inset-x-0 mx-auto bottom-[-170px] w-[400px] h-[600px]">
-              <img
-                src={tangledIllustration}
-                alt="Person tangled in lights"
-                className="anim-element slide-from-bottom absolute left-1/2 -translate-x-1/2 top-[9px] w-[384px] h-[529px] object-cover max-w-none"
-                style={{ '--delay': '0.3s' }}
-              />
+          <div className="hidden min-[540px]:block pointer-events-none absolute inset-x-0 top-0 w-full h-[880px] z-20">
+            <div className="absolute inset-x-0 bottom-[-160px] flex justify-center">
+              <div className="relative flex justify-center w-[400px] h-[600px]">
+                <img
+                  src={tangledIllustration}
+                  alt="Person tangled in lights"
+                  className="anim-element slide-from-bottom absolute top-[9px] w-[384px] h-[529px] object-cover max-w-none"
+                  style={{ '--delay': '0.3s' }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -275,7 +281,11 @@ const About = () => {
                   key={i}
                   className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal m-0"
                 >
-                  {para}
+                  <span className="reveal-wrapper block">
+                    <span className="reveal-text" style={{ animationDelay: `${0.08 + i * 0.08}s` }}>
+                      {para}
+                    </span>
+                  </span>
                 </p>
               ))}
             </div>
@@ -403,7 +413,7 @@ const About = () => {
                         <Img
                           src={story2Src}
                           alt="Atmosphere"
-                          className="anim-element slide-from-bottom w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
+                          className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
                           style={{ '--delay': '0.2s' }}
                         />
                       )}
@@ -444,7 +454,7 @@ const About = () => {
                         <Img
                           src={story1Src}
                           alt="Details"
-                          className="anim-element slide-from-bottom w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
+                          className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
                           style={{ '--delay': '0.2s' }}
                         />
                       )}
@@ -508,7 +518,7 @@ const About = () => {
                   <Img
                     src={story1Src}
                     alt="Atmosphere"
-                    className="anim-element slide-from-left w-full min-[540px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-r-[120px] min-[540px]:-ml-10 lg:-ml-20 xl:-ml-[100px]"
+                    className="anim-element slide-from-left about-page-hover-image w-full min-[540px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-r-[120px] min-[540px]:-ml-10 lg:-ml-20 xl:-ml-[100px]"
                   />
                 )}
                 <div className="w-full min-[540px]:flex-1 max-w-[486px] flex flex-col gap-7 min-[540px]:mt-28">
@@ -568,7 +578,7 @@ const About = () => {
                   <Img
                     src={story2Src}
                     alt="Details"
-                    className="order-1 min-[540px]:order-2 anim-element slide-from-right w-full min-[540px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-l-[120px] -mr-6 min-[540px]:-mr-10 lg:-mr-20 xl:-mr-[100px]"
+                    className="order-1 min-[540px]:order-2 anim-element slide-from-right about-page-hover-image w-full min-[540px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-l-[120px] -mr-6 min-[540px]:-mr-10 lg:-mr-20 xl:-mr-[100px]"
                   />
                 )}
               </div>
@@ -592,7 +602,7 @@ const About = () => {
                       <Img
                         src={mokshaSrc}
                         alt="Moksha"
-                        className="w-full h-full object-cover object-[center_15%] rounded-[10px] min-[540px]:rounded-none"
+                        className="about-page-hover-image w-full h-full object-cover object-[center_15%] rounded-[10px] min-[540px]:rounded-none"
                       />
                     )}
                   </div>
@@ -627,7 +637,16 @@ const About = () => {
                           'So, I took a leap of faith and Elewen was born.',
                         ]
                       ).map((para, i) => (
-                        <p key={i}>{para}</p>
+                        <p key={i}>
+                          <span className="reveal-wrapper block">
+                            <span
+                              className="reveal-text"
+                              style={{ animationDelay: `${0.08 + i * 0.08}s` }}
+                            >
+                              {para}
+                            </span>
+                          </span>
+                        </p>
                       ))}
                     </div>
                   </div>
@@ -653,7 +672,16 @@ const About = () => {
                           'Elewen began as an idea my co-founder and I developed while exploring the opportunity to build a thoughtful, design-driven brand.',
                         ]
                       ).map((para, i) => (
-                        <p key={i}>{para}</p>
+                        <p key={i}>
+                          <span className="reveal-wrapper block">
+                            <span
+                              className="reveal-text"
+                              style={{ animationDelay: `${0.08 + i * 0.08}s` }}
+                            >
+                              {para}
+                            </span>
+                          </span>
+                        </p>
                       ))}
                     </div>
                   </div>
@@ -663,7 +691,7 @@ const About = () => {
                       <Img
                         src={gauriSrc}
                         alt="Gauri"
-                        className="w-full h-full object-cover object-[center_15%] rounded-[20px] min-[540px]:rounded-none"
+                        className="about-page-hover-image w-full h-full object-cover object-[center_15%] rounded-[20px] min-[540px]:rounded-none"
                       />
                     )}
                   </div>
@@ -758,7 +786,7 @@ const About = () => {
                                 <Img
                                   src={src}
                                   alt=""
-                                  className="w-full h-full object-cover object-center"
+                                  className="about-page-hover-image w-full h-full object-cover object-center"
                                 />
                               </div>
                             )}
@@ -794,8 +822,12 @@ const About = () => {
                     className="mt-6 w-full max-w-[517px] text-white text-[16px] leading-[1.5] opacity-80"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
-                    {vq.body ??
-                      'We stand by the people behind every celebration, creating steady work, clear processes, and timely payments for vendors.'}
+                    <span className="reveal-wrapper block">
+                      <span className="reveal-text" style={{ animationDelay: '0.1s' }}>
+                        {vq.body ??
+                          'We stand by the people behind every celebration, creating steady work, clear processes, and timely payments for vendors.'}
+                      </span>
+                    </span>
                   </p>
                 </div>
 
@@ -831,12 +863,13 @@ const About = () => {
                     return (
                       <div
                         key={index}
-                        className="w-full min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] p-6 flex flex-col items-center gap-5"
+                        style={{ '--delay': `${0.08 + index * 0.06}s` }}
+                        className="card-reveal about-page-card group w-full min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] p-6 flex flex-col items-center gap-5"
                       >
-                        <div className="w-[80px] h-[80px] shrink-0">
+                        <div className="flex w-[80px] h-[80px] shrink-0 items-center justify-center about-page-card-icon">
                           {currentIconSrc && (
                             <div
-                              className="w-full h-full bg-[#591902]"
+                              className="w-full h-full origin-center bg-[#591902] about-page-hover-image"
                               style={{
                                 WebkitMaskImage: `url(${currentIconSrc})`,
                                 WebkitMaskSize: 'contain',
@@ -853,7 +886,7 @@ const About = () => {
 
                         <div className="flex flex-col items-center gap-4 w-full p-4">
                           <h5
-                            className="text-[#2D2D2D] text-[16px] sm:text-[21px] font-normal text-center leading-[120%]"
+                            className="about-page-card-title text-[#2D2D2D] text-[16px] sm:text-[21px] font-normal text-center leading-[120%]"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '120%',
@@ -863,7 +896,7 @@ const About = () => {
                             {card.title}
                           </h5>
                           <p
-                            className="text-[#767676] text-[12px] font-normal text-center leading-[150%] w-auto text-wrap"
+                            className="about-page-card-desc text-[#767676] text-[12px] font-normal text-center leading-[150%] w-auto text-wrap"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '150%',

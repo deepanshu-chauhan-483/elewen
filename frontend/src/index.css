@@ -323,25 +323,24 @@ p {
 /* ── Card reveal (simple, viewport-triggered) ────────────────────────────── */
 .card-reveal {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(42px);
   will-change: transform, opacity;
 }
 
 .card-reveal.is-visible {
-  animation: slideInBottom 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: cardFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-delay: var(--delay, 0s);
 }
 
 /* Testimonials cards: viewport reveal without touching size/state classes */
 .testimonial-card-reveal {
-  opacity: 0;
-  transform: translateY(26px);
+  opacity: 1;
+  transform: translateY(0);
   will-change: transform, opacity;
 }
 
 .testimonial-card-reveal.is-visible {
-  animation: slideInBottom 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--delay, 0s);
+  animation: none;
 }
 
 /* Celebration collage images: fade + clarity reveal on viewport */
@@ -384,6 +383,17 @@ p {
   0% {
     opacity: 0;
     transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(42px);
   }
   100% {
     opacity: 1;
@@ -485,4 +495,15 @@ p {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
   will-change: opacity, transform, filter;
+}
+
+.planner-card-image,
+.about-page-hover-image {
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.planner-card-hover:hover .planner-card-image,
+.about-page-hover-image:hover {
+  transform: scale(1.06);
 }

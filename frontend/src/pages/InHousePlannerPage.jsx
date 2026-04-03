@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect } from 'react'
+import { useRef, useState, useLayoutEffect, useEffect } from 'react'
 
 import gsap from 'gsap'
 
@@ -177,13 +177,10 @@ const GrandCelebrationsSection = () => {
   const [incomingPage, setIncomingPage] = useState(null)
 
   const [isAnimating, setIsAnimating] = useState(false)
-
   const perPageRef = useRef(perPage)
 
   const totalPages = Math.max(1, Math.ceil(celebrationData.length / perPage))
-
   const isMobile = perPage === 1
-
   const getItems = pageIndex => {
     const start = pageIndex * perPage
 
@@ -362,15 +359,23 @@ const GrandCelebrationsSection = () => {
               className="text-[#2D2D2D] text-[32px] leading-[1.05] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              <span ref={titleRef} className="block">
-                {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+              <span className="reveal-wrapper block">
+                <span ref={titleRef} className="reveal-text block">
+                  {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+                </span>
               </span>
             </h3>
 
             <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.5] max-w-[320px]">
-              <span ref={noteRef}>
-                {gc.note ??
-                  'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+              <span className="reveal-wrapper block">
+                <span
+                  ref={noteRef}
+                  className="reveal-text block"
+                  style={{ animationDelay: '0.08s' }}
+                >
+                  {gc.note ??
+                    'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+                </span>
               </span>
             </p>
           </div>
@@ -383,7 +388,6 @@ const GrandCelebrationsSection = () => {
                 const t =
                   mobileStackTransforms[idx] ||
                   mobileStackTransforms[mobileStackTransforms.length - 1]
-
                 return (
                   <div
                     key={`${item.id}-stack-${idx}`}
@@ -410,12 +414,10 @@ const GrandCelebrationsSection = () => {
           </div>
 
           {/* Dots + description (mobile) */}
-
           <div className="w-full flex flex-col items-center mt-5">
             <div className="flex items-center justify-center gap-2 mt-4">
               {Array.from({ length: totalPages }, (_, i) => {
                 const active = i === normalizedPage
-
                 return (
                   <button
                     key={`gc-dot-${i}`}
@@ -443,7 +445,7 @@ const GrandCelebrationsSection = () => {
           </div>
         </div>
       ) : (
-        <div className="relative w-full max-w-[1440px] h-[845px] mx-auto">
+        <div className="relative w-full max-w-[1440px] min-h-[920px] lg:min-h-[960px] mx-auto">
           {/* Cards area (active + incoming layers) */}
 
           <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-full px-[5%] lg:px-[76px]">
@@ -457,7 +459,7 @@ const GrandCelebrationsSection = () => {
                     ref={el => {
                       activeCardRefs.current[index] = el
                     }}
-                    className="relative w-full flex flex-col"
+                    className="relative w-full flex flex-col planner-card-hover"
                   >
                     <div
                       ref={el => {
@@ -473,7 +475,7 @@ const GrandCelebrationsSection = () => {
                       <img
                         src={item.image}
                         alt={item.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover planner-card-image"
                       />
                     </div>
 
@@ -485,7 +487,6 @@ const GrandCelebrationsSection = () => {
                         >
                           <GCTextReveal>{item.id}</GCTextReveal>
                         </span>
-
                         <div className="flex flex-col gap-[12px] mt-[5px]">
                           <h4
                             className="text-[#000000] text-[20px] leading-[1] font-serif uppercase tracking-wide"
@@ -493,7 +494,6 @@ const GrandCelebrationsSection = () => {
                           >
                             <GCTextReveal>{item.title}</GCTextReveal>
                           </h4>
-
                           <p className="text-[#2D2D2D] opacity-50 text-[12px] leading-[1.5]">
                             <GCTextReveal>{item.desc}</GCTextReveal>
                           </p>
@@ -505,7 +505,6 @@ const GrandCelebrationsSection = () => {
               </div>
 
               {/* Incoming layer (only during click animation) */}
-
               {incomingPage !== null && (
                 <div
                   ref={incomingLayerRef}
@@ -519,7 +518,7 @@ const GrandCelebrationsSection = () => {
                         ref={el => {
                           incomingCardRefs.current[index] = el
                         }}
-                        className="relative w-full flex flex-col"
+                        className="relative w-full flex flex-col planner-card-hover"
                       >
                         <div
                           ref={el => {
@@ -535,7 +534,7 @@ const GrandCelebrationsSection = () => {
                           <img
                             src={item.image}
                             alt={item.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover planner-card-image"
                           />
                         </div>
 
@@ -547,7 +546,6 @@ const GrandCelebrationsSection = () => {
                             >
                               <GCTextReveal>{item.id}</GCTextReveal>
                             </span>
-
                             <div className="flex flex-col gap-[12px] mt-[5px]">
                               <h4
                                 className="text-[#000000] text-[20px] leading-[1] font-serif uppercase tracking-wide"
@@ -555,7 +553,6 @@ const GrandCelebrationsSection = () => {
                               >
                                 <GCTextReveal>{item.title}</GCTextReveal>
                               </h4>
-
                               <p className="text-[#2D2D2D] opacity-50 text-[12px] leading-[1.5]">
                                 <GCTextReveal>{item.desc}</GCTextReveal>
                               </p>
@@ -572,26 +569,36 @@ const GrandCelebrationsSection = () => {
 
           {/* Bottom text */}
 
-          <div className="absolute w-full bottom-[40px] lg:bottom-[80px] px-[5%] lg:px-[100px] flex flex-col-reverse min-[540px]:flex-row justify-between items-start min-[540px]:items-end gap-8 pointer-events-none z-0">
+          <div className="absolute w-full bottom-[40px] lg:bottom-[80px] px-[5%] lg:px-[100px] flex flex-col-reverse min-[540px]:flex-row justify-between items-start min-[540px]:items-end gap-8 pointer-events-none z-30">
             <p className="text-[#2D2D2D] opacity-50 text-[14px] min-[540px]:text-[16px] leading-[1.5] text-left min-[540px]:pb-2 max-w-[631px]">
-              <span ref={noteRef} className="reveal-text gc-reveal-text">
-                {gc.note ??
-                  'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+              <span className="reveal-wrapper block">
+                <span
+                  ref={noteRef}
+                  className="reveal-text reveal-text-x-left reveal-text-slow block"
+                  style={{ animationDelay: '0.08s' }}
+                >
+                  {gc.note ??
+                    'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+                </span>
               </span>
             </p>
 
             <h3
-              className="text-[#2D2D2D] text-[32px] min-[540px]:text-[47px] leading-[1] text-left min-[540px]:text-right font-serif shrink-0"
+              className="text-[#2D2D2D] text-[28px] sm:text-[36px] min-[540px]:text-[45px] leading-[1] text-left min-[540px]:text-right font-serif shrink-0 max-w-[420px]"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              <span ref={titleRef} className="block">
-                {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+              <span className="reveal-wrapper block">
+                <span
+                  ref={titleRef}
+                  className="reveal-text reveal-text-x-right reveal-text-slow block"
+                >
+                  {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+                </span>
               </span>
             </h3>
           </div>
 
           {/* Navigation arrows */}
-
           <button
             ref={arrowLeftRef}
             type="button"
@@ -613,7 +620,6 @@ const GrandCelebrationsSection = () => {
               className="min-[540px]:ml-[-10px]"
             >
               <path d="M19 12H5" />
-
               <path d="m12 19-7-7 7-7" />
             </svg>
           </button>
@@ -639,7 +645,6 @@ const GrandCelebrationsSection = () => {
               className="min-[540px]:mr-[-10px]"
             >
               <path d="M5 12h14" />
-
               <path d="m12 5 7 7-7 7" />
             </svg>
           </button>
@@ -677,7 +682,6 @@ const CelebrationEveryDaySection = () => {
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   // Replace these mappings with real images per category when you have them.
-
   const CATEGORY_DATA = [
     {
       name: 'Anniversaries',
@@ -822,28 +826,19 @@ const CelebrationEveryDaySection = () => {
 
   const mobileWrapsRef = useRef({
     topLeft: null,
-
     topRight: null,
-
     bottomLeft: null,
-
     bottomRight: null,
   })
-
   const mobileHeadingRef = useRef(null)
-
   const mobileDescRef = useRef(null)
 
   const incomingHeadingRef = useRef(null)
 
   const incomingDescRef = useRef(null)
-
   const activeAccentRef = useRef(null)
-
   const incomingAccentRef = useRef(null)
-
   const incomingLayerRef = useRef(null)
-
   const active = CATEGORY_DATA.find(c => c.name === activeName) ?? CATEGORY_DATA[0]
 
   const incoming = incomingName ? (CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
@@ -871,7 +866,6 @@ const CelebrationEveryDaySection = () => {
 
     const outTl = gsap.timeline({
       defaults: { ease: 'power2.inOut' },
-
       onComplete: () => {
         setActiveName(nextName)
 
@@ -923,226 +917,242 @@ const CelebrationEveryDaySection = () => {
   const animateSwap = nextName => {
     if (prefersReducedMotion) {
       setActiveName(nextName)
-
       return
     }
 
-    if (isAnimating) return
-
-    if (nextName === activeName) return
+    if (isAnimating || nextName === activeName) return
 
     setIsAnimating(true)
-
     setIncomingName(nextName)
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const outTop = [
+        const outTopFrames = [
           activeWrapsRef.current.topLeft,
-
           activeWrapsRef.current.topRight,
-
-          activeAccentRef.current,
         ].filter(Boolean)
-
-        const outBottom = [
-          activeWrapsRef.current.bottomLeft,
-
-          activeWrapsRef.current.bottomRight,
-        ].filter(Boolean)
-
-        const inTop = [
+        const outBottomLeftFrame = activeWrapsRef.current.bottomLeft
+        const outBottomRightFrame = activeWrapsRef.current.bottomRight
+        const inTopFrames = [
           incomingWrapsRef.current.topLeft,
-
           incomingWrapsRef.current.topRight,
-
-          incomingAccentRef.current,
         ].filter(Boolean)
+        const inBottomLeftFrame = incomingWrapsRef.current.bottomLeft
+        const inBottomRightFrame = incomingWrapsRef.current.bottomRight
 
-        const inBottom = [
-          incomingWrapsRef.current.bottomLeft,
-
-          incomingWrapsRef.current.bottomRight,
-        ].filter(Boolean)
+        const outTop = outTopFrames.map(frame => frame.querySelector('img')).filter(Boolean)
+        const outBottomLeft = outBottomLeftFrame?.querySelector('img')
+        const outBottomRight = outBottomRightFrame?.querySelector('img')
+        const inTop = inTopFrames.map(frame => frame.querySelector('img')).filter(Boolean)
+        const inBottomLeft = inBottomLeftFrame?.querySelector('img')
+        const inBottomRight = inBottomRightFrame?.querySelector('img')
+        const outAccent = activeAccentRef.current
+        const inAccent = incomingAccentRef.current
 
         const outHeading = headingRef.current
-
         const outDesc = descRef.current
-
-        const inHeading = incomingHeadingRef.current
-
-        const inDesc = incomingDescRef.current
-
-        // Prep incoming layer (TOP from below, BOTTOM from above)
-
-        gsap.set(inTop, { y: 60, autoAlpha: 0 })
-
-        gsap.set(inBottom, { y: -60, autoAlpha: 0 })
-
-        // Text: out up, in from below (after images are in place).
-
-        if (inHeading) gsap.set(inHeading, { yPercent: 100, autoAlpha: 0 })
-
-        if (inDesc) gsap.set(inDesc, { yPercent: 120, autoAlpha: 0 })
-
-        // Keep incoming layer hidden until the IN phase starts (prevents any flash).
-
         if (incomingLayerRef.current) gsap.set(incomingLayerRef.current, { opacity: 0 })
 
-        const tl = gsap.timeline({
-          defaults: { ease: 'power2.inOut' },
+        gsap.set(inTop, {
+          y: '100%',
+          transformOrigin: 'center center',
+        })
 
+        if (inBottomLeft) gsap.set(inBottomLeft, { y: '-100%', transformOrigin: 'center center' })
+        if (inBottomRight) gsap.set(inBottomRight, { y: '-100%', transformOrigin: 'center center' })
+
+        gsap.set(outTop, { y: 0 })
+        if (outBottomLeft) gsap.set(outBottomLeft, { y: 0 })
+        if (outBottomRight) gsap.set(outBottomRight, { y: 0 })
+        if (inAccent) gsap.set(inAccent, { y: '100%' })
+        if (outAccent) gsap.set(outAccent, { y: 0 })
+
+        const tl = gsap.timeline({
+          defaults: { ease: 'power3.out' },
           onComplete: () => {
             setActiveName(nextName)
-
             setIncomingName(null)
 
-            setIsAnimating(false)
+            requestAnimationFrame(() => {
+              const nextHeading = headingRef.current
+              const nextDesc = descRef.current
 
-            // clear refs for the unmounted incoming layer
+              if (nextHeading) {
+                gsap.set(nextHeading, {
+                  autoAlpha: 0,
+                  y: 24,
+                  letterSpacing: '0.18em',
+                })
+              }
 
-            incomingWrapsRef.current = {
-              topLeft: null,
+              if (nextDesc) {
+                gsap.set(nextDesc, {
+                  autoAlpha: 0,
+                  y: 24,
+                })
+              }
 
-              topRight: null,
+              const textTl = gsap.timeline({
+                onComplete: () => {
+                  setIsAnimating(false)
+                  incomingWrapsRef.current = {
+                    topLeft: null,
+                    topRight: null,
+                    bottomLeft: null,
+                    bottomRight: null,
+                  }
+                },
+              })
 
-              bottomLeft: null,
+              if (nextHeading) {
+                textTl.to(
+                  nextHeading,
+                  {
+                    autoAlpha: 1,
+                    y: 0,
+                    letterSpacing: '0.08em',
+                    duration: 0.6,
+                    ease: 'expo.out',
+                  },
+                  0
+                )
+              }
 
-              bottomRight: null,
-            }
+              if (nextDesc) {
+                textTl.to(
+                  nextDesc,
+                  {
+                    autoAlpha: 1,
+                    y: 0,
+                    duration: 0.45,
+                    ease: 'power3.out',
+                  },
+                  0
+                )
+              }
+            })
           },
         })
 
-        // OUT (hard cut first)
-
-        // Top images: go UP and disappear
-
         tl.to(
           outTop,
-
           {
-            y: -60,
-
-            autoAlpha: 0,
-
-            duration: 0.75,
-
-            stagger: 0.04,
-
-            ease: 'power2.in',
+            y: '-100%',
+            duration: 1.05,
+            stagger: 0,
+            ease: 'power3.inOut',
           },
-
           0
         )
 
-        // Bottom images: go DOWN and disappear (reverse)
+        if (outBottomLeft) {
+          tl.to(
+            outBottomLeft,
+            {
+              y: '100%',
+              duration: 1.05,
+              ease: 'power3.inOut',
+            },
+            0
+          )
+        }
 
-        tl.to(
-          outBottom,
+        if (outBottomRight) {
+          tl.to(
+            outBottomRight,
+            {
+              y: '100%',
+              duration: 1.05,
+              ease: 'power3.inOut',
+            },
+            0
+          )
+        }
 
-          {
-            y: 60,
-
-            autoAlpha: 0,
-
-            duration: 0.75,
-
-            stagger: 0.04,
-
-            ease: 'power2.in',
-          },
-
-          0
-        )
-
-        // Text: out UP (heading + paragraph together)
+        if (outAccent) {
+          tl.to(
+            outAccent,
+            {
+              y: '-100%',
+              duration: 1.05,
+              ease: 'power3.inOut',
+            },
+            0
+          )
+        }
 
         if (outHeading) {
           tl.to(
             outHeading,
-
-            { yPercent: -100, autoAlpha: 0, duration: 0.42, ease: 'power2.in' },
-
-            0.03
+            {
+              autoAlpha: 0,
+              y: -18,
+              duration: 0.42,
+              ease: 'power2.inOut',
+            },
+            0.05
           )
         }
 
         if (outDesc) {
-          tl.to(outDesc, { yPercent: -120, autoAlpha: 0, duration: 0.34, ease: 'power2.in' }, 0.09)
-        }
-
-        // IN: start after OUT finishes (with a small pause) so the swap feels clean.
-
-        const OUT_END = 0.78
-
-        const IN_START = OUT_END + 0.14
-
-        if (incomingLayerRef.current)
-          tl.set(incomingLayerRef.current, { opacity: 1 }, IN_START - 0.01)
-
-        // Top images: come from DOWN
-
-        tl.to(
-          inTop,
-
-          {
-            y: 0,
-
-            autoAlpha: 1,
-
-            duration: 1.05,
-
-            stagger: 0.05,
-
-            ease: 'power3.out',
-          },
-
-          IN_START
-        )
-
-        // Bottom images: come from UP (reverse)
-
-        tl.to(
-          inBottom,
-
-          {
-            y: 0,
-
-            autoAlpha: 1,
-
-            duration: 1.05,
-
-            stagger: 0.05,
-
-            ease: 'power3.out',
-          },
-
-          IN_START
-        )
-
-        // Text: in from below (heading first, paragraph after), after images are set
-
-        const IMAGE_IN_END = IN_START + 1.05 + 0.1
-
-        const TEXT_IN_START = IMAGE_IN_END + 0.12
-
-        if (inHeading) {
           tl.to(
-            inHeading,
-
-            { yPercent: 0, autoAlpha: 1, duration: 0.65, ease: 'power3.out' },
-
-            TEXT_IN_START
+            outDesc,
+            {
+              autoAlpha: 0,
+              y: -10,
+              duration: 0.36,
+              ease: 'power2.inOut',
+            },
+            0.1
           )
         }
 
-        if (inDesc) {
+        tl.set(incomingLayerRef.current, { opacity: 1 }, 1.4)
+
+        tl.to(
+          inTop,
+          {
+            y: 0,
+            duration: 0.95,
+            stagger: 0,
+            ease: 'power3.out',
+          },
+          1.45
+        )
+
+        if (inBottomLeft) {
           tl.to(
-            inDesc,
+            inBottomLeft,
+            {
+              y: 0,
+              duration: 0.9,
+              ease: 'power3.out',
+            },
+            1.57
+          )
+        }
 
-            { yPercent: 0, autoAlpha: 1, duration: 0.55, ease: 'power2.out' },
+        if (inBottomRight) {
+          tl.to(
+            inBottomRight,
+            {
+              y: 0,
+              duration: 0.9,
+              ease: 'power3.out',
+            },
+            1.57
+          )
+        }
 
-            TEXT_IN_START + 0.12
+        if (inAccent) {
+          tl.to(
+            inAccent,
+            {
+              y: 0,
+              duration: 0.9,
+              ease: 'power3.out',
+            },
+            1.57
           )
         }
       })
@@ -1150,30 +1160,22 @@ const CelebrationEveryDaySection = () => {
   }
 
   const DESKTOP_CANVAS_W = 1440
-
   const DESKTOP_CANVAS_H = 1097
 
   const desktopWrapRef = useRef(null)
-
   const [desktopScale, setDesktopScale] = useState(1)
 
   useLayoutEffect(() => {
     const wrap = desktopWrapRef.current
-
     if (!wrap) return
 
     let raf = 0
-
     const update = () => {
       if (raf) cancelAnimationFrame(raf)
-
       raf = requestAnimationFrame(() => {
         raf = 0
-
         const w = wrap.clientWidth || DESKTOP_CANVAS_W
-
         const s = Math.min(1, w / DESKTOP_CANVAS_W)
-
         setDesktopScale(s)
       })
     }
@@ -1181,10 +1183,8 @@ const CelebrationEveryDaySection = () => {
     update()
 
     let ro
-
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => update())
-
       ro.observe(wrap)
     } else {
       window.addEventListener('resize', update)
@@ -1192,7 +1192,6 @@ const CelebrationEveryDaySection = () => {
 
     return () => {
       if (raf) cancelAnimationFrame(raf)
-
       if (ro) ro.disconnect()
       else window.removeEventListener('resize', update)
     }
@@ -1204,45 +1203,50 @@ const CelebrationEveryDaySection = () => {
       className="relative w-full bg-[#F8F4ED] flex justify-center overflow-hidden font-sans pb-20"
     >
       {/* Mobile layout (<= md) */}
-
       <div className="w-full max-w-[540px] px-5 pt-12 min-[540px]:hidden">
         <h2
           className="text-[#2D2D2D] text-[34px] leading-[1.05] text-center font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          {ced.heading ?? 'Celebrations We Plan Every Day'}
+          <span className="reveal-wrapper block">
+            <span className="reveal-text">{ced.heading ?? 'Celebrations We Plan Every Day'}</span>
+          </span>
         </h2>
 
         <p className="mt-5 text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7] text-center">
-          {ced.description ??
-            'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
+          <span className="reveal-wrapper block">
+            <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
+              {ced.description ??
+                'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
+            </span>
+          </span>
         </p>
 
         {/* Category tabs (2 rows like screenshot) */}
-
         <div className="mt-10">
           <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-3 text-[14px]">
             {CATEGORY_DATA.slice(0, 3).map((cat, idx) => {
               const isActive = cat.name === activeName
-
               return (
                 <div key={cat.name} className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => {
                       if (isAnimating) return
-
                       animateSwapMobile(cat.name)
                     }}
                     className={
                       isActive
-                        ? 'text-[#2D2D2D] font-medium border-b border-[#2D2D2D] pb-1'
-                        : 'text-[#2D2D2D]/50 pb-1'
+                        ? 'group text-[#2D2D2D] font-medium pb-1'
+                        : 'group text-[#2D2D2D]/50 hover:text-[#2D2D2D] pb-1'
                     }
                   >
-                    {cmsCats[idx]?.tab_label ?? cat.name}
+                    <span
+                      className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
+                    >
+                      {cmsCats[idx]?.tab_label ?? cat.name}
+                    </span>
                   </button>
-
                   {idx !== 2 && <span className="text-[#2D2D2D]/50">|</span>}
                 </div>
               )
@@ -1261,18 +1265,20 @@ const CelebrationEveryDaySection = () => {
                     type="button"
                     onClick={() => {
                       if (isAnimating) return
-
                       animateSwapMobile(cat.name)
                     }}
                     className={
                       isActive
-                        ? 'text-[#2D2D2D] font-medium border-b border-[#2D2D2D] pb-1'
-                        : 'text-[#2D2D2D]/50 pb-1'
+                        ? 'group text-[#2D2D2D] font-medium pb-1'
+                        : 'group text-[#2D2D2D]/50 hover:text-[#2D2D2D] pb-1'
                     }
                   >
-                    {cmsCats[idx]?.tab_label ?? cat.name}
+                    <span
+                      className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
+                    >
+                      {cmsCats[idx]?.tab_label ?? cat.name}
+                    </span>
                   </button>
-
                   {i !== 2 && <span className="text-[#2D2D2D]/50">|</span>}
                 </div>
               )
@@ -1299,7 +1305,6 @@ const CelebrationEveryDaySection = () => {
             </div>
 
             {/* Right top */}
-
             <div
               ref={el => (mobileWrapsRef.current.topRight = el)}
               className="relative overflow-hidden rounded-[18px] col-start-2 row-start-1"
@@ -1313,7 +1318,6 @@ const CelebrationEveryDaySection = () => {
             </div>
 
             {/* Bottom left */}
-
             <div
               ref={el => (mobileWrapsRef.current.bottomLeft = el)}
               className="relative overflow-hidden rounded-[18px] col-start-1 row-start-3"
@@ -1327,7 +1331,6 @@ const CelebrationEveryDaySection = () => {
             </div>
 
             {/* Big bottom right */}
-
             <div
               ref={el => (mobileWrapsRef.current.bottomRight = el)}
               className="relative overflow-hidden rounded-[18px] col-start-2 row-start-2 row-span-2"
@@ -1348,7 +1351,6 @@ const CelebrationEveryDaySection = () => {
           >
             {active.heading}
           </h3>
-
           <p
             ref={mobileDescRef}
             className="mt-3 text-center text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7]"
@@ -1391,33 +1393,36 @@ const CelebrationEveryDaySection = () => {
               </p>
 
               <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
-                <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#EBEBEB] z-0" />
-
-                <div
-                  key={active.name}
-                  ref={activeAccentRef}
-                  className="absolute left-[0px] top-[400px] w-[640px] h-[200px] bg-[#CDB17E] z-10"
-                  style={{ willChange: 'transform, opacity' }}
-                />
+                <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#FFFFFF] z-0" />
+                <div className="pointer-events-none absolute left-[0px] top-[399px] w-[1440px] h-px bg-[#D8D8D8] z-[40]" />
+                <div className="pointer-events-none absolute left-[0px] top-[599px] w-[640px] h-px bg-[#D8D8D8] z-[40]" />
+                <div className="absolute left-[0px] top-[400px] w-[640px] h-[200px] overflow-hidden z-10">
+                  <div
+                    key={active.name}
+                    ref={activeAccentRef}
+                    className="absolute inset-0 bg-[#CDB17E]"
+                    style={{ willChange: 'transform' }}
+                  />
+                </div>
 
                 {/* Left categories (stays as-is) */}
-
-                <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#F8F4ED] z-20">
+                <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#EBEBEB] z-20">
                   <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
                     {CATEGORY_DATA.map((cat, idx) => {
                       const isActive = cat.name === activeName
-
                       return (
                         <div
                           key={cat.name}
                           onClick={() => animateSwap(cat.name)}
-                          className={`py-2 pr-4 cursor-pointer w-fit ${
+                          className={`group py-2 pr-4 cursor-pointer w-fit ${
                             isActive
-                              ? 'border-b border-[#2D2D2D]'
+                              ? 'opacity-100'
                               : 'opacity-50 hover:opacity-100 transition-opacity'
                           }`}
                         >
-                          <span className="text-[#2D2D2D] text-[16px] font-medium leading-[1.5]">
+                          <span
+                            className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[#2D2D2D] text-[16px] font-medium leading-[1.5] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
+                          >
                             {cmsCats[idx]?.tab_label ?? cat.name}
                           </span>
                         </div>
@@ -1427,7 +1432,6 @@ const CelebrationEveryDaySection = () => {
                 </div>
 
                 {/* ACTIVE images */}
-
                 <ImgBox
                   key={`${active.name}-topLeft`}
                   src={active.images.topLeft}
@@ -1435,7 +1439,6 @@ const CelebrationEveryDaySection = () => {
                   className="absolute left-[440px] top-[0px] w-[500px] h-[400px] z-10"
                   setRef={el => (activeWrapsRef.current.topLeft = el)}
                 />
-
                 <ImgBox
                   key={`${active.name}-topRight`}
                   src={active.images.topRight}
@@ -1443,7 +1446,6 @@ const CelebrationEveryDaySection = () => {
                   className="absolute left-[940px] top-[0px] w-[500px] h-[400px] z-10"
                   setRef={el => (activeWrapsRef.current.topRight = el)}
                 />
-
                 <ImgBox
                   key={`${active.name}-bottomLeft`}
                   src={active.images.bottomLeft}
@@ -1451,7 +1453,6 @@ const CelebrationEveryDaySection = () => {
                   className="absolute left-[0px] top-[600px] w-[640px] h-[200px] z-10"
                   setRef={el => (activeWrapsRef.current.bottomLeft = el)}
                 />
-
                 <ImgBox
                   key={`${active.name}-bottomRight`}
                   src={active.images.bottomRight}
@@ -1461,46 +1462,47 @@ const CelebrationEveryDaySection = () => {
                 />
 
                 {/* ACTIVE text */}
-
-                <h3
-                  className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase overflow-hidden"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                >
-                  <span
-                    key={active.name}
-                    ref={headingRef}
-                    className="inline-block"
-                    style={{ willChange: 'transform' }}
+                <div className="absolute left-[640px] top-[362px] w-[800px] flex justify-center z-20 pointer-events-none">
+                  <h3
+                    className="w-full max-w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
+                    style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
-                    {active.heading}
-                  </span>
-                </h3>
+                    <span
+                      key={active.name}
+                      ref={headingRef}
+                      className="inline-block"
+                      style={{ willChange: 'transform', opacity: isAnimating ? 0 : 1 }}
+                    >
+                      {active.heading}
+                    </span>
+                  </h3>
+                </div>
 
                 <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
                   <span
                     key={active.name}
                     ref={descRef}
                     className="inline-block"
-                    style={{ willChange: 'transform' }}
+                    style={{ willChange: 'transform', opacity: isAnimating ? 0 : 1 }}
                   >
                     {active.desc}
                   </span>
                 </p>
 
                 {/* INCOMING layer (only during click animation) */}
-
                 {incoming && (
                   <div
                     ref={incomingLayerRef}
                     className="absolute inset-0 pointer-events-none z-30"
                     style={{ opacity: 0 }}
                   >
-                    <div
-                      ref={incomingAccentRef}
-                      className="absolute left-[0px] top-[400px] w-[640px] h-[200px] bg-[#CDB17E] z-10"
-                      style={{ willChange: 'transform, opacity' }}
-                    />
-
+                    <div className="absolute left-[0px] top-[400px] w-[640px] h-[200px] overflow-hidden z-10">
+                      <div
+                        ref={incomingAccentRef}
+                        className="absolute inset-0 bg-[#CDB17E]"
+                        style={{ willChange: 'transform' }}
+                      />
+                    </div>
                     <ImgBox
                       key={`${incoming.name}-topLeft`}
                       src={incoming.images.topLeft}
@@ -1508,7 +1510,6 @@ const CelebrationEveryDaySection = () => {
                       className="absolute left-[440px] top-[0px] w-[500px] h-[400px]"
                       setRef={el => (incomingWrapsRef.current.topLeft = el)}
                     />
-
                     <ImgBox
                       key={`${incoming.name}-topRight`}
                       src={incoming.images.topRight}
@@ -1516,7 +1517,6 @@ const CelebrationEveryDaySection = () => {
                       className="absolute left-[940px] top-[0px] w-[500px] h-[400px]"
                       setRef={el => (incomingWrapsRef.current.topRight = el)}
                     />
-
                     <ImgBox
                       key={`${incoming.name}-bottomLeft`}
                       src={incoming.images.bottomLeft}
@@ -1524,7 +1524,6 @@ const CelebrationEveryDaySection = () => {
                       className="absolute left-[0px] top-[600px] w-[640px] h-[200px]"
                       setRef={el => (incomingWrapsRef.current.bottomLeft = el)}
                     />
-
                     <ImgBox
                       key={`${incoming.name}-bottomRight`}
                       src={incoming.images.bottomRight}
@@ -1533,20 +1532,25 @@ const CelebrationEveryDaySection = () => {
                       setRef={el => (incomingWrapsRef.current.bottomRight = el)}
                     />
 
-                    <h3
-                      className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase overflow-hidden"
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
-                    >
-                      <span
-                        ref={incomingHeadingRef}
-                        className="inline-block"
-                        style={{ willChange: 'transform' }}
+                    <div className="absolute left-[640px] top-[362px] w-[800px] flex justify-center z-20 pointer-events-none">
+                      <h3
+                        className="w-full max-w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
+                        style={{ fontFamily: "'Poppins', sans-serif", opacity: 0 }}
                       >
-                        {incoming.heading}
-                      </span>
-                    </h3>
+                        <span
+                          ref={incomingHeadingRef}
+                          className="inline-block"
+                          style={{ willChange: 'transform' }}
+                        >
+                          {incoming.heading}
+                        </span>
+                      </h3>
+                    </div>
 
-                    <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
+                    <p
+                      className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden"
+                      style={{ opacity: 0 }}
+                    >
                       <span
                         ref={incomingDescRef}
                         className="inline-block"
@@ -1755,37 +1759,40 @@ const CelebrationFormSection = () => {
   return (
     <section className="relative w-full bg-[#FFFFFF] flex flex-col items-center pt-24 pb-32 font-sans overflow-hidden">
       {/* --- Header Section --- */}
-
       <div className="text-center mb-16 px-4 mx-3">
         <h2
           className="text-[#2D2D2D] text-[40px] min-[540px]:text-[61px] leading-[1] font-serif mb-6"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          {cta.heading ?? 'Tell Us About Your Celebration'}
+          <span className="reveal-wrapper block">
+            <span className="reveal-text">{cta.heading ?? 'Tell Us About Your Celebration'}</span>
+          </span>
         </h2>
 
         <p className="text-[#2D2D2D] opacity-50 text-[14px] min-[540px]:text-[16px] leading-[1.5] max-w-[727px] mx-auto">
-          {cta.body ??
-            'If youâd like me to plan your event end to end, leave your details and weâll take it from there.'}
+          <span className="reveal-wrapper block">
+            <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
+              {cta.body ??
+                'If youâd like me to plan your event end to end, leave your details and weâll take it from there.'}
+            </span>
+          </span>
         </p>
       </div>
 
       {/* --- Form Container --- */}
-
       <div className="relative w-[calc(100%-32px)] max-w-[720px] h-auto min-[540px]:h-[701px] bg-[#F8F4ED] rounded-[20px] shadow-sm mx-auto p-6 min-[540px]:p-0">
         {/* --- ZONE 1: STEPPER (Top 60px) --- */}
 
         {currentStep < 4 && (
-          <div className="relative min-[540px]:absolute min-[540px]:top-[60px] min-[540px]:left-[120px] min-[540px]:right-[120px] flex justify-between items-start z-10 mb-10 min-[540px]:mb-0">
+          <div className="relative min-[540px]:absolute min-[540px]:top-[60px] min-[540px]:left-[120px] min-[540px]:right-[120px] grid grid-cols-3 items-start z-10 mb-10 min-[540px]:mb-0">
             {/* Connecting Lines */}
-
-            <div className="absolute top-[30px] left-[30px] right-[30px] flex justify-between z-0">
+            <div className="absolute top-[30px] left-[60px] right-[60px] grid grid-cols-2 z-0">
               <div
-                className={`w-1/2 border-t-[1.5px] transition-colors duration-300 ${getLineColor(1)}`}
+                className={`w-full border-t-[1.5px] transition-colors duration-300 ${getLineColor(1)}`}
               ></div>
 
               <div
-                className={`w-1/2 border-t-[1.5px] transition-colors duration-300 ${getLineColor(2)}`}
+                className={`w-full justify-self-end border-t-[1.5px] transition-colors duration-300 ${getLineColor(2)}`}
               ></div>
             </div>
 
@@ -1855,7 +1862,6 @@ const CelebrationFormSection = () => {
         )}
 
         {/* --- ZONE 2: FORM CONTENT (Top 230px) --- */}
-
         <div className="relative min-[540px]:absolute min-[540px]:top-[230px] min-[540px]:left-[60px] min-[540px]:right-[60px] mb-10 min-[540px]:mb-0">
           {/* STEP 1: Basic Details */}
 
@@ -2071,7 +2077,9 @@ const CelebrationFormSection = () => {
             <div className="flex flex-col gap-10 animate-fadeIn">
               <div>
                 <h4 className="text-[21px] text-[#2D2D2D] mb-5">
-                  What kind of support are you looking for?
+                  <span className="reveal-wrapper block">
+                    <span className="reveal-text">What kind of support are you looking for?</span>
+                  </span>
                 </h4>
 
                 <div className="flex flex-col gap-3">
@@ -2112,7 +2120,11 @@ const CelebrationFormSection = () => {
 
               <div>
                 <h4 className="text-[21px] text-[#2D2D2D] mb-4">
-                  Tell us a little about your vision
+                  <span className="reveal-wrapper block">
+                    <span className="reveal-text" style={{ animationDelay: '0.06s' }}>
+                      Tell us a little about your vision
+                    </span>
+                  </span>
                 </h4>
 
                 <div className="border-b border-[#2D2D2D]/50 pb-2">
@@ -2185,12 +2197,10 @@ const CelebrationFormSection = () => {
         {currentStep < 4 && (
           <div className="relative min-[540px]:absolute min-[540px]:bottom-[60px] min-[540px]:left-[60px] min-[540px]:right-[60px] flex flex-col min-[540px]:flex-row min-[540px]:justify-between items-center gap-4 min-[540px]:gap-0">
             {/* Previous Button */}
-
             <div className="w-full min-[540px]:w-auto min-[540px]:flex-1 flex justify-center min-[540px]:justify-start">
               {currentStep > 1 && (
                 <>
                   {/* Mobile: full-width pill */}
-
                   <button
                     onClick={handlePrev}
                     className="min-[540px]:hidden w-full max-w-[520px] flex items-center justify-between bg-[#D9D9D9] rounded-[56px] pl-6 pr-1 py-1 hover:bg-[#c9c9c9] transition-colors group"
@@ -2198,7 +2208,6 @@ const CelebrationFormSection = () => {
                     <span className="text-[#8C8C8C] text-[16px] font-medium leading-[1.5]">
                       Previous
                     </span>
-
                     <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#8C8C8C] transition-transform group-hover:scale-105">
                       <svg
                         className="min-[540px]:hidden"
@@ -2224,14 +2233,12 @@ const CelebrationFormSection = () => {
                         strokeWidth="1.5"
                       >
                         <path d="M7 17L17 7" />
-
                         <path d="M7 7h10v10" />
                       </svg>
                     </div>
                   </button>
 
                   {/* Desktop: existing compact button */}
-
                   <button
                     onClick={handlePrev}
                     className="hidden min-[540px]:flex items-center gap-4 bg-[#D9D9D9] rounded-[56px] pl-1 pr-6 py-1 hover:bg-[#c9c9c9] transition-colors group"
@@ -2261,14 +2268,13 @@ const CelebrationFormSection = () => {
             </div>
 
             {/* Next / Submit Button */}
-
             <div className="w-full min-[540px]:w-auto flex justify-center min-[540px]:justify-end">
               <button
                 onClick={handleNext}
                 disabled={currentStep === 3 && isPending}
-                className={`w-full max-w-[520px] min-[540px]:w-auto flex items-center justify-between bg-[#CDB17E] rounded-[56px] pl-6 pr-1 py-1 hover:bg-[#bfa06b] transition-colors group ${currentStep === 3 && isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className={`group w-[220px] min-[540px]:w-fit flex items-center justify-between rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F] ${currentStep === 3 && isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
-                <span className="text-[#FAFAFA] text-[16px] font-medium leading-[1.5] pr-2">
+                <span className="flex-1 text-left text-[15px] font-medium text-white min-[540px]:mr-5 min-[540px]:flex-none">
                   {currentStep === 3 && isPending
                     ? 'Submitting...'
                     : currentStep === 3
@@ -2276,33 +2282,19 @@ const CelebrationFormSection = () => {
                       : 'Next'}
                 </span>
 
-                <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#CDB17E] transition-transform group-hover:scale-105">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                   <svg
-                    className="min-[540px]:hidden"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
+                    className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
                     fill="none"
-                    stroke="#CDB17E"
-                    strokeWidth="1.5"
-                  >
-                    <path d="M5 12h14" />
-
-                    <path d="m12 5 7 7-7 7" />
-                  </svg>
-
-                  <svg
-                    className="hidden min-[540px]:block"
-                    width="20"
-                    height="20"
                     viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#CDB17E"
-                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
                   >
-                    <path d="M7 17L17 7" />
-
-                    <path d="M7 7h10v10" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 17L17 7M17 7H9M17 7v8"
+                    />
                   </svg>
                 </div>
               </button>
@@ -2319,60 +2311,107 @@ const InHousePlannerSection = () => {
 
   const bio = cms.moksha_bio ?? {}
 
+  useEffect(() => {
+    const root = document.querySelector('[data-in-house-planner-page]')
+    if (!root) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          const el = entry.target
+          if (el.classList.contains('reveal-wrapper')) {
+            el.querySelectorAll('.reveal-text').forEach(text => text.classList.add('is-visible'))
+          } else {
+            el.classList.add('is-visible')
+          }
+          observer.unobserve(el)
+        })
+      },
+      { threshold: 0.12 }
+    )
+
+    root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <>
       <ScrollImageSpreadSection />
 
-      <section className="w-full bg-[#957960] flex justify-center font-sans">
-        <div className="w-full max-w-[1440px] flex flex-col min-[540px]:flex-row">
-          {/* Image */}
+      <div data-in-house-planner-page>
+        <section data-planner-intro className="w-full bg-[#957960] flex justify-center font-sans">
+          <div className="w-full max-w-[1440px] flex flex-col min-[540px]:flex-row">
+            {/* Image */}
 
-          <div className="w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">
-            <img
-              src={plannerImg}
-              alt="Moksha - In-House Event Planner"
-              className="w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
-            />
+            <div className="w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">
+              <img
+                src={plannerImg}
+                alt="Moksha - In-House Event Planner"
+                className="about-page-hover-image w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
+              />
+            </div>
+
+            {/* Content */}
+
+            <div className="w-full min-[540px]:w-1/2 flex flex-col justify-center px-6 py-8 min-[540px]:px-12 min-[540px]:py-0 text-white">
+              {/* Heading */}
+
+              <h2
+                className="text-[32px] min-[540px]:text-[61px] leading-tight font-serif mb-4"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0s' }}>
+                    From Our In-House
+                  </span>
+                </span>
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
+                    Event Planner
+                  </span>
+                </span>
+              </h2>
+
+              {/* Subheading */}
+
+              <h3 className="text-[18px] min-[540px]:text-[21px] font-medium mb-4">
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.14s' }}>
+                    {bio.greeting ?? "Hi, I'm Moksha."}
+                  </span>
+                </span>
+              </h3>
+
+              {/* Paragraphs */}
+
+              <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed mb-4">
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.2s' }}>
+                    {bio.intro ??
+                      'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.'}
+                  </span>
+                </span>
+              </p>
+
+              <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed">
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.28s' }}>
+                    {bio.personal_note ??
+                      "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created."}
+                  </span>
+                </span>
+              </p>
+            </div>
           </div>
+        </section>
 
-          {/* Content */}
+        <GrandCelebrationsSection />
 
-          <div className="w-full min-[540px]:w-1/2 flex flex-col justify-center px-6 py-8 min-[540px]:px-12 min-[540px]:py-0 text-white">
-            {/* Heading */}
+        <CelebrationEveryDaySection />
 
-            <h2
-              className="text-[32px] min-[540px]:text-[61px] leading-tight font-serif mb-4"
-              style={{ fontFamily: "'Malgin', serif" }}
-            >
-              From Our In-House <br /> Event Planner
-            </h2>
-
-            {/* Subheading */}
-
-            <h3 className="text-[18px] min-[540px]:text-[21px] font-medium mb-4">
-              {bio.greeting ?? "Hi, I'm Moksha."}
-            </h3>
-
-            {/* Paragraphs */}
-
-            <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed mb-4">
-              {bio.intro ??
-                'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.'}
-            </p>
-
-            <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed">
-              {bio.personal_note ??
-                "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created."}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <GrandCelebrationsSection />
-
-      <CelebrationEveryDaySection />
-
-      <CelebrationFormSection />
+        <CelebrationFormSection />
+      </div>
     </>
   )
 }

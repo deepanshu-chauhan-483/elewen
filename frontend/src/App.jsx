@@ -6,6 +6,7 @@ import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
 import InHousePlannerPage from './pages/InHousePlannerPage'
 import About from './pages/About'
+import HowItWorkPage from './pages/HowItWorkPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import LoginPage from './pages/LoginPage'
@@ -52,6 +53,8 @@ function AppLayout() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/in-house-planner" element={<InHousePlannerPage />} />
+        <Route path="/how-it-work" element={<HowItWorkPage />} />
+        <Route path="/how-it-works" element={<HowItWorkPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/login" element={<LoginPage />} />

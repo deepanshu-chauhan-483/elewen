@@ -340,8 +340,8 @@ const HeroSection = () => {
       }
 
       // ── ScrollTrigger: phases 2-3 ───────────────────────────────────────────
-      const scrubSmooth = 3.5
-      const textCardsEnd = 0.125
+      const scrubSmooth = 5.5
+      const textCardsEnd = 0.16
       ScrollTrigger.create({
         trigger: wrapperRef.current,
         start: 'top top',
@@ -363,14 +363,14 @@ const HeroSection = () => {
           s.contentY = lerp(0, -50, sub(p, 0.0, textCardsEnd))
 
           // Phase 3: Video shrinks to bottom layout
-          const shrinkP = sub(p, 0.12, 0.85)
+          const shrinkP = sub(p, 0.16, 0.93)
           s.vidTop = lerp(0, eT, shrinkP)
           s.vidLeft = lerp(0, eL, shrinkP)
           s.vidW = lerp(W, eW, shrinkP)
           s.vidH = lerp(H, eH, shrinkP)
           s.vidR = lerp(0, 16, shrinkP)
 
-          s.darkAlpha = lerp(1, 0, sub(p, 0.12, 0.4))
+          s.darkAlpha = lerp(1, 0, sub(p, 0.16, 0.48))
         },
       })
     }, wrapperRef) // Scope context to this specific component
@@ -512,13 +512,18 @@ const HeroSection = () => {
   const bandFont = {
     fontFamily: "'Poppins', sans-serif",
     fontWeight: 600,
-    fontSize: '120px',
-    lineHeight: '120%',
+    fontSize: '112px',
+    lineHeight: '100%',
   }
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div ref={wrapperRef} style={{ height: '420vh' }}>
+    <div
+      ref={wrapperRef}
+      data-nav-theme="glass"
+      data-nav-surface="transparent"
+      style={{ height: '420vh' }}
+    >
       <div
         style={{
           position: 'sticky',
@@ -536,13 +541,13 @@ const HeroSection = () => {
               {renderBandCopy(BAND1_TOKENS)}
             </div>
           </div>
-          <div style={bandWrap('27%')}>
+          <div style={bandWrap('23%')}>
             <div className="band-scroll dir-right" style={bandFont}>
               {renderBandCopy(BAND2_TOKENS)}
               {renderBandCopy(BAND2_TOKENS)}
             </div>
           </div>
-          <div style={bandWrap('44%')}>
+          <div style={bandWrap('36%')}>
             <div className="band-scroll dir-left" style={bandFont}>
               {renderBandCopy(BAND3_TOKENS)}
               {renderBandCopy(BAND3_TOKENS)}
@@ -637,10 +642,13 @@ const HeroSection = () => {
               <div className="flex flex-row md:flex-row items-center gap-[20px] md:gap-0">
                 <button
                   ref={ctaArrowRef}
-                  className="w-[68px] h-[68px] min-w-[68px] md:w-16 md:h-16 lg:w-18 lg:h-18 md:min-w-0 rounded-[80px] md:rounded-full border-[2px] md:border-2 border-white flex items-center justify-center md:mr-4 lg:mr-6 hover:bg-white/20 transition-colors backdrop-blur-sm shrink-0 pointer-events-auto"
+                  className="group relative flex h-[68px] w-[68px] min-w-[68px] items-center justify-center overflow-hidden rounded-[80px] border-[2px] border-white backdrop-blur-sm shrink-0 pointer-events-auto md:min-w-0 md:h-16 md:w-16 md:rounded-full md:border-2 md:mr-4 lg:h-18 lg:w-18 lg:mr-6"
                 >
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="h-0 w-0 rounded-full bg-white transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:h-[180%] group-hover:w-[180%]" />
+                  </span>
                   <svg
-                    className="w-[28px] h-[28px] md:w-8 md:h-8 text-[#FAFAFA]"
+                    className="relative z-10 h-[32px] w-[32px] text-[#FAFAFA] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:text-[#591902] md:h-9 md:w-9"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
