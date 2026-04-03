@@ -54,7 +54,7 @@ const NAVBAR_THEMES = {
   },
   glass: {
     desktop: {
-      bgColor: 'rgba(250,250,250,0.72)',
+      bgColor: 'rgba(250, 250, 250, 0.78)',
       bgImage: null,
       iconColor: '#262626',
       searchBg: 'rgba(255,255,255,0.58)',
@@ -71,6 +71,10 @@ const NAVBAR_THEMES = {
 }
 
 const TRANSPARENT_BG = 'rgba(0, 0, 0, 0)'
+const DEFAULT_NAV_SURFACE = 'solid'
+const TRANSPARENT_NAV_SURFACE = 'transparent'
+const GLASS_BLUR_MOBILE = 'blur(1px)'
+const GLASS_BLUR_DESKTOP = 'blur(1px)'
 
 const parseRgb = color => {
   const match = color?.match(/rgba?\(([^)]+)\)/i)
@@ -89,12 +93,22 @@ const getLuminance = ({ r, g, b }) => {
   return 0.2126 * normalize(r) + 0.7152 * normalize(g) + 0.0722 * normalize(b)
 }
 
-const resolveThemeFromPoint = (x, y) => {
+const resolveNavAppearanceFromPoint = (x, y) => {
   const element = document.elementFromPoint(x, y)
-  if (!element) return 'light'
+  if (!element) {
+    return { themeName: 'light', surface: DEFAULT_NAV_SURFACE }
+  }
+
+  const explicitSurface = element.closest('[data-nav-surface]')?.getAttribute('data-nav-surface')
+  const surface =
+    explicitSurface === TRANSPARENT_NAV_SURFACE
+      ? TRANSPARENT_NAV_SURFACE
+      : DEFAULT_NAV_SURFACE
 
   const explicitTheme = element.closest('[data-nav-theme]')?.getAttribute('data-nav-theme')
-  if (explicitTheme && NAVBAR_THEMES[explicitTheme]) return explicitTheme
+  if (explicitTheme && NAVBAR_THEMES[explicitTheme]) {
+    return { themeName: explicitTheme, surface }
+  }
 
   let current = element
   while (current && current !== document.body) {
@@ -107,14 +121,16 @@ const resolveThemeFromPoint = (x, y) => {
     ) {
       // Only semi-transparent section layers should produce the glass navbar.
       // Decorative background images should not override a solid section color.
-      if (parsed.a > 0 && parsed.a < 0.92) return 'glass'
-      if (parsed.a >= 0.92) return getLuminance(parsed) < 0.34 ? 'dark' : 'light'
+      if (parsed.a > 0 && parsed.a < 0.92) return { themeName: 'glass', surface }
+      if (parsed.a >= 0.92) {
+        return { themeName: getLuminance(parsed) < 0.34 ? 'dark' : 'light', surface }
+      }
     }
 
     current = current.parentElement
   }
 
-  return 'light'
+  return { themeName: 'light', surface }
 }
 
 const NavHeader = () => {
@@ -130,6 +146,7 @@ const NavHeader = () => {
   const [entered, setEntered] = useState(!isHome)
   const [hidden, setHidden] = useState(false)
   const [navThemeName, setNavThemeName] = useState(isHome ? 'glass' : 'light')
+  const [navSurface, setNavSurface] = useState(DEFAULT_NAV_SURFACE)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
 
   useEffect(() => {
@@ -193,11 +210,6 @@ const NavHeader = () => {
       const header = headerRef.current
       if (!header) return
 
-      if (pathname === '/' && window.scrollY < 80) {
-        setNavThemeName(prev => (prev === 'glass' ? prev : 'glass'))
-        return
-      }
-
       const rect = header.getBoundingClientRect()
       const sampleY = Math.min(Math.max(Math.round(rect.bottom + 16), 0), window.innerHeight - 1)
       const samplePoints = [0.2, 0.5, 0.8].map(ratio => ({
@@ -205,14 +217,21 @@ const NavHeader = () => {
         y: sampleY,
       }))
 
-      const themes = samplePoints.map(point => resolveThemeFromPoint(point.x, point.y))
+      const appearances = samplePoints.map(point => resolveNavAppearanceFromPoint(point.x, point.y))
+      const themes = appearances.map(appearance => appearance.themeName)
       const nextTheme =
         themes.find(theme => theme === 'dark') ??
         themes.find(theme => theme === 'light') ??
         themes[0] ??
         'light'
+      const nextSurface = appearances.some(
+        appearance => appearance.surface === TRANSPARENT_NAV_SURFACE
+      )
+        ? TRANSPARENT_NAV_SURFACE
+        : DEFAULT_NAV_SURFACE
 
       setNavThemeName(prev => (prev === nextTheme ? prev : nextTheme))
+      setNavSurface(prev => (prev === nextSurface ? prev : nextSurface))
     }
 
     const scheduleUpdate = () => {
@@ -250,18 +269,26 @@ const NavHeader = () => {
   const pageTheme = NAVBAR_THEMES[navThemeName] ?? NAVBAR_THEMES.light
   const desktopTheme = pageTheme.desktop
   const mobileTheme = pageTheme.mobile
-  const iconColor = desktopTheme.iconColor
-  const mobileIconColor = mobileTheme.iconColor
+  const isTransparentNav = navSurface === TRANSPARENT_NAV_SURFACE
+  const iconColor = isTransparentNav ? '#FAFAFA' : desktopTheme.iconColor
+  const mobileIconColor = isTransparentNav ? '#FAFAFA' : mobileTheme.iconColor
   const visibilityClass = !entered ? 'invisible pointer-events-none' : ''
   const transformClass = !entered
     ? '-translate-y-4'
     : hidden
       ? '-translate-y-full'
       : 'translate-y-0'
-  const desktopLogoStyle =
-    desktopTheme.logoMode === 'light' ? { filter: 'brightness(0) invert(1)' } : {}
+  const desktopLogoStyle = isTransparentNav
+    ? { filter: 'brightness(0) invert(1)' }
+    : desktopTheme.logoMode === 'light'
+      ? { filter: 'brightness(0) invert(1)' }
+      : {}
   const mobileLogoSrc = mobilenavlogo
-  const mobileLogoStyle = mobileTheme.logoMode === 'dark' ? { filter: 'brightness(0)' } : undefined
+  const mobileLogoStyle = isTransparentNav
+    ? undefined
+    : mobileTheme.logoMode === 'dark'
+      ? { filter: 'brightness(0)' }
+      : undefined
 
   return (
     <>
@@ -272,26 +299,40 @@ const NavHeader = () => {
         <div
           className="pointer-events-none absolute inset-0 md:hidden"
           style={{
-            backgroundColor: mobileTheme.bgColor,
-            backgroundImage: mobileTheme.bgImage ? `url(${mobileTheme.bgImage})` : 'none',
+            backgroundColor: isTransparentNav ? TRANSPARENT_BG : mobileTheme.bgColor,
+            backgroundImage:
+              isTransparentNav || !mobileTheme.bgImage ? 'none' : `url(${mobileTheme.bgImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backdropFilter: navThemeName === 'glass' ? 'blur(26px)' : 'none',
-            WebkitBackdropFilter: navThemeName === 'glass' ? 'blur(26px)' : 'none',
-            borderBottom: navThemeName === 'glass' ? '1px solid rgba(0,0,0,0.05)' : 'none',
+            backdropFilter:
+              isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_MOBILE,
+            WebkitBackdropFilter:
+              isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_MOBILE,
+            borderBottom:
+              isTransparentNav || navThemeName !== 'glass'
+                ? 'none'
+                : '1px solid rgba(0,0,0,0.05)',
           }}
         />
 
         <div
           className="pointer-events-none absolute inset-0 hidden md:block"
           style={{
-            backgroundColor: desktopTheme.bgColor,
-            backgroundImage: desktopTheme.bgImage ? `url(${desktopTheme.bgImage})` : 'none',
+            backgroundColor: isTransparentNav ? TRANSPARENT_BG : desktopTheme.bgColor,
+            backgroundImage:
+              isTransparentNav || !desktopTheme.bgImage
+                ? 'none'
+                : `url(${desktopTheme.bgImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backdropFilter: navThemeName === 'glass' ? 'blur(30px)' : 'none',
-            WebkitBackdropFilter: navThemeName === 'glass' ? 'blur(30px)' : 'none',
-            borderBottom: navThemeName === 'glass' ? '1px solid rgba(0,0,0,0.05)' : 'none',
+            backdropFilter:
+              isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_DESKTOP,
+            WebkitBackdropFilter:
+              isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_DESKTOP,
+            borderBottom:
+              isTransparentNav || navThemeName !== 'glass'
+                ? 'none'
+                : '1px solid rgba(0,0,0,0.05)',
           }}
         />
 

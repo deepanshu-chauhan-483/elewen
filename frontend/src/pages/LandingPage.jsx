@@ -1062,6 +1062,21 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 
     const progressLine = container.querySelector('.progress-line')
     const stepElements = gsap.utils.toArray('.step-item', stepsWrap)
+    const revealTexts = (elements, baseDelay = 0) => {
+      elements.forEach((element, index) => {
+        if (element.classList.contains('is-visible')) return
+        element.style.animationDelay = `${baseDelay + index * 0.04}s`
+        element.classList.add('is-visible')
+      })
+    }
+
+    const revealHeading = () => {
+      revealTexts(Array.from(container.querySelectorAll('h2 .reveal-text')), 0)
+    }
+
+    const revealStepText = step => {
+      revealTexts(Array.from(step.querySelectorAll('.reveal-text')), 0.2)
+    }
 
     // Variable to ensure the line only grows and never shrinks
     let maxProgress = 0
@@ -1111,24 +1126,21 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       })
 
       // Heading reveal ("HOW 11 WORKS")
-      ScrollTrigger.create({
-        trigger: container,
-        start: 'top 85%',
-        once: true,
-        onEnter: () => {
-          container.querySelectorAll('h2 .reveal-text').forEach((t, i) => {
-            t.style.animationDelay = `${i * 0.05}s`
-            t.classList.add('is-visible')
-          })
-        },
-      })
+      revealHeading()
 
-      stepElements.forEach(step => {
+      stepElements.forEach((step, index) => {
         const leftContent = step.querySelector('.left-content')
         const rightContent = step.querySelector('.right-content')
 
         // 1. Tighter trigger point for mobile (52% waits until it hits the line)
         const syncTrigger = window.innerWidth < 768 ? 'top 52%' : 'top 60%'
+
+        if (index === 0) {
+          revealStepText(step)
+          if (leftContent) gsap.set(leftContent, { x: 0, opacity: 1 })
+          if (rightContent) gsap.set(rightContent, { x: 0, opacity: 1 })
+          return
+        }
 
         // 2. Text Reveal Trigger
         ScrollTrigger.create({
@@ -1136,14 +1148,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
           start: syncTrigger,
           once: true,
           onEnter: () => {
-            const texts = step.querySelectorAll('.reveal-text')
-            texts.forEach((span, index) => {
-              if (!span.classList.contains('is-visible')) {
-                // ADDED: 0.2s base delay so it waits a split second after the line connects
-                span.style.animationDelay = `${0.2 + index * 0.04}s`
-                span.classList.add('is-visible')
-              }
-            })
+            revealStepText(step)
           },
         })
 
@@ -1697,6 +1702,7 @@ const ChecklistSection = () => {
   const [isLayoutVisible, setIsLayoutVisible] = useState(false)
   const gateAreaRef = useRef(null)
   const gateRef = useRef(null)
+  const insideBgRef = useRef(null)
   const howItWorksRef = useRef(null)
   const layoutWrapRef = useRef(null)
   const [layoutScale, setLayoutScale] = useState(1)
@@ -1742,10 +1748,10 @@ const ChecklistSection = () => {
   useEffect(() => {
     const gateArea = gateAreaRef.current
     const gate = gateRef.current
+    const insideBg = insideBgRef.current
     const howItWorks = howItWorksRef.current
-    if (!gateArea || !gate || !howItWorks) return
+    if (!gateArea || !gate || !insideBg || !howItWorks) return
 
-    const doorFill = gate.querySelector('#door-fill')
     const doorTable = gate.querySelector('#door-table')
     const doorLights = gate.querySelector('#door-lights')
     const doorCurvedText = gate.querySelector('#door-curved-text')
@@ -1766,6 +1772,17 @@ const ChecklistSection = () => {
       return `bottom+=${extraHeight}px bottom`
     }
     const startTrigger = isMobile ? getMobileStartTrigger : 'bottom bottom'
+
+    let howItWorksActivated = false
+    const activateHowItWorks = () => {
+      if (howItWorksActivated) return
+      howItWorksActivated = true
+      setHowItWorksVisible(true)
+      requestAnimationFrame(() => ScrollTrigger.refresh())
+    }
+
+    gsap.set(insideBg, { opacity: 0 })
+    gsap.set(howItWorks, { yPercent: 100, opacity: 1 })
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -1801,33 +1818,19 @@ const ChecklistSection = () => {
         0
       )
 
-    if (doorFill) tl.to(doorFill, { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.78)
-    tl.to(gate, { opacity: 0, duration: 0.15, ease: 'power2.out' }, 0.88)
+    tl.to(insideBg, { opacity: 1, duration: 0.24, ease: 'power2.out' }, 0.74)
+    tl.to(gate, { opacity: 0, duration: 0.18, ease: 'power2.out' }, 0.9)
 
     tl.to(
       howItWorks,
       {
-        opacity: 1,
-        duration: 0.4,
-        ease: 'power2.in',
-        onComplete: () => {
-          const hSection = howItWorksRef.current
-          if (hSection) {
-            let delay = 0
-            hSection.querySelectorAll('.reveal-wrapper').forEach(wrapper => {
-              wrapper.querySelectorAll('.reveal-text').forEach(t => {
-                if (!t.classList.contains('is-visible')) {
-                  t.style.animationDelay = `${delay}s`
-                  t.classList.add('is-visible')
-                  delay += 0.04
-                }
-              })
-            })
-          }
-          setHowItWorksVisible(true)
-        },
+        yPercent: 0,
+        duration: 0.96,
+        ease: 'power3.out',
+        onStart: activateHowItWorks,
+        onComplete: () => ScrollTrigger.refresh(),
       },
-      0.85
+      0.76
     )
 
     return () => {
@@ -1842,15 +1845,6 @@ const ChecklistSection = () => {
       data-nav-theme="glass"
       className="checklist-section relative w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
     >
-      <div
-        className="absolute hidden md:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
-        style={{ left: '-10%', top: '5%', transform: 'rotate(-37.82deg)' }}
-      />
-      <div
-        className="absolute hidden md:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
-        style={{ right: '5%', top: '30%', transform: 'rotate(-37.82deg)' }}
-      />
-
       {/* Lightbulbs */}
       <div className="absolute top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
         <div className="absolute top-0 left-0 w-full flex">
@@ -2149,10 +2143,15 @@ const ChecklistSection = () => {
       <div className="relative w-full z-10 mt-[80px] md:mt-10 overflow-visible md:overflow-hidden min-h-[90vh] md:min-h-[100vh]">
         <div
           ref={gateAreaRef}
-          className="relative w-full h-[90vh] md:h-[100vh] z-20"
+          className="relative w-full h-[90vh] md:h-[100vh] z-20 overflow-hidden"
           style={{ position: 'relative' }}
         >
-          <div className="absolute inset-0 flex justify-center items-start md:items-center pt-16 md:pt-0">
+          <div
+            ref={insideBgRef}
+            className="absolute inset-0 bg-[#E9D0A2] opacity-0 pointer-events-none"
+          />
+
+          <div className="absolute inset-0 z-10 flex justify-center items-start md:items-center pt-16 md:pt-0">
             <div
               ref={gateRef}
               className="w-full max-w-[1200px] px-2 md:px-4"
@@ -2168,8 +2167,7 @@ const ChecklistSection = () => {
 
         <div
           ref={howItWorksRef}
-          className="relative z-10 -mt-[50vh] md:-mt-[100vh]"
-          style={{ opacity: 0 }}
+          className="relative z-20 -mt-[50vh] md:-mt-[100vh]"
         >
           <HowItWorksSection isVisible={howItWorksVisible} />
         </div>

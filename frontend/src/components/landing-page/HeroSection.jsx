@@ -518,7 +518,12 @@ const HeroSection = () => {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div ref={wrapperRef} style={{ height: '420vh' }}>
+    <div
+      ref={wrapperRef}
+      data-nav-theme="glass"
+      data-nav-surface="transparent"
+      style={{ height: '420vh' }}
+    >
       <div
         style={{
           position: 'sticky',
