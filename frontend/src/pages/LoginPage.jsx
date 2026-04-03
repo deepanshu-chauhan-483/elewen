@@ -42,7 +42,7 @@ export default function LoginPage() {
       subtitle="Explore the collection. Your seamless event is just a few clicks away!"
       footer={
         <p
-          className="text-[#364022] text-[12px] min-[540px]:text-[14px] leading-[150%]"
+          className="text-[#364022] text-[12px] leading-[150%]"
           style={{ fontFamily: "'Poppins', sans-serif" }}
         >
           Don&apos;t have an account?{' '}
@@ -54,7 +54,7 @@ export default function LoginPage() {
     >
       {confirmed && (
         <p
-          className="w-full rounded-[6px] bg-[#364022]/10 px-[16px] py-[10px] text-[12px] min-[540px]:text-[14px] text-[#364022] leading-[150%]"
+          className="w-full rounded-[6px] bg-[#364022]/10 px-[16px] py-[10px] text-[13px] text-[#364022] leading-[150%]"
           style={{ fontFamily: "'Poppins', sans-serif" }}
         >
           Email verified! You can now sign in.
@@ -114,7 +114,7 @@ export default function LoginPage() {
             <label className="flex items-center gap-[4px] cursor-pointer">
               <input
                 type="checkbox"
-                className="w-[13px] h-[13px] border border-[rgba(45,45,45,0.5)] rounded-[2px] accent-[#CDB17E]"
+                className="w-[12px] h-[12px] border border-[rgba(45,45,45,0.5)] rounded-[2px] accent-[#CDB17E]"
               />
               <span className="text-[#364022] text-[12px] leading-[150%]">Remember me</span>
             </label>

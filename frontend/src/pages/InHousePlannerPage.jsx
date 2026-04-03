@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect } from 'react'
+import { useRef, useState, useLayoutEffect, useEffect } from 'react'
 
 import gsap from 'gsap'
 
@@ -359,15 +359,23 @@ const GrandCelebrationsSection = () => {
               className="text-[#2D2D2D] text-[32px] leading-[1.05] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              <span ref={titleRef} className="block">
-                {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+              <span className="reveal-wrapper block">
+                <span ref={titleRef} className="reveal-text block">
+                  {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+                </span>
               </span>
             </h3>
 
             <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.5] max-w-[320px]">
-              <span ref={noteRef}>
-                {gc.note ??
-                  'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+              <span className="reveal-wrapper block">
+                <span
+                  ref={noteRef}
+                  className="reveal-text block"
+                  style={{ animationDelay: '0.08s' }}
+                >
+                  {gc.note ??
+                    'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+                </span>
               </span>
             </p>
           </div>
@@ -437,7 +445,7 @@ const GrandCelebrationsSection = () => {
           </div>
         </div>
       ) : (
-        <div className="relative w-full max-w-[1440px] h-[845px] mx-auto">
+        <div className="relative w-full max-w-[1440px] min-h-[920px] lg:min-h-[960px] mx-auto">
           {/* Cards area (active + incoming layers) */}
 
           <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-full px-[5%] lg:px-[76px]">
@@ -451,7 +459,7 @@ const GrandCelebrationsSection = () => {
                     ref={el => {
                       activeCardRefs.current[index] = el
                     }}
-                    className="relative w-full flex flex-col"
+                    className="relative w-full flex flex-col planner-card-hover"
                   >
                     <div
                       ref={el => {
@@ -467,7 +475,7 @@ const GrandCelebrationsSection = () => {
                       <img
                         src={item.image}
                         alt={item.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover planner-card-image"
                       />
                     </div>
 
@@ -510,7 +518,7 @@ const GrandCelebrationsSection = () => {
                         ref={el => {
                           incomingCardRefs.current[index] = el
                         }}
-                        className="relative w-full flex flex-col"
+                        className="relative w-full flex flex-col planner-card-hover"
                       >
                         <div
                           ref={el => {
@@ -526,7 +534,7 @@ const GrandCelebrationsSection = () => {
                           <img
                             src={item.image}
                             alt={item.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover planner-card-image"
                           />
                         </div>
 
@@ -561,20 +569,31 @@ const GrandCelebrationsSection = () => {
 
           {/* Bottom text */}
 
-          <div className="absolute w-full bottom-[40px] lg:bottom-[80px] px-[5%] lg:px-[100px] flex flex-col-reverse min-[540px]:flex-row justify-between items-start min-[540px]:items-end gap-8 pointer-events-none z-0">
+          <div className="absolute w-full bottom-[40px] lg:bottom-[80px] px-[5%] lg:px-[100px] flex flex-col-reverse min-[540px]:flex-row justify-between items-start min-[540px]:items-end gap-8 pointer-events-none z-30">
             <p className="text-[#2D2D2D] opacity-50 text-[14px] min-[540px]:text-[16px] leading-[1.5] text-left min-[540px]:pb-2 max-w-[631px]">
-              <span ref={noteRef} className="reveal-text gc-reveal-text">
-                {gc.note ??
-                  'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+              <span className="reveal-wrapper block">
+                <span
+                  ref={noteRef}
+                  className="reveal-text reveal-text-x-left reveal-text-slow block"
+                  style={{ animationDelay: '0.08s' }}
+                >
+                  {gc.note ??
+                    'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
+                </span>
               </span>
             </p>
 
             <h3
-              className="text-[#2D2D2D] text-[32px] min-[540px]:text-[47px] leading-[1] text-left min-[540px]:text-right font-serif shrink-0"
+              className="text-[#2D2D2D] text-[28px] sm:text-[36px] min-[540px]:text-[45px] leading-[1] text-left min-[540px]:text-right font-serif shrink-0 max-w-[420px]"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              <span ref={titleRef} className="block">
-                {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+              <span className="reveal-wrapper block">
+                <span
+                  ref={titleRef}
+                  className="reveal-text reveal-text-x-right reveal-text-slow block"
+                >
+                  {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+                </span>
               </span>
             </h3>
           </div>
@@ -932,9 +951,6 @@ const CelebrationEveryDaySection = () => {
 
         const outHeading = headingRef.current
         const outDesc = descRef.current
-        const inHeading = incomingHeadingRef.current
-        const inDesc = incomingDescRef.current
-
         if (incomingLayerRef.current) gsap.set(incomingLayerRef.current, { opacity: 0 })
 
         gsap.set(inTop, {
@@ -951,34 +967,70 @@ const CelebrationEveryDaySection = () => {
         if (inAccent) gsap.set(inAccent, { y: '100%' })
         if (outAccent) gsap.set(outAccent, { y: 0 })
 
-        if (inHeading) {
-          gsap.set(inHeading, {
-            autoAlpha: 0,
-            y: 24,
-            letterSpacing: '0.18em',
-          })
-        }
-
-        if (inDesc) {
-          gsap.set(inDesc, {
-            autoAlpha: 0,
-            y: 24,
-          })
-        }
-
         const tl = gsap.timeline({
           defaults: { ease: 'power3.out' },
           onComplete: () => {
             setActiveName(nextName)
             setIncomingName(null)
-            setIsAnimating(false)
 
-            incomingWrapsRef.current = {
-              topLeft: null,
-              topRight: null,
-              bottomLeft: null,
-              bottomRight: null,
-            }
+            requestAnimationFrame(() => {
+              const nextHeading = headingRef.current
+              const nextDesc = descRef.current
+
+              if (nextHeading) {
+                gsap.set(nextHeading, {
+                  autoAlpha: 0,
+                  y: 24,
+                  letterSpacing: '0.18em',
+                })
+              }
+
+              if (nextDesc) {
+                gsap.set(nextDesc, {
+                  autoAlpha: 0,
+                  y: 24,
+                })
+              }
+
+              const textTl = gsap.timeline({
+                onComplete: () => {
+                  setIsAnimating(false)
+                  incomingWrapsRef.current = {
+                    topLeft: null,
+                    topRight: null,
+                    bottomLeft: null,
+                    bottomRight: null,
+                  }
+                },
+              })
+
+              if (nextHeading) {
+                textTl.to(
+                  nextHeading,
+                  {
+                    autoAlpha: 1,
+                    y: 0,
+                    letterSpacing: '0.08em',
+                    duration: 0.6,
+                    ease: 'expo.out',
+                  },
+                  0
+                )
+              }
+
+              if (nextDesc) {
+                textTl.to(
+                  nextDesc,
+                  {
+                    autoAlpha: 1,
+                    y: 0,
+                    duration: 0.45,
+                    ease: 'power3.out',
+                  },
+                  0
+                )
+              }
+            })
           },
         })
 
@@ -1103,33 +1155,6 @@ const CelebrationEveryDaySection = () => {
             1.57
           )
         }
-
-        if (inHeading) {
-          tl.to(
-            inHeading,
-            {
-              autoAlpha: 1,
-              y: 0,
-              letterSpacing: '0.08em',
-              duration: 0.6,
-              ease: 'expo.out',
-            },
-            2.5
-          )
-        }
-
-        if (inDesc) {
-          tl.to(
-            inDesc,
-            {
-              autoAlpha: 1,
-              y: 0,
-              duration: 0.45,
-              ease: 'power3.out',
-            },
-            2.5
-          )
-        }
       })
     })
   }
@@ -1183,12 +1208,18 @@ const CelebrationEveryDaySection = () => {
           className="text-[#2D2D2D] text-[34px] leading-[1.05] text-center font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          {ced.heading ?? 'Celebrations We Plan Every Day'}
+          <span className="reveal-wrapper block">
+            <span className="reveal-text">{ced.heading ?? 'Celebrations We Plan Every Day'}</span>
+          </span>
         </h2>
 
         <p className="mt-5 text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7] text-center">
-          {ced.description ??
-            'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
+          <span className="reveal-wrapper block">
+            <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
+              {ced.description ??
+                'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
+            </span>
+          </span>
         </p>
 
         {/* Category tabs (2 rows like screenshot) */}
@@ -1206,11 +1237,15 @@ const CelebrationEveryDaySection = () => {
                     }}
                     className={
                       isActive
-                        ? 'text-[#2D2D2D] font-medium border-b border-[#2D2D2D] pb-1'
-                        : 'text-[#2D2D2D]/50 pb-1'
+                        ? 'group text-[#2D2D2D] font-medium pb-1'
+                        : 'group text-[#2D2D2D]/50 hover:text-[#2D2D2D] pb-1'
                     }
                   >
-                    {cmsCats[idx]?.tab_label ?? cat.name}
+                    <span
+                      className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
+                    >
+                      {cmsCats[idx]?.tab_label ?? cat.name}
+                    </span>
                   </button>
                   {idx !== 2 && <span className="text-[#2D2D2D]/50">|</span>}
                 </div>
@@ -1234,11 +1269,15 @@ const CelebrationEveryDaySection = () => {
                     }}
                     className={
                       isActive
-                        ? 'text-[#2D2D2D] font-medium border-b border-[#2D2D2D] pb-1'
-                        : 'text-[#2D2D2D]/50 pb-1'
+                        ? 'group text-[#2D2D2D] font-medium pb-1'
+                        : 'group text-[#2D2D2D]/50 hover:text-[#2D2D2D] pb-1'
                     }
                   >
-                    {cmsCats[idx]?.tab_label ?? cat.name}
+                    <span
+                      className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
+                    >
+                      {cmsCats[idx]?.tab_label ?? cat.name}
+                    </span>
                   </button>
                   {i !== 2 && <span className="text-[#2D2D2D]/50">|</span>}
                 </div>
@@ -1355,8 +1394,8 @@ const CelebrationEveryDaySection = () => {
 
               <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
                 <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#FFFFFF] z-0" />
-                <div className="absolute left-[0px] top-[399px] w-[1440px] h-px bg-[#D8D8D8] z-[15]" />
-                <div className="absolute left-[0px] top-[599px] w-[640px] h-px bg-[#D8D8D8] z-[15]" />
+                <div className="pointer-events-none absolute left-[0px] top-[399px] w-[1440px] h-px bg-[#D8D8D8] z-[40]" />
+                <div className="pointer-events-none absolute left-[0px] top-[599px] w-[640px] h-px bg-[#D8D8D8] z-[40]" />
                 <div className="absolute left-[0px] top-[400px] w-[640px] h-[200px] overflow-hidden z-10">
                   <div
                     key={active.name}
@@ -1375,13 +1414,15 @@ const CelebrationEveryDaySection = () => {
                         <div
                           key={cat.name}
                           onClick={() => animateSwap(cat.name)}
-                          className={`py-2 pr-4 cursor-pointer w-fit ${
+                          className={`group py-2 pr-4 cursor-pointer w-fit ${
                             isActive
-                              ? 'border-b border-[#2D2D2D]'
+                              ? 'opacity-100'
                               : 'opacity-50 hover:opacity-100 transition-opacity'
                           }`}
                         >
-                          <span className="text-[#2D2D2D] text-[16px] font-medium leading-[1.5]">
+                          <span
+                            className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[#2D2D2D] text-[16px] font-medium leading-[1.5] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
+                          >
                             {cmsCats[idx]?.tab_label ?? cat.name}
                           </span>
                         </div>
@@ -1421,26 +1462,28 @@ const CelebrationEveryDaySection = () => {
                 />
 
                 {/* ACTIVE text */}
-                <h3
-                  className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase overflow-hidden"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                >
-                  <span
-                    key={active.name}
-                    ref={headingRef}
-                    className="inline-block"
-                    style={{ willChange: 'transform' }}
+                <div className="absolute left-[640px] top-[362px] w-[800px] flex justify-center z-20 pointer-events-none">
+                  <h3
+                    className="w-full max-w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
+                    style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
-                    {active.heading}
-                  </span>
-                </h3>
+                    <span
+                      key={active.name}
+                      ref={headingRef}
+                      className="inline-block"
+                      style={{ willChange: 'transform', opacity: isAnimating ? 0 : 1 }}
+                    >
+                      {active.heading}
+                    </span>
+                  </h3>
+                </div>
 
                 <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
                   <span
                     key={active.name}
                     ref={descRef}
                     className="inline-block"
-                    style={{ willChange: 'transform' }}
+                    style={{ willChange: 'transform', opacity: isAnimating ? 0 : 1 }}
                   >
                     {active.desc}
                   </span>
@@ -1489,20 +1532,25 @@ const CelebrationEveryDaySection = () => {
                       setRef={el => (incomingWrapsRef.current.bottomRight = el)}
                     />
 
-                    <h3
-                      className="absolute left-[787px] top-[362px] w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal z-20 drop-shadow-md tracking-wider uppercase overflow-hidden"
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
-                    >
-                      <span
-                        ref={incomingHeadingRef}
-                        className="inline-block"
-                        style={{ willChange: 'transform' }}
+                    <div className="absolute left-[640px] top-[362px] w-[800px] flex justify-center z-20 pointer-events-none">
+                      <h3
+                        className="w-full max-w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
+                        style={{ fontFamily: "'Poppins', sans-serif", opacity: 0 }}
                       >
-                        {incoming.heading}
-                      </span>
-                    </h3>
+                        <span
+                          ref={incomingHeadingRef}
+                          className="inline-block"
+                          style={{ willChange: 'transform' }}
+                        >
+                          {incoming.heading}
+                        </span>
+                      </h3>
+                    </div>
 
-                    <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
+                    <p
+                      className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden"
+                      style={{ opacity: 0 }}
+                    >
                       <span
                         ref={incomingDescRef}
                         className="inline-block"
@@ -1716,12 +1764,18 @@ const CelebrationFormSection = () => {
           className="text-[#2D2D2D] text-[40px] min-[540px]:text-[61px] leading-[1] font-serif mb-6"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          {cta.heading ?? 'Tell Us About Your Celebration'}
+          <span className="reveal-wrapper block">
+            <span className="reveal-text">{cta.heading ?? 'Tell Us About Your Celebration'}</span>
+          </span>
         </h2>
 
         <p className="text-[#2D2D2D] opacity-50 text-[14px] min-[540px]:text-[16px] leading-[1.5] max-w-[727px] mx-auto">
-          {cta.body ??
-            'If youâd like me to plan your event end to end, leave your details and weâll take it from there.'}
+          <span className="reveal-wrapper block">
+            <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
+              {cta.body ??
+                'If youâd like me to plan your event end to end, leave your details and weâll take it from there.'}
+            </span>
+          </span>
         </p>
       </div>
 
@@ -1730,15 +1784,15 @@ const CelebrationFormSection = () => {
         {/* --- ZONE 1: STEPPER (Top 60px) --- */}
 
         {currentStep < 4 && (
-          <div className="relative min-[540px]:absolute min-[540px]:top-[60px] min-[540px]:left-[120px] min-[540px]:right-[120px] flex justify-between items-start z-10 mb-10 min-[540px]:mb-0">
+          <div className="relative min-[540px]:absolute min-[540px]:top-[60px] min-[540px]:left-[120px] min-[540px]:right-[120px] grid grid-cols-3 items-start z-10 mb-10 min-[540px]:mb-0">
             {/* Connecting Lines */}
-            <div className="absolute top-[30px] left-[30px] right-[30px] flex justify-between z-0">
+            <div className="absolute top-[30px] left-[60px] right-[60px] grid grid-cols-2 z-0">
               <div
-                className={`w-1/2 border-t-[1.5px] transition-colors duration-300 ${getLineColor(1)}`}
+                className={`w-full border-t-[1.5px] transition-colors duration-300 ${getLineColor(1)}`}
               ></div>
 
               <div
-                className={`w-1/2 border-t-[1.5px] transition-colors duration-300 ${getLineColor(2)}`}
+                className={`w-full justify-self-end border-t-[1.5px] transition-colors duration-300 ${getLineColor(2)}`}
               ></div>
             </div>
 
@@ -2023,7 +2077,9 @@ const CelebrationFormSection = () => {
             <div className="flex flex-col gap-10 animate-fadeIn">
               <div>
                 <h4 className="text-[21px] text-[#2D2D2D] mb-5">
-                  What kind of support are you looking for?
+                  <span className="reveal-wrapper block">
+                    <span className="reveal-text">What kind of support are you looking for?</span>
+                  </span>
                 </h4>
 
                 <div className="flex flex-col gap-3">
@@ -2064,7 +2120,11 @@ const CelebrationFormSection = () => {
 
               <div>
                 <h4 className="text-[21px] text-[#2D2D2D] mb-4">
-                  Tell us a little about your vision
+                  <span className="reveal-wrapper block">
+                    <span className="reveal-text" style={{ animationDelay: '0.06s' }}>
+                      Tell us a little about your vision
+                    </span>
+                  </span>
                 </h4>
 
                 <div className="border-b border-[#2D2D2D]/50 pb-2">
@@ -2212,9 +2272,9 @@ const CelebrationFormSection = () => {
               <button
                 onClick={handleNext}
                 disabled={currentStep === 3 && isPending}
-                className={`w-full max-w-[520px] min-[540px]:w-auto flex items-center justify-between bg-[#CDB17E] rounded-[56px] pl-6 pr-1 py-1 hover:bg-[#bfa06b] transition-colors group ${currentStep === 3 && isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className={`group w-[220px] min-[540px]:w-fit flex items-center justify-between rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F] ${currentStep === 3 && isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
-                <span className="text-[#FAFAFA] text-[16px] font-medium leading-[1.5] pr-2">
+                <span className="flex-1 text-left text-[15px] font-medium text-white min-[540px]:mr-5 min-[540px]:flex-none">
                   {currentStep === 3 && isPending
                     ? 'Submitting...'
                     : currentStep === 3
@@ -2222,33 +2282,19 @@ const CelebrationFormSection = () => {
                       : 'Next'}
                 </span>
 
-                <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#CDB17E] transition-transform group-hover:scale-105">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                   <svg
-                    className="min-[540px]:hidden"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
+                    className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
                     fill="none"
-                    stroke="#CDB17E"
-                    strokeWidth="1.5"
-                  >
-                    <path d="M5 12h14" />
-
-                    <path d="m12 5 7 7-7 7" />
-                  </svg>
-
-                  <svg
-                    className="hidden min-[540px]:block"
-                    width="20"
-                    height="20"
                     viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#CDB17E"
-                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
                   >
-                    <path d="M7 17L17 7" />
-
-                    <path d="M7 7h10v10" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 17L17 7M17 7H9M17 7v8"
+                    />
                   </svg>
                 </div>
               </button>
@@ -2265,60 +2311,107 @@ const InHousePlannerSection = () => {
 
   const bio = cms.moksha_bio ?? {}
 
+  useEffect(() => {
+    const root = document.querySelector('[data-in-house-planner-page]')
+    if (!root) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          const el = entry.target
+          if (el.classList.contains('reveal-wrapper')) {
+            el.querySelectorAll('.reveal-text').forEach(text => text.classList.add('is-visible'))
+          } else {
+            el.classList.add('is-visible')
+          }
+          observer.unobserve(el)
+        })
+      },
+      { threshold: 0.12 }
+    )
+
+    root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <>
       <ScrollImageSpreadSection />
 
-      <section className="w-full bg-[#957960] flex justify-center font-sans">
-        <div className="w-full max-w-[1440px] flex flex-col min-[540px]:flex-row">
-          {/* Image */}
+      <div data-in-house-planner-page>
+        <section data-planner-intro className="w-full bg-[#957960] flex justify-center font-sans">
+          <div className="w-full max-w-[1440px] flex flex-col min-[540px]:flex-row">
+            {/* Image */}
 
-          <div className="w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">
-            <img
-              src={plannerImg}
-              alt="Moksha - In-House Event Planner"
-              className="w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
-            />
+            <div className="w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">
+              <img
+                src={plannerImg}
+                alt="Moksha - In-House Event Planner"
+                className="w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
+              />
+            </div>
+
+            {/* Content */}
+
+            <div className="w-full min-[540px]:w-1/2 flex flex-col justify-center px-6 py-8 min-[540px]:px-12 min-[540px]:py-0 text-white">
+              {/* Heading */}
+
+              <h2
+                className="text-[32px] min-[540px]:text-[61px] leading-tight font-serif mb-4"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0s' }}>
+                    From Our In-House
+                  </span>
+                </span>
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
+                    Event Planner
+                  </span>
+                </span>
+              </h2>
+
+              {/* Subheading */}
+
+              <h3 className="text-[18px] min-[540px]:text-[21px] font-medium mb-4">
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.14s' }}>
+                    {bio.greeting ?? "Hi, I'm Moksha."}
+                  </span>
+                </span>
+              </h3>
+
+              {/* Paragraphs */}
+
+              <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed mb-4">
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.2s' }}>
+                    {bio.intro ??
+                      'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.'}
+                  </span>
+                </span>
+              </p>
+
+              <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed">
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.28s' }}>
+                    {bio.personal_note ??
+                      "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created."}
+                  </span>
+                </span>
+              </p>
+            </div>
           </div>
+        </section>
 
-          {/* Content */}
+        <GrandCelebrationsSection />
 
-          <div className="w-full min-[540px]:w-1/2 flex flex-col justify-center px-6 py-8 min-[540px]:px-12 min-[540px]:py-0 text-white">
-            {/* Heading */}
+        <CelebrationEveryDaySection />
 
-            <h2
-              className="text-[32px] min-[540px]:text-[61px] leading-tight font-serif mb-4"
-              style={{ fontFamily: "'Malgin', serif" }}
-            >
-              From Our In-House <br /> Event Planner
-            </h2>
-
-            {/* Subheading */}
-
-            <h3 className="text-[18px] min-[540px]:text-[21px] font-medium mb-4">
-              {bio.greeting ?? "Hi, I'm Moksha."}
-            </h3>
-
-            {/* Paragraphs */}
-
-            <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed mb-4">
-              {bio.intro ??
-                'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.'}
-            </p>
-
-            <p className="opacity-80 text-[14px] min-[540px]:text-[16px] leading-relaxed">
-              {bio.personal_note ??
-                "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created."}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <GrandCelebrationsSection />
-
-      <CelebrationEveryDaySection />
-
-      <CelebrationFormSection />
+        <CelebrationFormSection />
+      </div>
     </>
   )
 }

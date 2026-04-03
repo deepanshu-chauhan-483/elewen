@@ -518,7 +518,12 @@ const HeroSection = () => {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div ref={wrapperRef} style={{ height: '420vh' }}>
+    <div
+      ref={wrapperRef}
+      data-nav-theme="glass"
+      data-nav-surface="transparent"
+      style={{ height: '420vh' }}
+    >
       <div
         style={{
           position: 'sticky',
@@ -637,10 +642,13 @@ const HeroSection = () => {
               <div className="flex flex-row md:flex-row items-center gap-[20px] md:gap-0">
                 <button
                   ref={ctaArrowRef}
-                  className="w-[68px] h-[68px] min-w-[68px] md:w-16 md:h-16 lg:w-18 lg:h-18 md:min-w-0 rounded-[80px] md:rounded-full border-[2px] md:border-2 border-white flex items-center justify-center md:mr-4 lg:mr-6 hover:bg-white/20 transition-colors backdrop-blur-sm shrink-0 pointer-events-auto"
+                  className="group relative flex h-[68px] w-[68px] min-w-[68px] items-center justify-center overflow-hidden rounded-[80px] border-[2px] border-white backdrop-blur-sm shrink-0 pointer-events-auto md:min-w-0 md:h-16 md:w-16 md:rounded-full md:border-2 md:mr-4 lg:h-18 lg:w-18 lg:mr-6"
                 >
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="h-0 w-0 rounded-full bg-white transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:h-[180%] group-hover:w-[180%]" />
+                  </span>
                   <svg
-                    className="w-[28px] h-[28px] md:w-8 md:h-8 text-[#FAFAFA]"
+                    className="relative z-10 h-[32px] w-[32px] text-[#FAFAFA] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:text-[#591902] md:h-9 md:w-9"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

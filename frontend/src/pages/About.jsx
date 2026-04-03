@@ -1,6 +1,3 @@
-// Add these files to: src/assets/images/
-// - tangled-lights.png
-// - logo-placeholder.png
 import { useRef, useEffect, useState } from 'react'
 import { useAboutPage } from '../hooks/useCmsPages'
 import tangledIllustration from '../assets/images/tangled-lights.png'
@@ -88,7 +85,9 @@ const About = () => {
       },
       { threshold: 0.1 }
     )
-    page.querySelectorAll('.reveal-wrapper, .anim-element').forEach(el => observer.observe(el))
+    page
+      .querySelectorAll('.reveal-wrapper, .anim-element, .card-reveal')
+      .forEach(el => observer.observe(el))
     return () => observer.disconnect()
   }, [])
 
@@ -279,7 +278,11 @@ const About = () => {
                   key={i}
                   className="text-[#591902] opacity-50 text-[16px] leading-[1.5] font-normal m-0"
                 >
-                  {para}
+                  <span className="reveal-wrapper block">
+                    <span className="reveal-text" style={{ animationDelay: `${0.08 + i * 0.08}s` }}>
+                      {para}
+                    </span>
+                  </span>
                 </p>
               ))}
             </div>
@@ -631,7 +634,16 @@ const About = () => {
                           'So, I took a leap of faith and Elewen was born.',
                         ]
                       ).map((para, i) => (
-                        <p key={i}>{para}</p>
+                        <p key={i}>
+                          <span className="reveal-wrapper block">
+                            <span
+                              className="reveal-text"
+                              style={{ animationDelay: `${0.08 + i * 0.08}s` }}
+                            >
+                              {para}
+                            </span>
+                          </span>
+                        </p>
                       ))}
                     </div>
                   </div>
@@ -657,7 +669,16 @@ const About = () => {
                           'Elewen began as an idea my co-founder and I developed while exploring the opportunity to build a thoughtful, design-driven brand.',
                         ]
                       ).map((para, i) => (
-                        <p key={i}>{para}</p>
+                        <p key={i}>
+                          <span className="reveal-wrapper block">
+                            <span
+                              className="reveal-text"
+                              style={{ animationDelay: `${0.08 + i * 0.08}s` }}
+                            >
+                              {para}
+                            </span>
+                          </span>
+                        </p>
                       ))}
                     </div>
                   </div>
@@ -798,8 +819,12 @@ const About = () => {
                     className="mt-6 w-full max-w-[517px] text-white text-[16px] leading-[1.5] opacity-80"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
-                    {vq.body ??
-                      'We stand by the people behind every celebration, creating steady work, clear processes, and timely payments for vendors.'}
+                    <span className="reveal-wrapper block">
+                      <span className="reveal-text" style={{ animationDelay: '0.1s' }}>
+                        {vq.body ??
+                          'We stand by the people behind every celebration, creating steady work, clear processes, and timely payments for vendors.'}
+                      </span>
+                    </span>
                   </p>
                 </div>
 
@@ -835,9 +860,10 @@ const About = () => {
                     return (
                       <div
                         key={index}
-                        className="w-full min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] p-6 flex flex-col items-center gap-5"
+                        style={{ '--delay': `${0.08 + index * 0.06}s` }}
+                        className="card-reveal about-page-card group w-full min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] p-6 flex flex-col items-center gap-5"
                       >
-                        <div className="w-[80px] h-[80px] shrink-0">
+                        <div className="w-[80px] h-[80px] shrink-0 about-page-card-icon">
                           {currentIconSrc && (
                             <div
                               className="w-full h-full bg-[#591902]"
@@ -857,7 +883,7 @@ const About = () => {
 
                         <div className="flex flex-col items-center gap-4 w-full p-4">
                           <h5
-                            className="text-[#2D2D2D] text-[16px] sm:text-[21px] font-normal text-center leading-[120%]"
+                            className="about-page-card-title text-[#2D2D2D] text-[16px] sm:text-[21px] font-normal text-center leading-[120%]"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '120%',
@@ -867,7 +893,7 @@ const About = () => {
                             {card.title}
                           </h5>
                           <p
-                            className="text-[#767676] text-[12px] font-normal text-center leading-[150%] w-auto text-wrap"
+                            className="about-page-card-desc text-[#767676] text-[12px] font-normal text-center leading-[150%] w-auto text-wrap"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '150%',

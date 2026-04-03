@@ -79,15 +79,12 @@ export default function AuthLayout({
                   ) : null}
                   <h2
                     className="w-full min-w-0 text-center text-[61px] leading-[100%] text-[#364022]"
-                    style={{
-                      fontFamily: "'Malgin', serif",
-                      fontSize: 'clamp(2.25rem, 5vw, 3.8125rem)',
-                    }}
+                    style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {title}
                   </h2>
                   <p
-                    className="w-full min-w-0 max-w-[421px] text-center text-[14px] min-[540px]:text-[16px] leading-[150%] text-[#727355]"
+                    className="w-full min-w-0 max-w-[421px] text-center text-[16px] leading-[150%] text-[#727355]"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
                     {subtitle}

@@ -78,6 +78,7 @@ const PlanEventSection = () => {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
@@ -102,10 +103,9 @@ const PlanEventSection = () => {
       ? CARDS_PER_PAGE
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
-  const visibleCards = filteredCards.slice(
-    page * currentCardsPerPage,
-    (page + 1) * currentCardsPerPage
-  )
+  const safePage = Math.min(page, totalPages - 1)
+  const mobileCardWidth = 289
+  const mobileCardGap = 16
 
   // Reset page when category changes
   const handleCategorySelect = cat => {
@@ -113,9 +113,23 @@ const PlanEventSection = () => {
     setPage(0)
   }
 
-  const scallopCount = [...Array(15)]
+  // const scallopCount = [...Array(15)]
 
   const sectionRef = useRef(null)
+  const carouselViewportRef = useRef(null)
+
+  useEffect(() => {
+    const viewport = carouselViewportRef.current
+    if (!viewport) return
+
+    const updateWidth = () => setCarouselViewportWidth(viewport.clientWidth)
+
+    const ro = new ResizeObserver(updateWidth)
+    ro.observe(viewport)
+    updateWidth()
+
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const root = sectionRef.current
@@ -139,7 +153,7 @@ const PlanEventSection = () => {
 
     cards.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [visibleCards, page, activeCategory])
+  }, [filteredCards.length, page, activeCategory])
 
   return (
     <section
@@ -147,7 +161,7 @@ const PlanEventSection = () => {
       className="relative w-full min-h-screen bg-[#F2F2F2] pt-[40px] md:pt-52 flex flex-col overflow-hidden font-sans"
     >
       {/* Background Decor (Desktop predominantly) */}
-      <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
+      {/* <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
         {scallopCount.map((_, i) => (
           <div key={i} className="relative shrink-0 w-[72px] md:w-[144px] h-[45px] md:h-[90px]">
             <div
@@ -197,7 +211,7 @@ const PlanEventSection = () => {
             )}
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 pb-8 md:pb-12 flex flex-col md:flex-row justify-between items-center md:items-end relative z-10">
@@ -308,7 +322,7 @@ const PlanEventSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
+                  disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -327,24 +341,36 @@ const PlanEventSection = () => {
                 </button>
               </div>
 
-              <div className="flex justify-center md:block">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-                  {visibleCards.map((card, i) => (
+              <div ref={carouselViewportRef} className="overflow-hidden md:px-0">
+                <div
+                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{
+                    transform: isMobile
+                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                  }}
+                >
+                  {filteredCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${mobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                           loading="lazy"
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide uppercase font-['Poppins']">
                           {card.title}
                         </h3>
@@ -361,7 +387,7 @@ const PlanEventSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
+                  disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -387,7 +413,7 @@ const PlanEventSection = () => {
             <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
+                disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -405,16 +431,18 @@ const PlanEventSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(i)}
+                    onClick={() => setPage(Math.min(i, totalPages - 1))}
                     className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                      i === safePage
+                        ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
+                        : 'w-[8px] h-[8px] bg-[#D4D4D4]'
                     }`}
                   />
                 ))}
               </div>
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
+                disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -435,9 +463,11 @@ const PlanEventSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(i)}
+                  onClick={() => setPage(Math.min(i, totalPages - 1))}
                   className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                    i === safePage
+                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
+                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
@@ -489,6 +519,7 @@ const WhatToPlanSection = () => {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
@@ -513,10 +544,9 @@ const WhatToPlanSection = () => {
       ? CARDS_PER_PAGE
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
-  const visibleCards = filteredCards.slice(
-    page * currentCardsPerPage,
-    (page + 1) * currentCardsPerPage
-  )
+  const safePage = Math.min(page, totalPages - 1)
+  const mobileCardWidth = 289
+  const mobileCardGap = 16
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -524,6 +554,20 @@ const WhatToPlanSection = () => {
   }
 
   const sectionRef = useRef(null)
+  const carouselViewportRef = useRef(null)
+
+  useEffect(() => {
+    const viewport = carouselViewportRef.current
+    if (!viewport) return
+
+    const updateWidth = () => setCarouselViewportWidth(viewport.clientWidth)
+
+    const ro = new ResizeObserver(updateWidth)
+    ro.observe(viewport)
+    updateWidth()
+
+    return () => ro.disconnect()
+  }, [])
 
   // Simple, section-scoped reveal (no global mutation observers).
   useEffect(() => {
@@ -559,7 +603,7 @@ const WhatToPlanSection = () => {
 
     targets.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [categories.length, visibleCards.length, page, activeCategory])
+  }, [categories.length, filteredCards.length, page, activeCategory])
 
   return (
     <section
@@ -635,7 +679,7 @@ const WhatToPlanSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
+                  disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -654,23 +698,35 @@ const WhatToPlanSection = () => {
                 </button>
               </div>
 
-              <div className="flex justify-center lg:block">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] lg:max-w-none lg:w-auto relative">
-                  {visibleCards.map((card, i) => (
+              <div ref={carouselViewportRef} className="overflow-hidden lg:px-0">
+                <div
+                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{
+                    transform: isMobile
+                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                  }}
+                >
+                  {filteredCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
-                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${mobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide font-['Poppins']">
                           {card.title}
                         </h3>
@@ -687,7 +743,7 @@ const WhatToPlanSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
+                  disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -711,7 +767,7 @@ const WhatToPlanSection = () => {
             <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
+                disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -730,9 +786,11 @@ const WhatToPlanSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(i)}
+                    onClick={() => setPage(Math.min(i, totalPages - 1))}
                     className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                      i === safePage
+                        ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
+                        : 'w-[8px] h-[8px] bg-[#D4D4D4]'
                     }`}
                   />
                 ))}
@@ -740,7 +798,7 @@ const WhatToPlanSection = () => {
 
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
+                disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -761,9 +819,11 @@ const WhatToPlanSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(i)}
+                  onClick={() => setPage(Math.min(i, totalPages - 1))}
                   className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                    i === safePage
+                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
+                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
@@ -1002,6 +1062,21 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 
     const progressLine = container.querySelector('.progress-line')
     const stepElements = gsap.utils.toArray('.step-item', stepsWrap)
+    const revealTexts = (elements, baseDelay = 0) => {
+      elements.forEach((element, index) => {
+        if (element.classList.contains('is-visible')) return
+        element.style.animationDelay = `${baseDelay + index * 0.04}s`
+        element.classList.add('is-visible')
+      })
+    }
+
+    const revealHeading = () => {
+      revealTexts(Array.from(container.querySelectorAll('h2 .reveal-text')), 0)
+    }
+
+    const revealStepText = step => {
+      revealTexts(Array.from(step.querySelectorAll('.reveal-text')), 0.2)
+    }
 
     // Variable to ensure the line only grows and never shrinks
     let maxProgress = 0
@@ -1051,24 +1126,21 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       })
 
       // Heading reveal ("HOW 11 WORKS")
-      ScrollTrigger.create({
-        trigger: container,
-        start: 'top 85%',
-        once: true,
-        onEnter: () => {
-          container.querySelectorAll('h2 .reveal-text').forEach((t, i) => {
-            t.style.animationDelay = `${i * 0.05}s`
-            t.classList.add('is-visible')
-          })
-        },
-      })
+      revealHeading()
 
-      stepElements.forEach(step => {
+      stepElements.forEach((step, index) => {
         const leftContent = step.querySelector('.left-content')
         const rightContent = step.querySelector('.right-content')
 
         // 1. Tighter trigger point for mobile (52% waits until it hits the line)
         const syncTrigger = window.innerWidth < 768 ? 'top 52%' : 'top 60%'
+
+        if (index === 0) {
+          revealStepText(step)
+          if (leftContent) gsap.set(leftContent, { x: 0, opacity: 1 })
+          if (rightContent) gsap.set(rightContent, { x: 0, opacity: 1 })
+          return
+        }
 
         // 2. Text Reveal Trigger
         ScrollTrigger.create({
@@ -1076,14 +1148,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
           start: syncTrigger,
           once: true,
           onEnter: () => {
-            const texts = step.querySelectorAll('.reveal-text')
-            texts.forEach((span, index) => {
-              if (!span.classList.contains('is-visible')) {
-                // ADDED: 0.2s base delay so it waits a split second after the line connects
-                span.style.animationDelay = `${0.2 + index * 0.04}s`
-                span.classList.add('is-visible')
-              }
-            })
+            revealStepText(step)
           },
         })
 
@@ -1164,6 +1229,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   return (
     <section
       ref={containerRef}
+      data-nav-theme="dark"
       className="relative w-full bg-[#591902] py-40 overflow-hidden font-sans text-white"
       style={{ scrollMarginTop: '100px' }}
     >
@@ -1284,7 +1350,7 @@ const CTASection = () => {
   const s = cms.consultation_cta ?? {}
 
   return (
-    <section className="w-full flex justify-center bg-[#591902] font-sans">
+    <section data-nav-theme="dark" className="w-full flex justify-center bg-[#591902] font-sans">
       <div className="w-full max-w-[1440px] h-[360px] flex flex-col items-center py-[80px] px-6">
         <h2
           className="text-[#FFFFFF] text-[24px] md:text-[36px] font-normal leading-none text-center font-serif reveal-heading"
@@ -1344,7 +1410,10 @@ const BetterWaySection = () => {
   const scallopCount = [...Array(15)]
 
   return (
-    <section className="w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans relative">
+    <section
+      data-nav-theme="glass"
+      className="w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans relative"
+    >
       <div className="relative w-full max-w-[1440px] mx-auto h-[841px] md:h-[1171px] shrink-0">
         {/* --- SCALLOP / BULB SECTION (Untouched) --- */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10">
@@ -1438,58 +1507,116 @@ const BetterWaySection = () => {
 
         {/* --- VENN DIAGRAM (MOBILE & DESKTOP) --- */}
         {/* Desktop Version */}
-        <div className="hidden md:block absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]">
+        <motion.div
+          className="hidden md:block absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.45 }}
+        >
           <svg
             width="723"
             height="422"
             viewBox="0 0 723 422"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full"
+            className="w-full h-full overflow-visible"
           >
             <defs>
               <clipPath id="intersectClipDesktop">
                 <circle cx="211" cy="211" r="211" />
               </clipPath>
             </defs>
-            <circle cx="211" cy="211" r="211" fill="#CDB17E" />
-            <circle cx="512" cy="211" r="211" fill="#591902" />
-            <circle
-              cx="512"
+            <motion.circle
+              cx="211"
               cy="211"
               r="211"
-              fill="#FFFFFF"
-              clipPath="url(#intersectClipDesktop)"
+              fill="#CDB17E"
+              variants={{
+                hidden: { x: -120, opacity: 0 },
+                visible: {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 1.45, ease: [0.22, 1, 0.36, 1] },
+                },
+              }}
             />
+            <motion.g
+              variants={{
+                hidden: { x: 120, opacity: 0 },
+                visible: {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 1.45, ease: [0.22, 1, 0.36, 1], delay: 0.12 },
+                },
+              }}
+            >
+              <circle cx="512" cy="211" r="211" fill="#591902" />
+              <circle
+                cx="512"
+                cy="211"
+                r="211"
+                fill="#FFFFFF"
+                clipPath="url(#intersectClipDesktop)"
+              />
+            </motion.g>
           </svg>
-        </div>
+        </motion.div>
 
         {/* Mobile Version */}
-        <div className="block md:hidden absolute w-[353px] h-[206.04px] left-1/2 -translate-x-1/2 top-[371px]">
+        <motion.div
+          className="block md:hidden absolute w-[353px] h-[206.04px] left-1/2 -translate-x-1/2 top-[371px]"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.45 }}
+        >
           <svg
             width="353"
             height="207"
             viewBox="0 0 353 207"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full"
+            className="w-full h-full overflow-visible"
           >
             <defs>
               <clipPath id="intersectClipMobile">
                 <circle cx="103.02" cy="103.02" r="103.02" />
               </clipPath>
             </defs>
-            <circle cx="103.02" cy="103.02" r="103.02" fill="#CDB17E" />
-            <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
-            <circle
-              cx="249.98"
+            <motion.circle
+              cx="103.02"
               cy="103.02"
               r="103.02"
-              fill="#FFFFFF"
-              clipPath="url(#intersectClipMobile)"
+              fill="#CDB17E"
+              variants={{
+                hidden: { x: -56, opacity: 0 },
+                visible: {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1] },
+                },
+              }}
             />
+            <motion.g
+              variants={{
+                hidden: { x: 56, opacity: 0 },
+                visible: {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1], delay: 0.12 },
+                },
+              }}
+            >
+              <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
+              <circle
+                cx="249.98"
+                cy="103.02"
+                r="103.02"
+                fill="#FFFFFF"
+                clipPath="url(#intersectClipMobile)"
+              />
+            </motion.g>
           </svg>
-        </div>
+        </motion.div>
 
         {/* --- DIAGRAM TEXTS --- */}
         <h5
@@ -1507,7 +1634,7 @@ const BetterWaySection = () => {
         </h5>
 
         {/* --- LOGO --- */}
-        <div className="absolute left-1/2 top-[474px] md:top-[742px] w-[37.71px] md:w-[320px] h-[44px] md:h-[320px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+        <div className="absolute left-1/2 top-[474px] md:top-[742px] w-[58px] md:w-[320px] h-[68px] md:h-[320px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
           <img
             src={centerLogo}
             alt="11 Logo"
@@ -1515,12 +1642,6 @@ const BetterWaySection = () => {
             loading="lazy"
           />
         </div>
-
-        {/* --- MOBILE DASHED LINE --- */}
-        <div className="block md:hidden absolute left-1/2 top-[558px] -translate-x-1/2 w-[1px] h-[145px] border-l-[0.5px] border-dashed border-[#000000]"></div>
-
-        {/* --- DESKTOP DASHED LINE --- */}
-        <div className="hidden md:block absolute left-1/2 top-[900px] -translate-x-1/2 w-[1px] h-[145px] border-l-[1px] border-dashed border-[#000000]/30"></div>
 
         {/* --- SUB TEXTS --- */}
         <p className="absolute w-[120px] md:w-[200px] left-[20px] md:left-[30px] top-[597px] md:top-[688px] text-[#957960] text-[12px] leading-[150%] md:leading-[1.5] font-['Poppins'] md:font-sans">
@@ -1581,6 +1702,7 @@ const ChecklistSection = () => {
   const [isLayoutVisible, setIsLayoutVisible] = useState(false)
   const gateAreaRef = useRef(null)
   const gateRef = useRef(null)
+  const insideBgRef = useRef(null)
   const howItWorksRef = useRef(null)
   const layoutWrapRef = useRef(null)
   const [layoutScale, setLayoutScale] = useState(1)
@@ -1626,10 +1748,10 @@ const ChecklistSection = () => {
   useEffect(() => {
     const gateArea = gateAreaRef.current
     const gate = gateRef.current
+    const insideBg = insideBgRef.current
     const howItWorks = howItWorksRef.current
-    if (!gateArea || !gate || !howItWorks) return
+    if (!gateArea || !gate || !insideBg || !howItWorks) return
 
-    const doorFill = gate.querySelector('#door-fill')
     const doorTable = gate.querySelector('#door-table')
     const doorLights = gate.querySelector('#door-lights')
     const doorCurvedText = gate.querySelector('#door-curved-text')
@@ -1640,6 +1762,10 @@ const ChecklistSection = () => {
     const gateLiftY = isMobile ? -260 : -220
     const scrollEnd = isMobile ? 1300 : 1500
     const scrubVal = isMobile ? 1 : 1
+    const doorOpenEnd = 1
+    const insideBgRevealStart = doorOpenEnd + 0.04
+    const gateFadeStart = doorOpenEnd + 0.08
+    const howItWorksStart = doorOpenEnd + 0.16
 
     const getMobileStartTrigger = () => {
       if (!gate) return 'bottom bottom'
@@ -1650,6 +1776,17 @@ const ChecklistSection = () => {
       return `bottom+=${extraHeight}px bottom`
     }
     const startTrigger = isMobile ? getMobileStartTrigger : 'bottom bottom'
+
+    let howItWorksActivated = false
+    const activateHowItWorks = () => {
+      if (howItWorksActivated) return
+      howItWorksActivated = true
+      setHowItWorksVisible(true)
+      requestAnimationFrame(() => ScrollTrigger.refresh())
+    }
+
+    gsap.set(insideBg, { opacity: 0 })
+    gsap.set(howItWorks, { yPercent: 100, opacity: 1 })
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -1685,33 +1822,20 @@ const ChecklistSection = () => {
         0
       )
 
-    if (doorFill) tl.to(doorFill, { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.78)
-    tl.to(gate, { opacity: 0, duration: 0.15, ease: 'power2.out' }, 0.88)
+    // Let the door finish opening before the inside scene starts revealing.
+    tl.to(insideBg, { opacity: 1, duration: 0.24, ease: 'power2.out' }, insideBgRevealStart)
+    tl.to(gate, { opacity: 0, duration: 0.18, ease: 'power2.out' }, gateFadeStart)
 
     tl.to(
       howItWorks,
       {
-        opacity: 1,
-        duration: 0.4,
-        ease: 'power2.in',
-        onComplete: () => {
-          const hSection = howItWorksRef.current
-          if (hSection) {
-            let delay = 0
-            hSection.querySelectorAll('.reveal-wrapper').forEach(wrapper => {
-              wrapper.querySelectorAll('.reveal-text').forEach(t => {
-                if (!t.classList.contains('is-visible')) {
-                  t.style.animationDelay = `${delay}s`
-                  t.classList.add('is-visible')
-                  delay += 0.04
-                }
-              })
-            })
-          }
-          setHowItWorksVisible(true)
-        },
+        yPercent: 0,
+        duration: 0.96,
+        ease: 'power3.out',
+        onStart: activateHowItWorks,
+        onComplete: () => ScrollTrigger.refresh(),
       },
-      0.85
+      howItWorksStart
     )
 
     return () => {
@@ -1723,17 +1847,9 @@ const ChecklistSection = () => {
   return (
     <section
       ref={sectionRef}
+      data-nav-theme="glass"
       className="checklist-section relative w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
     >
-      <div
-        className="absolute hidden md:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
-        style={{ left: '-10%', top: '5%', transform: 'rotate(-37.82deg)' }}
-      />
-      <div
-        className="absolute hidden md:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
-        style={{ right: '5%', top: '30%', transform: 'rotate(-37.82deg)' }}
-      />
-
       {/* Lightbulbs */}
       <div className="absolute top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
         <div className="absolute top-0 left-0 w-full flex">
@@ -2032,10 +2148,15 @@ const ChecklistSection = () => {
       <div className="relative w-full z-10 mt-[80px] md:mt-10 overflow-visible md:overflow-hidden min-h-[90vh] md:min-h-[100vh]">
         <div
           ref={gateAreaRef}
-          className="relative w-full h-[90vh] md:h-[100vh] z-20"
+          className="relative w-full h-[90vh] md:h-[100vh] z-20 overflow-hidden"
           style={{ position: 'relative' }}
         >
-          <div className="absolute inset-0 flex justify-center items-start md:items-center pt-16 md:pt-0">
+          <div
+            ref={insideBgRef}
+            className="absolute inset-0 bg-[#E9D0A2] opacity-0 pointer-events-none"
+          />
+
+          <div className="absolute inset-0 z-10 flex justify-center items-start md:items-center pt-16 md:pt-0">
             <div
               ref={gateRef}
               className="w-full max-w-[1200px] px-2 md:px-4"
@@ -2051,8 +2172,7 @@ const ChecklistSection = () => {
 
         <div
           ref={howItWorksRef}
-          className="relative z-10 -mt-[50vh] md:-mt-[100vh]"
-          style={{ opacity: 0 }}
+          className="relative z-20 -mt-[50vh] md:-mt-[100vh]"
         >
           <HowItWorksSection isVisible={howItWorksVisible} />
         </div>
@@ -2666,6 +2786,7 @@ const CelebrationFeelingSection = () => {
         containerRef.current = el
         preloadRef.current = el
       }}
+      data-nav-theme="glass"
       className="w-full bg-[#BFAC9B] overflow-hidden flex justify-center font-sans relative h-[700px] md:h-[900px]"
     >
       <div ref={revealRef} className="relative w-[1440px] max-w-full h-full shrink-0">
@@ -2785,6 +2906,7 @@ const PlanningGuidesSection = () => {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [page, setPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
@@ -2807,10 +2929,9 @@ const PlanningGuidesSection = () => {
       ? CARDS_PER_PAGE
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / currentCardsPerPage))
-  const visibleBlogs = filteredBlogs.slice(
-    page * currentCardsPerPage,
-    (page + 1) * currentCardsPerPage
-  )
+  const safePage = Math.min(page, totalPages - 1)
+  const mobileCardWidth = 289
+  const mobileCardGap = 16
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -2818,6 +2939,20 @@ const PlanningGuidesSection = () => {
   }
 
   const sectionRef = useRef(null)
+  const carouselViewportRef = useRef(null)
+
+  useEffect(() => {
+    const viewport = carouselViewportRef.current
+    if (!viewport) return
+
+    const updateWidth = () => setCarouselViewportWidth(viewport.clientWidth)
+
+    const ro = new ResizeObserver(updateWidth)
+    ro.observe(viewport)
+    updateWidth()
+
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const root = sectionRef.current
@@ -2841,7 +2976,7 @@ const PlanningGuidesSection = () => {
 
     cards.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [visibleBlogs, page, activeCategory])
+  }, [filteredBlogs.length, page, activeCategory])
 
   return (
     <section
@@ -2954,7 +3089,7 @@ const PlanningGuidesSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
+                  disabled={safePage === 0}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -2973,13 +3108,25 @@ const PlanningGuidesSection = () => {
                 </button>
               </div>
 
-              <div className="flex justify-center md:block">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-[289px] max-w-[min(289px,calc(100vw-2rem))] md:max-w-none md:w-auto relative">
-                  {visibleBlogs.map((blog, i) => (
+              <div ref={carouselViewportRef} className="overflow-hidden md:px-0">
+                <div
+                  className="flex gap-4 md:gap-6 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{
+                    transform: isMobile
+                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                  }}
+                >
+                  {filteredBlogs.map((blog, i) => (
                     <div
                       key={blog.id ?? blog.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal"
-                      style={{ '--delay': `${0.08 + i * 0.06}s` }}
+                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${mobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
                     >
                       <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
                         <img
@@ -2988,11 +3135,11 @@ const PlanningGuidesSection = () => {
                             CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]
                           }
                           alt={blog.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors group-hover:bg-[#6A6C52]">
+                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
                           {blog.title}
                         </h3>
@@ -3009,7 +3156,7 @@ const PlanningGuidesSection = () => {
               <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
                 <button
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
+                  disabled={safePage >= totalPages - 1}
                   className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
                 >
                   <svg
@@ -3033,7 +3180,7 @@ const PlanningGuidesSection = () => {
             <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
+                disabled={safePage === 0}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -3051,16 +3198,18 @@ const PlanningGuidesSection = () => {
                 {[...Array(totalPages)].map((_, i) => (
                   <div
                     key={i}
-                    onClick={() => setPage(i)}
+                    onClick={() => setPage(Math.min(i, totalPages - 1))}
                     className={`cursor-pointer rounded-[8px] transition-all ${
-                      i === page ? 'w-[52px] h-[8px] bg-[#D4BA8E]' : 'w-[8px] h-[8px] bg-[#D4D4D4]'
+                      i === safePage
+                        ? 'w-[52px] h-[8px] bg-[#D4BA8E]'
+                        : 'w-[8px] h-[8px] bg-[#D4D4D4]'
                     }`}
                   />
                 ))}
               </div>
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
+                disabled={safePage >= totalPages - 1}
                 className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
@@ -3081,9 +3230,11 @@ const PlanningGuidesSection = () => {
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setPage(i)}
+                  onClick={() => setPage(Math.min(i, totalPages - 1))}
                   className={`cursor-pointer rounded-[12px] transition-all ${
-                    i === page ? 'w-[20px] h-[4px] bg-[#CDB17E]' : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                    i === safePage
+                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
+                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
                   }`}
                 />
               ))}
@@ -3175,7 +3326,10 @@ const TestimonialsSection = () => {
   // Avoid initializing Swiper with empty/undefined data.
   if (safeTestimonials.length === 0) {
     return (
-      <section className="relative w-full min-h-[479px] md:min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center">
+      <section
+        data-nav-theme="dark"
+        className="relative w-full min-h-[479px] md:min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center"
+      >
         <h2
           className="text-[#FFFFFF] text-[24px] md:text-[61px] leading-[1] text-center font-serif mt-[40px] md:mt-[80px] z-10 px-4 reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
@@ -3191,6 +3345,7 @@ const TestimonialsSection = () => {
   return (
     <section
       ref={sectionRef}
+      data-nav-theme="dark"
       className="relative w-full min-h-[479px] md:min-h-[757px] bg-[#364022] overflow-x-hidden font-sans flex flex-col items-center"
     >
       <h2
@@ -3358,9 +3513,30 @@ const SplitInfoSection = () => {
   const { data: cms = {} } = useLandingPage()
   const ig = cms.instagram_section ?? {}
   const vp = cms.vendor_partner ?? {}
+  const splitRevealRef = useRef(null)
+  const [isSplitVisible, setIsSplitVisible] = useState(false)
 
   // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
   const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
+
+  useEffect(() => {
+    const root = splitRevealRef.current
+    if (!root) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          setIsSplitVisible(true)
+          io.disconnect()
+        })
+      },
+      { threshold: 0.22, rootMargin: '0px 0px -8% 0px' }
+    )
+
+    io.observe(root)
+    return () => io.disconnect()
+  }, [])
 
   useEffect(() => {
     const root = sectionRef.current
@@ -3396,9 +3572,29 @@ const SplitInfoSection = () => {
       */}
       <div className="w-full max-w-[1440px] min-w-0 flex flex-col lg:flex-row mx-auto">
         {/* LEFT SECTION - Inspiration */}
-        <div className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px]">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={
+            isSplitVisible
+              ? { opacity: 1, transition: { duration: 0.8, delay: 1.3 } }
+              : { opacity: 0 }
+          }
+          className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px]"
+        >
           {/* Text Content Block */}
-          <div className="flex flex-col items-start text-left w-[55%] lg:w-[400px] shrink-0">
+          <motion.div
+            initial={{ y: 72, opacity: 0 }}
+            animate={
+              isSplitVisible
+                ? {
+                    y: 0,
+                    opacity: 1,
+                    transition: { duration: 1.65, delay: 1.55, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { y: 72, opacity: 0 }
+            }
+            className="flex flex-col items-start text-left w-[55%] lg:w-[400px] shrink-0"
+          >
             <h2
               className="text-[#2D2D2D] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0 reveal-heading"
               style={{ fontFamily: "'Malgin', serif" }}
@@ -3419,15 +3615,15 @@ const SplitInfoSection = () => {
 
             <span className="mt-[20px] lg:mt-[16px] reveal-wrapper reveal-on-scroll">
               <span className="reveal-text">
-                <button className="box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] hover:bg-gray-50 transition-colors">
-                  <span className="text-[#591902] font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
+                <button className="box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] bg-transparent text-[#591902] hover:bg-[#591902] hover:text-white transition-colors group">
+                  <span className="text-[#591902] group-hover:text-white transition-colors font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
                     {ig.cta_label ?? 'Join Our Instagram'}
                   </span>
                   <svg
-                    className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0"
+                    className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0 transition-colors"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#591902"
+                    stroke="currentColor"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -3439,28 +3635,73 @@ const SplitInfoSection = () => {
                 </button>
               </span>
             </span>
-          </div>
+          </motion.div>
 
           {/* Image Block */}
-          <img
+          <motion.img
+            initial={{ y: 88, opacity: 0 }}
+            animate={
+              isSplitVisible
+                ? {
+                    y: 0,
+                    opacity: 1,
+                    transition: { duration: 1.75, delay: 1.78, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { y: 88, opacity: 0 }
+            }
             src={inspirationImg}
             alt="Behind the scenes setup"
             className="w-[40%] max-w-[156px] lg:max-w-[240px] h-[229px] lg:h-[351px] rounded-[3.57px] lg:rounded-[8px] object-cover object-[20%_center] card-reveal"
             style={{ '--delay': '0.08s' }}
             loading="lazy"
           />
-        </div>
+        </motion.div>
 
         {/* RIGHT SECTION - Partner */}
-        <div className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px]">
+        <motion.div
+          ref={splitRevealRef}
+          initial={{ x: 220, opacity: 0 }}
+          animate={
+            isSplitVisible
+              ? {
+                  x: 0,
+                  opacity: 1,
+                  transition: { duration: 2.35, ease: [0.22, 1, 0.36, 1] },
+                }
+              : { x: 220, opacity: 0 }
+          }
+          className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px]"
+        >
           {/* Placeholder/Top Box */}
-          <div
+          <motion.div
+            initial={{ y: 70, opacity: 0 }}
+            animate={
+              isSplitVisible
+                ? {
+                    y: 0,
+                    opacity: 1,
+                    transition: { duration: 1.7, delay: 1.1, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { y: 70, opacity: 0 }
+            }
             className="w-full max-w-[353px] lg:max-w-[420px] h-[152px] lg:h-[210px] bg-[#FFFFFF] rounded-[8px] overflow-hidden shrink-0 card-reveal"
             style={{ '--delay': '0.14s' }}
           />
 
           {/* Text Content Block */}
-          <div className="flex flex-col items-start w-full max-w-[353px] lg:max-w-[420px] mt-[32px] lg:mt-[40px]">
+          <motion.div
+            initial={{ y: 86, opacity: 0 }}
+            animate={
+              isSplitVisible
+                ? {
+                    y: 0,
+                    opacity: 1,
+                    transition: { duration: 1.8, delay: 1.35, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { y: 86, opacity: 0 }
+            }
+            className="flex flex-col items-start w-full max-w-[353px] lg:max-w-[420px] mt-[32px] lg:mt-[40px]"
+          >
             <h2
               className="text-[#FFFFFF] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0 reveal-heading"
               style={{ fontFamily: "'Malgin', serif" }}
@@ -3507,8 +3748,8 @@ const SplitInfoSection = () => {
                 </span>
               </span>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   )

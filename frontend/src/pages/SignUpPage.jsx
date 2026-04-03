@@ -93,7 +93,7 @@ export default function SignUpPage() {
       subtitle="Explore the collection. Your seamless event is just a few clicks away!"
       footer={
         <p
-          className="text-[#364022] text-[12px] min-[540px]:text-[14px] leading-[150%]"
+          className="text-[#364022] text-[12px] leading-[150%]"
           style={{ fontFamily: "'Poppins', sans-serif" }}
         >
           Already have an account?{' '}
@@ -108,7 +108,7 @@ export default function SignUpPage() {
         className="flex flex-col w-full gap-[24px]"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
-        <div className="flex flex-col min-[540px]:flex-row gap-[16px] w-full">
+        <div className="flex gap-[16px] w-full">
           <div className="flex flex-col gap-[8px] flex-1">
             <label className="text-[#364022] text-[16px] font-medium leading-[150%]">
               First name
@@ -195,7 +195,7 @@ export default function SignUpPage() {
               </svg>
             </button>
           </div>
-          <p className="text-[#727355] text-[12px] min-[540px]:text-[12px] leading-[150%]">
+          <p className="text-[#727355] text-[12px] leading-[150%]">
             Must be at least 8 characters.
           </p>
 
@@ -206,7 +206,7 @@ export default function SignUpPage() {
               onChange={e => setAgreed(e.target.checked)}
               className="w-[12px] h-[12px] border border-[rgba(45,45,45,0.5)] rounded-[2px] accent-[#CDB17E]"
             />
-            <span className="text-[#364022] text-[12px] min-[540px]:text-[14px] leading-[150%]">
+            <span className="text-[#364022] text-[12px] leading-[150%]">
               I agree with{' '}
               <a href="#" className="font-bold hover:underline">
                 Terms
@@ -225,7 +225,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading || !agreed}
-            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[14px] min-[540px]:text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             {loading ? 'Signing up…' : 'Sign up'}
           </button>
@@ -234,7 +234,7 @@ export default function SignUpPage() {
           </span>
           <a
             href={`${STRAPI_URL}/api/connect/google`}
-            className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[14px] min-[540px]:text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
+            className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
           >
             <svg
               width="24"

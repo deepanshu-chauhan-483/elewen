@@ -77,7 +77,7 @@ const Footer = () => {
       </div>
 
       {/* Rest of footer: centered column */}
-      <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 box-border md:px-[100px] md:py-8">
+      <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 box-border md:px-[100px] md:pb-12 md:pt-24">
         {/* Nav + about — flex row on desktop, centered column width on mobile */}
         <div className="flex w-full flex-1 flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-10">
           {/* Mobile: full width of column (no 347px cap) so each label+links stays one row */}
@@ -94,11 +94,12 @@ const Footer = () => {
                   {row.label}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-[16px] overflow-x-auto opacity-50 [-ms-overflow-style:none] [scrollbar-width:none] md:flex-wrap md:gap-x-7 md:gap-y-2 [&::-webkit-scrollbar]:hidden">
-                  {row.links.map(link => (
+                  {row.links.map((link, linkIndex) => (
                     <a
                       key={link}
                       href="#"
-                      className="shrink-0 whitespace-nowrap text-[14px] font-['Poppins'] leading-[150%] text-[#2D2D2D] transition-colors hover:text-[#591902] md:font-sans md:whitespace-normal md:text-[16px] md:leading-[1.5]"
+                      className="anim-element slide-from-left shrink-0 whitespace-nowrap text-[14px] font-['Poppins'] leading-[150%] text-[#2D2D2D] transition-colors hover:text-[#591902] md:font-sans md:whitespace-normal md:text-[16px] md:leading-[1.5]"
+                      style={{ '--delay': `${i * 0.06 + 0.08 + linkIndex * 0.04}s` }}
                     >
                       {link}
                     </a>
@@ -122,7 +123,10 @@ const Footer = () => {
         {/* Divider + copyright — pinned to bottom of footer column */}
         <div className="mt-auto flex w-full flex-col items-center gap-2 pt-6 md:items-end md:pt-12">
           <div className="w-full max-w-[353px] border-t border-[rgba(0,0,0,0.2)] md:max-w-[720px] md:border-[#000000] md:opacity-20" />
-          <p className="w-full max-w-[353px] text-center text-[12px] font-['Poppins'] leading-[150%] text-[#2D2D2D] opacity-50 md:text-right md:max-w-[720px] md:font-sans md:leading-[1.5]">
+          <p
+            className="anim-element slide-from-bottom w-full max-w-[353px] text-center text-[12px] font-['Poppins'] leading-[150%] text-[#2D2D2D] opacity-50 md:text-right md:max-w-[720px] md:font-sans md:leading-[1.5]"
+            style={{ '--delay': '0.12s' }}
+          >
             © 2025 Elewen. All rights reserved.
           </p>
         </div>

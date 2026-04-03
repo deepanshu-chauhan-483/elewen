@@ -127,7 +127,7 @@ export default function ForgotPasswordPage() {
 
             <Link
               to="/login"
-              className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] min-[540px]:text-[14px] leading-[150%]"
+              className="w-full flex justify-center items-center gap-[10px] text-[#364022] text-[12px] leading-[150%]"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="-rotate-90">
                 <path

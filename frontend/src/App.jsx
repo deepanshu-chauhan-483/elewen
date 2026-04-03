@@ -4,7 +4,7 @@ import { useLenis } from './useLenis'
 import NavHeader from './components/NavHeader'
 import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
-import InHousePlannerSection from './pages/InHousePlannerPage'
+import InHousePlannerPage from './pages/InHousePlannerPage'
 import About from './pages/About'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage'
 import SignUpPage from './pages/SignUpPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import NewPasswordPage from './pages/NewPasswordPage'
+import HowItWorkPage from './pages/HowItWorkPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -51,13 +52,14 @@ function AppLayout() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
-        <Route path="/in-house-planner" element={<InHousePlannerSection />} />
+        <Route path="/in-house-planner" element={<InHousePlannerPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/new-password" element={<NewPasswordPage />} />
+        <Route path="/how-it-work" element={<HowItWorkPage />} />
       </Routes>
       {!hideGlobalChrome && <Footer />}
     </>
