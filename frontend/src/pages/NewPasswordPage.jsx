@@ -235,7 +235,9 @@ export default function NewPasswordPage() {
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             <div className="flex flex-col gap-[8px] w-full min-w-0">
-              <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">Email</label>
+              <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
+                Email
+              </label>
               <input
                 type="email"
                 value={email}
@@ -326,7 +328,9 @@ export default function NewPasswordPage() {
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
         <div className="flex flex-col gap-[8px] w-full min-w-0">
-          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">Password</label>
+          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
+            Password
+          </label>
           <div className="relative w-full min-w-0">
             <input
               type={showPassword ? 'text' : 'password'}

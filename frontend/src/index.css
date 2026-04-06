@@ -552,8 +552,7 @@ p {
 
 .chaos-person-shadow-both {
   filter: drop-shadow(-10px 0 22px rgba(89, 25, 2, 0.14))
-    drop-shadow(10px 0 22px rgba(89, 25, 2, 0.14))
-    drop-shadow(0 0 22px rgba(89, 25, 2, 0.14))
+    drop-shadow(10px 0 22px rgba(89, 25, 2, 0.14)) drop-shadow(0 0 22px rgba(89, 25, 2, 0.14))
     drop-shadow(0 10px 24px rgba(89, 25, 2, 0.1));
 }
 

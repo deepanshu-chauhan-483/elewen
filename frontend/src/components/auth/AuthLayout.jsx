@@ -10,9 +10,7 @@ export default function AuthLayout({
   footer,
 }) {
   const rightPaddingClass =
-    activeTab === 'login'
-      ? 'px-4 py-6 min-[540px]:p-6'
-      : 'px-4 py-6 min-[540px]:p-8'
+    activeTab === 'login' ? 'px-4 py-6 min-[540px]:p-6' : 'px-4 py-6 min-[540px]:p-8'
 
   // Lenis smooth-scroll wraps the app and otherwise scrolls the window on wheel/touch,
   // which moves the whole auth view. data-lenis-prevent lets native overflow handle the

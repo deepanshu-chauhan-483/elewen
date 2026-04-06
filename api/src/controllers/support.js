@@ -165,7 +165,9 @@ export const updateTicket = async (req, res, next) => {
       return res.status(400).json({ error: `status must be one of: ${validStatuses.join(', ')}` })
     }
     if (priority && !validPriorities.includes(priority)) {
-      return res.status(400).json({ error: `priority must be one of: ${validPriorities.join(', ')}` })
+      return res
+        .status(400)
+        .json({ error: `priority must be one of: ${validPriorities.join(', ')}` })
     }
 
     const ticket = await prisma.supportTicket.findUnique({ where: { id } })

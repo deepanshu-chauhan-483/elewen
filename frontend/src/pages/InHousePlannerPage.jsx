@@ -1788,7 +1788,10 @@ const CelebrationFormSection = () => {
       </div>
 
       {/* --- Form Container --- */}
-      <div className="card-reveal relative w-[calc(100%-32px)] max-w-[720px] h-auto min-[540px]:h-[701px] bg-[#F8F4ED] rounded-[20px] shadow-sm mx-auto p-6 min-[540px]:p-0" style={{ '--delay': '0.15s' }}>
+      <div
+        className="card-reveal relative w-[calc(100%-32px)] max-w-[720px] h-auto min-[540px]:h-[701px] bg-[#F8F4ED] rounded-[20px] shadow-sm mx-auto p-6 min-[540px]:p-0"
+        style={{ '--delay': '0.15s' }}
+      >
         {/* --- ZONE 1: STEPPER (Top 60px) --- */}
 
         {currentStep < 4 && (

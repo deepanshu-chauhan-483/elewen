@@ -84,7 +84,7 @@ const PlanEventSection = () => {
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
     handleResize() // init
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -304,9 +304,9 @@ const PlanEventSection = () => {
       {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         {/* Categories Bar */}
-        <aside className="w-full md:w-[320px] pt-8 pb-0 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 relative reveal-border-y">
-          <div className="hidden md:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
-          <div className="flex flex-row md:flex-col items-center md:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 relative reveal-border-y">
+          <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
@@ -336,7 +336,7 @@ const PlanEventSection = () => {
                   </div>
                   {/* Vertical Separator for Mobile */}
                   {index < safeCategories.length - 1 && (
-                    <div className="block md:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
+                    <div className="block lg:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
                   )}
                 </React.Fragment>
               )
@@ -349,7 +349,7 @@ const PlanEventSection = () => {
           <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden md:overflow-hidden">
             <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] md:min-h-0">
               {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
-              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
@@ -423,7 +423,7 @@ const PlanEventSection = () => {
               </div>
 
               {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
                 <button
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
@@ -449,7 +449,7 @@ const PlanEventSection = () => {
             {/* Pagination Controls */}
 
             {/* Desktop Pagination Block */}
-            <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
+            <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
@@ -1808,12 +1808,7 @@ const BetterWaySection = () => {
 
 const LAYOUT_W = 1034
 const LAYOUT_H = 684
-const MobileChecklistGrid = ({
-  chaosItems,
-  chaosCardDetails,
-  chaosImages,
-  chaosShadowClasses,
-}) => {
+const MobileChecklistGrid = ({ chaosItems, chaosCardDetails, chaosImages, chaosShadowClasses }) => {
   const cards = [
     {
       titleClass: 'w-[74%] text-left',
@@ -1889,12 +1884,12 @@ const MobileChecklistGrid = ({
                   ${chaosShadowClasses[index]}
                   ${
                     index === 0
-                      ? 'h-[95%] max-w-[140%]'          // scrolling woman — slightly wider
+                      ? 'h-[95%] max-w-[140%]' // scrolling woman — slightly wider
                       : index === 1
-                        ? 'h-[90%] max-w-[150%]'          // calls man
+                        ? 'h-[90%] max-w-[150%]' // calls man
                         : index === 2
-                          ? 'h-[105%] max-w-[160%]'         // vendors woman — taller
-                          : 'h-[88%] max-w-[140%]'          // decisions man
+                          ? 'h-[105%] max-w-[160%]' // vendors woman — taller
+                          : 'h-[88%] max-w-[140%]' // decisions man
                   }
                 `}
                 style={cards[index].imageStyle}
@@ -1981,7 +1976,9 @@ const ChecklistSection = () => {
       { threshold: 0.2 }
     )
     observer.observe(wrap)
-    return () => { observer.disconnect() }
+    return () => {
+      observer.disconnect()
+    }
   }, [])
 
   useEffect(() => {
@@ -2040,25 +2037,47 @@ const ChecklistSection = () => {
 
     tl.to(gate, { scale: scaleEnd, y: gateLiftY, ease: 'power2.in', duration: doorOpenEnd }, 0)
     if (doorTable) tl.to(doorTable, { x: 180, ease: 'power2.in', duration: doorOpenEnd }, 0)
-    if (doorLights) tl.to(doorLights, { x: -120, y: -40, ease: 'power2.in', duration: doorOpenEnd }, 0)
+    if (doorLights)
+      tl.to(doorLights, { x: -120, y: -40, ease: 'power2.in', duration: doorOpenEnd }, 0)
     const archPath = gate.querySelector('#door-arch-path')
     if (doorCurvedText && archPath)
-      tl.to(doorCurvedText, {
-        motionPath: {
-          path: archPath, align: archPath, alignOrigin: [0.5, 0.5],
-          autoRotate: false, start: 0, end: 0.5,
+      tl.to(
+        doorCurvedText,
+        {
+          motionPath: {
+            path: archPath,
+            align: archPath,
+            alignOrigin: [0.5, 0.5],
+            autoRotate: false,
+            start: 0,
+            end: 0.5,
+          },
+          ease: 'power2.in',
+          duration: doorOpenEnd,
         },
-        ease: 'power2.in', duration: doorOpenEnd,
-      }, 0)
+        0
+      )
 
     tl.to(insideBg, { opacity: 1, duration: 0.18, ease: 'power2.out' }, insideBgRevealStart)
     tl.to(gate, { opacity: 0, duration: 0.12, ease: 'power2.out' }, gateFadeStart)
-    tl.to(howItWorks, {
-      yPercent: 0, duration: 1.12, ease: 'power2.out',
-      onComplete: () => { activateHowItWorks(); ScrollTrigger.refresh() },
-    }, howItWorksStart)
+    tl.to(
+      howItWorks,
+      {
+        yPercent: 0,
+        duration: 1.12,
+        ease: 'power2.out',
+        onComplete: () => {
+          activateHowItWorks()
+          ScrollTrigger.refresh()
+        },
+      },
+      howItWorksStart
+    )
 
-    return () => { tl.scrollTrigger?.kill(); tl.kill() }
+    return () => {
+      tl.scrollTrigger?.kill()
+      tl.kill()
+    }
   }, [])
 
   return (
@@ -2071,7 +2090,10 @@ const ChecklistSection = () => {
       <div className="absolute -top-px md:top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
         <div className="absolute top-0 left-0 w-full flex">
           {scallopCount.map((_, i) => (
-            <div key={i} className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]">
+            <div
+              key={i}
+              className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]"
+            >
               <div
                 className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
                 style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
@@ -2083,21 +2105,34 @@ const ChecklistSection = () => {
               {i !== scallopCount.length - 1 && (
                 <div
                   className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
-                  style={{ animationDuration: `${3.5 + (i % 3) * 0.5}s`, animationDelay: `${(i % 5) * 0.2}s` }}
+                  style={{
+                    animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                    animationDelay: `${(i % 5) * 0.2}s`,
+                  }}
                 >
-                  <div className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`} />
+                  <div
+                    className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`}
+                  />
                   <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
-                    <img src={i % 2 === 0 ? bulb1 : bulb2} alt="Light" className="w-[20px] md:w-[32px] h-auto relative z-10" loading="lazy" />
+                    <img
+                      src={i % 2 === 0 ? bulb1 : bulb2}
+                      alt="Light"
+                      className="w-[20px] md:w-[32px] h-auto relative z-10"
+                      loading="lazy"
+                    />
                     <div
                       className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
-                        i % 2 === 0 ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]' : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
+                        i % 2 === 0
+                          ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
+                          : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
                       }`}
                       style={{
                         animationDuration: `${4 + (i % 3) * 0.75}s`,
                         animationDelay: `${(i % 5) * 0.2}s`,
-                        background: i % 2 === 0
-                          ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
-                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
+                        background:
+                          i % 2 === 0
+                            ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
+                            : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
                         clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
                       }}
                     />
@@ -2113,9 +2148,13 @@ const ChecklistSection = () => {
         className="text-[24px] md:text-[61px] leading-[1.1] md:leading-[1] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
-        <span className="reveal-wrapper"><span className="reveal-text">{s.heading_1 ?? 'Somewhere along the way,'} </span></span>
+        <span className="reveal-wrapper">
+          <span className="reveal-text">{s.heading_1 ?? 'Somewhere along the way,'} </span>
+        </span>
         <br />
-        <span className="reveal-wrapper"><span className="reveal-text">{s.heading_2 ?? 'Hosting turned into Checklists.'}</span></span>
+        <span className="reveal-wrapper">
+          <span className="reveal-text">{s.heading_2 ?? 'Hosting turned into Checklists.'}</span>
+        </span>
       </h2>
 
       {/* ─── MOBILE GRID (FIXED) ─────────────────────────────────────────────── */}
@@ -2147,50 +2186,145 @@ const ChecklistSection = () => {
           >
             {/* STEP 1 */}
             <div className="absolute left-[283px] top-[19px] w-[211px] h-[211px]">
-              <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0`} style={{ '--delay': '0s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.1)' }} />
-              <img src={imgScrolling} className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`} alt="Scrolling" style={{ '--delay': '0.15s' }} loading="lazy" />
+              <div
+                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0`}
+                style={{
+                  '--delay': '0s',
+                  boxShadow:
+                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.1)',
+                }}
+              />
+              <img
+                src={imgScrolling}
+                className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
+                alt="Scrolling"
+                style={{ '--delay': '0.15s' }}
+                loading="lazy"
+              />
             </div>
-            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[196px] top-[170px] w-[113px] text-right z-20`} style={{ '--delay': '0.25s' }}>
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[0]?.title ?? 'Too much scrolling.'}</h3>
+            <div
+              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
+              style={{ '--delay': '0.25s' }}
+            >
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                {chaosItems[0]?.title ?? 'Too much scrolling.'}
+              </h3>
             </div>
-            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`} style={{ '--delay': '0.3s' }}>
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">What was once simple now means endless scrolling — and still no confidence.</p>
+            <div
+              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
+              style={{ '--delay': '0.3s' }}
+            >
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                What was once simple now means endless scrolling — and still no confidence.
+              </p>
             </div>
 
             {/* STEP 2 */}
             <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
-              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`} style={{ '--delay': '0.5s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
-              <img src={imgCalls} alt="Calls" className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`} style={{ '--delay': '0.65s' }} loading="lazy" />
-              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`} style={{ '--delay': '0.8s' }}>
-                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">{chaosItems[1]?.title ?? 'Too many calls.'}</h3>
+              <div
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
+                style={{
+                  '--delay': '0.5s',
+                  boxShadow:
+                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
+                }}
+              />
+              <img
+                src={imgCalls}
+                alt="Calls"
+                className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
+                style={{ '--delay': '0.65s' }}
+                loading="lazy"
+              />
+              <div
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
+                style={{ '--delay': '0.8s' }}
+              >
+                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
+                  {chaosItems[1]?.title ?? 'Too many calls.'}
+                </h3>
               </div>
-              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`} style={{ '--delay': '0.85s' }}>
-                <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns into a coordination hub, and excitement becomes stress.</p>
+              <div
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
+                style={{ '--delay': '0.85s' }}
+              >
+                <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
+                  Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns
+                  into a coordination hub, and excitement becomes stress.
+                </p>
               </div>
             </div>
 
             {/* STEP 3 */}
             <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
-              <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0`} style={{ '--delay': '1.0s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
-              <img src={imgVendors} className={`anim-element slide-from-bottom chaos-person-shadow-both ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`} alt="Vendors" style={{ '--delay': '1.15s' }} loading="lazy" />
+              <div
+                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0`}
+                style={{
+                  '--delay': '1.0s',
+                  boxShadow:
+                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
+                }}
+              />
+              <img
+                src={imgVendors}
+                className={`anim-element slide-from-bottom chaos-person-shadow-both ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
+                alt="Vendors"
+                style={{ '--delay': '1.15s' }}
+                loading="lazy"
+              />
             </div>
-            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[400px] top-[337px] w-[113px] text-right z-20`} style={{ '--delay': '1.25s' }}>
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[2]?.title ?? 'Too many vendors.'}</h3>
+            <div
+              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
+              style={{ '--delay': '1.25s' }}
+            >
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                {chaosItems[2]?.title ?? 'Too many vendors.'}
+              </h3>
             </div>
-            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`} style={{ '--delay': '1.3s' }}>
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">One decorator, one caterer, one supplier, different prices, different chaos. You&apos;re not planning a celebration; you&apos;re managing a team.</p>
+            <div
+              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
+              style={{ '--delay': '1.3s' }}
+            >
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                One decorator, one caterer, one supplier, different prices, different chaos.
+                You&apos;re not planning a celebration; you&apos;re managing a team.
+              </p>
             </div>
 
             {/* STEP 4 */}
             <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
-              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0`} style={{ '--delay': '1.5s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
-              <img src={imgDecisions} alt="Decisions" className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`} style={{ '--delay': '1.65s' }} loading="lazy" />
+              <div
+                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0`}
+                style={{
+                  '--delay': '1.5s',
+                  boxShadow:
+                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
+                }}
+              />
+              <img
+                src={imgDecisions}
+                alt="Decisions"
+                className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
+                style={{ '--delay': '1.65s' }}
+                loading="lazy"
+              />
             </div>
-            <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[662px] top-[551px] w-[122px] text-left z-20`} style={{ '--delay': '1.75s' }}>
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[3]?.title ?? 'Too many decisions.'}</h3>
+            <div
+              className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[662px] top-[551px] w-[122px] text-left z-20`}
+              style={{ '--delay': '1.75s' }}
+            >
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                {chaosItems[3]?.title ?? 'Too many decisions.'}
+              </h3>
             </div>
-            <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`} style={{ '--delay': '1.8s' }}>
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more freedom, just more pressure.</p>
+            <div
+              className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
+              style={{ '--delay': '1.8s' }}
+            >
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more
+                freedom, just more pressure.
+              </p>
             </div>
           </div>
         </div>
@@ -2198,27 +2332,55 @@ const ChecklistSection = () => {
 
       {/* Relief text */}
       <div className="flex flex-col items-center gap-6 md:gap-8 mb-8 md:mb-32 z-10 text-center mt-8 md:mt-[40px] px-6">
-        <h3 className="text-[20px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading" style={{ fontFamily: "'Malgin', serif" }}>
-          <span className="reveal-wrapper"><span className="reveal-text">{s.relief_heading ?? 'Stop take a deep breath'}</span></span>
+        <h3
+          className="text-[20px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          <span className="reveal-wrapper">
+            <span className="reveal-text">{s.relief_heading ?? 'Stop take a deep breath'}</span>
+          </span>
         </h3>
         <div className="flex flex-col items-center">
           {reliefItems.map((item, i) => (
-            <p key={i} className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-              <span className="reveal-wrapper"><span className="reveal-text">{item}</span></span>
+            <p
+              key={i}
+              className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll"
+            >
+              <span className="reveal-wrapper">
+                <span className="reveal-text">{item}</span>
+              </span>
             </p>
           ))}
         </div>
-        <h4 className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2 reveal-heading" style={{ fontFamily: "'Malgin', serif" }}>
-          <span className="reveal-wrapper"><span className="reveal-text">{s.tagline ?? '11 takes the chaos out so you can stay in the moment'}</span></span>
+        <h4
+          className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2 reveal-heading"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          <span className="reveal-wrapper">
+            <span className="reveal-text">
+              {s.tagline ?? '11 takes the chaos out so you can stay in the moment'}
+            </span>
+          </span>
         </h4>
       </div>
 
       {/* Door section — unchanged */}
       <div className="door-section relative w-full z-10 mt-0 md:mt-10">
-        <div ref={gateAreaRef} className="door-section__pin relative w-full z-20" style={{ position: 'relative' }}>
-          <div ref={insideBgRef} className="absolute inset-0 bg-[#E9D0A2] opacity-0 pointer-events-none" />
+        <div
+          ref={gateAreaRef}
+          className="door-section__pin relative w-full z-20"
+          style={{ position: 'relative' }}
+        >
+          <div
+            ref={insideBgRef}
+            className="absolute inset-0 bg-[#f2d49e] opacity-0 pointer-events-none"
+          />
           <div className="relative z-10 flex flex-1 items-center justify-center">
-            <div ref={gateRef} className="door-section__gate px-0 md:px-4" style={{ transformOrigin: 'center center', willChange: 'transform' }}>
+            <div
+              ref={gateRef}
+              className="door-section__gate px-0 md:px-4"
+              style={{ transformOrigin: 'center center', willChange: 'transform' }}
+            >
               <div className="door-section__gate-inner origin-center">
                 <CelebrationDoor className="w-full h-auto" />
               </div>
@@ -3762,7 +3924,7 @@ const SplitInfoSection = () => {
           initial={{ opacity: 0 }}
           animate={
             isSplitVisible
-              ? { opacity: 1, transition: { duration: 0.8, delay: 1.3 } }
+              ? { opacity: 1, transition: { duration: 0.4, delay: 0.05 } }
               : { opacity: 0 }
           }
           className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px] overflow-x-clip"
@@ -3775,7 +3937,7 @@ const SplitInfoSection = () => {
                 ? {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 1.65, delay: 1.55, ease: [0.22, 1, 0.36, 1] },
+                    transition: { duration: 0.55, delay: 0.1, ease: [0.22, 1, 0.36, 1] },
                   }
                 : { y: 72, opacity: 0 }
             }
@@ -3831,7 +3993,7 @@ const SplitInfoSection = () => {
                 ? {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 1.75, delay: 1.78, ease: [0.22, 1, 0.36, 1] },
+                    transition: { duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] },
                   }
                 : { y: 88, opacity: 0 }
             }
@@ -3852,7 +4014,7 @@ const SplitInfoSection = () => {
               ? {
                   x: 0,
                   opacity: 1,
-                  transition: { duration: 2.35, ease: [0.22, 1, 0.36, 1] },
+                  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
                 }
               : { x: 220, opacity: 0 }
           }
@@ -3866,7 +4028,7 @@ const SplitInfoSection = () => {
                 ? {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 1.7, delay: 1.1, ease: [0.22, 1, 0.36, 1] },
+                    transition: { duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] },
                   }
                 : { y: 70, opacity: 0 }
             }
@@ -3882,7 +4044,7 @@ const SplitInfoSection = () => {
                 ? {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 1.8, delay: 1.35, ease: [0.22, 1, 0.36, 1] },
+                    transition: { duration: 0.55, delay: 0.25, ease: [0.22, 1, 0.36, 1] },
                   }
                 : { y: 86, opacity: 0 }
             }

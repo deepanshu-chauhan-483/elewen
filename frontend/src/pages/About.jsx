@@ -467,20 +467,20 @@ const About = () => {
                     className="text-white text-[30px] leading-[1.05] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
-                    {sq.closing_heading
-                      ? sq.closing_heading.split('\n').map((line, i, arr) => (
-                          <span key={i}>
-                            {line}
-                            {i < arr.length - 1 && <br />}
-                          </span>
-                        ))
-                      : (
-                        <>
-                          Everything moved online.
-                          <br />
-                          Event planning didn&apos;t.
-                        </>
-                      )}
+                    {sq.closing_heading ? (
+                      sq.closing_heading.split('\n').map((line, i, arr) => (
+                        <span key={i}>
+                          {line}
+                          {i < arr.length - 1 && <br />}
+                        </span>
+                      ))
+                    ) : (
+                      <>
+                        Everything moved online.
+                        <br />
+                        Event planning didn&apos;t.
+                      </>
+                    )}
                   </h2>
                   <p className="text-white text-[14px] leading-[1.45] opacity-90 max-w-[28rem]">
                     {sq.closing_body ??

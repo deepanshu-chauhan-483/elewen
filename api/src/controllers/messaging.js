@@ -96,14 +96,15 @@ export const sendMessage = async (req, res, next) => {
         senderId: userId,
         messageText: messageText ?? null,
         messageType: finalType,
-        attachments: attachments.length > 0
-          ? {
-              create: attachments.map(a => ({
-                fileUrl: a.fileUrl,
-                fileType: a.fileType ?? null,
-              })),
-            }
-          : undefined,
+        attachments:
+          attachments.length > 0
+            ? {
+                create: attachments.map(a => ({
+                  fileUrl: a.fileUrl,
+                  fileType: a.fileType ?? null,
+                })),
+              }
+            : undefined,
       },
       include: { attachments: true },
     })

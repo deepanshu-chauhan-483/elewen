@@ -223,7 +223,11 @@ const options = {
             provider: { type: 'string', enum: ['razorpay', 'stripe', 'manual'], nullable: true },
             providerOrderId: { type: 'string', nullable: true, example: 'order_SYwBHt...' },
             providerPaymentId: { type: 'string', nullable: true, example: 'pay_SYwBHt...' },
-            paymentMethod: { type: 'string', enum: ['card', 'upi', 'netbanking', 'offline'], nullable: true },
+            paymentMethod: {
+              type: 'string',
+              enum: ['card', 'upi', 'netbanking', 'offline'],
+              nullable: true,
+            },
             createdAt: { type: 'string', format: 'date-time' },
           },
         },
@@ -260,7 +264,11 @@ const options = {
             id: { type: 'string', format: 'uuid' },
             bookingId: { type: 'string', format: 'uuid' },
             vendorId: { type: 'string', description: 'Strapi vendor ID' },
-            serviceId: { type: 'string', nullable: true, description: 'Strapi service category ID' },
+            serviceId: {
+              type: 'string',
+              nullable: true,
+              description: 'Strapi service category ID',
+            },
             assignedBy: { type: 'string', nullable: true, description: 'Admin user ID' },
             status: { type: 'string', enum: ['assigned', 'confirmed', 'completed', 'reassigned'] },
             assignedAt: { type: 'string', format: 'date-time' },
@@ -296,7 +304,11 @@ const options = {
                 properties: {
                   id: { type: 'string', format: 'uuid' },
                   fileUrl: { type: 'string' },
-                  fileType: { type: 'string', enum: ['image', 'document', 'media'], nullable: true },
+                  fileType: {
+                    type: 'string',
+                    enum: ['image', 'document', 'media'],
+                    nullable: true,
+                  },
                 },
               },
             },

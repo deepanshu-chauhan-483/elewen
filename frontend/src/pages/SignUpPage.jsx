@@ -138,7 +138,9 @@ export default function SignUpPage() {
         </div>
 
         <div className="flex flex-col gap-[8px] w-full">
-          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">Email</label>
+          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
+            Email
+          </label>
           <input
             type="email"
             value={email}
@@ -164,7 +166,9 @@ export default function SignUpPage() {
         </div>
 
         <div className="flex flex-col gap-[8px] w-full">
-          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">Password</label>
+          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
+            Password
+          </label>
           <div className="relative w-full">
             <input
               type={showPassword ? 'text' : 'password'}
