@@ -383,87 +383,57 @@ const About = () => {
             <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[540px]:pt-24 lg:pt-28 pb-24 min-[540px]:pb-32 lg:pb-36">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
               <div className="min-[540px]:hidden mt-14">
+                {/* Fixed top text — same for both slides */}
+                <div className="flex flex-col items-center text-center gap-4 px-4 mb-6">
+                  <h2
+                    className="text-white text-[30px] leading-[1.05] font-serif"
+                    style={{ fontFamily: "'Malgin', serif" }}
+                  >
+                    <span className="reveal-wrapper block">
+                      <span className="reveal-text">
+                        {sq.heading ?? 'We Asked a Simple Question'}
+                      </span>
+                    </span>
+                  </h2>
+                  <p className="text-white text-[14px] leading-[1.45] opacity-90 max-w-[28rem]">
+                    <span className="reveal-wrapper block">
+                      <span className="reveal-text" style={{ '--delay': '0.1s' }}>
+                        {sq.body ??
+                          'Almost everything else in our lives has moved online. We book cabs and holidays in minutes, so why does event planning still feel complicated?'}
+                      </span>
+                    </span>
+                  </p>
+                </div>
+
+                {/* Image-only carousel */}
                 <div
                   ref={mobileStoryCarouselRef}
-                  className="flex items-stretch overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
-                  <div className="flex w-full shrink-0 snap-start px-2">
-                    <div className="flex w-full min-h-[390px] flex-col items-center text-center gap-4 mt-8">
-                      <h2
-                        className="text-white text-[30px] leading-[1.05] font-serif"
-                        style={{ fontFamily: "'Malgin', serif" }}
-                      >
-                        <span className="reveal-wrapper block">
-                          <span className="reveal-text">
-                            {sq.heading ?? 'We Asked a Simple Question'}
-                          </span>
-                        </span>
-                      </h2>
-
-                      <p className="text-white text-[14px] leading-[1.45] opacity-90">
-                        <span className="reveal-wrapper block">
-                          <span className="reveal-text" style={{ '--delay': '0.1s' }}>
-                            {sq.body ??
-                              'Almost everything else in our lives has moved online. We book cabs and holidays in minutes, so why does event planning still feel complicated?'}
-                          </span>
-                        </span>
-                      </p>
-
-                      {story2Src && (
-                        <Img
-                          src={story2Src}
-                          alt="Atmosphere"
-                          className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
-                          style={{ '--delay': '0.2s' }}
-                        />
-                      )}
-                    </div>
+                  <div className="flex w-full shrink-0 snap-start px-2 justify-center">
+                    {story2Src && (
+                      <Img
+                        src={story2Src}
+                        alt="Atmosphere"
+                        className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
+                        style={{ '--delay': '0.2s' }}
+                      />
+                    )}
                   </div>
-
-                  <div className="flex w-full shrink-0 snap-start px-2">
-                    <div className="flex w-full min-h-[500px] flex-col items-center text-center gap-4">
-                      <h2
-                        className="text-white text-[30px] leading-[1.05] font-serif"
-                        style={{ fontFamily: "'Malgin', serif" }}
-                      >
-                        <span className="reveal-wrapper block">
-                          <span className="reveal-text">
-                            {tg.heading ?? 'Thoughtful Gatherings Over Loud Distractions?'}
-                          </span>
-                        </span>
-                      </h2>
-
-                      {(
-                        tg.paragraphs ?? [
-                          'With house parties becoming the new way to celebrate, it felt like the right time to bring digitalisation, organisation, and standardisation to the events space.',
-                        ]
-                      ).map((para, i) => (
-                        <p key={i} className="text-white text-[14px] leading-[1.45] opacity-90">
-                          <span className="reveal-wrapper block">
-                            <span
-                              className="reveal-text"
-                              style={{ '--delay': `${0.1 + i * 0.08}s` }}
-                            >
-                              {para}
-                            </span>
-                          </span>
-                        </p>
-                      ))}
-
-                      {story1Src && (
-                        <Img
-                          src={story1Src}
-                          alt="Details"
-                          className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
-                          style={{ '--delay': '0.2s' }}
-                        />
-                      )}
-                    </div>
+                  <div className="flex w-full shrink-0 snap-start px-2 justify-center">
+                    {story1Src && (
+                      <Img
+                        src={story1Src}
+                        alt="Details"
+                        className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
+                        style={{ '--delay': '0.2s' }}
+                      />
+                    )}
                   </div>
                 </div>
 
                 {/* White dash indicators */}
-                <div className="flex justify-center gap-2">
+                <div className="flex justify-center gap-2 mt-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -491,20 +461,30 @@ const About = () => {
                   />
                 </div>
 
-                {/* Text below image, visible for both slides */}
+                {/* Fixed bottom text — same for both slides */}
                 <div className="mt-8 flex flex-col items-center text-center gap-4 px-4">
                   <h2
                     className="text-white text-[30px] leading-[1.05] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
-                    Everything moved online.
-                    <br />
-                    Event planning didn&apos;t.
+                    {sq.closing_heading
+                      ? sq.closing_heading.split('\n').map((line, i, arr) => (
+                          <span key={i}>
+                            {line}
+                            {i < arr.length - 1 && <br />}
+                          </span>
+                        ))
+                      : (
+                        <>
+                          Everything moved online.
+                          <br />
+                          Event planning didn&apos;t.
+                        </>
+                      )}
                   </h2>
-
                   <p className="text-white text-[14px] leading-[1.45] opacity-90 max-w-[28rem]">
-                    Built on trust &amp; to save time, Elewen is a one-stop digital platform that
-                    makes hosting simpler with genuine pricing and seamless planning.
+                    {sq.closing_body ??
+                      'Built on trust & to save time, Elewen is a one-stop digital platform that makes hosting simpler with genuine pricing and seamless planning.'}
                   </p>
                 </div>
               </div>
@@ -924,18 +904,29 @@ const About = () => {
                 className="text-[#FFFFFF] text-[28px] min-[540px]:text-[40px] lg:text-[47px] font-normal leading-[1.05] m-0"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                {vc.heading ?? 'Not a part of the Elewen Network yet?'}
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text">
+                    {vc.heading ?? 'Not a part of the Elewen Network yet?'}
+                  </span>
+                </span>
               </h3>
               {/* Frame 151 (Button Group) */}
               <h5
                 className="text-[#FFFFFF] text-[18px] min-[540px]:text-[24px] lg:text-[27px] font-normal leading-[1.05] m-0"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                {vc.subheading ?? 'Come join the fam.'}
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ '--delay': '0.1s' }}>
+                    {vc.subheading ?? 'Come join the fam.'}
+                  </span>
+                </span>
               </h5>
             </div>
 
-            <div className="mt-8 min-[540px]:mt-10 flex flex-row flex-wrap items-center justify-center gap-4">
+            <div
+              className="mt-8 min-[540px]:mt-10 flex flex-row flex-wrap items-center justify-center gap-4 anim-element slide-from-bottom"
+              style={{ '--delay': '0.2s' }}
+            >
               <button className="flex flex-row items-center justify-between w-full max-w-[220px] min-[540px]:w-[208px] h-[44px] bg-[#CDB17E] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#c2a472] transition-colors group">
                 <span
                   className="text-[#591902] text-[16px] font-medium leading-[150%]"

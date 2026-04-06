@@ -59,7 +59,7 @@ const Footer = () => {
   return (
     <footer
       ref={footerRef}
-      className="flex min-h-[339px] w-full flex-col bg-[#F2F2F2] font-sans overflow-x-clip md:min-h-[645px]"
+      className="flex min-h-[339px] w-full flex-col bg-[#fff] font-sans overflow-x-clip md:min-h-[645px]"
     >
       {/* Full-bleed title — not constrained by max-w-[1440px]; scales with viewport width */}
       <div className="w-full min-w-0 shrink-0 px-2 pt-5 md:pt-20">

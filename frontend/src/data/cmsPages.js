@@ -121,6 +121,8 @@ export const ABOUT_PAGE_FALLBACK = {
   simple_question: {
     heading: 'We Asked a Simple Question',
     body: 'Almost everything else in our lives has moved online. We book cabs and holidays in minutes, so why does event planning still feel complicated?',
+    closing_heading: 'Everything moved online.\nEvent planning didn\'t.',
+    closing_body: 'Built on trust & to save time, Elewen is a one-stop digital platform that makes hosting simpler with genuine pricing and seamless planning.',
   },
   thoughtful_gatherings: {
     heading: 'Thoughtful Gatherings Over Loud Distractions?',

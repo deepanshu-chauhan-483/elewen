@@ -246,7 +246,7 @@ const PlanEventSection = () => {
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 pb-8 md:pb-12 flex flex-col md:flex-row justify-between items-center md:items-end relative z-10">
         <h1
-          className="text-[24px] md:text-[61px] leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left reveal-heading"
+          className="text-[24px] md:text-[61px] leading-[1.2] text-[#364022] md:text-[#3D4035]  font-normal tracking-normal text-center md:text-left reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">

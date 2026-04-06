@@ -96,18 +96,18 @@ export default function ForgotPasswordPage() {
       ) : (
         <form onSubmit={handleSubmit} className="contents">
           <div
-            className="flex min-w-0 w-full flex-col gap-[24px]"
+            className="flex min-w-0 w-full flex-col gap-[16px] min-[540px]:gap-[24px]"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             <div className="flex flex-col gap-[8px] w-full min-w-0">
-              <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
+              <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
-                className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+                className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
               />
             </div>
             {error && <p className="text-[#C62828] text-[12px] leading-[150%]">{error}</p>}
@@ -120,7 +120,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading || !email.trim()}
-              className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[14px] min-[540px]:text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
             >
               {loading ? 'Sending…' : 'Reset password'}
             </button>
