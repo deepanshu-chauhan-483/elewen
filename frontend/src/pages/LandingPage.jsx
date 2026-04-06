@@ -346,7 +346,7 @@ const PlanEventSection = () => {
 
         <div className="flex-1 py-4 md:py-16 px-6 md:px-12 lg:px-8">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
+          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden md:overflow-hidden">
             <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] md:min-h-0">
               {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
@@ -722,7 +722,7 @@ const WhatToPlanSection = () => {
         <div className="flex-1 order-last lg:order-none py-4 md:py-16 px-6 md:px-12 lg:px-8 relative reveal-border-y">
           <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           {/* Cards Carousel Area */}
-          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible lg:overflow-hidden">
+          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden lg:overflow-hidden">
             <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] lg:min-h-0">
               {/* Mobile Left Navigation Arrow */}
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
@@ -1110,7 +1110,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     const stepsWrap = stepsWrapRef.current
     if (!container || !stepsWrap) return
 
-    const progressLine = container.querySelector('.progress-line')
+    const progressLine = container.querySelector('.progress-line-active')
     const stepElements = gsap.utils.toArray('.step-item', stepsWrap)
     const revealTexts = (elements, baseDelay = 0) => {
       elements.forEach((element, index) => {
@@ -1125,34 +1125,124 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     }
 
     const revealStepText = step => {
-      revealTexts(Array.from(step.querySelectorAll('.reveal-text')), 0.2)
+      revealTexts(Array.from(step.querySelectorAll('.reveal-text')), 0.16)
     }
 
-    // Variable to ensure the line only grows and never shrinks
-    let maxProgress = 0
+    const revealedSteps = new WeakSet()
+    const animateStepContent = step => {
+      if (revealedSteps.has(step)) return
+      revealedSteps.add(step)
 
-    const updateStepHighlights = () => {
-      const stepItems = container.querySelectorAll('.step-item')
-      const vh = window.innerHeight
-      const center = vh * 0.5
+      const leftContent = step.querySelector('.left-content')
+      const rightContent = step.querySelector('.right-content')
 
-      if (progressLine && stepItems.length > 0) {
-        const firstStep = stepItems[0]
-        const lastStep = stepItems[stepItems.length - 1]
-        const firstRect = firstStep.getBoundingClientRect()
-        const lastRect = lastStep.getBoundingClientRect()
-        const firstCenter = firstRect.top + firstRect.height / 2
-        const lastCenter = lastRect.top + lastRect.height / 2
-        const range = lastCenter - firstCenter
+      revealStepText(step)
 
-        const currentProgress =
-          range > 0 ? Math.max(0, Math.min(1, (center - firstCenter) / range)) : 1
+      const stepTimeline = gsap.timeline({
+        defaults: { duration: 1.2, ease: 'power4.out', overwrite: 'auto' },
+      })
 
-        // Lock the maximum progress so the line doesn't reverse
-        maxProgress = Math.max(maxProgress, currentProgress)
+      if (leftContent) {
+        stepTimeline.to(leftContent, { x: 0, opacity: 1, clearProps: 'transform' }, 0)
+      }
 
-        progressLine.style.transform = `translateX(-50%) scaleY(${maxProgress})`
-        progressLine.style.transformOrigin = 'top center'
+      if (rightContent) {
+        stepTimeline.to(
+          rightContent,
+          { x: 0, opacity: 1, clearProps: 'transform' },
+          leftContent ? 0.12 : 0
+        )
+      }
+    }
+
+    let activeStepIndex = -1
+
+    const setActiveStepLine = (
+      stepItems,
+      nextIndex,
+      { immediate = false, revealContent = false } = {}
+    ) => {
+      if (!progressLine || !stepItems[nextIndex]) return
+
+      const targetStep = stepItems[nextIndex]
+      const targetTop = targetStep.offsetTop
+      const targetHeight = targetStep.offsetHeight
+
+      stepItems.forEach((step, index) => {
+        step.classList.toggle('is-step-active', index === nextIndex)
+      })
+
+      const wasInactive = activeStepIndex === -1
+      activeStepIndex = nextIndex
+
+      gsap.killTweensOf(progressLine)
+
+      if (immediate) {
+        gsap.set(progressLine, { top: targetTop, height: targetHeight, opacity: 1 })
+        if (revealContent) {
+          requestAnimationFrame(() => animateStepContent(targetStep))
+        }
+        return
+      }
+
+      if (wasInactive) {
+        gsap.fromTo(
+          progressLine,
+          { top: targetTop + 24, height: Math.max(targetHeight * 0.72, 1), opacity: 0 },
+          {
+            top: targetTop,
+            height: targetHeight,
+            opacity: 1,
+            duration: 1.2,
+            ease: 'power3.out',
+            overwrite: 'auto',
+            onComplete: () => {
+              if (revealContent) animateStepContent(targetStep)
+            },
+          }
+        )
+        return
+      }
+
+      gsap.to(progressLine, {
+        top: targetTop,
+        height: targetHeight,
+        opacity: 1,
+        duration: 1.15,
+        ease: 'power2.inOut',
+        overwrite: 'auto',
+        onComplete: () => {
+          if (revealContent) animateStepContent(targetStep)
+        },
+      })
+    }
+
+    const updateStepHighlights = ({ reposition = false, immediate = false } = {}) => {
+      const stepItems = Array.from(container.querySelectorAll('.step-item'))
+      if (!progressLine || stepItems.length === 0) return
+
+      const center = window.innerHeight * 0.5
+      let nearestStepIndex = 0
+      let nearestDistance = Number.POSITIVE_INFINITY
+
+      stepItems.forEach((step, index) => {
+        const rect = step.getBoundingClientRect()
+        const stepCenter = rect.top + rect.height / 2
+        const distance = Math.abs(stepCenter - center)
+
+        if (distance < nearestDistance) {
+          nearestDistance = distance
+          nearestStepIndex = index
+        }
+      })
+
+      const shouldRevealContent = nearestStepIndex !== activeStepIndex
+
+      if (reposition || shouldRevealContent) {
+        setActiveStepLine(stepItems, nearestStepIndex, {
+          immediate,
+          revealContent: shouldRevealContent,
+        })
       }
     }
 
@@ -1166,6 +1256,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     }
 
     let highlightTrigger = null
+    const refreshStepHighlights = () => updateStepHighlights({ reposition: true })
 
     const ctx = gsap.context(() => {
       highlightTrigger = ScrollTrigger.create({
@@ -1178,83 +1269,42 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       // Heading reveal ("HOW 11 WORKS")
       revealHeading()
 
-      stepElements.forEach((step, index) => {
+      stepElements.forEach(step => {
         const leftContent = step.querySelector('.left-content')
         const rightContent = step.querySelector('.right-content')
-
-        // 1. Tighter trigger point for mobile (52% waits until it hits the line)
-        const syncTrigger = window.innerWidth < 768 ? 'top 52%' : 'top 60%'
-
-        if (index === 0) {
-          revealStepText(step)
-          if (leftContent) gsap.set(leftContent, { x: 0, opacity: 1 })
-          if (rightContent) gsap.set(rightContent, { x: 0, opacity: 1 })
-          return
+        if (leftContent) {
+          gsap.set(leftContent, { x: -88, opacity: 0, force3D: true })
         }
 
-        // 2. Text Reveal Trigger
+        if (rightContent) {
+          gsap.set(rightContent, { x: 88, opacity: 0, force3D: true })
+        }
         ScrollTrigger.create({
           trigger: step,
-          start: syncTrigger,
+          start: 'top 42%',
           once: true,
           onEnter: () => {
-            revealStepText(step)
+            if (revealedSteps.has(step)) return
+            animateStepContent(step)
           },
         })
 
         // 3. Containers — matched the 0.2s delay here as well
-        if (leftContent) {
-          gsap.fromTo(
-            leftContent,
-            { x: -40, opacity: 0 },
-            {
-              scrollTrigger: {
-                trigger: step,
-                start: syncTrigger,
-                once: true,
-              },
-              x: 0,
-              opacity: 1,
-              duration: 0.55,
-              delay: 0.2, // Matches the text delay
-              ease: 'power2.out',
-            }
-          )
-        }
-
-        if (rightContent) {
-          gsap.fromTo(
-            rightContent,
-            { x: 40, opacity: 0 },
-            {
-              scrollTrigger: {
-                trigger: step,
-                start: syncTrigger,
-                once: true,
-              },
-              x: 0,
-              opacity: 1,
-              duration: 0.55,
-              delay: 0.2, // Matches the text delay
-              ease: 'power2.out',
-            }
-          )
-        }
       })
     }, container)
 
-    updateStepHighlights()
+    updateStepHighlights({ reposition: true })
 
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
-    ScrollTrigger.addEventListener('refresh', updateStepHighlights)
+    ScrollTrigger.addEventListener('refresh', refreshStepHighlights)
 
     const observer = new IntersectionObserver(
       entries => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             ScrollTrigger.refresh()
-            requestAnimationFrame(updateStepHighlights)
+            requestAnimationFrame(() => updateStepHighlights({ reposition: true }))
           }
         })
       },
@@ -1263,13 +1313,14 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     observer.observe(container)
 
     ScrollTrigger.refresh()
-    updateStepHighlights()
+    updateStepHighlights({ reposition: true })
 
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
-      ScrollTrigger.removeEventListener('refresh', updateStepHighlights)
+      ScrollTrigger.removeEventListener('refresh', refreshStepHighlights)
       if (rafId != null) cancelAnimationFrame(rafId)
+      gsap.killTweensOf(progressLine)
       highlightTrigger?.kill()
       ctx.revert()
       observer.disconnect()
@@ -1296,11 +1347,12 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-white opacity-20 -translate-x-1/2" />
 
         <div
-          className="progress-line absolute top-0 bottom-0 left-1/2 w-[2px] bg-white -translate-x-1/2 z-30"
+          className="progress-line progress-line-active absolute left-1/2 w-[2px] bg-white -translate-x-1/2 z-30"
           style={{
-            transform: 'translate3d(-50%, 0, 0) scaleY(0)',
-            transformOrigin: 'top center',
-            willChange: 'transform',
+            top: 0,
+            height: 0,
+            opacity: 0,
+            willChange: 'top, height, opacity',
             backfaceVisibility: 'hidden',
             boxShadow: 'none',
           }}
@@ -1465,11 +1517,11 @@ const BetterWaySection = () => {
   return (
     <section
       data-nav-theme="glass"
-      className="w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans relative"
+      className="relative -mt-px md:mt-0 w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans"
     >
-      <div className="relative w-full max-w-[1440px] mx-auto h-[841px] md:h-[1171px] shrink-0">
+      <div className="relative w-full max-w-[1440px] mx-auto min-h-[820px] md:h-[1171px] shrink-0">
         {/* --- SCALLOP / BULB SECTION (Untouched) --- */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10">
+        <div className="absolute -top-px md:top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10">
           {scallopCount.map((_, i) => (
             <div
               key={i}
@@ -1480,7 +1532,7 @@ const BetterWaySection = () => {
                 style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
               ></div>
               <div
-                className="absolute top-0 left-0 w-[65.5px] h-[32.75px] md:w-[144px] md:h-[72px] bg-[#591902]"
+                className="absolute top-0 left-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[72px] bg-[#591902]"
                 style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
               ></div>
 
@@ -1572,7 +1624,7 @@ const BetterWaySection = () => {
             viewBox="0 0 723 422"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full overflow-visible"
+            className="w-full h-full overflow-hidden"
           >
             <defs>
               <clipPath id="intersectClipDesktop">
@@ -1616,78 +1668,116 @@ const BetterWaySection = () => {
         </motion.div>
 
         {/* Mobile Version */}
-        <motion.div
-          className="block md:hidden absolute w-[353px] h-[206.04px] left-1/2 -translate-x-1/2 top-[371px]"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.45 }}
-        >
-          <svg
-            width="353"
-            height="207"
-            viewBox="0 0 353 207"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full overflow-visible"
+        <div className="relative z-20 mx-auto mt-[330px] flex w-full max-w-[420px] flex-col items-center px-4 pb-14 md:hidden">
+          <motion.div
+            className="relative w-full max-w-[353px] aspect-[353/207]"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.45 }}
           >
-            <defs>
-              <clipPath id="intersectClipMobile">
-                <circle cx="103.02" cy="103.02" r="103.02" />
-              </clipPath>
-            </defs>
-            <motion.circle
-              cx="103.02"
-              cy="103.02"
-              r="103.02"
-              fill="#CDB17E"
-              variants={{
-                hidden: { x: -56, opacity: 0 },
-                visible: {
-                  x: 0,
-                  opacity: 1,
-                  transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1] },
-                },
-              }}
-            />
-            <motion.g
-              variants={{
-                hidden: { x: 56, opacity: 0 },
-                visible: {
-                  x: 0,
-                  opacity: 1,
-                  transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1], delay: 0.12 },
-                },
-              }}
+            <svg
+              viewBox="0 0 353 207"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-full w-full overflow-visible"
             >
-              <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
-              <circle
-                cx="249.98"
+              <defs>
+                <clipPath id="intersectClipMobile">
+                  <circle cx="103.02" cy="103.02" r="103.02" />
+                </clipPath>
+              </defs>
+              <motion.circle
+                cx="103.02"
                 cy="103.02"
                 r="103.02"
-                fill="#FFFFFF"
-                clipPath="url(#intersectClipMobile)"
+                fill="#CDB17E"
+                variants={{
+                  hidden: { x: -56, opacity: 0 },
+                  visible: {
+                    x: 0,
+                    opacity: 1,
+                    transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1] },
+                  },
+                }}
               />
-            </motion.g>
-          </svg>
-        </motion.div>
+              <motion.g
+                variants={{
+                  hidden: { x: 56, opacity: 0 },
+                  visible: {
+                    x: 0,
+                    opacity: 1,
+                    transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1], delay: 0.12 },
+                  },
+                }}
+              >
+                <circle cx="249.98" cy="103.02" r="103.02" fill="#591902" />
+                <circle
+                  cx="249.98"
+                  cy="103.02"
+                  r="103.02"
+                  fill="#FFFFFF"
+                  clipPath="url(#intersectClipMobile)"
+                />
+              </motion.g>
+            </svg>
+
+            <h5
+              className="absolute left-[21%] top-1/2 w-[30%] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[24px] leading-[0.95] font-serif"
+              style={{ fontFamily: "'Malgin', serif" }}
+            >
+              {s.left_label ?? 'Event Planner'}
+            </h5>
+
+            <h5
+              className="absolute left-[79%] top-1/2 w-[28%] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[24px] leading-[0.95] font-serif"
+              style={{ fontFamily: "'Malgin', serif" }}
+            >
+              {s.right_label ?? 'DIY'}
+            </h5>
+
+            <div className="absolute left-1/2 top-1/2 flex h-[56px] w-[48px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+              <img
+                src={centerLogo}
+                alt="11 Logo"
+                className="h-full w-full object-contain"
+                loading="lazy"
+              />
+            </div>
+          </motion.div>
+
+          <div className="mt-5 grid w-full max-w-[353px] grid-cols-2 gap-4">
+            <p className="text-[#957960] text-[12px] leading-[1.5] font-['Poppins'] text-left">
+              Costly and slow, with too many layers.
+            </p>
+
+            <p className="text-[#591902] text-[12px] leading-[1.5] text-right font-['Poppins']">
+              Too many vendors, too many choices, DIY planning turns joy into work.
+            </p>
+          </div>
+
+          <p className="mt-5 w-full max-w-[260px] text-center text-[#2D2D2D] text-[12px] leading-[1.5] font-['Poppins']">
+            The perfect balance of structure and simplicity. Curated decor, trusted vendors, guided
+            planning, without the cost or pressure.
+          </p>
+        </div>
 
         {/* --- DIAGRAM TEXTS --- */}
         <h5
-          className="absolute left-[calc(50%-73px)] md:left-[calc(50%-150.5px)] top-[474px] md:top-[742px] w-[95.31px] md:w-[185px] -translate-x-1/2 -translate-y-1/2 text-left md:text-center text-[#591902] text-[24.7px] md:text-[27px] leading-[1] font-serif"
+          className="hidden md:block absolute left-[calc(50%-150.5px)] top-[742px] w-[185px] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.left_label ?? 'Event Planner'}
         </h5>
 
         <h5
-          className="absolute left-[calc(50%+130px)] md:left-[calc(50%+150.5px)] top-[474px] md:top-[742px] w-[46px] md:w-[80px] -translate-x-1/2 -translate-y-1/2 text-left md:text-center text-[#CDB17E] text-[24.7px] md:text-[27px] leading-[1] font-serif"
+          className="hidden md:block absolute left-[calc(50%+150.5px)] top-[742px] w-[80px] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.right_label ?? 'DIY'}
         </h5>
 
         {/* --- LOGO --- */}
-        <div className="absolute left-1/2 top-[474px] md:top-[742px] w-[58px] md:w-[320px] h-[68px] md:h-[320px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+        <div className="hidden md:flex absolute left-1/2 top-[742px] w-[320px] h-[320px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
           <img
             src={centerLogo}
             alt="11 Logo"
@@ -1697,33 +1787,19 @@ const BetterWaySection = () => {
         </div>
 
         {/* --- SUB TEXTS --- */}
-        <p className="absolute w-[120px] md:w-[200px] left-[20px] md:left-[30px] top-[597px] md:top-[688px] text-[#957960] text-[12px] leading-[150%] md:leading-[1.5] font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">
-            {s.left_body ??
-              'Full-service planning often comes with high costs and long coordination cycles. You rely on large teams, multiple approvals, and a process that can feel heavier than the event itself.'}
-          </span>
-          <span className="md:hidden">Costly and slow, with too many layers.</span>
+        <p className="hidden md:block absolute w-[200px] left-[30px] top-[688px] text-[#957960] text-[12px] leading-[1.5] font-['Poppins'] md:font-sans">
+          {s.left_body ??
+            'Full-service planning often comes with high costs and long coordination cycles. You rely on large teams, multiple approvals, and a process that can feel heavier than the event itself.'}
         </p>
 
-        <p className="absolute w-[120px] md:w-[200px] right-[20px] md:right-[30px] top-[597px] md:top-[688px] text-[#591902] text-[12px] leading-[150%] md:leading-[1.5] text-right font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">
-            {s.right_body ??
-              'Planning everything yourself means juggling vendors, comparing prices, managing logistics, and making countless decisions. It quickly turns a celebration into a checklist.'}
-          </span>
-          <span className="md:hidden">
-            Too many vendors, too many choices, DIY planning turns joy into work.
-          </span>
+        <p className="hidden md:block absolute w-[200px] right-[30px] top-[688px] text-[#591902] text-[12px] leading-[1.5] text-right font-['Poppins'] md:font-sans">
+          {s.right_body ??
+            'Planning everything yourself means juggling vendors, comparing prices, managing logistics, and making countless decisions. It quickly turns a celebration into a checklist.'}
         </p>
 
-        <p className="absolute w-[200px] md:w-[285px] left-1/2 -translate-x-1/2 top-[711px] md:top-[993px] text-[#2D2D2D] text-[12px] leading-[150%] md:leading-[1.5] text-center font-['Poppins'] md:font-sans">
-          <span className="hidden md:inline">
-            {s.center_body ??
-              'The balance between structure and simplicity. You get curated décor, trusted vendors, and guided planning, without the pressure or the price of full-scale event management.'}
-          </span>
-          <span className="md:hidden">
-            The perfect balance of structure and simplicity. curated décor, trusted vendors, guided
-            planning, without the cost or pressure.
-          </span>
+        <p className="hidden md:block absolute w-[285px] left-1/2 -translate-x-1/2 top-[993px] text-[#2D2D2D] text-[12px] leading-[1.5] text-center font-['Poppins'] md:font-sans">
+          {s.center_body ??
+            'The balance between structure and simplicity. You get curated decor, trusted vendors, and guided planning, without the pressure or the price of full-scale event management.'}
         </p>
       </div>
     </section>
@@ -1732,10 +1808,109 @@ const BetterWaySection = () => {
 
 const LAYOUT_W = 1034
 const LAYOUT_H = 684
+const MobileChecklistGrid = ({
+  chaosItems,
+  chaosCardDetails,
+  chaosImages,
+  chaosShadowClasses,
+}) => {
+  const cards = [
+    {
+      titleClass: 'w-[74%] text-left',
+      descClass: 'mt-[14px] ml-auto w-[79%] text-right',
+      imageClass: 'h-[95%] max-w-[148%]',
+      imageStyle: { left: '50%', transform: 'translateX(-45%)', height: '95%', maxWidth: 'none' },
+    },
+    {
+      titleClass: 'w-[76%] text-left',
+      descClass: 'mt-[14px] ml-auto w-[81%] text-right',
+      imageClass: 'h-[100%] max-w-[165%]',
+      imageStyle: { left: '-18%', height: '100%', maxWidth: 'none' },
+    },
+    {
+      titleClass: 'w-[78%] text-left',
+      descClass: 'mt-[14px] ml-auto w-[84%] text-right',
+      imageClass: 'h-[109%] max-w-[172%]',
+      imageStyle: { left: '-12%', height: '109%', maxWidth: 'none' },
+    },
+    {
+      titleClass: 'w-[78%] text-left',
+      descClass: 'mt-[14px] ml-auto w-[82%] text-right',
+      imageClass: 'h-[101%] max-w-[152%]',
+      imageStyle: { left: '-7%', height: '101%', maxWidth: 'none' },
+    },
+  ]
 
+  const descriptionClampStyle = {
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 6,
+    overflow: 'hidden',
+  }
+
+  return (
+    <div className="w-full px-3 mt-6 mb-8 z-10 font-sans md:hidden">
+      <div className="grid grid-cols-2 gap-3">
+        {chaosItems.slice(0, 4).map((item, index) => (
+          <article
+            key={`${item.title}-${index}`}
+            className="grid aspect-[145/312] grid-rows-[48%_52%] overflow-hidden rounded-[12px] bg-[#BFAC9B]"
+          >
+            {/* ── Text area (top ~40%) ── */}
+            <div className="min-h-0 px-3 pt-3.5">
+              <h3
+                className={`
+                  text-[14px]
+                  leading-[1.08] font-semibold text-[#591902]
+                  ${cards[index].titleClass}
+                `}
+              >
+                {item?.title}
+              </h3>
+              <p
+                className={`
+                  text-[11px]
+                  leading-[1.45] text-[#8D5B45]
+                  ${cards[index].descClass}
+                `}
+                style={descriptionClampStyle}
+              >
+                {chaosCardDetails[index]}
+              </p>
+            </div>
+
+            {/* ── Image area (bottom ~60%, absolutely pinned) ── */}
+            <div className="pointer-events-none relative min-h-0 overflow-hidden">
+              <img
+                src={chaosImages[index]}
+                alt={item?.title}
+                className={`
+                  absolute bottom-0 w-auto max-w-none object-contain object-bottom
+                  ${chaosShadowClasses[index]}
+                  ${
+                    index === 0
+                      ? 'h-[95%] max-w-[140%]'          // scrolling woman — slightly wider
+                      : index === 1
+                        ? 'h-[90%] max-w-[150%]'          // calls man
+                        : index === 2
+                          ? 'h-[105%] max-w-[160%]'         // vendors woman — taller
+                          : 'h-[88%] max-w-[140%]'          // decisions man
+                  }
+                `}
+                style={cards[index].imageStyle}
+                loading="lazy"
+              />
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  )
+}
 const ChecklistSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.checklist ?? {}
+
   const chaosItems = s.chaos_items ?? [
     { title: 'Too much scrolling.' },
     { title: 'Too many calls.' },
@@ -1747,6 +1922,23 @@ const ChecklistSection = () => {
     "You don't manage logistics",
     'No chasing vendors',
     'No waiting anxiously!',
+  ]
+  const chaosCardDetails = [
+    chaosItems[0]?.description ??
+      'What was once simple now means endless scrolling and still no confidence.',
+    chaosItems[1]?.description ??
+      'Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns into a coordination hub, and excitement becomes stress.',
+    chaosItems[2]?.description ??
+      "One decorator, one caterer, one supplier, different prices, different chaos. You're not planning a celebration, you're managing a team.",
+    chaosItems[3]?.description ??
+      "Color themes, backdrops, menus, endless add-ons mean options don't mean more freedom, just more pressure.",
+  ]
+  const chaosImages = [imgScrolling, imgCalls, imgVendors, imgDecisions]
+  const chaosShadowClasses = [
+    'chaos-person-shadow-right',
+    'chaos-person-shadow-right',
+    'chaos-person-shadow-both',
+    'chaos-person-shadow-right',
   ]
 
   const scallopCount = [...Array(15)]
@@ -1763,7 +1955,6 @@ const ChecklistSection = () => {
   useEffect(() => {
     const wrap = layoutWrapRef.current
     if (!wrap) return
-
     const resize = () => {
       const available = wrap.clientWidth
       const isMobile = window.innerWidth < 768
@@ -1771,7 +1962,6 @@ const ChecklistSection = () => {
       const scale = Math.min((available / LAYOUT_W) * mobileBoost, 1)
       setLayoutScale(scale)
     }
-
     const ro = new ResizeObserver(resize)
     ro.observe(wrap)
     resize()
@@ -1781,7 +1971,6 @@ const ChecklistSection = () => {
   useEffect(() => {
     const wrap = layoutWrapRef.current
     if (!wrap) return
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -1791,11 +1980,8 @@ const ChecklistSection = () => {
       },
       { threshold: 0.2 }
     )
-
     observer.observe(wrap)
-    return () => {
-      observer.disconnect()
-    }
+    return () => { observer.disconnect() }
   }, [])
 
   useEffect(() => {
@@ -1816,7 +2002,7 @@ const ChecklistSection = () => {
       : 6.4
 
     const scaleEnd = isMobile ? 4.85 : Math.max(5.9, requiredScaleToClearViewport)
-    const gateLiftY = isMobile ? -340 : -320
+    const gateLiftY = isMobile ? -420 : -320
     const scrollEnd = isMobile ? 1560 : 1830
     const scrubVal = 1.15
     const doorOpenEnd = 1.32
@@ -1826,14 +2012,9 @@ const ChecklistSection = () => {
 
     const getMobileStartTrigger = () => {
       if (!gate) return 'bottom bottom'
-      // The door is scaled by 2.8 on mobile from the center.
-      // This means it extends 0.9 * height below its bounding box.
-      // We want to trigger when the visual bottom reaches the viewport bottom.
       const extraHeight = gate.offsetHeight * 0.9
       return `bottom+=${extraHeight}px bottom`
     }
-    const startTrigger = isMobile ? getMobileStartTrigger : 'bottom bottom'
-
     let howItWorksActivated = false
     const activateHowItWorks = () => {
       if (howItWorksActivated) return
@@ -1848,7 +2029,7 @@ const ChecklistSection = () => {
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: gate,
-        start: startTrigger,
+        start: () => (isMobile ? getMobileStartTrigger() : 'bottom bottom'),
         end: `+=${scrollEnd}`,
         scrub: scrubVal,
         pin: gateArea,
@@ -1859,118 +2040,72 @@ const ChecklistSection = () => {
 
     tl.to(gate, { scale: scaleEnd, y: gateLiftY, ease: 'power2.in', duration: doorOpenEnd }, 0)
     if (doorTable) tl.to(doorTable, { x: 180, ease: 'power2.in', duration: doorOpenEnd }, 0)
-    if (doorLights)
-      tl.to(doorLights, { x: -120, y: -40, ease: 'power2.in', duration: doorOpenEnd }, 0)
+    if (doorLights) tl.to(doorLights, { x: -120, y: -40, ease: 'power2.in', duration: doorOpenEnd }, 0)
     const archPath = gate.querySelector('#door-arch-path')
     if (doorCurvedText && archPath)
-      tl.to(
-        doorCurvedText,
-        {
-          motionPath: {
-            path: archPath,
-            align: archPath,
-            alignOrigin: [0.5, 0.5],
-            autoRotate: false,
-            start: 0,
-            end: 0.5,
-          },
-          ease: 'power2.in',
-          duration: doorOpenEnd,
+      tl.to(doorCurvedText, {
+        motionPath: {
+          path: archPath, align: archPath, alignOrigin: [0.5, 0.5],
+          autoRotate: false, start: 0, end: 0.5,
         },
-        0
-      )
+        ease: 'power2.in', duration: doorOpenEnd,
+      }, 0)
 
-    // Start the inside background slightly before the depth animation fully
-    // completes so the handoff feels continuous instead of stopping first.
     tl.to(insideBg, { opacity: 1, duration: 0.18, ease: 'power2.out' }, insideBgRevealStart)
     tl.to(gate, { opacity: 0, duration: 0.12, ease: 'power2.out' }, gateFadeStart)
+    tl.to(howItWorks, {
+      yPercent: 0, duration: 1.12, ease: 'power2.out',
+      onComplete: () => { activateHowItWorks(); ScrollTrigger.refresh() },
+    }, howItWorksStart)
 
-    tl.to(
-      howItWorks,
-      {
-        yPercent: 0,
-        duration: 1.12,
-        ease: 'power2.out',
-        onComplete: () => {
-          activateHowItWorks()
-          ScrollTrigger.refresh()
-        },
-      },
-      howItWorksStart
-    )
-
-    return () => {
-      tl.scrollTrigger?.kill()
-      tl.kill()
-    }
+    return () => { tl.scrollTrigger?.kill(); tl.kill() }
   }, [])
 
   return (
     <section
       ref={sectionRef}
       data-nav-theme="glass"
-      className="checklist-section relative w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
+      className="checklist-section relative -mt-px md:mt-0 w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
     >
       {/* Lightbulbs */}
-      <div className="absolute top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
+      <div className="absolute -top-px md:top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
         <div className="absolute top-0 left-0 w-full flex">
-          {scallopCount.map((_, i) => {
-            return (
+          {scallopCount.map((_, i) => (
+            <div key={i} className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]">
               <div
-                key={i}
-                className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]"
-              >
+                className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
+                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+              />
+              <div
+                className="absolute top-0 left-0 w-full h-[40.94px] md:h-[60px] bg-[#F2F2F2]"
+                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+              />
+              {i !== scallopCount.length - 1 && (
                 <div
-                  className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
-                  style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-                ></div>
-                <div
-                  className="absolute top-0 left-0 w-full h-[32.75px] md:h-[60px] bg-[#F2F2F2]"
-                  style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-                ></div>
-
-                {i !== scallopCount.length - 1 && (
-                  <div
-                    className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
-                    style={{
-                      animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                      animationDelay: `${(i % 5) * 0.2}s`,
-                    }}
-                  >
+                  className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
+                  style={{ animationDuration: `${3.5 + (i % 3) * 0.5}s`, animationDelay: `${(i % 5) * 0.2}s` }}
+                >
+                  <div className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`} />
+                  <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
+                    <img src={i % 2 === 0 ? bulb1 : bulb2} alt="Light" className="w-[20px] md:w-[32px] h-auto relative z-10" loading="lazy" />
                     <div
-                      className={`w-[1px] ${
-                        i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'
-                      } bg-[#591902]/40`}
-                    ></div>
-                    <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
-                      <img
-                        src={i % 2 === 0 ? bulb1 : bulb2}
-                        alt="Light"
-                        className="w-[20px] md:w-[32px] h-auto relative z-10"
-                        loading="lazy"
-                      />
-                      <div
-                        className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
-                          i % 2 === 0
-                            ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
-                            : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                        }`}
-                        style={{
-                          animationDuration: `${4 + (i % 3) * 0.75}s`,
-                          animationDelay: `${(i % 5) * 0.2}s`,
-                          background:
-                            i % 2 === 0
-                              ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
-                              : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
-                          clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
-                        }}
-                      />
-                    </div>
+                      className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
+                        i % 2 === 0 ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]' : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
+                      }`}
+                      style={{
+                        animationDuration: `${4 + (i % 3) * 0.75}s`,
+                        animationDelay: `${(i % 5) * 0.2}s`,
+                        background: i % 2 === 0
+                          ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
+                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
+                        clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
+                      }}
+                    />
                   </div>
-                )}
-              </div>
-            )
-          })}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1978,25 +2113,28 @@ const ChecklistSection = () => {
         className="text-[24px] md:text-[61px] leading-[1.1] md:leading-[1] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
-        <span className="reveal-wrapper">
-          <span className="reveal-text">{s.heading_1 ?? 'Somewhere along the way,'} </span>
-        </span>
+        <span className="reveal-wrapper"><span className="reveal-text">{s.heading_1 ?? 'Somewhere along the way,'} </span></span>
         <br />
-        <span className="reveal-wrapper">
-          <span className="reveal-text">{s.heading_2 ?? 'Hosting turned into Checklists.'}</span>
-        </span>
+        <span className="reveal-wrapper"><span className="reveal-text">{s.heading_2 ?? 'Hosting turned into Checklists.'}</span></span>
       </h2>
 
+      {/* ─── MOBILE GRID (FIXED) ─────────────────────────────────────────────── */}
+      <MobileChecklistGrid
+        chaosItems={chaosItems}
+        chaosCardDetails={chaosCardDetails}
+        chaosImages={chaosImages}
+        chaosShadowClasses={chaosShadowClasses}
+      />
+      {/* ─── END MOBILE GRID ─────────────────────────────────────────────────── */}
+
+      {/* Desktop layout — unchanged */}
       <div
         ref={layoutWrapRef}
-        className="w-full max-w-[1034px] mx-auto mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
+        className="hidden md:block w-full max-w-[1034px] mx-auto mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
       >
         <div
           className="relative w-full overflow-hidden mx-auto"
-          style={{
-            maxWidth: `${LAYOUT_W}px`,
-            height: `${LAYOUT_H * layoutScale}px`,
-          }}
+          style={{ maxWidth: `${LAYOUT_W}px`, height: `${LAYOUT_H * layoutScale}px` }}
         >
           <div
             className="absolute top-0 left-[calc(50%+18px)] md:left-1/2"
@@ -2009,221 +2147,85 @@ const ChecklistSection = () => {
           >
             {/* STEP 1 */}
             <div className="absolute left-[283px] top-[19px] w-[211px] h-[211px]">
-              <div
-                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0`}
-                style={{
-                  '--delay': '0s',
-                  boxShadow:
-                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.1)',
-                }}
-              ></div>
-              <img
-                src={imgScrolling}
-                className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
-                alt="Scrolling"
-                style={{
-                  '--delay': '0.15s',
-                }}
-                loading="lazy"
-              />
+              <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0`} style={{ '--delay': '0s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.1)' }} />
+              <img src={imgScrolling} className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`} alt="Scrolling" style={{ '--delay': '0.15s' }} loading="lazy" />
             </div>
-            <div
-              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
-              style={{ '--delay': '0.25s' }}
-            >
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                {chaosItems[0]?.title ?? 'Too much scrolling.'}
-              </h3>
+            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[196px] top-[170px] w-[113px] text-right z-20`} style={{ '--delay': '0.25s' }}>
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[0]?.title ?? 'Too much scrolling.'}</h3>
             </div>
-            <div
-              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
-              style={{ '--delay': '0.3s' }}
-            >
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                What was once simple now means endless scrolling — and still no confidence.
-              </p>
+            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`} style={{ '--delay': '0.3s' }}>
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">What was once simple now means endless scrolling — and still no confidence.</p>
             </div>
 
             {/* STEP 2 */}
             <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
-              <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
-                style={{
-                  '--delay': '0.5s',
-                  boxShadow:
-                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
-                }}
-              ></div>
-              <img
-                src={imgCalls}
-                alt="Calls"
-                className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
-                style={{
-                  '--delay': '0.65s',
-                }}
-                loading="lazy"
-              />
-              <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
-                style={{ '--delay': '0.8s' }}
-              >
-                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
-                  {chaosItems[1]?.title ?? 'Too many calls.'}
-                </h3>
+              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`} style={{ '--delay': '0.5s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
+              <img src={imgCalls} alt="Calls" className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`} style={{ '--delay': '0.65s' }} loading="lazy" />
+              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`} style={{ '--delay': '0.8s' }}>
+                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">{chaosItems[1]?.title ?? 'Too many calls.'}</h3>
               </div>
-              <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
-                style={{ '--delay': '0.85s' }}
-              >
-                <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
-                  Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns
-                  into a coordination hub, and excitement becomes stress.
-                </p>
+              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`} style={{ '--delay': '0.85s' }}>
+                <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns into a coordination hub, and excitement becomes stress.</p>
               </div>
             </div>
 
             {/* STEP 3 */}
             <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
-              <div
-                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0`}
-                style={{
-                  '--delay': '1.0s',
-                  boxShadow:
-                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
-                }}
-              ></div>
-              <img
-                src={imgVendors}
-                className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
-                alt="Vendors"
-                style={{
-                  '--delay': '1.15s',
-                }}
-                loading="lazy"
-              />
+              <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0`} style={{ '--delay': '1.0s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
+              <img src={imgVendors} className={`anim-element slide-from-bottom chaos-person-shadow-both ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`} alt="Vendors" style={{ '--delay': '1.15s' }} loading="lazy" />
             </div>
-            <div
-              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
-              style={{ '--delay': '1.25s' }}
-            >
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                {chaosItems[2]?.title ?? 'Too many vendors.'}
-              </h3>
+            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[400px] top-[337px] w-[113px] text-right z-20`} style={{ '--delay': '1.25s' }}>
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[2]?.title ?? 'Too many vendors.'}</h3>
             </div>
-            <div
-              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
-              style={{ '--delay': '1.3s' }}
-            >
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                One decorator, one caterer, one supplier, different prices, different chaos.
-                You&apos;re not planning a celebration; you&apos;re managing a team.
-              </p>
+            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`} style={{ '--delay': '1.3s' }}>
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">One decorator, one caterer, one supplier, different prices, different chaos. You&apos;re not planning a celebration; you&apos;re managing a team.</p>
             </div>
 
-            {/* STEP 4 — outer clip + img as direct child (260×211) matches original positioning */}
+            {/* STEP 4 */}
             <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
-              <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0`}
-                style={{
-                  '--delay': '1.5s',
-                  boxShadow:
-                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
-                }}
-              ></div>
-              <img
-                src={imgDecisions}
-                alt="Decisions"
-                className={`anim-element slide-from-bottom ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
-                style={{
-                  '--delay': '1.65s',
-                }}
-                loading="lazy"
-              />
+              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0`} style={{ '--delay': '1.5s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
+              <img src={imgDecisions} alt="Decisions" className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`} style={{ '--delay': '1.65s' }} loading="lazy" />
             </div>
-            <div
-              className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[662px] top-[551px] w-[122px] text-left z-20`}
-              style={{ '--delay': '1.75s' }}
-            >
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                {chaosItems[3]?.title ?? 'Too many decisions.'}
-              </h3>
+            <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[662px] top-[551px] w-[122px] text-left z-20`} style={{ '--delay': '1.75s' }}>
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[3]?.title ?? 'Too many decisions.'}</h3>
             </div>
-            <div
-              className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
-              style={{ '--delay': '1.8s' }}
-            >
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more
-                freedom, just more pressure.
-              </p>
+            <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`} style={{ '--delay': '1.8s' }}>
+              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more freedom, just more pressure.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-6 md:gap-8 mb-20 md:mb-32 z-10 text-center mt-8 md:mt-[40px] px-6">
-        <h3
-          className="text-[20px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading"
-          style={{ fontFamily: "'Malgin', serif" }}
-        >
-          <span className="reveal-wrapper">
-            <span className="reveal-text">{s.relief_heading ?? 'Stop take a deep breath'}</span>
-          </span>
+      {/* Relief text */}
+      <div className="flex flex-col items-center gap-6 md:gap-8 mb-8 md:mb-32 z-10 text-center mt-8 md:mt-[40px] px-6">
+        <h3 className="text-[20px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading" style={{ fontFamily: "'Malgin', serif" }}>
+          <span className="reveal-wrapper"><span className="reveal-text">{s.relief_heading ?? 'Stop take a deep breath'}</span></span>
         </h3>
-
         <div className="flex flex-col items-center">
           {reliefItems.map((item, i) => (
-            <p
-              key={i}
-              className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll"
-            >
-              <span className="reveal-wrapper">
-                <span className="reveal-text">{item}</span>
-              </span>
+            <p key={i} className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
+              <span className="reveal-wrapper"><span className="reveal-text">{item}</span></span>
             </p>
           ))}
         </div>
-
-        {/* RESTORED: The missing text block is back! */}
-        <h4
-          className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2 reveal-heading"
-          style={{ fontFamily: "'Malgin', serif" }}
-        >
-          <span className="reveal-wrapper">
-            <span className="reveal-text">
-              {s.tagline ?? '11 takes the chaos out so you can stay in the moment'}
-            </span>
-          </span>
+        <h4 className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2 reveal-heading" style={{ fontFamily: "'Malgin', serif" }}>
+          <span className="reveal-wrapper"><span className="reveal-text">{s.tagline ?? '11 takes the chaos out so you can stay in the moment'}</span></span>
         </h4>
       </div>
 
-      {/* CHANGED: Increased the height to min-h-[90vh] so the taller door fits safely */}
-      <div className="relative w-full z-10 mt-[80px] md:mt-10 overflow-visible md:overflow-hidden min-h-[90vh] md:min-h-[100vh]">
-        <div
-          ref={gateAreaRef}
-          className="relative w-full h-[90vh] md:h-[100vh] z-20 overflow-hidden"
-          style={{ position: 'relative' }}
-        >
-          <div
-            ref={insideBgRef}
-            className="absolute inset-0 bg-[#E9D0A2] opacity-0 pointer-events-none"
-          />
-
-          <div className="absolute inset-0 z-10 flex justify-center items-start md:items-center pt-16 md:pt-0">
-            <div
-              ref={gateRef}
-              className="w-full max-w-[1200px] px-2 md:px-4"
-              style={{ transformOrigin: 'center center', willChange: 'transform' }}
-            >
-              {/* CHANGED: Increased scale back up to [2.8] for taller door */}
-              <div className="scale-[2.8] md:scale-100 origin-center w-full">
+      {/* Door section — unchanged */}
+      <div className="door-section relative w-full z-10 mt-0 md:mt-10">
+        <div ref={gateAreaRef} className="door-section__pin relative w-full z-20" style={{ position: 'relative' }}>
+          <div ref={insideBgRef} className="absolute inset-0 bg-[#E9D0A2] opacity-0 pointer-events-none" />
+          <div className="relative z-10 flex flex-1 items-center justify-center">
+            <div ref={gateRef} className="door-section__gate px-0 md:px-4" style={{ transformOrigin: 'center center', willChange: 'transform' }}>
+              <div className="door-section__gate-inner origin-center">
                 <CelebrationDoor className="w-full h-auto" />
               </div>
             </div>
           </div>
         </div>
-
-        <div ref={howItWorksRef} className="relative z-20 -mt-[50vh] md:-mt-[100vh]">
+        <div ref={howItWorksRef} className="door-section__overlay relative z-20">
           <HowItWorksSection isVisible={howItWorksVisible} />
         </div>
       </div>
@@ -2887,7 +2889,7 @@ const CelebrationFeelingSection = () => {
 
         <div className="sticky top-[180px] md:top-[250px] z-10 flex flex-col items-center">
           <h2
-            className="w-[353px] md:w-[1148px] max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[24px] md:text-[48px] lg:text-[96px] leading-[1] md:leading-[0.9] text-center font-serif drop-shadow-sm px-4 reveal-heading"
+            className="w-full max-w-[353px] md:w-[1148px] md:max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[24px] md:text-[48px] lg:text-[96px] leading-[1] md:leading-[0.9] text-center font-serif drop-shadow-sm px-4 reveal-heading"
             style={{ fontFamily: "'Malgin', serif" }}
           >
             <span className="reveal-wrapper">
@@ -2903,7 +2905,7 @@ const CelebrationFeelingSection = () => {
             </span>
           </h2>
 
-          <p className="mt-[20px] md:mt-8 w-[353px] md:w-[522px] max-w-[calc(100%-2rem)] text-[#FFFFFF] opacity-90 md:opacity-100 text-[14px] md:text-[16px] leading-[150%] text-center drop-shadow-sm px-4 reveal-on-scroll font-['Poppins'] md:font-sans">
+          <p className="mt-[20px] md:mt-8 w-full max-w-[353px] md:w-[522px] md:max-w-[calc(100%-2rem)] text-[#FFFFFF] opacity-90 md:opacity-100 text-[14px] md:text-[16px] leading-[150%] text-center drop-shadow-sm px-4 reveal-on-scroll font-['Poppins'] md:font-sans">
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 {s.body ??
@@ -3163,7 +3165,7 @@ const PlanningGuidesSection = () => {
 
         <div className="flex-1 py-4 md:py-16 px-12 lg:px-8 flex flex-col">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
+          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden md:overflow-hidden">
             <div className="relative -mx-12 md:mx-0 min-h-[400px] md:min-h-0">
               {/* Mobile Left Navigation Arrow */}
               <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
