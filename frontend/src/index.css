@@ -23,12 +23,20 @@ html {
   /* Updated to Poppins for body text */
   --font-body: 'Poppins', sans-serif;
   --font-display: Malgin, 'DM Serif Display', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --door-viewport-height: 100vh;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --door-viewport-height: 100dvh;
+  }
 }
 
 html,
 body,
 #root {
   height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
 }
@@ -36,6 +44,8 @@ body,
 body {
   /* Sets the default for the page to Poppins */
   font-family: var(--font-body);
+  min-height: 100%;
+  overflow-x: hidden;
 }
 
 /* Explicit configuration for p tags based on "Body/regular/b3" */
@@ -235,6 +245,134 @@ p {
   animation: slideInFromRightCircle 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* HOW 11 WORKS timeline: keep all steps visible, dim inactive ones, highlight the active step */
+.step-item .reveal-text,
+.step-item .reveal-text.reveal-text-x-left,
+.step-item .reveal-text.reveal-text-x-right,
+.step-item .reveal-circle-text.reveal-text-x-left,
+.step-item .reveal-circle-text.reveal-text-x-right {
+  transform: none;
+  opacity: 1;
+  animation: none !important;
+}
+
+.step-item .step-icon-shell,
+.step-item .step-copy-shell {
+  opacity: 0.28;
+  transition: opacity 0.22s ease;
+  will-change: opacity;
+}
+
+.step-item.is-step-active .step-icon-shell,
+.step-item.is-step-active .step-copy-shell {
+  opacity: 1;
+}
+
+.step-item .step-number-badge {
+  background: rgba(205, 177, 126, 0.24);
+  color: rgba(255, 255, 255, 0.32);
+  box-shadow: none;
+  transition:
+    background-color 0.32s ease,
+    color 0.32s ease,
+    box-shadow 0.32s ease;
+}
+
+.step-item.is-step-active .step-number-badge {
+  background: #cdb17e;
+  color: #fafafa;
+  box-shadow:
+    -25px 18px 12px rgba(0, 0, 0, 0.03),
+    -14px 10px 10px rgba(0, 0, 0, 0.1),
+    -6px 4px 8px rgba(0, 0, 0, 0.16),
+    -2px 1px 4px rgba(0, 0, 0, 0.19);
+}
+
+/* Landing page CTA hover system */
+.landing-cta-hover {
+  transition:
+    background-color 0.28s ease,
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    transform 0.28s ease;
+}
+
+.landing-cta-hover:hover {
+  transform: translateY(-1px);
+}
+
+.landing-cta-hover__label {
+  transition: color 0.28s ease;
+}
+
+.landing-cta-hover__icon-shell {
+  transition:
+    background-color 0.28s ease,
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    color 0.28s ease,
+    transform 0.28s ease;
+}
+
+.landing-cta-hover:hover .landing-cta-hover__icon-shell {
+  transform: translateX(2px);
+}
+
+.landing-cta-hover__icon--arrow {
+  transition: transform 0.28s ease;
+}
+
+.landing-cta-hover:hover .landing-cta-hover__icon--arrow {
+  transform: rotate(45deg);
+}
+
+.landing-cta-hover--dark:hover {
+  background-color: #a68567 !important;
+  box-shadow: 0 14px 30px -22px rgba(89, 25, 2, 0.42);
+}
+
+.landing-cta-hover--dark:hover .landing-cta-hover__label {
+  color: #fafafa !important;
+}
+
+.landing-cta-hover--dark:hover .landing-cta-hover__icon-shell {
+  background-color: #fafafa !important;
+  border-color: #fafafa !important;
+  color: #a68567 !important;
+}
+
+.landing-cta-hover--fill:hover {
+  background-color: #cdb17e !important;
+  border-color: #cdb17e !important;
+  box-shadow: 0 14px 30px -22px rgba(89, 25, 2, 0.32);
+}
+
+.landing-cta-hover--fill:hover .landing-cta-hover__label {
+  color: #fafafa !important;
+}
+
+.landing-cta-hover--fill:hover .landing-cta-hover__icon-shell {
+  background-color: #fafafa !important;
+  border-color: #fafafa !important;
+  color: #cdb17e !important;
+}
+
+.landing-cta-hover--outline:hover {
+  background-color: #591902 !important;
+  border-color: #591902 !important;
+  box-shadow: 0 14px 30px -22px rgba(89, 25, 2, 0.45);
+}
+
+.landing-cta-hover--outline:hover .landing-cta-hover__label {
+  color: #fafafa !important;
+}
+
+.landing-cta-hover--outline:hover .landing-cta-hover__icon-shell {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.36) !important;
+  color: #fafafa !important;
+}
+
 /* ── Layout Grid Continuous Floating (Checklist Section) ── */
 @keyframes subtle-float {
   0%,
@@ -320,6 +458,81 @@ p {
   animation-duration: 0.7s;
 }
 
+/* Checklist door section: keep a true full-height viewport on mobile browsers */
+.door-section {
+  min-height: 100vh;
+  min-height: var(--door-viewport-height);
+  height: auto;
+}
+
+.door-section__pin {
+  min-height: 100vh;
+  min-height: var(--door-viewport-height);
+  height: auto;
+  display: flex;
+  align-items: stretch;
+  overflow: clip;
+}
+
+.door-section__overlay {
+  margin-top: -100vh;
+  margin-top: calc(-1 * var(--door-viewport-height));
+}
+
+@supports not (overflow: clip) {
+  .door-section__pin {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 767px) {
+  .door-section__gate {
+    width: 96vw;
+    max-width: none;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .door-section__gate-inner {
+    width: 100%;
+    transform: translateY(14px) scale(1.98);
+    transform-origin: center center;
+  }
+}
+
+@media (min-width: 360px) and (max-width: 767px) {
+  .door-section__gate {
+    width: 100vw;
+  }
+
+  .door-section__gate-inner {
+    transform: translateY(10px) scale(2.18);
+  }
+}
+
+@media (min-width: 390px) and (max-width: 767px) {
+  .door-section__gate {
+    width: 104vw;
+  }
+
+  .door-section__gate-inner {
+    transform: translateY(8px) scale(2.42);
+  }
+}
+
+@media (min-width: 768px) {
+  .door-section__gate {
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .door-section__gate-inner {
+    transform: none;
+  }
+}
+
 /* ── Card reveal (simple, viewport-triggered) ────────────────────────────── */
 .card-reveal {
   opacity: 0;
@@ -330,6 +543,18 @@ p {
 .card-reveal.is-visible {
   animation: cardFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-delay: var(--delay, 0s);
+}
+
+.chaos-person-shadow-right {
+  filter: drop-shadow(10px 0 18px rgba(89, 25, 2, 0.16))
+    drop-shadow(8px 8px 20px rgba(89, 25, 2, 0.1));
+}
+
+.chaos-person-shadow-both {
+  filter: drop-shadow(-10px 0 22px rgba(89, 25, 2, 0.14))
+    drop-shadow(10px 0 22px rgba(89, 25, 2, 0.14))
+    drop-shadow(0 0 22px rgba(89, 25, 2, 0.14))
+    drop-shadow(0 10px 24px rgba(89, 25, 2, 0.1));
 }
 
 /* Testimonials cards: viewport reveal without touching size/state classes */

@@ -94,6 +94,7 @@ const HeroSection = () => {
   const leftLine3Refs = useRef([])
 
   const cardRefs = useRef([])
+  const bandRefs = useRef([])
 
   function initHeroAnimations() {
     const dk = darkOverlayRef.current
@@ -340,8 +341,8 @@ const HeroSection = () => {
       }
 
       // ── ScrollTrigger: phases 2-3 ───────────────────────────────────────────
-      const scrubSmooth = 5.5
-      const textCardsEnd = 0.16
+      const scrubSmooth = 3.5
+      const textCardsEnd = 0.125
       ScrollTrigger.create({
         trigger: wrapperRef.current,
         start: 'top top',
@@ -363,14 +364,14 @@ const HeroSection = () => {
           s.contentY = lerp(0, -50, sub(p, 0.0, textCardsEnd))
 
           // Phase 3: Video shrinks to bottom layout
-          const shrinkP = sub(p, 0.16, 0.93)
+          const shrinkP = sub(p, 0.12, 0.85)
           s.vidTop = lerp(0, eT, shrinkP)
           s.vidLeft = lerp(0, eL, shrinkP)
           s.vidW = lerp(W, eW, shrinkP)
           s.vidH = lerp(H, eH, shrinkP)
           s.vidR = lerp(0, 16, shrinkP)
 
-          s.darkAlpha = lerp(1, 0, sub(p, 0.16, 0.48))
+          s.darkAlpha = lerp(1, 0, sub(p, 0.12, 0.4))
         },
       })
     }, wrapperRef) // Scope context to this specific component
@@ -390,6 +391,13 @@ const HeroSection = () => {
       if (li) li.style.transform = `scale(${s.logoScale})`
 
       dk.style.opacity = s.darkAlpha
+
+      const bandStartSize = window.innerWidth < 768 ? 60 : 112
+      const bandEndSize = window.innerWidth < 768 ? 36 : 68
+      const bandFontSize = lerp(bandStartSize, bandEndSize, sub(s.scrollProgress, 0, 0.45))
+      bandRefs.current.filter(Boolean).forEach(el => {
+        el.style.fontSize = `${bandFontSize}px`
+      })
 
       const topR = s.vidTopR + s.vidR
       vw.style.top = `${s.vidTop}px`
@@ -512,8 +520,8 @@ const HeroSection = () => {
   const bandFont = {
     fontFamily: "'Poppins', sans-serif",
     fontWeight: 600,
-    fontSize: '112px',
-    lineHeight: '100%',
+    fontSize: '120px',
+    lineHeight: '120%',
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -541,13 +549,13 @@ const HeroSection = () => {
               {renderBandCopy(BAND1_TOKENS)}
             </div>
           </div>
-          <div style={bandWrap('23%')}>
+          <div style={bandWrap('27%')}>
             <div className="band-scroll dir-right" style={bandFont}>
               {renderBandCopy(BAND2_TOKENS)}
               {renderBandCopy(BAND2_TOKENS)}
             </div>
           </div>
-          <div style={bandWrap('36%')}>
+          <div style={bandWrap('44%')}>
             <div className="band-scroll dir-left" style={bandFont}>
               {renderBandCopy(BAND3_TOKENS)}
               {renderBandCopy(BAND3_TOKENS)}

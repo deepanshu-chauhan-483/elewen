@@ -174,15 +174,15 @@ const About = () => {
       >
         <div
           data-nav-surface="transparent"
-          className="relative w-full shrink-0 h-[750px] min-[540px]:h-[1000px]"
+          className="relative w-full shrink-0 h-[810px] min-[375px]:h-[850px] min-[540px]:h-[1000px]"
         >
           {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
-          <div className="absolute left-0 top-0 w-full h-[660px] min-[540px]:h-[880px] bg-[#591902] overflow-hidden rounded-b-[500px] min-[540px]:rounded-b-[1000px]">
+          <div className="absolute left-0 top-0 w-full h-[710px] min-[375px]:h-[745px] min-[540px]:h-[880px] bg-[#591902] overflow-hidden rounded-b-[500px] min-[540px]:rounded-b-[1000px]">
             {/* --- MAIN TEXT CONTENT (FLUID GRID) --- */}
-            <div className="relative z-30 max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-22 min-[540px]:pt-[120px] lg:pt-[223px]">
-              <div className="grid grid-cols-1 min-[540px]:grid-cols-12 items-start gap-y-6 min-[540px]:gap-y-0 min-[540px]:gap-x-10 lg:gap-x-[72px]">
+            <div className="relative z-30 max-w-[1440px] mx-auto px-5 min-[375px]:px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-18 min-[375px]:pt-20 min-[540px]:pt-[120px] lg:pt-[223px]">
+              <div className="grid grid-cols-1 min-[540px]:grid-cols-12 items-start gap-y-5 min-[540px]:gap-y-0 min-[540px]:gap-x-10 lg:gap-x-[72px]">
                 {/* Left Heading */}
-                <h2 className="min-[540px]:col-span-7 w-full max-w-[564px] text-[#FFFFFF] text-[24px] min-[540px]:text-[50px] lg:text-[61px] leading-[1.13] lg:leading-[1.15] font-serif m-0">
+                <h2 className="min-[540px]:col-span-7 w-full max-w-[564px] text-[#FFFFFF] text-[22px] min-[375px]:text-[24px] min-[540px]:text-[50px] lg:text-[61px] leading-[1.08] min-[540px]:leading-[1.13] lg:leading-[1.15] font-serif m-0">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ animationDelay: '0s' }}>
                       {so.heading_1 ?? 'When we saw Excitement'}
@@ -205,7 +205,7 @@ const About = () => {
                   ).map((para, i) => (
                     <p
                       key={i}
-                      className="text-[#FFFFFF] text-[14px] min-[540px]:text-[15px] lg:text-[16px] leading-[1.5] font-normal m-0 opacity-70 min-[540px]:opacity-100"
+                      className="text-[#FFFFFF] text-[13px] min-[375px]:text-[14px] min-[540px]:text-[15px] lg:text-[16px] leading-[1.5] font-normal m-0 opacity-80 min-[540px]:opacity-100"
                     >
                       <span className="reveal-wrapper block">
                         <span
@@ -224,18 +224,18 @@ const About = () => {
             {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
             <div className="pointer-events-none absolute inset-0 z-10">
               <div
-                className="anim-element slide-from-bottom absolute inset-x-0 mx-auto bottom-[-90px] min-[540px]:bottom-[-170px] w-[240px] min-[540px]:w-[400px] h-[360px] min-[540px]:h-[600px] bg-[#BFAC9B] rounded-t-[500px] min-[540px]:rounded-[500px] border-[2px] min-[540px]:border-[4px] border-[#591902] shadow-lg"
+                className="anim-element slide-from-bottom absolute inset-x-0 mx-auto bottom-[-108px] min-[375px]:bottom-[-118px] min-[540px]:bottom-[-170px] w-[252px] min-[375px]:w-[272px] min-[540px]:w-[400px] h-[378px] min-[375px]:h-[402px] min-[540px]:h-[600px] bg-[#BFAC9B] rounded-t-[500px] min-[540px]:rounded-[500px] border-[2px] min-[540px]:border-[4px] border-[#591902] shadow-lg"
                 style={{ '--delay': '0.1s' }}
               />
             </div>
 
             {/* --- MOBILE ONLY: GIRL CLIPPED BY THE CURVE --- */}
-            <div className="min-[540px]:hidden pointer-events-none absolute inset-x-0 bottom-[-90px] z-20 flex justify-center">
-              <div className="relative flex justify-center w-[240px] h-[360px]">
+            <div className="min-[540px]:hidden pointer-events-none absolute inset-x-0 bottom-[-108px] min-[375px]:bottom-[-118px] z-20 flex justify-center">
+              <div className="relative flex justify-center w-[252px] h-[378px] min-[375px]:w-[272px] min-[375px]:h-[402px]">
                 <img
                   src={tangledIllustration}
                   alt="Person tangled in lights"
-                  className="anim-element slide-from-bottom absolute top-[-15px] left-[-50px] z-10 w-[284px] h-[392px] max-w-none object-cover"
+                  className="anim-element slide-from-bottom absolute top-[-8px] left-[-30px] min-[375px]:left-[-34px] z-10 w-[308px] h-[398px] min-[375px]:w-[330px] min-[375px]:h-[424px] max-w-none object-cover"
                   style={{ '--delay': '0.3s' }}
                 />
               </div>
@@ -293,7 +293,7 @@ const About = () => {
         </div>
 
         {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
-        <section className="relative w-full bg-[#A5A687] overflow-hidden font-sans">
+        <section className="relative -mt-px md:mt-0 w-full bg-[#A5A687] overflow-hidden font-sans">
           <div ref={sectionRef} className="relative w-full min-h-[4550px]">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
@@ -305,7 +305,7 @@ const About = () => {
               style={{ right: '5%', top: '30%', transform: 'rotate(-37.82deg)' }}
             />
 
-            <div className="absolute top-0 left-0 flex w-full pointer-events-none z-10">
+            <div className="absolute -top-px min-[540px]:top-0 left-0 flex w-full pointer-events-none z-10">
               {visibleScallops.map((_, i, arr) => (
                 <div
                   key={i}
@@ -316,7 +316,7 @@ const About = () => {
                     style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
                   />
                   <div
-                    className="absolute top-0 left-0 w-full h-[30px] min-[540px]:h-[60px] bg-[#F8F4ED]"
+                    className="absolute top-0 left-0 w-full h-[36px] min-[540px]:h-[60px] bg-[#F8F4ED]"
                     style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
                   />
 
@@ -844,7 +844,7 @@ const About = () => {
                       <div
                         key={index}
                         style={{ '--delay': `${0.08 + index * 0.06}s` }}
-                        className="card-reveal about-page-card group w-full min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] p-6 flex flex-col items-center gap-5"
+                        className="card-reveal about-page-card group w-full max-w-[320px] min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] px-4 py-6 min-[375px]:p-6 flex flex-col items-center gap-5"
                       >
                         <div className="flex w-[80px] h-[80px] shrink-0 items-center justify-center about-page-card-icon">
                           {currentIconSrc && (
@@ -864,23 +864,23 @@ const About = () => {
                           )}
                         </div>
 
-                        <div className="flex flex-col items-center gap-4 w-full p-4">
+                        <div className="flex flex-col items-center gap-4 w-full px-1 min-[375px]:p-4">
                           <h5
-                            className="about-page-card-title text-[#2D2D2D] text-[16px] sm:text-[21px] font-normal text-center leading-[120%]"
+                            className="about-page-card-title text-[#2D2D2D] text-[16px] min-[375px]:text-[18px] sm:text-[21px] font-normal text-center leading-[120%] w-full max-w-[220px] min-[375px]:max-w-[240px] sm:max-w-none"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '120%',
-                              width: card.titleWidth,
+                              width: '100%',
                             }}
                           >
                             {card.title}
                           </h5>
                           <p
-                            className="about-page-card-desc text-[#767676] text-[12px] font-normal text-center leading-[150%] w-auto text-wrap"
+                            className="about-page-card-desc text-[#767676] text-[12px] min-[375px]:text-[13px] font-normal text-center leading-[150%] w-full max-w-[248px] min-[375px]:max-w-[276px] break-words"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '150%',
-                              width: '276px',
+                              width: '100%',
                             }}
                           >
                             {card.desc}

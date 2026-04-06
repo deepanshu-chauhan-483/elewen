@@ -338,11 +338,11 @@ const GrandCelebrationsSection = () => {
   const mobileStackTransforms = [
     { rotate: 0, x: 0, y: 0, scale: 1 },
 
-    { rotate: -10, x: -26, y: 16, scale: 0.98 },
+    { rotate: -10, x: -18, y: 14, scale: 0.97 },
 
-    { rotate: 10, x: 26, y: 22, scale: 0.96 },
+    { rotate: 10, x: 18, y: 20, scale: 0.95 },
 
-    { rotate: -6, x: -8, y: 30, scale: 0.94 },
+    { rotate: -6, x: -6, y: 26, scale: 0.93 },
   ]
 
   return (
@@ -351,12 +351,12 @@ const GrandCelebrationsSection = () => {
       className="relative w-full bg-[#FFFFFF] flex justify-center overflow-hidden font-sans"
     >
       {isMobile ? (
-        <div className="relative w-full max-w-[540px] mx-auto px-6 pt-14 pb-12 min-h-[820px] flex flex-col items-center">
+        <div className="relative w-full max-w-[540px] mx-auto px-4 pt-10 pb-10 min-h-screen min-h-[100dvh] flex flex-col items-center">
           {/* Title + note (mobile) */}
 
           <div className="w-full flex flex-col items-center text-center">
             <h3
-              className="text-[#2D2D2D] text-[32px] leading-[1.05] font-serif"
+              className="text-[#2D2D2D] text-[28px] leading-[1.05] font-serif min-[375px]:text-[32px]"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper block">
@@ -366,7 +366,7 @@ const GrandCelebrationsSection = () => {
               </span>
             </h3>
 
-            <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.5] max-w-[320px]">
+            <p className="mt-5 text-[#2D2D2D] opacity-50 text-[13px] leading-[1.5] max-w-[300px] min-[375px]:text-[14px] min-[375px]:max-w-[320px]">
               <span className="reveal-wrapper block">
                 <span
                   ref={noteRef}
@@ -382,8 +382,8 @@ const GrandCelebrationsSection = () => {
 
           {/* Stacked cards (mobile) */}
 
-          <div className="mt-14 flex-1 w-full flex items-center justify-center">
-            <div className="relative w-[260px] h-[360px]">
+          <div className="mt-8 flex-1 min-h-0 w-full flex items-center justify-center">
+            <div className="relative w-[min(74vw,280px)] aspect-[13/18] min-[375px]:w-[min(76vw,290px)]">
               {mobileStackItems.map((item, idx) => {
                 const t =
                   mobileStackTransforms[idx] ||
@@ -400,7 +400,7 @@ const GrandCelebrationsSection = () => {
                       transformOrigin: 'center',
                     }}
                   >
-                    <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[18px] shadow-[0_28px_70px_rgba(0,0,0,0.18)]">
+                    <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[18px] shadow-[0_18px_42px_rgba(0,0,0,0.16)]">
                       <img
                         src={item.image}
                         alt={item.title}
@@ -414,8 +414,8 @@ const GrandCelebrationsSection = () => {
           </div>
 
           {/* Dots + description (mobile) */}
-          <div className="w-full flex flex-col items-center mt-5">
-            <div className="flex items-center justify-center gap-2 mt-4">
+          <div className="w-full flex flex-col items-center mt-3">
+            <div className="flex items-center justify-center gap-2 mt-3">
               {Array.from({ length: totalPages }, (_, i) => {
                 const active = i === normalizedPage
                 return (
@@ -433,13 +433,13 @@ const GrandCelebrationsSection = () => {
             </div>
 
             <h4
-              className="mt-8 text-[#2D2D2D] text-[20px] leading-[1.1] font-serif uppercase tracking-wide text-center max-w-[320px]"
+              className="mt-6 text-[#2D2D2D] text-[18px] leading-[1.1] font-serif uppercase tracking-wide text-center max-w-[300px] min-[375px]:text-[20px] min-[375px]:max-w-[320px]"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               {mobileActiveItem?.title}
             </h4>
 
-            <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.6] text-center max-w-[320px]">
+            <p className="mt-4 text-[#2D2D2D] opacity-50 text-[13px] leading-[1.6] text-center max-w-[300px] min-[375px]:text-[14px] min-[375px]:max-w-[320px]">
               {mobileActiveItem?.desc}
             </p>
           </div>
