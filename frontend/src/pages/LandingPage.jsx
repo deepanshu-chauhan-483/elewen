@@ -90,7 +90,7 @@ const PlanEventSection = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Derive active category — default to first category once loaded
+  // Derive active category â€” default to first category once loaded
   const activeCategory = selectedCategory ?? safeCategories[0] ?? null
 
   // Filter cards by selected category
@@ -265,7 +265,7 @@ const PlanEventSection = () => {
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 {s.description ??
-                  'Choose your event type and explore curated décor and catering packages designed to simplify planning.'}
+                  'Choose your event type and explore curated dÃ©cor and catering packages designed to simplify planning.'}
               </span>
             </span>
           </p>
@@ -364,13 +364,13 @@ const PlanEventSection = () => {
                     <path
                       d="M19 12H5M5 12L12 19M5 12L12 5"
                       stroke="#CDB17E"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </button>
               </div>
-              {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
+              {/* Mobile Left Navigation Arrow â€” full-bleed row, vertically centered on card */}
 
               <div
                 ref={carouselViewportRef}
@@ -440,8 +440,8 @@ const PlanEventSection = () => {
                     <path
                       d="M5 12H19M19 12L12 19M19 12L12 5"
                       stroke="#CDB17E"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </button>
@@ -467,8 +467,8 @@ const PlanEventSection = () => {
                   <path
                     d="M19 12H5M5 12L12 19M5 12L12 5"
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               </button>
@@ -500,8 +500,8 @@ const PlanEventSection = () => {
                   <path
                     d="M5 12H19M19 12L12 19M19 12L12 5"
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               </button>
@@ -751,8 +751,8 @@ const WhatToPlanSection = () => {
                     <path
                       d="M19 12H5M5 12L12 19M5 12L12 5"
                       stroke="#CDB17E"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </button>
@@ -821,8 +821,8 @@ const WhatToPlanSection = () => {
                     <path
                       d="M5 12H19M19 12L12 19M19 12L12 5"
                       stroke="#CDB17E"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </button>
@@ -846,8 +846,8 @@ const WhatToPlanSection = () => {
                   <path
                     d="M19 12H5M5 12L12 19M5 12L12 5"
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               </button>
@@ -881,8 +881,8 @@ const WhatToPlanSection = () => {
                   <path
                     d="M5 12H19M19 12L12 19M19 12L12 5"
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               </button>
@@ -1111,7 +1111,7 @@ const howSteps = [
   {
     id: 5,
     title: "Have An Idea That's A Little Different?",
-    desc: "Leave us a note, ask a question, or pitch your wild idea — we'll align, curate, and make your party effortless.",
+    desc: "Leave us a note, ask a question, or pitch your wild idea â€” we'll align, curate, and make your party effortless.",
     side: 'right',
     icon: LightbulbIcon,
   },
@@ -1314,13 +1314,13 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
           gsap.set(rightContent, { x: 88, opacity: 0, force3D: true })
         }
 
-        // 3. Containers — matched the 0.2s delay here as well
+        // 3. Containers â€” matched the 0.2s delay here as well
       })
     }, container)
 
     updateStepHighlights({ reposition: true, immediate: true })
 
-    // 🔥 FORCE FIRST STEP TEXT
+    // ðŸ”¥ FORCE FIRST STEP TEXT
     const firstStep = stepElements[0]
     if (firstStep) {
       animateStepContent(firstStep)
@@ -1862,36 +1862,12 @@ const ChecklistSection = () => {
 
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  const chaosItems = s.chaos_items ?? [
-    { title: 'Too much scrolling.' },
-    { title: 'Too many calls.' },
-    { title: 'Too many vendors.' },
-    { title: 'Too many decisions.' },
-  ]
   const reliefItems = s.relief_items ?? [
     "You don't manage people",
     "You don't manage logistics",
     'No chasing vendors',
     'No waiting anxiously!',
   ]
-  const chaosCardDetails = [
-    chaosItems[0]?.description ??
-      'What was once simple now means endless scrolling and still no confidence.',
-    chaosItems[1]?.description ??
-      'Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns into a coordination hub, and excitement becomes stress.',
-    chaosItems[2]?.description ??
-      "One decorator, one caterer, one supplier, different prices, different chaos. You're not planning a celebration, you're managing a team.",
-    chaosItems[3]?.description ??
-      "Color themes, backdrops, menus, endless add-ons mean options don't mean more freedom, just more pressure.",
-  ]
-  const chaosImages = [imgScrolling, imgCalls, imgVendors, imgDecisions]
-  const chaosShadowClasses = [
-    'chaos-person-shadow-right',
-    'chaos-person-shadow-right',
-    'chaos-person-shadow-both',
-    'chaos-person-shadow-right',
-  ]
-
   const scallopCount = [...Array(isMobile ? 6 : 15)]
   const sectionRef = useRef(null)
   const [howItWorksVisible, setHowItWorksVisible] = useState(false)
@@ -2113,7 +2089,7 @@ const ChecklistSection = () => {
         </span>
       </h2>
 
-      {/* Desktop layout — unchanged */}
+      {/* Desktop layout â€” unchanged */}
       <div
         ref={layoutWrapRef}
         className="block w-[58%] mx-auto md:w-full overflow-visible mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
@@ -2172,7 +2148,7 @@ const ChecklistSection = () => {
                 style={{ '--delay': '0.3s' }}
               >
                 <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                  What was once simple now means endless scrolling — and still no confidence.
+                  What was once simple now means endless scrolling â€” and still no confidence.
                 </p>
               </div>
               {/* STEP 2: Too many calls (Starts at 1.4s) */}
@@ -2213,7 +2189,7 @@ const ChecklistSection = () => {
                   style={{ '--delay': '0.85s' }}
                 >
                   <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
-                    Follow-ups, confirmations, negotiations, and last-minute checks — your phone
+                    Follow-ups, confirmations, negotiations, and last-minute checks â€” your phone
                     turns into a coordination hub, and excitement becomes stress.
                   </p>
                 </div>
@@ -2294,8 +2270,8 @@ const ChecklistSection = () => {
               style={{ '--delay': '1.8s' }}
             >
               <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more
-                freedom, just more pressure.
+                Color themes, backdrops, menus, endless add-ons â€” more options don&apos;t mean
+                more freedom, just more pressure.
               </p>
             </div>
           </div>
@@ -2336,7 +2312,7 @@ const ChecklistSection = () => {
         </h4>
       </div>
 
-      {/* Door section — unchanged */}
+      {/* Door section â€” unchanged */}
       <div className="door-section relative w-full z-10 mt-0 overflow-hidden">
         <div
           ref={gateAreaRef}
@@ -2372,7 +2348,7 @@ const ChecklistSection = () => {
   )
 }
 
-// Local fallback images — used until Strapi media is uploaded
+// Local fallback images â€” used until Strapi media is uploaded
 // Order matches PACKAGES_FALLBACK in src/data/packages.js
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg2, pkgImg3],
@@ -2419,7 +2395,7 @@ const PackagesSection = () => {
 
   const count = packagesData.length
   const totalCards = count * 3
-  /** 3D ring needs ≥2 packages; with 1 CMS item the triple-buffer showed 3 identical cards */
+  /** 3D ring needs â‰¥2 packages; with 1 CMS item the triple-buffer showed 3 identical cards */
   const usePackageCylinder = count > 1
 
   const handleTransitionEnd = () => {
@@ -3319,8 +3295,8 @@ const PlanningGuidesSection = () => {
                     <path
                       d="M19 12H5M5 12L12 19M5 12L12 5"
                       stroke="#CDB17E"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </button>
@@ -3396,8 +3372,8 @@ const PlanningGuidesSection = () => {
                     <path
                       d="M5 12H19M19 12L12 19M19 12L12 5"
                       stroke="#CDB17E"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </button>
@@ -3421,8 +3397,8 @@ const PlanningGuidesSection = () => {
                   <path
                     d="M19 12H5M5 12L12 19M5 12L12 5"
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               </button>
@@ -3454,8 +3430,8 @@ const PlanningGuidesSection = () => {
                   <path
                     d="M5 12H19M19 12L12 19M19 12L12 5"
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               </button>
@@ -3849,7 +3825,7 @@ const SplitInfoSection = () => {
   const splitRevealRef = useRef(null)
   const [isSplitVisible, setIsSplitVisible] = useState(false)
 
-  // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
+  // inspirationImg is 15 MB â€” preload it 2 viewports ahead so it's ready on arrival
   const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
 
   useEffect(() => {
@@ -4089,11 +4065,11 @@ const SplitInfoSection = () => {
 export default function LandingPage() {
   const rootRef = useRef(null)
 
-  // ── Tiered asset preloading ───────────────────────────────────────────────
+  // â”€â”€ Tiered asset preloading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Tier 1 (on mount, during 2s preloader): only the images that appear the
-  //   instant the preloader fades — the scallop bulbs at the top of section 1.
+  //   instant the preloader fades â€” the scallop bulbs at the top of section 1.
   // Tier 2 (hero-preloader-done, ~3s in): checklist illustrations, first 3
-  //   package images, and the centre logo — sections 3–5.
+  //   package images, and the centre logo â€” sections 3â€“5.
   // Tier 3: IntersectionObserver hooks inside CelebrationFeelingSection and
   //   SplitInfoSection handle img1-5 and inspirationImg 2 viewports ahead.
   // All remaining img tags carry loading="lazy" so the browser fetches them

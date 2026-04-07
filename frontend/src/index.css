@@ -489,7 +489,7 @@ p {
   .door-section__gate {
     width: 100vw;
     height: calc(100vw * 833 / 1440);
-  max-height: 833px;
+    max-height: 833px;
     max-width: none;
     flex: 1 1 auto;
     display: flex;
@@ -554,8 +554,7 @@ p {
 
 .chaos-person-shadow-both {
   filter: drop-shadow(-10px 0 22px rgba(89, 25, 2, 0.14))
-    drop-shadow(10px 0 22px rgba(89, 25, 2, 0.14))
-    drop-shadow(0 0 22px rgba(89, 25, 2, 0.14))
+    drop-shadow(10px 0 22px rgba(89, 25, 2, 0.14)) drop-shadow(0 0 22px rgba(89, 25, 2, 0.14))
     drop-shadow(0 10px 24px rgba(89, 25, 2, 0.1));
 }
 
