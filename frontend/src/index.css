@@ -466,7 +466,7 @@ p {
 }
 
 .door-section__pin {
-  min-height: 100vh;
+  min-height: auto;
   min-height: var(--door-viewport-height);
   height: auto;
   display: flex;
@@ -487,7 +487,9 @@ p {
 
 @media (max-width: 767px) {
   .door-section__gate {
-    width: 96vw;
+    width: 100vw;
+    height: calc(100vw * 833 / 1440);
+  max-height: 833px;
     max-width: none;
     flex: 1 1 auto;
     display: flex;
@@ -497,7 +499,7 @@ p {
 
   .door-section__gate-inner {
     width: 100%;
-    transform: translateY(14px) scale(1.98);
+    transform: translateY(0) scale(1.98);
     transform-origin: center center;
   }
 }
@@ -508,7 +510,7 @@ p {
   }
 
   .door-section__gate-inner {
-    transform: translateY(10px) scale(2.18);
+    transform: translateY(0) scale(2.18);
   }
 }
 
@@ -518,7 +520,7 @@ p {
   }
 
   .door-section__gate-inner {
-    transform: translateY(8px) scale(2.42);
+    transform: translateY(0) scale(2.42);
   }
 }
 

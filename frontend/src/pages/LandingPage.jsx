@@ -106,8 +106,8 @@ const PlanEventSection = () => {
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
   const safePage = Math.min(page, totalPages - 1)
-  const mobileCardWidth = 289
-  const mobileCardGap = 16
+  const mobileCardWidth = 322
+  const mobileCardGap = 20
   const edgeFadeMask =
     slideDirection === 'prev'
       ? 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 9%, black 22%, black 86%, rgba(0,0,0,0.5) 95%, transparent 100%)'
@@ -188,7 +188,7 @@ const PlanEventSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full min-h-screen bg-[#F2F2F2] pt-[40px] md:pt-52 flex flex-col overflow-hidden font-sans"
+      className="relative w-full min-h-screen bg-[#F2F2F2] pt-[32px] md:pt-52 flex flex-col overflow-hidden font-sans"
     >
       {/* Background Decor (Desktop predominantly) */}
       {/* <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
@@ -246,7 +246,7 @@ const PlanEventSection = () => {
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 pb-8 md:pb-12 flex flex-col md:flex-row justify-between items-center md:items-end relative z-10">
         <h1
-          className="text-[24px] md:text-[61px] leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left reveal-heading"
+          className="text-[24px] md:text-[61px] leading-[1.08] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left reveal-heading max-w-[320px] md:max-w-none"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
@@ -260,8 +260,8 @@ const PlanEventSection = () => {
           </span>
         </h1>
 
-        <div className="relative max-w-[353px] md:max-w-[340px] mt-5 md:mt-4 md:top-4 flex flex-col items-center md:items-start">
-          <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
+        <div className="relative max-w-[320px] md:max-w-[340px] mt-5 md:mt-4 md:top-4 flex flex-col items-center md:items-start">
+          <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[1.45] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 {s.description ??
@@ -346,37 +346,38 @@ const PlanEventSection = () => {
 
         <div className="flex-1 py-4 md:py-16 px-6 md:px-12 lg:px-8">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden md:overflow-hidden">
-            <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] md:min-h-0">
-              {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
-              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
+            <div className="relative min-h-[460px] md:min-h-0">
+              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
+                      d="M19 12H5M5 12L12 19M5 12L12 5"
+                      stroke="#CDB17E"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   </svg>
                 </button>
               </div>
+              {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
 
               <div
                 ref={carouselViewportRef}
-                className="overflow-hidden md:px-0"
+                className="w-[322px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
                 style={{
-                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                  WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                  maskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
+                  WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
                   transition:
                     'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
@@ -398,9 +399,9 @@ const PlanEventSection = () => {
                           ? `${mobileCardWidth}px`
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
                       }}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5 mx-auto rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                     >
-                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                      <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
@@ -409,11 +410,11 @@ const PlanEventSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide uppercase font-['Poppins']">
+                      <div className="absolute bottom-[12px] my-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[261px] md:w-auto md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:p-7 h-[90px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        <h3 className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase font-['Poppins']">
                           {card.title}
                         </h3>
-                        <p className="text-white/50 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light font-['Poppins']">
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins']">
                           {card.tagline}
                         </p>
                       </div>
@@ -423,23 +424,24 @@ const PlanEventSection = () => {
               </div>
 
               {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
+                      d="M5 12H19M19 12L12 19M19 12L12 5"
+                      stroke="#CDB17E"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   </svg>
                 </button>
@@ -453,17 +455,21 @@ const PlanEventSection = () => {
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  <path
+                    d="M19 12H5M5 12L12 19M5 12L12 5"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </button>
               <div className="flex items-center gap-[4px] justify-center">
@@ -482,31 +488,35 @@ const PlanEventSection = () => {
               <button
                 onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <path
+                    d="M5 12H19M19 12L12 19M19 12L12 5"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </button>
             </div>
 
             {/* Mobile Pagination Dots */}
-            <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            <div className="flex md:hidden items-center justify-center gap-[5px] mt-10 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
                   onClick={() => goToPage(i)}
                   className={`cursor-pointer rounded-[12px] transition-all ${
                     i === safePage
-                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
-                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                      ? 'w-[20px] h-[4px] bg-[#D4BA8E]'
+                      : 'w-[8px] h-[4px] bg-[#C8C8C8]'
                   }`}
                 />
               ))}
@@ -584,8 +594,8 @@ const WhatToPlanSection = () => {
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
   const safePage = Math.min(page, totalPages - 1)
-  const mobileCardWidth = 289
-  const mobileCardGap = 16
+  const mobileCardWidth = 322
+  const mobileCardGap = 20
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -722,32 +732,37 @@ const WhatToPlanSection = () => {
         <div className="flex-1 order-last lg:order-none py-4 md:py-16 px-6 md:px-12 lg:px-8 relative reveal-border-y">
           <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           {/* Cards Carousel Area */}
-          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden lg:overflow-hidden">
-            <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] lg:min-h-0">
+          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible lg:overflow-hidden">
+            <div className="relative min-h-[460px] lg:min-h-0">
               {/* Mobile Left Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
+              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
+                      d="M19 12H5M5 12L12 19M5 12L12 5"
+                      stroke="#CDB17E"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   </svg>
                 </button>
               </div>
 
-              <div ref={carouselViewportRef} className="overflow-hidden lg:px-0">
+              <div
+                ref={carouselViewportRef}
+                className="overflow-hidden lg:px-0 mx-auto lg:mx-0"
+                style={{ width: isMobile ? `${mobileCardWidth}px` : undefined }}
+              >
                 <div
                   className="flex gap-4 md:gap-6 transition-transform duration-[1250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   style={{
@@ -760,7 +775,7 @@ const WhatToPlanSection = () => {
                   {filteredCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
                         width: isMobile
@@ -768,7 +783,7 @@ const WhatToPlanSection = () => {
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
                       }}
                     >
-                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                      <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
@@ -776,11 +791,11 @@ const WhatToPlanSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide font-['Poppins']">
+                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[261px] md:w-auto my-2 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:p-7 h-[90px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        <h3 className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']">
                           {card.title}
                         </h3>
-                        <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
                           {card.description}
                         </p>
                       </div>
@@ -790,23 +805,24 @@ const WhatToPlanSection = () => {
               </div>
 
               {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
+              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
+                      d="M5 12H19M19 12L12 19M19 12L12 5"
+                      stroke="#CDB17E"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   </svg>
                 </button>
@@ -818,17 +834,21 @@ const WhatToPlanSection = () => {
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  <path
+                    d="M19 12H5M5 12L12 19M5 12L12 5"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </button>
 
@@ -849,31 +869,35 @@ const WhatToPlanSection = () => {
               <button
                 onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <path
+                    d="M5 12H19M19 12L12 19M19 12L12 5"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </button>
             </div>
 
             {/* Mobile Pagination Dots */}
-            <div className="flex lg:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            <div className="flex lg:hidden items-center justify-center gap-[5px] mt-10 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
                   onClick={() => goToPage(i)}
                   className={`cursor-pointer rounded-[12px] transition-all ${
                     i === safePage
-                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
-                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                      ? 'w-[20px] h-[4px] bg-[#D4BA8E]'
+                      : 'w-[8px] h-[4px] bg-[#C8C8C8]'
                   }`}
                 />
               ))}
@@ -1103,7 +1127,15 @@ const howSteps = [
 const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   const containerRef = useRef(null)
   const stepsWrapRef = useRef(null)
-
+  gsap.config({
+    autoSleep: 60,
+    force3D: true,
+    nullTargetWarn: false,
+  })
+  ScrollTrigger.config({
+    limitCallbacks: true,
+    ignoreMobileResize: true,
+  })
   useLayoutEffect(() => {
     if (disableScrollAnimations || !isVisible) return
     const container = containerRef.current
@@ -1139,7 +1171,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       revealStepText(step)
 
       const stepTimeline = gsap.timeline({
-        defaults: { duration: 1.2, ease: 'power4.out', overwrite: 'auto' },
+        defaults: { duration: 0.45, ease: 'power2.out', overwrite: 'auto' },
       })
 
       if (leftContent) {
@@ -1155,7 +1187,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       }
     }
 
-    let activeStepIndex = -1
+    let activeStepIndex = 0
 
     const setActiveStepLine = (
       stepItems,
@@ -1196,7 +1228,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
             duration: 1.2,
             ease: 'power3.out',
             overwrite: 'auto',
-            onComplete: () => {
+            onStart: () => {
               if (revealContent) animateStepContent(targetStep)
             },
           }
@@ -1208,11 +1240,13 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         top: targetTop,
         height: targetHeight,
         opacity: 1,
-        duration: 1.15,
-        ease: 'power2.inOut',
+        duration: 0.4,
+        ease: 'none',
         overwrite: 'auto',
-        onComplete: () => {
-          if (revealContent) animateStepContent(targetStep)
+        onStart: () => {
+          if (revealContent) {
+            gsap.delayedCall(0.06, () => animateStepContent(targetStep))
+          }
         },
       })
     }
@@ -1279,21 +1313,25 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         if (rightContent) {
           gsap.set(rightContent, { x: 88, opacity: 0, force3D: true })
         }
-        ScrollTrigger.create({
-          trigger: step,
-          start: 'top 42%',
-          once: true,
-          onEnter: () => {
-            if (revealedSteps.has(step)) return
-            animateStepContent(step)
-          },
-        })
 
         // 3. Containers — matched the 0.2s delay here as well
       })
     }, container)
 
-    updateStepHighlights({ reposition: true })
+    updateStepHighlights({ reposition: true, immediate: true })
+
+    // 🔥 FORCE FIRST STEP TEXT
+    const firstStep = stepElements[0]
+    if (firstStep) {
+      animateStepContent(firstStep)
+    }
+    if (progressLine && stepElements[0]) {
+      gsap.set(progressLine, {
+        top: stepElements[0].offsetTop,
+        height: stepElements[0].offsetHeight,
+        opacity: 1,
+      })
+    }
 
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
@@ -1808,109 +1846,22 @@ const BetterWaySection = () => {
 
 const LAYOUT_W = 1034
 const LAYOUT_H = 684
-const MobileChecklistGrid = ({
-  chaosItems,
-  chaosCardDetails,
-  chaosImages,
-  chaosShadowClasses,
-}) => {
-  const cards = [
-    {
-      titleClass: 'w-[74%] text-left',
-      descClass: 'mt-[14px] ml-auto w-[79%] text-right',
-      imageClass: 'h-[95%] max-w-[148%]',
-      imageStyle: { left: '50%', transform: 'translateX(-45%)', height: '95%', maxWidth: 'none' },
-    },
-    {
-      titleClass: 'w-[76%] text-left',
-      descClass: 'mt-[14px] ml-auto w-[81%] text-right',
-      imageClass: 'h-[100%] max-w-[165%]',
-      imageStyle: { left: '-18%', height: '100%', maxWidth: 'none' },
-    },
-    {
-      titleClass: 'w-[78%] text-left',
-      descClass: 'mt-[14px] ml-auto w-[84%] text-right',
-      imageClass: 'h-[109%] max-w-[172%]',
-      imageStyle: { left: '-12%', height: '109%', maxWidth: 'none' },
-    },
-    {
-      titleClass: 'w-[78%] text-left',
-      descClass: 'mt-[14px] ml-auto w-[82%] text-right',
-      imageClass: 'h-[101%] max-w-[152%]',
-      imageStyle: { left: '-7%', height: '101%', maxWidth: 'none' },
-    },
-  ]
 
-  const descriptionClampStyle = {
-    display: '-webkit-box',
-    WebkitBoxOrient: 'vertical',
-    WebkitLineClamp: 6,
-    overflow: 'hidden',
-  }
-
-  return (
-    <div className="w-full px-3 mt-6 mb-8 z-10 font-sans md:hidden">
-      <div className="grid grid-cols-2 gap-3">
-        {chaosItems.slice(0, 4).map((item, index) => (
-          <article
-            key={`${item.title}-${index}`}
-            className="grid aspect-[145/312] grid-rows-[48%_52%] overflow-hidden rounded-[12px] bg-[#BFAC9B]"
-          >
-            {/* ── Text area (top ~40%) ── */}
-            <div className="min-h-0 px-3 pt-3.5">
-              <h3
-                className={`
-                  text-[14px]
-                  leading-[1.08] font-semibold text-[#591902]
-                  ${cards[index].titleClass}
-                `}
-              >
-                {item?.title}
-              </h3>
-              <p
-                className={`
-                  text-[11px]
-                  leading-[1.45] text-[#8D5B45]
-                  ${cards[index].descClass}
-                `}
-                style={descriptionClampStyle}
-              >
-                {chaosCardDetails[index]}
-              </p>
-            </div>
-
-            {/* ── Image area (bottom ~60%, absolutely pinned) ── */}
-            <div className="pointer-events-none relative min-h-0 overflow-hidden">
-              <img
-                src={chaosImages[index]}
-                alt={item?.title}
-                className={`
-                  absolute bottom-0 w-auto max-w-none object-contain object-bottom
-                  ${chaosShadowClasses[index]}
-                  ${
-                    index === 0
-                      ? 'h-[95%] max-w-[140%]'          // scrolling woman — slightly wider
-                      : index === 1
-                        ? 'h-[90%] max-w-[150%]'          // calls man
-                        : index === 2
-                          ? 'h-[105%] max-w-[160%]'         // vendors woman — taller
-                          : 'h-[88%] max-w-[140%]'          // decisions man
-                  }
-                `}
-                style={cards[index].imageStyle}
-                loading="lazy"
-              />
-            </div>
-          </article>
-        ))}
-      </div>
-    </div>
-  )
-}
 const ChecklistSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.checklist ?? {}
+  const [isMobile, setIsMobile] = useState(false)
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
   const chaosItems = s.chaos_items ?? [
     { title: 'Too much scrolling.' },
     { title: 'Too many calls.' },
@@ -1941,7 +1892,7 @@ const ChecklistSection = () => {
     'chaos-person-shadow-right',
   ]
 
-  const scallopCount = [...Array(15)]
+  const scallopCount = [...Array(isMobile ? 6 : 15)]
   const sectionRef = useRef(null)
   const [howItWorksVisible, setHowItWorksVisible] = useState(false)
   const [isLayoutVisible, setIsLayoutVisible] = useState(false)
@@ -1981,7 +1932,9 @@ const ChecklistSection = () => {
       { threshold: 0.2 }
     )
     observer.observe(wrap)
-    return () => { observer.disconnect() }
+    return () => {
+      observer.disconnect()
+    }
   }, [])
 
   useEffect(() => {
@@ -2040,25 +1993,47 @@ const ChecklistSection = () => {
 
     tl.to(gate, { scale: scaleEnd, y: gateLiftY, ease: 'power2.in', duration: doorOpenEnd }, 0)
     if (doorTable) tl.to(doorTable, { x: 180, ease: 'power2.in', duration: doorOpenEnd }, 0)
-    if (doorLights) tl.to(doorLights, { x: -120, y: -40, ease: 'power2.in', duration: doorOpenEnd }, 0)
+    if (doorLights)
+      tl.to(doorLights, { x: -120, y: -40, ease: 'power2.in', duration: doorOpenEnd }, 0)
     const archPath = gate.querySelector('#door-arch-path')
     if (doorCurvedText && archPath)
-      tl.to(doorCurvedText, {
-        motionPath: {
-          path: archPath, align: archPath, alignOrigin: [0.5, 0.5],
-          autoRotate: false, start: 0, end: 0.5,
+      tl.to(
+        doorCurvedText,
+        {
+          motionPath: {
+            path: archPath,
+            align: archPath,
+            alignOrigin: [0.5, 0.5],
+            autoRotate: false,
+            start: 0,
+            end: 0.5,
+          },
+          ease: 'power2.in',
+          duration: doorOpenEnd,
         },
-        ease: 'power2.in', duration: doorOpenEnd,
-      }, 0)
+        0
+      )
 
     tl.to(insideBg, { opacity: 1, duration: 0.18, ease: 'power2.out' }, insideBgRevealStart)
     tl.to(gate, { opacity: 0, duration: 0.12, ease: 'power2.out' }, gateFadeStart)
-    tl.to(howItWorks, {
-      yPercent: 0, duration: 1.12, ease: 'power2.out',
-      onComplete: () => { activateHowItWorks(); ScrollTrigger.refresh() },
-    }, howItWorksStart)
+    tl.to(
+      howItWorks,
+      {
+        yPercent: 0,
+        duration: 1.12,
+        ease: 'power2.out',
+        onComplete: () => {
+          activateHowItWorks()
+          ScrollTrigger.refresh()
+        },
+      },
+      howItWorksStart
+    )
 
-    return () => { tl.scrollTrigger?.kill(); tl.kill() }
+    return () => {
+      tl.scrollTrigger?.kill()
+      tl.kill()
+    }
   }, [])
 
   return (
@@ -2068,10 +2043,13 @@ const ChecklistSection = () => {
       className="checklist-section relative -mt-px md:mt-0 w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
     >
       {/* Lightbulbs */}
-      <div className="absolute -top-px md:top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
-        <div className="absolute top-0 left-0 w-full flex">
+      <div className="absolute -top-px md:top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10 ">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max flex">
           {scallopCount.map((_, i) => (
-            <div key={i} className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]">
+            <div
+              key={i}
+              className="relative shrink-0 w-[52px] sm:w-[60px] md:w-[144px] md:w-[144px] h-[40.94px] md:h-[90px]"
+            >
               <div
                 className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
                 style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
@@ -2083,21 +2061,34 @@ const ChecklistSection = () => {
               {i !== scallopCount.length - 1 && (
                 <div
                   className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
-                  style={{ animationDuration: `${3.5 + (i % 3) * 0.5}s`, animationDelay: `${(i % 5) * 0.2}s` }}
+                  style={{
+                    animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                    animationDelay: `${(i % 5) * 0.2}s`,
+                  }}
                 >
-                  <div className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`} />
+                  <div
+                    className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`}
+                  />
                   <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
-                    <img src={i % 2 === 0 ? bulb1 : bulb2} alt="Light" className="w-[20px] md:w-[32px] h-auto relative z-10" loading="lazy" />
+                    <img
+                      src={i % 2 !== 0 ? bulb1 : bulb2}
+                      alt="Light"
+                      className="w-[20px] md:w-[32px] h-auto relative z-10"
+                      loading="lazy"
+                    />
                     <div
                       className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
-                        i % 2 === 0 ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]' : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
+                        i % 2 === 0
+                          ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
+                          : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
                       }`}
                       style={{
                         animationDuration: `${4 + (i % 3) * 0.75}s`,
                         animationDelay: `${(i % 5) * 0.2}s`,
-                        background: i % 2 === 0
-                          ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
-                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
+                        background:
+                          i % 2 === 0
+                            ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
+                            : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
                         clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
                       }}
                     />
@@ -2113,31 +2104,29 @@ const ChecklistSection = () => {
         className="text-[24px] md:text-[61px] leading-[1.1] md:leading-[1] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
-        <span className="reveal-wrapper"><span className="reveal-text">{s.heading_1 ?? 'Somewhere along the way,'} </span></span>
+        <span className="reveal-wrapper">
+          <span className="reveal-text">{s.heading_1 ?? 'Somewhere along the way,'} </span>
+        </span>
         <br />
-        <span className="reveal-wrapper"><span className="reveal-text">{s.heading_2 ?? 'Hosting turned into Checklists.'}</span></span>
+        <span className="reveal-wrapper">
+          <span className="reveal-text">{s.heading_2 ?? 'Hosting turned into Checklists.'}</span>
+        </span>
       </h2>
-
-      {/* ─── MOBILE GRID (FIXED) ─────────────────────────────────────────────── */}
-      <MobileChecklistGrid
-        chaosItems={chaosItems}
-        chaosCardDetails={chaosCardDetails}
-        chaosImages={chaosImages}
-        chaosShadowClasses={chaosShadowClasses}
-      />
-      {/* ─── END MOBILE GRID ─────────────────────────────────────────────────── */}
 
       {/* Desktop layout — unchanged */}
       <div
         ref={layoutWrapRef}
-        className="hidden md:block w-full max-w-[1034px] mx-auto mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
+        className="block w-[58%] mx-auto md:w-full overflow-visible mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
       >
         <div
-          className="relative w-full overflow-hidden mx-auto"
-          style={{ maxWidth: `${LAYOUT_W}px`, height: `${LAYOUT_H * layoutScale}px` }}
+          className="relative w-full flex justify-center"
+          style={{
+            height: `${LAYOUT_H * layoutScale}px`,
+          }}
         >
+          {/* SCALE + CENTER FIX */}
           <div
-            className="absolute top-0 left-[calc(50%+18px)] md:left-1/2"
+            className="absolute top-0 left-1/2"
             style={{
               width: `${LAYOUT_W}px`,
               height: `${LAYOUT_H}px`,
@@ -2145,52 +2134,169 @@ const ChecklistSection = () => {
               transformOrigin: 'top center',
             }}
           >
-            {/* STEP 1 */}
-            <div className="absolute left-[283px] top-[19px] w-[211px] h-[211px]">
-              <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0`} style={{ '--delay': '0s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.1)' }} />
-              <img src={imgScrolling} className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`} alt="Scrolling" style={{ '--delay': '0.15s' }} loading="lazy" />
-            </div>
-            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[196px] top-[170px] w-[113px] text-right z-20`} style={{ '--delay': '0.25s' }}>
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[0]?.title ?? 'Too much scrolling.'}</h3>
-            </div>
-            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`} style={{ '--delay': '0.3s' }}>
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">What was once simple now means endless scrolling — and still no confidence.</p>
-            </div>
-
-            {/* STEP 2 */}
-            <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
-              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`} style={{ '--delay': '0.5s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
-              <img src={imgCalls} alt="Calls" className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`} style={{ '--delay': '0.65s' }} loading="lazy" />
-              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`} style={{ '--delay': '0.8s' }}>
-                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">{chaosItems[1]?.title ?? 'Too many calls.'}</h3>
+            <div className="relative w-full h-full max-w-full mx-auto px-10 sm:px-14 md:px-0 overflow-hidden">
+              {' '}
+              {/* STEP 1: Too much scrolling (Starts immediately) */}
+              <div className="absolute left-[28%] top-[3%] w-[20%] max-w-[211px] aspect-square">
+                {' '}
+                <div
+                  className={`anim-element slide-from-left ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0 shadow-sm`}
+                  style={{ '--delay': '0s' }}
+                ></div>
+                <img
+                  src={imgScrolling}
+                  className={`anim-element slide-from-bottom ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
+                  alt="Scrolling"
+                  style={{ '--delay': '0.15s' }}
+                  loading="lazy"
+                />
               </div>
-              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`} style={{ '--delay': '0.85s' }}>
-                <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns into a coordination hub, and excitement becomes stress.</p>
+              <div
+                className={`anim-element slide-from-left ${
+                  isLayoutVisible ? 'is-visible' : ''
+                } absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
+                style={{ '--delay': '0.25s' }}
+              >
+                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                  Too much scrolling.
+                </h3>
+              </div>
+              <div
+                className={`anim-element slide-from-left ${
+                  isLayoutVisible ? 'is-visible' : ''
+                } absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
+                style={{ '--delay': '0.3s' }}
+              >
+                <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                  What was once simple now means endless scrolling — and still no confidence.
+                </p>
+              </div>
+              {/* STEP 2: Too many calls (Starts at 1.4s) */}
+              <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
+                <div
+                  className={`anim-element slide-from-right ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
+                  style={{ '--delay': '0.5s' }}
+                ></div>
+                <img
+                  src={imgCalls}
+                  alt="Calls"
+                  className={`anim-element slide-from-bottom ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
+                  style={{
+                    '--delay': '0.65s',
+                    filter:
+                      'drop-shadow(33px 41px 32px rgba(109, 57, 8, 0.16)) drop-shadow(15px 18px 24px rgba(109, 57, 8, 0.28)) drop-shadow(4px 5px 13px rgba(109, 57, 8, 0.32))',
+                  }}
+                  loading="lazy"
+                />
+                <div
+                  className={`anim-element slide-from-right ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
+                  style={{ '--delay': '0.8s' }}
+                >
+                  <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
+                    Too many calls.
+                  </h3>
+                </div>
+                <div
+                  className={`anim-element slide-from-right ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
+                  style={{ '--delay': '0.85s' }}
+                >
+                  <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
+                    Follow-ups, confirmations, negotiations, and last-minute checks — your phone
+                    turns into a coordination hub, and excitement becomes stress.
+                  </p>
+                </div>
+              </div>
+              {/* STEP 3: Too many vendors (Starts at 2.8s) */}
+              <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
+                <div
+                  className={`anim-element slide-from-left ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute inset-0 bg-[#BFAC9B] z-0 shadow-sm`}
+                  style={{ '--delay': '1.0s' }}
+                ></div>
+                <img
+                  src={imgVendors}
+                  className={`anim-element slide-from-bottom ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
+                  alt="Vendors"
+                  style={{ '--delay': '1.15s' }}
+                  loading="lazy"
+                />
+              </div>
+              <div
+                className={`anim-element slide-from-left ${
+                  isLayoutVisible ? 'is-visible' : ''
+                } absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
+                style={{ '--delay': '1.25s' }}
+              >
+                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                  Too many vendors.
+                </h3>
+              </div>
+              <div
+                className={`anim-element slide-from-left ${
+                  isLayoutVisible ? 'is-visible' : ''
+                } absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
+                style={{ '--delay': '1.3s' }}
+              >
+                <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                  One decorator, one caterer, one supplier, different prices, different chaos.
+                  You&apos;re not planning a celebration; you&apos;re managing a team.
+                </p>
+              </div>
+              {/* STEP 4: Too many decisions (Starts at 4.2s) */}
+              <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
+                <div
+                  className={`anim-element slide-from-right ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0 shadow-sm`}
+                  style={{ '--delay': '1.5s' }}
+                ></div>
+                <img
+                  src={imgDecisions}
+                  alt="Decisions"
+                  className={`anim-element slide-from-bottom ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
+                  style={{ '--delay': '1.65s' }}
+                  loading="lazy"
+                />
               </div>
             </div>
-
-            {/* STEP 3 */}
-            <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
-              <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0`} style={{ '--delay': '1.0s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
-              <img src={imgVendors} className={`anim-element slide-from-bottom chaos-person-shadow-both ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`} alt="Vendors" style={{ '--delay': '1.15s' }} loading="lazy" />
-            </div>
-            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[400px] top-[337px] w-[113px] text-right z-20`} style={{ '--delay': '1.25s' }}>
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[2]?.title ?? 'Too many vendors.'}</h3>
-            </div>
-            <div className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`} style={{ '--delay': '1.3s' }}>
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">One decorator, one caterer, one supplier, different prices, different chaos. You&apos;re not planning a celebration; you&apos;re managing a team.</p>
+            <div
+              className={`anim-element slide-from-right ${
+                isLayoutVisible ? 'is-visible' : ''
+              } absolute left-[662px] top-[551px] w-[122px] text-left z-20`}
+              style={{ '--delay': '1.75s' }}
+            >
+              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                Too many decisions.
+              </h3>
             </div>
 
-            {/* STEP 4 */}
-            <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
-              <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0`} style={{ '--delay': '1.5s', boxShadow: '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)' }} />
-              <img src={imgDecisions} alt="Decisions" className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`} style={{ '--delay': '1.65s' }} loading="lazy" />
-            </div>
-            <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[662px] top-[551px] w-[122px] text-left z-20`} style={{ '--delay': '1.75s' }}>
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">{chaosItems[3]?.title ?? 'Too many decisions.'}</h3>
-            </div>
-            <div className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`} style={{ '--delay': '1.8s' }}>
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more freedom, just more pressure.</p>
+            <div
+              className={`anim-element slide-from-right ${
+                isLayoutVisible ? 'is-visible' : ''
+              } absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
+              style={{ '--delay': '1.8s' }}
+            >
+              <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more
+                freedom, just more pressure.
+              </p>
             </div>
           </div>
         </div>
@@ -2198,34 +2304,64 @@ const ChecklistSection = () => {
 
       {/* Relief text */}
       <div className="flex flex-col items-center gap-6 md:gap-8 mb-8 md:mb-32 z-10 text-center mt-8 md:mt-[40px] px-6">
-        <h3 className="text-[20px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading" style={{ fontFamily: "'Malgin', serif" }}>
-          <span className="reveal-wrapper"><span className="reveal-text">{s.relief_heading ?? 'Stop take a deep breath'}</span></span>
+        <h3
+          className="text-[20px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          <span className="reveal-wrapper">
+            <span className="reveal-text">{s.relief_heading ?? 'Stop take a deep breath'}</span>
+          </span>
         </h3>
         <div className="flex flex-col items-center">
           {reliefItems.map((item, i) => (
-            <p key={i} className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll">
-              <span className="reveal-wrapper"><span className="reveal-text">{item}</span></span>
+            <p
+              key={i}
+              className="text-[14px] md:text-[21px] text-[#591902] opacity-50 font-sans reveal-on-scroll"
+            >
+              <span className="reveal-wrapper">
+                <span className="reveal-text">{item}</span>
+              </span>
             </p>
           ))}
         </div>
-        <h4 className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2 reveal-heading" style={{ fontFamily: "'Malgin', serif" }}>
-          <span className="reveal-wrapper"><span className="reveal-text">{s.tagline ?? '11 takes the chaos out so you can stay in the moment'}</span></span>
+        <h4
+          className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2 reveal-heading"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          <span className="reveal-wrapper">
+            <span className="reveal-text">
+              {s.tagline ?? '11 takes the chaos out so you can stay in the moment'}
+            </span>
+          </span>
         </h4>
       </div>
 
       {/* Door section — unchanged */}
-      <div className="door-section relative w-full z-10 mt-0 md:mt-10">
-        <div ref={gateAreaRef} className="door-section__pin relative w-full z-20" style={{ position: 'relative' }}>
-          <div ref={insideBgRef} className="absolute inset-0 bg-[#E9D0A2] opacity-0 pointer-events-none" />
-          <div className="relative z-10 flex flex-1 items-center justify-center">
-            <div ref={gateRef} className="door-section__gate px-0 md:px-4" style={{ transformOrigin: 'center center', willChange: 'transform' }}>
-              <div className="door-section__gate-inner origin-center">
-                <CelebrationDoor className="w-full h-auto" />
+      <div className="door-section relative w-full z-10 mt-0 overflow-hidden">
+        <div
+          ref={gateAreaRef}
+          className="door-section__pin relative w-full z-20 md:h-[100dvh] "
+          style={{ position: 'relative' }}
+        >
+          <div
+            ref={insideBgRef}
+            className="absolute inset-0 bg-[#F6D69D] opacity-0 pointer-events-none"
+          />
+
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              ref={gateRef}
+              className="door-section__gate w-full h-full"
+              style={{ transformOrigin: 'center center', willChange: 'transform' }}
+            >
+              <div className="door-section__gate-inner h-full w-full origin-center my-5 flex items-start justify-center leading-none">
+                <CelebrationDoor className="block w-full h-full" />
               </div>
             </div>
           </div>
         </div>
-        <div ref={howItWorksRef} className="door-section__overlay relative z-20">
+
+        <div ref={howItWorksRef} className="door-section__overlay relative z-20 -mt-[100dvh]">
           <HowItWorksSection isVisible={howItWorksVisible} />
         </div>
       </div>
@@ -3163,28 +3299,28 @@ const PlanningGuidesSection = () => {
           </div>
         </aside>
 
-        <div className="flex-1 py-4 md:py-16 px-12 lg:px-8 flex flex-col">
+        <div className="flex-1 py-4 md:py-16 px-6 md:px-12 lg:px-8">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden md:overflow-hidden">
-            <div className="relative -mx-12 md:mx-0 min-h-[400px] md:min-h-0">
-              {/* Mobile Left Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
+            <div className="relative min-h-[460px] md:min-h-0">
+              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
+                      d="M19 12H5M5 12L12 19M5 12L12 5"
+                      stroke="#CDB17E"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   </svg>
                 </button>
@@ -3192,7 +3328,7 @@ const PlanningGuidesSection = () => {
 
               <div
                 ref={carouselViewportRef}
-                className="overflow-hidden md:px-0"
+                className="w-[300px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
                 style={{
                   maskImage: isCarouselSliding ? edgeFadeMask : 'none',
                   WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
@@ -3211,7 +3347,7 @@ const PlanningGuidesSection = () => {
                   {filteredBlogs.map((blog, i) => (
                     <div
                       key={blog.id ?? blog.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
                         width: isMobile
@@ -3219,7 +3355,7 @@ const PlanningGuidesSection = () => {
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
                       }}
                     >
-                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                      <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={
                             blog.cover_image ??
@@ -3244,23 +3380,24 @@ const PlanningGuidesSection = () => {
               </div>
 
               {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
+                      d="M5 12H19M19 12L12 19M19 12L12 5"
+                      stroke="#CDB17E"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   </svg>
                 </button>
@@ -3272,17 +3409,21 @@ const PlanningGuidesSection = () => {
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  <path
+                    d="M19 12H5M5 12L12 19M5 12L12 5"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </button>
               <div className="flex items-center gap-[4px] justify-center">
@@ -3301,17 +3442,21 @@ const PlanningGuidesSection = () => {
               <button
                 onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <path
+                    d="M5 12H19M19 12L12 19M19 12L12 5"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </button>
             </div>

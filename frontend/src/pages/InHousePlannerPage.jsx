@@ -2309,7 +2309,12 @@ const CelebrationFormSection = () => {
 const InHousePlannerSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
+  const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
+  const mobileHeroBody =
+    whatWeDo.mobile_intro ??
+    whatWeDo.intro ??
+    'We handle everything from the first conversation to the final wrap-up, understanding your vision, planning the concept and showflow, coordinating vendors and production, guiding styling and creative direction, and managing timelines, approvals, and execution so you can simply be present and enjoy the event.'
 
   useEffect(() => {
     const root = document.querySelector('[data-in-house-planner-page]')
@@ -2337,7 +2342,10 @@ const InHousePlannerSection = () => {
 
   return (
     <>
-      <ScrollImageSpreadSection />
+      <ScrollImageSpreadSection
+        mobileHeading={whatWeDo.heading ?? 'What we do as your In-House Planner'}
+        mobileBody={mobileHeroBody}
+      />
 
       <div data-in-house-planner-page>
         <section data-planner-intro className="w-full bg-[#957960] flex justify-center font-sans">

@@ -94,7 +94,6 @@ const HeroSection = () => {
   const leftLine3Refs = useRef([])
 
   const cardRefs = useRef([])
-  const bandRefs = useRef([])
 
   function initHeroAnimations() {
     const dk = darkOverlayRef.current
@@ -392,13 +391,6 @@ const HeroSection = () => {
 
       dk.style.opacity = s.darkAlpha
 
-      const bandStartSize = window.innerWidth < 768 ? 60 : 112
-      const bandEndSize = window.innerWidth < 768 ? 36 : 68
-      const bandFontSize = lerp(bandStartSize, bandEndSize, sub(s.scrollProgress, 0, 0.45))
-      bandRefs.current.filter(Boolean).forEach(el => {
-        el.style.fontSize = `${bandFontSize}px`
-      })
-
       const topR = s.vidTopR + s.vidR
       vw.style.top = `${s.vidTop}px`
       vw.style.left = `${s.vidLeft}px`
@@ -544,7 +536,7 @@ const HeroSection = () => {
         {/* ── z-10: diagonal infinite-scrolling banner text ─────────────────── */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 10, overflow: 'hidden' }}>
           <div style={bandWrap('10%')}>
-            <div className="band-scroll dir-left" style={bandFont}>
+            <div className="band-scroll dir-left " style={bandFont}>
               {renderBandCopy(BAND1_TOKENS)}
               {renderBandCopy(BAND1_TOKENS)}
             </div>
@@ -626,19 +618,19 @@ const HeroSection = () => {
             color: '#FAFAFA',
           }}
         >
-          <main className="absolute inset-0 flex flex-col justify-center items-center md:items-center z-10 pt-14 md:pt-24 px-0">
+          <main className="absolute inset-0 flex flex-col justify-center items-center md:items-center z-10 pt-14 md:pt-24 px-0 translate-y-[82px] md:translate-y-0">
             {/* Desktop original classes fully preserved via md:, mobile mapped to Figma spec */}
-            <div className="w-[353px] md:w-full md:max-w-249.25 text-right md:text-right flex flex-col pr-0 md:pr-8 lg:pr-0 pointer-events-auto">
+            <div className="w-fit max-w-[calc(100vw-40px)] mx-auto md:mx-0 md:w-full md:max-w-249.25 text-right md:text-right sm:mx-2 flex flex-col items-end pr-0 md:pr-8 lg:pr-0 pointer-events-auto">
               <span
                 ref={eyebrowRef}
-                className="text-[20px] md:text-[38px] lg:text-[48px] leading-[100%] md:leading-none text-[#FAFAFA]"
+                className="text-[20px] md:text-[38px] lg:text-[48px] leading-[100%] md:leading-none tracking-[0] text-right text-[#FAFAFA]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 IT&apos;S TIME TO
               </span>
               <span
                 ref={headingRef}
-                className="text-[36px] md:text-[54px] lg:text-[96px] leading-[100%] md:leading-[1.05] mt-1 md:mt-2 text-[#FAFAFA] uppercase"
+                className="text-[36px] whitespace-nowrap md:whitespace-normal md:text-[54px] lg:text-[96px] leading-[100%] md:leading-[1.05] mt-1 md:mt-2 text-right text-[#FAFAFA] uppercase tracking-[0]"
                 style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
               >
                 PLAN DIFFERENTLY
@@ -646,7 +638,7 @@ const HeroSection = () => {
             </div>
 
             {/* Desktop CTA fully preserved via md:, mobile mapped to Figma spec */}
-            <div className="w-[353px] md:w-full md:max-w-249.25 flex flex-row md:flex-row justify-start md:justify-end items-center mt-[40px] md:mt-8 lg:mt-12 pr-0 md:pr-12 gap-[20px] md:gap-8 lg:gap-0 pointer-events-auto">
+            <div className="w-full max-w-[353px] px-8 md:px-0 md:w-full md:max-w-249.25 flex flex-row md:flex-row justify-start md:justify-end items-center mt-[34px] md:mt-8 lg:mt-12 pr-0 md:pr-12 gap-[20px] md:gap-8 lg:gap-0 pointer-events-auto">
               <div className="flex flex-row md:flex-row items-center gap-[20px] md:gap-0">
                 <button
                   ref={ctaArrowRef}
@@ -670,7 +662,7 @@ const HeroSection = () => {
                   </svg>
                 </button>
                 <div
-                  className="w-[265px] md:max-w-62.5 text-[16px] md:text-[15px] lg:text-sm font-normal md:font-light leading-[150%] md:leading-relaxed opacity-90 text-left overflow-hidden text-[#FAFAFA]"
+                  className="w-[176px] md:w-[265px] md:max-w-62.5 text-[16px] md:text-[15px] lg:text-sm font-normal md:font-light leading-[1.5] md:leading-relaxed opacity-90 text-left overflow-hidden text-[#FAFAFA]"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
                   <p ref={ctaLine1Ref} className="m-0">
@@ -686,16 +678,16 @@ const HeroSection = () => {
 
           <footer className="absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20 pointer-events-auto">
             {/* Mobile EXACT Bottom-Left 'W' Block extracted from center */}
-            <div className="flex md:hidden items-start px-6 pb-8 w-full z-20">
+            <div className="flex md:hidden items-start px-8 pb-10 w-full z-20">
               <span
                 ref={el => (leftWRefs.current[1] = el)}
-                className="text-[80px] leading-[80%] font-serif mr-3 text-[#FFFFFF]"
+                className="text-[92px] leading-[80%] font-serif mr-3 text-[#FFFFFF]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 W
               </span>
               <div
-                className="flex flex-col justify-center text-[14px] font-medium tracking-wide space-y-[4px] mt-1 overflow-hidden leading-[150%] text-[#FFFFFF]"
+                className="flex flex-col justify-center text-[14px] font-medium tracking-wide space-y-[6px] mt-2 overflow-hidden leading-[150%] text-[#FFFFFF]"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
                 <p ref={el => (leftLine1Refs.current[1] = el)} className="m-0">

@@ -3,9 +3,9 @@ const CelebrationDoor = ({ style, ...props }) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
     viewBox="0 0 1440 833"
-    preserveAspectRatio="xMidYMid meet"
+    preserveAspectRatio="xMidYMax slice"
     fill="none"
-    style={{ overflow: 'visible', ...style }}
+    style={{ display: 'block', width: '100%', height: '100%',  ...style }}
     {...props}
   >
     <g clipPath="url(#a)">

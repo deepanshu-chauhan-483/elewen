@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect, useEffect, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -30,6 +30,7 @@ const IMAGE_DATA = [
 
 // ── Fly-by images: burst through camera and vanish ──────────────────────────
 const BASE_IMAGES = [img1, img2, img3, img4, img5, img6, img7, img8]
+const MOBILE_SLIDES = [IMAGE_DATA.slice(0, 4), IMAGE_DATA.slice(4, 8)]
 
 // 10 positions — all pushed to the periphery so they never block the centre
 const FLY_POS = [
@@ -59,15 +60,28 @@ const getFinalPositions = () => {
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-const ScrollImageSpreadSection = () => {
+const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
   const flowRef = useRef(null)
   const flyRefs = useRef([])
   const figmaRefs = useRef([])
   const bgRef = useRef(null)
   const whiteRef = useRef(null)
   const labelRef = useRef(null)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window === 'undefined' ? false : window.innerWidth < 540
+  )
+  const [mobilePage, setMobilePage] = useState(0)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 540)
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useLayoutEffect(() => {
+    if (isMobile) return undefined
+
     let st
     const ctx = gsap.context(() => {
       const flowEl = flowRef.current
@@ -158,7 +172,80 @@ const ScrollImageSpreadSection = () => {
       st?.kill()
       ctx.revert()
     }
-  }, [])
+  }, [isMobile])
+
+  if (isMobile) {
+    const activeSlide = MOBILE_SLIDES[mobilePage] ?? MOBILE_SLIDES[0]
+
+    return (
+      <section className="w-full bg-[#FFFFFF] font-sans pt-24 pb-14">
+        <div className="mx-auto w-full max-w-[430px] px-5">
+          <div className="grid h-[min(80vw,370px)] grid-cols-[1.85fr_1fr] grid-rows-3 gap-2.5">
+            <div className="relative row-span-2 overflow-hidden rounded-[18px] bg-[#F5F5F5]">
+              <img
+                src={activeSlide[0]?.src}
+                alt={activeSlide[0]?.alt ?? 'Planner showcase'}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="relative overflow-hidden rounded-[18px] bg-[#F5F5F5]">
+              <img
+                src={activeSlide[1]?.src}
+                alt={activeSlide[1]?.alt ?? 'Planner showcase'}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="relative overflow-hidden rounded-[18px] bg-[#F5F5F5]">
+              <img
+                src={activeSlide[2]?.src}
+                alt={activeSlide[2]?.alt ?? 'Planner showcase'}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="relative row-span-2 overflow-hidden rounded-[18px] bg-[#F5F5F5]">
+              <img
+                src={activeSlide[3]?.src}
+                alt={activeSlide[3]?.alt ?? 'Planner showcase'}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 flex items-center justify-center gap-2">
+            {MOBILE_SLIDES.map((_, idx) => {
+              const isActive = idx === mobilePage
+              return (
+                <button
+                  key={`planner-mobile-dot-${idx}`}
+                  type="button"
+                  onClick={() => setMobilePage(idx)}
+                  aria-label={`Go to planner hero slide ${idx + 1}`}
+                  className={`h-2 rounded-full transition-all ${
+                    isActive ? 'w-6 bg-[#7A2D06]' : 'w-3 bg-[#D0D0D0]'
+                  }`}
+                />
+              )
+            })}
+          </div>
+
+          <h1
+            className="mt-10 max-w-[340px] text-[34px] leading-[0.94] tracking-[-0.02em] text-[#2D2D2D]"
+            style={{ fontFamily: "'Malgin', serif" }}
+          >
+            {mobileHeading ?? 'What we do as your In-House Planner'}
+          </h1>
+
+          <p className="mt-8 max-w-[353px] text-[14px] leading-[1.55] text-[#2D2D2D] opacity-70">
+            {mobileBody ??
+              'We handle everything from the first conversation to the final wrap-up, understanding your vision, planning the concept and showflow, coordinating vendors and production, guiding styling and creative direction, and managing timelines, approvals, and execution so you can simply be present and enjoy the event.'}
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section
