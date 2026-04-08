@@ -703,15 +703,15 @@ const HeroSection = () => {
             </div>
 
             {/* Desktop W Left Block */}
-            <div className="hidden md:flex items-center px-10 pb-12">
+            <div className="hidden shrink-0 md:flex md:items-center md:px-6 md:pb-8 lg:px-10 lg:pb-12">
               <span
                 ref={el => (leftWRefs.current[0] = el)}
-                className="text-[90px] leading-[0.7] font-serif mr-1 text-[#FFFFFF]"
+                className="font-serif leading-[0.7] text-[#FFFFFF] md:mr-2 md:text-[74px] lg:mr-1 lg:text-[90px]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 W
               </span>
-              <div className="flex flex-col justify-center text-sm font-medium tracking-wide space-y-1 mt-3 overflow-hidden text-[#FFFFFF]">
+              <div className="flex flex-col justify-center overflow-hidden whitespace-nowrap text-[#FFFFFF] md:mt-2 md:text-[12px] md:font-medium md:leading-[1.35] md:tracking-[0.02em] md:space-y-0.5 lg:mt-3 lg:text-sm lg:tracking-wide lg:space-y-1">
                 <p ref={el => (leftLine1Refs.current[0] = el)} className="m-0">
                   ork made easy
                 </p>
@@ -742,18 +742,18 @@ const HeroSection = () => {
                 <div
                   key={label}
                   ref={el => (cardRefs.current[i] = el)}
-                  className={`col-span-1 md:w-55 h-22.5 md:h-31 md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
+                  className={`col-span-1 h-22.5 md:h-31 md:w-44 lg:w-55 md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
                 >
-                  <div className="absolute top-4 md:top-5 left-3 md:left-5 right-2 md:right-auto md:w-45 flex flex-col gap-1.5 md:gap-3">
+                  <div className="absolute top-4 left-3 right-2 flex flex-col gap-1.5 md:top-5 md:left-4 md:right-3 md:gap-2.5 lg:left-5 lg:right-auto lg:w-45 lg:gap-3">
                     <h3
-                      className="text-[10px] sm:text-[11px] md:text-sm font-bold tracking-widest uppercase truncate reveal-heading text-[#FAFAFA]"
+                      className="text-[10px] sm:text-[11px] md:text-[12px] lg:text-sm font-bold tracking-[0.14em] lg:tracking-widest uppercase truncate reveal-heading text-[#FAFAFA]"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper">
                         <span className="reveal-text">{label}</span>
                       </span>
                     </h3>
-                    <p className="text-[9px] md:text-xs font-light opacity-90 leading-[1.3] line-clamp-3 text-[#FAFAFA]">
+                    <p className="text-[9px] md:text-[11px] lg:text-xs font-light opacity-90 leading-[1.3] line-clamp-3 text-[#FAFAFA]">
                       {desc}
                     </p>
                   </div>

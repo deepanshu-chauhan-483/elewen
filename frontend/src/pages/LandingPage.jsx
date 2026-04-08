@@ -188,7 +188,7 @@ const PlanEventSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full min-h-screen bg-[#F2F2F2] pt-[32px] md:pt-52 flex flex-col overflow-hidden font-sans"
+      className="relative w-full min-h-auto bg-[#F2F2F2] pt-[32px] md:pt-24 lg:min-h-screen lg:pt-52 flex flex-col overflow-hidden font-sans"
     >
       {/* Background Decor (Desktop predominantly) */}
       {/* <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
@@ -304,12 +304,12 @@ const PlanEventSection = () => {
       {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         {/* Categories Bar */}
-        <aside className="w-full md:w-[320px] pt-8 pb-0 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 relative reveal-border-y">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:pt-8 md:pb-4 lg:py-20 px-4 md:px-8 lg:px-16 flex flex-col items-center lg:items-start shrink-0 relative reveal-border-y">
           <div className="hidden md:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           <div className="hidden md:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
             <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
           </div>
-          <div className="flex flex-row md:flex-col items-center md:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-5 lg:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
@@ -339,7 +339,7 @@ const PlanEventSection = () => {
                   </div>
                   {/* Vertical Separator for Mobile */}
                   {index < safeCategories.length - 1 && (
-                    <div className="block md:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
+                    <div className="block lg:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
                   )}
                 </React.Fragment>
               )
@@ -347,9 +347,9 @@ const PlanEventSection = () => {
           </div>
         </aside>
 
-        <div className="flex-1 py-4 md:py-16 px-6 md:px-12 lg:px-8">
+        <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
+          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
             <div className="relative min-h-[460px] md:min-h-0">
               <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
@@ -413,7 +413,7 @@ const PlanEventSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[15px] left-[15px] lg:my-2 right-[15px] md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:p-7 h-[90px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:px-6 md:py-5 lg:p-7 h-[90px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         {' '}
                         <h3 className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase font-['Poppins']">
                           {card.title}
@@ -576,7 +576,7 @@ const WhatToPlanSection = () => {
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024) // Using 1024px since original code uses lg: for sidebar
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
     handleResize() // init
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -671,11 +671,11 @@ const WhatToPlanSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="w-full min-h-screen bg-[#F2F2F2] flex flex-col overflow-hidden font-sans"
+      className="w-full min-h-auto bg-[#F2F2F2] flex flex-col overflow-hidden font-sans lg:min-h-screen"
     >
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center">
-        <div className="max-w-[353px] md:max-w-[340px] order-last md:order-first mt-5 md:mt-0 flex flex-col items-center md:items-start">
+        <div className="max-w-[353px] md:max-w-[340px] order-last lg:order-first mt-5 md:mt-0 flex flex-col items-center md:items-start">
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
@@ -712,7 +712,7 @@ const WhatToPlanSection = () => {
         </div>
 
         <h2
-          className="font-display text-[28px] md:text-[61px] leading-[1] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left order-first md:order-last reveal-heading"
+          className="font-display text-[28px] md:text-[61px] leading-[1] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left order-first lg:order-last reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
@@ -733,10 +733,49 @@ const WhatToPlanSection = () => {
       </div>
 
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 mb-10">
-        <div className="flex-1 order-last lg:order-none py-4 md:py-16 px-6 md:px-12 lg:px-8 relative reveal-border-y">
-          <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
-          {/* Cards Carousel Area */}
-          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible lg:overflow-hidden">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:pt-8 md:pb-4 lg:py-20 px-4 md:px-8 lg:px-16 flex flex-col items-center lg:items-start shrink-0 relative reveal-border-y">
+          <div className="hidden md:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
+          <div className="hidden md:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
+            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+          </div>
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-5 lg:gap-8 flex-wrap justify-center w-full">
+            {categories.map((cat, index) => {
+              const isActive = cat === activeCategory
+              return (
+                <React.Fragment key={cat}>
+                  <div
+                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5 reveal-on-scroll"
+                    onClick={() => handleCategorySelect(cat)}
+                  >
+                    <span
+                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
+                        isActive
+                          ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
+                          : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
+                      }`}
+                    >
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{cat}</span>
+                      </span>
+                    </span>
+
+                    <span
+                      className={`absolute bottom-0 left-0 h-[1.5px] bg-[#3D4035] transition-all duration-300 ease-out ${
+                        isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                      }`}
+                    />
+                  </div>
+                  {index < categories.length - 1 && (
+                    <div className="block lg:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
+                  )}
+                </React.Fragment>
+              )
+            })}
+          </div>
+        </aside>
+
+        <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
+          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
             <div className="relative min-h-[460px] lg:min-h-0">
               {/* Mobile Left Navigation Arrow */}
               <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
@@ -764,22 +803,20 @@ const WhatToPlanSection = () => {
 
               <div
                 ref={carouselViewportRef}
-                className="overflow-hidden lg:px-0 mx-auto lg:mx-0"
-                style={{ width: isMobile ? `${mobileCardWidth}px` : undefined }}
+                className="w-[322px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
               >
                 <div
-                  className="flex gap-4 md:gap-6 transition-transform duration-[1250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
                       ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
                       : `translateX(-${safePage * carouselViewportWidth}px)`,
-                    willChange: 'transform',
                   }}
                 >
                   {filteredCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5 mx-auto rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
                         width: isMobile
@@ -795,7 +832,7 @@ const WhatToPlanSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:bottom-0 md:left-0 md:right-0 lg:my-2 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:p-7 h-[90px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:px-6 md:py-5 lg:p-7 h-[90px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         {' '}
                         <h3 className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']">
                           {card.title}
@@ -835,7 +872,7 @@ const WhatToPlanSection = () => {
             </div>
 
             {/* Desktop Pagination Block */}
-            <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px] ">
+            <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px] ">
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
@@ -894,7 +931,7 @@ const WhatToPlanSection = () => {
             </div>
 
             {/* Mobile Pagination Dots */}
-            <div className="flex lg:hidden items-center justify-center gap-[5px] mt-10 mb-8">
+            <div className="flex md:hidden items-center justify-center gap-[5px] mt-10 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
@@ -937,49 +974,6 @@ const WhatToPlanSection = () => {
             </div>
           </div>
         </div>
-
-        {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] order-first lg:order-none pt-8 pb-0 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 lg:border-none border-[#3D4035]/15 relative ">
-          <div className="hidden lg:block absolute right-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
-            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
-          </div>
-          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
-            {categories.map((cat, index) => {
-              const isActive = cat === activeCategory
-              return (
-                <React.Fragment key={cat}>
-                  <div
-                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5 reveal-on-scroll"
-                    onClick={() => handleCategorySelect(cat)}
-                  >
-                    <span
-                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
-                        isActive
-                          ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
-                          : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
-                      }`}
-                    >
-                      <span className="reveal-wrapper">
-                        <span className="reveal-text">{cat}</span>
-                      </span>
-                    </span>
-
-                    {/* Animated Underline */}
-                    <span
-                      className={`absolute bottom-0 left-0 h-[1.5px] bg-[#3D4035] transition-all duration-300 ease-out ${
-                        isActive ? 'w-full' : 'w-0 group-hover:w-full'
-                      }`}
-                    />
-                  </div>
-                  {/* Vertical Separator for Mobile */}
-                  {index < categories.length - 1 && (
-                    <div className="block lg:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
-                  )}
-                </React.Fragment>
-              )
-            })}
-          </div>
-        </aside>
       </div>
     </section>
   )
@@ -1638,9 +1632,9 @@ const BetterWaySection = () => {
       data-nav-theme="glass"
       className="relative -mt-px md:mt-0 w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans"
     >
-      <div className="relative w-full max-w-[1440px] mx-auto min-h-[820px] md:h-[1171px] shrink-0">
+      <div className="relative w-full max-w-[1440px] mx-auto min-h-[820px] md:max-lg:min-h-[980px] lg:h-[1040px] xl:h-[1171px] shrink-0">
         {/* --- SCALLOP / BULB SECTION --- */}
-        <div className="hidden md:flex">
+        <div className="hidden lg:flex">
           {renderScallopStrip({
             scallopCount: desktopScallopCount,
             bulbCount: desktopBulbCount,
@@ -1657,7 +1651,7 @@ const BetterWaySection = () => {
           })}
         </div>
 
-        <div className="flex md:hidden">
+        <div className="flex lg:hidden">
           {renderScallopStrip({
             scallopCount: mobileScallopCount,
             bulbCount: mobileBulbCount,
@@ -1675,9 +1669,9 @@ const BetterWaySection = () => {
         </div>
 
         {/* --- HEADINGS --- */}
-        <div className="absolute w-[353px] md:w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[179px] md:top-[253px] flex flex-col items-center gap-[20px] md:gap-[10px] md:static md:block md:w-full md:max-w-none md:translate-x-0">
+        <div className="absolute w-[353px] lg:w-[760px] xl:w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[179px] lg:top-[180px] xl:top-[253px] flex flex-col items-center gap-[20px] lg:gap-[10px] lg:static lg:block lg:w-full lg:max-w-none lg:translate-x-0">
           <h2
-            className="w-full text-[#2D2D2D] text-[24px] md:text-[61px] leading-[1] text-center font-serif reveal-heading md:absolute md:w-[679px] md:left-1/2 md:-translate-x-1/2 md:top-[253px]"
+            className="w-full text-[#2D2D2D] text-[24px] lg:text-[54px] xl:text-[61px] leading-[1] text-center font-serif reveal-heading lg:absolute lg:w-[620px] xl:w-[679px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
             {s.heading ? (
@@ -1689,7 +1683,7 @@ const BetterWaySection = () => {
                 <span className="reveal-wrapper">
                   <span className="reveal-text">A Better Way Between </span>
                 </span>
-                <br className="hidden md:block" />
+                <br className="hidden lg:block" />
                 <span className="reveal-wrapper">
                   <span className="reveal-text">Event and DIY</span>
                 </span>
@@ -1697,7 +1691,7 @@ const BetterWaySection = () => {
             )}
           </h2>
 
-          <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] text-center reveal-on-scroll md:absolute md:w-[809px] md:left-1/2 md:-translate-x-1/2 md:top-[403px] font-['Poppins'] md:font-sans">
+          <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] lg:text-[15px] xl:text-[16px] leading-[150%] lg:leading-[1.5] text-center reveal-on-scroll lg:absolute lg:w-[760px] xl:w-[809px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[290px] xl:top-[403px] font-['Poppins'] lg:font-sans">
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 Event planners can feel expensive and overwhelming. Doing everything yourself can
@@ -1711,7 +1705,7 @@ const BetterWaySection = () => {
         {/* --- VENN DIAGRAM (MOBILE & DESKTOP) --- */}
         {/* Desktop Version */}
         <motion.div
-          className="hidden md:block absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]"
+          className="hidden lg:block absolute lg:w-[620px] xl:w-[723px] max-w-[calc(100%-2rem)] lg:h-[362px] xl:h-[422px] left-1/2 -translate-x-1/2 lg:top-[395px] xl:top-[531px]"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.45 }}
@@ -1766,7 +1760,7 @@ const BetterWaySection = () => {
         </motion.div>
 
         {/* Mobile Version */}
-        <div className="relative z-20 mx-auto mt-[330px] flex w-full max-w-[420px] flex-col items-center px-4 pb-14 md:hidden">
+        <div className="relative z-20 mx-auto mt-[330px] flex w-full max-w-[420px] flex-col items-center px-4 pb-14 lg:hidden">
           <motion.div
             className="relative w-full max-w-[353px] aspect-[353/207]"
             initial="hidden"
@@ -1861,21 +1855,21 @@ const BetterWaySection = () => {
 
         {/* --- DIAGRAM TEXTS --- */}
         <h5
-          className="hidden md:block absolute left-[calc(50%-150.5px)] top-[742px] w-[185px] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[27px] leading-[1] font-serif"
+          className="hidden lg:block absolute lg:left-[calc(50%-129px)] xl:left-[calc(50%-150.5px)] lg:top-[576px] xl:top-[742px] lg:w-[160px] xl:w-[185px] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.left_label ?? 'Event Planner'}
         </h5>
 
         <h5
-          className="hidden md:block absolute left-[calc(50%+150.5px)] top-[742px] w-[80px] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[27px] leading-[1] font-serif"
+          className="hidden lg:block absolute lg:left-[calc(50%+129px)] xl:left-[calc(50%+150.5px)] lg:top-[576px] xl:top-[742px] lg:w-[68px] xl:w-[80px] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.right_label ?? 'DIY'}
         </h5>
 
         {/* --- LOGO --- */}
-        <div className="hidden md:flex absolute left-1/2 top-[742px] w-[320px] h-[320px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <div className="hidden lg:flex absolute left-1/2 lg:top-[576px] xl:top-[742px] lg:w-[250px] lg:h-[250px] xl:w-[320px] xl:h-[320px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
           <img
             src={centerLogo}
             alt="11 Logo"
@@ -1885,17 +1879,17 @@ const BetterWaySection = () => {
         </div>
 
         {/* --- SUB TEXTS --- */}
-        <p className="hidden md:block absolute w-[200px] left-[30px] top-[688px] text-[#957960] text-[12px] leading-[1.5] font-['Poppins'] md:font-sans">
+        <p className="hidden lg:block absolute lg:w-[170px] xl:w-[200px] lg:left-[22px] xl:left-[30px] lg:top-[520px] xl:top-[688px] text-[#957960] text-[11px] xl:text-[12px] leading-[1.5] font-['Poppins'] lg:font-sans">
           {s.left_body ??
             'Full-service planning often comes with high costs and long coordination cycles. You rely on large teams, multiple approvals, and a process that can feel heavier than the event itself.'}
         </p>
 
-        <p className="hidden md:block absolute w-[200px] right-[30px] top-[688px] text-[#591902] text-[12px] leading-[1.5] text-right font-['Poppins'] md:font-sans">
+        <p className="hidden lg:block absolute lg:w-[170px] xl:w-[200px] lg:right-[22px] xl:right-[30px] lg:top-[520px] xl:top-[688px] text-[#591902] text-[11px] xl:text-[12px] leading-[1.5] text-right font-['Poppins'] lg:font-sans">
           {s.right_body ??
             'Planning everything yourself means juggling vendors, comparing prices, managing logistics, and making countless decisions. It quickly turns a celebration into a checklist.'}
         </p>
 
-        <p className="hidden md:block absolute w-[285px] left-1/2 -translate-x-1/2 top-[993px] text-[#2D2D2D] text-[12px] leading-[1.5] text-center font-['Poppins'] md:font-sans">
+        <p className="hidden lg:block absolute lg:w-[265px] xl:w-[285px] left-1/2 -translate-x-1/2 lg:top-[770px] xl:top-[993px] text-[#2D2D2D] text-[11px] xl:text-[12px] leading-[1.5] text-center font-['Poppins'] lg:font-sans">
           {s.center_body ??
             'The balance between structure and simplicity. You get curated decor, trusted vendors, and guided planning, without the pressure or the price of full-scale event management.'}
         </p>
@@ -3286,7 +3280,7 @@ const PlanningGuidesSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="w-full min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans"
+      className="w-full min-h-auto bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans lg:min-h-screen"
     >
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center relative z-10">
@@ -3346,12 +3340,12 @@ const PlanningGuidesSection = () => {
       {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10 mb-10">
         {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b-0 relative reveal-border-y">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:pt-8 md:pb-4 lg:py-20 px-4 md:px-8 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b-0 relative reveal-border-y">
           <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           <div className="hidden lg:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
             <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
           </div>
-          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] lg:gap-8 flex-wrap justify-center w-full">
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-5 lg:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
@@ -3389,9 +3383,9 @@ const PlanningGuidesSection = () => {
           </div>
         </aside>
 
-        <div className="flex-1 py-4 md:py-16 px-6 md:px-12 lg:px-8">
+        <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-visible md:overflow-hidden">
+          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
             <div className="relative min-h-[460px] md:min-h-0">
               <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
@@ -3456,7 +3450,7 @@ const PlanningGuidesSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[15px] left-[15px] right-[15px] lg:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:px-6 md:py-5 lg:p-7 h-[120px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         {' '}
                         <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
                           {blog.title}

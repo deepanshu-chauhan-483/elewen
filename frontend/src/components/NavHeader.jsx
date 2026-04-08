@@ -10,7 +10,7 @@ const EVENT_IMAGE = 'https://images.unsplash.com/photo-1519225421980-715cb0215ae
 const BASE_LINKS = [
   { label: 'Events', to: '/events' },
   { label: 'Services', to: '/services' },
-  // { label: 'How It Works', to: '/how-it-works' },
+  { label: 'How It Work', to: '/how-it-work' },
   { label: 'In-House Event Planner', to: '/in-house-planner' },
   { label: 'Story Behind 11', to: '/about' },
   { label: "FAQ's", to: '/faqs' },
