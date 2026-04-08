@@ -363,11 +363,11 @@ const GrandCelebrationsSection = () => {
   const mobileStackTransforms = [
     { rotate: 0, x: 0, y: 0, scale: 1 },
 
-    { rotate: -10, x: -26, y: 16, scale: 0.98 },
+    { rotate: -10, x: -24, y: 10, scale: 0.96 },
 
-    { rotate: 10, x: 26, y: 22, scale: 0.96 },
+    { rotate: 10, x: 24, y: 12, scale: 0.95 },
 
-    { rotate: -6, x: -8, y: 30, scale: 0.94 },
+    { rotate: -5, x: 10, y: 18, scale: 0.92 },
   ]
 
   return (
@@ -376,12 +376,12 @@ const GrandCelebrationsSection = () => {
       className="relative w-full bg-[#FFFFFF] flex justify-center overflow-hidden font-sans"
     >
       {isMobile ? (
-        <div className="relative w-full max-w-[540px] mx-auto px-6 pt-14 pb-12 min-h-[820px] flex flex-col items-center">
+        <div className="relative w-full max-w-[540px] mx-auto px-5 pt-10 pb-10 flex flex-col items-center">
           {/* Title + note (mobile) */}
 
           <div className="w-full flex flex-col items-center text-center">
             <h3
-              className="text-[#2D2D2D] text-[32px] leading-[1.05] font-serif"
+              className="max-w-[255px] text-[#2D2D2D] text-[28px] leading-[1] font-serif min-[375px]:text-[30px]"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper block">
@@ -391,7 +391,7 @@ const GrandCelebrationsSection = () => {
               </span>
             </h3>
 
-            <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.5] max-w-[320px]">
+            <p className="mt-4 max-w-[285px] text-[#2D2D2D] opacity-50 text-[12px] leading-[1.45]">
               <span className="reveal-wrapper block">
                 <span
                   ref={noteRef}
@@ -407,9 +407,9 @@ const GrandCelebrationsSection = () => {
 
           {/* Stacked cards (mobile) */}
 
-          <div className="mt-14 flex-1 w-full flex flex-col items-center justify-center gap-8">
+          <div className="mt-10 w-full flex flex-col items-center">
             <div className="w-full flex items-center justify-center">
-              <div className="relative w-[260px] h-[360px]">
+              <div className="relative mb-6 h-[258px] w-[168px] min-[375px]:h-[276px] min-[375px]:w-[180px]">
                 {mobileStackItems.map((item, idx) => {
                   const t =
                     mobileStackTransforms[idx] ||
@@ -424,9 +424,10 @@ const GrandCelebrationsSection = () => {
                         zIndex: mobileStackItems.length - idx,
 
                         transformOrigin: 'center',
+                        opacity: idx === 0 ? 1 : idx <= 2 ? 0.78 : 0.58,
                       }}
                     >
-                      <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[18px] shadow-[0_28px_70px_rgba(0,0,0,0.18)]">
+                      <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[8px] shadow-[0_18px_40px_rgba(0,0,0,0.16)]">
                         <img
                           src={item.image}
                           alt={item.title}
@@ -440,8 +441,8 @@ const GrandCelebrationsSection = () => {
             </div>
 
             {/* Dots + description (mobile) */}
-            <div className="w-full flex flex-col items-center">
-              <div className="flex items-center justify-center gap-2">
+            <div className="w-full flex flex-col items-center my-7 ">
+              <div className="flex items-center justify-center gap-[5px]">
                 {Array.from({ length: totalPages }, (_, i) => {
                   const active = i === normalizedPage
                   return (
@@ -451,7 +452,7 @@ const GrandCelebrationsSection = () => {
                       onClick={() => setPage(i)}
                       aria-label={`Go to celebrations ${i + 1}`}
                       className={`rounded-full transition-all ${
-                        active ? 'w-5 h-1.5 bg-neutral-800' : 'w-3 h-1.5 bg-neutral-800/30'
+                        active ? 'h-[4px] w-[20px] bg-[#7A2D06]' : 'h-[4px] w-[8px] bg-[#CFCFCF]'
                       }`}
                     />
                   )
@@ -459,13 +460,13 @@ const GrandCelebrationsSection = () => {
               </div>
 
               <h4
-                className="mt-8 text-[#2D2D2D] text-[20px] leading-[1.1] font-serif uppercase tracking-wide text-center max-w-[320px]"
+                className="mt-6 text-[#2D2D2D] text-[16px] leading-[1] font-serif uppercase text-center"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 {mobileActiveItem?.title}
               </h4>
 
-              <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.6] text-center max-w-[320px]">
+              <p className="mt-3 max-w-[248px] text-[#2D2D2D] opacity-50 text-[12px] leading-[1.45] text-center">
                 {mobileActiveItem?.desc}
               </p>
             </div>

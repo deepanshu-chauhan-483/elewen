@@ -5,7 +5,7 @@ const CelebrationDoor = ({ style, ...props }) => (
     viewBox="0 0 1440 833"
     preserveAspectRatio="xMidYMax slice"
     fill="none"
-    style={{ display: 'block', width: '100%', height: '100%', ...style }}
+    style={{ display: 'block', width: '100%', height: '100%', overflow: 'hidden', ...style }}
     {...props}
   >
     <g clipPath="url(#a)">

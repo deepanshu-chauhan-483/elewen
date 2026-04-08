@@ -49,10 +49,12 @@ const About = () => {
   const mokshaSrc = aboutAssetSrc('moksha_portrait.jpg')
   const gauriSrc = aboutAssetSrc('gauri.jpg')
   const iconSrc = aboutAssetSrc('image.png')
-  const scallopCount = [...Array(15)]
-  const mobileScallopCount = scallopCount.slice(0, 6)
+  const desktopScallopCount = [...Array(10)]
+  const mobileScallopCount = desktopScallopCount.slice(0, 6)
   const visibleScallops =
-    typeof window !== 'undefined' && window.innerWidth < 540 ? mobileScallopCount : scallopCount
+    typeof window !== 'undefined' && window.innerWidth < 540
+      ? mobileScallopCount
+      : desktopScallopCount
 
   const pageRef = useRef(null)
   const sectionRef = useRef(null)
@@ -224,7 +226,7 @@ const About = () => {
             {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
             <div className="pointer-events-none absolute inset-0 z-10">
               <div
-                className="anim-element slide-from-bottom absolute inset-x-0 mx-auto bottom-[-108px] min-[375px]:bottom-[-118px] min-[540px]:bottom-[-170px] w-[252px] min-[375px]:w-[272px] min-[540px]:w-[400px] h-[378px] min-[375px]:h-[402px] min-[540px]:h-[600px] bg-[#BFAC9B] rounded-t-[500px] min-[540px]:rounded-[500px] border-[2px] min-[540px]:border-[4px] border-[#591902] shadow-lg"
+                className="anim-element slide-from-bottom absolute top-[452px] min-[375px]:top-[466px] left-[97px] w-[200px] h-[300px] bg-[#BFAC9B] rounded-t-[500px] min-[540px]:top-[427px] min-[540px]:inset-x-0 min-[540px]:mx-auto min-[540px]:bottom-[-170px] min-[540px]:w-[400px] min-[540px]:h-[600px] min-[540px]:rounded-[500px] border-[2px] min-[540px]:border-[4px] border-[#591902] shadow-lg"
                 style={{ '--delay': '0.1s' }}
               />
             </div>
@@ -235,7 +237,7 @@ const About = () => {
                 <img
                   src={tangledIllustration}
                   alt="Person tangled in lights"
-                  className="anim-element slide-from-bottom absolute top-[-8px] left-[-30px] min-[375px]:left-[-34px] z-10 w-[308px] h-[398px] min-[375px]:w-[330px] min-[375px]:h-[424px] max-w-none object-cover"
+                  className="anim-element slide-from-bottom absolute top-[-28px] left-[-80px] z-10 w-[330px] h-[400px] max-w-none object-contain min-[540px]:left-1/2 min-[540px]:-translate-x-1/2 min-[540px]:top-[9px] min-[540px]:w-[384px] min-[540px]:h-[529px]"
                   style={{ '--delay': '0.3s' }}
                 />
               </div>
@@ -249,7 +251,7 @@ const About = () => {
                 <img
                   src={tangledIllustration}
                   alt="Person tangled in lights"
-                  className="anim-element slide-from-bottom absolute top-[9px] w-[384px] h-[529px] object-cover max-w-none"
+                  className="anim-element slide-from-bottom absolute top-[9px] overflow-visible w-[384px] h-[529px] object-cover max-w-none"
                   style={{ '--delay': '0.3s' }}
                 />
               </div>
@@ -307,10 +309,7 @@ const About = () => {
 
             <div className="absolute -top-px min-[540px]:top-0 left-0 flex w-full pointer-events-none z-10">
               {visibleScallops.map((_, i, arr) => (
-                <div
-                  key={i}
-                  className="relative h-[45px] flex-1 min-[540px]:shrink-0 min-[540px]:flex-none min-[540px]:w-[144px] min-[540px]:h-[90px]"
-                >
+                <div key={i} className="relative h-[45px] flex-1 min-[540px]:h-[90px]">
                   <div
                     className="absolute top-0 left-0 w-full h-[36px] min-[540px]:h-[72px] bg-[#CDB17E]"
                     style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
@@ -321,11 +320,17 @@ const About = () => {
                   />
 
                   {i !== arr.length - 1 && (
-                    <div className="absolute top-0 right-0 translate-x-1/2 flex flex-col items-center z-20">
+                    <div
+                      className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
+                      style={{
+                        animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                        animationDelay: `${(i % 5) * 0.2}s`,
+                      }}
+                    >
                       <div
                         className={`w-[1px] ${i % 2 === 0 ? 'h-[10px] min-[540px]:h-[14px]' : 'h-[4px] min-[540px]:h-[5px]'} bg-[#591902]/40`}
                       />
-                      <div className="relative flex flex-col items-center">
+                      <div className="relative flex flex-col items-center -mt-3 min-[540px]:-mt-4">
                         <img
                           src={i % 2 === 0 ? bulb1 : bulb2}
                           alt="Light"
@@ -333,16 +338,18 @@ const About = () => {
                         />
 
                         <div
-                          className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 min-[540px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
+                          className={`absolute left-1/2 top-full -translate-y-1 min-[540px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
                             i % 2 === 0
-                              ? 'min-[540px]:w-[76px] min-[540px]:h-[78px] blur-[4px]'
+                              ? 'min-[540px]:w-[76px] min-[540px]:h-[78px] blur-[6px] min-[540px]:blur-[8px]'
                               : 'min-[540px]:w-[76px] min-[540px]:h-[59px] blur-[4px]'
                           }`}
                           style={{
+                            animationDuration: `${4 + (i % 3) * 0.75}s`,
+                            animationDelay: `${(i % 5) * 0.2}s`,
                             background:
                               i % 2 === 0
-                                ? 'linear-gradient(180deg, #FCD768 0%, #A5A687 100%)'
-                                : 'linear-gradient(180deg, #FCE6A4 -1.95%, #A5A687 100%)',
+                                ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
+                                : 'linear-gradient(180deg, #FCE6A4 -1.95%, rgba(247,247,245,0) 100%)',
                             clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
                           }}
                         />
@@ -421,7 +428,7 @@ const About = () => {
                   </div>
 
                   <div className="flex w-full shrink-0 snap-start px-2">
-                    <div className="flex w-full min-h-[500px] flex-col items-center text-center gap-4">
+                    <div className="flex w-full min-h-[400px] flex-col items-center text-center ">
                       <h2
                         className="text-white text-[30px] leading-[1.05] font-serif"
                         style={{ fontFamily: "'Malgin', serif" }}
@@ -619,7 +626,7 @@ const About = () => {
                       </span>
                     </h2>
                     <h4
-                      className="text-white text-[32px] min-[540px]:text-[36px] font-serif min-[540px]:mt-8"
+                      className="text-white text-[24px] min-[540px]:text-[36px] font-serif min-[540px]:mt-8"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
@@ -628,7 +635,7 @@ const About = () => {
                         </span>
                       </span>
                     </h4>
-                    <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
+                    <div className="flex flex-col gap-[20px] text-white text-[14px] leading-[1.5] opacity-90">
                       {(
                         founders.founders?.[0]?.paragraphs ?? [
                           "I still don't fully know how a formerly shy kid has turned into an adult who now builds experiences around people, conversations, and connection, but here we are.",
@@ -655,7 +662,7 @@ const About = () => {
                 <div className="mt-20 flex flex-col-reverse min-[540px]:flex-row items-start min-[540px]:items-center gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-0">
                   <div className="w-full min-[540px]:flex-1 min-[540px]:max-w-[520px] flex flex-col gap-[28px] min-[540px]:self-center min-[540px]:ml-auto min-[540px]:pr-0">
                     <h4
-                      className="text-white text-[32px] min-[540px]:text-[36px] font-serif"
+                      className="text-white text-[24px] min-[540px]:text-[36px] font-serif"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
@@ -664,7 +671,7 @@ const About = () => {
                         </span>
                       </span>
                     </h4>
-                    <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
+                    <div className="flex flex-col gap-[20px] text-white text-[14px] leading-[1.5] opacity-90">
                       {(
                         founders.founders?.[1]?.paragraphs ?? [
                           "I'm a dancer, reader, dreamer, and a believer that every little step eventually leads to the right place.",
@@ -701,7 +708,7 @@ const About = () => {
               {/* --- SUB-TASK 5: WHY CHOOSE ELEWEN --- */}
               <div className=" -mx-6 px-6 py-16 bg-[#E8DDC6] min-[540px]:mt-40 min-[540px]:bg-transparent min-[540px]:mx-0 min-[540px]:px-0 min-[540px]:py-20 min-[540px]:flex min-[540px]:flex-col min-[540px]:items-start">
                 <h2
-                  className="text-[#591902] min-[540px]:text-white text-[36px] min-[540px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center min-[540px]:text-left"
+                  className="text-[#591902] min-[540px]:text-white text-[24px] min-[540px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center min-[540px]:text-left"
                   style={{ fontFamily: "'Malgin', serif" }}
                 >
                   <span className="reveal-wrapper block">
@@ -721,6 +728,7 @@ const About = () => {
                   {[
                     {
                       key: 'e47',
+                      mobileOrderClass: 'order-1',
                       left: 0,
                       iconW: 145.02,
                       iconH: 150.97,
@@ -732,6 +740,7 @@ const About = () => {
                     },
                     {
                       key: 'e49',
+                      mobileOrderClass: 'order-3',
                       left: 217,
                       iconW: 160,
                       iconH: 134,
@@ -743,6 +752,7 @@ const About = () => {
                     },
                     {
                       key: 'e48',
+                      mobileOrderClass: 'order-2',
                       left: 434,
                       iconW: 149,
                       iconH: 152,
@@ -754,6 +764,7 @@ const About = () => {
                     },
                     {
                       key: 'e50',
+                      mobileOrderClass: 'order-4',
                       left: 660,
                       iconW: 237,
                       iconH: 146,
@@ -768,14 +779,15 @@ const About = () => {
                     return (
                       <div
                         key={item.key}
-                        className={`anim-element slide-from-bottom w-full flex flex-col items-center ${item.key === 'e49' || item.key === 'e50' ? 'mt-10' : ''} min-[540px]:mt-0`}
+                        className={`anim-element slide-from-bottom ${item.mobileOrderClass} min-[540px]:order-none w-full flex flex-col items-center`}
                         style={{ '--delay': `${index * 0.06}s` }}
                       >
-                        <div className="relative overflow-hidden bg-[#F8F4ED] rounded-full w-[140px] h-[140px] min-[540px]:w-[110px] min-[540px]:h-[110px] min-[900px]:w-[177px] min-[900px]:h-[177px]">
+                        <div className="relative overflow-visible min-[540px]:overflow-hidden rounded-full w-[140px] h-[140px] min-[540px]:w-[110px] min-[540px]:h-[110px] min-[900px]:w-[177px] min-[900px]:h-[177px]">
+                          <div className="absolute inset-0 rounded-full bg-[#F8F4ED]" />
                           <div className="absolute left-0 top-0 w-[177px] h-[177px] origin-top-left scale-[0.79] min-[540px]:scale-[0.621] min-[900px]:scale-100">
                             {src && (
                               <div
-                                className="absolute"
+                                className="absolute z-10"
                                 style={{
                                   width: `${item.iconW}px`,
                                   height: `${item.iconH}px`,
@@ -794,7 +806,7 @@ const About = () => {
                         </div>
 
                         <p
-                          className="mt-5 min-[540px]:mt-4 text-[#591902] min-[540px]:text-white font-normal font-serif text-[16px] min-[540px]:text-[13px] min-[900px]:text-[21px] leading-[120%] text-center w-full max-w-[190px]"
+                          className="mt-5 min-[540px]:mt-4 text-[#591902] min-[540px]:text-white font-normal font-serif text-[16px] min-[540px]:text-[13px] min-[900px]:text-[21px] leading-[1.1] min-[900px]:leading-[120%] text-center w-full max-w-[158px] min-[540px]:max-w-[190px]"
                           style={{ fontFamily: "'Malgin', serif" }}
                         >
                           {item.label}
@@ -831,7 +843,7 @@ const About = () => {
                   </p>
                 </div>
 
-                <div className="mt-10 px-3 min-[540px]:px-0 w-full min-[540px]:w-fit mx-auto min-[540px]:mx-0 min-[540px]:ml-auto grid grid-cols-1 min-[540px]:grid-cols-3 gap-[20px] justify-items-stretch min-[540px]:justify-items-end">
+                <div className="mt-10 w-full min-[540px]:w-fit mx-auto min-[540px]:mx-0 min-[540px]:ml-auto grid grid-cols-1 min-[540px]:grid-cols-3 gap-[10px] min-[540px]:gap-[20px] justify-items-stretch min-[540px]:justify-items-end">
                   {[
                     {
                       title: vq.cards?.[0]?.title ?? 'Quality you can trust',
@@ -864,9 +876,9 @@ const About = () => {
                       <div
                         key={index}
                         style={{ '--delay': `${0.08 + index * 0.06}s` }}
-                        className="card-reveal about-page-card group w-full max-w-[320px] min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] px-4 py-6 min-[375px]:p-6 flex flex-col items-center gap-5"
+                        className="card-reveal about-page-card group w-full max-w-none min-[540px]:max-w-[316px] min-h-[120px] min-[540px]:min-h-[275px] bg-[#FFFFFF] rounded-[8px] min-[540px]:rounded-[20px] px-5 py-5 min-[540px]:p-6 flex flex-col items-center justify-center gap-3 min-[540px]:gap-5"
                       >
-                        <div className="flex w-[80px] h-[80px] shrink-0 items-center justify-center about-page-card-icon">
+                        <div className="flex w-[52px] h-[52px] min-[540px]:w-[80px] min-[540px]:h-[80px] shrink-0 items-center justify-center about-page-card-icon">
                           {currentIconSrc && (
                             <div
                               className="w-full h-full origin-center bg-[#591902] about-page-hover-image"
@@ -884,9 +896,9 @@ const About = () => {
                           )}
                         </div>
 
-                        <div className="flex flex-col items-center gap-4 w-full px-1 min-[375px]:p-4">
+                        <div className="flex flex-col items-center gap-2 min-[540px]:gap-4 w-full px-0 min-[540px]:p-4">
                           <h5
-                            className="about-page-card-title text-[#2D2D2D] text-[16px] min-[375px]:text-[18px] sm:text-[21px] font-normal text-center leading-[120%] w-full max-w-[220px] min-[375px]:max-w-[240px] sm:max-w-none"
+                            className="about-page-card-title text-[#2D2D2D] text-[14px] min-[375px]:text-[16px] min-[540px]:text-[18px] sm:text-[21px] font-normal text-center leading-[120%] w-full max-w-[210px] min-[540px]:max-w-[240px] sm:max-w-none"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '120%',
@@ -896,7 +908,7 @@ const About = () => {
                             {card.title}
                           </h5>
                           <p
-                            className="about-page-card-desc text-[#767676] text-[12px] min-[375px]:text-[13px] font-normal text-center leading-[150%] w-full max-w-[248px] min-[375px]:max-w-[276px] break-words"
+                            className="about-page-card-desc text-[#767676] text-[11px] min-[375px]:text-[12px] min-[540px]:text-[13px] font-normal text-center leading-[150%] w-full max-w-[230px] min-[540px]:max-w-[276px] break-words"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '150%',

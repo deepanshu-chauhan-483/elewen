@@ -306,6 +306,9 @@ const PlanEventSection = () => {
         {/* Categories Bar */}
         <aside className="w-full md:w-[320px] pt-8 pb-0 md:py-20 px-4 md:px-16 flex flex-col items-center md:items-start shrink-0 relative reveal-border-y">
           <div className="hidden md:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
+          <div className="hidden md:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
+            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+          </div>
           <div className="flex flex-row md:flex-col items-center md:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
@@ -410,7 +413,8 @@ const PlanEventSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] my-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[261px] md:w-auto md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:p-7 h-[90px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                      <div className="absolute bottom-[15px] left-[15px] lg:my-2 right-[15px] md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:p-7 h-[90px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
                         <h3 className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase font-['Poppins']">
                           {card.title}
                         </h3>
@@ -728,7 +732,7 @@ const WhatToPlanSection = () => {
         <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
       </div>
 
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 mb-10">
         <div className="flex-1 order-last lg:order-none py-4 md:py-16 px-6 md:px-12 lg:px-8 relative reveal-border-y">
           <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           {/* Cards Carousel Area */}
@@ -791,7 +795,8 @@ const WhatToPlanSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[261px] md:w-auto my-2 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:p-7 h-[90px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:bottom-0 md:left-0 md:right-0 lg:my-2 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:p-7 h-[90px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
                         <h3 className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']">
                           {card.title}
                         </h3>
@@ -830,7 +835,7 @@ const WhatToPlanSection = () => {
             </div>
 
             {/* Desktop Pagination Block */}
-            <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px]">
+            <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px] ">
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
@@ -934,7 +939,10 @@ const WhatToPlanSection = () => {
         </div>
 
         {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] order-first lg:order-none pt-8 pb-0 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 lg:border-none border-[#3D4035]/15">
+        <aside className="w-full lg:w-[320px] order-first lg:order-none pt-8 pb-0 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 lg:border-none border-[#3D4035]/15 relative ">
+          <div className="hidden lg:block absolute right-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
+            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+          </div>
           <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
             {categories.map((cat, index) => {
               const isActive = cat === activeCategory
@@ -1401,7 +1409,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
           return (
             <div
               key={step.id}
-              className="step-item relative w-full flex items-start justify-between mb-[140px] last:mb-0"
+              className="step-item relative w-full flex items-start justify-between mb-[50px] md:mb-10 last:mb-0"
             >
               {step.side === 'right' ? (
                 <>
@@ -1550,7 +1558,80 @@ const BetterWaySection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.better_way ?? {}
 
-  const scallopCount = [...Array(15)]
+  const desktopScallopCount = 10
+  const mobileScallopCount = 6
+
+  const desktopBulbCount = desktopScallopCount - 1 // 9
+  const mobileBulbCount = mobileScallopCount - 1 // 5
+
+  const renderScallopStrip = ({
+    scallopCount,
+    bulbCount,
+    itemWidthClass,
+    topHeightClass,
+    innerHeightClass,
+    bulbImageSizeClass,
+    beamSizeClass,
+    beamBlurEven,
+    beamBlurOdd,
+    beamYClass,
+    topOffsetClass,
+    containerClass = 'left-0 right-0 w-full',
+  }) => {
+    return (
+      <div className={`absolute ${topOffsetClass} ${containerClass} flex pointer-events-none z-10`}>
+        {Array.from({ length: scallopCount }).map((_, i) => (
+          <div key={i} className={`relative flex-1 shrink-0 ${itemWidthClass} overflow-visible`}>
+            <div
+              className={`absolute top-0 left-0 right-0 ${topHeightClass} bg-[#CDB17E]`}
+              style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+            />
+            <div
+              className={`absolute top-0 left-0 right-0 ${innerHeightClass} bg-[#591902]`}
+              style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+            />
+
+            {i < bulbCount && (
+              <div
+                className="absolute top-0 right-0 z-20 flex flex-col items-center animate-swing"
+                style={{
+                  animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                  animationDelay: `${(i % 5) * 0.2}s`,
+                }}
+              >
+                <div
+                  className={`w-[1px] ${
+                    i % 2 === 0 ? 'h-[-10px] md:h-[-14px]' : 'h-[-4px] md:h-[-5px]'
+                  } bg-[#591902]/40`}
+                />
+                <div className={`relative flex flex-col items-center -mt-3 md:-mt-4 ${beamYClass}`}>
+                  <img
+                    src={i % 2 === 0 ? bulb1 : bulb2}
+                    alt="Light"
+                    className={bulbImageSizeClass}
+                  />
+                  <div
+                    className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 opacity-40 pointer-events-none animate-beam ${beamSizeClass} ${
+                      i % 2 === 0 ? beamBlurEven : beamBlurOdd
+                    }`}
+                    style={{
+                      animationDuration: `${4 + (i % 3) * 0.75}s`,
+                      animationDelay: `${(i % 5) * 0.2}s`,
+                      background:
+                        i % 2 === 0
+                          ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
+                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, rgba(247,247,245,0) 100%)',
+                      clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <section
@@ -1558,60 +1639,39 @@ const BetterWaySection = () => {
       className="relative -mt-px md:mt-0 w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans"
     >
       <div className="relative w-full max-w-[1440px] mx-auto min-h-[820px] md:h-[1171px] shrink-0">
-        {/* --- SCALLOP / BULB SECTION (Untouched) --- */}
-        <div className="absolute -top-px md:top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10">
-          {scallopCount.map((_, i) => (
-            <div
-              key={i}
-              className="relative shrink-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px]"
-            >
-              <div
-                className="absolute top-0 left-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px] bg-[#CDB17E]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              ></div>
-              <div
-                className="absolute top-0 left-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[72px] bg-[#591902]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              ></div>
+        {/* --- SCALLOP / BULB SECTION --- */}
+        <div className="hidden md:flex">
+          {renderScallopStrip({
+            scallopCount: desktopScallopCount,
+            bulbCount: desktopBulbCount,
+            itemWidthClass: '',
+            topHeightClass: 'h-[90px]',
+            innerHeightClass: 'h-[72px]',
+            bulbImageSizeClass: 'w-[32px] h-auto relative z-10',
+            beamSizeClass: 'w-[76px] h-[78px] md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]',
+            beamBlurEven: '',
+            beamBlurOdd: 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]',
+            beamYClass: '',
+            topOffsetClass: 'top-0',
+            containerClass: 'top-0 left-1/2 -translate-x-1/2 w-screen',
+          })}
+        </div>
 
-              {i !== scallopCount.length - 1 && (
-                <div
-                  className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
-                  style={{
-                    animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                    animationDelay: `${(i % 5) * 0.2}s`,
-                  }}
-                >
-                  <div
-                    className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-14px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`}
-                  ></div>
-                  <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
-                    <img
-                      src={i % 2 === 0 ? bulb1 : bulb2}
-                      alt="Light"
-                      className="w-[20px] md:w-[32px] h-auto relative z-10"
-                    />
-                    <div
-                      className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
-                        i % 2 === 0
-                          ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
-                          : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                      }`}
-                      style={{
-                        animationDuration: `${4 + (i % 3) * 0.75}s`,
-                        animationDelay: `${(i % 5) * 0.2}s`,
-                        background:
-                          i % 2 === 0
-                            ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
-                            : 'linear-gradient(180deg, #FCE6A4 -1.95%, rgba(247,247,245,0) 100%)',
-                        clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="flex md:hidden">
+          {renderScallopStrip({
+            scallopCount: mobileScallopCount,
+            bulbCount: mobileBulbCount,
+            itemWidthClass: '',
+            topHeightClass: 'h-[41px]',
+            innerHeightClass: 'h-[34px]',
+            bulbImageSizeClass: 'w-[20px] h-auto relative z-10',
+            beamSizeClass: 'w-[40px] h-[48px] blur-[4px]',
+            beamBlurEven: 'blur-[5px]',
+            beamBlurOdd: 'blur-[4px]',
+            beamYClass: '',
+            topOffsetClass: '-top-px',
+            containerClass: 'left-0 right-0 w-full',
+          })}
         </div>
 
         {/* --- HEADINGS --- */}
@@ -1850,25 +1910,16 @@ const LAYOUT_H = 684
 const ChecklistSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.checklist ?? {}
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    handleResize()
-    window.addEventListener('resize', handleResize)
-
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
   const reliefItems = s.relief_items ?? [
     "You don't manage people",
     "You don't manage logistics",
     'No chasing vendors',
     'No waiting anxiously!',
   ]
-  const scallopCount = [...Array(isMobile ? 6 : 15)]
+  const desktopScallopCount = 10
+  const mobileScallopCount = 6
+  const desktopBulbCount = desktopScallopCount - 1
+  const mobileBulbCount = mobileScallopCount - 1
   const sectionRef = useRef(null)
   const [howItWorksVisible, setHowItWorksVisible] = useState(false)
   const [isLayoutVisible, setIsLayoutVisible] = useState(false)
@@ -2012,6 +2063,71 @@ const ChecklistSection = () => {
     }
   }, [])
 
+  const renderChecklistScallopStrip = ({
+    scallopCount,
+    bulbCount,
+    itemHeightClass,
+    topHeightClass,
+    innerHeightClass,
+    bulbImageSizeClass,
+    beamSizeClass,
+    beamBlurEven,
+    beamBlurOdd,
+    topOffsetClass,
+  }) => (
+    <div className={`absolute ${topOffsetClass} left-0 right-0 w-full flex`}>
+      {Array.from({ length: scallopCount }).map((_, i) => (
+        <div key={i} className={`relative flex-1 shrink-0 overflow-visible ${itemHeightClass}`}>
+          <div
+            className={`absolute top-0 left-0 right-0 ${topHeightClass} bg-[#CDB17E]`}
+            style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+          />
+          <div
+            className={`absolute top-0 left-0 right-0 ${innerHeightClass} bg-[#F2F2F2]`}
+            style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+          />
+          {i < bulbCount && (
+            <div
+              className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
+              style={{
+                animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                animationDelay: `${(i % 5) * 0.2}s`,
+              }}
+            >
+              <div
+                className={`w-[1px] ${
+                  i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'
+                } bg-[#591902]/40`}
+              />
+              <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
+                <img
+                  src={i % 2 !== 0 ? bulb1 : bulb2}
+                  alt="Light"
+                  className={bulbImageSizeClass}
+                  loading="lazy"
+                />
+                <div
+                  className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 opacity-40 pointer-events-none animate-beam ${beamSizeClass} ${
+                    i % 2 === 0 ? beamBlurEven : beamBlurOdd
+                  }`}
+                  style={{
+                    animationDuration: `${4 + (i % 3) * 0.75}s`,
+                    animationDelay: `${(i % 5) * 0.2}s`,
+                    background:
+                      i % 2 === 0
+                        ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
+                        : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
+                    clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+
   return (
     <section
       ref={sectionRef}
@@ -2019,60 +2135,35 @@ const ChecklistSection = () => {
       className="checklist-section relative -mt-px md:mt-0 w-full min-h-screen bg-white overflow-x-clip flex flex-col items-center pb-0"
     >
       {/* Lightbulbs */}
-      <div className="absolute -top-px md:top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10 ">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max flex">
-          {scallopCount.map((_, i) => (
-            <div
-              key={i}
-              className="relative shrink-0 w-[52px] sm:w-[60px] md:w-[144px] md:w-[144px] h-[40.94px] md:h-[90px]"
-            >
-              <div
-                className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              />
-              <div
-                className="absolute top-0 left-0 w-full h-[40.94px] md:h-[60px] bg-[#F2F2F2]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              />
-              {i !== scallopCount.length - 1 && (
-                <div
-                  className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
-                  style={{
-                    animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                    animationDelay: `${(i % 5) * 0.2}s`,
-                  }}
-                >
-                  <div
-                    className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`}
-                  />
-                  <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
-                    <img
-                      src={i % 2 !== 0 ? bulb1 : bulb2}
-                      alt="Light"
-                      className="w-[20px] md:w-[32px] h-auto relative z-10"
-                      loading="lazy"
-                    />
-                    <div
-                      className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
-                        i % 2 === 0
-                          ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
-                          : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                      }`}
-                      style={{
-                        animationDuration: `${4 + (i % 3) * 0.75}s`,
-                        animationDelay: `${(i % 5) * 0.2}s`,
-                        background:
-                          i % 2 === 0
-                            ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
-                            : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
-                        clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+      <div className="absolute -top-px md:top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
+        <div className="hidden md:flex">
+          {renderChecklistScallopStrip({
+            scallopCount: desktopScallopCount,
+            bulbCount: desktopBulbCount,
+            itemHeightClass: 'h-[90px]',
+            topHeightClass: 'h-[72px]',
+            innerHeightClass: 'h-[60px]',
+            bulbImageSizeClass: 'w-[32px] h-auto relative z-10',
+            beamSizeClass: 'w-[76px] h-[78px] blur-[6px] md:blur-[8px]',
+            beamBlurEven: '',
+            beamBlurOdd: 'w-[76px] h-[59px] blur-[4px] md:blur-[4px]',
+            topOffsetClass: 'top-0',
+          })}
+        </div>
+
+        <div className="flex md:hidden">
+          {renderChecklistScallopStrip({
+            scallopCount: mobileScallopCount,
+            bulbCount: mobileBulbCount,
+            itemHeightClass: 'h-[40.94px]',
+            topHeightClass: 'h-[40.94px]',
+            innerHeightClass: 'h-[40.94px]',
+            bulbImageSizeClass: 'w-[20px] h-auto relative z-10',
+            beamSizeClass: 'w-[44px] h-[44px] blur-[4px]',
+            beamBlurEven: 'blur-[5px]',
+            beamBlurOdd: 'blur-[4px]',
+            topOffsetClass: 'top-0',
+          })}
         </div>
       </div>
 
@@ -2127,7 +2218,13 @@ const ChecklistSection = () => {
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
                   alt="Scrolling"
-                  style={{ '--delay': '0.15s' }}
+                  style={{
+                    '--delay': '0.15s',
+                    filter: `
+      drop-shadow(-8px -10px 18px rgba(0,0,0,0.10))
+      drop-shadow(-2px -4px 8px rgba(0,0,0,0.06))
+    `,
+                  }}
                   loading="lazy"
                 />
               </div>
@@ -2167,8 +2264,10 @@ const ChecklistSection = () => {
                   } absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
                   style={{
                     '--delay': '0.65s',
-                    filter:
-                      'drop-shadow(33px 41px 32px rgba(109, 57, 8, 0.16)) drop-shadow(15px 18px 24px rgba(109, 57, 8, 0.28)) drop-shadow(4px 5px 13px rgba(109, 57, 8, 0.32))',
+                    filter: `
+    drop-shadow(0px -10px 18px rgba(109, 57, 8, 0.18))
+    drop-shadow(-6px 0px 12px rgba(109, 57, 8, 0.12))
+  `,
                   }}
                   loading="lazy"
                 />
@@ -2208,7 +2307,13 @@ const ChecklistSection = () => {
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
                   alt="Vendors"
-                  style={{ '--delay': '1.15s' }}
+                  style={{
+                    '--delay': '1.15s',
+                    filter: `
+      drop-shadow(0px -10px 18px rgba(0,0,0,0.12))
+      drop-shadow(-4px -6px 10px rgba(0,0,0,0.08))
+    `,
+                  }}
                   loading="lazy"
                 />
               </div>
@@ -2247,7 +2352,13 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-bottom ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
-                  style={{ '--delay': '1.65s' }}
+                  style={{
+                    '--delay': '1.65s',
+                    filter: `
+      drop-shadow(0px -12px 20px rgba(0,0,0,0.14))
+      
+    `,
+                  }}
                   loading="lazy"
                 />
               </div>
@@ -2312,7 +2423,7 @@ const ChecklistSection = () => {
         </h4>
       </div>
 
-      {/* Door section â€” unchanged */}
+      {/* Door section unchanged */}
       <div className="door-section relative w-full z-10 mt-0 overflow-hidden">
         <div
           ref={gateAreaRef}
@@ -3233,10 +3344,13 @@ const PlanningGuidesSection = () => {
       </div>
 
       {/* Main Content */}
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10 mb-10">
         {/* Categories Bar */}
         <aside className="w-full lg:w-[320px] pt-8 pb-0 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b-0 relative reveal-border-y">
           <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
+          <div className="hidden lg:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
+            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+          </div>
           <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] lg:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
@@ -3342,7 +3456,8 @@ const PlanningGuidesSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] lg:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
                         <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
                           {blog.title}
                         </h3>

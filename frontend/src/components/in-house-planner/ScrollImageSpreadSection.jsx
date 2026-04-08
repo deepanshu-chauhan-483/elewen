@@ -30,7 +30,10 @@ const IMAGE_DATA = [
 
 // ── Fly-by images: burst through camera and vanish ──────────────────────────
 const BASE_IMAGES = [img1, img2, img3, img4, img5, img6, img7, img8]
-const MOBILE_SLIDES = [IMAGE_DATA.slice(0, 4), IMAGE_DATA.slice(4, 8)]
+const MOBILE_SLIDES = [
+  [IMAGE_DATA[0], IMAGE_DATA[5], IMAGE_DATA[4], IMAGE_DATA[7]],
+  [IMAGE_DATA[1], IMAGE_DATA[3], IMAGE_DATA[2], IMAGE_DATA[6]],
+]
 
 // 10 positions — all pushed to the periphery so they never block the centre
 const FLY_POS = [
@@ -179,38 +182,42 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
 
     return (
       <section className="w-full bg-[#FFFFFF] font-sans pt-24 pb-14">
-        <div className="mx-auto w-full max-w-[430px] px-5">
-          <div className="grid h-[min(80vw,370px)] grid-cols-[1.85fr_1fr] grid-rows-3 gap-2.5">
-            <div className="relative row-span-2 overflow-hidden rounded-[18px] bg-[#F5F5F5]">
-              <img
-                src={activeSlide[0]?.src}
-                alt={activeSlide[0]?.alt ?? 'Planner showcase'}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
+        <div className="mx-auto w-full max-w-[430px] px-2">
+          <div className="flex flex-col justify-center mx-auto w-full grid h-[min(74vw,278px)]  grid-cols-[1.72fr_0.94fr] gap-1">
+            <div className="grid min-h-0 grid-rows-[1.52fr_0.86fr] gap-1">
+              <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
+                <img
+                  src={activeSlide[0]?.src}
+                  alt={activeSlide[0]?.alt ?? 'Planner showcase'}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
+
+              <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
+                <img
+                  src={activeSlide[2]?.src}
+                  alt={activeSlide[2]?.alt ?? 'Planner showcase'}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[18px] bg-[#F5F5F5]">
-              <img
-                src={activeSlide[1]?.src}
-                alt={activeSlide[1]?.alt ?? 'Planner showcase'}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            </div>
+            <div className="grid min-h-0 grid-rows-2 gap-1">
+              <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
+                <img
+                  src={activeSlide[1]?.src}
+                  alt={activeSlide[1]?.alt ?? 'Planner showcase'}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
 
-            <div className="relative overflow-hidden rounded-[18px] bg-[#F5F5F5]">
-              <img
-                src={activeSlide[2]?.src}
-                alt={activeSlide[2]?.alt ?? 'Planner showcase'}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            </div>
-
-            <div className="relative row-span-2 overflow-hidden rounded-[18px] bg-[#F5F5F5]">
-              <img
-                src={activeSlide[3]?.src}
-                alt={activeSlide[3]?.alt ?? 'Planner showcase'}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
+              <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
+                <img
+                  src={activeSlide[3]?.src}
+                  alt={activeSlide[3]?.alt ?? 'Planner showcase'}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
             </div>
           </div>
 
