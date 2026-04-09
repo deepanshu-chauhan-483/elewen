@@ -76,6 +76,7 @@ const DEFAULT_NAV_SURFACE = 'solid'
 const TRANSPARENT_NAV_SURFACE = 'transparent'
 const GLASS_BLUR_MOBILE = 'blur(1px)'
 const GLASS_BLUR_DESKTOP = 'blur(1px)'
+const BLACK_NAV_ACCENT_PATHS = ['/book-consultation', '/consultation-confirmation']
 
 const parseRgb = color => {
   const match = color?.match(/rgba?\(([^)]+)\)/i)
@@ -147,6 +148,7 @@ const NavHeader = () => {
   const [navThemeName, setNavThemeName] = useState(isHome ? 'glass' : 'light')
   const [navSurface, setNavSurface] = useState(DEFAULT_NAV_SURFACE)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
+  const useBlackNavAccent = BLACK_NAV_ACCENT_PATHS.includes(pathname)
 
   useEffect(() => {
     const sync = () => setIsLoggedIn(!!localStorage.getItem('elewen_jwt'))
@@ -285,12 +287,17 @@ const NavHeader = () => {
     : desktopTheme.logoMode === 'light'
       ? { filter: 'brightness(0) invert(1)' }
       : {}
+  const resolvedDesktopLogoStyle = useBlackNavAccent
+    ? { filter: 'brightness(0)' }
+    : desktopLogoStyle
   const mobileLogoSrc = mobilenavlogo
   const mobileLogoStyle = isTransparentNav
     ? undefined
     : mobileTheme.logoMode === 'dark'
       ? { filter: 'brightness(0)' }
       : undefined
+  const resolvedDesktopIconColor = useBlackNavAccent ? '#000000' : iconColor
+  const resolvedMobileIconColor = useBlackNavAccent ? '#000000' : mobileIconColor
 
   return (
     <>
@@ -384,14 +391,19 @@ const NavHeader = () => {
                 src={navLogo}
                 alt="Elewen"
                 className="h-full w-full object-contain"
-                style={desktopLogoStyle}
+                style={resolvedDesktopLogoStyle}
               />
             </Link>
           </div>
 
           <div className="flex items-center gap-4">
             <button className="p-1 md:hidden" aria-label="Search" type="button">
-              <svg className="h-5 w-5" fill="none" stroke={mobileIconColor} viewBox="0 0 24 24">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke={resolvedMobileIconColor}
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -409,11 +421,15 @@ const NavHeader = () => {
             >
               <div
                 className="h-0.5 w-7 transition-all duration-300 group-hover:opacity-60 md:w-9"
-                style={{ backgroundColor: isDesktop ? iconColor : mobileIconColor }}
+                style={{
+                  backgroundColor: isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor,
+                }}
               />
               <div
                 className="h-0.5 w-5 transition-all duration-300 group-hover:w-7 md:w-7 md:group-hover:w-9"
-                style={{ backgroundColor: isDesktop ? iconColor : mobileIconColor }}
+                style={{
+                  backgroundColor: isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor,
+                }}
               />
             </button>
           </div>
@@ -511,14 +527,14 @@ const NavHeader = () => {
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-col overflow-hidden px-6 pb-0 md:flex-1 md:flex-row md:px-10 md:pb-4">
-          <nav className="relative flex flex-col justify-start pt-8 md:flex-1 md:pt-8">
+        <div className="flex min-h-0 flex-col overflow-hidden px-6 pb-0 md:flex-1 md:flex-row md:px-10 md:pb-auto">
+          <nav className="relative flex flex-col justify-start pt-8 md:flex-1 md:pt-auto">
             {BASE_LINKS.map((link, index) => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={() => setOpen(false)}
-                className={`group flex items-end justify-between py-3 md:py-3 ${
+                className={`group flex items-end justify-between py-3 md:py-2 ${
                   pathname === link.to ? 'text-[#CDB17E]' : 'text-white/85 hover:text-white'
                 }`}
                 style={{
@@ -530,7 +546,7 @@ const NavHeader = () => {
               >
                 <span className="inline-block max-w-full md:max-w-[72%]">
                   <span
-                    className="inline-block w-auto max-w-none whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[14px] font-normal uppercase leading-[1] tracking-[0em] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] md:h-auto md:w-auto md:pb-1 md:text-[22px] md:leading-none lg:text-[24px]"
+                    className="inline-block w-auto max-w-none whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[14px] font-normal uppercase leading-[1] tracking-[0em] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] md:h-auto md:w-auto md:pb-1 md:text-[20px] md:leading-none lg:text-[22px]"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {link.label}
@@ -540,7 +556,7 @@ const NavHeader = () => {
             ))}
 
             <div
-              className="absolute right-0 top-4 mt-0 md:static md:mt-5"
+              className="absolute right-0 top-4 mt-0 md:static md:mt-4"
               style={{
                 transitionDelay: open ? `${BASE_LINKS.length * 50 + 150}ms` : '0ms',
                 transform: open ? 'translateY(0)' : 'translateY(20px)',
@@ -656,7 +672,7 @@ const NavHeader = () => {
                 'transform 0.6s cubic-bezier(0.32,0,0.15,1) 200ms, opacity 0.6s ease 200ms',
             }}
           >
-            <div className="h-80 w-full max-w-xl overflow-hidden rounded-2xl lg:h-96">
+            <div className="h-72 w-full max-w-xl overflow-hidden rounded-2xl lg:h-80">
               <img src={EVENT_IMAGE} alt="Elewen Events" className="h-full w-full object-cover" />
             </div>
             <div className="mt-6 flex flex-col items-end">
@@ -669,7 +685,7 @@ const NavHeader = () => {
         </div>
 
         <div
-          className="mb-0 flex shrink-0 flex-col-reverse items-start justify-between gap-4 px-6 pb-6 md:flex-row md:items-end md:px-10 md:pb-4"
+          className="mb-0 flex shrink-0 flex-col-reverse items-start justify-between gap-4 px-6 pb-6 md:flex-row md:items-end md:px-10 md:pb-3"
           style={{
             transitionDelay: open ? '350ms' : '0ms',
             transform: open ? 'translateY(0)' : 'translateY(20px)',

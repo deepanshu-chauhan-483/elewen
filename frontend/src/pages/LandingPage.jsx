@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -1519,7 +1520,10 @@ const CTASection = () => {
 
         <span className="mt-[40px] reveal-wrapper reveal-wrapper--overflow-visible reveal-on-scroll">
           <span className="reveal-text">
-            <button className="group flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] min-h-[36px] h-[36px] pl-[18.2948px] pr-[3.04913px] py-0 md:rounded-[56px] md:w-[243px] md:h-[44px] md:min-h-0 md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors">
+            <Link
+              to="/book-consultation"
+              className="group flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] min-h-[36px] h-[36px] pl-[18.2948px] pr-[3.04913px] py-0 md:rounded-[56px] md:w-[243px] md:h-[44px] md:min-h-0 md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors"
+            >
               <span className="text-[#FAFAFA] text-[12px] md:text-[16px] font-medium leading-[150%] tracking-wide w-[120px] h-[18px] md:w-auto md:h-auto whitespace-nowrap">
                 {s.cta_label ?? 'Book a Consultation'}
               </span>
@@ -1540,7 +1544,7 @@ const CTASection = () => {
                   <path d="M7 7h10v10" />
                 </svg>
               </div>
-            </button>
+            </Link>
           </span>
         </span>
       </div>

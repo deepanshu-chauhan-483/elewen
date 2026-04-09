@@ -66,57 +66,57 @@ const IDEA_TO_CELEBRATION_STEPS = [
 const IDEA_TO_CELEBRATION_CARDS = [
   {
     stepIndex: 0,
-    left: '31.5%',
-    top: '2.5%',
-    width: '38%',
-    maxWidth: '410px',
+    left: '29.5%',
+    top: '1.5%',
+    width: '34%',
+    maxWidth: '380px',
   },
   {
     stepIndex: 1,
     left: '12.5%',
-    top: '24.5%',
-    width: '36%',
-    maxWidth: '390px',
+    top: '23.5%',
+    width: '34%',
+    maxWidth: '360px',
   },
   {
     stepIndex: 2,
-    left: '39.5%',
-    top: '47%',
-    width: '35%',
-    maxWidth: '370px',
+    left: '37.5%',
+    top: '46.5%',
+    width: '33%',
+    maxWidth: '345px',
   },
   {
     stepIndex: 3,
-    left: '19%',
-    top: '69%',
-    width: '37%',
-    maxWidth: '390px',
+    left: '18%',
+    top: '70.5%',
+    width: '34%',
+    maxWidth: '360px',
   },
   {
     stepIndex: 4,
     left: '0%',
-    top: '91.5%',
-    width: '33%',
-    maxWidth: '335px',
+    top: '92%',
+    width: '31%',
+    maxWidth: '320px',
   },
 ]
 
 const IDEA_TO_CELEBRATION_CONNECTORS = {
   horizontals: [
-    { top: '19.5%', left: '8%', right: '10%' },
-    { top: '42.5%', left: '16%', right: '12%' },
-    { top: '67%', left: '8%', right: '12%' },
-    { top: '90%', left: '8%', right: '52%' },
+    { top: '19.5%', left: '0%', right: '8%' },
+    { top: '41.5%', left: '8%', right: '0%', inverse: true },
+    { top: '66.5%', left: '0%', right: '10%' },
+    { top: '89.5%', left: '0%', right: '12%' },
   ],
   verticals: [
-    { left: '29.5%', top: '2.5%', height: '17%' },
-    { left: '10%', top: '24.5%', height: '18%' },
-    { left: '58%', top: '19.5%', height: '23.5%' },
-    { left: '86%', top: '42.5%', height: '9.5%' },
-    { left: '39.5%', top: '42.5%', height: '24.5%' },
-    { left: '23%', top: '67%', height: '16%' },
-    { left: '63%', top: '67%', height: '13%' },
-    { left: '49.5%', top: '90%', height: '10%' },
+    { left: '28.5%', top: '4%', height: '15.5%' },
+    { left: '9%', top: '24.5%', height: '17.5%' },
+    { left: '56.5%', bottom: '66.5%', height: '14%', inverse: true },
+    { left: '78.5%', top: '42%', height: '10%' },
+    { left: '36.5%', top: '46%', height: '20.5%' },
+    { left: '15.5%', bottom: '14.5%', height: '19%', inverse: true },
+    { left: '60%', bottom: '21.5%', height: '12%', inverse: true },
+    { left: '48.5%', bottom: '0%', height: '10.5%', inverse: true },
   ],
 }
 
@@ -265,19 +265,23 @@ const IdeaToCelebrationSection = () => {
           </div>
 
           <div className="hidden md:block w-full">
-            <div className="relative mx-auto h-[1280px] w-full max-w-[1120px] lg:h-[1060px]">
+            <div className="relative mx-auto h-[1360px] w-full max-w-[1120px] lg:h-[1240px] xl:h-[1360px]">
               {IDEA_TO_CELEBRATION_CONNECTORS.horizontals.map((line, index) => (
                 <div
                   key={`h-line-${index}`}
-                  className="absolute h-0 border-t border-transparent"
+                  className="absolute h-0 border-t-[1.5px] border-transparent"
                   style={{
                     top: line.top,
                     left: line.left,
                     right: line.right,
                     borderImage:
-                      index % 2 === 0
-                        ? 'linear-gradient(90deg, #C73E0C 0%, #E7E0DA 100%) 1'
-                        : 'linear-gradient(270deg, #C73E0C 0%, #E7E0DA 100%) 1',
+                      index === 1
+                        ? 'linear-gradient(90deg, #E7E0DA 0%, #727355 100%) 1'
+                        : line.inverse
+                          ? 'linear-gradient(90deg, #E7E0DA 0%, #C73E0C 100%) 1'
+                          : index % 2 === 0
+                            ? 'linear-gradient(90deg, #C73E0C 0%, #E7E0DA 100%) 1'
+                            : 'linear-gradient(270deg, #C73E0C 0%, #E7E0DA 100%) 1',
                   }}
                 />
               ))}
@@ -285,12 +289,15 @@ const IdeaToCelebrationSection = () => {
               {IDEA_TO_CELEBRATION_CONNECTORS.verticals.map((line, index) => (
                 <div
                   key={`v-line-${index}`}
-                  className="absolute w-0 border-l border-transparent"
+                  className="absolute w-0 border-l-[1.5px] border-transparent"
                   style={{
                     left: line.left,
                     top: line.top,
+                    bottom: line.bottom,
                     height: line.height,
-                    borderImage: 'linear-gradient(180deg, #E7E0DA 0%, #C73E0C 100%) 1',
+                    borderImage: line.inverse
+                      ? 'linear-gradient(180deg, #C73E0C 0%, #E7E0DA 100%) 1'
+                      : 'linear-gradient(180deg, #E7E0DA 0%, #C73E0C 100%) 1',
                   }}
                 />
               ))}
@@ -463,15 +470,12 @@ const NeedToKnowSection = () => {
                       >
                         {faq.question}
                       </h3>
-
-                      {isOpen ? (
-                        <p className="mt-5 max-w-[760px] text-[16px] leading-[1.5] text-[#B29078] min-[540px]:text-[18px]">
-                          {faq.answer}
-                        </p>
-                      ) : null}
                     </div>
 
-                    <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center text-[#6C2205]">
+                    <span
+                      className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center text-[#6C2205] transition-transform duration-300 ease-out"
+                      style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    >
                       <svg
                         viewBox="0 0 24 24"
                         className="h-6 w-6"
@@ -490,6 +494,20 @@ const NeedToKnowSection = () => {
                       </svg>
                     </span>
                   </button>
+
+                  <div
+                    className="grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.32,0,0.15,1)]"
+                    style={{
+                      gridTemplateRows: isOpen ? '1fr' : '0fr',
+                      opacity: isOpen ? 1 : 0.55,
+                    }}
+                  >
+                    <div className="overflow-hidden">
+                      <p className="max-w-[760px] pb-5 text-[16px] leading-[1.5] text-[#B29078] min-[540px]:pb-6 min-[540px]:text-[18px]">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )
             })}
@@ -549,7 +567,7 @@ const FinalCtaSection = () => {
           </Link>
 
           <Link
-            to="/contact"
+            to="/book-consultation"
             className="flex min-h-[56px] w-full max-w-[280px] items-center justify-center rounded-full bg-white px-8 text-[16px] font-medium leading-[1.3] text-[#C89F5D] transition-colors hover:bg-[#f5f0e8]"
           >
             Book a Consultation
@@ -572,7 +590,7 @@ const FinalCtaSection = () => {
 const StepCard = ({ step, align = 'left' }) => {
   return (
     <article
-      className={` max-w-[290px] mx-auto  md:max-w-[380px] ${
+      className={`max-w-[290px] mx-auto md:max-w-[360px] ${
         align === 'right' ? 'md:mr-auto' : 'md:ml-auto'
       }`}
     >

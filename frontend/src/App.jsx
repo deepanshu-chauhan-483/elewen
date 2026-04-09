@@ -13,6 +13,10 @@ import LoginPage from './pages/LoginPage'
 import SignUpPage from './pages/SignUpPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import NewPasswordPage from './pages/NewPasswordPage'
+import BookConsultationPage from './pages/BookConsultation'
+import ConsultationConfirmation from './pages/ConsultationConfirmation'
+import BlogPage from './pages/BlogPage'
+import SingleBlogPage from './pages/SingleBlogPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -44,7 +48,6 @@ function AppLayout() {
     pathname === '/new-password' ||
     pathname === '/reset-password' ||
     pathname === '/auth/callback'
-
   return (
     <>
       <ScrollToTop />
@@ -54,13 +57,16 @@ function AppLayout() {
         <Route path="/about" element={<About />} />
         <Route path="/in-house-planner" element={<InHousePlannerPage />} />
         <Route path="/how-it-work" element={<HowItWorkPage />} />
-        <Route path="/how-it-works" element={<HowItWorkPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/new-password" element={<NewPasswordPage />} />
+        <Route path="/book-consultation" element={<BookConsultationPage />} />
+        <Route path="/consultation-confirmation" element={<ConsultationConfirmation />} />
+        <Route path="/blogs" element={<BlogPage />} />
+        <Route path="/blogs/:slug" element={<SingleBlogPage />} />
       </Routes>
       {!hideGlobalChrome && <Footer />}
     </>

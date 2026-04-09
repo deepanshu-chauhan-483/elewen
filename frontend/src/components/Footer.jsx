@@ -105,7 +105,7 @@ const Footer = () => {
                     <a
                       key={link}
                       href="#"
-                      className="anim-element slide-from-left shrink-0 whitespace-nowrap text-[14px] md:text-[14px] lg:text-[16px] text-[#2D2D2D] hover:text-[#591902]"
+                      className="anim-element slide-from-left shrink-0 whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat pb-[2px] text-[14px] md:text-[14px] lg:text-[16px] text-[#2D2D2D] transition-[background-size,color] duration-500 ease-out hover:bg-[length:100%_1px] hover:text-[#591902]"
                       style={{ '--delay': `${i * 0.06 + 0.08 + linkIndex * 0.04}s` }}
                     >
                       {link}
