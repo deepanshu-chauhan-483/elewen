@@ -2422,10 +2422,10 @@ const ChecklistSection = () => {
       </div>
 
       {/* Door section unchanged */}
-      <div className="door-section relative w-full z-10 mt-0 overflow-hidden">
+      <div className="door-section relative w-full z-10  overflow-hidden">
         <div
           ref={gateAreaRef}
-          className="door-section__pin relative w-full z-20 md:h-[100dvh] "
+          className="door-section__pin relative w-full z-20 h-[100svh] md:h-[100dvh] "
           style={{ position: 'relative' }}
         >
           <div
@@ -2439,7 +2439,7 @@ const ChecklistSection = () => {
               className="door-section__gate w-full h-full"
               style={{ transformOrigin: 'center center', willChange: 'transform' }}
             >
-              <div className="door-section__gate-inner h-full w-full origin-center my-5 flex items-start justify-center leading-none">
+              <div className="door-section__gate-inner h-full w-full origin-center lg:my-5 flex items-start justify-center leading-none">
                 <CelebrationDoor className="block w-full h-full" />
               </div>
             </div>

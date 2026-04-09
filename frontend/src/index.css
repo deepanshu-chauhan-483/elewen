@@ -481,6 +481,90 @@ p {
   animation-duration: 0.72s;
 }
 
+.blog-page .reveal-text.is-visible:not(.reveal-text-x-left):not(.reveal-text-x-right),
+.single-blog-page .reveal-text.is-visible:not(.reveal-text-x-left):not(.reveal-text-x-right) {
+  animation-duration: 0.85s;
+}
+
+.blog-page .reveal-text-x-left.is-visible,
+.blog-page .reveal-text-x-right.is-visible,
+.single-blog-page .reveal-text-x-left.is-visible,
+.single-blog-page .reveal-text-x-right.is-visible {
+  animation-duration: 0.95s;
+}
+
+.blog-page .anim-element.is-visible.slide-from-left,
+.blog-page .anim-element.is-visible.slide-from-right,
+.single-blog-page .anim-element.is-visible.slide-from-left,
+.single-blog-page .anim-element.is-visible.slide-from-right {
+  animation-duration: 0.8s;
+}
+
+.blog-page .anim-element.is-visible.slide-from-bottom,
+.single-blog-page .anim-element.is-visible.slide-from-bottom {
+  animation-duration: 0.7s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.blog-page .card-reveal.is-visible,
+.single-blog-page .card-reveal.is-visible {
+  animation-duration: 0.9s;
+}
+
+.blog-page .reveal-border-y .border-fill-y,
+.single-blog-page .reveal-border-y .border-fill-y {
+  transition:
+    transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.6s ease;
+}
+
+.single-blog-sidebar-border .border-fill-y {
+  transform-origin: 50% 0%;
+}
+
+.single-blog-sidebar-border.is-visible .border-fill-y {
+  transform: scaleY(1);
+  opacity: 1;
+}
+
+.how-it-work-page .draw-line {
+  opacity: 0;
+  will-change: transform, opacity;
+  transition:
+    transform var(--draw-duration, 1.05s) cubic-bezier(0.22, 1, 0.36, 1) var(--draw-delay, 0s),
+    opacity 0.32s ease var(--draw-delay, 0s);
+}
+
+.how-it-work-page .draw-line-x {
+  transform: scaleX(0);
+  transform-origin: 0% 50%;
+}
+
+.how-it-work-page .draw-line-y {
+  transform: scaleY(0);
+  transform-origin: 50% 0%;
+}
+
+.how-it-work-page .draw-line-from-end.draw-line-x {
+  transform-origin: 100% 50%;
+}
+
+.how-it-work-page .draw-line-from-end.draw-line-y {
+  transform-origin: 50% 100%;
+}
+
+.how-it-work-page .draw-line.is-visible {
+  opacity: 1;
+}
+
+.how-it-work-page .draw-line-x.is-visible {
+  transform: scaleX(1);
+}
+
+.how-it-work-page .draw-line-y.is-visible {
+  transform: scaleY(1);
+}
+
 /* Checklist door section: keep a true full-height viewport on mobile browsers */
 .door-section {
   min-height: 100vh;

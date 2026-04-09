@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import heroLeft from '../assets/images/IMG_3001.jpg'
 import heroRight from '../assets/images/IMG_7025.jpg'
@@ -35,7 +35,16 @@ const blogPosts = [
   },
 ]
 
+const RevealLine = ({ children, delay, className = '' }) => (
+  <span className={`reveal-wrapper block ${className}`.trim()}>
+    <span className="reveal-text" style={delay ? { animationDelay: delay } : undefined}>
+      {children}
+    </span>
+  </span>
+)
+
 const BlogPage = () => {
+  const pageRef = useRef(null)
   const [activeCategory, setActiveCategory] = useState('All')
 
   const visiblePosts = useMemo(() => {
@@ -43,8 +52,60 @@ const BlogPage = () => {
     return blogPosts.filter(post => post.category === activeCategory)
   }, [activeCategory])
 
+  useEffect(() => {
+    const page = pageRef.current
+    if (!page) return
+
+    const targets = Array.from(
+      page.querySelectorAll(
+        '.reveal-on-scroll, .reveal-wrapper, .anim-element, .card-reveal, .reveal-border-y'
+      )
+    ).filter(el => {
+      if (el.classList.contains('is-visible')) return false
+      if (el.classList.contains('reveal-wrapper') && el.closest('.reveal-on-scroll')) return false
+      return true
+    })
+
+    const reveal = el => {
+      if (
+        el.classList.contains('anim-element') ||
+        el.classList.contains('card-reveal') ||
+        el.classList.contains('reveal-border-y')
+      ) {
+        el.classList.add('is-visible')
+      }
+
+      if (el.classList.contains('reveal-wrapper') || el.classList.contains('reveal-on-scroll')) {
+        Array.from(el.querySelectorAll('.reveal-text')).forEach(text => {
+          text.style.animationDelay = '1s'
+          text.classList.add('is-visible')
+        })
+      }
+    }
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          reveal(entry.target)
+          observer.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.14, rootMargin: '0px 0px -12% 0px' }
+    )
+
+    targets.forEach(el => {
+      const rect = el.getBoundingClientRect()
+      const inView = rect.top < window.innerHeight * 0.92 && rect.bottom > 0
+      if (inView) reveal(el)
+      else observer.observe(el)
+    })
+
+    return () => observer.disconnect()
+  }, [activeCategory])
+
   return (
-    <main className="min-h-screen bg-[#F7F4EE] font-sans text-[#202716]">
+    <main ref={pageRef} className="blog-page min-h-screen bg-[#F7F4EE] font-sans text-[#202716]">
       <section
         data-nav-theme="glass"
         data-nav-surface="transparent"
@@ -52,26 +113,28 @@ const BlogPage = () => {
       >
         <div className="mx-auto max-w-[1720px]">
           <div className="relative mt-14 md:mt-20 lg:mt-24">
-            <div className="mx-auto max-w-[720px] text-center md:max-w-[820px] lg:absolute lg:left-1/2 lg:top-[-120px] lg:z-10 lg:w-[920px] lg:max-w-none lg:-translate-x-1/2 xl:w-[980px]">
+            <div className="mx-auto max-w-[720px] text-center md:max-w-[820px] lg:absolute lg:left-1/2 lg:top-[-120px] lg:z-10 lg:w-[920px] lg:max-w-none lg:-translate-x-1/2 xl:w-[980px] reveal-on-scroll">
               <h1
                 className="mx-auto max-w-[980px] text-center text-[44px] leading-[1] text-[#6D2005] sm:text-[52px] md:text-[64px] lg:text-[80px]"
                 style={{ fontFamily: "'Malgin', serif", fontWeight: 400, letterSpacing: '0' }}
               >
-                Ideas, Guides &amp;
-                <br />
-                Real Celebrations
+                <RevealLine>Ideas, Guides &amp;</RevealLine>
+                <RevealLine delay="0.06s">Real Celebrations</RevealLine>
               </h1>
             </div>
 
             <div className="mt-12 grid gap-6 md:grid-cols-[1.08fr_0.92fr] lg:mt-[250px] lg:grid-cols-[664px_560px] lg:items-start lg:justify-start lg:gap-4 lg:pl-[100px]">
-              <div className="h-[320px] overflow-hidden md:h-[480px] lg:h-[380px] lg:w-[664px]">
+              <div className="anim-element slide-from-bottom h-[320px] overflow-hidden md:h-[480px] lg:h-[380px] lg:w-[664px]">
                 <img
                   src={heroLeft}
                   alt="Celebration moment"
                   className="h-full w-full object-cover"
                 />
               </div>
-              <div className="h-[220px] overflow-hidden self-start md:mt-16 md:h-[300px] lg:mt-0 lg:h-[260px] lg:w-[560px]">
+              <div
+                className="anim-element slide-from-bottom h-[220px] overflow-hidden self-start md:mt-16 md:h-[300px] lg:mt-0 lg:h-[260px] lg:w-[560px]"
+                style={{ '--delay': '0s' }}
+              >
                 <img
                   src={heroRight}
                   alt="Decorated event space"
@@ -85,7 +148,8 @@ const BlogPage = () => {
 
       <section className=" md:px-10 lg:px-[96px] lg:py-20">
         <div className="mx-auto grid max-w-[1720px] gap-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-16">
-          <aside className="border-b border-[#A7AE98] pb-5 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-10">
+          <aside className="reveal-border-y relative border-b border-[#A7AE98] pb-5 lg:border-b-0 lg:pb-0 lg:pr-10">
+            <div className="absolute right-0 top-0 hidden h-full w-[1px] bg-[#A7AE98] lg:block border-fill-y" />
             <div className="flex flex-wrap gap-x-8 gap-y-4 lg:block lg:space-y-8">
               {categories.map(category => {
                 const active = activeCategory === category
@@ -94,7 +158,7 @@ const BlogPage = () => {
                     key={category}
                     type="button"
                     onClick={() => setActiveCategory(category)}
-                    className={`relative text-left text-[16px] w-full leading-[1.5] ${
+                    className={`reveal-on-scroll relative text-left text-[16px] w-full leading-[1.5] ${
                       active ? 'text-[#202716]' : 'text-[#9B9A92]'
                     }`}
                     style={{
@@ -103,7 +167,7 @@ const BlogPage = () => {
                       letterSpacing: '0',
                     }}
                   >
-                    {category}
+                    <RevealLine delay="0s">{category}</RevealLine>
                     {active && <span className="mt-2 block h-[1px] w-[42px] bg-[#A7AE98]" />}
                   </button>
                 )
@@ -122,12 +186,18 @@ const BlogPage = () => {
                 }`}
               >
                 {index % 2 === 1 && (
-                  <div className="order-2 h-[256px] w-full overflow-hidden lg:order-1 lg:w-[276px]">
+                  <div
+                    className="anim-element slide-from-left order-2 h-[256px] w-full overflow-hidden lg:order-1 lg:w-[276px]"
+                    style={{ '--delay': '0s' }}
+                  >
                     <img src={post.image} alt={post.title} className="h-full w-full object-cover" />
                   </div>
                 )}
 
-                <div className={index % 2 === 1 ? 'order-1 lg:order-2' : ''}>
+                <div
+                  className={`anim-element slide-from-right ${index % 2 === 1 ? 'order-1 lg:order-2' : ''}`}
+                  style={{ '--delay': '0s' }}
+                >
                   <p
                     className="text-[16px] leading-[1.5] text-[#A77B45]"
                     style={{
@@ -186,14 +256,17 @@ const BlogPage = () => {
                 </div>
 
                 {index % 2 === 0 && (
-                  <div className="h-[256px] w-full overflow-hidden lg:w-[276px]">
+                  <div
+                    className="anim-element slide-from-right h-[256px] w-full overflow-hidden lg:w-[276px]"
+                    style={{ '--delay': '0.5s' }}
+                  >
                     <img src={post.image} alt={post.title} className="h-full w-full object-cover" />
                   </div>
                 )}
               </article>
             ))}
 
-            <div className="mt-10 flex items-center justify-center gap-5 md:gap-8 lg:mt-14">
+            <div className="anim-element slide-from-bottom mt-10 flex items-center justify-center gap-5 md:gap-8 lg:mt-14">
               <button
                 type="button"
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6D2005] text-white md:h-14 md:w-14"

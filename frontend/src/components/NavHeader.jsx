@@ -303,7 +303,7 @@ const NavHeader = () => {
     <>
       <header
         ref={headerRef}
-        className={`fixed top-0 left-0 right-0 z-[60] overflow-hidden px-6 py-4 transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-6 ${visibilityClass} ${transformClass}`}
+        className={`fixed top-0 left-0 right-0 z-[60] overflow-hidden px-6 py-[14px] transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-[22px] ${visibilityClass} ${transformClass}`}
       >
         <div
           className="pointer-events-none absolute inset-0 md:hidden"
@@ -446,7 +446,7 @@ const NavHeader = () => {
           transition: 'clip-path 0.72s cubic-bezier(0.32,0,0.15,1), opacity 0.32s ease',
         }}
       >
-        <div className="flex items-center justify-between px-6 py-4 md:px-10 md:py-6">
+        <div className="flex items-center justify-between px-6 py-[14px] md:px-10 md:py-[22px]">
           <div className="hidden w-64 items-center rounded-full border border-white/15 bg-white/10 px-4 py-2.5 backdrop-blur-lg md:flex">
             <svg
               className="mr-3 h-4 w-4 shrink-0 text-white/60"

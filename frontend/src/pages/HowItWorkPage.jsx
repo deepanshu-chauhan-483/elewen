@@ -110,9 +110,9 @@ const IDEA_TO_CELEBRATION_CONNECTORS = {
   ],
   verticals: [
     { left: '28.5%', top: '4%', height: '15.5%' },
-    { left: '9%', top: '24.5%', height: '17.5%' },
+    { left: '9%', top: '24%', height: '17.5%' },
     { left: '56.5%', bottom: '66.5%', height: '14%', inverse: true },
-    { left: '78.5%', top: '42%', height: '10%' },
+    { left: '78.5%', top: '41.7%', height: '10%' },
     { left: '36.5%', top: '46%', height: '20.5%' },
     { left: '15.5%', bottom: '14.5%', height: '19%', inverse: true },
     { left: '60%', bottom: '21.5%', height: '12%', inverse: true },
@@ -257,20 +257,27 @@ const IdeaToCelebrationSection = () => {
                 className="relative flex pl-8 card-reveal"
                 style={{ '--delay': `${index * 0.08}s` }}
               >
-                <div className="absolute bottom-0 left-0 top-0 w-px bg-[#D8B29B]" />
-                <div className="absolute left-0 top-5 h-px w-6 bg-[#D8B29B]" />
+                <div
+                  className="draw-line draw-line-y absolute bottom-0 left-0 top-0 w-px bg-[#D8B29B]"
+                  style={{ '--draw-delay': `${0.08 + index * 0.08}s` }}
+                />
+                <div
+                  className="draw-line draw-line-x absolute left-0 top-5 h-px w-6 bg-[#D8B29B]"
+                  style={{ '--draw-delay': `${0.14 + index * 0.08}s` }}
+                />
                 <StepCard step={step} />
               </div>
             ))}
           </div>
 
-          <div className="hidden md:block w-full">
+          <div className="hidden md:block w-full mb-10">
             <div className="relative mx-auto h-[1360px] w-full max-w-[1120px] lg:h-[1240px] xl:h-[1360px]">
               {IDEA_TO_CELEBRATION_CONNECTORS.horizontals.map((line, index) => (
                 <div
                   key={`h-line-${index}`}
-                  className="absolute h-0 border-t-[1.5px] border-transparent"
+                  className={`draw-line draw-line-x absolute h-0 border-t-[1.5px] border-transparent ${line.inverse ? 'draw-line-from-end' : ''}`}
                   style={{
+                    '--draw-delay': `${0.1 + index * 0.12}s`,
                     top: line.top,
                     left: line.left,
                     right: line.right,
@@ -289,8 +296,9 @@ const IdeaToCelebrationSection = () => {
               {IDEA_TO_CELEBRATION_CONNECTORS.verticals.map((line, index) => (
                 <div
                   key={`v-line-${index}`}
-                  className="absolute w-0 border-l-[1.5px] border-transparent"
+                  className={`draw-line draw-line-y absolute w-0 border-l-[1.5px] border-transparent ${line.inverse ? 'draw-line-from-end' : ''}`}
                   style={{
+                    '--draw-delay': `${0.22 + index * 0.08}s`,
                     left: line.left,
                     top: line.top,
                     bottom: line.bottom,
@@ -568,7 +576,7 @@ const FinalCtaSection = () => {
 
           <Link
             to="/book-consultation"
-            className="flex min-h-[56px] w-full max-w-[280px] items-center justify-center rounded-full bg-white px-8 text-[16px] font-medium leading-[1.3] text-[#C89F5D] transition-colors hover:bg-[#f5f0e8]"
+            className="flex min-h-[56px] w-full max-w-[280px] items-center justify-center rounded-full bg-white px-8 text-[16px] font-medium leading-[1.3] text-[#C89F5D] transition-colors "
           >
             Book a Consultation
           </Link>
@@ -735,7 +743,9 @@ const HowItWorkPage = () => {
     const rafIds = []
 
     const targets = Array.from(
-      page.querySelectorAll('.reveal-on-scroll, .reveal-wrapper, .anim-element, .card-reveal')
+      page.querySelectorAll(
+        '.reveal-on-scroll, .reveal-wrapper, .anim-element, .card-reveal, .draw-line'
+      )
     ).filter(el => {
       if (el.classList.contains('is-visible')) return false
       if (el.classList.contains('reveal-wrapper') && el.closest('.reveal-on-scroll')) return false
@@ -743,7 +753,11 @@ const HowItWorkPage = () => {
     })
 
     const revealTarget = el => {
-      if (el.classList.contains('anim-element') || el.classList.contains('card-reveal')) {
+      if (
+        el.classList.contains('anim-element') ||
+        el.classList.contains('card-reveal') ||
+        el.classList.contains('draw-line')
+      ) {
         el.classList.add('is-visible')
       }
 

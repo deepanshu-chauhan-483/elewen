@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useBlogs } from '../hooks/useBlogs'
 import blogImg1 from '../assets/images/IMG_0658.jpg'
@@ -119,7 +119,16 @@ const resolveCoverImage = post => {
 
 const resolvePublishedDate = index => fallbackDates[index % fallbackDates.length]
 
+const RevealLine = ({ children, delay, className = '' }) => (
+  <span className={`reveal-wrapper block ${className}`.trim()}>
+    <span className="reveal-text" style={delay ? { animationDelay: delay } : undefined}>
+      {children}
+    </span>
+  </span>
+)
+
 const SingleBlogPage = () => {
+  const pageRef = useRef(null)
   const { slug } = useParams()
   const { data: blogs = [] } = useBlogs({ limit: 12 })
   const allPosts = useMemo(() => [...localBlogPagePosts, ...blogs], [blogs])
@@ -143,14 +152,65 @@ const SingleBlogPage = () => {
   }, [allPosts, currentPost])
 
   const articleBlocks = useMemo(() => buildArticleBlocks(currentPost), [currentPost])
+  const heroImage = resolveCoverImage(currentPost)
+
+  useEffect(() => {
+    const page = pageRef.current
+    if (!page) return
+
+    const targets = Array.from(
+      page.querySelectorAll(
+        '.reveal-on-scroll, .reveal-wrapper, .anim-element, .card-reveal, .reveal-border-y'
+      )
+    ).filter(el => {
+      if (el.classList.contains('is-visible')) return false
+      if (el.classList.contains('reveal-wrapper') && el.closest('.reveal-on-scroll')) return false
+      return true
+    })
+
+    const reveal = el => {
+      if (
+        el.classList.contains('anim-element') ||
+        el.classList.contains('card-reveal') ||
+        el.classList.contains('reveal-border-y')
+      ) {
+        el.classList.add('is-visible')
+      }
+
+      if (el.classList.contains('reveal-wrapper') || el.classList.contains('reveal-on-scroll')) {
+        Array.from(el.querySelectorAll('.reveal-text')).forEach(text => {
+          text.style.animationDelay = '0s'
+          text.classList.add('is-visible')
+        })
+      }
+    }
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          reveal(entry.target)
+          observer.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.14, rootMargin: '0px 0px -12% 0px' }
+    )
+
+    targets.forEach(el => {
+      const rect = el.getBoundingClientRect()
+      const inView = rect.top < window.innerHeight * 0.92 && rect.bottom > 0
+      if (inView) reveal(el)
+      else observer.observe(el)
+    })
+
+    return () => observer.disconnect()
+  }, [currentPost])
 
   if (!slug) return <Navigate to="/blogs" replace />
   if (!currentPost) return <Navigate to="/blogs" replace />
 
-  const heroImage = resolveCoverImage(currentPost)
-
   return (
-    <main className="min-h-screen bg-[#F7F4EE] text-[#202716]">
+    <main ref={pageRef} className="single-blog-page min-h-screen bg-[#F7F4EE] text-[#202716]">
       <section
         data-nav-theme="glass"
         data-nav-surface="transparent"
@@ -158,17 +218,17 @@ const SingleBlogPage = () => {
       >
         <div className="mx-auto max-w-[1760px]">
           <div className="relative mt-14 md:mt-20 lg:mt-24">
-            <div className="mx-auto max-w-[860px] text-center lg:absolute lg:left-1/2 lg:top-[-98px] lg:z-10 lg:w-[1080px] lg:max-w-none lg:-translate-x-1/2">
+            <div className="mx-auto max-w-[860px] text-center lg:absolute lg:left-1/2 lg:top-[-98px] lg:z-10 lg:w-[1080px] lg:max-w-none lg:-translate-x-1/2 reveal-on-scroll">
               <h1
                 className="font-display mx-auto max-w-[1080px] text-center text-[46px] leading-[0.95] text-[#6D2005] sm:text-[58px] md:text-[74px] lg:text-[100px]"
                 style={{ fontWeight: 400, letterSpacing: '0' }}
               >
-                {currentPost.title}
+                <RevealLine>{currentPost.title}</RevealLine>
               </h1>
             </div>
 
             <div className="mt-12 lg:mt-[250px]">
-              <div className="overflow-hidden bg-white">
+              <div className="anim-element slide-from-bottom overflow-hidden bg-white">
                 <img
                   src={heroImage}
                   alt={currentPost.title}
@@ -176,7 +236,10 @@ const SingleBlogPage = () => {
                 />
               </div>
 
-              <div className="mt-5 flex items-center justify-between gap-4 text-white">
+              <div
+                className="anim-element slide-from-bottom mt-5 flex items-center justify-between gap-4 text-white"
+                style={{ '--delay': '0s' }}
+              >
                 <p
                   className="text-[18px] leading-[1.2] sm:text-[22px]"
                   style={{
@@ -205,9 +268,10 @@ const SingleBlogPage = () => {
 
       <section className="px-6 py-14 md:px-10 lg:px-[96px] lg:py-24">
         <div className="mx-auto grid max-w-[1760px] gap-14 lg:grid-cols-[420px_minmax(0,1fr)] lg:gap-[90px]">
-          <aside className="order-2 lg:order-1">
+          <aside className="single-blog-sidebar-border reveal-border-y relative order-2 lg:order-1 lg:pr-10">
+            <div className="absolute right-0 top-0 hidden h-full w-[1px] bg-[#CDC7BE] lg:block border-fill-y" />
             <h2
-              className="text-[#202716]"
+              className="reveal-on-scroll text-[#202716]"
               style={{
                 fontFamily: "'Malgin', serif",
                 fontWeight: 400,
@@ -216,14 +280,15 @@ const SingleBlogPage = () => {
                 letterSpacing: '0',
               }}
             >
-              You May Also Like
+              <RevealLine>You May Also Like</RevealLine>
             </h2>
 
             <div className="mt-10 space-y-8">
               {relatedPosts.map((post, index) => (
                 <article
                   key={post.slug}
-                  className="border-b border-[#CDC7BE] pb-8 last:border-b-0 last:pb-0"
+                  className="anim-element slide-from-left border-b border-[#CDC7BE] pb-8 last:border-b-0 last:pb-0"
+                  style={{ '--delay': '0s' }}
                 >
                   <Link to={`/blogs/${post.slug}`} className="block">
                     <p
@@ -273,7 +338,7 @@ const SingleBlogPage = () => {
 
           <article className="order-1 lg:order-2">
             <h2
-              className=" max-w-[900px] text-[#202716]"
+              className="reveal-on-scroll max-w-[900px] text-[#202716]"
               style={{
                 fontFamily: "'Malgin', serif",
                 fontWeight: 400,
@@ -282,14 +347,18 @@ const SingleBlogPage = () => {
                 letterSpacing: '0',
               }}
             >
-              {currentPost.title}
+              <RevealLine>{currentPost.title}</RevealLine>
             </h2>
 
             <div className="mt-8 space-y-10">
               {articleBlocks.map((block, index) => {
                 if (block.type === 'image-full') {
                   return (
-                    <div key={`${block.type}-${index}`} className="overflow-hidden bg-white">
+                    <div
+                      key={`${block.type}-${index}`}
+                      className="anim-element slide-from-right overflow-hidden bg-white"
+                      style={{ '--delay': '0s' }}
+                    >
                       <img
                         src={block.image}
                         alt={block.alt}
@@ -305,8 +374,12 @@ const SingleBlogPage = () => {
                       key={`${block.type}-${index}`}
                       className="grid gap-4 sm:grid-cols-2 lg:gap-[18px]"
                     >
-                      {block.images.map(image => (
-                        <div key={image.alt} className="overflow-hidden bg-white">
+                      {block.images.map((image, imageIndex) => (
+                        <div
+                          key={image.alt}
+                          className={`anim-element overflow-hidden bg-white ${imageIndex === 0 ? 'slide-from-left' : 'slide-from-right'}`}
+                          style={{ '--delay': '0s' }}
+                        >
                           <img
                             src={image.src}
                             alt={image.alt}
@@ -319,7 +392,11 @@ const SingleBlogPage = () => {
                 }
 
                 return (
-                  <div key={`${block.type}-${index}`} className="space-y-7">
+                  <div
+                    key={`${block.type}-${index}`}
+                    className="anim-element slide-from-right space-y-7"
+                    style={{ '--delay': '0s' }}
+                  >
                     {block.paragraphs.map(paragraph => (
                       <p
                         key={paragraph}
