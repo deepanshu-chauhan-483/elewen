@@ -6,7 +6,7 @@ export default function ScallopBulbCurtain({
   outerColor = '#CDB17E',
   innerColor = '#591902',
   wireColorClass = 'bg-[#591902]/40',
-  className = 'absolute top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10',
+  className = 'absolute -top-px md:top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10',
   showBulbs = true,
   fitToWidth = false,
 }) {
@@ -18,8 +18,8 @@ export default function ScallopBulbCurtain({
     ? 'absolute inset-x-0 top-0 h-[34px] md:h-[76px]'
     : 'absolute top-0 left-0 w-[60px] h-[34px] md:w-[136px] md:h-[76px]'
   const innerArcClass = fitToWidth
-    ? 'absolute inset-x-0 top-0 h-[27px] md:h-[61px]'
-    : 'absolute top-0 left-0 w-[60px] h-[27px] md:w-[136px] md:h-[61px]'
+    ? 'absolute inset-x-0 top-0 h-[34px] md:h-[61px]'
+    : 'absolute top-0 left-0 w-[60px] h-[34px] md:w-[136px] md:h-[61px]'
 
   return (
     <div className={className}>

@@ -95,8 +95,14 @@ services:
       STRAPI_JWT_SECRET: ${STRAPI_JWT_SECRET}
       STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
     ports:
       - "3000:3000"
+    volumes:
+      - ./api/src:/app/src
+      - ./api/test-payment.html:/app/test-payment.html
     depends_on:
       postgres:
         condition: service_healthy

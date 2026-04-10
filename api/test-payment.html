@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Elewen — Payment Flow Test</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: monospace;
+        background: #0f0f0f;
+        color: #e0e0e0;
+        padding: 24px;
+      }
+      h1 {
+        color: #a78bfa;
+        margin-bottom: 24px;
+        font-size: 18px;
+      }
+      h2 {
+        color: #818cf8;
+        font-size: 14px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 6px;
+      }
+      .section {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        font-size: 11px;
+        color: #888;
+        margin-bottom: 4px;
+        margin-top: 10px;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        background: #0f0f0f;
+        border: 1px solid #333;
+        border-radius: 4px;
+        color: #e0e0e0;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      textarea {
+        height: 120px;
+        resize: vertical;
+      }
+      button {
+        margin-top: 12px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .btn-primary {
+        background: #7c3aed;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #6d28d9;
+      }
+      .btn-success {
+        background: #065f46;
+        color: #6ee7b7;
+      }
+      .btn-danger {
+        background: #7f1d1d;
+        color: #fca5a5;
+      }
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .log {
+        background: #0a0a0a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        padding: 12px;
+        font-size: 11px;
+        line-height: 1.6;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .log-entry {
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #1a1a1a;
+      }
+      .log-entry:last-child {
+        border-bottom: none;
+      }
+      .tag {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        margin-right: 6px;
+      }
+      .tag-req {
+        background: #1e3a5f;
+        color: #60a5fa;
+      }
+      .tag-ok {
+        background: #064e3b;
+        color: #6ee7b7;
+      }
+      .tag-err {
+        background: #7f1d1d;
+        color: #fca5a5;
+      }
+      .tag-info {
+        background: #1e1b4b;
+        color: #a5b4fc;
+      }
+      .tag-pay {
+        background: #3b1f00;
+        color: #fbbf24;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-all;
+        color: #d1d5db;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .status-bar {
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      .status-ok {
+        background: #064e3b;
+        color: #6ee7b7;
+      }
+      .status-err {
+        background: #7f1d1d;
+        color: #fca5a5;
+      }
+      .status-pending {
+        background: #1e1b4b;
+        color: #a5b4fc;
+      }
+      .hint {
+        font-size: 11px;
+        color: #555;
+        margin-top: 6px;
+      }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .card-item {
+        background: #0a0a0a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        padding: 8px;
+      }
+      .card-label {
+        font-size: 10px;
+        color: #6b7280;
+        margin-bottom: 2px;
+      }
+      .card-val {
+        font-size: 11px;
+        color: #e0e0e0;
+      }
+      .copy-btn {
+        font-size: 10px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #888;
+        padding: 1px 6px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-left: 6px;
+      }
+      .copy-btn:hover {
+        color: #e0e0e0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>⚡ Elewen Payment Flow — Test Console</h1>
+
+    <!-- ─── Config ─── -->
+    <div class="section">
+      <h2>1. Config</h2>
+      <label>API Base URL</label>
+      <input id="apiUrl" value="http://localhost:3000" />
+
+      <label>JWT Token (from /auth/login or /api-docs)</label>
+      <input
+        id="jwt"
+        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc3NTExNDczNSwiZXhwIjoxNzc3NzA2NzM1fQ.fFQsC4Jbvrkk3a8o8Sm1S7Z5vY-kwG9XeSXzo1Qsc54"
+      />
+      <p class="hint">
+        Login first via
+        <a
+          href="http://localhost:3000/api-docs#/Auth/post_auth_login"
+          target="_blank"
+          style="color: #818cf8"
+          >Swagger → POST /auth/login</a
+        >
+        and paste the token here.
+      </p>
+    </div>
+
+    <!-- ─── Step 1: Setup Cart + Booking ─── -->
+    <div class="section">
+      <h2>2. Setup — Cart &amp; Booking</h2>
+      <div class="grid">
+        <div>
+          <label>Package ID (Strapi numeric ID)</label>
+          <input id="packageId" value="1" />
+          <label>Event Date</label>
+          <input id="eventDate" type="date" />
+          <label>Guest Count</label>
+          <input id="guestCount" value="50" />
+        </div>
+        <div>
+          <label>Or paste existing Booking ID directly</label>
+          <input id="bookingId" placeholder="uuid of existing booking" />
+          <p class="hint">
+            If you have a booking already, skip the create flow and paste its ID above.
+          </p>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="setupCart()">Add to Cart + Set Date/Guests</button>
+        <button class="btn-primary" onclick="createBooking()">Create Booking from Cart</button>
+      </div>
+      <div id="bookingStatus"></div>
+    </div>
+
+    <!-- ─── Step 2: Create Razorpay Order ─── -->
+    <div class="section">
+      <h2>3. Create Razorpay Order</h2>
+      <label>Payment Type</label>
+      <select id="paymentType">
+        <option value="advance">advance (30% deposit)</option>
+        <option value="remaining">remaining (70% balance)</option>
+        <option value="full">full (100% one-shot)</option>
+      </select>
+      <button class="btn-primary" onclick="createOrder()">Create Order</button>
+      <div id="orderStatus"></div>
+    </div>
+
+    <!-- ─── Step 3: Pay ─── -->
+    <div class="section">
+      <h2>4. Pay via Razorpay Modal</h2>
+
+      <p style="font-size: 12px; color: #888; margin-bottom: 12px">
+        Use these test credentials in the modal:
+      </p>
+
+      <div class="card-grid">
+        <div class="card-item" style="border-color: #065f46">
+          <div class="card-label" style="color: #6ee7b7">⭐ BEST: Netbanking (always works)</div>
+          <div class="card-val" style="margin-top: 6px; line-height: 1.8">
+            1. Click <b>Netbanking</b> tab<br />
+            2. Pick any bank (HDFC/SBI/ICICI)<br />
+            3. Click <b>Pay Now</b><br />
+            4. Test page opens → click <b>"Success"</b>
+          </div>
+        </div>
+        <div class="card-item">
+          <div class="card-label">✅ UPI (scroll tabs to find)</div>
+          <div class="card-val">
+            success@razorpay
+            <button class="copy-btn" onclick="copy('success@razorpay')">copy</button>
+          </div>
+          <div class="card-label" style="margin-top: 4px">❌ Failure UPI</div>
+          <div class="card-val">
+            failure@razorpay
+            <button class="copy-btn" onclick="copy('failure@razorpay')">copy</button>
+          </div>
+        </div>
+        <div class="card-item">
+          <div class="card-label">✅ Domestic Mastercard</div>
+          <div class="card-val">
+            5267 3181 8797 5449
+            <button class="copy-btn" onclick="copy('5267318187975449')">copy</button>
+          </div>
+          <div class="card-label" style="margin-top: 4px">Expiry / CVV / OTP</div>
+          <div class="card-val">02/35 / 123 / OTP: <b>1234</b></div>
+        </div>
+      </div>
+
+      <button class="btn-success" style="margin-top: 16px" onclick="openModal()">
+        Open Razorpay Modal →
+      </button>
+      <div id="payStatus"></div>
+    </div>
+
+    <!-- ─── Step 4: Webhook simulation ─── -->
+    <div class="section">
+      <h2>5. Simulate Webhook Events</h2>
+      <p class="hint" style="margin-bottom: 12px">
+        Runs the same signing logic as test-webhook.js but directly in browser. Useful to test DB
+        logging without CLI.
+      </p>
+      <label>Webhook Secret (must match RAZORPAY_WEBHOOK_SECRET in .env)</label>
+      <input id="webhookSecret" value="elewen_dev_2026" />
+      <div class="btn-row" style="margin-top: 12px">
+        <button class="btn-success" onclick="simulateWebhook('payment.captured')">
+          payment.captured
+        </button>
+        <button class="btn-danger" onclick="simulateWebhook('payment.failed')">
+          payment.failed
+        </button>
+        <button class="btn-primary" onclick="simulateWebhook('refund.processed')">
+          refund.processed
+        </button>
+      </div>
+      <div id="webhookStatus"></div>
+    </div>
+
+    <!-- ─── Log ─── -->
+    <div class="section">
+      <h2>Activity Log</h2>
+      <div class="log" id="log"><div style="color: #555">Waiting for activity...</div></div>
+    </div>
+
+    <!-- ─── DB Check queries ─── -->
+    <div class="section">
+      <h2>DB Verification Queries</h2>
+      <p class="hint" style="margin-bottom: 8px">
+        Run these in your Postgres client (TablePlus / psql) to verify data is being written.
+      </p>
+      <textarea readonly style="height: 160px" id="dbQueries"></textarea>
+    </div>
+
+    <script>
+      // ─── State ───────────────────────────────────────────────────────────────────
+      let state = {
+        bookingId: null,
+        paymentId: null,
+        razorpayOrderId: null,
+        razorpayPaymentId: null,
+        amount: null,
+        keyId: null,
+      }
+
+      // ─── Helpers ─────────────────────────────────────────────────────────────────
+      const api = () => document.getElementById('apiUrl').value.replace(/\/$/, '')
+      const jwt = () => document.getElementById('jwt').value.trim()
+
+      function log(tag, tagClass, message, data) {
+        const el = document.getElementById('log')
+        if (el.innerHTML.includes('Waiting')) el.innerHTML = ''
+        const pre = data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''
+        el.innerHTML =
+          `<div class="log-entry"><span class="tag ${tagClass}">${tag}</span>${message}${pre}</div>` +
+          el.innerHTML
+      }
+
+      function setStatus(id, msg, type = 'pending') {
+        const el = document.getElementById(id)
+        el.innerHTML = `<div class="status-bar status-${type}">${msg}</div>`
+      }
+
+      function copy(text) {
+        navigator.clipboard.writeText(text)
+      }
+
+      async function apiFetch(method, path, body) {
+        log('REQ', 'tag-req', ` ${method} ${path}`)
+        const opts = {
+          method,
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt()}` },
+        }
+        if (body) opts.body = JSON.stringify(body)
+        const res = await fetch(`${api()}${path}`, opts)
+        const data = await res.json().catch(() => ({}))
+        const tagClass = res.ok ? 'tag-ok' : 'tag-err'
+        log(res.status, tagClass, ` ${path}`, data)
+        if (!res.ok) throw Object.assign(new Error(data.error || 'Request failed'), { data })
+        return data
+      }
+
+      function updateDbQueries() {
+        const bId = state.bookingId || 'YOUR_BOOKING_ID'
+        document.getElementById('dbQueries').value = [
+          `-- Payments for booking`,
+          `SELECT id, payment_type, amount, status, provider, provider_order_id, provider_payment_id, payment_method, created_at`,
+          `FROM payments WHERE booking_id = '${bId}' ORDER BY created_at DESC;`,
+          ``,
+          `-- Payment transactions (gateway raw responses)`,
+          `SELECT pt.id, pt.status, pt.gateway_response, pt.created_at`,
+          `FROM payment_transactions pt`,
+          `JOIN payments p ON p.id = pt.payment_id`,
+          `WHERE p.booking_id = '${bId}' ORDER BY pt.created_at DESC;`,
+          ``,
+          `-- Audit logs`,
+          `SELECT action, performed_by, metadata, created_at`,
+          `FROM payment_logs pl`,
+          `JOIN payments p ON p.id = pl.payment_id`,
+          `WHERE p.booking_id = '${bId}' ORDER BY pl.created_at DESC;`,
+          ``,
+          `-- Booking status after payment`,
+          `SELECT id, status, total_price, advance_amount, remaining_amount FROM bookings WHERE id = '${bId}';`,
+          ``,
+          `-- System alerts (failed payments)`,
+          `SELECT alert_type, severity, message, status, created_at FROM alerts ORDER BY created_at DESC LIMIT 5;`,
+        ].join('\n')
+      }
+
+      // ─── Step 2: Cart + Booking ───────────────────────────────────────────────────
+      async function setupCart() {
+        try {
+          if (!jwt()) return alert('Paste your JWT token first')
+          const packageId = document.getElementById('packageId').value
+          const eventDate = document.getElementById('eventDate').value
+          const guestCount = document.getElementById('guestCount').value
+
+          if (!eventDate) return alert('Set an event date')
+
+          await apiFetch('POST', '/cart/items', { packageId: parseInt(packageId), quantity: 1 })
+          await apiFetch('PATCH', '/cart', {
+            eventDate,
+            guestCount: parseInt(guestCount),
+            eventCity: 'Delhi',
+          })
+          setStatus('bookingStatus', '✅ Cart ready — now click Create Booking', 'ok')
+        } catch (e) {
+          setStatus('bookingStatus', `❌ ${e.message}`, 'err')
+        }
+      }
+
+      async function createBooking() {
+        try {
+          if (!jwt()) return alert('Paste your JWT token first')
+          const data = await apiFetch('POST', '/bookings')
+          state.bookingId = data.booking.id
+          document.getElementById('bookingId').value = state.bookingId
+          setStatus(
+            'bookingStatus',
+            `✅ Booking created: ${state.bookingId} | Total: ₹${data.booking.totalPrice} | Advance: ₹${data.booking.advanceAmount}`,
+            'ok'
+          )
+          updateDbQueries()
+          log('BOOKING', 'tag-info', ` ID: ${state.bookingId}`)
+        } catch (e) {
+          setStatus('bookingStatus', `❌ ${e.message}`, 'err')
+        }
+      }
+
+      // ─── Step 3: Create Order ─────────────────────────────────────────────────────
+      async function createOrder() {
+        try {
+          if (!jwt()) return alert('Paste your JWT token first')
+
+          // Use manually entered bookingId if set
+          const manualId = document.getElementById('bookingId').value.trim()
+          if (manualId) state.bookingId = manualId
+
+          if (!state.bookingId) return alert('Create a booking first or paste a booking ID')
+
+          const paymentType = document.getElementById('paymentType').value
+          const data = await apiFetch('POST', '/payments/create-order', {
+            bookingId: state.bookingId,
+            paymentType,
+          })
+
+          state.paymentId = data.paymentId
+          state.razorpayOrderId = data.razorpayOrderId
+          state.amount = data.amount
+          state.keyId = data.keyId
+
+          setStatus(
+            'orderStatus',
+            `✅ Order created | Amount: ₹${data.amount} | Razorpay Order: ${data.razorpayOrderId}`,
+            'ok'
+          )
+          updateDbQueries()
+        } catch (e) {
+          setStatus('orderStatus', `❌ ${e.message}`, 'err')
+        }
+      }
+
+      // ─── Step 4: Open Razorpay Modal ─────────────────────────────────────────────
+      function openModal() {
+        if (!state.razorpayOrderId) return alert('Create a Razorpay order first (Step 3)')
+
+        const options = {
+          key: state.keyId,
+          amount: state.amount * 100, // paise
+          currency: 'INR',
+          name: 'Elewen',
+          description: 'Event Booking Payment',
+          order_id: state.razorpayOrderId,
+          prefill: { name: 'Test User', email: 'test@elewen.com', contact: '9999999999' },
+          config: {
+            display: {
+              blocks: { banks: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] } },
+              sequence: ['block.banks'],
+              preferences: { show_default_blocks: true },
+            },
+          },
+          theme: { color: '#7c3aed' },
+
+          handler: async function (response) {
+            // Payment success in modal — now verify on our backend
+            log('RAZORPAY', 'tag-pay', ' Payment callback received', response)
+            state.razorpayPaymentId = response.razorpay_payment_id
+            setStatus('payStatus', `⏳ Verifying payment on backend...`, 'pending')
+
+            try {
+              const data = await apiFetch('POST', '/payments/verify', {
+                paymentId: state.paymentId,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              })
+              setStatus(
+                'payStatus',
+                `✅ Payment verified! Status: ${data.payment.status} | DB updated`,
+                'ok'
+              )
+              log('VERIFY', 'tag-ok', ' Payment verified and written to DB')
+            } catch (e) {
+              setStatus('payStatus', `❌ Verify failed: ${e.message}`, 'err')
+            }
+          },
+
+          modal: {
+            ondismiss: function () {
+              setStatus('payStatus', '⚠️ Modal closed without payment', 'err')
+              log('MODAL', 'tag-info', ' Dismissed without payment')
+            },
+          },
+        }
+
+        const rzp = new window.Razorpay(options)
+        rzp.on('payment.failed', function (response) {
+          log('RAZORPAY', 'tag-err', ' Payment failed in modal', response.error)
+          setStatus('payStatus', `❌ Payment failed: ${response.error.description}`, 'err')
+        })
+        rzp.open()
+      }
+
+      // ─── Step 5: Simulate Webhooks ────────────────────────────────────────────────
+      async function simulateWebhook(eventType) {
+        const secret = document.getElementById('webhookSecret').value
+        const now = Math.floor(Date.now() / 1000)
+        const orderId = state.razorpayOrderId || 'order_TEST_' + Date.now()
+        const paymentId = state.razorpayPaymentId || 'pay_TEST_' + Date.now()
+
+        let payload
+
+        if (eventType === 'payment.captured') {
+          payload = {
+            entity: 'event',
+            event: 'payment.captured',
+            contains: ['payment'],
+            payload: {
+              payment: {
+                entity: {
+                  id: paymentId,
+                  status: 'captured',
+                  order_id: orderId,
+                  method: 'upi',
+                  amount: (state.amount || 500) * 100,
+                  currency: 'INR',
+                  captured: true,
+                  created_at: now,
+                },
+              },
+            },
+            created_at: now,
+          }
+        } else if (eventType === 'payment.failed') {
+          payload = {
+            entity: 'event',
+            event: 'payment.failed',
+            contains: ['payment'],
+            payload: {
+              payment: {
+                entity: {
+                  id: 'pay_TEST_FAIL_' + Date.now(),
+                  status: 'failed',
+                  order_id: orderId,
+                  method: 'card',
+                  error_code: 'BAD_REQUEST_ERROR',
+                  error_description: 'Card declined by issuing bank',
+                  amount: (state.amount || 500) * 100,
+                  currency: 'INR',
+                  created_at: now,
+                },
+              },
+            },
+            created_at: now,
+          }
+        } else if (eventType === 'refund.processed') {
+          payload = {
+            entity: 'event',
+            event: 'refund.processed',
+            contains: ['refund'],
+            payload: {
+              refund: {
+                entity: {
+                  id: 'rfnd_TEST_' + Date.now(),
+                  status: 'processed',
+                  payment_id: paymentId,
+                  amount: (state.amount || 500) * 100,
+                  currency: 'INR',
+                  created_at: now,
+                },
+              },
+            },
+            created_at: now,
+          }
+        }
+
+        const body = JSON.stringify(payload)
+
+        // Sign the payload using Web Crypto (same as HMAC-SHA256 in Node)
+        const encoder = new TextEncoder()
+        const key = await crypto.subtle.importKey(
+          'raw',
+          encoder.encode(secret),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign']
+        )
+        const sigBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(body))
+        const signature = Array.from(new Uint8Array(sigBuffer))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('')
+
+        log('WEBHOOK', 'tag-info', ` Sending ${eventType}`)
+        setStatus('webhookStatus', `⏳ Sending ${eventType}...`, 'pending')
+
+        try {
+          const res = await fetch(`${api()}/payments/webhook`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Razorpay-Signature': signature },
+            body,
+          })
+          const data = await res.json().catch(() => ({}))
+          if (res.ok) {
+            setStatus('webhookStatus', `✅ ${eventType} processed — check DB`, 'ok')
+            log('WEBHOOK', 'tag-ok', ` ${eventType} accepted`, data)
+          } else {
+            setStatus('webhookStatus', `❌ ${res.status}: ${JSON.stringify(data)}`, 'err')
+            log('WEBHOOK', 'tag-err', ` ${eventType} rejected`, data)
+          }
+        } catch (e) {
+          setStatus('webhookStatus', `❌ ${e.message}`, 'err')
+        }
+      }
+
+      // ─── Init ─────────────────────────────────────────────────────────────────────
+      document.getElementById('eventDate').value = new Date(Date.now() + 30 * 86400000)
+        .toISOString()
+        .split('T')[0]
+      updateDbQueries()
+    </script>
+  </body>
+</html>

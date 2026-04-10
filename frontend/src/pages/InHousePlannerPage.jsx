@@ -316,6 +316,31 @@ const GrandCelebrationsSection = () => {
     return () => window.removeEventListener('resize', updatePerPage)
   }, [])
 
+  useEffect(() => {
+    const root = sectionRef.current
+    if (!root) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          const el = entry.target
+          if (el.classList.contains('reveal-wrapper')) {
+            el.querySelectorAll('.reveal-text').forEach(text => text.classList.add('is-visible'))
+          } else {
+            el.classList.add('is-visible')
+          }
+          observer.unobserve(el)
+        })
+      },
+      { threshold: 0.12 }
+    )
+
+    root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
+
+    return () => observer.disconnect()
+  }, [isMobile])
+
   const normalizedPage = ((page % totalPages) + totalPages) % totalPages
 
   const normalizedIncomingPage =
@@ -382,70 +407,72 @@ const GrandCelebrationsSection = () => {
 
           {/* Stacked cards (mobile) */}
 
-          <div className="mt-14 flex-1 w-full flex items-center justify-center">
-            <div className="relative w-[260px] h-[360px]">
-              {mobileStackItems.map((item, idx) => {
-                const t =
-                  mobileStackTransforms[idx] ||
-                  mobileStackTransforms[mobileStackTransforms.length - 1]
-                return (
-                  <div
-                    key={`${item.id}-stack-${idx}`}
-                    className="absolute inset-0"
-                    style={{
-                      transform: `translate3d(${t.x}px, ${t.y}px, 0) rotate(${t.rotate}deg) scale(${t.scale})`,
+          <div className="mt-14 flex-1 w-full flex flex-col items-center justify-center gap-8">
+            <div className="w-full flex items-center justify-center">
+              <div className="relative w-[260px] h-[360px]">
+                {mobileStackItems.map((item, idx) => {
+                  const t =
+                    mobileStackTransforms[idx] ||
+                    mobileStackTransforms[mobileStackTransforms.length - 1]
+                  return (
+                    <div
+                      key={`${item.id}-stack-${idx}`}
+                      className="absolute inset-0"
+                      style={{
+                        transform: `translate3d(${t.x}px, ${t.y}px, 0) rotate(${t.rotate}deg) scale(${t.scale})`,
 
-                      zIndex: mobileStackItems.length - idx,
+                        zIndex: mobileStackItems.length - idx,
 
-                      transformOrigin: 'center',
-                    }}
-                  >
-                    <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[18px] shadow-[0_28px_70px_rgba(0,0,0,0.18)]">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
+                        transformOrigin: 'center',
+                      }}
+                    >
+                      <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[18px] shadow-[0_28px_70px_rgba(0,0,0,0.18)]">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Dots + description (mobile) */}
-          <div className="w-full flex flex-col items-center mt-5">
-            <div className="flex items-center justify-center gap-2 mt-4">
-              {Array.from({ length: totalPages }, (_, i) => {
-                const active = i === normalizedPage
-                return (
-                  <button
-                    key={`gc-dot-${i}`}
-                    type="button"
-                    onClick={() => setPage(i)}
-                    aria-label={`Go to celebrations ${i + 1}`}
-                    className={`rounded-full transition-all ${
-                      active ? 'w-5 h-1.5 bg-neutral-800' : 'w-3 h-1.5 bg-neutral-800/30'
-                    }`}
-                  />
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
 
-            <h4
-              className="mt-8 text-[#2D2D2D] text-[20px] leading-[1.1] font-serif uppercase tracking-wide text-center max-w-[320px]"
-              style={{ fontFamily: "'Malgin', serif" }}
-            >
-              {mobileActiveItem?.title}
-            </h4>
+            {/* Dots + description (mobile) */}
+            <div className="w-full flex flex-col items-center">
+              <div className="flex items-center justify-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => {
+                  const active = i === normalizedPage
+                  return (
+                    <button
+                      key={`gc-dot-${i}`}
+                      type="button"
+                      onClick={() => setPage(i)}
+                      aria-label={`Go to celebrations ${i + 1}`}
+                      className={`rounded-full transition-all ${
+                        active ? 'w-5 h-1.5 bg-neutral-800' : 'w-3 h-1.5 bg-neutral-800/30'
+                      }`}
+                    />
+                  )
+                })}
+              </div>
 
-            <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.6] text-center max-w-[320px]">
-              {mobileActiveItem?.desc}
-            </p>
+              <h4
+                className="mt-8 text-[#2D2D2D] text-[20px] leading-[1.1] font-serif uppercase tracking-wide text-center max-w-[320px]"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                {mobileActiveItem?.title}
+              </h4>
+
+              <p className="mt-6 text-[#2D2D2D] opacity-50 text-[14px] leading-[1.6] text-center max-w-[320px]">
+                {mobileActiveItem?.desc}
+              </p>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="relative w-full max-w-[1440px] min-h-[920px] lg:min-h-[960px] mx-auto">
+        <div className="relative w-full max-w-[1440px] min-h-[920px] lg:min-h-[890px] mx-auto">
           {/* Cards area (active + incoming layers) */}
 
           <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-full px-[5%] lg:px-[76px]">
@@ -2309,7 +2336,36 @@ const CelebrationFormSection = () => {
 const InHousePlannerSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
+  const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
+  const mobileHeroBody =
+    whatWeDo.mobile_intro ??
+    whatWeDo.intro ??
+    'We handle everything from the first conversation to the final wrap-up, understanding your vision, planning the concept and showflow, coordinating vendors and production, guiding styling and creative direction, and managing timelines, approvals, and execution so you can simply be present and enjoy the event.'
+
+  useEffect(() => {
+    const root = document.querySelector('[data-in-house-planner-page]')
+    if (!root) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          const el = entry.target
+          if (el.classList.contains('reveal-wrapper')) {
+            el.querySelectorAll('.reveal-text').forEach(text => text.classList.add('is-visible'))
+          } else {
+            el.classList.add('is-visible')
+          }
+          observer.unobserve(el)
+        })
+      },
+      { threshold: 0.12 }
+    )
+
+    root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     const root = document.querySelector('[data-in-house-planner-page]')
@@ -2337,7 +2393,10 @@ const InHousePlannerSection = () => {
 
   return (
     <>
-      <ScrollImageSpreadSection />
+      <ScrollImageSpreadSection
+        mobileHeading={whatWeDo.heading ?? 'What we do as your In-House Planner'}
+        mobileBody={mobileHeroBody}
+      />
 
       <div data-in-house-planner-page>
         <section data-planner-intro className="w-full bg-[#957960] flex justify-center font-sans">
@@ -2348,7 +2407,7 @@ const InHousePlannerSection = () => {
               <img
                 src={plannerImg}
                 alt="Moksha - In-House Event Planner"
-                className="w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
+                className="about-page-hover-image w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
               />
             </div>
 

@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import bulb1 from '../assets/lightbulb_images/bulb1.png'
-import bulb2 from '../assets/lightbulb_images/bulb2.png'
-import plannerPortrait from '../assets/images/moksha_portrait.jpg'
+import ScallopBulbCurtain from '../components/common/ScallopBulbCurtain'
 
 const HERO_TAGS = [
   'BIRTHDAYS',
@@ -11,25 +9,6 @@ const HERO_TAGS = [
   'BABY SHOWERS',
   'CORPORATE',
   'RELIGIOUS',
-]
-
-const ORBS = [
-  {
-    className:
-      'anim-element slide-from-left absolute -left-[18%] top-[17%] h-[360px] w-[360px] rounded-full bg-[#BE350440] min-[540px]:-left-[10%] min-[540px]:top-[10%] min-[540px]:h-[660px] min-[540px]:w-[660px]',
-  },
-  {
-    className:
-      'anim-element slide-from-right absolute right-[18%] top-[14%] h-[160px] w-[160px] rounded-full bg-[#CDB17E26] min-[540px]:right-[20%] min-[540px]:top-[14%] min-[540px]:h-[280px] min-[540px]:w-[280px]',
-  },
-  {
-    className:
-      'anim-element slide-from-right absolute right-[-8%] top-[-8%] h-[220px] w-[220px] rounded-full bg-[#CDB17E26] min-[540px]:h-[430px] min-[540px]:w-[430px]',
-  },
-  {
-    className:
-      'anim-element slide-from-right absolute -right-[18%] bottom-[12%] h-[300px] w-[300px] rounded-full bg-[#CDB17E26] min-[540px]:-right-[10%] min-[540px]:bottom-[4%] min-[540px]:h-[560px] min-[540px]:w-[560px]',
-  },
 ]
 
 const IDEA_TO_CELEBRATION_STEPS = [
@@ -65,33 +44,60 @@ const IDEA_TO_CELEBRATION_STEPS = [
   },
 ]
 
-const IDEA_TO_CELEBRATION_LAYOUT = [
+const IDEA_TO_CELEBRATION_CARDS = [
   {
     stepIndex: 0,
-    rowClass: 'justify-center md:pl-24 lg:pl-32',
-    lineClass: 'left-[10%] right-[20%]',
+    left: '50%',
+    top: '5%',
+    width: '32%',
+    maxWidth: '320px',
+    translateX: '-50%',
   },
   {
     stepIndex: 1,
-    rowClass: 'justify-start md:pl-10 lg:pl-14',
-    lineClass: 'left-[6%] right-[8%]',
+    left: '8%',
+    top: '24%',
+    width: '27%',
+    maxWidth: '270px',
   },
   {
     stepIndex: 2,
-    rowClass: 'justify-center md:pl-8 lg:pl-16',
-    lineClass: 'left-[10%] right-[14%]',
+    left: '43%',
+    top: '46%',
+    width: '30%',
+    maxWidth: '290px',
   },
   {
     stepIndex: 3,
-    rowClass: 'justify-start md:pl-16 lg:pl-24',
-    lineClass: 'left-[6%] right-[22%]',
+    left: '17%',
+    top: '67%',
+    width: '29%',
+    maxWidth: '280px',
   },
   {
     stepIndex: 4,
-    rowClass: 'justify-start',
-    lineClass: 'left-[6%] right-[42%]',
+    left: '2%',
+    top: '87%',
+    width: '27%',
+    maxWidth: '260px',
   },
 ]
+
+const IDEA_TO_CELEBRATION_CONNECTORS = {
+  horizontals: [
+    { top: '17.8%', left: '8%', right: '9%' },
+    { top: '38.6%', left: '8%', right: '6%' },
+    { top: '58.3%', left: '8%', right: '18%' },
+    { top: '79.4%', left: '8%', right: '38%' },
+  ],
+  verticals: [
+    { left: '42%', top: '10.7%', height: '7.1%' },
+    { left: '12.3%', top: '31.4%', height: '7.2%' },
+    { left: '58.5%', top: '52.3%', height: '6%' },
+    { left: '18.7%', top: '72.2%', height: '7.2%' },
+    { left: '50.5%', top: '84.4%', height: '5.5%' },
+  ],
+}
 
 const DASHBOARD_FEATURES = [
   {
@@ -143,8 +149,6 @@ const DASHBOARD_FEATURES = [
   },
 ]
 
-const DASHBOARD_BULBS = Array.from({ length: 10 })
-const PLANNER_TAGS = ['Dedicated Planner', 'Pre-event Briefing', 'Day-of Coordination']
 const HOW_IT_WORK_FAQS = [
   {
     question: 'How is pricing determined?',
@@ -213,26 +217,53 @@ const IdeaToCelebrationSection = () => {
             ))}
           </div>
 
-          <div className="hidden md:flex md:flex-col md:gap-10 lg:gap-12">
-            {IDEA_TO_CELEBRATION_LAYOUT.map((item, index) => {
-              const step = IDEA_TO_CELEBRATION_STEPS[item.stepIndex]
-              const showLine = index < IDEA_TO_CELEBRATION_LAYOUT.length - 1
+          <div className="hidden md:block w-full">
+            <div className="relative mx-auto w-full max-w-[1040px] h-[min(120vw,1203px)] min-h-[920px]">
+              {IDEA_TO_CELEBRATION_CONNECTORS.horizontals.map((line, index) => (
+                <div
+                  key={`h-line-${index}`}
+                  className="absolute h-0 border-t border-transparent"
+                  style={{
+                    top: line.top,
+                    left: line.left,
+                    right: line.right,
+                    borderImage: 'linear-gradient(270deg, #C73E0C 0%, #E7E0DA 100%) 1',
+                  }}
+                />
+              ))}
 
-              return (
-                <div key={step.number} className="relative flex flex-col">
-                  <div className={`relative flex min-h-[140px] w-full ${item.rowClass}`}>
-                    <div className="relative flex w-full max-w-[320px] flex-col">
-                      <div className="absolute left-[18px] top-[-22px] h-[22px] w-px bg-[#D8B29B]" />
-                      <StepCard step={step} />
-                    </div>
+              {IDEA_TO_CELEBRATION_CONNECTORS.verticals.map((line, index) => (
+                <div
+                  key={`v-line-${index}`}
+                  className="absolute w-0 border-l border-transparent"
+                  style={{
+                    left: line.left,
+                    top: line.top,
+                    height: line.height,
+                    borderImage: 'linear-gradient(180deg, #E7E0DA 0%, #C73E0C 100%) 1',
+                  }}
+                />
+              ))}
+
+              {IDEA_TO_CELEBRATION_CARDS.map(card => {
+                const step = IDEA_TO_CELEBRATION_STEPS[card.stepIndex]
+                return (
+                  <div
+                    key={step.number}
+                    className="absolute"
+                    style={{
+                      left: card.left,
+                      top: card.top,
+                      width: card.width,
+                      maxWidth: card.maxWidth,
+                      transform: card.translateX ? `translateX(${card.translateX})` : undefined,
+                    }}
+                  >
+                    <StepCard step={step} />
                   </div>
-
-                  {showLine ? (
-                    <div className={`relative mt-3 h-px bg-[#D8B29B] ${item.lineClass}`} />
-                  ) : null}
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -242,45 +273,20 @@ const IdeaToCelebrationSection = () => {
 
 const EventDashboardSection = () => {
   return (
-    <section className="relative flex w-full justify-center overflow-hidden bg-[#FAFAFA] px-6 pb-16 pt-0 min-[540px]:px-10 min-[540px]:pb-20 lg:px-20 xl:px-[100px]">
-      <div className="absolute inset-x-0 top-0 flex w-full pointer-events-none">
-        {DASHBOARD_BULBS.map((_, index) => (
-          <div
-            key={index}
-            className="relative flex h-[92px] flex-1 justify-center overflow-visible"
-          >
-            <div
-              className="absolute left-0 top-0 h-[62px] w-full bg-[#6C2205]"
-              style={{ borderRadius: '0 0 999px 999px / 0 0 100% 100%' }}
-            />
-            <div
-              className="absolute left-0 top-0 h-[52px] w-full bg-[#E9E2DA]"
-              style={{ borderRadius: '0 0 999px 999px / 0 0 100% 100%' }}
-            />
-            <div className="absolute top-[40px] flex flex-col items-center">
-              <div className="h-[18px] w-px bg-[#6C2205]/40" />
-              <img
-                src={index % 2 === 0 ? bulb1 : bulb2}
-                alt=""
-                className="mt-[-2px] h-auto w-[22px]"
-              />
-              <div
-                className="mt-[-2px] h-[74px] w-[78px] opacity-55 blur-[8px]"
-                style={{
-                  background:
-                    'linear-gradient(180deg, rgba(252,214,112,0.9) 0%, rgba(252,214,112,0) 100%)',
-                  clipPath: 'polygon(46% 0, 54% 0, 100% 100%, 0 100%)',
-                }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+    <section className="relative flex w-full justify-center overflow-hidden bg-[#FAFAFA] px-6 py-16 pt-0 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
+      <ScallopBulbCurtain
+        count={10}
+        outerColor="#6C2205"
+        innerColor="#E9E2DA"
+        wireColorClass="bg-[#6C2205]/40"
+        fitToWidth
+        className="absolute inset-x-0 top-0 flex w-full pointer-events-none z-10"
+      />
 
       <div className="relative flex w-full max-w-[1180px] flex-col gap-12 pt-[132px] lg:flex-row lg:items-center lg:gap-14 lg:pt-[170px]">
         <div className="flex w-full flex-col lg:max-w-[410px]">
           <h2
-            className="max-w-[420px] text-[48px] leading-[0.95] text-[#6C2205] min-[540px]:text-[60px] lg:text-[72px]"
+            className="max-w-[420px] text-[48px] leading-[0.95] text-[#6C2205] min-[540px]:text-[61px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
             Your Dashboard. Everything in One Place.
@@ -320,7 +326,7 @@ const EventDashboardSection = () => {
 
         <div className="flex w-full flex-1">
           <div className="flex w-full flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_24px_70px_rgba(117,72,33,0.12)]">
-            <div className="flex min-h-[72px] items-center rounded-t-[22px] bg-[#3E4E22] px-7 py-5">
+            <div className="flex min-h-[72px] items-center rounded-full bg-[#3E4E22] px-7 py-5">
               <span className="text-[18px] font-medium leading-[1.3] text-[#FAFAFA] min-[540px]:text-[20px]">
                 My Event Dashboard
               </span>
@@ -349,74 +355,6 @@ const EventDashboardSection = () => {
   )
 }
 
-const InHousePlannerHighlightSection = () => {
-  return (
-    <section className="flex w-full justify-center bg-[#F8F4ED] px-6 py-16 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
-      <div className="flex w-full max-w-[1180px] flex-col items-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
-        <div className="flex w-full justify-center lg:w-auto lg:justify-start">
-          <div className="flex h-[360px] w-[300px] items-center justify-center rounded-[999px] bg-[#EAD9B8] p-6 min-[540px]:h-[460px] min-[540px]:w-[380px] lg:h-[540px] lg:w-[450px]">
-            <div className="h-full w-full overflow-hidden rounded-[999px]">
-              <img
-                src={plannerPortrait}
-                alt="In-house event planner"
-                className="h-full w-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex w-full max-w-[620px] flex-col items-start">
-          <h2
-            className="max-w-[620px] text-[44px] leading-[0.96] text-[#6C2205] min-[540px]:text-[56px] lg:text-[72px]"
-            style={{ fontFamily: "'Malgin', serif" }}
-          >
-            Your Own In-house Event Planner.
-          </h2>
-
-          <p className="mt-8 max-w-[620px] text-[18px] leading-[1.5] text-[#A78974]">
-            Every booking comes with a dedicated in-house planner — a real person who knows your
-            event inside-out. They coordinate with vendors, manage timelines, and are available for
-            last-minute questions.
-          </p>
-
-          <p className="mt-6 max-w-[620px] text-[18px] leading-[1.5] text-[#A78974]">
-            No bots. No generic helplines. Just focused, human support.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            {PLANNER_TAGS.map(tag => (
-              <span
-                key={tag}
-                className="rounded-full bg-[#EAD9B8] px-5 py-2.5 text-[14px] font-medium leading-[1.3] text-[#8A5B35]"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          <Link
-            to="/in-house-planner"
-            className="group mt-14 flex min-h-[56px] w-full max-w-[280px] items-center justify-between rounded-full bg-[#D4BA8E] pl-6 pr-2 text-white transition-colors hover:bg-[#c9ad7f]"
-          >
-            <span className="text-[16px] font-medium leading-[1.3]">Book an In-House Planner</span>
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#D4BA8E]">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 transition-transform duration-300 group-hover:rotate-45"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M7 17L17 7M17 7H9M17 7v8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
-          </Link>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 const NeedToKnowSection = () => {
   const [openIndex, setOpenIndex] = useState(0)
 
@@ -425,7 +363,7 @@ const NeedToKnowSection = () => {
       <div className="flex w-full max-w-[1180px] flex-col gap-12 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
         <div className="flex w-full max-w-[360px] flex-col">
           <h2
-            className="text-[48px] leading-[0.95] text-[#6C2205] min-[540px]:text-[56px] lg:text-[72px]"
+            className="text-[48px] leading-[0.95] text-[#6C2205] min-[540px]:text-[61px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
             Everything You Need to Know.
@@ -437,7 +375,7 @@ const NeedToKnowSection = () => {
         </div>
 
         <div className="flex w-full flex-1">
-          <div className="flex w-full flex-col rounded-[24px] bg-white p-5 shadow-[0_24px_70px_rgba(117,72,33,0.12)] min-[540px]:p-6 lg:p-7">
+          <div className="flex w-full flex-col rounded-[24px] bg-white px-5 shadow-[0_24px_70px_rgba(117,72,33,0.12)] min-[540px]:px-6 lg:px-7">
             {HOW_IT_WORK_FAQS.map((faq, index) => {
               const isOpen = openIndex === index
 
@@ -497,33 +435,28 @@ const NeedToKnowSection = () => {
 
 const FinalCtaSection = () => {
   return (
-    <section className="relative flex w-full justify-center overflow-hidden bg-[#591902] px-6 py-20 min-[540px]:px-10 min-[540px]:py-24 lg:px-20 xl:px-[100px]">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-12%] top-[-22%] h-[320px] w-[320px] rounded-full bg-[#7B2A07] min-[540px]:h-[440px] min-[540px]:w-[440px] lg:h-[560px] lg:w-[560px]" />
-        <div className="absolute bottom-[-18%] right-[-10%] h-[260px] w-[260px] rounded-full bg-[#7B2A07] min-[540px]:h-[340px] min-[540px]:w-[340px] lg:h-[420px] lg:w-[420px]" />
-      </div>
-
+    <section className="relative flex w-full justify-center overflow-hidden bg-[#591902] px-6 py-14 min-[540px]:px-10 min-[540px]:py-16 lg:px-20 xl:px-[100px]">
       <div className="relative flex w-full max-w-[980px] flex-col items-center text-center">
         <div className="flex flex-col items-center">
           <div className="h-px w-20 bg-[#D4BA8E]" />
-          <span className="mt-4 text-[16px] uppercase leading-[1.3] tracking-[0.04em] text-[#D4BA8E]">
+          <span className="mt-4 text-[12px] uppercase leading-[1.3] tracking-[0.04em] text-[#D4BA8E]">
             READY WHEN YOU ARE
           </span>
         </div>
 
         <h2
-          className="mt-6 max-w-[980px] text-[48px] leading-[0.96] text-white min-[540px]:text-[64px] lg:text-[86px]"
+          className="mt-5 max-w-[980px] text-[48px] leading-[0.96] text-white min-[540px]:text-[61px] lg:text-[72px]"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           Your Celebration Is Just a Few Steps Away.
         </h2>
 
-        <p className="mt-8 max-w-[760px] text-[18px] leading-[1.55] text-[#D6B8A7] min-[540px]:text-[22px]">
+        <p className="mt-6 max-w-[760px] text-[16px] leading-[1.55] text-[#D6B8A7] min-[540px]:text-[22px]">
           No stress. No juggling. Just a beautiful, well-planned event — handled by people who care
           about getting it right.
         </p>
 
-        <div className="mt-10 flex w-full flex-col items-center justify-center gap-4 min-[540px]:flex-row">
+        <div className="mt-8 flex w-full flex-col items-center justify-center gap-4 min-[540px]:flex-row">
           <Link
             to="/login"
             className="group flex min-h-[56px] w-full max-w-[280px] items-center justify-between rounded-full bg-[#D4BA8E] pl-8 pr-2 text-white transition-colors hover:bg-[#c9ad7f]"
@@ -550,7 +483,7 @@ const FinalCtaSection = () => {
           </Link>
         </div>
 
-        <div className="mt-16 flex items-center justify-center gap-3 text-center text-[16px] leading-[1.4] text-[#B89074]">
+        <div className="mt-10 flex items-center justify-center gap-3 text-center text-[16px] leading-[1.4] text-[#B89074]">
           <span className="text-[#C89F5D]">✦</span>
           <span>Trusted by 500+ hosts across Jaipur, Delhi &amp; Mumbai</span>
           <span className="text-[#C89F5D]">✦</span>
@@ -587,22 +520,16 @@ const HowItWorkHeroSection = () => {
   return (
     <section
       data-nav-surface="transparent"
-      className="relative min-h-screen overflow-hidden bg-[#591902] pt-28 min-[540px]:pt-36"
+      className="relative min-h-screen overflow-hidden bg-[#591902] pt-24 min-[540px]:pt-28 lg:pt-32"
     >
-      <div className="pointer-events-none absolute inset-0">
-        {ORBS.map(orb => (
-          <div key={orb.className} className={orb.className} />
-        ))}
-      </div>
-
-      <div className="relative z-10 flex min-h-screen flex-col justify-between">
-        <div className="w-full px-6 pb-12 min-[540px]:px-10 lg:px-20 xl:px-[100px]">
-          <div className="flex min-h-[calc(100vh-180px)] items-center">
-            <div className="flex w-full flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+      <div className="relative z-10 flex min-h-[80svh] flex-col justify-between">
+        <div className="w-full px-6 pb-4 min-[540px]:px-10 min-[540px]:pb-6 lg:px-20 lg:pb-8 xl:px-[100px]">
+          <div className="flex flex-col pt-4 min-[540px]:pt-6 lg:pt-10">
+            <div className="flex items-center">
               <div className="flex w-full max-w-[760px] gap-4 min-[540px]:gap-6">
                 <div className="anim-element slide-from-bottom mt-1 hidden w-px shrink-0 self-stretch bg-[#CDB17E]/70 min-[540px]:block" />
 
-                <div className="pt-1">
+                <div className="py-4">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text w-full max-w-[542px] text-[12px] uppercase leading-[1.5] tracking-[0] text-[#CDB17E]">
                       PLANNING MADE SIMPLE
@@ -662,27 +589,27 @@ const HowItWorkHeroSection = () => {
                   </span>
                 </div>
               </div>
+            </div>
 
-              <div className="w-full lg:flex lg:justify-end">
-                <p
-                  className="w-full max-w-[469px] text-left text-[16px] leading-[1] whitespace-nowrap text-[#C08E72] min-[540px]:text-[22px] lg:text-right lg:text-[27px]"
-                  style={{ fontFamily: "'Malgin', serif" }}
-                >
-                  <span className="reveal-wrapper block lg:text-right">
-                    <span
-                      className="reveal-text reveal-text-x-right inline-block"
-                      style={{ animationDelay: '0.12s' }}
-                    >
-                      - no chaos, no coordination stress
-                    </span>
+            <div className="mt-6 flex w-full justify-start lg:mt-8 lg:justify-end">
+              <p
+                className="w-full max-w-[469px] text-left text-[16px] leading-[1] whitespace-nowrap text-[#C08E72] min-[540px]:text-[22px] lg:text-right lg:text-[27px]"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                <span className="reveal-wrapper block lg:text-right">
+                  <span
+                    className="reveal-text reveal-text-x-right inline-block"
+                    style={{ animationDelay: '0.12s' }}
+                  >
+                    - no chaos, no coordination stress
                   </span>
-                </p>
-              </div>
+                </span>
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="anim-element slide-from-bottom relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-6 py-5 backdrop-blur-sm min-[540px]:px-10 lg:px-20 xl:px-[100px]">
+        <div className="anim-element slide-from-bottom relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-6 py-3 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-4 lg:px-20 xl:px-[100px]">
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-[#CDB17E] lg:justify-between">
             {HERO_TAGS.map((tag, index) => (
               <div key={tag} className="flex items-center gap-4 lg:gap-7">
@@ -690,7 +617,9 @@ const HowItWorkHeroSection = () => {
                   {tag}
                 </span>
                 {index < HERO_TAGS.length - 1 && (
-                  <span className="hidden text-[#CDB17E]/40 lg:inline-block">.</span>
+                  <span className="hidden lg:flex lg:items-center lg:justify-center lg:self-center text-[#CDB17E]/40 leading-none">
+                    .
+                  </span>
                 )}
               </div>
             ))}
@@ -729,7 +658,7 @@ const HowItWorkPage = () => {
   }, [])
 
   return (
-    <main ref={pageRef} className="w-full bg-[#591902] font-sans">
+    <main ref={pageRef} className="w-full bg-[#591902]">
       <HowItWorkHeroSection />
 
       <IdeaToCelebrationSection />
@@ -746,8 +675,6 @@ const HowItWorkPage = () => {
           </p>
         </div>
       </section>
-
-      <InHousePlannerHighlightSection />
 
       <NeedToKnowSection />
 

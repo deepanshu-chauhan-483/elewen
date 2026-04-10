@@ -8,9 +8,9 @@ import { authLogout } from '../lib/api'
 const EVENT_IMAGE = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80'
 
 const BASE_LINKS = [
-  { label: 'Events', to: '/events' },
+  { label: 'Events', to: '/event-flow/category' },
   { label: 'Services', to: '/services' },
-  { label: 'How It Works', to: '/how-it-work' },
+  { label: 'How It Work', to: '/how-it-work' },
   { label: 'In-House Event Planner', to: '/in-house-planner' },
   { label: 'Story Behind 11', to: '/about' },
   { label: "FAQ's", to: '/faqs' },
@@ -271,6 +271,9 @@ const NavHeader = () => {
   const isTransparentNav = navSurface === TRANSPARENT_NAV_SURFACE
   const iconColor = isTransparentNav ? '#FAFAFA' : desktopTheme.iconColor
   const mobileIconColor = isTransparentNav ? '#FAFAFA' : mobileTheme.iconColor
+  const searchButtonBg = isTransparentNav ? 'rgba(255,255,255,0.22)' : desktopTheme.searchBg
+  const searchButtonBorder = isTransparentNav ? 'rgba(255,255,255,0.16)' : desktopTheme.searchBorder
+  const searchTextColor = isTransparentNav ? 'rgba(255,255,255,0.82)' : 'rgba(38,38,38,0.58)'
   const visibilityClass = !entered ? 'invisible pointer-events-none' : ''
   const transformClass = !entered
     ? '-translate-y-4'
@@ -343,27 +346,33 @@ const NavHeader = () => {
             <button
               onClick={() => setOpen(true)}
               type="button"
-              className="hidden w-64 items-center rounded-full px-4 py-2.5 backdrop-blur-lg transition-all md:flex"
+              className="hidden w-[248px] items-center gap-2.5 rounded-full px-2.5 py-1.5 backdrop-blur-md transition-all md:flex"
               style={{
-                border: `1px solid ${desktopTheme.searchBorder}`,
-                background: desktopTheme.searchBg,
+                border: `1px solid ${searchButtonBorder}`,
+                background: searchButtonBg,
+                boxShadow: isTransparentNav ? '0 8px 20px rgba(89,25,2,0.05)' : 'none',
               }}
             >
-              <svg
-                className="mr-3 h-4 w-4 shrink-0"
-                style={{ color: iconColor }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#591902]">
+                <svg
+                  className="h-3.5 w-3.5"
+                  style={{ color: '#FAFAFA' }}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                  />
+                </svg>
+              </span>
+              <span
+                className="text-[15px] font-medium tracking-wide"
+                style={{ color: searchTextColor }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                />
-              </svg>
-              <span className="text-sm font-medium tracking-wide" style={{ color: iconColor }}>
                 Search
               </span>
             </button>
