@@ -8,7 +8,7 @@ import { authLogout } from '../lib/api'
 const EVENT_IMAGE = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80'
 
 const BASE_LINKS = [
-  { label: 'Events', to: '/events' },
+  { label: 'Events', to: '/event-flow/category' },
   { label: 'Services', to: '/services' },
   { label: 'How It Work', to: '/how-it-work' },
   { label: 'In-House Event Planner', to: '/in-house-planner' },
@@ -750,4 +750,4 @@ const NavHeader = () => {
   )
 }
 
-export default NavHeader
+export default NavHeader 

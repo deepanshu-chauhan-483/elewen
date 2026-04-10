@@ -173,6 +173,14 @@ p {
   animation: slideInFromRight 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.reveal-text-slow.reveal-text-x-left.is-visible {
+  animation: slideInFromLeft 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.reveal-text-slow.reveal-text-x-right.is-visible {
+  animation: slideInFromRight 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 /* Extra padding for circle reveal so box-shadow isn't clipped by overflow:hidden */
 .reveal-wrapper-circle {
   padding: 4px 8px 32px 40px;
@@ -402,26 +410,54 @@ p {
   transform: scaleX(0);
   opacity: 0;
   transform-origin: 0% 50%;
-  transition:
-    transform 2.5s cubic-bezier(0, 0, 0.2, 1) 0.5s,
-    opacity 0.45s ease 0.5s;
+  will-change: transform, opacity;
 }
 .reveal-border-x.is-visible .border-fill-x {
-  transform: scaleX(1);
-  opacity: 1;
+  animation: drawBorderX 10.2s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
 }
 
 .border-fill-y {
   transform: scaleY(0);
   opacity: 0;
   transform-origin: 50% 0%;
-  transition:
-    transform 2.5s cubic-bezier(0, 0, 0.2, 1) 0.5s,
-    opacity 0.45s ease 0.5s;
+  will-change: transform, opacity;
 }
 .reveal-border-y.is-visible .border-fill-y {
-  transform: scaleY(1);
-  opacity: 1;
+  animation: drawBorderY 10.2s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
+}
+
+@keyframes drawBorderX {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.2;
+  }
+  35% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes drawBorderY {
+  0% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.2;
+  }
+  35% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 
 /* ── Sequential Scroll Animations (Checklist Section) ── */
@@ -839,4 +875,14 @@ p {
 .planner-card-hover:hover .planner-card-image,
 .about-page-hover-image:hover {
   transform: scale(1.06);
+}
+/* Reusable class to hide scrollbar but keep scroll working */
+.hide-scrollbar {
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and old Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }

@@ -2368,6 +2368,30 @@ const InHousePlannerSection = () => {
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    const root = document.querySelector('[data-in-house-planner-page]')
+    if (!root) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          const el = entry.target
+          if (el.classList.contains('reveal-wrapper')) {
+            el.querySelectorAll('.reveal-text').forEach(text => text.classList.add('is-visible'))
+          } else {
+            el.classList.add('is-visible')
+          }
+          observer.unobserve(el)
+        })
+      },
+      { threshold: 0.12 }
+    )
+
+    root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <>
       <ScrollImageSpreadSection

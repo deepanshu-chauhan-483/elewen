@@ -6,7 +6,6 @@ import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
 import InHousePlannerPage from './pages/InHousePlannerPage'
 import About from './pages/About'
-import HowItWorkPage from './pages/HowItWorkPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import LoginPage from './pages/LoginPage'
@@ -17,6 +16,19 @@ import BookConsultationPage from './pages/BookConsultation'
 import ConsultationConfirmation from './pages/ConsultationConfirmation'
 import BlogPage from './pages/BlogPage'
 import SingleBlogPage from './pages/SingleBlogPage'
+import HowItWorkPage from './pages/HowItWorkPage'
+import CategoryPage from './pages/CategoryPage'
+import EventPage from './pages/EventPage'
+import ServicePage from './pages/ServicePage'
+import DecorThemePage from './pages/DecorThemePage'
+import CateringLevelsPage from './pages/CateringLevelsPage'
+import PackageListingPage from './pages/PackageListingPage'
+import DecorLevelsPage from './pages/DecorLevelsPage'
+import DecorPackagesPage from './pages/DecorPackagesPage'
+import RentalFurniturePackagesPage from './pages/RentalFurniturePackagesPage'
+import CateringPackagesPage from './pages/CateringPackagesPage'
+import BartendingPackagesPage from './pages/BartendingPackagesPage'
+import SheeshaPackagesPage from './pages/SheeshaPackagesPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -47,7 +59,16 @@ function AppLayout() {
     pathname === '/forgot-password' ||
     pathname === '/new-password' ||
     pathname === '/reset-password' ||
-    pathname === '/auth/callback'
+    pathname === '/auth/callback' ||
+    pathname === '/event-flow/category' ||
+    pathname === '/event-flow/event' ||
+    pathname === '/event-flow/service' ||
+    pathname === '/event-flow/decor-theme' ||
+    pathname === '/event-flow/catering-levels' ||
+    pathname === '/package-listing' ||
+    pathname === '/packages/decor-levels' ||
+    pathname.startsWith('/packages/')
+
   return (
     <>
       <ScrollToTop />
@@ -67,6 +88,18 @@ function AppLayout() {
         <Route path="/consultation-confirmation" element={<ConsultationConfirmation />} />
         <Route path="/blogs" element={<BlogPage />} />
         <Route path="/blogs/:slug" element={<SingleBlogPage />} />
+        <Route path="/event-flow/category" element={<CategoryPage />} />
+        <Route path="/event-flow/event" element={<EventPage />} />
+        <Route path="/event-flow/service" element={<ServicePage />} />
+        <Route path="/event-flow/decor-theme" element={<DecorThemePage />} />
+        <Route path="/event-flow/catering-levels" element={<CateringLevelsPage />} />
+        <Route path="/package-listing" element={<PackageListingPage />} />
+        <Route path="/packages/decor-levels" element={<DecorLevelsPage />} />
+        <Route path="/packages/decor" element={<DecorPackagesPage />} />
+        <Route path="/packages/rental-furniture" element={<RentalFurniturePackagesPage />} />
+        <Route path="/packages/catering" element={<CateringPackagesPage />} />
+        <Route path="/packages/bartending" element={<BartendingPackagesPage />} />
+        <Route path="/packages/sheesha" element={<SheeshaPackagesPage />} />
       </Routes>
       {!hideGlobalChrome && <Footer />}
     </>
