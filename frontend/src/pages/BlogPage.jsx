@@ -1,39 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useBlogCategories, useBlogs } from '../hooks/useBlogs'
 import heroLeft from '../assets/images/IMG_3001.jpg'
 import heroRight from '../assets/images/IMG_7025.jpg'
 import blogImg1 from '../assets/images/IMG_0658.jpg'
 import blogImg2 from '../assets/images/outdoor-party-setup-with-balloons-and-decorations-2026-03-18-09-29-30-utc.jpg'
 import blogImg3 from '../assets/images/IMG_3148.jpg'
 
-const categories = ['All', 'Planning Tips', 'Decor Inspiration', 'Hosting Guide', 'Food & Catering']
+const fallbackImagesByCategory = {
+  'Planning Tips': blogImg3,
+  'Decor Inspiration': blogImg1,
+  'Hosting Guide': blogImg2,
+  'Food & Catering': blogImg2,
+}
 
-const blogPosts = [
-  {
-    title: '5 Simple Decor Ideas for Small Gatherings',
-    slug: '5-simple-decor-ideas-for-small-gatherings',
-    date: 'January 12, 2023',
-    excerpt: 'Easy styling ideas that make your space feel celebration-ready without overdoing it.',
-    category: 'Decor Inspiration',
-    image: blogImg1,
-  },
-  {
-    title: 'What to Include in a Catering Menu for House Parties',
-    slug: 'what-to-include-in-a-catering-menu-for-house-parties',
-    date: 'January 12, 2023',
-    excerpt: 'A practical breakdown of food, portions, and service styles for smooth hosting.',
-    category: 'Food & Catering',
-    image: blogImg2,
-  },
-  {
-    title: 'Behind a Birthday Setup: From Planning to Execution',
-    slug: 'behind-a-birthday-setup-from-planning-to-execution',
-    date: 'January 12, 2023',
-    excerpt: 'A look at how a simple birthday celebration comes together step by step.',
-    category: 'Planning Tips',
-    image: blogImg3,
-  },
+const fallbackDates = [
+  'April 3, 2026',
+  'March 28, 2026',
+  'March 19, 2026',
+  'March 8, 2026',
+  'February 24, 2026',
+  'February 10, 2026',
 ]
+
+const resolveCoverImage = post =>
+  post?.cover_image || fallbackImagesByCategory[post?.category] || blogImg1
+
+const resolvePublishedDate = index => fallbackDates[index % fallbackDates.length]
 
 const RevealLine = ({ children, delay, className = '' }) => (
   <span className={`reveal-wrapper block ${className}`.trim()}>
@@ -46,11 +39,18 @@ const RevealLine = ({ children, delay, className = '' }) => (
 const BlogPage = () => {
   const pageRef = useRef(null)
   const [activeCategory, setActiveCategory] = useState('All')
+  const { data: blogCategories = [] } = useBlogCategories()
+  const { data: blogPosts = [] } = useBlogs({ limit: 50 })
+
+  const categories = useMemo(
+    () => ['All', ...(Array.isArray(blogCategories) ? blogCategories : [])],
+    [blogCategories]
+  )
 
   const visiblePosts = useMemo(() => {
     if (activeCategory === 'All') return blogPosts
     return blogPosts.filter(post => post.category === activeCategory)
-  }, [activeCategory])
+  }, [activeCategory, blogPosts])
 
   useEffect(() => {
     const page = pageRef.current
@@ -176,6 +176,21 @@ const BlogPage = () => {
           </aside>
 
           <div>
+            {visiblePosts.length === 0 ? (
+              <div className="anim-element slide-from-bottom border-b border-[#DDD7CE] py-10">
+                <p
+                  className="max-w-[640px] text-[16px] leading-[1.5] text-[#9B9A92]"
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 400,
+                    letterSpacing: '0',
+                  }}
+                >
+                  No posts are available in this category yet.
+                </p>
+              </div>
+            ) : null}
+
             {visiblePosts.map((post, index) => (
               <article
                 key={post.title}
@@ -190,7 +205,11 @@ const BlogPage = () => {
                     className="anim-element slide-from-left order-2 h-[256px] w-full overflow-hidden lg:order-1 lg:w-[276px]"
                     style={{ '--delay': '0s' }}
                   >
-                    <img src={post.image} alt={post.title} className="h-full w-full object-cover" />
+                    <img
+                      src={resolveCoverImage(post)}
+                      alt={post.title}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                 )}
 
@@ -206,15 +225,17 @@ const BlogPage = () => {
                       letterSpacing: '0',
                     }}
                   >
-                    {post.date}
+                    {resolvePublishedDate(index)}
                   </p>
 
-                  <h2
-                    className="mt-3 max-w-[760px] text-[32px] leading-[1] text-[#171717] lg:text-[36px]"
-                    style={{ fontFamily: "'Malgin', serif", fontWeight: 400, letterSpacing: '0' }}
-                  >
-                    {post.title}
-                  </h2>
+                  <Link to={`/blogs/${post.slug}`} className="block">
+                    <h2
+                      className="mt-3 max-w-[760px] text-[32px] leading-[1] text-[#171717] transition-colors duration-300 hover:text-[#6D2005] lg:text-[36px]"
+                      style={{ fontFamily: "'Malgin', serif", fontWeight: 400, letterSpacing: '0' }}
+                    >
+                      {post.title}
+                    </h2>
+                  </Link>
 
                   <p
                     className="mt-5 max-w-[760px] text-[16px] leading-[1.5] text-[#9B9A92]"
@@ -260,52 +281,15 @@ const BlogPage = () => {
                     className="anim-element slide-from-right h-[256px] w-full overflow-hidden lg:w-[276px]"
                     style={{ '--delay': '0.5s' }}
                   >
-                    <img src={post.image} alt={post.title} className="h-full w-full object-cover" />
+                    <img
+                      src={resolveCoverImage(post)}
+                      alt={post.title}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                 )}
               </article>
             ))}
-
-            <div className="anim-element slide-from-bottom mt-10 flex items-center justify-center gap-5 md:gap-8 lg:mt-14">
-              <button
-                type="button"
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6D2005] text-white md:h-14 md:w-14"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19 8 12l7-7" />
-                </svg>
-              </button>
-              <div
-                className="flex items-center gap-5 text-[16px] leading-[1.5] text-[#B9A89A] md:gap-7"
-                style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 500, letterSpacing: '0' }}
-              >
-                <span className="text-[#6D2005]">1</span>
-                <span>2</span>
-                <span>3</span>
-                <span>...</span>
-                <span>12</span>
-              </div>
-              <button
-                type="button"
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6D2005] text-white md:h-14 md:w-14"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m9 5 7 7-7 7" />
-                </svg>
-              </button>
-            </div>
           </div>
         </div>
       </section>

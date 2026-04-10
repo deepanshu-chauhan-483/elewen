@@ -306,7 +306,7 @@ const PlanEventSection = () => {
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         {/* Categories Bar */}
         <aside className="w-full lg:w-[320px] pt-8 pb-0 md:pt-8 md:pb-4 lg:py-20 px-4 md:px-8 lg:px-16 flex flex-col items-center lg:items-start shrink-0 relative reveal-border-y">
-          <div className="hidden md:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
+          <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           <div className="hidden md:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
             <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
           </div>
@@ -733,11 +733,11 @@ const WhatToPlanSection = () => {
         <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
       </div>
 
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 mb-10">
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row-reverse flex-1 mb-10">
         <aside className="w-full lg:w-[320px] pt-8 pb-0 md:pt-8 md:pb-4 lg:py-20 px-4 md:px-8 lg:px-16 flex flex-col items-center lg:items-start shrink-0 relative reveal-border-y">
-          <div className="hidden md:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
+          <div className="hidden md:block absolute left-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
           <div className="hidden md:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
-            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+            <div className="absolute top-0 left-16 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
           </div>
           <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-5 lg:gap-8 flex-wrap justify-center w-full">
             {categories.map((cat, index) => {
@@ -1673,7 +1673,7 @@ const BetterWaySection = () => {
         </div>
 
         {/* --- HEADINGS --- */}
-        <div className="absolute w-[353px] lg:w-[760px] xl:w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[179px] lg:top-[180px] xl:top-[253px] flex flex-col items-center gap-[20px] lg:gap-[10px] lg:static lg:block lg:w-full lg:max-w-none lg:translate-x-0">
+        <div className="absolute w-[353px] mx-auto lg:w-[760px] xl:w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[179px] lg:top-[180px] xl:top-[253px] flex flex-col items-center gap-[20px] lg:gap-[10px] lg:static lg:block lg:w-full lg:max-w-none lg:translate-x-0">
           <h2
             className="w-full text-[#2D2D2D] text-[24px] lg:text-[54px] xl:text-[61px] leading-[1] text-center font-serif reveal-heading lg:absolute lg:w-[620px] xl:w-[679px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px]"
             style={{ fontFamily: "'Malgin', serif" }}
@@ -1818,7 +1818,7 @@ const BetterWaySection = () => {
             </svg>
 
             <h5
-              className="absolute left-[21%] top-1/2 w-[30%] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[24px] leading-[0.95] font-serif"
+              className="absolute left-[21%] top-1/2 w-[30%]  -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[24px] leading-[0.95] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               {s.left_label ?? 'Event Planner'}
@@ -1859,7 +1859,7 @@ const BetterWaySection = () => {
 
         {/* --- DIAGRAM TEXTS --- */}
         <h5
-          className="hidden lg:block absolute lg:left-[calc(50%-129px)] xl:left-[calc(50%-150.5px)] lg:top-[576px] xl:top-[742px] lg:w-[160px] xl:w-[185px] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
+          className="hidden lg:block absolute lg:left-[calc(50%-129px)] xl:left-[calc(50%-150.5px)] lg:top-[576px] xl:top-[742px] lg:w-[160px] xl:w-[185px] -translate-x-1/2 -translate-y-1/2 text-center  text-[#591902] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.left_label ?? 'Event Planner'}
@@ -3137,7 +3137,10 @@ const CelebrationFeelingSection = () => {
 
           <span className="mt-[32px] md:mt-10 reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
-              <button className="w-[181px] md:w-[213px] h-[33.5px] md:h-[44px] group flex items-center justify-between bg-[#FAFAFA] md:bg-[#FFFFFF] rounded-[42.7px] md:rounded-[56px] pl-[18.3px] md:pl-[24px] pr-[3px] md:pr-[4px] py-[3px] md:py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg">
+              <Link
+                to="/book-consultation"
+                className="w-[181px] md:w-[213px] h-[33.5px] md:h-[44px] group flex items-center justify-between bg-[#FAFAFA] md:bg-[#FFFFFF] rounded-[42.7px] md:rounded-[56px] pl-[18.3px] md:pl-[24px] pr-[3px] md:pr-[4px] py-[3px] md:py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg"
+              >
                 <span className="text-[#CDB17E] text-[12px] md:text-[16px] font-medium leading-[1.5] tracking-wide font-['Poppins'] md:font-sans">
                   <span className="md:hidden">{s.cta_label ?? 'Book a consultation'}</span>
                   <span className="hidden md:inline">{s.cta_label ?? 'Plan with Elewen'}</span>
@@ -3156,7 +3159,7 @@ const CelebrationFeelingSection = () => {
                     <path d="M7 7h10v10" />
                   </svg>
                 </div>
-              </button>
+              </Link>
             </span>
           </span>
         </div>
@@ -3312,7 +3315,10 @@ const PlanningGuidesSection = () => {
 
           <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
-              <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+              <Link
+                to="/blogs"
+                className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit"
+              >
                 <span className="text-white font-medium text-[15px] mr-5">
                   {s.cta_label ?? 'View All'}
                 </span>
@@ -3331,7 +3337,7 @@ const PlanningGuidesSection = () => {
                     />
                   </svg>
                 </div>
-              </button>
+              </Link>
             </span>
           </span>
         </div>
@@ -3433,8 +3439,9 @@ const PlanningGuidesSection = () => {
                   }}
                 >
                   {filteredBlogs.map((blog, i) => (
-                    <div
+                    <Link
                       key={blog.id ?? blog.title}
+                      to={`/blogs/${blog.slug}`}
                       className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
@@ -3463,7 +3470,7 @@ const PlanningGuidesSection = () => {
                           {blog.excerpt}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>

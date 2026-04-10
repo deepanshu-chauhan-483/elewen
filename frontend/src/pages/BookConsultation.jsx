@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useConsultation } from '../hooks/useConsultation'
 
 const consultationFeatures = [
   {
@@ -31,12 +32,16 @@ const RevealLine = ({ children, delay, className = '' }) => (
 const BookConsultationPage = () => {
   const pageRef = useRef(null)
   const navigate = useNavigate()
+  const { mutate: submitConsultation, isPending, isError, error } = useConsultation()
   const [form, setForm] = useState({
-    eventType: '',
-    date: '',
-    location: '',
-    budget: '',
-    notes: '',
+    full_name: '',
+    email: '',
+    phone: '',
+    event_type: '',
+    event_date: '',
+    city: '',
+    budget_range: '',
+    vision_notes: '',
   })
 
   useEffect(() => {
@@ -91,7 +96,22 @@ const BookConsultationPage = () => {
 
   const handleSubmit = event => {
     event.preventDefault()
-    navigate('/consultation-confirmation', { state: form })
+    submitConsultation(form, {
+      onSuccess: () => {
+        navigate('/consultation-confirmation', {
+          state: {
+            fullName: form.full_name,
+            email: form.email,
+            phone: form.phone,
+            eventType: form.event_type,
+            date: form.event_date,
+            location: form.city,
+            budget: form.budget_range,
+            notes: form.vision_notes,
+          },
+        })
+      },
+    })
   }
 
   return (
@@ -230,8 +250,38 @@ const BookConsultationPage = () => {
             <div className="grid gap-x-6 gap-y-4 md:grid-cols-2 lg:gap-x-6 lg:gap-y-6">
               <input
                 type="text"
-                name="eventType"
-                value={form.eventType}
+                name="full_name"
+                value={form.full_name}
+                onChange={handleChange}
+                placeholder="Full Name"
+                required
+                className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
+                style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
+              />
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="Email Address"
+                required
+                className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
+                style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
+              />
+              <input
+                type="text"
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="Phone Number"
+                required
+                className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
+                style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
+              />
+              <input
+                type="text"
+                name="event_type"
+                value={form.event_type}
                 onChange={handleChange}
                 placeholder="Event Type"
                 required
@@ -240,18 +290,16 @@ const BookConsultationPage = () => {
               />
               <input
                 type="date"
-                name="date"
-                value={form.date}
+                name="event_date"
+                value={form.event_date}
                 onChange={handleChange}
-                placeholder="Select a date"
-                required
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
               <input
                 type="text"
-                name="location"
-                value={form.location}
+                name="city"
+                value={form.city}
                 onChange={handleChange}
                 placeholder="City/Location"
                 required
@@ -260,19 +308,18 @@ const BookConsultationPage = () => {
               />
               <input
                 type="text"
-                name="budget"
-                value={form.budget}
+                name="budget_range"
+                value={form.budget_range}
                 onChange={handleChange}
                 placeholder="Budget Range"
-                required
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
             </div>
 
             <textarea
-              name="notes"
-              value={form.notes}
+              name="vision_notes"
+              value={form.vision_notes}
               onChange={handleChange}
               placeholder="Notes (Optional)"
               rows={3}
@@ -280,9 +327,19 @@ const BookConsultationPage = () => {
               style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
             />
 
+            {isError ? (
+              <p
+                className="mt-4 text-[13px] leading-[1.5] text-[#B3261E]"
+                style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
+              >
+                {error?.message || 'We could not submit your request right now. Please try again.'}
+              </p>
+            ) : null}
+
             <div className="mt-11 flex flex-col gap-6 md:items-end">
               <button
                 type="submit"
+                disabled={isPending}
                 className="group flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] md:w-fit"
               >
                 <span
@@ -293,7 +350,7 @@ const BookConsultationPage = () => {
                     letterSpacing: '0',
                   }}
                 >
-                  Request Consultation
+                  {isPending ? 'Submitting...' : 'Request Consultation'}
                 </span>
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                   <svg
