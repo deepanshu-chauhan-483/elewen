@@ -534,7 +534,7 @@ const NavHeader = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => setOpen(false)}
-                className={`group flex items-end justify-between py-3 md:py-2 ${
+                className={`group flex items-end justify-between py-2.5 md:py-1.5 ${
                   pathname === link.to ? 'text-[#CDB17E]' : 'text-white/85 hover:text-white'
                 }`}
                 style={{
@@ -546,7 +546,7 @@ const NavHeader = () => {
               >
                 <span className="inline-block max-w-full md:max-w-[72%]">
                   <span
-                    className="inline-block w-auto max-w-none whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[14px] font-normal uppercase leading-[1] tracking-[0em] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] md:h-auto md:w-auto md:pb-1 md:text-[20px] md:leading-none lg:text-[22px]"
+                    className="inline-block w-auto max-w-none whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[14px] font-normal uppercase leading-[1] tracking-[0em] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] md:h-auto md:w-auto md:pb-1 md:text-[clamp(16px,1.25vw,22px)] md:leading-none "
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {link.label}
