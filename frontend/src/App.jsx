@@ -29,6 +29,7 @@ import RentalFurniturePackagesPage from './pages/RentalFurniturePackagesPage'
 import CateringPackagesPage from './pages/CateringPackagesPage'
 import BartendingPackagesPage from './pages/BartendingPackagesPage'
 import SheeshaPackagesPage from './pages/SheeshaPackagesPage'
+import BartendingLevelsPage from './pages/BartendingLevelsPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -65,6 +66,7 @@ function AppLayout() {
     pathname === '/event-flow/service' ||
     pathname === '/event-flow/decor-theme' ||
     pathname === '/event-flow/catering-levels' ||
+    pathname === '/event-flow/bartending-levels' ||
     pathname === '/package-listing' ||
     pathname === '/packages/decor-levels' ||
     pathname.startsWith('/packages/')
@@ -93,6 +95,7 @@ function AppLayout() {
         <Route path="/event-flow/service" element={<ServicePage />} />
         <Route path="/event-flow/decor-theme" element={<DecorThemePage />} />
         <Route path="/event-flow/catering-levels" element={<CateringLevelsPage />} />
+        <Route path="/event-flow/bartending-levels" element={<BartendingLevelsPage />} />
         <Route path="/package-listing" element={<PackageListingPage />} />
         <Route path="/packages/decor-levels" element={<DecorLevelsPage />} />
         <Route path="/packages/decor" element={<DecorPackagesPage />} />

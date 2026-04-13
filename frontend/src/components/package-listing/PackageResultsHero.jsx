@@ -31,7 +31,7 @@ export default function PackageResultsHero({
     <section
       className={`relative w-full max-h-[244px] overflow-hidden bg-[#591902] py-8 sm:py-10 mt-0 ${className}`}
     >
-      <div className="mx-5 flex w-full max-w-[1220px] flex-col justify-center">
+      <div className="mx-15 flex w-full max-w-[1220px] flex-col justify-center">
         <div className="flex w-full flex-col gap-3 text-white lg:flex-row lg:items-center lg:gap-8">
           <span className="shrink-0 text-[14px] leading-none text-white/90">{title}</span>
 

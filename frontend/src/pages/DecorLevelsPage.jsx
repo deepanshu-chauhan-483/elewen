@@ -212,38 +212,38 @@ const categoryLabel = formatFilterLabel(categoryId, 'Social')
                 </Link>
               </div>
 
-              <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-visible">
-                {/* LEFT ARROW */}
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  disabled={isPrevDisabled}
-                  className={`absolute left-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E7E0DA] pl-2 text-black transition-all md:flex ${
-                    isPrevDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#D9D0C4]'
-                  }`}
-                >
-                  <RowArrow direction="left" />
-                </button>
-
-                <div className="mx-auto w-full max-w-[1280px]">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {visiblePackages.map((pkg, index) => (
-                      <PackageCard key={`${level.id}-${pkg.id ?? pkg.title}-${index}`} pkg={pkg} />
-                    ))}
-                  </div>
+              <div className="relative overflow-visible">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {visiblePackages.map((pkg, index) => (
+                    <PackageCard key={`${level.id}-${pkg.id ?? pkg.title}-${index}`} pkg={pkg} />
+                  ))}
                 </div>
 
-                {/* RIGHT ARROW */}
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={isNextDisabled}
-                  className={`absolute right-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E7E0DA] pr-2 text-black transition-all md:flex ${
-                    isNextDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#D9D0C4]'
-                  }`}
-                >
-                  <RowArrow direction="right" />
-                </button>
+                <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 md:block">
+                  {/* LEFT ARROW */}
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    disabled={isPrevDisabled}
+                    className={`pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E7E0DA] pl-2 text-black transition-all ${
+                      isPrevDisabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-[#D9D0C4]'
+                    }`}
+                  >
+                    <RowArrow direction="left" />
+                  </button>
+
+                  {/* RIGHT ARROW */}
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={isNextDisabled}
+                    className={`pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E7E0DA] pr-2 text-black transition-all ${
+                      isNextDisabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-[#D9D0C4]'
+                    }`}
+                  >
+                    <RowArrow direction="right" />
+                  </button>
+                </div>
               </div>
 
               <DynamicDots totalPages={totalPages} currentPage={currentPage} />

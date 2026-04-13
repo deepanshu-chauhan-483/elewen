@@ -39,8 +39,8 @@ export default function PackageListLayout({
     <main className="min-h-screen bg-white text-white">
       <NavHeader />
       {heroContent ? <div className="pt-18 md:pt-22">{heroContent}</div> : null}
-      <div className="px-4 pb-0 pt-20 sm:px-6 md:pt-24 lg:px-10 bg-[#2D2D2D">
-        <div className="mx-auto flex w-full max-w-[1220px] flex-col">
+      <div className="px-4 pb-0 pt-20 sm:px-6 md:pt-24">
+        <div className="mx-auto flex w-full flex-col lg:w-[calc(100%-200px)] lg:max-w-none">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p
               className="text-[27px] leading-none text-[#1C1C1C]"
@@ -120,7 +120,7 @@ export default function PackageListLayout({
       <section className="mt-16 flex w-full justify-center bg-[#591902] px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
         <div className="flex w-full max-w-[1000px] flex-col items-center text-center">
           <h2
-            className="max-w-[760px] text-[34px] leading-[0.95] text-white sm:text-[48px] lg:text-[72px]"
+            className="max-w-[760px] text-[30px] leading-[0.95] text-white sm:text-[44px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
             {ctaTitle}

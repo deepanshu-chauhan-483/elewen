@@ -304,23 +304,13 @@ export default function EventPage() {
     >
       <div className="flex h-full w-full flex-col justify-between gap-3 overflow-visible">
         <div
-          className="relative left-1/2 flex w-screen -translate-x-1/2 flex-1 items-center overflow-visible"
+          className="relative flex flex-1 items-center overflow-visible"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={safePageIndex === 0}
-            className="absolute left-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:flex"
-            aria-label="Previous cards"
-          >
-            <EventCarouselArrow direction="left" />
-          </button>
-
-          <div className="mx-auto flex w-full max-w-[1280px] flex-col ">
+          <div className="mx-auto flex w-full flex-col">
             <div className="flex w-full flex-col gap-3 md:gap-4">
-              <div className="grid w-full py-3 grid-cols-1 justify-items-center gap-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
+              <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
                 {visibleEvents.map(event => (
                   <EventCard key={event.id} categoryId={categoryId} event={event} />
                 ))}
@@ -328,15 +318,27 @@ export default function EventPage() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={safePageIndex >= totalPages - 1}
-            className="absolute right-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:flex"
-            aria-label="Next cards"
-          >
-            <EventCarouselArrow direction="right" />
-          </button>
+          <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 md:block">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={safePageIndex === 0}
+              className="pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
+              aria-label="Previous cards"
+            >
+              <EventCarouselArrow direction="left" />
+            </button>
+
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={safePageIndex >= totalPages - 1}
+              className="pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
+              aria-label="Next cards"
+            >
+              <EventCarouselArrow direction="right" />
+            </button>
+          </div>
         </div>
 
         {filteredEvents.length === 0 ? (

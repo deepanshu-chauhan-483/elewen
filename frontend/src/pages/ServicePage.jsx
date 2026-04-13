@@ -51,7 +51,7 @@ const SERVICE_ROUTE_MAP = {
   decor: '/event-flow/decor-theme',
   'rental-furniture': '/packages/rental-furniture',
   catering: '/event-flow/catering-levels',
-  bartending: '/packages/bartending',
+  bartending: '/event-flow/bartending-levels',
   sheesha: '/packages/sheesha',
 }
 
