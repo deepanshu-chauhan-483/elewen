@@ -29,7 +29,7 @@ export function useEventCategories() {
           'filters[is_active][$eq]': 'true',
           sort: 'name:asc',
         })
-        return data.map(e => e.name)
+        return data.map(e => e.name.trim())
       } catch {
         return EVENT_CATEGORIES_FALLBACK
       }
@@ -65,7 +65,7 @@ export function useEventCards() {
           title: e.name?.toUpperCase() ?? '',
           tagline: e.tagline ?? '',
           description: blocksToText(e.description),
-          category: e.parent_event?.name ?? '',
+          category: (e.parent_event?.name ?? '').trim(),
           image: e.icon?.url
             ? e.icon.url.startsWith('http')
               ? e.icon.url
@@ -108,8 +108,8 @@ export function useServiceCards() {
           id: s.id,
           documentId: s.documentId,
           title: s.name ?? '',
-          description: s.description ?? '',
-          category: s.parent_category?.name ?? '',
+          description: Array.isArray(s.description) ? blocksToText(s.description) : (s.description ?? ''),
+          category: (s.parent_category?.name ?? s.name ?? '').trim(),
           image: s.icon?.url
             ? s.icon.url.startsWith('http')
               ? s.icon.url

@@ -114,6 +114,12 @@
       "relation": "oneToMany",
       "target": "api::booking-review.booking-review",
       "mappedBy": "package"
+    },
+    "themes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::theme.theme",
+      "inversedBy": "packages"
     }
   }
 }

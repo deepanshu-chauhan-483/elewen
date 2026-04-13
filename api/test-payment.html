@@ -514,13 +514,6 @@
           description: 'Event Booking Payment',
           order_id: state.razorpayOrderId,
           prefill: { name: 'Test User', email: 'test@elewen.com', contact: '9999999999' },
-          config: {
-            display: {
-              blocks: { banks: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] } },
-              sequence: ['block.banks'],
-              preferences: { show_default_blocks: true },
-            },
-          },
           theme: { color: '#7c3aed' },
 
           handler: async function (response) {

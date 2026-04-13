@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import prisma from '../lib/prisma.js'
 import razorpay from '../lib/razorpay.js'
+import { notify } from '../lib/notify.js'
 
 // ─── Helper: verify Razorpay payment signature ─────────────────────────────────
 const verifyPaymentSignature = (orderId, paymentId, signature) => {
@@ -257,6 +258,16 @@ export const verifyPayment = async (req, res, next) => {
       })
     }
 
+    // Notify on successful payment
+    notify(payment.booking.userId, {
+      type: 'payment',
+      title: 'Payment Received',
+      message: `₹${Number(payment.amount).toLocaleString('en-IN')} ${payment.paymentType} payment confirmed.`,
+      linkUrl: `/dashboard/bookings/${payment.bookingId}`,
+      emailTemplate: 'payment_success',
+      emailData: { bookingId: payment.bookingId, amount: payment.amount, paymentType: payment.paymentType },
+    }).catch(() => {})
+
     res.json({ payment: updatedPayment })
   } catch (err) {
     next(err)
@@ -343,6 +354,14 @@ export const handleWebhook = async (req, res) => {
                   note: 'Auto-confirmed via payment.captured webhook',
                 },
               })
+              notify(booking.userId, {
+                type: 'payment',
+                title: 'Payment Received',
+                message: `₹${Number(payment.amount).toLocaleString('en-IN')} advance payment confirmed.`,
+                linkUrl: `/dashboard/bookings/${payment.bookingId}`,
+                emailTemplate: 'payment_success',
+                emailData: { bookingId: payment.bookingId, amount: payment.amount, paymentType: payment.paymentType },
+              }).catch(() => {})
             }
           }
         }
@@ -366,6 +385,19 @@ export const handleWebhook = async (req, res) => {
               metadata: { errorDescription, eventType },
             },
           })
+          // Notify user of failed payment
+          const failedBooking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
+          if (failedBooking) {
+            notify(failedBooking.userId, {
+              type: 'payment',
+              title: 'Payment Failed',
+              message: 'Your payment could not be processed. Please try again.',
+              linkUrl: `/dashboard/bookings/${payment.bookingId}`,
+              emailTemplate: 'payment_failed',
+              emailData: { bookingId: payment.bookingId, amount: payment.amount },
+            }).catch(() => {})
+          }
+
           // Create a system alert for failed payment
           await prisma.alert.create({
             data: {
@@ -592,6 +624,21 @@ export const processRefund = async (req, res, next) => {
         metadata: { refundId: id, gatewayRefundId },
       },
     })
+
+    // Notify user when refund is approved and being processed
+    if (action === 'approve') {
+      const refundBooking = await prisma.booking.findUnique({ where: { id: updated.bookingId } })
+      if (refundBooking) {
+        notify(refundBooking.userId, {
+          type: 'payment',
+          title: 'Refund Initiated',
+          message: `₹${Number(updated.amount).toLocaleString('en-IN')} refund has been processed and will reflect in 5–7 business days.`,
+          linkUrl: `/dashboard/bookings/${updated.bookingId}`,
+          emailTemplate: 'refund_processed',
+          emailData: { bookingId: updated.bookingId, amount: updated.amount },
+        }).catch(() => {})
+      }
+    }
 
     res.json({ refund: updated })
   } catch (err) {

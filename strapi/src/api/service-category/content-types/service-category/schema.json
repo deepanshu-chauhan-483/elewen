@@ -40,6 +40,9 @@
       "type": "boolean",
       "default": false
     },
+    "wizard_steps": {
+      "type": "json"
+    },
     "parent_category": {
       "type": "relation",
       "relation": "manyToOne",

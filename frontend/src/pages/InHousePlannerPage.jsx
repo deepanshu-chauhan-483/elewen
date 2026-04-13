@@ -632,8 +632,8 @@ const GrandCelebrationsSection = () => {
             type="button"
             onClick={() => go(-1)}
             disabled={isAnimating}
-            className="absolute left-0 top-[228px] w-[40px] min-[540px]:w-[52px] h-[80px] min-[540px]:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md disabled:opacity-60"
-            style={{ borderRadius: '0 104px 104px 0' }}
+            className="anim-element slide-from-left absolute left-0 top-[228px] w-[40px] min-[540px]:w-[52px] h-[80px] min-[540px]:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md disabled:opacity-60"
+            style={{ borderRadius: '0 104px 104px 0', '--delay': '0.3s' }}
             aria-label="Previous celebrations"
           >
             <svg
@@ -657,8 +657,8 @@ const GrandCelebrationsSection = () => {
             type="button"
             onClick={() => go(1)}
             disabled={isAnimating}
-            className="absolute right-0 top-[228px] w-[40px] min-[540px]:w-[52px] h-[80px] min-[540px]:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md disabled:opacity-60"
-            style={{ borderRadius: '104px 0 0 104px' }}
+            className="anim-element slide-from-right absolute right-0 top-[228px] w-[40px] min-[540px]:w-[52px] h-[80px] min-[540px]:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md disabled:opacity-60"
+            style={{ borderRadius: '104px 0 0 104px', '--delay': '0.3s' }}
             aria-label="Next celebrations"
           >
             <svg
@@ -1412,12 +1412,20 @@ const CelebrationEveryDaySection = () => {
                 className="absolute left-1/2 -translate-x-1/2 top-[80px] w-[967px] text-[#2D2D2D] text-[61px] leading-[1] text-center font-serif"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                {ced.heading ?? 'Celebrations We Plan Every Day'}
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text">
+                    {ced.heading ?? 'Celebrations We Plan Every Day'}
+                  </span>
+                </span>
               </h2>
 
               <p className="absolute left-1/2 -translate-x-1/2 top-[169px] w-[809px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center">
-                {ced.description ??
-                  'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
+                <span className="reveal-wrapper block">
+                  <span className="reveal-text" style={{ animationDelay: '0.1s' }}>
+                    {ced.description ??
+                      'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
+                  </span>
+                </span>
               </p>
 
               <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
@@ -1808,7 +1816,10 @@ const CelebrationFormSection = () => {
       </div>
 
       {/* --- Form Container --- */}
-      <div className="relative w-[calc(100%-32px)] max-w-[720px] h-auto min-[540px]:h-[701px] bg-[#F8F4ED] rounded-[20px] shadow-sm mx-auto p-6 min-[540px]:p-0">
+      <div
+        className="card-reveal relative w-[calc(100%-32px)] max-w-[720px] h-auto min-[540px]:h-[701px] bg-[#F8F4ED] rounded-[20px] shadow-sm mx-auto p-6 min-[540px]:p-0"
+        style={{ '--delay': '0.15s' }}
+      >
         {/* --- ZONE 1: STEPPER (Top 60px) --- */}
 
         {currentStep < 4 && (
@@ -1894,7 +1905,7 @@ const CelebrationFormSection = () => {
           {/* STEP 1: Basic Details */}
 
           {currentStep === 1 && (
-            <div className="flex flex-col gap-y-[24px] animate-fadeIn">
+            <div className="grid grid-cols-1 min-[540px]:grid-cols-2 gap-x-8 gap-y-[24px] animate-fadeIn">
               <div>
                 <div
                   className={`border-b pb-2 ${errors.full_name ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
@@ -1970,7 +1981,7 @@ const CelebrationFormSection = () => {
           {/* STEP 2: Event Details */}
 
           {currentStep === 2 && (
-            <div className="flex flex-col gap-y-[24px] animate-fadeIn">
+            <div className="grid grid-cols-1 min-[540px]:grid-cols-2 gap-x-8 gap-y-[24px] animate-fadeIn">
               <div>
                 <div
                   className={`border-b pb-2 ${errors.event_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
@@ -2364,7 +2375,9 @@ const InHousePlannerSection = () => {
       { threshold: 0.12 }
     )
 
-    root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
+    root
+      .querySelectorAll('.reveal-wrapper, .anim-element, .card-reveal')
+      .forEach(el => observer.observe(el))
     return () => observer.disconnect()
   }, [])
 
@@ -2404,7 +2417,7 @@ const InHousePlannerSection = () => {
           <div className="w-full max-w-[1440px] flex flex-col min-[540px]:flex-row">
             {/* Image */}
 
-            <div className="w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">
+            <div className="anim-element slide-from-left w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">
               <img
                 src={plannerImg}
                 alt="Moksha - In-House Event Planner"

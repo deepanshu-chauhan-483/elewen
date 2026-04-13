@@ -15,7 +15,7 @@ const sub = (p, start, end) => c01((p - start) / (end - start))
 // ── banner text content ───────────────────────────────────────────────────────
 const G = '\u2002'
 const SOLID = { color: '#591902' }
-const OUTLINE = { color: 'transparent', WebkitTextStroke: '2px #591902' }
+const OUTLINE = { color: 'transparent', WebkitTextStroke: '0.1px #591902' }
 
 const BAND1_TOKENS = [
   'PLAN DIFFERENTLY',
