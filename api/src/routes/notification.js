@@ -1,10 +1,10 @@
 import { Router } from 'express'
 import { getNotifications, markRead, markAllRead, getUnreadCount } from '../controllers/notification.js'
-import { authenticate } from '../middleware/auth.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = Router()
 
-router.use(authenticate)
+router.use(requireAuth)
 
 /**
  * @openapi

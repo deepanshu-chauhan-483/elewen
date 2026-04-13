@@ -49,10 +49,12 @@ const About = () => {
   const mokshaSrc = aboutAssetSrc('moksha_portrait.jpg')
   const gauriSrc = aboutAssetSrc('gauri.jpg')
   const iconSrc = aboutAssetSrc('image.png')
-  const scallopCount = [...Array(15)]
-  const mobileScallopCount = scallopCount.slice(0, 6)
+  const desktopScallopCount = [...Array(10)]
+  const mobileScallopCount = desktopScallopCount.slice(0, 6)
   const visibleScallops =
-    typeof window !== 'undefined' && window.innerWidth < 540 ? mobileScallopCount : scallopCount
+    typeof window !== 'undefined' && window.innerWidth < 661
+      ? mobileScallopCount
+      : desktopScallopCount
 
   const pageRef = useRef(null)
   const sectionRef = useRef(null)
@@ -107,7 +109,7 @@ const About = () => {
   }, [])
 
   useEffect(() => {
-    const isDesktop = () => window.innerWidth >= 540
+    const isDesktop = () => window.innerWidth >= 661
 
     const onScroll = () => {
       if (animRef.current) cancelAnimationFrame(animRef.current)
@@ -179,10 +181,10 @@ const About = () => {
           {/* --- 1. THE BROWN BACKGROUND WITH THE CURVE --- */}
           <div className="absolute left-0 top-0 w-full h-[710px] min-[375px]:h-[745px] min-[540px]:h-[880px] bg-[#591902] overflow-hidden rounded-b-[500px] min-[540px]:rounded-b-[1000px]">
             {/* --- MAIN TEXT CONTENT (FLUID GRID) --- */}
-            <div className="relative z-30 max-w-[1440px] mx-auto px-5 min-[375px]:px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-18 min-[375px]:pt-20 min-[540px]:pt-[120px] lg:pt-[223px]">
-              <div className="grid grid-cols-1 min-[540px]:grid-cols-12 items-start gap-y-5 min-[540px]:gap-y-0 min-[540px]:gap-x-10 lg:gap-x-[72px]">
+            <div className="relative z-30 max-w-[1440px] mx-auto px-5 min-[375px]:px-6 min-[540px]:px-8 min-[661px]:px-10 lg:px-20 xl:px-[100px] pt-18 min-[375px]:pt-20 min-[540px]:pt-[110px] min-[661px]:pt-[120px] lg:pt-[223px]">
+              <div className="grid grid-cols-1 min-[540px]:grid-cols-[minmax(0,1.1fr)_minmax(220px,0.9fr)] min-[661px]:grid-cols-12 items-start gap-y-5 min-[540px]:gap-y-0 min-[540px]:gap-x-6 min-[661px]:gap-x-10 lg:gap-x-[72px]">
                 {/* Left Heading */}
-                <h2 className="min-[540px]:col-span-7 w-full max-w-[564px] text-[#FFFFFF] text-[22px] min-[375px]:text-[24px] min-[540px]:text-[50px] lg:text-[61px] leading-[1.08] min-[540px]:leading-[1.13] lg:leading-[1.15] font-serif m-0">
+                <h2 className="min-[661px]:col-span-7 w-full max-w-[564px] min-[540px]:max-w-[390px] min-[661px]:max-w-[564px] text-[#FFFFFF] text-[22px] min-[375px]:text-[24px] min-[540px]:text-[42px] min-[661px]:text-[50px] lg:text-[61px] leading-[1.08] min-[540px]:leading-[1.08] min-[661px]:leading-[1.13] lg:leading-[1.15] font-serif m-0">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ animationDelay: '0s' }}>
                       {so.heading_1 ?? 'When we saw Excitement'}
@@ -196,7 +198,7 @@ const About = () => {
                 </h2>
 
                 {/* Right Descriptive Paragraphs */}
-                <div className="min-[540px]:col-span-5 min-[540px]:justify-self-end w-full max-w-[404px] flex flex-col gap-3 min-[540px]:gap-5">
+                <div className="min-[661px]:col-span-5 min-[540px]:justify-self-end w-full max-w-[404px] min-[540px]:max-w-[240px] min-[661px]:max-w-[404px] flex flex-col gap-3 min-[540px]:gap-4 min-[661px]:gap-5">
                   {(
                     so.paragraphs ?? [
                       'Elewen was born from noticing a simple truth: many people love the idea of hosting, but hesitate because planning an event often feels like too much to manage.',
@@ -205,7 +207,7 @@ const About = () => {
                   ).map((para, i) => (
                     <p
                       key={i}
-                      className="text-[#FFFFFF] text-[13px] min-[375px]:text-[14px] min-[540px]:text-[15px] lg:text-[16px] leading-[1.5] font-normal m-0 opacity-80 min-[540px]:opacity-100"
+                      className="text-[#FFFFFF] text-[13px] min-[375px]:text-[14px] min-[540px]:text-[14px] min-[661px]:text-[15px] lg:text-[16px] leading-[1.45] min-[661px]:leading-[1.5] font-normal m-0 opacity-80 min-[540px]:opacity-100"
                     >
                       <span className="reveal-wrapper block">
                         <span
@@ -224,7 +226,7 @@ const About = () => {
             {/* --- 2. THE PILL (CLIPPED BY THE CURVE) --- */}
             <div className="pointer-events-none absolute inset-0 z-10">
               <div
-                className="anim-element slide-from-bottom absolute inset-x-0 mx-auto bottom-[-108px] min-[375px]:bottom-[-118px] min-[540px]:bottom-[-170px] w-[252px] min-[375px]:w-[272px] min-[540px]:w-[400px] h-[378px] min-[375px]:h-[402px] min-[540px]:h-[600px] bg-[#BFAC9B] rounded-t-[500px] min-[540px]:rounded-[500px] border-[2px] min-[540px]:border-[4px] border-[#591902] shadow-lg"
+                className="anim-element slide-from-bottom absolute top-[452px] min-[375px]:top-[466px] left-[97px] w-[200px] h-[300px] bg-[#BFAC9B] rounded-t-[500px] min-[540px]:top-[427px] min-[540px]:inset-x-0 min-[540px]:mx-auto min-[540px]:bottom-[-170px] min-[540px]:w-[400px] min-[540px]:h-[600px] min-[540px]:rounded-[500px] border-[2px] min-[540px]:border-[4px] border-[#591902] shadow-lg"
                 style={{ '--delay': '0.1s' }}
               />
             </div>
@@ -235,7 +237,7 @@ const About = () => {
                 <img
                   src={tangledIllustration}
                   alt="Person tangled in lights"
-                  className="anim-element slide-from-bottom absolute top-[-8px] left-[-30px] min-[375px]:left-[-34px] z-10 w-[308px] h-[398px] min-[375px]:w-[330px] min-[375px]:h-[424px] max-w-none object-cover"
+                  className="anim-element slide-from-bottom absolute top-[-28px] left-[-80px] z-10 w-[330px] h-[400px] max-w-none object-contain min-[540px]:left-1/2 min-[540px]:-translate-x-1/2 min-[540px]:top-[9px] min-[540px]:w-[384px] min-[540px]:h-[529px]"
                   style={{ '--delay': '0.3s' }}
                 />
               </div>
@@ -249,7 +251,7 @@ const About = () => {
                 <img
                   src={tangledIllustration}
                   alt="Person tangled in lights"
-                  className="anim-element slide-from-bottom absolute top-[9px] w-[384px] h-[529px] object-cover max-w-none"
+                  className="anim-element slide-from-bottom absolute top-[9px] overflow-visible w-[384px] h-[529px] object-cover max-w-none"
                   style={{ '--delay': '0.3s' }}
                 />
               </div>
@@ -257,10 +259,10 @@ const About = () => {
           </div>
         </div>
         {/* --- 4. Celebrations Don't Have to Be Big to Matter --- */}
-        <div className="w-full max-w-[1440px] shrink-0 mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pb-16 min-[540px]:pb-8">
-          <div className="grid grid-cols-1 min-[540px]:grid-cols-12 items-center min-[540px]:items-start text-center min-[540px]:text-left gap-y-8 min-[540px]:gap-y-0 min-[540px]:gap-x-12 lg:gap-x-20">
+        <div className="w-full max-w-[1440px] shrink-0 mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] pb-16 min-[661px]:pb-8">
+          <div className="grid grid-cols-1 min-[661px]:grid-cols-12 items-center min-[661px]:items-start text-center min-[661px]:text-left gap-y-8 min-[661px]:gap-y-0 min-[661px]:gap-x-12 lg:gap-x-20">
             <h2
-              className="min-[540px]:col-span-7 w-full max-w-[546px] text-[#591902] text-[40px] min-[540px]:text-[50px] lg:text-[61px] leading-[1] font-normal font-serif m-0"
+              className="min-[661px]:col-span-7 w-full max-w-[546px] text-[#591902] text-[40px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-normal font-serif m-0"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper block">
@@ -270,7 +272,7 @@ const About = () => {
               </span>
             </h2>
 
-            <div className="min-[540px]:col-span-5 min-[540px]:justify-self-end w-full max-w-[463px] flex flex-col gap-5 mx-auto min-[540px]:mx-0">
+            <div className="min-[661px]:col-span-5 min-[661px]:justify-self-end w-full max-w-[463px] flex flex-col gap-5 mx-auto min-[661px]:mx-0">
               {(
                 cm.paragraphs ?? [
                   'Hosting a party, celebrating with close friends and family, and taking a pause from everyday life truly matters.',
@@ -297,52 +299,57 @@ const About = () => {
           <div ref={sectionRef} className="relative w-full min-h-[4550px]">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
-              className="absolute hidden min-[540px]:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
+              className="absolute hidden min-[661px]:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
               style={{ left: '-10%', top: '5%', transform: 'rotate(-37.82deg)' }}
             />
             <div
-              className="absolute hidden min-[540px]:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
+              className="absolute hidden min-[661px]:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
               style={{ right: '5%', top: '30%', transform: 'rotate(-37.82deg)' }}
             />
 
-            <div className="absolute -top-px min-[540px]:top-0 left-0 flex w-full pointer-events-none z-10">
+            <div className="absolute -top-px min-[661px]:top-0 left-0 flex w-full pointer-events-none z-10">
               {visibleScallops.map((_, i, arr) => (
-                <div
-                  key={i}
-                  className="relative h-[45px] flex-1 min-[540px]:shrink-0 min-[540px]:flex-none min-[540px]:w-[144px] min-[540px]:h-[90px]"
-                >
+                <div key={i} className="relative h-[45px] flex-1 min-[661px]:h-[90px]">
                   <div
-                    className="absolute top-0 left-0 w-full h-[36px] min-[540px]:h-[72px] bg-[#CDB17E]"
+                    className="absolute top-0 left-0 w-full h-[36px] min-[661px]:h-[72px] bg-[#CDB17E]"
                     style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
                   />
                   <div
-                    className="absolute top-0 left-0 w-full h-[36px] min-[540px]:h-[60px] bg-[#F8F4ED]"
+                    className="absolute top-0 left-0 w-full h-[36px] min-[661px]:h-[60px] bg-[#F8F4ED]"
                     style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
                   />
 
                   {i !== arr.length - 1 && (
-                    <div className="absolute top-0 right-0 translate-x-1/2 flex flex-col items-center z-20">
+                    <div
+                      className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
+                      style={{
+                        animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                        animationDelay: `${(i % 5) * 0.2}s`,
+                      }}
+                    >
                       <div
-                        className={`w-[1px] ${i % 2 === 0 ? 'h-[10px] min-[540px]:h-[14px]' : 'h-[4px] min-[540px]:h-[5px]'} bg-[#591902]/40`}
+                        className={`w-[1px] ${i % 2 === 0 ? 'h-[10px] min-[661px]:h-[14px]' : 'h-[4px] min-[661px]:h-[5px]'} bg-[#591902]/40`}
                       />
-                      <div className="relative flex flex-col items-center">
+                      <div className="relative flex flex-col items-center -mt-3 min-[661px]:-mt-4">
                         <img
                           src={i % 2 === 0 ? bulb1 : bulb2}
                           alt="Light"
-                          className="w-[20px] min-[540px]:w-[32px] h-auto relative z-10"
+                          className="w-[20px] min-[661px]:w-[32px] h-auto relative z-10"
                         />
 
                         <div
-                          className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 min-[540px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none ${
+                          className={`absolute left-1/2 top-full -translate-y-1 min-[661px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
                             i % 2 === 0
-                              ? 'min-[540px]:w-[76px] min-[540px]:h-[78px] blur-[4px]'
-                              : 'min-[540px]:w-[76px] min-[540px]:h-[59px] blur-[4px]'
+                              ? 'min-[661px]:w-[76px] min-[661px]:h-[78px] blur-[6px] min-[661px]:blur-[8px]'
+                              : 'min-[661px]:w-[76px] min-[661px]:h-[59px] blur-[4px]'
                           }`}
                           style={{
+                            animationDuration: `${4 + (i % 3) * 0.75}s`,
+                            animationDelay: `${(i % 5) * 0.2}s`,
                             background:
                               i % 2 === 0
-                                ? 'linear-gradient(180deg, #FCD768 0%, #A5A687 100%)'
-                                : 'linear-gradient(180deg, #FCE6A4 -1.95%, #A5A687 100%)',
+                                ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
+                                : 'linear-gradient(180deg, #FCE6A4 -1.95%, rgba(247,247,245,0) 100%)',
                             clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
                           }}
                         />
@@ -356,7 +363,7 @@ const About = () => {
             {/* --- SNAKE LINE SVG --- */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 hidden min-[540px]:block z-0"
+              className="pointer-events-none absolute inset-x-0 hidden min-[661px]:block z-0"
               style={{ top: `${SVG_TOP}px` }}
             >
               <svg
@@ -380,32 +387,9 @@ const About = () => {
               </svg>
             </div>
 
-            <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[540px]:pt-24 lg:pt-28 pb-24 min-[540px]:pb-32 lg:pb-36">
+            <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[661px]:pt-24 lg:pt-28 pb-24 min-[661px]:pb-32 lg:pb-36">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
-              <div className="min-[540px]:hidden mt-14">
-                {/* Fixed top text — same for both slides */}
-                <div className="flex flex-col items-center text-center gap-4 px-4 mb-6">
-                  <h2
-                    className="text-white text-[30px] leading-[1.05] font-serif"
-                    style={{ fontFamily: "'Malgin', serif" }}
-                  >
-                    <span className="reveal-wrapper block">
-                      <span className="reveal-text">
-                        {sq.heading ?? 'We Asked a Simple Question'}
-                      </span>
-                    </span>
-                  </h2>
-                  <p className="text-white text-[14px] leading-[1.45] opacity-90 max-w-[28rem]">
-                    <span className="reveal-wrapper block">
-                      <span className="reveal-text" style={{ '--delay': '0.1s' }}>
-                        {sq.body ??
-                          'Almost everything else in our lives has moved online. We book cabs and holidays in minutes, so why does event planning still feel complicated?'}
-                      </span>
-                    </span>
-                  </p>
-                </div>
-
-                {/* Image-only carousel */}
+              <div className="min-[661px]:hidden mt-14">
                 <div
                   ref={mobileStoryCarouselRef}
                   className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -420,15 +404,46 @@ const About = () => {
                       />
                     )}
                   </div>
-                  <div className="flex w-full shrink-0 snap-start px-2 justify-center">
-                    {story1Src && (
-                      <Img
-                        src={story1Src}
-                        alt="Details"
-                        className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
-                        style={{ '--delay': '0.2s' }}
-                      />
-                    )}
+
+                  <div className="flex w-full shrink-0 snap-start px-2">
+                    <div className="flex w-full min-h-[400px] flex-col items-center text-center ">
+                      <h2
+                        className="text-white text-[30px] leading-[1.05] font-serif"
+                        style={{ fontFamily: "'Malgin', serif" }}
+                      >
+                        <span className="reveal-wrapper block">
+                          <span className="reveal-text">
+                            {tg.heading ?? 'Thoughtful Gatherings Over Loud Distractions?'}
+                          </span>
+                        </span>
+                      </h2>
+
+                      {(
+                        tg.paragraphs ?? [
+                          'With house parties becoming the new way to celebrate, it felt like the right time to bring digitalisation, organisation, and standardisation to the events space.',
+                        ]
+                      ).map((para, i) => (
+                        <p key={i} className="text-white text-[14px] leading-[1.45] opacity-90">
+                          <span className="reveal-wrapper block">
+                            <span
+                              className="reveal-text"
+                              style={{ '--delay': `${0.1 + i * 0.08}s` }}
+                            >
+                              {para}
+                            </span>
+                          </span>
+                        </p>
+                      ))}
+
+                      {story1Src && (
+                        <Img
+                          src={story1Src}
+                          alt="Details"
+                          className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
+                          style={{ '--delay': '0.2s' }}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -492,18 +507,18 @@ const About = () => {
               {/* --- SUB-TASK 2: SIMPLE QUESTION BLOCK --- */}
               <div
                 ref={subTask2Ref}
-                className="hidden min-[540px]:flex mt-8 min-[540px]:mt-48 flex-col min-[540px]:flex-row items-start gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-4 lg:gap-x-6"
+                className="hidden min-[661px]:flex mt-8 min-[661px]:mt-48 flex-col min-[661px]:flex-row items-start gap-y-10 min-[661px]:gap-y-0 min-[661px]:gap-x-4 lg:gap-x-6"
               >
                 {story1Src && (
                   <Img
                     src={story1Src}
                     alt="Atmosphere"
-                    className="anim-element slide-from-left about-page-hover-image w-full min-[540px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-r-[120px] min-[540px]:-ml-10 lg:-ml-20 xl:-ml-[100px]"
+                    className="anim-element slide-from-left about-page-hover-image w-full min-[661px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-r-[120px] min-[661px]:-ml-10 lg:-ml-20 xl:-ml-[100px]"
                   />
                 )}
-                <div className="w-full min-[540px]:flex-1 max-w-[486px] flex flex-col gap-7 min-[540px]:mt-28">
+                <div className="w-full min-[661px]:flex-1 max-w-[486px] flex flex-col gap-7 min-[661px]:mt-28">
                   <h2
-                    className="text-white text-[24px] min-[540px]:text-[30px] lg:text-[50px] leading-[1] font-serif"
+                    className="text-white text-[24px] min-[661px]:text-[30px] lg:text-[50px] leading-[1] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -512,7 +527,7 @@ const About = () => {
                       </span>
                     </span>
                   </h2>
-                  <p className="text-white text-[12px] min-[540px]:text-[14px] lg:text-[16px] leading-[1.2]">
+                  <p className="text-white text-[12px] min-[661px]:text-[14px] lg:text-[16px] leading-[1.2]">
                     <span className="reveal-wrapper block">
                       <span className="reveal-text" style={{ '--delay': '0.1s' }}>
                         {sq.body ??
@@ -524,10 +539,10 @@ const About = () => {
               </div>
 
               {/* --- SUB-TASK 3: THOUGHTFUL GATHERINGS BLOCK --- */}
-              <div className="hidden min-[540px]:flex mt-24 min-[540px]:pb-30 flex-col min-[540px]:flex-row items-center gap-y-10 min-[540px]:gap-y-0">
-                <div className="order-2 min-[540px]:order-1 w-full min-[540px]:flex-1 min-[540px]:max-w-[560px] min-[540px]:ml-auto min-[540px]:mr-5 flex flex-col gap-7">
+              <div className="hidden min-[661px]:flex mt-24 min-[661px]:pb-30 flex-col min-[661px]:flex-row items-center gap-y-10 min-[661px]:gap-y-0">
+                <div className="order-2 min-[661px]:order-1 w-full min-[661px]:flex-1 min-[661px]:max-w-[560px] min-[661px]:ml-auto min-[661px]:mr-5 flex flex-col gap-7">
                   <h2
-                    className="text-white text-[24px] min-[540px]:text-[30px] lg:text-[50px] leading-[1] font-serif"
+                    className="text-white text-[24px] min-[661px]:text-[30px] lg:text-[50px] leading-[1] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -543,7 +558,7 @@ const About = () => {
                   ).map((para, i) => (
                     <p
                       key={i}
-                      className="text-white text-[12px] min-[540px]:text-[14px] lg:text-[16px] leading-[1.2]"
+                      className="text-white text-[12px] min-[661px]:text-[14px] lg:text-[16px] leading-[1.2]"
                     >
                       <span className="reveal-wrapper block">
                         <span className="reveal-text" style={{ '--delay': `${0.1 + i * 0.08}s` }}>
@@ -558,16 +573,16 @@ const About = () => {
                   <Img
                     src={story2Src}
                     alt="Details"
-                    className="order-1 min-[540px]:order-2 anim-element slide-from-right about-page-hover-image w-full min-[540px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-l-[120px] -mr-6 min-[540px]:-mr-10 lg:-mr-20 xl:-mr-[100px]"
+                    className="order-1 min-[661px]:order-2 anim-element slide-from-right about-page-hover-image w-full min-[661px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-l-[120px] -mr-6 min-[661px]:-mr-10 lg:-mr-20 xl:-mr-[100px]"
                   />
                 )}
               </div>
 
               {/* --- SUB-TASK 4: MEET THE FOUNDERS --- */}
-              <div className="mt-28 -mx-6 px-6 pb-16 bg-[#222815] min-[540px]:bg-transparent min-[540px]:mx-0 min-[540px]:px-0 min-[540px]:pb-20">
-                <div className="flex justify-center min-[540px]:hidden mt-4 pt-16">
+              <div className="mt-28 -mx-6 px-6 pb-16 bg-[#222815] min-[661px]:bg-transparent min-[661px]:mx-0 min-[661px]:px-0 min-[661px]:pb-20">
+                <div className="flex justify-center min-[661px]:hidden mt-4 pt-16">
                   <h2
-                    className="text-white text-[44px] min-[540px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center"
+                    className="text-white text-[44px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -576,20 +591,20 @@ const About = () => {
                   </h2>
                 </div>
 
-                <div className="mt-8 min-[540px]:mt-36 flex flex-col min-[540px]:flex-row items-start min-[540px]:items-start gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-4 lg:gap-x-6 min-[540px]:pb-20">
-                  <div className="anim-element slide-from-left w-full max-w-[600px] mx-auto min-[540px]:mx-0 min-[540px]:w-1/2 shrink-0 h-[320px] min-[540px]:h-[420px] lg:h-[520px] xl:h-[600px] bg-[#222815] overflow-hidden min-[540px]:-ml-10 lg:-ml-20 xl:-ml-[100px]">
+                <div className="mt-8 min-[661px]:mt-36 flex flex-col min-[661px]:flex-row items-start min-[661px]:items-start gap-y-10 min-[661px]:gap-y-0 min-[661px]:gap-x-4 lg:gap-x-6 min-[661px]:pb-20">
+                  <div className="anim-element slide-from-left w-full max-w-[600px] mx-auto min-[661px]:mx-0 min-[661px]:w-1/2 shrink-0 h-[320px] min-[661px]:h-[420px] lg:h-[520px] xl:h-[600px] bg-[#222815] overflow-hidden min-[661px]:-ml-10 lg:-ml-20 xl:-ml-[100px]">
                     {mokshaSrc && (
                       <Img
                         src={mokshaSrc}
                         alt="Moksha"
-                        className="about-page-hover-image w-full h-full object-cover object-[center_15%] rounded-[10px] min-[540px]:rounded-none"
+                        className="about-page-hover-image w-full h-full object-cover object-[center_15%] rounded-[10px] min-[661px]:rounded-none"
                       />
                     )}
                   </div>
 
-                  <div className="w-full min-[540px]:flex-1 min-[540px]:max-w-[520px] flex flex-col gap-[28px]">
+                  <div className="w-full min-[661px]:flex-1 min-[661px]:max-w-[520px] flex flex-col gap-[28px]">
                     <h2
-                      className="hidden min-[540px]:block text-white text-[44px] min-[540px]:text-[50px] lg:text-[61px] leading-[1] font-serif min-[540px]:mb-2"
+                      className="hidden min-[661px]:block text-white text-[44px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif min-[661px]:mb-2"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
@@ -599,7 +614,7 @@ const About = () => {
                       </span>
                     </h2>
                     <h4
-                      className="text-white text-[32px] min-[540px]:text-[36px] font-serif min-[540px]:mt-8"
+                      className="text-white text-[24px] min-[661px]:text-[36px] font-serif min-[661px]:mt-8"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
@@ -608,7 +623,7 @@ const About = () => {
                         </span>
                       </span>
                     </h4>
-                    <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
+                    <div className="flex flex-col gap-[20px] text-white text-[14px] leading-[1.5] opacity-90">
                       {(
                         founders.founders?.[0]?.paragraphs ?? [
                           "I still don't fully know how a formerly shy kid has turned into an adult who now builds experiences around people, conversations, and connection, but here we are.",
@@ -632,10 +647,10 @@ const About = () => {
                   </div>
                 </div>
 
-                <div className="mt-20 flex flex-col-reverse min-[540px]:flex-row items-start min-[540px]:items-center gap-y-10 min-[540px]:gap-y-0 min-[540px]:gap-x-0">
-                  <div className="w-full min-[540px]:flex-1 min-[540px]:max-w-[520px] flex flex-col gap-[28px] min-[540px]:self-center min-[540px]:ml-auto min-[540px]:pr-0">
+                <div className="mt-20 flex flex-col-reverse min-[661px]:flex-row items-start min-[661px]:items-center gap-y-10 min-[661px]:gap-y-0 min-[661px]:gap-x-0">
+                  <div className="w-full min-[661px]:flex-1 min-[661px]:max-w-[520px] flex flex-col gap-[28px] min-[661px]:self-center min-[661px]:ml-auto min-[661px]:pr-0">
                     <h4
-                      className="text-white text-[32px] min-[540px]:text-[36px] font-serif"
+                      className="text-white text-[24px] min-[661px]:text-[36px] font-serif"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       <span className="reveal-wrapper block">
@@ -644,7 +659,7 @@ const About = () => {
                         </span>
                       </span>
                     </h4>
-                    <div className="flex flex-col gap-[20px] text-white text-[12px] leading-[1.5] opacity-90">
+                    <div className="flex flex-col gap-[20px] text-white text-[14px] leading-[1.5] opacity-90">
                       {(
                         founders.founders?.[1]?.paragraphs ?? [
                           "I'm a dancer, reader, dreamer, and a believer that every little step eventually leads to the right place.",
@@ -666,12 +681,12 @@ const About = () => {
                     </div>
                   </div>
 
-                  <div className="anim-element slide-from-right w-full min-[540px]:w-1/2 max-w-[600px] shrink-0 h-[320px] min-[540px]:h-[420px] lg:h-[520px] xl:h-[600px] bg-[#080808] overflow-hidden mx-auto min-[540px]:mx-0 -mr-0 min-[540px]:-mr-10 lg:-mr-20 xl:-mr-[100px] rounded-[10px] min-[540px]:rounded-none">
+                  <div className="anim-element slide-from-right w-full min-[661px]:w-1/2 max-w-[600px] shrink-0 h-[320px] min-[661px]:h-[420px] lg:h-[520px] xl:h-[600px] bg-[#080808] overflow-hidden mx-auto min-[661px]:mx-0 -mr-0 min-[661px]:-mr-10 lg:-mr-20 xl:-mr-[100px] rounded-[10px] min-[661px]:rounded-none">
                     {gauriSrc && (
                       <Img
                         src={gauriSrc}
                         alt="Gauri"
-                        className="about-page-hover-image w-full h-full object-cover object-[center_15%] rounded-[20px] min-[540px]:rounded-none"
+                        className="about-page-hover-image w-full h-full object-cover object-[center_15%] rounded-[20px] min-[661px]:rounded-none"
                       />
                     )}
                   </div>
@@ -679,16 +694,16 @@ const About = () => {
               </div>
 
               {/* --- SUB-TASK 5: WHY CHOOSE ELEWEN --- */}
-              <div className=" -mx-6 px-6 py-16 bg-[#E8DDC6] min-[540px]:mt-40 min-[540px]:bg-transparent min-[540px]:mx-0 min-[540px]:px-0 min-[540px]:py-20 min-[540px]:flex min-[540px]:flex-col min-[540px]:items-start">
+              <div className=" -mx-6 px-6 py-16 bg-[#E8DDC6] min-[661px]:mt-40 min-[661px]:bg-transparent min-[661px]:mx-0 min-[661px]:px-0 min-[661px]:py-20 min-[661px]:flex min-[661px]:flex-col min-[661px]:items-start">
                 <h2
-                  className="text-[#591902] min-[540px]:text-white text-[36px] min-[540px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center min-[540px]:text-left"
+                  className="text-[#591902] min-[661px]:text-white text-[24px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center min-[661px]:text-left"
                   style={{ fontFamily: "'Malgin', serif" }}
                 >
                   <span className="reveal-wrapper block">
                     <span className="reveal-text">{wc.heading ?? 'Why Choose Elewen'}</span>
                   </span>
                 </h2>
-                <p className="mt-4 min-[540px]:mt-6 w-full max-w-[520px] mx-auto min-[540px]:mx-0 text-[#591902] min-[540px]:text-white text-[14px] min-[540px]:text-[16px] leading-[1.5] opacity-80 text-center min-[540px]:text-left">
+                <p className="mt-4 min-[661px]:mt-6 w-full max-w-[520px] mx-auto min-[661px]:mx-0 text-[#591902] min-[661px]:text-white text-[14px] min-[661px]:text-[16px] leading-[1.5] opacity-80 text-center min-[661px]:text-left">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ '--delay': '0.1s' }}>
                       {wc.subheading ??
@@ -697,10 +712,11 @@ const About = () => {
                   </span>
                 </p>
 
-                <div className="mt-12 grid grid-cols-2 min-[540px]:grid-cols-4 justify-items-center gap-x-8 min-[540px]:gap-x-6 lg:gap-x-8 gap-y-12 min-[540px]:gap-y-12 min-[540px]:w-fit">
+                <div className="mt-12 grid grid-cols-2 min-[661px]:grid-cols-4 justify-items-center gap-x-8 min-[661px]:gap-x-6 lg:gap-x-8 gap-y-12 min-[661px]:gap-y-12 min-[661px]:w-fit">
                   {[
                     {
                       key: 'e47',
+                      mobileOrderClass: 'order-1',
                       left: 0,
                       iconW: 145.02,
                       iconH: 150.97,
@@ -712,6 +728,7 @@ const About = () => {
                     },
                     {
                       key: 'e49',
+                      mobileOrderClass: 'order-3',
                       left: 217,
                       iconW: 160,
                       iconH: 134,
@@ -723,6 +740,7 @@ const About = () => {
                     },
                     {
                       key: 'e48',
+                      mobileOrderClass: 'order-2',
                       left: 434,
                       iconW: 149,
                       iconH: 152,
@@ -734,6 +752,7 @@ const About = () => {
                     },
                     {
                       key: 'e50',
+                      mobileOrderClass: 'order-4',
                       left: 660,
                       iconW: 237,
                       iconH: 146,
@@ -748,14 +767,15 @@ const About = () => {
                     return (
                       <div
                         key={item.key}
-                        className={`anim-element slide-from-bottom w-full flex flex-col items-center ${item.key === 'e49' || item.key === 'e50' ? 'mt-10' : ''} min-[540px]:mt-0`}
+                        className={`anim-element slide-from-bottom ${item.mobileOrderClass} min-[661px]:order-none w-full flex flex-col items-center`}
                         style={{ '--delay': `${index * 0.06}s` }}
                       >
-                        <div className="relative overflow-hidden bg-[#F8F4ED] rounded-full w-[140px] h-[140px] min-[540px]:w-[110px] min-[540px]:h-[110px] min-[900px]:w-[177px] min-[900px]:h-[177px]">
-                          <div className="absolute left-0 top-0 w-[177px] h-[177px] origin-top-left scale-[0.79] min-[540px]:scale-[0.621] min-[900px]:scale-100">
+                        <div className="relative overflow-visible min-[661px]:overflow-hidden rounded-full w-[140px] h-[140px] min-[661px]:w-[110px] min-[661px]:h-[110px] min-[900px]:w-[177px] min-[900px]:h-[177px]">
+                          <div className="absolute inset-0 rounded-full bg-[#F8F4ED]" />
+                          <div className="absolute left-0 top-0 w-[177px] h-[177px] origin-top-left scale-[0.79] min-[661px]:scale-[0.621] min-[900px]:scale-100">
                             {src && (
                               <div
-                                className="absolute"
+                                className="absolute z-10"
                                 style={{
                                   width: `${item.iconW}px`,
                                   height: `${item.iconH}px`,
@@ -774,7 +794,7 @@ const About = () => {
                         </div>
 
                         <p
-                          className="mt-5 min-[540px]:mt-4 text-[#591902] min-[540px]:text-white font-normal font-serif text-[16px] min-[540px]:text-[13px] min-[900px]:text-[21px] leading-[120%] text-center w-full max-w-[190px]"
+                          className="mt-5 min-[661px]:mt-4 text-[#591902] min-[661px]:text-white font-normal font-serif text-[16px] min-[661px]:text-[13px] min-[900px]:text-[21px] leading-[1.1] min-[900px]:leading-[120%] text-center w-full max-w-[158px] min-[661px]:max-w-[190px]"
                           style={{ fontFamily: "'Malgin', serif" }}
                         >
                           {item.label}
@@ -786,10 +806,10 @@ const About = () => {
               </div>
 
               {/* --- SUB-TASK 6: VENDOR QUALITY & CARDS --- */}
-              <div ref={subTask6Ref} className="mt-24 min-[540px]:mt-40">
-                <div className="flex flex-col items-center text-center min-[540px]:items-end min-[540px]:text-right">
+              <div ref={subTask6Ref} className="mt-24 min-[661px]:mt-40">
+                <div className="flex flex-col items-center text-center min-[661px]:items-end min-[661px]:text-right">
                   <h2
-                    className="w-full max-w-[517px] text-white text-[44px] min-[540px]:text-[50px] lg:text-[61px] leading-[1] font-serif"
+                    className="w-full max-w-[517px] text-white text-[44px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -811,7 +831,7 @@ const About = () => {
                   </p>
                 </div>
 
-                <div className="mt-10 px-3 min-[540px]:px-0 w-full min-[540px]:w-fit mx-auto min-[540px]:mx-0 min-[540px]:ml-auto grid grid-cols-1 min-[540px]:grid-cols-3 gap-[20px] justify-items-stretch min-[540px]:justify-items-end">
+                <div className="mt-10 w-full min-[661px]:w-fit mx-auto min-[661px]:mx-0 min-[661px]:ml-auto grid grid-cols-1 min-[661px]:grid-cols-3 gap-[10px] min-[661px]:gap-[20px] justify-items-stretch min-[661px]:justify-items-end">
                   {[
                     {
                       title: vq.cards?.[0]?.title ?? 'Quality you can trust',
@@ -844,9 +864,9 @@ const About = () => {
                       <div
                         key={index}
                         style={{ '--delay': `${0.08 + index * 0.06}s` }}
-                        className="card-reveal about-page-card group w-full max-w-[320px] min-[540px]:max-w-[316px] min-h-[275px] bg-[#FFFFFF] rounded-[20px] px-4 py-6 min-[375px]:p-6 flex flex-col items-center gap-5"
+                        className="card-reveal about-page-card group w-full max-w-none min-[661px]:max-w-[316px] min-h-[120px] min-[661px]:min-h-[275px] bg-[#FFFFFF] rounded-[8px] min-[661px]:rounded-[20px] px-5 py-5 min-[661px]:p-6 flex flex-col items-center justify-center gap-3 min-[661px]:gap-5"
                       >
-                        <div className="flex w-[80px] h-[80px] shrink-0 items-center justify-center about-page-card-icon">
+                        <div className="flex w-[52px] h-[52px] min-[661px]:w-[80px] min-[661px]:h-[80px] shrink-0 items-center justify-center about-page-card-icon">
                           {currentIconSrc && (
                             <div
                               className="w-full h-full origin-center bg-[#591902] about-page-hover-image"
@@ -864,9 +884,9 @@ const About = () => {
                           )}
                         </div>
 
-                        <div className="flex flex-col items-center gap-4 w-full px-1 min-[375px]:p-4">
+                        <div className="flex flex-col items-center gap-2 min-[661px]:gap-4 w-full px-0 min-[661px]:p-4">
                           <h5
-                            className="about-page-card-title text-[#2D2D2D] text-[16px] min-[375px]:text-[18px] sm:text-[21px] font-normal text-center leading-[120%] w-full max-w-[220px] min-[375px]:max-w-[240px] sm:max-w-none"
+                            className="about-page-card-title text-[#2D2D2D] text-[14px] min-[375px]:text-[16px] min-[661px]:text-[18px] sm:text-[21px] font-normal text-center leading-[120%] w-full max-w-[210px] min-[661px]:max-w-[240px] sm:max-w-none"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '120%',
@@ -876,7 +896,7 @@ const About = () => {
                             {card.title}
                           </h5>
                           <p
-                            className="about-page-card-desc text-[#767676] text-[12px] min-[375px]:text-[13px] font-normal text-center leading-[150%] w-full max-w-[248px] min-[375px]:max-w-[276px] break-words"
+                            className="about-page-card-desc text-[#767676] text-[11px] min-[375px]:text-[12px] min-[661px]:text-[13px] font-normal text-center leading-[150%] w-full max-w-[230px] min-[661px]:max-w-[276px] break-words"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '150%',
@@ -898,10 +918,10 @@ const About = () => {
         {/* --- Call To Action Section --- */}
         {/* Frame 271 */}
         <div className="w-full bg-[#591902] shrink-0">
-          <div className="max-w-[1440px] mx-auto px-6 min-[540px]:px-10 lg:px-20 xl:px-[100px] py-12 min-[540px]:py-5">
+          <div className="max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] py-12 min-[661px]:py-5">
             <div className="flex flex-col items-center text-center gap-4">
               <h3
-                className="text-[#FFFFFF] text-[28px] min-[540px]:text-[40px] lg:text-[47px] font-normal leading-[1.05] m-0"
+                className="text-[#FFFFFF] text-[28px] min-[661px]:text-[40px] lg:text-[47px] font-normal leading-[1.05] m-0"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block">
@@ -912,7 +932,7 @@ const About = () => {
               </h3>
               {/* Frame 151 (Button Group) */}
               <h5
-                className="text-[#FFFFFF] text-[18px] min-[540px]:text-[24px] lg:text-[27px] font-normal leading-[1.05] m-0"
+                className="text-[#FFFFFF] text-[18px] min-[661px]:text-[24px] lg:text-[27px] font-normal leading-[1.05] m-0"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block">
@@ -923,11 +943,8 @@ const About = () => {
               </h5>
             </div>
 
-            <div
-              className="mt-8 min-[540px]:mt-10 flex flex-row flex-wrap items-center justify-center gap-4 anim-element slide-from-bottom"
-              style={{ '--delay': '0.2s' }}
-            >
-              <button className="flex flex-row items-center justify-between w-full max-w-[220px] min-[540px]:w-[208px] h-[44px] bg-[#CDB17E] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#c2a472] transition-colors group">
+            <div className="mt-8 min-[661px]:mt-10 flex flex-row flex-wrap items-center justify-center gap-4">
+              <button className="flex flex-row items-center justify-between w-full max-w-[220px] min-[661px]:w-[208px] h-[44px] bg-[#CDB17E] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#c2a472] transition-colors group">
                 <span
                   className="text-[#591902] text-[16px] font-medium leading-[150%]"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
@@ -953,7 +970,7 @@ const About = () => {
                 </div>
               </button>
 
-              <button className="flex flex-row items-center justify-center w-full max-w-[220px] min-[540px]:w-[169px] h-[44px] bg-[#FAFAFA] rounded-[56px] px-[24px] py-[4px] hover:bg-[#eaeaea] transition-colors">
+              <button className="flex flex-row items-center justify-center w-full max-w-[220px] min-[661px]:w-[169px] h-[44px] bg-[#FAFAFA] rounded-[56px] px-[24px] py-[4px] hover:bg-[#eaeaea] transition-colors">
                 <span
                   className="text-[#591902] text-[16px] font-medium leading-[150%]"
                   style={{ fontFamily: "'Poppins', sans-serif" }}

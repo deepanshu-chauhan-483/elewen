@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -90,7 +91,7 @@ const PlanEventSection = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Derive active category — default to first category once loaded
+  // Derive active category â€” default to first category once loaded
   const activeCategory = selectedCategory ?? safeCategories[0] ?? null
 
   // Filter cards by selected category
@@ -106,8 +107,8 @@ const PlanEventSection = () => {
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
   const safePage = Math.min(page, totalPages - 1)
-  const mobileCardWidth = 289
-  const mobileCardGap = 16
+  const mobileCardWidth = 322
+  const mobileCardGap = 20
   const edgeFadeMask =
     slideDirection === 'prev'
       ? 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 9%, black 22%, black 86%, rgba(0,0,0,0.5) 95%, transparent 100%)'
@@ -188,7 +189,7 @@ const PlanEventSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full min-h-screen bg-[#F2F2F2] pt-[40px] md:pt-52 flex flex-col overflow-hidden font-sans"
+      className="relative w-full min-h-auto bg-[#F2F2F2] pt-[32px] md:pt-24 lg:min-h-screen lg:pt-52 flex flex-col overflow-hidden font-sans"
     >
       {/* Background Decor (Desktop predominantly) */}
       {/* <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
@@ -246,7 +247,7 @@ const PlanEventSection = () => {
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 pb-8 md:pb-12 flex flex-col md:flex-row justify-between items-center md:items-end relative z-10">
         <h1
-          className="text-[24px] md:text-[61px] leading-[1.2] text-[#364022] md:text-[#3D4035]  font-normal tracking-normal text-center md:text-left reveal-heading"
+          className="text-[24px] md:text-[61px] leading-[1.08] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left reveal-heading max-w-[320px] md:max-w-none"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
@@ -260,12 +261,12 @@ const PlanEventSection = () => {
           </span>
         </h1>
 
-        <div className="relative max-w-[353px] md:max-w-[340px] mt-5 md:mt-4 md:top-4 flex flex-col items-center md:items-start">
-          <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
+        <div className="relative max-w-[320px] md:max-w-[340px] mt-5 md:mt-4 md:top-4 flex flex-col items-center md:items-start">
+          <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[1.45] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 {s.description ??
-                  'Choose your event type and explore curated décor and catering packages designed to simplify planning.'}
+                  'Choose your event type and explore curated dÃ©cor and catering packages designed to simplify planning.'}
               </span>
             </span>
           </p>
@@ -304,9 +305,12 @@ const PlanEventSection = () => {
       {/* Main Content */}
       <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
         {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] pt-8 pb-0 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 relative reveal-border-y">
-          <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
-          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:pt-8 md:pb-4 lg:py-20 px-4 md:px-8 lg:px-16 flex flex-col items-center lg:items-start shrink-0 relative reveal-border-y">
+          <div className="hidden md:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
+          <div className="hidden md:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
+            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+          </div>
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-5 lg:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
@@ -344,39 +348,40 @@ const PlanEventSection = () => {
           </div>
         </aside>
 
-        <div className="flex-1 py-4 md:py-16 px-6 md:px-12 lg:px-8">
+        <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden md:overflow-hidden">
-            <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] md:min-h-0">
-              {/* Mobile Left Navigation Arrow — full-bleed row, vertically centered on card */}
-              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
+          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
+            <div className="relative min-h-[460px] md:min-h-0">
+              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
+                      d="M19 12H5M5 12L12 19M5 12L12 5"
+                      stroke="#CDB17E"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
                     />
                   </svg>
                 </button>
               </div>
+              {/* Mobile Left Navigation Arrow â€” full-bleed row, vertically centered on card */}
 
               <div
                 ref={carouselViewportRef}
-                className="overflow-hidden md:px-0"
+                className="w-[322px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
                 style={{
-                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                  WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                  maskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
+                  WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
                   transition:
                     'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
@@ -398,9 +403,9 @@ const PlanEventSection = () => {
                           ? `${mobileCardWidth}px`
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
                       }}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5 mx-auto rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                     >
-                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                      <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
@@ -409,11 +414,12 @@ const PlanEventSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[92px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide uppercase font-['Poppins']">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:px-6 md:py-5 lg:p-7 h-[90px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
+                        <h3 className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase font-['Poppins']">
                           {card.title}
                         </h3>
-                        <p className="text-white/50 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light font-['Poppins']">
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins']">
                           {card.tagline}
                         </p>
                       </div>
@@ -423,23 +429,24 @@ const PlanEventSection = () => {
               </div>
 
               {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
+              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
+                      d="M5 12H19M19 12L12 19M19 12L12 5"
+                      stroke="#CDB17E"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
                     />
                   </svg>
                 </button>
@@ -453,17 +460,21 @@ const PlanEventSection = () => {
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  <path
+                    d="M19 12H5M5 12L12 19M5 12L12 5"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
               <div className="flex items-center gap-[4px] justify-center">
@@ -482,31 +493,35 @@ const PlanEventSection = () => {
               <button
                 onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <path
+                    d="M5 12H19M19 12L12 19M19 12L12 5"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </div>
 
             {/* Mobile Pagination Dots */}
-            <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            <div className="flex md:hidden items-center justify-center gap-[5px] mt-10 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
                   onClick={() => goToPage(i)}
                   className={`cursor-pointer rounded-[12px] transition-all ${
                     i === safePage
-                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
-                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                      ? 'w-[20px] h-[4px] bg-[#D4BA8E]'
+                      : 'w-[8px] h-[4px] bg-[#C8C8C8]'
                   }`}
                 />
               ))}
@@ -562,7 +577,7 @@ const WhatToPlanSection = () => {
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024) // Using 1024px since original code uses lg: for sidebar
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
     handleResize() // init
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -584,8 +599,8 @@ const WhatToPlanSection = () => {
       : 3
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
   const safePage = Math.min(page, totalPages - 1)
-  const mobileCardWidth = 289
-  const mobileCardGap = 16
+  const mobileCardWidth = 322
+  const mobileCardGap = 20
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -657,11 +672,11 @@ const WhatToPlanSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="w-full min-h-screen bg-[#F2F2F2] flex flex-col overflow-hidden font-sans"
+      className="w-full min-h-auto bg-[#F2F2F2] flex flex-col overflow-hidden font-sans lg:min-h-screen"
     >
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center">
-        <div className="max-w-[353px] md:max-w-[340px] order-last md:order-first mt-5 md:mt-0 flex flex-col items-center md:items-start">
+        <div className="max-w-[353px] md:max-w-[340px] order-last lg:order-first mt-5 md:mt-0 flex flex-col items-center md:items-start">
           <p className="text-[#727355] md:text-[#3D4035]/70 text-[14px] md:text-[15px] leading-[150%] md:leading-relaxed mb-0 md:mb-6 font-normal md:font-medium text-center md:text-left font-['Poppins'] reveal-on-scroll">
             <span className="reveal-wrapper">
               <span className="reveal-text">
@@ -698,7 +713,7 @@ const WhatToPlanSection = () => {
         </div>
 
         <h2
-          className="font-display text-[28px] md:text-[61px] leading-[1] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left order-first md:order-last reveal-heading"
+          className="font-display text-[28px] md:text-[61px] leading-[1] md:leading-[1] text-[#364022] md:text-[#3D4035] font-normal tracking-normal text-center md:text-left order-first lg:order-last reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
@@ -718,49 +733,91 @@ const WhatToPlanSection = () => {
         <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
       </div>
 
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1">
-        <div className="flex-1 order-last lg:order-none py-4 md:py-16 px-6 md:px-12 lg:px-8 relative reveal-border-y">
-          <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
-          {/* Cards Carousel Area */}
-          <div className="flex-1 order-last lg:order-none py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden lg:overflow-hidden">
-            <div className="relative -mx-6 md:-mx-12 lg:mx-0 min-h-[400px] lg:min-h-0">
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row-reverse flex-1 mb-10">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:pt-8 md:pb-4 lg:py-20 px-4 md:px-8 lg:px-16 flex flex-col items-center lg:items-start shrink-0 relative reveal-border-y">
+          <div className="hidden md:block absolute left-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
+          <div className="hidden md:block absolute right-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
+            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+          </div>
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-5 lg:gap-8 flex-wrap justify-center w-full">
+            {categories.map((cat, index) => {
+              const isActive = cat === activeCategory
+              return (
+                <React.Fragment key={cat}>
+                  <div
+                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5 reveal-on-scroll"
+                    onClick={() => handleCategorySelect(cat)}
+                  >
+                    <span
+                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
+                        isActive
+                          ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
+                          : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
+                      }`}
+                    >
+                      <span className="reveal-wrapper">
+                        <span className="reveal-text">{cat}</span>
+                      </span>
+                    </span>
+
+                    <span
+                      className={`absolute bottom-0 left-0 h-[1.5px] bg-[#3D4035] transition-all duration-300 ease-out ${
+                        isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                      }`}
+                    />
+                  </div>
+                  {index < categories.length - 1 && (
+                    <div className="block lg:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
+                  )}
+                </React.Fragment>
+              )
+            })}
+          </div>
+        </aside>
+
+        <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
+          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
+            <div className="relative min-h-[460px] lg:min-h-0">
               {/* Mobile Left Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 lg:hidden pointer-events-none">
+              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
+                      d="M19 12H5M5 12L12 19M5 12L12 5"
+                      stroke="#CDB17E"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
                     />
                   </svg>
                 </button>
               </div>
 
-              <div ref={carouselViewportRef} className="overflow-hidden lg:px-0">
+              <div
+                ref={carouselViewportRef}
+                className="w-[322px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
+              >
                 <div
-                  className="flex gap-4 md:gap-6 transition-transform duration-[1250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
                       ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
                       : `translateX(-${safePage * carouselViewportWidth}px)`,
-                    willChange: 'transform',
                   }}
                 >
                   {filteredCards.map((card, i) => (
                     <div
                       key={card.id ?? card.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5 mx-auto rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
                         width: isMobile
@@ -768,7 +825,7 @@ const WhatToPlanSection = () => {
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
                       }}
                     >
-                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                      <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
@@ -776,11 +833,12 @@ const WhatToPlanSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[16px] md:p-7 h-[100px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        <h3 className="text-white font-medium md:font-semibold text-[16px] md:text-[17px] mb-1 md:mb-2.5 tracking-wide font-['Poppins']">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[12px] py-[14px] md:px-6 md:py-5 lg:p-7 h-[90px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
+                        <h3 className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']">
                           {card.title}
                         </h3>
-                        <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
                           {card.description}
                         </p>
                       </div>
@@ -790,23 +848,24 @@ const WhatToPlanSection = () => {
               </div>
 
               {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 lg:hidden pointer-events-none">
+              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
+                      d="M5 12H19M19 12L12 19M19 12L12 5"
+                      stroke="#CDB17E"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
                     />
                   </svg>
                 </button>
@@ -814,21 +873,25 @@ const WhatToPlanSection = () => {
             </div>
 
             {/* Desktop Pagination Block */}
-            <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px]">
+            <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-12 md:mt-16 mx-auto justify-between items-center gap-[25px] ">
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  <path
+                    d="M19 12H5M5 12L12 19M5 12L12 5"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
 
@@ -849,31 +912,35 @@ const WhatToPlanSection = () => {
               <button
                 onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <path
+                    d="M5 12H19M19 12L12 19M19 12L12 5"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </div>
 
             {/* Mobile Pagination Dots */}
-            <div className="flex lg:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            <div className="flex md:hidden items-center justify-center gap-[5px] mt-10 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
                   onClick={() => goToPage(i)}
                   className={`cursor-pointer rounded-[12px] transition-all ${
                     i === safePage
-                      ? 'w-[20px] h-[4px] bg-[#CDB17E]'
-                      : 'w-[8px] h-[4px] bg-[#BFBFBF]'
+                      ? 'w-[20px] h-[4px] bg-[#D4BA8E]'
+                      : 'w-[8px] h-[4px] bg-[#C8C8C8]'
                   }`}
                 />
               ))}
@@ -908,46 +975,6 @@ const WhatToPlanSection = () => {
             </div>
           </div>
         </div>
-
-        {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] order-first lg:order-none pt-8 pb-0 lg:py-20 px-4 md:px-16 flex flex-col items-center lg:items-start shrink-0 lg:border-none border-[#3D4035]/15">
-          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-8 flex-wrap justify-center w-full">
-            {categories.map((cat, index) => {
-              const isActive = cat === activeCategory
-              return (
-                <React.Fragment key={cat}>
-                  <div
-                    className="cursor-pointer group relative w-fit flex flex-col pb-1.5 reveal-on-scroll"
-                    onClick={() => handleCategorySelect(cat)}
-                  >
-                    <span
-                      className={`font-['Poppins'] text-[14px] md:text-[16px] transition-colors font-medium tracking-wide ${
-                        isActive
-                          ? 'text-[#364022] md:text-[#3D4035] md:font-bold'
-                          : 'text-[#364022] md:text-[#A3A3A3] group-hover:text-[#3D4035]'
-                      }`}
-                    >
-                      <span className="reveal-wrapper">
-                        <span className="reveal-text">{cat}</span>
-                      </span>
-                    </span>
-
-                    {/* Animated Underline */}
-                    <span
-                      className={`absolute bottom-0 left-0 h-[1.5px] bg-[#3D4035] transition-all duration-300 ease-out ${
-                        isActive ? 'w-full' : 'w-0 group-hover:w-full'
-                      }`}
-                    />
-                  </div>
-                  {/* Vertical Separator for Mobile */}
-                  {index < categories.length - 1 && (
-                    <div className="block lg:hidden w-[1px] h-[20px] bg-[#1C1C1C]"></div>
-                  )}
-                </React.Fragment>
-              )
-            })}
-          </div>
-        </aside>
       </div>
     </section>
   )
@@ -1087,7 +1114,7 @@ const howSteps = [
   {
     id: 5,
     title: "Have An Idea That's A Little Different?",
-    desc: "Leave us a note, ask a question, or pitch your wild idea — we'll align, curate, and make your party effortless.",
+    desc: "Leave us a note, ask a question, or pitch your wild idea â€” we'll align, curate, and make your party effortless.",
     side: 'right',
     icon: LightbulbIcon,
   },
@@ -1103,7 +1130,15 @@ const howSteps = [
 const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   const containerRef = useRef(null)
   const stepsWrapRef = useRef(null)
-
+  gsap.config({
+    autoSleep: 60,
+    force3D: true,
+    nullTargetWarn: false,
+  })
+  ScrollTrigger.config({
+    limitCallbacks: true,
+    ignoreMobileResize: true,
+  })
   useLayoutEffect(() => {
     if (disableScrollAnimations || !isVisible) return
     const container = containerRef.current
@@ -1139,7 +1174,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       revealStepText(step)
 
       const stepTimeline = gsap.timeline({
-        defaults: { duration: 1.2, ease: 'power4.out', overwrite: 'auto' },
+        defaults: { duration: 0.45, ease: 'power2.out', overwrite: 'auto' },
       })
 
       if (leftContent) {
@@ -1155,7 +1190,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       }
     }
 
-    let activeStepIndex = -1
+    let activeStepIndex = 0
 
     const setActiveStepLine = (
       stepItems,
@@ -1196,7 +1231,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
             duration: 1.2,
             ease: 'power3.out',
             overwrite: 'auto',
-            onComplete: () => {
+            onStart: () => {
               if (revealContent) animateStepContent(targetStep)
             },
           }
@@ -1208,11 +1243,13 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         top: targetTop,
         height: targetHeight,
         opacity: 1,
-        duration: 1.15,
-        ease: 'power2.inOut',
+        duration: 0.4,
+        ease: 'none',
         overwrite: 'auto',
-        onComplete: () => {
-          if (revealContent) animateStepContent(targetStep)
+        onStart: () => {
+          if (revealContent) {
+            gsap.delayedCall(0.06, () => animateStepContent(targetStep))
+          }
         },
       })
     }
@@ -1279,21 +1316,25 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         if (rightContent) {
           gsap.set(rightContent, { x: 88, opacity: 0, force3D: true })
         }
-        ScrollTrigger.create({
-          trigger: step,
-          start: 'top 42%',
-          once: true,
-          onEnter: () => {
-            if (revealedSteps.has(step)) return
-            animateStepContent(step)
-          },
-        })
 
-        // 3. Containers — matched the 0.2s delay here as well
+        // 3. Containers â€” matched the 0.2s delay here as well
       })
     }, container)
 
-    updateStepHighlights({ reposition: true })
+    updateStepHighlights({ reposition: true, immediate: true })
+
+    // ðŸ”¥ FORCE FIRST STEP TEXT
+    const firstStep = stepElements[0]
+    if (firstStep) {
+      animateStepContent(firstStep)
+    }
+    if (progressLine && stepElements[0]) {
+      gsap.set(progressLine, {
+        top: stepElements[0].offsetTop,
+        height: stepElements[0].offsetHeight,
+        opacity: 1,
+      })
+    }
 
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
@@ -1363,7 +1404,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
           return (
             <div
               key={step.id}
-              className="step-item relative w-full flex items-start justify-between mb-[140px] last:mb-0"
+              className="step-item relative w-full flex items-start justify-between mb-[50px] md:mb-10 last:mb-0"
             >
               {step.side === 'right' ? (
                 <>
@@ -1479,7 +1520,10 @@ const CTASection = () => {
 
         <span className="mt-[40px] reveal-wrapper reveal-wrapper--overflow-visible reveal-on-scroll">
           <span className="reveal-text">
-            <button className="group flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] min-h-[36px] h-[36px] pl-[18.2948px] pr-[3.04913px] py-0 md:rounded-[56px] md:w-[243px] md:h-[44px] md:min-h-0 md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors">
+            <Link
+              to="/book-consultation"
+              className="group flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] min-h-[36px] h-[36px] pl-[18.2948px] pr-[3.04913px] py-0 md:rounded-[56px] md:w-[243px] md:h-[44px] md:min-h-0 md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors"
+            >
               <span className="text-[#FAFAFA] text-[12px] md:text-[16px] font-medium leading-[150%] tracking-wide w-[120px] h-[18px] md:w-auto md:h-auto whitespace-nowrap">
                 {s.cta_label ?? 'Book a Consultation'}
               </span>
@@ -1500,7 +1544,7 @@ const CTASection = () => {
                   <path d="M7 7h10v10" />
                 </svg>
               </div>
-            </button>
+            </Link>
           </span>
         </span>
       </div>
@@ -1512,74 +1556,126 @@ const BetterWaySection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.better_way ?? {}
 
-  const scallopCount = [...Array(15)]
+  const desktopScallopCount = 10
+  const mobileScallopCount = 6
+
+  const desktopBulbCount = desktopScallopCount - 1 // 9
+  const mobileBulbCount = mobileScallopCount - 1 // 5
+
+  const renderScallopStrip = ({
+    scallopCount,
+    bulbCount,
+    itemWidthClass,
+    topHeightClass,
+    innerHeightClass,
+    bulbImageSizeClass,
+    beamSizeClass,
+    beamBlurEven,
+    beamBlurOdd,
+    beamYClass,
+    topOffsetClass,
+    containerClass = 'left-0 right-0 w-full',
+  }) => {
+    return (
+      <div className={`absolute ${topOffsetClass} ${containerClass} flex pointer-events-none z-10`}>
+        {Array.from({ length: scallopCount }).map((_, i) => (
+          <div key={i} className={`relative flex-1 shrink-0 ${itemWidthClass} overflow-visible`}>
+            <div
+              className={`absolute top-0 left-0 right-0 ${topHeightClass} bg-[#CDB17E]`}
+              style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+            />
+            <div
+              className={`absolute top-0 left-0 right-0 ${innerHeightClass} bg-[#591902]`}
+              style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+            />
+
+            {i < bulbCount && (
+              <div
+                className="absolute top-0 right-0 z-20 flex flex-col items-center animate-swing"
+                style={{
+                  animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                  animationDelay: `${(i % 5) * 0.2}s`,
+                }}
+              >
+                <div
+                  className={`w-[1px] ${
+                    i % 2 === 0 ? 'h-[-10px] md:h-[-14px]' : 'h-[-4px] md:h-[-5px]'
+                  } bg-[#591902]/40`}
+                />
+                <div className={`relative flex flex-col items-center -mt-3 md:-mt-4 ${beamYClass}`}>
+                  <img
+                    src={i % 2 === 0 ? bulb1 : bulb2}
+                    alt="Light"
+                    className={bulbImageSizeClass}
+                  />
+                  <div
+                    className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 opacity-40 pointer-events-none animate-beam ${beamSizeClass} ${
+                      i % 2 === 0 ? beamBlurEven : beamBlurOdd
+                    }`}
+                    style={{
+                      animationDuration: `${4 + (i % 3) * 0.75}s`,
+                      animationDelay: `${(i % 5) * 0.2}s`,
+                      background:
+                        i % 2 === 0
+                          ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
+                          : 'linear-gradient(180deg, #FCE6A4 -1.95%, rgba(247,247,245,0) 100%)',
+                      clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <section
       data-nav-theme="glass"
       className="relative -mt-px md:mt-0 w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans"
     >
-      <div className="relative w-full max-w-[1440px] mx-auto min-h-[820px] md:h-[1171px] shrink-0">
-        {/* --- SCALLOP / BULB SECTION (Untouched) --- */}
-        <div className="absolute -top-px md:top-0 left-1/2 -translate-x-1/2 w-max flex pointer-events-none z-10">
-          {scallopCount.map((_, i) => (
-            <div
-              key={i}
-              className="relative shrink-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px]"
-            >
-              <div
-                className="absolute top-0 left-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[90px] bg-[#CDB17E]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              ></div>
-              <div
-                className="absolute top-0 left-0 w-[65.5px] h-[40.94px] md:w-[144px] md:h-[72px] bg-[#591902]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              ></div>
+      <div className="relative w-full max-w-[1440px] mx-auto min-h-[820px] md:max-lg:min-h-[980px] lg:h-[1040px] xl:h-[1171px] shrink-0">
+        {/* --- SCALLOP / BULB SECTION --- */}
+        <div className="hidden lg:flex">
+          {renderScallopStrip({
+            scallopCount: desktopScallopCount,
+            bulbCount: desktopBulbCount,
+            itemWidthClass: '',
+            topHeightClass: 'h-[90px]',
+            innerHeightClass: 'h-[72px]',
+            bulbImageSizeClass: 'w-[32px] h-auto relative z-10',
+            beamSizeClass: 'w-[76px] h-[78px] md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]',
+            beamBlurEven: '',
+            beamBlurOdd: 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]',
+            beamYClass: '',
+            topOffsetClass: 'top-0',
+            containerClass: 'top-0 left-1/2 -translate-x-1/2 w-screen',
+          })}
+        </div>
 
-              {i !== scallopCount.length - 1 && (
-                <div
-                  className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
-                  style={{
-                    animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                    animationDelay: `${(i % 5) * 0.2}s`,
-                  }}
-                >
-                  <div
-                    className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-14px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`}
-                  ></div>
-                  <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
-                    <img
-                      src={i % 2 === 0 ? bulb1 : bulb2}
-                      alt="Light"
-                      className="w-[20px] md:w-[32px] h-auto relative z-10"
-                    />
-                    <div
-                      className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
-                        i % 2 === 0
-                          ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
-                          : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                      }`}
-                      style={{
-                        animationDuration: `${4 + (i % 3) * 0.75}s`,
-                        animationDelay: `${(i % 5) * 0.2}s`,
-                        background:
-                          i % 2 === 0
-                            ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
-                            : 'linear-gradient(180deg, #FCE6A4 -1.95%, rgba(247,247,245,0) 100%)',
-                        clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="flex lg:hidden">
+          {renderScallopStrip({
+            scallopCount: mobileScallopCount,
+            bulbCount: mobileBulbCount,
+            itemWidthClass: '',
+            topHeightClass: 'h-[41px]',
+            innerHeightClass: 'h-[34px]',
+            bulbImageSizeClass: 'w-[20px] h-auto relative z-10',
+            beamSizeClass: 'w-[40px] h-[48px] blur-[4px]',
+            beamBlurEven: 'blur-[5px]',
+            beamBlurOdd: 'blur-[4px]',
+            beamYClass: '',
+            topOffsetClass: '-top-px',
+            containerClass: 'left-0 right-0 w-full',
+          })}
         </div>
 
         {/* --- HEADINGS --- */}
-        <div className="absolute w-[353px] md:w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[179px] md:top-[253px] flex flex-col items-center gap-[20px] md:gap-[10px] md:static md:block md:w-full md:max-w-none md:translate-x-0">
+        <div className="absolute w-[353px] lg:w-[760px] xl:w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[179px] lg:top-[180px] xl:top-[253px] flex flex-col items-center gap-[20px] lg:gap-[10px] lg:static lg:block lg:w-full lg:max-w-none lg:translate-x-0">
           <h2
-            className="w-full text-[#2D2D2D] text-[24px] md:text-[61px] leading-[1] text-center font-serif reveal-heading md:absolute md:w-[679px] md:left-1/2 md:-translate-x-1/2 md:top-[253px]"
+            className="w-full text-[#2D2D2D] text-[24px] lg:text-[54px] xl:text-[61px] leading-[1] text-center font-serif reveal-heading lg:absolute lg:w-[620px] xl:w-[679px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
             {s.heading ? (
@@ -1591,7 +1687,7 @@ const BetterWaySection = () => {
                 <span className="reveal-wrapper">
                   <span className="reveal-text">A Better Way Between </span>
                 </span>
-                <br className="hidden md:block" />
+                <br className="hidden lg:block" />
                 <span className="reveal-wrapper">
                   <span className="reveal-text">Event and DIY</span>
                 </span>
@@ -1599,7 +1695,7 @@ const BetterWaySection = () => {
             )}
           </h2>
 
-          <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] md:text-[16px] leading-[150%] md:leading-[1.5] text-center reveal-on-scroll md:absolute md:w-[809px] md:left-1/2 md:-translate-x-1/2 md:top-[403px] font-['Poppins'] md:font-sans">
+          <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] lg:text-[15px] xl:text-[16px] leading-[150%] lg:leading-[1.5] text-center reveal-on-scroll lg:absolute lg:w-[760px] xl:w-[809px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[290px] xl:top-[403px] font-['Poppins'] lg:font-sans">
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 Event planners can feel expensive and overwhelming. Doing everything yourself can
@@ -1613,7 +1709,7 @@ const BetterWaySection = () => {
         {/* --- VENN DIAGRAM (MOBILE & DESKTOP) --- */}
         {/* Desktop Version */}
         <motion.div
-          className="hidden md:block absolute w-[723px] max-w-[calc(100%-2rem)] h-[422px] left-1/2 -translate-x-1/2 top-[531px]"
+          className="hidden lg:block absolute lg:w-[620px] xl:w-[723px] max-w-[calc(100%-2rem)] lg:h-[362px] xl:h-[422px] left-1/2 -translate-x-1/2 lg:top-[395px] xl:top-[531px]"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.45 }}
@@ -1668,7 +1764,7 @@ const BetterWaySection = () => {
         </motion.div>
 
         {/* Mobile Version */}
-        <div className="relative z-20 mx-auto mt-[330px] flex w-full max-w-[420px] flex-col items-center px-4 pb-14 md:hidden">
+        <div className="relative z-20 mx-auto mt-[330px] flex w-full max-w-[420px] flex-col items-center px-4 pb-14 lg:hidden">
           <motion.div
             className="relative w-full max-w-[353px] aspect-[353/207]"
             initial="hidden"
@@ -1763,21 +1859,21 @@ const BetterWaySection = () => {
 
         {/* --- DIAGRAM TEXTS --- */}
         <h5
-          className="hidden md:block absolute left-[calc(50%-150.5px)] top-[742px] w-[185px] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[27px] leading-[1] font-serif"
+          className="hidden lg:block absolute lg:left-[calc(50%-129px)] xl:left-[calc(50%-150.5px)] lg:top-[576px] xl:top-[742px] lg:w-[160px] xl:w-[185px] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.left_label ?? 'Event Planner'}
         </h5>
 
         <h5
-          className="hidden md:block absolute left-[calc(50%+150.5px)] top-[742px] w-[80px] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[27px] leading-[1] font-serif"
+          className="hidden lg:block absolute lg:left-[calc(50%+129px)] xl:left-[calc(50%+150.5px)] lg:top-[576px] xl:top-[742px] lg:w-[68px] xl:w-[80px] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.right_label ?? 'DIY'}
         </h5>
 
         {/* --- LOGO --- */}
-        <div className="hidden md:flex absolute left-1/2 top-[742px] w-[320px] h-[320px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <div className="hidden lg:flex absolute left-1/2 lg:top-[576px] xl:top-[742px] lg:w-[250px] lg:h-[250px] xl:w-[320px] xl:h-[320px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
           <img
             src={centerLogo}
             alt="11 Logo"
@@ -1787,17 +1883,17 @@ const BetterWaySection = () => {
         </div>
 
         {/* --- SUB TEXTS --- */}
-        <p className="hidden md:block absolute w-[200px] left-[30px] top-[688px] text-[#957960] text-[12px] leading-[1.5] font-['Poppins'] md:font-sans">
+        <p className="hidden lg:block absolute lg:w-[170px] xl:w-[200px] lg:left-[22px] xl:left-[30px] lg:top-[520px] xl:top-[688px] text-[#957960] text-[11px] xl:text-[12px] leading-[1.5] font-['Poppins'] lg:font-sans">
           {s.left_body ??
             'Full-service planning often comes with high costs and long coordination cycles. You rely on large teams, multiple approvals, and a process that can feel heavier than the event itself.'}
         </p>
 
-        <p className="hidden md:block absolute w-[200px] right-[30px] top-[688px] text-[#591902] text-[12px] leading-[1.5] text-right font-['Poppins'] md:font-sans">
+        <p className="hidden lg:block absolute lg:w-[170px] xl:w-[200px] lg:right-[22px] xl:right-[30px] lg:top-[520px] xl:top-[688px] text-[#591902] text-[11px] xl:text-[12px] leading-[1.5] text-right font-['Poppins'] lg:font-sans">
           {s.right_body ??
             'Planning everything yourself means juggling vendors, comparing prices, managing logistics, and making countless decisions. It quickly turns a celebration into a checklist.'}
         </p>
 
-        <p className="hidden md:block absolute w-[285px] left-1/2 -translate-x-1/2 top-[993px] text-[#2D2D2D] text-[12px] leading-[1.5] text-center font-['Poppins'] md:font-sans">
+        <p className="hidden lg:block absolute lg:w-[265px] xl:w-[285px] left-1/2 -translate-x-1/2 lg:top-[770px] xl:top-[993px] text-[#2D2D2D] text-[11px] xl:text-[12px] leading-[1.5] text-center font-['Poppins'] lg:font-sans">
           {s.center_body ??
             'The balance between structure and simplicity. You get curated decor, trusted vendors, and guided planning, without the pressure or the price of full-scale event management.'}
         </p>
@@ -1902,41 +1998,20 @@ const MobileChecklistGrid = ({ chaosItems, chaosCardDetails, chaosImages, chaosS
     </div>
   )
 }
+
 const ChecklistSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.checklist ?? {}
-
-  const chaosItems = s.chaos_items ?? [
-    { title: 'Too much scrolling.' },
-    { title: 'Too many calls.' },
-    { title: 'Too many vendors.' },
-    { title: 'Too many decisions.' },
-  ]
   const reliefItems = s.relief_items ?? [
     "You don't manage people",
     "You don't manage logistics",
     'No chasing vendors',
     'No waiting anxiously!',
   ]
-  const chaosCardDetails = [
-    chaosItems[0]?.description ??
-      'What was once simple now means endless scrolling and still no confidence.',
-    chaosItems[1]?.description ??
-      'Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns into a coordination hub, and excitement becomes stress.',
-    chaosItems[2]?.description ??
-      "One decorator, one caterer, one supplier, different prices, different chaos. You're not planning a celebration, you're managing a team.",
-    chaosItems[3]?.description ??
-      "Color themes, backdrops, menus, endless add-ons mean options don't mean more freedom, just more pressure.",
-  ]
-  const chaosImages = [imgScrolling, imgCalls, imgVendors, imgDecisions]
-  const chaosShadowClasses = [
-    'chaos-person-shadow-right',
-    'chaos-person-shadow-right',
-    'chaos-person-shadow-both',
-    'chaos-person-shadow-right',
-  ]
-
-  const scallopCount = [...Array(15)]
+  const desktopScallopCount = 10
+  const mobileScallopCount = 6
+  const desktopBulbCount = desktopScallopCount - 1
+  const mobileBulbCount = mobileScallopCount - 1
   const sectionRef = useRef(null)
   const [howItWorksVisible, setHowItWorksVisible] = useState(false)
   const [isLayoutVisible, setIsLayoutVisible] = useState(false)
@@ -2080,6 +2155,71 @@ const ChecklistSection = () => {
     }
   }, [])
 
+  const renderChecklistScallopStrip = ({
+    scallopCount,
+    bulbCount,
+    itemHeightClass,
+    topHeightClass,
+    innerHeightClass,
+    bulbImageSizeClass,
+    beamSizeClass,
+    beamBlurEven,
+    beamBlurOdd,
+    topOffsetClass,
+  }) => (
+    <div className={`absolute ${topOffsetClass} left-0 right-0 w-full flex`}>
+      {Array.from({ length: scallopCount }).map((_, i) => (
+        <div key={i} className={`relative flex-1 shrink-0 overflow-visible ${itemHeightClass}`}>
+          <div
+            className={`absolute top-0 left-0 right-0 ${topHeightClass} bg-[#CDB17E]`}
+            style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+          />
+          <div
+            className={`absolute top-0 left-0 right-0 ${innerHeightClass} bg-[#F2F2F2]`}
+            style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
+          />
+          {i < bulbCount && (
+            <div
+              className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
+              style={{
+                animationDuration: `${3.5 + (i % 3) * 0.5}s`,
+                animationDelay: `${(i % 5) * 0.2}s`,
+              }}
+            >
+              <div
+                className={`w-[1px] ${
+                  i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'
+                } bg-[#591902]/40`}
+              />
+              <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
+                <img
+                  src={i % 2 !== 0 ? bulb1 : bulb2}
+                  alt="Light"
+                  className={bulbImageSizeClass}
+                  loading="lazy"
+                />
+                <div
+                  className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 opacity-40 pointer-events-none animate-beam ${beamSizeClass} ${
+                    i % 2 === 0 ? beamBlurEven : beamBlurOdd
+                  }`}
+                  style={{
+                    animationDuration: `${4 + (i % 3) * 0.75}s`,
+                    animationDelay: `${(i % 5) * 0.2}s`,
+                    background:
+                      i % 2 === 0
+                        ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
+                        : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
+                    clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+
   return (
     <section
       ref={sectionRef}
@@ -2088,59 +2228,34 @@ const ChecklistSection = () => {
     >
       {/* Lightbulbs */}
       <div className="absolute -top-px md:top-0 left-0 w-full h-[300px] overflow-hidden pointer-events-none z-10">
-        <div className="absolute top-0 left-0 w-full flex">
-          {scallopCount.map((_, i) => (
-            <div
-              key={i}
-              className="relative shrink-0 w-[65.5px] md:w-[144px] h-[40.94px] md:h-[90px]"
-            >
-              <div
-                className="absolute top-0 left-0 w-full h-[40.94px] md:h-[72px] bg-[#CDB17E]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              />
-              <div
-                className="absolute top-0 left-0 w-full h-[40.94px] md:h-[60px] bg-[#F2F2F2]"
-                style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
-              />
-              {i !== scallopCount.length - 1 && (
-                <div
-                  className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
-                  style={{
-                    animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                    animationDelay: `${(i % 5) * 0.2}s`,
-                  }}
-                >
-                  <div
-                    className={`w-[1px] ${i % 2 === 0 ? 'h-[-10px] md:h-[-15px]' : 'h-[-4px] md:h-[-5px]'} bg-[#591902]/40`}
-                  />
-                  <div className="relative flex flex-col items-center -mt-3 md:-mt-4">
-                    <img
-                      src={i % 2 === 0 ? bulb1 : bulb2}
-                      alt="Light"
-                      className="w-[20px] md:w-[32px] h-auto relative z-10"
-                      loading="lazy"
-                    />
-                    <div
-                      className={`absolute left-1/2 top-full -translate-y-1 md:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
-                        i % 2 === 0
-                          ? 'md:w-[76px] md:h-[78px] blur-[6px] md:blur-[8px]'
-                          : 'md:w-[76px] md:h-[59px] blur-[4px] md:blur-[4px]'
-                      }`}
-                      style={{
-                        animationDuration: `${4 + (i % 3) * 0.75}s`,
-                        animationDelay: `${(i % 5) * 0.2}s`,
-                        background:
-                          i % 2 === 0
-                            ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
-                            : 'linear-gradient(180deg, #FCE6A4 -1.95%, #F8F4ED 100%)',
-                        clipPath: 'polygon(35% 0, 65% 0, 100% 100%, 0 100%)',
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="hidden md:flex">
+          {renderChecklistScallopStrip({
+            scallopCount: desktopScallopCount,
+            bulbCount: desktopBulbCount,
+            itemHeightClass: 'h-[90px]',
+            topHeightClass: 'h-[72px]',
+            innerHeightClass: 'h-[60px]',
+            bulbImageSizeClass: 'w-[32px] h-auto relative z-10',
+            beamSizeClass: 'w-[76px] h-[78px] blur-[6px] md:blur-[8px]',
+            beamBlurEven: '',
+            beamBlurOdd: 'w-[76px] h-[59px] blur-[4px] md:blur-[4px]',
+            topOffsetClass: 'top-0',
+          })}
+        </div>
+
+        <div className="flex md:hidden">
+          {renderChecklistScallopStrip({
+            scallopCount: mobileScallopCount,
+            bulbCount: mobileBulbCount,
+            itemHeightClass: 'h-[40.94px]',
+            topHeightClass: 'h-[40.94px]',
+            innerHeightClass: 'h-[40.94px]',
+            bulbImageSizeClass: 'w-[20px] h-auto relative z-10',
+            beamSizeClass: 'w-[44px] h-[44px] blur-[4px]',
+            beamBlurEven: 'blur-[5px]',
+            beamBlurOdd: 'blur-[4px]',
+            topOffsetClass: 'top-0',
+          })}
         </div>
       </div>
 
@@ -2157,26 +2272,20 @@ const ChecklistSection = () => {
         </span>
       </h2>
 
-      {/* ─── MOBILE GRID (FIXED) ─────────────────────────────────────────────── */}
-      <MobileChecklistGrid
-        chaosItems={chaosItems}
-        chaosCardDetails={chaosCardDetails}
-        chaosImages={chaosImages}
-        chaosShadowClasses={chaosShadowClasses}
-      />
-      {/* ─── END MOBILE GRID ─────────────────────────────────────────────────── */}
-
-      {/* Desktop layout — unchanged */}
+      {/* Desktop layout â€” unchanged */}
       <div
         ref={layoutWrapRef}
-        className="hidden md:block w-full max-w-[1034px] mx-auto mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
+        className="block w-[58%] mx-auto md:w-full overflow-visible mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
       >
         <div
-          className="relative w-full overflow-hidden mx-auto"
-          style={{ maxWidth: `${LAYOUT_W}px`, height: `${LAYOUT_H * layoutScale}px` }}
+          className="relative w-full flex justify-center"
+          style={{
+            height: `${LAYOUT_H * layoutScale}px`,
+          }}
         >
+          {/* SCALE + CENTER FIX */}
           <div
-            className="absolute top-0 left-[calc(50%+18px)] md:left-1/2"
+            className="absolute top-0 left-1/2"
             style={{
               width: `${LAYOUT_W}px`,
               height: `${LAYOUT_H}px`,
@@ -2184,146 +2293,188 @@ const ChecklistSection = () => {
               transformOrigin: 'top center',
             }}
           >
-            {/* STEP 1 */}
-            <div className="absolute left-[283px] top-[19px] w-[211px] h-[211px]">
+            <div className="relative w-full h-full max-w-full mx-auto px-10 sm:px-14 md:px-0 overflow-hidden">
+              {' '}
+              {/* STEP 1: Too much scrolling (Starts immediately) */}
+              <div className="absolute left-[28%] top-[3%] w-[20%] max-w-[211px] aspect-square">
+                {' '}
+                <div
+                  className={`anim-element slide-from-left ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0 shadow-sm`}
+                  style={{ '--delay': '0s' }}
+                ></div>
+                <img
+                  src={imgScrolling}
+                  className={`anim-element slide-from-bottom ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
+                  alt="Scrolling"
+                  style={{
+                    '--delay': '0.15s',
+                    filter: `
+      drop-shadow(-8px -10px 18px rgba(0,0,0,0.10))
+      drop-shadow(-2px -4px 8px rgba(0,0,0,0.06))
+    `,
+                  }}
+                  loading="lazy"
+                />
+              </div>
               <div
-                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] rounded-tl-full z-0`}
-                style={{
-                  '--delay': '0s',
-                  boxShadow:
-                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.1)',
-                }}
-              />
-              <img
-                src={imgScrolling}
-                className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
-                alt="Scrolling"
-                style={{ '--delay': '0.15s' }}
-                loading="lazy"
-              />
-            </div>
-            <div
-              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
-              style={{ '--delay': '0.25s' }}
-            >
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                {chaosItems[0]?.title ?? 'Too much scrolling.'}
-              </h3>
-            </div>
-            <div
-              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
-              style={{ '--delay': '0.3s' }}
-            >
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                What was once simple now means endless scrolling — and still no confidence.
-              </p>
-            </div>
-
-            {/* STEP 2 */}
-            <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
-              <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
-                style={{
-                  '--delay': '0.5s',
-                  boxShadow:
-                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
-                }}
-              />
-              <img
-                src={imgCalls}
-                alt="Calls"
-                className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
-                style={{ '--delay': '0.65s' }}
-                loading="lazy"
-              />
-              <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
-                style={{ '--delay': '0.8s' }}
+                className={`anim-element slide-from-left ${
+                  isLayoutVisible ? 'is-visible' : ''
+                } absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
+                style={{ '--delay': '0.25s' }}
               >
-                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
-                  {chaosItems[1]?.title ?? 'Too many calls.'}
+                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                  Too much scrolling.
                 </h3>
               </div>
               <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
-                style={{ '--delay': '0.85s' }}
+                className={`anim-element slide-from-left ${
+                  isLayoutVisible ? 'is-visible' : ''
+                } absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
+                style={{ '--delay': '0.3s' }}
               >
-                <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
-                  Follow-ups, confirmations, negotiations, and last-minute checks — your phone turns
-                  into a coordination hub, and excitement becomes stress.
+                <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                  What was once simple now means endless scrolling â€” and still no confidence.
                 </p>
               </div>
-            </div>
-
-            {/* STEP 3 */}
-            <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
+              {/* STEP 2: Too many calls (Starts at 1.4s) */}
+              <div className="absolute left-[510px] top-[1px] w-[524px] h-[229px] z-10">
+                <div
+                  className={`anim-element slide-from-right ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
+                  style={{ '--delay': '0.5s' }}
+                ></div>
+                <img
+                  src={imgCalls}
+                  alt="Calls"
+                  className={`anim-element slide-from-bottom ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
+                  style={{
+                    '--delay': '0.65s',
+                    filter: `
+    drop-shadow(0px -10px 18px rgba(109, 57, 8, 0.18))
+    drop-shadow(-6px 0px 12px rgba(109, 57, 8, 0.12))
+  `,
+                  }}
+                  loading="lazy"
+                />
+                <div
+                  className={`anim-element slide-from-right ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
+                  style={{ '--delay': '0.8s' }}
+                >
+                  <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
+                    Too many calls.
+                  </h3>
+                </div>
+                <div
+                  className={`anim-element slide-from-right ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
+                  style={{ '--delay': '0.85s' }}
+                >
+                  <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
+                    Follow-ups, confirmations, negotiations, and last-minute checks â€” your phone
+                    turns into a coordination hub, and excitement becomes stress.
+                  </p>
+                </div>
+              </div>
+              {/* STEP 3: Too many vendors (Starts at 2.8s) */}
+              <div className="absolute left-[510px] top-[246px] w-[211px] h-[211px]">
+                <div
+                  className={`anim-element slide-from-left ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute inset-0 bg-[#BFAC9B] z-0 shadow-sm`}
+                  style={{ '--delay': '1.0s' }}
+                ></div>
+                <img
+                  src={imgVendors}
+                  className={`anim-element slide-from-bottom ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
+                  alt="Vendors"
+                  style={{
+                    '--delay': '1.15s',
+                    filter: `
+      drop-shadow(0px -10px 18px rgba(0,0,0,0.12))
+      drop-shadow(-4px -6px 10px rgba(0,0,0,0.08))
+    `,
+                  }}
+                  loading="lazy"
+                />
+              </div>
               <div
-                className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute inset-0 bg-[#BFAC9B] z-0`}
-                style={{
-                  '--delay': '1.0s',
-                  boxShadow:
-                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.16), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
-                }}
-              />
-              <img
-                src={imgVendors}
-                className={`anim-element slide-from-bottom chaos-person-shadow-both ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
-                alt="Vendors"
-                style={{ '--delay': '1.15s' }}
-                loading="lazy"
-              />
-            </div>
-            <div
-              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
-              style={{ '--delay': '1.25s' }}
-            >
-              <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                {chaosItems[2]?.title ?? 'Too many vendors.'}
-              </h3>
-            </div>
-            <div
-              className={`anim-element slide-from-left ${isLayoutVisible ? 'is-visible' : ''} absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
-              style={{ '--delay': '1.3s' }}
-            >
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                One decorator, one caterer, one supplier, different prices, different chaos.
-                You&apos;re not planning a celebration; you&apos;re managing a team.
-              </p>
-            </div>
-
-            {/* STEP 4 */}
-            <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
+                className={`anim-element slide-from-left ${
+                  isLayoutVisible ? 'is-visible' : ''
+                } absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
+                style={{ '--delay': '1.25s' }}
+              >
+                <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
+                  Too many vendors.
+                </h3>
+              </div>
               <div
-                className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0`}
-                style={{
-                  '--delay': '1.5s',
-                  boxShadow:
-                    '0 -14px 26px -18px rgba(68, 33, 4, 0.2), -14px 0 22px -18px rgba(68, 33, 4, 0.1), 14px 0 22px -18px rgba(68, 33, 4, 0.16)',
-                }}
-              />
-              <img
-                src={imgDecisions}
-                alt="Decisions"
-                className={`anim-element slide-from-bottom chaos-person-shadow-right ${isLayoutVisible ? 'is-visible' : ''} absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
-                style={{ '--delay': '1.65s' }}
-                loading="lazy"
-              />
+                className={`anim-element slide-from-left ${
+                  isLayoutVisible ? 'is-visible' : ''
+                } absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
+                style={{ '--delay': '1.3s' }}
+              >
+                <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                  One decorator, one caterer, one supplier, different prices, different chaos.
+                  You&apos;re not planning a celebration; you&apos;re managing a team.
+                </p>
+              </div>
+              {/* STEP 4: Too many decisions (Starts at 4.2s) */}
+              <div className="absolute left-[461px] top-[466px] w-[260px] h-[211px] overflow-hidden rounded-br-full">
+                <div
+                  className={`anim-element slide-from-right ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0 shadow-sm`}
+                  style={{ '--delay': '1.5s' }}
+                ></div>
+                <img
+                  src={imgDecisions}
+                  alt="Decisions"
+                  className={`anim-element slide-from-bottom ${
+                    isLayoutVisible ? 'is-visible' : ''
+                  } absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
+                  style={{
+                    '--delay': '1.65s',
+                    filter: `
+      drop-shadow(0px -12px 20px rgba(0,0,0,0.14))
+      
+    `,
+                  }}
+                  loading="lazy"
+                />
+              </div>
             </div>
             <div
-              className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[662px] top-[551px] w-[122px] text-left z-20`}
+              className={`anim-element slide-from-right ${
+                isLayoutVisible ? 'is-visible' : ''
+              } absolute left-[662px] top-[551px] w-[122px] text-left z-20`}
               style={{ '--delay': '1.75s' }}
             >
               <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
-                {chaosItems[3]?.title ?? 'Too many decisions.'}
+                Too many decisions.
               </h3>
             </div>
+
             <div
-              className={`anim-element slide-from-right ${isLayoutVisible ? 'is-visible' : ''} absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
+              className={`anim-element slide-from-right ${
+                isLayoutVisible ? 'is-visible' : ''
+              } absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
               style={{ '--delay': '1.8s' }}
             >
-              <p className="hidden md:block text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                Color themes, backdrops, menus, endless add-ons — more options don&apos;t mean more
-                freedom, just more pressure.
+              <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
+                Color themes, backdrops, menus, endless add-ons â€” more options don&apos;t mean
+                more freedom, just more pressure.
               </p>
             </div>
           </div>
@@ -2364,30 +2515,32 @@ const ChecklistSection = () => {
         </h4>
       </div>
 
-      {/* Door section — unchanged */}
-      <div className="door-section relative w-full z-10 mt-0 md:mt-10">
+      {/* Door section unchanged */}
+      <div className="door-section relative w-full z-10  overflow-hidden">
         <div
           ref={gateAreaRef}
-          className="door-section__pin relative w-full z-20"
+          className="door-section__pin relative w-full z-20 h-[100svh] md:h-[100dvh] "
           style={{ position: 'relative' }}
         >
           <div
             ref={insideBgRef}
-            className="absolute inset-0 bg-[#f2d49e] opacity-0 pointer-events-none"
+            className="absolute inset-0 bg-[#F6D69D] opacity-0 pointer-events-none"
           />
-          <div className="relative z-10 flex flex-1 items-center justify-center">
+
+          <div className="absolute inset-0 flex items-center justify-center">
             <div
               ref={gateRef}
-              className="door-section__gate px-0 md:px-4"
+              className="door-section__gate w-full h-full"
               style={{ transformOrigin: 'center center', willChange: 'transform' }}
             >
-              <div className="door-section__gate-inner origin-center">
-                <CelebrationDoor className="w-full h-auto" />
+              <div className="door-section__gate-inner h-full w-full origin-center lg:my-5 flex items-start justify-center leading-none">
+                <CelebrationDoor className="block w-full h-full" />
               </div>
             </div>
           </div>
         </div>
-        <div ref={howItWorksRef} className="door-section__overlay relative z-20">
+
+        <div ref={howItWorksRef} className="door-section__overlay relative z-20 -mt-[100dvh]">
           <HowItWorksSection isVisible={howItWorksVisible} />
         </div>
       </div>
@@ -2398,7 +2551,7 @@ const ChecklistSection = () => {
   )
 }
 
-// Local fallback images — used until Strapi media is uploaded
+// Local fallback images â€” used until Strapi media is uploaded
 // Order matches PACKAGES_FALLBACK in src/data/packages.js
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg2, pkgImg3],
@@ -2447,6 +2600,8 @@ const PackagesSection = () => {
   const totalCards = count * 3
   /** 3D ring needs ≥2 packages; with 1 CMS item the triple-buffer showed 3 identical cards */
   const usePackageCylinder = count > 1
+  /** Show nav buttons/dots whenever there is at least 1 package */
+  const showNavButtons = count > 0
 
   const handleTransitionEnd = () => {
     if (count === 0 || !usePackageCylinder) return
@@ -2604,7 +2759,7 @@ const PackagesSection = () => {
         >
           {/* --- Mobile Only Navigation Arrows (Half Circles on Edges) --- */}
           <div
-            className={`absolute inset-y-0 left-0 right-0 md:hidden z-[100] flex items-center justify-between pointer-events-none ${usePackageCylinder ? '' : 'hidden'}`}
+            className={`absolute inset-y-0 left-0 right-0 md:hidden z-[100] flex items-center justify-between pointer-events-none ${showNavButtons ? '' : 'hidden'}`}
           >
             <button
               type="button"
@@ -2870,7 +3025,7 @@ const PackagesSection = () => {
 
       {/* Desktop Controls */}
       <div
-        className={`${usePackageCylinder ? 'hidden md:flex' : 'hidden'} w-[611px] max-w-[90vw] h-[48px] mx-auto justify-between items-center gap-[25px] z-20 relative -mt-20`}
+        className={`${showNavButtons ? 'hidden md:flex' : 'hidden'} w-[611px] max-w-[90vw] h-[48px] mx-auto justify-between items-center gap-[25px] z-20 relative -mt-20`}
       >
         <button
           type="button"
@@ -2922,7 +3077,7 @@ const PackagesSection = () => {
 
       {/* Mobile Main Pagination Dots */}
       <div
-        className={`${usePackageCylinder ? 'flex md:hidden' : 'hidden'} items-center justify-center gap-[6px] mt-[16px] z-20 relative`}
+        className={`${showNavButtons ? 'flex md:hidden' : 'hidden'} items-center justify-center gap-[6px] mt-[16px] z-20 relative`}
       >
         {packagesData.map((_, idx) => (
           <div
@@ -3225,7 +3380,7 @@ const PlanningGuidesSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="w-full min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans"
+      className="w-full min-h-auto bg-[#F2F2F2] md:bg-[#F4F4F2] flex flex-col overflow-hidden font-sans lg:min-h-screen"
     >
       {/* Header Info */}
       <div className="w-full max-w-[1440px] mx-auto pt-10 md:pt-24 pb-8 md:pb-12 px-6 md:px-12 lg:px-20 flex flex-col md:flex-row justify-between items-center md:items-center relative z-10">
@@ -3283,11 +3438,14 @@ const PlanningGuidesSection = () => {
       </div>
 
       {/* Main Content */}
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10">
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row flex-1 relative z-10 mb-10">
         {/* Categories Bar */}
-        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:py-16 lg:py-20 px-4 md:px-12 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b-0 relative reveal-border-y">
+        <aside className="w-full lg:w-[320px] pt-8 pb-0 md:pt-8 md:pb-4 lg:py-20 px-4 md:px-8 lg:px-16 flex flex-col items-center lg:items-start shrink-0 border-b-0 relative reveal-border-y">
           <div className="hidden lg:block absolute right-0 top-0 w-[1px] h-full bg-[#3D4035]/15 border-fill-y"></div>
-          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] lg:gap-8 flex-wrap justify-center w-full">
+          <div className="hidden lg:block absolute left-[-64px] bottom-0 w-[calc(100%+64px)] h-[1px] reveal-border-x">
+            <div className="absolute top-0 left-0 w-full h-full bg-[#3D4035]/15 border-fill-x"></div>
+          </div>
+          <div className="flex flex-row lg:flex-col items-center lg:items-start gap-[12px] md:gap-5 lg:gap-8 flex-wrap justify-center w-full">
             {safeCategories.map((cat, index) => {
               const isActive = cat === activeCategory
               return (
@@ -3325,28 +3483,28 @@ const PlanningGuidesSection = () => {
           </div>
         </aside>
 
-        <div className="flex-1 py-4 md:py-16 px-12 lg:px-8 flex flex-col">
+        <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-16 px-0 md:px-12 lg:px-8 w-full overflow-hidden md:overflow-hidden">
-            <div className="relative -mx-12 md:mx-0 min-h-[400px] md:min-h-0">
-              {/* Mobile Left Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 left-0 z-20 md:hidden pointer-events-none">
+          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
+            <div className="relative min-h-[460px] md:min-h-0">
+              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-r-full bg-[#ECE7DC] flex items-center justify-center border-y border-r border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
+                      d="M19 12H5M5 12L12 19M5 12L12 5"
+                      stroke="#CDB17E"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
                     />
                   </svg>
                 </button>
@@ -3354,7 +3512,7 @@ const PlanningGuidesSection = () => {
 
               <div
                 ref={carouselViewportRef}
-                className="overflow-hidden md:px-0"
+                className="w-[300px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
                 style={{
                   maskImage: isCarouselSliding ? edgeFadeMask : 'none',
                   WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
@@ -3373,7 +3531,7 @@ const PlanningGuidesSection = () => {
                   {filteredBlogs.map((blog, i) => (
                     <div
                       key={blog.id ?? blog.title}
-                      className="bg-white p-0 md:p-2.5 rounded-[8px] md:rounded-[24px] shadow-sm flex flex-col h-[400px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
                         width: isMobile
@@ -3381,7 +3539,7 @@ const PlanningGuidesSection = () => {
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
                       }}
                     >
-                      <div className="flex-1 rounded-t-[8px] md:rounded-t-[16px] rounded-b-[8px] md:rounded-b-none bg-[#E8E4DC] relative overflow-hidden h-full md:min-h-0">
+                      <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
                         <img
                           src={
                             blog.cover_image ??
@@ -3392,7 +3550,8 @@ const PlanningGuidesSection = () => {
                         />
                       </div>
 
-                      <div className="absolute bottom-[12px] mt-2 md:bottom-0 left-1/2 -translate-x-1/2 md:translate-x-0 w-[265px] md:w-auto md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:p-7 h-[120px] md:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:px-6 md:py-5 lg:p-7 h-[120px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
                         <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
                           {blog.title}
                         </h3>
@@ -3406,23 +3565,24 @@ const PlanningGuidesSection = () => {
               </div>
 
               {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[200px] -translate-y-1/2 right-0 z-20 md:hidden pointer-events-none">
+              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[34px] h-[68px] rounded-l-full bg-[#ECE7DC] flex items-center justify-center border-y border-l border-[#CDB17E] disabled:opacity-40 transition-opacity"
+                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
                 >
                   <svg
-                    className="w-[24px] h-[24px] -rotate-90 text-[#CDB17E]"
-                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    fill="none"
                   >
                     <path
+                      d="M5 12H19M19 12L12 19M19 12L12 5"
+                      stroke="#CDB17E"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
                     />
                   </svg>
                 </button>
@@ -3434,17 +3594,21 @@ const PlanningGuidesSection = () => {
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  <path
+                    d="M19 12H5M5 12L12 19M5 12L12 5"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
               <div className="flex items-center gap-[4px] justify-center">
@@ -3463,17 +3627,21 @@ const PlanningGuidesSection = () => {
               <button
                 onClick={goToNextPage}
                 disabled={safePage >= totalPages - 1}
-                className="w-12 h-12 rounded-[96px] bg-[#EAE6DD] flex items-center justify-center text-[#BEB09B] hover:bg-[#D4BA8E] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-[96px] bg-[#E6DCC6] flex items-center justify-center text-[#BEB09B] hover:bg-[#957960] hover:text-white transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg
-                  width="28"
-                  height="28"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <path
+                    d="M5 12H19M19 12L12 19M19 12L12 5"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </div>
@@ -3866,7 +4034,7 @@ const SplitInfoSection = () => {
   const splitRevealRef = useRef(null)
   const [isSplitVisible, setIsSplitVisible] = useState(false)
 
-  // inspirationImg is 15 MB — preload it 2 viewports ahead so it's ready on arrival
+  // inspirationImg is 15 MB â€” preload it 2 viewports ahead so it's ready on arrival
   const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
 
   useEffect(() => {
@@ -4105,12 +4273,26 @@ const SplitInfoSection = () => {
 
 export default function LandingPage() {
   const rootRef = useRef(null)
+  const { data: cmsData } = useLandingPage()
 
-  // ── Tiered asset preloading ───────────────────────────────────────────────
+  // When Strapi CMS data loads after mount, new .reveal-text spans are created
+  // inside elements that the global IO already marked .is-visible. Those new spans
+  // never get the class. This pass finds them and makes them visible immediately.
+  useEffect(() => {
+    if (!rootRef.current || !cmsData) return
+    rootRef.current.querySelectorAll('.is-visible').forEach(parent => {
+      parent.querySelectorAll('.reveal-text:not(.is-visible)').forEach(span => {
+        span.style.animationDelay = '0s'
+        span.classList.add('is-visible')
+      })
+    })
+  }, [cmsData])
+
+  // â”€â”€ Tiered asset preloading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Tier 1 (on mount, during 2s preloader): only the images that appear the
-  //   instant the preloader fades — the scallop bulbs at the top of section 1.
+  //   instant the preloader fades â€” the scallop bulbs at the top of section 1.
   // Tier 2 (hero-preloader-done, ~3s in): checklist illustrations, first 3
-  //   package images, and the centre logo — sections 3–5.
+  //   package images, and the centre logo â€” sections 3â€“5.
   // Tier 3: IntersectionObserver hooks inside CelebrationFeelingSection and
   //   SplitInfoSection handle img1-5 and inspirationImg 2 viewports ahead.
   // All remaining img tags carry loading="lazy" so the browser fetches them

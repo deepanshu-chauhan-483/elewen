@@ -316,6 +316,31 @@ const GrandCelebrationsSection = () => {
     return () => window.removeEventListener('resize', updatePerPage)
   }, [])
 
+  useEffect(() => {
+    const root = sectionRef.current
+    if (!root) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          const el = entry.target
+          if (el.classList.contains('reveal-wrapper')) {
+            el.querySelectorAll('.reveal-text').forEach(text => text.classList.add('is-visible'))
+          } else {
+            el.classList.add('is-visible')
+          }
+          observer.unobserve(el)
+        })
+      },
+      { threshold: 0.12 }
+    )
+
+    root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
+
+    return () => observer.disconnect()
+  }, [isMobile])
+
   const normalizedPage = ((page % totalPages) + totalPages) % totalPages
 
   const normalizedIncomingPage =
@@ -338,11 +363,11 @@ const GrandCelebrationsSection = () => {
   const mobileStackTransforms = [
     { rotate: 0, x: 0, y: 0, scale: 1 },
 
-    { rotate: -10, x: -18, y: 14, scale: 0.97 },
+    { rotate: -10, x: -24, y: 10, scale: 0.96 },
 
-    { rotate: 10, x: 18, y: 20, scale: 0.95 },
+    { rotate: 10, x: 24, y: 12, scale: 0.95 },
 
-    { rotate: -6, x: -6, y: 26, scale: 0.93 },
+    { rotate: -5, x: 10, y: 18, scale: 0.92 },
   ]
 
   return (
@@ -351,12 +376,12 @@ const GrandCelebrationsSection = () => {
       className="relative w-full bg-[#FFFFFF] flex justify-center overflow-hidden font-sans"
     >
       {isMobile ? (
-        <div className="relative w-full max-w-[540px] mx-auto px-4 pt-10 pb-10 min-h-screen min-h-[100dvh] flex flex-col items-center">
+        <div className="relative w-full max-w-[540px] mx-auto px-5 pt-10 pb-10 flex flex-col items-center">
           {/* Title + note (mobile) */}
 
           <div className="w-full flex flex-col items-center text-center">
             <h3
-              className="text-[#2D2D2D] text-[28px] leading-[1.05] font-serif min-[375px]:text-[32px]"
+              className="max-w-[255px] text-[#2D2D2D] text-[28px] leading-[1] font-serif min-[375px]:text-[30px]"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               <span className="reveal-wrapper block">
@@ -366,7 +391,7 @@ const GrandCelebrationsSection = () => {
               </span>
             </h3>
 
-            <p className="mt-5 text-[#2D2D2D] opacity-50 text-[13px] leading-[1.5] max-w-[300px] min-[375px]:text-[14px] min-[375px]:max-w-[320px]">
+            <p className="mt-4 max-w-[285px] text-[#2D2D2D] opacity-50 text-[12px] leading-[1.45]">
               <span className="reveal-wrapper block">
                 <span
                   ref={noteRef}
@@ -382,70 +407,73 @@ const GrandCelebrationsSection = () => {
 
           {/* Stacked cards (mobile) */}
 
-          <div className="mt-8 flex-1 min-h-0 w-full flex items-center justify-center">
-            <div className="relative w-[min(74vw,280px)] aspect-[13/18] min-[375px]:w-[min(76vw,290px)]">
-              {mobileStackItems.map((item, idx) => {
-                const t =
-                  mobileStackTransforms[idx] ||
-                  mobileStackTransforms[mobileStackTransforms.length - 1]
-                return (
-                  <div
-                    key={`${item.id}-stack-${idx}`}
-                    className="absolute inset-0"
-                    style={{
-                      transform: `translate3d(${t.x}px, ${t.y}px, 0) rotate(${t.rotate}deg) scale(${t.scale})`,
+          <div className="mt-10 w-full flex flex-col items-center">
+            <div className="w-full flex items-center justify-center">
+              <div className="relative mb-6 h-[258px] w-[168px] min-[375px]:h-[276px] min-[375px]:w-[180px]">
+                {mobileStackItems.map((item, idx) => {
+                  const t =
+                    mobileStackTransforms[idx] ||
+                    mobileStackTransforms[mobileStackTransforms.length - 1]
+                  return (
+                    <div
+                      key={`${item.id}-stack-${idx}`}
+                      className="absolute inset-0"
+                      style={{
+                        transform: `translate3d(${t.x}px, ${t.y}px, 0) rotate(${t.rotate}deg) scale(${t.scale})`,
 
-                      zIndex: mobileStackItems.length - idx,
+                        zIndex: mobileStackItems.length - idx,
 
-                      transformOrigin: 'center',
-                    }}
-                  >
-                    <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[18px] shadow-[0_18px_42px_rgba(0,0,0,0.16)]">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
+                        transformOrigin: 'center',
+                        opacity: idx === 0 ? 1 : idx <= 2 ? 0.78 : 0.58,
+                      }}
+                    >
+                      <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[8px] shadow-[0_18px_40px_rgba(0,0,0,0.16)]">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Dots + description (mobile) */}
-          <div className="w-full flex flex-col items-center mt-3">
-            <div className="flex items-center justify-center gap-2 mt-3">
-              {Array.from({ length: totalPages }, (_, i) => {
-                const active = i === normalizedPage
-                return (
-                  <button
-                    key={`gc-dot-${i}`}
-                    type="button"
-                    onClick={() => setPage(i)}
-                    aria-label={`Go to celebrations ${i + 1}`}
-                    className={`rounded-full transition-all ${
-                      active ? 'w-5 h-1.5 bg-neutral-800' : 'w-3 h-1.5 bg-neutral-800/30'
-                    }`}
-                  />
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
 
-            <h4
-              className="mt-6 text-[#2D2D2D] text-[18px] leading-[1.1] font-serif uppercase tracking-wide text-center max-w-[300px] min-[375px]:text-[20px] min-[375px]:max-w-[320px]"
-              style={{ fontFamily: "'Malgin', serif" }}
-            >
-              {mobileActiveItem?.title}
-            </h4>
+            {/* Dots + description (mobile) */}
+            <div className="w-full flex flex-col items-center my-7 ">
+              <div className="flex items-center justify-center gap-[5px]">
+                {Array.from({ length: totalPages }, (_, i) => {
+                  const active = i === normalizedPage
+                  return (
+                    <button
+                      key={`gc-dot-${i}`}
+                      type="button"
+                      onClick={() => setPage(i)}
+                      aria-label={`Go to celebrations ${i + 1}`}
+                      className={`rounded-full transition-all ${
+                        active ? 'h-[4px] w-[20px] bg-[#7A2D06]' : 'h-[4px] w-[8px] bg-[#CFCFCF]'
+                      }`}
+                    />
+                  )
+                })}
+              </div>
 
-            <p className="mt-4 text-[#2D2D2D] opacity-50 text-[13px] leading-[1.6] text-center max-w-[300px] min-[375px]:text-[14px] min-[375px]:max-w-[320px]">
-              {mobileActiveItem?.desc}
-            </p>
+              <h4
+                className="mt-6 text-[#2D2D2D] text-[16px] leading-[1] font-serif uppercase text-center"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                {mobileActiveItem?.title}
+              </h4>
+
+              <p className="mt-3 max-w-[248px] text-[#2D2D2D] opacity-50 text-[12px] leading-[1.45] text-center">
+                {mobileActiveItem?.desc}
+              </p>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="relative w-full max-w-[1440px] min-h-[920px] lg:min-h-[960px] mx-auto">
+        <div className="relative w-full max-w-[1440px] min-h-[920px] lg:min-h-[890px] mx-auto">
           {/* Cards area (active + incoming layers) */}
 
           <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-full px-[5%] lg:px-[76px]">
@@ -2320,7 +2348,12 @@ const CelebrationFormSection = () => {
 const InHousePlannerSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
+  const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
+  const mobileHeroBody =
+    whatWeDo.mobile_intro ??
+    whatWeDo.intro ??
+    'We handle everything from the first conversation to the final wrap-up, understanding your vision, planning the concept and showflow, coordinating vendors and production, guiding styling and creative direction, and managing timelines, approvals, and execution so you can simply be present and enjoy the event.'
 
   useEffect(() => {
     const root = document.querySelector('[data-in-house-planner-page]')
@@ -2350,7 +2383,10 @@ const InHousePlannerSection = () => {
 
   return (
     <>
-      <ScrollImageSpreadSection />
+      <ScrollImageSpreadSection
+        mobileHeading={whatWeDo.heading ?? 'What we do as your In-House Planner'}
+        mobileBody={mobileHeroBody}
+      />
 
       <div data-in-house-planner-page>
         <section data-planner-intro className="w-full bg-[#957960] flex justify-center font-sans">
