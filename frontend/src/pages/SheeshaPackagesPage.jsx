@@ -5,6 +5,7 @@ export default function SheeshaPackagesPage() {
     <ServicePackagesPageContent
       serviceLabel="Sheesha"
       ctaTitle="Not sure which sheesha package is right for you?"
+      showHero={false}
     />
   )
 }

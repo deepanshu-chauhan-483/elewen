@@ -6,12 +6,14 @@ function ImageDots({ count, currentIndex = 0 }) {
   if (count <= 1) return null
 
   return (
-    <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5 z-10">
+    <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className={`h-[6px] w-[6px] rounded-full transition-all ${
-            i === currentIndex ? 'bg-white scale-110' : 'bg-white/60'
+          className={`transition-all duration-300 ${
+            i === currentIndex
+              ? 'h-[6px] w-[22px] rounded-full bg-white'
+              : 'h-[6px] w-[6px] rounded-full bg-white/60'
           }`}
         />
       ))}
@@ -88,7 +90,7 @@ export default function PackageCard({ pkg }) {
             type="button"
             onClick={goToNext}
             disabled={currentIndex === images.length - 1}
-            className="absolute right-0 top-1/2 z-20 hidden h-[41px] w-[20px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:flex"
+            className="absolute right-0 top-1/2 z-20 hidden bg-red h-[41px] w-[20px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:flex"
             aria-label="Next image"
           >
             <EventCarouselArrow direction="right" />

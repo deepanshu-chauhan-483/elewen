@@ -49,7 +49,9 @@ function ThemeCard({ categoryId, eventId, theme }) {
         <img src={theme.image} alt={theme.title} className="h-full w-full object-cover" />
       </div>
       <div className="mt-2 flex h-[40px] items-center rounded-[10px] bg-[#7E8061] px-3 text-white md:h-[44px] md:px-3.5">
-        <h2 className="text-[14px] font-medium leading-[1.2] md:text-[15px]">{theme.title}</h2>
+        <h2 className="text-[14px] font-medium leading-[1.2] md:text-[15px]">
+          {theme.title}
+        </h2>
       </div>
     </Link>
   )
@@ -65,7 +67,9 @@ export default function DecorThemePage() {
   const filteredThemes = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
     if (!query) return THEMES
-    return THEMES.filter(theme => theme.title.toLowerCase().includes(query))
+    return THEMES.filter(theme =>
+      theme.title.toLowerCase().includes(query)
+    )
   }, [searchValue])
 
   const backTo = useMemo(() => {
@@ -112,22 +116,22 @@ export default function DecorThemePage() {
         </Link>
       }
     >
-      {/* Container matching EventPage structure */}
       <div className="flex h-full w-full flex-col justify-between gap-3 overflow-visible">
-        <div
-          className="relative left-1/2 flex w-screen -translate-x-1/2 flex-1 items-center overflow-visible"
-        >
-          {/* LEFT ARROW - Screen Edge */}
+        
+        {/* KEEP THIS (for arrows at screen edges) */}
+        <div className="relative left-1/2 flex w-screen -translate-x-1/2 flex-1 items-center overflow-visible">
+
+          {/* LEFT ARROW */}
           <button
             type="button"
             className="absolute left-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] md:flex"
-            aria-label="Previous themes"
           >
             <ThemeArrow direction="left" />
           </button>
 
-          {/* Themes Grid */}
-          <div className="mx-auto flex w-full max-w-[1280px] flex-col">
+          {/* ONLY FIX IS HERE 👇 */}
+          <div className="mx-auto flex w-full max-w-[1280px] flex-col px-[clamp(16px,2vw,40px)]">
+            
             <div className="flex w-full flex-col gap-3 md:gap-4">
               <div className="grid w-full py-3 grid-cols-1 justify-items-center gap-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
                 {filteredThemes.map(theme => (
@@ -140,16 +144,17 @@ export default function DecorThemePage() {
                 ))}
               </div>
             </div>
+
           </div>
 
-          {/* RIGHT ARROW - Screen Edge */}
+          {/* RIGHT ARROW */}
           <button
             type="button"
             className="absolute right-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] md:flex"
-            aria-label="Next themes"
           >
             <ThemeArrow direction="right" />
           </button>
+
         </div>
       </div>
     </EventFlowLayout>

@@ -31,9 +31,13 @@ export default function PackageResultsHero({
     <section
       className={`relative w-full max-h-[244px] overflow-hidden bg-[#591902] py-8 sm:py-10 mt-0 ${className}`}
     >
-      <div className="mx-5 flex w-full max-w-[1220px] flex-col justify-center">
+      {/* ✅ LEFT ALIGNED FIX */}
+      <div className="flex w-full max-w-[1220px] flex-col justify-center pl-[clamp(16px,4vw,80px)] pr-[clamp(16px,2vw,40px)]">
+
         <div className="flex w-full flex-col gap-3 text-white lg:flex-row lg:items-center lg:gap-8">
-          <span className="shrink-0 text-[14px] leading-none text-white/90">{title}</span>
+          <span className="shrink-0 text-[14px] leading-none text-white/90">
+            {title}
+          </span>
 
           <div className="flex w-full max-w-[553px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             {filters.map(filter => (
@@ -45,6 +49,7 @@ export default function PackageResultsHero({
             ))}
           </div>
         </div>
+
       </div>
     </section>
   )

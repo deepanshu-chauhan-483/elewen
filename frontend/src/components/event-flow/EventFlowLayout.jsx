@@ -78,12 +78,13 @@ export default function EventFlowLayout({
           className="event-flow-scroll hide-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#F8F4ED]"
           data-lenis-prevent
         >
-          <div className="mx-auto flex w-full max-w-[1280px] flex-col  py-3  sm:py-4  md:py-5">
+          {/* ✅ ONLY FIX HERE */}
+          <div className="mx-auto flex w-full max-w-[1280px] flex-col px-[clamp(16px,2vw,40px)] py-3 sm:py-4 md:py-5">
+
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="flex w-full max-w-[328px] flex-col gap-[12px] md:max-w-[440px] md:pt-20">
-                {' '}
                 <h1
-                  className="text-[28px] leading-[1] text-[#2D2D2D] sm:text-[32px] md:text-[36px] "
+                  className="text-[28px] leading-[1] text-[#2D2D2D] sm:text-[32px] md:text-[36px]"
                   style={{ fontFamily: "'Malgin', serif" }}
                 >
                   {title}
@@ -112,7 +113,9 @@ export default function EventFlowLayout({
             </div>
 
             <div className="relative mt-5 flex w-full flex-col items-center justify-start py-1">
-              <div className="flex w-full items-center justify-center px-0">{children}</div>
+              <div className="flex w-full items-center justify-center px-0">
+                {children}
+              </div>
 
               {showNextButton && nextTo ? (
                 <Link
@@ -150,8 +153,10 @@ export default function EventFlowLayout({
           <Footer />
         </section>
 
+        {/* ✅ ONLY FIX HERE */}
         <section className="h-[84px] shrink-0 bg-[#591902] sm:h-[92px] fix bottom-0">
-          <div className=" flex h-full w-full max-w-[1280px] items-center justify-between gap-6 mx-auto">
+          <div className="flex h-full w-full max-w-[1280px] items-center justify-between gap-6 mx-auto px-[clamp(16px,2vw,40px)]">
+
             {steps.length > 0 ? (
               <div className="flex flex-wrap items-start gap-x-0 gap-y-3">
                 {steps.map((step, index) => {
@@ -159,27 +164,28 @@ export default function EventFlowLayout({
                   const isCompleted = step.id < currentStep
                   const showConnector = index < steps.length - 1
                   const isPlaceholderStep = !step.label?.trim()
+
                   return (
-                   <div key={step.id} className="flex flex-col items-start">
+                    <div key={step.id} className="flex flex-col items-start">
                       <div className="flex items-start">
                         <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[14px] font-medium transition-colors ${
+                          className={`flex h-8 w-8 items-center justify-center rounded-full border text-[14px] ${
                             isActive
                               ? 'border-white bg-white text-[#8C4A22]'
                               : isCompleted
-                                ? 'border-[#CBAA78] bg-white text-[#8C4A22]'
-                                : 'border-[#C7AB98] bg-[#C7AB98] text-[#8C4A22]'
+                              ? 'border-[#CBAA78] bg-white text-[#8C4A22]'
+                              : 'border-[#C7AB98] bg-[#C7AB98] text-[#8C4A22]'
                           }`}
                         >
                           {isPlaceholderStep ? '' : step.id}
                         </div>
- 
-                        {showConnector ? (
-                          <div className="mt-[16px] h-px w-12 border-t border-dashed border-[#A46A4A] w-[25px] sm:w-[40px] md:w-[57px]" />
-                        ) : null}
+
+                        {showConnector && (
+                          <div className="mt-[16px] border-t border-dashed border-[#A46A4A] w-[25px] sm:w-[40px] md:w-[57px]" />
+                        )}
                       </div>
- 
-                      <span className="mt-1.5 block w-8 text-center text-[10px] leading-[1.2] text-[#E8CDB8] sm:text-[11px]">
+
+                      <span className="mt-1.5 w-8 text-center text-[10px] text-[#E8CDB8]">
                         {step.label}
                       </span>
                     </div>
@@ -191,7 +197,7 @@ export default function EventFlowLayout({
             {showBackButton && backTo ? (
               <Link
                 to={backTo}
-                className="items-center gap-2 rounded-full bg-[#FAFAFA33] px-4 mr-2 py-2.5 text-[14px] leading-none text-white transition-colors hover:bg-[#9a5530] md:flex"
+                className="items-center gap-2 rounded-full bg-[#FAFAFA33] px-4 mr-2 py-2.5 text-[14px] text-white md:flex"
               >
                 <ArrowIcon direction="left" />
                 <span>Previous</span>
@@ -200,8 +206,6 @@ export default function EventFlowLayout({
           </div>
         </section>
       </div>
-
-      {/* <Footer /> */}
     </main>
   )
 }

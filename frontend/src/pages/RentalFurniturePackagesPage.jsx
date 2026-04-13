@@ -5,6 +5,7 @@ export default function RentalFurniturePackagesPage() {
     <ServicePackagesPageContent
       serviceLabel="Rental Furniture"
       ctaTitle="Not sure which rental furniture package is right for you?"
+      showHero={false}
     />
   )
 }

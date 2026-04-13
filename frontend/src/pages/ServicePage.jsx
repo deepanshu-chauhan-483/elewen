@@ -61,9 +61,6 @@ function ServiceCard({ categoryId, eventId, service }) {
       to={`${SERVICE_ROUTE_MAP[service.id] ?? '/package-listing'}?category=${categoryId}&event=${eventId}&service=${service.id}`}
       className="group flex h-full max-h-[340px] w-full max-w-[235px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[340px]"
     >
-      {/* <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
-        <img src={service.image} alt={service.title} className="h-full w-full object-cover" />
-      </div> */}
       <div className="flex h-[88px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-3 text-white md:h-[96px] md:px-4 md:py-3.5">
         <h2 className="text-[15px] font-medium leading-[1.2] text-white md:text-[16px]">
           {service.title}
@@ -100,17 +97,27 @@ export default function ServicePage() {
       showBackButton
       backTo={backTo}
     >
-      <div className="flex h-full w-full items-center">
-        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5 md:gap-4">
-          {SERVICE_OPTIONS.map(service => (
-            <ServiceCard
-              key={service.id}
-              categoryId={categoryId}
-              eventId={eventId}
-              service={service}
-            />
-          ))}
+      <div className="flex h-full w-full justify-center">
+
+        {/* SAME STRUCTURE AS OTHER PAGES */}
+        <div className="relative left-1/2 w-screen -translate-x-1/2 px-[clamp(16px,2vw,40px)]">
+          
+          <div className="mx-auto w-full max-w-[1280px]">
+            
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5 md:gap-4">
+              {SERVICE_OPTIONS.map(service => (
+                <ServiceCard
+                  key={service.id}
+                  categoryId={categoryId}
+                  eventId={eventId}
+                  service={service}
+                />
+              ))}
+            </div>
+
+          </div>
         </div>
+
       </div>
     </EventFlowLayout>
   )

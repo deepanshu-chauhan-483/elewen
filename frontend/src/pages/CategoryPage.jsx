@@ -52,34 +52,47 @@ export default function CategoryPage() {
       currentStep={1}
       steps={FLOW_STEPS}
     >
-      <div className="flex h-[40svh] w-full items-start mt-2 h-80 md:h-[50svh] lg:h-[60svh] ">
-        <div className="flex w-full flex-col gap-4 md:flex-row md:gap-5 ">
-          {CATEGORY_OPTIONS.map(category => (
-            <Link
-              key={category.id}
-              to={`/event-flow/event?category=${category.id}`}
-              className="group flex w-full max-w-[325px] max-h-[82px] items-center justify-between rounded-[24px] border border-[#E0D0BE] bg-white px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-[#D3B38A] hover:shadow-[0_16px_38px_rgba(111,76,43,0.08)] sm:px-6"
-            >
-              <div className="flex min-w-0 items-center gap-4 ">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#EFE4D2] text-[24px]">
-                  <span className="text-[16px] font-semibold text-[#8C4A22]">{category.badge}</span>
-                </span>
-                <div className="min-w-0 w-full max-w-[203px] max-h-[42px] overflow-hidden">
-                  <h2 className="text-[16px] md:text-[16px] leading-[1.1] text-[#2D2D2D]">
-                    {category.title}
-                  </h2>
-                  <p className="mt-1 text-[12px] md:text-[12px] leading-[1.45] text-[#8F8B86]">
-                    {category.description}
-                  </p>
-                </div>
-              </div>
+      <div className="flex h-[40svh] w-full items-start mt-2 md:h-[50svh] lg:h-[60svh]">
 
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center text-[#2D2D2D] transition-transform group-hover:translate-x-1">
-                <CategoryArrow />
-              </span>
-            </Link>
-          ))}
+        {/* ✅ FIXED WRAPPER (same system as other pages) */}
+        <div className="relative left-1/2 w-screen -translate-x-1/2">
+          
+          <div className="mx-auto w-full max-w-[1280px] px-[clamp(16px,2vw,40px)]">
+            
+            <div className="flex w-full flex-col gap-4 md:flex-row md:gap-5">
+              {CATEGORY_OPTIONS.map(category => (
+                <Link
+                  key={category.id}
+                  to={`/event-flow/event?category=${category.id}`}
+                  className="group flex w-full max-w-[325px] max-h-[82px] items-center justify-between rounded-[24px] border border-[#E0D0BE] bg-white px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-[#D3B38A] hover:shadow-[0_16px_38px_rgba(111,76,43,0.08)] sm:px-6"
+                >
+                  <div className="flex min-w-0 items-center gap-4">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#EFE4D2] text-[24px]">
+                      <span className="text-[16px] font-semibold text-[#8C4A22]">
+                        {category.badge}
+                      </span>
+                    </span>
+
+                    <div className="min-w-0 w-full max-w-[203px] max-h-[42px] overflow-hidden">
+                      <h2 className="text-[16px] leading-[1.1] text-[#2D2D2D]">
+                        {category.title}
+                      </h2>
+                      <p className="mt-1 text-[12px] leading-[1.45] text-[#8F8B86]">
+                        {category.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center text-[#2D2D2D] transition-transform group-hover:translate-x-1">
+                    <CategoryArrow />
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+          </div>
         </div>
+
       </div>
     </EventFlowLayout>
   )

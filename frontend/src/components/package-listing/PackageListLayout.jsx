@@ -32,15 +32,19 @@ export default function PackageListLayout({
   ctaTitle = 'Not sure which package is right for you?',
   ctaButtonText = 'Book a Consultation',
   ctaButtonTo = '/contact',
-  showPagination = true, // ← New prop (default: true)
-  heroContent = null, // ← New prop
+  showPagination = true,
+  heroContent = null,
 }) {
   return (
-    <main className="min-h-screen bg-white text-white">
+    <main className="min-h-screen overflow-x-hidden bg-white text-white">
       <NavHeader />
+
       {heroContent ? <div className="pt-18 md:pt-22">{heroContent}</div> : null}
-      <div className="px-4 pb-0 pt-20 sm:px-6 md:pt-24 lg:px-10 bg-[#2D2D2D">
+
+      {/* FIXED RESPONSIVE WRAPPER */}
+      <div className="bg-[#ffffff] px-[clamp(16px,2vw,40px)] pb-0 pt-20 md:pt-24 lg:pt-28">
         <div className="mx-auto flex w-full max-w-[1220px] flex-col">
+          
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p
               className="text-[27px] leading-none text-[#1C1C1C]"
@@ -74,7 +78,6 @@ export default function PackageListLayout({
 
           <div className="mt-8">{children}</div>
 
-          {/* Pagination - Only show if showPagination is true */}
           {showPagination && (
             <div className="mt-10 flex items-center justify-center gap-4 text-[#8C3B11]">
               <button
@@ -117,7 +120,7 @@ export default function PackageListLayout({
         </div>
       </div>
 
-      <section className="mt-16 flex w-full justify-center bg-[#591902] px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
+      <section className="mt-16 flex w-full justify-center bg-[#591902] px-[clamp(16px,2vw,40px)] py-16 sm:py-20 lg:py-24">
         <div className="flex w-full max-w-[1000px] flex-col items-center text-center">
           <h2
             className="max-w-[760px] text-[34px] leading-[0.95] text-white sm:text-[48px] lg:text-[72px]"
@@ -127,15 +130,13 @@ export default function PackageListLayout({
           </h2>
 
           <Link
-            to="/consultation"
-            onClick={() => setOpen(false)}
-            className="group mt-8 flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5  transition-colors hover:bg-[#C6AB7F]"
-            
+            to={ctaButtonTo}
+            className="group mt-8 flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F]"
           >
             <span className="mr-5 text-[15px] font-medium text-white">{ctaButtonText}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
               <svg
-                className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                className="h-[18px] w-[18px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
