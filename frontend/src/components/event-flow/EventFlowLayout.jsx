@@ -164,7 +164,7 @@ export default function EventFlowLayout({
                     const showConnector = index < steps.length - 1
                     const isPlaceholderStep = !step.label?.trim()
                     return (
-                     <div key={step.id} className="flex flex-col items-start">
+                      <div key={step.id} className="flex flex-col items-start">
                         <div className="flex items-start">
                           <div
                             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[14px] font-medium transition-colors ${
@@ -177,12 +177,12 @@ export default function EventFlowLayout({
                           >
                             {isPlaceholderStep ? '' : step.id}
                           </div>
-  
+
                           {showConnector ? (
                             <div className="mt-[16px] h-px w-12 border-t border-dashed border-[#A46A4A] w-[25px] sm:w-[40px] md:w-[57px]" />
                           ) : null}
                         </div>
-  
+
                         <span className="mt-1.5 block w-8 text-center text-[10px] leading-[1.2] text-[#E8CDB8] sm:text-[11px]">
                           {step.label}
                         </span>

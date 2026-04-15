@@ -52,9 +52,7 @@ function ThemeCard({ categoryId, eventId, serviceSlug, serviceId, theme, image }
         <img src={image} alt={theme.label} className="h-full w-full object-cover" />
       </div>
       <div className="mt-2 flex h-[40px] items-center rounded-[10px] bg-[#7E8061] px-3 text-white md:h-[44px] md:px-3.5">
-        <h2 className="text-[14px] font-medium leading-[1.2] md:text-[15px]">
-          {theme.label}
-        </h2>
+        <h2 className="text-[14px] font-medium leading-[1.2] md:text-[15px]">{theme.label}</h2>
       </div>
     </Link>
   )
@@ -137,7 +135,10 @@ export default function DecorThemePage() {
                     serviceSlug={serviceSlug}
                     serviceId={serviceId}
                     theme={theme}
-                    image={theme.preview_image || FALLBACK_THEME_IMAGES[index % FALLBACK_THEME_IMAGES.length]}
+                    image={
+                      theme.preview_image ||
+                      FALLBACK_THEME_IMAGES[index % FALLBACK_THEME_IMAGES.length]
+                    }
                   />
                 ))}
               </div>

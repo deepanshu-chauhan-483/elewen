@@ -64,7 +64,8 @@ export default function PackageResultsHero({
 
   const autoFilters = useMemo(() => {
     const categoryLabel =
-      categories.find(category => category.slug === categorySlug)?.name || titleizeSlug(categorySlug)
+      categories.find(category => category.slug === categorySlug)?.name ||
+      titleizeSlug(categorySlug)
     const eventLabel =
       events.find(event => event.slug === eventSlug)?.title || titleizeSlug(eventSlug)
     const themeLabel =
@@ -73,18 +74,10 @@ export default function PackageResultsHero({
       levels.find(level => level.slug === levelSlug)?.label || titleizeSlug(levelSlug)
 
     return [
-      categorySlug
-        ? { label: categoryLabel, widthClass: DEFAULT_WIDTHS.category }
-        : null,
-      eventSlug
-        ? { label: eventLabel, widthClass: DEFAULT_WIDTHS.event }
-        : null,
-      themeSlug
-        ? { label: themeLabel, widthClass: DEFAULT_WIDTHS.theme }
-        : null,
-      levelSlug
-        ? { label: levelLabel, widthClass: DEFAULT_WIDTHS.level }
-        : null,
+      categorySlug ? { label: categoryLabel, widthClass: DEFAULT_WIDTHS.category } : null,
+      eventSlug ? { label: eventLabel, widthClass: DEFAULT_WIDTHS.event } : null,
+      themeSlug ? { label: themeLabel, widthClass: DEFAULT_WIDTHS.theme } : null,
+      levelSlug ? { label: levelLabel, widthClass: DEFAULT_WIDTHS.level } : null,
     ].filter(Boolean)
   }, [categories, categorySlug, events, eventSlug, themes, themeSlug, levels, levelSlug])
 
@@ -96,9 +89,7 @@ export default function PackageResultsHero({
     >
       <div className="mx-15 flex w-full max-w-[1220px] flex-col justify-center">
         <div className="flex w-full flex-col gap-3 text-white lg:flex-row lg:items-center lg:gap-8">
-          <span className="shrink-0 text-[14px] leading-none text-white/90">
-            {title}
-          </span>
+          <span className="shrink-0 text-[14px] leading-none text-white/90">{title}</span>
 
           <div className="flex w-full max-w-[553px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             {displayFilters.map(filter => (

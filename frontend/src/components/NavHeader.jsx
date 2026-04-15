@@ -437,8 +437,9 @@ const NavHeader = () => {
       </header>
 
       <div
-        className={`fixed inset-x-0 top-0 z-[80] flex flex-col overflow-hidden bg-[#111110] md:inset-0 md:min-h-screen ${open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-          }`}
+        className={`fixed inset-x-0 top-0 z-[80] flex flex-col overflow-hidden bg-[#111110] md:inset-0 md:min-h-screen ${
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
         style={{
           height: isDesktop ? '100vh' : 'auto',
           clipPath: open ? 'inset(0% 0% 0% 0%)' : 'inset(0% 0% 100% 0%)',
@@ -749,4 +750,4 @@ const NavHeader = () => {
   )
 }
 
-export default NavHeader 
+export default NavHeader

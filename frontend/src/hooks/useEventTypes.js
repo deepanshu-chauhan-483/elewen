@@ -171,8 +171,9 @@ const mapServiceCategory = service => ({
   documentId: service.documentId,
   name: service.name?.trim() ?? '',
   slug: service.slug?.trim() || slugify(service.name),
-  description:
-    Array.isArray(service.description) ? blocksToText(service.description) : (service.description ?? ''),
+  description: Array.isArray(service.description)
+    ? blocksToText(service.description)
+    : (service.description ?? ''),
   category: (service.parent_category?.name ?? service.name ?? '').trim(),
   image: toAbsoluteStrapiUrl(service.icon?.url),
   wizardSteps: Array.isArray(service.wizard_steps) ? service.wizard_steps : [],
@@ -182,9 +183,8 @@ const findStepBySource = (steps, sourceName) =>
   (Array.isArray(steps) ? steps : []).find(step => step?.source === sourceName) ?? null
 
 const getFallbackEventsByCategory = categorySlug =>
-  EVENT_CARDS_FALLBACK
-    .filter(event => slugify(event.category) === slugify(categorySlug))
-    .map((event, index) => ({
+  EVENT_CARDS_FALLBACK.filter(event => slugify(event.category) === slugify(categorySlug)).map(
+    (event, index) => ({
       id: event.id ?? index,
       documentId: event.documentId,
       slug: slugify(event.title),
@@ -193,11 +193,14 @@ const getFallbackEventsByCategory = categorySlug =>
       category: event.category,
       categorySlug: slugify(event.category),
       image: event.image ?? null,
-    }))
+    })
+  )
 
 const parseQueryStringParams = value => {
   const params = {}
-  const source = String(value ?? '').trim().replace(/^&+/, '')
+  const source = String(value ?? '')
+    .trim()
+    .replace(/^&+/, '')
   if (!source) return params
 
   const searchParams = new URLSearchParams(source)
@@ -210,12 +213,11 @@ const parseQueryStringParams = value => {
 const mapWizardOption = (item, index) => ({
   id: item?.id ?? index,
   label: item?.name ?? item?.label ?? item?.title ?? `Option ${index + 1}`,
-  slug: item?.slug?.trim() || slugify(item?.name ?? item?.label ?? item?.title ?? item?.id ?? index),
+  slug:
+    item?.slug?.trim() || slugify(item?.name ?? item?.label ?? item?.title ?? item?.id ?? index),
   preview_image: toAbsoluteStrapiUrl(item?.preview_image?.url ?? item?.preview_image),
   description:
-    typeof item?.description === 'string'
-      ? item.description
-      : blocksToText(item?.description),
+    typeof item?.description === 'string' ? item.description : blocksToText(item?.description),
   starting_price: item?.starting_price ?? item?.base_price ?? null,
 })
 
@@ -223,8 +225,7 @@ const mapLevelOption = (level, index) => ({
   id: level.id ?? index,
   label: level.label ?? `Level ${index + 1}`,
   slug: level.slug ?? slugify(level.label ?? `level-${index + 1}`),
-  description:
-    level.description ?? 'Choose the package level that matches your event scale.',
+  description: level.description ?? 'Choose the package level that matches your event scale.',
   price: level.starting_price
     ? `Starting ${Number(level.starting_price).toLocaleString('en-IN')}`
     : '',
@@ -393,10 +394,9 @@ export function useServiceCards() {
           id: service.id,
           documentId: service.documentId,
           title: service.name ?? '',
-          description:
-            Array.isArray(service.description)
-              ? blocksToText(service.description)
-              : (service.description ?? ''),
+          description: Array.isArray(service.description)
+            ? blocksToText(service.description)
+            : (service.description ?? ''),
           category: (service.parent_category?.name ?? service.name ?? '').trim(),
           image: toAbsoluteStrapiUrl(service.icon?.url),
         }))
@@ -456,10 +456,7 @@ export function useDecorThemeOptions(serviceCategoryId) {
   const step = findStepBySource(query.data?.steps, 'themes')
   return {
     ...query,
-    data:
-      step?.options?.length
-        ? step.options
-        : DECOR_THEME_FALLBACK,
+    data: step?.options?.length ? step.options : DECOR_THEME_FALLBACK,
   }
 }
 
@@ -468,9 +465,6 @@ export function useBudgetLevelOptions(serviceCategoryId) {
   const step = findStepBySource(query.data?.steps, 'budget-levels')
   return {
     ...query,
-    data:
-      step?.options?.length
-        ? step.options.map(mapLevelOption)
-        : LEVELS_FALLBACK,
+    data: step?.options?.length ? step.options.map(mapLevelOption) : LEVELS_FALLBACK,
   }
 }

@@ -33,7 +33,6 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service }) {
   if (eventId) params.set('eventId', eventId)
   params.set('service', resolvedServiceSlug)
   if (service.id != null) params.set('serviceId', String(service.id))
-    
 
   return (
     <Link

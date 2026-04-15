@@ -60,7 +60,6 @@ export default function PackageCard({ pkg }) {
 
   return (
     <article className="flex min-h-[380px] flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
-      
       {/* Image Container */}
       <div
         className="relative overflow-hidden rounded-[6px] bg-[#E8E2DA]"
@@ -68,11 +67,7 @@ export default function PackageCard({ pkg }) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <img
-          src={currentImage}
-          alt={pkg.title}
-          className="h-[280px] w-full object-cover"
-        />
+        <img src={currentImage} alt={pkg.title} className="h-[280px] w-full object-cover" />
 
         {/* Price */}
         <div className="absolute right-3 top-3 z-30 rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#4B4B4B]">
@@ -138,7 +133,10 @@ export default function PackageCard({ pkg }) {
           <p className="text-[12px] font-medium">Includes :</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {(pkg.tags ?? []).slice(0, 5).map((tag, i) => (
-              <span key={i} className="text-[#2D2D2D] px-2 py-1 text-[12px] bg-black/5 rounded-full font-medium">
+              <span
+                key={i}
+                className="text-[#2D2D2D] px-2 py-1 text-[12px] bg-black/5 rounded-full font-medium"
+              >
                 {tag}
               </span>
             ))}

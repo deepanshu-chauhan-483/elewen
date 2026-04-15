@@ -62,7 +62,7 @@ export function usePackages() {
           'populate[packages][populate]': '*',
           sort: 'createdAt:asc',
         })
-console.log('FULL API DATA 👉', data)
+        console.log('FULL API DATA 👉', data)
         // Normalise Strapi v5 flat response → UI shape
         return data.map((pkg, i) => ({
           id: pkg.id,

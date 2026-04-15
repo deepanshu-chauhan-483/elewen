@@ -159,7 +159,11 @@ export default function EventPage() {
             <div className="flex w-full flex-col gap-3 md:gap-4">
               <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
                 {visibleEvents.map(event => (
-                  <EventCard key={event.id ?? event.slug} categorySlug={categorySlug} event={event} />
+                  <EventCard
+                    key={event.id ?? event.slug}
+                    categorySlug={categorySlug}
+                    event={event}
+                  />
                 ))}
               </div>
             </div>

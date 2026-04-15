@@ -35,12 +35,9 @@ export default function CategoryPage() {
       steps={FLOW_STEPS}
     >
       <div className="flex h-[40svh] w-full items-start mt-2 md:h-[50svh] lg:h-[60svh]">
-
         {/* ✅ FIXED WRAPPER (same system as other pages) */}
         <div className="relative left-1/2 w-screen -translate-x-1/2">
-          
           <div className="mx-auto w-full max-w-[1280px] px-[clamp(16px,2vw,40px)]">
-            
             <div className="flex w-full flex-col gap-4 md:flex-row md:gap-5">
               {categories.map(category => (
                 <Link
@@ -56,9 +53,7 @@ export default function CategoryPage() {
                     </span>
 
                     <div className="min-w-0 w-full max-w-[203px] max-h-[42px] overflow-hidden">
-                      <h2 className="text-[16px] leading-[1.1] text-[#2D2D2D]">
-                        {category.name}
-                      </h2>
+                      <h2 className="text-[16px] leading-[1.1] text-[#2D2D2D]">{category.name}</h2>
                       <p className="mt-1 text-[12px] leading-[1.45] text-[#8F8B86]">
                         {category.description}
                       </p>
@@ -71,10 +66,8 @@ export default function CategoryPage() {
                 </Link>
               ))}
             </div>
-
           </div>
         </div>
-
       </div>
     </EventFlowLayout>
   )
