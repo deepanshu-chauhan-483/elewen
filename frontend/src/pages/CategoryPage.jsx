@@ -1,32 +1,12 @@
 import { Link } from 'react-router-dom'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
+import { useEventCategoryOptions } from '../hooks/useEventTypes'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Category' },
   { id: 2, label: 'Event' },
   { id: 3, label: 'Service' },
   { id: 4, label: ' ' },
-]
-
-const CATEGORY_OPTIONS = [
-  {
-    id: 'social',
-    title: 'Social',
-    description: 'Birthdays, parties & more',
-    badge: 'S',
-  },
-  {
-    id: 'religious',
-    title: 'Religious',
-    description: 'Puja, ceremonies & rituals',
-    badge: 'R',
-  },
-  {
-    id: 'corporate',
-    title: 'Corporate',
-    description: 'Conferences, launches & more',
-    badge: 'C',
-  },
 ]
 
 function CategoryArrow() {
@@ -45,6 +25,8 @@ function CategoryArrow() {
 }
 
 export default function CategoryPage() {
+  const { data: categories = [] } = useEventCategoryOptions()
+
   return (
     <EventFlowLayout
       title="What are you planning?"
@@ -60,10 +42,10 @@ export default function CategoryPage() {
           <div className="mx-auto w-full max-w-[1280px] px-[clamp(16px,2vw,40px)]">
             
             <div className="flex w-full flex-col gap-4 md:flex-row md:gap-5">
-              {CATEGORY_OPTIONS.map(category => (
+              {categories.map(category => (
                 <Link
                   key={category.id}
-                  to={`/event-flow/event?category=${category.id}`}
+                  to={`/event-flow/event?category=${category.slug}`}
                   className="group flex w-full max-w-[325px] max-h-[82px] items-center justify-between rounded-[24px] border border-[#E0D0BE] bg-white px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-[#D3B38A] hover:shadow-[0_16px_38px_rgba(111,76,43,0.08)] sm:px-6"
                 >
                   <div className="flex min-w-0 items-center gap-4">
@@ -75,7 +57,7 @@ export default function CategoryPage() {
 
                     <div className="min-w-0 w-full max-w-[203px] max-h-[42px] overflow-hidden">
                       <h2 className="text-[16px] leading-[1.1] text-[#2D2D2D]">
-                        {category.title}
+                        {category.name}
                       </h2>
                       <p className="mt-1 text-[12px] leading-[1.45] text-[#8F8B86]">
                         {category.description}

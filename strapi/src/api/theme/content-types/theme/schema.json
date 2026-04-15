@@ -25,7 +25,9 @@
     "preview_image": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "is_active": {
       "type": "boolean",

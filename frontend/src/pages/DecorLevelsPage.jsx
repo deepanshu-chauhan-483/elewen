@@ -28,15 +28,6 @@ const DECOR_LEVELS = [
   { id: 'level-2', label: 'Level 2' },
   { id: 'level-3', label: 'Level 3' },
 ]
-function formatFilterLabel(value, fallback) {
-  if (!value) return fallback
- 
-  return value
-    .split('-')
-    .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
 const CARDS_PER_ROW = 3
 
 function RowArrow({ direction = 'left' }) {
@@ -99,9 +90,7 @@ export default function DecorLevelsPage() {
   const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
   const eventId = searchParams.get('event')?.toLowerCase() ?? ''
   const themeId = searchParams.get('theme')?.toLowerCase() ?? ''
-const categoryLabel = formatFilterLabel(categoryId, 'Social')
-  const eventLabel = formatFilterLabel(eventId, 'House Warming')
-  const themeLabel = formatFilterLabel(themeId, 'Retro')
+  const serviceId = searchParams.get('serviceId') ?? ''
   // Independent pagination state for each level
   const [pagination, setPagination] = useState({
     level1: 0,
@@ -151,6 +140,7 @@ const categoryLabel = formatFilterLabel(categoryId, 'Social')
     if (categoryId) params.set('category', categoryId)
     if (eventId) params.set('event', eventId)
     params.set('service', 'decor')
+    if (serviceId) params.set('serviceId', serviceId)
     if (themeId) params.set('theme', themeId)
     params.set('level', levelId)
     return `/packages/decor?${params.toString()}`
@@ -168,15 +158,7 @@ const categoryLabel = formatFilterLabel(categoryId, 'Social')
       onPageSelect={() => {}}
       ctaTitle="Not sure which decor package is right for you?"
       showPagination={false} // ← This hides the bottom number + arrow pagination
-       heroContent={
-        <PackageResultsHero
-          filters={[
-            { label: categoryLabel, widthClass: 'sm:w-[102px]' },
-            { label: eventLabel, widthClass: 'sm:w-[156px]' },
-            { label: themeLabel, widthClass: 'sm:w-[92px]' },
-          ]}
-        />
-      }
+      heroContent={<PackageResultsHero />}
     >
       <div className="flex flex-col gap-12">
         {/* Your existing content with per-level arrows and dynamic dots */}
@@ -212,38 +194,38 @@ const categoryLabel = formatFilterLabel(categoryId, 'Social')
                 </Link>
               </div>
 
-              <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-visible">
-                {/* LEFT ARROW */}
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  disabled={isPrevDisabled}
-                  className={`absolute left-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E7E0DA] pl-2 text-black transition-all md:flex ${
-                    isPrevDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#D9D0C4]'
-                  }`}
-                >
-                  <RowArrow direction="left" />
-                </button>
-
-                <div className="mx-auto w-full max-w-[1280px]">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {visiblePackages.map((pkg, index) => (
-                      <PackageCard key={`${level.id}-${pkg.id ?? pkg.title}-${index}`} pkg={pkg} />
-                    ))}
-                  </div>
+              <div className="relative overflow-visible">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {visiblePackages.map((pkg, index) => (
+                    <PackageCard key={`${level.id}-${pkg.id ?? pkg.title}-${index}`} pkg={pkg} />
+                  ))}
                 </div>
 
-                {/* RIGHT ARROW */}
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={isNextDisabled}
-                  className={`absolute right-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E7E0DA] pr-2 text-black transition-all md:flex ${
-                    isNextDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#D9D0C4]'
-                  }`}
-                >
-                  <RowArrow direction="right" />
-                </button>
+                <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 md:block">
+                  {/* LEFT ARROW */}
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    disabled={isPrevDisabled}
+                    className={`pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E7E0DA] pl-2 text-black transition-all ${
+                      isPrevDisabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-[#D9D0C4]'
+                    }`}
+                  >
+                    <RowArrow direction="left" />
+                  </button>
+
+                  {/* RIGHT ARROW */}
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={isNextDisabled}
+                    className={`pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E7E0DA] pr-2 text-black transition-all ${
+                      isNextDisabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-[#D9D0C4]'
+                    }`}
+                  >
+                    <RowArrow direction="right" />
+                  </button>
+                </div>
               </div>
 
               <DynamicDots totalPages={totalPages} currentPage={currentPage} />

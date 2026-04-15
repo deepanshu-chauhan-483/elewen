@@ -1,6 +1,7 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
+import { useDecorThemeOptions } from '../hooks/useEventTypes'
 
 import themeImg1 from '../assets/images/IMG_3903.jpg'
 import themeImg2 from '../assets/images/IMG_7768.jpg'
@@ -15,12 +16,7 @@ const FLOW_STEPS = [
   { id: 5, label: 'Package' },
 ]
 
-const THEMES = [
-  { id: 'retro', title: 'Retro', image: themeImg1 },
-  { id: 'disco', title: 'Disco', image: themeImg2 },
-  { id: 'floral', title: 'Floral', image: themeImg3 },
-  { id: 'bollywood', title: 'Bollywood', image: themeImg4 },
-]
+const FALLBACK_THEME_IMAGES = [themeImg1, themeImg2, themeImg3, themeImg4]
 
 function ThemeArrow({ direction = 'left' }) {
   const rotationClass = direction === 'right' ? '' : 'rotate-180'
@@ -39,18 +35,25 @@ function ThemeArrow({ direction = 'left' }) {
   )
 }
 
-function ThemeCard({ categoryId, eventId, theme }) {
+function ThemeCard({ categoryId, eventId, serviceSlug, serviceId, theme, image }) {
+  const params = new URLSearchParams()
+  params.set('category', categoryId)
+  params.set('event', eventId)
+  params.set('service', serviceSlug)
+  if (serviceId) params.set('serviceId', serviceId)
+  params.set('theme', theme.slug)
+
   return (
     <Link
-      to={`/packages/decor-levels?category=${categoryId}&event=${eventId}&service=decor&theme=${theme.id}`}
+      to={`/packages/decor-levels?${params.toString()}`}
       className="group flex max-h-[384px] w-full max-w-[298px] flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[8px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1"
     >
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
-        <img src={theme.image} alt={theme.title} className="h-full w-full object-cover" />
+        <img src={image} alt={theme.label} className="h-full w-full object-cover" />
       </div>
       <div className="mt-2 flex h-[40px] items-center rounded-[10px] bg-[#7E8061] px-3 text-white md:h-[44px] md:px-3.5">
         <h2 className="text-[14px] font-medium leading-[1.2] md:text-[15px]">
-          {theme.title}
+          {theme.label}
         </h2>
       </div>
     </Link>
@@ -63,29 +66,34 @@ export default function DecorThemePage() {
 
   const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
   const eventId = searchParams.get('event')?.toLowerCase() ?? ''
+  const serviceSlug = searchParams.get('service')?.toLowerCase() ?? 'decor'
+  const serviceId = searchParams.get('serviceId') ?? ''
+
+  const { data: themes = [] } = useDecorThemeOptions(serviceId)
 
   const filteredThemes = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
-    if (!query) return THEMES
-    return THEMES.filter(theme =>
-      theme.title.toLowerCase().includes(query)
-    )
-  }, [searchValue])
+    if (!query) return themes
+    return themes.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
+  }, [searchValue, themes])
 
   const backTo = useMemo(() => {
     const params = new URLSearchParams()
     if (categoryId) params.set('category', categoryId)
     if (eventId) params.set('event', eventId)
+    if (searchParams.get('eventId')) params.set('eventId', searchParams.get('eventId'))
     return `/event-flow/service?${params.toString()}`
-  }, [categoryId, eventId])
+  }, [categoryId, eventId, searchParams])
 
   const skipToPackages = useMemo(() => {
     const params = new URLSearchParams()
     if (categoryId) params.set('category', categoryId)
     if (eventId) params.set('event', eventId)
-    params.set('service', 'decor')
+    if (searchParams.get('eventId')) params.set('eventId', searchParams.get('eventId'))
+    params.set('service', serviceSlug)
+    if (serviceId) params.set('serviceId', serviceId)
     return `/packages/decor-levels?${params.toString()}`
-  }, [categoryId, eventId])
+  }, [categoryId, eventId, serviceSlug, serviceId, searchParams])
 
   if (!categoryId || !eventId) {
     return <Navigate to="/event-flow/category" replace />
@@ -109,7 +117,7 @@ export default function DecorThemePage() {
       afterPagination={
         <Link
           to={skipToPackages}
-          className="flex items-center gap-3 rounded-full bg-[#1F1F1F] px-5 py-2.5 my-5 text-[11px] font-medium text-white transition-colors hover:bg-black md:text-[12px]"
+          className="my-5 flex items-center gap-3 rounded-full bg-[#1F1F1F] px-5 py-2.5 text-[11px] font-medium text-white transition-colors hover:bg-black md:text-[12px]"
         >
           <span>Skip to Package Listing</span>
           <ThemeArrow direction="right" />
@@ -117,44 +125,42 @@ export default function DecorThemePage() {
       }
     >
       <div className="flex h-full w-full flex-col justify-between gap-3 overflow-visible">
-        
-        {/* KEEP THIS (for arrows at screen edges) */}
-        <div className="relative left-1/2 flex w-screen -translate-x-1/2 flex-1 items-center overflow-visible">
-
-          {/* LEFT ARROW */}
-          <button
-            type="button"
-            className="absolute left-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] md:flex"
-          >
-            <ThemeArrow direction="left" />
-          </button>
-
-          {/* ONLY FIX IS HERE 👇 */}
-          <div className="mx-auto flex w-full max-w-[1280px] flex-col px-[clamp(16px,2vw,40px)]">
-            
+        <div className="relative flex flex-1 items-center overflow-visible">
+          <div className="mx-auto flex w-full flex-col">
             <div className="flex w-full flex-col gap-3 md:gap-4">
-              <div className="grid w-full py-3 grid-cols-1 justify-items-center gap-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
-                {filteredThemes.map(theme => (
+              <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
+                {filteredThemes.map((theme, index) => (
                   <ThemeCard
-                    key={theme.id}
+                    key={theme.id ?? theme.slug ?? index}
                     categoryId={categoryId}
                     eventId={eventId}
+                    serviceSlug={serviceSlug}
+                    serviceId={serviceId}
                     theme={theme}
+                    image={theme.preview_image || FALLBACK_THEME_IMAGES[index % FALLBACK_THEME_IMAGES.length]}
                   />
                 ))}
               </div>
             </div>
-
           </div>
 
-          {/* RIGHT ARROW */}
-          <button
-            type="button"
-            className="absolute right-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] md:flex"
-          >
-            <ThemeArrow direction="right" />
-          </button>
+          <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 md:block">
+            <button
+              type="button"
+              className="pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5]"
+              aria-label="Previous themes"
+            >
+              <ThemeArrow direction="left" />
+            </button>
 
+            <button
+              type="button"
+              className="pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5]"
+              aria-label="Next themes"
+            >
+              <ThemeArrow direction="right" />
+            </button>
+          </div>
         </div>
       </div>
     </EventFlowLayout>

@@ -437,9 +437,8 @@ const NavHeader = () => {
       </header>
 
       <div
-        className={`fixed inset-x-0 top-0 z-[80] flex flex-col overflow-hidden bg-[#111110] md:inset-0 md:min-h-screen ${
-          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-        }`}
+        className={`fixed inset-x-0 top-0 z-[80] flex flex-col overflow-hidden bg-[#111110] md:inset-0 md:min-h-screen ${open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+          }`}
         style={{
           height: isDesktop ? '100vh' : 'auto',
           clipPath: open ? 'inset(0% 0% 0% 0%)' : 'inset(0% 0% 100% 0%)',
@@ -546,7 +545,7 @@ const NavHeader = () => {
               >
                 <span className="inline-block max-w-full md:max-w-[72%]">
                   <span
-                    className="inline-block w-auto max-w-none whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[14px] font-normal uppercase leading-[1] tracking-[0em] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] md:h-auto md:w-auto md:pb-1 md:text-[clamp(16px,1.25vw,22px)] md:leading-none "
+                    className="inline-block w-auto max-w-none whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[14px] font-normal uppercase leading-[1] tracking-[0em] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] md:h-auto md:w-auto md:pb-1 md:leading-none md:text-[clamp(16px,1.25vw,22px)]"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {link.label}
