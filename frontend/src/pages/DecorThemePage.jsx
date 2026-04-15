@@ -8,11 +8,10 @@ import themeImg3 from '../assets/images/IMG_0749.jpg'
 import themeImg4 from '../assets/images/IMG_0658.jpg'
 
 const FLOW_STEPS = [
-  { id: 1, label: 'Category' },
-  { id: 2, label: 'Event' },
-  { id: 3, label: 'Service' },
-  { id: 4, label: 'Theme' },
-  { id: 5, label: 'Package' },
+  { id: 1, label: 'Event' },
+  { id: 2, label: 'Service' },
+  { id: 3, label: 'Theme' },
+  { id: 4, label: 'Package' },
 ]
 
 const THEMES = [
@@ -91,7 +90,7 @@ export default function DecorThemePage() {
     <EventFlowLayout
       title="Choose a theme"
       subtitle="Pick a visual theme that sets the mood for your event"
-      currentStep={4}
+      currentStep={3}
       steps={FLOW_STEPS}
       showSearch
       searchPlaceholder="Search Theme Name"

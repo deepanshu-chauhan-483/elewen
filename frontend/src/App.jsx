@@ -30,6 +30,8 @@ import CateringPackagesPage from './pages/CateringPackagesPage'
 import BartendingPackagesPage from './pages/BartendingPackagesPage'
 import SheeshaPackagesPage from './pages/SheeshaPackagesPage'
 import BartendingLevelsPage from './pages/BartendingLevelsPage'
+import PackageDetailsPage from './pages/PackageDetailsPage'
+import DecorSinglePackagePage from './pages/DecorSinglePackagePage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -103,6 +105,8 @@ function AppLayout() {
         <Route path="/packages/catering" element={<CateringPackagesPage />} />
         <Route path="/packages/bartending" element={<BartendingPackagesPage />} />
         <Route path="/packages/sheesha" element={<SheeshaPackagesPage />} />
+        <Route path="/packages/decor-single/:packageId" element={<DecorSinglePackagePage />} />
+        <Route path="/packages/:service/:packageId" element={<PackageDetailsPage />} />
       </Routes>
       {!hideGlobalChrome && <Footer />}
     </>

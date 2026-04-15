@@ -28,7 +28,7 @@ const Footer = () => {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024)
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -64,10 +64,10 @@ const Footer = () => {
   return (
     <footer
       ref={footerRef}
-      className="flex min-h-[339px] w-full flex-col bg-[#F2F2F2] font-sans overflow-x-clip lg:min-h-[645px]"
+      className="flex min-h-[339px] w-full flex-col bg-[#F2F2F2] font-sans overflow-x-clip md:min-h-[645px]"
     >
       {/* Title */}
-      <div className="w-full px-2 pt-5 lg:pt-20">
+      <div className="w-full px-2 pt-5 md:pt-20">
         <h1
           className="w-full text-center leading-none text-[#2D2D2D]"
           style={{
@@ -82,30 +82,30 @@ const Footer = () => {
       </div>
 
       {/* Content */}
-      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 lg:px-[100px] lg:pb-12 lg:pt-24">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 md:px-[100px] md:pb-12 md:pt-24">
         {/* NAV */}
-        <div className="flex w-full flex-1 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
+        <div className="flex w-full flex-1 flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-10">
           {/* LEFT NAV (tablet = mobile behavior) */}
-          <div className="mx-auto flex w-full flex-col gap-[16px] lg:mx-0 lg:gap-4">
+          <div className="mx-auto flex w-full flex-col gap-[16px] md:mx-0 md:gap-4">
             {footerNav.map((row, i) => (
               <div
                 key={row.label}
-                className="flex flex-nowrap items-start gap-[6px] pl-2 lg:items-center lg:gap-[60px] lg:pl-0"
+                className="flex flex-nowrap items-start gap-[6px] pl-2 md:items-center md:gap-[60px] md:pl-0"
               >
                 <span
-                  className={`anim-element slide-from-left ${row.labelWidth} whitespace-nowrap text-[14px] md:text-[14px] lg:text-[16px] text-[#2D2D2D]`}
+                  className={`anim-element slide-from-left ${row.labelWidth} whitespace-nowrap text-[14px] md:text-[16px] text-[#2D2D2D]`}
                   style={{ '--delay': `${i * 0.06}s` }}
                 >
                   {row.label}
                 </span>
 
                 {/* LINKS */}
-                <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-[12px] overflow-x-auto lg:overflow-visible opacity-50 [-ms-overflow-style:none] [scrollbar-width:none] lg:flex-wrap lg:gap-x-7 lg:gap-y-2 [&::-webkit-scrollbar]:hidden">
+                <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-[12px] overflow-x-auto md:overflow-visible opacity-50 [-ms-overflow-style:none] [scrollbar-width:none] md:flex-wrap md:gap-x-7 md:gap-y-2 [&::-webkit-scrollbar]:hidden">
                   {row.links.map((link, linkIndex) => (
                     <a
                       key={link}
                       href="#"
-                      className="anim-element slide-from-left shrink-0 whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat pb-[2px] text-[14px] md:text-[14px] lg:text-[16px] text-[#2D2D2D] transition-[background-size,color] duration-500 ease-out hover:bg-[length:100%_1px] hover:text-[#591902]"
+                      className="anim-element slide-from-left shrink-0 whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat pb-[2px] text-[14px] md:text-[16px] text-[#2D2D2D] transition-[background-size,color] duration-500 ease-out hover:bg-[length:100%_1px] hover:text-[#591902]"
                       style={{ '--delay': `${i * 0.06 + 0.08 + linkIndex * 0.04}s` }}
                     >
                       {link}
@@ -117,7 +117,7 @@ const Footer = () => {
           </div>
 
           {/* RIGHT TEXT (ONLY DESKTOP) */}
-          <p className="hidden lg:block lg:w-[611px] text-[16px] text-[#2D2D2D] opacity-50">
+          <p className="hidden md:block md:w-[611px] text-[16px] text-[#2D2D2D] opacity-50">
             <span className="reveal-wrapper block">
               <span className="reveal-text">
                 Elewen simplifies event planning with curated décor, catering, and personal
@@ -129,11 +129,11 @@ const Footer = () => {
         </div>
 
         {/* Divider */}
-        <div className="mt-auto flex w-full flex-col items-center gap-2 pt-6 lg:items-end lg:pt-12">
-          <div className="w-full border-t border-black/20 lg:max-w-[720px]" />
+        <div className="mt-auto flex w-full flex-col items-center gap-2 pt-6 md:items-end md:pt-12">
+          <div className="w-full border-t border-black/20 md:max-w-[720px]" />
 
           <p
-            className="anim-element slide-from-bottom w-full text-center text-[12px] text-[#2D2D2D] opacity-50 lg:text-right lg:max-w-[720px]"
+            className="anim-element slide-from-bottom w-full text-center text-[12px] text-[#2D2D2D] opacity-50 md:max-w-[720px] md:text-right"
             style={{ '--delay': '0.12s' }}
           >
             © 2025 Elewen. All rights reserved.

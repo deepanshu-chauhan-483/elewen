@@ -31,7 +31,6 @@ export default function PackageListLayout({
   onPageSelect,
   ctaTitle = 'Not sure which package is right for you?',
   ctaButtonText = 'Book a Consultation',
-  ctaButtonTo = '/contact',
   showPagination = true, // ← New prop (default: true)
   heroContent = null, // ← New prop
 }) {
@@ -128,9 +127,7 @@ export default function PackageListLayout({
 
           <Link
             to="/consultation"
-            onClick={() => setOpen(false)}
             className="group mt-8 flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5  transition-colors hover:bg-[#C6AB7F]"
-            
           >
             <span className="mr-5 text-[15px] font-medium text-white">{ctaButtonText}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">

@@ -42,7 +42,7 @@ const NAVBAR_THEMES = {
       bgColor: '#050505',
       bgImage: null,
       iconColor: '#FAFAFA',
-      searchBg: 'rgba(255,255,255,0.18)',
+      searchBg: 'rgba(139, 135, 135, 0.18)',
       searchBorder: 'rgba(255,255,255,0.12)',
       logoMode: 'light',
     },
@@ -275,7 +275,8 @@ const NavHeader = () => {
   const mobileIconColor = isTransparentNav ? '#FAFAFA' : mobileTheme.iconColor
   const searchButtonBg = isTransparentNav ? 'rgba(255,255,255,0.22)' : desktopTheme.searchBg
   const searchButtonBorder = isTransparentNav ? 'rgba(255,255,255,0.16)' : desktopTheme.searchBorder
-  const searchTextColor = isTransparentNav ? 'rgba(255,255,255,0.82)' : 'rgba(38,38,38,0.58)'
+  const isLightSearchText = isTransparentNav || navThemeName === 'dark' || navThemeName === 'glass'
+  const searchTextColor = isLightSearchText ? 'rgba(255,255,255,0.82)' : 'rgba(38,38,38,0.58)'
   const visibilityClass = !entered ? 'invisible pointer-events-none' : ''
   const transformClass = !entered
     ? '-translate-y-4'
@@ -437,8 +438,9 @@ const NavHeader = () => {
       </header>
 
       <div
-        className={`fixed inset-x-0 top-0 z-[80] flex flex-col overflow-hidden bg-[#111110] md:inset-0 md:min-h-screen ${open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-          }`}
+        className={`fixed inset-x-0 top-0 z-[80] flex flex-col overflow-hidden bg-[#111110] md:inset-0 md:min-h-screen ${
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
         style={{
           height: isDesktop ? '100vh' : 'auto',
           clipPath: open ? 'inset(0% 0% 0% 0%)' : 'inset(0% 0% 100% 0%)',
@@ -533,8 +535,9 @@ const NavHeader = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => setOpen(false)}
-                className={`group flex items-end justify-between py-2.5 md:py-1.5 ${pathname === link.to ? 'text-[#CDB17E]' : 'text-white/85 hover:text-white'
-                  }`}
+                className={`group flex items-end justify-between py-2.5 md:py-1.5 ${
+                  pathname === link.to ? 'text-[#CDB17E]' : 'text-white/85 hover:text-white'
+                }`}
                 style={{
                   transitionDelay: open ? `${index * 50 + 100}ms` : '0ms',
                   transform: open ? 'translateY(0)' : 'translateY(20px)',
@@ -748,4 +751,4 @@ const NavHeader = () => {
   )
 }
 
-export default NavHeader 
+export default NavHeader

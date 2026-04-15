@@ -30,7 +30,7 @@ const DECOR_LEVELS = [
 ]
 function formatFilterLabel(value, fallback) {
   if (!value) return fallback
- 
+
   return value
     .split('-')
     .filter(Boolean)
@@ -99,7 +99,7 @@ export default function DecorLevelsPage() {
   const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
   const eventId = searchParams.get('event')?.toLowerCase() ?? ''
   const themeId = searchParams.get('theme')?.toLowerCase() ?? ''
-const categoryLabel = formatFilterLabel(categoryId, 'Social')
+  const categoryLabel = formatFilterLabel(categoryId, 'Social')
   const eventLabel = formatFilterLabel(eventId, 'House Warming')
   const themeLabel = formatFilterLabel(themeId, 'Retro')
   // Independent pagination state for each level
@@ -168,7 +168,7 @@ const categoryLabel = formatFilterLabel(categoryId, 'Social')
       onPageSelect={() => {}}
       ctaTitle="Not sure which decor package is right for you?"
       showPagination={false} // ← This hides the bottom number + arrow pagination
-       heroContent={
+      heroContent={
         <PackageResultsHero
           filters={[
             { label: categoryLabel, widthClass: 'sm:w-[102px]' },
@@ -181,8 +181,10 @@ const categoryLabel = formatFilterLabel(categoryId, 'Social')
       <div className="flex flex-col gap-12">
         {/* Your existing content with per-level arrows and dynamic dots */}
         <p className="max-w-[540px] text-[12px] leading-[1.5] text-black/35">
-          <span className='text-[16px] text-[#1C1C1C] font-medium'>Each level represents the scale and detail of your setup.</span><br /> Choose the level that matches
-          your event mood, guest count, and decor complexity.
+          <span className="text-[16px] text-[#1C1C1C] font-medium">
+            Each level represents the scale and detail of your setup.
+          </span>
+          <br /> Choose the level that matches your event mood, guest count, and decor complexity.
         </p>
 
         {DECOR_LEVELS.map((level, levelIndex) => {

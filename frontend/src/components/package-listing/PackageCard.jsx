@@ -1,6 +1,5 @@
-'use client'
-
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 function ImageDots({ count, currentIndex = 0 }) {
   if (count <= 1) return null
@@ -39,8 +38,16 @@ function EventCarouselArrow({ direction = 'left' }) {
 export default function PackageCard({ pkg }) {
   const images = pkg.images || []
   const [currentIndex, setCurrentIndex] = useState(0)
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const currentImage = images.length > 0 ? images[currentIndex] : null
+  const packageId = String(pkg.documentId ?? pkg.id ?? pkg.title)
+    .trim()
+    .toLowerCase()
+  const serviceSlug =
+    pkg.serviceSlug || new URLSearchParams(location.search).get('service') || 'decor'
+  const packageHref = `/packages/${serviceSlug}/${packageId}${location.search || ''}`
 
   const goToPrevious = () => {
     setCurrentIndex(prev => (prev === 0 ? images.length - 1 : prev - 1))
@@ -51,7 +58,18 @@ export default function PackageCard({ pkg }) {
   }
 
   return (
-    <article className="flex min-h-[380px] flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={() => navigate(packageHref)}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          navigate(packageHref)
+        }
+      }}
+      className="flex min-h-[380px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1"
+    >
       {/* Image Container */}
       <div className="relative overflow-hidden rounded-[6px] bg-[#E8E2DA]">
         {currentImage ? (
@@ -73,7 +91,10 @@ export default function PackageCard({ pkg }) {
         {images.length > 1 && (
           <button
             type="button"
-            onClick={goToPrevious}
+            onClick={event => {
+              event.stopPropagation()
+              goToPrevious()
+            }}
             disabled={currentIndex === 0}
             className="absolute left-0 top-1/2 z-20 hidden h-[41px] w-[20px]  -translate-y-1/2 items-center justify-end rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:flex"
             aria-label="Previous image"
@@ -86,7 +107,10 @@ export default function PackageCard({ pkg }) {
         {images.length > 1 && (
           <button
             type="button"
-            onClick={goToNext}
+            onClick={event => {
+              event.stopPropagation()
+              goToNext()
+            }}
             disabled={currentIndex === images.length - 1}
             className="absolute right-0 top-1/2 z-20 hidden h-[41px] w-[20px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:flex"
             aria-label="Next image"

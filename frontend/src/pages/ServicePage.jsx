@@ -8,10 +8,9 @@ import serviceImg4 from '../assets/images/usha.jpg'
 import serviceImg5 from '../assets/images/moksha_portrait.jpg'
 
 const FLOW_STEPS = [
-  { id: 1, label: 'Category' },
-  { id: 2, label: 'Event' },
-  { id: 3, label: 'Service' },
-  { id: 4, label: ' ' },
+  { id: 1, label: 'Event' },
+  { id: 2, label: 'Service' },
+  { id: 3, label: ' ' },
 ]
 
 const SERVICE_OPTIONS = [
@@ -84,8 +83,9 @@ export default function ServicePage() {
   const backTo = useMemo(() => {
     const params = new URLSearchParams()
     if (categoryId) params.set('category', categoryId)
-    return `/event-flow/event${params.toString() ? `?${params.toString()}` : ''}`
-  }, [categoryId])
+    if (eventId) params.set('event', eventId)
+    return `/event-flow/category${params.toString() ? `?${params.toString()}` : ''}`
+  }, [categoryId, eventId])
 
   if (!categoryId || !eventId) {
     return <Navigate to="/event-flow/category" replace />
@@ -95,7 +95,7 @@ export default function ServicePage() {
     <EventFlowLayout
       title="What do you need help with?"
       subtitle="Select a service - you can add more services later"
-      currentStep={3}
+      currentStep={2}
       steps={FLOW_STEPS}
       showBackButton
       backTo={backTo}

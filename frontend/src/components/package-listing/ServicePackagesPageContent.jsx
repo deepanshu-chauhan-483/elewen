@@ -47,21 +47,14 @@ export default function ServicePackagesPageContent({
   const eventId = searchParams.get('event')?.toLowerCase() ?? ''
   const themeId = searchParams.get('theme')?.toLowerCase() ?? ''
   const levelId = searchParams.get('level')?.toLowerCase() ?? ''
+  const serviceSlug = searchParams.get('service')?.toLowerCase() ?? serviceLabel.toLowerCase()
 
   const heroFilters = useMemo(() => {
     const filters = [
-      categoryId
-        ? { label: formatFilterLabel(categoryId), widthClass: 'sm:w-[118px]' }
-        : null,
-      eventId
-        ? { label: formatFilterLabel(eventId), widthClass: 'sm:w-[168px]' }
-        : null,
-      themeId
-        ? { label: formatFilterLabel(themeId), widthClass: 'sm:w-[110px]' }
-        : null,
-      levelId
-        ? { label: formatFilterLabel(levelId), widthClass: 'sm:w-[106px]' }
-        : null,
+      categoryId ? { label: formatFilterLabel(categoryId), widthClass: 'sm:w-[118px]' } : null,
+      eventId ? { label: formatFilterLabel(eventId), widthClass: 'sm:w-[168px]' } : null,
+      themeId ? { label: formatFilterLabel(themeId), widthClass: 'sm:w-[110px]' } : null,
+      levelId ? { label: formatFilterLabel(levelId), widthClass: 'sm:w-[106px]' } : null,
     ]
 
     return filters.filter(Boolean)
@@ -71,11 +64,12 @@ export default function ServicePackagesPageContent({
     () =>
       packages.map((pkg, i) => ({
         ...pkg,
+        serviceSlug,
         images: pkg.images?.length
           ? pkg.images
           : (PKG_LOCAL_IMAGES[i % PKG_LOCAL_IMAGES.length] ?? []),
       })),
-    [packages]
+    [packages, serviceSlug]
   )
 
   const serviceFilteredPackages = useMemo(() => {

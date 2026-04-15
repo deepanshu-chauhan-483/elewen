@@ -622,7 +622,7 @@ const HowItWorkHeroSection = () => {
   return (
     <section
       data-nav-surface="transparent"
-      className="relative flex min-h-screen w-full flex-col overflow-hidden bg-[#591902] pt-24 min-[540px]:pt-28 lg:pt-32"
+      className="relative flex h-full w-full flex-col overflow-hidden bg-[#591902] pt-24 min-[540px]:pt-28 lg:pt-32"
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-between">
         <div className="w-full px-6 pb-4 min-[540px]:px-10 min-[540px]:pb-6 lg:px-20 lg:pb-8 xl:px-[100px]">
