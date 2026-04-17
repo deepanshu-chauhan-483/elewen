@@ -4,10 +4,9 @@ import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useServiceOptions } from '../hooks/useEventTypes'
 
 const FLOW_STEPS = [
-  { id: 1, label: 'Category' },
-  { id: 2, label: 'Event' },
-  { id: 3, label: 'Service' },
-  { id: 4, label: ' ' },
+  { id: 1, label: 'Event' },
+  { id: 2, label: 'Service' },
+  { id: 3, label: ' ' },
 ]
 
 const SERVICE_ROUTE_MAP = {
@@ -73,7 +72,7 @@ export default function ServicePage() {
     <EventFlowLayout
       title="What do you need help with?"
       subtitle="Select a service - you can add more services later"
-      currentStep={3}
+      currentStep={2}
       steps={FLOW_STEPS}
       showBackButton
       backTo={backTo}

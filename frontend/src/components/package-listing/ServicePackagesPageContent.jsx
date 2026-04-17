@@ -25,6 +25,21 @@ const PKG_LOCAL_IMAGES = [
 
 const PAGE_SIZE = 9
 
+// function formatFilterLabel(label) {
+//   return label
+//     .split('-')
+//     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+//     .join(' ')
+// }
+
+function normaliseListingServiceSlug(serviceSlug = '') {
+  return String(serviceSlug)
+    .trim()
+    .toLowerCase()
+    .replace(/-single$/, '')
+    .replace(/-services?$/, '')
+}
+
 export default function ServicePackagesPageContent({
   ctaTitle = 'Not sure which package is right for you?',
   showHero = true,
@@ -34,6 +49,23 @@ export default function ServicePackagesPageContent({
   const [searchParams] = useSearchParams()
   const [sortValue, setSortValue] = useState('price-desc')
   const [page, setPage] = useState(1)
+  // const [searchParams] = useSearchParams()
+  // const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
+  // const eventId = searchParams.get('event')?.toLowerCase() ?? ''
+  // const themeId = searchParams.get('theme')?.toLowerCase() ?? ''
+  // const levelId = searchParams.get('level')?.toLowerCase() ?? ''
+  const listingServiceSlug = normaliseListingServiceSlug(serviceSlug)
+
+  // const heroFilters = useMemo(() => {
+  //   const filters = [
+  //     categoryId ? { label: formatFilterLabel(categoryId), widthClass: 'sm:w-[118px]' } : null,
+  //     eventId ? { label: formatFilterLabel(eventId), widthClass: 'sm:w-[168px]' } : null,
+  //     themeId ? { label: formatFilterLabel(themeId), widthClass: 'sm:w-[110px]' } : null,
+  //     levelId ? { label: formatFilterLabel(levelId), widthClass: 'sm:w-[106px]' } : null,
+  //   ]
+
+  //   return filters.filter(Boolean)
+  // }, [categoryId, eventId, themeId, levelId])
 
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
@@ -48,11 +80,12 @@ export default function ServicePackagesPageContent({
     () =>
       packages.map((pkg, i) => ({
         ...pkg,
+        serviceSlug: serviceSlug || pkg.service_slugs?.[0] || '',
         images: pkg.images?.length
           ? pkg.images
           : (PKG_LOCAL_IMAGES[i % PKG_LOCAL_IMAGES.length] ?? []),
       })),
-    [packages]
+    [packages, serviceSlug]
   )
 
   const filteredPackages = useMemo(

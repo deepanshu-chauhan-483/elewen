@@ -5,10 +5,9 @@ import { useBudgetLevelOptions } from '../hooks/useEventTypes'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Category' },
-  { id: 2, label: 'Event' },
-  { id: 3, label: 'Service' },
-  { id: 4, label: 'Levels' },
-  { id: 5, label: 'Package' },
+  { id: 2, label: 'Service' },
+  { id: 3, label: 'Levels' },
+  { id: 4, label: 'Package' },
 ]
 
 function normalizeServiceSlug(slug) {
@@ -72,8 +71,8 @@ export default function BartendingLevelsPage() {
   return (
     <EventFlowLayout
       title="Choose your package level"
-      subtitle="Select the level that best matches your event scale and guest experience."
-      currentStep={4}
+      subtitle="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+      currentStep={3}
       steps={FLOW_STEPS}
       showBackButton
       backTo={backTo}

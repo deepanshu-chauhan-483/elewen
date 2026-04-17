@@ -25,6 +25,20 @@ const PKG_LOCAL_IMAGES = [
   [pkgImg5, pkgImg1, pkgImg8],
 ]
 
+const DECOR_LEVELS = [
+  { id: 'level-1', label: 'Level 1' },
+  { id: 'level-2', label: 'Level 2' },
+  { id: 'level-3', label: 'Level 3' },
+]
+function formatFilterLabel(value, fallback) {
+  if (!value) return fallback
+
+  return value
+    .split('-')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
 const CARDS_PER_ROW = 3
 
 function RowArrow({ direction = 'left' }) {
@@ -90,13 +104,17 @@ export default function DecorLevelsPage() {
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const serviceId = searchParams.get('serviceId') ?? ''
   const { data: levels = [] } = useBudgetLevelOptions(serviceId)
+
+  const categoryLabel = formatFilterLabel(categorySlug, 'Category')
+  const eventLabel = formatFilterLabel(eventSlug, 'Event')
+  const themeLabel = formatFilterLabel(themeSlug, 'Theme')
+
   // Independent pagination state for each level
   const [pagination, setPagination] = useState({
     level1: 0,
     level2: 0,
     level3: 0,
   })
-
   const packagesData = useMemo(
     () =>
       packages.map((pkg, i) => ({
@@ -181,7 +199,15 @@ export default function DecorLevelsPage() {
       onPageSelect={() => {}}
       ctaTitle="Not sure which decor package is right for you?"
       showPagination={false} // ← This hides the bottom number + arrow pagination
-      heroContent={<PackageResultsHero />}
+     heroContent={
+  <PackageResultsHero
+    filters={[
+      { label: categoryLabel, widthClass: 'sm:w-[102px]' },
+      { label: eventLabel, widthClass: 'sm:w-[156px]' },
+      { label: themeLabel, widthClass: 'sm:w-[92px]' },
+    ]}
+  />
+}
     >
       <div className="flex flex-col gap-12">
         {/* Your existing content with per-level arrows and dynamic dots */}

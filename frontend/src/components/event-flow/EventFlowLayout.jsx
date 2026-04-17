@@ -5,9 +5,13 @@ import NavHeader from '../NavHeader'
 
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="m16 16 4 4" strokeLinecap="round" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.5"
+        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+      />
     </svg>
   )
 }
@@ -97,16 +101,18 @@ export default function EventFlowLayout({
                 </div>
 
                 {showSearch ? (
-                  <label className="flex h-11 w-full max-w-[300px] items-center gap-2.5 rounded-full bg-[#EFE8DE] px-4 text-[#A19B94]">
-                    <span className="h-4.5 w-4.5 shrink-0">
-                      <SearchIcon />
+                  <label className="flex w-full max-w-[300px] items-center gap-2.5 rounded-full bg-[#EFE8DE] px-2.5 py-1.5 text-[#A19B94]">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
+                      <span className="h-3.5 w-3.5">
+                        <SearchIcon />
+                      </span>
                     </span>
                     <input
                       type="text"
                       value={searchValue}
                       onChange={onSearchChange}
                       placeholder={searchPlaceholder}
-                      className="w-full bg-transparent text-[14px] text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
+                      className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
                     />
                   </label>
                 ) : null}

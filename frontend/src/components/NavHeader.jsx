@@ -42,7 +42,7 @@ const NAVBAR_THEMES = {
       bgColor: '#050505',
       bgImage: null,
       iconColor: '#FAFAFA',
-      searchBg: 'rgba(255,255,255,0.18)',
+      searchBg: 'rgba(139, 135, 135, 0.18)',
       searchBorder: 'rgba(255,255,255,0.12)',
       logoMode: 'light',
     },
@@ -275,7 +275,8 @@ const NavHeader = () => {
   const mobileIconColor = isTransparentNav ? '#FAFAFA' : mobileTheme.iconColor
   const searchButtonBg = isTransparentNav ? 'rgba(255,255,255,0.22)' : desktopTheme.searchBg
   const searchButtonBorder = isTransparentNav ? 'rgba(255,255,255,0.16)' : desktopTheme.searchBorder
-  const searchTextColor = isTransparentNav ? 'rgba(255,255,255,0.82)' : 'rgba(38,38,38,0.58)'
+  const isLightSearchText = isTransparentNav || navThemeName === 'dark' || navThemeName === 'glass'
+  const searchTextColor = isLightSearchText ? 'rgba(255,255,255,0.82)' : 'rgba(38,38,38,0.58)'
   const visibilityClass = !entered ? 'invisible pointer-events-none' : ''
   const transformClass = !entered
     ? '-translate-y-4'
