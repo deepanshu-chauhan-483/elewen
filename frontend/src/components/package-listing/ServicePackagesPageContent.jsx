@@ -66,7 +66,16 @@ export default function ServicePackagesPageContent({
         themeSlug,
         levelSlug,
       }),
-    [packagesData, categorySlug, eventSlug, eventId, selectedServiceSlug, serviceId, themeSlug, levelSlug]
+    [
+      packagesData,
+      categorySlug,
+      eventSlug,
+      eventId,
+      selectedServiceSlug,
+      serviceId,
+      themeSlug,
+      levelSlug,
+    ]
   )
 
   const sortedPackages = useMemo(() => {

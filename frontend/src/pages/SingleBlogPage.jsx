@@ -43,7 +43,10 @@ const blocksToHtml = blocks => {
 
   return blocks
     .map(block => {
-      const text = (block.children ?? []).map(child => child.text ?? '').join('').trim()
+      const text = (block.children ?? [])
+        .map(child => child.text ?? '')
+        .join('')
+        .trim()
       if (!text) return ''
 
       if (block.type === 'heading') return `<h3>${escapeHtml(text)}</h3>`

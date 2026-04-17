@@ -1,4 +1,7 @@
-const normalizeValue = value => String(value ?? '').trim().toLowerCase()
+const normalizeValue = value =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
 
 export const normalizeServiceSlug = value => {
   const normalized = normalizeValue(value)
@@ -10,7 +13,9 @@ const includesNormalized = (values, target) => {
   const normalizedTarget = normalizeValue(target)
   if (!normalizedTarget) return true
 
-  return (Array.isArray(values) ? values : []).some(value => normalizeValue(value) === normalizedTarget)
+  return (Array.isArray(values) ? values : []).some(
+    value => normalizeValue(value) === normalizedTarget
+  )
 }
 
 export function filterPackages(packages, filters = {}) {
