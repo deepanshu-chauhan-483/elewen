@@ -32,14 +32,6 @@ const PAGE_SIZE = 9
 //     .join(' ')
 // }
 
-function normaliseListingServiceSlug(serviceSlug = '') {
-  return String(serviceSlug)
-    .trim()
-    .toLowerCase()
-    .replace(/-single$/, '')
-    .replace(/-services?$/, '')
-}
-
 export default function ServicePackagesPageContent({
   ctaTitle = 'Not sure which package is right for you?',
   showHero = true,
@@ -54,7 +46,7 @@ export default function ServicePackagesPageContent({
   // const eventId = searchParams.get('event')?.toLowerCase() ?? ''
   // const themeId = searchParams.get('theme')?.toLowerCase() ?? ''
   // const levelId = searchParams.get('level')?.toLowerCase() ?? ''
-  const listingServiceSlug = normaliseListingServiceSlug(serviceSlug)
+  // const listingServiceSlug = normaliseListingServiceSlug(serviceSlug)
 
   // const heroFilters = useMemo(() => {
   //   const filters = [

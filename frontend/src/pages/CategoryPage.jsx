@@ -85,7 +85,8 @@ export default function CategoryPage() {
   })
 
   useEffect(() => {
-    if (!categories.length || !selectedCategoryId || requestedCategorySlug === selectedCategoryId) return
+    if (!categories.length || !selectedCategoryId || requestedCategorySlug === selectedCategoryId)
+      return
 
     setSearchParams(prevParams => {
       const nextParams = new URLSearchParams(prevParams)

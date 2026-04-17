@@ -41,7 +41,9 @@ function buildPackageId(pkg) {
 function createInitialCustomizationData(groups = []) {
   return {
     selectedOptions: Object.fromEntries(
-      groups.map(group => [group.label, group.options?.[0] ?? '']).filter(([, value]) => Boolean(value))
+      groups
+        .map(group => [group.label, group.options?.[0] ?? ''])
+        .filter(([, value]) => Boolean(value))
     ),
   }
 }
@@ -103,10 +105,16 @@ export default function PackageDetailsPage() {
   const normalizedService = normalizeServiceSlug(service)
   const search = searchParams.toString()
   const details = getServiceProductDetails(normalizedService)
-  const { customizations, activeCustomization, handleAddToCart, handleIncrease, handleDecrease, setCustomizations } =
-    useCustomization({
-      createInitialData: () => createInitialCustomizationData(details.configurableGroups),
-    })
+  const {
+    customizations,
+    activeCustomization,
+    handleAddToCart,
+    handleIncrease,
+    handleDecrease,
+    setCustomizations,
+  } = useCustomization({
+    createInitialData: () => createInitialCustomizationData(details.configurableGroups),
+  })
 
   const packagesData = useMemo(
     () =>
@@ -131,8 +139,7 @@ export default function PackageDetailsPage() {
         item =>
           buildPackageId(item) === normalisePackageId(packageId) &&
           item.service_slugs?.some(slug => normalizeServiceSlug(slug) === normalizedService)
-      ) ??
-      packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
+      ) ?? packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
     [normalizedService, packageId, packagesData]
   )
 
@@ -152,15 +159,14 @@ export default function PackageDetailsPage() {
   )
 
   if (normalizedService === 'decor' || normalizedService === 'decor-single') {
-    return <Navigate to={`/packages/decor-single/${packageId}${search ? `?${search}` : ''}`} replace />
+    return (
+      <Navigate to={`/packages/decor-single/${packageId}${search ? `?${search}` : ''}`} replace />
+    )
   }
 
   if (normalizedService === 'sheesha' || normalizedService === 'sheesha-single') {
     return (
-      <Navigate
-        to={`/packages/sheesha-single/${packageId}${search ? `?${search}` : ''}`}
-        replace
-      />
+      <Navigate to={`/packages/sheesha-single/${packageId}${search ? `?${search}` : ''}`} replace />
     )
   }
 
@@ -169,7 +175,9 @@ export default function PackageDetailsPage() {
   }
 
   const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
-  const sideImages = Array.from({ length: 5 }).map((_, index) => sourceImages[index % sourceImages.length])
+  const sideImages = Array.from({ length: 5 }).map(
+    (_, index) => sourceImages[index % sourceImages.length]
+  )
   const packageTitle = pkg.title || details.heroBadge
   const packagePrice = pkg.price || ''
   const packageIntro = pkg.description || details.intro

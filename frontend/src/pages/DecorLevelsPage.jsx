@@ -25,11 +25,11 @@ const PKG_LOCAL_IMAGES = [
   [pkgImg5, pkgImg1, pkgImg8],
 ]
 
-const DECOR_LEVELS = [
-  { id: 'level-1', label: 'Level 1' },
-  { id: 'level-2', label: 'Level 2' },
-  { id: 'level-3', label: 'Level 3' },
-]
+// const DECOR_LEVELS = [
+//   { id: 'level-1', label: 'Level 1' },
+//   { id: 'level-2', label: 'Level 2' },
+//   { id: 'level-3', label: 'Level 3' },
+// ]
 function formatFilterLabel(value, fallback) {
   if (!value) return fallback
 
@@ -199,15 +199,15 @@ export default function DecorLevelsPage() {
       onPageSelect={() => {}}
       ctaTitle="Not sure which decor package is right for you?"
       showPagination={false} // ← This hides the bottom number + arrow pagination
-     heroContent={
-  <PackageResultsHero
-    filters={[
-      { label: categoryLabel, widthClass: 'sm:w-[102px]' },
-      { label: eventLabel, widthClass: 'sm:w-[156px]' },
-      { label: themeLabel, widthClass: 'sm:w-[92px]' },
-    ]}
-  />
-}
+      heroContent={
+        <PackageResultsHero
+          filters={[
+            { label: categoryLabel, widthClass: 'sm:w-[102px]' },
+            { label: eventLabel, widthClass: 'sm:w-[156px]' },
+            { label: themeLabel, widthClass: 'sm:w-[92px]' },
+          ]}
+        />
+      }
     >
       <div className="flex flex-col gap-12">
         {/* Your existing content with per-level arrows and dynamic dots */}
