@@ -2,6 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { BLOGS_FALLBACK, BLOG_CATEGORIES_FALLBACK } from '../data/blogs'
 
+const toAbsoluteStrapiUrl = url =>
+  url
+    ? url.startsWith('http')
+      ? url
+      : `${import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'}${url}`
+    : null
+
+const filterFallbackBlogs = ({ limit, category, slug }) =>
+  BLOGS_FALLBACK.filter(blog => {
+    if (category && blog.category !== category) return false
+    if (slug && blog.slug !== slug) return false
+    return true
+  }).slice(0, limit)
+
 /**
  * Fetches published blogs from Strapi.
  *
@@ -16,11 +30,11 @@ import { BLOGS_FALLBACK, BLOG_CATEGORIES_FALLBACK } from '../data/blogs'
  *   post_status  (not status)
  *   post_published_at  (not published_at)
  */
-export function useBlogs({ limit = 3, category } = {}) {
+export function useBlogs({ limit = 3, category, slug } = {}) {
   return useQuery({
-    queryKey: ['blogs', { limit, category }],
+    queryKey: ['blogs', { limit, category, slug }],
     queryFn: async () => {
-      if (USE_FALLBACK) return BLOGS_FALLBACK
+      if (USE_FALLBACK) return filterFallbackBlogs({ limit, category, slug })
       try {
         const params = {
           'filters[post_status][$eq]': 'published',
@@ -29,6 +43,7 @@ export function useBlogs({ limit = 3, category } = {}) {
           'pagination[pageSize]': String(limit),
         }
         if (category) params['filters[category][$eq]'] = category
+        if (slug) params['filters[slug][$eq]'] = slug
 
         const { data } = await strapiGet('/blogs', params)
 
@@ -39,17 +54,16 @@ export function useBlogs({ limit = 3, category } = {}) {
           slug: b.slug ?? '',
           excerpt: b.excerpt ?? '',
           category: b.category ?? '',
-          cover_image: b.cover_image?.url
-            ? b.cover_image.url.startsWith('http')
-              ? b.cover_image.url
-              : `${import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'}${b.cover_image.url}`
-            : null,
+          content: b.content ?? '',
+          author: b.author ?? '',
+          post_published_at: b.post_published_at ?? null,
+          cover_image: toAbsoluteStrapiUrl(b.cover_image?.url),
         }))
       } catch {
-        return BLOGS_FALLBACK
+        return filterFallbackBlogs({ limit, category, slug })
       }
     },
-    placeholderData: BLOGS_FALLBACK,
+    placeholderData: filterFallbackBlogs({ limit, category, slug }),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   })

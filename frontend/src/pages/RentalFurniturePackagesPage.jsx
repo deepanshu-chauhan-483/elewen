@@ -3,7 +3,7 @@ import ServicePackagesPageContent from '../components/package-listing/ServicePac
 export default function RentalFurniturePackagesPage() {
   return (
     <ServicePackagesPageContent
-      serviceLabel="Rental Furniture"
+      serviceSlug="rental-furniture"
       ctaTitle="Not sure which rental furniture package is right for you?"
       showHero={false}
     />

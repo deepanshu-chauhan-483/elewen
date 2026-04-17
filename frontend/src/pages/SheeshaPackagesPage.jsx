@@ -3,7 +3,7 @@ import ServicePackagesPageContent from '../components/package-listing/ServicePac
 export default function SheeshaPackagesPage() {
   return (
     <ServicePackagesPageContent
-      serviceLabel="Sheesha"
+      serviceSlug="sheesha"
       ctaTitle="Not sure which sheesha package is right for you?"
       showHero={false}
     />

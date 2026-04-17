@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import PackageCard from './PackageCard'
 import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'
 import { usePackages } from '../../hooks/usePackages'
+import { filterPackages, normalizeServiceSlug } from '../../lib/packageFilters'
 import pkgImg1 from '../../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../../assets/images/IMG_0749.jpg'
@@ -26,10 +28,21 @@ const PAGE_SIZE = 9
 export default function ServicePackagesPageContent({
   ctaTitle = 'Not sure which package is right for you?',
   showHero = true,
+  serviceSlug = '',
 }) {
   const { data: packages = [] } = usePackages()
+  const [searchParams] = useSearchParams()
   const [sortValue, setSortValue] = useState('price-desc')
   const [page, setPage] = useState(1)
+
+  const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+  const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
+  const eventId = searchParams.get('eventId') ?? ''
+  const selectedServiceSlug =
+    normalizeServiceSlug(searchParams.get('service')) || normalizeServiceSlug(serviceSlug)
+  const serviceId = searchParams.get('serviceId') ?? ''
+  const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
+  const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
 
   const packagesData = useMemo(
     () =>
@@ -42,15 +55,29 @@ export default function ServicePackagesPageContent({
     [packages]
   )
 
+  const filteredPackages = useMemo(
+    () =>
+      filterPackages(packagesData, {
+        categorySlug,
+        eventSlug,
+        eventId,
+        serviceSlug: selectedServiceSlug,
+        serviceId,
+        themeSlug,
+        levelSlug,
+      }),
+    [packagesData, categorySlug, eventSlug, eventId, selectedServiceSlug, serviceId, themeSlug, levelSlug]
+  )
+
   const sortedPackages = useMemo(() => {
-    const items = [...packagesData]
+    const items = [...filteredPackages]
 
     if (sortValue === 'price-asc')
       return items.sort((a, b) => (a.base_price ?? 0) - (b.base_price ?? 0))
     if (sortValue === 'price-desc')
       return items.sort((a, b) => (b.base_price ?? 0) - (a.base_price ?? 0))
     return items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-  }, [packagesData, sortValue])
+  }, [filteredPackages, sortValue])
 
   const totalPages = Math.max(1, Math.ceil(sortedPackages.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
@@ -72,11 +99,19 @@ export default function ServicePackagesPageContent({
       onPageSelect={setPage}
       ctaTitle={ctaTitle}
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visiblePackages.map(pkg => (
-          <PackageCard key={pkg.id ?? pkg.documentId ?? pkg.title} pkg={pkg} />
-        ))}
-      </div>
+      {visiblePackages.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visiblePackages.map(pkg => (
+            <PackageCard key={pkg.id ?? pkg.documentId ?? pkg.title} pkg={pkg} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[18px] border border-[#DDD7CE] px-6 py-10 text-[#1C1C1C]">
+          <p className="text-[18px] leading-[1.4]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            No packages match the selected filters right now.
+          </p>
+        </div>
+      )}
     </PackageListLayout>
   )
 }

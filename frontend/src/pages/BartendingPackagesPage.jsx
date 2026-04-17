@@ -3,7 +3,7 @@ import ServicePackagesPageContent from '../components/package-listing/ServicePac
 export default function BartendingPackagesPage() {
   return (
     <ServicePackagesPageContent
-      serviceLabel="Bartending"
+      serviceSlug="bartending"
       ctaTitle="Not sure which bartending package is right for you?"
     />
   )
