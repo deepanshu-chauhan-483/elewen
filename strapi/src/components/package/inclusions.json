@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_package_inclusions",
+  "info": {
+    "displayName": "inclusions"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

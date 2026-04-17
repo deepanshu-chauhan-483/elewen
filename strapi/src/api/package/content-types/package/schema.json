@@ -114,6 +114,20 @@
       "relation": "oneToMany",
       "target": "api::booking-review.booking-review",
       "mappedBy": "package"
+    },
+    "themes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::theme.theme",
+      "inversedBy": "packages"
+    },
+    "packages": {
+      "type": "dynamiczone",
+      "components": [
+        "package.eventpackage",
+        "package.decorpackages",
+        "package.sheeshapackage"
+      ]
     }
   }
 }

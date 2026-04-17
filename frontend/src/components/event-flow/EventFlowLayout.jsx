@@ -158,6 +158,7 @@ export default function EventFlowLayout({
           <Footer />
         </section>
 
+        {/* ✅ ONLY FIX HERE */}
         <section className="h-[84px] shrink-0 bg-[#591902] sm:h-[92px] fix bottom-0">
           <div className="h-full px-4 sm:px-6">
             <div className="mx-auto flex h-full w-full lg:w-[calc(100%-200px)] lg:max-w-none items-center justify-between gap-6">
@@ -210,8 +211,6 @@ export default function EventFlowLayout({
           </div>
         </section>
       </div>
-
-      {/* <Footer /> */}
     </main>
   )
 }

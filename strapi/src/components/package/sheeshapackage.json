@@ -1,0 +1,47 @@
+{
+  "collectionName": "components_package_sheeshapackages",
+  "info": {
+    "displayName": "sheeshapackage"
+  },
+  "options": {},
+  "attributes": {
+    "size": {
+      "type": "enumeration",
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ]
+    },
+    "flavors": {
+      "type": "component",
+      "component": "package.flavors",
+      "repeatable": true
+    },
+    "inclusions": {
+      "type": "component",
+      "component": "package.inclusions",
+      "repeatable": true
+    },
+    "min_quantity": {
+      "type": "integer"
+    },
+    "max_quantity": {
+      "type": "integer"
+    },
+    "price_per_unit": {
+      "type": "decimal"
+    },
+    "package_image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    }
+  },
+  "config": {}
+}

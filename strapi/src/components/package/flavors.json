@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_package_flavors",
+  "info": {
+    "displayName": "flavors"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

@@ -1,0 +1,37 @@
+{
+  "collectionName": "components_package_eventpackages",
+  "info": {
+    "displayName": "eventpackage"
+  },
+  "options": {},
+  "attributes": {
+    "seating_details": {
+      "type": "text"
+    },
+    "backdrop_images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "entry_setup": {
+      "type": "text"
+    },
+    "centerpiece_details": {
+      "type": "text"
+    },
+    "inclusions": {
+      "type": "component",
+      "component": "package.inclusions",
+      "repeatable": true
+    },
+    "personal_notes": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

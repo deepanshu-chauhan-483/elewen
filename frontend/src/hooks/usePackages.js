@@ -24,6 +24,13 @@ function normaliseMediaArray(media) {
   return []
 }
 
+function normaliseRelationArray(value) {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (Array.isArray(value?.data)) return value.data
+  return []
+}
+
 function toAbsoluteStrapiUrl(url) {
   if (!url || typeof url !== 'string') return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
@@ -47,9 +54,15 @@ export function usePackages() {
           'populate[elements][populate]': 'service',
           'populate[addons]': 'true',
           'populate[images]': 'true',
+          'populate[events][populate][0]': 'parent_event',
+          'populate[service_categories]': 'true',
+          'populate[themes]': 'true',
+          'populate[budget_level]': 'true',
+
+          'populate[packages][populate]': '*',
           sort: 'createdAt:asc',
         })
-
+        console.log('FULL API DATA 👉', data)
         // Normalise Strapi v5 flat response → UI shape
         return data.map((pkg, i) => ({
           id: pkg.id,
@@ -64,6 +77,29 @@ export function usePackages() {
             .map(el => el.service?.name)
             .filter(Boolean)
             .concat('More'),
+          event_slugs: normaliseRelationArray(pkg.events)
+            .map(event => event?.slug)
+            .filter(Boolean),
+          event_ids: normaliseRelationArray(pkg.events)
+            .map(event => String(event?.id))
+            .filter(Boolean),
+          category_slugs: normaliseRelationArray(pkg.events)
+            .map(event => event?.parent_event?.slug)
+            .filter(Boolean),
+          category_ids: normaliseRelationArray(pkg.events)
+            .map(event => String(event?.parent_event?.id))
+            .filter(Boolean),
+          service_slugs: normaliseRelationArray(pkg.service_categories)
+            .map(service => service?.slug)
+            .filter(Boolean),
+          service_ids: normaliseRelationArray(pkg.service_categories)
+            .map(service => String(service?.id))
+            .filter(Boolean),
+          theme_slugs: normaliseRelationArray(pkg.themes)
+            .map(theme => theme?.slug)
+            .filter(Boolean),
+          level_slug: pkg.budget_level?.slug ?? '',
+          level_id: pkg.budget_level?.id != null ? String(pkg.budget_level.id) : '',
           // Strapi image URL: prepend VITE_STRAPI_URL to relative paths
           images: normaliseMediaArray(pkg.images)
             .map(img => {

@@ -77,7 +77,7 @@ export default function SignUpPage() {
         >
           <Link
             to="/login"
-            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors"
+            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[14px] min-[540px]:text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors"
           >
             Go to Login
           </Link>
@@ -105,12 +105,12 @@ export default function SignUpPage() {
     >
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col w-full gap-[24px]"
+        className="flex flex-col w-full gap-[16px] min-[540px]:gap-[24px]"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
         <div className="flex gap-[16px] w-full">
           <div className="flex flex-col gap-[8px] flex-1">
-            <label className="text-[#364022] text-[16px] font-medium leading-[150%]">
+            <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
               First name
             </label>
             <input
@@ -119,11 +119,11 @@ export default function SignUpPage() {
               onChange={e => setFirstName(e.target.value)}
               placeholder="Name"
               required
-              className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+              className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
             />
           </div>
           <div className="flex flex-col gap-[8px] flex-1">
-            <label className="text-[#364022] text-[16px] font-medium leading-[150%]">
+            <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
               Last name
             </label>
             <input
@@ -132,25 +132,27 @@ export default function SignUpPage() {
               onChange={e => setLastName(e.target.value)}
               placeholder="Name"
               required
-              className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+              className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-[8px] w-full">
-          <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
+          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
+            Email
+          </label>
           <input
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="email@"
             required
-            className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+            className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
           />
         </div>
 
         <div className="flex flex-col gap-[8px] w-full">
-          <label className="text-[#364022] text-[16px] font-medium leading-[150%]">
+          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
             Phone number
           </label>
           <input
@@ -159,12 +161,14 @@ export default function SignUpPage() {
             onChange={e => setPhone(e.target.value)}
             placeholder="Enter your phone number"
             required
-            className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+            className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
           />
         </div>
 
         <div className="flex flex-col gap-[8px] w-full">
-          <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Password</label>
+          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
+            Password
+          </label>
           <div className="relative w-full">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -172,7 +176,7 @@ export default function SignUpPage() {
               onChange={e => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
-              className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors pr-10"
+              className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors pr-10"
             />
             <button
               type="button"
@@ -225,7 +229,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading || !agreed}
-            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[14px] min-[540px]:text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             {loading ? 'Signing up…' : 'Sign up'}
           </button>
@@ -234,7 +238,7 @@ export default function SignUpPage() {
           </span>
           <a
             href={`${STRAPI_URL}/api/connect/google`}
-            className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
+            className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[14px] min-[540px]:text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
           >
             <svg
               width="24"

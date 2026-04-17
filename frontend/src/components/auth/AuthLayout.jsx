@@ -9,7 +9,8 @@ export default function AuthLayout({
   children,
   footer,
 }) {
-  const rightPaddingClass = activeTab === 'login' ? 'p-6' : 'p-8'
+  const rightPaddingClass =
+    activeTab === 'login' ? 'px-4 py-6 min-[540px]:p-6' : 'px-4 py-6 min-[540px]:p-8'
 
   // Lenis smooth-scroll wraps the app and otherwise scrolls the window on wheel/touch,
   // which moves the whole auth view. data-lenis-prevent lets native overflow handle the
@@ -70,21 +71,21 @@ export default function AuthLayout({
         <div className={`flex min-h-full w-full flex-col justify-start ${rightPaddingClass}`}>
           <div className="mx-auto my-auto flex w-full min-w-0 max-w-[655px] flex-col items-stretch justify-between">
             <div className="flex w-full min-w-0 flex-col justify-start">
-              <div className="mx-auto flex w-full min-w-0 max-w-[527px] flex-col gap-[24px]">
+              <div className="mx-auto flex w-full min-w-0 max-w-[527px] flex-col gap-[16px] min-[540px]:gap-[24px]">
                 <div className="flex min-w-0 w-full flex-col items-center gap-[8px]">
                   {headerPrefix ? (
-                    <div className="flex w-full shrink-0 justify-center [&>svg]:block [&>svg]:max-h-[56px] [&>svg]:max-w-[56px]">
+                    <div className="flex w-full shrink-0 justify-center [&>svg]:block [&>svg]:max-h-[40px] [&>svg]:max-w-[40px] min-[540px]:[&>svg]:max-h-[56px] min-[540px]:[&>svg]:max-w-[56px]">
                       {headerPrefix}
                     </div>
                   ) : null}
                   <h2
-                    className="w-full min-w-0 text-center text-[61px] leading-[100%] text-[#364022]"
+                    className="w-full min-w-0 text-center text-[32px] min-[540px]:text-[44px] lg:text-[61px] leading-[100%] text-[#364022]"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {title}
                   </h2>
                   <p
-                    className="w-full min-w-0 max-w-[421px] text-center text-[16px] leading-[150%] text-[#727355]"
+                    className="w-full min-w-0 max-w-[421px] text-center text-[13px] min-[540px]:text-[15px] lg:text-[16px] leading-[150%] text-[#727355]"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
                     {subtitle}

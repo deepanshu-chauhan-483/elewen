@@ -24,47 +24,52 @@ const PKG_LOCAL_IMAGES = [
 
 const PAGE_SIZE = 9
 
-function formatFilterLabel(value) {
-  if (!value) return ''
+// function formatFilterLabel(label) {
+//   return label
+//     .split('-')
+//     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+//     .join(' ')
+// }
 
-  return value
-    .split('-')
-    .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
+function normaliseListingServiceSlug(serviceSlug = '') {
+  return String(serviceSlug)
+    .trim()
+    .toLowerCase()
+    .replace(/-single$/, '')
+    .replace(/-services?$/, '')
 }
 
 export default function ServicePackagesPageContent({
-  serviceLabel = 'Packages',
+  serviceSlug,
   ctaTitle = 'Not sure which package is right for you?',
   showHero = true,
 }) {
   const { data: packages = [] } = usePackages()
   const [sortValue, setSortValue] = useState('price-desc')
   const [page, setPage] = useState(1)
-  const [searchParams] = useSearchParams()
-  const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
-  const eventId = searchParams.get('event')?.toLowerCase() ?? ''
-  const themeId = searchParams.get('theme')?.toLowerCase() ?? ''
-  const levelId = searchParams.get('level')?.toLowerCase() ?? ''
-  const serviceSlug = searchParams.get('service')?.toLowerCase() ?? serviceLabel.toLowerCase()
+  // const [searchParams] = useSearchParams()
+  // const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
+  // const eventId = searchParams.get('event')?.toLowerCase() ?? ''
+  // const themeId = searchParams.get('theme')?.toLowerCase() ?? ''
+  // const levelId = searchParams.get('level')?.toLowerCase() ?? ''
+  const listingServiceSlug = normaliseListingServiceSlug(serviceSlug)
 
-  const heroFilters = useMemo(() => {
-    const filters = [
-      categoryId ? { label: formatFilterLabel(categoryId), widthClass: 'sm:w-[118px]' } : null,
-      eventId ? { label: formatFilterLabel(eventId), widthClass: 'sm:w-[168px]' } : null,
-      themeId ? { label: formatFilterLabel(themeId), widthClass: 'sm:w-[110px]' } : null,
-      levelId ? { label: formatFilterLabel(levelId), widthClass: 'sm:w-[106px]' } : null,
-    ]
+  // const heroFilters = useMemo(() => {
+  //   const filters = [
+  //     categoryId ? { label: formatFilterLabel(categoryId), widthClass: 'sm:w-[118px]' } : null,
+  //     eventId ? { label: formatFilterLabel(eventId), widthClass: 'sm:w-[168px]' } : null,
+  //     themeId ? { label: formatFilterLabel(themeId), widthClass: 'sm:w-[110px]' } : null,
+  //     levelId ? { label: formatFilterLabel(levelId), widthClass: 'sm:w-[106px]' } : null,
+  //   ]
 
-    return filters.filter(Boolean)
-  }, [categoryId, eventId, themeId, levelId])
+  //   return filters.filter(Boolean)
+  // }, [categoryId, eventId, themeId, levelId])
 
   const packagesData = useMemo(
     () =>
       packages.map((pkg, i) => ({
         ...pkg,
-        serviceSlug,
+        serviceSlug: serviceSlug || pkg.service_slugs?.[0] || '',
         images: pkg.images?.length
           ? pkg.images
           : (PKG_LOCAL_IMAGES[i % PKG_LOCAL_IMAGES.length] ?? []),
@@ -72,34 +77,25 @@ export default function ServicePackagesPageContent({
     [packages, serviceSlug]
   )
 
-  const serviceFilteredPackages = useMemo(() => {
-    const normalizedService = serviceLabel.toLowerCase()
-    const filtered = packagesData.filter(pkg => {
-      const title = pkg.title?.toLowerCase() ?? ''
-      const description = pkg.description?.toLowerCase() ?? ''
-      const category = pkg.category?.toLowerCase() ?? ''
-      const tags = (pkg.tags ?? []).join(' ').toLowerCase()
+  const filteredPackages = useMemo(() => {
+    if (!listingServiceSlug) return packagesData
 
-      return (
-        title.includes(normalizedService) ||
-        description.includes(normalizedService) ||
-        category.includes(normalizedService) ||
-        tags.includes(normalizedService)
+    return packagesData.filter(pkg =>
+      (pkg.service_slugs ?? []).some(
+        slug => normaliseListingServiceSlug(slug) === listingServiceSlug
       )
-    })
-
-    return filtered.length > 0 ? filtered : packagesData
-  }, [packagesData, serviceLabel])
+    )
+  }, [listingServiceSlug, packagesData])
 
   const sortedPackages = useMemo(() => {
-    const items = [...serviceFilteredPackages]
+    const items = [...filteredPackages]
 
     if (sortValue === 'price-asc')
       return items.sort((a, b) => (a.base_price ?? 0) - (b.base_price ?? 0))
     if (sortValue === 'price-desc')
       return items.sort((a, b) => (b.base_price ?? 0) - (a.base_price ?? 0))
     return items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-  }, [serviceFilteredPackages, sortValue])
+  }, [filteredPackages, sortValue])
 
   const totalPages = Math.max(1, Math.ceil(sortedPackages.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
@@ -113,9 +109,7 @@ export default function ServicePackagesPageContent({
         setSortValue(e.target.value)
         setPage(1)
       }}
-      heroContent={
-        showHero && heroFilters.length > 0 ? <PackageResultsHero filters={heroFilters} /> : null
-      }
+      heroContent={showHero ? <PackageResultsHero /> : null}
       page={safePage}
       totalPages={totalPages}
       onPrevPage={() => setPage(current => Math.max(1, current - 1))}

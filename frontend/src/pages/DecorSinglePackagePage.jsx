@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackages } from '../hooks/usePackages'
+import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -11,6 +12,7 @@ import pkgImg6 from '../assets/images/IMG_7025.jpg'
 import pkgImg7 from '../assets/images/IMG_8625.png'
 import pkgImg8 from '../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../assets/images/6f6af066.jpg'
+import useCustomization from '../hooks/useCustomization'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg1, pkgImg1, pkgImg1, pkgImg1],
@@ -22,7 +24,7 @@ const PKG_LOCAL_IMAGES = [
 
 const DECOR_SECTION_TEMPLATE = [
   {
-    type: 'option-row',
+    type: 'choice-row',
     title: 'Backdrop & styling (choose 1)',
     items: [
       { title: '1 Bow-detailed backdrop setup', selected: false },
@@ -54,8 +56,8 @@ const DECOR_SECTION_TEMPLATE = [
     type: 'option-row',
     title: 'Entrance Set up (choose 1)',
     items: [
-      { title: 'Florals bunches', description: '- Floral entrance', selected: false },
-      { title: 'Balloons', description: '- Balloons entrance', selected: false },
+      { title: 'Florals bunches', description: 'Floral entrance', selected: false },
+      { title: 'Balloons', description: 'Balloons entrance', selected: false },
     ],
   },
   {
@@ -64,18 +66,18 @@ const DECOR_SECTION_TEMPLATE = [
     items: [
       {
         title: 'Entry Setup',
-        description: '- 1 easel and board\n- Balloon accent on easel',
+        description: '1 easel and board\n  Balloon accent on easel',
         selected: false,
       },
       {
         title: 'Centerpieces',
-        description: '- Bear balloon Centerpieces',
+        description: 'Bear balloon Centerpieces',
         selected: false,
       },
     ],
   },
   {
-    type: 'option-row',
+    type: 'choice-row',
     title: 'Choose 1',
     items: [
       { title: 'Oh Baby backdrop', selected: false },
@@ -88,12 +90,12 @@ const DECOR_SECTION_TEMPLATE = [
     items: [
       {
         title: 'Baby corner',
-        description: '- Baby Balloon Corner',
+        description: 'Baby Balloon Corner',
         selected: false,
       },
       {
         title: 'Baby Corner',
-        description: '- Floral Balloon Corner',
+        description: 'Floral Balloon Corner',
         selected: false,
       },
     ],
@@ -104,9 +106,6 @@ const DECOR_CONTENT = {
   title: 'Paint & Prosecco',
   price: '$13,600.00',
   intro:
-    'An intimate, beautifully styled setup designed for slow conversations, shared laughs, and a hands-on painting experience. Think soft florals, cozy seating, and a table that invites you to sit, sip, and spill everything.',
-  keyDetailsTitle: 'Key decor elements',
-  keyDetails:
     'An intimate, beautifully styled setup designed for slow conversations, shared laughs, and a hands-on painting experience. Think soft florals, cozy seating, and a table that invites you to sit, sip, and spill everything.',
   accordionSections: [
     {
@@ -147,15 +146,10 @@ function createInitialSections() {
   }))
 }
 
-function createCustomization(id, sections = createInitialSections(), isAddedToCart = false) {
-  return { id, sections, isAddedToCart }
-}
-
-function cloneSections(sections) {
-  return sections.map(section => ({
-    ...section,
-    items: section.items.map(item => (typeof item === 'string' ? item : { ...item })),
-  }))
+function createInitialCustomizationData() {
+  return {
+    sections: createInitialSections(),
+  }
 }
 
 function normalisePackageId(value = '') {
@@ -185,9 +179,11 @@ function DecorOptionButton({ item, wide = false, onClick }) {
           : 'border-[#CDB17E] bg-[#F8F4ED] text-[#CDB17E] opacity-60'
       }`}
     >
-      <p className="text-[12px] font-semibold leading-[1.2] text-[#591902]">{item.title}</p>
+      <p className="text-[12px] leading-[1.2] text-[#591902]" style={{ fontWeight: 600 }}>
+        {item.title}
+      </p>
       {item.description ? (
-        <p className="mt-1 whitespace-pre-line text-[11px] leading-[1.35] text-[#591902]">
+        <p className="mt-1 text-[11px] leading-[1.35] text-[#591902] before:content-['•'] before:mr-1">
           {item.description}
         </p>
       ) : null}
@@ -198,7 +194,12 @@ function DecorOptionButton({ item, wide = false, onClick }) {
 function DecorTextRow({ section }) {
   return (
     <div>
-      <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">{section.title}</p>
+      <p
+        className="text-[13px] font-semibold leading-none text-[#2D2D2D]"
+        style={{ fontWeight: 600 }}
+      >
+        {section.title}
+      </p>
       <div className="mt-3 flex flex-wrap items-center gap-y-2">
         {section.items.map((item, index) => (
           <div key={`${section.title}-${item}`} className="flex items-center">
@@ -213,34 +214,20 @@ function DecorTextRow({ section }) {
   )
 }
 
-function RepeatCustomizationPrompt({ onRepeat, onCreateNew }) {
-  return (
-    <div className="rounded-[10px] bg-[#E9D9C0] px-4 py-4">
-      <p className="text-[14px] font-medium text-[#591902]">Repeat last used customization?</p>
-      <div className="mt-4 flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={onRepeat}
-          className="rounded-full bg-[#591902] px-5 py-2 text-[13px] font-semibold text-white"
-        >
-          Yes
-        </button>
-        <button
-          type="button"
-          onClick={onCreateNew}
-          className="rounded-full bg-white px-5 py-2 text-[13px] font-semibold text-[#591902]"
-        >
-          No, Add new customization
-        </button>
-      </div>
-    </div>
-  )
-}
-
 function DecorPackageSections({ sections, onSelect }) {
   return (
     <div>
-      <p className="text-[16px] font-semibold text-[#2D2D2D]">What&apos;s included:</p>
+      <div className=" border-b border-[#36402280] py-4">
+        <p className="text-[12px] text-[#2D2D2D]" style={{ fontWeight: 600 }}>
+          Key decor elements
+        </p>
+        <p className="mt-3 text-[13px] leading-[1.7] text-[#591902] opacity-50">
+          An intimate, beautifully styled setup designed for slow conversations, shared laughs, and
+          a hands-on painting experience. Think soft florals, cozy seating, and a table that invites
+          you to sit, sip, and spill everything.
+        </p>
+      </div>
+      <p className="text-[16px] font-semibold text-[#2D2D2D] pt-5">What&apos;s included:</p>
       <div className="mt-4 space-y-6">
         {sections.map((section, index) => {
           if (section.type === 'text-row') {
@@ -250,7 +237,10 @@ function DecorPackageSections({ sections, onSelect }) {
           if (section.type === 'choice-row') {
             return (
               <div key={`${section.title}-${index}`}>
-                <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">
+                <p
+                  className="text-[13px] font-semibold leading-none text-[#2D2D2D]"
+                  style={{ fontWeight: 600 }}
+                >
                   {section.title}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -269,7 +259,10 @@ function DecorPackageSections({ sections, onSelect }) {
 
           return (
             <div key={`${section.title}-${index}`}>
-              <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">
+              <p
+                className="text-[13px] font-semibold leading-none text-[#2D2D2D]"
+                style={{ fontWeight: 600 }}
+              >
                 {section.title}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -290,12 +283,25 @@ function DecorPackageSections({ sections, onSelect }) {
 }
 
 export default function DecorSinglePackagePage() {
-  const [activeCustomizationIndex, setActiveCustomizationIndex] = useState(0)
-  const [customizations, setCustomizations] = useState([createCustomization(1)])
-  const [showRepeatPrompt, setShowRepeatPrompt] = useState(false)
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { data: packages = [] } = usePackages()
+  const {
+    customizations,
+    activeCustomization,
+    activeIndex,
+    showRepeatPrompt,
+    handleAddToCart,
+    handleIncrease,
+    handleRepeat,
+    handleNew,
+    handleDecrease,
+    setCustomizations,
+  } = useCustomization({
+    createInitialData: createInitialCustomizationData,
+  })
+  const sections = activeCustomization?.data?.sections ?? createInitialCustomizationData().sections
+  const quantity = customizations.length
 
   const packagesData = useMemo(
     () =>
@@ -322,22 +328,21 @@ export default function DecorSinglePackagePage() {
     return <Navigate to={backHref} replace />
   }
 
-  const activeCustomization = customizations[activeCustomizationIndex]
-  const quantity = customizations.length
   const source = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
   const sideImages = Array.from({ length: 5 }).map((_, index) => source[index % source.length])
   const relatedProducts = packagesData
     .filter(item => buildPackageId(item) !== buildPackageId(pkg))
     .slice(0, 3)
     .map(item => ({ ...item, serviceSlug: 'decor' }))
-  const isAddToCartDisabled = !isCustomizationComplete(activeCustomization.sections)
 
   const handleSelect = (sectionIndex, itemTitle) => {
-    setCustomizations(current =>
-      current.map((customization, customizationIndex) => {
-        if (customizationIndex !== activeCustomizationIndex) return customization
+    setCustomizations(prev =>
+      prev.map((c, i) => {
+        if (i !== activeIndex) return c
 
-        const nextSections = customization.sections.map((section, index) => {
+        const sections = c.data?.sections || createInitialSections()
+
+        const updatedSections = sections.map((section, index) => {
           if (index !== sectionIndex) return section
           if (section.type !== 'option-row' && section.type !== 'choice-row') return section
 
@@ -360,94 +365,38 @@ export default function DecorSinglePackagePage() {
         })
 
         return {
-          ...customization,
-          sections: nextSections,
+          ...c,
+          data: { sections: updatedSections },
           isAddedToCart: false,
         }
       })
     )
   }
-
-  const handleAddToCart = () => {
-    if (isAddToCartDisabled) return
-
-    setCustomizations(current =>
-      current.map((customization, index) =>
-        index === activeCustomizationIndex
-          ? { ...customization, isAddedToCart: true }
-          : customization
-      )
-    )
-  }
-
-  const handleIncreaseQuantity = () => {
-    if (!activeCustomization.isAddedToCart) return
-    setShowRepeatPrompt(true)
-  }
-
-  const handleRepeatLastCustomization = () => {
-    const nextIndex = customizations.length
-
-    setCustomizations(current => {
-      const lastCustomization = current[current.length - 1]
-      const nextCustomization = createCustomization(
-        current.length + 1,
-        cloneSections(lastCustomization.sections),
-        true
-      )
-
-      return [...current, nextCustomization]
-    })
-    setActiveCustomizationIndex(nextIndex)
-    setShowRepeatPrompt(false)
-  }
-
-  const handleAddNewCustomization = () => {
-    const nextIndex = customizations.length
-
-    setCustomizations(current => [...current, createCustomization(current.length + 1)])
-    setActiveCustomizationIndex(nextIndex)
-    setShowRepeatPrompt(false)
-  }
-
-  const handleDecreaseQuantity = () => {
-    if (customizations.length <= 1) return
-
-    setCustomizations(current => current.slice(0, -1))
-    setActiveCustomizationIndex(current =>
-      Math.max(0, Math.min(current, customizations.length - 2))
-    )
-    setShowRepeatPrompt(false)
-  }
+  const isDisabled = !isCustomizationComplete(sections)
+  const packageTitle = pkg.title || DECOR_CONTENT.title
+  const packagePrice = pkg.price || DECOR_CONTENT.price
+  const packageIntro = pkg.description || DECOR_CONTENT.intro
 
   return (
     <SingleProductPageContent
-      backHref={backHref}
-      title={DECOR_CONTENT.title}
-      price={DECOR_CONTENT.price}
-      intro={DECOR_CONTENT.intro}
-      keyDetailsTitle={DECOR_CONTENT.keyDetailsTitle}
-      keyDetails={DECOR_CONTENT.keyDetails}
+      title={packageTitle}
+      price={packagePrice}
+      intro={packageIntro}
       promptContent={
-        showRepeatPrompt ? (
-          <RepeatCustomizationPrompt
-            onRepeat={handleRepeatLastCustomization}
-            onCreateNew={handleAddNewCustomization}
-          />
-        ) : null
+        showRepeatPrompt && (
+          <RepeatCustomizationPrompt onRepeat={handleRepeat} onCreateNew={handleNew} />
+        )
       }
-      customContent={
-        <DecorPackageSections sections={activeCustomization.sections} onSelect={handleSelect} />
-      }
+      customContent={<DecorPackageSections sections={sections} onSelect={handleSelect} />}
       accordionSections={DECOR_CONTENT.accordionSections}
       mainImage={pkg.images?.[0] ?? sideImages[0]}
       sideImages={sideImages}
       relatedProducts={relatedProducts}
-      disableAddToCart={isAddToCartDisabled}
+      disableAddToCart={isDisabled}
       onAddToCart={handleAddToCart}
       quantity={quantity}
-      onDecrement={handleDecreaseQuantity}
-      onIncrement={handleIncreaseQuantity}
+      onDecrement={handleDecrease}
+      onIncrement={handleIncrease}
     />
   )
 }

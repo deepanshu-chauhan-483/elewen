@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma.js'
 import { strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
+import { notify } from '../lib/notify.js'
 
 const DEFAULT_ADVANCE_PCT = 30
 
@@ -194,6 +195,22 @@ export const createBooking = async (req, res, next) => {
       },
     })
 
+    // Fire-and-forget notifications — never block the response
+    notify(userId, {
+      type: 'booking_update',
+      title: 'Booking Placed',
+      message: 'Your booking has been received. Complete the advance payment to confirm.',
+      linkUrl: `/dashboard/bookings/${booking.id}`,
+      emailTemplate: 'booking_created',
+      emailData: {
+        bookingId: booking.id,
+        totalPrice: booking.totalPrice,
+        advanceAmount: booking.advanceAmount,
+        eventDate: booking.eventDate,
+        guestCount: booking.guestCount,
+      },
+    }).catch(() => {})
+
     res.status(201).json({ booking: fullBooking })
   } catch (err) {
     next(err)
@@ -286,6 +303,33 @@ export const updateStatus = async (req, res, next) => {
       return updatedBooking
     })
 
+    // Notify on every status transition
+    const statusLabels = {
+      confirmed: 'Booking Confirmed',
+      info_collection: 'Information Required',
+      planning: 'Event Planning Started',
+      pre_event: 'Almost There!',
+      execution: 'Event Day',
+      completed: 'Event Completed',
+      post_event: 'Post-Event Follow Up',
+      cancelled: 'Booking Cancelled',
+    }
+    notify(userId, {
+      type: 'booking_update',
+      title: statusLabels[status] || `Booking status: ${status}`,
+      message: `Your booking status has been updated to ${status.replace('_', ' ')}.`,
+      linkUrl: `/dashboard/bookings/${id}`,
+      emailTemplate: status === 'confirmed' ? 'booking_confirmed' : 'booking_status_update',
+      emailData: {
+        bookingId: id,
+        previousStatus: booking.status,
+        newStatus: status,
+        eventDate: booking.eventDate,
+        totalPrice: booking.totalPrice,
+        guestCount: booking.guestCount,
+      },
+    }).catch(() => {})
+
     res.json({ booking: updated })
   } catch (err) {
     next(err)
@@ -334,6 +378,15 @@ export const cancelBooking = async (req, res, next) => {
         },
       })
     })
+
+    notify(userId, {
+      type: 'booking_update',
+      title: 'Booking Cancelled',
+      message: 'Your cancellation request has been submitted.',
+      linkUrl: `/dashboard/bookings/${id}`,
+      emailTemplate: 'booking_cancelled',
+      emailData: { bookingId: id, reason },
+    }).catch(() => {})
 
     res.json({ ok: true, message: 'Cancellation request submitted' })
   } catch (err) {

@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_package_decorpackages",
+  "info": {
+    "displayName": "decorpackages"
+  },
+  "options": {},
+  "attributes": {
+    "theme_name": {
+      "type": "string"
+    },
+    "color_palette": {
+      "type": "string"
+    },
+    "ballon_count": {
+      "type": "integer"
+    },
+    "setup_time": {
+      "type": "string"
+    },
+    "inclustions": {
+      "type": "component",
+      "component": "package.inclusions",
+      "repeatable": true
+    },
+    "notes": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

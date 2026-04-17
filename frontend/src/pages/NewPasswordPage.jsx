@@ -231,17 +231,19 @@ export default function NewPasswordPage() {
       >
         <form onSubmit={handleResendEmail} className="contents">
           <div
-            className="flex min-w-0 w-full flex-col gap-[24px]"
+            className="flex min-w-0 w-full flex-col gap-[16px] min-[540px]:gap-[24px]"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             <div className="flex flex-col gap-[8px] w-full min-w-0">
-              <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Email</label>
+              <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
+                Email
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+                className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
               />
             </div>
           </div>
@@ -256,7 +258,7 @@ export default function NewPasswordPage() {
             <button
               type="submit"
               disabled={emailLoading || !email.trim()}
-              className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[14px] min-[540px]:text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
             >
               {emailLoading ? 'Sending…' : 'Reset password'}
             </button>
@@ -304,7 +306,7 @@ export default function NewPasswordPage() {
         >
           <Link
             to="/login"
-            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors"
+            className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[14px] min-[540px]:text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors"
           >
             log in
           </Link>
@@ -322,11 +324,13 @@ export default function NewPasswordPage() {
       footer={null}
     >
       <div
-        className="flex min-w-0 w-full flex-col gap-[24px]"
+        className="flex min-w-0 w-full flex-col gap-[16px] min-[540px]:gap-[24px]"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
         <div className="flex flex-col gap-[8px] w-full min-w-0">
-          <label className="text-[#364022] text-[16px] font-medium leading-[150%]">Password</label>
+          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
+            Password
+          </label>
           <div className="relative w-full min-w-0">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -334,7 +338,7 @@ export default function NewPasswordPage() {
               onChange={e => setPassword(e.target.value)}
               placeholder="Enter your password"
               autoComplete="new-password"
-              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] pr-10 bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] pr-10 bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
             />
             <button
               type="button"
@@ -348,7 +352,7 @@ export default function NewPasswordPage() {
         </div>
 
         <div className="flex flex-col gap-[8px] w-full min-w-0">
-          <label className="text-[#364022] text-[16px] font-medium leading-[150%]">
+          <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
             Confirm password
           </label>
           <div className="relative w-full min-w-0">
@@ -358,7 +362,7 @@ export default function NewPasswordPage() {
               onChange={e => setConfirm(e.target.value)}
               placeholder="Confirm password"
               autoComplete="new-password"
-              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] pr-10 bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] pr-10 bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
             />
             <button
               type="button"
@@ -389,7 +393,7 @@ export default function NewPasswordPage() {
         <button
           type="button"
           onClick={handleResetPassword}
-          className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+          className="w-full h-[44px] flex justify-center items-center bg-[#CDB17E] text-[#FAFAFA] text-[14px] min-[540px]:text-[16px] font-medium leading-[150%] rounded-[56px] hover:bg-[#b89e6e] transition-colors disabled:opacity-50 disabled:pointer-events-none"
           disabled={resetLoading || !hasLength || !hasSpecial || password !== confirm}
         >
           {resetLoading ? 'Resetting…' : 'Reset password'}

@@ -85,7 +85,7 @@ const PlanEventSection = () => {
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
     handleResize() // init
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -387,7 +387,7 @@ const PlanEventSection = () => {
                 }}
               >
                 <div
-                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+                  className="flex gap-4 md:gap-4 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
                       ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
@@ -403,7 +403,7 @@ const PlanEventSection = () => {
                           ? `${mobileCardWidth}px`
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
                       }}
-                      className="bg-white p-[10px] md:p-2.5 mx-auto rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5  rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                     >
                       <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
                         <img
@@ -456,7 +456,7 @@ const PlanEventSection = () => {
             {/* Pagination Controls */}
 
             {/* Desktop Pagination Block */}
-            <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
+            <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
@@ -577,7 +577,7 @@ const WhatToPlanSection = () => {
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
     handleResize() // init
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -2504,8 +2504,10 @@ const PackagesSection = () => {
 
   const count = packagesData.length
   const totalCards = count * 3
-  /** 3D ring needs â‰¥2 packages; with 1 CMS item the triple-buffer showed 3 identical cards */
+  /** 3D ring needs ≥2 packages; with 1 CMS item the triple-buffer showed 3 identical cards */
   const usePackageCylinder = count > 1
+  /** Show nav buttons/dots whenever there is at least 1 package */
+  const showNavButtons = count > 0
 
   const handleTransitionEnd = () => {
     if (count === 0 || !usePackageCylinder) return
@@ -2663,7 +2665,7 @@ const PackagesSection = () => {
         >
           {/* --- Mobile Only Navigation Arrows (Half Circles on Edges) --- */}
           <div
-            className={`absolute inset-y-0 left-0 right-0 md:hidden z-[100] flex items-center justify-between pointer-events-none ${usePackageCylinder ? '' : 'hidden'}`}
+            className={`absolute inset-y-0 left-0 right-0 md:hidden z-[100] flex items-center justify-between pointer-events-none ${showNavButtons ? '' : 'hidden'}`}
           >
             <button
               type="button"
@@ -2929,7 +2931,7 @@ const PackagesSection = () => {
 
       {/* Desktop Controls */}
       <div
-        className={`${usePackageCylinder ? 'hidden md:flex' : 'hidden'} w-[611px] max-w-[90vw] h-[48px] mx-auto justify-between items-center gap-[25px] z-20 relative -mt-20`}
+        className={`${showNavButtons ? 'hidden md:flex' : 'hidden'} w-[611px] max-w-[90vw] h-[48px] mx-auto justify-between items-center gap-[25px] z-20 relative -mt-20`}
       >
         <button
           type="button"
@@ -2981,7 +2983,7 @@ const PackagesSection = () => {
 
       {/* Mobile Main Pagination Dots */}
       <div
-        className={`${usePackageCylinder ? 'flex md:hidden' : 'hidden'} items-center justify-center gap-[6px] mt-[16px] z-20 relative`}
+        className={`${showNavButtons ? 'flex md:hidden' : 'hidden'} items-center justify-center gap-[6px] mt-[16px] z-20 relative`}
       >
         {packagesData.map((_, idx) => (
           <div
@@ -4003,7 +4005,7 @@ const SplitInfoSection = () => {
           initial={{ opacity: 0 }}
           animate={
             isSplitVisible
-              ? { opacity: 1, transition: { duration: 0.8, delay: 1.3 } }
+              ? { opacity: 1, transition: { duration: 0.4, delay: 0.05 } }
               : { opacity: 0 }
           }
           className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px] overflow-x-clip"
@@ -4016,7 +4018,7 @@ const SplitInfoSection = () => {
                 ? {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 1.65, delay: 1.55, ease: [0.22, 1, 0.36, 1] },
+                    transition: { duration: 0.55, delay: 0.1, ease: [0.22, 1, 0.36, 1] },
                   }
                 : { y: 72, opacity: 0 }
             }
@@ -4072,7 +4074,7 @@ const SplitInfoSection = () => {
                 ? {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 1.75, delay: 1.78, ease: [0.22, 1, 0.36, 1] },
+                    transition: { duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] },
                   }
                 : { y: 88, opacity: 0 }
             }
@@ -4093,7 +4095,7 @@ const SplitInfoSection = () => {
               ? {
                   x: 0,
                   opacity: 1,
-                  transition: { duration: 2.35, ease: [0.22, 1, 0.36, 1] },
+                  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
                 }
               : { x: 220, opacity: 0 }
           }
@@ -4107,7 +4109,7 @@ const SplitInfoSection = () => {
                 ? {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 1.7, delay: 1.1, ease: [0.22, 1, 0.36, 1] },
+                    transition: { duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] },
                   }
                 : { y: 70, opacity: 0 }
             }
@@ -4123,7 +4125,7 @@ const SplitInfoSection = () => {
                 ? {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 1.8, delay: 1.35, ease: [0.22, 1, 0.36, 1] },
+                    transition: { duration: 0.55, delay: 0.25, ease: [0.22, 1, 0.36, 1] },
                   }
                 : { y: 86, opacity: 0 }
             }
@@ -4184,6 +4186,20 @@ const SplitInfoSection = () => {
 
 export default function LandingPage() {
   const rootRef = useRef(null)
+  const { data: cmsData } = useLandingPage()
+
+  // When Strapi CMS data loads after mount, new .reveal-text spans are created
+  // inside elements that the global IO already marked .is-visible. Those new spans
+  // never get the class. This pass finds them and makes them visible immediately.
+  useEffect(() => {
+    if (!rootRef.current || !cmsData) return
+    rootRef.current.querySelectorAll('.is-visible').forEach(parent => {
+      parent.querySelectorAll('.reveal-text:not(.is-visible)').forEach(span => {
+        span.style.animationDelay = '0s'
+        span.classList.add('is-visible')
+      })
+    })
+  }, [cmsData])
 
   // â”€â”€ Tiered asset preloading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Tier 1 (on mount, during 2s preloader): only the images that appear the

@@ -3,7 +3,8 @@ import ServicePackagesPageContent from '../components/package-listing/ServicePac
 export default function DecorPackagesPage() {
   return (
     <ServicePackagesPageContent
-      serviceLabel="Decor"
+      serviceSlug="decor"
+      serviceLabel="Package"
       ctaTitle="Not sure which decor package is right for you?"
     />
   )

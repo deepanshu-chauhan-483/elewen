@@ -32,6 +32,7 @@ import SheeshaPackagesPage from './pages/SheeshaPackagesPage'
 import BartendingLevelsPage from './pages/BartendingLevelsPage'
 import PackageDetailsPage from './pages/PackageDetailsPage'
 import DecorSinglePackagePage from './pages/DecorSinglePackagePage'
+import SheeshaSinglePackagePage from './pages/SheeshaSinglePackagePage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -106,6 +107,7 @@ function AppLayout() {
         <Route path="/packages/bartending" element={<BartendingPackagesPage />} />
         <Route path="/packages/sheesha" element={<SheeshaPackagesPage />} />
         <Route path="/packages/decor-single/:packageId" element={<DecorSinglePackagePage />} />
+        <Route path="/packages/sheesha-single/:packageId" element={<SheeshaSinglePackagePage />} />
         <Route path="/packages/:service/:packageId" element={<PackageDetailsPage />} />
       </Routes>
       {!hideGlobalChrome && <Footer />}

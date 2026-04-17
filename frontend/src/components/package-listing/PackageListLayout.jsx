@@ -31,12 +31,14 @@ export default function PackageListLayout({
   onPageSelect,
   ctaTitle = 'Not sure which package is right for you?',
   ctaButtonText = 'Book a Consultation',
-  showPagination = true, // ← New prop (default: true)
-  heroContent = null, // ← New prop
+  ctaButtonTo = '/contact',
+  showPagination = true,
+  heroContent = null,
 }) {
   return (
-    <main className="min-h-screen bg-white text-white">
+    <main className="min-h-screen overflow-x-hidden bg-white text-white">
       <NavHeader />
+
       {heroContent ? <div className="pt-18 md:pt-22">{heroContent}</div> : null}
       <div className="px-4 pb-0 pt-20 sm:px-6 md:pt-24">
         <div className="mx-auto flex w-full flex-col lg:w-[calc(100%-200px)] lg:max-w-none">
@@ -73,7 +75,6 @@ export default function PackageListLayout({
 
           <div className="mt-8">{children}</div>
 
-          {/* Pagination - Only show if showPagination is true */}
           {showPagination && (
             <div className="mt-10 flex items-center justify-center gap-4 text-[#8C3B11]">
               <button
@@ -116,7 +117,7 @@ export default function PackageListLayout({
         </div>
       </div>
 
-      <section className="mt-16 flex w-full justify-center bg-[#591902] px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
+      <section className="mt-16 flex w-full justify-center bg-[#591902] px-[clamp(16px,2vw,40px)] py-16 sm:py-20 lg:py-24">
         <div className="flex w-full max-w-[1000px] flex-col items-center text-center">
           <h2
             className="max-w-[760px] text-[30px] leading-[0.95] text-white sm:text-[44px] lg:text-[61px]"
@@ -126,13 +127,13 @@ export default function PackageListLayout({
           </h2>
 
           <Link
-            to="/consultation"
-            className="group mt-8 flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5  transition-colors hover:bg-[#C6AB7F]"
+            to={ctaButtonTo}
+            className="group mt-8 flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F]"
           >
             <span className="mr-5 text-[15px] font-medium text-white">{ctaButtonText}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
               <svg
-                className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                className="h-[18px] w-[18px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

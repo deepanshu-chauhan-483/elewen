@@ -46,7 +46,9 @@ function AccordionSection({ title, body, defaultOpen = false }) {
         <span className="text-[16px] leading-none text-[#6B7152] font-semibold">{title}</span>
         <span className="text-[20px] leading-none text-[#C4A36B]">{isOpen ? '-' : '+'}</span>
       </button>
-      {isOpen ? <p className="mt-3 text-[13px] leading-[1.65] text-[#B98955]">{body}</p> : null}
+      {isOpen ? (
+        <p className="mt-3 text-[13px] leading-[1.65] text-[#591902] opacity-50">{body}</p>
+      ) : null}
     </div>
   )
 }
@@ -174,8 +176,6 @@ export default function SingleProductPageContent({
   title,
   price,
   intro,
-  keyDetailsTitle = 'Key decor elements',
-  keyDetails,
   customContent = null,
   accordionSections = [],
   mainImage,
@@ -183,7 +183,7 @@ export default function SingleProductPageContent({
   quantity = 1,
   onDecrement,
   onIncrement,
-  promptContent = null,
+  promptContent,
   addToCartLabel = 'Add to cart',
   relatedProducts = [],
   disableAddToCart = false,
@@ -195,33 +195,59 @@ export default function SingleProductPageContent({
       <NavHeader />
 
       <section className="relative overflow-hidden pb-16 pt-22 md:pt-23">
-        <div className="relative mx-auto max-w-[1540px] flex flex-col gap-8 md:flex-row md:items-start md:justify-between border-t-2 border-[#2D2D2D] px-[50px] md:px-[100px]">
-          <div className="max-w-[196px] space-y-2 pt-2 flex flex-col justify-end">
+        <div
+          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start md:justify-between"
+          style={{
+            maxWidth: '1540px',
+            gap: 'clamp(1.5rem, 2.2vw, 2rem)',
+            paddingLeft: 'clamp(20px, 8.3vw, 100px)',
+            paddingRight: 'clamp(20px, 8.3vw, 100px)',
+          }}
+        >
+          <div className="flex flex-col items-end space-y-2 pt-2 md:shrink">
             {sideImages.map((image, index) => (
               <div
                 key={`${image}-${index}`}
-                className="overflow-hidden rounded-[12px] h-[103px] w-[80px]"
+                className="overflow-hidden rounded-[12px]"
+                style={{
+                  width: 'clamp(4rem, 5vw, 5rem)',
+                  height: 'clamp(5.125rem, 6.5vw, 6.4375rem)',
+                }}
               >
                 <img
                   src={image}
                   alt={`${title} preview ${index + 1}`}
-                  className="h-[103px] w-[80px] rounded-[14px] object-cover"
+                  className="h-full w-full rounded-[14px] object-cover"
                 />
               </div>
             ))}
           </div>
 
-          <div className="mx-auto w-full max-w-[600px] max-h-[934px] shrink-0">
+          <div
+            className="mx-auto w-full shrink-0"
+            style={{
+              maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
+            }}
+          >
             <div className="overflow-hidden">
               <img
                 src={mainImage}
                 alt={title}
-                className="h-[420px] w-full object-cover sm:h-[700px] md:h-[934px] border-[#727355] border-r-2 border-b-2 border-l-2"
+                className="w-full object-cover border-[#727355] border-r-2 border-b-2 border-l-2"
+                style={{
+                  height: 'clamp(26.25rem, 70vw, 58.375rem)',
+                }}
               />
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-[652px] flex-1 min-w-0 lg:mx-0 md:pl-[24px] lg:pl-[36px]">
+          <div
+            className="mx-auto w-full min-w-0 flex-1 lg:mx-0"
+            style={{
+              maxWidth: 'clamp(20rem, 45vw, 40.75rem)',
+              paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
+            }}
+          >
             <div className="mt-5 flex items-start justify-between gap-4">
               <h1
                 className=" text-[28px] leading-[0.95] text-[#591902] sm:text-[36px] md:text-[36px]"
@@ -240,7 +266,7 @@ export default function SingleProductPageContent({
               onIncrement={onIncrement}
             />
 
-            {promptContent ? <div className="mt-5">{promptContent}</div> : null}
+            {promptContent && <div className="mt-5">{promptContent}</div>}
 
             <button
               type="button"
@@ -271,11 +297,6 @@ export default function SingleProductPageContent({
                 </svg>
               </span>
             </button>
-
-            <div className="mt-7 border-t border-[#36402280] pt-5">
-              <p className="text-[12px] font-semibold text-[#2D2D2D]">{keyDetailsTitle}</p>
-              <p className="mt-3 text-[13px] leading-[1.7] text-[#591902]">{keyDetails}</p>
-            </div>
 
             {customContent ? (
               <div className="mt-8 border-t border-[#36402280] pt-5">{customContent}</div>
@@ -336,7 +357,7 @@ export default function SingleProductPageContent({
               the confusion into a clear, sorted plan.
             </p>
             <Link
-              to="/consultation"
+              to="/book-consultation"
               className="mx-auto group mt-8 flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5  transition-colors hover:bg-[#C6AB7F]"
             >
               <span className="mr-5 text-[15px] font-medium text-white">{ctaButtonText}</span>
@@ -395,7 +416,7 @@ export default function SingleProductPageContent({
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">{title}</h2>
               <span>•</span>
-              <span>₹13,600.00</span>
+              <span>{price}</span>
             </div>
 
             {/* Right */}
