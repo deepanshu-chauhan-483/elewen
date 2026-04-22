@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_shared_exclusion_items",
+  "info": {
+    "displayName": "exclusion-item"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

@@ -4,6 +4,7 @@ import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import ScallopBulbCurtain from './common/ScallopBulbCurtain'
 import { authLogout } from '../lib/api'
+import { useCart } from '../hooks/useCart'
 
 const EVENT_IMAGE = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80'
 
@@ -133,7 +134,69 @@ const resolveNavAppearanceFromPoint = (x, y) => {
   return { themeName: 'light', surface }
 }
 
-const NavHeader = () => {
+function DashboardIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M9 3H4C3.44772 3 3 3.44772 3 4V11C3 11.5523 3.44772 12 4 12H9C9.55228 12 10 11.5523 10 11V4C10 3.44772 9.55228 3 9 3Z"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20 3H15C14.4477 3 14 3.44772 14 4V7C14 7.55228 14.4477 8 15 8H20C20.5523 8 21 7.55228 21 7V4C21 3.44772 20.5523 3 20 3Z"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20 12H15C14.4477 12 14 12.4477 14 13V20C14 20.5523 14.4477 21 15 21H20C20.5523 21 21 20.5523 21 20V13C21 12.4477 20.5523 12 20 12Z"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 16H4C3.44772 16 3 16.4477 3 17V20C3 20.5523 3.44772 21 4 21H9C9.55228 21 10 20.5523 10 20V17C10 16.4477 9.55228 16 9 16Z"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function CartIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M16 17.2002C16 18.2611 15.5786 19.2785 14.8284 20.0286C14.0783 20.7788 13.0609 21.2002 12 21.2002C10.9391 21.2002 9.92172 20.7788 9.17157 20.0286C8.42143 19.2785 8 18.2611 8 17.2002M3.103 13.2342H20.897M3.4 12.6672C3.14036 13.0134 3 13.4345 3 13.8672V27.2002C3 27.7306 3.21071 28.2393 3.58579 28.6144C3.96086 28.9895 4.46957 29.2002 5 29.2002H19C19.5304 29.2002 20.0391 28.9895 20.4142 28.6144C20.7893 28.2393 21 27.7306 21 27.2002V13.8672C21 13.4345 20.8596 13.0134 20.6 12.6672L18.6 10.0002C18.4137 9.7518 18.1721 9.5502 17.8944 9.41134C17.6167 9.27249 17.3105 9.2002 17 9.2002H7C6.68951 9.2002 6.38328 9.27249 6.10557 9.41134C5.82786 9.5502 5.58629 9.7518 5.4 10.0002L3.4 12.6672Z"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function CartButton({ count, className, onClick }) {
+  return (
+    <button type="button" aria-label="Cart" className={`relative ${className}`} onClick={onClick}>
+      <CartIcon />
+      {count > 0 ? (
+        <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#D4BA8E] px-1 text-[11px] font-semibold leading-none text-[#111110]">
+          {count > 99 ? '99+' : count}
+        </span>
+      ) : null}
+    </button>
+  )
+}
+
+const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) => {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -148,6 +211,7 @@ const NavHeader = () => {
   const [navThemeName, setNavThemeName] = useState(isHome ? 'glass' : 'light')
   const [navSurface, setNavSurface] = useState(DEFAULT_NAV_SURFACE)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
+  const { itemCount } = useCart()
   const useBlackNavAccent = BLACK_NAV_ACCENT_PATHS.includes(pathname)
 
   useEffect(() => {
@@ -203,6 +267,8 @@ const NavHeader = () => {
   }, [open])
 
   useEffect(() => {
+    if (forcedThemeName && NAVBAR_THEMES[forcedThemeName]) return undefined
+
     if (open) return
 
     let rafId = null
@@ -252,7 +318,7 @@ const NavHeader = () => {
       window.removeEventListener('resize', scheduleUpdate)
       if (rafId != null) window.cancelAnimationFrame(rafId)
     }
-  }, [pathname, open])
+  }, [forcedThemeName, pathname, open])
 
   const handleLogout = async () => {
     try {
@@ -267,15 +333,19 @@ const NavHeader = () => {
     navigate('/')
   }
 
-  const pageTheme = NAVBAR_THEMES[navThemeName] ?? NAVBAR_THEMES.light
+  const hasForcedTheme = !!(forcedThemeName && NAVBAR_THEMES[forcedThemeName])
+  const resolvedThemeName = hasForcedTheme ? forcedThemeName : navThemeName
+  const pageTheme = NAVBAR_THEMES[resolvedThemeName] ?? NAVBAR_THEMES.light
   const desktopTheme = pageTheme.desktop
   const mobileTheme = pageTheme.mobile
-  const isTransparentNav = navSurface === TRANSPARENT_NAV_SURFACE
+  const resolvedNavSurface = hasForcedTheme ? DEFAULT_NAV_SURFACE : navSurface
+  const isTransparentNav = resolvedNavSurface === TRANSPARENT_NAV_SURFACE
   const iconColor = isTransparentNav ? '#FAFAFA' : desktopTheme.iconColor
   const mobileIconColor = isTransparentNav ? '#FAFAFA' : mobileTheme.iconColor
   const searchButtonBg = isTransparentNav ? 'rgba(255,255,255,0.22)' : desktopTheme.searchBg
   const searchButtonBorder = isTransparentNav ? 'rgba(255,255,255,0.16)' : desktopTheme.searchBorder
-  const isLightSearchText = isTransparentNav || navThemeName === 'dark' || navThemeName === 'glass'
+  const isLightSearchText =
+    isTransparentNav || resolvedThemeName === 'dark' || resolvedThemeName === 'glass'
   const searchTextColor = isLightSearchText ? 'rgba(255,255,255,0.82)' : 'rgba(38,38,38,0.58)'
   const visibilityClass = !entered ? 'invisible pointer-events-none' : ''
   const transformClass = !entered
@@ -299,6 +369,8 @@ const NavHeader = () => {
       : undefined
   const resolvedDesktopIconColor = useBlackNavAccent ? '#000000' : iconColor
   const resolvedMobileIconColor = useBlackNavAccent ? '#000000' : mobileIconColor
+  const overlayActionClass =
+    'flex h-10 w-10 items-center justify-center text-white transition-opacity hover:opacity-70'
 
   return (
     <>
@@ -310,16 +382,21 @@ const NavHeader = () => {
           className="pointer-events-none absolute inset-0 md:hidden"
           style={{
             backgroundColor: isTransparentNav ? TRANSPARENT_BG : mobileTheme.bgColor,
+            ...(backgroundColorOverride && !isTransparentNav
+              ? { backgroundColor: backgroundColorOverride }
+              : {}),
             backgroundImage:
               isTransparentNav || !mobileTheme.bgImage ? 'none' : `url(${mobileTheme.bgImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backdropFilter:
-              isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_MOBILE,
+              isTransparentNav || resolvedThemeName !== 'glass' ? 'none' : GLASS_BLUR_MOBILE,
             WebkitBackdropFilter:
-              isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_MOBILE,
+              isTransparentNav || resolvedThemeName !== 'glass' ? 'none' : GLASS_BLUR_MOBILE,
             borderBottom:
-              isTransparentNav || navThemeName !== 'glass' ? 'none' : '1px solid rgba(0,0,0,0.05)',
+              isTransparentNav || resolvedThemeName !== 'glass'
+                ? 'none'
+                : '1px solid rgba(0,0,0,0.05)',
           }}
         />
 
@@ -327,16 +404,21 @@ const NavHeader = () => {
           className="pointer-events-none absolute inset-0 hidden md:block"
           style={{
             backgroundColor: isTransparentNav ? TRANSPARENT_BG : desktopTheme.bgColor,
+            ...(backgroundColorOverride && !isTransparentNav
+              ? { backgroundColor: backgroundColorOverride }
+              : {}),
             backgroundImage:
               isTransparentNav || !desktopTheme.bgImage ? 'none' : `url(${desktopTheme.bgImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backdropFilter:
-              isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_DESKTOP,
+              isTransparentNav || resolvedThemeName !== 'glass' ? 'none' : GLASS_BLUR_DESKTOP,
             WebkitBackdropFilter:
-              isTransparentNav || navThemeName !== 'glass' ? 'none' : GLASS_BLUR_DESKTOP,
+              isTransparentNav || resolvedThemeName !== 'glass' ? 'none' : GLASS_BLUR_DESKTOP,
             borderBottom:
-              isTransparentNav || navThemeName !== 'glass' ? 'none' : '1px solid rgba(0,0,0,0.05)',
+              isTransparentNav || resolvedThemeName !== 'glass'
+                ? 'none'
+                : '1px solid rgba(0,0,0,0.05)',
           }}
         />
 
@@ -414,6 +496,11 @@ const NavHeader = () => {
               </svg>
             </button>
 
+            <CartButton
+              count={itemCount}
+              className={isDesktop ? 'hidden md:flex' : 'flex md:hidden'}
+            />
+
             <button
               onClick={() => setOpen(true)}
               aria-label="Open menu"
@@ -484,7 +571,7 @@ const NavHeader = () => {
             </Link>
           </div>
 
-          <div className="ml-auto flex items-center gap-4 md:hidden">
+          <div className="ml-auto flex items-center gap-3  md:hidden">
             <button type="button" aria-label="Search" className="p-1 text-white">
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -495,37 +582,73 @@ const NavHeader = () => {
                 />
               </svg>
             </button>
+            {isLoggedIn ? (
+              <Link
+                to="/account"
+                onClick={() => setOpen(false)}
+                aria-label="Dashboard"
+                className={overlayActionClass}
+              >
+                <DashboardIcon />
+              </Link>
+            ) : null}
+            <CartButton count={itemCount} className={overlayActionClass} />
             <button
               onClick={() => setOpen(false)}
               aria-label="Close menu"
-              className="flex flex-col gap-1.5 p-1"
+              className={overlayActionClass}
               type="button"
             >
-              <span className="block h-0.5 w-8 bg-white" />
-              <span className="ml-auto block h-0.5 w-5 bg-white" />
+              <svg
+                className="h-5 w-5 translate-y-[1px]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
 
-          <button
-            onClick={() => setOpen(false)}
-            aria-label="Close menu"
-            className="ml-auto hidden h-10 w-10 items-center justify-center  transition-colors  md:flex"
-            type="button"
-          >
-            <svg
-              className="h-5 w-5 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="ml-auto hidden items-center  gap-3 md:flex">
+            {isLoggedIn ? (
+              <Link
+                to="/account"
+                onClick={() => setOpen(false)}
+                aria-label="Dashboard"
+                className={overlayActionClass}
+              >
+                <DashboardIcon />
+              </Link>
+            ) : null}
+            <CartButton count={itemCount} className={overlayActionClass} />
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close menu"
+              className={overlayActionClass}
+              type="button"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+              <svg
+                className="h-5 w-5 translate-y-[1px]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="flex min-h-0 flex-col overflow-hidden px-6 pb-0 md:flex-1 md:flex-row md:px-10 md:pb-auto">

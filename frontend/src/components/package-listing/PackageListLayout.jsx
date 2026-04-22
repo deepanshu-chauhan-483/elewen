@@ -37,7 +37,7 @@ export default function PackageListLayout({
 }) {
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-white">
-      <NavHeader />
+      <NavHeader forcedThemeName="dark" backgroundColorOverride="#591902" />
 
       {heroContent ? <div className="pt-18 md:pt-22">{heroContent}</div> : null}
       <div className="px-4 pb-0 pt-20 sm:px-6 md:pt-24">

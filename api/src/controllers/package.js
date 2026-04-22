@@ -148,11 +148,10 @@ export const wizardFilter = async (req, res, next) => {
     const populate = [
       'populate[0]=images',
       'populate[1]=budget_level',
-      'populate[2]=themes',
-      'populate[3]=service_categories',
-      'populate[4]=elements',
-      'populate[5]=addons',
-      'populate[6]=pricing_rules',
+      'populate[2]=service_categories',
+      'populate[3]=elements',
+      'populate[4]=addons',
+      'populate[5]=pricing_rules',
     ].join('&')
 
     const pagination = `pagination[page]=${page}&pagination[pageSize]=${pageSize}`

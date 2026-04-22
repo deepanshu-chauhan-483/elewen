@@ -7,6 +7,12 @@
   "attributes": {
     "text": {
       "type": "string"
+    },
+    "group_title": {
+      "type": "string"
+    },
+    "is_choice_group": {
+      "type": "boolean"
     }
   },
   "config": {}

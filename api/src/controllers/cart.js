@@ -65,6 +65,7 @@ export const getCart = async (req, res, next) => {
     }
 
     res.json({ cart })
+    console.log(cart,"cart item");
   } catch (err) {
     next(err)
   }

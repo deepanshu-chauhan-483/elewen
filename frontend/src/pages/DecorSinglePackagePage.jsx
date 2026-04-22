@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
-import { usePackages } from '../hooks/usePackages'
+import { usePackageById, usePackages } from '../hooks/usePackages'
+import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -13,6 +14,7 @@ import pkgImg7 from '../assets/images/IMG_8625.png'
 import pkgImg8 from '../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../assets/images/6f6af066.jpg'
 import useCustomization from '../hooks/useCustomization'
+import { useCart } from '../hooks/useCart'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg1, pkgImg1, pkgImg1, pkgImg1],
@@ -282,10 +284,47 @@ function DecorPackageSections({ sections, onSelect }) {
   )
 }
 
+function buildDecorAccordionSections(pkg) {
+  return Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
+    ? pkg.detail_accordion_sections
+    : DECOR_CONTENT.accordionSections
+}
+
+function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancellationSection) {
+  const sections = Array.isArray(baseSections) ? [...baseSections] : []
+  const fallbackCancellation =
+    sections.find(section => section?.title === 'Cancellation Policy') ??
+    fallbackCancellationSection ??
+    null
+  const withoutCancellation = sections.filter(section => section?.title !== 'Cancellation Policy')
+
+  if (cancellationPolicy?.body) {
+    withoutCancellation.push(cancellationPolicy)
+  } else if (fallbackCancellation) {
+    withoutCancellation.push(fallbackCancellation)
+  }
+
+  return withoutCancellation
+}
+
+function buildDecorIntro(pkg) {
+  if (pkg?.description) return pkg.description
+
+  if (Array.isArray(pkg?.detail_inclusions) && pkg.detail_inclusions.length) {
+    return pkg.detail_inclusions.slice(0, 4).join(', ')
+  }
+
+  return DECOR_CONTENT.intro
+}
+
 export default function DecorSinglePackagePage() {
+  const navigate = useNavigate()
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { data: packages = [] } = usePackages()
+  const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
+  const { data: cancellationPolicy } = useCancellationPolicy()
+  const { addPackage } = useCart()
   const {
     customizations,
     activeCustomization,
@@ -300,6 +339,8 @@ export default function DecorSinglePackagePage() {
   } = useCustomization({
     createInitialData: createInitialCustomizationData,
   })
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [addToCartMessage, setAddToCartMessage] = useState('')
   const sections = activeCustomization?.data?.sections ?? createInitialCustomizationData().sections
   const quantity = customizations.length
 
@@ -320,9 +361,22 @@ export default function DecorSinglePackagePage() {
   }, [searchParams])
 
   const pkg = useMemo(
-    () => packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
-    [packageId, packagesData]
+    () =>
+      packageDetails
+        ? {
+            ...packageDetails,
+            images: packageDetails.images?.length
+              ? packageDetails.images
+              : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
+                PKG_LOCAL_IMAGES[0]),
+          }
+        : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
+    [packageDetails, packageId, packagesData]
   )
+
+  if (isPackageLoading) {
+    return null
+  }
 
   if (!pkg) {
     return <Navigate to={backHref} replace />
@@ -336,6 +390,7 @@ export default function DecorSinglePackagePage() {
     .map(item => ({ ...item, serviceSlug: 'decor' }))
 
   const handleSelect = (sectionIndex, itemTitle) => {
+    setAddToCartMessage('')
     setCustomizations(prev =>
       prev.map((c, i) => {
         if (i !== activeIndex) return c
@@ -372,10 +427,55 @@ export default function DecorSinglePackagePage() {
       })
     )
   }
+
+  const handlePackageAddToCart = async () => {
+    setAddToCartMessage('')
+
+    if (!pkg?.id) {
+      setAddToCartMessage('This package is missing its cart ID. Please refresh and try again.')
+      return
+    }
+
+    setIsAddingToCart(true)
+    console.log('[cart-click] decor add to cart', {
+      packageId: Number(pkg.id),
+      title: pkg.title,
+    })
+
+    try {
+      const updatedCart = await addPackage({ packageId: Number(pkg.id), quantity: 1 })
+      handleAddToCart()
+      console.log('[cart-click] decor added', {
+        packageId: Number(pkg.id),
+        title: pkg.title,
+        itemCount: (updatedCart?.items ?? []).reduce(
+          (sum, item) => sum + Number(item?.quantity ?? 0),
+          0
+        ),
+      })
+      setAddToCartMessage('Added to cart.')
+    } catch (err) {
+      if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
+        navigate('/login')
+        return
+      }
+
+      console.error('[cart-click] decor add failed', err)
+      setAddToCartMessage('Could not add this package to cart. Please try again.')
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
+
   const isDisabled = !isCustomizationComplete(sections)
   const packageTitle = pkg.title || DECOR_CONTENT.title
   const packagePrice = pkg.price || DECOR_CONTENT.price
-  const packageIntro = pkg.description || DECOR_CONTENT.intro
+  const packageIntro = buildDecorIntro(pkg)
+  const accordionSections = mergeAccordionSections(
+    buildDecorAccordionSections(pkg),
+    cancellationPolicy,
+    DECOR_CONTENT.accordionSections.find(section => section.title === 'Cancellation Policy')
+  )
 
   return (
     <SingleProductPageContent
@@ -388,12 +488,14 @@ export default function DecorSinglePackagePage() {
         )
       }
       customContent={<DecorPackageSections sections={sections} onSelect={handleSelect} />}
-      accordionSections={DECOR_CONTENT.accordionSections}
+      accordionSections={accordionSections}
       mainImage={pkg.images?.[0] ?? sideImages[0]}
       sideImages={sideImages}
       relatedProducts={relatedProducts}
-      disableAddToCart={isDisabled}
-      onAddToCart={handleAddToCart}
+      addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
+      addToCartMessage={addToCartMessage}
+      disableAddToCart={isDisabled || isAddingToCart}
+      onAddToCart={handlePackageAddToCart}
       quantity={quantity}
       onDecrement={handleDecrease}
       onIncrement={handleIncrease}

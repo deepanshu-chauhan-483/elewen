@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_shared_price_breakdown_items",
+  "info": {
+    "displayName": "price-breakdown-item"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "integer"
+    }
+  },
+  "config": {}
+}

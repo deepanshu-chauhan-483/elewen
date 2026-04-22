@@ -6,6 +6,10 @@ const normalizeValue = value =>
 export const normalizeServiceSlug = value => {
   const normalized = normalizeValue(value)
   if (normalized === 'bar-tending') return 'bartending'
+  if (normalized === 'sheesha-services') return 'sheesha'
+  if (normalized === 'decoration') return 'decor'
+  if (normalized === 'furniture') return 'rental-furniture'
+  if (normalized === 'decor-services') return 'decor'
   return normalized
 }
 
@@ -36,7 +40,14 @@ export function filterPackages(packages, filters = {}) {
     if (!includesNormalized(pkg.category_slugs, categorySlug)) return false
     if (!includesNormalized(pkg.event_slugs, eventSlug)) return false
     if (!includesNormalized(pkg.event_ids, eventId)) return false
-    if (!includesNormalized(pkg.service_slugs, normalizedServiceSlug)) return false
+    if (
+      normalizedServiceSlug &&
+      !(Array.isArray(pkg.service_slugs) ? pkg.service_slugs : []).some(
+        value => normalizeServiceSlug(value) === normalizedServiceSlug
+      )
+    ) {
+      return false
+    }
     if (!includesNormalized(pkg.service_ids, serviceId)) return false
     if (!includesNormalized(pkg.theme_slugs, themeSlug)) return false
     if (levelSlug && normalizeValue(pkg.level_slug) !== normalizeValue(levelSlug)) return false

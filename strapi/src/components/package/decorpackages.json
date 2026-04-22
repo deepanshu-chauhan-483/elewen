@@ -24,6 +24,74 @@
     },
     "notes": {
       "type": "text"
+    },
+    "elements": {
+      "type": "component",
+      "component": "package.package-element",
+      "repeatable": true
+    },
+    "addons": {
+      "type": "component",
+      "component": "package.package-addon",
+      "repeatable": true
+    },
+    "pricing_rules": {
+      "type": "component",
+      "component": "package.package-pricing-rule",
+      "repeatable": true
+    },
+    "policy": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::policy.policy"
+    },
+    "setup_needs": {
+      "type": "text"
+    },
+    "price_covers": {
+      "type": "component",
+      "component": "shared.price-covers-item",
+      "repeatable": true
+    },
+    "nitty_gritty": {
+      "type": "text"
+    },
+    "best_placed_at": {
+      "type": "text"
+    },
+    "why_we_love_it": {
+      "type": "text"
+    },
+    "theme": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::theme.theme"
+    },
+    "key_decor_elements": {
+      "type": "text"
+    },
+    "purpose": {
+      "type": "text"
+    },
+    "backdrop_images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "price_breakdown": {
+      "type": "component",
+      "component": "shared.price-breakdown-item",
+      "repeatable": true
+    },
+    "budget_level": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::budget-level.budget-level"
     }
   },
   "config": {}

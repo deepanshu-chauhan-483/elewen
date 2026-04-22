@@ -8,14 +8,79 @@
  */
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+const AUTH_EVENT = 'elewen-auth-change'
+
+let refreshPromise = null
+
+function setStoredJwt(jwt) {
+  if (!jwt) return
+  localStorage.setItem('elewen_jwt', jwt)
+  window.dispatchEvent(new Event(AUTH_EVENT))
+}
+
+function clearStoredJwt() {
+  localStorage.removeItem('elewen_jwt')
+  window.dispatchEvent(new Event(AUTH_EVENT))
+}
+
+async function refreshJwt() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${BASE}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(async res => {
+        if (!res.ok) {
+          const msg = await res.text().catch(() => '')
+          throw new Error(`API ${res.status} on POST /auth/refresh: ${msg}`)
+        }
+
+        const data = await res.json()
+        if (!data?.jwt) {
+          throw new Error('API refresh did not return a jwt')
+        }
+
+        setStoredJwt(data.jwt)
+        return data.jwt
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+
+  return refreshPromise
+}
 
 async function request(method, path, body, opts = {}) {
+  const { _retried = false, headers: extraHeaders = {}, ...restOpts } = opts
   const res = await fetch(`${BASE}${path}`, {
     method,
     credentials: 'include', // send/receive HttpOnly refresh cookie
-    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
     ...(body ? { body: JSON.stringify(body) } : {}),
+    ...restOpts,
   })
+
+  const hasBearerToken = typeof extraHeaders.Authorization === 'string'
+  const canRefresh = hasBearerToken && path !== '/auth/refresh' && !_retried
+
+  if (res.status === 401 && canRefresh) {
+    try {
+      const nextJwt = await refreshJwt()
+      return request(method, path, body, {
+        ...restOpts,
+        _retried: true,
+        headers: {
+          ...extraHeaders,
+          Authorization: `Bearer ${nextJwt}`,
+        },
+      })
+    } catch (refreshErr) {
+      clearStoredJwt()
+      throw refreshErr
+    }
+  }
 
   if (!res.ok) {
     const msg = await res.text().catch(() => '')
@@ -40,6 +105,18 @@ export const authMe = token => apiGet('/auth/me', { headers: { Authorization: `B
 export const authForgotPassword = email => apiPost('/auth/forgot-password', { email })
 export const authResetPassword = body => apiPost('/auth/reset-password', body)
 export const authGoogleSession = access_token => apiPost('/auth/google/session', { access_token })
+
+/* -- Cart ------------------------------------------------------------------- */
+
+export const cartGet = token => apiGet('/cart', { headers: { Authorization: `Bearer ${token}` } })
+export const cartAddItem = (token, body) =>
+  apiPost('/cart/items', body, { headers: { Authorization: `Bearer ${token}` } })
+export const cartUpdateItem = (token, itemId, body) =>
+  apiPut(`/cart/items/${itemId}`, body, { headers: { Authorization: `Bearer ${token}` } })
+export const cartRemoveItem = (token, itemId) =>
+  apiDel(`/cart/items/${itemId}`, { headers: { Authorization: `Bearer ${token}` } })
+export const cartUpdate = (token, body) =>
+  request('PATCH', '/cart', body, { headers: { Authorization: `Bearer ${token}` } })
 
 /* ── Consultation ─────────────────────────────────────────────────────────── */
 
