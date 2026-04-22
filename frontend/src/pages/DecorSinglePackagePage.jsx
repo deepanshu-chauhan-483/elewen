@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackages } from '../hooks/usePackages'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
@@ -13,6 +13,7 @@ import pkgImg7 from '../assets/images/IMG_8625.png'
 import pkgImg8 from '../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../assets/images/6f6af066.jpg'
 import useCustomization from '../hooks/useCustomization'
+import { useCart } from '../hooks/useCart'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg1, pkgImg1, pkgImg1, pkgImg1],
@@ -285,7 +286,9 @@ function DecorPackageSections({ sections, onSelect }) {
 export default function DecorSinglePackagePage() {
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
+  const { addPackage } = useCart()
   const {
     customizations,
     activeCustomization,
@@ -300,6 +303,7 @@ export default function DecorSinglePackagePage() {
   } = useCustomization({
     createInitialData: createInitialCustomizationData,
   })
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
   const sections = activeCustomization?.data?.sections ?? createInitialCustomizationData().sections
   const quantity = customizations.length
 
@@ -377,6 +381,25 @@ export default function DecorSinglePackagePage() {
   const packagePrice = pkg.price || DECOR_CONTENT.price
   const packageIntro = pkg.description || DECOR_CONTENT.intro
 
+  const handleCartAdd = async () => {
+    if (isDisabled || isAddingToCart) return
+
+    setIsAddingToCart(true)
+    try {
+      await addPackage({ packageId: pkg.id, quantity })
+      handleAddToCart()
+      navigate('/cart')
+    } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED') {
+        navigate('/login')
+        return
+      }
+      console.error('[decor] add to cart failed', err)
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
+
   return (
     <SingleProductPageContent
       title={packageTitle}
@@ -393,7 +416,8 @@ export default function DecorSinglePackagePage() {
       sideImages={sideImages}
       relatedProducts={relatedProducts}
       disableAddToCart={isDisabled}
-      onAddToCart={handleAddToCart}
+      isAddingToCart={isAddingToCart}
+      onAddToCart={handleCartAdd}
       quantity={quantity}
       onDecrement={handleDecrease}
       onIncrement={handleIncrease}

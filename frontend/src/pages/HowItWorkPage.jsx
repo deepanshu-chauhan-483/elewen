@@ -622,10 +622,10 @@ const HowItWorkHeroSection = () => {
   return (
     <section
       data-nav-surface="transparent"
-      className="relative flex h-full w-full flex-col overflow-hidden bg-[#591902] pt-24 min-[540px]:pt-28 lg:pt-32"
+      className="relative flex min-h-screen min-h-[90svh] w-full flex-col overflow-hidden bg-[#591902] pt-[90px] min-[540px]:pt-[105px] lg:pt-[120px]"
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-between">
-        <div className="w-full px-6 pb-4 min-[540px]:px-10 min-[540px]:pb-6 lg:px-20 lg:pb-8 xl:px-[100px]">
+        <div className="w-full px-6 pb-2 min-[540px]:px-10 min-[540px]:pb-4 md:px-20 lg:pb-6 xl:px-[100px]">
           <div className="flex flex-col pt-4 min-[540px]:pt-6 lg:pt-10">
             <div className="flex items-center">
               <div className="flex w-full max-w-[760px] gap-4 min-[540px]:gap-6">
@@ -693,12 +693,12 @@ const HowItWorkHeroSection = () => {
               </div>
             </div>
 
-            <div className="mt-6 flex w-full justify-start lg:mt-30 lg:justify-end">
+            <div className="mt-6 flex w-full justify-start md:mt-15 md:justify-end">
               <p
-                className="w-full max-w-[469px] text-left text-[16px] leading-[1] whitespace-nowrap text-[#C08E72] min-[540px]:text-[22px] lg:text-right lg:text-[27px]"
+                className="w-full max-w-[469px] text-left text-[16px] leading-[1] whitespace-nowrap text-[#C08E72] min-[540px]:text-[22px] md:text-right md:text-[27px]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                <span className="reveal-wrapper block lg:text-right">
+                <span className="reveal-wrapper block md:text-right">
                   <span
                     className="reveal-text reveal-text-x-right inline-block"
                     style={{ animationDelay: '0.12s' }}
@@ -711,17 +711,29 @@ const HowItWorkHeroSection = () => {
           </div>
         </div>
 
-        <div className="anim-element slide-from-bottom relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-6 py-3 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-4 lg:px-20 xl:px-[100px]">
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-[#CDB17E] lg:justify-between">
+        <div className="anim-element slide-from-bottom is-visible relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-6 py-3 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-3 md:px-20 xl:px-[100px]">
+          <div className="flex flex-wrap items-center justify-start text-[#CDB17E] w-full gap-2 min-[540px]:gap-4 md:gap-4 lg:gap-6">
             {HERO_TAGS.map((tag, index) => (
-              <div key={tag} className="flex items-center gap-4 lg:gap-7">
-                <span className="text-[13px] uppercase leading-[1.5] tracking-[0.02em] min-[540px]:text-[16px]">
+              <div
+                key={tag}
+                className="flex items-center h-8 whitespace-nowrap gap-3 md:gap-5 lg:gap-7"
+              >
+                <span className="text-[13px] uppercase leading-none tracking-[0.02em] min-[540px]:text-[16px]">
                   {tag}
                 </span>
                 {index < HERO_TAGS.length - 1 && (
-                  <span className="hidden lg:flex lg:items-center lg:justify-center lg:self-center text-[#CDB17E]/40 leading-none">
-                    .
-                  </span>
+                  <div className="hidden md:flex items-center justify-center px-3">
+                    <svg
+                      width="4"
+                      height="4"
+                      viewBox="0 0 4 4"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="flex-shrink-0"
+                    >
+                      <circle cx="2" cy="2" r="2" fill="#CDB17E" fillOpacity="0.5" />
+                    </svg>
+                  </div>
                 )}
               </div>
             ))}

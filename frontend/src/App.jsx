@@ -33,6 +33,10 @@ import BartendingLevelsPage from './pages/BartendingLevelsPage'
 import PackageDetailsPage from './pages/PackageDetailsPage'
 import DecorSinglePackagePage from './pages/DecorSinglePackagePage'
 import SheeshaSinglePackagePage from './pages/SheeshaSinglePackagePage'
+import SinglePackageCheckout from './pages/SinglePackageCheckout'
+import CartPage from './pages/CartPage'
+import CheckoutPage from './pages/CheckoutPage'
+import BookingConfirmation from './pages/BookingConfirmation'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -91,6 +95,10 @@ function AppLayout() {
         <Route path="/new-password" element={<NewPasswordPage />} />
         <Route path="/book-consultation" element={<BookConsultationPage />} />
         <Route path="/consultation-confirmation" element={<ConsultationConfirmation />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/single-package-checkout" element={<SinglePackageCheckout />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/booking-confirmation" element={<BookingConfirmation />} />
         <Route path="/blogs" element={<BlogPage />} />
         <Route path="/blogs/:slug" element={<SingleBlogPage />} />
         <Route path="/event-flow/category" element={<CategoryPage />} />

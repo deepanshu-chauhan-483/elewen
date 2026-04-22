@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import PackageCard from './PackageCard'
 import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'

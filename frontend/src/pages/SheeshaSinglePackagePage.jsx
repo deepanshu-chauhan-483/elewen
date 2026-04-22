@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackages } from '../hooks/usePackages'
 import useCustomization from '../hooks/useCustomization'
+import { useCart } from '../hooks/useCart'
 
 // images (reuse same pattern)
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -121,10 +122,13 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors }) {
 export default function SheeshaSinglePackagePage() {
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
+  const { addPackage } = useCart()
   const { customizations, handleAddToCart, handleIncrease, handleDecrease } = useCustomization()
 
   const [selectedFlavor, setSelectedFlavor] = useState(null)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
   const quantity = customizations.length
 
   const packagesData = useMemo(
@@ -165,6 +169,25 @@ export default function SheeshaSinglePackagePage() {
   const packagePrice = pkg.price || SHEESHA_CONTENT.price
   const packageIntro = pkg.description || SHEESHA_CONTENT.intro
 
+  const handleCartAdd = async () => {
+    if (isAddToCartDisabled || isAddingToCart) return
+
+    setIsAddingToCart(true)
+    try {
+      await addPackage({ packageId: pkg.id, quantity })
+      handleAddToCart()
+      navigate('/cart')
+    } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED') {
+        navigate('/login')
+        return
+      }
+      console.error('[sheesha] add to cart failed', err)
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
+
   return (
     <SingleProductPageContent
       backHref={backHref}
@@ -176,7 +199,8 @@ export default function SheeshaSinglePackagePage() {
       sideImages={sideImages}
       relatedProducts={relatedProducts}
       disableAddToCart={isAddToCartDisabled}
-      onAddToCart={handleAddToCart}
+      isAddingToCart={isAddingToCart}
+      onAddToCart={handleCartAdd}
       quantity={quantity}
       onDecrement={handleDecrease}
       onIncrement={handleIncrease}

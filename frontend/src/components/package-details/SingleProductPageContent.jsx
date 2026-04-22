@@ -187,9 +187,13 @@ export default function SingleProductPageContent({
   addToCartLabel = 'Add to cart',
   relatedProducts = [],
   disableAddToCart = false,
+  isAddingToCart = false,
   onAddToCart,
   ctaButtonText = 'Book a Consultation',
 }) {
+  const addToCartDisabled = disableAddToCart || isAddingToCart
+  const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
+
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
       <NavHeader />
@@ -270,23 +274,23 @@ export default function SingleProductPageContent({
 
             <button
               type="button"
-              disabled={disableAddToCart}
+              disabled={addToCartDisabled}
               onClick={onAddToCart}
               className={`group ${promptContent ? 'mt-4' : 'mt-5'} flex w-full items-center justify-between rounded-full pl-6 pr-1.5 py-1.5 text-[13px] font-medium transition-colors ${
-                disableAddToCart
+                addToCartDisabled
                   ? 'cursor-not-allowed bg-[#CFCBC5] text-[#8A847E]'
                   : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
               }`}
             >
-              <span className="mr-5">{addToCartLabel}</span>
+              <span className="mr-5">{addToCartButtonLabel}</span>
               <span
                 className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ${
-                  disableAddToCart ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
+                  addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
                 }`}
               >
                 <svg
                   className={`h-[18px] w-[18px] transition-transform duration-300 ease-out ${
-                    disableAddToCart ? '' : 'group-hover:rotate-none'
+                    addToCartDisabled ? '' : 'group-hover:rotate-none'
                   }`}
                   fill="none"
                   viewBox="0 0 24 24"
@@ -425,23 +429,23 @@ export default function SingleProductPageContent({
 
               <button
                 className={`group flex items-center rounded-full pl-6 pr-1.5 py-1.5 text-[13px] font-medium transition-colors ${
-                  disableAddToCart
+                  addToCartDisabled
                     ? 'cursor-not-allowed bg-[#CFCBC5] text-[#8A847E]'
                     : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
                 }`}
-                disabled={disableAddToCart}
+                disabled={addToCartDisabled}
                 type="button"
                 onClick={onAddToCart}
               >
-                <span className="mr-5">{addToCartLabel}</span>
+                <span className="mr-5">{addToCartButtonLabel}</span>
                 <span
                   className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ${
-                    disableAddToCart ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
+                    addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
                   }`}
                 >
                   <svg
                     className={`h-[18px] w-[18px] transition-transform duration-300 ease-out ${
-                      disableAddToCart ? '' : 'group-hover:rotate-none'
+                      addToCartDisabled ? '' : 'group-hover:rotate-none'
                     }`}
                     fill="none"
                     viewBox="0 0 24 24"
