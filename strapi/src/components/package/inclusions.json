@@ -11,6 +11,12 @@
     "group_title": {
       "type": "string"
     },
+    "choice_group_label": {
+      "type": "string"
+    },
+    "choice_group_key": {
+      "type": "string"
+    },
     "is_choice_group": {
       "type": "boolean"
     }

@@ -41,6 +41,10 @@ function formatFilterLabel(value, fallback) {
 }
 const CARDS_PER_ROW = 3
 
+function isNumericId(value) {
+  return /^\d+$/.test(String(value ?? '').trim())
+}
+
 function RowArrow({ direction = 'left' }) {
   const rotationClass = direction === 'right' ? '' : 'rotate-180'
 
@@ -160,7 +164,7 @@ export default function DecorLevelsPage() {
         key: `level${index + 1}`,
         packages: filterPackages(sortedPackages, {
           levelSlug: level.slug,
-          levelId: level.id != null ? String(level.id) : '',
+          levelId: isNumericId(level?.id) ? String(level.id) : '',
         }),
       })),
     [levels, sortedPackages]

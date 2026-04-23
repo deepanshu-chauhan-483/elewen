@@ -67,6 +67,10 @@ export default function ServicePackagesPageContent({
   const serviceId = searchParams.get('serviceId') ?? ''
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
+  const shouldBypassEventFilters = selectedServiceSlug === 'sheesha'
+  const effectiveCategorySlug = shouldBypassEventFilters ? '' : categorySlug
+  const effectiveEventSlug = shouldBypassEventFilters ? '' : eventSlug
+  const effectiveEventId = shouldBypassEventFilters ? '' : eventId
 
   const packagesData = useMemo(
     () =>
@@ -83,9 +87,9 @@ export default function ServicePackagesPageContent({
   const filteredPackages = useMemo(
     () =>
       filterPackages(packagesData, {
-        categorySlug,
-        eventSlug,
-        eventId,
+        categorySlug: effectiveCategorySlug,
+        eventSlug: effectiveEventSlug,
+        eventId: effectiveEventId,
         serviceSlug: selectedServiceSlug,
         serviceId,
         themeSlug,
@@ -93,9 +97,9 @@ export default function ServicePackagesPageContent({
       }),
     [
       packagesData,
-      categorySlug,
-      eventSlug,
-      eventId,
+      effectiveCategorySlug,
+      effectiveEventSlug,
+      effectiveEventId,
       selectedServiceSlug,
       serviceId,
       themeSlug,

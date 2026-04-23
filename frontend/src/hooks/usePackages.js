@@ -99,6 +99,19 @@ function getNestedPackageBudgetLevels(pkg) {
     .filter(Boolean)
 }
 
+function inferServiceSlugsFromSections(pkg) {
+  const componentTypes = uniqueValues(
+    getNestedPackageSections(pkg).map(section => String(section?.__component ?? '').trim())
+  )
+
+  return componentTypes.flatMap(componentType => {
+    if (componentType === 'package.sheeshapackage') return ['sheesha']
+    if (componentType === 'package.decorpackages') return ['decor']
+    if (componentType === 'package.bartendingpackage') return ['bartending']
+    return []
+  })
+}
+
 function getPackageTags(pkg) {
   const elementTags = getNestedPackageElements(pkg).flatMap(element => [
     element?.service?.name,
@@ -178,14 +191,16 @@ function normalizePackage(pkg, index = 0) {
   const budgetLevels = getNestedPackageBudgetLevels(pkg)
   const primaryBudgetLevel = budgetLevels[0] ?? null
   const serviceSlugs = uniqueValues(
-    serviceCategories.flatMap(service => [
-      service?.slug,
-      normalizeServiceSlug(service?.slug),
-      service?.parent_category?.slug,
-      normalizeServiceSlug(service?.parent_category?.slug),
-      service?.name,
-      normalizeServiceSlug(service?.name),
-    ])
+    serviceCategories
+      .flatMap(service => [
+        service?.slug,
+        normalizeServiceSlug(service?.slug),
+        service?.parent_category?.slug,
+        normalizeServiceSlug(service?.parent_category?.slug),
+        service?.name,
+        normalizeServiceSlug(service?.name),
+      ])
+      .concat(inferServiceSlugsFromSections(pkg))
   )
   const serviceIds = uniqueValues(
     serviceCategories.flatMap(service => [service?.id, service?.parent_category?.id]).map(String)
@@ -245,8 +260,10 @@ function getPackagePopulateParams() {
     'populate[packages][on][package.decorpackages][populate][inclustions]': 'true',
     'populate[packages][on][package.decorpackages][populate][policy]': 'true',
     'populate[packages][on][package.decorpackages][populate][price_covers]': 'true',
+    'populate[packages][on][package.decorpackages][populate][price_breakdown]': 'true',
     'populate[packages][on][package.decorpackages][populate][theme]': 'true',
     'populate[packages][on][package.decorpackages][populate][budget_level]': 'true',
+    'populate[packages][on][package.decorpackages][populate][backdrop_images]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][elements][populate]': 'service',
     'populate[packages][on][package.sheeshapackage][populate][addons]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][inclusions]': 'true',

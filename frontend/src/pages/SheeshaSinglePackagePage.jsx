@@ -6,6 +6,7 @@ import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
+import { useFlavors } from '../hooks/useFlavors'
 
 // images (reuse same pattern)
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -41,18 +42,6 @@ const SHEESHA_CONTENT = {
   ],
 }
 
-// flavors
-const FLAVORS = [
-  { title: 'Double Apple' },
-  { title: 'Mint' },
-  { title: 'Blueberry' },
-  { title: 'Watermelon' },
-  {
-    title: 'Ice Mint',
-    description: 'Intense icy mint for extreme cooling',
-  },
-]
-
 function buildSheeshaAccordionSections(pkg) {
   return Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
     ? pkg.detail_accordion_sections
@@ -78,7 +67,7 @@ function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancel
 
 function buildSheeshaFlavors(pkg) {
   if (Array.isArray(pkg?.flavor_options) && pkg.flavor_options.length) return pkg.flavor_options
-  return FLAVORS
+  return []
 }
 
 function buildSheeshaInclusions(pkg) {
@@ -169,6 +158,7 @@ export default function SheeshaSinglePackagePage() {
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { data: packages = [] } = usePackages()
+  const { data: packageFlavors = [] } = useFlavors()
   const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
   const { data: cancellationPolicy } = useCancellationPolicy()
   const { addPackage } = useCart()
@@ -252,7 +242,8 @@ export default function SheeshaSinglePackagePage() {
     cancellationPolicy,
     SHEESHA_CONTENT.accordionSections.find(section => section.title === 'Cancellation Policy')
   )
-  const flavors = buildSheeshaFlavors(pkg)
+  const packageFlavorsList = buildSheeshaFlavors(pkg)
+  const flavors = packageFlavorsList.length ? packageFlavorsList : packageFlavors
   const inclusions = buildSheeshaInclusions(pkg)
 
   const handleSelectFlavor = flavorTitle => {
