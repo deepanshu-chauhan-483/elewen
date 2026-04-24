@@ -95,8 +95,8 @@ export const templates = {
         ${infoRow('Booking ID', `#${bookingId.slice(0, 8).toUpperCase()}`)}
         ${infoRow('Event Date', new Date(eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }))}
         ${infoRow('Guests', guestCount)}
-        ${infoRow('Total', `₹${Number(totalPrice).toLocaleString('en-IN')}`)}
-        ${infoRow('Advance Due', `₹${Number(advanceAmount).toLocaleString('en-IN')}`)}
+        ${infoRow('Total', `₹${(Number(totalPrice) || totalPrice.toNumber?.()).toLocaleString('en-IN')}`)}
+        ${infoRow('Advance Due', `₹${(Number(advanceAmount) || advanceAmount.toNumber?.()).toLocaleString('en-IN')}`)}
       `)}
       ${divider()}
       ${p('To confirm your booking, please complete the advance payment.')}

@@ -1,5 +1,50 @@
 import prisma from '../lib/prisma.js'
-import { strapiServerGet } from '../lib/strapi.js'
+import { strapiGet, strapiServerGet } from '../lib/strapi.js'
+
+const cartInclude = {
+  items: { orderBy: { createdAt: 'asc' } },
+}
+
+const getCartWithItems = cartId =>
+  prisma.cart.findUnique({
+    where: { id: cartId },
+    include: cartInclude,
+  })
+
+const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+
+function normalizeSelectedOptions(selectedOptions) {
+  if (!selectedOptions || typeof selectedOptions !== 'object' || Array.isArray(selectedOptions)) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.entries(selectedOptions)
+      .map(([key, value]) => [String(key ?? '').trim(), String(value ?? '').trim()])
+      .filter(([key, value]) => key && value)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+  )
+}
+
+function buildSelectionKey(selectedOptions) {
+  const normalized = normalizeSelectedOptions(selectedOptions)
+  const serialized = JSON.stringify(normalized)
+  if (!serialized || serialized === '{}') return null
+
+  let hash = 5381
+  for (let index = 0; index < serialized.length; index += 1) {
+    hash = ((hash << 5) + hash + serialized.charCodeAt(index)) >>> 0
+  }
+
+  return `pkgopt_${hash.toString(36)}`
+}
+
+function buildCartItemTitle(title, selectedOptions) {
+  const normalized = normalizeSelectedOptions(selectedOptions)
+  if (!Object.keys(normalized).length) return title
+
+  return `${title}${CART_META_SEPARATOR}${JSON.stringify({ selectedOptions: normalized })}`
+}
 
 // ─── Helper: recalculate cart totals ─────────────────────────────────────────
 // couponIdOverride: pass null to explicitly remove coupon, a string to set one,
@@ -54,18 +99,20 @@ export const getCart = async (req, res, next) => {
 
     let cart = await prisma.cart.findFirst({
       where: { userId },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
+      include: cartInclude,
     })
 
     if (!cart) {
       cart = await prisma.cart.create({
         data: { userId },
-        include: { items: true },
+        include: cartInclude,
       })
     }
 
+    await recalcCart(cart.id)
+    cart = await getCartWithItems(cart.id)
+
     res.json({ cart })
-    console.log(cart,"cart item");
   } catch (err) {
     next(err)
   }
@@ -75,18 +122,20 @@ export const getCart = async (req, res, next) => {
 export const addItem = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { packageId, quantity = 1 } = req.body
+    const { packageId, quantity = 1, selectedOptions } = req.body
 
     if (!packageId) return res.status(400).json({ error: 'packageId is required' })
     if (quantity < 1) return res.status(400).json({ error: 'quantity must be at least 1' })
 
     // Fetch package from Strapi — use filter by id (Strapi v5 single entry needs documentId, filter by id works)
-    const { data: pkgs } = await strapiServerGet(`/api/packages?filters[id][$eq]=${packageId}`)
+    const { data: pkgs } = await strapiGet('/packages', { 'filters[id][$eq]': packageId })
     const pkg = pkgs?.[0]
     if (!pkg) return res.status(404).json({ error: 'Package not found' })
 
     const unitPrice = Number(pkg.base_price)
     const title = pkg.title
+    const selectionKey = buildSelectionKey(selectedOptions)
+    const storedTitle = buildCartItemTitle(title, selectedOptions)
 
     // Get or create cart
     let cart = await prisma.cart.findFirst({ where: { userId } })
@@ -99,7 +148,7 @@ export const addItem = async (req, res, next) => {
       where: {
         cartId: cart.id,
         packageId: String(packageId),
-        packageElementId: null,
+        packageElementId: selectionKey,
         addonId: null,
       },
     })
@@ -115,7 +164,8 @@ export const addItem = async (req, res, next) => {
         data: {
           cartId: cart.id,
           packageId: String(packageId),
-          title,
+          packageElementId: selectionKey,
+          title: storedTitle,
           quantity,
           unitPrice: unitPrice.toFixed(2),
           totalPrice: (unitPrice * quantity).toFixed(2),
@@ -125,10 +175,7 @@ export const addItem = async (req, res, next) => {
 
     await recalcCart(cart.id)
 
-    const updated = await prisma.cart.findUnique({
-      where: { id: cart.id },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
-    })
+    const updated = await getCartWithItems(cart.id)
 
     res.status(201).json({ cart: updated })
   } catch (err) {
@@ -164,10 +211,7 @@ export const updateItem = async (req, res, next) => {
 
     await recalcCart(item.cart.id)
 
-    const cart = await prisma.cart.findUnique({
-      where: { id: item.cart.id },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
-    })
+    const cart = await getCartWithItems(item.cart.id)
 
     res.json({ cart })
   } catch (err) {
@@ -193,10 +237,7 @@ export const removeItem = async (req, res, next) => {
     await prisma.cartItem.delete({ where: { id: itemId } })
     await recalcCart(cartId)
 
-    const cart = await prisma.cart.findUnique({
-      where: { id: cartId },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
-    })
+    const cart = await getCartWithItems(cartId)
 
     res.json({ cart })
   } catch (err) {
@@ -222,7 +263,7 @@ export const updateCart = async (req, res, next) => {
           guestCount: guestCount ? parseInt(guestCount, 10) : null,
         }),
       },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
+      include: cartInclude,
     })
 
     res.json({ cart: updated })
@@ -267,10 +308,7 @@ export const applyCoupon = async (req, res, next) => {
     await prisma.cart.update({ where: { id: cart.id }, data: { couponId: String(coupon.id) } })
     await recalcCart(cart.id, String(coupon.id))
 
-    const updated = await prisma.cart.findUnique({
-      where: { id: cart.id },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
-    })
+    const updated = await getCartWithItems(cart.id)
 
     res.json({
       cart: updated,
@@ -296,10 +334,7 @@ export const removeCoupon = async (req, res, next) => {
     await prisma.cart.update({ where: { id: cart.id }, data: { couponId: null } })
     await recalcCart(cart.id, null)
 
-    const updated = await prisma.cart.findUnique({
-      where: { id: cart.id },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
-    })
+    const updated = await getCartWithItems(cart.id)
 
     res.json({ cart: updated })
   } catch (err) {

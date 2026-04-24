@@ -662,7 +662,7 @@ const HeroSection = () => {
                   </svg>
                 </button>
                 <div
-                  className="w-[176px] md:w-[265px] md:max-w-62.5 text-[16px] md:text-[15px] lg:text-sm font-normal md:font-light leading-[1.5] md:leading-relaxed opacity-90 text-left overflow-hidden text-[#FAFAFA]"
+                  className="w-[176px] md:w-[270px] md:max-w-62.5 text-[16px] md:text-[15px] lg:text-sm font-normal md:font-light leading-[1.5] md:leading-relaxed opacity-90 text-left overflow-hidden text-[#FAFAFA]"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
                   <p ref={ctaLine1Ref} className="m-0">

@@ -34,30 +34,38 @@ export default function useCustomization({
   const handleRepeat = () => {
     const sourceData = activeCustomization?.data ?? createInitialData()
 
-    setCustomizations(prev => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        data: cloneData(sourceData),
-        isAddedToCart: true,
-      },
-    ])
+    setCustomizations(prev => {
+      const nextIndex = prev.length
+      setActiveIndex(nextIndex)
 
-    setActiveIndex(customizations.length)
+      return [
+        ...prev,
+        {
+          id: nextIndex + 1,
+          data: cloneData(sourceData),
+          isAddedToCart: false,
+        },
+      ]
+    })
+
     setShowRepeatPrompt(false)
   }
 
   const handleNew = () => {
-    setCustomizations(prev => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        data: createInitialData(),
-        isAddedToCart: false,
-      },
-    ])
+    setCustomizations(prev => {
+      const nextIndex = prev.length
+      setActiveIndex(nextIndex)
 
-    setActiveIndex(customizations.length)
+      return [
+        ...prev,
+        {
+          id: nextIndex + 1,
+          data: createInitialData(),
+          isAddedToCart: false,
+        },
+      ]
+    })
+
     setShowRepeatPrompt(false)
   }
 

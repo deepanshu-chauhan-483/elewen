@@ -3,9 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import ScallopBulbCurtain from './common/ScallopBulbCurtain'
-import { authLogout } from '../lib/api'
+import { authLogout, getStoredJwt } from '../lib/api'
 import { useCart } from '../hooks/useCart'
-
 const EVENT_IMAGE = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80'
 
 const BASE_LINKS = [
@@ -183,9 +182,18 @@ function CartIcon() {
   )
 }
 
-function CartButton({ count, className, onClick }) {
+function CartButton({ count, className }) {
+  const navigate = useNavigate()
+  const handleClick = () => {
+    navigate('/cart')
+  }
   return (
-    <button type="button" aria-label="Cart" className={`relative ${className}`} onClick={onClick}>
+    <button
+      type="button"
+      aria-label="Cart"
+      className={`relative ${className}`}
+      onClick={handleClick}
+    >
       <CartIcon />
       {count > 0 ? (
         <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#D4BA8E] px-1 text-[11px] font-semibold leading-none text-[#111110]">
@@ -195,7 +203,6 @@ function CartButton({ count, className, onClick }) {
     </button>
   )
 }
-
 const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) => {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
@@ -205,7 +212,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const lastScrollY = useRef(0)
   const headerRef = useRef(null)
 
-  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('elewen_jwt'))
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!getStoredJwt())
   const [entered, setEntered] = useState(!isHome)
   const [hidden, setHidden] = useState(false)
   const [navThemeName, setNavThemeName] = useState(isHome ? 'glass' : 'light')
@@ -215,7 +222,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const useBlackNavAccent = BLACK_NAV_ACCENT_PATHS.includes(pathname)
 
   useEffect(() => {
-    const sync = () => setIsLoggedIn(!!localStorage.getItem('elewen_jwt'))
+    const sync = () => setIsLoggedIn(!!getStoredJwt())
     window.addEventListener('storage', sync)
     window.addEventListener('elewen-auth-change', sync)
     return () => {
@@ -319,7 +326,6 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       if (rafId != null) window.cancelAnimationFrame(rafId)
     }
   }, [forcedThemeName, pathname, open])
-
   const handleLogout = async () => {
     try {
       await authLogout()
@@ -327,6 +333,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       // Ignore logout API failures and continue clearing local session state.
     }
     localStorage.removeItem('elewen_jwt')
+    localStorage.removeItem('accessToken')
     setIsLoggedIn(false)
     setOpen(false)
     window.dispatchEvent(new Event('elewen-auth-change'))
@@ -371,7 +378,6 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const resolvedMobileIconColor = useBlackNavAccent ? '#000000' : mobileIconColor
   const overlayActionClass =
     'flex h-10 w-10 items-center justify-center text-white transition-opacity hover:opacity-70'
-
   return (
     <>
       <header
@@ -495,12 +501,10 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 />
               </svg>
             </button>
-
             <CartButton
               count={itemCount}
               className={isDesktop ? 'hidden md:flex' : 'flex md:hidden'}
             />
-
             <button
               onClick={() => setOpen(true)}
               aria-label="Open menu"
@@ -570,7 +574,6 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               />
             </Link>
           </div>
-
           <div className="ml-auto flex items-center gap-3  md:hidden">
             <button type="button" aria-label="Search" className="p-1 text-white">
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -615,7 +618,6 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               </svg>
             </button>
           </div>
-
           <div className="ml-auto hidden items-center  gap-3 md:flex">
             {isLoggedIn ? (
               <Link

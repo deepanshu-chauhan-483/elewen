@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
-import { usePackages } from '../hooks/usePackages'
 import { getServiceProductDetails } from '../data/serviceProductDetails'
-import useCustomization from '../hooks/useCustomization'
+import { useCart } from '../hooks/useCart'
+import { usePackages } from '../hooks/usePackages'
+import { getStoredJwt } from '../lib/api'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -38,13 +39,41 @@ function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
 }
 
-function createInitialCustomizationData(groups = []) {
-  return {
-    selectedOptions: Object.fromEntries(
-      groups
-        .map(group => [group.label, group.options?.[0] ?? ''])
-        .filter(([, value]) => Boolean(value))
-    ),
+function buildDefaultSelectedOptions(groups = []) {
+  return Object.fromEntries(
+    groups
+      .map(group => [group.label, group.options?.[0] ?? ''])
+      .filter(([, value]) => Boolean(value))
+  )
+}
+
+function normalizeSelectedOptions(selectedOptions = {}) {
+  return Object.fromEntries(
+    Object.entries(selectedOptions)
+      .map(([key, value]) => [String(key ?? '').trim(), String(value ?? '').trim()])
+      .filter(([key, value]) => key && value)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+  )
+}
+
+function getSelectedOptionsFromSearchParams(searchParams, groups = []) {
+  const rawValue = searchParams.get('selectedOptions')
+  if (!rawValue) return {}
+
+  try {
+    const parsed = JSON.parse(rawValue)
+    const normalized = normalizeSelectedOptions(parsed)
+    const validOptionsByGroup = new Map(
+      groups.map(group => [group.label, new Set(group.options ?? [])])
+    )
+
+    return Object.fromEntries(
+      Object.entries(normalized).filter(([groupLabel, option]) =>
+        validOptionsByGroup.get(groupLabel)?.has(option)
+      )
+    )
+  } catch {
+    return {}
   }
 }
 
@@ -99,22 +128,20 @@ function PackageOptions({ groups = [], selectedOptions = {}, onSelect }) {
 }
 
 export default function PackageDetailsPage() {
+  const navigate = useNavigate()
   const { service = '', packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { data: packages = [] } = usePackages()
+  const { addPackage } = useCart()
   const normalizedService = normalizeServiceSlug(service)
   const search = searchParams.toString()
   const details = getServiceProductDetails(normalizedService)
-  const {
-    customizations,
-    activeCustomization,
-    handleAddToCart,
-    handleIncrease,
-    handleDecrease,
-    setCustomizations,
-  } = useCustomization({
-    createInitialData: () => createInitialCustomizationData(details.configurableGroups),
-  })
+  const [selectedOptions, setSelectedOptions] = useState(() =>
+    buildDefaultSelectedOptions(details.configurableGroups)
+  )
+  const [quantity, setQuantity] = useState(1)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [addToCartMessage, setAddToCartMessage] = useState('')
 
   const packagesData = useMemo(
     () =>
@@ -143,8 +170,6 @@ export default function PackageDetailsPage() {
     [normalizedService, packageId, packagesData]
   )
 
-  const selectedOptions = activeCustomization?.data?.selectedOptions ?? {}
-
   const relatedProducts = useMemo(
     () =>
       packagesData
@@ -157,6 +182,21 @@ export default function PackageDetailsPage() {
         .map(item => ({ ...item, serviceSlug: normalizedService })),
     [normalizedService, packagesData, pkg]
   )
+
+  useEffect(() => {
+    const defaultOptions = buildDefaultSelectedOptions(details.configurableGroups)
+    const selectedOptionsFromSearch = getSelectedOptionsFromSearchParams(
+      searchParams,
+      details.configurableGroups
+    )
+
+    setSelectedOptions({
+      ...defaultOptions,
+      ...selectedOptionsFromSearch,
+    })
+    setQuantity(1)
+    setAddToCartMessage('')
+  }, [details.configurableGroups, packageId, searchParams])
 
   if (normalizedService === 'decor' || normalizedService === 'decor-single') {
     return (
@@ -183,23 +223,44 @@ export default function PackageDetailsPage() {
   const packageIntro = pkg.description || details.intro
 
   const handleSelect = (groupLabel, option) => {
-    setCustomizations(current =>
-      current.map((item, index) => {
-        if (index !== 0) return item
+    setAddToCartMessage('')
+    setSelectedOptions(current => ({
+      ...current,
+      [groupLabel]: option,
+    }))
+  }
 
-        return {
-          ...item,
-          data: {
-            ...item.data,
-            selectedOptions: {
-              ...(item.data?.selectedOptions ?? {}),
-              [groupLabel]: option,
-            },
-          },
-          isAddedToCart: false,
-        }
+  const handleAddToCart = async () => {
+    setAddToCartMessage('')
+
+    const numericPackageId = Number(pkg?.id)
+    if (!Number.isFinite(numericPackageId)) {
+      setAddToCartMessage('This package is missing its cart ID. Please refresh and try again.')
+      return
+    }
+
+    setIsAddingToCart(true)
+
+    try {
+      await addPackage({
+        packageId: numericPackageId,
+        quantity,
+        selectedOptions: normalizeSelectedOptions(selectedOptions),
       })
-    )
+      setAddToCartMessage(quantity > 1 ? `${quantity} packages added to cart.` : 'Added to cart.')
+    } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED' || err?.message === 'AUTH_REQUIRED') {
+        if (!getStoredJwt()) {
+          navigate('/login')
+          return
+        }
+      }
+
+      console.error('[package-details] add to cart failed', err)
+      setAddToCartMessage('Could not add this package to cart. Please try again.')
+    } finally {
+      setIsAddingToCart(false)
+    }
   }
 
   return (
@@ -218,10 +279,19 @@ export default function PackageDetailsPage() {
       mainImage={pkg.images?.[0] ?? sideImages[0]}
       sideImages={sideImages}
       relatedProducts={relatedProducts}
+      addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
+      addToCartMessage={addToCartMessage}
+      disableAddToCart={isAddingToCart}
       onAddToCart={handleAddToCart}
-      quantity={customizations.length}
-      onDecrement={handleDecrease}
-      onIncrement={handleIncrease}
+      quantity={quantity}
+      onDecrement={() => {
+        setAddToCartMessage('')
+        setQuantity(current => Math.max(1, current - 1))
+      }}
+      onIncrement={() => {
+        setAddToCartMessage('')
+        setQuantity(current => current + 1)
+      }}
     />
   )
 }

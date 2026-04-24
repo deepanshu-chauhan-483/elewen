@@ -15,6 +15,7 @@ import pkgImg8 from '../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../assets/images/6f6af066.jpg'
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
+import { getStoredJwt } from '../lib/api'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg1, pkgImg1, pkgImg1, pkgImg1],
@@ -469,6 +470,62 @@ function isCustomizationComplete(sections = []) {
   )
 }
 
+function normalizeSelectedOptions(selectedOptions = {}) {
+  return Object.fromEntries(
+    Object.entries(selectedOptions)
+      .map(([key, value]) => [String(key ?? '').trim(), String(value ?? '').trim()])
+      .filter(([key, value]) => key && value)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+  )
+}
+
+function buildDecorSelectedOptions(customization) {
+  const selectedSections = (customization?.data?.sections ?? []).filter(
+    section => section?.type === 'choice-row'
+  )
+
+  return normalizeSelectedOptions(
+    Object.fromEntries(
+      selectedSections
+        .map(section => {
+          const selectedItem = (section.items ?? []).find(
+            item => typeof item !== 'string' && item.selected
+          )
+
+          return [section.title, selectedItem?.title ?? '']
+        })
+        .filter(([, value]) => Boolean(value))
+    )
+  )
+}
+
+function applySelectedOptionsToSections(sections = [], selectedOptions = {}) {
+  return (Array.isArray(sections) ? sections : []).map(section => {
+    if (section?.type !== 'choice-row') return section
+
+    const selectedTitle = selectedOptions?.[section.title]
+    if (!selectedTitle) return section
+
+    return {
+      ...section,
+      items: (section.items ?? []).map(item =>
+        typeof item === 'string' ? item : { ...item, selected: item.title === selectedTitle }
+      ),
+    }
+  })
+}
+
+function getSelectedOptionsFromSearchParams(searchParams) {
+  const rawValue = searchParams.get('selectedOptions')
+  if (!rawValue) return {}
+
+  try {
+    return normalizeSelectedOptions(JSON.parse(rawValue))
+  } catch {
+    return {}
+  }
+}
+
 function DecorOptionButton({ item, wide = false, onClick }) {
   return (
     <button
@@ -664,12 +721,18 @@ export default function DecorSinglePackagePage() {
   useEffect(() => {
     if (!pkg) return
 
+    const selectedOptionsFromSearch = getSelectedOptionsFromSearchParams(searchParams)
+
     setCustomizations(prev => {
       let hasChanges = false
 
       const nextCustomizations = prev.map(customization => {
         const currentSections = customization?.data?.sections ?? []
-        const nextSections = mergeTemplateSections(sectionTemplate, currentSections)
+        const mergedSections = mergeTemplateSections(sectionTemplate, currentSections)
+        const nextSections =
+          currentSections.length === 0
+            ? applySelectedOptionsToSections(mergedSections, selectedOptionsFromSearch)
+            : mergedSections
 
         if (serializeSections(nextSections) === serializeSections(currentSections)) {
           return customization
@@ -688,7 +751,14 @@ export default function DecorSinglePackagePage() {
 
       return hasChanges ? nextCustomizations : prev
     })
-  }, [pkg, sectionTemplate, sectionTemplateSignature, setCustomizations])
+  }, [
+    customizations.length,
+    pkg,
+    searchParams,
+    sectionTemplate,
+    sectionTemplateSignature,
+    setCustomizations,
+  ])
 
   if (isPackageLoading) {
     return null
@@ -772,13 +842,19 @@ export default function DecorSinglePackagePage() {
     setIsAddingToCart(true)
 
     try {
-      await addPackage({ packageId: Number(pkg.id), quantity: 1 })
+      await addPackage({
+        packageId: Number(pkg.id),
+        quantity: 1,
+        selectedOptions: buildDecorSelectedOptions(activeCustomization),
+      })
       handleAddToCart()
       setAddToCartMessage('Added to cart.')
     } catch (err) {
       if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
-        navigate('/login')
-        return
+        if (!getStoredJwt()) {
+          navigate('/login')
+          return
+        }
       }
 
       console.error('[cart-click] decor add failed', err)

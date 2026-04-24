@@ -7,6 +7,7 @@ import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationP
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
 import { useFlavors } from '../hooks/useFlavors'
+import { getStoredJwt } from '../lib/api'
 
 // images (reuse same pattern)
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -80,6 +81,37 @@ function buildSheeshaInclusions(pkg) {
         'Unlimited Coal Change',
         'Full Hookah Equipment kit',
       ]
+}
+
+function normalizeSelectedOptions(selectedOptions = {}) {
+  return Object.fromEntries(
+    Object.entries(selectedOptions)
+      .map(([key, value]) => [String(key ?? '').trim(), String(value ?? '').trim()])
+      .filter(([key, value]) => key && value)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+  )
+}
+
+function buildSheeshaSelectedOptions(customization) {
+  const selectedFlavor = String(customization?.data?.selectedFlavor ?? '').trim()
+  return normalizeSelectedOptions(
+    selectedFlavor
+      ? {
+          Flavor: selectedFlavor,
+        }
+      : {}
+  )
+}
+
+function getSelectedOptionsFromSearchParams(searchParams) {
+  const rawValue = searchParams.get('selectedOptions')
+  if (!rawValue) return {}
+
+  try {
+    return normalizeSelectedOptions(JSON.parse(rawValue))
+  } catch {
+    return {}
+  }
 }
 
 // utils (same as decor)
@@ -177,15 +209,22 @@ export default function SheeshaSinglePackagePage() {
     createInitialData: () => ({ selectedFlavor: null }),
   })
 
-  const [selectedFlavor, setSelectedFlavor] = useState(null)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [addToCartMessage, setAddToCartMessage] = useState('')
   const quantity = customizations.length
 
-  // Sync selectedFlavor with active customization when activeIndex changes
   useEffect(() => {
-    setSelectedFlavor(activeCustomization?.data?.selectedFlavor ?? null)
-  }, [activeIndex, activeCustomization])
+    const selectedOptionsFromSearch = getSelectedOptionsFromSearchParams(searchParams)
+    const selectedFlavorFromSearch = selectedOptionsFromSearch.Flavor ?? null
+
+    setCustomizations([
+      {
+        id: 1,
+        data: { selectedFlavor: selectedFlavorFromSearch },
+        isAddedToCart: false,
+      },
+    ])
+  }, [packageId, searchParams, setCustomizations])
 
   const packagesData = useMemo(
     () =>
@@ -233,6 +272,7 @@ export default function SheeshaSinglePackagePage() {
     .slice(0, 3)
     .map(item => ({ ...item, serviceSlug: 'sheesha' }))
 
+  const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null
   const isAddToCartDisabled = !selectedFlavor
   const packageTitle = pkg.title || SHEESHA_CONTENT.title
   const packagePrice = pkg.price || SHEESHA_CONTENT.price
@@ -248,7 +288,6 @@ export default function SheeshaSinglePackagePage() {
 
   const handleSelectFlavor = flavorTitle => {
     setAddToCartMessage('')
-    setSelectedFlavor(flavorTitle)
     setCustomizations(prev =>
       prev.map((c, i) =>
         i === activeIndex
@@ -267,28 +306,22 @@ export default function SheeshaSinglePackagePage() {
     }
 
     setIsAddingToCart(true)
-    console.log('[cart-click] sheesha add to cart', {
-      packageId: Number(pkg.id),
-      title: pkg.title,
-      selectedFlavor,
-    })
 
     try {
-      const updatedCart = await addPackage({ packageId: Number(pkg.id), quantity: 1 })
-      handleAddToCart()
-      console.log('[cart-click] sheesha added', {
+      const updatedCart = await addPackage({
         packageId: Number(pkg.id),
-        title: pkg.title,
-        itemCount: (updatedCart?.items ?? []).reduce(
-          (sum, item) => sum + Number(item?.quantity ?? 0),
-          0
-        ),
+        quantity: 1,
+        selectedOptions: buildSheeshaSelectedOptions(activeCustomization),
       })
+      handleAddToCart()
+      void updatedCart
       setAddToCartMessage('Added to cart.')
     } catch (err) {
       if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
-        navigate('/login')
-        return
+        if (!getStoredJwt()) {
+          navigate('/login')
+          return
+        }
       }
 
       console.error('[cart-click] sheesha add failed', err)

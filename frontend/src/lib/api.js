@@ -12,15 +12,46 @@ const AUTH_EVENT = 'elewen-auth-change'
 
 let refreshPromise = null
 
+function decodeJwtPayload(token) {
+  try {
+    if (!token || typeof token !== 'string') return null
+    const [, payload = ''] = token.split('.')
+    if (!payload) return null
+    return JSON.parse(atob(payload))
+  } catch {
+    return null
+  }
+}
+
+function getRawStoredJwt() {
+  return localStorage.getItem('elewen_jwt') || localStorage.getItem('accessToken') || ''
+}
+
+export function getStoredJwt() {
+  const jwt = getRawStoredJwt()
+  if (jwt && !localStorage.getItem('elewen_jwt')) {
+    localStorage.setItem('elewen_jwt', jwt)
+  }
+  return jwt
+}
+
 function setStoredJwt(jwt) {
   if (!jwt) return
   localStorage.setItem('elewen_jwt', jwt)
+  localStorage.setItem('accessToken', jwt)
   window.dispatchEvent(new Event(AUTH_EVENT))
 }
 
-function clearStoredJwt() {
-  localStorage.removeItem('elewen_jwt')
-  window.dispatchEvent(new Event(AUTH_EVENT))
+// function clearStoredJwt() {
+//   localStorage.removeItem('elewen_jwt')
+//   localStorage.removeItem('accessToken')
+//   window.dispatchEvent(new Event(AUTH_EVENT))
+// }
+
+function createAuthRequiredError(message = 'AUTH_REQUIRED') {
+  const error = new Error(message)
+  error.code = 'AUTH_REQUIRED'
+  return error
 }
 
 async function refreshJwt() {
@@ -33,12 +64,12 @@ async function refreshJwt() {
       .then(async res => {
         if (!res.ok) {
           const msg = await res.text().catch(() => '')
-          throw new Error(`API ${res.status} on POST /auth/refresh: ${msg}`)
+          throw createAuthRequiredError(`API ${res.status} on POST /auth/refresh: ${msg}`)
         }
 
         const data = await res.json()
         if (!data?.jwt) {
-          throw new Error('API refresh did not return a jwt')
+          throw createAuthRequiredError('API refresh did not return a jwt')
         }
 
         setStoredJwt(data.jwt)
@@ -54,6 +85,10 @@ async function refreshJwt() {
 
 async function request(method, path, body, opts = {}) {
   const { _retried = false, headers: extraHeaders = {}, ...restOpts } = opts
+  const authHeader = extraHeaders.Authorization
+  const bearerToken =
+    typeof authHeader === 'string' && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+
   const res = await fetch(`${BASE}${path}`, {
     method,
     credentials: 'include', // send/receive HttpOnly refresh cookie
@@ -67,6 +102,12 @@ async function request(method, path, body, opts = {}) {
 
   if (res.status === 401 && canRefresh) {
     try {
+      console.error('[api] 401 received, attempting refresh', {
+        method,
+        path,
+        retried: _retried,
+        jwtPayload: decodeJwtPayload(bearerToken),
+      })
       const nextJwt = await refreshJwt()
       return request(method, path, body, {
         ...restOpts,
@@ -77,13 +118,28 @@ async function request(method, path, body, opts = {}) {
         },
       })
     } catch (refreshErr) {
-      clearStoredJwt()
-      throw refreshErr
+      console.error('[api] refresh failed', {
+        method,
+        path,
+        message: refreshErr?.message,
+        jwtPayload: decodeJwtPayload(bearerToken),
+      })
+      throw createAuthRequiredError(refreshErr.message)
     }
   }
 
   if (!res.ok) {
     const msg = await res.text().catch(() => '')
+    if (res.status === 401) {
+      console.error('[api] request unauthorized', {
+        method,
+        path,
+        message: msg,
+        retried: _retried,
+        jwtPayload: decodeJwtPayload(bearerToken),
+      })
+      throw createAuthRequiredError(`API ${res.status} on ${method} ${path}: ${msg}`)
+    }
     throw new Error(`API ${res.status} on ${method} ${path}: ${msg}`)
   }
 
@@ -117,6 +173,26 @@ export const cartRemoveItem = (token, itemId) =>
   apiDel(`/cart/items/${itemId}`, { headers: { Authorization: `Bearer ${token}` } })
 export const cartUpdate = (token, body) =>
   request('PATCH', '/cart', body, { headers: { Authorization: `Bearer ${token}` } })
+export const cartApplyCoupon = (token, body) =>
+  apiPost('/cart/coupon', body, { headers: { Authorization: `Bearer ${token}` } })
+export const cartRemoveCoupon = token =>
+  apiDel('/cart/coupon', { headers: { Authorization: `Bearer ${token}` } })
+
+/* -- Bookings ---------------------------------------------------------------- */
+
+export const bookingCreate = token =>
+  apiPost('/bookings', {}, { headers: { Authorization: `Bearer ${token}` } })
+
+export const bookingAddNote = (token, bookingId, body) =>
+  apiPost(`/bookings/${bookingId}/notes`, body, { headers: { Authorization: `Bearer ${token}` } })
+
+/* -- Payments ---------------------------------------------------------------- */
+
+export const paymentCreateOrder = (token, body) =>
+  apiPost('/payments/create-order', body, { headers: { Authorization: `Bearer ${token}` } })
+
+export const paymentVerify = (token, body) =>
+  apiPost('/payments/verify', body, { headers: { Authorization: `Bearer ${token}` } })
 
 /* ── Consultation ─────────────────────────────────────────────────────────── */
 
