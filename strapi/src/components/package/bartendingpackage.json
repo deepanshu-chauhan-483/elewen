@@ -1,0 +1,60 @@
+{
+  "collectionName": "components_package_bartendingpackages",
+  "info": {
+    "displayName": "bartendingpackage"
+  },
+  "options": {},
+  "attributes": {
+    "bartender_type": {
+      "type": "string"
+    },
+    "hours_range": {
+      "type": "string"
+    },
+    "price_per_extra_hour": {
+      "type": "integer"
+    },
+    "ideal_for": {
+      "type": "text"
+    },
+    "inclusions": {
+      "type": "component",
+      "component": "package.inclusions",
+      "repeatable": true
+    },
+    "exclusions": {
+      "type": "component",
+      "component": "shared.exclusion-item",
+      "repeatable": true
+    },
+    "price_covers": {
+      "type": "component",
+      "component": "shared.price-covers-item",
+      "repeatable": true
+    },
+    "setup_needs": {
+      "type": "text"
+    },
+    "addons": {
+      "type": "component",
+      "component": "package.package-addon",
+      "repeatable": true
+    },
+    "policy": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::policy.policy"
+    },
+    "price_breakdown": {
+      "type": "component",
+      "component": "shared.price-breakdown-item",
+      "repeatable": true
+    },
+    "budget_level": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::budget-level.budget-level"
+    }
+  },
+  "config": {}
+}

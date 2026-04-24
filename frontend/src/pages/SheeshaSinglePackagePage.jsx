@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
-import { usePackages } from '../hooks/usePackages'
+import { usePackageById, usePackages } from '../hooks/usePackages'
+import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
+import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
 
@@ -51,6 +53,46 @@ const FLAVORS = [
   },
 ]
 
+function buildSheeshaAccordionSections(pkg) {
+  return Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
+    ? pkg.detail_accordion_sections
+    : SHEESHA_CONTENT.accordionSections
+}
+
+function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancellationSection) {
+  const sections = Array.isArray(baseSections) ? [...baseSections] : []
+  const fallbackCancellation =
+    sections.find(section => section?.title === 'Cancellation Policy') ??
+    fallbackCancellationSection ??
+    null
+  const withoutCancellation = sections.filter(section => section?.title !== 'Cancellation Policy')
+
+  if (cancellationPolicy?.body) {
+    withoutCancellation.push(cancellationPolicy)
+  } else if (fallbackCancellation) {
+    withoutCancellation.push(fallbackCancellation)
+  }
+
+  return withoutCancellation
+}
+
+function buildSheeshaFlavors(pkg) {
+  if (Array.isArray(pkg?.flavor_options) && pkg.flavor_options.length) return pkg.flavor_options
+  return FLAVORS
+}
+
+function buildSheeshaInclusions(pkg) {
+  return Array.isArray(pkg?.detail_inclusions) && pkg.detail_inclusions.length
+    ? pkg.detail_inclusions
+    : [
+        '1 staff/Hookah operator',
+        'One Hookah Pot',
+        'Unlimited Flavour Change of chosen flavor',
+        'Unlimited Coal Change',
+        'Full Hookah Equipment kit',
+      ]
+}
+
 // utils (same as decor)
 function normalisePackageId(value = '') {
   return String(value).trim().toLowerCase()
@@ -60,14 +102,23 @@ function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
 }
 
-function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors }) {
+function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusions }) {
+  if (!flavors || flavors.length === 0) {
+    return (
+      <div>
+        <p className="text-[16px] font-semibold text-[#2D2D2D]">Flavors</p>
+        <p className="mt-4 text-[13px] text-[#591902]">No flavors available</p>
+      </div>
+    )
+  }
+
   return (
     <div>
       {/* Flavors */}
       <div>
         <p className="text-[16px] font-semibold text-[#2D2D2D]">Flavors</p>
 
-        <div className="mt-4 grid grid-cols-2 gap-y-3">
+        <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 max-h-none">
           {flavors.map((flavor, index) => (
             <label key={index} className="flex items-start gap-3 cursor-pointer">
               <input
@@ -98,13 +149,7 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors }) {
         <p className="text-[16px] font-semibold text-[#2D2D2D]">What&apos;s Included:</p>
 
         <ul className="mt-4 space-y-2">
-          {[
-            '1 staff/Hookah operator',
-            'One Hookah Pot',
-            'Unlimited Flavour Change of chosen flavor',
-            'Unlimited Coal Change',
-            'Full Hookah Equipment kit',
-          ].map((item, index) => (
+          {inclusions.map((item, index) => (
             <li
               key={index}
               className="flex items-start gap-2 text-[13px] text-[#591902] opacity-70"
@@ -124,12 +169,33 @@ export default function SheeshaSinglePackagePage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
+  const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
+  const { data: cancellationPolicy } = useCancellationPolicy()
   const { addPackage } = useCart()
-  const { customizations, handleAddToCart, handleIncrease, handleDecrease } = useCustomization()
+  const {
+    customizations,
+    activeCustomization,
+    activeIndex,
+    showRepeatPrompt,
+    handleAddToCart,
+    handleIncrease,
+    handleRepeat,
+    handleNew,
+    handleDecrease,
+    setCustomizations,
+  } = useCustomization({
+    createInitialData: () => ({ selectedFlavor: null }),
+  })
 
   const [selectedFlavor, setSelectedFlavor] = useState(null)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [addToCartMessage, setAddToCartMessage] = useState('')
   const quantity = customizations.length
+
+  // Sync selectedFlavor with active customization when activeIndex changes
+  useEffect(() => {
+    setSelectedFlavor(activeCustomization?.data?.selectedFlavor ?? null)
+  }, [activeIndex, activeCustomization])
 
   const packagesData = useMemo(
     () =>
@@ -148,9 +214,22 @@ export default function SheeshaSinglePackagePage() {
   }, [searchParams])
 
   const pkg = useMemo(
-    () => packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
-    [packageId, packagesData]
+    () =>
+      packageDetails
+        ? {
+            ...packageDetails,
+            images: packageDetails.images?.length
+              ? packageDetails.images
+              : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
+                PKG_LOCAL_IMAGES[0]),
+          }
+        : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
+    [packageDetails, packageId, packagesData]
   )
+
+  if (isPackageLoading) {
+    return null
+  }
 
   if (!pkg) {
     return <Navigate to={backHref} replace />
@@ -168,6 +247,65 @@ export default function SheeshaSinglePackagePage() {
   const packageTitle = pkg.title || SHEESHA_CONTENT.title
   const packagePrice = pkg.price || SHEESHA_CONTENT.price
   const packageIntro = pkg.description || SHEESHA_CONTENT.intro
+  const accordionSections = mergeAccordionSections(
+    buildSheeshaAccordionSections(pkg),
+    cancellationPolicy,
+    SHEESHA_CONTENT.accordionSections.find(section => section.title === 'Cancellation Policy')
+  )
+  const flavors = buildSheeshaFlavors(pkg)
+  const inclusions = buildSheeshaInclusions(pkg)
+
+  const handleSelectFlavor = flavorTitle => {
+    setAddToCartMessage('')
+    setSelectedFlavor(flavorTitle)
+    setCustomizations(prev =>
+      prev.map((c, i) =>
+        i === activeIndex
+          ? { ...c, data: { selectedFlavor: flavorTitle }, isAddedToCart: false }
+          : c
+      )
+    )
+  }
+
+  const handlePackageAddToCart = async () => {
+    setAddToCartMessage('')
+
+    if (!pkg?.id) {
+      setAddToCartMessage('This package is missing its cart ID. Please refresh and try again.')
+      return
+    }
+
+    setIsAddingToCart(true)
+    console.log('[cart-click] sheesha add to cart', {
+      packageId: Number(pkg.id),
+      title: pkg.title,
+      selectedFlavor,
+    })
+
+    try {
+      const updatedCart = await addPackage({ packageId: Number(pkg.id), quantity: 1 })
+      handleAddToCart()
+      console.log('[cart-click] sheesha added', {
+        packageId: Number(pkg.id),
+        title: pkg.title,
+        itemCount: (updatedCart?.items ?? []).reduce(
+          (sum, item) => sum + Number(item?.quantity ?? 0),
+          0
+        ),
+      })
+      setAddToCartMessage('Added to cart.')
+    } catch (err) {
+      if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
+        navigate('/login')
+        return
+      }
+
+      console.error('[cart-click] sheesha add failed', err)
+      setAddToCartMessage('Could not add this package to cart. Please try again.')
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
 
   const handleCartAdd = async () => {
     if (isAddToCartDisabled || isAddingToCart) return
@@ -194,21 +332,28 @@ export default function SheeshaSinglePackagePage() {
       title={packageTitle}
       price={packagePrice}
       intro={packageIntro}
-      accordionSections={SHEESHA_CONTENT.accordionSections}
+      accordionSections={accordionSections}
       mainImage={pkg.images?.[0] ?? sideImages[0]}
       sideImages={sideImages}
       relatedProducts={relatedProducts}
-      disableAddToCart={isAddToCartDisabled}
-      isAddingToCart={isAddingToCart}
-      onAddToCart={handleCartAdd}
+      addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
+      addToCartMessage={addToCartMessage}
+      disableAddToCart={isAddToCartDisabled || isAddingToCart}
+      onAddToCart={handlePackageAddToCart}
       quantity={quantity}
       onDecrement={handleDecrease}
       onIncrement={handleIncrease}
+      promptContent={
+        showRepeatPrompt && (
+          <RepeatCustomizationPrompt onRepeat={handleRepeat} onCreateNew={handleNew} />
+        )
+      }
       customContent={
         <SheeshaCustomContent
-          flavors={FLAVORS}
+          flavors={flavors}
+          inclusions={inclusions}
           selectedFlavor={selectedFlavor}
-          onSelectFlavor={setSelectedFlavor}
+          onSelectFlavor={handleSelectFlavor}
         />
       }
     />

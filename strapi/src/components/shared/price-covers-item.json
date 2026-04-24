@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_shared_price_covers_items",
+  "info": {
+    "displayName": "price-covers-item"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

@@ -41,13 +41,15 @@ function AccordionSection({ title, body, defaultOpen = false }) {
       <button
         type="button"
         onClick={() => setIsOpen(open => !open)}
-        className="flex w-full items-center justify-between gap-4 text-left"
+        className="flex w-full items-center justify-between gap-4 text-left outline-none focus:outline-none focus-visible:outline-none"
       >
         <span className="text-[16px] leading-none text-[#6B7152] font-semibold">{title}</span>
         <span className="text-[20px] leading-none text-[#C4A36B]">{isOpen ? '-' : '+'}</span>
       </button>
       {isOpen ? (
-        <p className="mt-3 text-[13px] leading-[1.65] text-[#591902] opacity-50">{body}</p>
+        <p className="mt-3 whitespace-pre-line text-[13px] leading-[1.65] text-[#591902] opacity-50">
+          {body}
+        </p>
       ) : null}
     </div>
   )
@@ -185,6 +187,7 @@ export default function SingleProductPageContent({
   onIncrement,
   promptContent,
   addToCartLabel = 'Add to cart',
+  addToCartMessage = '',
   relatedProducts = [],
   disableAddToCart = false,
   isAddingToCart = false,
@@ -301,6 +304,12 @@ export default function SingleProductPageContent({
                 </svg>
               </span>
             </button>
+
+            {addToCartMessage ? (
+              <p className="mt-3 text-[12px] leading-[1.5] text-[#591902] opacity-70">
+                {addToCartMessage}
+              </p>
+            ) : null}
 
             {customContent ? (
               <div className="mt-8 border-t border-[#36402280] pt-5">{customContent}</div>

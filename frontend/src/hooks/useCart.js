@@ -38,6 +38,8 @@ export function useCart() {
 
   useEffect(() => {
     let cancelled = false
+    let lastSyncTime = 0
+    const SYNC_DEBOUNCE_MS = 500 // Prevent syncs within 500ms
 
     const applyCart = nextCart => {
       if (cancelled) return
@@ -76,8 +78,16 @@ export function useCart() {
       }
     }
 
+    const debouncedSync = () => {
+      const now = Date.now()
+      if (now - lastSyncTime >= SYNC_DEBOUNCE_MS) {
+        lastSyncTime = now
+        syncCart()
+      }
+    }
+
     const handleAuthChange = () => {
-      syncCart()
+      debouncedSync()
     }
 
     const handleCartChange = event => {
@@ -87,7 +97,7 @@ export function useCart() {
         return
       }
 
-      syncCart()
+      debouncedSync()
     }
 
     syncCart()

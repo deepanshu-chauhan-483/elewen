@@ -13,34 +13,51 @@
         "large"
       ]
     },
-    "flavors": {
-      "type": "component",
-      "component": "package.flavors",
-      "repeatable": true
+    "service_duration": {
+      "type": "string"
     },
     "inclusions": {
       "type": "component",
       "component": "package.inclusions",
       "repeatable": true
     },
-    "min_quantity": {
-      "type": "integer"
+    "price_covers": {
+      "type": "component",
+      "component": "shared.price-covers-item",
+      "repeatable": true
     },
-    "max_quantity": {
-      "type": "integer"
+    "setup_needs": {
+      "type": "text"
     },
-    "price_per_unit": {
-      "type": "decimal"
+    "elements": {
+      "type": "component",
+      "component": "package.package-element",
+      "repeatable": true
     },
-    "package_image": {
-      "type": "media",
-      "multiple": false,
-      "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
-      ]
+    "addons": {
+      "type": "component",
+      "component": "package.package-addon",
+      "repeatable": true
+    },
+    "pricing_rules": {
+      "type": "component",
+      "component": "package.package-pricing-rule",
+      "repeatable": true
+    },
+    "policy": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::policy.policy"
+    },
+    "price_breakdown": {
+      "type": "component",
+      "component": "shared.price-breakdown-item",
+      "repeatable": true
+    },
+    "flavor": {
+      "type": "component",
+      "component": "package.flavors",
+      "repeatable": true
     }
   },
   "config": {}

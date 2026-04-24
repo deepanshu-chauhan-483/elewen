@@ -235,7 +235,7 @@ const resolveWizardStepsFromStrapi = async serviceCategoryId => {
   if (!serviceCategoryId) return { steps: [] }
 
   const { data: categories } = await strapiGet('/service-categories', {
-    'filters[id][$eq]': serviceCategoryId,
+    'filters[documentId][$eq]': serviceCategoryId,
   })
 
   const category = categories?.[0]

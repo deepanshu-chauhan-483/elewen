@@ -1,190 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
-import eventImg1 from '../assets/images/IMG_3903.jpg'
-import eventImg2 from '../assets/images/IMG_7768.jpg'
-import eventImg3 from '../assets/images/IMG_0749.jpg'
-import eventImg4 from '../assets/images/IMG_0658.jpg'
+import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventTypes'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Event' },
   { id: 2, label: 'Service' },
   { id: 3, label: ' ' },
 ]
-
-const CATEGORY_OPTIONS = [
-  {
-    id: 'social',
-    title: 'Social',
-    description: 'Birthdays, parties & more',
-    badge: 'S',
-  },
-  {
-    id: 'religious',
-    title: 'Religious',
-    description: 'Puja, ceremonies & rituals',
-    badge: 'R',
-  },
-  {
-    id: 'corporate',
-    title: 'Corporate',
-    description: 'Conferences, launches & more',
-    badge: 'C',
-  },
-]
-
-const CATEGORY_EVENT_MAP = {
-  social: [
-    {
-      id: 'birthday-celebrations',
-      title: 'Birthday Celebrations',
-      description: 'Curated decor and catering packages designed for effortless hosting.',
-      image: eventImg1,
-    },
-    {
-      id: 'anniversary-evenings',
-      title: 'Anniversary Evenings',
-      description: 'Warm, elegant setups for intimate dinners and milestone moments.',
-      image: eventImg2,
-    },
-    {
-      id: 'baby-showers',
-      title: 'Baby Showers',
-      description: 'Soft styling, coordinated details, and thoughtful guest experiences.',
-      image: eventImg3,
-    },
-    {
-      id: 'house-parties',
-      title: 'House Parties',
-      description: 'Flexible in-home celebrations with food, styling, and entertainment.',
-      image: eventImg4,
-    },
-    {
-      id: 'engagement-parties',
-      title: 'Engagement Parties',
-      description: 'Polished celebrations with decor styling, food curation, and hosting support.',
-      image: eventImg1,
-    },
-    {
-      id: 'cocktail-nights',
-      title: 'Cocktail Nights',
-      description: 'Evening-ready experiences with ambience design, service, and entertainment.',
-      image: eventImg2,
-    },
-    {
-      id: 'brunch-gatherings',
-      title: 'Brunch Gatherings',
-      description: 'Light, stylish daytime setups planned for guests, food, and flow.',
-      image: eventImg3,
-    },
-    {
-      id: 'family-dinners',
-      title: 'Family Dinners',
-      description: 'Thoughtful hosting support for intimate meals and meaningful celebrations.',
-      image: eventImg4,
-    },
-  ],
-  religious: [
-    {
-      id: 'satyanarayan-puja',
-      title: 'Satyanarayan Puja',
-      description: 'Traditional arrangements with rituals, seating, and coordinated hosting.',
-      image: eventImg4,
-    },
-    {
-      id: 'griha-pravesh',
-      title: 'Griha Pravesh',
-      description: 'Welcome-home ceremonies planned with pooja essentials and guest flow.',
-      image: eventImg3,
-    },
-    {
-      id: 'mundan-ceremony',
-      title: 'Mundan Ceremony',
-      description: 'Family-focused celebrations with decor, ritual support, and meals.',
-      image: eventImg2,
-    },
-    {
-      id: 'festival-gatherings',
-      title: 'Festival Gatherings',
-      description: 'Seasonal pujas and festive events arranged with decor and hospitality.',
-      image: eventImg1,
-    },
-    {
-      id: 'jagran-evening',
-      title: 'Jagran Evening',
-      description: 'Prayer-focused gatherings coordinated with stage, seating, and guest comfort.',
-      image: eventImg4,
-    },
-    {
-      id: 'havans',
-      title: 'Havans',
-      description: 'Sacred setups managed with ritual planning, materials, and venue flow.',
-      image: eventImg3,
-    },
-    {
-      id: 'naming-ceremony',
-      title: 'Naming Ceremony',
-      description: 'Family celebrations with ritual decor, meals, and coordinated hospitality.',
-      image: eventImg2,
-    },
-    {
-      id: 'community-bhoj',
-      title: 'Community Bhoj',
-      description: 'Larger religious meals organized with service teams and guest movement.',
-      image: eventImg1,
-    },
-  ],
-  corporate: [
-    {
-      id: 'product-launch',
-      title: 'Product Launch',
-      description: 'High-impact launches with stage design, branding, and guest coordination.',
-      image: eventImg2,
-    },
-    {
-      id: 'team-offsite',
-      title: 'Team Offsite',
-      description: 'Well-organized offsites with logistics, food, and activity support.',
-      image: eventImg1,
-    },
-    {
-      id: 'awards-night',
-      title: 'Awards Night',
-      description: 'Polished formal experiences with production, seating, and program flow.',
-      image: eventImg4,
-    },
-    {
-      id: 'conference-meet',
-      title: 'Conference Meet',
-      description: 'Structured event planning for speakers, schedules, and attendee comfort.',
-      image: eventImg3,
-    },
-    {
-      id: 'brand-showcase',
-      title: 'Brand Showcase',
-      description: 'Immersive branded experiences built for launches, demos, and media presence.',
-      image: eventImg2,
-    },
-    {
-      id: 'annual-day',
-      title: 'Annual Day',
-      description: 'End-to-end event planning for teams, awards, entertainment, and staging.',
-      image: eventImg1,
-    },
-    {
-      id: 'press-briefing',
-      title: 'Press Briefing',
-      description: 'Clean, controlled media events with branding, seating, and production support.',
-      image: eventImg4,
-    },
-    {
-      id: 'client-mixer',
-      title: 'Client Mixer',
-      description: 'Relationship-building formats with elegant setup, food, and smooth hosting.',
-      image: eventImg3,
-    },
-  ],
-}
 
 const DESKTOP_CARDS_PER_PAGE = 4
 
@@ -205,14 +28,25 @@ function CategoryArrow({ direction = 'right' }) {
   )
 }
 
-function EventCard({ categoryId, event }) {
+function EventCard({ categorySlug, event }) {
+  const params = new URLSearchParams()
+  params.set('category', categorySlug)
+  params.set('event', event.slug)
+  if (event.id != null) params.set('eventId', String(event.id))
+
   return (
     <Link
-      to={`/event-flow/service?category=${categoryId}&event=${event.id}`}
+      to={`/event-flow/service?${params.toString()}`}
       className="group flex h-full max-h-[424px] w-full max-w-[298px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px]"
     >
       <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
-        <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
+        {event.image ? (
+          <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">
+            {event.title}
+          </div>
+        )}
       </div>
       <div className="flex h-[76px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-2.5 text-white md:h-[84px] md:px-3.5 md:py-3">
         <h2 className="text-[15px] font-semibold uppercase leading-[1.2] tracking-[0.01em] md:text-[16px]">
@@ -228,18 +62,42 @@ function EventCard({ categoryId, event }) {
 
 export default function CategoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialCategoryId = searchParams.get('category')?.toLowerCase() ?? CATEGORY_OPTIONS[0].id
-  const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategoryId)
   const [searchValue, setSearchValue] = useState('')
   const [touchStartX, setTouchStartX] = useState(null)
+  const requestedCategorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+
+  const { data: categories = [] } = useEventCategoryOptions()
+
+  const selectedCategoryId = useMemo(() => {
+    if (!categories.length) return requestedCategorySlug
+    return (
+      categories.find(category => category.slug === requestedCategorySlug)?.slug ??
+      categories[0]?.slug ??
+      ''
+    )
+  }, [categories, requestedCategorySlug])
+
+  const { data: events = [] } = useEventsByCategory(selectedCategoryId)
   const paginationKey = `${selectedCategoryId}:${searchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
     key: paginationKey,
     pageIndex: 0,
   })
 
+  useEffect(() => {
+    if (!categories.length || !selectedCategoryId || requestedCategorySlug === selectedCategoryId)
+      return
+
+    setSearchParams(prevParams => {
+      const nextParams = new URLSearchParams(prevParams)
+      nextParams.set('category', selectedCategoryId)
+      nextParams.delete('event')
+      nextParams.delete('eventId')
+      return nextParams
+    })
+  }, [categories.length, requestedCategorySlug, selectedCategoryId, setSearchParams])
+
   const filteredEvents = useMemo(() => {
-    const events = CATEGORY_EVENT_MAP[selectedCategoryId] ?? []
     const query = searchValue.trim().toLowerCase()
     if (!query) return events
 
@@ -247,7 +105,7 @@ export default function CategoryPage() {
       event =>
         event.title.toLowerCase().includes(query) || event.description.toLowerCase().includes(query)
     )
-  }, [searchValue, selectedCategoryId])
+  }, [events, searchValue])
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / DESKTOP_CARDS_PER_PAGE))
   const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
@@ -257,13 +115,13 @@ export default function CategoryPage() {
     safePageIndex * DESKTOP_CARDS_PER_PAGE + DESKTOP_CARDS_PER_PAGE
   )
 
-  const selectCategory = categoryId => {
-    setSelectedCategoryId(categoryId)
-    setPaginationState({ key: `${categoryId}:${searchValue.trim().toLowerCase()}`, pageIndex: 0 })
+  const selectCategory = categorySlug => {
+    setPaginationState({ key: `${categorySlug}:${searchValue.trim().toLowerCase()}`, pageIndex: 0 })
     setSearchParams(prevParams => {
       const nextParams = new URLSearchParams(prevParams)
-      nextParams.set('category', categoryId)
+      nextParams.set('category', categorySlug)
       nextParams.delete('event')
+      nextParams.delete('eventId')
       return nextParams
     })
   }
@@ -319,14 +177,14 @@ export default function CategoryPage() {
     >
       <div className="flex h-full w-full flex-col justify-between gap-6 overflow-visible">
         <div className="flex w-full flex-col gap-2 md:flex-row md:gap-2 my-7">
-          {CATEGORY_OPTIONS.map(category => {
-            const isActive = category.id === selectedCategoryId
+          {categories.map(category => {
+            const isActive = category.slug === selectedCategoryId
 
             return (
               <button
-                key={category.id}
+                key={category.id ?? category.slug}
                 type="button"
-                onClick={() => selectCategory(category.id)}
+                onClick={() => selectCategory(category.slug)}
                 className={`group flex max-w-[325px] items-center justify-between rounded-[24px] border px-5 py-4 text-left transition-all hover:-translate-y-0.5 sm:px-6 ${
                   isActive
                     ? 'border-[#7A2B08] bg-[#591902] text-white shadow-[0_16px_38px_rgba(111,76,43,0.14)]'
@@ -344,11 +202,11 @@ export default function CategoryPage() {
                         isActive ? 'text-white' : 'text-[#8C4A22]'
                       }`}
                     >
-                      {category.badge}
+                      {category.badge || category.name?.charAt(0)?.toUpperCase()}
                     </span>
                   </span>
                   <div className="min-w-0 max-w-[203px]">
-                    <h2 className="text-[16px] leading-[1.1]">{category.title}</h2>
+                    <h2 className="text-[16px] leading-[1.1]">{category.name}</h2>
                     <p
                       className={`mt-1 text-[12px] leading-[1.45] ${isActive ? 'text-white/75' : 'text-[#8F8B86]'}`}
                     >
@@ -374,7 +232,11 @@ export default function CategoryPage() {
             <div className="flex w-full flex-col gap-3 md:gap-4">
               <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
                 {visibleEvents.map(event => (
-                  <EventCard key={event.id} categoryId={selectedCategoryId} event={event} />
+                  <EventCard
+                    key={event.id ?? event.slug}
+                    categorySlug={selectedCategoryId}
+                    event={event}
+                  />
                 ))}
               </div>
             </div>

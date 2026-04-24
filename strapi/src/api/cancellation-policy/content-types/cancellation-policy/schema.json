@@ -1,0 +1,30 @@
+{
+  "kind": "singleType",
+  "collectionName": "cancellation_policies",
+  "info": {
+    "singularName": "cancellation-policy",
+    "pluralName": "cancellation-policies",
+    "displayName": "CancellationPolicy"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "within_16h": {
+      "type": "string"
+    },
+    "between_16_48h": {
+      "type": "string"
+    },
+    "after_48h": {
+      "type": "string"
+    },
+    "refund_note": {
+      "type": "string"
+    },
+    "material_policy": {
+      "type": "text"
+    }
+  }
+}

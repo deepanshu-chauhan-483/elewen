@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 function ImageDots({ count, currentIndex = 0 }) {
   if (count <= 1) return null
@@ -40,11 +40,13 @@ export default function PackageCard({ pkg }) {
   const images = pkg.images || []
   const [currentIndex, setCurrentIndex] = useState(0)
   const navigate = useNavigate()
+  const location = useLocation()
   const packageId = pkg.documentId ?? pkg.id
-  const serviceSlug = String(pkg.serviceSlug ?? '')
+  const serviceSlug = String(pkg.serviceSlug ?? pkg.service_slugs?.[0] ?? '')
     .trim()
     .toLowerCase()
-  const packageHref = getPackageHref(serviceSlug, packageId)
+  const basePackageHref = getPackageHref(serviceSlug, packageId)
+  const packageHref = `${basePackageHref}${location.search || ''}`
 
   const startX = useRef(0)
   const endX = useRef(0)
@@ -53,10 +55,12 @@ export default function PackageCard({ pkg }) {
 
   // 🔥LOOP LOGIC (important)
   const goToPrevious = () => {
+    if (!images.length) return
     setCurrentIndex(prev => (prev - 1 + images.length) % images.length)
   }
 
   const goToNext = () => {
+    if (!images.length) return
     setCurrentIndex(prev => (prev + 1) % images.length)
   }
 
@@ -101,7 +105,13 @@ export default function PackageCard({ pkg }) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <img src={currentImage} alt={pkg.title} className="h-[280px] w-full object-cover" />
+        {currentImage ? (
+          <img src={currentImage} alt={pkg.title} className="h-[280px] w-full object-cover" />
+        ) : (
+          <div className="flex h-[280px] w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">
+            {pkg.title}
+          </div>
+        )}
 
         {/* Price */}
         <div className="absolute right-3 top-3 z-30 rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#4B4B4B]">
@@ -111,7 +121,10 @@ export default function PackageCard({ pkg }) {
         {/* 🔥 LEFT ARROW (DIV STYLE) */}
         {images.length > 1 && (
           <div
-            onClick={goToPrevious}
+            onClick={event => {
+              event.stopPropagation()
+              goToPrevious()
+            }}
             className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex h-[41px] w-[20px] items-center justify-center rounded-r-full bg-white/20 backdrop-blur-md cursor-pointer"
           >
             <svg
@@ -131,7 +144,10 @@ export default function PackageCard({ pkg }) {
         {/* 🔥 RIGHT ARROW (DIV STYLE) */}
         {images.length > 1 && (
           <div
-            onClick={goToNext}
+            onClick={event => {
+              event.stopPropagation()
+              goToNext()
+            }}
             className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex h-[41px] w-[21px] items-center justify-center rounded-l-full bg-white/20 backdrop-blur-md cursor-pointer"
           >
             <svg

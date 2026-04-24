@@ -1,169 +1,161 @@
-const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337'
-
 /**
- * POST to Strapi (unauthenticated — used for auth endpoints)
+ * Strapi REST client helpers shared by the Express API.
+ *
+ * Notes:
+ * - Content API collection/single-type endpoints use `/api/...`
+ * - Auth endpoints (`/auth/local`, `/auth/local/register`, etc.) expect raw JSON bodies
+ * - Content create/update endpoints expect `{ data: ... }`
  */
-export const strapiPost = async (path, body) => {
-  const res = await fetch(`${STRAPI_URL}${path}`, {
+
+const BASE = process.env.STRAPI_URL || 'http://localhost:1337'
+const SERVER_TOKEN = process.env.STRAPI_ADMIN_TOKEN || process.env.STRAPI_API_TOKEN || null
+
+const normalizePath = (path, { prefixApi = true } = {}) => {
+  if (!path.startsWith('/')) return prefixApi ? `/api/${path}` : `/${path}`
+  if (path.startsWith('/api/')) return path
+  return prefixApi ? `/api${path}` : path
+}
+
+const buildHeaders = extraHeaders => {
+  const headers = { ...extraHeaders }
+  if (SERVER_TOKEN) {
+    headers.Authorization = `Bearer ${SERVER_TOKEN}`
+  }
+  return headers
+}
+
+const makeStrapiError = async (res, fallbackMessage) => {
+  let payload = null
+  let text = ''
+
+  try {
+    payload = await res.json()
+  } catch {
+    text = await res.text().catch(() => '')
+  }
+
+  const strapiError = payload?.error ?? payload ?? null
+  const message = strapiError?.message || text || fallbackMessage
+  const error = new Error(message)
+  error.status = res.status
+  error.strapiError = strapiError
+  return error
+}
+
+const requestJson = async (
+  path,
+  { method = 'GET', headers = {}, body, prefixApi = true } = {}
+) => {
+  const res = await fetch(`${BASE}${normalizePath(path, { prefixApi })}`, {
+    method,
+    headers,
+    ...(body !== undefined && { body: JSON.stringify(body) }),
+  })
+
+  if (!res.ok) {
+    throw await makeStrapiError(res, `${method} ${path} failed`)
+  }
+
+  return res.json()
+}
+
+// ---------------- GET ----------------
+export async function strapiGet(path, params = {}) {
+  const url = new URL(normalizePath(path), BASE)
+
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) {
+      url.searchParams.set(k, String(v))
+    }
+  })
+
+  const res = await fetch(url.toString())
+
+  if (!res.ok) {
+    throw await makeStrapiError(res, `GET ${path} failed`)
+  }
+
+  return res.json()
+}
+
+// ---------------- POST ----------------
+export async function strapiPost(path, body) {
+  return requestJson(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body,
   })
-  const data = await res.json()
-  if (!res.ok) {
-    const err = new Error(data?.error?.message || 'Strapi request failed')
-    err.status = res.status
-    err.strapiError = data?.error
-    throw err
-  }
-  return data
 }
 
-/**
- * Find a Strapi user by email using the API token.
- * Returns the user object or null if not found.
- */
-export const strapiFindUserByEmail = async email => {
-  const res = await fetch(
-    `${STRAPI_URL}/api/users?filters[email][$eq]=${encodeURIComponent(email)}&populate=role`,
-    { headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` } }
-  )
-  const data = await res.json()
-  if (!res.ok) return null
-  return Array.isArray(data) ? (data[0] ?? null) : null
-}
-
-/**
- * Create a Strapi user via the admin API token.
- * Automatically fetches and assigns the Authenticated role.
- */
-export const strapiCreateUser = async userData => {
-  // Get the Authenticated role ID
-  const rolesRes = await fetch(`${STRAPI_URL}/api/users-permissions/roles`, {
-    headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` },
-  })
-  const rolesData = await rolesRes.json()
-  const authenticatedRole = rolesData?.roles?.find(r => r.type === 'authenticated')
-  if (!authenticatedRole) {
-    const err = new Error('Could not find Authenticated role in Strapi')
-    err.status = 500
-    throw err
-  }
-
-  const res = await fetch(`${STRAPI_URL}/api/users`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
-    },
-    body: JSON.stringify({ ...userData, role: authenticatedRole.id }),
-  })
-  const data = await res.json()
-  if (!res.ok) {
-    const err = new Error(data?.error?.message || 'Failed to create user')
-    err.status = res.status
-    throw err
-  }
-  return data
-}
-
-/**
- * GET from Strapi with a user JWT (used to verify tokens and fetch user data)
- */
-export const strapiGetMe = async jwt => {
-  const res = await fetch(`${STRAPI_URL}/api/users/me`, {
-    headers: { Authorization: `Bearer ${jwt}` },
-  })
-  const data = await res.json()
-  if (!res.ok) {
-    const err = new Error('Invalid or expired token')
-    err.status = 401
-    throw err
-  }
-  return data
-}
-
-/**
- * POST to Strapi using the server API token.
- * Use this for any server-to-server write that should NOT be allowed by the Public role.
- * e.g. creating vendor entries, sending admin notifications.
- */
-export const strapiServerPost = async (path, body) => {
-  const res = await fetch(`${STRAPI_URL}${path}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
-    },
-    body: JSON.stringify(body),
-  })
-  const data = await res.json()
-  if (!res.ok) {
-    const err = new Error(data?.error?.message || 'Strapi request failed')
-    err.status = res.status
-    err.strapiError = data?.error
-    throw err
-  }
-  return data
-}
-
-/**
- * GET from Strapi using the server API token.
- * Used for fetching package details, coupon data, etc. from the Express API.
- */
-export const strapiServerGet = async path => {
-  const res = await fetch(`${STRAPI_URL}${path}`, {
-    headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` },
-  })
-  const data = await res.json()
-  if (!res.ok) {
-    const err = new Error(data?.error?.message || 'Strapi request failed')
-    err.status = res.status
-    err.strapiError = data?.error
-    throw err
-  }
-  return data
-}
-
-/**
- * PUT to Strapi using the server API token (used for content type updates)
- */
-export const strapiServerPut = async (path, body) => {
-  const res = await fetch(`${STRAPI_URL}${path}`, {
+// ---------------- ADMIN PUT ----------------
+export async function strapiAdminPut(path, body) {
+  return requestJson(path, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
-    },
-    body: JSON.stringify(body),
+    headers: buildHeaders({ 'Content-Type': 'application/json' }),
+    body,
   })
-  const data = await res.json()
-  if (!res.ok) {
-    const err = new Error(data?.error?.message || 'Strapi request failed')
-    err.status = res.status
-    err.strapiError = data?.error
-    throw err
-  }
-  return data
 }
 
-/**
- * PUT to Strapi with admin API token (used for server-side user updates)
- */
-export const strapiAdminPut = async (path, body) => {
-  const res = await fetch(`${STRAPI_URL}${path}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
-    },
-    body: JSON.stringify(body),
+// ---------------- SERVER GET ----------------
+export async function strapiServerGet(path) {
+  return requestJson(path, {
+    headers: buildHeaders(),
+    prefixApi: !path.startsWith('/api/'),
   })
-  const data = await res.json()
+}
+
+// ---------------- SERVER POST ----------------
+export async function strapiServerPost(path, body) {
+  return requestJson(path, {
+    method: 'POST',
+    headers: buildHeaders({ 'Content-Type': 'application/json' }),
+    body,
+    prefixApi: !path.startsWith('/api/'),
+  })
+}
+
+// ---------------- SERVER PUT ----------------
+export async function strapiServerPut(path, body) {
+  return requestJson(path, {
+    method: 'PUT',
+    headers: buildHeaders({ 'Content-Type': 'application/json' }),
+    body,
+    prefixApi: !path.startsWith('/api/'),
+  })
+}
+
+// ---------------- GET ME ----------------
+export async function strapiGetMe(jwt) {
+  const res = await fetch(`${BASE}/api/users/me`, {
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+    },
+  })
+
+  if (!res.ok) throw await makeStrapiError(res, 'Failed to fetch user')
+  return res.json()
+}
+
+// ---------------- FIND USER BY EMAIL ----------------
+export async function strapiFindUserByEmail(email) {
+  const res = await fetch(`${BASE}/api/users?filters[email][$eq]=${encodeURIComponent(email)}`, {
+    headers: buildHeaders(),
+  })
+
   if (!res.ok) {
-    const err = new Error(data?.error?.message || 'Strapi admin request failed')
-    err.status = res.status
-    throw err
+    throw await makeStrapiError(res, 'Failed to find user by email')
   }
-  return data
+
+  const data = await res.json()
+  return data?.[0] ?? null
+}
+
+// ---------------- CREATE USER ----------------
+export async function strapiCreateUser(body) {
+  return requestJson('/api/users', {
+    method: 'POST',
+    headers: buildHeaders({ 'Content-Type': 'application/json' }),
+    body,
+    prefixApi: false,
+  })
 }

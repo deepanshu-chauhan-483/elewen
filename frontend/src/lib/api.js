@@ -12,10 +12,6 @@ const AUTH_EVENT = 'elewen-auth-change'
 
 let refreshPromise = null
 
-// function getStoredJwt() {
-//   return localStorage.getItem('elewen_jwt')
-// }
-
 function setStoredJwt(jwt) {
   if (!jwt) return
   localStorage.setItem('elewen_jwt', jwt)

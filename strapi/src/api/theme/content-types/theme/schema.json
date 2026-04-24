@@ -35,12 +35,6 @@
     },
     "display_order": {
       "type": "integer"
-    },
-    "packages": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::package.package",
-      "mappedBy": "themes"
     }
   }
 }

@@ -12,112 +12,64 @@ const fallbackImagesByCategory = {
   'Food & Catering': blogImg2,
 }
 
-const fallbackDates = [
-  'April 3, 2026',
-  'March 28, 2026',
-  'March 19, 2026',
-  'March 8, 2026',
-  'February 24, 2026',
-  'February 10, 2026',
-]
-
-const localBlogPagePosts = [
-  {
-    id: 100,
-    title: '5 Simple Decor Ideas for Small Gatherings',
-    slug: '5-simple-decor-ideas-for-small-gatherings',
-    excerpt: 'Easy styling ideas that make your space feel celebration-ready without overdoing it.',
-    category: 'Decor Inspiration',
-    cover_image: blogImg1,
-  },
-  {
-    id: 101,
-    title: 'What to Include in a Catering Menu for House Parties',
-    slug: 'what-to-include-in-a-catering-menu-for-house-parties',
-    excerpt: 'A practical breakdown of food, portions, and service styles for smooth hosting.',
-    category: 'Food & Catering',
-    cover_image: blogImg2,
-  },
-  {
-    id: 102,
-    title: 'Behind a Birthday Setup: From Planning to Execution',
-    slug: 'behind-a-birthday-setup-from-planning-to-execution',
-    excerpt: 'A look at how a simple birthday celebration comes together step by step.',
-    category: 'Planning Tips',
-    cover_image: blogImg3,
-  },
-]
-
-const textOnlyArticleSlugs = new Set(['behind-a-birthday-setup-from-planning-to-execution'])
-
-const buildArticleBlocks = post => {
-  if (!post) return []
-
-  const title = post.title || 'Thoughtful celebrations'
-  const category = post.category || 'Celebration Guide'
-  const excerpt =
-    post.excerpt ||
-    'A calm and practical approach to styling, planning, and hosting memorable moments at home.'
-  const coverImage = resolveCoverImage(post)
-
-  if (textOnlyArticleSlugs.has(post.slug)) {
-    return [
-      {
-        type: 'text',
-        paragraphs: [
-          `${title} starts with a simple idea: make the experience feel intentional without making it complicated. In ${category.toLowerCase()}, the strongest details are usually the ones that support the mood quietly, from the first visual impression to the final guest touchpoint.`,
-          `${excerpt} When the layout, decor, and hosting flow work together, the whole celebration feels more personal and more polished. That balance is what turns a pretty setup into a space people genuinely enjoy being in.`,
-          `A strong setup does not need too many moving parts. Repeating a few materials, keeping the palette consistent, and giving one focal element room to stand out can make the event feel elevated while still staying easy to manage.`,
-          `The goal is not to fill every corner. It is to make the room feel considered. Once the key visual moments are in place, the rest of the experience becomes lighter, smoother, and easier for everyone involved.`,
-          `Thoughtful styling, comfortable flow, and well-placed visual moments are often what make a celebration feel complete. When those parts work together, the experience becomes memorable without ever feeling overloaded.`,
-        ],
-      },
-    ]
-  }
-
-  return [
-    {
-      type: 'image-full',
-      image: coverImage,
-      alt: title,
-    },
-    {
-      type: 'text',
-      paragraphs: [
-        `${title} starts with a simple idea: make the experience feel intentional without making it complicated. In ${category.toLowerCase()}, the strongest details are usually the ones that support the mood quietly, from the first visual impression to the final guest touchpoint.`,
-        `${excerpt} When the layout, decor, and hosting flow work together, the whole celebration feels more personal and more polished. That balance is what turns a pretty setup into a space people genuinely enjoy being in.`,
-      ],
-    },
-    {
-      type: 'image-grid',
-      images: [
-        {
-          src: coverImage,
-          alt: `${title} detail one`,
-        },
-        {
-          src: fallbackImagesByCategory[category] || blogImg2,
-          alt: `${title} detail two`,
-        },
-      ],
-    },
-    {
-      type: 'text',
-      paragraphs: [
-        `A strong setup does not need too many moving parts. Repeating a few materials, keeping the palette consistent, and giving one focal element room to stand out can make the event feel elevated while still staying easy to manage.`,
-        `The goal is not to fill every corner. It is to make the room feel considered. Once the key visual moments are in place, the rest of the experience becomes lighter, smoother, and easier for everyone involved.`,
-        `Thoughtful styling, comfortable flow, and well-placed visual moments are often what make a celebration feel complete. When those parts work together, the experience becomes memorable without ever feeling overloaded.`,
-      ],
-    },
-  ]
-}
-
 const resolveCoverImage = post => {
   if (post?.cover_image) return post.cover_image
   return fallbackImagesByCategory[post?.category] || blogImg1
 }
 
-const resolvePublishedDate = index => fallbackDates[index % fallbackDates.length]
+const formatPublishedDate = value => {
+  if (!value) return 'Elewen Journal'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Elewen Journal'
+
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+const escapeHtml = value =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+const blocksToHtml = blocks => {
+  if (!Array.isArray(blocks)) return ''
+
+  return blocks
+    .map(block => {
+      const text = (block.children ?? [])
+        .map(child => child.text ?? '')
+        .join('')
+        .trim()
+      if (!text) return ''
+
+      if (block.type === 'heading') return `<h3>${escapeHtml(text)}</h3>`
+      return `<p>${escapeHtml(text)}</p>`
+    })
+    .filter(Boolean)
+    .join('')
+}
+
+const getContentHtml = post => {
+  if (typeof post?.content === 'string' && post.content.trim()) return post.content
+  if (Array.isArray(post?.content)) {
+    const html = blocksToHtml(post.content)
+    if (html) return html
+  }
+
+  const title = post?.title || 'Thoughtful celebrations'
+  const excerpt =
+    post?.excerpt ||
+    'A calm and practical approach to styling, planning, and hosting memorable moments at home.'
+
+  return `<p>${escapeHtml(title)} starts with a simple idea: make the experience feel intentional without making it complicated.</p><p>${escapeHtml(excerpt)}</p>`
+}
 
 const RevealLine = ({ children, delay, className = '' }) => (
   <span className={`reveal-wrapper block ${className}`.trim()}>
@@ -130,18 +82,20 @@ const RevealLine = ({ children, delay, className = '' }) => (
 const SingleBlogPage = () => {
   const pageRef = useRef(null)
   const { slug } = useParams()
-  const { data: blogs = [] } = useBlogs({ limit: 12 })
-  const allPosts = useMemo(() => [...localBlogPagePosts, ...blogs], [blogs])
+  const {
+    data: currentBlogData = [],
+    isLoading: isCurrentBlogLoading,
+    isFetching: isCurrentBlogFetching,
+    isFetched: isCurrentBlogFetched,
+  } = useBlogs({ limit: 1, slug })
+  const { data: allBlogs = [] } = useBlogs({ limit: 50 })
 
-  const currentPost = useMemo(
-    () => allPosts.find(post => post.slug === slug) ?? null,
-    [allPosts, slug]
-  )
+  const currentPost = currentBlogData[0] ?? null
 
   const relatedPosts = useMemo(() => {
     if (!currentPost) return []
 
-    return allPosts
+    return allBlogs
       .filter(post => post.slug !== currentPost.slug)
       .sort((a, b) => {
         if (a.category === currentPost.category && b.category !== currentPost.category) return -1
@@ -149,10 +103,11 @@ const SingleBlogPage = () => {
         return 0
       })
       .slice(0, 3)
-  }, [allPosts, currentPost])
+  }, [allBlogs, currentPost])
 
-  const articleBlocks = useMemo(() => buildArticleBlocks(currentPost), [currentPost])
   const heroImage = resolveCoverImage(currentPost)
+  const publishedDate = formatPublishedDate(currentPost?.post_published_at)
+  const contentHtml = useMemo(() => getContentHtml(currentPost), [currentPost])
 
   useEffect(() => {
     const page = pageRef.current
@@ -207,7 +162,26 @@ const SingleBlogPage = () => {
   }, [currentPost])
 
   if (!slug) return <Navigate to="/blogs" replace />
-  if (!currentPost) return <Navigate to="/blogs" replace />
+  if (!currentPost && (isCurrentBlogLoading || isCurrentBlogFetching || !isCurrentBlogFetched)) {
+    return (
+      <main className="min-h-screen bg-[#F7F4EE] px-6 py-24 text-[#202716] md:px-10 lg:px-[96px]">
+        <div className="mx-auto max-w-[1760px]">
+          <p
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: '16px',
+              lineHeight: '150%',
+              letterSpacing: '0',
+            }}
+          >
+            Loading blog...
+          </p>
+        </div>
+      </main>
+    )
+  }
+  if (isCurrentBlogFetched && !currentPost) return <Navigate to="/blogs" replace />
 
   return (
     <main ref={pageRef} className="single-blog-page min-h-screen bg-[#F7F4EE] text-[#202716]">
@@ -248,7 +222,7 @@ const SingleBlogPage = () => {
                     letterSpacing: '0',
                   }}
                 >
-                  Elewen Studio
+                  {currentPost.author || 'Elewen Studio'}
                 </p>
                 <p
                   className="text-right text-[18px] leading-[1.2] sm:text-[22px]"
@@ -258,7 +232,7 @@ const SingleBlogPage = () => {
                     letterSpacing: '0',
                   }}
                 >
-                  {resolvePublishedDate(currentPost.id ?? 0)}
+                  {publishedDate}
                 </p>
               </div>
             </div>
@@ -284,7 +258,7 @@ const SingleBlogPage = () => {
             </h2>
 
             <div className="mt-10 space-y-8">
-              {relatedPosts.map((post, index) => (
+              {relatedPosts.map(post => (
                 <article
                   key={post.slug}
                   className="anim-element slide-from-left border-b border-[#CDC7BE] pb-8 last:border-b-0 last:pb-0"
@@ -302,7 +276,7 @@ const SingleBlogPage = () => {
                         verticalAlign: 'bottom',
                       }}
                     >
-                      {resolvePublishedDate(index + 1)}
+                      {formatPublishedDate(post.post_published_at)}
                     </p>
 
                     <h3
@@ -350,72 +324,11 @@ const SingleBlogPage = () => {
               <RevealLine>{currentPost.title}</RevealLine>
             </h2>
 
-            <div className="mt-8 space-y-10">
-              {articleBlocks.map((block, index) => {
-                if (block.type === 'image-full') {
-                  return (
-                    <div
-                      key={`${block.type}-${index}`}
-                      className="anim-element slide-from-right overflow-hidden bg-white"
-                      style={{ '--delay': '0s' }}
-                    >
-                      <img
-                        src={block.image}
-                        alt={block.alt}
-                        className="h-[220px] w-full object-cover sm:h-[320px] lg:h-[388px]"
-                      />
-                    </div>
-                  )
-                }
-
-                if (block.type === 'image-grid') {
-                  return (
-                    <div
-                      key={`${block.type}-${index}`}
-                      className="grid gap-4 sm:grid-cols-2 lg:gap-[18px]"
-                    >
-                      {block.images.map((image, imageIndex) => (
-                        <div
-                          key={image.alt}
-                          className={`anim-element overflow-hidden bg-white ${imageIndex === 0 ? 'slide-from-left' : 'slide-from-right'}`}
-                          style={{ '--delay': '0s' }}
-                        >
-                          <img
-                            src={image.src}
-                            alt={image.alt}
-                            className="h-[220px] w-full object-cover sm:h-[280px] lg:h-[320px]"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )
-                }
-
-                return (
-                  <div
-                    key={`${block.type}-${index}`}
-                    className="anim-element slide-from-right space-y-7"
-                    style={{ '--delay': '0s' }}
-                  >
-                    {block.paragraphs.map(paragraph => (
-                      <p
-                        key={paragraph}
-                        className="max-w-[980px] text-[#9B9A92]"
-                        style={{
-                          fontFamily: "'Poppins', sans-serif",
-                          fontWeight: 400,
-                          fontSize: '16px',
-                          lineHeight: '150%',
-                          letterSpacing: '0',
-                        }}
-                      >
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                )
-              })}
-            </div>
+            <div
+              className="anim-element slide-from-right prose prose-p:my-6 prose-p:max-w-none prose-p:text-[#9B9A92] prose-p:text-[16px] prose-p:leading-[150%] prose-headings:mt-10 prose-headings:text-[#202716] prose-headings:font-normal prose-strong:text-[#202716] mt-8 max-w-none"
+              style={{ '--delay': '0s' }}
+              dangerouslySetInnerHTML={{ __html: contentHtml }}
+            />
           </article>
         </div>
       </section>

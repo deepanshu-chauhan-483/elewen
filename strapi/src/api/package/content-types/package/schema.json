@@ -22,18 +22,9 @@
     "description": {
       "type": "blocks"
     },
-    "category": {
-      "type": "string"
-    },
     "base_price": {
       "type": "decimal",
       "required": true
-    },
-    "min_guests": {
-      "type": "integer"
-    },
-    "max_guests": {
-      "type": "integer"
     },
     "is_featured": {
       "type": "boolean",
@@ -70,12 +61,6 @@
         "audios"
       ]
     },
-    "budget_level": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::budget-level.budget-level",
-      "inversedBy": "packages"
-    },
     "service_categories": {
       "type": "relation",
       "relation": "manyToMany",
@@ -94,39 +79,18 @@
       "target": "api::event.event",
       "mappedBy": "packages"
     },
-    "elements": {
-      "type": "component",
-      "component": "package.package-element",
-      "repeatable": true
-    },
-    "addons": {
-      "type": "component",
-      "component": "package.package-addon",
-      "repeatable": true
-    },
-    "pricing_rules": {
-      "type": "component",
-      "component": "package.package-pricing-rule",
-      "repeatable": true
-    },
     "booking_reviews": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::booking-review.booking-review",
       "mappedBy": "package"
     },
-    "themes": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::theme.theme",
-      "inversedBy": "packages"
-    },
     "packages": {
       "type": "dynamiczone",
       "components": [
-        "package.eventpackage",
         "package.decorpackages",
-        "package.sheeshapackage"
+        "package.sheeshapackage",
+        "package.bartendingpackage"
       ]
     }
   }

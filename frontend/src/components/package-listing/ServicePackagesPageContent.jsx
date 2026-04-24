@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import PackageCard from './PackageCard'
 import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'
 import { usePackages } from '../../hooks/usePackages'
+import { filterPackages, normalizeServiceSlug } from '../../lib/packageFilters'
 import pkgImg1 from '../../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../../assets/images/IMG_0749.jpg'
@@ -30,20 +32,13 @@ const PAGE_SIZE = 9
 //     .join(' ')
 // }
 
-function normaliseListingServiceSlug(serviceSlug = '') {
-  return String(serviceSlug)
-    .trim()
-    .toLowerCase()
-    .replace(/-single$/, '')
-    .replace(/-services?$/, '')
-}
-
 export default function ServicePackagesPageContent({
-  serviceSlug,
   ctaTitle = 'Not sure which package is right for you?',
   showHero = true,
+  serviceSlug = '',
 }) {
   const { data: packages = [] } = usePackages()
+  const [searchParams] = useSearchParams()
   const [sortValue, setSortValue] = useState('price-desc')
   const [page, setPage] = useState(1)
   // const [searchParams] = useSearchParams()
@@ -51,7 +46,7 @@ export default function ServicePackagesPageContent({
   // const eventId = searchParams.get('event')?.toLowerCase() ?? ''
   // const themeId = searchParams.get('theme')?.toLowerCase() ?? ''
   // const levelId = searchParams.get('level')?.toLowerCase() ?? ''
-  const listingServiceSlug = normaliseListingServiceSlug(serviceSlug)
+  // const listingServiceSlug = normaliseListingServiceSlug(serviceSlug)
 
   // const heroFilters = useMemo(() => {
   //   const filters = [
@@ -63,6 +58,15 @@ export default function ServicePackagesPageContent({
 
   //   return filters.filter(Boolean)
   // }, [categoryId, eventId, themeId, levelId])
+
+  const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+  const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
+  const eventId = searchParams.get('eventId') ?? ''
+  const selectedServiceSlug =
+    normalizeServiceSlug(searchParams.get('service')) || normalizeServiceSlug(serviceSlug)
+  const serviceId = searchParams.get('serviceId') ?? ''
+  const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
+  const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
 
   const packagesData = useMemo(
     () =>
@@ -76,15 +80,28 @@ export default function ServicePackagesPageContent({
     [packages, serviceSlug]
   )
 
-  const filteredPackages = useMemo(() => {
-    if (!listingServiceSlug) return packagesData
-
-    return packagesData.filter(pkg =>
-      (pkg.service_slugs ?? []).some(
-        slug => normaliseListingServiceSlug(slug) === listingServiceSlug
-      )
-    )
-  }, [listingServiceSlug, packagesData])
+  const filteredPackages = useMemo(
+    () =>
+      filterPackages(packagesData, {
+        categorySlug,
+        eventSlug,
+        eventId,
+        serviceSlug: selectedServiceSlug,
+        serviceId,
+        themeSlug,
+        levelSlug,
+      }),
+    [
+      packagesData,
+      categorySlug,
+      eventSlug,
+      eventId,
+      selectedServiceSlug,
+      serviceId,
+      themeSlug,
+      levelSlug,
+    ]
+  )
 
   const sortedPackages = useMemo(() => {
     const items = [...filteredPackages]
@@ -116,11 +133,19 @@ export default function ServicePackagesPageContent({
       onPageSelect={setPage}
       ctaTitle={ctaTitle}
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visiblePackages.map(pkg => (
-          <PackageCard key={pkg.id ?? pkg.documentId ?? pkg.title} pkg={pkg} />
-        ))}
-      </div>
+      {visiblePackages.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visiblePackages.map(pkg => (
+            <PackageCard key={pkg.id ?? pkg.documentId ?? pkg.title} pkg={pkg} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[18px] border border-[#DDD7CE] px-6 py-10 text-[#1C1C1C]">
+          <p className="text-[18px] leading-[1.4]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            No packages match the selected filters right now.
+          </p>
+        </div>
+      )}
     </PackageListLayout>
   )
 }

@@ -3,13 +3,13 @@ import jwt from 'jsonwebtoken'
 import prisma from '../lib/prisma.js'
 import {
   strapiPost,
-  strapiGetMe,
   strapiAdminPut,
-  strapiFindUserByEmail,
-  strapiCreateUser,
   strapiServerGet,
   strapiServerPost,
   strapiServerPut,
+  strapiGetMe,
+  strapiFindUserByEmail,
+  strapiCreateUser
 } from '../lib/strapi.js'
 
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
@@ -135,9 +135,15 @@ export const register = async (req, res, next) => {
       password,
     })
 
-    // Step 2: Update profile fields via admin API token — Strapi rejects these on /register
+    // Step 2: Best-effort profile sync — account creation should still succeed
+    // even if the server token cannot update extended user fields.
     if (result.user?.id) {
-      await strapiAdminPut(`/api/users/${result.user.id}`, { first_name, last_name, phone })
+      try {
+        await strapiAdminPut(`/api/users/${result.user.id}`, { first_name, last_name, phone })
+      } catch (profileSyncErr) {
+        console.error('[auth.register] Failed to sync Strapi user profile fields:', profileSyncErr)
+      }
+
       // Create customer profile — no photo for email users (frontend shows placeholder)
       await createCustomerProfile({
         userId: result.user.id,

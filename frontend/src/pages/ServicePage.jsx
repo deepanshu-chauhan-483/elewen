@@ -31,7 +31,7 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service }) {
   params.set('event', eventSlug)
   if (eventId) params.set('eventId', eventId)
   params.set('service', resolvedServiceSlug)
-  if (service.id != null) params.set('serviceId', String(service.id))
+  if (service.documentId != null) params.set('serviceId', String(service.documentId))
 
   return (
     <Link

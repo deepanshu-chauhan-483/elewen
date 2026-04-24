@@ -14,19 +14,21 @@ const fallbackImagesByCategory = {
   'Food & Catering': blogImg2,
 }
 
-const fallbackDates = [
-  'April 3, 2026',
-  'March 28, 2026',
-  'March 19, 2026',
-  'March 8, 2026',
-  'February 24, 2026',
-  'February 10, 2026',
-]
-
 const resolveCoverImage = post =>
   post?.cover_image || fallbackImagesByCategory[post?.category] || blogImg1
 
-const resolvePublishedDate = index => fallbackDates[index % fallbackDates.length]
+const formatPublishedDate = value => {
+  if (!value) return 'Elewen Journal'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Elewen Journal'
+
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
 
 const RevealLine = ({ children, delay, className = '' }) => (
   <span className={`reveal-wrapper block ${className}`.trim()}>
@@ -225,7 +227,7 @@ const BlogPage = () => {
                       letterSpacing: '0',
                     }}
                   >
-                    {resolvePublishedDate(index)}
+                    {formatPublishedDate(post.post_published_at)}
                   </p>
 
                   <Link to={`/blogs/${post.slug}`} className="block">
