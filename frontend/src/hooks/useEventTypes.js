@@ -411,10 +411,20 @@ export function useServiceCards() {
 }
 
 export function useServiceOptions() {
+  return useFilteredServiceOptions()
+}
+
+export function useFilteredServiceOptions(allowedSlugs = []) {
   return useQuery({
-    queryKey: ['service-options'],
+    queryKey: ['service-options', [...allowedSlugs].sort()],
     queryFn: async () => {
-      if (USE_FALLBACK) return SERVICE_OPTIONS_FALLBACK
+      const normalizedAllowedSlugs = [...new Set((allowedSlugs ?? []).map(slugify).filter(Boolean))]
+      const filterByAllowedSlugs = items => {
+        if (!normalizedAllowedSlugs.length) return items
+        return items.filter(item => normalizedAllowedSlugs.includes(slugify(item?.slug)))
+      }
+
+      if (USE_FALLBACK) return filterByAllowedSlugs(SERVICE_OPTIONS_FALLBACK)
       try {
         const { data } = await strapiGet('/service-categories', {
           'filters[is_active][$eq]': 'true',
@@ -422,12 +432,18 @@ export function useServiceOptions() {
           'populate[1]': 'icon',
           sort: 'name:asc',
         })
-        return data.map(mapServiceCategory)
+        return filterByAllowedSlugs(data.map(mapServiceCategory))
       } catch {
-        return SERVICE_OPTIONS_FALLBACK
+        return filterByAllowedSlugs(SERVICE_OPTIONS_FALLBACK)
       }
     },
-    placeholderData: SERVICE_OPTIONS_FALLBACK,
+    placeholderData: () => {
+      const normalizedAllowedSlugs = [...new Set((allowedSlugs ?? []).map(slugify).filter(Boolean))]
+      if (!normalizedAllowedSlugs.length) return SERVICE_OPTIONS_FALLBACK
+      return SERVICE_OPTIONS_FALLBACK.filter(item =>
+        normalizedAllowedSlugs.includes(slugify(item?.slug))
+      )
+    },
     staleTime: 10 * 60 * 1000,
     retry: 1,
   })

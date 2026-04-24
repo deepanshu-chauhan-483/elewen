@@ -80,32 +80,38 @@ function getSelectedElements(item) {
   }))
 }
 
-function getSelectedOptionsSearchParam(selectedOptions = {}) {
-  const entries = Object.entries(selectedOptions).filter(([, value]) => Boolean(value))
-  if (!entries.length) return ''
-
-  return encodeURIComponent(JSON.stringify(Object.fromEntries(entries)))
-}
-
-function getCartPackageHref(pkg, selectedOptions = {}) {
+function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   const packageId = pkg?.documentId ?? pkg?.id
   const serviceSlug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
-  const selectedOptionsParam = getSelectedOptionsSearchParam(selectedOptions)
+  const params = new URLSearchParams()
+
+  if (selectedOptions && Object.keys(selectedOptions).length) {
+    params.set(
+      'selectedOptions',
+      JSON.stringify(Object.fromEntries(Object.entries(selectedOptions).filter(([, value]) => Boolean(value))))
+    )
+  }
+
+  if (cartItemId) {
+    params.set('cartItemId', String(cartItemId))
+  }
+
+  const queryString = params.toString()
 
   if (!packageId || !serviceSlug) return ''
 
   if (serviceSlug === 'decor') {
     const basePath = `/packages/decor-single/${packageId}`
-    return selectedOptionsParam ? `${basePath}?selectedOptions=${selectedOptionsParam}` : basePath
+    return queryString ? `${basePath}?${queryString}` : basePath
   }
 
   if (serviceSlug === 'sheesha') {
     const basePath = `/packages/sheesha-single/${packageId}`
-    return selectedOptionsParam ? `${basePath}?selectedOptions=${selectedOptionsParam}` : basePath
+    return queryString ? `${basePath}?${queryString}` : basePath
   }
 
   const basePath = `/packages/${serviceSlug}/${packageId}`
-  return selectedOptionsParam ? `${basePath}?selectedOptions=${selectedOptionsParam}` : basePath
+  return queryString ? `${basePath}?${queryString}` : basePath
 }
 
 export default function SinglePackageCheckout() {
@@ -145,7 +151,7 @@ export default function SinglePackageCheckout() {
     : 'Selected package'
   const eventLocation = cart?.eventCity || 'Add city / area'
   const eventDate = formatDisplayDate(cart?.eventDate)
-  const packageHref = getCartPackageHref(item.packageData, item.selectedOptions)
+  const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
   const advancePayable = Number(item.totalPrice ?? 0) * 0.3
   const balanceDue = Number(item.totalPrice ?? 0) - advancePayable
 

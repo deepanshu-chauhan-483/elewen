@@ -112,6 +112,10 @@ function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
 }
 
+function isDecorPackage(pkg) {
+  return Array.isArray(pkg?.service_slugs) && pkg.service_slugs.includes('decor')
+}
+
 function getDecorDetailSections(pkg) {
   return (Array.isArray(pkg?.detail_sections) ? pkg.detail_sections : []).filter(
     section =>
@@ -422,17 +426,26 @@ function serializeSections(sections = []) {
 }
 
 function mergeTemplateSections(templateSections = [], existingSections = []) {
-  const existingSectionMap = new Map(
-    (Array.isArray(existingSections) ? existingSections : []).map(section => [
-      `${section.type}:${section.title}`,
-      section,
-    ])
-  )
+  const existingSectionCounts = new Map()
+  const existingSectionMap = new Map()
+
+  ;(Array.isArray(existingSections) ? existingSections : []).forEach(section => {
+    const baseKey = `${section.type}:${section.title}`
+    const nextCount = existingSectionCounts.get(baseKey) ?? 0
+    existingSectionCounts.set(baseKey, nextCount + 1)
+    existingSectionMap.set(`${baseKey}:${nextCount}`, section)
+  })
+
+  const templateSectionCounts = new Map()
 
   return cloneSections(templateSections).map(section => {
     if (section.type !== 'choice-row') return section
 
-    const existingSection = existingSectionMap.get(`${section.type}:${section.title}`)
+    const baseKey = `${section.type}:${section.title}`
+    const nextCount = templateSectionCounts.get(baseKey) ?? 0
+    templateSectionCounts.set(baseKey, nextCount + 1)
+
+    const existingSection = existingSectionMap.get(`${baseKey}:${nextCount}`)
     if (!existingSection) return section
 
     return {
@@ -462,11 +475,11 @@ function isCustomizationComplete(sections = []) {
       section.items.length
   )
 
-  return (
-    requiredSections.length > 0 &&
-    requiredSections.every(section =>
-      section.items.some(item => typeof item !== 'string' && item.selected)
-    )
+  // No selectable options means the package is already complete
+  if (requiredSections.length === 0) return true
+
+  return requiredSections.every(section =>
+    section.items.some(item => typeof item !== 'string' && item.selected)
   )
 }
 
@@ -483,27 +496,41 @@ function buildDecorSelectedOptions(customization) {
   const selectedSections = (customization?.data?.sections ?? []).filter(
     section => section?.type === 'choice-row'
   )
+  
+  console.log('[buildDecorSelectedOptions] selectedSections:', selectedSections)
 
-  return normalizeSelectedOptions(
+  const result = normalizeSelectedOptions(
     Object.fromEntries(
       selectedSections
-        .map(section => {
+        .map((section, idx) => {
           const selectedItem = (section.items ?? []).find(
             item => typeof item !== 'string' && item.selected
           )
+          
+          console.log(`[buildDecorSelectedOptions] section[${idx}] title="${section.title}", selectedItem:`, selectedItem)
 
-          return [section.title, selectedItem?.title ?? '']
+          // Use index as unique key to prevent overwriting when multiple sections have same title
+          const key = `${section.title}_${idx}`
+          return [key, selectedItem?.title ?? '']
         })
         .filter(([, value]) => Boolean(value))
     )
   )
+  
+  console.log('[buildDecorSelectedOptions] final result:', result)
+  return result
 }
 
 function applySelectedOptionsToSections(sections = [], selectedOptions = {}) {
+  let choiceIndex = -1
+
   return (Array.isArray(sections) ? sections : []).map(section => {
     if (section?.type !== 'choice-row') return section
 
-    const selectedTitle = selectedOptions?.[section.title]
+    choiceIndex += 1
+
+    const selectedTitle =
+      selectedOptions?.[`${section.title}_${choiceIndex}`] ?? selectedOptions?.[section.title]
     if (!selectedTitle) return section
 
     return {
@@ -661,7 +688,8 @@ export default function DecorSinglePackagePage() {
   const { data: packages = [] } = usePackages()
   const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
   const { data: cancellationPolicy } = useCancellationPolicy()
-  const { addPackage } = useCart()
+  const { addPackage, updateCartItemDetails } = useCart()
+  const cartItemId = searchParams.get('cartItemId') ?? ''
   const {
     customizations,
     activeCustomization,
@@ -778,7 +806,12 @@ export default function DecorSinglePackagePage() {
     (_, index) => sourceImages[index % sourceImages.length]
   )
   const relatedProducts = packagesData
-    .filter(item => hasDecorPackageData(item) && buildPackageId(item) !== buildPackageId(pkg))
+    .filter(
+      item =>
+        hasDecorPackageData(item) &&
+        isDecorPackage(item) &&
+        buildPackageId(item) !== buildPackageId(pkg)
+    )
     .slice(0, 3)
     .map(item => ({ ...item, serviceSlug: 'decor' }))
   const sections = activeCustomization?.data?.sections ?? []
@@ -841,14 +874,25 @@ export default function DecorSinglePackagePage() {
 
     setIsAddingToCart(true)
 
+    const selectedOpts = buildDecorSelectedOptions(activeCustomization)
+
     try {
-      await addPackage({
-        packageId: Number(pkg.id),
-        quantity: 1,
-        selectedOptions: buildDecorSelectedOptions(activeCustomization),
-      })
-      handleAddToCart()
-      setAddToCartMessage('Added to cart.')
+      if (cartItemId) {
+        await updateCartItemDetails({
+          itemId: cartItemId,
+          quantity,
+          selectedOptions: selectedOpts,
+        })
+        setAddToCartMessage('Package updated.')
+      } else {
+        await addPackage({
+          packageId: Number(pkg.id),
+          quantity: 1,
+          selectedOptions: selectedOpts,
+        })
+        handleAddToCart()
+        setAddToCartMessage('Added to cart.')
+      }
     } catch (err) {
       if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
         if (!getStoredJwt()) {

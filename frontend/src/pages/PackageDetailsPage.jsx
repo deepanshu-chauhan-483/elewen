@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { getServiceProductDetails } from '../data/serviceProductDetails'
+import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCart } from '../hooks/useCart'
-import { usePackages } from '../hooks/usePackages'
+import { usePackageById, usePackages } from '../hooks/usePackages'
 import { getStoredJwt } from '../lib/api'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -37,6 +38,11 @@ function normalisePackageId(value = '') {
 
 function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
+}
+
+function packageMatchesService(pkg, serviceSlug) {
+  const normalizedService = normalizeServiceSlug(serviceSlug)
+  return pkg?.service_slugs?.some(slug => normalizeServiceSlug(slug) === normalizedService)
 }
 
 function buildDefaultSelectedOptions(groups = []) {
@@ -127,12 +133,128 @@ function PackageOptions({ groups = [], selectedOptions = {}, onSelect }) {
   )
 }
 
+function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancellationSection) {
+  const sections = Array.isArray(baseSections) ? [...baseSections] : []
+  const fallbackCancellation =
+    sections.find(section => section?.title === 'Cancellation Policy') ??
+    fallbackCancellationSection ??
+    null
+  const withoutCancellation = sections.filter(section => section?.title !== 'Cancellation Policy')
+
+  if (cancellationPolicy?.body) {
+    withoutCancellation.push(cancellationPolicy)
+  } else if (fallbackCancellation) {
+    withoutCancellation.push(fallbackCancellation)
+  }
+
+  return withoutCancellation
+}
+
+function formatCurrency(value) {
+  const amount = Number(value)
+  if (!Number.isFinite(amount) || amount <= 0) return ''
+  return `₹${amount.toLocaleString('en-IN')}`
+}
+
+function PackageCmsDetails({ pkg, groups, selectedOptions, onSelect }) {
+  const primarySection = Array.isArray(pkg?.detail_sections) ? pkg.detail_sections[0] ?? null : null
+  const inclusions = Array.isArray(pkg?.detail_inclusions) ? pkg.detail_inclusions : []
+  const exclusions = Array.isArray(pkg?.detail_exclusions) ? pkg.detail_exclusions : []
+  const addons = Array.isArray(pkg?.detail_addons) ? pkg.detail_addons : []
+  const priceBreakdown = Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : []
+  const hasCmsContent =
+    Boolean(primarySection) ||
+    inclusions.length > 0 ||
+    exclusions.length > 0 ||
+    addons.length > 0 ||
+    priceBreakdown.length > 0
+
+  const infoItems = [
+    primarySection?.bartender_type
+      ? { label: 'Bartender type', value: primarySection.bartender_type }
+      : null,
+    primarySection?.hours_range ? { label: 'Hours', value: primarySection.hours_range } : null,
+    primarySection?.price_per_extra_hour
+      ? {
+          label: 'Extra hour',
+          value: `${formatCurrency(primarySection.price_per_extra_hour)} / hour`,
+        }
+      : null,
+    primarySection?.ideal_for ? { label: 'Ideal for', value: primarySection.ideal_for } : null,
+  ].filter(Boolean)
+
+  if (!hasCmsContent && !groups.length) return null
+
+  return (
+    <div className="space-y-6">
+      {infoItems.length ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {infoItems.map(item => (
+            <div key={item.label} className="rounded-[10px] border border-[#CDB17E] bg-[#F8F4ED] p-3">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-semibold text-[#8F6945]">{item.label}</p>
+              <p className="mt-2 text-[13px] leading-[1.6] text-[#591902]">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {inclusions.length ? (
+        <div>
+          <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">What&apos;s included</p>
+          <ul className="mt-3 space-y-2">
+            {inclusions.map(item => (
+              <li key={item} className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80">
+                <span className="mt-[7px] h-[4px] w-[4px] rounded-full bg-[#591902]" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {exclusions.length ? (
+        <div>
+          <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">Not included</p>
+          <ul className="mt-3 space-y-2">
+            {exclusions.map(item => (
+              <li key={item} className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80">
+                <span className="mt-[7px] h-[4px] w-[4px] rounded-full bg-[#591902]" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {addons.length ? (
+        <div>
+          <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">Available add-ons</p>
+          <ul className="mt-3 space-y-2">
+            {addons.map(item => (
+              <li key={item} className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80">
+                <span className="mt-[7px] h-[4px] w-[4px] rounded-full bg-[#591902]" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      
+
+    </div>
+  )
+}
+
 export default function PackageDetailsPage() {
   const navigate = useNavigate()
   const { service = '', packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { data: packages = [] } = usePackages()
-  const { addPackage } = useCart()
+  const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
+  const { data: cancellationPolicy } = useCancellationPolicy()
+  const { addPackage, updateCartItemDetails } = useCart()
+  const cartItemId = searchParams.get('cartItemId') ?? ''
   const normalizedService = normalizeServiceSlug(service)
   const search = searchParams.toString()
   const details = getServiceProductDetails(normalizedService)
@@ -162,12 +284,21 @@ export default function PackageDetailsPage() {
 
   const pkg = useMemo(
     () =>
-      packagesData.find(
-        item =>
-          buildPackageId(item) === normalisePackageId(packageId) &&
-          item.service_slugs?.some(slug => normalizeServiceSlug(slug) === normalizedService)
-      ) ?? packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
-    [normalizedService, packageId, packagesData]
+      packageDetails
+        ? {
+            ...packageDetails,
+            serviceSlug: packageDetails.service_slugs?.[0] || normalizedService,
+            images: packageDetails.images?.length
+              ? packageDetails.images
+              : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
+                PKG_LOCAL_IMAGES[0]),
+          }
+        : packagesData.find(
+            item =>
+              buildPackageId(item) === normalisePackageId(packageId) &&
+              packageMatchesService(item, normalizedService)
+          ) ?? packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
+    [normalizedService, packageDetails, packageId, packagesData]
   )
 
   const relatedProducts = useMemo(
@@ -176,7 +307,7 @@ export default function PackageDetailsPage() {
         .filter(
           item =>
             buildPackageId(item) !== buildPackageId(pkg ?? {}) &&
-            item.service_slugs?.some(slug => normalizeServiceSlug(slug) === normalizedService)
+            packageMatchesService(item, normalizedService)
         )
         .slice(0, 3)
         .map(item => ({ ...item, serviceSlug: normalizedService })),
@@ -210,6 +341,10 @@ export default function PackageDetailsPage() {
     )
   }
 
+  if (isPackageLoading) {
+    return null
+  }
+
   if (!pkg) {
     return <Navigate to={backHref} replace />
   }
@@ -221,6 +356,13 @@ export default function PackageDetailsPage() {
   const packageTitle = pkg.title || details.heroBadge
   const packagePrice = pkg.price || ''
   const packageIntro = pkg.description || details.intro
+  const accordionSections = mergeAccordionSections(
+    Array.isArray(pkg.detail_accordion_sections) && pkg.detail_accordion_sections.length
+      ? pkg.detail_accordion_sections
+      : details.sections,
+    cancellationPolicy,
+    details.sections.find(section => section.title === 'Cancellation Policy')
+  )
 
   const handleSelect = (groupLabel, option) => {
     setAddToCartMessage('')
@@ -242,12 +384,21 @@ export default function PackageDetailsPage() {
     setIsAddingToCart(true)
 
     try {
-      await addPackage({
-        packageId: numericPackageId,
-        quantity,
-        selectedOptions: normalizeSelectedOptions(selectedOptions),
-      })
-      setAddToCartMessage(quantity > 1 ? `${quantity} packages added to cart.` : 'Added to cart.')
+      if (cartItemId) {
+        await updateCartItemDetails({
+          itemId: cartItemId,
+          quantity,
+          selectedOptions: normalizeSelectedOptions(selectedOptions),
+        })
+        setAddToCartMessage('Package updated.')
+      } else {
+        await addPackage({
+          packageId: numericPackageId,
+          quantity,
+          selectedOptions: normalizeSelectedOptions(selectedOptions),
+        })
+        setAddToCartMessage(quantity > 1 ? `${quantity} packages added to cart.` : 'Added to cart.')
+      }
     } catch (err) {
       if (err?.code === 'AUTH_REQUIRED' || err?.message === 'AUTH_REQUIRED') {
         if (!getStoredJwt()) {
@@ -269,13 +420,14 @@ export default function PackageDetailsPage() {
       price={packagePrice}
       intro={packageIntro}
       customContent={
-        <PackageOptions
+        <PackageCmsDetails
+          pkg={pkg}
           groups={details.configurableGroups}
           selectedOptions={selectedOptions}
           onSelect={handleSelect}
         />
       }
-      accordionSections={details.sections}
+      accordionSections={accordionSections}
       mainImage={pkg.images?.[0] ?? sideImages[0]}
       sideImages={sideImages}
       relatedProducts={relatedProducts}

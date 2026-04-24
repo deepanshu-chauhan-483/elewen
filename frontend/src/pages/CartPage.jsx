@@ -7,7 +7,7 @@ const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
-  return `₹${amount.toLocaleString('en-IN', {
+  return `Rs${amount.toLocaleString('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
@@ -17,6 +17,92 @@ function parseApiError(error) {
   const message = error?.message ?? 'Something went wrong'
   const match = message.match(/\{"error":"([^"]+)"\}/)
   return match?.[1] ?? message
+}
+
+function parseBreakdownAmount(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value !== 'string') return 0
+
+  const normalized = value.replace(/[^0-9.-]+/g, '')
+  const amount = Number(normalized)
+  return Number.isFinite(amount) ? amount : 0
+}
+
+function getBreakdownLabel(entry) {
+  if (!entry || typeof entry !== 'object') return ''
+
+  return (
+    entry.label ??
+    entry.title ??
+    entry.name ??
+    entry.text ??
+    entry.description ??
+    entry.item ??
+    ''
+  )
+}
+
+function getBreakdownAmount(entry) {
+  if (!entry || typeof entry !== 'object') return 0
+
+  const directAmount =
+    entry.amount ??
+    entry.price ??
+    entry.value ??
+    entry.cost ??
+    entry.total ??
+    entry.rate ??
+    entry.base_price
+
+  if (directAmount != null) {
+    return parseBreakdownAmount(directAmount)
+  }
+
+  for (const [key, value] of Object.entries(entry)) {
+    if (
+      ['id', 'documentId', 'createdAt', 'updatedAt', 'publishedAt'].includes(key) ||
+      typeof value === 'object'
+    ) {
+      continue
+    }
+
+    const amount = parseBreakdownAmount(value)
+    if (amount > 0) return amount
+  }
+
+  return 0
+}
+
+function getPackageBreakdownRows(pkg) {
+  return (Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : [])
+    .map(entry => {
+      const label = String(getBreakdownLabel(entry) ?? '').trim()
+      const amount = getBreakdownAmount(entry)
+      return label && amount > 0 ? { label, amount } : null
+    })
+    .filter(Boolean)
+}
+
+function getCartItemSummary(item) {
+  const quantity = Math.max(1, Number(item?.quantity ?? 1))
+  const breakdownRows = getPackageBreakdownRows(item?.packageData)
+
+  if (!breakdownRows.length) {
+    return {
+      rows: [],
+      total: Number(item?.totalPrice ?? 0),
+    }
+  }
+
+  const rows = breakdownRows.map(row => ({
+    ...row,
+    total: row.amount * quantity,
+  }))
+
+  return {
+    rows,
+    total: rows.reduce((sum, row) => sum + row.total, 0),
+  }
 }
 
 function SummaryRow({ label, value, valueClassName = 'text-[#2C2C2C] font-medium' }) {
@@ -96,15 +182,64 @@ function parseCartItemTitle(value = '') {
 }
 
 function getSelectedElements(item) {
+  console.log('[CartPage] getSelectedElements - item:', item)
+  console.log('[CartPage] getSelectedElements - customization:', item?.customization)
+  console.log('[CartPage] getSelectedElements - selectedOptions:', item?.selectedOptions)
+  
+  // First, check if item has selectedOptions (from decorSelectedOptions)
   const selectedOptions = item?.selectedOptions ?? {}
-  const selectedElements = Object.entries(selectedOptions)
-    .map(([label, value]) => ({
-      label,
-      value,
-    }))
-    .filter(element => element.label && element.value)
+  if (Object.keys(selectedOptions).length > 0) {
+    console.log('[CartPage] Using selectedOptions:', selectedOptions)
+    const selected = Object.entries(selectedOptions)
+      .map(([label, value]) => ({
+        label: label.replace(/_\d+$/, ''),  // Remove index suffix for display
+        value,
+      }))
+      .filter(element => element.label && element.value)
 
-  if (selectedElements.length) return selectedElements
+    if (selected.length) {
+      console.log('[CartPage] Final selected elements from selectedOptions:', selected)
+      return selected
+    }
+  }
+
+  // Fallback to customization.sections (Decor package format)
+  if (item?.customization?.sections && Array.isArray(item.customization.sections)) {
+    console.log('[CartPage] Found sections:', item.customization.sections)
+    const selected = []
+    
+    item.customization.sections.forEach((section, idx) => {
+      console.log(`[CartPage] Processing section ${idx}:`, section)
+      
+      if (section.type === 'choice-row' && Array.isArray(section.items)) {
+        console.log(`[CartPage] Choice-row section "${section.title}":`, section.items)
+        // For choice-row, get the selected item's title
+        const selectedItem = section.items.find(item => typeof item !== 'string' && item.selected)
+        console.log(`[CartPage] Selected item in "${section.title}":`, selectedItem)
+        
+        if (selectedItem && selectedItem.title) {
+          selected.push({
+            label: section.title,
+            value: selectedItem.title,
+          })
+        }
+      } else if (section.type === 'text-row' && Array.isArray(section.items)) {
+        console.log(`[CartPage] Text-row section "${section.title}":`, section.items)
+        // For text-row, add all items
+        section.items.forEach(item => {
+          if (typeof item === 'string' && item) {
+            selected.push({
+              label: section.title,
+              value: item,
+            })
+          }
+        })
+      }
+    })
+
+    console.log('[CartPage] Final selected elements from sections:', selected)
+    if (selected.length) return selected
+  }
 
   return (item?.packageData?.detail_inclusions ?? []).slice(0, 4).map(highlight => ({
     label: 'Included with this package',
@@ -114,13 +249,6 @@ function getSelectedElements(item) {
 
 function getPrimaryServiceSlug(pkg) {
   return normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
-}
-
-function getSelectedOptionsSearchParam(selectedOptions = {}) {
-  const entries = Object.entries(selectedOptions).filter(([, value]) => Boolean(value))
-  if (!entries.length) return ''
-
-  return encodeURIComponent(JSON.stringify(Object.fromEntries(entries)))
 }
 
 function getSuggestedPackages(packages, cartItems) {
@@ -145,76 +273,71 @@ function getSuggestedPackages(packages, cartItems) {
     }))
 }
 
-function QuickViewButton({ itemId }) {
+function DetailField({ label, value, type = 'text', ...props }) {
   return (
-    <Link
-      to={`/single-package-checkout?itemId=${encodeURIComponent(itemId)}`}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#B08B5A] bg-white text-[#75431F] transition-colors hover:bg-[#FFF7EA]"
-      aria-label="View package details"
-      title="View package details"
-    >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <label className="rounded-[10px] border border-[#E6D9C8] bg-[#FCFAF7] px-4 py-3">
+      <span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#927C65]">
+        {label}
+      </span>
+      <input
+        type={type}
+        value={value}
+        className="mt-1 w-full bg-transparent text-[14px] font-medium text-[#2C2C2C] outline-none"
+        {...props}
+      />
+    </label>
+  )
+}
+function PincodeCard({
+  pincode,
+  message,
+  cart,
+  isChecking,
+  onChange,
+  onSubmit,
+  onClear,
+}) {
+  return (
+    <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
+      
+      {/* TITLE */}
+      <h2 className="text-lg font-medium text-[#2C2C2C]">
+        Enter Pincode
+      </h2>
+
+      <p className="mb-4 mt-1 text-sm text-gray-500">
+        Enter your pincode to check service availability and charges.
+      </p>
+
+      {/* INPUT */}
+      <div className="flex flex-col gap-3">
+        <input
+          type="text"
+          value={pincode}
+          onChange={e => onChange(e.target.value)}
+          placeholder="Enter pincode"
+          className="w-full border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
         />
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
-      </svg>
-    </Link>
-  )
-}
 
-function SuggestedPackages({ packages = [] }) {
-  if (!packages.length) return null
-
-  return (
-    <div className="rounded-[14px] border border-[#E6D9C8] bg-white p-4">
-      <div className="mb-4">
-        <h3 className="text-[16px] font-medium text-[#2C2C2C]">You might also like</h3>
-        <p className="mt-1 text-[12px] text-[#8B8B8B]">
-          Similar packages from the same service category.
-        </p>
+        {/* hidden submit (same pattern) */}
+        <button type="submit" disabled={isChecking || !pincode.trim()} className="hidden">
+          {isChecking ? 'Checking...' : 'Check'}
+        </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {packages.map(pkg => (
-          <div
-            key={pkg.id}
-            className="rounded-[10px] border border-[#EEE1D0] bg-[#FCFAF7] px-3 py-3"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[13px] font-medium text-[#2C2C2C]">{pkg.title}</p>
-                <p className="mt-1 text-[11px] text-[#8B8B8B]">{pkg.subtitle}</p>
-                <p className="mt-2 text-[12px] font-medium text-[#75431F]">{pkg.price}</p>
-              </div>
-              <Link
-                to={getCartPackageHref({
-                  id: pkg.id,
-                  documentId: pkg.id,
-                  service_slugs: [pkg.serviceSlug],
-                })}
-                className="rounded-full bg-[#A98559] px-3 py-1 text-[11px] font-medium text-white"
-              >
-                View
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+
+      {/* NOTE */}
+      <p className="mt-2 text-xs text-gray-500">
+        Service availability depends on your location
+      </p>
+
+      {/* MESSAGE */}
+      {message && (
+        <p className="mt-2 text-sm text-[#5A1E0E]">{message}</p>
+      )}
+    </form>
   )
 }
-
 function CouponCard({
   couponCode,
   couponMessage,
@@ -225,46 +348,47 @@ function CouponCard({
   onRemoveCoupon,
 }) {
   return (
-    <form onSubmit={onApplyCoupon} className="rounded-[14px] border border-[#E6D9C8] bg-white p-4">
-      <h2 className="text-[16px] font-medium text-[#2C2C2C]">Apply Coupon</h2>
-      <p className="mb-4 mt-1 text-[12px] text-[#8B8B8B]">
+    <form onSubmit={onApplyCoupon} className="rounded-xl border border-[#95796066] p-5">
+      <h2 className="text-lg font-medium text-[#2C2C2C]">Apply Coupon</h2>
+      <p className="mb-4 mt-1 text-sm text-gray-500">
         Have a code? Apply it here to unlock savings.
       </p>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3">
         <input
           type="text"
           value={couponCode}
           onChange={event => onCouponChange(event.target.value.toUpperCase())}
-          placeholder="Enter Coupon Code"
-          className="w-full rounded-[10px] border border-[#E6D9C8] bg-[#FCFAF7] px-4 py-3 text-[13px] text-[#2C2C2C] focus:outline-none"
+          placeholder="Enter coupon code"
+          className="w-full border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
         />
-        <button
-          type="submit"
-          disabled={isApplyingCoupon || !couponCode.trim()}
-          className="rounded-full bg-[#D4BA8E] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
-        >
+        <button type="submit" disabled={isApplyingCoupon || !couponCode.trim()} className="hidden">
           {isApplyingCoupon ? 'Applying...' : 'Apply'}
         </button>
       </div>
 
       {cart?.couponId ? (
-        <div className="mt-4 flex items-start justify-between rounded-[10px] border border-[#EEE1D0] bg-[#FCFAF7] p-4">
+        <div className="mt-4 flex items-start justify-between rounded-xl bg-[#F3F3F3] p-4">
           <div>
-            <p className="text-sm font-medium text-[#2C2C2C]">Coupon applied</p>
-            <p className="text-sm text-gray-500">Discount: {formatCurrency(cart.discountAmount)}</p>
+            <p className="text-sm font-medium text-[#2C2C2C]">
+              Coupon Applied: {cart?.couponCode ?? couponCode ?? 'SAVE2000'}
+            </p>
+            <p className="text-sm text-gray-500">
+              {formatCurrency(cart.discountAmount)} has been deducted from your total
+            </p>
           </div>
           <button
             type="button"
             onClick={onRemoveCoupon}
-            className="text-sm font-medium text-[#5A1E0E]"
+            className="text-lg leading-none text-[#2C2C2C]"
+            aria-label="Remove coupon"
           >
-            Remove
+            ✕
           </button>
         </div>
       ) : null}
-
-      {couponMessage ? <p className="mt-3 text-sm text-[#5A1E0E]">{couponMessage}</p> : null}
+      <p className="mt-2 text-xs text-gray-500">Only one coupon can be applied at a time</p>
+      {couponMessage ? <p className="mt-2 text-sm text-[#5A1E0E]">{couponMessage}</p> : null}
     </form>
   )
 }
@@ -280,7 +404,7 @@ function SinglePackageCard({
 }) {
   const isPending = pendingItemId === item.id
   const quantity = Number(item.quantity ?? 0)
-  const packageHref = getCartPackageHref(item.packageData, item.selectedOptions)
+  const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
   const packageImage = item.packageData?.images?.[0] ?? ''
   const packageTitle = item.packageData?.title || item.displayTitle
   const selectedElements = getSelectedElements(item)
@@ -313,7 +437,7 @@ function SinglePackageCard({
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2">
         {packageHref ? (
           <Link
             to={packageHref}
@@ -329,12 +453,7 @@ function SinglePackageCard({
             Edit Package
           </button>
         )}
-        <Link
-          to={`/single-package-checkout?itemId=${encodeURIComponent(item.id)}`}
-          className="flex items-center justify-center rounded-full border border-[#B08B5A] bg-white px-4 py-2.5 text-[13px] font-medium text-[#75431F]"
-        >
-          View Details
-        </Link>
+
         <button
           type="button"
           onClick={() => onRemoveItem(item.id)}
@@ -343,39 +462,6 @@ function SinglePackageCard({
         >
           {isPending ? 'Updating...' : 'Delete Package'}
         </button>
-      </div>
-
-      <div className="rounded-[12px] border border-[#E6D9C8] bg-white overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[#EEE1D0] bg-[#F8F4ED] px-4 py-3">
-          <h3 className="text-[14px] font-medium text-[#2C2C2C]">Package Quantity</h3>
-          <span className="text-[12px] text-[#8B8B8B]">
-            line total {formatCurrency(item.totalPrice)}
-          </span>
-        </div>
-
-        <div className="px-4 py-4">
-          <div className="inline-flex items-center overflow-hidden rounded-[6px] border border-[#B08B5A] bg-[#FFF7EA]">
-            <button
-              type="button"
-              disabled={isPending || quantity <= 1}
-              onClick={() => onQuantityChange(item.id, quantity - 1)}
-              className="flex h-9 w-9 items-center justify-center text-[18px] leading-none text-[#75431F] disabled:opacity-50"
-            >
-              -
-            </button>
-            <span className="flex h-9 min-w-[40px] items-center justify-center border-x border-[#B08B5A] px-3 text-[13px] font-medium text-[#75431F]">
-              {quantity}
-            </span>
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => onQuantityChange(item.id, quantity + 1)}
-              className="flex h-9 w-9 items-center justify-center text-[18px] leading-none text-[#75431F] disabled:opacity-50"
-            >
-              +
-            </button>
-          </div>
-        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-[#95796066]">
@@ -446,213 +532,275 @@ function SinglePackageCard({
 }
 
 function MultiPackageList({ cartItems, itemCount, pendingItemId, onQuantityChange, onRemoveItem }) {
+  const groupedItems = cartItems.reduce((groups, item) => {
+    const category = getPackageSubtitle(item.packageData)
+    const existingGroup = groups.find(group => group.category === category)
+
+    if (existingGroup) {
+      existingGroup.packages.push(item)
+      return groups
+    }
+
+    groups.push({
+      category,
+      icon: '',
+      border: 'border-[#95796066]',
+      bg: 'bg-[#FCFAF7]',
+      packages: [item],
+    })
+
+    return groups
+  }, [])
+
   return (
-    <div className="rounded-[14px] border border-[#E6D9C8] bg-white overflow-hidden">
-      <div className="flex items-center justify-between border-b border-[#EEE1D0] bg-[#F8F4ED] px-4 py-3">
-        <h2 className="font-medium text-[#2C2C2C]">Selected Packages</h2>
-        <span className="text-sm text-gray-500">{itemCount} items</span>
-      </div>
+    <div className="space-y-4">
+      {groupedItems.map(group => (
+        <div
+          key={group.category}
+          className={`rounded-lg border ${group.border} ${group.bg} overflow-hidden`}
+        >
+          <div className="flex justify-between border-b border-[#95796033] px-4 py-3">
+            <h2 className="font-medium text-[#2C2C2C]">
+              {group.icon ? `${group.icon} ` : ''}
+              {group.category}
+            </h2>
+            <span className="text-sm text-gray-500">{group.packages.length} packages</span>
+          </div>
 
-      <div className="space-y-4 p-4">
-        {cartItems.map(item => {
-          const quantity = Number(item.quantity ?? 0)
-          const isPending = pendingItemId === item.id
-          const packageHref = getCartPackageHref(item.packageData, item.selectedOptions)
-          const packageImage = item.packageData?.images?.[0] ?? ''
-          const packageTitle = item.packageData?.title || item.displayTitle
-          const selectedElements = getSelectedElements(item)
+          <div className="space-y-4 p-4">
+            {group.packages.map(item => {
+              const quantity = Number(item.quantity ?? 0)
+              const isPending = pendingItemId === item.id
+              const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
+              const packageTitle = item.packageData?.title || item.displayTitle
+              const selectedElements = getSelectedElements(item)
+              const tags = selectedElements
+                .map(element => element.value)
+                .filter(Boolean)
+                .slice(0, 4)
 
-          return (
-            <div
-              key={item.id}
-              className="relative flex gap-4 rounded-[12px] border border-[#EEE1D0] bg-[#FCFAF7] p-4"
-            >
-              <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-[12px] bg-[#957960]" />
+              return (
+                <div
+                  key={item.id}
+                  className="relative flex gap-4 rounded-lg border border-[#94949433] bg-white p-4"
+                >
+                  <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-lg bg-[#957960]" />
 
-              {packageImage ? (
-                packageHref ? (
-                  <Link
-                    to={packageHref}
-                    className="ml-2 h-24 w-24 shrink-0 overflow-hidden rounded-[10px] bg-[#F8F4ED]"
-                  >
-                    <img
-                      src={packageImage}
-                      alt={packageTitle}
-                      className="h-full w-full object-cover"
-                    />
-                  </Link>
-                ) : (
-                  <div className="ml-2 h-24 w-24 shrink-0 overflow-hidden rounded-[10px] bg-[#F8F4ED]">
-                    <img
-                      src={packageImage}
-                      alt={packageTitle}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )
-              ) : null}
+                  <div className="flex-1 pl-2">
+                    <div className="flex justify-between gap-4">
+                      {packageHref ? (
+                        <Link
+                          to={packageHref}
+                          className="font-medium text-[#2C2C2C] transition-colors hover:text-[#5A1E0E]"
+                        >
+                          {packageTitle}
+                        </Link>
+                      ) : (
+                        <h3 className="font-medium text-[#2C2C2C]">{packageTitle}</h3>
+                      )}
 
-              <div className="flex-1 pl-2">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#9A8771]">
-                      {getPackageSubtitle(item.packageData)}
-                    </p>
-                    {packageHref ? (
-                      <Link
-                        to={packageHref}
-                        className="mt-1 block font-medium text-[#2C2C2C] transition-colors hover:text-[#5A1E0E]"
-                      >
-                        {packageTitle}
-                      </Link>
-                    ) : (
-                      <h3 className="mt-1 font-medium text-[#2C2C2C]">{packageTitle}</h3>
-                    )}
-                    <p className="mt-1 text-sm text-gray-500">
-                      Unit price: {formatCurrency(item.unitPrice)}
-                    </p>
-                  </div>
-
-                  <div className="text-left sm:text-right">
-                    <p className="font-semibold text-[#2C2C2C]">
-                      {formatCurrency(item.totalPrice)}
-                    </p>
-                    <p className="text-xs text-gray-500">line total</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <QuickViewButton itemId={item.id} />
-                  <div className="inline-flex items-center overflow-hidden rounded-[4px] border border-[#B08B5A] bg-[#FFF7EA]">
-                    <button
-                      type="button"
-                      disabled={isPending || quantity <= 1}
-                      onClick={() => onQuantityChange(item.id, quantity - 1)}
-                      className="flex h-8 w-8 items-center justify-center text-[18px] leading-none text-[#75431F] transition-colors hover:bg-[#F6E5C7] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      -
-                    </button>
-                    <span className="flex h-8 min-w-[34px] items-center justify-center border-x border-[#B08B5A] px-2 text-[13px] font-medium text-[#75431F]">
-                      {quantity}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => onQuantityChange(item.id, quantity + 1)}
-                      className="flex h-8 w-8 items-center justify-center text-[18px] leading-none text-[#75431F] transition-colors hover:bg-[#F6E5C7] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => onRemoveItem(item.id)}
-                    disabled={isPending}
-                    className="rounded-full bg-[#5A1E0E] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#4A180B] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isPending ? 'Updating...' : 'Remove'}
-                  </button>
-                </div>
-
-                {selectedElements.length ? (
-                  <div className="mt-4 rounded-[10px] border border-[#E6D9C8] bg-white px-3 py-3">
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-[12px] font-medium text-[#2C2C2C]">Selected Elements</p>
-                      <span className="text-[11px] text-[#8B8B8B]">
-                        {selectedElements.length}{' '}
-                        {selectedElements.length === 1 ? 'element' : 'elements'}
-                      </span>
+                      <div className="text-right">
+                        <p className="font-semibold text-[#2C2C2C]">
+                          {formatCurrency(item.totalPrice)}
+                        </p>
+                        <p className="text-xs text-gray-500">per event</p>
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      {selectedElements.map(element => (
-                        <div
-                          key={`${item.id}-${element.label}-${element.value}`}
-                          className="flex items-start gap-2 text-[12px]"
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {tags.map(tag => (
+                        <span
+                          key={`${item.id}-${tag}`}
+                          className="rounded-full bg-[#EFE7DC] px-2 py-1 text-xs text-[#6B4F3B]"
                         >
-                          <span className="mt-[6px] h-[5px] w-[5px] shrink-0 rounded-full bg-[#D5D5D5]" />
-                          <div>
-                            <p className="font-medium text-[#2C2C2C]">{element.value}</p>
-                            <p className="text-[#8B8B8B]">{element.label}</p>
-                          </div>
-                        </div>
+                          {tag}
+                        </span>
                       ))}
                     </div>
+
+                    <div className="mt-4 flex items-center gap-2">
+                      <Link
+                        to={`/single-package-checkout?itemId=${encodeURIComponent(item.id)}`}
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100"
+                        aria-label="View package"
+                        title="View package"
+                      >
+                        👁️
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveItem(item.id)}
+                        disabled={isPending}
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#5A1E0E] text-white disabled:opacity-60"
+                        aria-label="Delete package"
+                        title="Delete package"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
-                ) : null}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
 
-function PriceSummaryCard({ cartItems, cart, singleItem = false, onCheckout, couponCard = null }) {
-  const advancePayable = Number(cart?.total ?? 0) * 0.3
-  const balanceDue = Math.max(0, Number(cart?.total ?? 0) - advancePayable)
+function SuggestedPackages({ packages = [] }) {
+  if (!packages.length) return null
+
+  return (
+    <div className="rounded-[16px] border border-[#E5E5E5] bg-white p-5">
+      {/* HEADER */}
+      <div className="mb-5">
+        <h2 className="text-[20px] font-semibold text-[#2C2C2C]">Suggested Add-ons</h2>
+        <p className="text-sm text-gray-500">Enhance your event with these popular extras</p>
+      </div>
+
+      {/* GRID */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {packages.map(pkg => (
+          <div
+            key={pkg.id}
+            className="flex items-center justify-between rounded-[16px] bg-[#F5F5F5] px-3 py-4"
+          >
+            {/* LEFT CONTENT */}
+            <div>
+              <p className="text-[16px] font-medium text-[#2C2C2C]">{pkg.title}</p>
+
+              <p className="text-sm text-gray-500">{pkg.subtitle || 'Pro set + napkins'}</p>
+
+              <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
+            </div>
+
+            {/* BUTTON */}
+            <Link
+              to={getCartPackageHref({
+                id: pkg.id,
+                documentId: pkg.id,
+                service_slugs: [pkg.serviceSlug],
+              })}
+              className="rounded-full bg-[#957960] w-fit px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              + Add
+            </Link>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+function PriceSummaryCard({ cartItems, cart, singleItem = false, onCheckout, couponCard = null, pincodeCard = null }) {
+  const itemSummaries = cartItems.map(item => ({
+    item,
+    summary: getCartItemSummary(item),
+  }))
+  const computedSubtotal = itemSummaries.reduce(
+    (sum, entry) => sum + Number(entry.summary.total ?? 0),
+    0
+  )
+  const discountAmount = Number(cart?.discountAmount ?? 0)
+  const computedTotal = Math.max(0, computedSubtotal - discountAmount)
+  const advancePayable = computedTotal * 0.3
+  const balanceDue = Math.max(0, computedTotal - advancePayable)
 
   return (
     <div className="space-y-4">
-      {couponCard}
+      {pincodeCard}
 
-      <div className="overflow-hidden rounded-[14px] border border-[#E6D9C8] bg-white">
-        <div className="px-4 pb-4 pt-4">
-          <h2 className="text-[14px] font-medium text-[#2C2C2C]">Price Summary</h2>
-          <div className="mt-3 h-[2px] w-full bg-[#2E3A1F]" />
+      <div className="rounded-[16px] overflow-hidden border border-[#E5E5E5] bg-white">
+        {/* HEADER */}
+        <div className="flex items-center justify-between bg-[#1F2A14] px-5 py-4 text-white">
+          <h2 className="text-[16px] font-medium">Price Summary</h2>
+          <span className="text-sm">{cartItems.length} packages</span>
         </div>
 
-        <div className="px-5 pb-5 text-sm">
-          <div className="space-y-2 text-[#4B5563]">
-            {cartItems.map(item => (
-              <SummaryRow
-                key={item.id}
-                label={
-                  singleItem
-                    ? `Base Package - ${item.packageData?.title || item.displayTitle}`
-                    : `${item.packageData?.title || item.displayTitle} x ${item.quantity}`
-                }
-                value={formatCurrency(item.totalPrice)}
-              />
+        <div className="p-5 space-y-4">
+          {/* PACKAGES */}
+          <div className="space-y-2">
+            {itemSummaries.map(({ item, summary }) => (
+              <div key={item.id} className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[#2C2C2C]">
+                  {singleItem
+                    ? `Base Package — ${item.packageData?.title || item.displayTitle}`
+                    : `${item.packageData?.title || item.displayTitle}`}
+                </span>
+                  <span className="font-medium">{formatCurrency(summary.total)}</span>
+                </div>
+                {summary.rows.map(row => (
+                  <div key={`${item.id}-${row.label}`} className="flex justify-between text-gray-500">
+                    <span>{row.label}</span>
+                    <span>{formatCurrency(row.total)}</span>
+                  </div>
+                ))}
+              </div>
             ))}
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
 
-          <div className="space-y-2 text-[#4B5563]">
-            <SummaryRow label="Subtotal" value={formatCurrency(cart?.subtotal)} />
-            <SummaryRow label="Discount" value={`-${formatCurrency(cart?.discountAmount)}`} />
+          {/* CALCULATIONS */}
+          <div className="space-y-2 text-sm text-gray-600">
+            <div className="flex justify-between">
+              <span>Subtotal (before GST)</span>
+              <span>{formatCurrency(computedSubtotal)}</span>
+            </div>
+
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-[#6B1D0C]">
+                <span>Discount coupon applied</span>
+                <span>-{formatCurrency(discountAmount)}</span>
+              </div>
+            )}
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
 
-          <div className="flex items-center justify-between rounded-[10px] bg-[#F8F4ED] px-4 py-3 font-medium text-[#2C2C2C]">
-            <span>Total Amount</span>
-            <span>{formatCurrency(cart?.total)}</span>
+          {/* TOTAL */}
+          <div className="flex justify-between items-center bg-[#F3F0EA] rounded-[12px] px-4 py-3">
+            <span className="font-medium">Total Amount</span>
+            <span className="text-lg font-semibold">{formatCurrency(computedTotal)}</span>
           </div>
 
-          <div className="mt-3 flex items-center justify-between rounded-[10px] bg-[#F3EFE9] px-4 py-3 font-medium text-[#2C2C2C]">
-            <span>Advance Payable (30%)</span>
-            <span>{formatCurrency(advancePayable)}</span>
+          {/* ADVANCE */}
+          <div className="flex justify-between items-center bg-[#EFEFEF] rounded-[12px] px-4 py-3">
+            <span className="font-medium">Advance Payable (30%)</span>
+            <span className="text-lg font-semibold">{formatCurrency(advancePayable)}</span>
           </div>
 
-          <p className="mt-3 text-[11px] text-[#8B8B8B]">
+          {/* BALANCE */}
+          <p className="text-xs text-gray-500">
             Balance: {formatCurrency(balanceDue)} due on event day
           </p>
         </div>
       </div>
 
+      {/* CHECKOUT BUTTON (unchanged)
       <div className="rounded-[14px] border border-[#E6D9C8] bg-white p-4">
-        <div className="rounded-[10px] bg-[#EEFFE2] py-3 text-center text-[13px] font-medium text-[#2C2C2C]">
-          Secure & Verified Platform
+        <button
+          type="button"
+          onClick={onCheckout}
+          className="w-full rounded-full bg-[#D4BA8E] py-3 text-white font-medium"
+        >
+          Proceed to Checkout →
+        </button>
+      </div> */}
+      <div className="rounded-xl border border-[#95796066] p-5">
+        <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
+          Secure payment · Instant confirmation · Easy cancellation
         </div>
+
+        {/* {formError ? <p className="mb-4 text-sm text-[#B42318]">{formError}</p> : null} */}
 
         <button
           type="button"
           onClick={onCheckout}
-          className="group mt-6 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F]"
+          // disabled={isSubmitting}
+          className="mx-auto mt-4 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
         >
           <span className="mr-5 text-[15px] font-medium text-white">Proceed to Checkout</span>
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
@@ -680,23 +828,36 @@ function normalizeServiceSlug(value = '') {
     .replace(/-services?$/, '')
 }
 
-function getCartPackageHref(pkg, selectedOptions = {}) {
+function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   const packageId = pkg?.documentId ?? pkg?.id
   const serviceSlug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
-  const selectedOptionsParam = getSelectedOptionsSearchParam(selectedOptions)
+  const params = new URLSearchParams()
+
+  if (selectedOptions && Object.keys(selectedOptions).length) {
+    params.set(
+      'selectedOptions',
+      JSON.stringify(Object.fromEntries(Object.entries(selectedOptions).filter(([, value]) => Boolean(value))))
+    )
+  }
+
+  if (cartItemId) {
+    params.set('cartItemId', String(cartItemId))
+  }
+
+  const queryString = params.toString()
 
   if (!packageId || !serviceSlug) return ''
   if (serviceSlug === 'decor') {
     const basePath = `/packages/decor-single/${packageId}`
-    return selectedOptionsParam ? `${basePath}?selectedOptions=${selectedOptionsParam}` : basePath
+    return queryString ? `${basePath}?${queryString}` : basePath
   }
   if (serviceSlug === 'sheesha') {
     const basePath = `/packages/sheesha-single/${packageId}`
-    return selectedOptionsParam ? `${basePath}?selectedOptions=${selectedOptionsParam}` : basePath
+    return queryString ? `${basePath}?${queryString}` : basePath
   }
 
   const basePath = `/packages/${serviceSlug}/${packageId}`
-  return selectedOptionsParam ? `${basePath}?selectedOptions=${selectedOptionsParam}` : basePath
+  return queryString ? `${basePath}?${queryString}` : basePath
 }
 
 export default function CartPage() {
@@ -709,18 +870,25 @@ export default function CartPage() {
     isLoggedIn,
     updateItemQuantity,
     removeItem,
+    updateCartDetails,
     applyCoupon,
     clearCoupon,
   } = useCart()
   const [couponCode, setCouponCode] = useState('')
   const [couponMessage, setCouponMessage] = useState('')
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
+  const [pincode, setPincode] = useState('')
+  const [pincodeMessage, setPincodeMessage] = useState('')
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [pendingItemId, setPendingItemId] = useState('')
   const [detailsForm, setDetailsForm] = useState({
     eventDate: '',
     eventCity: '',
     guestCount: '',
   })
+  const [showDateEditor, setShowDateEditor] = useState(false)
+  const [showCityEditor, setShowCityEditor] = useState(false)
+
   const items = useMemo(() => cart?.items ?? [], [cart?.items])
   const packageLookup = useMemo(
     () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
@@ -780,6 +948,22 @@ export default function CartPage() {
       console.error('[cart-page] remove item failed', err)
     } finally {
       setPendingItemId('')
+    }
+  }
+
+  const handleBlurCartDetails = async () => {
+    if (!hasItems) return
+
+    const payload = {
+      eventDate: detailsForm.eventDate || null,
+      eventCity: detailsForm.eventCity.trim() || null,
+      guestCount: detailsForm.guestCount ? Number(detailsForm.guestCount) : null,
+    }
+
+    try {
+      await updateCartDetails(payload)
+    } catch (err) {
+      console.error('[cart-page] update details failed', err)
     }
   }
 
@@ -847,7 +1031,7 @@ export default function CartPage() {
       ) : !hasItems ? (
         <EmptyCart />
       ) : (
-        <div className="flex flex-col gap-[clamp(24px,5vw,100px)] lg:flex-row">
+        <div className="flex flex-col items-start gap-[clamp(24px,5vw,100px)] lg:flex-row">
           <div className="flex-1 space-y-6">
             {!hasSingleItem ? (
               <CouponCard
@@ -868,8 +1052,8 @@ export default function CartPage() {
                 onQuantityChange={handleQuantityChange}
                 onRemoveItem={handleRemoveItem}
                 detailsForm={detailsForm}
-                onEditDate={() => {}}
-                onEditCity={() => {}}
+                onEditDate={() => setShowDateEditor(current => !current)}
+                onEditCity={() => setShowCityEditor(current => !current)}
               />
             ) : (
               <MultiPackageList
@@ -880,8 +1064,8 @@ export default function CartPage() {
                 onRemoveItem={handleRemoveItem}
               />
             )}
-
-            {/* <div className="rounded-[14px] border border-[#E6D9C8] bg-white p-4">
+            {/* 
+            <div className="rounded-[14px] border border-[#E6D9C8] bg-white p-4">
               <div className="mb-4">
                 <h2 className="text-[16px] font-medium text-[#2C2C2C]">Event Details</h2>
                 <p className="mt-1 text-[12px] text-[#8B8B8B]">
@@ -947,6 +1131,29 @@ export default function CartPage() {
               cart={cart}
               singleItem={hasSingleItem}
               onCheckout={() => navigate('/checkout')}
+              pincodeCard={
+                <PincodeCard
+                  pincode={pincode}
+                  message={pincodeMessage}
+                  cart={cart}
+                  isChecking={isCheckingPincode}
+                  onChange={setPincode}
+                  onSubmit={e => {
+                    e.preventDefault()
+                    // Add your pincode check logic here
+                    setIsCheckingPincode(true)
+                    setPincodeMessage('Checking availability...')
+                    setTimeout(() => {
+                      setIsCheckingPincode(false)
+                      setPincodeMessage('Service available in your area')
+                    }, 1000)
+                  }}
+                  onClear={() => {
+                    setPincode('')
+                    setPincodeMessage('')
+                  }}
+                />
+              }
               couponCard={
                 hasSingleItem ? (
                   <CouponCard

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OxgcDdty15PDOr4VcByfSU4S2cD1yptxI8R62p26v0dyx4ypA2JHUzUa4YtTAGE
+\restrict jc8fEaowjbv67WqRNHiybzUbkwFMkpc30DI2iP7FrAWrFkeldMQCoyIyf7qw5jf
 
 -- Dumped from database version 16.13
 -- Dumped by pg_dump version 16.13
@@ -7241,7 +7241,7 @@ COPY api.cancellations (id, "bookingId", "requestedBy", reason, "policyAcknowled
 --
 
 COPY api.cart_items (id, "cartId", "packageId", "packageElementId", "addonId", title, quantity, "unitPrice", "totalPrice", "createdAt") FROM stdin;
-4020a556-6013-41e3-b53f-11478ec31d81	4281c106-7e24-4284-85b3-d459795b90bc	32	pkgopt_1r378dn	\N	Basic Turkish Hookah||__ELEWEN_META__||{"selectedOptions":{"Flavor":"Love 66"}}	1	2700.00	2700.00	2026-04-24 06:39:03.132
+ee551952-5c72-4d2e-bf4d-95ab4fc02735	4281c106-7e24-4284-85b3-d459795b90bc	34	pkgopt_jt22mm	\N	Floating Moments - Level 1||__ELEWEN_META__||{"selectedOptions":{"Choose 1_0":"Balloon Bouquet","Choose 1_1":"Balloon Arch with sign"}}	1	5150.00	5150.00	2026-04-24 13:28:33.815
 \.
 
 
@@ -7258,7 +7258,7 @@ a58637ca-9850-40b0-8a5f-2b8d57a5d9f0	22	\N	\N	\N	\N	\N	0.00	0.00	0.00	2026-04-22
 90f6facb-f08c-4f64-aa01-fe1b7d3320d9	23	\N	\N	\N	\N	\N	0.00	0.00	0.00	2026-04-22 05:05:09.16	2026-04-22 05:05:09.16
 e57d6ec0-b920-4e28-89c6-bc00651d665e	24	\N	\N	\N	\N	\N	0.00	0.00	0.00	2026-04-22 05:37:14.684	2026-04-22 05:37:14.684
 bef5ca07-76c3-4ecf-98d5-f5028a0a2c66	25	\N	\N	\N	\N	\N	0.00	0.00	0.00	2026-04-22 07:21:10.65	2026-04-22 07:21:10.65
-4281c106-7e24-4284-85b3-d459795b90bc	27	\N	\N	\N	G-14 Shayona city - 4 ,near Shayona International School , Ghatlodia ,ahmedabad	\N	2700.00	0.00	2700.00	2026-04-22 10:10:47.776	2026-04-24 06:53:38.732
+4281c106-7e24-4284-85b3-d459795b90bc	27	\N	\N	\N	G-14 Shayona city - 4 ,near Shayona International School , Ghatlodia ,ahmedabad	\N	5150.00	0.00	5150.00	2026-04-22 10:10:47.776	2026-04-24 13:30:03.751
 \.
 
 
@@ -8816,6 +8816,8 @@ COPY public.components_cms_navigation_items (id, label, url, order_index, is_act
 --
 
 COPY public.components_package_bartendingpackages (id, bartender_type, hours_range, price_per_extra_hour, ideal_for, setup_needs) FROM stdin;
+1	Signature Mix	3-4 hours	\N	Social and corporate events, luxury parties, and large celebrations.	\N
+4	Signature Mix	3-4 hours	\N	Social and corporate events, luxury parties, and large celebrations.	\N
 \.
 
 
@@ -8824,6 +8826,8 @@ COPY public.components_package_bartendingpackages (id, bartender_type, hours_ran
 --
 
 COPY public.components_package_bartendingpackages_budget_level_lnk (id, bartendingpackage_id, budget_level_id) FROM stdin;
+1	1	3
+4	4	12
 \.
 
 
@@ -8832,6 +8836,20 @@ COPY public.components_package_bartendingpackages_budget_level_lnk (id, bartendi
 --
 
 COPY public.components_package_bartendingpackages_cmps (id, entity_id, cmp_id, component_type, field, "order") FROM stdin;
+1	1	110	package.inclusions	inclusions	1
+2	1	111	package.inclusions	inclusions	3
+3	1	112	package.inclusions	inclusions	4
+4	1	113	package.inclusions	inclusions	6
+5	1	114	package.inclusions	inclusions	7
+6	1	45	shared.price-breakdown-item	price_breakdown	1
+7	1	46	shared.price-breakdown-item	price_breakdown	2
+36	4	125	package.inclusions	inclusions	1
+37	4	126	package.inclusions	inclusions	2
+38	4	127	package.inclusions	inclusions	3
+39	4	128	package.inclusions	inclusions	4
+40	4	129	package.inclusions	inclusions	5
+41	4	51	shared.price-breakdown-item	price_breakdown	1
+42	4	52	shared.price-breakdown-item	price_breakdown	2
 \.
 
 
@@ -8840,6 +8858,8 @@ COPY public.components_package_bartendingpackages_cmps (id, entity_id, cmp_id, c
 --
 
 COPY public.components_package_bartendingpackages_policy_lnk (id, bartendingpackage_id, policy_id) FROM stdin;
+1	1	1
+4	4	2
 \.
 
 
@@ -8850,8 +8870,10 @@ COPY public.components_package_bartendingpackages_policy_lnk (id, bartendingpack
 COPY public.components_package_decorpackages (id, theme_name, color_palette, ballon_count, setup_time, notes, setup_needs, nitty_gritty, best_placed_at, why_we_love_it, key_decor_elements, purpose) FROM stdin;
 3	Floating Moments - Level 1	\N	11	A small area for our team to work, access to water and electricity.	\N	A small area for our team to work, access to water and electricity.	Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t	Entry points, backdrop areas, living / bed rooms, terraces, or party corners - anywhere you want an instant pop of celebration.	It’s effortless, cheerful, and instantly elevates the space without overdoing it.	\N	\N
 8	Floating Moments - Level 1	\N	11	A small area for our team to work, access to water and electricity.	\N	A small area for our team to work, access to water and electricity.	Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t	Entry points, backdrop areas, living / bed rooms, terraces, or party corners - anywhere you want an instant pop of celebration.	It’s effortless, cheerful, and instantly elevates the space without overdoing it.	\N	\N
+14	Proposal Setup	 Pastels & Warm Golds (Customizable - We'll contact you to finalize the perfect shade from our available decor)	0	2-3 hours	Love the look but need a different color? Go ahead and book! We'll contact you to finalize the perfect shade from our available decor to match your vibe.\n\nSetup Needs: A small area for our team to work, access to water and electricity.\n\nBest Placed At: Terraces, balconies, backyards, or any cozy corner.	 A small area for our team to work, access to water and electricity	Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.\t\t\t\t\t\t\t\t\t\t\t\t	Terraces, balconies, backyards, or any cozy corner	Perfect when you want privacy and comfort. It’s warm, personal, and feels like a moment made just for the two of you to walk into forever 	Fairy light canopy, floor cushions, rose walkway, floral arrangements, candlelight	Marriage proposal setup for couples seeking an intimate, romantic, and private moment.
 1	birthday party	\N	10	2 hours	\N	birthday party	birthday party	birthday party	birthday party	birthday party	birthday party
 10	birthday party	\N	10	2 hours	\N	birthday party	birthday party	birthday party	birthday party	birthday party	birthday party
+11	Proposal Setup	 Pastels & Warm Golds (Customizable - We'll contact you to finalize the perfect shade from our available decor)	0	2-3 hours	Love the look but need a different color? Go ahead and book! We'll contact you to finalize the perfect shade from our available decor to match your vibe.\n\nSetup Needs: A small area for our team to work, access to water and electricity.\n\nBest Placed At: Terraces, balconies, backyards, or any cozy corner.	 A small area for our team to work, access to water and electricity	Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.\t\t\t\t\t\t\t\t\t\t\t\t	Terraces, balconies, backyards, or any cozy corner	Perfect when you want privacy and comfort. It’s warm, personal, and feels like a moment made just for the two of you to walk into forever 	Fairy light canopy, floor cushions, rose walkway, floral arrangements, candlelight	Marriage proposal setup for couples seeking an intimate, romantic, and private moment.
 \.
 
 
@@ -8864,6 +8886,8 @@ COPY public.components_package_decorpackages_budget_level_lnk (id, decorpackages
 3	3	1
 7	8	10
 9	10	12
+10	11	1
+13	14	10
 \.
 
 
@@ -8872,6 +8896,7 @@ COPY public.components_package_decorpackages_budget_level_lnk (id, decorpackages
 --
 
 COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, component_type, field, "order") FROM stdin;
+135	11	43	package.package-element	elements	19
 1	3	60	package.inclusions	inclustions	7
 2	3	61	package.inclusions	inclustions	9
 3	3	24	package.package-element	elements	1
@@ -8893,9 +8918,54 @@ COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, compon
 117	8	131	shared.price-covers-item	price_covers	3
 118	8	132	shared.price-covers-item	price_covers	4
 119	8	31	shared.price-breakdown-item	price_breakdown	1
+124	11	85	package.inclusions	inclustions	18
+125	11	86	package.inclusions	inclustions	20
+126	11	87	package.inclusions	inclustions	22
+127	11	88	package.inclusions	inclustions	23
+128	11	36	package.package-element	elements	5
+129	11	37	package.package-element	elements	7
+130	11	38	package.package-element	elements	11
+131	11	39	package.package-element	elements	13
+132	11	40	package.package-element	elements	14
+133	11	41	package.package-element	elements	15
+134	11	42	package.package-element	elements	17
+136	11	3	package.package-pricing-rule	pricing_rules	1
+137	11	133	shared.price-covers-item	price_covers	2
 63	3	72	package.inclusions	inclustions	11
 64	3	73	package.inclusions	inclustions	12
 120	8	32	shared.price-breakdown-item	price_breakdown	2
+138	11	134	shared.price-covers-item	price_covers	4
+139	11	135	shared.price-covers-item	price_covers	6
+140	11	136	shared.price-covers-item	price_covers	8
+141	11	33	shared.price-breakdown-item	price_breakdown	1
+142	11	34	shared.price-breakdown-item	price_breakdown	2
+143	11	35	shared.price-breakdown-item	price_breakdown	3
+236	14	103	package.inclusions	inclustions	1
+237	14	104	package.inclusions	inclustions	2
+238	14	105	package.inclusions	inclustions	3
+239	14	106	package.inclusions	inclustions	4
+240	14	107	package.inclusions	inclustions	5
+241	14	108	package.inclusions	inclustions	6
+242	14	109	package.inclusions	inclustions	7
+243	14	60	package.package-element	elements	1
+244	14	61	package.package-element	elements	2
+245	14	62	package.package-element	elements	3
+246	14	63	package.package-element	elements	4
+247	14	64	package.package-element	elements	5
+248	14	65	package.package-element	elements	6
+249	14	66	package.package-element	elements	7
+250	14	67	package.package-element	elements	8
+251	14	6	package.package-pricing-rule	pricing_rules	1
+252	14	145	shared.price-covers-item	price_covers	1
+253	14	146	shared.price-covers-item	price_covers	2
+254	14	147	shared.price-covers-item	price_covers	3
+255	14	148	shared.price-covers-item	price_covers	4
+256	14	42	shared.price-breakdown-item	price_breakdown	1
+257	14	43	shared.price-breakdown-item	price_breakdown	2
+258	14	44	shared.price-breakdown-item	price_breakdown	3
+121	11	82	package.inclusions	inclustions	3
+122	11	83	package.inclusions	inclustions	10
+123	11	84	package.inclusions	inclustions	12
 \.
 
 
@@ -8908,6 +8978,8 @@ COPY public.components_package_decorpackages_policy_lnk (id, decorpackages_id, p
 3	3	1
 8	8	2
 10	10	4
+11	11	3
+14	14	4
 \.
 
 
@@ -8920,6 +8992,8 @@ COPY public.components_package_decorpackages_theme_lnk (id, decorpackages_id, th
 3	3	7
 8	8	9
 10	10	9
+11	11	5
+14	14	11
 \.
 
 
@@ -9034,6 +9108,9 @@ COPY public.components_package_inclusions (id, text, group_title, is_choice_grou
 41	One Hookah Pot	\N	\N	\N	\N
 42	Unlimited Flavour Change of chosen flavor	\N	\N	\N	\N
 43	Unlimited Coal Change	\N	\N	\N	\N
+110	Senior bartender / cocktail specialist	\N	f	\N	\N
+111	Full professional bar toolkit	\N	\N	\N	\N
+112	Advanced cocktail preparation	\N	\N	\N	\N
 52	1 staff/Hookah operator	\N	\N	\N	\N
 53	One Hookah Pot	\N	\N	\N	\N
 54	Unlimited Flavour Change of chosen flavor	\N	\N	\N	\N
@@ -9042,6 +9119,12 @@ COPY public.components_package_inclusions (id, text, group_title, is_choice_grou
 57	One Hookah Pot	\N	\N	\N	\N
 58	Unlimited Flavour Change of chosen flavor	\N	\N	\N	\N
 59	Unlimited Coal Change	\N	\N	\N	\N
+113	Engaging guest service experience	\N	\N	\N	\N
+114	Professional bar setup management	\N	\N	\N	\N
+125	Senior bartender / cocktail specialist	\N	f	\N	\N
+126	Full professional bar toolkit	\N	\N	\N	\N
+127	Advanced cocktail preparation	\N	\N	\N	\N
+128	Engaging guest service experience	\N	\N	\N	\N
 44	1 staff/Hookah operator	\N	\N	\N	\N
 45	One Hookah Pot	\N	\N	\N	\N
 46	Unlimited Flavour Change of chosen flavor	\N	\N	\N	\N
@@ -9050,6 +9133,21 @@ COPY public.components_package_inclusions (id, text, group_title, is_choice_grou
 69	One Hookah Pot	\N	\N	\N	\N
 70	Unlimited Flavour Change of chosen flavor	\N	\N	\N	\N
 71	Unlimited Coal Change	\N	f	\N	\N
+129	Professional bar setup management	\N	\N	\N	\N
+82	Canopy-style Set up with fairy lights	\N	f	\N	\N
+83	Floor seating with cushions and gadda	\N	f	\N	\N
+84	5 small floral vases	\N	f	\N	\N
+85	10 candles in glasses	\N	f	\N	\N
+86	Walkway made with candles and roses	\N	f	\N	\N
+87	Low table with runner	\N	f	\N	\N
+88	Centerpiece + candles	\N	f	\N	\N
+103	Canopy-style Set up with fairy lights	\N	f	\N	\N
+104	Floor seating with cushions and gadda	\N	f	\N	\N
+105	5 small floral vases	\N	f	\N	\N
+106	10 candles in glasses	\N	f	\N	\N
+107	Walkway made with candles and roses	\N	f	\N	\N
+108	Low table with runner	\N	f	\N	\N
+109	Centerpiece + candles	\N	f	\N	\N
 \.
 
 
@@ -9082,6 +9180,7 @@ COPY public.components_package_package_addons_cmps (id, entity_id, cmp_id, compo
 --
 
 COPY public.components_package_package_elements (id, title, description, base_quantity, unit, base_price, is_included, quantity_editable, visibility) FROM stdin;
+42	Low Table with Runner	Low seating table with decorative runner	1	piece	\N	t	f	f
 24	Option 1	Loose Helium 10 heart shaped balloons with sign and  Balloon Bouqet	\N	\N	1800.00	t	f	t
 25	Option 2	Balloon Arch with sign and 2 small standees (10 years) 	\N	\N	2850.00	t	f	t
 34	Option 1	Loose Helium 10 heart shaped balloons with sign and  Balloon Bouqet	\N	\N	1800.00	t	f	t
@@ -9096,6 +9195,21 @@ COPY public.components_package_package_elements (id, title, description, base_qu
 22	Veg Buffet	Full vegetarian buffet with 10 items, live counter, and dessert station	20	pax	350.00	t	t	t
 23	3-Hour Event Photography	Professional photographer for 3 hours with 100 edited digital photos	1	piece	6000.00	t	f	t
 35	Option 2	Balloon Arch with sign and 2 small standees (10 years) 	\N	\N	2850.00	t	f	t
+43	Centerpiece with Candles	Decorative centerpiece with candles	1	\N	1100.00	t	f	f
+60	Canopy Set up with fairy lights	Beautiful canopy-style setup with twinkling fairy lights	1	\N	\N	t	f	f
+61	Floor Seating - Cushions and Gadda	Comfortable floor seating arrangement	1	\N	\N	t	f	f
+36	Canopy Set up with fairy lights	Beautiful canopy-style setup with twinkling fairy lights	1	\N	\N	t	f	f
+37	Floor Seating - Cushions and Gadda	Comfortable floor seating arrangement	1	\N	\N	t	f	f
+38	Fairy Lights	Additional decorative fairy lights	1	\N	5000.00	t	f	f
+39	Small Floral Vases	Elegant small vases with fresh flowers	5	piece	2000.00	t	f	f
+40	 Candles in Glasses	 Romantic candles in glass holders	10	piece	600.00	t	f	f
+41	 Candle and Rose Walkway	Beautiful pathway decorated with candles and roses	1	\N	1700.00	t	f	f
+62	Fairy Lights	Additional decorative fairy lights	1	\N	5000.00	t	f	f
+63	Small Floral Vases	Elegant small vases with fresh flowers	5	piece	2000.00	t	f	f
+64	 Candles in Glasses	 Romantic candles in glass holders	10	piece	600.00	t	f	f
+65	 Candle and Rose Walkway	Beautiful pathway decorated with candles and roses	1	\N	1700.00	t	f	f
+66	Low Table with Runner	Low seating table with decorative runner	1	piece	\N	t	f	f
+67	Centerpiece with Candles	Decorative centerpiece with candles	1	\N	1100.00	t	f	f
 \.
 
 
@@ -9118,6 +9232,14 @@ COPY public.components_package_package_elements_service_lnk (id, package_element
 25	25	16
 34	34	20
 35	35	20
+36	36	18
+37	37	21
+38	38	18
+39	43	21
+48	60	19
+49	61	22
+50	62	19
+51	67	22
 \.
 
 
@@ -9128,6 +9250,8 @@ COPY public.components_package_package_elements_service_lnk (id, package_element
 COPY public.components_package_package_pricing_rules (id, rule_type, value, modifier_type, modifier_value) FROM stdin;
 1	guest_count	10	flat_amount	500.00
 2	guest_count	10	flat_amount	500.00
+3	\N	\N	\N	\N
+6	\N	\N	\N	\N
 \.
 
 
@@ -9392,6 +9516,16 @@ COPY public.components_shared_price_breakdown_items (id, label, amount) FROM std
 20	Platform fee	500
 31	Package Price	4650
 32	Platform fee	500
+33	Package Price	10400
+34	Labour and Transport	1000
+35	Platform fee	500
+42	Package Price	10400
+43	Labour and Transport	1000
+44	Platform fee	500
+45	Package total 	5500
+46	Platform Fee	550
+51	Package total 	5500
+52	Platform Fee	550
 \.
 
 
@@ -9480,6 +9614,14 @@ COPY public.components_shared_price_covers_items (id, text) FROM stdin;
 130	Professional Setup
 131	Final Dismantling
 132	Cordination with decor team handled end-to-end to ensure timely setup.
+133	The Complete Look
+134	Professional Setup
+135	Final Dismantling
+136	Cordination with decor team handled end-to-end to ensure timely setup.
+145	The Complete Look
+146	Professional Setup
+147	Final Dismantling
+148	Cordination with decor team handled end-to-end to ensure timely setup.
 \.
 
 
@@ -9630,6 +9772,12 @@ COPY public.events_packages_lnk (id, event_id, package_id, package_ord, event_or
 22	20	28	1	0
 29	58	36	2	1
 30	174	34	1	1
+31	69	37	1	0
+34	70	40	1	1
+37	107	41	3	1
+39	1	41	1	2
+40	108	44	3	1
+41	56	44	1	2
 \.
 
 
@@ -10091,6 +10239,12 @@ COPY public.files_related_mph (id, file_id, related_id, related_type, field, "or
 910	54	153	cms.content-section	images	33
 911	53	153	cms.content-section	images	34
 912	52	153	cms.content-section	images	35
+925	39	37	api::package.package	images	1
+926	40	37	api::package.package	images	2
+927	41	37	api::package.package	images	3
+928	39	40	api::package.package	images	1
+929	40	40	api::package.package	images	2
+930	41	40	api::package.package	images	3
 \.
 
 
@@ -10296,6 +10450,10 @@ COPY public.packages (id, document_id, title, slug, description, base_price, is_
 19	grawtuslf2mk4kvk31xk8l5v	birthday party	birthday-party	[{"type": "paragraph", "children": [{"text": "birthday party", "type": "text"}]}]	1000.00	f	t	f	\N	t	2026-04-21 13:22:58.656	2026-04-23 10:00:33.775	\N	2	40	\N	\N	\N
 28	scgf7f6e859w6lbts46ixyf5	Floating Moments - Level 1	floating-moments-level-1	[{"type": "paragraph", "children": [{"text": "A simple yet romantic balloon setup with personalized photos creating floating memories.Floating hearts, personalised balloon accents, and milestone standees that instantly turn any corner into a celebration", "type": "text"}]}]	5150.00	f	t	f	\N	t	2026-04-22 12:06:23.005	2026-04-23 06:11:54.91	\N	2	2	\N	\N	\N
 36	grawtuslf2mk4kvk31xk8l5v	birthday party	birthday-party	[{"type": "paragraph", "children": [{"text": "birthday party", "type": "text"}]}]	1000.00	f	t	f	\N	t	2026-04-21 13:22:58.656	2026-04-23 10:00:33.775	2026-04-23 10:00:34.05	2	40	\N	\N	\N
+37	u4si7vrkrf6pkzicfh8chefv	Our Private Corner	our-private-corner	[{"type": "paragraph", "children": [{"text": "A dreamy proposal setting where soft drapes, glowing lights, and a candlelit pathway come together to create an intimate space for the moment you ask forever.", "type": "text"}]}]	11900.00	f	t	f	\N	t	2026-04-24 07:44:09.587	2026-04-24 07:54:58.382	\N	2	2	\N	 Our Private Corner - Dreamy Proposal Package	A dreamy proposal setting where soft drapes, glowing lights, and a candlelit pathway come together to create an intimate space for the moment you ask forever.
+40	u4si7vrkrf6pkzicfh8chefv	Our Private Corner	our-private-corner	[{"type": "paragraph", "children": [{"text": "A dreamy proposal setting where soft drapes, glowing lights, and a candlelit pathway come together to create an intimate space for the moment you ask forever.", "type": "text"}]}]	11900.00	f	t	f	\N	t	2026-04-24 07:44:09.587	2026-04-24 07:54:58.382	2026-04-24 07:54:58.514	2	2	\N	 Our Private Corner - Dreamy Proposal Package	A dreamy proposal setting where soft drapes, glowing lights, and a candlelit pathway come together to create an intimate space for the moment you ask forever.
+41	wi7xfap0sl2pkybtmhhtumbb	The House Special - Premium Bartending Service	the-house-special-premium-bartending-service	[{"type": "paragraph", "children": [{"text": "A high-end bar experience designed to impress your guests. The House Special delivers an elevated bar service with a senior bartender skilled in cocktail craft and presentation. Perfect for events where the bar becomes a centerpiece of the experience.", "type": "text"}]}]	6050.00	t	t	f	Premium bartending package - Signature Mix level. Platform fee: ₹550. Total with platform fee: ₹6050	t	2026-04-24 08:22:25.093	2026-04-24 08:23:43.162	\N	2	2	\N	The House Special - Premium Bartending Service | Professional Cocktail Bar	Elevate your event with The House Special premium bartending service. Senior bartender, advanced cocktail preparation, and professional bar setup for social events, corporate gatherings, and luxury celebrations.
+44	wi7xfap0sl2pkybtmhhtumbb	The House Special - Premium Bartending Service	the-house-special-premium-bartending-service	[{"type": "paragraph", "children": [{"text": "A high-end bar experience designed to impress your guests. The House Special delivers an elevated bar service with a senior bartender skilled in cocktail craft and presentation. Perfect for events where the bar becomes a centerpiece of the experience.", "type": "text"}]}]	6050.00	t	t	f	Premium bartending package - Signature Mix level. Platform fee: ₹550. Total with platform fee: ₹6050	t	2026-04-24 08:22:25.093	2026-04-24 08:23:43.162	2026-04-24 08:23:43.245	2	2	\N	The House Special - Premium Bartending Service | Professional Cocktail Bar	Elevate your event with The House Special premium bartending service. Senior bartender, advanced cocktail preparation, and professional bar setup for social events, corporate gatherings, and luxury celebrations.
 \.
 
 
@@ -10314,6 +10472,10 @@ COPY public.packages_cmps (id, entity_id, cmp_id, component_type, field, "order"
 50	10	11	package.package-addon	addons	1
 51	10	12	package.package-addon	addons	2
 52	10	2	package.package-pricing-rule	pricing_rules	1
+105	37	11	package.decorpackages	packages	1
+106	40	14	package.decorpackages	packages	1
+111	41	1	package.bartendingpackage	packages	1
+112	44	4	package.bartendingpackage	packages	1
 7	3	5	package.package-element	elements	2
 8	3	6	package.package-element	elements	4
 9	3	7	package.package-element	elements	5
@@ -10345,14 +10507,15 @@ COPY public.packages_cmps (id, entity_id, cmp_id, component_type, field, "order"
 
 COPY public.packages_service_categories_lnk (id, package_id, service_category_id, service_category_ord, package_ord) FROM stdin;
 67	36	117	0	3
+68	37	2	0	2
+71	40	116	0	2
+72	41	81	0	3
 37	9	79	0	2
 38	9	81	1	1
 39	10	117	0	2
-40	10	118	1	1
 32	3	79	1	1
 41	3	81	2	2
 42	11	117	1	1
-43	11	118	2	2
 46	14	84	0	2
 49	17	84	0	3
 51	19	79	0	3
@@ -10364,6 +10527,9 @@ COPY public.packages_service_categories_lnk (id, package_id, service_category_id
 62	24	84	1	5
 63	32	102	1	5
 65	34	116	0	1
+79	10	120	1	1
+80	11	120	2	2
+81	44	120	0	3
 \.
 
 
@@ -10471,6 +10637,7 @@ COPY public.service_categories (id, document_id, name, slug, description, is_act
 77	gnd2t6c2p93h3nnxir4xm05s	Technical (Showrunning)	technical-showrunning	Seamless showrunning by experienced in-house event managers	t	2026-03-25 08:31:51.098	2026-03-25 08:31:51.098	\N	1	1	\N	t	\N
 78	gnd2t6c2p93h3nnxir4xm05s	Technical (Showrunning)	technical-showrunning	Seamless showrunning by experienced in-house event managers	t	2026-03-25 08:31:51.098	2026-03-25 08:31:51.098	2026-03-25 08:31:51.126	1	1	\N	t	\N
 117	x3dvlyv2y45o6yg6u2n85yxb	Catering	catering	Chef-led menus and taste that sounds like perfection. Tasting Available	t	2026-03-25 08:32:18.106	2026-04-15 05:45:41.922	2026-04-15 05:45:41.97	1	2	\N	t	[{"id": "budget_level", "type": "single_select", "label": "Choose Level", "source": "budget-levels", "maps_to": {"type": "relation", "operator": "$eq", "strapi_filter": "budget_level.slug"}, "required": true}]
+120	pyucfryv6b6h8z9idk2skxjw	Bartending	bar-tending	Professional bar tenders, be it one bartender to a full bar team	t	2026-03-25 08:33:11.505	2026-04-24 10:35:00.858	2026-04-24 10:35:00.892	1	2	\N	t	[{"id": "budget_level", "type": "single_select", "label": "Choose Level", "source": "budget-levels", "maps_to": {"type": "relation", "operator": "$eq", "strapi_filter": "budget_level.slug"}, "required": true}]
 45	c6wn32aus7hgk5ntyztv3tj6	Food & Beverage Services	food-and-beverage-services	\N	t	2026-03-23 12:30:16.607	2026-03-25 08:21:08.373	\N	1	1	\N	f	\N
 67	c6wn32aus7hgk5ntyztv3tj6	Food & Beverage Services	food-and-beverage-services	\N	t	2026-03-23 12:30:16.607	2026-03-25 08:21:08.373	2026-03-25 08:21:08.4	1	1	\N	f	\N
 68	p7cwg96dyoyvm5s8walthr3z	Decoration	decoration	From simple setups to curated d??cor that transforms spaces	t	2026-03-25 08:25:32.202	2026-03-25 08:25:32.202	\N	1	1	\N	t	\N
@@ -10478,8 +10645,7 @@ COPY public.service_categories (id, document_id, name, slug, description, is_act
 84	bfok8xw2mwhd1goqliuuu1ta	Sheesha Services	sheesha-services	Executive flavours, premium sheesha sets, and a dedicated operator	t	2026-03-25 09:29:56.736	2026-04-14 11:31:47.02	\N	1	2	\N	t	[]
 70	erk66zxdcpkl3h4hdvn23lgl	Furniture	furniture	Rent stylish furniture to complete your event setup	t	2026-03-25 08:26:01.628	2026-04-14 11:32:18.354	\N	1	2	\N	t	[]
 116	arqbtqn88q736adicebbg15i	Decor	decor	Professional decor services, be it simple elegant setups to fully themed and curated decorations.	t	2026-03-18 04:46:13.674	2026-04-15 05:45:15.474	2026-04-15 05:45:15.572	1	2	\N	f	[{"id": "theme", "type": "single_select", "label": "Choose a Theme", "source": "themes", "maps_to": {"type": "relation", "operator": "$eq", "strapi_filter": "themes.slug"}, "required": true}]
-81	pyucfryv6b6h8z9idk2skxjw	Bartending	bar-tending	Professional bar tenders, be it one bartender to a full bar team	t	2026-03-25 08:33:11.505	2026-04-15 05:46:06.636	\N	1	2	\N	t	[{"id": "budget_level", "type": "single_select", "label": "Choose Level", "source": "budget-levels", "maps_to": {"type": "relation", "operator": "$eq", "strapi_filter": "budget_level.slug"}, "required": true}]
-118	pyucfryv6b6h8z9idk2skxjw	Bartending	bar-tending	Professional bar tenders, be it one bartender to a full bar team	t	2026-03-25 08:33:11.505	2026-04-15 05:46:06.636	2026-04-15 05:46:06.683	1	2	\N	t	[{"id": "budget_level", "type": "single_select", "label": "Choose Level", "source": "budget-levels", "maps_to": {"type": "relation", "operator": "$eq", "strapi_filter": "budget_level.slug"}, "required": true}]
+81	pyucfryv6b6h8z9idk2skxjw	Bartending	bar-tending	Professional bar tenders, be it one bartender to a full bar team	t	2026-03-25 08:33:11.505	2026-04-24 10:35:00.858	\N	1	2	\N	t	[{"id": "budget_level", "type": "single_select", "label": "Choose Level", "source": "budget-levels", "maps_to": {"type": "relation", "operator": "$eq", "strapi_filter": "budget_level.slug"}, "required": true}]
 102	bfok8xw2mwhd1goqliuuu1ta	Sheesha Services	sheesha-services	Executive flavours, premium sheesha sets, and a dedicated operator	t	2026-03-25 09:29:56.736	2026-04-14 11:31:47.02	2026-04-14 11:31:47.053	1	2	\N	t	[]
 103	erk66zxdcpkl3h4hdvn23lgl	Furniture	furniture	Rent stylish furniture to complete your event setup	t	2026-03-25 08:26:01.628	2026-04-14 11:32:18.354	2026-04-14 11:32:18.393	1	2	\N	t	[]
 \.
@@ -10503,7 +10669,7 @@ COPY public.service_categories_parent_category_lnk (id, service_category_id, inv
 145	74	116	3
 146	78	116	4
 147	117	67	11
-148	118	67	12
+150	120	67	12
 \.
 
 
@@ -10770,8 +10936,14 @@ COPY public.strapi_sessions (id, document_id, user_id, session_id, child_id, dev
 216	mssbmzyv21bbn5jx1pfqv30h	40	8d052c7128e086949ce9f5bc8438558e	\N	341a24ab-7955-4422-a146-9dca3f54cd1d	admin	2026-05-08 05:32:36.598	2026-05-23 09:58:34.607	active	refresh	2026-04-24 05:32:36.599	2026-04-24 05:32:36.599	2026-04-24 05:32:36.6	\N	\N	\N
 214	c8bwh0siiaaa3tb2zlgquu94	40	e8a82b528da74a4f052c3408113b6896	8d052c7128e086949ce9f5bc8438558e	341a24ab-7955-4422-a146-9dca3f54cd1d	admin	2026-05-08 05:02:28.456	2026-05-23 09:58:34.607	rotated	refresh	2026-04-24 05:02:28.458	2026-04-24 05:32:36.613	2026-04-24 05:02:28.465	\N	\N	\N
 215	n161gycxifgl71ovyp0ouwcx	2	1b4ce19b71436cdf26950a26690f7b73	588119a5a9b0a58cd1a8cab57352684a	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 07:18:58.733	2026-05-24 04:48:12.215	rotated	session	2026-04-24 05:18:58.735	2026-04-24 05:55:54.025	2026-04-24 05:18:58.743	\N	\N	\N
-218	neupry9r2wz36zm7dpre8leb	2	80f8acfca4d576915346c039f9dac956	\N	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 08:45:06.115	2026-05-24 04:48:12.215	active	session	2026-04-24 06:45:06.117	2026-04-24 06:45:06.117	2026-04-24 06:45:06.125	\N	\N	\N
 217	xc8fv2iutj2du75lth8lu3wq	2	588119a5a9b0a58cd1a8cab57352684a	80f8acfca4d576915346c039f9dac956	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 07:55:53.984	2026-05-24 04:48:12.215	rotated	session	2026-04-24 05:55:53.987	2026-04-24 06:45:06.179	2026-04-24 05:55:53.991	\N	\N	\N
+218	neupry9r2wz36zm7dpre8leb	2	80f8acfca4d576915346c039f9dac956	7b058f6561c732a6ef48b8bc5afce516	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 08:45:06.115	2026-05-24 04:48:12.215	rotated	session	2026-04-24 06:45:06.117	2026-04-24 07:15:06.6	2026-04-24 06:45:06.125	\N	\N	\N
+219	j93mia4otce11rhu1gwprnja	2	7b058f6561c732a6ef48b8bc5afce516	fcccba9bfa718aaf1c5b488abecca835	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 09:15:06.54	2026-05-24 04:48:12.215	rotated	session	2026-04-24 07:15:06.544	2026-04-24 07:51:23.015	2026-04-24 07:15:06.552	\N	\N	\N
+220	vldnj5ao813f9agl4a7urayx	2	fcccba9bfa718aaf1c5b488abecca835	2f47b077deb67eb6584b137fd28d523b	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 09:51:22.819	2026-05-24 04:48:12.215	rotated	session	2026-04-24 07:51:22.84	2026-04-24 08:22:24.894	2026-04-24 07:51:22.88	\N	\N	\N
+221	g0u4fykf4tbdxlw2dld2bsk8	2	2f47b077deb67eb6584b137fd28d523b	13fb38f155f719773af0d2a8e2d17bf4	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 10:22:24.844	2026-05-24 04:48:12.215	rotated	session	2026-04-24 08:22:24.845	2026-04-24 09:39:03.484	2026-04-24 08:22:24.859	\N	\N	\N
+223	tbexcln1nri7ra1o7uc11ie1	2	fc7710c52b0b3cb68406c01af2c5ebee	\N	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 12:25:26.033	2026-05-24 04:48:12.215	active	session	2026-04-24 10:25:26.056	2026-04-24 10:25:26.056	2026-04-24 10:25:26.241	\N	\N	\N
+222	umqdojmqmxnpukw081pmft7u	2	13fb38f155f719773af0d2a8e2d17bf4	fc7710c52b0b3cb68406c01af2c5ebee	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 11:39:03.266	2026-05-24 04:48:12.215	rotated	session	2026-04-24 09:39:03.276	2026-04-24 10:25:27.007	2026-04-24 09:39:03.412	\N	\N	\N
+224	bti9tjtxhcgmlfamla9cbuqy	2	7df2a470e68dea6936d87d563372d8cf	\N	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-04-24 15:04:24.193	2026-05-24 13:04:24.193	active	session	2026-04-24 13:04:24.195	2026-04-24 13:04:24.195	2026-04-24 13:04:24.211	\N	\N	\N
 \.
 
 
@@ -11430,63 +11602,63 @@ SELECT pg_catalog.setval('public.components_cms_navigation_items_id_seq', 18, tr
 -- Name: components_package_bartendingpackages_budget_level_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_bartendingpackages_budget_level_lnk_id_seq', 1, false);
+SELECT pg_catalog.setval('public.components_package_bartendingpackages_budget_level_lnk_id_seq', 4, true);
 
 
 --
 -- Name: components_package_bartendingpackages_cmps_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_bartendingpackages_cmps_id_seq', 1, false);
+SELECT pg_catalog.setval('public.components_package_bartendingpackages_cmps_id_seq', 42, true);
 
 
 --
 -- Name: components_package_bartendingpackages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_bartendingpackages_id_seq', 1, false);
+SELECT pg_catalog.setval('public.components_package_bartendingpackages_id_seq', 4, true);
 
 
 --
 -- Name: components_package_bartendingpackages_policy_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_bartendingpackages_policy_lnk_id_seq', 1, false);
+SELECT pg_catalog.setval('public.components_package_bartendingpackages_policy_lnk_id_seq', 4, true);
 
 
 --
 -- Name: components_package_decorpackages_budget_level_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_budget_level_lnk_id_seq', 9, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_budget_level_lnk_id_seq', 13, true);
 
 
 --
 -- Name: components_package_decorpackages_cmps_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_cmps_id_seq', 120, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_cmps_id_seq', 258, true);
 
 
 --
 -- Name: components_package_decorpackages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_id_seq', 10, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_id_seq', 14, true);
 
 
 --
 -- Name: components_package_decorpackages_policy_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_policy_lnk_id_seq', 10, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_policy_lnk_id_seq', 14, true);
 
 
 --
 -- Name: components_package_decorpackages_theme_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_theme_lnk_id_seq', 10, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_theme_lnk_id_seq', 14, true);
 
 
 --
@@ -11500,7 +11672,7 @@ SELECT pg_catalog.setval('public.components_package_flavors_id_seq', 84, true);
 -- Name: components_package_inclusions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_inclusions_id_seq', 81, true);
+SELECT pg_catalog.setval('public.components_package_inclusions_id_seq', 129, true);
 
 
 --
@@ -11521,21 +11693,21 @@ SELECT pg_catalog.setval('public.components_package_package_addons_id_seq', 14, 
 -- Name: components_package_package_elements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_package_elements_id_seq', 35, true);
+SELECT pg_catalog.setval('public.components_package_package_elements_id_seq', 67, true);
 
 
 --
 -- Name: components_package_package_elements_service_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_package_elements_service_lnk_id_seq', 35, true);
+SELECT pg_catalog.setval('public.components_package_package_elements_service_lnk_id_seq', 51, true);
 
 
 --
 -- Name: components_package_package_pricing_rules_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_package_pricing_rules_id_seq', 2, true);
+SELECT pg_catalog.setval('public.components_package_package_pricing_rules_id_seq', 6, true);
 
 
 --
@@ -11570,14 +11742,14 @@ SELECT pg_catalog.setval('public.components_shared_exclusion_items_id_seq', 1, f
 -- Name: components_shared_price_breakdown_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_shared_price_breakdown_items_id_seq', 32, true);
+SELECT pg_catalog.setval('public.components_shared_price_breakdown_items_id_seq', 52, true);
 
 
 --
 -- Name: components_shared_price_covers_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_shared_price_covers_items_id_seq', 132, true);
+SELECT pg_catalog.setval('public.components_shared_price_covers_items_id_seq', 148, true);
 
 
 --
@@ -11640,7 +11812,7 @@ SELECT pg_catalog.setval('public.events_id_seq', 174, true);
 -- Name: events_packages_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.events_packages_lnk_id_seq', 30, true);
+SELECT pg_catalog.setval('public.events_packages_lnk_id_seq', 41, true);
 
 
 --
@@ -11675,7 +11847,7 @@ SELECT pg_catalog.setval('public.files_id_seq', 113, true);
 -- Name: files_related_mph_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.files_related_mph_id_seq', 912, true);
+SELECT pg_catalog.setval('public.files_related_mph_id_seq', 930, true);
 
 
 --
@@ -11780,21 +11952,21 @@ SELECT pg_catalog.setval('public.navigation_menus_id_seq', 4, true);
 -- Name: packages_cmps_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.packages_cmps_id_seq', 100, true);
+SELECT pg_catalog.setval('public.packages_cmps_id_seq', 112, true);
 
 
 --
 -- Name: packages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.packages_id_seq', 36, true);
+SELECT pg_catalog.setval('public.packages_id_seq', 44, true);
 
 
 --
 -- Name: packages_service_categories_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.packages_service_categories_lnk_id_seq', 67, true);
+SELECT pg_catalog.setval('public.packages_service_categories_lnk_id_seq', 81, true);
 
 
 --
@@ -11857,14 +12029,14 @@ SELECT pg_catalog.setval('public.saved_packages_user_lnk_id_seq', 1, false);
 -- Name: service_categories_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.service_categories_id_seq', 118, true);
+SELECT pg_catalog.setval('public.service_categories_id_seq', 120, true);
 
 
 --
 -- Name: service_categories_parent_category_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.service_categories_parent_category_lnk_id_seq', 148, true);
+SELECT pg_catalog.setval('public.service_categories_parent_category_lnk_id_seq', 150, true);
 
 
 --
@@ -11976,7 +12148,7 @@ SELECT pg_catalog.setval('public.strapi_releases_id_seq', 1, false);
 -- Name: strapi_sessions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.strapi_sessions_id_seq', 218, true);
+SELECT pg_catalog.setval('public.strapi_sessions_id_seq', 224, true);
 
 
 --
@@ -18187,5 +18359,5 @@ ALTER TABLE ONLY public.vendors_user_lnk
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OxgcDdty15PDOr4VcByfSU4S2cD1yptxI8R62p26v0dyx4ypA2JHUzUa4YtTAGE
+\unrestrict jc8fEaowjbv67WqRNHiybzUbkwFMkpc30DI2iP7FrAWrFkeldMQCoyIyf7qw5jf
 

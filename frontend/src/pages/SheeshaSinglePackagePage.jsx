@@ -123,6 +123,10 @@ function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
 }
 
+function isSheeshaPackage(pkg) {
+  return Array.isArray(pkg?.service_slugs) && pkg.service_slugs.includes('sheesha')
+}
+
 function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusions }) {
   if (!flavors || flavors.length === 0) {
     return (
@@ -193,7 +197,8 @@ export default function SheeshaSinglePackagePage() {
   const { data: packageFlavors = [] } = useFlavors()
   const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
   const { data: cancellationPolicy } = useCancellationPolicy()
-  const { addPackage } = useCart()
+  const { addPackage, updateCartItemDetails } = useCart()
+  const cartItemId = searchParams.get('cartItemId') ?? ''
   const {
     customizations,
     activeCustomization,
@@ -268,7 +273,7 @@ export default function SheeshaSinglePackagePage() {
   const sideImages = Array.from({ length: 5 }).map((_, i) => source[i % source.length])
 
   const relatedProducts = packagesData
-    .filter(item => buildPackageId(item) !== buildPackageId(pkg))
+    .filter(item => isSheeshaPackage(item) && buildPackageId(item) !== buildPackageId(pkg))
     .slice(0, 3)
     .map(item => ({ ...item, serviceSlug: 'sheesha' }))
 
@@ -308,14 +313,25 @@ export default function SheeshaSinglePackagePage() {
     setIsAddingToCart(true)
 
     try {
-      const updatedCart = await addPackage({
-        packageId: Number(pkg.id),
-        quantity: 1,
-        selectedOptions: buildSheeshaSelectedOptions(activeCustomization),
-      })
-      handleAddToCart()
-      void updatedCart
-      setAddToCartMessage('Added to cart.')
+      const selectedOptions = buildSheeshaSelectedOptions(activeCustomization)
+
+      if (cartItemId) {
+        await updateCartItemDetails({
+          itemId: cartItemId,
+          quantity,
+          selectedOptions,
+        })
+        setAddToCartMessage('Package updated.')
+      } else {
+        const updatedCart = await addPackage({
+          packageId: Number(pkg.id),
+          quantity: 1,
+          selectedOptions,
+        })
+        handleAddToCart()
+        void updatedCart
+        setAddToCartMessage('Added to cart.')
+      }
     } catch (err) {
       if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
         if (!getStoredJwt()) {

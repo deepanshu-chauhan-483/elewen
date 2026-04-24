@@ -71,6 +71,18 @@ function getNestedPackageAddons(pkg) {
   )
 }
 
+function getNestedPackageExclusions(pkg) {
+  return getNestedPackageSections(pkg).flatMap(section =>
+    Array.isArray(section?.exclusions) ? section.exclusions : []
+  )
+}
+
+function getNestedPackagePriceBreakdowns(pkg) {
+  return getNestedPackageSections(pkg).flatMap(section =>
+    Array.isArray(section?.price_breakdown) ? section.price_breakdown : []
+  )
+}
+
 function getNestedPackageFlavors(pkg) {
   return getNestedPackageSections(pkg).flatMap(section =>
     Array.isArray(section?.flavor)
@@ -185,6 +197,14 @@ function buildFlavorOptions(pkg) {
   })
 }
 
+function buildTextList(items, keys = ['text', 'title', 'name', 'label']) {
+  return uniqueValues(
+    (Array.isArray(items) ? items : [])
+      .flatMap(item => keys.map(key => item?.[key]))
+      .filter(Boolean)
+  )
+}
+
 function normalizePackage(pkg, index = 0) {
   const serviceCategories = normaliseRelationArray(pkg.service_categories)
   const packageThemes = getNestedPackageThemes(pkg)
@@ -244,6 +264,9 @@ function normalizePackage(pkg, index = 0) {
       .filter(Boolean),
     detail_sections: getNestedPackageSections(pkg),
     detail_inclusions: buildDetailHighlights(pkg),
+    detail_addons: buildTextList(getNestedPackageAddons(pkg), ['name', 'title', 'text']),
+    detail_exclusions: buildTextList(getNestedPackageExclusions(pkg)),
+    detail_price_breakdown: getNestedPackagePriceBreakdowns(pkg),
     detail_accordion_sections: buildAccordionSections(pkg),
     flavor_options: buildFlavorOptions(pkg),
     _index: index,
@@ -272,8 +295,10 @@ function getPackagePopulateParams() {
     'populate[packages][on][package.sheeshapackage][populate][flavor]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][addons]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][inclusions]': 'true',
+    'populate[packages][on][package.bartendingpackage][populate][exclusions]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][policy]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][price_covers]': 'true',
+    'populate[packages][on][package.bartendingpackage][populate][price_breakdown]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][budget_level]': 'true',
   }
 }

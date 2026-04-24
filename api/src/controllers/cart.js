@@ -249,10 +249,72 @@ export const removeItem = async (req, res, next) => {
 export const updateCart = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { eventDate, eventCity, guestCount } = req.body
+    const { eventDate, eventCity, guestCount, itemId, quantity, selectedOptions } = req.body
 
     const cart = await prisma.cart.findFirst({ where: { userId } })
     if (!cart) return res.status(404).json({ error: 'Cart not found' })
+
+    if (itemId !== undefined) {
+      const item = await prisma.cartItem.findUnique({
+        where: { id: String(itemId) },
+        include: { cart: { select: { userId: true, id: true } } },
+      })
+
+      if (!item) return res.status(404).json({ error: 'Cart item not found' })
+      if (item.cart.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+      const nextQuantity = quantity !== undefined ? Number(quantity) : Number(item.quantity)
+      if (!Number.isFinite(nextQuantity) || nextQuantity < 1) {
+        return res.status(400).json({ error: 'quantity must be at least 1' })
+      }
+
+      const normalizedSelectedOptions = normalizeSelectedOptions(selectedOptions)
+      const nextSelectionKey = buildSelectionKey(normalizedSelectedOptions)
+      const nextTitle = buildCartItemTitle(
+        String(item.title ?? '').split(CART_META_SEPARATOR)[0] || item.title,
+        normalizedSelectedOptions
+      )
+
+      const duplicateItem = await prisma.cartItem.findFirst({
+        where: {
+          cartId: item.cart.id,
+          packageId: item.packageId,
+          packageElementId: nextSelectionKey,
+          addonId: null,
+          NOT: { id: item.id },
+        },
+      })
+
+      if (duplicateItem) {
+        const mergedQuantity = Number(duplicateItem.quantity) + nextQuantity
+
+        await prisma.cartItem.update({
+          where: { id: duplicateItem.id },
+          data: {
+            quantity: mergedQuantity,
+            totalPrice: (Number(duplicateItem.unitPrice) * mergedQuantity).toFixed(2),
+          },
+        })
+
+        await prisma.cartItem.delete({ where: { id: item.id } })
+      } else {
+        await prisma.cartItem.update({
+          where: { id: item.id },
+          data: {
+            title: nextTitle,
+            packageElementId: nextSelectionKey,
+            quantity: nextQuantity,
+            totalPrice: (Number(item.unitPrice) * nextQuantity).toFixed(2),
+          },
+        })
+      }
+
+      await recalcCart(item.cart.id)
+
+      const updatedCart = await getCartWithItems(item.cart.id)
+
+      return res.json({ cart: updatedCart })
+    }
 
     const updated = await prisma.cart.update({
       where: { id: cart.id },
