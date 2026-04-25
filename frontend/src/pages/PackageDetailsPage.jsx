@@ -83,56 +83,6 @@ function getSelectedOptionsFromSearchParams(searchParams, groups = []) {
   }
 }
 
-function PackageOptions({ groups = [], selectedOptions = {}, onSelect }) {
-  if (!groups.length) return null
-
-  return (
-    <div className="space-y-6">
-      <div className="border-b border-[#36402280] py-4">
-        <p className="text-[12px] text-[#2D2D2D]" style={{ fontWeight: 600 }}>
-          Customize your package
-        </p>
-        <p className="mt-3 text-[13px] leading-[1.7] text-[#591902] opacity-50">
-          Choose the setup options that best match the event format and guest experience you want.
-        </p>
-      </div>
-
-      {groups.map(group => (
-        <div key={group.label}>
-          <p
-            className="text-[13px] font-semibold leading-none text-[#2D2D2D]"
-            style={{ fontWeight: 600 }}
-          >
-            {group.label}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {(group.options ?? []).map(option => {
-              const isSelected = selectedOptions[group.label] === option
-
-              return (
-                <button
-                  key={`${group.label}-${option}`}
-                  type="button"
-                  onClick={() => onSelect(group.label, option)}
-                  className={`min-w-[150px] flex-1 rounded-[6px] border px-3 py-2 text-left transition-all ${
-                    isSelected
-                      ? 'border-[#977545] bg-[#F8F4ED] text-[#591902]'
-                      : 'border-[#CDB17E] bg-[#F8F4ED] text-[#CDB17E] opacity-60'
-                  }`}
-                >
-                  <p className="text-[12px] leading-[1.2]" style={{ fontWeight: 600 }}>
-                    {option}
-                  </p>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancellationSection) {
   const sections = Array.isArray(baseSections) ? [...baseSections] : []
   const fallbackCancellation =
@@ -156,12 +106,16 @@ function formatCurrency(value) {
   return `₹${amount.toLocaleString('en-IN')}`
 }
 
-function PackageCmsDetails({ pkg, groups, selectedOptions, onSelect }) {
-  const primarySection = Array.isArray(pkg?.detail_sections) ? pkg.detail_sections[0] ?? null : null
+function PackageCmsDetails({ pkg, groups }) {
+  const primarySection = Array.isArray(pkg?.detail_sections)
+    ? (pkg.detail_sections[0] ?? null)
+    : null
   const inclusions = Array.isArray(pkg?.detail_inclusions) ? pkg.detail_inclusions : []
   const exclusions = Array.isArray(pkg?.detail_exclusions) ? pkg.detail_exclusions : []
   const addons = Array.isArray(pkg?.detail_addons) ? pkg.detail_addons : []
-  const priceBreakdown = Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : []
+  const priceBreakdown = Array.isArray(pkg?.detail_price_breakdown)
+    ? pkg.detail_price_breakdown
+    : []
   const hasCmsContent =
     Boolean(primarySection) ||
     inclusions.length > 0 ||
@@ -190,8 +144,13 @@ function PackageCmsDetails({ pkg, groups, selectedOptions, onSelect }) {
       {infoItems.length ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {infoItems.map(item => (
-            <div key={item.label} className="rounded-[10px] border border-[#CDB17E] bg-[#F8F4ED] p-3">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-semibold text-[#8F6945]">{item.label}</p>
+            <div
+              key={item.label}
+              className="rounded-[10px] border border-[#CDB17E] bg-[#F8F4ED] p-3"
+            >
+              <p className="text-[11px] uppercase tracking-[0.12em] text-semibold text-[#8F6945]">
+                {item.label}
+              </p>
               <p className="mt-2 text-[13px] leading-[1.6] text-[#591902]">{item.value}</p>
             </div>
           ))}
@@ -200,10 +159,15 @@ function PackageCmsDetails({ pkg, groups, selectedOptions, onSelect }) {
 
       {inclusions.length ? (
         <div>
-          <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">What&apos;s included</p>
+          <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">
+            What&apos;s included
+          </p>
           <ul className="mt-3 space-y-2">
             {inclusions.map(item => (
-              <li key={item} className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80">
+              <li
+                key={item}
+                className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80"
+              >
                 <span className="mt-[7px] h-[4px] w-[4px] rounded-full bg-[#591902]" />
                 <span>{item}</span>
               </li>
@@ -217,7 +181,10 @@ function PackageCmsDetails({ pkg, groups, selectedOptions, onSelect }) {
           <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">Not included</p>
           <ul className="mt-3 space-y-2">
             {exclusions.map(item => (
-              <li key={item} className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80">
+              <li
+                key={item}
+                className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80"
+              >
                 <span className="mt-[7px] h-[4px] w-[4px] rounded-full bg-[#591902]" />
                 <span>{item}</span>
               </li>
@@ -231,7 +198,10 @@ function PackageCmsDetails({ pkg, groups, selectedOptions, onSelect }) {
           <p className="text-[13px] font-semibold leading-none text-[#2D2D2D]">Available add-ons</p>
           <ul className="mt-3 space-y-2">
             {addons.map(item => (
-              <li key={item} className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80">
+              <li
+                key={item}
+                className="flex items-start gap-2 text-[13px] leading-[1.6] text-[#591902] opacity-80"
+              >
                 <span className="mt-[7px] h-[4px] w-[4px] rounded-full bg-[#591902]" />
                 <span>{item}</span>
               </li>
@@ -239,9 +209,6 @@ function PackageCmsDetails({ pkg, groups, selectedOptions, onSelect }) {
           </ul>
         </div>
       ) : null}
-
-      
-
     </div>
   )
 }
@@ -293,11 +260,11 @@ export default function PackageDetailsPage() {
               : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
                 PKG_LOCAL_IMAGES[0]),
           }
-        : packagesData.find(
+        : (packagesData.find(
             item =>
               buildPackageId(item) === normalisePackageId(packageId) &&
               packageMatchesService(item, normalizedService)
-          ) ?? packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
+          ) ?? packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId))),
     [normalizedService, packageDetails, packageId, packagesData]
   )
 
@@ -364,14 +331,6 @@ export default function PackageDetailsPage() {
     details.sections.find(section => section.title === 'Cancellation Policy')
   )
 
-  const handleSelect = (groupLabel, option) => {
-    setAddToCartMessage('')
-    setSelectedOptions(current => ({
-      ...current,
-      [groupLabel]: option,
-    }))
-  }
-
   const handleAddToCart = async () => {
     setAddToCartMessage('')
 
@@ -419,14 +378,7 @@ export default function PackageDetailsPage() {
       title={packageTitle}
       price={packagePrice}
       intro={packageIntro}
-      customContent={
-        <PackageCmsDetails
-          pkg={pkg}
-          groups={details.configurableGroups}
-          selectedOptions={selectedOptions}
-          onSelect={handleSelect}
-        />
-      }
+      customContent={<PackageCmsDetails pkg={pkg} groups={details.configurableGroups} />}
       accordionSections={accordionSections}
       mainImage={pkg.images?.[0] ?? sideImages[0]}
       sideImages={sideImages}

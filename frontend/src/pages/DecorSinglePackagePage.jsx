@@ -496,7 +496,7 @@ function buildDecorSelectedOptions(customization) {
   const selectedSections = (customization?.data?.sections ?? []).filter(
     section => section?.type === 'choice-row'
   )
-  
+
   console.log('[buildDecorSelectedOptions] selectedSections:', selectedSections)
 
   const result = normalizeSelectedOptions(
@@ -506,8 +506,11 @@ function buildDecorSelectedOptions(customization) {
           const selectedItem = (section.items ?? []).find(
             item => typeof item !== 'string' && item.selected
           )
-          
-          console.log(`[buildDecorSelectedOptions] section[${idx}] title="${section.title}", selectedItem:`, selectedItem)
+
+          console.log(
+            `[buildDecorSelectedOptions] section[${idx}] title="${section.title}", selectedItem:`,
+            selectedItem
+          )
 
           // Use index as unique key to prevent overwriting when multiple sections have same title
           const key = `${section.title}_${idx}`
@@ -516,7 +519,7 @@ function buildDecorSelectedOptions(customization) {
         .filter(([, value]) => Boolean(value))
     )
   )
-  
+
   console.log('[buildDecorSelectedOptions] final result:', result)
   return result
 }

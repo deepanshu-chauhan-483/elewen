@@ -32,13 +32,7 @@ function getBreakdownLabel(entry) {
   if (!entry || typeof entry !== 'object') return ''
 
   return (
-    entry.label ??
-    entry.title ??
-    entry.name ??
-    entry.text ??
-    entry.description ??
-    entry.item ??
-    ''
+    entry.label ?? entry.title ?? entry.name ?? entry.text ?? entry.description ?? entry.item ?? ''
   )
 }
 
@@ -103,15 +97,6 @@ function getCartItemSummary(item) {
     rows,
     total: rows.reduce((sum, row) => sum + row.total, 0),
   }
-}
-
-function SummaryRow({ label, value, valueClassName = 'text-[#2C2C2C] font-medium' }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span>{label}</span>
-      <span className={valueClassName}>{value}</span>
-    </div>
-  )
 }
 
 function EmptyCart() {
@@ -185,14 +170,14 @@ function getSelectedElements(item) {
   console.log('[CartPage] getSelectedElements - item:', item)
   console.log('[CartPage] getSelectedElements - customization:', item?.customization)
   console.log('[CartPage] getSelectedElements - selectedOptions:', item?.selectedOptions)
-  
+
   // First, check if item has selectedOptions (from decorSelectedOptions)
   const selectedOptions = item?.selectedOptions ?? {}
   if (Object.keys(selectedOptions).length > 0) {
     console.log('[CartPage] Using selectedOptions:', selectedOptions)
     const selected = Object.entries(selectedOptions)
       .map(([label, value]) => ({
-        label: label.replace(/_\d+$/, ''),  // Remove index suffix for display
+        label: label.replace(/_\d+$/, ''), // Remove index suffix for display
         value,
       }))
       .filter(element => element.label && element.value)
@@ -207,16 +192,16 @@ function getSelectedElements(item) {
   if (item?.customization?.sections && Array.isArray(item.customization.sections)) {
     console.log('[CartPage] Found sections:', item.customization.sections)
     const selected = []
-    
+
     item.customization.sections.forEach((section, idx) => {
       console.log(`[CartPage] Processing section ${idx}:`, section)
-      
+
       if (section.type === 'choice-row' && Array.isArray(section.items)) {
         console.log(`[CartPage] Choice-row section "${section.title}":`, section.items)
         // For choice-row, get the selected item's title
         const selectedItem = section.items.find(item => typeof item !== 'string' && item.selected)
         console.log(`[CartPage] Selected item in "${section.title}":`, selectedItem)
-        
+
         if (selectedItem && selectedItem.title) {
           selected.push({
             label: section.title,
@@ -273,37 +258,11 @@ function getSuggestedPackages(packages, cartItems) {
     }))
 }
 
-function DetailField({ label, value, type = 'text', ...props }) {
-  return (
-    <label className="rounded-[10px] border border-[#E6D9C8] bg-[#FCFAF7] px-4 py-3">
-      <span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#927C65]">
-        {label}
-      </span>
-      <input
-        type={type}
-        value={value}
-        className="mt-1 w-full bg-transparent text-[14px] font-medium text-[#2C2C2C] outline-none"
-        {...props}
-      />
-    </label>
-  )
-}
-function PincodeCard({
-  pincode,
-  message,
-  cart,
-  isChecking,
-  onChange,
-  onSubmit,
-  onClear,
-}) {
+function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
   return (
     <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
-      
       {/* TITLE */}
-      <h2 className="text-lg font-medium text-[#2C2C2C]">
-        Enter Pincode
-      </h2>
+      <h2 className="text-lg font-medium text-[#2C2C2C]">Enter Pincode</h2>
 
       <p className="mb-4 mt-1 text-sm text-gray-500">
         Enter your pincode to check service availability and charges.
@@ -325,16 +284,11 @@ function PincodeCard({
         </button>
       </div>
 
-
       {/* NOTE */}
-      <p className="mt-2 text-xs text-gray-500">
-        Service availability depends on your location
-      </p>
+      <p className="mt-2 text-xs text-gray-500">Service availability depends on your location</p>
 
       {/* MESSAGE */}
-      {message && (
-        <p className="mt-2 text-sm text-[#5A1E0E]">{message}</p>
-      )}
+      {message && <p className="mt-2 text-sm text-[#5A1E0E]">{message}</p>}
     </form>
   )
 }
@@ -396,14 +350,12 @@ function CouponCard({
 function SinglePackageCard({
   item,
   pendingItemId,
-  onQuantityChange,
   onRemoveItem,
   detailsForm,
   onEditDate,
   onEditCity,
 }) {
   const isPending = pendingItemId === item.id
-  const quantity = Number(item.quantity ?? 0)
   const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
   const packageImage = item.packageData?.images?.[0] ?? ''
   const packageTitle = item.packageData?.title || item.displayTitle
@@ -531,7 +483,7 @@ function SinglePackageCard({
   )
 }
 
-function MultiPackageList({ cartItems, itemCount, pendingItemId, onQuantityChange, onRemoveItem }) {
+function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
   const groupedItems = cartItems.reduce((groups, item) => {
     const category = getPackageSubtitle(item.packageData)
     const existingGroup = groups.find(group => group.category === category)
@@ -569,9 +521,12 @@ function MultiPackageList({ cartItems, itemCount, pendingItemId, onQuantityChang
 
           <div className="space-y-4 p-4">
             {group.packages.map(item => {
-              const quantity = Number(item.quantity ?? 0)
               const isPending = pendingItemId === item.id
-              const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
+              const packageHref = getCartPackageHref(
+                item.packageData,
+                item.selectedOptions,
+                item.id
+              )
               const packageTitle = item.packageData?.title || item.displayTitle
               const selectedElements = getSelectedElements(item)
               const tags = selectedElements
@@ -693,7 +648,7 @@ function SuggestedPackages({ packages = [] }) {
     </div>
   )
 }
-function PriceSummaryCard({ cartItems, cart, singleItem = false, onCheckout, couponCard = null, pincodeCard = null }) {
+function PriceSummaryCard({ cartItems, cart, singleItem = false, onCheckout, pincodeCard = null }) {
   const itemSummaries = cartItems.map(item => ({
     item,
     summary: getCartItemSummary(item),
@@ -725,14 +680,17 @@ function PriceSummaryCard({ cartItems, cart, singleItem = false, onCheckout, cou
               <div key={item.id} className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-[#2C2C2C]">
-                  {singleItem
-                    ? `Base Package — ${item.packageData?.title || item.displayTitle}`
-                    : `${item.packageData?.title || item.displayTitle}`}
-                </span>
+                    {singleItem
+                      ? `Base Package — ${item.packageData?.title || item.displayTitle}`
+                      : `${item.packageData?.title || item.displayTitle}`}
+                  </span>
                   <span className="font-medium">{formatCurrency(summary.total)}</span>
                 </div>
                 {summary.rows.map(row => (
-                  <div key={`${item.id}-${row.label}`} className="flex justify-between text-gray-500">
+                  <div
+                    key={`${item.id}-${row.label}`}
+                    className="flex justify-between text-gray-500"
+                  >
                     <span>{row.label}</span>
                     <span>{formatCurrency(row.total)}</span>
                   </div>
@@ -836,7 +794,9 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   if (selectedOptions && Object.keys(selectedOptions).length) {
     params.set(
       'selectedOptions',
-      JSON.stringify(Object.fromEntries(Object.entries(selectedOptions).filter(([, value]) => Boolean(value))))
+      JSON.stringify(
+        Object.fromEntries(Object.entries(selectedOptions).filter(([, value]) => Boolean(value)))
+      )
     )
   }
 
@@ -863,17 +823,7 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
 export default function CartPage() {
   const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
-  const {
-    cart,
-    loading,
-    error,
-    isLoggedIn,
-    updateItemQuantity,
-    removeItem,
-    updateCartDetails,
-    applyCoupon,
-    clearCoupon,
-  } = useCart()
+  const { cart, loading, error, isLoggedIn, removeItem, applyCoupon, clearCoupon } = useCart()
   const [couponCode, setCouponCode] = useState('')
   const [couponMessage, setCouponMessage] = useState('')
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
@@ -886,8 +836,6 @@ export default function CartPage() {
     eventCity: '',
     guestCount: '',
   })
-  const [showDateEditor, setShowDateEditor] = useState(false)
-  const [showCityEditor, setShowCityEditor] = useState(false)
 
   const items = useMemo(() => cart?.items ?? [], [cart?.items])
   const packageLookup = useMemo(
@@ -910,10 +858,6 @@ export default function CartPage() {
   )
   const hasItems = cartItems.length > 0
   const hasSingleItem = cartItems.length === 1
-  const itemCount = useMemo(
-    () => cartItems.reduce((sum, item) => sum + Number(item?.quantity ?? 0), 0),
-    [cartItems]
-  )
   const suggestedPackages = useMemo(
     () => getSuggestedPackages(packages, cartItems),
     [packages, cartItems]
@@ -927,18 +871,6 @@ export default function CartPage() {
     })
   }, [cart?.eventDate, cart?.eventCity, cart?.guestCount])
 
-  const handleQuantityChange = async (itemId, nextQuantity) => {
-    if (nextQuantity < 1 || pendingItemId) return
-    setPendingItemId(itemId)
-    try {
-      await updateItemQuantity(itemId, nextQuantity)
-    } catch (err) {
-      console.error('[cart-page] quantity update failed', err)
-    } finally {
-      setPendingItemId('')
-    }
-  }
-
   const handleRemoveItem = async itemId => {
     if (pendingItemId) return
     setPendingItemId(itemId)
@@ -948,22 +880,6 @@ export default function CartPage() {
       console.error('[cart-page] remove item failed', err)
     } finally {
       setPendingItemId('')
-    }
-  }
-
-  const handleBlurCartDetails = async () => {
-    if (!hasItems) return
-
-    const payload = {
-      eventDate: detailsForm.eventDate || null,
-      eventCity: detailsForm.eventCity.trim() || null,
-      guestCount: detailsForm.guestCount ? Number(detailsForm.guestCount) : null,
-    }
-
-    try {
-      await updateCartDetails(payload)
-    } catch (err) {
-      console.error('[cart-page] update details failed', err)
     }
   }
 
@@ -1049,18 +965,15 @@ export default function CartPage() {
               <SinglePackageCard
                 item={cartItems[0]}
                 pendingItemId={pendingItemId}
-                onQuantityChange={handleQuantityChange}
                 onRemoveItem={handleRemoveItem}
                 detailsForm={detailsForm}
-                onEditDate={() => setShowDateEditor(current => !current)}
-                onEditCity={() => setShowCityEditor(current => !current)}
+                onEditDate={() => {}}
+                onEditCity={() => {}}
               />
             ) : (
               <MultiPackageList
                 cartItems={cartItems}
-                itemCount={itemCount}
                 pendingItemId={pendingItemId}
-                onQuantityChange={handleQuantityChange}
                 onRemoveItem={handleRemoveItem}
               />
             )}
@@ -1135,7 +1048,6 @@ export default function CartPage() {
                 <PincodeCard
                   pincode={pincode}
                   message={pincodeMessage}
-                  cart={cart}
                   isChecking={isCheckingPincode}
                   onChange={setPincode}
                   onSubmit={e => {
@@ -1148,24 +1060,7 @@ export default function CartPage() {
                       setPincodeMessage('Service available in your area')
                     }, 1000)
                   }}
-                  onClear={() => {
-                    setPincode('')
-                    setPincodeMessage('')
-                  }}
                 />
-              }
-              couponCard={
-                hasSingleItem ? (
-                  <CouponCard
-                    couponCode={couponCode}
-                    couponMessage={couponMessage}
-                    cart={cart}
-                    isApplyingCoupon={isApplyingCoupon}
-                    onCouponChange={setCouponCode}
-                    onApplyCoupon={handleApplyCoupon}
-                    onRemoveCoupon={handleRemoveCoupon}
-                  />
-                ) : null
               }
             />
           </div>

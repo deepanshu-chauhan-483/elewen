@@ -394,6 +394,7 @@ export function useServiceCards() {
           id: service.id,
           documentId: service.documentId,
           title: service.name ?? '',
+          slug: service.slug?.trim() || slugify(service.name),
           description: Array.isArray(service.description)
             ? blocksToText(service.description)
             : (service.description ?? ''),

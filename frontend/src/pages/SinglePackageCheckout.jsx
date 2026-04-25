@@ -88,7 +88,9 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   if (selectedOptions && Object.keys(selectedOptions).length) {
     params.set(
       'selectedOptions',
-      JSON.stringify(Object.fromEntries(Object.entries(selectedOptions).filter(([, value]) => Boolean(value))))
+      JSON.stringify(
+        Object.fromEntries(Object.entries(selectedOptions).filter(([, value]) => Boolean(value)))
+      )
     )
   }
 

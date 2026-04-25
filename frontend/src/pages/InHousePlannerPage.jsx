@@ -59,7 +59,8 @@ function normalizeCelebrationCategories(section = {}) {
 
   return (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
-      const name = item.tab_label ?? item.name ?? item.title ?? item.heading ?? `Category ${index + 1}`
+      const name =
+        item.tab_label ?? item.name ?? item.title ?? item.heading ?? `Category ${index + 1}`
       return {
         name,
         heading: item.heading ?? String(name).toUpperCase(),
@@ -72,10 +73,16 @@ function normalizeCelebrationCategories(section = {}) {
             item.top_right_image ?? item.topRightImage ?? item.images?.topRight ?? item.image_2
           ),
           bottomLeft: getMediaUrl(
-            item.bottom_left_image ?? item.bottomLeftImage ?? item.images?.bottomLeft ?? item.image_3
+            item.bottom_left_image ??
+              item.bottomLeftImage ??
+              item.images?.bottomLeft ??
+              item.image_3
           ),
           bottomRight: getMediaUrl(
-            item.bottom_right_image ?? item.bottomRightImage ?? item.images?.bottomRight ?? item.image_4
+            item.bottom_right_image ??
+              item.bottomRightImage ??
+              item.images?.bottomRight ??
+              item.image_4
           ),
         },
       }
@@ -719,22 +726,11 @@ const CelebrationEveryDaySection = () => {
   const activeAccentRef = useRef(null)
   const incomingAccentRef = useRef(null)
   const incomingLayerRef = useRef(null)
-  const active = CATEGORY_DATA.find(c => c.name === activeName) ?? CATEGORY_DATA[0]
-
   const incoming = incomingName ? (CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
-
-  useEffect(() => {
-    if (!CATEGORY_DATA.length) {
-      setActiveName('')
-      return
-    }
-
-    if (!CATEGORY_DATA.some(category => category.name === activeName)) {
-      setActiveName(CATEGORY_DATA[0].name)
-    }
-  }, [CATEGORY_DATA, activeName])
-
-  if (!CATEGORY_DATA.length) return null
+  const resolvedActiveName = CATEGORY_DATA.some(category => category.name === activeName)
+    ? activeName
+    : (CATEGORY_DATA[0]?.name ?? '')
+  const active = CATEGORY_DATA.find(c => c.name === resolvedActiveName) ?? CATEGORY_DATA[0]
 
   const animateSwapMobile = nextName => {
     if (prefersReducedMotion) {
@@ -745,7 +741,7 @@ const CelebrationEveryDaySection = () => {
 
     if (isAnimating) return
 
-    if (nextName === activeName) return
+    if (nextName === resolvedActiveName) return
 
     setIsAnimating(true)
 
@@ -813,7 +809,7 @@ const CelebrationEveryDaySection = () => {
       return
     }
 
-    if (isAnimating || nextName === activeName) return
+    if (isAnimating || nextName === resolvedActiveName) return
 
     setIsAnimating(true)
     setIncomingName(nextName)
@@ -1090,6 +1086,8 @@ const CelebrationEveryDaySection = () => {
     }
   }, [])
 
+  if (!CATEGORY_DATA.length) return null
+
   return (
     <section
       ref={sectionRef}
@@ -1119,7 +1117,7 @@ const CelebrationEveryDaySection = () => {
         <div className="mt-10">
           <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-3 text-[14px]">
             {CATEGORY_DATA.slice(0, 3).map((cat, idx) => {
-              const isActive = cat.name === activeName
+              const isActive = cat.name === resolvedActiveName
               return (
                 <div key={cat.name} className="flex items-center gap-3">
                   <button
@@ -1148,9 +1146,7 @@ const CelebrationEveryDaySection = () => {
 
           <div className="mt-3 flex items-center justify-center flex-wrap gap-x-3 gap-y-3 text-[14px]">
             {CATEGORY_DATA.slice(3, 6).map((cat, i) => {
-              const idx = i + 3
-
-              const isActive = cat.name === activeName
+              const isActive = cat.name === resolvedActiveName
 
               return (
                 <div key={cat.name} className="flex items-center gap-3">
@@ -1309,8 +1305,8 @@ const CelebrationEveryDaySection = () => {
                 {/* Left categories (stays as-is) */}
                 <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#EBEBEB] z-20">
                   <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
-                    {CATEGORY_DATA.map((cat, idx) => {
-                      const isActive = cat.name === activeName
+                    {CATEGORY_DATA.map(cat => {
+                      const isActive = cat.name === resolvedActiveName
                       return (
                         <div
                           key={cat.name}
