@@ -461,10 +461,29 @@ export function useDecorThemeOptions(serviceCategoryId) {
 }
 
 export function useBudgetLevelOptions(serviceCategoryId) {
-  const query = usePackageWizardSteps(serviceCategoryId)
-  const step = findStepBySource(query.data?.steps, 'budget-levels')
+  const wizardQuery = usePackageWizardSteps(serviceCategoryId)
+  const step = findStepBySource(wizardQuery.data?.steps, 'budget-levels')
+  const budgetLevelsQuery = useQuery({
+    queryKey: ['budget-level-options'],
+    queryFn: async () => {
+      if (USE_FALLBACK) return LEVELS_FALLBACK
+      try {
+        const { data } = await strapiGet('/budget-levels', {
+          'filters[is_active][$eq]': 'true',
+          sort: 'display_order:asc',
+        })
+        return data.map(mapLevelOption)
+      } catch {
+        return LEVELS_FALLBACK
+      }
+    },
+    placeholderData: LEVELS_FALLBACK,
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+  })
+
   return {
-    ...query,
-    data: step?.options?.length ? step.options.map(mapLevelOption) : LEVELS_FALLBACK,
+    ...wizardQuery,
+    data: step?.options?.length ? step.options.map(mapLevelOption) : budgetLevelsQuery.data,
   }
 }

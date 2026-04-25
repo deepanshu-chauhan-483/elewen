@@ -39,8 +39,8 @@ export default function PackageListLayout({
     <main className="min-h-screen overflow-x-hidden bg-white text-white">
       <NavHeader forcedThemeName="dark" backgroundColorOverride="#591902" />
 
-      {heroContent ? <div className="pt-18 md:pt-22">{heroContent}</div> : null}
-      <div className="px-4 pb-0 pt-20 sm:px-6 md:pt-24">
+      {heroContent ? <div className="pt-8 md:pt-10">{heroContent}</div> : null}
+      <div className="px-4 pb-0 pt-8 sm:px-6 md:pt-10">
         <div className="mx-auto flex w-full flex-col lg:w-[calc(100%-200px)] lg:max-w-none">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p

@@ -1,52 +1,93 @@
-// import React from "react";
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useCart } from '../hooks/useCart'
+import { usePackages } from '../hooks/usePackages'
+import {
+  bookingAddNote,
+  bookingCreate,
+  getStoredJwt,
+  paymentCreateOrder,
+  paymentVerify,
+} from '../lib/api'
 
-// DATA
-const ITEMS = [
-  { name: 'Decor (2 packages)', price: '₹60,500' },
-  { name: 'Catering (1 package)', price: '₹65,000' },
-  { name: 'Bartending (1 package)', price: '₹65,000' },
-  { name: 'Sheesha (1 package)', price: '₹65,000' },
-]
+function formatCurrency(value) {
+  const amount = Number(value ?? 0)
+  return `Rs${amount.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
 
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+function normalizeServiceSlug(value = '') {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/-single$/, '')
+    .replace(/-services?$/, '')
+}
 
-const PAYMENT_OPTIONS = [
-  {
-    id: 'upi',
-    title: 'UPI / BHIM',
-    desc: 'Google Pay, PhonePe, Paytm',
-  },
-  {
-    id: 'card',
-    title: 'Credit / Debit Card',
-    desc: 'Visa, Mastercard, RuPay',
-  },
-  {
-    id: 'net',
-    title: 'Net Banking',
-    desc: 'All major bank supported',
-  },
-]
+function getSavedUser() {
+  try {
+    const raw = localStorage.getItem('elewen_user')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
 
-const PaymentMethod = () => {
-  const [selected, setSelected] = useState('upi')
+function loadRazorpayScript() {
+  return new Promise(resolve => {
+    if (window.Razorpay) {
+      resolve(true)
+      return
+    }
 
-  const base = 'flex items-center gap-3 border rounded-xl p-4 cursor-pointer transition'
+    const existing = document.querySelector('script[data-razorpay="true"]')
+    if (existing) {
+      existing.addEventListener('load', () => resolve(true), { once: true })
+      existing.addEventListener('error', () => resolve(false), { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.dataset.razorpay = 'true'
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
+
+function SummaryRow({ label, value, valueClassName = 'text-[#2C2C2C] font-medium' }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span>{label}</span>
+      <span className={valueClassName}>{value}</span>
+    </div>
+  )
+}
+
+function PaymentMethod({ selected, onChange }) {
+  const options = [
+    { id: 'upi', title: 'UPI / BHIM', desc: 'Google Pay, PhonePe, Paytm' },
+    { id: 'card', title: 'Credit / Debit Card', desc: 'Visa, Mastercard, RuPay' },
+    { id: 'netbanking', title: 'Net Banking', desc: 'All major banks supported' },
+  ]
 
   return (
-    <div className="border border-[#95796066] rounded-xl p-5">
-      <h3 className="font-medium text-lg mb-4">Payment Method</h3>
+    <div className="rounded-xl border border-[#95796066] p-5">
+      <h3 className="mb-4 text-lg font-medium">Payment Method</h3>
 
       <div className="space-y-3">
-        {PAYMENT_OPTIONS.map(option => {
+        {options.map(option => {
           const isActive = selected === option.id
 
           return (
             <label
               key={option.id}
-              className={`${base} ${
-                isActive ? 'bg-[#E9E9E2] border-[#222815]' : 'bg-[#F5F5F5] border-transparent'
+              className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition ${
+                isActive ? 'border-[#222815] bg-[#E9E9E2]' : 'border-transparent bg-[#F5F5F5]'
               }`}
             >
               <input
@@ -54,16 +95,15 @@ const PaymentMethod = () => {
                 name="payment"
                 className="hidden"
                 checked={isActive}
-                onChange={() => setSelected(option.id)}
+                onChange={() => onChange(option.id)}
               />
 
-              {/* custom radio */}
               <div
-                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                className={`flex h-4 w-4 items-center justify-center rounded-full border ${
                   isActive ? 'border-[#222815]' : 'border-gray-400'
                 }`}
               >
-                {isActive && <div className="w-2 h-2 bg-[#222815] rounded-full"></div>}
+                {isActive ? <div className="h-2 w-2 rounded-full bg-[#222815]" /> : null}
               </div>
 
               <div>
@@ -79,126 +119,389 @@ const PaymentMethod = () => {
 }
 
 export default function CheckoutPage() {
+  const navigate = useNavigate()
+  const savedUser = getSavedUser()
+  const { data: packages = [] } = usePackages()
+  const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
+
+  const [fullName, setFullName] = useState(
+    [savedUser?.first_name, savedUser?.last_name].filter(Boolean).join(' ')
+  )
+  const [phone, setPhone] = useState(savedUser?.phone ?? '')
+  const [email, setEmail] = useState(savedUser?.email ?? '')
+  const [eventDate, setEventDate] = useState(
+    cart?.eventDate ? String(cart.eventDate).slice(0, 10) : ''
+  )
+  const [eventTime, setEventTime] = useState('')
+  const [eventAddress, setEventAddress] = useState(cart?.eventCity ?? '')
+  const [pinCode, setPinCode] = useState('')
+  const [guestCount, setGuestCount] = useState(
+    cart?.guestCount != null ? String(cart.guestCount) : ''
+  )
+  const [paymentMethod, setPaymentMethod] = useState('upi')
+  const [formError, setFormError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const packageLookup = useMemo(
+    () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
+    [packages]
+  )
+
+  const cartItems = useMemo(
+    () =>
+      (cart?.items ?? []).map(item => ({
+        ...item,
+        packageData: packageLookup.get(String(item.packageId)) ?? null,
+      })),
+    [cart?.items, packageLookup]
+  )
+
+  const itemCount = useMemo(
+    () => cartItems.reduce((sum, item) => sum + Number(item?.quantity ?? 0), 0),
+    [cartItems]
+  )
+
+  const advancePayable = Number(cart?.total ?? 0) * 0.3
+  const balanceDue = Math.max(0, Number(cart?.total ?? 0) - advancePayable)
+
+  const handleCheckout = async () => {
+    const token = getStoredJwt()
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (!fullName.trim() || !phone.trim() || !email.trim()) {
+      setFormError('Please fill in your contact details.')
+      return
+    }
+
+    if (!eventDate || !eventAddress.trim() || !guestCount || Number(guestCount) < 1) {
+      setFormError('Please complete the event information form before payment.')
+      return
+    }
+
+    setFormError('')
+    setIsSubmitting(true)
+
+    try {
+      await updateCartDetails({
+        eventDate,
+        eventCity: eventAddress.trim(),
+        guestCount: Number(guestCount),
+      })
+
+      const bookingResponse = await bookingCreate(token)
+      const booking = bookingResponse?.booking
+
+      if (!booking?.id) {
+        throw new Error('Booking could not be created.')
+      }
+
+      const extraDetails = [
+        `Contact name: ${fullName.trim()}`,
+        `Phone: ${phone.trim()}`,
+        `Email: ${email.trim()}`,
+        `Event date: ${eventDate}`,
+        `Event time: ${eventTime || 'Not provided'}`,
+        `Event address: ${eventAddress.trim()}`,
+        `PIN code: ${pinCode || 'Not provided'}`,
+        `Guest count: ${guestCount}`,
+      ].join('\n')
+
+      await bookingAddNote(token, booking.id, { note: extraDetails }).catch(() => {})
+
+      const orderResponse = await paymentCreateOrder(token, {
+        bookingId: booking.id,
+        paymentType: 'advance',
+      })
+
+      const scriptLoaded = await loadRazorpayScript()
+      if (!scriptLoaded || !window.Razorpay) {
+        throw new Error('Razorpay checkout could not be loaded.')
+      }
+
+      const options = {
+        key: orderResponse.keyId,
+        amount: Math.round(Number(orderResponse.amount) * 100),
+        currency: orderResponse.currency || 'INR',
+        name: 'Elewen',
+        description: 'Advance payment for your booking',
+        order_id: orderResponse.razorpayOrderId,
+        prefill: {
+          name: fullName.trim(),
+          email: email.trim(),
+          contact: phone.trim(),
+        },
+        theme: {
+          color: '#D4BA8E',
+        },
+        handler: async response => {
+          try {
+            await paymentVerify(token, {
+              paymentId: orderResponse.paymentId,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              paymentMethod,
+            })
+
+            navigate('/booking-confirmation', {
+              state: {
+                booking,
+                payment: {
+                  advanceAmount: orderResponse.amount,
+                  balanceDue,
+                },
+                checkoutInfo: {
+                  fullName,
+                  phone,
+                  email,
+                  eventDate,
+                  eventTime,
+                  eventAddress,
+                  pinCode,
+                  guestCount,
+                },
+              },
+            })
+          } catch (verifyErr) {
+            setFormError(verifyErr.message || 'Payment verification failed.')
+          } finally {
+            setIsSubmitting(false)
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsSubmitting(false)
+          },
+        },
+      }
+
+      const razorpay = new window.Razorpay(options)
+      razorpay.on('payment.failed', response => {
+        setFormError(response?.error?.description || 'Payment failed. Please try again.')
+        setIsSubmitting(false)
+      })
+      razorpay.open()
+    } catch (err) {
+      setFormError(err.message || 'Checkout failed. Please try again.')
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F7] px-4 pt-24 md:px-8 lg:px-16">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-[#95796066] bg-white p-8 text-center">
+          <p className="text-[24px] font-semibold text-[#1C1C1C]">Sign in to continue checkout</p>
+          <p className="mt-2 text-gray-500">Your checkout is linked to your account cart.</p>
+          <Link
+            to="/login"
+            className="mx-auto mt-6 flex w-fit items-center rounded-full bg-[#D4BA8E] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#C6AB7F]"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F7] px-4 pt-24 md:px-8 lg:px-16">
+        <div className="rounded-2xl border border-[#95796066] bg-white p-8 text-center text-gray-500">
+          Loading checkout...
+        </div>
+      </div>
+    )
+  }
+
+  if (!cartItems.length) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F7] px-4 pt-24 md:px-8 lg:px-16">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-[#95796066] bg-white p-8 text-center">
+          <p className="text-[24px] font-semibold text-[#1C1C1C]">Your cart is empty</p>
+          <p className="mt-2 text-gray-500">Add a package before moving to checkout.</p>
+          <Link
+            to="/cart"
+            className="mx-auto mt-6 flex w-fit items-center rounded-full bg-[#D4BA8E] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#C6AB7F]"
+          >
+            Back to Cart
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="bg-[#FAF9F7] min-h-screen px-4 md:px-8 lg:px-16 py-10 pt-24">
-      {/* HEADER */}
+    <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-10">
         <h1 className="text-4xl font-semibold text-[#2C2C2C]">Checkout</h1>
-        <p className="text-gray-500 mt-2">Review your event packages and complete your booking.</p>
+        <p className="mt-2 text-gray-500">Review your event packages and complete your booking.</p>
       </div>
 
-      {/* MAIN GRID */}
-      <div className="flex flex-col md:flex-row gap-[clamp(24px,5vw,100px)]">
-        {/* LEFT SIDE (SUMMARY) */}
+      <div className="flex flex-col gap-[clamp(24px,5vw,100px)] md:flex-row">
         <div className="flex-1 space-y-6">
-          <div className="border border-[#95796066] rounded-xl overflow-hidden">
-            {/* HEADER */}
-            <div className="bg-[#1F2A16] text-white px-5 py-3">
+          <div className="overflow-hidden rounded-xl border border-[#95796066]">
+            <div className="bg-[#1F2A16] px-5 py-3 text-white">
               <h3 className="font-medium">Booking Summary</h3>
             </div>
 
-            {/* CONTENT */}
-            <div className="p-5 space-y-4 text-sm">
-              {/* BASE PACKAGE */}
-              <div className="flex justify-between font-medium text-base">
-                <span>Base Package — Grand Celebration</span>
-                <span>₹55,000</span>
-              </div>
+            <div className="space-y-4 p-5 text-sm">
+              {cartItems.map((item, index) => {
+                const packageName = item.packageData?.title || item.title
+                const serviceName = normalizeServiceSlug(item.packageData?.service_slugs?.[0] ?? '')
+                const label = serviceName
+                  ? `${serviceName.charAt(0).toUpperCase()}${serviceName.slice(1)} (${item.quantity} package${Number(item.quantity) > 1 ? 's' : ''})`
+                  : `${packageName} (${item.quantity})`
+
+                return (
+                  <div key={item.id}>
+                    {index === 0 ? (
+                      <div className="flex justify-between text-base font-medium">
+                        <span>Base Package - {packageName}</span>
+                        <span>{formatCurrency(item.totalPrice)}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-gray-600">
+                        <span>{label}</span>
+                        <span>{formatCurrency(item.totalPrice)}</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
 
               <hr className="my-4 border-[#0000001A]" />
 
-              {/* ITEMS */}
-              {ITEMS.map((item, i) => (
-                <div key={i} className="flex justify-between text-gray-600">
-                  <span>{item.name}</span>
-                  <span>{item.price}</span>
-                </div>
-              ))}
-
-              <hr className="my-4 border-[#0000001A]" />
-
-              {/* PRICE BREAKDOWN */}
               <div className="space-y-2 text-gray-600">
-                <div className="flex justify-between">
-                  <span>Subtotal (before GST)</span>
-                  <span>₹3,35,500</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>GST (18%)</span>
-                  <span>₹60,390</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>Discount coupon applied</span>
-                  <span className="text-red-500">−₹2,000</span>
-                </div>
+                <SummaryRow label="Items" value={String(itemCount)} />
+                <SummaryRow label="Subtotal" value={formatCurrency(cart?.subtotal)} />
+                <SummaryRow
+                  label="Discount coupon applied"
+                  value={`-${formatCurrency(cart?.discountAmount)}`}
+                  valueClassName="font-medium text-[#B42318]"
+                />
               </div>
 
               <hr className="my-4 border-[#0000001A]" />
 
-              {/* TOTAL */}
-              <div className="bg-[#F3EFE9] rounded-lg px-4 py-3 flex justify-between font-medium text-base">
+              <div className="flex justify-between rounded-lg bg-[#F3EFE9] px-4 py-3 text-base font-medium">
                 <span>Total Amount</span>
-                <span>₹68,500</span>
+                <span>{formatCurrency(cart?.total)}</span>
               </div>
 
-              {/* ADVANCE */}
-              <div className="bg-[#F1F1F1] rounded-lg px-4 py-3 flex justify-between font-medium text-base">
+              <div className="flex justify-between rounded-lg bg-[#F1F1F1] px-4 py-3 text-base font-medium">
                 <span>Advance Payable (30%)</span>
-                <span>₹20,550</span>
+                <span>{formatCurrency(advancePayable)}</span>
               </div>
 
-              <p className="text-xs text-gray-500">Balance: ₹47,950 due on event day</p>
+              <p className="text-xs text-gray-500">
+                Balance: {formatCurrency(balanceDue)} due on event day
+              </p>
             </div>
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="flex-1 space-y-6">
-          {/* USER DETAILS */}
-          <div className="border border-[#95796066] rounded-xl p-5">
-            <h3 className="font-medium text-lg mb-1">Your Details</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              We’ll use these details to confirm and coordinate your event
+          <div className="rounded-[20px] border border-[#95796066] bg-white p-6 md:p-8">
+            <h2 className="text-[24px] font-semibold text-[#2C2C2C]">Event Information</h2>
+            <p className="mt-3 text-[14px] text-[#7A7A7A]">
+              We&apos;ll use these details to plan and coordinate your event.
             </p>
 
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="w-full border-b-[0.5px] border-[#2D2D2D] outline-none pb-2 bg-transparent"
-              />
+            <div className="mt-10">
+              <h3 className="text-[18px] font-semibold text-[#2C2C2C]">Contact Details</h3>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="mt-6 space-y-6">
                 <input
                   type="text"
-                  placeholder="Phone Number"
-                  className="border-b-[0.5px] border-[#2D2D2D] outline-none pb-2 bg-transparent"
+                  value={fullName}
+                  onChange={event => setFullName(event.target.value)}
+                  placeholder="Full Name"
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                />
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={event => setPhone(event.target.value)}
+                    placeholder="Mobile Number"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={event => setEmail(event.target.value)}
+                    placeholder="Email Address"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10">
+              <h3 className="text-[18px] font-semibold text-[#2C2C2C]">Event Details</h3>
+
+              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <input
+                  type="date"
+                  value={eventDate}
+                  onChange={event => setEventDate(event.target.value)}
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
                 />
                 <input
-                  type="email"
-                  placeholder="Email Address"
-                  className="border-b-[0.5px] border-[#2D2D2D] outline-none pb-2 bg-transparent"
+                  type="time"
+                  value={eventTime}
+                  onChange={event => setEventTime(event.target.value)}
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                />
+                <input
+                  type="text"
+                  value={eventAddress}
+                  onChange={event => setEventAddress(event.target.value)}
+                  placeholder="Event Address"
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                />
+                <input
+                  type="text"
+                  value={pinCode}
+                  onChange={event => setPinCode(event.target.value)}
+                  placeholder="PIN Code"
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                />
+                <input
+                  type="number"
+                  min="1"
+                  value={guestCount}
+                  onChange={event => setGuestCount(event.target.value)}
+                  placeholder="Number of Guests"
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none md:col-span-2"
                 />
               </div>
             </div>
           </div>
 
-          {/* PAYMENT METHOD */}
-          <PaymentMethod></PaymentMethod>
+          <PaymentMethod selected={paymentMethod} onChange={setPaymentMethod} />
 
-          {/* PAYMENT BUTTON */}
-          <div className="border border-[#95796066] rounded-xl p-5">
-            <div className="bg-[#E6F2E1] text-sm text-center py-3 rounded-lg mb-4">
-              🔒 SSL Secured · Instant Confirmation · Easy Cancellation
+          <div className="rounded-xl border border-[#95796066] p-5">
+            <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
+              Secure payment · Instant confirmation · Easy cancellation
             </div>
 
-            <Link
-              to="/booking-confirmation"
-              className="mx-auto group mt-8 flex w-full justify-between items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5  transition-colors hover:bg-[#C6AB7F]"
+            {formError ? <p className="mb-4 text-sm text-[#B42318]">{formError}</p> : null}
+
+            <button
+              type="button"
+              onClick={handleCheckout}
+              disabled={isSubmitting}
+              className="mx-auto mt-4 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
             >
-              <span className="mr-5 text-[15px] font-medium text-white">Proceed to Checkout</span>
+              <span className="mr-5 text-[15px] font-medium text-white">
+                {isSubmitting ? 'Processing...' : 'Pay Advance & Confirm Booking'}
+              </span>
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                 <svg
                   className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
@@ -210,7 +513,7 @@ export default function CheckoutPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
                 </svg>
               </div>
-            </Link>
+            </button>
           </div>
         </div>
       </div>

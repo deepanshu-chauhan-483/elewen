@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { strapiGet, USE_FALLBACK } from '../lib/strapi'
+import { useMemo } from 'react'
+import { usePackages } from './usePackages'
 
 // 🎯 Hardcoded fallback flavours (used when Strapi unavailable)
 const FALLBACK_FLAVORS = [
@@ -13,50 +13,44 @@ const FALLBACK_FLAVORS = [
   { id: 8, title: 'Grape', description: '' },
 ]
 
-// ✅ Normalize each flavor item
 function normalizeFlavor(item) {
   if (!item) return null
 
+  const title = item.title ?? item.Name ?? item.name ?? ''
+  if (!title) return null
+
   return {
-    id: item.id ?? item.documentId,
-    title: item.Name ?? item.name ?? '',
+    id: item.id ?? item.documentId ?? title,
+    title,
     description: item.description ?? '',
   }
 }
 
-// ✅ Fetch + transform data
-async function fetchFlavors() {
-  const response = await strapiGet('/flavors', {
-    sort: 'Name:asc',
-  })
+function collectPackageFlavors(packages) {
+  const allFlavors = (Array.isArray(packages) ? packages : []).flatMap(pkg =>
+    Array.isArray(pkg?.flavor_options) ? pkg.flavor_options : []
+  )
 
-  const items = Array.isArray(response?.data) ? response.data : []
-
-  // normalize + remove nulls
-  return items.map(normalizeFlavor).filter(Boolean)
+  const seen = new Set()
+  return allFlavors
+    .map(normalizeFlavor)
+    .filter(Boolean)
+    .filter(flavor => {
+      const key = flavor.title.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
 }
 
 // ✅ React Query hook
 export function useFlavors() {
-  return useQuery({
-    queryKey: ['flavors'],
-    queryFn: async () => {
-      if (USE_FALLBACK) {
-        return FALLBACK_FLAVORS
-      }
+  const { data: packages = [] } = usePackages()
 
-      try {
-        const flavors = await fetchFlavors()
-        if (!flavors || flavors.length === 0) {
-          return FALLBACK_FLAVORS
-        }
-        return flavors
-      } catch (error) {
-        return FALLBACK_FLAVORS
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-    retry: 1,
-  })
+  return useMemo(() => {
+    const flavors = collectPackageFlavors(packages)
+    return {
+      data: flavors.length ? flavors : FALLBACK_FLAVORS,
+    }
+  }, [packages])
 }

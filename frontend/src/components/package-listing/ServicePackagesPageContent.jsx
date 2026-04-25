@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import PackageCard from './PackageCard'
 import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'
@@ -14,6 +13,7 @@ import pkgImg6 from '../../assets/images/IMG_7025.jpg'
 import pkgImg7 from '../../assets/images/IMG_8625.png'
 import pkgImg8 from '../../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../../assets/images/6f6af066.jpg'
+import { useSearchParams } from 'react-router-dom'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg2, pkgImg3],
@@ -67,6 +67,10 @@ export default function ServicePackagesPageContent({
   const serviceId = searchParams.get('serviceId') ?? ''
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
+  const shouldBypassEventFilters = selectedServiceSlug === 'sheesha'
+  const effectiveCategorySlug = shouldBypassEventFilters ? '' : categorySlug
+  const effectiveEventSlug = shouldBypassEventFilters ? '' : eventSlug
+  const effectiveEventId = shouldBypassEventFilters ? '' : eventId
 
   const packagesData = useMemo(
     () =>
@@ -83,9 +87,9 @@ export default function ServicePackagesPageContent({
   const filteredPackages = useMemo(
     () =>
       filterPackages(packagesData, {
-        categorySlug,
-        eventSlug,
-        eventId,
+        categorySlug: effectiveCategorySlug,
+        eventSlug: effectiveEventSlug,
+        eventId: effectiveEventId,
         serviceSlug: selectedServiceSlug,
         serviceId,
         themeSlug,
@@ -93,9 +97,9 @@ export default function ServicePackagesPageContent({
       }),
     [
       packagesData,
-      categorySlug,
-      eventSlug,
-      eventId,
+      effectiveCategorySlug,
+      effectiveEventSlug,
+      effectiveEventId,
       selectedServiceSlug,
       serviceId,
       themeSlug,

@@ -201,7 +201,7 @@ export default function SingleProductPageContent({
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
       <NavHeader />
 
-      <section className="relative overflow-hidden pb-16 pt-22 md:pt-23">
+      <section className="relative overflow-hidden pb-16 pt-8 md:pt-10">
         <div
           className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start md:justify-between"
           style={{
@@ -423,7 +423,7 @@ export default function SingleProductPageContent({
       </section>
 
       <section className="pb-16 ">
-        <div className="fixed bottom-0 left-0 w-full h-[82px] bg-[#591902] text-white z-50 px-[50px] lg:px-[100px]">
+        <div className="fixed bottom-0 left-0 w-full h-[60px] md:h-[70px] bg-[#591902] text-white z-50 px-[50px] lg:px-[100px]">
           <div className="max-w-[1400px] mx-auto flex items-center justify-between py-4">
             {/* Left */}
             <div className="flex items-center gap-3">

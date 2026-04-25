@@ -10,123 +10,93 @@ import { useInHousePlannerPage } from '../hooks/useCmsPages'
 
 import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
 
-import plannerImg from '../assets/images/moksha_portrait.jpg'
-
-import celebrationImg1 from '../assets/images/citroen.png'
-
-import celebrationImg2 from '../assets/images/danube.jpg'
-
-import celebrationImg3 from '../assets/images/guns.jpg'
-
-import celebrationImg4 from '../assets/images/usha.jpg'
-
-import everyDayImg1 from '../assets/images/IMG_3010.jpg' // Top Right
-
-import everyDayImg2 from '../assets/images/IMG_2017.jpg' // Bottom Right
-
-import everyDayImg3 from '../assets/images/IMG_7768.jpg' // Bottom Left
-
-import everyDayImg4 from '../assets/images/IMG_3001.jpg' // Top Center
-
 gsap.registerPlugin(ScrollTrigger)
 
-const celebrationData = [
-  {
-    id: '01',
+const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
-    title: 'CITROEN',
+function toAbsoluteMediaUrl(url = '') {
+  const value = String(url ?? '').trim()
+  if (!value) return ''
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  return `${STRAPI_BASE}${value.startsWith('/') ? value : `/${value}`}`
+}
 
-    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+function getMediaUrl(media) {
+  if (!media) return ''
+  if (typeof media === 'string') return toAbsoluteMediaUrl(media)
+  if (Array.isArray(media)) return getMediaUrl(media[0])
 
-    image: celebrationImg1,
+  return toAbsoluteMediaUrl(
+    media.url ??
+      media.src ??
+      media.image?.url ??
+      media.data?.url ??
+      media.data?.attributes?.url ??
+      media.formats?.large?.url ??
+      media.formats?.medium?.url ??
+      media.formats?.small?.url ??
+      media.formats?.thumbnail?.url ??
+      ''
+  )
+}
 
-    tall: true,
-  },
+function normalizeGrandCelebrationItems(section = {}) {
+  const items = section.items ?? section.cards ?? section.projects ?? section.portfolio_items ?? []
 
-  {
-    id: '02',
+  return (Array.isArray(items) ? items : [])
+    .map((item, index) => ({
+      id: String(item.id ?? item.order ?? index + 1).padStart(2, '0'),
+      title: item.title ?? item.heading ?? item.name ?? '',
+      desc: item.desc ?? item.description ?? item.body ?? '',
+      image: getMediaUrl(item.image ?? item.media ?? item.photo ?? item.thumbnail),
+      tall: Boolean(item.tall ?? item.is_tall ?? item.portrait ?? false),
+    }))
+    .filter(item => item.title || item.image)
+}
 
-    title: 'DANUBE',
+function normalizeCelebrationCategories(section = {}) {
+  const categories = section.categories ?? section.items ?? []
 
-    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
-
-    image: celebrationImg2,
-
-    tall: false,
-  },
-
-  {
-    id: '03',
-
-    title: 'GUNS & GULAABS',
-
-    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
-
-    image: celebrationImg3,
-
-    tall: true,
-  },
-
-  {
-    id: '04',
-
-    title: 'USHA',
-
-    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
-
-    image: celebrationImg4,
-
-    tall: false,
-  },
-
-  {
-    id: '05',
-
-    title: 'CITROEN',
-
-    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
-
-    image: celebrationImg1,
-
-    tall: false,
-  },
-
-  {
-    id: '06',
-
-    title: 'DANUBE',
-
-    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
-
-    image: celebrationImg2,
-
-    tall: true,
-  },
-
-  {
-    id: '07',
-
-    title: 'GUNS & GULAABS',
-
-    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
-
-    image: celebrationImg3,
-
-    tall: false,
-  },
-
-  {
-    id: '08',
-
-    title: 'USHA',
-
-    desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
-
-    image: celebrationImg4,
-
-    tall: true,
-  },
-]
+  return (Array.isArray(categories) ? categories : [])
+    .map((item, index) => {
+      const name =
+        item.tab_label ?? item.name ?? item.title ?? item.heading ?? `Category ${index + 1}`
+      return {
+        name,
+        heading: item.heading ?? String(name).toUpperCase(),
+        desc: item.description ?? item.desc ?? item.body ?? '',
+        images: {
+          topLeft: getMediaUrl(
+            item.top_left_image ?? item.topLeftImage ?? item.images?.topLeft ?? item.image_1
+          ),
+          topRight: getMediaUrl(
+            item.top_right_image ?? item.topRightImage ?? item.images?.topRight ?? item.image_2
+          ),
+          bottomLeft: getMediaUrl(
+            item.bottom_left_image ??
+              item.bottomLeftImage ??
+              item.images?.bottomLeft ??
+              item.image_3
+          ),
+          bottomRight: getMediaUrl(
+            item.bottom_right_image ??
+              item.bottomRightImage ??
+              item.images?.bottomRight ??
+              item.image_4
+          ),
+        },
+      }
+    })
+    .filter(
+      item =>
+        item.name &&
+        (item.images.topLeft ||
+          item.images.topRight ||
+          item.images.bottomLeft ||
+          item.images.bottomRight ||
+          item.desc)
+    )
+}
 
 // Defined at module level so React never treats it as a new component type on re-render
 
@@ -145,6 +115,7 @@ const GrandCelebrationsSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
   const gc = cms.grand_celebrations_intro ?? {}
+  const celebrationData = normalizeGrandCelebrationItems(gc)
 
   const sectionRef = useRef(null)
 
@@ -701,124 +672,12 @@ const CelebrationEveryDaySection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
   const ced = cms.celebrations_every_day ?? {}
-
-  const cmsCats = ced.categories ?? []
+  const CATEGORY_DATA = normalizeCelebrationCategories(ced)
 
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  // Replace these mappings with real images per category when you have them.
-  const CATEGORY_DATA = [
-    {
-      name: 'Anniversaries',
-
-      heading: 'ANNIVERSARIES',
-
-      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-
-      images: {
-        topLeft: everyDayImg4,
-
-        topRight: everyDayImg1,
-
-        bottomLeft: everyDayImg3,
-
-        bottomRight: everyDayImg2,
-      },
-    },
-
-    {
-      name: 'Birthday Parties',
-
-      heading: 'BIRTHDAY PARTIES',
-
-      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-
-      images: {
-        topLeft: everyDayImg1,
-
-        topRight: everyDayImg4,
-
-        bottomLeft: everyDayImg2,
-
-        bottomRight: everyDayImg3,
-      },
-    },
-
-    {
-      name: 'Engagement',
-
-      heading: 'ENGAGEMENT',
-
-      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-
-      images: {
-        topLeft: everyDayImg2,
-
-        topRight: everyDayImg1,
-
-        bottomLeft: everyDayImg4,
-
-        bottomRight: everyDayImg3,
-      },
-    },
-
-    {
-      name: 'Haldi',
-
-      heading: 'HALDI',
-
-      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-
-      images: {
-        topLeft: everyDayImg3,
-
-        topRight: everyDayImg2,
-
-        bottomLeft: everyDayImg1,
-
-        bottomRight: everyDayImg4,
-      },
-    },
-
-    {
-      name: 'Mehendi',
-
-      heading: 'MEHENDI',
-
-      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-
-      images: {
-        topLeft: everyDayImg4,
-
-        topRight: everyDayImg2,
-
-        bottomLeft: everyDayImg3,
-
-        bottomRight: everyDayImg1,
-      },
-    },
-
-    {
-      name: 'Weddings',
-
-      heading: 'WEDDINGS',
-
-      desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-
-      images: {
-        topLeft: everyDayImg1,
-
-        topRight: everyDayImg3,
-
-        bottomLeft: everyDayImg2,
-
-        bottomRight: everyDayImg4,
-      },
-    },
-  ]
 
   const [activeName, setActiveName] = useState(CATEGORY_DATA[0]?.name ?? '')
 
@@ -870,6 +729,19 @@ const CelebrationEveryDaySection = () => {
   const active = CATEGORY_DATA.find(c => c.name === activeName) ?? CATEGORY_DATA[0]
 
   const incoming = incomingName ? (CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
+
+  useEffect(() => {
+    if (!CATEGORY_DATA.length) {
+      setActiveName('')
+      return
+    }
+
+    if (!CATEGORY_DATA.some(category => category.name === activeName)) {
+      setActiveName(CATEGORY_DATA[0].name)
+    }
+  }, [CATEGORY_DATA, activeName])
+
+  if (!CATEGORY_DATA.length) return null
 
   const animateSwapMobile = nextName => {
     if (prefersReducedMotion) {
@@ -1272,7 +1144,7 @@ const CelebrationEveryDaySection = () => {
                     <span
                       className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
                     >
-                      {cmsCats[idx]?.tab_label ?? cat.name}
+                      {cat.name}
                     </span>
                   </button>
                   {idx !== 2 && <span className="text-[#2D2D2D]/50">|</span>}
@@ -1283,7 +1155,7 @@ const CelebrationEveryDaySection = () => {
 
           <div className="mt-3 flex items-center justify-center flex-wrap gap-x-3 gap-y-3 text-[14px]">
             {CATEGORY_DATA.slice(3, 6).map((cat, i) => {
-              const idx = i + 3
+              // const idx = i + 3
 
               const isActive = cat.name === activeName
 
@@ -1304,7 +1176,7 @@ const CelebrationEveryDaySection = () => {
                     <span
                       className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
                     >
-                      {cmsCats[idx]?.tab_label ?? cat.name}
+                      {cat.name}
                     </span>
                   </button>
                   {i !== 2 && <span className="text-[#2D2D2D]/50">|</span>}
@@ -1444,7 +1316,7 @@ const CelebrationEveryDaySection = () => {
                 {/* Left categories (stays as-is) */}
                 <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#EBEBEB] z-20">
                   <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
-                    {CATEGORY_DATA.map((cat, idx) => {
+                    {CATEGORY_DATA.map(cat => {
                       const isActive = cat.name === activeName
                       return (
                         <div
@@ -1459,7 +1331,7 @@ const CelebrationEveryDaySection = () => {
                           <span
                             className={`inline-block bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat text-[#2D2D2D] text-[16px] font-medium leading-[1.5] transition-[background-size] duration-500 ease-out group-hover:bg-[length:100%_1px] ${isActive ? 'bg-[length:100%_1px]' : ''}`}
                           >
-                            {cmsCats[idx]?.tab_label ?? cat.name}
+                            {cat.name}
                           </span>
                         </div>
                       )
@@ -2350,6 +2222,18 @@ const InHousePlannerSection = () => {
 
   const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
+  const plannerImage =
+    getMediaUrl(bio.image ?? bio.photo ?? bio.portrait_image ?? bio.portrait) ||
+    getMediaUrl(cms.hero?.image ?? cms.hero?.photo)
+  const plannerImageAlt =
+    bio.image_alt ??
+    bio.photo_alt ??
+    bio.alt ??
+    `${bio.greeting ?? 'In-House Event Planner'} portrait`
+  const plannerHeadingLine1 =
+    bio.heading_line_1 ?? bio.headingLine1 ?? bio.title_line_1 ?? 'From Our In-House'
+  const plannerHeadingLine2 =
+    bio.heading_line_2 ?? bio.headingLine2 ?? bio.title_line_2 ?? 'Event Planner'
   const mobileHeroBody =
     whatWeDo.mobile_intro ??
     whatWeDo.intro ??
@@ -2418,11 +2302,13 @@ const InHousePlannerSection = () => {
             {/* Image */}
 
             <div className="anim-element slide-from-left w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">
-              <img
-                src={plannerImg}
-                alt="Moksha - In-House Event Planner"
-                className="about-page-hover-image w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
-              />
+              {plannerImage ? (
+                <img
+                  src={plannerImage}
+                  alt={plannerImageAlt}
+                  className="about-page-hover-image w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
+                />
+              ) : null}
             </div>
 
             {/* Content */}
@@ -2436,12 +2322,12 @@ const InHousePlannerSection = () => {
               >
                 <span className="reveal-wrapper block">
                   <span className="reveal-text" style={{ animationDelay: '0s' }}>
-                    From Our In-House
+                    {plannerHeadingLine1}
                   </span>
                 </span>
                 <span className="reveal-wrapper block">
                   <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
-                    Event Planner
+                    {plannerHeadingLine2}
                   </span>
                 </span>
               </h2>

@@ -6,6 +6,8 @@ import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
+import { useFlavors } from '../hooks/useFlavors'
+import { getStoredJwt } from '../lib/api'
 
 // images (reuse same pattern)
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -41,18 +43,6 @@ const SHEESHA_CONTENT = {
   ],
 }
 
-// flavors
-const FLAVORS = [
-  { title: 'Double Apple' },
-  { title: 'Mint' },
-  { title: 'Blueberry' },
-  { title: 'Watermelon' },
-  {
-    title: 'Ice Mint',
-    description: 'Intense icy mint for extreme cooling',
-  },
-]
-
 function buildSheeshaAccordionSections(pkg) {
   return Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
     ? pkg.detail_accordion_sections
@@ -78,7 +68,7 @@ function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancel
 
 function buildSheeshaFlavors(pkg) {
   if (Array.isArray(pkg?.flavor_options) && pkg.flavor_options.length) return pkg.flavor_options
-  return FLAVORS
+  return []
 }
 
 function buildSheeshaInclusions(pkg) {
@@ -91,6 +81,37 @@ function buildSheeshaInclusions(pkg) {
         'Unlimited Coal Change',
         'Full Hookah Equipment kit',
       ]
+}
+
+function normalizeSelectedOptions(selectedOptions = {}) {
+  return Object.fromEntries(
+    Object.entries(selectedOptions)
+      .map(([key, value]) => [String(key ?? '').trim(), String(value ?? '').trim()])
+      .filter(([key, value]) => key && value)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+  )
+}
+
+function buildSheeshaSelectedOptions(customization) {
+  const selectedFlavor = String(customization?.data?.selectedFlavor ?? '').trim()
+  return normalizeSelectedOptions(
+    selectedFlavor
+      ? {
+          Flavor: selectedFlavor,
+        }
+      : {}
+  )
+}
+
+function getSelectedOptionsFromSearchParams(searchParams) {
+  const rawValue = searchParams.get('selectedOptions')
+  if (!rawValue) return {}
+
+  try {
+    return normalizeSelectedOptions(JSON.parse(rawValue))
+  } catch {
+    return {}
+  }
 }
 
 // utils (same as decor)
@@ -167,8 +188,8 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
 export default function SheeshaSinglePackagePage() {
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
+  const { data: packageFlavors = [] } = useFlavors()
   const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
   const { data: cancellationPolicy } = useCancellationPolicy()
   const { addPackage } = useCart()
@@ -187,15 +208,23 @@ export default function SheeshaSinglePackagePage() {
     createInitialData: () => ({ selectedFlavor: null }),
   })
 
-  const [selectedFlavor, setSelectedFlavor] = useState(null)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [addToCartMessage, setAddToCartMessage] = useState('')
   const quantity = customizations.length
+  const navigate = useNavigate()
 
-  // Sync selectedFlavor with active customization when activeIndex changes
   useEffect(() => {
-    setSelectedFlavor(activeCustomization?.data?.selectedFlavor ?? null)
-  }, [activeIndex, activeCustomization])
+    const selectedOptionsFromSearch = getSelectedOptionsFromSearchParams(searchParams)
+    const selectedFlavorFromSearch = selectedOptionsFromSearch.Flavor ?? null
+
+    setCustomizations([
+      {
+        id: 1,
+        data: { selectedFlavor: selectedFlavorFromSearch },
+        isAddedToCart: false,
+      },
+    ])
+  }, [packageId, searchParams, setCustomizations])
 
   const packagesData = useMemo(
     () =>
@@ -243,6 +272,7 @@ export default function SheeshaSinglePackagePage() {
     .slice(0, 3)
     .map(item => ({ ...item, serviceSlug: 'sheesha' }))
 
+  const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null
   const isAddToCartDisabled = !selectedFlavor
   const packageTitle = pkg.title || SHEESHA_CONTENT.title
   const packagePrice = pkg.price || SHEESHA_CONTENT.price
@@ -252,12 +282,12 @@ export default function SheeshaSinglePackagePage() {
     cancellationPolicy,
     SHEESHA_CONTENT.accordionSections.find(section => section.title === 'Cancellation Policy')
   )
-  const flavors = buildSheeshaFlavors(pkg)
+  const packageFlavorsList = buildSheeshaFlavors(pkg)
+  const flavors = packageFlavorsList.length ? packageFlavorsList : packageFlavors
   const inclusions = buildSheeshaInclusions(pkg)
 
   const handleSelectFlavor = flavorTitle => {
     setAddToCartMessage('')
-    setSelectedFlavor(flavorTitle)
     setCustomizations(prev =>
       prev.map((c, i) =>
         i === activeIndex
@@ -276,51 +306,26 @@ export default function SheeshaSinglePackagePage() {
     }
 
     setIsAddingToCart(true)
-    console.log('[cart-click] sheesha add to cart', {
-      packageId: Number(pkg.id),
-      title: pkg.title,
-      selectedFlavor,
-    })
 
     try {
-      const updatedCart = await addPackage({ packageId: Number(pkg.id), quantity: 1 })
-      handleAddToCart()
-      console.log('[cart-click] sheesha added', {
+      const updatedCart = await addPackage({
         packageId: Number(pkg.id),
-        title: pkg.title,
-        itemCount: (updatedCart?.items ?? []).reduce(
-          (sum, item) => sum + Number(item?.quantity ?? 0),
-          0
-        ),
+        quantity: 1,
+        selectedOptions: buildSheeshaSelectedOptions(activeCustomization),
       })
+      handleAddToCart()
+      void updatedCart
       setAddToCartMessage('Added to cart.')
     } catch (err) {
       if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
-        navigate('/login')
-        return
+        if (!getStoredJwt()) {
+          navigate('/login')
+          return
+        }
       }
 
       console.error('[cart-click] sheesha add failed', err)
       setAddToCartMessage('Could not add this package to cart. Please try again.')
-    } finally {
-      setIsAddingToCart(false)
-    }
-  }
-
-  const handleCartAdd = async () => {
-    if (isAddToCartDisabled || isAddingToCart) return
-
-    setIsAddingToCart(true)
-    try {
-      await addPackage({ packageId: pkg.id, quantity })
-      handleAddToCart()
-      navigate('/cart')
-    } catch (err) {
-      if (err?.code === 'AUTH_REQUIRED') {
-        navigate('/login')
-        return
-      }
-      console.error('[sheesha] add to cart failed', err)
     } finally {
       setIsAddingToCart(false)
     }

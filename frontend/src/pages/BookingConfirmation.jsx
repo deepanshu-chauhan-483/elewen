@@ -1,89 +1,126 @@
+import { Link, useLocation } from 'react-router-dom'
 
-/* SMALL REUSABLE COMPONENT */
+function formatCurrency(value) {
+  const amount = Number(value ?? 0)
+  return `Rs${amount.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+function formatDate(value) {
+  if (!value) return 'Not provided'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Not provided'
+  return date.toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 function Detail({ label, value }) {
   return (
-    <div className="flex justify-between items-start">
+    <div className="flex items-start justify-between gap-4">
       <p className="text-gray-500">{label}</p>
-      <p className="text-[#2C2C2C] text-right">{value}</p>
+      <p className="text-right text-[#2C2C2C]">{value}</p>
     </div>
   )
 }
 
-/* DATA */
-const STEPS = [
+const DEFAULT_STEPS = [
   {
     title: 'Confirmation Email',
-    desc: 'A booking confirmation will be sent to priya@example.com',
+    desc: 'A booking confirmation has been sent to your email address.',
   },
   {
     title: 'Vendor Coordination',
-    desc: 'Our team will contact you within 24 hrs to confirm details',
+    desc: 'Our team will contact you within 24 hours to confirm details.',
   },
   {
-    title: 'Event Day',
-    desc: 'Your vendor arrives 2 hrs before the event for setup',
+    title: 'Event Planning',
+    desc: 'Your event brief and package notes will be reviewed internally.',
   },
   {
     title: 'Balance Payment',
-    desc: 'Remaining ₹47,950 due 3 days before the event',
+    desc: 'The remaining amount will be due before the event date.',
   },
 ]
 
 export default function BookingConfirmation() {
+  const { state } = useLocation()
+  const booking = state?.booking ?? null
+  const payment = state?.payment ?? null
+  const checkoutInfo = state?.checkoutInfo ?? {}
+
+  const packageLabel = booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package'
+
   return (
-    <div className="bg-[#FAF9F7] min-h-screen px-4 md:px-8 lg:px-16 py-10 md:pt-24">
-      {/* MAIN GRID */}
-      <div className="flex flex-col md:flex-row gap-[clamp(24px,6vw,150px)]">
-        {/* LEFT SIDE */}
+    <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">
+      <div className="flex flex-col gap-[clamp(24px,6vw,150px)] md:flex-row">
         <div className="flex-1 space-y-6">
-          {/* SUCCESS ICON */}
-          <div className="w-14 h-14 rounded-full bg-[#B7B59F] flex items-center justify-center mb-6">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#B7B59F] text-xl text-white">
             ✓
           </div>
 
-          {/* TITLE */}
-          <h1 className=" text-[16px] md:text-[27px] font-semibold text-[#2C2C2C] mb-2">
+          <h1 className="mb-2 text-[16px] font-semibold text-[#2C2C2C] md:text-[27px]">
             Booking Confirmed!
           </h1>
 
-          <p className="text-gray-500 mb-6 text-[12px] md:text-[16px]">
+          <p className="mb-6 text-[12px] text-gray-500 md:text-[16px]">
             Your event has been successfully booked. Details below.
           </p>
 
-          {/* BUTTONS */}
-          <div className="flex gap-4 mb-8 flex-wrap">
-            <button className="px-3 py-2 rounded-full border border-[#957960] text-[#957960] text-[12px]">
-              Download Receipt
-            </button>
-
-            <button className="px-3 py-2 rounded-full bg-[#D8C9AF] text-[#6B5B4D] text-[12px]">
+          <div className="mb-8 flex flex-wrap gap-4">
+            <Link
+              to="/"
+              className="rounded-full border border-[#957960] px-3 py-2 text-[12px] text-[#957960]"
+            >
               Back to Home
-            </button>
+            </Link>
+
+            <Link
+              to="/cart"
+              className="rounded-full bg-[#D8C9AF] px-3 py-2 text-[12px] text-[#6B5B4D]"
+            >
+              View Cart
+            </Link>
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
 
-          {/* ADVANCE PAID BOX */}
-          <div className="bg-[#F8F4ED] rounded-xl p-5 flex justify-between items-center mb-6">
+          <div className="mb-6 flex items-center justify-between rounded-xl bg-[#F8F4ED] p-5">
             <div>
-              <p className="text-[#957960] font-medium">Advance Paid</p>
+              <p className="font-medium text-[#957960]">Advance Paid</p>
               <p className="text-sm text-gray-500">Balance due before event</p>
             </div>
 
             <div className="text-right">
-              <p className="text-lg text-[#957960] font-semibold">₹20,550</p>
-              <p className="text-sm text-gray-700">₹47,950</p>
+              <p className="text-lg font-semibold text-[#957960]">
+                {formatCurrency(payment?.advanceAmount ?? booking?.advanceAmount)}
+              </p>
+              <p className="text-sm text-gray-700">
+                {formatCurrency(payment?.balanceDue ?? booking?.remainingAmount)}
+              </p>
             </div>
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
 
-          {/* EVENT DETAILS */}
-          <div className="justify-between text-[12px]">
-            <Detail label="Event" value="The Grand Celebration — Birthday Party" />
-            <Detail label="Date" value="Saturday, 14 June 2026" />
-            <Detail label="Location" value="Jaipur, Rajasthan" />
-            <Detail label="Package" value="Grand Celebration + 5 Add-ons" />
+          <div className="space-y-3 text-[12px] md:text-[14px]">
+            <Detail label="Booking ID" value={booking?.id ?? 'Not available'} />
+            <Detail
+              label="Event Date"
+              value={formatDate(checkoutInfo?.eventDate ?? booking?.eventDate)}
+            />
+            <Detail label="Location" value={checkoutInfo?.eventAddress || 'Not provided'} />
+            <Detail
+              label="Guests"
+              value={checkoutInfo?.guestCount || booking?.guestCount || 'Not provided'}
+            />
+            <Detail label="Package" value={packageLabel} />
+            <Detail label="Contact" value={checkoutInfo?.fullName || 'Not provided'} />
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
@@ -93,26 +130,22 @@ export default function BookingConfirmation() {
           </p>
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="flex-1">
-          <div className="bg-[#EADEC8] rounded-2xl p-6 h-fit max-w-[458px] lg:ml-auto">
-            <h3 className="text-[#591902] text-[12px] font-medium mb-6">What Happens Next</h3>
+          <div className="h-fit max-w-[458px] rounded-2xl bg-[#EADEC8] p-6 lg:ml-auto">
+            <h3 className="mb-6 text-[12px] font-medium text-[#591902]">What Happens Next</h3>
 
-            <div className="space-y-8 relative">
-              {/* vertical line */}
-              <div className="absolute left-4 top-2 bottom-2 w-[1px] border-l border-dashed border-[#C8B89E]"></div>
+            <div className="relative space-y-8">
+              <div className="absolute bottom-2 left-4 top-2 w-[1px] border-l border-dashed border-[#C8B89E]" />
 
-              {STEPS.map((step, i) => (
-                <div key={i} className="flex gap-4 relative">
-                  {/* number */}
-                  <div className="w-8 h-8 rounded-full border border-[#CDB17E] text-[#957960] flex items-center justify-center bg-white z-10">
+              {DEFAULT_STEPS.map((step, i) => (
+                <div key={i} className="relative flex gap-4">
+                  <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#CDB17E] bg-white text-[#957960]">
                     {i + 1}
                   </div>
 
-                  {/* content */}
                   <div>
-                    <p className="font-medium text-[#1C1C1C] text-[16px]">{step.title}</p>
-                    <p className="text-sm text-[#364022] text-[12px]">{step.desc}</p>
+                    <p className="text-[16px] font-medium text-[#1C1C1C]">{step.title}</p>
+                    <p className="text-[12px] text-[#364022]">{step.desc}</p>
                   </div>
                 </div>
               ))}

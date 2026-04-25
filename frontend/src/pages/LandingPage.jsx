@@ -348,9 +348,9 @@ const PlanEventSection = () => {
           </div>
         </aside>
 
-        <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
+        <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8 min-w-0">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
+          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden min-w-0">
             <div className="relative min-h-[460px] md:min-h-0">
               <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
@@ -378,9 +378,9 @@ const PlanEventSection = () => {
 
               <div
                 ref={carouselViewportRef}
-                className="w-[322px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
+                className="w-[300px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
                 style={{
-                  maskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
+                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
                   WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
                   transition:
                     'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -2425,7 +2425,7 @@ const ChecklistSection = () => {
       <div className="door-section relative w-full z-10  overflow-hidden">
         <div
           ref={gateAreaRef}
-          className="door-section__pin relative w-full z-20 h-[100svh] md:h-[100dvh] "
+          className="door-section__pin relative w-full z-20 h-[100svh] md:h-[100dvh]"
           style={{ position: 'relative' }}
         >
           <div
