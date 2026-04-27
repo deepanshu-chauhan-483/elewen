@@ -220,10 +220,41 @@ export const INHOUSE_PLANNER_PAGE_FALLBACK = {
       'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.',
     personal_note:
       "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created.",
+    _sectionImages: [
+      { id: 1, name: 'moksha_portrait.jpg', url: '/images/placeholder.jpg' },
+    ],
   },
   grand_celebrations_intro: {
-    heading_1: 'Experience, without the noise:',
+    heading_1: 'Experience Across Grand Celebrations',
     note: 'Executed during my tenure at Wizcraft and/or as a freelance project manager.',
+    categories: [
+      {
+        label: 'Citroen',
+        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+      },
+      {
+        label: 'Danube',
+        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+      },
+      {
+        label: 'Guns & Gulaabs',
+        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+      },
+      {
+        label: 'Usha',
+        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+      },
+    ],
+    _sectionImages: [
+      { id: 1, name: 'CITROEN01.jpg', url: '/images/placeholder.jpg' },
+      { id: 2, name: 'CITROEN02.jpg', url: '/images/placeholder.jpg' },
+      { id: 3, name: 'DANUBE01.jpg', url: '/images/placeholder.jpg' },
+      { id: 4, name: 'DANUBE02.jpg', url: '/images/placeholder.jpg' },
+      { id: 5, name: 'GUNS01.jpg', url: '/images/placeholder.jpg' },
+      { id: 6, name: 'GUNS02.jpg', url: '/images/placeholder.jpg' },
+      { id: 7, name: 'USHA01.jpg', url: '/images/placeholder.jpg' },
+      { id: 8, name: 'USHA02.jpg', url: '/images/placeholder.jpg' },
+    ],
   },
   celebrations_every_day: {
     heading: 'Celebrations We Plan Every Day',

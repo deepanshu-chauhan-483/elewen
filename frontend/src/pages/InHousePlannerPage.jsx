@@ -7,12 +7,65 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { usePlannerLead } from '../hooks/usePlannerLead'
 
 import { useInHousePlannerPage } from '../hooks/useCmsPages'
+import { INHOUSE_PLANNER_PAGE_FALLBACK } from '../data/cmsPages'
 
 import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+
+const MOKSHA_FALLBACK_IMAGE = new URL('../assets/images/moksha_portrait.jpg', import.meta.url).href
+
+const GRAND_CELEBRATION_FALLBACKS = {
+  citroen: [new URL('../assets/images/citroen.png', import.meta.url).href],
+  danube: [new URL('../assets/images/danube.jpg', import.meta.url).href],
+  'guns & gulaabs': [new URL('../assets/images/guns.jpg', import.meta.url).href],
+  usha: [new URL('../assets/images/usha.jpg', import.meta.url).href],
+  iifl: [new URL('../assets/images/IMG_9814.jpg', import.meta.url).href],
+  'maruti dzire': [new URL('../assets/images/IMG_3903.jpg', import.meta.url).href],
+  trail: [new URL('../assets/images/6f6af066.jpg', import.meta.url).href],
+  'indus ind': [new URL('../assets/images/IMG_3148.jpg', import.meta.url).href],
+}
+
+const CELEBRATION_CATEGORY_FALLBACKS = {
+  anniversaries: {
+    topLeft: new URL('../assets/images/IMG_7768.jpg', import.meta.url).href,
+    topRight: new URL('../assets/images/img3010.jpg', import.meta.url).href,
+    bottomLeft: new URL('../assets/images/img3001.jpg', import.meta.url).href,
+    bottomRight: new URL('../assets/images/img2017.jpg', import.meta.url).href,
+  },
+  'birthday parties': {
+    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/IMG_7656.jpg', import.meta.url).href,
+    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/IMG_7646.jpg', import.meta.url).href,
+    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/f3867d0a-728b-422d-9a68-49df01b46d65.JPG', import.meta.url).href,
+    bottomRight: new URL('../assets/images/img8f9e.jpg', import.meta.url).href,
+  },
+  engagement: {
+    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Engagement/IMG_9913.jpg', import.meta.url).href,
+    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Engagement/IMG_4757.jpg', import.meta.url).href,
+    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Engagement/IMG_3015.jpg', import.meta.url).href,
+    bottomRight: new URL('../assets/images/img6a98.jpg', import.meta.url).href,
+  },
+  haldi: {
+    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Haldi/IMG_8639.PNG', import.meta.url).href,
+    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Haldi/IMG_8638.PNG', import.meta.url).href,
+    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Haldi/IMG_4826.jpg', import.meta.url).href,
+    bottomRight: new URL('../assets/Inhouse Planner Images/Social Events/Haldi/IMG_4794.jpg', import.meta.url).href,
+  },
+  mehendi: {
+    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8642.PNG', import.meta.url).href,
+    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8641.PNG', import.meta.url).href,
+    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8640.PNG', import.meta.url).href,
+    bottomRight: new URL('../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_4656.jpg', import.meta.url).href,
+  },
+  weddings: {
+    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Weddings/IMG_8637.PNG', import.meta.url).href,
+    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4854.jpg', import.meta.url).href,
+    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4853.jpg', import.meta.url).href,
+    bottomRight: new URL('../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4850.jpg', import.meta.url).href,
+  },
+}
 
 function toAbsoluteMediaUrl(url = '') {
   const value = String(url ?? '').trim()
@@ -40,61 +93,131 @@ function getMediaUrl(media) {
   )
 }
 
+function normalizeKey(value = '') {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+}
+
+function toBucketKey(value = '') {
+  const compact = normalizeKey(value).replace(/[^a-z0-9]/g, '')
+  const aliasMap = {
+    gunsgulaabs: 'guns',
+  }
+
+  return aliasMap[compact] ?? compact
+}
+
+function buildImagesByBucket(images = []) {
+  return (Array.isArray(images) ? images : []).reduce((acc, img) => {
+    const filename = String(img?.name ?? img?.url ?? '')
+    const match = filename.match(/^([a-z]+)/i)
+    if (!match) return acc
+
+    const key = toBucketKey(match[1])
+    if (!key) return acc
+
+    if (!acc[key]) acc[key] = []
+    acc[key].push(img)
+    return acc
+  }, {})
+}
+
 function normalizeGrandCelebrationItems(section = {}) {
-  const items = section.items ?? section.cards ?? section.projects ?? section.portfolio_items ?? []
+  const items = section.items ?? section.cards ?? section.projects ?? section.portfolio_items ?? section.categories ?? []
+  const sectionImages = Array.isArray(section._sectionImages)
+    ? section._sectionImages
+    : Array.isArray(section.images)
+      ? section.images
+      : []
+  const imagesByCategory = buildImagesByBucket(sectionImages)
 
   return (Array.isArray(items) ? items : [])
-    .map((item, index) => ({
-      id: String(item.id ?? item.order ?? index + 1).padStart(2, '0'),
-      title: item.title ?? item.heading ?? item.name ?? '',
-      desc: item.desc ?? item.description ?? item.body ?? '',
-      image: getMediaUrl(item.image ?? item.media ?? item.photo ?? item.thumbnail),
-      tall: Boolean(item.tall ?? item.is_tall ?? item.portrait ?? false),
-    }))
+    .map((item, index) => {
+      const title = item.title ?? item.heading ?? item.name ?? item.label ?? ''
+      const categoryName = toBucketKey(title)
+      const categoryImages = imagesByCategory[categoryName] || []
+      const fallbackImages = GRAND_CELEBRATION_FALLBACKS[categoryName] ?? []
+      
+      return {
+        id: String(item.id ?? item.order ?? index + 1).padStart(2, '0'),
+        title,
+        desc: item.desc ?? item.description ?? item.body ?? '',
+        image: getMediaUrl(
+          item.image ??
+            item.media ??
+            item.photo ??
+            item.thumbnail ??
+            categoryImages[0] ??
+            sectionImages[index] ??
+            fallbackImages[0]
+        ),
+        tall: Boolean(item.tall ?? item.is_tall ?? item.portrait ?? false),
+      }
+    })
     .filter(item => item.title || item.image)
 }
 
 function normalizeCelebrationCategories(section = {}) {
   const categories = section.categories ?? section.items ?? []
+  const sectionImages = Array.isArray(section._sectionImages)
+    ? section._sectionImages
+    : Array.isArray(section.images)
+      ? section.images
+      : []
+  const imagesByCategory = buildImagesByBucket(sectionImages)
 
   return (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
       const name =
         item.tab_label ?? item.name ?? item.title ?? item.heading ?? `Category ${index + 1}`
+      const bucketKey = toBucketKey(name)
+      const categoryImages = imagesByCategory[bucketKey] ?? []
+      const fallbackImages = CELEBRATION_CATEGORY_FALLBACKS[bucketKey] ?? {}
       return {
         name,
         heading: item.heading ?? String(name).toUpperCase(),
         desc: item.description ?? item.desc ?? item.body ?? '',
         images: {
           topLeft: getMediaUrl(
-            item.top_left_image ?? item.topLeftImage ?? item.images?.topLeft ?? item.image_1
+            item.top_left_image ??
+              item.topLeftImage ??
+              item.images?.topLeft ??
+              item.image_1 ??
+              categoryImages[0] ??
+              fallbackImages.topLeft
           ),
           topRight: getMediaUrl(
-            item.top_right_image ?? item.topRightImage ?? item.images?.topRight ?? item.image_2
+            item.top_right_image ??
+              item.topRightImage ??
+              item.images?.topRight ??
+              item.image_2 ??
+              categoryImages[1] ??
+              fallbackImages.topRight
           ),
           bottomLeft: getMediaUrl(
             item.bottom_left_image ??
               item.bottomLeftImage ??
               item.images?.bottomLeft ??
-              item.image_3
+              item.image_3 ??
+              categoryImages[2] ??
+              fallbackImages.bottomLeft
           ),
           bottomRight: getMediaUrl(
             item.bottom_right_image ??
               item.bottomRightImage ??
               item.images?.bottomRight ??
-              item.image_4
+              item.image_4 ??
+              categoryImages[3] ??
+              fallbackImages.bottomRight
           ),
         },
       }
     })
     .filter(
       item =>
-        item.name &&
-        (item.images.topLeft ||
-          item.images.topRight ||
-          item.images.bottomLeft ||
-          item.images.bottomRight ||
-          item.desc)
+        item.name
     )
 }
 
@@ -114,8 +237,13 @@ const GCTextReveal = ({ children, className = '' }) => (
 const GrandCelebrationsSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
-  const gc = cms.grand_celebrations_intro ?? {}
+  const gc = cms.grandCelebrationSection ?? cms.grand_celebrations_intro ?? {}
+  const fallbackGc = INHOUSE_PLANNER_PAGE_FALLBACK.grand_celebrations_intro ?? {}
   const celebrationData = normalizeGrandCelebrationItems(gc)
+  const resolvedCelebrationData =
+    celebrationData.length > 0 ? celebrationData : normalizeGrandCelebrationItems(fallbackGc)
+  const resolvedGc =
+    celebrationData.length > 0 || !Object.keys(gc).length ? gc : { ...fallbackGc, ...gc }
 
   const sectionRef = useRef(null)
 
@@ -150,12 +278,12 @@ const GrandCelebrationsSection = () => {
   const [isAnimating, setIsAnimating] = useState(false)
   const perPageRef = useRef(perPage)
 
-  const totalPages = Math.max(1, Math.ceil(celebrationData.length / perPage))
+  const totalPages = Math.max(1, Math.ceil(resolvedCelebrationData.length / perPage))
   const isMobile = perPage === 1
   const getItems = pageIndex => {
     const start = pageIndex * perPage
 
-    return celebrationData.slice(start, start + perPage)
+    return resolvedCelebrationData.slice(start, start + perPage)
   }
 
   const getRevealTexts = cards =>
@@ -321,13 +449,14 @@ const GrandCelebrationsSection = () => {
 
   const incomingItems = normalizedIncomingPage === null ? [] : getItems(normalizedIncomingPage)
 
-  const mobileActiveItem = celebrationData[(normalizedPage * perPage) % celebrationData.length]
+  const mobileActiveItem =
+    resolvedCelebrationData[(normalizedPage * perPage) % resolvedCelebrationData.length]
 
   const mobileStackItems = isMobile
     ? Array.from({ length: 4 }, (_, offset) => {
-        const idx = (normalizedPage + offset) % celebrationData.length
+        const idx = (normalizedPage + offset) % resolvedCelebrationData.length
 
-        return celebrationData[idx]
+        return resolvedCelebrationData[idx]
       })
     : []
 
@@ -357,7 +486,7 @@ const GrandCelebrationsSection = () => {
             >
               <span className="reveal-wrapper block">
                 <span ref={titleRef} className="reveal-text block">
-                  {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+                  {resolvedGc.heading_1 ?? 'Experience Across Grand Celebrations'}
                 </span>
               </span>
             </h3>
@@ -369,7 +498,7 @@ const GrandCelebrationsSection = () => {
                   className="reveal-text block"
                   style={{ animationDelay: '0.08s' }}
                 >
-                  {gc.note ??
+                  {resolvedGc.note ??
                     'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
                 </span>
               </span>
@@ -576,7 +705,7 @@ const GrandCelebrationsSection = () => {
                   className="reveal-text reveal-text-x-left reveal-text-slow block"
                   style={{ animationDelay: '0.08s' }}
                 >
-                  {gc.note ??
+                  {resolvedGc.note ??
                     'Executed during my tenure at Wizcraft and/or as a freelance project manager.'}
                 </span>
               </span>
@@ -591,7 +720,7 @@ const GrandCelebrationsSection = () => {
                   ref={titleRef}
                   className="reveal-text reveal-text-x-right reveal-text-slow block"
                 >
-                  {gc.heading_1 ?? 'Experience Across Grand Celebrations'}
+                  {resolvedGc.heading_1 ?? 'Experience Across Grand Celebrations'}
                 </span>
               </span>
             </h3>
@@ -672,14 +801,19 @@ const CelebrationEveryDaySection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
   const ced = cms.celebrations_every_day ?? {}
+  const fallbackCed = INHOUSE_PLANNER_PAGE_FALLBACK.celebrations_every_day ?? {}
   const CATEGORY_DATA = normalizeCelebrationCategories(ced)
+  const RESOLVED_CATEGORY_DATA =
+    CATEGORY_DATA.length > 0 ? CATEGORY_DATA : normalizeCelebrationCategories(fallbackCed)
+  const resolvedCed =
+    CATEGORY_DATA.length > 0 || !Object.keys(ced).length ? ced : { ...fallbackCed, ...ced }
 
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  const [activeName, setActiveName] = useState(CATEGORY_DATA[0]?.name ?? '')
+  const [activeName, setActiveName] = useState(RESOLVED_CATEGORY_DATA[0]?.name ?? '')
 
   const [incomingName, setIncomingName] = useState(null)
 
@@ -726,11 +860,12 @@ const CelebrationEveryDaySection = () => {
   const activeAccentRef = useRef(null)
   const incomingAccentRef = useRef(null)
   const incomingLayerRef = useRef(null)
-  const incoming = incomingName ? (CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
-  const resolvedActiveName = CATEGORY_DATA.some(category => category.name === activeName)
+  const incoming = incomingName ? (RESOLVED_CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
+  const resolvedActiveName = RESOLVED_CATEGORY_DATA.some(category => category.name === activeName)
     ? activeName
-    : (CATEGORY_DATA[0]?.name ?? '')
-  const active = CATEGORY_DATA.find(c => c.name === resolvedActiveName) ?? CATEGORY_DATA[0]
+    : (RESOLVED_CATEGORY_DATA[0]?.name ?? '')
+  const active =
+    RESOLVED_CATEGORY_DATA.find(c => c.name === resolvedActiveName) ?? RESOLVED_CATEGORY_DATA[0]
 
   const animateSwapMobile = nextName => {
     if (prefersReducedMotion) {
@@ -1086,7 +1221,7 @@ const CelebrationEveryDaySection = () => {
     }
   }, [])
 
-  if (!CATEGORY_DATA.length) return null
+  if (!RESOLVED_CATEGORY_DATA.length) return null
 
   return (
     <section
@@ -1100,14 +1235,16 @@ const CelebrationEveryDaySection = () => {
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper block">
-            <span className="reveal-text">{ced.heading ?? 'Celebrations We Plan Every Day'}</span>
+            <span className="reveal-text">
+              {resolvedCed.heading ?? 'Celebrations We Plan Every Day'}
+            </span>
           </span>
         </h2>
 
         <p className="mt-5 text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7] text-center">
           <span className="reveal-wrapper block">
             <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
-              {ced.description ??
+              {resolvedCed.description ??
                 'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
             </span>
           </span>
@@ -1116,7 +1253,7 @@ const CelebrationEveryDaySection = () => {
         {/* Category tabs (2 rows like screenshot) */}
         <div className="mt-10">
           <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-3 text-[14px]">
-            {CATEGORY_DATA.slice(0, 3).map((cat, idx) => {
+            {RESOLVED_CATEGORY_DATA.slice(0, 3).map((cat, idx) => {
               const isActive = cat.name === resolvedActiveName
               return (
                 <div key={cat.name} className="flex items-center gap-3">
@@ -1145,7 +1282,7 @@ const CelebrationEveryDaySection = () => {
           </div>
 
           <div className="mt-3 flex items-center justify-center flex-wrap gap-x-3 gap-y-3 text-[14px]">
-            {CATEGORY_DATA.slice(3, 6).map((cat, i) => {
+            {RESOLVED_CATEGORY_DATA.slice(3, 6).map((cat, i) => {
               const isActive = cat.name === resolvedActiveName
 
               return (
@@ -1275,7 +1412,7 @@ const CelebrationEveryDaySection = () => {
               >
                 <span className="reveal-wrapper block">
                   <span className="reveal-text">
-                    {ced.heading ?? 'Celebrations We Plan Every Day'}
+                    {resolvedCed.heading ?? 'Celebrations We Plan Every Day'}
                   </span>
                 </span>
               </h2>
@@ -1283,7 +1420,7 @@ const CelebrationEveryDaySection = () => {
               <p className="absolute left-1/2 -translate-x-1/2 top-[169px] w-[809px] text-[#2D2D2D] opacity-50 text-[16px] leading-[1.5] text-center">
                 <span className="reveal-wrapper block">
                   <span className="reveal-text" style={{ animationDelay: '0.1s' }}>
-                    {ced.description ??
+                    {resolvedCed.description ??
                       'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.'}
                   </span>
                 </span>
@@ -1305,7 +1442,7 @@ const CelebrationEveryDaySection = () => {
                 {/* Left categories (stays as-is) */}
                 <div className="absolute left-[0px] top-[0px] w-[440px] h-[400px] bg-[#EBEBEB] z-20">
                   <div className="absolute left-[100px] top-[0px] flex flex-col pt-12">
-                    {CATEGORY_DATA.map(cat => {
+                    {RESOLVED_CATEGORY_DATA.map(cat => {
                       const isActive = cat.name === resolvedActiveName
                       return (
                         <div
@@ -2212,7 +2349,14 @@ const InHousePlannerSection = () => {
   const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
   const plannerImage =
-    getMediaUrl(bio.image ?? bio.photo ?? bio.portrait_image ?? bio.portrait) ||
+    getMediaUrl(
+      bio.image ??
+        bio.photo ??
+        bio.portrait_image ??
+        bio.portrait ??
+        bio._sectionImages?.[0] ??
+        MOKSHA_FALLBACK_IMAGE
+    ) ||
     getMediaUrl(cms.hero?.image ?? cms.hero?.photo)
   const plannerImageAlt =
     bio.image_alt ??

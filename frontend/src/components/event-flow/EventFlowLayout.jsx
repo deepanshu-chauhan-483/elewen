@@ -77,7 +77,7 @@ export default function EventFlowLayout({
     <main className="bg-[#F8F4ED] text-[#2D2D2D] ">
       <NavHeader />
 
-      <div className="flex h-[100svh] flex-col overflow-hidden pt-16 min-[540px]:pt-18 md:pt-20 ">
+      <div className="flex h-[100svh] flex-col overflow-hidden pt-6 min-[540px]:pt-8 md:pt-10 ">
         <section
           className="event-flow-scroll hide-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#F8F4ED]"
           data-lenis-prevent
@@ -159,7 +159,7 @@ export default function EventFlowLayout({
         </section>
 
         {/* ✅ ONLY FIX HERE */}
-        <section className="h-[84px] shrink-0 bg-[#591902] sm:h-[92px] fix bottom-0">
+        <section className="h-[55px] shrink-0 bg-[#591902] sm:h-[70px] fix bottom-0">
           <div className="h-full px-4 sm:px-6">
             <div className="mx-auto flex h-full w-full lg:w-[calc(100%-200px)] lg:max-w-none items-center justify-between gap-6">
               {steps.length > 0 ? (

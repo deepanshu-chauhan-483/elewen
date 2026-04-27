@@ -135,7 +135,14 @@ const resolveNavAppearanceFromPoint = (x, y) => {
 
 function DashboardIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="mt-2"
+    >
       <path
         d="M9 3H4C3.44772 3 3 3.44772 3 4V11C3 11.5523 3.44772 12 4 12H9C9.55228 12 10 11.5523 10 11V4C10 3.44772 9.55228 3 9 3Z"
         stroke="#FAFAFA"
@@ -181,7 +188,6 @@ function CartIcon() {
     </svg>
   )
 }
-
 function CartButton({ count, className }) {
   const navigate = useNavigate()
   const handleClick = () => {
@@ -377,12 +383,12 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const resolvedDesktopIconColor = useBlackNavAccent ? '#000000' : iconColor
   const resolvedMobileIconColor = useBlackNavAccent ? '#000000' : mobileIconColor
   const overlayActionClass =
-    'flex h-10 w-10 items-center justify-center text-white transition-opacity hover:opacity-70'
+    'flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-70'
   return (
     <>
       <header
         ref={headerRef}
-        className={`fixed top-0 left-0 right-0 z-[60] overflow-hidden px-6 py-[14px] transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-[22px] ${visibilityClass} ${transformClass}`}
+        className={`fixed top-0 left-0 right-0 z-[60] overflow-hidden px-6 py-[8px] transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-[12px] ${visibilityClass} ${transformClass}`}
       >
         <div
           className="pointer-events-none absolute inset-0 md:hidden"
@@ -442,16 +448,16 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             <button
               onClick={() => setOpen(true)}
               type="button"
-              className="hidden w-[248px] items-center gap-2.5 rounded-full px-2.5 py-1.5 backdrop-blur-md transition-all md:flex"
+              className="hidden w-[225px] items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md transition-all md:flex"
               style={{
                 border: `1px solid ${searchButtonBorder}`,
                 background: searchButtonBg,
                 boxShadow: isTransparentNav ? '0 8px 20px rgba(89,25,2,0.05)' : 'none',
               }}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#591902]">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#591902]">
                 <svg
-                  className="h-3.5 w-3.5"
+                  className="h-3 w-3"
                   style={{ color: '#FAFAFA' }}
                   fill="none"
                   stroke="currentColor"
@@ -466,7 +472,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 </svg>
               </span>
               <span
-                className="text-[15px] font-medium tracking-wide"
+                className="text-[13px] font-medium tracking-wide"
                 style={{ color: searchTextColor }}
               >
                 Search
@@ -475,7 +481,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           </div>
 
           <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
-            <Link to="/" className="flex h-40 w-110 items-center justify-center md:h-70 md:w-130">
+            <Link to="/" className="flex h-26 w-84 items-center justify-center md:h-52 md:w-96">
               <img
                 src={navLogo}
                 alt="Elewen"
@@ -486,9 +492,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="p-1 md:hidden" aria-label="Search" type="button">
+            <button className="p-0.5 md:hidden" aria-label="Search" type="button">
               <svg
-                className="h-5 w-5"
+                className="h-4 w-4"
                 fill="none"
                 stroke={resolvedMobileIconColor}
                 viewBox="0 0 24 24"
@@ -501,24 +507,20 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 />
               </svg>
             </button>
-            <CartButton
-              count={itemCount}
-              className={isDesktop ? 'hidden md:flex' : 'flex md:hidden'}
-            />
             <button
               onClick={() => setOpen(true)}
               aria-label="Open menu"
-              className="group flex flex-col gap-1.5 p-1"
+              className="group flex flex-col gap-1 p-0.5"
               type="button"
             >
               <div
-                className="h-0.5 w-7 transition-all duration-300 group-hover:opacity-60 md:w-9"
+                className="h-0.5 w-6 transition-all duration-300 group-hover:opacity-60 md:w-7"
                 style={{
                   backgroundColor: isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor,
                 }}
               />
               <div
-                className="h-0.5 w-5 transition-all duration-300 group-hover:w-7 md:w-7 md:group-hover:w-9"
+                className="h-0.5 w-4 transition-all duration-300 group-hover:w-7 md:w-6 md:group-hover:w-8"
                 style={{
                   backgroundColor: isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor,
                 }}
@@ -560,7 +562,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             <img
               src={mobilenavlogo}
               alt="Elewen"
-              className="h-auto w-[min(114px,32vw)] min-w-[92px] object-contain"
+              className="h-auto w-[min(114px,32vw)] min-w-[92px] object-contain mt-2"
             />
           </Link>
 
@@ -574,9 +576,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               />
             </Link>
           </div>
-          <div className="ml-auto flex items-center gap-3  md:hidden">
+          <div className="ml-auto flex items-center gap-3 md:hidden">
             <button type="button" aria-label="Search" className="p-1 text-white">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -603,7 +605,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               type="button"
             >
               <svg
-                className="h-5 w-5 translate-y-[1px]"
+                className="h-10 w-10 translate-y-[2px] mt-1"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -637,7 +639,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               type="button"
             >
               <svg
-                className="h-5 w-5 translate-y-[1px]"
+                className="h-10 w-10 translate-y-[2px] mt-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
