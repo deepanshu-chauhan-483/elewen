@@ -82,13 +82,13 @@ export function useCart() {
       }
     }
 
-    const debouncedSync = () => {
-      const now = Date.now()
-      if (now - lastSyncTime >= SYNC_DEBOUNCE_MS) {
-        lastSyncTime = now
-        syncCart()
-      }
-    }
+    // const debouncedSync = () => {
+    //   const now = Date.now()
+    //   if (now - lastSyncTime >= SYNC_DEBOUNCE_MS) {
+    //     lastSyncTime = now
+    //     syncCart()
+    //   }
+    // }
 
     const handleAuthChange = () => {
       setIsLoggedIn(!!getToken())
