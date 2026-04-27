@@ -1,4 +1,4 @@
-import { strapiServerPost } from '../lib/strapi.js'
+import { strapiPost, strapiServerPost } from '../lib/strapi.js'
 
 // ─── POST /consultations ───────────────────────────────────────────────────────
 // Stores a "Book a Consultation" enquiry in the shared planner_leads Strapi
@@ -32,7 +32,7 @@ export const createConsultation = async (req, res, next) => {
       ? parseInt(String(guest_count).split('-')[0], 10) || null
       : null
 
-    await strapiServerPost('/api/planner-leads', {
+    const payload = {
       data: {
         lead_type: 'consultation',
         full_name,
@@ -46,7 +46,21 @@ export const createConsultation = async (req, res, next) => {
         vision_notes: vision_notes || null,
         planner_lead_status: 'new',
       },
-    })
+    }
+
+    try {
+      await strapiServerPost('/api/planner-leads', payload)
+    } catch (err) {
+      const isCredentialError =
+        (err?.status === 401 || err?.status === 403) &&
+        /missing or invalid credentials/i.test(String(err?.message ?? ''))
+
+      if (!isCredentialError) {
+        throw err
+      }
+
+      await strapiPost('/planner-leads', payload)
+    }
 
     res.status(201).json({ ok: true })
   } catch (err) {
