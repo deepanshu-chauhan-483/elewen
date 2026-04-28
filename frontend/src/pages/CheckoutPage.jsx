@@ -26,6 +26,18 @@ function normalizeServiceSlug(value = '') {
     .replace(/-services?$/, '')
 }
 
+function getMinEventDate() {
+  const today = new Date()
+  const minDate = new Date(today)
+  minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
+
+  const year = minDate.getFullYear()
+  const month = String(minDate.getMonth() + 1).padStart(2, '0')
+  const day = String(minDate.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 function getSavedUser() {
   try {
     const raw = localStorage.getItem('elewen_user')
@@ -563,6 +575,7 @@ export default function CheckoutPage() {
               <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <input
                   type="date"
+                  min={getMinEventDate()}
                   value={eventDate}
                   onChange={event => setEventDate(event.target.value)}
                   className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"

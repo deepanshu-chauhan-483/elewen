@@ -1,21 +1,35 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   useBudgetLevelOptions,
   useDecorThemeOptions,
   useEventCategoryOptions,
-  useEventsByCategory,
+  useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
+import { normalizeServiceSlug } from '../../lib/packageFilters'
 
-function FilterPill({ label, widthClass = '' }) {
+function FilterPill({
+  label,
+  widthClass = '',
+  value = '',
+  options = [],
+  onChange,
+  disabled = false,
+}) {
   return (
     <div className={`relative w-full sm:w-auto ${widthClass}`}>
       <select
-        value={label}
-        disabled
+        value={value}
+        disabled={disabled}
+        onChange={onChange}
         className="h-[34px] w-full appearance-none rounded-full bg-[#F7F0E6] pl-4 pr-9 text-[14px] leading-none text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
       >
-        <option>{label}</option>
+        <option value="">{label}</option>
+        {options.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
 
       <svg
@@ -40,46 +54,175 @@ const titleizeSlug = value =>
 
 const DEFAULT_WIDTHS = {
   category: 'sm:w-[118px]',
-  event: 'sm:w-[168px]',
+  service: 'sm:w-[132px]',
   theme: 'sm:w-[110px]',
   level: 'sm:w-[106px]',
 }
+
+const CATEGORY_ORDER = ['social', 'corporate', 'religious']
+const SERVICE_ORDER = ['catering', 'decor', 'bar-tending', 'sheesha-services', 'furniture']
+const LEVEL_ORDER = ['level-1', 'level-2', 'level-3']
+
+const toSelectOption = item => ({
+  value: item.slug,
+  label: item.name ?? item.label ?? titleizeSlug(item.slug),
+})
 
 export default function PackageResultsHero({
   title = 'Showing results for:',
   filters = [],
   className = '',
 }) {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
-  const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
+  const serviceSlug = normalizeServiceSlug(searchParams.get('service') ?? '')
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
-  const serviceId = searchParams.get('serviceId') ?? ''
+  const serviceIdParam = searchParams.get('serviceId') ?? ''
 
-  const { data: categories = [] } = useEventCategoryOptions()
-  const { data: events = [] } = useEventsByCategory(categorySlug)
-  const { data: themes = [] } = useDecorThemeOptions(serviceId)
-  const { data: levels = [] } = useBudgetLevelOptions(serviceId)
+  const { data: allCategories = [] } = useEventCategoryOptions()
+  const { data: allServices = [] } = useFilteredServiceOptions(SERVICE_ORDER)
+
+  const categories = useMemo(
+    () =>
+      CATEGORY_ORDER.map(slug => allCategories.find(category => category.slug === slug)).filter(
+        Boolean
+      ),
+    [allCategories]
+  )
+
+  const services = useMemo(
+    () =>
+      SERVICE_ORDER.map(slug => allServices.find(service => service.slug === slug)).filter(Boolean),
+    [allServices]
+  )
+
+  const selectedService = useMemo(
+    () => services.find(service => normalizeServiceSlug(service.slug) === serviceSlug) ?? null,
+    [services, serviceSlug]
+  )
+
+  const resolvedServiceId =
+    serviceIdParam || (selectedService?.id != null ? String(selectedService.id) : '')
+  const isDecorService = serviceSlug === 'decor'
+  const { data: allThemes = [] } = useDecorThemeOptions(isDecorService ? resolvedServiceId : '')
+  const { data: allLevels = [] } = useBudgetLevelOptions(resolvedServiceId)
+
+  const themes = useMemo(() => {
+    if (!isDecorService) return []
+    return (Array.isArray(allThemes) ? allThemes : []).map(theme => ({
+      value: theme.slug,
+      label: theme.label ?? titleizeSlug(theme.slug),
+    }))
+  }, [allThemes, isDecorService])
+
+  const levels = useMemo(
+    () =>
+      LEVEL_ORDER.map(slug =>
+        (Array.isArray(allLevels) ? allLevels : []).find(level => level.slug === slug)
+      )
+        .filter(Boolean)
+        .map(level => ({
+          value: level.slug,
+          label: level.label ?? titleizeSlug(level.slug),
+        })),
+    [allLevels]
+  )
+
+  const handleFilterChange = useCallback(
+    (key, value) => {
+      const nextParams = new URLSearchParams(searchParams)
+
+      if (!value) {
+        nextParams.delete(key)
+        if (key === 'category') {
+          nextParams.delete('event')
+          nextParams.delete('eventId')
+        }
+        if (key === 'service') {
+          nextParams.delete('serviceId')
+          nextParams.delete('theme')
+        }
+        setSearchParams(nextParams)
+        return
+      }
+
+      if (key === 'category') {
+        nextParams.set('category', value)
+        nextParams.delete('event')
+        nextParams.delete('eventId')
+        setSearchParams(nextParams)
+        return
+      }
+
+      if (key === 'service') {
+        const normalizedValue = normalizeServiceSlug(value)
+        const matchedService =
+          services.find(service => normalizeServiceSlug(service.slug) === normalizedValue) ?? null
+
+        nextParams.set('service', normalizedValue)
+        if (matchedService?.id != null) nextParams.set('serviceId', String(matchedService.id))
+        else nextParams.delete('serviceId')
+
+        if (normalizedValue !== 'decor') nextParams.delete('theme')
+        setSearchParams(nextParams)
+        return
+      }
+
+      nextParams.set(key, value)
+      setSearchParams(nextParams)
+    },
+    [searchParams, services, setSearchParams]
+  )
 
   const autoFilters = useMemo(() => {
-    const categoryLabel =
-      categories.find(category => category.slug === categorySlug)?.name ||
-      titleizeSlug(categorySlug)
-    const eventLabel =
-      events.find(event => event.slug === eventSlug)?.title || titleizeSlug(eventSlug)
-    const themeLabel =
-      themes.find(theme => theme.slug === themeSlug)?.label || titleizeSlug(themeSlug)
-    const levelLabel =
-      levels.find(level => level.slug === levelSlug)?.label || titleizeSlug(levelSlug)
-
     return [
-      categorySlug ? { label: categoryLabel, widthClass: DEFAULT_WIDTHS.category } : null,
-      eventSlug ? { label: eventLabel, widthClass: DEFAULT_WIDTHS.event } : null,
-      themeSlug ? { label: themeLabel, widthClass: DEFAULT_WIDTHS.theme } : null,
-      levelSlug ? { label: levelLabel, widthClass: DEFAULT_WIDTHS.level } : null,
+      {
+        label: 'Category',
+        value: categorySlug,
+        widthClass: DEFAULT_WIDTHS.category,
+        options: categories.map(toSelectOption),
+        onChange: event => handleFilterChange('category', event.target.value),
+      },
+      {
+        label: 'Services',
+        value: serviceSlug,
+        widthClass: DEFAULT_WIDTHS.service,
+        options: services.map(service => ({
+          value: normalizeServiceSlug(service.slug),
+          label: service.name === 'Rental Furniture' ? 'Furniture' : service.name,
+        })),
+        onChange: event => handleFilterChange('service', event.target.value),
+      },
+      {
+        label: 'Level',
+        value: levelSlug,
+        widthClass: DEFAULT_WIDTHS.level,
+        options: levels,
+        onChange: event => handleFilterChange('level', event.target.value),
+      },
+      isDecorService
+        ? {
+            label: 'Theme',
+            value: themeSlug,
+            widthClass: DEFAULT_WIDTHS.theme,
+            options: themes,
+            onChange: event => handleFilterChange('theme', event.target.value),
+          }
+        : null,
     ].filter(Boolean)
-  }, [categories, categorySlug, events, eventSlug, themes, themeSlug, levels, levelSlug])
+  }, [
+    categorySlug,
+    categories,
+    handleFilterChange,
+    isDecorService,
+    levelSlug,
+    levels,
+    serviceSlug,
+    services,
+    themeSlug,
+    themes,
+  ])
 
   const displayFilters = filters.length > 0 ? filters : autoFilters
 
@@ -97,6 +240,10 @@ export default function PackageResultsHero({
                 key={`${filter.label}-${filter.widthClass ?? ''}`}
                 label={filter.label}
                 widthClass={filter.widthClass}
+                value={filter.value ?? filter.label}
+                options={filter.options ?? []}
+                onChange={filter.onChange}
+                disabled={filter.disabled ?? filters.length > 0}
               />
             ))}
           </div>

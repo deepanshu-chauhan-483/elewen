@@ -86,6 +86,33 @@ const sanitizeProfile = profile => {
   }
 }
 
+const isJwtLike = token => typeof token === 'string' && token.split('.').length === 3
+
+const isVerifiedGoogleEmail = value => value === true || value === 'true'
+
+const verifyGoogleToken = async token => {
+  const tokenInfoUrls = isJwtLike(token)
+    ? [
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
+        `https://oauth2.googleapis.com/tokeninfo?access_token=${token}`,
+      ]
+    : [
+        `https://oauth2.googleapis.com/tokeninfo?access_token=${token}`,
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
+      ]
+
+  for (const url of tokenInfoUrls) {
+    const res = await fetch(url)
+    const payload = await res.json().catch(() => null)
+
+    if (res.ok && payload?.email && isVerifiedGoogleEmail(payload.email_verified)) {
+      return payload
+    }
+  }
+
+  return null
+}
+
 /** Create a UserSession row and set the refresh token cookie */
 const createSession = async (res, userId, ipAddress, userAgent) => {
   const refreshToken = crypto.randomBytes(40).toString('hex')
@@ -362,7 +389,14 @@ export const resetPassword = async (req, res, next) => {
 
     // Completing a password reset proves email ownership — confirm the user if not already
     if (result?.user?.id) {
-      await strapiAdminPut(`/api/users/${result.user.id}`, { confirmed: true })
+      try {
+        await strapiAdminPut(`/api/users/${result.user.id}`, { confirmed: true })
+      } catch (confirmErr) {
+        console.error(
+          '[auth.resetPassword] Failed to sync confirmed=true after password reset:',
+          confirmErr
+        )
+      }
     }
 
     res.json({ ok: true })
@@ -384,6 +418,7 @@ export const resetPassword = async (req, res, next) => {
 //   4. Frontend extracts access_token from URL, POST it here
 //   5. We verify it, create a UserSession, return { jwt, user }
 export const googleSession = async (req, res, next) => {
+  
   try {
     const { access_token } = req.body
     if (!access_token) {
@@ -394,18 +429,24 @@ export const googleSession = async (req, res, next) => {
     let strapiJwt
     let googleName = {} // { firstName, lastName, picture } — populated for raw token path
 
-    if (access_token.startsWith('eyJ')) {
-      // Already a Strapi JWT — verify and get user directly
-      user = await strapiGetMe(access_token)
-      strapiJwt = access_token
-    } else {
-      // Raw Google access token — verify with Google's tokeninfo endpoint
-      const tokenInfoRes = await fetch(
-        `https://oauth2.googleapis.com/tokeninfo?access_token=${access_token}`
-      )
-      const tokenInfo = await tokenInfoRes.json()
+    if (isJwtLike(access_token)) {
+      try {
+        // First try the simplest case: Strapi already redirected back with its own JWT.
+        user = await strapiGetMe(access_token)
+        strapiJwt = access_token
+      } catch (err) {
+        // Not a Strapi JWT — fall through and verify it as a Google token instead.
+        if (err.status && err.status !== 401 && err.status !== 403) {
+          throw err
+        }
+      }
+    }
 
-      if (!tokenInfoRes.ok || !tokenInfo.email || tokenInfo.email_verified !== 'true') {
+    if (!user || !strapiJwt) {
+      // Raw Google token (or Google JWT/id_token) — verify with Google's tokeninfo endpoint.
+      const tokenInfo = await verifyGoogleToken(access_token)
+
+      if (!tokenInfo) {
         return res.status(401).json({ error: 'Invalid or expired Google token' })
       }
 
@@ -415,6 +456,8 @@ export const googleSession = async (req, res, next) => {
       })
       if (userinfoRes.ok) {
         const userinfo = await userinfoRes.json()
+        console.log('[googleSession] userinfoRes.ok', userinfoRes.ok)
+
         googleName = {
           firstName: userinfo.given_name ?? null,
           lastName: userinfo.family_name ?? null,

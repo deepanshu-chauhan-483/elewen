@@ -36,7 +36,7 @@ const PasswordResetSuccessIcon = () => (
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
-  const code = searchParams.get('code')
+  const code = searchParams.get('code') || searchParams.get('token')
 
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')

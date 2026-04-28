@@ -253,10 +253,14 @@ function normalizeGrandCelebrationItems(section = {}) {
 
 function normalizeCelebrationCategories(section = {}) {
   const categories = section.categories ?? section.items ?? []
-  const sectionImages = getSectionImages(section)
+  const sectionImages = Array.isArray(section._sectionImages)
+    ? section._sectionImages
+    : Array.isArray(section.images)
+      ? section.images
+      : []
   const imagesByCategory = buildImagesByBucket(sectionImages)
 
-  return (Array.isArray(categories) ? categories : [])
+  const result = (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
       const name =
         item.tab_label ?? item.name ?? item.title ?? item.heading ?? `Category ${index + 1}`
@@ -310,6 +314,15 @@ function normalizeCelebrationCategories(section = {}) {
       }
     })
     .filter(item => item.name)
+
+  return result
+}
+
+function getMinEventDateForPlanner() {
+  const today = new Date()
+  const minDate = new Date(today)
+  minDate.setDate(minDate.getDate() + 6)
+  return minDate.toISOString().split('T')[0]
 }
 
 // Defined at module level so React never treats it as a new component type on re-render
@@ -326,22 +339,16 @@ const GCTextReveal = ({ children, className = '' }) => (
 )
 
 const GrandCelebrationImage = ({ src, fallbackSrc, alt, className = '', style }) => {
-  const [currentSrc, setCurrentSrc] = useState(src || fallbackSrc || '')
-
-  useEffect(() => {
-    setCurrentSrc(src || fallbackSrc || '')
-  }, [src, fallbackSrc])
-
   return (
     <img
-      src={currentSrc}
+      src={src || fallbackSrc || ''}
       alt={alt}
       className={className}
       style={style}
-      onError={() => {
+      onError={event => {
         if (!fallbackSrc) return
-        if (currentSrc === fallbackSrc) return
-        setCurrentSrc(fallbackSrc)
+        if (event.currentTarget.getAttribute('src') === fallbackSrc) return
+        event.currentTarget.src = fallbackSrc
       }}
     />
   )
@@ -388,7 +395,6 @@ const GrandCelebrationsSection = () => {
 
   const [incomingPage, setIncomingPage] = useState(null)
 
-  const [isAnimating, setIsAnimating] = useState(false)
   const perPageRef = useRef(perPage)
 
   const totalPages = Math.max(1, Math.ceil(resolvedCelebrationData.length / perPage))
@@ -399,12 +405,8 @@ const GrandCelebrationsSection = () => {
     return resolvedCelebrationData.slice(start, start + perPage)
   }
 
-  const getRevealTexts = cards =>
-    cards.flatMap(card => Array.from(card.querySelectorAll('.gc-reveal-text')))
-
   const resetTransitionState = () => {
     setIncomingPage(null)
-    setIsAnimating(false)
     activeCardRefs.current = []
     activeImgWrapRefs.current = []
     incomingCardRefs.current = []
@@ -1266,7 +1268,16 @@ const CelebrationEveryDaySection = () => {
     }
   }, [])
 
-  if (!RESOLVED_CATEGORY_DATA.length) return null
+  if (!RESOLVED_CATEGORY_DATA.length) {
+    console.warn(
+      '[CelebrationEveryDaySection] Warning: No categories found in CMS data or fallback',
+      {
+        cmsCategories: ced.categories?.length,
+        fallbackCategories: fallbackCed.categories?.length,
+      }
+    )
+    return null
+  }
 
   return (
     <section
@@ -1441,7 +1452,7 @@ const CelebrationEveryDaySection = () => {
       <div className="hidden min-[540px]:block w-full">
         <div
           ref={desktopWrapRef}
-          className="relative w-full max-w-[1440px] mx-auto"
+          className="relative w-full max-w-[1540px] mx-auto"
           style={{ height: `${DESKTOP_CANVAS_H * desktopScale}px` }}
         >
           <div
@@ -1475,7 +1486,7 @@ const CelebrationEveryDaySection = () => {
                 </span>
               </p>
 
-              <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
+              <div className="absolute left-[0px] top-[297px] w-[1540px] h-[800px]">
                 <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#FFFFFF] z-0" />
                 <div className="pointer-events-none absolute left-[0px] top-[399px] w-[1440px] h-px bg-[#D8D8D8] z-[40]" />
                 <div className="pointer-events-none absolute left-[0px] top-[599px] w-[640px] h-px bg-[#D8D8D8] z-[40]" />
@@ -2087,7 +2098,7 @@ const CelebrationFormSection = () => {
                     value={form.event_date}
                     onChange={e => set('event_date', e.target.value)}
                     onBlur={() => handleBlur('event_date')}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getMinEventDateForPlanner()}
                     className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none cursor-pointer"
                   />
                 </div>
@@ -2487,7 +2498,7 @@ const InHousePlannerSection = () => {
 
       <div data-in-house-planner-page>
         <section data-planner-intro className="w-full bg-[#957960] flex justify-center font-sans">
-          <div className="w-full max-w-[1440px] flex flex-col min-[540px]:flex-row">
+          <div className="w-full max-w-[1540px] flex flex-col min-[540px]:flex-row">
             {/* Image */}
 
             <div className="anim-element slide-from-left w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">

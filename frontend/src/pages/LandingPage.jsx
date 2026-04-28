@@ -93,6 +93,11 @@ const buildServiceListingHref = serviceSlug => {
   return normalizedService ? `/packages/${normalizedService}` : '/package-listing'
 }
 
+const getMobileCarouselTranslateX = ({ totalItems, page, cardWidth, cardGap }) => {
+  if (totalItems <= 1) return 'translateX(0px)'
+  return `translateX(calc(50% - ${cardWidth / 2}px - ${page * (cardWidth + cardGap)}px))`
+}
+
 const PlanEventSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.plan_event_intro ?? {}
@@ -422,7 +427,12 @@ const PlanEventSection = () => {
                   className="flex gap-4 md:gap-4 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
-                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      ? getMobileCarouselTranslateX({
+                          totalItems: filteredCards.length,
+                          page: safePage,
+                          cardWidth: mobileCardWidth,
+                          cardGap: mobileCardGap,
+                        })
                       : `translateX(-${safePage * carouselViewportWidth}px)`,
                   }}
                 >
@@ -853,7 +863,12 @@ const WhatToPlanSection = () => {
                   className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
-                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      ? getMobileCarouselTranslateX({
+                          totalItems: filteredCards.length,
+                          page: safePage,
+                          cardWidth: mobileCardWidth,
+                          cardGap: mobileCardGap,
+                        })
                       : `translateX(-${safePage * carouselViewportWidth}px)`,
                   }}
                 >
@@ -3483,7 +3498,12 @@ const PlanningGuidesSection = () => {
                   className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
-                      ? `translateX(calc(50% - ${mobileCardWidth / 2}px - ${safePage * (mobileCardWidth + mobileCardGap)}px))`
+                      ? getMobileCarouselTranslateX({
+                          totalItems: filteredBlogs.length,
+                          page: safePage,
+                          cardWidth: mobileCardWidth,
+                          cardGap: mobileCardGap,
+                        })
                       : `translateX(-${safePage * carouselViewportWidth}px)`,
                   }}
                 >
