@@ -17,6 +17,7 @@ import { useEventCategories, useEventCards, useServiceCards } from '../hooks/use
 import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
 import { useLandingPage } from '../hooks/useCmsPages'
+import { normalizeServiceSlug } from '../lib/packageFilters'
 
 import { preloadImages, usePreloadOnApproach } from '../utils/preloadAssets'
 import inspirationImg from '../assets/images/inspiration.png'
@@ -65,6 +66,33 @@ const CARD_LOCAL_IMAGES = [
   img5,
 ]
 
+const slugifyValue = value =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+const buildCategoryListingHref = categorySlug =>
+  categorySlug
+    ? `/package-listing?category=${encodeURIComponent(categorySlug)}`
+    : '/package-listing'
+
+const buildEventListingHref = (categorySlug, eventSlug, eventId) => {
+  const params = new URLSearchParams()
+  if (categorySlug) params.set('category', categorySlug)
+  if (eventSlug) params.set('event', eventSlug)
+  if (eventId != null) params.set('eventId', String(eventId))
+  return `/package-listing?${params.toString()}`
+}
+
+const buildServiceListingHref = serviceSlug => {
+  const normalizedService = normalizeServiceSlug(serviceSlug)
+  if (normalizedService === 'sheesha-service') return '/packages/sheesha'
+  return normalizedService ? `/packages/${normalizedService}` : '/package-listing'
+}
+
 const PlanEventSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.plan_event_intro ?? {}
@@ -93,6 +121,7 @@ const PlanEventSection = () => {
 
   // Derive active category â€” default to first category once loaded
   const activeCategory = selectedCategory ?? safeCategories[0] ?? null
+  const activeCategorySlug = slugifyValue(activeCategory)
 
   // Filter cards by selected category
   const filteredCards = activeCategory
@@ -273,7 +302,10 @@ const PlanEventSection = () => {
 
           <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
-              <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+              <Link
+                to={buildCategoryListingHref(activeCategorySlug)}
+                className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit"
+              >
                 <span className="text-white font-medium text-[15px] mr-5">
                   {s.cta_label ?? 'View All'}
                 </span>
@@ -292,7 +324,7 @@ const PlanEventSection = () => {
                     />
                   </svg>
                 </div>
-              </button>
+              </Link>
             </span>
           </span>
         </div>
@@ -395,8 +427,13 @@ const PlanEventSection = () => {
                   }}
                 >
                   {filteredCards.map((card, i) => (
-                    <div
+                    <Link
                       key={card.id ?? card.title}
+                      to={buildEventListingHref(
+                        card.categorySlug || activeCategorySlug,
+                        card.slug,
+                        card.id
+                      )}
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
                         width: isMobile
@@ -423,7 +460,7 @@ const PlanEventSection = () => {
                           {card.tagline}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -531,7 +568,10 @@ const PlanEventSection = () => {
             <div className="flex md:hidden justify-center pb-12 reveal-on-scroll">
               <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
                 <span className="reveal-text">
-                  <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                  <Link
+                    to={buildCategoryListingHref(activeCategorySlug)}
+                    className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group"
+                  >
                     <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
                       {s.cta_label ?? 'View All'}
                     </span>
@@ -550,7 +590,7 @@ const PlanEventSection = () => {
                         />
                       </svg>
                     </div>
-                  </button>
+                  </Link>
                 </span>
               </span>
             </div>
@@ -688,7 +728,10 @@ const WhatToPlanSection = () => {
 
           <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
-              <button className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit">
+              <Link
+                to="/package-listing"
+                className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit"
+              >
                 <span className="text-white font-medium text-[15px] mr-5">
                   {s.cta_label ?? 'View All'}
                 </span>
@@ -707,7 +750,7 @@ const WhatToPlanSection = () => {
                     />
                   </svg>
                 </div>
-              </button>
+              </Link>
             </span>
           </span>
         </div>
@@ -815,8 +858,9 @@ const WhatToPlanSection = () => {
                   }}
                 >
                   {filteredCards.map((card, i) => (
-                    <div
+                    <Link
                       key={card.id ?? card.title}
+                      to={buildServiceListingHref(card.slug ?? card.title)}
                       className="bg-white p-[10px] md:p-2.5 mx-auto rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
@@ -842,7 +886,7 @@ const WhatToPlanSection = () => {
                           {card.description}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -950,7 +994,10 @@ const WhatToPlanSection = () => {
             <div className="flex md:hidden justify-center pb-12 reveal-on-scroll">
               <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
                 <span className="reveal-text">
-                  <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                  <Link
+                    to="/package-listing"
+                    className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group"
+                  >
                     <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
                       {s.cta_label ?? 'View All'}
                     </span>
@@ -969,7 +1016,7 @@ const WhatToPlanSection = () => {
                         />
                       </svg>
                     </div>
-                  </button>
+                  </Link>
                 </span>
               </span>
             </div>
@@ -2425,7 +2472,7 @@ const ChecklistSection = () => {
       <div className="door-section relative w-full z-10  overflow-hidden">
         <div
           ref={gateAreaRef}
-          className="door-section__pin relative w-full z-20 h-[100svh] md:h-[100dvh]"
+          className="door-section__pin relative w-full z-20 h-[100svh] md:h-[100dvh] "
           style={{ position: 'relative' }}
         >
           <div

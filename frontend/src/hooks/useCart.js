@@ -36,8 +36,6 @@ export function useCart() {
 
   useEffect(() => {
     let cancelled = false
-    let lastSyncTime = 0
-    const SYNC_DEBOUNCE_MS = 500 // Prevent syncs within 500ms
 
     const applyCart = nextCart => {
       if (cancelled) return
@@ -81,14 +79,6 @@ export function useCart() {
         }
       }
     }
-
-    // const debouncedSync = () => {
-    //   const now = Date.now()
-    //   if (now - lastSyncTime >= SYNC_DEBOUNCE_MS) {
-    //     lastSyncTime = now
-    //     syncCart()
-    //   }
-    // }
 
     const handleAuthChange = () => {
       setIsLoggedIn(!!getToken())
@@ -202,6 +192,27 @@ export function useCart() {
     }
   }
 
+  const updateCartItemDetails = async ({ itemId, quantity, selectedOptions }) => {
+    const token = getToken()
+    if (!token) {
+      const e = new Error('AUTH_REQUIRED')
+      e.code = 'AUTH_REQUIRED'
+      throw e
+    }
+    try {
+      const data = await cartUpdate(token, { itemId, quantity, selectedOptions })
+      const nextCart = data.cart ?? null
+      setCart(nextCart)
+      setItemCount(getItemCount(nextCart))
+      setError('')
+      dispatchCartChange(nextCart)
+      return nextCart
+    } catch (err) {
+      setError(err.message ?? 'Failed to update cart item')
+      throw err
+    }
+  }
+
   const applyCoupon = async code => {
     const token = getToken()
     if (!token) {
@@ -252,6 +263,7 @@ export function useCart() {
     isLoggedIn, // ✅ now reactive state, not a snapshot
     addPackage,
     updateItemQuantity,
+    updateCartItemDetails,
     removeItem,
     updateCartDetails,
     applyCoupon,

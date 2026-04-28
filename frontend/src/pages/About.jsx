@@ -187,7 +187,7 @@ const About = () => {
                 <h2 className="min-[661px]:col-span-7 w-full max-w-[564px] min-[540px]:max-w-[390px] min-[661px]:max-w-[564px] text-[#FFFFFF] text-[22px] min-[375px]:text-[24px] min-[540px]:text-[42px] min-[661px]:text-[50px] lg:text-[61px] leading-[1.08] min-[540px]:leading-[1.08] min-[661px]:leading-[1.13] lg:leading-[1.15] font-serif m-0">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ animationDelay: '0s' }}>
-                      {so.heading_1}
+                      {so.heading_1 ?? 'When we saw Excitement'}
                     </span>
                   </span>
                   <span className="reveal-wrapper block">

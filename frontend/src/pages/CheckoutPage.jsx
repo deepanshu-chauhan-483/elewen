@@ -68,6 +68,86 @@ function SummaryRow({ label, value, valueClassName = 'text-[#2C2C2C] font-medium
   )
 }
 
+function parseBreakdownAmount(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value !== 'string') return 0
+
+  const normalized = value.replace(/[^0-9.-]+/g, '')
+  const amount = Number(normalized)
+  return Number.isFinite(amount) ? amount : 0
+}
+
+function getBreakdownLabel(entry) {
+  if (!entry || typeof entry !== 'object') return ''
+
+  return (
+    entry.label ?? entry.title ?? entry.name ?? entry.text ?? entry.description ?? entry.item ?? ''
+  )
+}
+
+function getBreakdownAmount(entry) {
+  if (!entry || typeof entry !== 'object') return 0
+
+  const directAmount =
+    entry.amount ??
+    entry.price ??
+    entry.value ??
+    entry.cost ??
+    entry.total ??
+    entry.rate ??
+    entry.base_price
+
+  if (directAmount != null) {
+    return parseBreakdownAmount(directAmount)
+  }
+
+  for (const [key, value] of Object.entries(entry)) {
+    if (
+      ['id', 'documentId', 'createdAt', 'updatedAt', 'publishedAt'].includes(key) ||
+      typeof value === 'object'
+    ) {
+      continue
+    }
+
+    const amount = parseBreakdownAmount(value)
+    if (amount > 0) return amount
+  }
+
+  return 0
+}
+
+function getPackageBreakdownRows(pkg) {
+  return (Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : [])
+    .map(entry => {
+      const label = String(getBreakdownLabel(entry) ?? '').trim()
+      const amount = getBreakdownAmount(entry)
+      return label && amount > 0 ? { label, amount } : null
+    })
+    .filter(Boolean)
+}
+
+function getCartItemSummary(item) {
+  const quantity = Math.max(1, Number(item?.quantity ?? 1))
+  const breakdownRows = getPackageBreakdownRows(item?.packageData)
+
+  if (!breakdownRows.length) {
+    return {
+      rows: [],
+      total: Number(item?.totalPrice ?? 0),
+    }
+  }
+
+  const rows = breakdownRows.map(row => ({
+    ...row,
+    total: row.amount * quantity,
+  }))
+
+  return {
+    rows,
+    total: rows.reduce((sum, row) => sum + row.total, 0),
+  }
+}
+
 function PaymentMethod({ selected, onChange }) {
   const options = [
     { id: 'upi', title: 'UPI / BHIM', desc: 'Google Pay, PhonePe, Paytm' },
@@ -160,9 +240,22 @@ export default function CheckoutPage() {
     () => cartItems.reduce((sum, item) => sum + Number(item?.quantity ?? 0), 0),
     [cartItems]
   )
-
-  const advancePayable = Number(cart?.total ?? 0) * 0.3
-  const balanceDue = Math.max(0, Number(cart?.total ?? 0) - advancePayable)
+  const itemSummaries = useMemo(
+    () =>
+      cartItems.map(item => ({
+        item,
+        summary: getCartItemSummary(item),
+      })),
+    [cartItems]
+  )
+  const computedSubtotal = useMemo(
+    () => itemSummaries.reduce((sum, entry) => sum + Number(entry.summary.total ?? 0), 0),
+    [itemSummaries]
+  )
+  const discountAmount = Number(cart?.discountAmount ?? 0)
+  const computedTotal = Math.max(0, computedSubtotal - discountAmount)
+  const advancePayable = computedTotal * 0.3
+  const balanceDue = Math.max(0, computedTotal - advancePayable)
 
   const handleCheckout = async () => {
     const token = getStoredJwt()
@@ -349,7 +442,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="space-y-4 p-5 text-sm">
-              {cartItems.map((item, index) => {
+              {itemSummaries.map(({ item, summary }, index) => {
                 const packageName = item.packageData?.title || item.title
                 const serviceName = normalizeServiceSlug(item.packageData?.service_slugs?.[0] ?? '')
                 const label = serviceName
@@ -359,14 +452,36 @@ export default function CheckoutPage() {
                 return (
                   <div key={item.id}>
                     {index === 0 ? (
-                      <div className="flex justify-between text-base font-medium">
-                        <span>Base Package - {packageName}</span>
-                        <span>{formatCurrency(item.totalPrice)}</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-base font-medium">
+                          <span>Base Package - {packageName}</span>
+                          <span>{formatCurrency(summary.total)}</span>
+                        </div>
+                        {summary.rows.map(row => (
+                          <div
+                            key={`${item.id}-${row.label}`}
+                            className="flex justify-between text-gray-600"
+                          >
+                            <span>{row.label}</span>
+                            <span>{formatCurrency(row.total)}</span>
+                          </div>
+                        ))}
                       </div>
                     ) : (
-                      <div className="flex justify-between text-gray-600">
-                        <span>{label}</span>
-                        <span>{formatCurrency(item.totalPrice)}</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-gray-600">
+                          <span>{label}</span>
+                          <span>{formatCurrency(summary.total)}</span>
+                        </div>
+                        {summary.rows.map(row => (
+                          <div
+                            key={`${item.id}-${row.label}`}
+                            className="flex justify-between text-gray-500"
+                          >
+                            <span>{row.label}</span>
+                            <span>{formatCurrency(row.total)}</span>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -377,10 +492,10 @@ export default function CheckoutPage() {
 
               <div className="space-y-2 text-gray-600">
                 <SummaryRow label="Items" value={String(itemCount)} />
-                <SummaryRow label="Subtotal" value={formatCurrency(cart?.subtotal)} />
+                <SummaryRow label="Subtotal" value={formatCurrency(computedSubtotal)} />
                 <SummaryRow
                   label="Discount coupon applied"
-                  value={`-${formatCurrency(cart?.discountAmount)}`}
+                  value={`-${formatCurrency(discountAmount)}`}
                   valueClassName="font-medium text-[#B42318]"
                 />
               </div>
@@ -389,7 +504,7 @@ export default function CheckoutPage() {
 
               <div className="flex justify-between rounded-lg bg-[#F3EFE9] px-4 py-3 text-base font-medium">
                 <span>Total Amount</span>
-                <span>{formatCurrency(cart?.total)}</span>
+                <span>{formatCurrency(computedTotal)}</span>
               </div>
 
               <div className="flex justify-between rounded-lg bg-[#F1F1F1] px-4 py-3 text-base font-medium">
@@ -404,7 +519,7 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-4">
           <div className="rounded-[20px] border border-[#95796066] bg-white p-6 md:p-8">
             <h2 className="text-[24px] font-semibold text-[#2C2C2C]">Event Information</h2>
             <p className="mt-3 text-[14px] text-[#7A7A7A]">
@@ -414,7 +529,7 @@ export default function CheckoutPage() {
             <div className="mt-10">
               <h3 className="text-[18px] font-semibold text-[#2C2C2C]">Contact Details</h3>
 
-              <div className="mt-6 space-y-6">
+              <div className="mt-6 space-y-4">
                 <input
                   type="text"
                   value={fullName}

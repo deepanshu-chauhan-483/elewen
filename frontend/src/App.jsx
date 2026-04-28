@@ -34,9 +34,9 @@ import PackageDetailsPage from './pages/PackageDetailsPage'
 import DecorSinglePackagePage from './pages/DecorSinglePackagePage'
 import SheeshaSinglePackagePage from './pages/SheeshaSinglePackagePage'
 import SinglePackageCheckout from './pages/SinglePackageCheckout'
-import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
 import BookingConfirmation from './pages/BookingConfirmation'
+import CartPage from './pages/CartPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()

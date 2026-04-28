@@ -6,6 +6,46 @@ import {
   INHOUSE_PLANNER_PAGE_FALLBACK,
 } from '../data/cmsPages'
 
+function mergeSectionData(fallbackValue, cmsValue) {
+  if (cmsValue === undefined || cmsValue === null) return fallbackValue
+
+  if (Array.isArray(fallbackValue) || Array.isArray(cmsValue)) {
+    return Array.isArray(cmsValue) && cmsValue.length > 0 ? cmsValue : fallbackValue
+  }
+
+  if (
+    fallbackValue &&
+    cmsValue &&
+    typeof fallbackValue === 'object' &&
+    typeof cmsValue === 'object'
+  ) {
+    const merged = { ...fallbackValue }
+    Object.keys(cmsValue).forEach(key => {
+      merged[key] = mergeSectionData(fallbackValue?.[key], cmsValue[key])
+    })
+    return merged
+  }
+
+  return cmsValue
+}
+
+function mergePageSections(fallbackSections, cmsSections) {
+  const merged = { ...fallbackSections }
+
+  Object.keys(cmsSections).forEach(key => {
+    merged[key] = mergeSectionData(fallbackSections?.[key], cmsSections[key])
+  })
+
+  return merged
+}
+
+function normalizeSectionImages(images) {
+  if (Array.isArray(images)) return images
+  if (Array.isArray(images?.data)) return images.data
+  if (images?.data) return [images.data]
+  return []
+}
+
 /**
  * Converts a Strapi sections array into a keyed map for easy lookup.
  *
@@ -15,7 +55,15 @@ import {
 function parseSections(sections = []) {
   return sections.reduce((acc, s) => {
     if (s?.section_key && s?.content_json) {
-      acc[s.section_key] = s.content_json
+      const content =
+        s.content_json && typeof s.content_json === 'object'
+          ? {
+              ...s.content_json,
+              _sectionImages: normalizeSectionImages(s.images),
+            }
+          : s.content_json
+
+      acc[s.section_key] = content
     }
     return acc
   }, {})
@@ -35,7 +83,7 @@ export function useLandingPage() {
         const { data } = await strapiGet('/landing-page', {
           'populate[sections][populate]': '*',
         })
-        return parseSections(data?.sections ?? [])
+        return mergePageSections(LANDING_PAGE_FALLBACK, parseSections(data?.sections ?? []))
       } catch {
         return LANDING_PAGE_FALLBACK
       }
@@ -60,7 +108,7 @@ export function useAboutPage() {
         const { data } = await strapiGet('/about-page', {
           'populate[sections][populate]': '*',
         })
-        return parseSections(data?.sections ?? [])
+        return mergePageSections(ABOUT_PAGE_FALLBACK, parseSections(data?.sections ?? []))
       } catch {
         return ABOUT_PAGE_FALLBACK
       }
@@ -85,7 +133,7 @@ export function useInHousePlannerPage() {
         const { data } = await strapiGet('/inhouse-planner-page', {
           'populate[sections][populate]': '*',
         })
-        return parseSections(data?.sections ?? [])
+        return mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parseSections(data?.sections ?? []))
       } catch {
         return INHOUSE_PLANNER_PAGE_FALLBACK
       }

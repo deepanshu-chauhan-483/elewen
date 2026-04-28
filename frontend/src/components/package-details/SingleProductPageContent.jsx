@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
@@ -194,6 +194,13 @@ export default function SingleProductPageContent({
   onAddToCart,
   ctaButtonText = 'Book a Consultation',
 }) {
+  const initialDisplayImage = sideImages[0] ?? mainImage
+  const [activeImage, setActiveImage] = useState(initialDisplayImage)
+
+  useEffect(() => {
+    setActiveImage(sideImages[0] ?? mainImage)
+  }, [mainImage, sideImages])
+
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
 
@@ -201,7 +208,7 @@ export default function SingleProductPageContent({
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
       <NavHeader />
 
-      <section className="relative overflow-hidden pb-16 pt-8 md:pt-10">
+      <section className="relative overflow-hidden pb-16 pt-8 md:pt-14.5">
         <div
           className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start md:justify-between"
           style={{
@@ -213,9 +220,14 @@ export default function SingleProductPageContent({
         >
           <div className="flex flex-col items-end space-y-2 pt-2 md:shrink">
             {sideImages.map((image, index) => (
-              <div
+              <button
+                type="button"
                 key={`${image}-${index}`}
-                className="overflow-hidden rounded-[12px]"
+                onClick={() => setActiveImage(image)}
+                className={`overflow-hidden rounded-[12px] transition-opacity ${
+                  activeImage === image ? 'opacity-100' : 'opacity-40'
+                }`}
+                aria-label={`Show ${title} preview ${index + 1}`}
                 style={{
                   width: 'clamp(4rem, 5vw, 5rem)',
                   height: 'clamp(5.125rem, 6.5vw, 6.4375rem)',
@@ -226,7 +238,7 @@ export default function SingleProductPageContent({
                   alt={`${title} preview ${index + 1}`}
                   className="h-full w-full rounded-[14px] object-cover"
                 />
-              </div>
+              </button>
             ))}
           </div>
 
@@ -238,7 +250,7 @@ export default function SingleProductPageContent({
           >
             <div className="overflow-hidden">
               <img
-                src={mainImage}
+                src={activeImage}
                 alt={title}
                 className="w-full object-cover border-[#727355] border-r-2 border-b-2 border-l-2"
                 style={{

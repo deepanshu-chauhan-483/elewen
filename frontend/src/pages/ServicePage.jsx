@@ -1,7 +1,7 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
-import { useServiceOptions } from '../hooks/useEventTypes'
+import { useFilteredServiceOptions } from '../hooks/useEventTypes'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Event' },
@@ -18,6 +18,14 @@ const SERVICE_ROUTE_MAP = {
   sheesha: '/packages/sheesha',
 }
 
+const SERVICE_PAGE_ALLOWED_SLUGS = [
+  'decor',
+  'catering',
+  'bar-tending',
+  'sheesha-services',
+  'furniture',
+]
+
 function normalizeServiceSlug(slug) {
   const value = (slug ?? '').toLowerCase()
   if (value === 'bar-tending') return 'bartending'
@@ -31,7 +39,7 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service }) {
   params.set('event', eventSlug)
   if (eventId) params.set('eventId', eventId)
   params.set('service', resolvedServiceSlug)
-  if (service.documentId != null) params.set('serviceId', String(service.documentId))
+  if (service.id != null) params.set('serviceId', String(service.id))
 
   return (
     <Link
@@ -52,7 +60,7 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service }) {
 
 export default function ServicePage() {
   const [searchParams] = useSearchParams()
-  const { data: services = [] } = useServiceOptions()
+  const { data: services = [] } = useFilteredServiceOptions(SERVICE_PAGE_ALLOWED_SLUGS)
 
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''

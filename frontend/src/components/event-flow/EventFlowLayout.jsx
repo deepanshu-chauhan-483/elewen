@@ -77,7 +77,7 @@ export default function EventFlowLayout({
     <main className="bg-[#F8F4ED] text-[#2D2D2D] ">
       <NavHeader />
 
-      <div className="flex h-[100svh] flex-col overflow-hidden pt-6 min-[540px]:pt-8 md:pt-10">
+      <div className="flex h-[100svh] flex-col overflow-hidden pt-6 min-[540px]:pt-8 md:pt-10 ">
         <section
           className="event-flow-scroll hide-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#F8F4ED]"
           data-lenis-prevent
@@ -158,7 +158,7 @@ export default function EventFlowLayout({
           <Footer />
         </section>
 
-        {/* ONLY FIX HERE */}
+        {/* ✅ ONLY FIX HERE */}
         <section className="h-[55px] shrink-0 bg-[#591902] sm:h-[70px] fix bottom-0">
           <div className="h-full px-4 sm:px-6">
             <div className="mx-auto flex h-full w-full lg:w-[calc(100%-200px)] lg:max-w-none items-center justify-between gap-6">
@@ -173,7 +173,7 @@ export default function EventFlowLayout({
                       <div key={step.id} className="flex flex-col items-start">
                         <div className="flex items-start">
                           <div
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[14px] font-medium transition-colors ${
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[14px] font-medium transition-colors ${
                               isActive
                                 ? 'border-white bg-white text-[#8C4A22]'
                                 : isCompleted
@@ -185,11 +185,11 @@ export default function EventFlowLayout({
                           </div>
 
                           {showConnector ? (
-                            <div className="mt-[12px] h-px w-12 border-t border-dashed border-[#A46A4A] w-[25px] sm:w-[40px] md:w-[57px]" />
+                            <div className="mt-[16px] h-px w-12 border-t border-dashed border-[#A46A4A] w-[25px] sm:w-[40px] md:w-[57px]" />
                           ) : null}
                         </div>
 
-                        <span className="mt-1.5 block w-6 text-center text-[10px] leading-[1.2] text-[#E8CDB8] sm:text-[10px]">
+                        <span className="mt-1.5 block w-8 text-center text-[10px] leading-[1.2] text-[#E8CDB8] sm:text-[11px]">
                           {step.label}
                         </span>
                       </div>
@@ -201,7 +201,7 @@ export default function EventFlowLayout({
               {showBackButton && backTo ? (
                 <Link
                   to={backTo}
-                  className="items-center gap-2 rounded-full bg-[#FAFAFA33] px-4 mr-2 py-2.5 text-[12px] leading-none text-white transition-colors hover:bg-[#9a5530] md:flex"
+                  className="items-center gap-2 rounded-full bg-[#FAFAFA33] px-4 mr-2 py-2.5 text-[14px] leading-none text-white transition-colors hover:bg-[#9a5530] md:flex"
                 >
                   <ArrowIcon direction="left" />
                   <span>Previous</span>
