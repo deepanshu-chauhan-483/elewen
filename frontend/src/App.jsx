@@ -37,6 +37,7 @@ import SinglePackageCheckout from './pages/SinglePackageCheckout'
 import CheckoutPage from './pages/CheckoutPage'
 import BookingConfirmation from './pages/BookingConfirmation'
 import CartPage from './pages/CartPage'
+import SampleTasteBooking from './pages/SampleTestBooking'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -99,6 +100,7 @@ function AppLayout() {
         <Route path="/single-package-checkout" element={<SinglePackageCheckout />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+        <Route path="/sample-test-booking" element={<SampleTasteBooking />} />
         <Route path="/blogs" element={<BlogPage />} />
         <Route path="/blogs/:slug" element={<SingleBlogPage />} />
         <Route path="/event-flow/category" element={<CategoryPage />} />

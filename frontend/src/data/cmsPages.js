@@ -246,6 +246,26 @@ export const INHOUSE_PLANNER_PAGE_FALLBACK = {
         description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
       },
+      {
+        label: 'IIFL',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+      },
+      {
+        label: 'Maruti Dzire',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+      },
+      {
+        label: 'Trail',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+      },
+      {
+        label: 'Indus Ind',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+      },
     ],
     _sectionImages: [
       { id: 1, name: 'CITROEN01.jpg', url: '/images/placeholder.jpg' },
@@ -256,6 +276,14 @@ export const INHOUSE_PLANNER_PAGE_FALLBACK = {
       { id: 6, name: 'GUNS02.jpg', url: '/images/placeholder.jpg' },
       { id: 7, name: 'USHA01.jpg', url: '/images/placeholder.jpg' },
       { id: 8, name: 'USHA02.jpg', url: '/images/placeholder.jpg' },
+      { id: 9, name: 'IIFL01.jpg', url: '/images/placeholder.jpg' },
+      { id: 10, name: 'IIFL02.jpg', url: '/images/placeholder.jpg' },
+      { id: 11, name: 'MARUTIDZIRE01.jpg', url: '/images/placeholder.jpg' },
+      { id: 12, name: 'MARUTIDZIRE02.jpg', url: '/images/placeholder.jpg' },
+      { id: 13, name: 'TRAIL01.jpg', url: '/images/placeholder.jpg' },
+      { id: 14, name: 'TRAIL02.jpg', url: '/images/placeholder.jpg' },
+      { id: 15, name: 'INDUSIND01.jpg', url: '/images/placeholder.jpg' },
+      { id: 16, name: 'INDUSIND02.jpg', url: '/images/placeholder.jpg' },
     ],
   },
   celebrations_every_day: {

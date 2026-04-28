@@ -2779,7 +2779,7 @@ const PackagesSection = () => {
 
               return (
                 <div
-                  key={`pkg-${pkg.id ?? pkg.documentId ?? index}`}
+                  key={`pkg-${pkg.id ?? pkg.documentId ?? 'fallback'}-${index}`}
                   onClick={() => usePackageCylinder && !isActive && setVirtualIndex(index)}
                   className={`relative flex flex-col bg-white overflow-hidden pointer-events-auto 
                     ${isActive ? 'cursor-default' : 'cursor-pointer'} 

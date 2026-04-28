@@ -113,7 +113,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
       st = ScrollTrigger.create({
         trigger: flowEl,
         start: 'top top',
-        end: () => `+=${window.innerHeight * 6}`,
+        end: () => `+=${window.innerHeight * 1}`,
         pin: true,
         pinSpacing: true,
         anticipatePin: 1,

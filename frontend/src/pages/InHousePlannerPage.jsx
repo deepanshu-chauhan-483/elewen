@@ -412,6 +412,8 @@ const GrandCelebrationsSection = () => {
   }
 
   const go = dir => {
+    if (totalPages <= 1) return
+
     // Always allow the carousel to advance, even if the animated incoming layer
     // is not ready yet in the current dev/runtime state.
     setPage(currentPage => ((currentPage % totalPages) + dir + totalPages) % totalPages)
@@ -758,53 +760,63 @@ const GrandCelebrationsSection = () => {
 
           {/* Navigation arrows */}
           <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 min-[540px]:block z-40">
-            <button
-              ref={arrowLeftRef}
-              type="button"
-              onClick={() => go(-1)}
-              className="pointer-events-auto absolute left-0 top-[228px] flex h-[80px] w-[40px] min-[540px]:h-[104px] min-[540px]:w-[52px] cursor-pointer items-center justify-center bg-[#F2F2F2] shadow-md transition-colors hover:bg-[#e5e5e5]"
-              style={{ borderRadius: '0 104px 104px 0' }}
-              aria-label="Previous celebrations"
+            <div
+              className=" pointer-events-none absolute left-0 top-[228px]"
+              style={{ '--delay': '0.24s' }}
             >
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#2D2D2D"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="min-[540px]:ml-[-10px]"
+              <button
+                ref={arrowLeftRef}
+                type="button"
+                onClick={() => go(-1)}
+                className="anim-element slide-from-left pointer-events-auto flex h-[80px] w-[40px] min-[540px]:h-[104px] min-[540px]:w-[52px] cursor-pointer items-center justify-center bg-[#F2F2F2] shadow-md transition-colors hover:bg-[#e5e5e5]"
+                style={{ borderRadius: '0 104px 104px 0' }}
+                aria-label="Previous celebrations"
               >
-                <path d="M19 12H5" />
-                <path d="m12 19-7-7 7-7" />
-              </svg>
-            </button>
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#2D2D2D"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="min-[540px]:ml-[-10px]"
+                >
+                  <path d="M19 12H5" />
+                  <path d="m12 19-7-7 7-7" />
+                </svg>
+              </button>
+            </div>
 
-            <button
-              ref={arrowRightRef}
-              type="button"
-              onClick={() => go(1)}
-              className="pointer-events-auto absolute right-0 top-[228px] flex h-[80px] w-[40px] min-[540px]:h-[104px] min-[540px]:w-[52px] cursor-pointer items-center justify-center bg-[#F2F2F2] shadow-md transition-colors hover:bg-[#e5e5e5]"
-              style={{ borderRadius: '104px 0 0 104px' }}
-              aria-label="Next celebrations"
+            <div
+              className=" pointer-events-none absolute right-0 top-[228px]"
+              style={{ '--delay': '0.24s' }}
             >
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#2D2D2D"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="min-[540px]:mr-[-10px]"
+              <button
+                ref={arrowRightRef}
+                type="button"
+                onClick={() => go(1)}
+                className="anim-element slide-from-right pointer-events-auto flex h-[80px] w-[40px] min-[540px]:h-[104px] min-[540px]:w-[52px] cursor-pointer items-center justify-center bg-[#F2F2F2] shadow-md transition-colors hover:bg-[#e5e5e5]"
+                style={{ borderRadius: '104px 0 0 104px' }}
+                aria-label="Next celebrations"
               >
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
-            </button>
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#2D2D2D"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="min-[540px]:mr-[-10px]"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}
