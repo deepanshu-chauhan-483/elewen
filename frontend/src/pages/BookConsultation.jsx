@@ -33,7 +33,7 @@ function getMinEventDateForConsultation() {
   const today = new Date()
   const minDate = new Date(today)
   minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
-  
+
   return minDate.toISOString().split('T')[0]
 }
 

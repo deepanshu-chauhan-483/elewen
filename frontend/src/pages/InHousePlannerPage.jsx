@@ -313,12 +313,16 @@ function normalizeCelebrationCategories(section = {}) {
         },
       }
     })
-    .filter(
-      item =>
-        item.name
-    )
+    .filter(item => item.name)
 
   return result
+}
+
+function getMinEventDateForPlanner() {
+  const today = new Date()
+  const minDate = new Date(today)
+  minDate.setDate(minDate.getDate() + 6)
+  return minDate.toISOString().split('T')[0]
 }
 
 // Defined at module level so React never treats it as a new component type on re-render
@@ -335,22 +339,16 @@ const GCTextReveal = ({ children, className = '' }) => (
 )
 
 const GrandCelebrationImage = ({ src, fallbackSrc, alt, className = '', style }) => {
-  const [currentSrc, setCurrentSrc] = useState(src || fallbackSrc || '')
-
-  useEffect(() => {
-    setCurrentSrc(src || fallbackSrc || '')
-  }, [src, fallbackSrc])
-
   return (
     <img
-      src={currentSrc}
+      src={src || fallbackSrc || ''}
       alt={alt}
       className={className}
       style={style}
-      onError={() => {
+      onError={event => {
         if (!fallbackSrc) return
-        if (currentSrc === fallbackSrc) return
-        setCurrentSrc(fallbackSrc)
+        if (event.currentTarget.getAttribute('src') === fallbackSrc) return
+        event.currentTarget.src = fallbackSrc
       }}
     />
   )
@@ -397,7 +395,6 @@ const GrandCelebrationsSection = () => {
 
   const [incomingPage, setIncomingPage] = useState(null)
 
-  const [isAnimating, setIsAnimating] = useState(false)
   const perPageRef = useRef(perPage)
 
   const totalPages = Math.max(1, Math.ceil(resolvedCelebrationData.length / perPage))
@@ -408,12 +405,8 @@ const GrandCelebrationsSection = () => {
     return resolvedCelebrationData.slice(start, start + perPage)
   }
 
-  const getRevealTexts = cards =>
-    cards.flatMap(card => Array.from(card.querySelectorAll('.gc-reveal-text')))
-
   const resetTransitionState = () => {
     setIncomingPage(null)
-    setIsAnimating(false)
     activeCardRefs.current = []
     activeImgWrapRefs.current = []
     incomingCardRefs.current = []
@@ -848,16 +841,6 @@ const CelebrationEveryDaySection = () => {
   const resolvedCed =
     CATEGORY_DATA.length > 0 || !Object.keys(ced).length ? ced : { ...fallbackCed, ...ced }
 
-  // Debug logging
-  useEffect(() => {
-    console.log('[CelebrationEveryDaySection] Debug:', {
-      cmsData: ced,
-      categoryDataLength: CATEGORY_DATA.length,
-      resolvedCategoryDataLength: RESOLVED_CATEGORY_DATA.length,
-      fallbackCategories: fallbackCed.categories?.length,
-    })
-  }, [ced, CATEGORY_DATA, RESOLVED_CATEGORY_DATA, fallbackCed])
-
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia &&
@@ -1274,10 +1257,13 @@ const CelebrationEveryDaySection = () => {
   }, [])
 
   if (!RESOLVED_CATEGORY_DATA.length) {
-    console.warn('[CelebrationEveryDaySection] Warning: No categories found in CMS data or fallback', {
-      cmsCategories: ced.categories?.length,
-      fallbackCategories: fallbackCed.categories?.length,
-    })
+    console.warn(
+      '[CelebrationEveryDaySection] Warning: No categories found in CMS data or fallback',
+      {
+        cmsCategories: ced.categories?.length,
+        fallbackCategories: fallbackCed.categories?.length,
+      }
+    )
     return null
   }
 

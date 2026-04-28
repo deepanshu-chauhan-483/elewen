@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
@@ -195,11 +195,11 @@ export default function SingleProductPageContent({
   ctaButtonText = 'Book a Consultation',
 }) {
   const initialDisplayImage = sideImages[0] ?? mainImage
-  const [activeImage, setActiveImage] = useState(initialDisplayImage)
-
-  useEffect(() => {
-    setActiveImage(sideImages[0] ?? mainImage)
-  }, [mainImage, sideImages])
+  const [selectedImage, setSelectedImage] = useState(null)
+  const activeImage =
+    selectedImage && [mainImage, ...sideImages].includes(selectedImage)
+      ? selectedImage
+      : initialDisplayImage
 
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
@@ -223,7 +223,7 @@ export default function SingleProductPageContent({
               <button
                 type="button"
                 key={`${image}-${index}`}
-                onClick={() => setActiveImage(image)}
+                onClick={() => setSelectedImage(image)}
                 className={`overflow-hidden rounded-[12px] transition-opacity ${
                   activeImage === image ? 'opacity-100' : 'opacity-40'
                 }`}

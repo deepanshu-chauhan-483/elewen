@@ -17,11 +17,11 @@ function getMinEventDate() {
   const today = new Date()
   const minDate = new Date(today)
   minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
-  
+
   const year = minDate.getFullYear()
   const month = String(minDate.getMonth() + 1).padStart(2, '0')
   const day = String(minDate.getDate()).padStart(2, '0')
-  
+
   return `${year}-${month}-${day}`
 }
 

@@ -70,7 +70,7 @@ function parseSections(sections = []) {
     }
     return acc
   }, {})
-  
+
   console.log('[parseSections] Final parsed sections:', Object.keys(result))
   return result
 }
@@ -147,7 +147,10 @@ export function useInHousePlannerPage() {
         const parsedSections = parseSections(data?.sections ?? [])
         console.log('[useInHousePlannerPage] Parsed sections:', parsedSections)
         const merged = mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parsedSections)
-        console.log('[useInHousePlannerPage] Merged result - celebrations_every_day:', merged.celebrations_every_day)
+        console.log(
+          '[useInHousePlannerPage] Merged result - celebrations_every_day:',
+          merged.celebrations_every_day
+        )
         return merged
       } catch (err) {
         console.error('[useInHousePlannerPage] Fetch error:', err)
