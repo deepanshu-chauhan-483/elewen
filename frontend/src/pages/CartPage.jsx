@@ -13,6 +13,18 @@ function formatCurrency(value) {
   })}`
 }
 
+function getMinEventDate() {
+  const today = new Date()
+  const minDate = new Date(today)
+  minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
+  
+  const year = minDate.getFullYear()
+  const month = String(minDate.getMonth() + 1).padStart(2, '0')
+  const day = String(minDate.getDate()).padStart(2, '0')
+  
+  return `${year}-${month}-${day}`
+}
+
 function parseApiError(error) {
   const message = error?.message ?? 'Something went wrong'
   const match = message.match(/\{"error":"([^"]+)"\}/)
@@ -354,6 +366,12 @@ function SinglePackageCard({
   detailsForm,
   onEditDate,
   onEditCity,
+  editingField,
+  onDetailsChange,
+  onSaveDetails,
+  onCancelEdit,
+  isSavingDetails,
+  detailsError,
 }) {
   const isPending = pendingItemId === item.id
   const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
@@ -459,25 +477,95 @@ function SinglePackageCard({
 
         <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
           <div className="flex justify-between rounded-lg bg-[#F5F5F5] p-4">
-            <div>
-              <p className="text-sm text-gray-500">City / Area</p>
-              <p className="font-medium">{eventLocation}</p>
-            </div>
-            <button type="button" onClick={onEditCity} className="text-sm text-[#957960]">
-              Edit
-            </button>
+            {editingField === 'city' ? (
+              <div className="w-full space-y-3">
+                <div>
+                  <p className="text-sm text-gray-500">City / Area</p>
+                  <input
+                    type="text"
+                    value={detailsForm.eventCity}
+                    onChange={event => onDetailsChange('eventCity', event.target.value)}
+                    placeholder="Enter city / area"
+                    className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={onCancelEdit}
+                    className="rounded-full border border-[#95796066] px-4 py-2 text-xs font-medium text-[#2C2C2C]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSaveDetails('city')}
+                    disabled={isSavingDetails || !detailsForm.eventCity.trim()}
+                    className="rounded-full bg-[#2E3A1F] px-4 py-2 text-xs font-medium text-white disabled:opacity-60"
+                  >
+                    {isSavingDetails ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <p className="text-sm text-gray-500">City / Area</p>
+                  <p className="font-medium">{eventLocation}</p>
+                </div>
+                <button type="button" onClick={onEditCity} className="text-sm text-[#957960]">
+                  Edit
+                </button>
+              </>
+            )}
           </div>
 
           <div className="flex justify-between rounded-lg bg-[#F3F3F3] p-4">
-            <div>
-              <p className="text-sm text-gray-500">Event Date</p>
-              <p className="font-medium">{eventDate}</p>
-            </div>
-            <button type="button" onClick={onEditDate} className="text-sm text-[#957960]">
-              Edit
-            </button>
+            {editingField === 'date' ? (
+              <div className="w-full space-y-3">
+                <div>
+                  <p className="text-sm text-gray-500">Event Date</p>
+                  <input
+                    type="date"
+                    min={getMinEventDate()}
+                    value={detailsForm.eventDate}
+                    onChange={event => onDetailsChange('eventDate', event.target.value)}
+                    className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={onCancelEdit}
+                    className="rounded-full border border-[#95796066] px-4 py-2 text-xs font-medium text-[#2C2C2C]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSaveDetails('date')}
+                    disabled={isSavingDetails || !detailsForm.eventDate}
+                    className="rounded-full bg-[#2E3A1F] px-4 py-2 text-xs font-medium text-white disabled:opacity-60"
+                  >
+                    {isSavingDetails ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <p className="text-sm text-gray-500">Event Date</p>
+                  <p className="font-medium">{eventDate}</p>
+                </div>
+                <button type="button" onClick={onEditDate} className="text-sm text-[#957960]">
+                  Edit
+                </button>
+              </>
+            )}
           </div>
         </div>
+
+        {detailsError ? <p className="px-4 pb-4 text-sm text-[#8F2D1F]">{detailsError}</p> : null}
       </div>
     </div>
   )
@@ -648,7 +736,14 @@ function SuggestedPackages({ packages = [] }) {
     </div>
   )
 }
-function PriceSummaryCard({ cartItems, cart, singleItem = false, onCheckout, pincodeCard = null }) {
+function PriceSummaryCard({
+  cartItems,
+  cart,
+  singleItem = false,
+  onCheckout,
+  pincodeCard = null,
+  isCheckoutDisabled = false,
+}) {
   const itemSummaries = cartItems.map(item => ({
     item,
     summary: getCartItemSummary(item),
@@ -757,7 +852,7 @@ function PriceSummaryCard({ cartItems, cart, singleItem = false, onCheckout, pin
         <button
           type="button"
           onClick={onCheckout}
-          // disabled={isSubmitting}
+          disabled={isCheckoutDisabled}
           className="mx-auto mt-4 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
         >
           <span className="mr-5 text-[15px] font-medium text-white">Proceed to Checkout</span>
@@ -773,6 +868,9 @@ function PriceSummaryCard({ cartItems, cart, singleItem = false, onCheckout, pin
             </svg>
           </div>
         </button>
+        {isCheckoutDisabled ? (
+          <p className="mt-3 text-sm text-[#8B8B8B]">Enter your pincode to enable checkout.</p>
+        ) : null}
       </div>
     </div>
   )
@@ -823,7 +921,16 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
 export default function CartPage() {
   const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
-  const { cart, loading, error, isLoggedIn, removeItem, applyCoupon, clearCoupon } = useCart()
+  const {
+    cart,
+    loading,
+    error,
+    isLoggedIn,
+    removeItem,
+    applyCoupon,
+    clearCoupon,
+    updateCartDetails,
+  } = useCart()
   const [couponCode, setCouponCode] = useState('')
   const [couponMessage, setCouponMessage] = useState('')
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
@@ -831,6 +938,9 @@ export default function CartPage() {
   const [pincodeMessage, setPincodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [pendingItemId, setPendingItemId] = useState('')
+  const [editingField, setEditingField] = useState('')
+  const [isSavingDetails, setIsSavingDetails] = useState(false)
+  const [detailsError, setDetailsError] = useState('')
   const [detailsForm, setDetailsForm] = useState({
     eventDate: '',
     eventCity: '',
@@ -858,6 +968,7 @@ export default function CartPage() {
   )
   const hasItems = cartItems.length > 0
   const hasSingleItem = cartItems.length === 1
+  const isCheckoutDisabled = !pincode.trim()
   const suggestedPackages = useMemo(
     () => getSuggestedPackages(packages, cartItems),
     [packages, cartItems]
@@ -870,6 +981,59 @@ export default function CartPage() {
       guestCount: cart?.guestCount != null ? String(cart.guestCount) : '',
     })
   }, [cart?.eventDate, cart?.eventCity, cart?.guestCount])
+
+  const handleDetailChange = (field, value) => {
+    setDetailsError('')
+    setDetailsForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleEditField = field => {
+    setDetailsError('')
+    setEditingField(field)
+  }
+
+  const handleCancelEdit = () => {
+    setDetailsError('')
+    setEditingField('')
+    setDetailsForm({
+      eventDate: cart?.eventDate ? String(cart.eventDate).slice(0, 10) : '',
+      eventCity: cart?.eventCity ?? '',
+      guestCount: cart?.guestCount != null ? String(cart.guestCount) : '',
+    })
+  }
+
+  const handleSaveDetails = async field => {
+    if (isSavingDetails) return
+
+    const nextCity = detailsForm.eventCity.trim()
+    const nextDate = detailsForm.eventDate
+
+    if (field === 'city' && !nextCity) {
+      setDetailsError('Please enter city / area.')
+      return
+    }
+
+    if (field === 'date' && !nextDate) {
+      setDetailsError('Please select an event date.')
+      return
+    }
+
+    setIsSavingDetails(true)
+    setDetailsError('')
+
+    try {
+      await updateCartDetails({
+        eventCity: nextCity,
+        eventDate: nextDate,
+        guestCount: detailsForm.guestCount ? Number(detailsForm.guestCount) : undefined,
+      })
+      setEditingField('')
+    } catch (err) {
+      setDetailsError(parseApiError(err))
+    } finally {
+      setIsSavingDetails(false)
+    }
+  }
 
   const handleRemoveItem = async itemId => {
     if (pendingItemId) return
@@ -967,8 +1131,14 @@ export default function CartPage() {
                 pendingItemId={pendingItemId}
                 onRemoveItem={handleRemoveItem}
                 detailsForm={detailsForm}
-                onEditDate={() => {}}
-                onEditCity={() => {}}
+                onEditDate={() => handleEditField('date')}
+                onEditCity={() => handleEditField('city')}
+                editingField={editingField}
+                onDetailsChange={handleDetailChange}
+                onSaveDetails={handleSaveDetails}
+                onCancelEdit={handleCancelEdit}
+                isSavingDetails={isSavingDetails}
+                detailsError={detailsError}
               />
             ) : (
               <MultiPackageList
@@ -991,6 +1161,7 @@ export default function CartPage() {
                   <DetailField
                     label="Event Date"
                     type="date"
+                    min={getMinEventDate()}
                     value={detailsForm.eventDate}
                     onChange={event =>
                       setDetailsForm(prev => ({ ...prev, eventDate: event.target.value }))
@@ -1044,6 +1215,7 @@ export default function CartPage() {
               cart={cart}
               singleItem={hasSingleItem}
               onCheckout={() => navigate('/checkout')}
+              isCheckoutDisabled={isCheckoutDisabled}
               pincodeCard={
                 <PincodeCard
                   pincode={pincode}

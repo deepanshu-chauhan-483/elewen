@@ -1,4 +1,4 @@
-import { strapiServerPost } from '../lib/strapi.js'
+import { strapiPost } from '../lib/strapi.js'
 
 // ─── POST /planner-leads ───────────────────────────────────────────────────────
 export const createPlannerLead = async (req, res, next) => {
@@ -34,7 +34,7 @@ export const createPlannerLead = async (req, res, next) => {
     // guest_count from form is a range string e.g. "50-100" — store the lower bound as integer
     const guestCountInt = parseInt(String(guest_count).split('-')[0], 10) || null
 
-    await strapiServerPost('/api/planner-leads', {
+    await strapiPost('/api/planner-leads', {
       data: {
         lead_type: 'planner',
         full_name,

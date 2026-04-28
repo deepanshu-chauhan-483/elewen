@@ -46,7 +46,7 @@ function mergePageSections(fallbackSections, cmsSections) {
  * Output: { hero: {...}, checklist: {...}, ... }
  */
 function parseSections(sections = []) {
-  return sections.reduce((acc, s) => {
+  const result = sections.reduce((acc, s) => {
     if (s?.section_key && s?.content_json) {
       const content =
         s.content_json && typeof s.content_json === 'object'
@@ -57,9 +57,15 @@ function parseSections(sections = []) {
           : s.content_json
 
       acc[s.section_key] = content
+      console.log(`[parseSections] Parsed section: ${s.section_key}`, content)
+    } else {
+      console.warn('[parseSections] Invalid section:', s)
     }
     return acc
   }, {})
+  
+  console.log('[parseSections] Final parsed sections:', Object.keys(result))
+  return result
 }
 
 /**
@@ -121,13 +127,23 @@ export function useInHousePlannerPage() {
   return useQuery({
     queryKey: ['cms-page', 'in-house-planner'],
     queryFn: async () => {
-      if (USE_FALLBACK) return INHOUSE_PLANNER_PAGE_FALLBACK
+      if (USE_FALLBACK) {
+        console.log('[useInHousePlannerPage] Using fallback data (USE_FALLBACK=true)')
+        return INHOUSE_PLANNER_PAGE_FALLBACK
+      }
       try {
+        console.log('[useInHousePlannerPage] Fetching from Strapi...')
         const { data } = await strapiGet('/inhouse-planner-page', {
           'populate[sections][populate]': '*',
         })
-        return mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parseSections(data?.sections ?? []))
-      } catch {
+        console.log('[useInHousePlannerPage] Raw Strapi response sections:', data?.sections)
+        const parsedSections = parseSections(data?.sections ?? [])
+        console.log('[useInHousePlannerPage] Parsed sections:', parsedSections)
+        const merged = mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parsedSections)
+        console.log('[useInHousePlannerPage] Merged result - celebrations_every_day:', merged.celebrations_every_day)
+        return merged
+      } catch (err) {
+        console.error('[useInHousePlannerPage] Fetch error:', err)
         return INHOUSE_PLANNER_PAGE_FALLBACK
       }
     },

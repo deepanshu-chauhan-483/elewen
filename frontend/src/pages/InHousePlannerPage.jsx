@@ -35,7 +35,7 @@ const CELEBRATION_CATEGORY_FALLBACKS = {
     bottomLeft: new URL('../assets/images/img3001.jpg', import.meta.url).href,
     bottomRight: new URL('../assets/images/img2017.jpg', import.meta.url).href,
   },
-  'birthday parties': {
+  birthdayparties: {
     topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/IMG_7656.jpg', import.meta.url).href,
     topRight: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/IMG_7646.jpg', import.meta.url).href,
     bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/f3867d0a-728b-422d-9a68-49df01b46d65.JPG', import.meta.url).href,
@@ -161,6 +161,16 @@ function normalizeGrandCelebrationItems(section = {}) {
 
 function normalizeCelebrationCategories(section = {}) {
   const categories = section.categories ?? section.items ?? []
+  
+  // Log the input for debugging
+  if (Object.keys(section).length > 0) {
+    console.log('[normalizeCelebrationCategories] Input section:', {
+      sectionKeys: Object.keys(section),
+      categoriesLength: Array.isArray(categories) ? categories.length : 'not an array',
+      categories: categories,
+    })
+  }
+  
   const sectionImages = Array.isArray(section._sectionImages)
     ? section._sectionImages
     : Array.isArray(section.images)
@@ -168,7 +178,7 @@ function normalizeCelebrationCategories(section = {}) {
       : []
   const imagesByCategory = buildImagesByBucket(sectionImages)
 
-  return (Array.isArray(categories) ? categories : [])
+  const result = (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
       const name =
         item.tab_label ?? item.name ?? item.title ?? item.heading ?? `Category ${index + 1}`
@@ -219,6 +229,18 @@ function normalizeCelebrationCategories(section = {}) {
       item =>
         item.name
     )
+    
+  console.log('[normalizeCelebrationCategories] Output categories:', result.map(c => ({ name: c.name, heading: c.heading })))
+  
+  return result
+}
+
+function getMinEventDateForPlanner() {
+  const today = new Date()
+  const minDate = new Date(today)
+  minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
+  
+  return minDate.toISOString().split('T')[0]
 }
 
 // Defined at module level so React never treats it as a new component type on re-render
@@ -808,6 +830,16 @@ const CelebrationEveryDaySection = () => {
   const resolvedCed =
     CATEGORY_DATA.length > 0 || !Object.keys(ced).length ? ced : { ...fallbackCed, ...ced }
 
+  // Debug logging
+  useEffect(() => {
+    console.log('[CelebrationEveryDaySection] Debug:', {
+      cmsData: ced,
+      categoryDataLength: CATEGORY_DATA.length,
+      resolvedCategoryDataLength: RESOLVED_CATEGORY_DATA.length,
+      fallbackCategories: fallbackCed.categories?.length,
+    })
+  }, [ced, CATEGORY_DATA, RESOLVED_CATEGORY_DATA, fallbackCed])
+
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia &&
@@ -1221,7 +1253,13 @@ const CelebrationEveryDaySection = () => {
     }
   }, [])
 
-  if (!RESOLVED_CATEGORY_DATA.length) return null
+  if (!RESOLVED_CATEGORY_DATA.length) {
+    console.warn('[CelebrationEveryDaySection] Warning: No categories found in CMS data or fallback', {
+      cmsCategories: ced.categories?.length,
+      fallbackCategories: fallbackCed.categories?.length,
+    })
+    return null
+  }
 
   return (
     <section
@@ -2030,7 +2068,7 @@ const CelebrationFormSection = () => {
                     value={form.event_date}
                     onChange={e => set('event_date', e.target.value)}
                     onBlur={() => handleBlur('event_date')}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getMinEventDateForPlanner()}
                     className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none cursor-pointer"
                   />
                 </div>
