@@ -17,55 +17,129 @@ const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
 const MOKSHA_FALLBACK_IMAGE = new URL('../assets/images/moksha_portrait.jpg', import.meta.url).href
 
-const GRAND_CELEBRATION_FALLBACKS = {
-  citroen: [new URL('../assets/images/citroen.png', import.meta.url).href],
-  danube: [new URL('../assets/images/danube.jpg', import.meta.url).href],
-  'guns & gulaabs': [new URL('../assets/images/guns.jpg', import.meta.url).href],
-  usha: [new URL('../assets/images/usha.jpg', import.meta.url).href],
-  iifl: [new URL('../assets/images/IMG_9814.jpg', import.meta.url).href],
-  'maruti dzire': [new URL('../assets/images/IMG_3903.jpg', import.meta.url).href],
-  trail: [new URL('../assets/images/6f6af066.jpg', import.meta.url).href],
-  'indus ind': [new URL('../assets/images/IMG_3148.jpg', import.meta.url).href],
+function normalizeKey(value = '') {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
 }
 
-const CELEBRATION_CATEGORY_FALLBACKS = {
+function toBucketKey(value = '') {
+  const compact = normalizeKey(value).replace(/[^a-z0-9]/g, '')
+  const aliasMap = {
+    gunsgulaabs: 'guns',
+  }
+
+  return aliasMap[compact] ?? compact
+}
+
+function normalizeFallbackBuckets(source = {}) {
+  return Object.fromEntries(Object.entries(source).map(([key, value]) => [toBucketKey(key), value]))
+}
+
+const GRAND_CELEBRATION_FALLBACKS = normalizeFallbackBuckets({
+  citroen: new URL('../assets/Inhouse Planner Images/Citroen/IMG_4266.jpg', import.meta.url).href,
+  danube: new URL('../assets/images/danube.jpg', import.meta.url).href,
+  'guns & gulaabs': new URL('../assets/images/guns.jpg', import.meta.url).href,
+  usha: new URL('../assets/images/usha.jpg', import.meta.url).href,
+  iifl: new URL('../assets/images/IMG_9814.jpg', import.meta.url).href,
+  'maruti dzire': new URL('../assets/images/IMG_3903.jpg', import.meta.url).href,
+  trail: new URL('../assets/images/6f6af066.jpg', import.meta.url).href,
+  'indus ind': new URL('../assets/images/IMG_3148.jpg', import.meta.url).href,
+})
+
+const CELEBRATION_CATEGORY_FALLBACKS = normalizeFallbackBuckets({
   anniversaries: {
     topLeft: new URL('../assets/images/IMG_7768.jpg', import.meta.url).href,
     topRight: new URL('../assets/images/img3010.jpg', import.meta.url).href,
     bottomLeft: new URL('../assets/images/img3001.jpg', import.meta.url).href,
     bottomRight: new URL('../assets/images/img2017.jpg', import.meta.url).href,
   },
-  birthdayparties: {
-    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/IMG_7656.jpg', import.meta.url).href,
-    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/IMG_7646.jpg', import.meta.url).href,
-    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Birthday Parties/f3867d0a-728b-422d-9a68-49df01b46d65.JPG', import.meta.url).href,
+  'birthday parties': {
+    topLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Birthday Parties/IMG_7656.jpg',
+      import.meta.url
+    ).href,
+    topRight: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Birthday Parties/IMG_7646.jpg',
+      import.meta.url
+    ).href,
+    bottomLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Birthday Parties/f3867d0a-728b-422d-9a68-49df01b46d65.JPG',
+      import.meta.url
+    ).href,
     bottomRight: new URL('../assets/images/img8f9e.jpg', import.meta.url).href,
   },
   engagement: {
-    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Engagement/IMG_9913.jpg', import.meta.url).href,
-    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Engagement/IMG_4757.jpg', import.meta.url).href,
-    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Engagement/IMG_3015.jpg', import.meta.url).href,
+    topLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Engagement/IMG_9913.jpg',
+      import.meta.url
+    ).href,
+    topRight: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Engagement/IMG_4757.jpg',
+      import.meta.url
+    ).href,
+    bottomLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Engagement/IMG_3015.jpg',
+      import.meta.url
+    ).href,
     bottomRight: new URL('../assets/images/img6a98.jpg', import.meta.url).href,
   },
   haldi: {
-    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Haldi/IMG_8639.PNG', import.meta.url).href,
-    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Haldi/IMG_8638.PNG', import.meta.url).href,
-    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Haldi/IMG_4826.jpg', import.meta.url).href,
-    bottomRight: new URL('../assets/Inhouse Planner Images/Social Events/Haldi/IMG_4794.jpg', import.meta.url).href,
+    topLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Haldi/IMG_8639.PNG',
+      import.meta.url
+    ).href,
+    topRight: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Haldi/IMG_8638.PNG',
+      import.meta.url
+    ).href,
+    bottomLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Haldi/IMG_4826.jpg',
+      import.meta.url
+    ).href,
+    bottomRight: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Haldi/IMG_4794.jpg',
+      import.meta.url
+    ).href,
   },
   mehendi: {
-    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8642.PNG', import.meta.url).href,
-    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8641.PNG', import.meta.url).href,
-    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8640.PNG', import.meta.url).href,
-    bottomRight: new URL('../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_4656.jpg', import.meta.url).href,
+    topLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8642.PNG',
+      import.meta.url
+    ).href,
+    topRight: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8641.PNG',
+      import.meta.url
+    ).href,
+    bottomLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_8640.PNG',
+      import.meta.url
+    ).href,
+    bottomRight: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Mehendi/IMG_4656.jpg',
+      import.meta.url
+    ).href,
   },
   weddings: {
-    topLeft: new URL('../assets/Inhouse Planner Images/Social Events/Weddings/IMG_8637.PNG', import.meta.url).href,
-    topRight: new URL('../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4854.jpg', import.meta.url).href,
-    bottomLeft: new URL('../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4853.jpg', import.meta.url).href,
-    bottomRight: new URL('../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4850.jpg', import.meta.url).href,
+    topLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Weddings/IMG_8637.PNG',
+      import.meta.url
+    ).href,
+    topRight: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4854.jpg',
+      import.meta.url
+    ).href,
+    bottomLeft: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4853.jpg',
+      import.meta.url
+    ).href,
+    bottomRight: new URL(
+      '../assets/Inhouse Planner Images/Social Events/Weddings/IMG_4850.jpg',
+      import.meta.url
+    ).href,
   },
-}
+})
 
 function toAbsoluteMediaUrl(url = '') {
   const value = String(url ?? '').trim()
@@ -93,20 +167,29 @@ function getMediaUrl(media) {
   )
 }
 
-function normalizeKey(value = '') {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
+function getSectionImages(section = {}) {
+  const sectionImages = section._sectionImages ?? section.images ?? []
+
+  if (Array.isArray(sectionImages)) return sectionImages
+  if (Array.isArray(sectionImages?.data)) return sectionImages.data
+  if (sectionImages?.data) return [sectionImages.data]
+
+  return []
 }
 
-function toBucketKey(value = '') {
-  const compact = normalizeKey(value).replace(/[^a-z0-9]/g, '')
-  const aliasMap = {
-    gunsgulaabs: 'guns',
-  }
+function getFilenameStem(media) {
+  const filename = String(media?.name ?? media?.url ?? media?.src ?? '')
+  return filename.replace(/\.[^.]+$/, '')
+}
 
-  return aliasMap[compact] ?? compact
+function getGrandCelebrationImageRank(media) {
+  const stem = getFilenameStem(media)
+  const filename = String(media?.name ?? '')
+  const exactOrderMatch =
+    filename.match(/(?:^|[^0-9])0*(\d+)(?=\.[^.]+$)/i) ?? stem.match(/(\d+)(?!.*\d)/)
+  const order = exactOrderMatch ? Number(exactOrderMatch[1]) : Number.POSITIVE_INFINITY
+
+  return Number.isFinite(order) ? order : Number.POSITIVE_INFINITY
 }
 
 function buildImagesByBucket(images = []) {
@@ -125,21 +208,29 @@ function buildImagesByBucket(images = []) {
 }
 
 function normalizeGrandCelebrationItems(section = {}) {
-  const items = section.items ?? section.cards ?? section.projects ?? section.portfolio_items ?? section.categories ?? []
-  const sectionImages = Array.isArray(section._sectionImages)
-    ? section._sectionImages
-    : Array.isArray(section.images)
-      ? section.images
-      : []
-  const imagesByCategory = buildImagesByBucket(sectionImages)
+  const items =
+    section.items ??
+    section.cards ??
+    section.projects ??
+    section.portfolio_items ??
+    section.categories ??
+    []
+  const sectionImages = getSectionImages(section)
+  const imagesByCategory = Object.fromEntries(
+    Object.entries(buildImagesByBucket(sectionImages)).map(([key, value]) => [
+      key,
+      [...value].sort((a, b) => getGrandCelebrationImageRank(a) - getGrandCelebrationImageRank(b)),
+    ])
+  )
 
   return (Array.isArray(items) ? items : [])
     .map((item, index) => {
       const title = item.title ?? item.heading ?? item.name ?? item.label ?? ''
       const categoryName = toBucketKey(title)
       const categoryImages = imagesByCategory[categoryName] || []
-      const fallbackImages = GRAND_CELEBRATION_FALLBACKS[categoryName] ?? []
-      
+      const fallbackImage = GRAND_CELEBRATION_FALLBACKS[categoryName] ?? ''
+      const explicitTall = item.tall ?? item.is_tall ?? item.portrait ?? item.variant === 'tall'
+
       return {
         id: String(item.id ?? item.order ?? index + 1).padStart(2, '0'),
         title,
@@ -151,9 +242,10 @@ function normalizeGrandCelebrationItems(section = {}) {
             item.thumbnail ??
             categoryImages[0] ??
             sectionImages[index] ??
-            fallbackImages[0]
+            fallbackImage
         ),
-        tall: Boolean(item.tall ?? item.is_tall ?? item.portrait ?? false),
+        fallbackImage,
+        tall: explicitTall ?? index % 2 === 0,
       }
     })
     .filter(item => item.title || item.image)
@@ -161,16 +253,6 @@ function normalizeGrandCelebrationItems(section = {}) {
 
 function normalizeCelebrationCategories(section = {}) {
   const categories = section.categories ?? section.items ?? []
-  
-  // Log the input for debugging
-  if (Object.keys(section).length > 0) {
-    console.log('[normalizeCelebrationCategories] Input section:', {
-      sectionKeys: Object.keys(section),
-      categoriesLength: Array.isArray(categories) ? categories.length : 'not an array',
-      categories: categories,
-    })
-  }
-  
   const sectionImages = Array.isArray(section._sectionImages)
     ? section._sectionImages
     : Array.isArray(section.images)
@@ -223,24 +305,20 @@ function normalizeCelebrationCategories(section = {}) {
               fallbackImages.bottomRight
           ),
         },
+        fallbackImages: {
+          topLeft: fallbackImages.topLeft ?? '',
+          topRight: fallbackImages.topRight ?? '',
+          bottomLeft: fallbackImages.bottomLeft ?? '',
+          bottomRight: fallbackImages.bottomRight ?? '',
+        },
       }
     })
     .filter(
       item =>
         item.name
     )
-    
-  console.log('[normalizeCelebrationCategories] Output categories:', result.map(c => ({ name: c.name, heading: c.heading })))
-  
-  return result
-}
 
-function getMinEventDateForPlanner() {
-  const today = new Date()
-  const minDate = new Date(today)
-  minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
-  
-  return minDate.toISOString().split('T')[0]
+  return result
 }
 
 // Defined at module level so React never treats it as a new component type on re-render
@@ -255,6 +333,28 @@ const GCTextReveal = ({ children, className = '' }) => (
     </span>
   </span>
 )
+
+const GrandCelebrationImage = ({ src, fallbackSrc, alt, className = '', style }) => {
+  const [currentSrc, setCurrentSrc] = useState(src || fallbackSrc || '')
+
+  useEffect(() => {
+    setCurrentSrc(src || fallbackSrc || '')
+  }, [src, fallbackSrc])
+
+  return (
+    <img
+      src={currentSrc}
+      alt={alt}
+      className={className}
+      style={style}
+      onError={() => {
+        if (!fallbackSrc) return
+        if (currentSrc === fallbackSrc) return
+        setCurrentSrc(fallbackSrc)
+      }}
+    />
+  )
+}
 
 const GrandCelebrationsSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
@@ -311,98 +411,20 @@ const GrandCelebrationsSection = () => {
   const getRevealTexts = cards =>
     cards.flatMap(card => Array.from(card.querySelectorAll('.gc-reveal-text')))
 
+  const resetTransitionState = () => {
+    setIncomingPage(null)
+    setIsAnimating(false)
+    activeCardRefs.current = []
+    activeImgWrapRefs.current = []
+    incomingCardRefs.current = []
+    incomingImgWrapRefs.current = []
+  }
+
   const go = dir => {
-    if (isAnimating || totalPages <= 1) return
-
-    const current = ((page % totalPages) + totalPages) % totalPages
-
-    const next = (current + dir + totalPages) % totalPages
-
-    setIsAnimating(true)
-
-    setIncomingPage(next)
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const outCards = activeCardRefs.current.filter(Boolean)
-
-        const outWraps = activeImgWrapRefs.current.filter(Boolean)
-
-        const inCards = incomingCardRefs.current.filter(Boolean)
-
-        const inWraps = incomingImgWrapRefs.current.filter(Boolean)
-
-        const outTexts = getRevealTexts(outCards)
-
-        const inTexts = getRevealTexts(inCards)
-
-        // Reveal the incoming layer only after setting hidden initial states (prevents flash)
-
-        gsap.set(incomingLayerRef.current, { opacity: 1 })
-
-        gsap.set(inTexts, { yPercent: 100, autoAlpha: 1 })
-
-        gsap.set(inWraps, { clipPath: 'inset(100% 0% 0% 0%)' })
-
-        const tl = gsap.timeline({
-          defaults: { ease: 'power2.inOut' },
-
-          onComplete: () => {
-            setPage(next)
-
-            setIncomingPage(null)
-
-            setIsAnimating(false)
-
-            activeCardRefs.current = []
-
-            activeImgWrapRefs.current = []
-
-            incomingCardRefs.current = []
-
-            incomingImgWrapRefs.current = []
-          },
-        })
-
-        tl.to(
-          outTexts,
-
-          { yPercent: -100, autoAlpha: 0, duration: 0.34, stagger: 0.015, ease: 'power2.in' },
-
-          0
-        ).to(
-          outWraps,
-
-          {
-            clipPath: 'inset(0% 0% 100% 0%)',
-
-            duration: 0.38,
-
-            stagger: 0.03,
-
-            ease: 'power2.in',
-          },
-
-          0
-        )
-
-        tl.to(inWraps, {
-          clipPath: 'inset(0% 0% 0% 0%)',
-
-          duration: 0.55,
-
-          stagger: 0.045,
-
-          ease: 'power3.out',
-        }).to(
-          inTexts,
-
-          { yPercent: 0, autoAlpha: 1, duration: 0.55, stagger: 0.02, ease: 'power3.out' },
-
-          '<+=0.02'
-        )
-      })
-    })
+    // Always allow the carousel to advance, even if the animated incoming layer
+    // is not ready yet in the current dev/runtime state.
+    setPage(currentPage => ((currentPage % totalPages) + dir + totalPages) % totalPages)
+    resetTransitionState()
   }
 
   useLayoutEffect(() => {
@@ -419,17 +441,7 @@ const GrandCelebrationsSection = () => {
 
       setPerPage(nextPerPage)
 
-      setIncomingPage(null)
-
-      setIsAnimating(false)
-
-      activeCardRefs.current = []
-
-      activeImgWrapRefs.current = []
-
-      incomingCardRefs.current = []
-
-      incomingImgWrapRefs.current = []
+      resetTransitionState()
     }
 
     window.addEventListener('resize', updatePerPage)
@@ -492,6 +504,8 @@ const GrandCelebrationsSection = () => {
     { rotate: -5, x: 10, y: 18, scale: 0.92 },
   ]
 
+  const isDesktopCardTall = index => index % 2 === 0
+
   return (
     <section
       ref={sectionRef}
@@ -550,8 +564,9 @@ const GrandCelebrationsSection = () => {
                       }}
                     >
                       <div className="w-full h-full bg-[#F5F5F5] overflow-hidden rounded-[8px] shadow-[0_18px_40px_rgba(0,0,0,0.16)]">
-                        <img
+                        <GrandCelebrationImage
                           src={item.image}
+                          fallbackSrc={item.fallbackImage}
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />
@@ -616,14 +631,15 @@ const GrandCelebrationsSection = () => {
                         activeImgWrapRefs.current[index] = el
                       }}
                       className={`w-full bg-[#F5F5F5] overflow-hidden ${
-                        item.tall
+                        isDesktopCardTall(index)
                           ? 'h-[320px] min-[540px]:h-[400px]'
                           : 'h-[220px] min-[540px]:h-[300px]'
                       }`}
                       style={{ willChange: 'clip-path' }}
                     >
-                      <img
+                      <GrandCelebrationImage
                         src={item.image}
+                        fallbackSrc={item.fallbackImage}
                         alt={item.title}
                         className="w-full h-full object-cover planner-card-image"
                       />
@@ -675,14 +691,15 @@ const GrandCelebrationsSection = () => {
                             incomingImgWrapRefs.current[index] = el
                           }}
                           className={`w-full bg-[#F5F5F5] overflow-hidden ${
-                            item.tall
+                            isDesktopCardTall(index)
                               ? 'h-[320px] min-[540px]:h-[400px]'
                               : 'h-[220px] min-[540px]:h-[300px]'
                           }`}
                           style={{ willChange: 'clip-path' }}
                         >
-                          <img
+                          <GrandCelebrationImage
                             src={item.image}
+                            fallbackSrc={item.fallbackImage}
                             alt={item.title}
                             className="w-full h-full object-cover planner-card-image"
                           />
@@ -749,69 +766,70 @@ const GrandCelebrationsSection = () => {
           </div>
 
           {/* Navigation arrows */}
-          <button
-            ref={arrowLeftRef}
-            type="button"
-            onClick={() => go(-1)}
-            disabled={isAnimating}
-            className="anim-element slide-from-left absolute left-0 top-[228px] w-[40px] min-[540px]:w-[52px] h-[80px] min-[540px]:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md disabled:opacity-60"
-            style={{ borderRadius: '0 104px 104px 0', '--delay': '0.3s' }}
-            aria-label="Previous celebrations"
-          >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#2D2D2D"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="min-[540px]:ml-[-10px]"
+          <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 min-[540px]:block z-40">
+            <button
+              ref={arrowLeftRef}
+              type="button"
+              onClick={() => go(-1)}
+              className="pointer-events-auto absolute left-0 top-[228px] flex h-[80px] w-[40px] min-[540px]:h-[104px] min-[540px]:w-[52px] cursor-pointer items-center justify-center bg-[#F2F2F2] shadow-md transition-colors hover:bg-[#e5e5e5]"
+              style={{ borderRadius: '0 104px 104px 0' }}
+              aria-label="Previous celebrations"
             >
-              <path d="M19 12H5" />
-              <path d="m12 19-7-7 7-7" />
-            </svg>
-          </button>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#2D2D2D"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="min-[540px]:ml-[-10px]"
+              >
+                <path d="M19 12H5" />
+                <path d="m12 19-7-7 7-7" />
+              </svg>
+            </button>
 
-          <button
-            ref={arrowRightRef}
-            type="button"
-            onClick={() => go(1)}
-            disabled={isAnimating}
-            className="anim-element slide-from-right absolute right-0 top-[228px] w-[40px] min-[540px]:w-[52px] h-[80px] min-[540px]:h-[104px] bg-[#F2F2F2] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors z-20 shadow-md disabled:opacity-60"
-            style={{ borderRadius: '104px 0 0 104px', '--delay': '0.3s' }}
-            aria-label="Next celebrations"
-          >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#2D2D2D"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="min-[540px]:mr-[-10px]"
+            <button
+              ref={arrowRightRef}
+              type="button"
+              onClick={() => go(1)}
+              className="pointer-events-auto absolute right-0 top-[228px] flex h-[80px] w-[40px] min-[540px]:h-[104px] min-[540px]:w-[52px] cursor-pointer items-center justify-center bg-[#F2F2F2] shadow-md transition-colors hover:bg-[#e5e5e5]"
+              style={{ borderRadius: '104px 0 0 104px' }}
+              aria-label="Next celebrations"
             >
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </button>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#2D2D2D"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="min-[540px]:mr-[-10px]"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
     </section>
   )
 }
 
-const ImgBox = ({ src, alt, className, setRef }) => (
+const ImgBox = ({ src, fallbackSrc, alt, className, setRef }) => (
   <div
     ref={setRef}
     className={`${className} overflow-hidden`}
     style={{ willChange: 'transform, clip-path', clipPath: 'inset(0% 0% 0% 0%)' }}
   >
-    <img
+    <GrandCelebrationImage
       src={src}
+      fallbackSrc={fallbackSrc}
       alt={alt}
       className="w-full h-full object-cover"
       style={{ willChange: 'transform' }}
@@ -892,7 +910,9 @@ const CelebrationEveryDaySection = () => {
   const activeAccentRef = useRef(null)
   const incomingAccentRef = useRef(null)
   const incomingLayerRef = useRef(null)
-  const incoming = incomingName ? (RESOLVED_CATEGORY_DATA.find(c => c.name === incomingName) ?? null) : null
+  const incoming = incomingName
+    ? (RESOLVED_CATEGORY_DATA.find(c => c.name === incomingName) ?? null)
+    : null
   const resolvedActiveName = RESOLVED_CATEGORY_DATA.some(category => category.name === activeName)
     ? activeName
     : (RESOLVED_CATEGORY_DATA[0]?.name ?? '')
@@ -1361,8 +1381,9 @@ const CelebrationEveryDaySection = () => {
               className="relative overflow-hidden rounded-[18px] row-span-2 col-start-1 row-start-1"
               style={{ willChange: 'transform, opacity' }}
             >
-              <img
+              <GrandCelebrationImage
                 src={active.images.topLeft}
+                fallbackSrc={active.fallbackImages?.topLeft}
                 alt={`${active.name} left`}
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -1374,8 +1395,9 @@ const CelebrationEveryDaySection = () => {
               className="relative overflow-hidden rounded-[18px] col-start-2 row-start-1"
               style={{ willChange: 'transform, opacity' }}
             >
-              <img
+              <GrandCelebrationImage
                 src={active.images.topRight}
+                fallbackSrc={active.fallbackImages?.topRight}
                 alt={`${active.name} right top`}
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -1387,8 +1409,9 @@ const CelebrationEveryDaySection = () => {
               className="relative overflow-hidden rounded-[18px] col-start-1 row-start-3"
               style={{ willChange: 'transform, opacity' }}
             >
-              <img
+              <GrandCelebrationImage
                 src={active.images.bottomLeft}
+                fallbackSrc={active.fallbackImages?.bottomLeft}
                 alt={`${active.name} bottom left`}
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -1400,8 +1423,9 @@ const CelebrationEveryDaySection = () => {
               className="relative overflow-hidden rounded-[18px] col-start-2 row-start-2 row-span-2"
               style={{ willChange: 'transform, opacity' }}
             >
-              <img
+              <GrandCelebrationImage
                 src={active.images.bottomRight}
+                fallbackSrc={active.fallbackImages?.bottomRight}
                 alt={`${active.name} bottom right`}
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -1430,7 +1454,7 @@ const CelebrationEveryDaySection = () => {
       <div className="hidden min-[540px]:block w-full">
         <div
           ref={desktopWrapRef}
-          className="relative w-full max-w-[1440px] mx-auto"
+          className="relative w-full max-w-[1540px] mx-auto"
           style={{ height: `${DESKTOP_CANVAS_H * desktopScale}px` }}
         >
           <div
@@ -1464,7 +1488,7 @@ const CelebrationEveryDaySection = () => {
                 </span>
               </p>
 
-              <div className="absolute left-[0px] top-[297px] w-[1440px] h-[800px]">
+              <div className="absolute left-[0px] top-[297px] w-[1540px] h-[800px]">
                 <div className="absolute left-[0px] top-[0px] w-[1440px] h-[800px] bg-[#FFFFFF] z-0" />
                 <div className="pointer-events-none absolute left-[0px] top-[399px] w-[1440px] h-px bg-[#D8D8D8] z-[40]" />
                 <div className="pointer-events-none absolute left-[0px] top-[599px] w-[640px] h-px bg-[#D8D8D8] z-[40]" />
@@ -1507,6 +1531,7 @@ const CelebrationEveryDaySection = () => {
                 <ImgBox
                   key={`${active.name}-topLeft`}
                   src={active.images.topLeft}
+                  fallbackSrc={active.fallbackImages?.topLeft}
                   alt={`${active.name} image`}
                   className="absolute left-[440px] top-[0px] w-[500px] h-[400px] z-10"
                   setRef={el => (activeWrapsRef.current.topLeft = el)}
@@ -1514,6 +1539,7 @@ const CelebrationEveryDaySection = () => {
                 <ImgBox
                   key={`${active.name}-topRight`}
                   src={active.images.topRight}
+                  fallbackSrc={active.fallbackImages?.topRight}
                   alt={`${active.name} image`}
                   className="absolute left-[940px] top-[0px] w-[500px] h-[400px] z-10"
                   setRef={el => (activeWrapsRef.current.topRight = el)}
@@ -1521,6 +1547,7 @@ const CelebrationEveryDaySection = () => {
                 <ImgBox
                   key={`${active.name}-bottomLeft`}
                   src={active.images.bottomLeft}
+                  fallbackSrc={active.fallbackImages?.bottomLeft}
                   alt={`${active.name} image`}
                   className="absolute left-[0px] top-[600px] w-[640px] h-[200px] z-10"
                   setRef={el => (activeWrapsRef.current.bottomLeft = el)}
@@ -1528,6 +1555,7 @@ const CelebrationEveryDaySection = () => {
                 <ImgBox
                   key={`${active.name}-bottomRight`}
                   src={active.images.bottomRight}
+                  fallbackSrc={active.fallbackImages?.bottomRight}
                   alt={`${active.name} image`}
                   className="absolute left-[640px] top-[400px] w-[800px] h-[400px] z-10"
                   setRef={el => (activeWrapsRef.current.bottomRight = el)}
@@ -1578,6 +1606,7 @@ const CelebrationEveryDaySection = () => {
                     <ImgBox
                       key={`${incoming.name}-topLeft`}
                       src={incoming.images.topLeft}
+                      fallbackSrc={incoming.fallbackImages?.topLeft}
                       alt={`${incoming.name} image`}
                       className="absolute left-[440px] top-[0px] w-[500px] h-[400px]"
                       setRef={el => (incomingWrapsRef.current.topLeft = el)}
@@ -1585,6 +1614,7 @@ const CelebrationEveryDaySection = () => {
                     <ImgBox
                       key={`${incoming.name}-topRight`}
                       src={incoming.images.topRight}
+                      fallbackSrc={incoming.fallbackImages?.topRight}
                       alt={`${incoming.name} image`}
                       className="absolute left-[940px] top-[0px] w-[500px] h-[400px]"
                       setRef={el => (incomingWrapsRef.current.topRight = el)}
@@ -1592,6 +1622,7 @@ const CelebrationEveryDaySection = () => {
                     <ImgBox
                       key={`${incoming.name}-bottomLeft`}
                       src={incoming.images.bottomLeft}
+                      fallbackSrc={incoming.fallbackImages?.bottomLeft}
                       alt={`${incoming.name} image`}
                       className="absolute left-[0px] top-[600px] w-[640px] h-[200px]"
                       setRef={el => (incomingWrapsRef.current.bottomLeft = el)}
@@ -1599,6 +1630,7 @@ const CelebrationEveryDaySection = () => {
                     <ImgBox
                       key={`${incoming.name}-bottomRight`}
                       src={incoming.images.bottomRight}
+                      fallbackSrc={incoming.fallbackImages?.bottomRight}
                       alt={`${incoming.name} image`}
                       className="absolute left-[640px] top-[400px] w-[800px] h-[400px]"
                       setRef={el => (incomingWrapsRef.current.bottomRight = el)}
@@ -2394,8 +2426,7 @@ const InHousePlannerSection = () => {
         bio.portrait ??
         bio._sectionImages?.[0] ??
         MOKSHA_FALLBACK_IMAGE
-    ) ||
-    getMediaUrl(cms.hero?.image ?? cms.hero?.photo)
+    ) || getMediaUrl(cms.hero?.image ?? cms.hero?.photo)
   const plannerImageAlt =
     bio.image_alt ??
     bio.photo_alt ??
@@ -2469,7 +2500,7 @@ const InHousePlannerSection = () => {
 
       <div data-in-house-planner-page>
         <section data-planner-intro className="w-full bg-[#957960] flex justify-center font-sans">
-          <div className="w-full max-w-[1440px] flex flex-col min-[540px]:flex-row">
+          <div className="w-full max-w-[1540px] flex flex-col min-[540px]:flex-row">
             {/* Image */}
 
             <div className="anim-element slide-from-left w-full min-[540px]:w-1/2 h-[clamp(380px,62vh,520px)] min-[540px]:h-[670px] overflow-hidden">

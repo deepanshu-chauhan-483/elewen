@@ -389,7 +389,14 @@ export const resetPassword = async (req, res, next) => {
 
     // Completing a password reset proves email ownership — confirm the user if not already
     if (result?.user?.id) {
-      await strapiAdminPut(`/api/users/${result.user.id}`, { confirmed: true })
+      try {
+        await strapiAdminPut(`/api/users/${result.user.id}`, { confirmed: true })
+      } catch (confirmErr) {
+        console.error(
+          '[auth.resetPassword] Failed to sync confirmed=true after password reset:',
+          confirmErr
+        )
+      }
     }
 
     res.json({ ok: true })

@@ -39,6 +39,13 @@ function mergePageSections(fallbackSections, cmsSections) {
   return merged
 }
 
+function normalizeSectionImages(images) {
+  if (Array.isArray(images)) return images
+  if (Array.isArray(images?.data)) return images.data
+  if (images?.data) return [images.data]
+  return []
+}
+
 /**
  * Converts a Strapi sections array into a keyed map for easy lookup.
  *
@@ -52,7 +59,7 @@ function parseSections(sections = []) {
         s.content_json && typeof s.content_json === 'object'
           ? {
               ...s.content_json,
-              _sectionImages: Array.isArray(s.images) ? s.images : [],
+              _sectionImages: normalizeSectionImages(s.images),
             }
           : s.content_json
 

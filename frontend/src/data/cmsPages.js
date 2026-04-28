@@ -220,9 +220,7 @@ export const INHOUSE_PLANNER_PAGE_FALLBACK = {
       'Co-founder at Elewen and a professional event planner with 6+ years of industry experience. Trained in International Events in the UK, I bring structure, creativity, and calm to every celebration.',
     personal_note:
       "Some events call for personal attention and thoughtful detailing. They need intention, detail, and a planner who truly cares, that's exactly why the In-House Planner was created.",
-    _sectionImages: [
-      { id: 1, name: 'moksha_portrait.jpg', url: '/images/placeholder.jpg' },
-    ],
+    _sectionImages: [{ id: 1, name: 'moksha_portrait.jpg', url: '/images/placeholder.jpg' }],
   },
   grand_celebrations_intro: {
     heading_1: 'Experience Across Grand Celebrations',
@@ -230,19 +228,23 @@ export const INHOUSE_PLANNER_PAGE_FALLBACK = {
     categories: [
       {
         label: 'Citroen',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
       },
       {
         label: 'Danube',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
       },
       {
         label: 'Guns & Gulaabs',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
       },
       {
         label: 'Usha',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.',
       },
     ],
     _sectionImages: [

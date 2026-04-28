@@ -233,7 +233,7 @@ const IdeaToCelebrationSection = () => {
         <div className="absolute left-[45%] top-[26%] h-[520px] w-[180px] rotate-[-38deg] rounded-[40px] bg-white/10" />
       </div>
 
-      <div className="relative flex w-full max-w-[1180px] flex-col items-center">
+      <div className="relative flex w-full max-w-[1180px] flex-col items-center pb-5">
         <div className="flex w-full max-w-[760px] flex-col items-center text-center reveal-on-scroll">
           <h2
             className="text-[40px] leading-[1] text-[#7A341C] min-[540px]:text-[52px] lg:text-[61px]"
@@ -349,8 +349,8 @@ const EventDashboardSection = () => {
         className="absolute inset-x-0 top-0 flex w-full pointer-events-none z-10"
       />
 
-      <div className="relative flex w-full max-w-[1180px] flex-col gap-12 pt-[132px] lg:flex-row lg:items-center lg:gap-14 lg:pt-[170px]">
-        <div className="flex w-full flex-col lg:max-w-[410px] reveal-on-scroll">
+      <div className="relative flex w-full max-w-[1180px] flex-col gap-3 pt-[132px] lg:flex-row lg:items-center lg:gap-6 lg:pt-[170px]">
+        <div className="flex w-full flex-col lg:max-w-[496px] reveal-on-scroll">
           <h2
             className="max-w-[420px] text-[48px] leading-[0.95] text-[#6C2205] min-[540px]:text-[61px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
@@ -359,7 +359,7 @@ const EventDashboardSection = () => {
             <RevealLine delay="0.06s">Everything in One Place.</RevealLine>
           </h2>
 
-          <p className="mt-8 max-w-[396px] text-[16px] leading-[1.5] text-[#B29078] min-[540px]:text-[18px]">
+          <p className="mt-8 max-w-[396px] text-[12px] leading-[1.5] text-[#B29078] min-[540px]:text-[16px]">
             <RevealLine delay="0.12s">
               Once your booking is confirmed, you get access to your personal event dashboard —
               where everything lives, from order details to vendor updates.
@@ -389,7 +389,7 @@ const EventDashboardSection = () => {
                     <path d="m3.5 8.5 2.5 2.5 6-7" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
-                <span className="text-[14px] leading-[1.4] text-[#4F4F4F] min-[540px]:text-[15px]">
+                <span className="text-[10px] leading-[1.4] text-[#4F4F4F] min-[540px]:text-[14px]">
                   {item}
                 </span>
               </div>
@@ -403,7 +403,7 @@ const EventDashboardSection = () => {
             style={{ '--delay': '0.14s' }}
           >
             <div className="flex min-h-[72px] items-center rounded-full bg-[#3E4E22] px-7 py-5">
-              <span className="text-[18px] font-medium leading-[1.3] text-[#FAFAFA] min-[540px]:text-[20px]">
+              <span className="text-[12px] font-medium leading-[1.3] text-[#FAFAFA] min-[540px]:text-[16px]">
                 My Event Dashboard
               </span>
             </div>
@@ -415,10 +415,10 @@ const EventDashboardSection = () => {
                   className="flex min-h-[170px] flex-col rounded-[14px] bg-[#F4EEE6] p-5 min-[540px]:min-h-[182px] min-[540px]:p-6"
                 >
                   <div className="h-9 w-9 text-[#7A341C]">{feature.icon}</div>
-                  <h3 className="mt-5 text-[20px] font-medium leading-[1.15] text-[#7A341C]">
+                  <h3 className="mt-5 text-[12px] min-[540px]:text-[16px] font-medium leading-[1.15] text-[#7A341C]">
                     {feature.title}
                   </h3>
-                  <p className="mt-3 max-w-[250px] text-[14px] leading-[1.5] text-[#C0A48E] min-[540px]:text-[15px]">
+                  <p className="mt-3 max-w-[250px] text-[10px] leading-[1.5] text-[#C0A48E] min-[540px]:text-[14px]">
                     {feature.description}
                   </p>
                 </div>
@@ -436,10 +436,10 @@ const NeedToKnowSection = () => {
 
   return (
     <section className="flex w-full justify-center bg-[#FAFAFA] px-6 py-16 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
-      <div className="flex w-full max-w-[1180px] flex-col gap-12 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
-        <div className="flex w-full max-w-[360px] flex-col reveal-on-scroll">
+      <div className="flex w-full max-w-[1180px] flex-col lg:flex-row lg:items-start lg:justify-between lg:gap-3">
+        <div className="flex w-full max-w-[496px] flex-col reveal-on-scroll">
           <h2
-            className="text-[48px] leading-[0.95] text-[#6C2205] min-[540px]:text-[61px] lg:text-[61px]"
+            className="text-[30px] leading-[1.08] text-[#6C2205] min-[540px]:text-[41px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
             <RevealLine>Everything You</RevealLine>
@@ -473,7 +473,7 @@ const NeedToKnowSection = () => {
                   >
                     <div className="flex flex-col">
                       <h3
-                        className="text-[24px] leading-[1.08] text-[#6C2205] min-[540px]:text-[32px]"
+                        className="text-[18px] leading-[1.08] text-[#6C2205] min-[540px]:text-[27px]"
                         style={{ fontFamily: "'Malgin', serif" }}
                       >
                         {faq.question}
@@ -511,7 +511,7 @@ const NeedToKnowSection = () => {
                     }}
                   >
                     <div className="overflow-hidden">
-                      <p className="max-w-[760px] pb-5 text-[16px] leading-[1.5] text-[#B29078] min-[540px]:pb-6 min-[540px]:text-[18px]">
+                      <p className="max-w-[760px] pb-5 text-[12px] leading-[1.5] text-[#B29078] min-[540px]:pb-6 min-[540px]:text-[16px]">
                         {faq.answer}
                       </p>
                     </div>
@@ -528,7 +528,7 @@ const NeedToKnowSection = () => {
 
 const FinalCtaSection = () => {
   return (
-    <section className="relative flex w-full justify-center overflow-hidden bg-[#591902] px-6 py-14 min-[540px]:px-10 min-[540px]:py-16 lg:px-20 xl:px-[100px]">
+    <section className="relative flex w-full justify-center overflow-hidden bg-[#591902] px-6 pt-14 pb-4 min-[540px]:px-10 min-[540px]:pt-16 min-[540px]:pb-6 lg:px-20 xl:px-[100px]">
       <div className="relative flex w-full max-w-[980px] flex-col items-center text-center reveal-on-scroll">
         <div className="flex flex-col items-center">
           <div className="anim-element slide-from-bottom h-px w-20 bg-[#D4BA8E]" />
@@ -538,14 +538,14 @@ const FinalCtaSection = () => {
         </div>
 
         <h2
-          className="mt-5 max-w-[980px] text-[48px] leading-[0.96] text-white min-[540px]:text-[61px] lg:text-[72px]"
+          className="mt-5 max-w-[980px] text-[30px] leading-[0.96] text-white min-[540px]:text-[41px] lg:text-[61px]"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <RevealLine delay="0.08s">Your Celebration Is</RevealLine>
           <RevealLine delay="0.14s">Just a Few Steps Away.</RevealLine>
         </h2>
 
-        <p className="mt-6 max-w-[760px] text-[16px] leading-[1.55] text-[#D6B8A7] min-[540px]:text-[22px]">
+        <p className="mt-6 max-w-[760px] text-[12px] leading-[1.55] text-[#D6B8A7] min-[540px]:text-[16px]">
           <RevealLine delay="0.18s">
             No stress. No juggling. Just a beautiful, well-planned event — handled by people who
             care about getting it right.
@@ -583,7 +583,7 @@ const FinalCtaSection = () => {
         </div>
 
         <div
-          className="anim-element slide-from-bottom mt-10 flex items-center justify-center gap-3 text-center text-[16px] leading-[1.4] text-[#B89074]"
+          className="anim-element slide-from-bottom mt-15 flex items-center justify-center gap-3 text-center text-[12px] leading-[1.4] text-[#B89074]"
           style={{ '--delay': '0.3s' }}
         >
           <span className="text-[#C89F5D]">✦</span>
@@ -712,17 +712,17 @@ const HowItWorkHeroSection = () => {
         </div>
 
         <div className="anim-element slide-from-bottom is-visible relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-6 py-3 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-3 md:px-20 xl:px-[100px]">
-          <div className="flex flex-wrap items-center justify-start text-[#CDB17E] w-full gap-2 min-[540px]:gap-4 md:gap-4 lg:gap-6">
+          <div className="flex flex-wrap items-center justify-start text-[#CDB17E] w-full gap-2 min-[540px]:gap-2 md:gap-2 lg:gap-8 xl:gap-12">
             {HERO_TAGS.map((tag, index) => (
               <div
                 key={tag}
-                className="flex items-center h-8 whitespace-nowrap gap-3 md:gap-5 lg:gap-7"
+                className="flex items-center h-8 whitespace-nowrap gap-1 md:gap-2 lg:gap-6"
               >
                 <span className="text-[13px] uppercase leading-none tracking-[0.02em] min-[540px]:text-[16px]">
                   {tag}
                 </span>
                 {index < HERO_TAGS.length - 1 && (
-                  <div className="hidden md:flex items-center justify-center px-3">
+                  <div className="hidden md:flex items-center justify-center px-3.5">
                     <svg
                       width="4"
                       height="4"
