@@ -90,6 +90,35 @@ const isJwtLike = token => typeof token === 'string' && token.split('.').length 
 
 const isVerifiedGoogleEmail = value => value === true || value === 'true'
 
+const exchangeGoogleAccessTokenForStrapiSession = async accessToken => {
+  const url = new URL('/api/auth/google/callback', process.env.STRAPI_URL || 'http://localhost:1337')
+  url.searchParams.set('access_token', accessToken)
+
+  try {
+    const res = await fetch(url.toString())
+    console.log('[exchangeGoogleAccessTokenForStrapiSession] Status:', res.status, 'URL:', url.toString())
+    
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '')
+      console.error('[exchangeGoogleAccessTokenForStrapiSession] Failed:', res.status, errText)
+      return null
+    }
+
+    const payload = await res.json().catch(() => null)
+    console.log('[exchangeGoogleAccessTokenForStrapiSession] Success, got user:', payload?.user?.email)
+    
+    if (!payload?.jwt || !payload?.user) {
+      console.error('[exchangeGoogleAccessTokenForStrapiSession] Missing jwt or user in response')
+      return null
+    }
+
+    return payload
+  } catch (err) {
+    console.error('[exchangeGoogleAccessTokenForStrapiSession] Error:', err.message)
+    return null
+  }
+}
+
 const verifyGoogleToken = async token => {
   const tokenInfoUrls = isJwtLike(token)
     ? [
@@ -101,15 +130,24 @@ const verifyGoogleToken = async token => {
         `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
       ]
 
-  for (const url of tokenInfoUrls) {
-    const res = await fetch(url)
-    const payload = await res.json().catch(() => null)
+  console.log('[verifyGoogleToken] Starting verification, isJwt:', isJwtLike(token))
 
-    if (res.ok && payload?.email && isVerifiedGoogleEmail(payload.email_verified)) {
-      return payload
+  for (const url of tokenInfoUrls) {
+    try {
+      const res = await fetch(url)
+      const payload = await res.json().catch(() => null)
+      console.log('[verifyGoogleToken] URL:', url.split('=')[0] + '=...', 'Status:', res.status)
+
+      if (res.ok && payload?.email && isVerifiedGoogleEmail(payload.email_verified)) {
+        console.log('[verifyGoogleToken] ✓ Token verified for:', payload.email)
+        return payload
+      }
+    } catch (err) {
+      console.error('[verifyGoogleToken] Fetch error:', err.message)
     }
   }
 
+  console.error('[verifyGoogleToken] ✗ All verification attempts failed')
   return null
 }
 
@@ -418,7 +456,6 @@ export const resetPassword = async (req, res, next) => {
 //   4. Frontend extracts access_token from URL, POST it here
 //   5. We verify it, create a UserSession, return { jwt, user }
 export const googleSession = async (req, res, next) => {
-  
   try {
     const { access_token } = req.body
     if (!access_token) {
@@ -443,27 +480,32 @@ export const googleSession = async (req, res, next) => {
     }
 
     if (!user || !strapiJwt) {
-      // Raw Google token (or Google JWT/id_token) — verify with Google's tokeninfo endpoint.
+      // Raw Google token (or Google JWT/id_token).
+      // First let Strapi complete the provider callback exchange, which returns
+      // the app JWT + user without requiring admin-only /api/users access.
+      console.log('[googleSession] Attempting Strapi OAuth callback exchange...')
+      const strapiOAuthSession = await exchangeGoogleAccessTokenForStrapiSession(access_token)
+      if (strapiOAuthSession?.jwt && strapiOAuthSession?.user) {
+        strapiJwt = strapiOAuthSession.jwt
+        user = strapiOAuthSession.user
+        console.log('[googleSession] ✓ Got user from Strapi OAuth:', user.email)
+      } else {
+        console.error('[googleSession] ✗ Strapi OAuth callback failed. Token may be invalid or Strapi Google OAuth not configured.')
+      }
+    }
+
+    if (!user || !strapiJwt) {
+      // Fallback for environments where Strapi returns a raw Google token and
+      // the provider callback exchange is unavailable.
+      console.log('[googleSession] Fallback: Verifying token directly with Google API...')
       const tokenInfo = await verifyGoogleToken(access_token)
 
       if (!tokenInfo) {
+        console.error('[googleSession] ✗ Google token verification failed - all methods exhausted')
         return res.status(401).json({ error: 'Invalid or expired Google token' })
       }
 
-      // Fetch full Google profile (name + picture) — tokeninfo doesn't include these
-      const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${access_token}` },
-      })
-      if (userinfoRes.ok) {
-        const userinfo = await userinfoRes.json()
-        console.log('[googleSession] userinfoRes.ok', userinfoRes.ok)
-
-        googleName = {
-          firstName: userinfo.given_name ?? null,
-          lastName: userinfo.family_name ?? null,
-          picture: userinfo.picture ?? null,
-        }
-      }
+      console.log('[googleSession] ✓ Token verified with Google:', tokenInfo.email)
 
       // Find existing Strapi user by email
       user = await strapiFindUserByEmail(tokenInfo.email)

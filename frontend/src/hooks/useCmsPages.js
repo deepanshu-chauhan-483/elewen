@@ -75,6 +75,66 @@ function parseSections(sections = []) {
   return result
 }
 
+async function fetchGrandCelebrationsIntro() {
+  const { data } = await strapiGet('/grand-celebrations-intros', {
+    'pagination[pageSize]': 1,
+    sort: 'updatedAt:desc',
+    'populate[category_item][populate]': '*',
+  })
+
+  const entry = Array.isArray(data) ? data[0] : null
+  if (!entry) return null
+
+  const categoryItems = Array.isArray(entry.category_item) ? entry.category_item : []
+  const sectionImages = categoryItems.flatMap(item =>
+    Array.isArray(item?.image) ? item.image : item?.image ? [item.image] : []
+  )
+
+  return {
+    heading_1: entry.heading_1 ?? '',
+    note: entry.note ?? '',
+    category_item: categoryItems,
+    categories: categoryItems,
+    _sectionImages: sectionImages,
+  }
+}
+
+export async function fetchInHousePlannerPageData() {
+  if (USE_FALLBACK) {
+    console.log('[useInHousePlannerPage] Using fallback data (USE_FALLBACK=true)')
+    return INHOUSE_PLANNER_PAGE_FALLBACK
+  }
+
+  try {
+    console.log('[useInHousePlannerPage] Fetching from Strapi...')
+    const [{ data }, grandCelebrationsIntro] = await Promise.all([
+      strapiGet('/inhouse-planner-page', {
+        'populate[sections][populate]': '*',
+      }),
+      fetchGrandCelebrationsIntro().catch(err => {
+        console.warn('[useInHousePlannerPage] grand celebrations intro fetch failed:', err)
+        return null
+      }),
+    ])
+
+    console.log('[useInHousePlannerPage] Raw Strapi response sections:', data?.sections)
+    const parsedSections = parseSections(data?.sections ?? [])
+    if (grandCelebrationsIntro) {
+      parsedSections.grand_celebrations_intro = grandCelebrationsIntro
+    }
+    console.log('[useInHousePlannerPage] Parsed sections:', parsedSections)
+    const merged = mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parsedSections)
+    console.log(
+      '[useInHousePlannerPage] Merged result - celebrations_every_day:',
+      merged.celebrations_every_day
+    )
+    return merged
+  } catch (err) {
+    console.error('[useInHousePlannerPage] Fetch error:', err)
+    return INHOUSE_PLANNER_PAGE_FALLBACK
+  }
+}
+
 /**
  * useLandingPage
  * Fetches Landing Page Single Type from Strapi.
@@ -133,30 +193,7 @@ export function useAboutPage() {
 export function useInHousePlannerPage() {
   return useQuery({
     queryKey: ['cms-page', 'in-house-planner'],
-    queryFn: async () => {
-      if (USE_FALLBACK) {
-        console.log('[useInHousePlannerPage] Using fallback data (USE_FALLBACK=true)')
-        return INHOUSE_PLANNER_PAGE_FALLBACK
-      }
-      try {
-        console.log('[useInHousePlannerPage] Fetching from Strapi...')
-        const { data } = await strapiGet('/inhouse-planner-page', {
-          'populate[sections][populate]': '*',
-        })
-        console.log('[useInHousePlannerPage] Raw Strapi response sections:', data?.sections)
-        const parsedSections = parseSections(data?.sections ?? [])
-        console.log('[useInHousePlannerPage] Parsed sections:', parsedSections)
-        const merged = mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parsedSections)
-        console.log(
-          '[useInHousePlannerPage] Merged result - celebrations_every_day:',
-          merged.celebrations_every_day
-        )
-        return merged
-      } catch (err) {
-        console.error('[useInHousePlannerPage] Fetch error:', err)
-        return INHOUSE_PLANNER_PAGE_FALLBACK
-      }
-    },
+    queryFn: fetchInHousePlannerPageData,
     placeholderData: INHOUSE_PLANNER_PAGE_FALLBACK,
     staleTime: 10 * 60 * 1000,
     retry: 1,
