@@ -876,7 +876,7 @@ const WhatToPlanSection = () => {
                     <Link
                       key={card.id ?? card.title}
                       to={buildServiceListingHref(card.slug ?? card.title)}
-                      className="bg-white p-[10px] md:p-2.5 mx-auto rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.08 + i * 0.06}s`,
                         width: isMobile

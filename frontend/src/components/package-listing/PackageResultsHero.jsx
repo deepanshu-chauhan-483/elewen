@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   useBudgetLevelOptions,
   useDecorThemeOptions,
@@ -7,6 +7,7 @@ import {
   useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
 import { normalizeServiceSlug } from '../../lib/packageFilters'
+import { buildServiceDestination } from '../../lib/serviceFlow'
 
 function FilterPill({
   label,
@@ -24,7 +25,9 @@ function FilterPill({
         onChange={onChange}
         className="h-[34px] w-full appearance-none rounded-full bg-[#F7F0E6] pl-4 pr-9 text-[14px] leading-none text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
       >
-        <option value="">{label}</option>
+        <option value="" disabled hidden>
+          {label}
+        </option>
         {options.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -73,12 +76,16 @@ export default function PackageResultsHero({
   filters = [],
   className = '',
 }) {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+  const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
+  const eventId = searchParams.get('eventId') ?? ''
   const serviceSlug = normalizeServiceSlug(searchParams.get('service') ?? '')
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
   const serviceIdParam = searchParams.get('serviceId') ?? ''
+  const flow = searchParams.get('flow') ?? ''
 
   const { data: allCategories = [] } = useEventCategoryOptions()
   const { data: allServices = [] } = useFilteredServiceOptions(SERVICE_ORDER)
@@ -160,19 +167,23 @@ export default function PackageResultsHero({
         const matchedService =
           services.find(service => normalizeServiceSlug(service.slug) === normalizedValue) ?? null
 
-        nextParams.set('service', normalizedValue)
-        if (matchedService?.id != null) nextParams.set('serviceId', String(matchedService.id))
-        else nextParams.delete('serviceId')
-
-        if (normalizedValue !== 'decor') nextParams.delete('theme')
-        setSearchParams(nextParams)
+        navigate(
+          buildServiceDestination({
+            categorySlug,
+            eventSlug,
+            eventId,
+            serviceSlug: normalizedValue,
+            serviceId: matchedService?.id != null ? String(matchedService.id) : '',
+            flow,
+          })
+        )
         return
       }
 
       nextParams.set(key, value)
       setSearchParams(nextParams)
     },
-    [searchParams, services, setSearchParams]
+    [categorySlug, eventId, eventSlug, flow, navigate, searchParams, services, setSearchParams]
   )
 
   const autoFilters = useMemo(() => {

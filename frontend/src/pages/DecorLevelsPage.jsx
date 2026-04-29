@@ -25,20 +25,6 @@ const PKG_LOCAL_IMAGES = [
   [pkgImg5, pkgImg1, pkgImg8],
 ]
 
-// const DECOR_LEVELS = [
-//   { id: 'level-1', label: 'Level 1' },
-//   { id: 'level-2', label: 'Level 2' },
-//   { id: 'level-3', label: 'Level 3' },
-// ]
-function formatFilterLabel(value, fallback) {
-  if (!value) return fallback
-
-  return value
-    .split('-')
-    .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
 const CARDS_PER_ROW = 3
 
 function isNumericId(value) {
@@ -107,11 +93,8 @@ export default function DecorLevelsPage() {
   const eventId = searchParams.get('eventId') ?? ''
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const serviceId = searchParams.get('serviceId') ?? ''
+  const flow = searchParams.get('flow') ?? ''
   const { data: levels = [] } = useBudgetLevelOptions(serviceId)
-
-  const categoryLabel = formatFilterLabel(categorySlug, 'Category')
-  const eventLabel = formatFilterLabel(eventSlug, 'Event')
-  const themeLabel = formatFilterLabel(themeSlug, 'Theme')
 
   // Independent pagination state for each level
   const [pagination, setPagination] = useState({
@@ -179,15 +162,16 @@ export default function DecorLevelsPage() {
     }))
   }
 
-  const buildViewAllLink = levelId => {
+  const buildViewAllLink = level => {
     const params = new URLSearchParams()
     if (categorySlug) params.set('category', categorySlug)
     if (eventSlug) params.set('event', eventSlug)
     if (eventId) params.set('eventId', eventId)
     params.set('service', 'decor')
     if (serviceId) params.set('serviceId', serviceId)
+    if (flow) params.set('flow', flow)
     if (themeSlug) params.set('theme', themeSlug)
-    params.set('level', levelId)
+    if (level?.slug) params.set('level', level.slug)
     return `/packages/decor?${params.toString()}`
   }
 
@@ -203,15 +187,7 @@ export default function DecorLevelsPage() {
       onPageSelect={() => {}}
       ctaTitle="Not sure which decor package is right for you?"
       showPagination={false} // ← This hides the bottom number + arrow pagination
-      heroContent={
-        <PackageResultsHero
-          filters={[
-            { label: categoryLabel, widthClass: 'sm:w-[102px]' },
-            { label: eventLabel, widthClass: 'sm:w-[156px]' },
-            { label: themeLabel, widthClass: 'sm:w-[92px]' },
-          ]}
-        />
-      }
+      heroContent={<PackageResultsHero />}
     >
       <div className="flex flex-col gap-12">
         {/* Your existing content with per-level arrows and dynamic dots */}
@@ -239,7 +215,7 @@ export default function DecorLevelsPage() {
               <div className="flex items-center justify-between ">
                 <span className="text-[21px] text-black font-medium">{level.label}</span>
                 <Link
-                  to={buildViewAllLink(level.id)}
+                  to={buildViewAllLink(level)}
                   className="flex items-center gap-1 text-[16px] text-[#727355] "
                 >
                   <span>View all</span>

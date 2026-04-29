@@ -1,4 +1,5 @@
 import { useRef, useState, useLayoutEffect, useEffect } from 'react'
+import { flushSync } from 'react-dom'
 
 import gsap from 'gsap'
 
@@ -16,6 +17,8 @@ gsap.registerPlugin(ScrollTrigger)
 const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
 const MOKSHA_FALLBACK_IMAGE = new URL('../assets/images/moksha_portrait.jpg', import.meta.url).href
+
+const PLACEHOLDER_MEDIA_PATH = '/images/placeholder.jpg'
 
 function normalizeKey(value = '') {
   return String(value ?? '')
@@ -144,6 +147,14 @@ const CELEBRATION_CATEGORY_FALLBACKS = normalizeFallbackBuckets({
 function toAbsoluteMediaUrl(url = '') {
   const value = String(url ?? '').trim()
   if (!value) return ''
+  const normalizedValue = value.toLowerCase()
+  if (
+    normalizedValue === PLACEHOLDER_MEDIA_PATH ||
+    normalizedValue === PLACEHOLDER_MEDIA_PATH.slice(1) ||
+    normalizedValue.endsWith(PLACEHOLDER_MEDIA_PATH)
+  ) {
+    return ''
+  }
   if (value.startsWith('http://') || value.startsWith('https://')) return value
   return `${STRAPI_BASE}${value.startsWith('/') ? value : `/${value}`}`
 }
@@ -165,6 +176,15 @@ function getMediaUrl(media) {
       media.formats?.thumbnail?.url ??
       ''
   )
+}
+
+function resolveMediaUrl(...candidates) {
+  for (const candidate of candidates) {
+    const resolved = getMediaUrl(candidate)
+    if (resolved) return resolved
+  }
+
+  return ''
 }
 
 function getSectionImages(section = {}) {
@@ -235,14 +255,10 @@ function normalizeGrandCelebrationItems(section = {}) {
         id: String(item.id ?? item.order ?? index + 1).padStart(2, '0'),
         title,
         desc: item.desc ?? item.description ?? item.body ?? '',
-        image: getMediaUrl(
-          item.image ??
-            item.media ??
-            item.photo ??
-            item.thumbnail ??
-            categoryImages[0] ??
-            sectionImages[index] ??
-            fallbackImage
+        image: resolveMediaUrl(
+          item.image ?? item.media ?? item.photo ?? item.thumbnail ?? categoryImages[0],
+          sectionImages[index],
+          fallbackImage
         ),
         fallbackImage,
         tall: explicitTall ?? index % 2 === 0,
@@ -272,37 +288,37 @@ function normalizeCelebrationCategories(section = {}) {
         heading: item.heading ?? String(name).toUpperCase(),
         desc: item.description ?? item.desc ?? item.body ?? '',
         images: {
-          topLeft: getMediaUrl(
+          topLeft: resolveMediaUrl(
             item.top_left_image ??
               item.topLeftImage ??
               item.images?.topLeft ??
               item.image_1 ??
-              categoryImages[0] ??
-              fallbackImages.topLeft
+              categoryImages[0],
+            fallbackImages.topLeft
           ),
-          topRight: getMediaUrl(
+          topRight: resolveMediaUrl(
             item.top_right_image ??
               item.topRightImage ??
               item.images?.topRight ??
               item.image_2 ??
-              categoryImages[1] ??
-              fallbackImages.topRight
+              categoryImages[1],
+            fallbackImages.topRight
           ),
-          bottomLeft: getMediaUrl(
+          bottomLeft: resolveMediaUrl(
             item.bottom_left_image ??
               item.bottomLeftImage ??
               item.images?.bottomLeft ??
               item.image_3 ??
-              categoryImages[2] ??
-              fallbackImages.bottomLeft
+              categoryImages[2],
+            fallbackImages.bottomLeft
           ),
-          bottomRight: getMediaUrl(
+          bottomRight: resolveMediaUrl(
             item.bottom_right_image ??
               item.bottomRightImage ??
               item.images?.bottomRight ??
               item.image_4 ??
-              categoryImages[3] ??
-              fallbackImages.bottomRight
+              categoryImages[3],
+            fallbackImages.bottomRight
           ),
         },
         fallbackImages: {
@@ -379,6 +395,8 @@ const GrandCelebrationsSection = () => {
 
   const activeImgWrapRefs = useRef([])
 
+  const activeLayerRef = useRef(null)
+
   const incomingCardRefs = useRef([])
 
   const incomingImgWrapRefs = useRef([])
@@ -394,6 +412,7 @@ const GrandCelebrationsSection = () => {
   const [page, setPage] = useState(0)
 
   const [incomingPage, setIncomingPage] = useState(null)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   const perPageRef = useRef(perPage)
 
@@ -405,8 +424,15 @@ const GrandCelebrationsSection = () => {
     return resolvedCelebrationData.slice(start, start + perPage)
   }
 
+  const getRevealTexts = cards =>
+    cards.flatMap(card => Array.from(card.querySelectorAll('.gc-reveal-text')))
+
   const resetTransitionState = () => {
     setIncomingPage(null)
+    setIsAnimating(false)
+    if (activeLayerRef.current) {
+      gsap.set(activeLayerRef.current, { opacity: 1 })
+    }
     activeCardRefs.current = []
     activeImgWrapRefs.current = []
     incomingCardRefs.current = []
@@ -414,12 +440,90 @@ const GrandCelebrationsSection = () => {
   }
 
   const go = dir => {
-    if (totalPages <= 1) return
+    if (isAnimating || totalPages <= 1) return
 
-    // Always allow the carousel to advance, even if the animated incoming layer
-    // is not ready yet in the current dev/runtime state.
-    setPage(currentPage => ((currentPage % totalPages) + dir + totalPages) % totalPages)
-    resetTransitionState()
+    const current = ((page % totalPages) + totalPages) % totalPages
+    const next = (current + dir + totalPages) % totalPages
+
+    if (isMobile) {
+      setPage(next)
+      resetTransitionState()
+      return
+    }
+
+    setIsAnimating(true)
+    setIncomingPage(next)
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const outCards = activeCardRefs.current.filter(Boolean)
+        const outWraps = activeImgWrapRefs.current.filter(Boolean)
+        const inCards = incomingCardRefs.current.filter(Boolean)
+        const inWraps = incomingImgWrapRefs.current.filter(Boolean)
+        const outTexts = getRevealTexts(outCards)
+        const inTexts = getRevealTexts(inCards)
+
+        if (!incomingLayerRef.current || !outWraps.length || !inWraps.length) {
+          setPage(next)
+          resetTransitionState()
+          return
+        }
+
+        gsap.set(incomingLayerRef.current, { opacity: 1 })
+        gsap.set(inTexts, { yPercent: 100, autoAlpha: 1 })
+        gsap.set(inWraps, { clipPath: 'inset(100% 0% 0% 0%)' })
+
+        const tl = gsap.timeline({
+          defaults: { ease: 'power2.inOut' },
+          onComplete: () => {
+            // Commit the next page while the incoming layer is still visible,
+            // so React's re-render cannot expose a one-frame flash underneath.
+            flushSync(() => {
+              setPage(next)
+            })
+
+            requestAnimationFrame(() => {
+              if (activeLayerRef.current) {
+                gsap.set(activeLayerRef.current, { opacity: 0 })
+              }
+
+              requestAnimationFrame(() => {
+                if (activeLayerRef.current) {
+                  gsap.set(activeLayerRef.current, { opacity: 1 })
+                }
+                resetTransitionState()
+              })
+            })
+          },
+        })
+
+        tl.to(
+          outTexts,
+          { yPercent: -100, autoAlpha: 0, duration: 0.34, stagger: 0.015, ease: 'power2.in' },
+          0
+        ).to(
+          outWraps,
+          {
+            clipPath: 'inset(0% 0% 100% 0%)',
+            duration: 0.38,
+            stagger: 0.03,
+            ease: 'power2.in',
+          },
+          0
+        )
+
+        tl.to(inWraps, {
+          clipPath: 'inset(0% 0% 0% 0%)',
+          duration: 0.55,
+          stagger: 0.045,
+          ease: 'power3.out',
+        }).to(
+          inTexts,
+          { yPercent: 0, autoAlpha: 1, duration: 0.55, stagger: 0.02, ease: 'power3.out' },
+          '<+=0.02'
+        )
+      })
+    })
   }
 
   useLayoutEffect(() => {
@@ -612,7 +716,10 @@ const GrandCelebrationsSection = () => {
             <div className="relative">
               {/* Active layer */}
 
-              <div className="grid grid-cols-1 min-[540px]:grid-cols-4 gap-4 min-[540px]:gap-6">
+              <div
+                ref={activeLayerRef}
+                className="grid grid-cols-1 min-[540px]:grid-cols-4 gap-4 min-[540px]:gap-6"
+              >
                 {activeItems.map((item, index) => (
                   <div
                     key={`active-${item.id}`}
@@ -2416,15 +2523,11 @@ const InHousePlannerSection = () => {
 
   const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
-  const plannerImage =
-    getMediaUrl(
-      bio.image ??
-        bio.photo ??
-        bio.portrait_image ??
-        bio.portrait ??
-        bio._sectionImages?.[0] ??
-        MOKSHA_FALLBACK_IMAGE
-    ) || getMediaUrl(cms.hero?.image ?? cms.hero?.photo)
+  const plannerImage = resolveMediaUrl(
+    bio.image ?? bio.photo ?? bio.portrait_image ?? bio.portrait ?? bio._sectionImages?.[0],
+    MOKSHA_FALLBACK_IMAGE,
+    cms.hero?.image ?? cms.hero?.photo
+  )
   const plannerImageAlt =
     bio.image_alt ??
     bio.photo_alt ??

@@ -2,28 +2,23 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useFilteredServiceOptions } from '../hooks/useEventTypes'
+import {
+  buildServiceDestination,
+  buildServiceFlowParams,
+  SERVICE_PAGE_ALLOWED_SLUGS,
+  SERVICES_FLOW_KEY,
+} from '../lib/serviceFlow'
 
-const FLOW_STEPS = [
+const EVENT_FLOW_STEPS = [
   { id: 1, label: 'Event' },
   { id: 2, label: 'Service' },
   { id: 3, label: ' ' },
 ]
 
-const SERVICE_ROUTE_MAP = {
-  decor: '/event-flow/decor-theme',
-  'rental-furniture': '/packages/rental-furniture',
-  catering: '/event-flow/catering-levels',
-  bartending: '/event-flow/bartending-levels',
-  'bar-tending': '/event-flow/bartending-levels',
-  sheesha: '/packages/sheesha',
-}
-
-const SERVICE_PAGE_ALLOWED_SLUGS = [
-  'decor',
-  'catering',
-  'bar-tending',
-  'sheesha-services',
-  'furniture',
+const SERVICES_FLOW_STEPS = [
+  { id: 1, label: 'Service' },
+  { id: 2, label: 'Category' },
+  { id: 3, label: ' ' },
 ]
 
 function normalizeServiceSlug(slug) {
@@ -32,18 +27,26 @@ function normalizeServiceSlug(slug) {
   return value
 }
 
-function ServiceCard({ categorySlug, eventSlug, eventId, service }) {
+function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
   const resolvedServiceSlug = normalizeServiceSlug(service.slug)
-  const params = new URLSearchParams()
-  params.set('category', categorySlug)
-  params.set('event', eventSlug)
-  if (eventId) params.set('eventId', eventId)
-  params.set('service', resolvedServiceSlug)
-  if (service.id != null) params.set('serviceId', String(service.id))
+  const destination =
+    flow === SERVICES_FLOW_KEY
+      ? `/event-flow/category?${buildServiceFlowParams({
+          serviceSlug: resolvedServiceSlug,
+          serviceId: service.id != null ? String(service.id) : '',
+          flow,
+        }).toString()}`
+      : buildServiceDestination({
+          categorySlug,
+          eventSlug,
+          eventId,
+          serviceSlug: resolvedServiceSlug,
+          serviceId: service.id != null ? String(service.id) : '',
+        })
 
   return (
     <Link
-      to={`${SERVICE_ROUTE_MAP[service.slug] ?? SERVICE_ROUTE_MAP[resolvedServiceSlug] ?? '/package-listing'}?${params.toString()}`}
+      to={destination}
       className="group flex h-full max-h-[340px] w-full max-w-[235px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[340px]"
     >
       <div className="flex h-[88px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-3 text-white md:h-[96px] md:px-4 md:py-3.5">
@@ -62,6 +65,8 @@ export default function ServicePage() {
   const [searchParams] = useSearchParams()
   const { data: services = [] } = useFilteredServiceOptions(SERVICE_PAGE_ALLOWED_SLUGS)
 
+  const flow = searchParams.get('flow') ?? ''
+  const isServicesFlow = flow === SERVICES_FLOW_KEY
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
   const eventId = searchParams.get('eventId') ?? ''
@@ -72,7 +77,7 @@ export default function ServicePage() {
     return `/event-flow/event${params.toString() ? `?${params.toString()}` : ''}`
   }, [categorySlug])
 
-  if (!categorySlug || !eventSlug) {
+  if (!isServicesFlow && (!categorySlug || !eventSlug)) {
     return <Navigate to="/event-flow/category" replace />
   }
 
@@ -80,10 +85,10 @@ export default function ServicePage() {
     <EventFlowLayout
       title="What do you need help with?"
       subtitle="Select a service - you can add more services later"
-      currentStep={2}
-      steps={FLOW_STEPS}
-      showBackButton
-      backTo={backTo}
+      currentStep={isServicesFlow ? 1 : 2}
+      steps={isServicesFlow ? SERVICES_FLOW_STEPS : EVENT_FLOW_STEPS}
+      showBackButton={!isServicesFlow}
+      backTo={isServicesFlow ? null : backTo}
     >
       <div className="flex h-full w-full justify-center">
         <div className="relative left-1/2 w-screen -translate-x-1/2">
@@ -96,6 +101,7 @@ export default function ServicePage() {
                   eventSlug={eventSlug}
                   eventId={eventId}
                   service={service}
+                  flow={flow}
                 />
               ))}
             </div>

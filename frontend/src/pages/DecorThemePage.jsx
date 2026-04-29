@@ -2,15 +2,23 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useDecorThemeOptions } from '../hooks/useEventTypes'
+import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
 
 import themeImg1 from '../assets/images/IMG_3903.jpg'
 import themeImg2 from '../assets/images/IMG_7768.jpg'
 import themeImg3 from '../assets/images/IMG_0749.jpg'
 import themeImg4 from '../assets/images/IMG_0658.jpg'
 
-const FLOW_STEPS = [
+const EVENT_FLOW_STEPS = [
   { id: 1, label: 'Event' },
   { id: 2, label: 'Service' },
+  { id: 3, label: 'Theme' },
+  { id: 4, label: 'Package' },
+]
+
+const SERVICES_FLOW_STEPS = [
+  { id: 1, label: 'Service' },
+  { id: 2, label: 'Category' },
   { id: 3, label: 'Theme' },
   { id: 4, label: 'Package' },
 ]
@@ -34,12 +42,23 @@ function ThemeArrow({ direction = 'left' }) {
   )
 }
 
-function ThemeCard({ categoryId, eventId, serviceSlug, serviceId, theme, image }) {
+function ThemeCard({
+  categoryId,
+  eventId,
+  eventNumericId,
+  serviceSlug,
+  serviceId,
+  flow,
+  theme,
+  image,
+}) {
   const params = new URLSearchParams()
   params.set('category', categoryId)
-  params.set('event', eventId)
+  if (eventId) params.set('event', eventId)
+  if (eventNumericId) params.set('eventId', eventNumericId)
   params.set('service', serviceSlug)
   if (serviceId) params.set('serviceId', serviceId)
+  if (flow) params.set('flow', flow)
   params.set('theme', theme.slug)
 
   return (
@@ -63,8 +82,10 @@ export default function DecorThemePage() {
 
   const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
   const eventId = searchParams.get('event')?.toLowerCase() ?? ''
+  const eventNumericId = searchParams.get('eventId') ?? ''
   const serviceSlug = searchParams.get('service')?.toLowerCase() ?? 'decor'
   const serviceId = searchParams.get('serviceId') ?? ''
+  const flow = searchParams.get('flow') ?? ''
 
   const { data: themes = [] } = useDecorThemeOptions(serviceId)
 
@@ -75,25 +96,36 @@ export default function DecorThemePage() {
   }, [searchValue, themes])
 
   const backTo = useMemo(() => {
-    const params = new URLSearchParams()
-    if (categoryId) params.set('category', categoryId)
-    if (eventId) params.set('event', eventId)
-    if (searchParams.get('eventId')) params.set('eventId', searchParams.get('eventId'))
-    return `/event-flow/service?${params.toString()}`
-  }, [categoryId, eventId, searchParams])
+    return buildServiceSelectionBackTo({
+      categorySlug: categoryId,
+      eventSlug: eventId,
+      eventId: eventNumericId,
+      serviceSlug,
+      serviceId,
+      flow,
+    })
+  }, [categoryId, eventId, eventNumericId, flow, serviceId, serviceSlug])
 
   const skipToPackages = useMemo(() => {
     const params = new URLSearchParams()
     if (categoryId) params.set('category', categoryId)
     if (eventId) params.set('event', eventId)
-    if (searchParams.get('eventId')) params.set('eventId', searchParams.get('eventId'))
+    if (eventNumericId) params.set('eventId', eventNumericId)
     params.set('service', serviceSlug)
     if (serviceId) params.set('serviceId', serviceId)
+    if (flow) params.set('flow', flow)
     return `/packages/decor-levels?${params.toString()}`
-  }, [categoryId, eventId, serviceSlug, serviceId, searchParams])
+  }, [categoryId, eventId, eventNumericId, flow, serviceId, serviceSlug])
 
-  if (!categoryId || !eventId) {
-    return <Navigate to="/event-flow/category" replace />
+  if (!categoryId || (flow !== SERVICES_FLOW_KEY && !eventId)) {
+    return (
+      <Navigate
+        to={
+          flow === SERVICES_FLOW_KEY ? '/event-flow/service?flow=services' : '/event-flow/category'
+        }
+        replace
+      />
+    )
   }
 
   return (
@@ -101,7 +133,7 @@ export default function DecorThemePage() {
       title="Choose a theme"
       subtitle="Pick a visual theme that sets the mood for your event"
       currentStep={3}
-      steps={FLOW_STEPS}
+      steps={flow === SERVICES_FLOW_KEY ? SERVICES_FLOW_STEPS : EVENT_FLOW_STEPS}
       showSearch
       searchPlaceholder="Search Theme Name"
       searchValue={searchValue}
@@ -131,8 +163,10 @@ export default function DecorThemePage() {
                     key={theme.id ?? theme.slug ?? index}
                     categoryId={categoryId}
                     eventId={eventId}
+                    eventNumericId={eventNumericId}
                     serviceSlug={serviceSlug}
                     serviceId={serviceId}
+                    flow={flow}
                     theme={theme}
                     image={
                       theme.preview_image ||

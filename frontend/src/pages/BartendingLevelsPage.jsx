@@ -2,6 +2,7 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useBudgetLevelOptions } from '../hooks/useEventTypes'
+import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Category' },
@@ -16,13 +17,14 @@ function normalizeServiceSlug(slug) {
   return value
 }
 
-function LevelCard({ categoryId, eventId, eventNumericId, serviceSlug, serviceId, level }) {
+function LevelCard({ categoryId, eventId, eventNumericId, serviceSlug, serviceId, flow, level }) {
   const params = new URLSearchParams()
   params.set('category', categoryId)
   params.set('event', eventId)
   if (eventNumericId) params.set('eventId', eventNumericId)
   params.set('service', serviceSlug)
   if (serviceId) params.set('serviceId', serviceId)
+  if (flow) params.set('flow', flow)
   params.set('level', level.slug)
 
   return (
@@ -53,19 +55,30 @@ export default function BartendingLevelsPage() {
   const eventNumericId = searchParams.get('eventId') ?? ''
   const serviceSlug = normalizeServiceSlug(searchParams.get('service') ?? 'bartending')
   const serviceId = searchParams.get('serviceId') ?? ''
+  const flow = searchParams.get('flow') ?? ''
 
   const { data: levels = [] } = useBudgetLevelOptions(serviceId)
 
   const backTo = useMemo(() => {
-    const params = new URLSearchParams()
-    if (categoryId) params.set('category', categoryId)
-    if (eventId) params.set('event', eventId)
-    if (eventNumericId) params.set('eventId', eventNumericId)
-    return `/event-flow/service?${params.toString()}`
-  }, [categoryId, eventId, eventNumericId])
+    return buildServiceSelectionBackTo({
+      categorySlug: categoryId,
+      eventSlug: eventId,
+      eventId: eventNumericId,
+      serviceSlug,
+      serviceId,
+      flow,
+    })
+  }, [categoryId, eventId, eventNumericId, flow, serviceId, serviceSlug])
 
   if (!categoryId || !eventId) {
-    return <Navigate to="/event-flow/category" replace />
+    return (
+      <Navigate
+        to={
+          flow === SERVICES_FLOW_KEY ? '/event-flow/service?flow=services' : '/event-flow/category'
+        }
+        replace
+      />
+    )
   }
 
   return (
@@ -87,6 +100,7 @@ export default function BartendingLevelsPage() {
               eventNumericId={eventNumericId}
               serviceSlug={serviceSlug}
               serviceId={serviceId}
+              flow={flow}
               level={level}
             />
           ))}

@@ -1,11 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventTypes'
+import { normalizeServiceSlug } from '../lib/packageFilters'
+import {
+  buildServiceDestination,
+  buildServiceFlowParams,
+  SERVICES_FLOW_KEY,
+} from '../lib/serviceFlow'
 
-const FLOW_STEPS = [
+const EVENT_FLOW_STEPS = [
   { id: 1, label: 'Event' },
   { id: 2, label: 'Service' },
+  { id: 3, label: ' ' },
+]
+
+const SERVICES_FLOW_STEPS = [
+  { id: 1, label: 'Service' },
+  { id: 2, label: 'Category' },
   { id: 3, label: ' ' },
 ]
 
@@ -28,15 +40,32 @@ function CategoryArrow({ direction = 'right' }) {
   )
 }
 
-function EventCard({ categorySlug, event }) {
+function EventCard({
+  categorySlug,
+  event,
+  isServicesFlow = false,
+  serviceSlug = '',
+  serviceId = '',
+}) {
   const params = new URLSearchParams()
   params.set('category', categorySlug)
   params.set('event', event.slug)
   if (event.id != null) params.set('eventId', String(event.id))
 
+  const destination = isServicesFlow
+    ? buildServiceDestination({
+        categorySlug,
+        eventSlug: event.slug,
+        eventId: event.id != null ? String(event.id) : '',
+        serviceSlug,
+        serviceId,
+        flow: SERVICES_FLOW_KEY,
+      })
+    : `/event-flow/service?${params.toString()}`
+
   return (
     <Link
-      to={`/event-flow/service?${params.toString()}`}
+      to={destination}
       className="group flex h-full max-h-[424px] w-full max-w-[298px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px]"
     >
       <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
@@ -65,6 +94,10 @@ export default function CategoryPage() {
   const [searchValue, setSearchValue] = useState('')
   const [touchStartX, setTouchStartX] = useState(null)
   const requestedCategorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+  const serviceSlug = normalizeServiceSlug(searchParams.get('service') ?? '')
+  const serviceId = searchParams.get('serviceId') ?? ''
+  const flow = searchParams.get('flow') ?? ''
+  const isServicesFlow = flow === SERVICES_FLOW_KEY
 
   const { data: categories = [] } = useEventCategoryOptions()
 
@@ -93,9 +126,23 @@ export default function CategoryPage() {
       nextParams.set('category', selectedCategoryId)
       nextParams.delete('event')
       nextParams.delete('eventId')
+      if (isServicesFlow) {
+        if (serviceSlug) nextParams.set('service', serviceSlug)
+        if (serviceId) nextParams.set('serviceId', serviceId)
+        if (flow) nextParams.set('flow', flow)
+      }
       return nextParams
     })
-  }, [categories.length, requestedCategorySlug, selectedCategoryId, setSearchParams])
+  }, [
+    categories.length,
+    flow,
+    isServicesFlow,
+    requestedCategorySlug,
+    selectedCategoryId,
+    serviceId,
+    serviceSlug,
+    setSearchParams,
+  ])
 
   const filteredEvents = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
@@ -122,6 +169,11 @@ export default function CategoryPage() {
       nextParams.set('category', categorySlug)
       nextParams.delete('event')
       nextParams.delete('eventId')
+      if (isServicesFlow) {
+        if (serviceSlug) nextParams.set('service', serviceSlug)
+        if (serviceId) nextParams.set('serviceId', serviceId)
+        if (flow) nextParams.set('flow', flow)
+      }
       return nextParams
     })
   }
@@ -155,12 +207,30 @@ export default function CategoryPage() {
     setTouchStartX(null)
   }
 
+  const servicesFlowBackTo = useMemo(() => {
+    const params = buildServiceFlowParams({
+      serviceSlug,
+      serviceId,
+      flow,
+    })
+
+    return `/event-flow/service?${params.toString()}`
+  }, [flow, serviceId, serviceSlug])
+
+  if (isServicesFlow && !serviceSlug) {
+    return <Navigate to="/event-flow/service?flow=services" replace />
+  }
+
   return (
     <EventFlowLayout
       title="What are you planning?"
-      subtitle="Choose your event category to get started"
-      currentStep={1}
-      steps={FLOW_STEPS}
+      subtitle={
+        isServicesFlow
+          ? 'Choose your event category to continue'
+          : 'Choose your event category to get started'
+      }
+      currentStep={isServicesFlow ? 2 : 1}
+      steps={isServicesFlow ? SERVICES_FLOW_STEPS : EVENT_FLOW_STEPS}
       showSearch
       searchPlaceholder="Search Event Name"
       searchValue={searchValue}
@@ -174,6 +244,8 @@ export default function CategoryPage() {
       showPagination
       paginationCount={totalPages}
       activePaginationIndex={safePageIndex}
+      showBackButton={isServicesFlow}
+      backTo={isServicesFlow ? servicesFlowBackTo : null}
     >
       <div className="flex h-full w-full flex-col justify-between gap-6 overflow-visible">
         <div className="flex w-full flex-col gap-2 md:flex-row md:gap-2 my-7">
@@ -236,6 +308,9 @@ export default function CategoryPage() {
                     key={event.id ?? event.slug}
                     categorySlug={selectedCategoryId}
                     event={event}
+                    isServicesFlow={isServicesFlow}
+                    serviceSlug={serviceSlug}
+                    serviceId={serviceId}
                   />
                 ))}
               </div>
