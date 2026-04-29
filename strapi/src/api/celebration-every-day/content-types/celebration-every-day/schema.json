@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "celebration_every_days",
+  "info": {
+    "singularName": "celebration-every-day",
+    "pluralName": "celebration-every-days",
+    "displayName": "celebration_every_day"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "heading": {
+      "type": "string"
+    },
+    "subheading": {
+      "type": "text"
+    },
+    "categories": {
+      "type": "component",
+      "component": "package.categories",
+      "repeatable": true
+    }
+  }
+}

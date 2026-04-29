@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import SmoothScroll from './SmoothScroll'
 import { strapiGet } from './lib/strapi'
+import { fetchInHousePlannerPageData } from './hooks/useCmsPages'
 import './index.css'
 
 // Prevent browser from restoring scroll on reload — ensures page always starts from top
@@ -46,7 +47,7 @@ const prefetchCmsPages = async () => {
     }),
     queryClient.prefetchQuery({
       queryKey: ['cms-page', 'in-house-planner'],
-      queryFn: () => strapiGet('/inhouse-planner-page', populate).then(r => r.data),
+      queryFn: fetchInHousePlannerPageData,
       staleTime: 10 * 60 * 1000,
     }),
     queryClient.prefetchQuery({

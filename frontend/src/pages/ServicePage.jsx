@@ -49,8 +49,17 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
       to={destination}
       className="group flex h-full max-h-[340px] w-full max-w-[235px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[340px]"
     >
+      <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
+        {service.image ? (
+          <img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">
+            {service.name}
+          </div>
+        )}
+      </div>
       <div className="flex h-[88px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-3 text-white md:h-[96px] md:px-4 md:py-3.5">
-        <h2 className="text-[15px] font-medium leading-[1.2] text-white md:text-[16px]">
+        <h2 className="flex text-[15px] font-medium leading-[1.2] text-white md:text-[16px]">
           {service.name}
         </h2>
         <p className="mt-1.5 min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 [&::-webkit-scrollbar]:hidden md:text-[13px]">

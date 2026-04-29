@@ -233,6 +233,7 @@ function normalizeGrandCelebrationItems(section = {}) {
     section.cards ??
     section.projects ??
     section.portfolio_items ??
+    section.category_item ??
     section.categories ??
     []
   const sectionImages = getSectionImages(section)
@@ -252,7 +253,7 @@ function normalizeGrandCelebrationItems(section = {}) {
       const explicitTall = item.tall ?? item.is_tall ?? item.portrait ?? item.variant === 'tall'
 
       return {
-        id: String(item.id ?? item.order ?? index + 1).padStart(2, '0'),
+        id: String(index + 1).padStart(2, '0'),
         title,
         desc: item.desc ?? item.description ?? item.body ?? '',
         image: resolveMediaUrl(

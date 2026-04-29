@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grand_celebrations_intros",
+  "info": {
+    "singularName": "grand-celebrations-intro",
+    "pluralName": "grand-celebrations-intros",
+    "displayName": "grand_celebrations_intro"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "note": {
+      "type": "text"
+    },
+    "heading_1": {
+      "type": "string"
+    },
+    "category_item": {
+      "type": "component",
+      "component": "package.category-item",
+      "repeatable": true
+    }
+  }
+}
