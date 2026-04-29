@@ -44,13 +44,27 @@ function AccordionSection({ title, body, defaultOpen = false }) {
         className="flex w-full items-center justify-between gap-4 text-left outline-none focus:outline-none focus-visible:outline-none"
       >
         <span className="text-[16px] leading-none text-[#6B7152] font-semibold">{title}</span>
-        <span className="text-[20px] leading-none text-[#C4A36B]">{isOpen ? '-' : '+'}</span>
+        <span
+          className="text-[20px] leading-none text-[#C4A36B] transition-transform duration-300 ease-out"
+          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        >
+          {isOpen ? '-' : '+'}
+        </span>
       </button>
-      {isOpen ? (
-        <p className="mt-3 whitespace-pre-line text-[13px] leading-[1.65] text-[#591902] opacity-50">
-          {body}
-        </p>
-      ) : null}
+
+      <div
+        className="grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.32,0,0.15,1)]"
+        style={{
+          gridTemplateRows: isOpen ? '1fr' : '0fr',
+          opacity: isOpen ? 1 : 0.55,
+        }}
+      >
+        <div className="overflow-hidden">
+          <p className="mt-3 whitespace-pre-line text-[13px] leading-[1.65] text-[#591902] opacity-50">
+            {body}
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

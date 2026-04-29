@@ -287,7 +287,7 @@ export default function CategoryPage() {
                   </div>
                 </div>
 
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center transition-transform group-hover:translate-x-1">
+                <span className="flex h-6 w-6 ml-2 shrink-0 items-center justify-center transition-transform group-hover:translate-x-1">
                   <CategoryArrow />
                 </span>
               </button>
