@@ -2,6 +2,14 @@
 /* Import Poppins from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
 
+@font-face {
+  font-family: 'Malgin';
+  src: url('./assets/fonts/malgin/Malgin-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -22,7 +30,8 @@ html {
 :root {
   /* Updated to Poppins for body text */
   --font-body: 'Poppins', sans-serif;
-  --font-display: Malgin, 'DM Serif Display', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-display:
+    'Malgin', 'DM Serif Display', 'Playfair Display', Georgia, 'Times New Roman', serif;
   --door-viewport-height: 100vh;
 }
 
@@ -48,9 +57,30 @@ body {
   overflow-x: hidden;
 }
 
-/* Explicit configuration for p tags based on "Body/regular/b3" */
-p {
+body,
+p,
+label,
+input,
+textarea,
+select,
+button,
+a,
+li,
+small,
+blockquote,
+figcaption,
+td,
+th {
   font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+p {
   font-weight: 400;
 }
 

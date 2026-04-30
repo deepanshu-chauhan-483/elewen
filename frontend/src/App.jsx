@@ -38,6 +38,8 @@ import CheckoutPage from './pages/CheckoutPage'
 import BookingConfirmation from './pages/BookingConfirmation'
 import CartPage from './pages/CartPage'
 import SampleTasteBooking from './pages/SampleTestBooking'
+import FAQ from './pages/FAQ'
+import Terms from './pages/LegalPages'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -119,6 +121,8 @@ function AppLayout() {
         <Route path="/packages/decor-single/:packageId" element={<DecorSinglePackagePage />} />
         <Route path="/packages/sheesha-single/:packageId" element={<SheeshaSinglePackagePage />} />
         <Route path="/packages/:service/:packageId" element={<PackageDetailsPage />} />
+        <Route path="/faqs" element={<FAQ />} />
+        <Route path="/legalpages" element={<Terms />} />
       </Routes>
       {!hideGlobalChrome && <Footer />}
     </>

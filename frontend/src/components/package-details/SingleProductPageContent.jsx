@@ -214,6 +214,7 @@ export default function SingleProductPageContent({
     selectedImage && [mainImage, ...sideImages].includes(selectedImage)
       ? selectedImage
       : initialDisplayImage
+  const desktopSectionTop = '58px'
 
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
@@ -221,8 +222,7 @@ export default function SingleProductPageContent({
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
       <NavHeader />
-
-      <section className="relative overflow-hidden pb-16 pt-8 md:pt-14.5">
+      <section className="relative pb-16 pt-8 md:pt-14.5">
         <div
           className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start md:justify-between"
           style={{
@@ -232,45 +232,52 @@ export default function SingleProductPageContent({
             paddingRight: 'clamp(20px, 8.3vw, 100px)',
           }}
         >
-          <div className="flex flex-col items-end space-y-2 pt-2 md:shrink">
-            {sideImages.map((image, index) => (
-              <button
-                type="button"
-                key={`${image}-${index}`}
-                onClick={() => setSelectedImage(image)}
-                className={`overflow-hidden rounded-[12px] transition-opacity ${
-                  activeImage === image ? 'opacity-100' : 'opacity-40'
-                }`}
-                aria-label={`Show ${title} preview ${index + 1}`}
+          <div
+            className="md:sticky top-15 md:self-start md:shrink-0"
+            style={{ top: desktopSectionTop }}
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-start">
+              <div className="flex flex-row items-center gap-2 overflow-x-auto pt-2 md:flex-col md:items-end md:space-y-2 md:gap-0 md:overflow-visible">
+                {sideImages.map((image, index) => (
+                  <button
+                    type="button"
+                    key={`${image}-${index}`}
+                    onClick={() => setSelectedImage(image)}
+                    className={`shrink-0 overflow-hidden rounded-[12px] transition-opacity ${
+                      activeImage === image ? 'opacity-100' : 'opacity-40'
+                    }`}
+                    aria-label={`Show ${title} preview ${index + 1}`}
+                    style={{
+                      width: 'clamp(4rem, 5vw, 5rem)',
+                      height: 'clamp(5.125rem, 6.5vw, 6.4375rem)',
+                    }}
+                  >
+                    <img
+                      src={image}
+                      alt={`${title} preview ${index + 1}`}
+                      className="h-full w-full rounded-[14px] object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <div
+                className="mx-auto w-full shrink-0"
                 style={{
-                  width: 'clamp(4rem, 5vw, 5rem)',
-                  height: 'clamp(5.125rem, 6.5vw, 6.4375rem)',
+                  maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
                 }}
               >
-                <img
-                  src={image}
-                  alt={`${title} preview ${index + 1}`}
-                  className="h-full w-full rounded-[14px] object-cover"
-                />
-              </button>
-            ))}
-          </div>
-
-          <div
-            className="mx-auto w-full shrink-0"
-            style={{
-              maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
-            }}
-          >
-            <div className="overflow-hidden">
-              <img
-                src={activeImage}
-                alt={title}
-                className="w-full object-cover border-[#727355] border-r-2 border-b-2 border-l-2"
-                style={{
-                  height: 'clamp(26.25rem, 70vw, 58.375rem)',
-                }}
-              />
+                <div>
+                  <img
+                    src={activeImage}
+                    alt={title}
+                    className="w-full object-cover border-[#727355] border-r-2 border-b-2 border-l-2"
+                    style={{
+                      height: 'clamp(26.25rem, 70vw, 58.375rem)',
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -281,7 +288,7 @@ export default function SingleProductPageContent({
               paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
             }}
           >
-            <div className="mt-5 flex items-start justify-between gap-4">
+            <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
               <h1
                 className=" text-[28px] leading-[0.95] text-[#591902] sm:text-[36px] md:text-[36px]"
                 style={{ fontFamily: "'Malgin', serif" }}

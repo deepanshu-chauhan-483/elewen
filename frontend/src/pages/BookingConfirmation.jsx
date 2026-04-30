@@ -29,6 +29,27 @@ function Detail({ label, value }) {
   )
 }
 
+function LocationPinIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 13.5C13.6569 13.5 15 12.1569 15 10.5C15 8.84315 13.6569 7.5 12 7.5C10.3431 7.5 9 8.84315 9 10.5C9 12.1569 10.3431 13.5 12 13.5Z"
+        stroke="#0383E4"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19.5 10.5C19.5 16.125 12 21 12 21C12 21 4.5 16.125 4.5 10.5C4.5 8.51088 5.29018 6.60322 6.6967 5.1967C8.10322 3.79018 10.0109 3 12 3C13.9891 3 15.8968 3.79018 17.3033 5.1967C18.7098 6.60322 19.5 8.51088 19.5 10.5Z"
+        stroke="#0383E4"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 const DEFAULT_STEPS = [
   {
     title: 'Confirmation Email',
@@ -48,11 +69,52 @@ const DEFAULT_STEPS = [
   },
 ]
 
+const SAMPLE_TASTING_STEPS = [
+  {
+    title: 'Order Confirmation',
+    desc: 'You’ll receive a confirmation with your tasting details.',
+  },
+  {
+    title: 'Preparation',
+    desc: 'Our vendors will prepare fresh sample portions for you.',
+  },
+  {
+    title: 'Delivery',
+    desc: 'Your tasting will be delivered within your selected time window.',
+  },
+  {
+    title: 'Try & Decide',
+    desc: 'Taste the samples and finalize your event package with confidence.',
+  },
+]
+
 export default function BookingConfirmation() {
   const { state } = useLocation()
   const booking = state?.booking ?? null
   const payment = state?.payment ?? null
   const checkoutInfo = state?.checkoutInfo ?? {}
+  const isSampleTastingBooking = checkoutInfo?.checkoutMode === 'sample-tasting'
+  const sessionDetails = {
+    dateLabel: checkoutInfo?.eventDate ?? 'Saturday, 14 June',
+    timeLabel: checkoutInfo?.eventTime ?? '2:00 PM',
+    address: checkoutInfo?.eventAddress ?? 'E-22 Vaishali nagar, jaipur, rajasthan',
+  }
+  const pageContent = isSampleTastingBooking
+    ? {
+        heading: 'Tasting Booked!',
+        intro:
+          'Your tasting session has been scheduled. We’ll deliver your selected samples to you shortly.',
+        amountLabel: 'Total Amount Paid',
+        amountSubtext: null,
+        steps: SAMPLE_TASTING_STEPS,
+      }
+    : {
+        heading: 'Booking Confirmed!',
+        intro: 'Your event has been successfully booked. Details below.',
+        amountLabel: 'Advance Paid',
+        amountSubtext: 'Balance due before event',
+        steps: DEFAULT_STEPS,
+      }
 
   const packageLabel = booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package'
 
@@ -65,12 +127,24 @@ export default function BookingConfirmation() {
           </div>
 
           <h1 className="mb-2 text-[16px] font-semibold text-[#2C2C2C] md:text-[27px]">
-            Booking Confirmed!
+            {pageContent.heading}
           </h1>
 
-          <p className="mb-6 text-[12px] text-gray-500 md:text-[16px]">
-            Your event has been successfully booked. Details below.
-          </p>
+          <p className="mb-6 text-[12px] text-gray-500 md:text-[16px]">{pageContent.intro}</p>
+
+          {isSampleTastingBooking ? (
+            <div className="flex items-start gap-4 rounded-xl border border-[#0383E4] bg-[#EAF5FF] px-4 py-3">
+              <div className="mt-0.5 shrink-0">
+                <LocationPinIcon />
+              </div>
+              <div>
+                <p className="text-[12px] font-medium text-[#0383E4]">
+                  {sessionDetails.dateLabel} - {sessionDetails.timeLabel}
+                </p>
+                <p className="mt-1 text-[11px] text-[#00477C]">{sessionDetails.address}</p>
+              </div>
+            </div>
+          ) : null}
 
           <div className="mb-8 flex flex-wrap gap-4">
             <Link
@@ -92,8 +166,10 @@ export default function BookingConfirmation() {
 
           <div className="mb-6 flex items-center justify-between rounded-xl bg-[#F8F4ED] p-5">
             <div>
-              <p className="font-medium text-[#957960]">Advance Paid</p>
-              <p className="text-sm text-gray-500">Balance due before event</p>
+              <p className="font-medium text-[#957960]">{pageContent.amountLabel}</p>
+              {pageContent.amountSubtext ? (
+                <p className="text-sm text-gray-500">{pageContent.amountSubtext}</p>
+              ) : null}
             </div>
 
             <div className="text-right">
@@ -137,7 +213,7 @@ export default function BookingConfirmation() {
             <div className="relative space-y-8">
               <div className="absolute bottom-2 left-4 top-2 w-[1px] border-l border-dashed border-[#C8B89E]" />
 
-              {DEFAULT_STEPS.map((step, i) => (
+              {pageContent.steps.map((step, i) => (
                 <div key={i} className="relative flex gap-4">
                   <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#CDB17E] bg-white text-[#957960]">
                     {i + 1}
