@@ -2537,6 +2537,7 @@ const PackagesSection = () => {
   const [disableTransition, setDisableTransition] = useState(false)
   const lastDirectionRef = useRef('next')
   const [isMobile, setIsMobile] = useState(false)
+  const [expandedIncludeCards, setExpandedIncludeCards] = useState({})
 
   // Touch handlers for mobile swiping of the main packages
   const touchStartX = useRef(0)
@@ -2791,6 +2792,11 @@ const PackagesSection = () => {
               const isActive = index === effectiveVirtualIndex
               const imageCount = pkg.images?.length ?? 0
               const useInnerSwiper = imageCount > 1
+              const includeCardKey = String(pkg.documentId ?? pkg.id ?? index)
+              const tags = Array.isArray(pkg.tags) ? pkg.tags : []
+              const showAllIncludes = !!expandedIncludeCards[includeCardKey]
+              const visibleTags = showAllIncludes ? tags : tags.slice(0, 4)
+              const hasMoreIncludes = tags.length > 4
 
               return (
                 <div
@@ -2955,7 +2961,7 @@ const PackagesSection = () => {
                           Includes :
                         </p>
                         <div className="flex flex-wrap gap-[2.5px] md:gap-1">
-                          {pkg.tags.map((tag, i) => (
+                          {visibleTags.map((tag, i) => (
                             <div
                               key={i}
                               className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
@@ -2969,6 +2975,25 @@ const PackagesSection = () => {
                               </span>
                             </div>
                           ))}
+                          {hasMoreIncludes && !showAllIncludes ? (
+                            <button
+                              type="button"
+                              onClick={event => {
+                                event.stopPropagation()
+                                setExpandedIncludeCards(prev => ({
+                                  ...prev,
+                                  [includeCardKey]: true,
+                                }))
+                              }}
+                              className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
+                              style={{
+                                background: 'rgba(0, 0, 0, 0.05)',
+                                padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                              }}
+                            >
+                              More
+                            </button>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -3535,9 +3560,7 @@ const PlanningGuidesSection = () => {
                         <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
                           {blog.title}
                         </h3>
-                        <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins'] line-clamp-2">
-                          {blog.excerpt}
-                        </p>
+                        
                       </div>
                     </Link>
                   ))}

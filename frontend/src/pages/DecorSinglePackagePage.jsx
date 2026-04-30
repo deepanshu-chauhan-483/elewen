@@ -15,7 +15,6 @@ import pkgImg8 from '../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../assets/images/6f6af066.jpg'
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
-import { getStoredJwt } from '../lib/api'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg1, pkgImg1, pkgImg1, pkgImg1],
@@ -897,13 +896,6 @@ export default function DecorSinglePackagePage() {
         setAddToCartMessage('Added to cart.')
       }
     } catch (err) {
-      if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
-        if (!getStoredJwt()) {
-          navigate('/login')
-          return
-        }
-      }
-
       console.error('[cart-click] decor add failed', err)
       setAddToCartMessage('Could not add this package to cart. Please try again.')
     } finally {

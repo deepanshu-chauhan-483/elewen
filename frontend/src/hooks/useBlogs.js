@@ -23,7 +23,7 @@ const filterFallbackBlogs = ({ limit, category, slug }) =>
  *   GET /api/blogs
  *     ?filters[post_status][$eq]=published
  *     &sort=post_published_at:desc
- *     &populate=cover_image
+ *     &populate=*
  *     &pagination[pageSize]=6
  *
  * Schema deviations (see memory/project_schema_deviations.md):
@@ -39,7 +39,7 @@ export function useBlogs({ limit = 3, category, slug } = {}) {
         const params = {
           'filters[post_status][$eq]': 'published',
           sort: 'post_published_at:desc',
-          populate: 'cover_image',
+          populate: '*',
           'pagination[pageSize]': String(limit),
         }
         if (category) params['filters[category][$eq]'] = category
@@ -54,10 +54,16 @@ export function useBlogs({ limit = 3, category, slug } = {}) {
           slug: b.slug ?? '',
           excerpt: b.excerpt ?? '',
           category: b.category ?? '',
-          content: b.content ?? '',
+          content: b.content_blocks ?? b.content ?? '',
           author: b.author ?? '',
           post_published_at: b.post_published_at ?? null,
           cover_image: toAbsoluteStrapiUrl(b.cover_image?.url),
+          blog_images: Array.isArray(b.blog_images)
+            ? b.blog_images.map(image => ({
+                url: toAbsoluteStrapiUrl(image?.url),
+                alt: image?.alternativeText || image?.name || '',
+              }))
+            : [],
         }))
       } catch {
         return filterFallbackBlogs({ limit, category, slug })

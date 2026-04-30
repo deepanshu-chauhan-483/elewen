@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
+import CustomSelect from '../common/CustomSelect'
 
 function ArrowIcon({ direction = 'left' }) {
   const rotationClass = direction === 'right' ? '' : 'rotate-180'
@@ -51,25 +52,21 @@ export default function PackageListLayout({
             </p>
 
             <label className="relative flex w-full max-w-[180px] items-center justify-end sm:w-auto">
-              <select
+              <CustomSelect
                 value={sortValue}
                 onChange={onSortChange}
-                className="h-9 w-full appearance-none rounded-full bg-[#D9D9D9] pl-4 pr-9 text-[12px] text-[#2D2D2D] outline-none ring-1 ring-black/10"
-              >
-                <option value="price-asc">Sort Price Low-High</option>
-                <option value="price-desc">Sort Price High-Low</option>
-                <option value="title-asc">Sort Title A-Z</option>
-              </select>
-
-              <svg
-                viewBox="0 0 12 12"
-                className="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path d="m2.5 4.5 3.5 3 3.5-3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+                options={[
+                  { value: 'price-asc', label: 'Sort Price Low-High' },
+                  { value: 'price-desc', label: 'Sort Price High-Low' },
+                  { value: 'title-asc', label: 'Sort Title A-Z' },
+                ]}
+                buttonClassName="flex h-9 w-full items-center rounded-full bg-[#D9D9D9] pl-4 pr-9 text-left text-[12px] text-[#2D2D2D] outline-none ring-1 ring-black/10"
+                arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
+                menuClassName="fixed z-[999] overflow-hidden border border-black/10 bg-[#D9D9D9] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+                optionClassName="flex w-full whitespace-nowrap items-center bg-[#D9D9D9] px-4 py-3 text-left text-[12px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
+                selectedOptionClassName=""
+                ariaLabel="Sort packages"
+              />
             </label>
           </div>
 

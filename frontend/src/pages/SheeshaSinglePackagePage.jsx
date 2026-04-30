@@ -7,7 +7,6 @@ import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationP
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
 import { useFlavors } from '../hooks/useFlavors'
-import { getStoredJwt } from '../lib/api'
 
 // images (reuse same pattern)
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -333,13 +332,6 @@ export default function SheeshaSinglePackagePage() {
         setAddToCartMessage('Added to cart.')
       }
     } catch (err) {
-      if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
-        if (!getStoredJwt()) {
-          navigate('/login')
-          return
-        }
-      }
-
       console.error('[cart-click] sheesha add failed', err)
       setAddToCartMessage('Could not add this package to cart. Please try again.')
     } finally {

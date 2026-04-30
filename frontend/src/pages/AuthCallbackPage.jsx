@@ -2,6 +2,25 @@ import { useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { authGoogleSession } from '../lib/api'
 
+function parseAuthErrorDetails(error) {
+  const message = String(error?.message ?? '')
+  const jsonMatch = message.match(/\{.*\}$/)
+
+  if (!jsonMatch) {
+    return { code: '', error: '' }
+  }
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0])
+    return {
+      code: String(parsed?.code ?? ''),
+      error: String(parsed?.error ?? ''),
+    }
+  } catch {
+    return { code: '', error: '' }
+  }
+}
+
 /**
  * Handles the Google OAuth redirect from Strapi.
  *
@@ -33,10 +52,20 @@ export default function AuthCallbackPage() {
         localStorage.setItem('elewen_jwt', jwt)
         window.dispatchEvent(new Event('elewen-auth-change'))
         localStorage.setItem('elewen_user', JSON.stringify(user))
+        sessionStorage.removeItem('elewen_auth_origin')
         navigate('/', { replace: true })
       })
-      .catch(() => {
-        navigate('/?auth=error', { replace: true })
+      .catch(error => {
+        const origin = sessionStorage.getItem('elewen_auth_origin') || '/login'
+        const { code } = parseAuthErrorDetails(error)
+        sessionStorage.removeItem('elewen_auth_origin')
+
+        if (code === 'LOCAL_ACCOUNT_USE_PASSWORD') {
+          navigate(`${origin}?authError=local_account_use_password`, { replace: true })
+          return
+        }
+
+        navigate(`${origin}?authError=google_failed`, { replace: true })
       })
   }, [searchParams, navigate])
 

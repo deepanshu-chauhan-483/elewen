@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import { authRegister } from '../lib/api'
 
@@ -20,6 +20,7 @@ const CheckEmailIcon = () => (
 
 export default function SignUpPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -30,6 +31,13 @@ export default function SignUpPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [emailPending, setEmailPending] = useState(false)
+  const authError = searchParams.get('authError') || ''
+  const authErrorMessage =
+    authError === 'local_account_use_password'
+      ? 'This email is already registered with password login. Please sign in with your password.'
+      : authError === 'google_failed'
+        ? 'Google sign-in could not be completed. Please try again.'
+        : ''
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -93,7 +101,7 @@ export default function SignUpPage() {
       subtitle="Explore the collection. Your seamless event is just a few clicks away!"
       footer={
         <p
-          className="text-[#364022] text-[12px] leading-[150%]"
+          className="text-[#364022] text-[12px] leading-[150%] mb-3"
           style={{ fontFamily: "'Poppins', sans-serif" }}
         >
           Already have an account?{' '}
@@ -103,6 +111,9 @@ export default function SignUpPage() {
         </p>
       }
     >
+      {authErrorMessage ? (
+        <p className="text-[#C62828] text-[12px] leading-[150%]">{authErrorMessage}</p>
+      ) : null}
       <form
         onSubmit={handleSubmit}
         className="flex flex-col w-full gap-[16px] min-[540px]:gap-[24px]"
@@ -238,6 +249,7 @@ export default function SignUpPage() {
           </span>
           <a
             href={`${STRAPI_URL}/api/connect/google`}
+            onClick={() => sessionStorage.setItem('elewen_auth_origin', '/signup')}
             className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[14px] min-[540px]:text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
           >
             <svg

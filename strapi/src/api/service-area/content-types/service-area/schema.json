@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "service_areas",
+  "info": {
+    "singularName": "service-area",
+    "pluralName": "service-areas",
+    "displayName": "service-area"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "pincode_start": {
+      "type": "integer"
+    },
+    "pincode_end": {
+      "type": "integer"
+    },
+    "extra_pincodes": {
+      "type": "json"
+    },
+    "is_active": {
+      "type": "boolean"
+    }
+  }
+}

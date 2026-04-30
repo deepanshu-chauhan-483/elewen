@@ -114,8 +114,8 @@ const BlogPage = () => {
         className="bg-[#CBB9A7] px-6 pb-16 pt-24 sm:pt-26 md:px-10 md:pt-28 lg:px-[96px] lg:pb-24 lg:pt-10 xl:pt-12"
       >
         <div className="mx-auto max-w-[1720px]">
-          <div className="relative mt-14 md:mt-20 lg:mt-24">
-            <div className="mx-auto max-w-[720px] text-center md:max-w-[820px] lg:absolute lg:left-1/2 lg:top-[-120px] lg:z-10 lg:w-[920px] lg:max-w-none lg:-translate-x-1/2 xl:w-[980px] reveal-on-scroll">
+          <div className="mt-14 md:mt-20 lg:mt-24">
+            <div className="mx-auto max-w-[720px] text-center md:max-w-[820px] lg:max-w-[920px] xl:max-w-[980px] reveal-on-scroll">
               <h1
                 className="mx-auto max-w-[980px] text-center text-[44px] leading-[1] text-[#6D2005] sm:text-[52px] md:text-[64px] lg:text-[80px]"
                 style={{ fontFamily: "'Malgin', serif", fontWeight: 400, letterSpacing: '0' }}
@@ -125,7 +125,7 @@ const BlogPage = () => {
               </h1>
             </div>
 
-            <div className="mt-12 grid gap-6 md:grid-cols-[1.08fr_0.92fr] lg:mt-[250px] lg:grid-cols-[664px_560px] lg:items-start lg:justify-start lg:gap-4 lg:pl-[100px]">
+            <div className="mt-12 grid gap-6 md:grid-cols-[1.08fr_0.92fr] lg:grid-cols-[664px_560px] lg:items-start lg:justify-start lg:gap-4 lg:pl-[100px]">
               <div className="anim-element slide-from-bottom h-[320px] overflow-hidden md:h-[480px] lg:h-[380px] lg:w-[664px]">
                 <img
                   src={heroLeft}
@@ -150,7 +150,7 @@ const BlogPage = () => {
 
       <section className=" md:px-10 lg:px-[96px] lg:py-20">
         <div className="mx-auto grid max-w-[1720px] gap-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-16">
-          <aside className="reveal-border-y relative border-b border-[#A7AE98] pb-5 lg:border-b-0 lg:pb-0 lg:pr-10">
+          <aside className="reveal-border-y relative border-b border-[#A7AE98] pb-5 lg:sticky lg:top-28 lg:border-b-0 lg:pb-0 lg:pr-10 self-start">
             <div className="absolute right-0 top-0 hidden h-full w-[1px] bg-[#A7AE98] lg:block border-fill-y" />
             <div className="flex flex-wrap gap-x-8 gap-y-4 lg:block lg:space-y-8">
               {categories.map(category => {

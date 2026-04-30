@@ -42,11 +42,11 @@ function setStoredJwt(jwt) {
   window.dispatchEvent(new Event(AUTH_EVENT))
 }
 
-// function clearStoredJwt() {
-//   localStorage.removeItem('elewen_jwt')
-//   localStorage.removeItem('accessToken')
-//   window.dispatchEvent(new Event(AUTH_EVENT))
-// }
+export function clearStoredJwt() {
+  localStorage.removeItem('elewen_jwt')
+  localStorage.removeItem('accessToken')
+  window.dispatchEvent(new Event(AUTH_EVENT))
+}
 
 function createAuthRequiredError(message = 'AUTH_REQUIRED') {
   const error = new Error(message)
@@ -177,6 +177,15 @@ export const cartApplyCoupon = (token, body) =>
   apiPost('/cart/coupon', body, { headers: { Authorization: `Bearer ${token}` } })
 export const cartRemoveCoupon = token =>
   apiDel('/cart/coupon', { headers: { Authorization: `Bearer ${token}` } })
+
+/* -- Wishlist --------------------------------------------------------------- */
+
+export const wishlistGet = token =>
+  apiGet('/wishlist', { headers: { Authorization: `Bearer ${token}` } })
+export const wishlistAdd = (token, body) =>
+  apiPost('/wishlist', body, { headers: { Authorization: `Bearer ${token}` } })
+export const wishlistRemove = (token, packageId) =>
+  apiDel(`/wishlist/${packageId}`, { headers: { Authorization: `Bearer ${token}` } })
 
 /* -- Bookings ---------------------------------------------------------------- */
 

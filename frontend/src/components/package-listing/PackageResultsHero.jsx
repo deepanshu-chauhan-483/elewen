@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import CustomSelect from '../common/CustomSelect'
 import {
   useBudgetLevelOptions,
   useDecorThemeOptions,
@@ -19,31 +20,18 @@ function FilterPill({
 }) {
   return (
     <div className={`relative w-full sm:w-auto ${widthClass}`}>
-      <select
+      <CustomSelect
         value={value}
-        disabled={disabled}
+        options={options}
         onChange={onChange}
-        className="h-[34px] w-full appearance-none rounded-full bg-[#F7F0E6] pl-4 pr-9 text-[14px] leading-none text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
-      >
-        <option value="" disabled hidden>
-          {label}
-        </option>
-        {options.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-
-      <svg
-        viewBox="0 0 12 12"
-        className="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#7A2B08]"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      >
-        <path d="m2.5 4.5 3.5 3 3.5-3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+        disabled={disabled}
+        placeholder={label}
+        buttonClassName="flex h-[34px] w-full items-center rounded-full bg-[#F7F0E6] pl-4 pr-9 text-left text-[14px] leading-none text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
+        arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#7A2B08]"
+        menuClassName="fixed z-[999] overflow-hidden border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+        optionClassName="flex w-full whitespace-nowrap items-center bg-[#F7F0E6] px-6 py-3 text-left text-[14px] leading-none text-[#7A2B08] transition-colors hover:bg-black hover:text-white"
+        selectedOptionClassName=""
+      />
     </div>
   )
 }

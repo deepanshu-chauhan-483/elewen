@@ -5,7 +5,6 @@ import { getServiceProductDetails } from '../data/serviceProductDetails'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCart } from '../hooks/useCart'
 import { usePackageById, usePackages } from '../hooks/usePackages'
-import { getStoredJwt } from '../lib/api'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -359,13 +358,6 @@ export default function PackageDetailsPage() {
         setAddToCartMessage(quantity > 1 ? `${quantity} packages added to cart.` : 'Added to cart.')
       }
     } catch (err) {
-      if (err?.code === 'AUTH_REQUIRED' || err?.message === 'AUTH_REQUIRED') {
-        if (!getStoredJwt()) {
-          navigate('/login')
-          return
-        }
-      }
-
       console.error('[package-details] add to cart failed', err)
       setAddToCartMessage('Could not add this package to cart. Please try again.')
     } finally {

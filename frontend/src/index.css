@@ -860,10 +860,11 @@ p {
 
 .animate-beam {
   transform-origin: top center;
-  animation-name: realistic-flicker;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: opacity, transform, filter;
+  animation: none;
+  opacity: 0.55;
+  transform: translateX(-50%) scale(1.02);
+  filter: brightness(1.1);
+  will-change: auto;
 }
 
 .planner-card-image,

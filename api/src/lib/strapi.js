@@ -124,6 +124,15 @@ export async function strapiServerPut(path, body) {
   })
 }
 
+// ---------------- SERVER DELETE ----------------
+export async function strapiServerDelete(path) {
+  return requestJson(path, {
+    method: 'DELETE',
+    headers: buildHeaders(),
+    prefixApi: !path.startsWith('/api/'),
+  })
+}
+
 // ---------------- GET ME ----------------
 export async function strapiGetMe(jwt) {
   const res = await fetch(`${BASE}/api/users/me`, {
