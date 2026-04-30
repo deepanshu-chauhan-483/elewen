@@ -40,6 +40,7 @@ import CartPage from './pages/CartPage'
 import SampleTasteBooking from './pages/SampleTestBooking'
 import FAQ from './pages/FAQ'
 import Terms from './pages/LegalPages'
+import ContactUsPage from './pages/ContactUsPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -123,6 +124,7 @@ function AppLayout() {
         <Route path="/packages/:service/:packageId" element={<PackageDetailsPage />} />
         <Route path="/faqs" element={<FAQ />} />
         <Route path="/legalpages" element={<Terms />} />
+        <Route path="/contact" element={<ContactUsPage />} />
       </Routes>
       {!hideGlobalChrome && <Footer />}
     </>
