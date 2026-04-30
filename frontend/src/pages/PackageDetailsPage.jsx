@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { getServiceProductDetails } from '../data/serviceProductDetails'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
@@ -213,7 +213,7 @@ function PackageCmsDetails({ pkg, groups }) {
 }
 
 export default function PackageDetailsPage() {
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   const { service = '', packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { data: packages = [] } = usePackages()

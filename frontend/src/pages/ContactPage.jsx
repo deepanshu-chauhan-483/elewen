@@ -81,8 +81,8 @@ export default function ContactPage() {
                 This Together
               </p>
               <p className="mt-5 max-w-[360px] text-[15px] leading-[1.7] text-white/90 md:text-[16px]">
-                Have questions, need help, or want to discuss your event? We&apos;re here to
-                guide you.
+                Have questions, need help, or want to discuss your event? We&apos;re here to guide
+                you.
               </p>
             </div>
 
@@ -125,7 +125,12 @@ export default function ContactPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
-                  <path d="M16.5 7.5H16.51" stroke="white" strokeWidth="1.7" strokeLinecap="round" />
+                  <path
+                    d="M16.5 7.5H16.51"
+                    stroke="white"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </ContactInfoRow>
             </div>
@@ -144,8 +149,8 @@ export default function ContactPage() {
                 Get in Touch
               </h1>
               <p className="mx-auto mt-5 max-w-[460px] text-[16px] leading-[1.65] text-[#6C675D]">
-                We&apos;re here to help whether you have a question, need guidance, or simply
-                want to connect.
+                We&apos;re here to help whether you have a question, need guidance, or simply want
+                to connect.
               </p>
             </div>
 

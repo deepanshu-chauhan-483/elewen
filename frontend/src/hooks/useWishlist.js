@@ -1,12 +1,6 @@
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  clearStoredJwt,
-  getStoredJwt,
-  wishlistAdd,
-  wishlistGet,
-  wishlistRemove,
-} from '../lib/api'
+import { clearStoredJwt, getStoredJwt, wishlistAdd, wishlistGet, wishlistRemove } from '../lib/api'
 
 const WISHLIST_EVENT = 'elewen-wishlist-change'
 const AUTH_EVENT = 'elewen-auth-change'

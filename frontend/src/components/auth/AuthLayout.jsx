@@ -1,25 +1,5 @@
 import { useEffect } from 'react'
 import bgImage from '../../assets/images/outdoor-party-setup-with-balloons-and-decorations-2026-03-18-09-29-30-utc.jpg'
-import navLogo from '../../assets/images/navbar.png'
-
-function SearchBadge() {
-  return (
-    <div className="flex h-[40px] w-full max-w-[220px] items-center gap-3 rounded-full bg-white/40 px-4 backdrop-blur-md shadow-md">
-      <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#6B270A]">
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-          <path
-            d="M17.5 17.5L13.8833 13.8833M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z"
-            stroke="#FAFAFA"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-      <span className="text-[12px] text-[#1C1C1C]">Search</span>
-    </div>
-  )
-}
 
 /* 🔥 Improved soft watermark like your design */
 function WatermarkLayer() {
@@ -32,14 +12,7 @@ function WatermarkLayer() {
   )
 }
 
-export default function AuthLayout({
-  activeTab = 'login',
-  title,
-  subtitle,
-  headerPrefix,
-  children,
-  footer,
-}) {
+export default function AuthLayout({ activeTab = 'login', title, subtitle, children, footer }) {
   const rightPaddingClass =
     activeTab === 'login' ? 'px-4 py-6 min-[540px]:p-6' : 'px-4 py-6 min-[540px]:p-8'
 

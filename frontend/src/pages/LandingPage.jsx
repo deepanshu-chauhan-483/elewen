@@ -3560,7 +3560,6 @@ const PlanningGuidesSection = () => {
                         <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
                           {blog.title}
                         </h3>
-                        
                       </div>
                     </Link>
                   ))}

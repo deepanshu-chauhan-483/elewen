@@ -63,7 +63,10 @@ const blocksToHtml = blocks => {
     .join('')
 }
 
-const stripHtml = value => String(value ?? '').replace(/<[^>]*>/g, '').trim()
+const stripHtml = value =>
+  String(value ?? '')
+    .replace(/<[^>]*>/g, '')
+    .trim()
 
 const paragraphsFromHtml = html => {
   if (typeof html !== 'string' || !html.trim()) return []
@@ -84,7 +87,12 @@ const paragraphsFromHtml = html => {
 }
 
 const getPlainTextFromChildren = children =>
-  Array.isArray(children) ? children.map(child => child?.text ?? '').join('').trim() : ''
+  Array.isArray(children)
+    ? children
+        .map(child => child?.text ?? '')
+        .join('')
+        .trim()
+    : ''
 
 const renderInlineChildren = children =>
   Array.isArray(children)
@@ -165,7 +173,7 @@ const normalizeContentNodes = post => {
   if (typeof post?.content === 'string' && post.content.trim()) {
     nodes = paragraphsFromHtml(post.content)
   } else if (Array.isArray(post?.content) && post.content.length) {
-    const nodes = []
+    let nodes = []
     let imageBuffer = []
 
     const flushImages = () => {
@@ -305,9 +313,7 @@ const BlogContent = ({ nodes }) => (
             style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400 }}
           >
             {node.block.children.map((item, itemIndex) => (
-              <li key={`${node.key}-item-${itemIndex}`}>
-                {renderInlineChildren(item.children)}
-              </li>
+              <li key={`${node.key}-item-${itemIndex}`}>{renderInlineChildren(item.children)}</li>
             ))}
           </ListTag>
         )

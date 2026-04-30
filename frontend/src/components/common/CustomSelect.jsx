@@ -73,10 +73,7 @@ export default function CustomSelect({
     }
 
     const handlePointerDown = event => {
-      if (
-        !wrapperRef.current?.contains(event.target) &&
-        !menuRef.current?.contains(event.target)
-      ) {
+      if (!wrapperRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) {
         triggerBlur()
         setIsOpen(false)
       }

@@ -176,7 +176,9 @@ export function dispatchCartChange(cart) {
 
 export function useCart() {
   const [cart, setCart] = useState(() => (getToken() ? null : readGuestCart()))
-  const [itemCount, setItemCount] = useState(() => getItemCount(getToken() ? null : readGuestCart()))
+  const [itemCount, setItemCount] = useState(() =>
+    getItemCount(getToken() ? null : readGuestCart())
+  )
   const [loading, setLoading] = useState(() => !!getToken())
   const [error, setError] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!getToken())
@@ -445,7 +447,8 @@ export function useCart() {
         nextItems = guestCart.items
           .map(entry => {
             if (entry.id !== duplicateItem.id) return entry
-            const mergedQuantity = Number(entry.quantity ?? 0) + Number(quantity ?? item.quantity ?? 1)
+            const mergedQuantity =
+              Number(entry.quantity ?? 0) + Number(quantity ?? item.quantity ?? 1)
             return {
               ...entry,
               quantity: mergedQuantity,

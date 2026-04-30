@@ -43,7 +43,10 @@ function getServiceAreaByPincode(value = '', serviceAreas = []) {
     const end = Number(area?.pincodeEnd)
     const extraPincodes = Array.isArray(area?.extraPincodes) ? area.extraPincodes : []
     const inRange =
-      Number.isFinite(start) && Number.isFinite(end) && numericPincode >= start && numericPincode <= end
+      Number.isFinite(start) &&
+      Number.isFinite(end) &&
+      numericPincode >= start &&
+      numericPincode <= end
 
     return inRange || extraPincodes.includes(pincode)
   })
@@ -1313,7 +1316,7 @@ export default function CartPage() {
               cartItems={cartItems}
               cart={cart}
               singleItem={hasSingleItem}
-              onCheckout={() => isLoggedIn ? navigate('/checkout') : navigate('/login')}
+              onCheckout={() => (isLoggedIn ? navigate('/checkout') : navigate('/login'))}
               isCheckoutDisabled={isCheckoutDisabled}
               pincodeCard={
                 <PincodeCard

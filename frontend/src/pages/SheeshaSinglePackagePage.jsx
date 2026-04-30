@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
@@ -189,7 +189,7 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
 }
 
 export default function SheeshaSinglePackagePage() {
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { data: packages = [] } = usePackages()

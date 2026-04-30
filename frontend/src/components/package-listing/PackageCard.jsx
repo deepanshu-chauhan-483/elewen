@@ -142,7 +142,13 @@ export default function PackageCard({ pkg }) {
               saved ? 'bg-[#8C3B11] text-white border-[#8C3B11]' : ''
             }`}
           >
-            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-[18px] w-[18px]"
+              fill={saved ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
               <path
                 d="M12 21s-6.716-4.35-9.193-8.107C.708 9.704 1.48 5.5 5.538 4.39A5.39 5.39 0 0 1 12 6.303a5.39 5.39 0 0 1 6.462-1.913c4.057 1.11 4.83 5.314 2.73 8.503C18.716 16.65 12 21 12 21Z"
                 strokeLinecap="round"
