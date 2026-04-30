@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
 import {
@@ -77,6 +77,27 @@ function SummaryRow({ label, value, valueClassName = 'text-[#2C2C2C] font-medium
       <span>{label}</span>
       <span className={valueClassName}>{value}</span>
     </div>
+  )
+}
+
+function LocationPinIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 13.5C13.6569 13.5 15 12.1569 15 10.5C15 8.84315 13.6569 7.5 12 7.5C10.3431 7.5 9 8.84315 9 10.5C9 12.1569 10.3431 13.5 12 13.5Z"
+        stroke="#0383E4"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19.5 10.5C19.5 16.125 12 21 12 21C12 21 4.5 16.125 4.5 10.5C4.5 8.51088 5.29018 6.60322 6.6967 5.1967C8.10322 3.79018 10.0109 3 12 3C13.9891 3 15.8968 3.79018 17.3033 5.1967C18.7098 6.60322 19.5 8.51088 19.5 10.5Z"
+        stroke="#0383E4"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 
@@ -169,7 +190,9 @@ function PaymentMethod({ selected, onChange }) {
 
   return (
     <div className="rounded-xl border border-[#95796066] p-5">
-      <h3 className="mb-4 text-lg font-medium">Payment Method</h3>
+      <h3 className="mb-4 text-lg font-medium" style={{ fontFamily: "'Poppins'" }}>
+        Payment Method
+      </h3>
 
       <div className="space-y-3">
         {options.map(option => {
@@ -212,9 +235,19 @@ function PaymentMethod({ selected, onChange }) {
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const savedUser = getSavedUser()
   const { data: packages = [] } = usePackages()
   const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
+  const queryParams = new URLSearchParams(location.search)
+  const isSampleTastingCheckout =
+    queryParams.get('mode') === 'sample-tasting' ||
+    location.state?.checkoutMode === 'sample-tasting'
+  const sessionDetails = location.state?.sampleSessionDetails ?? {
+    dateLabel: 'Saturday, 14 June',
+    timeLabel: '2:00 PM',
+    address: 'E-22 Vaishali nagar, jaipur, rajasthan',
+  }
 
   const [fullName, setFullName] = useState(
     [savedUser?.first_name, savedUser?.last_name].filter(Boolean).join(' ')
@@ -268,6 +301,23 @@ export default function CheckoutPage() {
   const computedTotal = Math.max(0, computedSubtotal - discountAmount)
   const advancePayable = computedTotal * 0.3
   const balanceDue = Math.max(0, computedTotal - advancePayable)
+  const pageContent = isSampleTastingCheckout
+    ? {
+        heading: 'Confirm Tasting',
+        intro: 'Quick checkout - just a few details needed',
+        summaryTitle: 'Tasting Summary',
+        detailsTitle: 'Your Details',
+        detailsIntro: "We'll use these details to confirm and coordinate your event",
+        ctaLabel: 'Confirm Booking',
+      }
+    : {
+        heading: 'Checkout',
+        intro: 'Review your event packages and complete your booking.',
+        summaryTitle: 'Booking Summary',
+        detailsTitle: 'Event Information',
+        detailsIntro: "We'll use these details to plan and coordinate your event.",
+        ctaLabel: 'Pay Advance & Confirm Booking',
+      }
 
   const handleCheckout = async () => {
     const token = getStoredJwt()
@@ -281,7 +331,10 @@ export default function CheckoutPage() {
       return
     }
 
-    if (!eventDate || !eventAddress.trim() || !guestCount || Number(guestCount) < 1) {
+    if (
+      !isSampleTastingCheckout &&
+      (!eventDate || !eventAddress.trim() || !guestCount || Number(guestCount) < 1)
+    ) {
       setFormError('Please complete the event information form before payment.')
       return
     }
@@ -290,11 +343,13 @@ export default function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
-      await updateCartDetails({
-        eventDate,
-        eventCity: eventAddress.trim(),
-        guestCount: Number(guestCount),
-      })
+      if (!isSampleTastingCheckout) {
+        await updateCartDetails({
+          eventDate,
+          eventCity: eventAddress.trim(),
+          guestCount: Number(guestCount),
+        })
+      }
 
       const bookingResponse = await bookingCreate(token)
       const booking = bookingResponse?.booking
@@ -303,16 +358,26 @@ export default function CheckoutPage() {
         throw new Error('Booking could not be created.')
       }
 
-      const extraDetails = [
-        `Contact name: ${fullName.trim()}`,
-        `Phone: ${phone.trim()}`,
-        `Email: ${email.trim()}`,
-        `Event date: ${eventDate}`,
-        `Event time: ${eventTime || 'Not provided'}`,
-        `Event address: ${eventAddress.trim()}`,
-        `PIN code: ${pinCode || 'Not provided'}`,
-        `Guest count: ${guestCount}`,
-      ].join('\n')
+      const extraDetails = isSampleTastingCheckout
+        ? [
+            'Checkout mode: Sample tasting',
+            `Contact name: ${fullName.trim()}`,
+            `Phone: ${phone.trim()}`,
+            `Email: ${email.trim()}`,
+            `Tasting date: ${sessionDetails.dateLabel || 'Not provided'}`,
+            `Tasting time: ${sessionDetails.timeLabel || 'Not provided'}`,
+            `Tasting address: ${sessionDetails.address || 'Not provided'}`,
+          ].join('\n')
+        : [
+            `Contact name: ${fullName.trim()}`,
+            `Phone: ${phone.trim()}`,
+            `Email: ${email.trim()}`,
+            `Event date: ${eventDate}`,
+            `Event time: ${eventTime || 'Not provided'}`,
+            `Event address: ${eventAddress.trim()}`,
+            `PIN code: ${pinCode || 'Not provided'}`,
+            `Guest count: ${guestCount}`,
+          ].join('\n')
 
       await bookingAddNote(token, booking.id, { note: extraDetails }).catch(() => {})
 
@@ -362,11 +427,12 @@ export default function CheckoutPage() {
                   fullName,
                   phone,
                   email,
-                  eventDate,
-                  eventTime,
-                  eventAddress,
+                  eventDate: isSampleTastingCheckout ? sessionDetails.dateLabel : eventDate,
+                  eventTime: isSampleTastingCheckout ? sessionDetails.timeLabel : eventTime,
+                  eventAddress: isSampleTastingCheckout ? sessionDetails.address : eventAddress,
                   pinCode,
                   guestCount,
+                  checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
                 },
               },
             })
@@ -442,15 +508,31 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-10">
-        <h1 className="text-4xl font-semibold text-[#2C2C2C]">Checkout</h1>
-        <p className="mt-2 text-gray-500">Review your event packages and complete your booking.</p>
+        <h2 className="text-4xl text-[#2C2C2C]">{pageContent.heading}</h2>
+        <p className="mt-2 text-gray-500">{pageContent.intro}</p>
       </div>
 
       <div className="flex flex-col gap-[clamp(24px,5vw,100px)] md:flex-row">
         <div className="flex-1 space-y-6">
+          {isSampleTastingCheckout ? (
+            <div className="flex items-start gap-4 rounded-xl border border-[#0383E4] bg-[#EAF5FF] px-4 py-3">
+              <div className="mt-0.5 shrink-0">
+                <LocationPinIcon />
+              </div>
+              <div>
+                <p className="text-[12px] font-medium text-[#0383E4]">
+                  {sessionDetails.dateLabel} - {sessionDetails.timeLabel}
+                </p>
+                <p className="mt-1 text-[11px] text-[#00477C]">{sessionDetails.address}</p>
+              </div>
+            </div>
+          ) : null}
+
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#1F2A16] px-5 py-3 text-white">
-              <h3 className="font-medium">Booking Summary</h3>
+              <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+                {pageContent.summaryTitle}
+              </h3>
             </div>
 
             <div className="space-y-4 p-5 text-sm">
@@ -533,90 +615,96 @@ export default function CheckoutPage() {
 
         <div className="flex-1 space-y-4">
           <div className="rounded-[20px] border border-[#95796066] bg-white p-6 md:p-8">
-            <h2 className="text-[24px] font-semibold text-[#2C2C2C]">Event Information</h2>
-            <p className="mt-3 text-[14px] text-[#7A7A7A]">
-              We&apos;ll use these details to plan and coordinate your event.
-            </p>
+            <h2
+              className="text-[24px] font-semibold text-[#2C2C2C]"
+              style={{ fontFamily: "'Poppins'" }}
+            >
+              {pageContent.detailsTitle}
+            </h2>
+            <p className="mt-3 text-[14px] text-[#7A7A7A]">{pageContent.detailsIntro}</p>
 
-            <div className="mt-10">
-              <h3 className="text-[18px] font-semibold text-[#2C2C2C]">Contact Details</h3>
+            <div className="mt-10 space-y-4">
+              <input
+                type="text"
+                value={fullName}
+                onChange={event => setFullName(event.target.value)}
+                placeholder="Full Name"
+                className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+              />
 
-              <div className="mt-6 space-y-4">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <input
                   type="text"
-                  value={fullName}
-                  onChange={event => setFullName(event.target.value)}
-                  placeholder="Full Name"
+                  value={phone}
+                  onChange={event => setPhone(event.target.value)}
+                  placeholder="Phone Number"
                   className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
                 />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
+                  placeholder="Email Address"
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                />
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {!isSampleTastingCheckout ? (
+              <div className="mt-10">
+                <h3
+                  className="text-[18px] font-semibold text-[#2C2C2C]"
+                  style={{ fontFamily: "'Poppins'" }}
+                >
+                  Event Details
+                </h3>
+
+                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                   <input
-                    type="text"
-                    value={phone}
-                    onChange={event => setPhone(event.target.value)}
-                    placeholder="Mobile Number"
+                    type="date"
+                    min={getMinEventDate()}
+                    value={eventDate}
+                    onChange={event => setEventDate(event.target.value)}
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
                   />
                   <input
-                    type="email"
-                    value={email}
-                    onChange={event => setEmail(event.target.value)}
-                    placeholder="Email Address"
+                    type="time"
+                    value={eventTime}
+                    onChange={event => setEventTime(event.target.value)}
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={eventAddress}
+                    onChange={event => setEventAddress(event.target.value)}
+                    placeholder="Event Address"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={pinCode}
+                    onChange={event => setPinCode(event.target.value)}
+                    placeholder="PIN Code"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    value={guestCount}
+                    onChange={event => setGuestCount(event.target.value)}
+                    placeholder="Number of Guests"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none md:col-span-2"
                   />
                 </div>
               </div>
-            </div>
-
-            <div className="mt-10">
-              <h3 className="text-[18px] font-semibold text-[#2C2C2C]">Event Details</h3>
-
-              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                <input
-                  type="date"
-                  min={getMinEventDate()}
-                  value={eventDate}
-                  onChange={event => setEventDate(event.target.value)}
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
-                />
-                <input
-                  type="time"
-                  value={eventTime}
-                  onChange={event => setEventTime(event.target.value)}
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
-                />
-                <input
-                  type="text"
-                  value={eventAddress}
-                  onChange={event => setEventAddress(event.target.value)}
-                  placeholder="Event Address"
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
-                />
-                <input
-                  type="text"
-                  value={pinCode}
-                  onChange={event => setPinCode(event.target.value)}
-                  placeholder="PIN Code"
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
-                />
-                <input
-                  type="number"
-                  min="1"
-                  value={guestCount}
-                  onChange={event => setGuestCount(event.target.value)}
-                  placeholder="Number of Guests"
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none md:col-span-2"
-                />
-              </div>
-            </div>
+            ) : null}
           </div>
 
           <PaymentMethod selected={paymentMethod} onChange={setPaymentMethod} />
 
           <div className="rounded-xl border border-[#95796066] p-5">
             <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
-              Secure payment · Instant confirmation · Easy cancellation
+              🔒 Secure payment · Instant confirmation · Easy cancellation
             </div>
 
             {formError ? <p className="mb-4 text-sm text-[#B42318]">{formError}</p> : null}
@@ -628,7 +716,7 @@ export default function CheckoutPage() {
               className="mx-auto mt-4 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
             >
               <span className="mr-5 text-[15px] font-medium text-white">
-                {isSubmitting ? 'Processing...' : 'Pay Advance & Confirm Booking'}
+                {isSubmitting ? 'Processing...' : pageContent.ctaLabel}
               </span>
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                 <svg

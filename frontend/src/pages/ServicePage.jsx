@@ -59,7 +59,10 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
         )}
       </div>
       <div className="flex h-[88px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-3 text-white md:h-[96px] md:px-4 md:py-3.5">
-        <h2 className="flex text-[15px] font-medium leading-[1.2] text-white md:text-[16px]">
+        <h2
+          className="flex text-[15px] font-medium leading-[1.2] text-white md:text-[16px]"
+          style={{ fontFamily: "'Poppins'" }}
+        >
           {service.name}
         </h2>
         <p className="mt-1.5 min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 [&::-webkit-scrollbar]:hidden md:text-[13px]">
@@ -83,7 +86,7 @@ export default function ServicePage() {
   const backTo = useMemo(() => {
     const params = new URLSearchParams()
     if (categorySlug) params.set('category', categorySlug)
-    return `/event-flow/event${params.toString() ? `?${params.toString()}` : ''}`
+    return `/event-flow/category${params.toString() ? `?${params.toString()}` : ''}`
   }, [categorySlug])
 
   if (!isServicesFlow && (!categorySlug || !eventSlug)) {

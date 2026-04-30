@@ -349,7 +349,9 @@ function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
   return (
     <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
       {/* TITLE */}
-      <h2 className="text-lg font-medium text-[#2C2C2C]">Enter Pincode</h2>
+      <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+        Enter Pincode
+      </h2>
 
       <p className="mb-4 mt-1 text-sm text-gray-500">
         Enter your pincode to check service availability and charges.
@@ -390,7 +392,9 @@ function CouponCard({
 }) {
   return (
     <form onSubmit={onApplyCoupon} className="rounded-xl border border-[#95796066] p-5">
-      <h2 className="text-lg font-medium text-[#2C2C2C]">Apply Coupon</h2>
+      <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+        Apply Coupon
+      </h2>
       <p className="mb-4 mt-1 text-sm text-gray-500">
         Have a code? Apply it here to unlock savings.
       </p>
@@ -474,7 +478,9 @@ function SinglePackageCard({
               {packageTitle}
             </Link>
           ) : (
-            <h3 className="font-medium text-lg text-[#2C2C2C]">{packageTitle}</h3>
+            <h3 className="font-medium text-lg text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+              {packageTitle}
+            </h3>
           )}
           <p className="text-sm text-gray-500">
             {eventLocation} · {eventDate}
@@ -511,7 +517,9 @@ function SinglePackageCard({
 
       <div className="overflow-hidden rounded-xl border border-[#95796066]">
         <div className="flex justify-between bg-[#F8F4ED] px-4 py-3">
-          <h3 className="font-medium">Selected Elements</h3>
+          <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+            Selected Elements
+          </h3>
           <span className="text-sm text-gray-500">{selectedElements.length} elements</span>
         </div>
 
@@ -547,7 +555,9 @@ function SinglePackageCard({
 
       <div className="overflow-hidden rounded-xl border border-[#95796066]">
         <div className="bg-[#F8F4ED] px-4 py-3">
-          <h3 className="font-medium">Event Details</h3>
+          <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+            Event Details
+          </h3>
         </div>
 
         <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
@@ -714,7 +724,12 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                           {packageTitle}
                         </Link>
                       ) : (
-                        <h3 className="font-medium text-[#2C2C2C]">{packageTitle}</h3>
+                        <h3
+                          className="font-medium text-[#2C2C2C]"
+                          style={{ fontFamily: "'Poppins'" }}
+                        >
+                          {packageTitle}
+                        </h3>
                       )}
 
                       <div className="text-right">
@@ -774,7 +789,12 @@ function SuggestedPackages({ packages = [] }) {
     <div className="rounded-[16px] border border-[#E5E5E5] bg-white p-5">
       {/* HEADER */}
       <div className="mb-5">
-        <h2 className="text-[20px] font-semibold text-[#2C2C2C]">Suggested Add-ons</h2>
+        <h2
+          className="text-[20px] font-semibold text-[#2C2C2C]"
+          style={{ fontFamily: "'Poppins'" }}
+        >
+          Suggested Add-ons
+        </h2>
         <p className="text-sm text-gray-500">Enhance your event with these popular extras</p>
       </div>
 
@@ -839,7 +859,9 @@ function PriceSummaryCard({
       <div className="rounded-[16px] overflow-hidden border border-[#E5E5E5] bg-white">
         {/* HEADER */}
         <div className="flex items-center justify-between bg-[#1F2A14] px-5 py-4 text-white">
-          <h2 className="text-[16px] font-medium">Price Summary</h2>
+          <h2 className="text-[16px] font-medium" style={{ fontFamily: "'Poppins'" }}>
+            Price Summary
+          </h2>
           <span className="text-sm">{cartItems.length} packages</span>
         </div>
 
@@ -1202,7 +1224,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-white px-4 pb-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-6">
-        <p className="text-[24px] font-semibold text-[#1C1C1C] md:text-[36px]">Review Your Event</p>
+        <h2 className="text-[24px] text-[#1C1C1C] md:text-[36px]">Review Your Event</h2>
         <p className="text-gray-500">Check your selections and confirm details before checkout.</p>
       </div>
 

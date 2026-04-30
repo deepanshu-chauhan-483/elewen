@@ -160,7 +160,7 @@ export default function SinglePackageCheckout() {
   return (
     <div className="min-h-screen bg-white px-4 py-8 md:px-8 md:pt-24 lg:px-16">
       <div className="mb-8">
-        <h1 className="text-[24px] font-semibold text-[#1C1C1C] md:text-[36px]">Package Details</h1>
+        <h2 className="text-[24px] text-[#1C1C1C] md:text-[36px]">Package Details</h2>
         <p className="mt-1 text-[12px] text-gray-500 md:text-[16px]">
           Review what&apos;s included in your selected package.
         </p>
@@ -178,7 +178,9 @@ export default function SinglePackageCheckout() {
 
             <div>
               <p className="text-sm text-gray-500">{packageSubtitle}</p>
-              <h3 className="font-medium text-lg">{packageTitle}</h3>
+              <h3 className="font-medium text-lg" style={{ fontFamily: "'Poppins'" }}>
+                {packageTitle}
+              </h3>
               <p className="text-sm text-gray-500">
                 {eventLocation} · {eventDate}
               </p>
@@ -187,7 +189,9 @@ export default function SinglePackageCheckout() {
 
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="flex justify-between bg-[#F8F4ED] px-4 py-3">
-              <h3 className="font-medium">Selected Elements</h3>
+              <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+                Selected Elements
+              </h3>
               <span className="text-sm text-gray-500">{elements.length} elements</span>
             </div>
 
@@ -219,7 +223,9 @@ export default function SinglePackageCheckout() {
 
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#F8F4ED] px-4 py-3">
-              <h3 className="font-medium">Event Details</h3>
+              <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+                Event Details
+              </h3>
             </div>
 
             <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
@@ -245,7 +251,9 @@ export default function SinglePackageCheckout() {
         <div className="flex-1">
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#222815] px-4 py-3 text-white">
-              <h3 className="font-medium">Price Summary</h3>
+              <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+                Price Summary
+              </h3>
             </div>
 
             <div className="space-y-3 p-4 text-sm">

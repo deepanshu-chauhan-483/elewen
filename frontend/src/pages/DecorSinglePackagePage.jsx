@@ -565,11 +565,11 @@ function DecorOptionButton({ item, wide = false, onClick }) {
       } ${
         item.selected
           ? 'border-[#7A3516] bg-[#FBF6ED] text-[#591902]'
-          : 'border-[#D8C19A] bg-white text-[#D4A24C]'
+          : 'border-[#937032] bg-[#FFFFFF] text-[#937032]'
       }`}
     >
       <p
-        className={`text-[12px] leading-[1.3] ${item.selected ? 'text-[#591902]' : 'text-[#D4A24C]'}`}
+        className={`text-[12px] leading-[1.3] ${item.selected ? 'text-[#591902]' : 'text-[#937032]'}`}
         style={{ fontWeight: 600 }}
       >
         {item.title}

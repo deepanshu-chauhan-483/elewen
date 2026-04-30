@@ -78,7 +78,10 @@ function EventCard({
         )}
       </div>
       <div className="flex h-[76px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-2.5 text-white md:h-[84px] md:px-3.5 md:py-3">
-        <h2 className="text-[15px] font-semibold uppercase leading-[1.2] tracking-[0.01em] md:text-[16px]">
+        <h2
+          className="text-[15px] font-semibold uppercase leading-[1.2] tracking-[0.01em] md:text-[16px]"
+          style={{ fontFamily: "'Poppins'" }}
+        >
           {event.title}
         </h2>
         <p className="mt-1 min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:text-[13px]">
@@ -278,7 +281,9 @@ export default function CategoryPage() {
                     </span>
                   </span>
                   <div className="min-w-0 max-w-[203px]">
-                    <h2 className="text-[16px] leading-[1.1]">{category.name}</h2>
+                    <h2 className="text-[16px] leading-[1.1]" style={{ fontFamily: "'Poppins'" }}>
+                      {category.name}
+                    </h2>
                     <p
                       className={`mt-1 text-[12px] leading-[1.45] ${isActive ? 'text-white/75' : 'text-[#8F8B86]'}`}
                     >

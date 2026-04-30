@@ -211,7 +211,12 @@ export default function PackageCard({ pkg }) {
       {/* Content */}
       <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-[16px] font-medium text-[#2D2D2D]">{pkg.title}</h3>
+          <h3
+            className="text-[16px] font-medium text-[#2D2D2D]"
+            style={{ fontFamily: "'Poppins'" }}
+          >
+            {pkg.title}
+          </h3>
           <span className="rounded-full bg-black/5 px-2 py-1 text-[12px] text-[#2D2D2D]">
             {pkg.category || 'Package'}
           </span>

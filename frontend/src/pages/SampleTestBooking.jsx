@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const PACKAGES = [
   {
@@ -91,11 +92,12 @@ const SELECTED_ITEMS = new Set(['paneer-tikka', 'dal-makhani', 'mojito-classic',
 
 export default function SampleTasteBooking() {
   const [selectedDelivery, setSelectedDelivery] = useState(true)
+  const navigate = useNavigate()
 
   return (
     <div className="bg-[#FAF9F7] min-h-screen px-4 md:px-8 lg:px-16 py-10 mt-10">
       <div className="mb-10">
-        <h1 className="text-[clamp(18px,4vw,36px)] leading-tight font-semibold text-[#2C2C2C]">
+        <h1 className="text-[clamp(18px,4vw,36px)] leading-tight text-[#2C2C2C]">
           Book Your Tasting Session
         </h1>
         <p className="text-gray-500 mt-2 text-[clamp(14px,1.2vw,18px)]">
@@ -106,13 +108,31 @@ export default function SampleTasteBooking() {
       <div className="flex flex-col gap-[clamp(24px,5vw,100px)] md:flex-row">
         {/* LEFT SIDE */}
         <div className="flex-1 space-y-6">
-          <div className="border border-[#0383E4] bg-[#EAF5FF] rounded-xl px-4 py-3">
-            <p className="text-[#0383E4] text-[12px] font-medium">
-              Items are tasting portions only — not full servings.
-            </p>
-            <p className="text-[#0383E4] text-[11px] mt-1">
-              Your feedback helps confirm your final event order.
-            </p>
+          <div className="flex flex-row border border-[#0383E4] bg-[#EAF5FF] rounded-xl px-4 py-3">
+            <div className="flex items-start mr-2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.9974 13.3334V10.0001M9.9974 6.66675H10.0057M18.3307 10.0001C18.3307 14.6025 14.5998 18.3334 9.9974 18.3334C5.39502 18.3334 1.66406 14.6025 1.66406 10.0001C1.66406 5.39771 5.39502 1.66675 9.9974 1.66675C14.5998 1.66675 18.3307 5.39771 18.3307 10.0001Z"
+                  stroke="#0383E4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="flex flex-col ml-2">
+              <p className="text-[#0383E4] text-[12px] font-medium">
+                Items are tasting portions only — not full servings.
+              </p>
+              <p className="text-[#00477C] text-[11px] mt-1">
+                Your feedback helps confirm your final event order.
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-5 text-sm">
@@ -134,7 +154,12 @@ export default function SampleTasteBooking() {
               >
                 <div className="px-5 py-4 flex justify-between items-start border-b border-[#95796033]">
                   <div>
-                    <h2 className="text-[18px] font-medium text-[#2C2C2C]">{pkg.title}</h2>
+                    <h2
+                      className="text-[18px] font-medium text-[#2C2C2C]"
+                      style={{ fontFamily: "'Poppins'" }}
+                    >
+                      {pkg.title}
+                    </h2>
                     <p className="text-sm text-gray-500 mt-1">{pkg.desc}</p>
                   </div>
 
@@ -208,7 +233,12 @@ export default function SampleTasteBooking() {
         <div className="flex-1 space-y-6">
           <div className="border border-[#95796066] rounded-xl p-5 bg-white">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[18px] font-medium text-[#2C2C2C]">Delivery Details</h3>
+              <h3
+                className="text-[18px] font-medium text-[#2C2C2C]"
+                style={{ fontFamily: "'Poppins'" }}
+              >
+                Delivery Details
+              </h3>
               <span className="text-sm text-gray-500">Standard Est: 3-4 days</span>
             </div>
 
@@ -259,7 +289,9 @@ export default function SampleTasteBooking() {
                   </svg>
                 </div>
                 <div className="flex flex-col">
-                  <h4 className="text-[#E48E03] text-[12px]">Get it faster — Express Delivery</h4>
+                  <h4 className="text-[#E48E03] text-[12px]" style={{ fontFamily: "'Poppins'" }}>
+                    Get it faster — Express Delivery
+                  </h4>
                   <p className="text-[#E48E03] text-[11px] mt-1">
                     Delivery in 2 days for ₹300 extra
                   </p>
@@ -284,7 +316,9 @@ export default function SampleTasteBooking() {
 
           <div className="border border-[#95796066] rounded-xl overflow-hidden bg-white">
             <div className="bg-[#242C14] text-white px-5 py-3 flex items-center justify-between">
-              <h3 className="font-medium">Tasting Summary</h3>
+              <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+                Tasting Summary
+              </h3>
               <span className="text-sm">4 items selected</span>
             </div>
 
@@ -371,6 +405,18 @@ export default function SampleTasteBooking() {
             </div>
             <button
               type="button"
+              onClick={() =>
+                navigate('/checkout?mode=sample-tasting', {
+                  state: {
+                    checkoutMode: 'sample-tasting',
+                    sampleSessionDetails: {
+                      dateLabel: 'Saturday, 14 June',
+                      timeLabel: '2:00 PM',
+                      address: 'E-22 Vaishali nagar, jaipur, rajasthan',
+                    },
+                  },
+                })
+              }
               className="mx-auto mt-4 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
             >
               <span className="mr-5 text-[15px] font-medium text-white">Proceed to Checkout</span>
