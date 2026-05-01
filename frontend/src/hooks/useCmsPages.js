@@ -75,11 +75,118 @@ function sanitizeCmsValue(value) {
   return value
 }
 
+function normalizeCmsArray(value) {
+  if (Array.isArray(value)) return value
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  if (!value || typeof value !== 'object') return []
+
+  if (Array.isArray(value.data)) return value.data
+  if (Array.isArray(value.items)) return value.items
+  if (Array.isArray(value.value)) return value.value
+  if (Array.isArray(value.attributes?.data)) return value.attributes.data
+
+  const numericKeys = Object.keys(value)
+    .filter(key => /^\d+$/.test(key))
+    .sort((a, b) => Number(a) - Number(b))
+
+  if (numericKeys.length > 0) {
+    return numericKeys.map(key => value[key])
+  }
+
+  return []
+}
+
+function normalizeNestedCmsArray(value, seen = new WeakSet()) {
+  if (value === null || value === undefined) return []
+
+  if (typeof value === 'string') {
+    try {
+      return normalizeNestedCmsArray(JSON.parse(value), seen)
+    } catch {
+      return []
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(item => {
+      if (item === null || item === undefined) return []
+
+      if (typeof item === 'string') {
+        try {
+          return normalizeNestedCmsArray(JSON.parse(item), seen)
+        } catch {
+          return [item]
+        }
+      }
+
+      if (Array.isArray(item)) return normalizeNestedCmsArray(item, seen)
+
+      if (typeof item === 'object') {
+        const nested = normalizeCmsArray(item)
+        if (nested.length > 0) return normalizeNestedCmsArray(nested, seen)
+      }
+
+      return [item]
+    })
+  }
+
+  if (typeof value !== 'object') return []
+  if (seen.has(value)) return []
+  seen.add(value)
+
+  const nested = normalizeCmsArray(value)
+  if (nested.length > 0) return normalizeNestedCmsArray(nested, seen)
+
+  if (
+    'label' in value ||
+    'title' in value ||
+    'heading' in value ||
+    'name' in value ||
+    'description' in value ||
+    'body' in value ||
+    'text' in value
+  ) {
+    return [value]
+  }
+
+  return []
+}
+
+function normalizeCmsEntry(entry) {
+  if (!entry || typeof entry !== 'object') return entry
+
+  return entry.attributes && typeof entry.attributes === 'object'
+    ? { ...entry.attributes, id: entry.id ?? entry.attributes.id }
+    : entry
+}
+
 function normalizeHeroCard(card = {}) {
+  const normalizedCard = normalizeCmsEntry(card) ?? {}
+
   return {
-    ...card,
-    label: card.label ?? card.title ?? card.heading ?? '',
-    tagline: card.tagline ?? card.description ?? card.desc ?? card.body ?? '',
+    ...normalizedCard,
+    label:
+      normalizedCard.label ??
+      normalizedCard.title ??
+      normalizedCard.heading ??
+      normalizedCard.name ??
+      '',
+    description: normalizedCard.description ?? normalizedCard.body ?? '',
+    tagline:
+      normalizedCard.tagline ??
+      normalizedCard.description ??
+      normalizedCard.desc ??
+      normalizedCard.body ??
+      '',
   }
 }
 
@@ -96,19 +203,16 @@ function normalizeLandingPageSections(sections = {}) {
         hero.search_line_1 ?? hero.cta_line_1 ?? hero.description_line_1 ?? hero.body_line_1,
       search_line_2:
         hero.search_line_2 ?? hero.cta_line_2 ?? hero.description_line_2 ?? hero.body_line_2,
-      left_taglines: (
-        hero.left_taglines ??
-        hero.taglines ??
-        hero.left_lines ??
-        hero.feature_lines ??
-        []
-      ).map(item => (typeof item === 'string' ? item : (item?.label ?? item?.title ?? ''))),
-      right_cards: (
-        hero.right_cards ??
-        hero.cards ??
-        hero.hero_cards ??
-        hero.featured_cards ??
-        []
+      left_taglines: normalizeNestedCmsArray(
+        hero.left_taglines ?? hero.taglines ?? hero.left_lines ?? hero.feature_lines ?? []
+      ).map(item => {
+        const normalizedItem = normalizeCmsEntry(item)
+        return typeof normalizedItem === 'string'
+          ? normalizedItem
+          : (normalizedItem?.label ?? normalizedItem?.title ?? normalizedItem?.text ?? '')
+      }),
+      right_cards: normalizeNestedCmsArray(
+        hero.right_cards ?? hero.cards ?? hero.hero_cards ?? hero.featured_cards ?? []
       ).map(normalizeHeroCard),
     }
   }
