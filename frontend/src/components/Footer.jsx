@@ -1,27 +1,44 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const footerNav = [
   {
     label: 'LEGAL',
     labelWidth: 'min-w-[46px] shrink-0 md:w-[46px]',
-    links: ['Terms & Conditions', 'Cancellation Policy'],
+    links: [
+      { label: 'Terms & Conditions', to: '/legalpages' },
+      { label: 'Cancellation Policy', to: '/legalpages' },
+    ],
   },
   {
     label: 'COMMUNITY',
     labelWidth: 'min-w-[85px] shrink-0 md:w-[97px]',
-    links: ['Vendor Registration', 'Instagram'],
+    links: [
+      { label: 'Vendor Registration', to: '/vendor-registration' },
+      { label: 'Instagram', href: 'https://www.instagram.com/' },
+    ],
   },
   {
     label: 'HELP',
     labelWidth: 'min-w-[36px] shrink-0 md:w-[36px]',
-    links: ['Contact Us', "FAQ's", 'Order Updates'],
+    links: [
+      { label: 'Contact Us', to: '/contact' },
+      { label: "FAQ's", to: '/faqs' },
+      { label: 'Order Updates', to: '/contact' },
+    ],
   },
   {
     label: 'SHOP BY',
     labelWidth: 'min-w-[58px] shrink-0 md:w-[66px]',
-    links: ['Events', 'Services'],
+    links: [
+      { label: 'Events', to: '/event-flow/category' },
+      { label: 'Services', to: '/event-flow/service?flow=services' },
+    ],
   },
 ]
+
+const footerLinkClass =
+  'anim-element slide-from-left shrink-0 whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat pb-[2px] text-[14px] md:text-[16px] text-[#2D2D2D] transition-[background-size,color] duration-500 ease-out hover:bg-[length:100%_1px] hover:text-[#591902]'
 
 const Footer = () => {
   const footerRef = useRef(null)
@@ -101,16 +118,37 @@ const Footer = () => {
 
                 {/* LINKS */}
                 <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-[12px] overflow-x-auto md:overflow-visible opacity-50 [-ms-overflow-style:none] [scrollbar-width:none] md:flex-wrap md:gap-x-7 md:gap-y-2 [&::-webkit-scrollbar]:hidden">
-                  {row.links.map((link, linkIndex) => (
-                    <a
-                      key={link}
-                      href="#"
-                      className="anim-element slide-from-left shrink-0 whitespace-nowrap bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat pb-[2px] text-[14px] md:text-[16px] text-[#2D2D2D] transition-[background-size,color] duration-500 ease-out hover:bg-[length:100%_1px] hover:text-[#591902]"
-                      style={{ '--delay': `${i * 0.06 + 0.08 + linkIndex * 0.04}s` }}
-                    >
-                      {link}
-                    </a>
-                  ))}
+                  {row.links.map((link, linkIndex) => {
+                    const animationStyle = {
+                      '--delay': `${i * 0.06 + 0.08 + linkIndex * 0.04}s`,
+                    }
+
+                    if (link.href) {
+                      return (
+                        <a
+                          key={link.label}
+                          href={link.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={footerLinkClass}
+                          style={animationStyle}
+                        >
+                          {link.label}
+                        </a>
+                      )
+                    }
+
+                    return (
+                      <Link
+                        key={link.label}
+                        to={link.to}
+                        className={footerLinkClass}
+                        style={animationStyle}
+                      >
+                        {link.label}
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
             ))}

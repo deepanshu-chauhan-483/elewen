@@ -116,6 +116,48 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   return queryString ? `${basePath}?${queryString}` : basePath
 }
 
+function BackIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M9.9974 15.8334L4.16406 10M4.16406 10L9.9974 4.16669M4.16406 10H15.8307"
+        stroke="#6B6B6B"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function EditIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M10 2.50001H4.16667C3.72464 2.50001 3.30072 2.6756 2.98816 2.98816C2.67559 3.30072 2.5 3.72464 2.5 4.16667V15.8333C2.5 16.2754 2.67559 16.6993 2.98816 17.0118C3.30072 17.3244 3.72464 17.5 4.16667 17.5H15.8333C16.2754 17.5 16.6993 17.3244 17.0118 17.0118C17.3244 16.6993 17.5 16.2754 17.5 15.8333V10M15.3125 2.18751C15.644 1.85599 16.0937 1.66974 16.5625 1.66974C17.0313 1.66974 17.481 1.85599 17.8125 2.18751C18.144 2.51903 18.3303 2.96866 18.3303 3.43751C18.3303 3.90635 18.144 4.35598 17.8125 4.68751L10.3017 12.1992C10.1038 12.3969 9.85934 12.5416 9.59083 12.62L7.19667 13.32C7.12496 13.3409 7.04895 13.3422 6.97659 13.3236C6.90423 13.3051 6.83819 13.2675 6.78537 13.2146C6.73255 13.1618 6.69491 13.0958 6.67637 13.0234C6.65783 12.9511 6.65909 12.875 6.68 12.8033L7.38 10.4092C7.45877 10.1409 7.60378 9.89672 7.80167 9.69917L15.3125 2.18751Z"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function DeleteIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M15.8333 5.00002V16.6667C15.8333 17.1087 15.6577 17.5326 15.3452 17.8452C15.0326 18.1578 14.6087 18.3334 14.1667 18.3334H5.83333C5.39131 18.3334 4.96738 18.1578 4.65482 17.8452C4.34226 17.5326 4.16667 17.1087 4.16667 16.6667V5.00002M2.5 5.00002H17.5M6.66667 5.00002V3.33335C6.66667 2.89133 6.84226 2.4674 7.15482 2.15484C7.46738 1.84228 7.89131 1.66669 8.33333 1.66669H11.6667C12.1087 1.66669 12.5326 1.84228 12.8452 2.15484C13.1577 2.4674 13.3333 2.89133 13.3333 3.33335V5.00002"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export default function SinglePackageCheckout() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -168,7 +210,7 @@ export default function SinglePackageCheckout() {
 
       <div className="flex flex-col gap-[clamp(24px,5vw,100px)] lg:flex-row">
         <div className="flex-1 space-y-6">
-          <div className="relative flex items-center gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
+          <div className="relative flex gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
             <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
             <div className="ml-2 h-20 w-20 overflow-hidden rounded-lg bg-gray-200">
               {packageImage ? (
@@ -176,12 +218,15 @@ export default function SinglePackageCheckout() {
               ) : null}
             </div>
 
-            <div>
-              <p className="text-sm text-gray-500">{packageSubtitle}</p>
-              <h3 className="font-medium text-lg" style={{ fontFamily: "'Poppins'" }}>
+            <div className="items-start">
+              <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
+              <h3
+                className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
+                style={{ fontFamily: "'Poppins'" }}
+              >
                 {packageTitle}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-[10px] md:text-[12px] text-[#6A6864]">
                 {eventLocation} · {eventDate}
               </p>
             </div>
@@ -289,19 +334,32 @@ export default function SinglePackageCheckout() {
             </div>
           </div>
 
-          <div className="mt-10 flex w-full flex-row gap-4">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+            {/* BACK */}
             <button
               onClick={() => navigate('/cart')}
-              className="rounded-full bg-gray-200 px-6 py-3 text-gray-700"
+              className="flex items-center justify-center gap-2 h-[40px] rounded-full bg-[#E5E5E5] text-[#6B7280]"
             >
-              Back to Cart
+              <BackIcon />
+              Go Back
             </button>
 
-            {packageHref ? (
-              <Link to={packageHref} className="rounded-full bg-[#2E3A1F] px-6 py-3 text-white">
+            {/* EDIT */}
+            {packageHref && (
+              <Link
+                to={packageHref}
+                className="flex items-center justify-center gap-2 h-[40px] rounded-full bg-[#2E3A1F] text-white"
+              >
+                <EditIcon />
                 Edit Package
               </Link>
-            ) : null}
+            )}
+
+            {/* DELETE */}
+            <button className="flex items-center justify-center gap-2 h-[40px] rounded-full bg-[#7A1E0E] text-white">
+              <DeleteIcon />
+              Delete Package
+            </button>
           </div>
         </div>
       </div>
