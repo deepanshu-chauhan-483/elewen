@@ -15,7 +15,8 @@
       "type": "enumeration",
       "enum": [
         "planner",
-        "consultation"
+        "consultation",
+        "contact us"
       ]
     },
     "full_name": {
@@ -57,13 +58,13 @@
     },
     "planner_lead_status": {
       "type": "enumeration",
+      "default": "new",
       "enum": [
         "new",
         "contacted",
         "converted",
         "closed"
-      ],
-      "default": "new"
+      ]
     }
   }
 }

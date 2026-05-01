@@ -42,11 +42,11 @@ function setStoredJwt(jwt) {
   window.dispatchEvent(new Event(AUTH_EVENT))
 }
 
-// function clearStoredJwt() {
-//   localStorage.removeItem('elewen_jwt')
-//   localStorage.removeItem('accessToken')
-//   window.dispatchEvent(new Event(AUTH_EVENT))
-// }
+export function clearStoredJwt() {
+  localStorage.removeItem('elewen_jwt')
+  localStorage.removeItem('accessToken')
+  window.dispatchEvent(new Event(AUTH_EVENT))
+}
 
 function createAuthRequiredError(message = 'AUTH_REQUIRED') {
   const error = new Error(message)
@@ -178,6 +178,15 @@ export const cartApplyCoupon = (token, body) =>
 export const cartRemoveCoupon = token =>
   apiDel('/cart/coupon', { headers: { Authorization: `Bearer ${token}` } })
 
+/* -- Wishlist --------------------------------------------------------------- */
+
+export const wishlistGet = token =>
+  apiGet('/wishlist', { headers: { Authorization: `Bearer ${token}` } })
+export const wishlistAdd = (token, body) =>
+  apiPost('/wishlist', body, { headers: { Authorization: `Bearer ${token}` } })
+export const wishlistRemove = (token, packageId) =>
+  apiDel(`/wishlist/${packageId}`, { headers: { Authorization: `Bearer ${token}` } })
+
 /* -- Bookings ---------------------------------------------------------------- */
 
 export const bookingCreate = token =>
@@ -213,6 +222,21 @@ export const paymentVerify = (token, body) =>
  */
 export function submitConsultation(body) {
   return apiPost('/consultations', body)
+}
+
+/**
+ * Submit a Contact Us enquiry.
+ * Maps to POST /contact in the Express API.
+ *
+ * @param {Object} body
+ * @param {string} body.firstName
+ * @param {string} body.lastName
+ * @param {string} body.email
+ * @param {string} body.phone
+ * @param {string} body.message
+ */
+export function submitContact(body) {
+  return apiPost('/contact', body)
 }
 
 /* ── Planner Lead ─────────────────────────────────────────────────────────── */

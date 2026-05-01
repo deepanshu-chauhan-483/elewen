@@ -286,10 +286,17 @@ const PlanEventSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              {s.heading ?? (
+              {s.heading_1 || s.heading_2 ? (
                 <>
-                  Plan Your Event, <br className="hidden md:block" /> Differently.
+                  {s.heading_1 ?? 'Plan Your Event,'} <br className="hidden md:block" />{' '}
+                  {s.heading_2 ?? 'Differently.'}
                 </>
+              ) : (
+                (s.heading ?? (
+                  <>
+                    Plan Your Event, <br className="hidden md:block" /> Differently.
+                  </>
+                ))
               )}
             </span>
           </span>
@@ -774,11 +781,17 @@ const WhatToPlanSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              {s.heading ?? (
+              {s.heading_1 || s.heading_2 ? (
                 <>
-                  What Would You <br className="hidden md:block" /> Like To{' '}
-                  <br className="block md:hidden" /> Plan?
+                  {s.heading_1 ?? 'What Would You'} <br className="hidden md:block" />{' '}
+                  {s.heading_2 ?? 'Like To Plan?'}
                 </>
+              ) : (
+                (s.heading ?? (
+                  <>
+                    What Would You <br className="hidden md:block" /> Like To Plan?
+                  </>
+                ))
               )}
             </span>
           </span>
@@ -1746,7 +1759,17 @@ const BetterWaySection = () => {
             className="w-full text-[#2D2D2D] text-[24px] lg:text-[54px] xl:text-[61px] leading-[1] text-center font-serif reveal-heading lg:absolute lg:w-[620px] xl:w-[679px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            {s.heading ? (
+            {s.heading_1 || s.heading_2 ? (
+              <>
+                <span className="reveal-wrapper">
+                  <span className="reveal-text">{s.heading_1 ?? 'A Better Way Between'}</span>
+                </span>
+                <br className="hidden lg:block" />
+                <span className="reveal-wrapper">
+                  <span className="reveal-text">{s.heading_2 ?? 'Event and DIY'}</span>
+                </span>
+              </>
+            ) : s.heading ? (
               <span className="reveal-wrapper">
                 <span className="reveal-text">{s.heading}</span>
               </span>
@@ -1766,9 +1789,8 @@ const BetterWaySection = () => {
           <p className="w-full text-[#2D2D2D] opacity-50 text-[14px] lg:text-[15px] xl:text-[16px] leading-[150%] lg:leading-[1.5] text-center reveal-on-scroll lg:absolute lg:w-[760px] xl:w-[809px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[290px] xl:top-[403px] font-['Poppins'] lg:font-sans">
             <span className="reveal-wrapper">
               <span className="reveal-text">
-                Event planners can feel expensive and overwhelming. Doing everything yourself can
-                quickly become stressful. Elewen brings the best of both, thoughtful styling without
-                the chaos.
+                {s.body ??
+                  'Event planners can feel expensive and overwhelming. Doing everything yourself can quickly become stressful. Elewen brings the best of both, thoughtful styling without the chaos.'}
               </span>
             </span>
           </p>
@@ -2543,6 +2565,7 @@ const PackagesSection = () => {
   const [disableTransition, setDisableTransition] = useState(false)
   const lastDirectionRef = useRef('next')
   const [isMobile, setIsMobile] = useState(false)
+  const [expandedIncludeCards, setExpandedIncludeCards] = useState({})
 
   // Touch handlers for mobile swiping of the main packages
   const touchStartX = useRef(0)
@@ -2797,6 +2820,11 @@ const PackagesSection = () => {
               const isActive = index === effectiveVirtualIndex
               const imageCount = pkg.images?.length ?? 0
               const useInnerSwiper = imageCount > 1
+              const includeCardKey = String(pkg.documentId ?? pkg.id ?? index)
+              const tags = Array.isArray(pkg.tags) ? pkg.tags : []
+              const showAllIncludes = !!expandedIncludeCards[includeCardKey]
+              const visibleTags = showAllIncludes ? tags : tags.slice(0, 4)
+              const hasMoreIncludes = tags.length > 4
 
               return (
                 <div
@@ -2961,7 +2989,7 @@ const PackagesSection = () => {
                           Includes :
                         </p>
                         <div className="flex flex-wrap gap-[2.5px] md:gap-1">
-                          {pkg.tags.map((tag, i) => (
+                          {visibleTags.map((tag, i) => (
                             <div
                               key={i}
                               className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
@@ -2975,6 +3003,25 @@ const PackagesSection = () => {
                               </span>
                             </div>
                           ))}
+                          {hasMoreIncludes && !showAllIncludes ? (
+                            <button
+                              type="button"
+                              onClick={event => {
+                                event.stopPropagation()
+                                setExpandedIncludeCards(prev => ({
+                                  ...prev,
+                                  [includeCardKey]: true,
+                                }))
+                              }}
+                              className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
+                              style={{
+                                background: 'rgba(0, 0, 0, 0.05)',
+                                padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                              }}
+                            >
+                              More
+                            </button>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -3535,12 +3582,12 @@ const PlanningGuidesSection = () => {
 
                       <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:px-6 md:py-5 lg:p-7 h-[120px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         {' '}
-                        <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none">
+                        <h3
+                          className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none"
+                          style={{ fontFamily: 'Poppins' }}
+                        >
                           {blog.title}
                         </h3>
-                        <p className="text-white/60 md:text-white/80 text-[12px] md:text-[13px] leading-[150%] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins'] line-clamp-2">
-                          {blog.excerpt}
-                        </p>
                       </div>
                     </Link>
                   ))}

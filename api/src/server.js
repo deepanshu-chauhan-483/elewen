@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js'
 import vendorRoutes from './routes/vendor.js'
 import plannerLeadRoutes from './routes/plannerLead.js'
 import consultationRoutes from './routes/consultation.js'
+import contactRoutes from './routes/contact.js'
 import cartRoutes from './routes/cart.js'
 import bookingRoutes from './routes/booking.js'
 import sampleTasteRoutes from './routes/sampleTaste.js'
@@ -18,6 +19,7 @@ import messagingRoutes from './routes/messaging.js'
 import supportRoutes from './routes/support.js'
 import packageRoutes from './routes/package.js'
 import notificationRoutes from './routes/notification.js'
+import wishlistRoutes from './routes/wishlist.js'
 import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -84,6 +86,7 @@ app.use('/auth', authRoutes)
 app.use('/vendor', vendorRoutes)
 app.use('/planner-leads', plannerLeadRoutes)
 app.use('/consultations', consultationRoutes)
+app.use('/contact', contactRoutes)
 app.use('/cart', cartRoutes)
 app.use('/bookings', bookingRoutes)
 app.use('/sample-taste', sampleTasteRoutes)
@@ -93,6 +96,7 @@ app.use('/messages', messagingRoutes)
 app.use('/support', supportRoutes)
 app.use('/packages', packageRoutes)
 app.use('/notifications', notificationRoutes)
+app.use('/wishlist', wishlistRoutes)
 
 // ─── Dev-only test pages ──────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {

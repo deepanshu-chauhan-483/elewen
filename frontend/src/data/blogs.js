@@ -5,6 +5,10 @@
  *   { id, documentId, title, slug, excerpt, category, content, author, post_published_at, cover_image }
  */
 
+import blogImg1 from '../assets/images/IMG_0658.jpg'
+import blogImg2 from '../assets/images/outdoor-party-setup-with-balloons-and-decorations-2026-03-18-09-29-30-utc.jpg'
+import blogImg3 from '../assets/images/IMG_3148.jpg'
+
 export const BLOG_CATEGORIES_FALLBACK = [
   'Planning Tips',
   'Decor Inspiration',
@@ -21,8 +25,53 @@ export const BLOGS_FALLBACK = [
     excerpt:
       'A practical guide to organizing decor, food, and setup without managing multiple vendors.',
     category: 'Planning Tips',
-    content:
-      '<p>Planning a celebration at home works best when you simplify decisions early. Start with the guest list, define the mood, and lock the essentials before moving into decor and food details.</p><p>A clear plan reduces last-minute stress and helps the event feel intentional from start to finish.</p>',
+    content: [
+      {
+        type: 'paragraph',
+        children: [
+          {
+            text: 'Planning a celebration at home works best when you simplify decisions early. Start with the guest list, define the mood, and lock the essentials before moving into decor and food details.',
+          },
+        ],
+      },
+      {
+        type: 'image',
+        image: {
+          url: blogImg2,
+          alternativeText: 'Celebration styling reference',
+        },
+      },
+      {
+        type: 'paragraph',
+        children: [
+          {
+            text: 'A clear plan reduces last-minute stress and helps the event feel intentional from start to finish. Visual anchors across the room make the setup feel cohesive even when you are working with a compact home space.',
+          },
+        ],
+      },
+      {
+        type: 'image',
+        image: {
+          url: blogImg1,
+          alternativeText: 'Decor detail close-up',
+        },
+      },
+      {
+        type: 'image',
+        image: {
+          url: blogImg3,
+          alternativeText: 'Table styling detail',
+        },
+      },
+      {
+        type: 'paragraph',
+        children: [
+          {
+            text: 'Using one larger image followed by two supporting visuals is a good structure for blog storytelling. It gives the reader a strong first impression and then lets you show supporting details without changing the rest of the page layout.',
+          },
+        ],
+      },
+    ],
     author: 'Elewen Studio',
     post_published_at: '2026-04-03T00:00:00.000Z',
     cover_image: null,

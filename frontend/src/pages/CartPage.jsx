@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
+import { useServiceAreas } from '../hooks/useServiceAreas'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 
@@ -23,6 +24,80 @@ function getMinEventDate() {
   const day = String(minDate.getDate()).padStart(2, '0')
 
   return `${year}-${month}-${day}`
+}
+
+function normalizePincode(value = '') {
+  return String(value ?? '')
+    .replace(/\D/g, '')
+    .slice(0, 6)
+}
+
+function getServiceAreaByPincode(value = '', serviceAreas = []) {
+  const pincode = normalizePincode(value)
+
+  if (pincode.length !== 6) return ''
+
+  const numericPincode = Number(pincode)
+  const matchingArea = (Array.isArray(serviceAreas) ? serviceAreas : []).find(area => {
+    const start = Number(area?.pincodeStart)
+    const end = Number(area?.pincodeEnd)
+    const extraPincodes = Array.isArray(area?.extraPincodes) ? area.extraPincodes : []
+    const inRange =
+      Number.isFinite(start) &&
+      Number.isFinite(end) &&
+      numericPincode >= start &&
+      numericPincode <= end
+
+    return inRange || extraPincodes.includes(pincode)
+  })
+
+  return matchingArea?.name ?? ''
+}
+
+function getPincodeValidationState(value = '', serviceAreas = [], isLoadingServiceAreas = false) {
+  const normalizedPincode = normalizePincode(value)
+
+  if (!normalizedPincode) {
+    return {
+      isChecking: false,
+      isValid: false,
+      message: '',
+    }
+  }
+
+  if (normalizedPincode.length !== 6) {
+    return {
+      isChecking: false,
+      isValid: false,
+      message: 'Please enter a valid 6-digit pincode.',
+    }
+  }
+
+  if (isLoadingServiceAreas) {
+    return {
+      isChecking: true,
+      isValid: false,
+      message: 'Checking availability...',
+    }
+  }
+
+  const area = getServiceAreaByPincode(normalizedPincode, serviceAreas)
+
+  if (area) {
+    return {
+      isChecking: false,
+      isValid: true,
+      message: `Service available in ${area}.`,
+    }
+  }
+
+  return {
+    isChecking: false,
+    isValid: false,
+    message: serviceAreas.length
+      ? 'Service not available in your area.'
+      : 'We could not verify service availability right now.',
+  }
 }
 
 function parseApiError(error) {
@@ -993,6 +1068,7 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
 export default function CartPage() {
   const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
+  const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = useServiceAreas()
   const {
     cart,
     loading,
@@ -1009,6 +1085,7 @@ export default function CartPage() {
   const [pincode, setPincode] = useState('')
   const [pincodeMessage, setPincodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
+  const [isPincodeValid, setIsPincodeValid] = useState(false)
   const [pendingItemId, setPendingItemId] = useState('')
   const [editingField, setEditingField] = useState('')
   const [isSavingDetails, setIsSavingDetails] = useState(false)
@@ -1040,7 +1117,7 @@ export default function CartPage() {
   )
   const hasItems = cartItems.length > 0
   const hasSingleItem = cartItems.length === 1
-  const isCheckoutDisabled = !pincode.trim()
+  const isCheckoutDisabled = !isPincodeValid
   const suggestedPackages = useMemo(
     () => getSuggestedPackages(packages, cartItems),
     [packages, cartItems]
@@ -1053,6 +1130,13 @@ export default function CartPage() {
       guestCount: cart?.guestCount != null ? String(cart.guestCount) : '',
     })
   }, [cart?.eventDate, cart?.eventCity, cart?.guestCount])
+
+  useEffect(() => {
+    const nextState = getPincodeValidationState(pincode, serviceAreas, isLoadingServiceAreas)
+    setIsCheckingPincode(nextState.isChecking)
+    setIsPincodeValid(nextState.isValid)
+    setPincodeMessage(nextState.message)
+  }, [pincode, isLoadingServiceAreas, serviceAreas])
 
   const handleDetailChange = (field, value) => {
     setDetailsError('')
@@ -1150,23 +1234,41 @@ export default function CartPage() {
     }
   }
 
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-white px-4 pt-24 md:px-8 lg:px-16">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-[#95796066] bg-white p-8 text-center">
-          <p className="text-[24px] font-semibold text-[#1C1C1C]">Sign in to view your cart</p>
-          <p className="mt-2 text-gray-500">
-            Your cart is linked to your account in the current API flow.
-          </p>
-          <Link
-            to="/login"
-            className="mx-auto mt-6 flex w-fit items-center rounded-full bg-[#D4BA8E] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#C6AB7F]"
-          >
-            Go to Login
-          </Link>
-        </div>
-      </div>
-    )
+  const validatePincode = value => {
+    const nextState = getPincodeValidationState(value, serviceAreas, isLoadingServiceAreas)
+    setIsCheckingPincode(nextState.isChecking)
+    setIsPincodeValid(nextState.isValid)
+    setPincodeMessage(nextState.message)
+  }
+
+  const handlePincodeChange = value => {
+    const normalizedPincode = normalizePincode(value)
+
+    setPincode(normalizedPincode)
+    setIsPincodeValid(false)
+
+    if (!normalizedPincode) {
+      setIsCheckingPincode(false)
+      setPincodeMessage('')
+      return
+    }
+
+    if (normalizedPincode.length < 6) {
+      setIsCheckingPincode(false)
+      setPincodeMessage('')
+      return
+    }
+
+    setIsCheckingPincode(true)
+    setPincodeMessage('Checking availability...')
+    validatePincode(normalizedPincode)
+  }
+
+  const handlePincodeSubmit = event => {
+    event.preventDefault()
+    setIsCheckingPincode(true)
+    setPincodeMessage('Checking availability...')
+    validatePincode(pincode)
   }
 
   return (
@@ -1286,24 +1388,15 @@ export default function CartPage() {
               cartItems={cartItems}
               cart={cart}
               singleItem={hasSingleItem}
-              onCheckout={() => navigate('/checkout')}
+              onCheckout={() => (isLoggedIn ? navigate('/checkout') : navigate('/login'))}
               isCheckoutDisabled={isCheckoutDisabled}
               pincodeCard={
                 <PincodeCard
                   pincode={pincode}
                   message={pincodeMessage}
                   isChecking={isCheckingPincode}
-                  onChange={setPincode}
-                  onSubmit={e => {
-                    e.preventDefault()
-                    // Add your pincode check logic here
-                    setIsCheckingPincode(true)
-                    setPincodeMessage('Checking availability...')
-                    setTimeout(() => {
-                      setIsCheckingPincode(false)
-                      setPincodeMessage('Service available in your area')
-                    }, 1000)
-                  }}
+                  onChange={handlePincodeChange}
+                  onSubmit={handlePincodeSubmit}
                 />
               }
             />

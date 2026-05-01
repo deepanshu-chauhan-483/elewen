@@ -90,14 +90,49 @@ const isJwtLike = token => typeof token === 'string' && token.split('.').length 
 
 const isVerifiedGoogleEmail = value => value === true || value === 'true'
 
+const isGoogleProvider = provider => String(provider ?? '').trim().toLowerCase() === 'google'
+
+const isStrapiCredentialError = err =>
+  (err?.status === 401 || err?.status === 403) &&
+  /missing or invalid credentials/i.test(String(err?.message ?? ''))
+
+const extractGoogleProfile = payload => {
+  const fullName = typeof payload?.name === 'string' ? payload.name.trim() : ''
+  const nameParts = fullName ? fullName.split(/\s+/) : []
+
+  return {
+    firstName: payload?.given_name ?? payload?.givenName ?? nameParts[0] ?? null,
+    lastName:
+      payload?.family_name ??
+      payload?.familyName ??
+      (nameParts.length > 1 ? nameParts.slice(1).join(' ') : null),
+    picture: payload?.picture ?? null,
+  }
+}
+
 const exchangeGoogleAccessTokenForStrapiSession = async accessToken => {
   const url = new URL('/api/auth/google/callback', process.env.STRAPI_URL || 'http://localhost:1337')
   url.searchParams.set('access_token', accessToken)
 
   try {
-    const res = await fetch(url.toString())
+    const res = await fetch(url.toString(), { redirect: 'manual' })
     console.log('[exchangeGoogleAccessTokenForStrapiSession] Status:', res.status, 'URL:', url.toString())
-    
+
+    const redirectLocation = res.headers.get('location')
+    if (redirectLocation) {
+      const redirectUrl = new URL(redirectLocation, url.toString())
+      const redirectedToken = redirectUrl.searchParams.get('access_token')
+
+      if (isJwtLike(redirectedToken)) {
+        const user = await strapiGetMe(redirectedToken)
+        console.log(
+          '[exchangeGoogleAccessTokenForStrapiSession] Success via redirect token, got user:',
+          user?.email
+        )
+        return { jwt: redirectedToken, user }
+      }
+    }
+
     if (!res.ok) {
       const errText = await res.text().catch(() => '')
       console.error('[exchangeGoogleAccessTokenForStrapiSession] Failed:', res.status, errText)
@@ -106,7 +141,7 @@ const exchangeGoogleAccessTokenForStrapiSession = async accessToken => {
 
     const payload = await res.json().catch(() => null)
     console.log('[exchangeGoogleAccessTokenForStrapiSession] Success, got user:', payload?.user?.email)
-    
+
     if (!payload?.jwt || !payload?.user) {
       console.error('[exchangeGoogleAccessTokenForStrapiSession] Missing jwt or user in response')
       return null
@@ -138,7 +173,11 @@ const verifyGoogleToken = async token => {
       const payload = await res.json().catch(() => null)
       console.log('[verifyGoogleToken] URL:', url.split('=')[0] + '=...', 'Status:', res.status)
 
-      if (res.ok && payload?.email && isVerifiedGoogleEmail(payload.email_verified)) {
+      if (
+        res.ok &&
+        payload?.email &&
+        isVerifiedGoogleEmail(payload?.email_verified ?? payload?.verified_email ?? true)
+      ) {
         console.log('[verifyGoogleToken] ✓ Token verified for:', payload.email)
         return payload
       }
@@ -244,6 +283,14 @@ export const login = async (req, res, next) => {
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' })
+    }
+
+    const existingUser = await strapiFindUserByEmail(email)
+    if (existingUser && isGoogleProvider(existingUser.provider)) {
+      return res.status(409).json({
+        error: 'This account was created with Google. Please continue with Google to sign in.',
+        code: 'GOOGLE_ACCOUNT_USE_GOOGLE',
+      })
     }
 
     const { jwt: strapiJwt, user } = await strapiPost('/api/auth/local', {
@@ -507,8 +554,18 @@ export const googleSession = async (req, res, next) => {
 
       console.log('[googleSession] ✓ Token verified with Google:', tokenInfo.email)
 
+      googleName = extractGoogleProfile(tokenInfo)
+
       // Find existing Strapi user by email
       user = await strapiFindUserByEmail(tokenInfo.email)
+
+      if (user && !isGoogleProvider(user.provider)) {
+        return res.status(409).json({
+          error:
+            'This email is already registered with password login. Please sign in with your password.',
+          code: 'LOCAL_ACCOUNT_USE_PASSWORD',
+        })
+      }
 
       if (!user) {
         // First-time Google login — create Strapi user
@@ -528,8 +585,27 @@ export const googleSession = async (req, res, next) => {
       strapiJwt = jwt.sign({ id: user.id }, process.env.STRAPI_JWT_SECRET, { expiresIn: '7d' })
     }
 
+    if (user && !isGoogleProvider(user.provider)) {
+      return res.status(409).json({
+        error:
+          'This email is already registered with password login. Please sign in with your password.',
+        code: 'LOCAL_ACCOUNT_USE_PASSWORD',
+      })
+    }
+
     // Ensure customer profile exists — create on first login, skip if already present
-    const existingProfile = await findCustomerProfile(user.id)
+    let existingProfile = null
+    try {
+      existingProfile = await findCustomerProfile(user.id)
+    } catch (err) {
+      if (!isStrapiCredentialError(err)) {
+        throw err
+      }
+
+      console.warn(
+        '[googleSession] Skipping customer profile lookup because Strapi server credentials are unavailable'
+      )
+    }
     if (!existingProfile) {
       await createCustomerProfile({
         userId: user.id,

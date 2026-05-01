@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useBlogs } from '../hooks/useBlogs'
 import blogImg1 from '../assets/images/IMG_0658.jpg'
@@ -30,6 +30,13 @@ const formatPublishedDate = value => {
   })
 }
 
+const toAbsoluteStrapiUrl = url =>
+  url
+    ? url.startsWith('http')
+      ? url
+      : `${import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'}${url}`
+    : null
+
 const escapeHtml = value =>
   String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -56,11 +63,172 @@ const blocksToHtml = blocks => {
     .join('')
 }
 
-const getContentHtml = post => {
-  if (typeof post?.content === 'string' && post.content.trim()) return post.content
-  if (Array.isArray(post?.content)) {
+const stripHtml = value =>
+  String(value ?? '')
+    .replace(/<[^>]*>/g, '')
+    .trim()
+
+const paragraphsFromHtml = html => {
+  if (typeof html !== 'string' || !html.trim()) return []
+
+  const matches = [...html.matchAll(/<p\b[^>]*>(.*?)<\/p>/gis)]
+  if (matches.length) {
+    return matches
+      .map(([, inner], index) => ({
+        kind: 'paragraph',
+        key: `html-paragraph-${index}`,
+        text: stripHtml(inner),
+      }))
+      .filter(node => node.text)
+  }
+
+  const text = stripHtml(html)
+  return text ? [{ kind: 'paragraph', key: 'html-paragraph-0', text }] : []
+}
+
+const getPlainTextFromChildren = children =>
+  Array.isArray(children)
+    ? children
+        .map(child => child?.text ?? '')
+        .join('')
+        .trim()
+    : ''
+
+const renderInlineChildren = children =>
+  Array.isArray(children)
+    ? children.map((child, index) => {
+        const text = child?.text ?? ''
+        if (!text) return null
+
+        let node = text
+        if (child.bold) node = <strong key={`bold-${index}`}>{node}</strong>
+        if (child.italic) node = <em key={`italic-${index}`}>{node}</em>
+        if (child.underline) node = <u key={`underline-${index}`}>{node}</u>
+        if (child.strikethrough) node = <s key={`strike-${index}`}>{node}</s>
+        if (child.code) node = <code key={`code-${index}`}>{node}</code>
+
+        if (child.url) {
+          node = (
+            <a
+              key={`link-${index}`}
+              href={child.url}
+              target={child.url.startsWith('http') ? '_blank' : undefined}
+              rel={child.url.startsWith('http') ? 'noreferrer' : undefined}
+              className="text-[#6D2005] underline decoration-[1px] underline-offset-[3px]"
+            >
+              {node}
+            </a>
+          )
+        }
+
+        return <Fragment key={index}>{node}</Fragment>
+      })
+    : null
+
+const getImageFromBlock = block => {
+  const imageCandidate =
+    block?.image ||
+    block?.media ||
+    block?.asset ||
+    block?.file ||
+    block?.data?.image ||
+    block?.data?.media ||
+    block?.children?.find?.(child => child?.type === 'image')?.image
+
+  if (typeof imageCandidate === 'string') {
+    return { src: toAbsoluteStrapiUrl(imageCandidate), alt: '' }
+  }
+
+  if (!imageCandidate || typeof imageCandidate !== 'object') return null
+
+  const src = toAbsoluteStrapiUrl(
+    imageCandidate.url ||
+      imageCandidate.src ||
+      imageCandidate.formats?.large?.url ||
+      imageCandidate.formats?.medium?.url ||
+      imageCandidate.formats?.small?.url
+  )
+
+  if (!src) return null
+
+  return {
+    src,
+    alt: imageCandidate.alternativeText || imageCandidate.alt || imageCandidate.name || '',
+  }
+}
+
+const normalizeContentNodes = post => {
+  const blogImages = Array.isArray(post?.blog_images)
+    ? post.blog_images
+        .filter(image => image?.url)
+        .map((image, index) => ({
+          src: image.url,
+          alt: image.alt || '',
+          key: `blog-image-${index}`,
+        }))
+    : []
+
+  let nodes = []
+
+  if (typeof post?.content === 'string' && post.content.trim()) {
+    nodes = paragraphsFromHtml(post.content)
+  } else if (Array.isArray(post?.content) && post.content.length) {
+    let nodes = []
+    let imageBuffer = []
+
+    const flushImages = () => {
+      if (!imageBuffer.length) return
+      nodes.push({ kind: 'images', images: imageBuffer })
+      imageBuffer = []
+    }
+
+    post.content.forEach((block, index) => {
+      if (!block || typeof block !== 'object') return
+
+      const image = getImageFromBlock(block)
+      if (block.type === 'image' && image) {
+        imageBuffer.push({ ...image, key: `image-${index}` })
+        return
+      }
+
+      flushImages()
+
+      if (block.type === 'heading') {
+        const text = getPlainTextFromChildren(block.children)
+        if (text) nodes.push({ kind: 'heading', key: `heading-${index}`, block })
+        return
+      }
+
+      if (block.type === 'list' && Array.isArray(block.children)) {
+        nodes.push({ kind: 'list', key: `list-${index}`, block })
+        return
+      }
+
+      if (block.type === 'quote') {
+        const text = getPlainTextFromChildren(block.children)
+        if (text) nodes.push({ kind: 'quote', key: `quote-${index}`, block })
+        return
+      }
+
+      const text = getPlainTextFromChildren(block.children)
+      if (text) nodes.push({ kind: 'paragraph', key: `paragraph-${index}`, block })
+    })
+
+    flushImages()
+
+    if (nodes.length) {
+      const hasImageNode = nodes.some(node => node.kind === 'images')
+      if (hasImageNode || !blogImages.length) return nodes
+      return injectBlogImagesIntoNodes(nodes, blogImages)
+    }
+
     const html = blocksToHtml(post.content)
-    if (html) return html
+    if (html) nodes = paragraphsFromHtml(html)
+  }
+
+  if (nodes.length) {
+    if (!blogImages.length) return nodes
+    return injectBlogImagesIntoNodes(nodes, blogImages)
   }
 
   const title = post?.title || 'Thoughtful celebrations'
@@ -68,8 +236,164 @@ const getContentHtml = post => {
     post?.excerpt ||
     'A calm and practical approach to styling, planning, and hosting memorable moments at home.'
 
-  return `<p>${escapeHtml(title)} starts with a simple idea: make the experience feel intentional without making it complicated.</p><p>${escapeHtml(excerpt)}</p>`
+  return [
+    {
+      kind: 'paragraph',
+      key: 'fallback-paragraph-0',
+      text: `${title} starts with a simple idea: make the experience feel intentional without making it complicated.`,
+    },
+    {
+      kind: 'paragraph',
+      key: 'fallback-paragraph-1',
+      text: excerpt,
+    },
+  ]
 }
+
+const injectBlogImagesIntoNodes = (baseNodes, blogImages) => {
+  if (!blogImages.length) return baseNodes
+
+  const nodes = [...baseNodes]
+  nodes.unshift({ kind: 'images', images: [blogImages[0]] })
+
+  if (blogImages.length > 1) {
+    const pair = blogImages.slice(1, 3)
+    const insertAfter = Math.min(3, nodes.length)
+    nodes.splice(insertAfter, 0, { kind: 'images', images: pair })
+  }
+
+  if (blogImages.length > 3) {
+    nodes.push({ kind: 'images', images: blogImages.slice(3) })
+  }
+
+  return nodes
+}
+
+const BlogContent = ({ nodes }) => (
+  <div className="mt-8 max-w-none">
+    {nodes.map((node, index) => {
+      if (node.kind === 'html') {
+        return (
+          <div
+            key={`html-${index}`}
+            className="prose prose-p:my-6 prose-p:max-w-none prose-p:text-[#9B9A92] prose-p:text-[16px] prose-p:leading-[150%] prose-headings:mt-10 prose-headings:text-[#202716] prose-headings:font-normal prose-strong:text-[#202716] max-w-none"
+            dangerouslySetInnerHTML={{ __html: node.html }}
+          />
+        )
+      }
+
+      if (node.kind === 'heading') {
+        return (
+          <h3
+            key={node.key}
+            className="mt-10 text-[#202716]"
+            style={{
+              fontFamily: "'Malgin', serif",
+              fontWeight: 400,
+              fontSize: 'clamp(24px, 2.1vw, 32px)',
+              lineHeight: '110%',
+              letterSpacing: '0',
+            }}
+          >
+            {renderInlineChildren(node.block.children)}
+          </h3>
+        )
+      }
+
+      if (node.kind === 'list') {
+        const isOrdered = node.block.format === 'ordered'
+        const ListTag = isOrdered ? 'ol' : 'ul'
+
+        return (
+          <ListTag
+            key={node.key}
+            className={`my-6 space-y-3 pl-6 text-[16px] leading-[150%] text-[#9B9A92] ${
+              isOrdered ? 'list-decimal' : 'list-disc'
+            }`}
+            style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400 }}
+          >
+            {node.block.children.map((item, itemIndex) => (
+              <li key={`${node.key}-item-${itemIndex}`}>{renderInlineChildren(item.children)}</li>
+            ))}
+          </ListTag>
+        )
+      }
+
+      if (node.kind === 'quote') {
+        return (
+          <blockquote
+            key={node.key}
+            className="my-8 border-l border-[#CDC7BE] pl-6 text-[#6D2005]"
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: '18px',
+              lineHeight: '160%',
+              letterSpacing: '0',
+            }}
+          >
+            {renderInlineChildren(node.block.children)}
+          </blockquote>
+        )
+      }
+
+      if (node.kind === 'images') {
+        const isPair = node.images.length === 2
+
+        return (
+          <div
+            key={`images-${index}`}
+            className={`my-10 grid gap-4 md:gap-6 ${isPair ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}
+          >
+            {node.images.map(image => (
+              <div key={image.key} className="overflow-hidden bg-white">
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className={`w-full object-cover ${isPair ? 'h-[180px] sm:h-[220px] lg:h-[240px]' : 'h-[240px] sm:h-[320px] lg:h-[360px]'}`}
+                />
+              </div>
+            ))}
+          </div>
+        )
+      }
+
+      if (node.kind === 'paragraph' && node.text) {
+        return (
+          <p
+            key={node.key}
+            className="my-6 text-[#9B9A92]"
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: '16px',
+              lineHeight: '150%',
+              letterSpacing: '0',
+            }}
+          >
+            {node.text}
+          </p>
+        )
+      }
+
+      return (
+        <p
+          key={node.key}
+          className="my-6 text-[#9B9A92]"
+          style={{
+            fontFamily: "'Poppins', sans-serif",
+            fontWeight: 400,
+            fontSize: '16px',
+            lineHeight: '150%',
+            letterSpacing: '0',
+          }}
+        >
+          {renderInlineChildren(node.block.children)}
+        </p>
+      )
+    })}
+  </div>
+)
 
 const RevealLine = ({ children, delay, className = '' }) => (
   <span className={`reveal-wrapper block ${className}`.trim()}>
@@ -107,7 +431,7 @@ const SingleBlogPage = () => {
 
   const heroImage = resolveCoverImage(currentPost)
   const publishedDate = formatPublishedDate(currentPost?.post_published_at)
-  const contentHtml = useMemo(() => getContentHtml(currentPost), [currentPost])
+  const contentNodes = useMemo(() => normalizeContentNodes(currentPost), [currentPost])
 
   useEffect(() => {
     const page = pageRef.current
@@ -191,8 +515,8 @@ const SingleBlogPage = () => {
         className="bg-[#CBB9A7] px-6 pb-14 pt-24 sm:pt-26 md:px-10 md:pt-28 lg:px-[96px] lg:pb-20 lg:pt-10 xl:pt-12"
       >
         <div className="mx-auto max-w-[1760px]">
-          <div className="relative mt-14 md:mt-20 lg:mt-24">
-            <div className="mx-auto max-w-[860px] text-center lg:absolute lg:left-1/2 lg:top-[-98px] lg:z-10 lg:w-[1080px] lg:max-w-none lg:-translate-x-1/2 reveal-on-scroll">
+          <div className="mt-14 md:mt-20 lg:mt-24">
+            <div className="mx-auto max-w-[860px] text-center lg:max-w-[1080px] reveal-on-scroll">
               <h1
                 className="font-display mx-auto max-w-[1080px] text-center text-[46px] leading-[0.95] text-[#6D2005] sm:text-[58px] md:text-[74px] lg:text-[100px]"
                 style={{ fontWeight: 400, letterSpacing: '0' }}
@@ -201,7 +525,7 @@ const SingleBlogPage = () => {
               </h1>
             </div>
 
-            <div className="mt-12 lg:mt-[250px]">
+            <div className="mt-12">
               <div className="anim-element slide-from-bottom overflow-hidden bg-white">
                 <img
                   src={heroImage}
@@ -241,8 +565,8 @@ const SingleBlogPage = () => {
       </section>
 
       <section className="px-6 py-14 md:px-10 lg:px-[96px] lg:py-24">
-        <div className="mx-auto grid max-w-[1760px] gap-14 lg:grid-cols-[420px_minmax(0,1fr)] lg:gap-[90px]">
-          <aside className="single-blog-sidebar-border reveal-border-y relative order-2 lg:order-1 lg:pr-10">
+        <div className="mx-auto grid max-w-[1760px] items-start gap-14 lg:grid-cols-[420px_minmax(0,1fr)] lg:gap-[90px]">
+          <aside className="single-blog-sidebar-border reveal-border-y relative order-2 self-start lg:order-1 lg:sticky lg:top-28 lg:pr-10">
             <div className="absolute right-0 top-0 hidden h-full w-[1px] bg-[#CDC7BE] lg:block border-fill-y" />
             <h2
               className="reveal-on-scroll text-[#202716]"
@@ -310,7 +634,7 @@ const SingleBlogPage = () => {
             </div>
           </aside>
 
-          <article className="order-1 lg:order-2">
+          <article className="order-1 self-start lg:order-2">
             <h2
               className="reveal-on-scroll max-w-[900px] text-[#202716]"
               style={{
@@ -324,11 +648,9 @@ const SingleBlogPage = () => {
               <RevealLine>{currentPost.title}</RevealLine>
             </h2>
 
-            <div
-              className="anim-element slide-from-right prose prose-p:my-6 prose-p:max-w-none prose-p:text-[#9B9A92] prose-p:text-[16px] prose-p:leading-[150%] prose-headings:mt-10 prose-headings:text-[#202716] prose-headings:font-normal prose-strong:text-[#202716] mt-8 max-w-none"
-              style={{ '--delay': '0s' }}
-              dangerouslySetInnerHTML={{ __html: contentHtml }}
-            />
+            <div className="anim-element slide-from-right" style={{ '--delay': '0s' }}>
+              <BlogContent nodes={contentNodes} />
+            </div>
           </article>
         </div>
       </section>

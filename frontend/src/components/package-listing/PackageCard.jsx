@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useWishlist } from '../../hooks/useWishlist'
 
 function ImageDots({ count, currentIndex = 0 }) {
   if (count <= 1) return null
@@ -39,9 +40,12 @@ function getPackageHref(serviceSlug, packageId) {
 export default function PackageCard({ pkg }) {
   const images = pkg.images || []
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [showAllIncludes, setShowAllIncludes] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
   const packageId = pkg.documentId ?? pkg.id
+  const wishlistPackageId = pkg.id ?? pkg.documentId
   const serviceSlug = String(pkg.serviceSlug ?? pkg.service_slugs?.[0] ?? '')
     .trim()
     .toLowerCase()
@@ -52,6 +56,11 @@ export default function PackageCard({ pkg }) {
   const endX = useRef(0)
 
   const currentImage = images[currentIndex]
+  const saved = isSaved(wishlistPackageId)
+  const isWishlistPending = String(pendingPackageId) === String(wishlistPackageId)
+  const tags = Array.isArray(pkg.tags) ? pkg.tags : []
+  const hasMoreIncludes = tags.length > 4
+  const visibleTags = showAllIncludes ? tags : tags.slice(0, 4)
 
   // 🔥LOOP LOGIC (important)
   const goToPrevious = () => {
@@ -81,6 +90,11 @@ export default function PackageCard({ pkg }) {
     } else if (diff < -50) {
       goToPrevious()
     }
+  }
+
+  const handleWishlistClick = async event => {
+    event.stopPropagation()
+    await toggleSavedPackage({ packageId: wishlistPackageId })
   }
 
   return (
@@ -113,9 +127,35 @@ export default function PackageCard({ pkg }) {
           </div>
         )}
 
-        {/* Price */}
-        <div className="absolute right-3 top-3 z-30 rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#4B4B4B]">
-          Starting from {pkg.price}
+        {/* Price + Wishlist */}
+        <div className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
+          <div className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#4B4B4B]">
+            Starting from {pkg.price}
+          </div>
+          <button
+            type="button"
+            aria-label={saved ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-pressed={saved}
+            disabled={isWishlistPending}
+            onClick={handleWishlistClick}
+            className={`flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[#8C3B11] shadow-sm transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70 ${
+              saved ? 'bg-[#8C3B11] text-white border-[#8C3B11]' : ''
+            }`}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-[18px] w-[18px]"
+              fill={saved ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <path
+                d="M12 21s-6.716-4.35-9.193-8.107C.708 9.704 1.48 5.5 5.538 4.39A5.39 5.39 0 0 1 12 6.303a5.39 5.39 0 0 1 6.462-1.913c4.057 1.11 4.83 5.314 2.73 8.503C18.716 16.65 12 21 12 21Z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
 
         {/* 🔥 LEFT ARROW (DIV STYLE) */}
@@ -187,7 +227,7 @@ export default function PackageCard({ pkg }) {
         <div className="mt-3">
           <p className="text-[12px] font-medium">Includes :</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {(pkg.tags ?? []).slice(0, 5).map((tag, i) => (
+            {visibleTags.map((tag, i) => (
               <span
                 key={i}
                 className="text-[#2D2D2D] px-2 py-1 text-[12px] bg-black/5 rounded-full font-medium"
@@ -195,6 +235,18 @@ export default function PackageCard({ pkg }) {
                 {tag}
               </span>
             ))}
+            {hasMoreIncludes && !showAllIncludes ? (
+              <button
+                type="button"
+                onClick={event => {
+                  event.stopPropagation()
+                  setShowAllIncludes(true)
+                }}
+                className="text-[#2D2D2D] rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium"
+              >
+                More
+              </button>
+            ) : null}
           </div>
         </div>
       </div>

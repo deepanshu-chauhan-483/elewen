@@ -11,6 +11,7 @@ import { useInHousePlannerPage } from '../hooks/useCmsPages'
 import { INHOUSE_PLANNER_PAGE_FALLBACK } from '../data/cmsPages'
 
 import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
+import CustomSelect from '../components/common/CustomSelect'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -280,9 +281,19 @@ function normalizeCelebrationCategories(section = {}) {
   const result = (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
       const name =
-        item.tab_label ?? item.name ?? item.title ?? item.heading ?? `Category ${index + 1}`
+        item.tab_label ??
+        item.label ??
+        item.name ??
+        item.title ??
+        item.heading ??
+        `Category ${index + 1}`
       const bucketKey = toBucketKey(name)
       const categoryImages = imagesByCategory[bucketKey] ?? []
+      const directImages = Array.isArray(item.images)
+        ? item.images
+        : item.images
+          ? [item.images]
+          : []
       const fallbackImages = CELEBRATION_CATEGORY_FALLBACKS[bucketKey] ?? {}
       return {
         name,
@@ -293,6 +304,7 @@ function normalizeCelebrationCategories(section = {}) {
             item.top_left_image ??
               item.topLeftImage ??
               item.images?.topLeft ??
+              directImages[0] ??
               item.image_1 ??
               categoryImages[0],
             fallbackImages.topLeft
@@ -301,6 +313,7 @@ function normalizeCelebrationCategories(section = {}) {
             item.top_right_image ??
               item.topRightImage ??
               item.images?.topRight ??
+              directImages[1] ??
               item.image_2 ??
               categoryImages[1],
             fallbackImages.topRight
@@ -309,6 +322,7 @@ function normalizeCelebrationCategories(section = {}) {
             item.bottom_left_image ??
               item.bottomLeftImage ??
               item.images?.bottomLeft ??
+              directImages[2] ??
               item.image_3 ??
               categoryImages[2],
             fallbackImages.bottomLeft
@@ -317,6 +331,7 @@ function normalizeCelebrationCategories(section = {}) {
             item.bottom_right_image ??
               item.bottomRightImage ??
               item.images?.bottomRight ??
+              directImages[3] ??
               item.image_4 ??
               categoryImages[3],
             fallbackImages.bottomRight
@@ -2160,36 +2175,27 @@ const CelebrationFormSection = () => {
                 <div
                   className={`border-b pb-2 ${errors.event_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <select
+                  <CustomSelect
                     value={form.event_type}
                     onChange={e => set('event_type', e.target.value)}
                     onBlur={() => handleBlur('event_type')}
-                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>
-                      Type of Event
-                    </option>
-
-                    {[
+                    placeholder="Type of Event"
+                    options={[
                       'Birthday',
-
                       'Anniversary',
-
                       'House Party',
-
                       'Baby Shower',
-
                       'Corporate',
-
                       'Wedding',
-
                       'Other',
-                    ].map(o => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
+                    ]}
+                    buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
+                    arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
+                    menuClassName="fixed z-[999] overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
+                    optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
+                    selectedOptionClassName=""
+                    ariaLabel="Type of Event"
+                  />
                 </div>
 
                 {errors.event_type && (
@@ -2220,22 +2226,19 @@ const CelebrationFormSection = () => {
                 <div
                   className={`border-b pb-2 ${errors.guest_count ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <select
+                  <CustomSelect
                     value={form.guest_count}
                     onChange={e => set('guest_count', e.target.value)}
                     onBlur={() => handleBlur('guest_count')}
-                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>
-                      Estimated Guest Count
-                    </option>
-
-                    {['1â15', '15â30', '30â50', '50â100', '100+'].map(o => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Estimated Guest Count"
+                    options={['1â15', '15â30', '30â50', '50â100', '100+']}
+                    buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
+                    arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
+                    menuClassName="fixed z-[999] overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
+                    optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
+                    selectedOptionClassName=""
+                    ariaLabel="Estimated Guest Count"
+                  />
                 </div>
 
                 {errors.guest_count && (
@@ -2247,34 +2250,26 @@ const CelebrationFormSection = () => {
                 <div
                   className={`border-b pb-2 ${errors.venue_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <select
+                  <CustomSelect
                     value={form.venue_type}
                     onChange={e => set('venue_type', e.target.value)}
                     onBlur={() => handleBlur('venue_type')}
-                    className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>
-                      Venue Type
-                    </option>
-
-                    {[
+                    placeholder="Venue Type"
+                    options={[
                       'Home',
-
                       'Banquet Hall',
-
                       'Terrace / Rooftop',
-
                       'Garden / Outdoor',
-
                       'Office',
-
                       'Other',
-                    ].map(o => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
+                    ]}
+                    buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
+                    arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
+                    menuClassName="fixed z-[999] overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
+                    optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
+                    selectedOptionClassName=""
+                    ariaLabel="Venue Type"
+                  />
                 </div>
 
                 {errors.venue_type && (
@@ -2522,8 +2517,12 @@ const CelebrationFormSection = () => {
 const InHousePlannerSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
+  const hero = cms.hero ?? {}
   const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
+  const heroImages = getSectionImages(hero)
+    .map(image => resolveMediaUrl(image))
+    .filter(Boolean)
   const plannerImage = resolveMediaUrl(
     bio.image ?? bio.photo ?? bio.portrait_image ?? bio.portrait ?? bio._sectionImages?.[0],
     MOKSHA_FALLBACK_IMAGE,
@@ -2598,6 +2597,9 @@ const InHousePlannerSection = () => {
       <ScrollImageSpreadSection
         mobileHeading={whatWeDo.heading ?? 'What we do as your In-House Planner'}
         mobileBody={mobileHeroBody}
+        heroLabel={hero.label ?? 'In House Event Planner'}
+        heroSubtext={hero.subtext ?? 'scroll to discover'}
+        heroImages={heroImages}
       />
 
       <div data-in-house-planner-page>

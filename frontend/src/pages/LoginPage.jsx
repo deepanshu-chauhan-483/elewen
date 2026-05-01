@@ -9,11 +9,20 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const confirmed = searchParams.get('confirmed') === 'true'
+  const redirectTarget = searchParams.get('redirect') || '/'
+  const authError = searchParams.get('authError') || ''
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const authErrorMessage =
+    authError === 'local_account_use_password'
+      ? 'This email is already registered with password login. Please sign in with your password.'
+      : authError === 'google_failed'
+        ? 'Google sign-in could not be completed. Please try again.'
+        : ''
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -23,9 +32,11 @@ export default function LoginPage() {
       const data = await authLogin({ email, password })
       localStorage.setItem('elewen_jwt', data.jwt)
       window.dispatchEvent(new Event('elewen-auth-change'))
-      navigate('/')
+      navigate(redirectTarget)
     } catch (err) {
-      if (err.message?.includes('403')) {
+      if (err.message?.includes('GOOGLE_ACCOUNT_USE_GOOGLE')) {
+        setError('This account was created with Google. Please continue with Google to sign in.')
+      } else if (err.message?.includes('403')) {
         setError('Please confirm your email before logging in. Check your inbox.')
       } else {
         setError('Invalid email or password.')
@@ -60,6 +71,14 @@ export default function LoginPage() {
           Email verified! You can now sign in.
         </p>
       )}
+      {authErrorMessage ? (
+        <p
+          className="w-full rounded-[6px] bg-[#C62828]/10 px-[16px] py-[10px] text-[13px] text-[#C62828] leading-[150%]"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
+          {authErrorMessage}
+        </p>
+      ) : null}
       <form
         onSubmit={handleSubmit}
         className="flex flex-col w-full gap-[16px] min-[540px]:gap-[24px]"
@@ -148,6 +167,7 @@ export default function LoginPage() {
 
           <a
             href={`${STRAPI_URL}/api/connect/google`}
+            onClick={() => sessionStorage.setItem('elewen_auth_origin', '/login')}
             className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[14px] min-[540px]:text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
           >
             <svg

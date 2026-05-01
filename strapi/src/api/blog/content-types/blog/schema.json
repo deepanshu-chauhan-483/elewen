@@ -25,8 +25,8 @@
     "category": {
       "type": "string"
     },
-    "content": {
-      "type": "richtext"
+    "content_blocks": {
+      "type": "blocks"
     },
     "cover_image": {
       "type": "media",
@@ -76,6 +76,16 @@
       "relation": "manyToMany",
       "target": "api::service.service",
       "inversedBy": "blogs"
+    },
+    "blog_images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }

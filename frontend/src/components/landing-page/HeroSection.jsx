@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import HeroPreloader from './HeroPreloader'
+import { useLandingPage } from '../../hooks/useCmsPages'
 import { useLenis } from '../../useLenis'
 import HeroVideo from '../../assets/HeroVideo.mp4'
 
@@ -69,11 +71,88 @@ const renderBandCopy = tokens => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PRELOADER_DONE_KEY = 'elewen-preloader-done'
+const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
 // Use a Vite import so the URL is generated correctly.
 const HERO_VIDEO_SRC = HeroVideo
+const HERO_LEFT_TAGLINES_FALLBACK = ['Work made easy', 'Worth the spend', 'Well-vetted Vendors']
+const HERO_RIGHT_CARDS_FALLBACK = [
+  { label: 'Birthday', tagline: "Let's get this party going" },
+  { label: 'Anniversary', tagline: 'Let us help you celebrate your love story' },
+  { label: 'House Party', tagline: 'Turn your home into the party spot' },
+]
+const getTrailingWWord = (value, fallback) =>
+  String(value ?? fallback).replace(/^[Ww]/, fallback.slice(1, 2))
+
+const toAbsoluteMediaUrl = url => {
+  const value = String(url ?? '').trim()
+  if (!value) return ''
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  return `${STRAPI_BASE}${value.startsWith('/') ? value : `/${value}`}`
+}
+
+const getMediaUrl = media => {
+  if (!media) return ''
+  if (typeof media === 'string') return toAbsoluteMediaUrl(media)
+  if (Array.isArray(media)) return getMediaUrl(media[0])
+
+  return toAbsoluteMediaUrl(
+    media.url ??
+      media.src ??
+      media.image?.url ??
+      media.data?.url ??
+      media.data?.attributes?.url ??
+      media.formats?.large?.url ??
+      media.formats?.medium?.url ??
+      media.formats?.small?.url ??
+      media.formats?.thumbnail?.url ??
+      ''
+  )
+}
+
+const buildBandTokens = (tokens, fallbackTokens) => {
+  if (!Array.isArray(tokens) || tokens.length < 2) return fallbackTokens
+
+  const [first, second] = tokens
+  return [first, '*', second, '*', first, '*', second, '*']
+}
 
 const HeroSection = () => {
+  const navigate = useNavigate()
+  const { data: cms = {} } = useLandingPage()
+  const hero = cms.hero ?? {}
+  const leftTaglines = Array.isArray(hero.left_taglines)
+    ? hero.left_taglines
+    : HERO_LEFT_TAGLINES_FALLBACK
+
+  // Merge Strapi cards with defaults to ensure all 3 cards are populated
+  const strapiCards = Array.isArray(hero.right_cards) ? hero.right_cards : []
+  const rightCards = HERO_RIGHT_CARDS_FALLBACK.map((defaultCard, idx) => ({
+    ...defaultCard,
+    ...(strapiCards[idx] || {}),
+  }))
+
+  // Debug: Log card data
+  useEffect(() => {
+    console.log('[HeroSection] strapiCards:', strapiCards)
+    console.log('[HeroSection] rightCards merged:', rightCards)
+    console.log('[HeroSection] hero.right_cards from CMS:', hero.right_cards)
+  }, [strapiCards, rightCards, hero])
+  const bandTokens = Array.isArray(hero.band_tokens) ? hero.band_tokens.filter(Boolean) : []
+  const heroBand1Tokens = buildBandTokens(bandTokens.slice(0, 2), BAND1_TOKENS)
+  const heroBand2Tokens = buildBandTokens(bandTokens.slice(2, 4), BAND2_TOKENS)
+  const heroBand3Tokens = buildBandTokens(bandTokens.slice(4, 6), BAND3_TOKENS)
+  const heroVideoSrc =
+    getMediaUrl(
+      hero.video ??
+        hero.hero_video ??
+        hero.background_video ??
+        hero.media ??
+        hero._sectionImages?.find(item =>
+          String(item?.mime ?? item?.data?.attributes?.mime ?? '').startsWith('video/')
+        ) ??
+        hero._sectionImages?.[0]
+    ) || HERO_VIDEO_SRC
   const wrapperRef = useRef(null)
   const preloaderRef = useRef(null)
   const darkOverlayRef = useRef(null)
@@ -537,20 +616,20 @@ const HeroSection = () => {
         <div style={{ position: 'absolute', inset: 0, zIndex: 10, overflow: 'hidden' }}>
           <div style={bandWrap('10%')}>
             <div className="band-scroll dir-left " style={bandFont}>
-              {renderBandCopy(BAND1_TOKENS)}
-              {renderBandCopy(BAND1_TOKENS)}
+              {renderBandCopy(heroBand1Tokens)}
+              {renderBandCopy(heroBand1Tokens)}
             </div>
           </div>
           <div style={bandWrap('27%')}>
             <div className="band-scroll dir-right" style={bandFont}>
-              {renderBandCopy(BAND2_TOKENS)}
-              {renderBandCopy(BAND2_TOKENS)}
+              {renderBandCopy(heroBand2Tokens)}
+              {renderBandCopy(heroBand2Tokens)}
             </div>
           </div>
           <div style={bandWrap('44%')}>
             <div className="band-scroll dir-left" style={bandFont}>
-              {renderBandCopy(BAND3_TOKENS)}
-              {renderBandCopy(BAND3_TOKENS)}
+              {renderBandCopy(heroBand3Tokens)}
+              {renderBandCopy(heroBand3Tokens)}
             </div>
           </div>
         </div>
@@ -584,7 +663,7 @@ const HeroSection = () => {
             preload="auto"
             onError={() => {
               // Helps diagnose "video not showing" vs "video offscreen" during hero animations.
-              console.error('Hero video failed to load:', HERO_VIDEO_SRC)
+              console.error('Hero video failed to load:', heroVideoSrc)
             }}
             style={{
               position: 'absolute',
@@ -594,7 +673,7 @@ const HeroSection = () => {
               objectFit: 'cover',
             }}
           >
-            <source src={HERO_VIDEO_SRC} type="video/mp4" />
+            <source src={heroVideoSrc} type="video/mp4" />
           </video>
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.22)' }} />
 
@@ -626,14 +705,14 @@ const HeroSection = () => {
                 className="text-[20px] md:text-[38px] lg:text-[48px] leading-[100%] md:leading-none tracking-[0] text-right text-[#FAFAFA]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                IT&apos;S TIME TO
+                {hero.eyebrow ?? "IT'S TIME TO"}
               </span>
               <span
                 ref={headingRef}
                 className="text-[36px] whitespace-nowrap md:whitespace-normal md:text-[54px] lg:text-[96px] leading-[100%] md:leading-[1.05] mt-1 md:mt-2 text-right text-[#FAFAFA] uppercase tracking-[0]"
                 style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
               >
-                PLAN DIFFERENTLY
+                {hero.heading ?? 'PLAN DIFFERENTLY'}
               </span>
             </div>
 
@@ -642,6 +721,7 @@ const HeroSection = () => {
               <div className="flex flex-row md:flex-row items-center gap-[20px] md:gap-0">
                 <button
                   ref={ctaArrowRef}
+                  onClick={() => navigate('/event-flow/category')}
                   className="group relative flex h-[68px] w-[68px] min-w-[68px] items-center justify-center overflow-hidden rounded-[80px] border-[2px] border-white backdrop-blur-sm shrink-0 pointer-events-auto md:min-w-0 md:h-16 md:w-16 md:rounded-full md:border-2 md:mr-4 lg:h-18 lg:w-18 lg:mr-6"
                 >
                   <span className="absolute inset-0 flex items-center justify-center">
@@ -666,10 +746,10 @@ const HeroSection = () => {
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
                   <p ref={ctaLine1Ref} className="m-0">
-                    Explore the collection. Your seamless
+                    {hero.search_line_1 ?? 'Explore the collection. Your seamless'}
                   </p>
                   <p ref={ctaLine2Ref} className="m-0">
-                    event is just a few clicks away!
+                    {hero.search_line_2 ?? 'event is just a few clicks away!'}
                   </p>
                 </div>
               </div>
@@ -691,13 +771,13 @@ const HeroSection = () => {
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
                 <p ref={el => (leftLine1Refs.current[1] = el)} className="m-0">
-                  ork made easy
+                  {getTrailingWWord(leftTaglines[0], 'Work made easy')}
                 </p>
                 <p ref={el => (leftLine2Refs.current[1] = el)} className="m-0">
-                  orth the spend
+                  {getTrailingWWord(leftTaglines[1], 'Worth the spend')}
                 </p>
                 <p ref={el => (leftLine3Refs.current[1] = el)} className="m-0">
-                  ell-vetted vendors
+                  {getTrailingWWord(leftTaglines[2], 'Well-vetted Vendors')}
                 </p>
               </div>
             </div>
@@ -713,52 +793,51 @@ const HeroSection = () => {
               </span>
               <div className="flex flex-col justify-center overflow-hidden whitespace-nowrap text-[#FFFFFF] md:mt-2 md:text-[12px] md:font-medium md:leading-[1.35] md:tracking-[0.02em] md:space-y-0.5 lg:mt-3 lg:text-sm lg:tracking-wide lg:space-y-1">
                 <p ref={el => (leftLine1Refs.current[0] = el)} className="m-0">
-                  ork made easy
+                  {getTrailingWWord(leftTaglines[0], 'Work made easy')}
                 </p>
                 <p ref={el => (leftLine2Refs.current[0] = el)} className="m-0">
-                  orth the spend
+                  {getTrailingWWord(leftTaglines[1], 'Worth the spend')}
                 </p>
                 <p ref={el => (leftLine3Refs.current[0] = el)} className="m-0">
-                  ell-vetted vendors
+                  {getTrailingWWord(leftTaglines[2], 'Well-vetted Vendors')}
                 </p>
               </div>
             </div>
 
             {/* Cards section - strictly hidden on Mobile using hidden md:flex */}
             <div className="hidden md:flex w-full md:w-auto border-t md:border-t-0 border-white/20 bg-black/20 md:bg-transparent backdrop-blur-md md:backdrop-blur-none">
-              {[
-                {
-                  label: 'Birthday',
-                  desc: 'Curated décor & catering packages',
-                  extra: 'md:rounded-tl-[20px]',
-                },
-                { label: 'Anniversaries', desc: 'Intimate, elegant setups handled', extra: '' },
-                {
-                  label: 'House Parties',
-                  desc: 'Simple planning. Beautiful execution.',
-                  extra: 'md:border-t-0 border-t border-white/20',
-                },
-              ].map(({ label, desc, extra }, i) => (
-                <div
-                  key={label}
-                  ref={el => (cardRefs.current[i] = el)}
-                  className={`col-span-1 h-22.5 md:h-31 md:w-44 lg:w-55 md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
-                >
-                  <div className="absolute top-4 left-3 right-2 flex flex-col gap-1.5 md:top-5 md:left-4 md:right-3 md:gap-2.5 lg:left-5 lg:right-auto lg:w-45 lg:gap-3">
-                    <h3
-                      className="text-[10px] sm:text-[11px] md:text-[12px] lg:text-sm font-bold tracking-[0.14em] lg:tracking-widest uppercase truncate reveal-heading text-[#FAFAFA]"
-                      style={{ fontFamily: "'Malgin', serif" }}
-                    >
-                      <span className="reveal-wrapper">
-                        <span className="reveal-text">{label}</span>
-                      </span>
-                    </h3>
-                    <p className="text-[9px] md:text-[11px] lg:text-xs font-light opacity-90 leading-[1.3] line-clamp-3 text-[#FAFAFA]">
-                      {desc}
-                    </p>
+              {rightCards.map((card, i) => {
+                const extras = [
+                  'md:rounded-tl-[20px]',
+                  '',
+                  'md:border-t-0 border-t border-white/20',
+                ]
+                const extra = extras[i] ?? ''
+                const resolvedLabel = card.label ?? ''
+                const resolvedDesc = card.tagline ?? card.desc ?? ''
+
+                return (
+                  <div
+                    key={resolvedLabel || i}
+                    ref={el => (cardRefs.current[i] = el)}
+                    className={`col-span-1 h-22.5 md:h-31 md:w-44 lg:w-55 md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
+                  >
+                    <div className="absolute top-4 left-3 right-2 flex flex-col gap-1.5 md:top-5 md:left-4 md:right-3 md:gap-2.5 lg:left-5 lg:right-auto lg:w-45 lg:gap-3">
+                      <h3
+                        className="text-[10px] sm:text-[11px] md:text-[12px] lg:text-sm font-bold tracking-[0.14em] lg:tracking-widest uppercase truncate reveal-heading text-[#FAFAFA]"
+                        style={{ fontFamily: "'Malgin', serif" }}
+                      >
+                        <span className="reveal-wrapper">
+                          <span className="reveal-text">{resolvedLabel}</span>
+                        </span>
+                      </h3>
+                      <p className="text-[9px] md:text-[11px] lg:text-xs font-light opacity-90 leading-[1.3] line-clamp-3 text-[#FAFAFA]">
+                        {resolvedDesc}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </footer>
         </div>

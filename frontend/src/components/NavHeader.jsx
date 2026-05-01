@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import ScallopBulbCurtain from './common/ScallopBulbCurtain'
 import { authLogout, getStoredJwt } from '../lib/api'
 import { useCart } from '../hooks/useCart'
-const EVENT_IMAGE = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80'
 
 const BASE_LINKS = [
   { label: 'Events', to: '/event-flow/category' },
@@ -77,6 +76,7 @@ const TRANSPARENT_NAV_SURFACE = 'transparent'
 const GLASS_BLUR_MOBILE = 'blur(1px)'
 const GLASS_BLUR_DESKTOP = 'blur(1px)'
 const BLACK_NAV_ACCENT_PATHS = ['/book-consultation', '/consultation-confirmation']
+const WHITE_NAV_BG_PATHS = ['/faqs', '/legalpages']
 
 const parseRgb = color => {
   const match = color?.match(/rgba?\(([^)]+)\)/i)
@@ -175,12 +175,12 @@ function DashboardIcon() {
   )
 }
 
-function CartIcon() {
+function CartIcon({ color = '#FAFAFA' }) {
   return (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M16 17.2002C16 18.2611 15.5786 19.2785 14.8284 20.0286C14.0783 20.7788 13.0609 21.2002 12 21.2002C10.9391 21.2002 9.92172 20.7788 9.17157 20.0286C8.42143 19.2785 8 18.2611 8 17.2002M3.103 13.2342H20.897M3.4 12.6672C3.14036 13.0134 3 13.4345 3 13.8672V27.2002C3 27.7306 3.21071 28.2393 3.58579 28.6144C3.96086 28.9895 4.46957 29.2002 5 29.2002H19C19.5304 29.2002 20.0391 28.9895 20.4142 28.6144C20.7893 28.2393 21 27.7306 21 27.2002V13.8672C21 13.4345 20.8596 13.0134 20.6 12.6672L18.6 10.0002C18.4137 9.7518 18.1721 9.5502 17.8944 9.41134C17.6167 9.27249 17.3105 9.2002 17 9.2002H7C6.68951 9.2002 6.38328 9.27249 6.10557 9.41134C5.82786 9.5502 5.58629 9.7518 5.4 10.0002L3.4 12.6672Z"
-        stroke="#FAFAFA"
+        stroke={color}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -188,7 +188,7 @@ function CartIcon() {
     </svg>
   )
 }
-function CartButton({ count, className }) {
+function CartButton({ count, className, iconColor }) {
   const navigate = useNavigate()
   const handleClick = () => {
     navigate('/cart')
@@ -200,7 +200,7 @@ function CartButton({ count, className }) {
       className={`relative ${className}`}
       onClick={handleClick}
     >
-      <CartIcon />
+      <CartIcon color={iconColor} />
       {count > 0 ? (
         <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#D4BA8E] px-1 text-[11px] font-semibold leading-none text-[#111110]">
           {count > 99 ? '99+' : count}
@@ -226,6 +226,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
   const { itemCount } = useCart()
   const useBlackNavAccent = BLACK_NAV_ACCENT_PATHS.includes(pathname)
+  const useWhiteNavBackground = WHITE_NAV_BG_PATHS.includes(pathname)
 
   useEffect(() => {
     const sync = () => setIsLoggedIn(!!getStoredJwt())
@@ -279,8 +280,11 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     }
   }, [open])
 
+  const routeForcedThemeName = useWhiteNavBackground ? 'light' : null
+  const effectiveForcedThemeName = forcedThemeName ?? routeForcedThemeName
+
   useEffect(() => {
-    if (forcedThemeName && NAVBAR_THEMES[forcedThemeName]) return undefined
+    if (effectiveForcedThemeName && NAVBAR_THEMES[effectiveForcedThemeName]) return undefined
 
     if (open) return
 
@@ -331,7 +335,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       window.removeEventListener('resize', scheduleUpdate)
       if (rafId != null) window.cancelAnimationFrame(rafId)
     }
-  }, [forcedThemeName, pathname, open])
+  }, [effectiveForcedThemeName, pathname, open])
   const handleLogout = async () => {
     try {
       await authLogout()
@@ -346,8 +350,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     navigate('/')
   }
 
-  const hasForcedTheme = !!(forcedThemeName && NAVBAR_THEMES[forcedThemeName])
-  const resolvedThemeName = hasForcedTheme ? forcedThemeName : navThemeName
+  const hasForcedTheme = !!(effectiveForcedThemeName && NAVBAR_THEMES[effectiveForcedThemeName])
+  const resolvedThemeName = hasForcedTheme ? effectiveForcedThemeName : navThemeName
   const pageTheme = NAVBAR_THEMES[resolvedThemeName] ?? NAVBAR_THEMES.light
   const desktopTheme = pageTheme.desktop
   const mobileTheme = pageTheme.mobile
@@ -384,6 +388,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const resolvedMobileIconColor = useBlackNavAccent ? '#000000' : mobileIconColor
   const overlayActionClass =
     'flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-70'
+  const isSinglePackagePage = /^\/packages\/[^/]+\/[^/]+$/.test(pathname)
+  const shouldShowNavbarCart = isSinglePackagePage && itemCount > 0
   return (
     <>
       <header
@@ -394,8 +400,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           className="pointer-events-none absolute inset-0 md:hidden"
           style={{
             backgroundColor: isTransparentNav ? TRANSPARENT_BG : mobileTheme.bgColor,
-            ...(backgroundColorOverride && !isTransparentNav
-              ? { backgroundColor: backgroundColorOverride }
+            ...((backgroundColorOverride || useWhiteNavBackground) && !isTransparentNav
+              ? { backgroundColor: backgroundColorOverride ?? '#FFFFFF' }
               : {}),
             backgroundImage:
               isTransparentNav || !mobileTheme.bgImage ? 'none' : `url(${mobileTheme.bgImage})`,
@@ -416,8 +422,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           className="pointer-events-none absolute inset-0 hidden md:block"
           style={{
             backgroundColor: isTransparentNav ? TRANSPARENT_BG : desktopTheme.bgColor,
-            ...(backgroundColorOverride && !isTransparentNav
-              ? { backgroundColor: backgroundColorOverride }
+            ...((backgroundColorOverride || useWhiteNavBackground) && !isTransparentNav
+              ? { backgroundColor: backgroundColorOverride ?? '#FFFFFF' }
               : {}),
             backgroundImage:
               isTransparentNav || !desktopTheme.bgImage ? 'none' : `url(${desktopTheme.bgImage})`,
@@ -507,6 +513,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 />
               </svg>
             </button>
+            {shouldShowNavbarCart ? (
+              <CartButton count={itemCount} className="text-inherit" iconColor="#000000" />
+            ) : null}
             <button
               onClick={() => setOpen(true)}
               aria-label="Open menu"
@@ -800,8 +809,15 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 'transform 0.6s cubic-bezier(0.32,0,0.15,1) 200ms, opacity 0.6s ease 200ms',
             }}
           >
-            <div className="h-72 w-full max-w-xl overflow-hidden rounded-2xl lg:h-80">
-              <img src={EVENT_IMAGE} alt="Elewen Events" className="h-full w-full object-cover" />
+            <div className="flex w-full max-w-xl flex-1 items-start justify-end pt-8 lg:pt-10">
+              <p
+                className="max-w-[540px] text-left text-[clamp(34px,4vw,58px)] leading-[0.95] text-white"
+                style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
+              >
+                Less coordination.
+                <br />
+                More celebration.
+              </p>
             </div>
             <div className="mt-6 flex flex-col items-end">
               <p className="mb-0.5 text-sm text-white/40">+91 7263587619</p>
@@ -856,9 +872,10 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 Privacy Policy
               </a>
               <span>&bull;</span>
-              <a href="/terms" className="transition-colors">
+
+              <NavLink to="/legalpages" className="transition-colors">
                 Terms of Service
-              </a>
+              </NavLink>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
@@ -15,7 +15,6 @@ import pkgImg8 from '../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../assets/images/6f6af066.jpg'
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
-import { getStoredJwt } from '../lib/api'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg1, pkgImg1, pkgImg1, pkgImg1],
@@ -685,7 +684,7 @@ function DecorPackageSections({ keyDecorText, sections, message, onMessageChange
 }
 
 export default function DecorSinglePackagePage() {
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { data: packages = [] } = usePackages()
@@ -897,13 +896,6 @@ export default function DecorSinglePackagePage() {
         setAddToCartMessage('Added to cart.')
       }
     } catch (err) {
-      if (err.code === 'AUTH_REQUIRED' || err.message === 'AUTH_REQUIRED') {
-        if (!getStoredJwt()) {
-          navigate('/login')
-          return
-        }
-      }
-
       console.error('[cart-click] decor add failed', err)
       setAddToCartMessage('Could not add this package to cart. Please try again.')
     } finally {

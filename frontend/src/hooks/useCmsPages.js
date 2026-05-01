@@ -46,6 +46,101 @@ function normalizeSectionImages(images) {
   return []
 }
 
+function sanitizeCmsText(value) {
+  if (typeof value !== 'string') return value
+
+  return value
+    .replace(/d\?\?cor/gi, match => (match[0] === 'D' ? 'Décor' : 'décor'))
+    .replace(/dÃ©cor/gi, match => (match[0] === 'D' ? 'Décor' : 'décor'))
+}
+
+function sanitizeCmsTextSafe(value) {
+  if (typeof value !== 'string') return value
+
+  let result = sanitizeCmsText(value)
+  result = result.replace(/d\?\?cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+  result = result.replace(/dÃ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+  result = result.replace(/dÃƒÂ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+  return result
+}
+
+function sanitizeCmsValue(value) {
+  if (typeof value === 'string') return sanitizeCmsTextSafe(value)
+  if (Array.isArray(value)) return value.map(sanitizeCmsValue)
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, sanitizeCmsValue(item)])
+    )
+  }
+  return value
+}
+
+function normalizeHeroCard(card = {}) {
+  return {
+    ...card,
+    label: card.label ?? card.title ?? card.heading ?? '',
+    tagline: card.tagline ?? card.description ?? card.desc ?? card.body ?? '',
+  }
+}
+
+function normalizeLandingPageSections(sections = {}) {
+  const normalized = sanitizeCmsValue({ ...sections })
+
+  if (normalized.hero && typeof normalized.hero === 'object') {
+    const hero = normalized.hero
+    normalized.hero = {
+      ...hero,
+      eyebrow: hero.eyebrow ?? hero.pre_heading ?? hero.kicker ?? hero.heading_1 ?? hero.title_1,
+      heading: hero.heading ?? hero.heading_2 ?? hero.title ?? hero.title_2,
+      search_line_1:
+        hero.search_line_1 ?? hero.cta_line_1 ?? hero.description_line_1 ?? hero.body_line_1,
+      search_line_2:
+        hero.search_line_2 ?? hero.cta_line_2 ?? hero.description_line_2 ?? hero.body_line_2,
+      left_taglines: (
+        hero.left_taglines ??
+        hero.taglines ??
+        hero.left_lines ??
+        hero.feature_lines ??
+        []
+      ).map(item => (typeof item === 'string' ? item : (item?.label ?? item?.title ?? ''))),
+      right_cards: (
+        hero.right_cards ??
+        hero.cards ??
+        hero.hero_cards ??
+        hero.featured_cards ??
+        []
+      ).map(normalizeHeroCard),
+    }
+  }
+
+  if (normalized.plan_event_intro && typeof normalized.plan_event_intro === 'object') {
+    const section = normalized.plan_event_intro
+    normalized.plan_event_intro = {
+      ...section,
+      heading:
+        section.heading ??
+        [section.heading_1, section.heading_2].filter(Boolean).join('\n') ??
+        undefined,
+    }
+  }
+
+  if (normalized.better_way && typeof normalized.better_way === 'object') {
+    const section = normalized.better_way
+    normalized.better_way = {
+      ...section,
+      heading:
+        section.heading ??
+        [section.heading_1, section.heading_2].filter(Boolean).join('\n') ??
+        undefined,
+      left_body: section.left_body ?? section.left_description,
+      right_body: section.right_body ?? section.right_description,
+      center_body: section.center_body ?? section.center_description,
+    }
+  }
+
+  return normalized
+}
+
 /**
  * Converts a Strapi sections array into a keyed map for easy lookup.
  *
@@ -99,6 +194,35 @@ async function fetchGrandCelebrationsIntro() {
   }
 }
 
+async function fetchCelebrationEveryDay() {
+  const { data } = await strapiGet('/celebration-every-days', {
+    'pagination[pageSize]': 1,
+    sort: 'updatedAt:desc',
+    'populate[categories][populate]': '*',
+  })
+
+  const entry = Array.isArray(data) ? data[0] : null
+  if (!entry) return null
+
+  const categories = Array.isArray(entry.categories) ? entry.categories : []
+  const sectionImages = categories.flatMap(item =>
+    Array.isArray(item?.images) ? item.images : item?.images ? [item.images] : []
+  )
+
+  return {
+    heading: entry.heading ?? '',
+    description: entry.subheading ?? '',
+    subheading: entry.subheading ?? '',
+    categories: categories.map(item => ({
+      ...item,
+      tab_label: item.tab_label ?? item.label ?? '',
+      description: item.description ?? '',
+      images: Array.isArray(item.images) ? item.images : item.images ? [item.images] : [],
+    })),
+    _sectionImages: sectionImages,
+  }
+}
+
 export async function fetchInHousePlannerPageData() {
   if (USE_FALLBACK) {
     console.log('[useInHousePlannerPage] Using fallback data (USE_FALLBACK=true)')
@@ -107,12 +231,16 @@ export async function fetchInHousePlannerPageData() {
 
   try {
     console.log('[useInHousePlannerPage] Fetching from Strapi...')
-    const [{ data }, grandCelebrationsIntro] = await Promise.all([
+    const [{ data }, grandCelebrationsIntro, celebrationEveryDay] = await Promise.all([
       strapiGet('/inhouse-planner-page', {
         'populate[sections][populate]': '*',
       }),
       fetchGrandCelebrationsIntro().catch(err => {
         console.warn('[useInHousePlannerPage] grand celebrations intro fetch failed:', err)
+        return null
+      }),
+      fetchCelebrationEveryDay().catch(err => {
+        console.warn('[useInHousePlannerPage] celebration every day fetch failed:', err)
         return null
       }),
     ])
@@ -121,6 +249,9 @@ export async function fetchInHousePlannerPageData() {
     const parsedSections = parseSections(data?.sections ?? [])
     if (grandCelebrationsIntro) {
       parsedSections.grand_celebrations_intro = grandCelebrationsIntro
+    }
+    if (celebrationEveryDay) {
+      parsedSections.celebrations_every_day = celebrationEveryDay
     }
     console.log('[useInHousePlannerPage] Parsed sections:', parsedSections)
     const merged = mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parsedSections)
@@ -135,6 +266,21 @@ export async function fetchInHousePlannerPageData() {
   }
 }
 
+export async function fetchLandingPageData() {
+  if (USE_FALLBACK) return LANDING_PAGE_FALLBACK
+  try {
+    const { data } = await strapiGet('/landing-page', {
+      'populate[sections][populate]': '*',
+    })
+    return mergePageSections(
+      LANDING_PAGE_FALLBACK,
+      normalizeLandingPageSections(parseSections(data?.sections ?? []))
+    )
+  } catch {
+    return LANDING_PAGE_FALLBACK
+  }
+}
+
 /**
  * useLandingPage
  * Fetches Landing Page Single Type from Strapi.
@@ -143,17 +289,7 @@ export async function fetchInHousePlannerPageData() {
 export function useLandingPage() {
   return useQuery({
     queryKey: ['cms-page', 'landing'],
-    queryFn: async () => {
-      if (USE_FALLBACK) return LANDING_PAGE_FALLBACK
-      try {
-        const { data } = await strapiGet('/landing-page', {
-          'populate[sections][populate]': '*',
-        })
-        return mergePageSections(LANDING_PAGE_FALLBACK, parseSections(data?.sections ?? []))
-      } catch {
-        return LANDING_PAGE_FALLBACK
-      }
-    },
+    queryFn: fetchLandingPageData,
     placeholderData: LANDING_PAGE_FALLBACK,
     staleTime: 10 * 60 * 1000,
     retry: 1,
