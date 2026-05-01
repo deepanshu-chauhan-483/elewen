@@ -281,9 +281,15 @@ function normalizeCelebrationCategories(section = {}) {
   const result = (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
       const name =
-        item.tab_label ?? item.name ?? item.title ?? item.heading ?? `Category ${index + 1}`
+        item.tab_label ??
+        item.label ??
+        item.name ??
+        item.title ??
+        item.heading ??
+        `Category ${index + 1}`
       const bucketKey = toBucketKey(name)
       const categoryImages = imagesByCategory[bucketKey] ?? []
+      const directImages = Array.isArray(item.images) ? item.images : item.images ? [item.images] : []
       const fallbackImages = CELEBRATION_CATEGORY_FALLBACKS[bucketKey] ?? {}
       return {
         name,
@@ -294,6 +300,7 @@ function normalizeCelebrationCategories(section = {}) {
             item.top_left_image ??
               item.topLeftImage ??
               item.images?.topLeft ??
+              directImages[0] ??
               item.image_1 ??
               categoryImages[0],
             fallbackImages.topLeft
@@ -302,6 +309,7 @@ function normalizeCelebrationCategories(section = {}) {
             item.top_right_image ??
               item.topRightImage ??
               item.images?.topRight ??
+              directImages[1] ??
               item.image_2 ??
               categoryImages[1],
             fallbackImages.topRight
@@ -310,6 +318,7 @@ function normalizeCelebrationCategories(section = {}) {
             item.bottom_left_image ??
               item.bottomLeftImage ??
               item.images?.bottomLeft ??
+              directImages[2] ??
               item.image_3 ??
               categoryImages[2],
             fallbackImages.bottomLeft
@@ -318,6 +327,7 @@ function normalizeCelebrationCategories(section = {}) {
             item.bottom_right_image ??
               item.bottomRightImage ??
               item.images?.bottomRight ??
+              directImages[3] ??
               item.image_4 ??
               categoryImages[3],
             fallbackImages.bottomRight
@@ -2503,8 +2513,12 @@ const CelebrationFormSection = () => {
 const InHousePlannerSection = () => {
   const { data: cms = {} } = useInHousePlannerPage()
 
+  const hero = cms.hero ?? {}
   const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
+  const heroImages = getSectionImages(hero)
+    .map(image => resolveMediaUrl(image))
+    .filter(Boolean)
   const plannerImage = resolveMediaUrl(
     bio.image ?? bio.photo ?? bio.portrait_image ?? bio.portrait ?? bio._sectionImages?.[0],
     MOKSHA_FALLBACK_IMAGE,
@@ -2579,6 +2593,9 @@ const InHousePlannerSection = () => {
       <ScrollImageSpreadSection
         mobileHeading={whatWeDo.heading ?? 'What we do as your In-House Planner'}
         mobileBody={mobileHeroBody}
+        heroLabel={hero.label ?? 'In House Event Planner'}
+        heroSubtext={hero.subtext ?? 'scroll to discover'}
+        heroImages={heroImages}
       />
 
       <div data-in-house-planner-page>

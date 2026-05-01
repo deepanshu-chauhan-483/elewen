@@ -1,18 +1,31 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useFaqCategories, useFaqItems } from '../hooks/useFaqItems'
 
-const faqs = [
-  {
-    q: 'How does Elewen work?',
-    a: 'You select your event, choose services like decor or catering, and pick from curated packages. We handle the rest — from coordination to execution.',
-  },
-  { q: 'Can I customize a package?', a: '' },
-  { q: 'Do I need to book everything at once?', a: '' },
-  { q: 'What do the package levels mean?', a: '' },
-  { q: 'Why does the final price differ from the starting price?', a: '' },
-]
+const formatCategoryLabel = value =>
+  String(value || '')
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 
 export default function FAQ() {
+  const [activeCategory, setActiveCategory] = useState('')
   const [openIndex, setOpenIndex] = useState(0)
+  const { data: faqs = [] } = useFaqItems()
+  const { data: categories = [] } = useFaqCategories()
+
+  useEffect(() => {
+    if (!categories.length) return
+    if (!activeCategory || !categories.includes(activeCategory)) {
+      setActiveCategory(categories[0])
+      setOpenIndex(0)
+    }
+  }, [activeCategory, categories])
+
+  const visibleFaqs = useMemo(() => {
+    if (!activeCategory) return faqs
+    return faqs.filter(item => item.category === activeCategory)
+  }, [activeCategory, faqs])
 
   return (
     <div className="w-full">
@@ -28,38 +41,77 @@ export default function FAQ() {
       </section>
 
       {/* CONTENT */}
-      <section className="flex max-w-[1200px] mx-auto py-[60px]">
-        {/* LEFT MENU */}
-        <div className="w-[250px] pr-6 border-r border-[#364022]">
-          <ul className="space-y-5 text-[16px] text-gray-600">
-            <li className="text-black font-medium">General</li>
-            <li>Packages & Pricing</li>
-            <li>Sample Tasting</li>
-            <li>Bookings & Payments</li>
-            <li>Vendors & Execution</li>
-            <li>Changes & Support</li>
-          </ul>
-        </div>
+      <section className="max-w-[1200px] mx-auto py-[60px]  ">
+        <div className="grid gap-10 lg:grid-cols-[250px_minmax(0,1fr)] ">
+          {/* LEFT MENU */}
+          <div className="border-b border-[#364022] lg:border-b-0 lg:border-r lg:pr-6 ">
+            <aside className="self-start pb-6 lg:sticky lg:top-28 lg:pb-0 ">
+              <ul className="space-y-6 text-[16px] ">
+                {categories.map(category => {
+                  const isActive = activeCategory === category
 
-        {/* FAQ BOX */}
-        <div className="flex-1 pl-10">
-          <div className="bg-[#f7f7f7] p-8">
-            {faqs.map((item, index) => (
-              <div
-                key={index}
-                className="border-b border-gray-300 py-5 cursor-pointer"
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-[27px] font-serif">{item.q}</h3>
-                  <span className="text-[24px]">{openIndex === index ? '−' : '+'}</span>
+                  return (
+                    <li key={category}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveCategory(category)
+                          setOpenIndex(0)
+                        }}
+                        className={`cursor-pointer text-left text-[16px] transition-colors ${
+                          isActive ? 'font-medium text-[#364022]' : 'text-[#737373]'
+                        }`}
+                      >
+                        <span className="relative inline-block pb-[15px]">
+                          {formatCategoryLabel(category)}
+                          <span
+                            className={`absolute bottom-0 left-0 h-px bg-[#364022] transition-all duration-300 ease-out ${
+                              isActive ? 'w-full opacity-200' : 'w-0 opacity-0'
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </aside>
+          </div>
+
+          {/* FAQ BOX */}
+          <div className="min-w-0 lg:pl-10">
+            <div className="bg-[#f7f7f7] p-8">
+              {visibleFaqs.map((item, index) => (
+                <div
+                  key={item.id ?? index}
+                  className={`py-5 ${index > 0 ? 'border-t border-gray-300' : ''} ${
+                    index === visibleFaqs.length - 1 ? '' : 'border-b border-gray-300'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                    className="flex w-full items-center justify-between text-left"
+                  >
+                    <h3 className="text-[27px] font-serif">{item.q}</h3>
+                    <span className="text-[24px]">{openIndex === index ? '-' : '+'}</span>
+                  </button>
+
+                  <div
+                    className="grid transition-[grid-template-rows,opacity,margin] duration-500 ease-[cubic-bezier(0.32,0,0.15,1)]"
+                    style={{
+                      gridTemplateRows: openIndex === index && item.a ? '1fr' : '0fr',
+                      opacity: openIndex === index && item.a ? 1 : 0,
+                      marginTop: openIndex === index && item.a ? '0.75rem' : '0rem',
+                    }}
+                  >
+                    <div className="overflow-hidden">
+                      <p className="max-w-[700px] text-[16px] text-gray-600">{item.a}</p>
+                    </div>
+                  </div>
                 </div>
-
-                {openIndex === index && item.a && (
-                  <p className="mt-3 text-[16px] text-gray-600 max-w-[700px]">{item.a}</p>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>

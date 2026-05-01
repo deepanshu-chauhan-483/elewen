@@ -224,6 +224,21 @@ export function submitConsultation(body) {
   return apiPost('/consultations', body)
 }
 
+/**
+ * Submit a Contact Us enquiry.
+ * Maps to POST /contact in the Express API.
+ *
+ * @param {Object} body
+ * @param {string} body.firstName
+ * @param {string} body.lastName
+ * @param {string} body.email
+ * @param {string} body.phone
+ * @param {string} body.message
+ */
+export function submitContact(body) {
+  return apiPost('/contact', body)
+}
+
 /* ── Planner Lead ─────────────────────────────────────────────────────────── */
 
 /**

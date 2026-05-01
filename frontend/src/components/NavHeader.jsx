@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import ScallopBulbCurtain from './common/ScallopBulbCurtain'
@@ -76,6 +76,7 @@ const TRANSPARENT_NAV_SURFACE = 'transparent'
 const GLASS_BLUR_MOBILE = 'blur(1px)'
 const GLASS_BLUR_DESKTOP = 'blur(1px)'
 const BLACK_NAV_ACCENT_PATHS = ['/book-consultation', '/consultation-confirmation']
+const WHITE_NAV_BG_PATHS = ['/faqs', '/legalpages']
 
 const parseRgb = color => {
   const match = color?.match(/rgba?\(([^)]+)\)/i)
@@ -225,6 +226,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
   const { itemCount } = useCart()
   const useBlackNavAccent = BLACK_NAV_ACCENT_PATHS.includes(pathname)
+  const useWhiteNavBackground = WHITE_NAV_BG_PATHS.includes(pathname)
 
   useEffect(() => {
     const sync = () => setIsLoggedIn(!!getStoredJwt())
@@ -278,8 +280,11 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     }
   }, [open])
 
+  const routeForcedThemeName = useWhiteNavBackground ? 'light' : null
+  const effectiveForcedThemeName = forcedThemeName ?? routeForcedThemeName
+
   useEffect(() => {
-    if (forcedThemeName && NAVBAR_THEMES[forcedThemeName]) return undefined
+    if (effectiveForcedThemeName && NAVBAR_THEMES[effectiveForcedThemeName]) return undefined
 
     if (open) return
 
@@ -330,7 +335,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       window.removeEventListener('resize', scheduleUpdate)
       if (rafId != null) window.cancelAnimationFrame(rafId)
     }
-  }, [forcedThemeName, pathname, open])
+  }, [effectiveForcedThemeName, pathname, open])
   const handleLogout = async () => {
     try {
       await authLogout()
@@ -345,8 +350,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     navigate('/')
   }
 
-  const hasForcedTheme = !!(forcedThemeName && NAVBAR_THEMES[forcedThemeName])
-  const resolvedThemeName = hasForcedTheme ? forcedThemeName : navThemeName
+  const hasForcedTheme = !!(effectiveForcedThemeName && NAVBAR_THEMES[effectiveForcedThemeName])
+  const resolvedThemeName = hasForcedTheme ? effectiveForcedThemeName : navThemeName
   const pageTheme = NAVBAR_THEMES[resolvedThemeName] ?? NAVBAR_THEMES.light
   const desktopTheme = pageTheme.desktop
   const mobileTheme = pageTheme.mobile
@@ -395,8 +400,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           className="pointer-events-none absolute inset-0 md:hidden"
           style={{
             backgroundColor: isTransparentNav ? TRANSPARENT_BG : mobileTheme.bgColor,
-            ...(backgroundColorOverride && !isTransparentNav
-              ? { backgroundColor: backgroundColorOverride }
+            ...((backgroundColorOverride || useWhiteNavBackground) && !isTransparentNav
+              ? { backgroundColor: backgroundColorOverride ?? '#FFFFFF' }
               : {}),
             backgroundImage:
               isTransparentNav || !mobileTheme.bgImage ? 'none' : `url(${mobileTheme.bgImage})`,
@@ -417,8 +422,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           className="pointer-events-none absolute inset-0 hidden md:block"
           style={{
             backgroundColor: isTransparentNav ? TRANSPARENT_BG : desktopTheme.bgColor,
-            ...(backgroundColorOverride && !isTransparentNav
-              ? { backgroundColor: backgroundColorOverride }
+            ...((backgroundColorOverride || useWhiteNavBackground) && !isTransparentNav
+              ? { backgroundColor: backgroundColorOverride ?? '#FFFFFF' }
               : {}),
             backgroundImage:
               isTransparentNav || !desktopTheme.bgImage ? 'none' : `url(${desktopTheme.bgImage})`,
@@ -806,7 +811,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           >
             <div className="flex w-full max-w-xl flex-1 items-start justify-end pt-8 lg:pt-10">
               <p
-                className="max-w-[440px] text-left text-[clamp(34px,4vw,58px)] leading-[0.95] text-white"
+                className="max-w-[540px] text-left text-[clamp(34px,4vw,58px)] leading-[0.95] text-white"
                 style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
               >
                 Less coordination.
@@ -867,9 +872,10 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 Privacy Policy
               </a>
               <span>&bull;</span>
-              <a href="/terms" className="transition-colors">
+              
+              <NavLink to="/legalpages" className="transition-colors">
                 Terms of Service
-              </a>
+              </NavLink>
             </div>
           </div>
         </div>

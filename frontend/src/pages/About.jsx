@@ -14,6 +14,37 @@ const aboutImageModules = import.meta.glob('../assets/images/*', {
 
 const aboutAssetSrc = fileName => aboutImageModules[`../assets/images/${fileName}`]
 
+const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+
+const toAbsoluteMediaUrl = url => {
+  const value = String(url ?? '').trim()
+  if (!value) return ''
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  return `${STRAPI_BASE}${value.startsWith('/') ? value : `/${value}`}`
+}
+
+const getMediaUrl = media => {
+  if (!media) return ''
+  if (typeof media === 'string') return toAbsoluteMediaUrl(media)
+  if (Array.isArray(media)) return getMediaUrl(media[0])
+
+  return toAbsoluteMediaUrl(
+    media.url ??
+      media.src ??
+      media.image?.url ??
+      media.data?.url ??
+      media.data?.attributes?.url ??
+      media.formats?.large?.url ??
+      media.formats?.medium?.url ??
+      media.formats?.small?.url ??
+      media.formats?.thumbnail?.url ??
+      ''
+  )
+}
+
+const getSectionImage = (section, index, fallback = '') =>
+  getMediaUrl(section?._sectionImages?.[index]) || fallback
+
 const Img = ({ src, alt = '', className = '', style, ...rest }) => (
   <img
     src={src}
@@ -44,11 +75,23 @@ const About = () => {
   const vq = cms.vendor_quality ?? {}
   const vc = cms.vendor_cta ?? {}
 
-  const story1Src = aboutAssetSrc('story-1.png')
-  const story2Src = aboutAssetSrc('story-2.png')
-  const mokshaSrc = aboutAssetSrc('moksha_portrait.jpg')
-  const gauriSrc = aboutAssetSrc('gauri.jpg')
+  const tangledIllustrationFallback = aboutAssetSrc('tangled-lights.png') || tangledIllustration
+  const story1Fallback = aboutAssetSrc('story-1.png')
+  const story2Fallback = aboutAssetSrc('story-2.png')
+  const mokshaFallback = aboutAssetSrc('moksha_portrait.jpg')
+  const gauriFallback = aboutAssetSrc('gauri.jpg')
+  const featureIconFallbacks = ['e47.png', 'e49.png', 'e48.png', 'e50.png'].map(aboutAssetSrc)
+  const vendorIconFallbacks = ['quality-icon.png', 'everyone-icon.png', 'tiers-icon.png'].map(
+    aboutAssetSrc
+  )
   const iconSrc = aboutAssetSrc('image.png')
+  const heroIllustrationSrc = getSectionImage(so, 0, tangledIllustrationFallback)
+  const story1Src = getSectionImage(sq, 0, story1Fallback)
+  const story2Src = getSectionImage(tg, 0, story2Fallback)
+  const mokshaSrc = getSectionImage(founders, 0, mokshaFallback)
+  const gauriSrc = getSectionImage(founders, 1, gauriFallback)
+  const featureIconSrcs = featureIconFallbacks.map((fallback, index) => getSectionImage(wc, index, fallback))
+  const vendorIconSrcs = vendorIconFallbacks.map((fallback, index) => getSectionImage(vq, index, fallback))
   const desktopScallopCount = [...Array(10)]
   const mobileScallopCount = desktopScallopCount.slice(0, 6)
   const visibleScallops =
@@ -235,7 +278,7 @@ const About = () => {
             <div className="min-[540px]:hidden pointer-events-none absolute inset-x-0 bottom-[-108px] min-[375px]:bottom-[-118px] z-20 flex justify-center">
               <div className="relative flex justify-center w-[252px] h-[378px] min-[375px]:w-[272px] min-[375px]:h-[402px]">
                 <img
-                  src={tangledIllustration}
+                  src={heroIllustrationSrc}
                   alt="Person tangled in lights"
                   className="anim-element slide-from-bottom absolute top-[-28px] left-[-80px] z-10 w-[330px] h-[400px] max-w-none object-contain min-[540px]:left-1/2 min-[540px]:-translate-x-1/2 min-[540px]:top-[9px] min-[540px]:w-[384px] min-[540px]:h-[529px]"
                   style={{ '--delay': '0.3s' }}
@@ -249,7 +292,7 @@ const About = () => {
             <div className="absolute inset-x-0 bottom-[-160px] flex justify-center">
               <div className="relative flex justify-center w-[400px] h-[600px]">
                 <img
-                  src={tangledIllustration}
+                  src={heroIllustrationSrc}
                   alt="Person tangled in lights"
                   className="anim-element slide-from-bottom absolute top-[9px] overflow-visible w-[384px] h-[529px] object-cover max-w-none"
                   style={{ '--delay': '0.3s' }}
@@ -763,7 +806,7 @@ const About = () => {
                       label: wc.features?.[3]?.label ?? "Behind the scenes? That's on us.",
                     },
                   ].map((item, index) => {
-                    const src = aboutAssetSrc(`${item.key}.png`)
+                    const src = featureIconSrcs[index]
                     return (
                       <div
                         key={item.key}
@@ -859,7 +902,7 @@ const About = () => {
                     },
                   ].map((card, index) => {
                     // Dynamically resolve the specific image for this card
-                    const currentIconSrc = aboutAssetSrc(card.iconName) || iconSrc
+                    const currentIconSrc = vendorIconSrcs[index] || iconSrc
                     return (
                       <div
                         key={index}

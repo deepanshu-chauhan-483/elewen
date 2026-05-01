@@ -17,7 +17,6 @@ import ConsultationConfirmation from './pages/ConsultationConfirmation'
 import BlogPage from './pages/BlogPage'
 import SingleBlogPage from './pages/SingleBlogPage'
 import HowItWorkPage from './pages/HowItWorkPage'
-import ContactPage from './pages/ContactPage'
 import CategoryPage from './pages/CategoryPage'
 import EventPage from './pages/EventPage'
 import ServicePage from './pages/ServicePage'
@@ -92,7 +91,6 @@ function AppLayout() {
         <Route path="/about" element={<About />} />
         <Route path="/in-house-planner" element={<InHousePlannerPage />} />
         <Route path="/how-it-work" element={<HowItWorkPage />} />
-        <Route path="/contact" element={<ContactPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/login" element={<LoginPage />} />

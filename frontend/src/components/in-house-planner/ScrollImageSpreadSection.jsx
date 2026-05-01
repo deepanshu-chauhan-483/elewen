@@ -30,9 +30,9 @@ const IMAGE_DATA = [
 
 // ── Fly-by images: burst through camera and vanish ──────────────────────────
 const BASE_IMAGES = [img1, img2, img3, img4, img5, img6, img7, img8]
-const MOBILE_SLIDES = [
-  [IMAGE_DATA[0], IMAGE_DATA[5], IMAGE_DATA[4], IMAGE_DATA[7]],
-  [IMAGE_DATA[1], IMAGE_DATA[3], IMAGE_DATA[2], IMAGE_DATA[6]],
+const MOBILE_SLIDE_INDEXES = [
+  [0, 5, 4, 7],
+  [1, 3, 2, 6],
 ]
 
 // 10 positions — all pushed to the periphery so they never block the centre
@@ -63,7 +63,13 @@ const getFinalPositions = () => {
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
+const ScrollImageSpreadSection = ({
+  mobileHeading,
+  mobileBody,
+  heroLabel,
+  heroSubtext,
+  heroImages = [],
+}) => {
   const flowRef = useRef(null)
   const flyRefs = useRef([])
   const figmaRefs = useRef([])
@@ -74,6 +80,15 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
     typeof window === 'undefined' ? false : window.innerWidth < 540
   )
   const [mobilePage, setMobilePage] = useState(0)
+
+  const resolvedImageData = IMAGE_DATA.map((item, index) => ({
+    ...item,
+    src: heroImages[index] || item.src,
+  }))
+  const resolvedBaseImages = BASE_IMAGES.map((src, index) => heroImages[index] || src)
+  const mobileSlides = MOBILE_SLIDE_INDEXES.map(indexes =>
+    indexes.map(imageIndex => resolvedImageData[imageIndex])
+  )
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 540)
@@ -178,7 +193,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
   }, [isMobile])
 
   if (isMobile) {
-    const activeSlide = MOBILE_SLIDES[mobilePage] ?? MOBILE_SLIDES[0]
+    const activeSlide = mobileSlides[mobilePage] ?? mobileSlides[0]
 
     return (
       <section className="w-full bg-[#FFFFFF] font-sans pt-24 pb-14">
@@ -222,7 +237,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
           </div>
 
           <div className="mt-6 flex items-center justify-center gap-2">
-            {MOBILE_SLIDES.map((_, idx) => {
+            {mobileSlides.map((_, idx) => {
               const isActive = idx === mobilePage
               return (
                 <button
@@ -275,10 +290,10 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
           className="text-white opacity-80 text-[clamp(1.5rem,5vw,2rem)] leading-[1.2] tracking-[0.05em] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          In House Event Planner
+          {heroLabel ?? 'In House Event Planner'}
           <br />
           <span className="text-[clamp(0.9rem,2vw,1.1rem)] opacity-60 tracking-widest uppercase">
-            scroll to discover
+            {heroSubtext ?? 'scroll to discover'}
           </span>
         </p>
       </div>
@@ -305,7 +320,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
             }}
           >
             <img
-              src={BASE_IMAGES[i % BASE_IMAGES.length]}
+              src={resolvedBaseImages[i % resolvedBaseImages.length]}
               alt={`Event photo ${i + 1}`}
               className="w-full h-full object-cover"
             />
@@ -313,7 +328,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody }) => {
         ))}
 
         {/* ── Figma landing images: painted last (always on top) ─── */}
-        {IMAGE_DATA.map((img, i) => (
+        {resolvedImageData.map((img, i) => (
           <div
             key={`figma-${i}`}
             ref={el => {
