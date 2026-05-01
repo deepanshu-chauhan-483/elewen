@@ -124,7 +124,7 @@ const HeroSection = () => {
   const leftTaglines = Array.isArray(hero.left_taglines)
     ? hero.left_taglines
     : HERO_LEFT_TAGLINES_FALLBACK
-  
+
   // Merge Strapi cards with defaults to ensure all 3 cards are populated
   const strapiCards = Array.isArray(hero.right_cards) ? hero.right_cards : []
   const rightCards = HERO_RIGHT_CARDS_FALLBACK.map((defaultCard, idx) => ({

@@ -68,7 +68,9 @@ function sanitizeCmsValue(value) {
   if (typeof value === 'string') return sanitizeCmsTextSafe(value)
   if (Array.isArray(value)) return value.map(sanitizeCmsValue)
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, sanitizeCmsValue(item)]))
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, sanitizeCmsValue(item)])
+    )
   }
   return value
 }
@@ -88,12 +90,7 @@ function normalizeLandingPageSections(sections = {}) {
     const hero = normalized.hero
     normalized.hero = {
       ...hero,
-      eyebrow:
-        hero.eyebrow ??
-        hero.pre_heading ??
-        hero.kicker ??
-        hero.heading_1 ??
-        hero.title_1,
+      eyebrow: hero.eyebrow ?? hero.pre_heading ?? hero.kicker ?? hero.heading_1 ?? hero.title_1,
       heading: hero.heading ?? hero.heading_2 ?? hero.title ?? hero.title_2,
       search_line_1:
         hero.search_line_1 ?? hero.cta_line_1 ?? hero.description_line_1 ?? hero.body_line_1,
@@ -105,7 +102,7 @@ function normalizeLandingPageSections(sections = {}) {
         hero.left_lines ??
         hero.feature_lines ??
         []
-      ).map(item => (typeof item === 'string' ? item : item?.label ?? item?.title ?? '')),
+      ).map(item => (typeof item === 'string' ? item : (item?.label ?? item?.title ?? ''))),
       right_cards: (
         hero.right_cards ??
         hero.cards ??

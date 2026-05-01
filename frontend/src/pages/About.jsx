@@ -90,8 +90,12 @@ const About = () => {
   const story2Src = getSectionImage(tg, 0, story2Fallback)
   const mokshaSrc = getSectionImage(founders, 0, mokshaFallback)
   const gauriSrc = getSectionImage(founders, 1, gauriFallback)
-  const featureIconSrcs = featureIconFallbacks.map((fallback, index) => getSectionImage(wc, index, fallback))
-  const vendorIconSrcs = vendorIconFallbacks.map((fallback, index) => getSectionImage(vq, index, fallback))
+  const featureIconSrcs = featureIconFallbacks.map((fallback, index) =>
+    getSectionImage(wc, index, fallback)
+  )
+  const vendorIconSrcs = vendorIconFallbacks.map((fallback, index) =>
+    getSectionImage(vq, index, fallback)
+  )
   const desktopScallopCount = [...Array(10)]
   const mobileScallopCount = desktopScallopCount.slice(0, 6)
   const visibleScallops =

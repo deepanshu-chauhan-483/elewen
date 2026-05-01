@@ -292,11 +292,11 @@ const PlanEventSection = () => {
                   {s.heading_2 ?? 'Differently.'}
                 </>
               ) : (
-                s.heading ?? (
-                <>
-                  Plan Your Event, <br className="hidden md:block" /> Differently.
-                </>
-                )
+                (s.heading ?? (
+                  <>
+                    Plan Your Event, <br className="hidden md:block" /> Differently.
+                  </>
+                ))
               )}
             </span>
           </span>
@@ -781,17 +781,17 @@ const WhatToPlanSection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-               {s.heading_1 || s.heading_2 ? (
+              {s.heading_1 || s.heading_2 ? (
                 <>
                   {s.heading_1 ?? 'What Would You'} <br className="hidden md:block" />{' '}
                   {s.heading_2 ?? 'Like To Plan?'}
                 </>
               ) : (
-                s.heading ?? (
-                <>
-                  What Would You <br className="hidden md:block" /> Like To Plan?
-                </>
-                )
+                (s.heading ?? (
+                  <>
+                    What Would You <br className="hidden md:block" /> Like To Plan?
+                  </>
+                ))
               )}
             </span>
           </span>
@@ -3582,7 +3582,10 @@ const PlanningGuidesSection = () => {
 
                       <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:px-6 md:py-5 lg:p-7 h-[120px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         {' '}
-                        <h3 className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none" style={{fontFamily:"Poppins"}}>
+                        <h3
+                          className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none"
+                          style={{ fontFamily: 'Poppins' }}
+                        >
                           {blog.title}
                         </h3>
                       </div>

@@ -289,7 +289,11 @@ function normalizeCelebrationCategories(section = {}) {
         `Category ${index + 1}`
       const bucketKey = toBucketKey(name)
       const categoryImages = imagesByCategory[bucketKey] ?? []
-      const directImages = Array.isArray(item.images) ? item.images : item.images ? [item.images] : []
+      const directImages = Array.isArray(item.images)
+        ? item.images
+        : item.images
+          ? [item.images]
+          : []
       const fallbackImages = CELEBRATION_CATEGORY_FALLBACKS[bucketKey] ?? {}
       return {
         name,

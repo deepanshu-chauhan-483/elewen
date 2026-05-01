@@ -14,13 +14,13 @@ export default function ContactUsPage() {
   const [submitMessage, setSubmitMessage] = useState('')
   const [submitError, setSubmitError] = useState('')
 
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     setSubmitError('')
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault()
     setSubmitError('')
     setSubmitMessage('')

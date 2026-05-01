@@ -34,7 +34,9 @@ export const FAQ_ITEMS_FALLBACK = [
   },
 ]
 
-const FAQ_CATEGORIES_FALLBACK = [...new Set(FAQ_ITEMS_FALLBACK.map(item => item.category).filter(Boolean))]
+const FAQ_CATEGORIES_FALLBACK = [
+  ...new Set(FAQ_ITEMS_FALLBACK.map(item => item.category).filter(Boolean)),
+]
 
 export function useFaqItems() {
   return useQuery({
@@ -82,7 +84,9 @@ export function useFaqCategories() {
           'pagination[pageSize]': '100',
         })
 
-        const categories = [...new Set((Array.isArray(data) ? data : []).map(item => item.category).filter(Boolean))]
+        const categories = [
+          ...new Set((Array.isArray(data) ? data : []).map(item => item.category).filter(Boolean)),
+        ]
 
         return categories.length > 0 ? categories : FAQ_CATEGORIES_FALLBACK
       } catch {

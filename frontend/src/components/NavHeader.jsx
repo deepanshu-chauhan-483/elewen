@@ -872,7 +872,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 Privacy Policy
               </a>
               <span>&bull;</span>
-              
+
               <NavLink to="/legalpages" className="transition-colors">
                 Terms of Service
               </NavLink>
