@@ -16,7 +16,7 @@ export default function ContactUsPage() {
             >
               <div className="max-w-[520px] text-white">
                 <h2
-                  className="text-[clamp(40px,5vw,64px)] leading-[100%]"
+                  className="text-[clamp(40px,5vw,61px)] leading-[100%]"
                   style={{ fontFamily: "'Malgin', serif" }}
                 >
                   Let&apos;s Plan

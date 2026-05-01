@@ -363,6 +363,20 @@ function CouponCard({
   )
 }
 
+function EditIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M10 2.50001H4.16667C3.72464 2.50001 3.30072 2.6756 2.98816 2.98816C2.67559 3.30072 2.5 3.72464 2.5 4.16667V15.8333C2.5 16.2754 2.67559 16.6993 2.98816 17.0118C3.30072 17.3244 3.72464 17.5 4.16667 17.5H15.8333C16.2754 17.5 16.6993 17.3244 17.0118 17.0118C17.3244 16.6993 17.5 16.2754 17.5 15.8333V10M15.3125 2.18751C15.644 1.85599 16.0937 1.66974 16.5625 1.66974C17.0313 1.66974 17.481 1.85599 17.8125 2.18751C18.144 2.51903 18.3303 2.96866 18.3303 3.43751C18.3303 3.90635 18.144 4.35598 17.8125 4.68751L10.3017 12.1992C10.1038 12.3969 9.85934 12.5416 9.59083 12.62L7.19667 13.32C7.12496 13.3409 7.04895 13.3422 6.97659 13.3236C6.90423 13.3051 6.83819 13.2675 6.78537 13.2146C6.73255 13.1618 6.69491 13.0958 6.67637 13.0234C6.65783 12.9511 6.65909 12.875 6.68 12.8033L7.38 10.4092C7.45877 10.1409 7.60378 9.89672 7.80167 9.69917L15.3125 2.18751Z"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function SinglePackageCard({
   item,
   pendingItemId,
@@ -388,7 +402,7 @@ function SinglePackageCard({
 
   return (
     <div className="space-y-6">
-      <div className="relative flex items-center gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
+      <div className="relative flex gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
         <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
         <div className="ml-2 h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200">
           {packageImage ? (
@@ -396,46 +410,48 @@ function SinglePackageCard({
           ) : null}
         </div>
 
-        <div>
-          <p className="text-sm text-gray-500">{packageSubtitle}</p>
-          {packageHref ? (
-            <Link to={packageHref} className="font-medium text-lg text-[#2C2C2C]">
-              {packageTitle}
-            </Link>
-          ) : (
-            <h3 className="font-medium text-lg text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
-              {packageTitle}
-            </h3>
-          )}
-          <p className="text-sm text-gray-500">
+        <div className="items-start">
+          <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
+          <h3
+            className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
+            style={{ fontFamily: "'Poppins'" }}
+          >
+            {packageTitle}
+          </h3>
+          <p className="text-[10px] md:text-[12px] text-[#6A6864]">
             {eventLocation} · {eventDate}
           </p>
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+        {/* EDIT */}
         {packageHref ? (
           <Link
             to={packageHref}
-            className="flex items-center justify-center rounded-full bg-[#2E3A1F] px-4 py-2.5 text-[13px] font-medium text-white"
+            className="flex items-center justify-center gap-2 w-full h-[40px] rounded-full bg-[#2E3A1F] text-[13px] font-medium text-white"
           >
+            <EditIcon />
             Edit Package
           </Link>
         ) : (
           <button
             type="button"
-            className="rounded-full bg-[#2E3A1F] px-4 py-2.5 text-[13px] font-medium text-white"
+            className="flex items-center justify-center gap-2 w-full h-[40px] rounded-full bg-[#2E3A1F] text-[13px] font-medium text-white"
           >
+            <EditIcon />
             Edit Package
           </button>
         )}
 
+        {/* DELETE */}
         <button
           type="button"
           onClick={() => onRemoveItem(item.id)}
           disabled={isPending}
-          className="rounded-full bg-[#6B1D0C] px-4 py-2.5 text-[13px] font-medium text-white disabled:opacity-60"
+          className="flex items-center justify-center gap-2 w-full h-[40px] rounded-full bg-[#6B1D0C] text-[13px] font-medium text-white disabled:opacity-60"
         >
+          <DeleteIcon />
           {isPending ? 'Updating...' : 'Delete Package'}
         </button>
       </div>
@@ -581,6 +597,38 @@ function SinglePackageCard({
   )
 }
 
+function EyeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M1.03125 6.17394C0.989582 6.06168 0.989582 5.93819 1.03125 5.82594C1.4371 4.84186 2.12601 4.00046 3.01064 3.40839C3.89527 2.81631 4.93577 2.50024 6.00025 2.50024C7.06473 2.50024 8.10524 2.81631 8.98987 3.40839C9.87449 4.00046 10.5634 4.84186 10.9693 5.82594C11.0109 5.93819 11.0109 6.06168 10.9693 6.17394C10.5634 7.15801 9.87449 7.99942 8.98987 8.59149C8.10524 9.18356 7.06473 9.49963 6.00025 9.49963C4.93577 9.49963 3.89527 9.18356 3.01064 8.59149C2.12601 7.99942 1.4371 7.15801 1.03125 6.17394Z"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6.00025 7.49994C6.82868 7.49994 7.50025 6.82836 7.50025 5.99994C7.50025 5.17151 6.82868 4.49994 6.00025 4.49994C5.17183 4.49994 4.50025 5.17151 4.50025 5.99994C4.50025 6.82836 5.17183 7.49994 6.00025 7.49994Z"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function DeleteIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M9.5 3V10C9.5 10.2652 9.39464 10.5196 9.20711 10.7071C9.01957 10.8946 8.76522 11 8.5 11H3.5C3.23478 11 2.98043 10.8946 2.79289 10.7071C2.60536 10.5196 2.5 10.2652 2.5 10V3M1.5 3H10.5M4 3V2C4 1.73478 4.10536 1.48043 4.29289 1.29289C4.48043 1.10536 4.73478 1 5 1H7C7.26522 1 7.51957 1.10536 7.70711 1.29289C7.89464 1.48043 8 1.73478 8 2V3"
+        stroke="#FAFAFA"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
   const groupedItems = cartItems.reduce((groups, item) => {
     const category = getPackageSubtitle(item.packageData)
@@ -610,7 +658,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
           className={`rounded-lg border ${group.border} ${group.bg} overflow-hidden`}
         >
           <div className="flex justify-between border-b border-[#95796033] px-4 py-3">
-            <h2 className="font-medium text-[#2C2C2C]">
+            <h2 className="font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
               {group.icon ? `${group.icon} ` : ''}
               {group.category}
             </h2>
@@ -635,9 +683,9 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
               return (
                 <div
                   key={item.id}
-                  className="relative flex gap-4 rounded-lg border border-[#94949433] bg-white p-4"
+                  className="relative flex gap-4 rounded-lg border border-[#94949433] bg-[#FFFFFF] p-4"
                 >
-                  <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-lg bg-[#957960]" />
+                  <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-lg bg-[#FFFFFF]" />
 
                   <div className="flex-1 pl-2">
                     <div className="flex justify-between gap-4">
@@ -683,7 +731,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                         aria-label="View package"
                         title="View package"
                       >
-                        👁️
+                        <EyeIcon />
                       </Link>
                       <button
                         type="button"
@@ -693,7 +741,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                         aria-label="Delete package"
                         title="Delete package"
                       >
-                        🗑️
+                        <DeleteIcon />
                       </button>
                     </div>
                   </div>
@@ -728,13 +776,15 @@ function SuggestedPackages({ packages = [] }) {
         {packages.map(pkg => (
           <div
             key={pkg.id}
-            className="flex items-center justify-between rounded-[16px] bg-[#F5F5F5] px-3 py-4"
+            className="flex items-center justify-between rounded-[16px] bg-[#F5F5F5] px-3 py-4 gap-3"
           >
             {/* LEFT CONTENT */}
-            <div>
-              <p className="text-[16px] font-medium text-[#2C2C2C]">{pkg.title}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-[16px] font-medium text-[#2C2C2C] truncate">{pkg.title}</p>
 
-              <p className="text-sm text-gray-500">{pkg.subtitle || 'Pro set + napkins'}</p>
+              <p className="text-sm text-gray-500 truncate">
+                {pkg.subtitle || 'Pro set + napkins'}
+              </p>
 
               <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
             </div>
@@ -746,7 +796,7 @@ function SuggestedPackages({ packages = [] }) {
                 documentId: pkg.id,
                 service_slugs: [pkg.serviceSlug],
               })}
-              className="rounded-full bg-[#957960] w-fit px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
+              className="shrink-0 rounded-full bg-[#957960] px-5 py-2 text-sm font-medium text-white whitespace-nowrap"
             >
               + Add
             </Link>

@@ -389,66 +389,110 @@ const About = () => {
 
             <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[661px]:pt-24 lg:pt-28 pb-24 min-[661px]:pb-32 lg:pb-36">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
-              <div className="min-[661px]:hidden mt-14">
+              <div className="flex flex-col items-center mt-15">
+                {/* ================= CAROUSEL ================= */}
                 <div
                   ref={mobileStoryCarouselRef}
-                  className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  className="flex w-full overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
+                  {/* Slide 1 */}
                   <div className="flex w-full shrink-0 snap-start px-2 justify-center">
-                    {story2Src && (
-                      <Img
-                        src={story2Src}
-                        alt="Atmosphere"
-                        className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
-                        style={{ '--delay': '0.2s' }}
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex w-full shrink-0 snap-start px-2">
-                    <div className="flex w-full min-h-[400px] flex-col items-center text-center ">
-                      <h2
-                        className="text-white text-[30px] leading-[1.05] font-serif"
-                        style={{ fontFamily: "'Malgin', serif" }}
-                      >
-                        <span className="reveal-wrapper block">
-                          <span className="reveal-text">
-                            {tg.heading ?? 'Thoughtful Gatherings Over Loud Distractions?'}
-                          </span>
-                        </span>
-                      </h2>
-
-                      {(
-                        tg.paragraphs ?? [
-                          'With house parties becoming the new way to celebrate, it felt like the right time to bring digitalisation, organisation, and standardisation to the events space.',
-                        ]
-                      ).map((para, i) => (
-                        <p key={i} className="text-white text-[14px] leading-[1.45] opacity-90">
+                    <div className="flex w-full max-w-[420px] h-[480px] flex-col text-center">
+                      {/* Top Content */}
+                      <div>
+                        <h2
+                          className="text-white text-[30px] leading-[1.05] font-serif"
+                          style={{ fontFamily: "'Malgin', serif" }}
+                        >
                           <span className="reveal-wrapper block">
-                            <span
-                              className="reveal-text"
-                              style={{ '--delay': `${0.1 + i * 0.08}s` }}
-                            >
-                              {para}
+                            <span className="reveal-text">
+                              {sq.heading ?? 'We Asked a Simple Question'}
                             </span>
                           </span>
-                        </p>
-                      ))}
+                        </h2>
 
+                        {[
+                          sq.body ??
+                            'Almost everything else in our lives has moved online. We book cabs and holidays in minutes, so why does event planning still feel complicated?',
+                        ].map((para, i) => (
+                          <p
+                            key={i}
+                            className="text-white text-[14px] leading-[1.45] opacity-90 mt-2"
+                          >
+                            <span className="reveal-wrapper block">
+                              <span
+                                className="reveal-text"
+                                style={{ '--delay': `${0.1 + i * 0.08}s` }}
+                              >
+                                {para}
+                              </span>
+                            </span>
+                          </p>
+                        ))}
+                      </div>
+
+                      {/* Image */}
+                      {story2Src && (
+                        <Img
+                          src={story2Src}
+                          alt="Atmosphere"
+                          className="mt-auto w-full aspect-[4/3] object-cover rounded-[20px]"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Slide 2 */}
+                  <div className="flex w-full shrink-0 snap-start px-2 justify-center">
+                    <div className="flex w-full max-w-[420px] h-[480px] flex-col text-center">
+                      {/* Top Content */}
+                      <div>
+                        <h2
+                          className="text-white text-[30px] leading-[1.05] font-serif"
+                          style={{ fontFamily: "'Malgin', serif" }}
+                        >
+                          <span className="reveal-wrapper block">
+                            <span className="reveal-text">
+                              {tg.heading ?? 'Thoughtful Gatherings Over Loud Distractions?'}
+                            </span>
+                          </span>
+                        </h2>
+
+                        {(
+                          tg.paragraphs ?? [
+                            'With house parties becoming the new way to celebrate, it felt like the right time to bring digitalisation, organisation, and standardisation to the events space.',
+                          ]
+                        ).map((para, i) => (
+                          <p
+                            key={i}
+                            className="text-white text-[14px] leading-[1.45] opacity-90 mt-2"
+                          >
+                            <span className="reveal-wrapper block">
+                              <span
+                                className="reveal-text"
+                                style={{ '--delay': `${0.1 + i * 0.08}s` }}
+                              >
+                                {para}
+                              </span>
+                            </span>
+                          </p>
+                        ))}
+                      </div>
+
+                      {/* Image */}
                       {story1Src && (
                         <Img
                           src={story1Src}
                           alt="Details"
-                          className="anim-element slide-from-bottom about-page-hover-image w-full max-w-[420px] aspect-[4/3] object-cover rounded-[20px]"
-                          style={{ '--delay': '0.2s' }}
+                          className="mt-auto w-full aspect-[4/3] object-cover rounded-[20px]"
                         />
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* White dash indicators */}
-                <div className="flex justify-center gap-2 mt-4">
+                {/* ================= INDICATORS ================= */}
+                <div className="flex justify-center gap-2 mt-6 shrink-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -458,7 +502,6 @@ const About = () => {
                     className={`h-[5px] rounded-full transition-all duration-300 ${
                       mobileStorySlide === 0 ? 'w-[26px] bg-white' : 'w-[14px] bg-white/40'
                     }`}
-                    aria-label="Go to first slide"
                   />
                   <button
                     type="button"
@@ -469,15 +512,14 @@ const About = () => {
                         behavior: 'smooth',
                       })
                     }}
-                    className={`h-[4px] rounded-full transition-all duration-300 ${
+                    className={`h-[5px] rounded-full transition-all duration-300 ${
                       mobileStorySlide === 1 ? 'w-[26px] bg-white' : 'w-[14px] bg-white/40'
                     }`}
-                    aria-label="Go to second slide"
                   />
                 </div>
 
-                {/* Fixed bottom text — same for both slides */}
-                <div className="mt-8 flex flex-col items-center text-center gap-4 px-4">
+                {/* ================= CLOSING SECTION ================= */}
+                <div className="mt-8 flex flex-col items-center text-center gap-4 px-4 max-w-[420px]">
                   <h2
                     className="text-white text-[30px] leading-[1.05] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
@@ -497,6 +539,7 @@ const About = () => {
                       </>
                     )}
                   </h2>
+
                   <p className="text-white text-[14px] leading-[1.45] opacity-90 max-w-[28rem]">
                     {sq.closing_body ??
                       'Built on trust & to save time, Elewen is a one-stop digital platform that makes hosting simpler with genuine pricing and seamless planning.'}
