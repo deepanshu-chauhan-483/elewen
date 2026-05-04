@@ -2417,7 +2417,7 @@ const CelebrationFormSection = () => {
                       Previous
                     </span>
                     <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#8C8C8C] transition-transform group-hover:scale-105">
-                      <svg
+                      {/* <svg
                         className="min-[540px]:hidden"
                         width="20"
                         height="20"
@@ -2429,9 +2429,26 @@ const CelebrationFormSection = () => {
                         <path d="M19 12H5" />
 
                         <path d="m12 19-7-7 7-7" />
-                      </svg>
+                      </svg> */}
 
                       <svg
+                        className="min-[540px]:hidden"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M10 15.8931L4.10744 10.0005M4.10744 10.0005L10 4.10795M4.10744 10.0005H15.8926"
+                          stroke="#8C8C8C"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+
+                      {/* <svg
                         className="hidden min-[540px]:block rotate-180"
                         width="20"
                         height="20"
@@ -2442,6 +2459,23 @@ const CelebrationFormSection = () => {
                       >
                         <path d="M7 17L17 7" />
                         <path d="M7 7h10v10" />
+                      </svg> */}
+
+                      <svg
+                        className="hidden min-[540px]:block"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M10 15.8931L4.10744 10.0005M4.10744 10.0005L10 4.10795M4.10744 10.0005H15.8926"
+                          stroke="#8C8C8C"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </div>
                   </button>
@@ -2452,7 +2486,7 @@ const CelebrationFormSection = () => {
                     className="hidden min-[540px]:flex items-center gap-4 bg-[#D9D9D9] rounded-[56px] pl-1 pr-6 py-1 hover:bg-[#c9c9c9] transition-colors group"
                   >
                     <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center border-[1.5px] border-[#8C8C8C] transition-transform group-hover:scale-105">
-                      <svg
+                      {/* <svg
                         width="20"
                         height="20"
                         viewBox="0 0 24 24"
@@ -2464,6 +2498,21 @@ const CelebrationFormSection = () => {
                         <path d="M7 17L17 7" />
 
                         <path d="M7 7h10v10" />
+                      </svg> */}
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M10 15.8931L4.10744 10.0005M4.10744 10.0005L10 4.10795M4.10744 10.0005H15.8926"
+                          stroke="#8C8C8C"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </div>
 
@@ -2476,11 +2525,11 @@ const CelebrationFormSection = () => {
             </div>
 
             {/* Next / Submit Button */}
-            <div className="w-full min-[540px]:w-auto flex justify-center min-[540px]:justify-end">
+            <div className="w-full min-[540px]:w-auto flex min-[540px]:justify-end">
               <button
                 onClick={handleNext}
                 disabled={currentStep === 3 && isPending}
-                className={`group w-[220px] min-[540px]:w-fit flex items-center justify-between rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F] ${currentStep === 3 && isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className={`group w-full min-[540px]:w-fit flex items-center justify-between rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1 transition-colors hover:bg-[#C6AB7F] ${currentStep === 3 && isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <span className="flex-1 text-left text-[15px] font-medium text-white min-[540px]:mr-5 min-[540px]:flex-none">
                   {currentStep === 3 && isPending
@@ -2491,7 +2540,7 @@ const CelebrationFormSection = () => {
                 </span>
 
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
-                  <svg
+                  {/* <svg
                     className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -2502,6 +2551,20 @@ const CelebrationFormSection = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       d="M7 17L17 7M17 7H9M17 7v8"
+                    />
+                  </svg> */}
+                  <svg
+                    className="h-[18px] w-[18px]"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M10 4.10693L15.8926 9.99949M15.8926 9.99949L10 15.892M15.8926 9.99949H4.10744"
+                      stroke="#CDB17E"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </div>

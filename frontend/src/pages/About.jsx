@@ -343,7 +343,7 @@ const About = () => {
 
         {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
         <section className="relative -mt-px md:mt-0 w-full bg-[#A5A687] overflow-hidden font-sans">
-          <div ref={sectionRef} className="relative w-full min-h-[4550px]">
+          <div ref={sectionRef} className="relative w-full max-h-[4550px] min-[661px]:max-h-none">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
               className="absolute hidden min-[661px]:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
@@ -434,9 +434,9 @@ const About = () => {
               </svg>
             </div>
 
-            <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[661px]:pt-24 lg:pt-28 pb-24 min-[661px]:pb-32 lg:pb-36">
+            <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[661px]:pt-24 lg:pt-28 min-[661px]:pb-32 lg:pb-36">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
-              <div className="flex flex-col items-center mt-15">
+              <div className="flex flex-col items-center mt-15 min-[661px]:hidden">
                 {/* ================= CAROUSEL ================= */}
                 <div
                   ref={mobileStoryCarouselRef}
@@ -568,7 +568,7 @@ const About = () => {
                 {/* ================= CLOSING SECTION ================= */}
                 <div className="mt-8 flex flex-col items-center text-center gap-4 px-4 max-w-[420px]">
                   <h2
-                    className="text-white text-[30px] leading-[1.05] font-serif"
+                    className="text-white text-[24px] leading-[1.05] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {sq.closing_heading ? (
@@ -672,7 +672,7 @@ const About = () => {
               <div className="mt-28 -mx-6 px-6 pb-16 bg-[#222815] min-[661px]:bg-transparent min-[661px]:mx-0 min-[661px]:px-0 min-[661px]:pb-20">
                 <div className="flex justify-center min-[661px]:hidden mt-4 pt-16">
                   <h2
-                    className="text-white text-[44px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center"
+                    className="text-white text-[30px] min-[661px]:text-[41px] lg:text-[61px] leading-[1] font-serif text-center"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -896,10 +896,13 @@ const About = () => {
               </div>
 
               {/* --- SUB-TASK 6: VENDOR QUALITY & CARDS --- */}
-              <div ref={subTask6Ref} className="mt-24 min-[661px]:mt-40">
+              <div
+                ref={subTask6Ref}
+                className="-mx-6 py-24 bg-[#F8F4ED] min-[661px]:bg-transparent px-6 min-[661px]:mt-40 min-[661px]:mx-0 min-[661px]:px-0"
+              >
                 <div className="flex flex-col items-center text-center min-[661px]:items-end min-[661px]:text-right">
                   <h2
-                    className="w-full max-w-[517px] text-white text-[44px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif"
+                    className="w-full max-w-[517px] text-[#1C1C1C] text-[30px] min-[661px]:text-[41px] min-[661px]:text-white lg:text-[61px] leading-[1] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -909,7 +912,7 @@ const About = () => {
                     </span>
                   </h2>
                   <p
-                    className="mt-6 w-full max-w-[517px] text-white text-[16px] leading-[1.5] opacity-80"
+                    className="mt-6 w-full max-w-[517px] text-[#1C1C1C] text-[16px] leading-[1.5] opacity-80 min-[661px]:text-white"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
                     <span className="reveal-wrapper block">

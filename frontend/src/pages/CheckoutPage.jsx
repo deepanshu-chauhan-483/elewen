@@ -233,6 +233,119 @@ function PaymentMethod({ selected, onChange }) {
   )
 }
 
+function PaymentOptionPopup({
+  open,
+  onClose,
+  onConfirm,
+  selected,
+  setSelected,
+  advanceAmount,
+  fullAmount,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* BACKDROP */}
+      <div className="fixed inset-0 z-40 backdrop-blur-[16px] bg-[#00000033]" onClick={onClose} />
+
+      {/* POPUP */}
+      <div className="relative w-[92%] max-w-md rounded-[20px] bg-white p-5 shadow-xl border border-[#00000033]">
+        {/* HEADER */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-[16px] font-semibold">Choose Your Payment Option</h2>
+            <p className="text-[12px] text-gray-500 mt-1">
+              Secure your booking with an advance or pay in full for added benefits.
+            </p>
+          </div>
+
+          <button onClick={onClose} className="text-[18px]">
+            ✕
+          </button>
+        </div>
+
+        {/* OPTIONS */}
+        <div className="mt-5 space-y-5">
+          {/* ADVANCE */}
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="radio"
+              checked={selected === 'advance'}
+              onChange={() => setSelected('advance')}
+              className="hidden"
+            />
+
+            <div className="mt-1 flex h-5 w-5 items-center justify-center rounded-full border border-[#222815]">
+              {selected === 'advance' && <div className="h-2.5 w-2.5 rounded-full bg-[#222815]" />}
+            </div>
+
+            <div className="flex-1">
+              <div className="flex justify-between items-center">
+                <p className="text-[12px] font-medium">Pay Advance (30%)</p>
+                <p className="text-[14px] font-medium">
+                  ₹{Number(advanceAmount).toLocaleString('en-IN')}
+                </p>
+              </div>
+
+              <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                Secure your booking today and pay the remaining amount closer to your event date.
+              </p>
+            </div>
+          </label>
+
+          {/* FULL */}
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="radio"
+              checked={selected === 'full'}
+              onChange={() => setSelected('full')}
+              className="hidden"
+            />
+
+            <div className="mt-1 flex h-5 w-5 items-center justify-center rounded-full border border-[#222815]">
+              {selected === 'full' && <div className="h-2.5 w-2.5 rounded-full bg-[#222815]" />}
+            </div>
+
+            <div className="flex-1">
+              <div className="flex justify-between items-center">
+                <p className="text-[12px] font-medium">Pay Full Amount</p>
+                <p className="text-[14px] font-medium">
+                  ₹{Number(fullAmount).toLocaleString('en-IN')}
+                </p>
+              </div>
+
+              <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                Pay the full amount now and get a discount on your total booking.
+              </p>
+            </div>
+          </label>
+        </div>
+
+        {/* CTA */}
+        <button
+          onClick={() => onConfirm(selected)}
+          className="mt-6 w-full flex items-center justify-between rounded-full bg-[#D4BA8E] py-2 pl-5 pr-2"
+        >
+          <span className="text-white text-[14px] font-medium">Confirm Booking</span>
+
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
+            <svg className="h-[18px] w-[18px] text-[#D4BA8E]" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -319,7 +432,10 @@ export default function CheckoutPage() {
         ctaLabel: 'Pay Advance & Confirm Booking',
       }
 
-  const handleCheckout = async () => {
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false)
+  const [paymentOption, setPaymentOption] = useState('advance')
+
+  const handleCheckout = async paymentType => {
     const token = getStoredJwt()
     if (!token) {
       navigate('/login')
@@ -383,7 +499,7 @@ export default function CheckoutPage() {
 
       const orderResponse = await paymentCreateOrder(token, {
         bookingId: booking.id,
-        paymentType: 'advance',
+        paymentType,
       })
 
       const scriptLoaded = await loadRazorpayScript()
@@ -711,7 +827,7 @@ export default function CheckoutPage() {
 
             <button
               type="button"
-              onClick={handleCheckout}
+              onClick={() => setShowPaymentPopup(true)}
               disabled={isSubmitting}
               className="mx-auto mt-4 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
             >
@@ -720,19 +836,37 @@ export default function CheckoutPage() {
               </span>
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                 <svg
-                  className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                  className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                  viewBox="0 0 20 20"
                   fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                  <path
+                    d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </div>
             </button>
           </div>
         </div>
       </div>
+
+      <PaymentOptionPopup
+        open={showPaymentPopup}
+        onClose={() => setShowPaymentPopup(false)}
+        selected={paymentOption}
+        setSelected={setPaymentOption}
+        advanceAmount={advancePayable}
+        fullAmount={computedTotal}
+        onConfirm={type => {
+          setShowPaymentPopup(false)
+          handleCheckout(type)
+        }}
+      />
     </div>
   )
 }

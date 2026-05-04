@@ -161,7 +161,7 @@ function DeleteIcon() {
 export default function SinglePackageCheckout() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { cart, loading, isLoggedIn } = useCart()
+  const { cart, loading } = useCart()
   const { data: packages = [] } = usePackages()
   const itemId = searchParams.get('itemId') ?? ''
 
@@ -183,7 +183,6 @@ export default function SinglePackageCheckout() {
     }
   }, [cart?.items, itemId, packageLookup])
 
-  if (!isLoggedIn) return <Navigate to="/login" replace />
   if (!loading && !item) return <Navigate to="/cart" replace />
   if (!item) return null
 
@@ -259,7 +258,7 @@ export default function SinglePackageCheckout() {
                   </div>
                   <div>
                     <p className="font-medium text-[#2C2C2C]">{element.title}</p>
-                    <p className="text-sm text-gray-500">{element.desc}</p>
+                    {/* <p className="text-sm text-gray-500">{element.desc}</p> */}
                   </div>
                 </div>
               ))}

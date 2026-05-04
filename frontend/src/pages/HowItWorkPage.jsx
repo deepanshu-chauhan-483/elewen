@@ -561,15 +561,19 @@ const FinalCtaSection = () => {
             className="group flex min-h-[56px] w-full max-w-[280px] items-center justify-between rounded-full bg-[#D4BA8E] pl-8 pr-2 text-white transition-colors hover:bg-[#c9ad7f]"
           >
             <span className="text-[16px] font-medium leading-[1.3]">Start Booking</span>
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#D4BA8E]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white">
               <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 transition-transform duration-300 group-hover:rotate-45"
+                className="h-[20px] w-[20px] text-[#CDB17E] transition-transform duration-300 group-hover:rotate-45"
+                viewBox="0 0 20 20"
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
               >
-                <path d="M7 17L17 7M17 7H9M17 7v8" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M5.83203 5.83301H14.1654M14.1654 5.83301V14.1663M14.1654 5.83301L5.83203 14.1663"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </span>
           </Link>
@@ -666,23 +670,24 @@ const HowItWorkHeroSection = () => {
                     <span className="reveal-text" style={{ animationDelay: '0.2s' }}>
                       <Link
                         to="/in-house-planner"
-                        className="group flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F]"
+                        className="group flex w-fit items-center rounded-full bg-[#FFFFFF] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#FFFFFF]"
                       >
-                        <span className="mr-5 text-[15px] font-medium text-white">
+                        <span className="mr-5 text-[15px] font-medium text-[#CDB17E]">
                           Plan with Elewen
                         </span>
-                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#CDB17E]  shadow-sm">
                           <svg
-                            className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                            className="h-[20px] w-[20px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                            viewBox="0 0 20 20"
                             fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
+                            xmlns="http://www.w3.org/2000/svg"
                           >
                             <path
+                              d="M5.83203 5.83301H14.1654M14.1654 5.83301V14.1663M14.1654 5.83301L5.83203 14.1663"
+                              stroke="white"
+                              strokeWidth="1.5"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              d="M7 17L17 7M17 7H9M17 7v8"
                             />
                           </svg>
                         </span>

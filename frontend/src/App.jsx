@@ -43,6 +43,8 @@ import Terms from './pages/LegalPages'
 import ContactUsPage from './pages/ContactUsPage'
 import VendorRegistration from './pages/VendorRegistrationForm'
 import FallbackPage from './pages/FallbackScreen'
+import DashboardLayout from './components/dashboard/DashboardLayout'
+import ActiveBookings from './pages/dashboard/ActiveBookings'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -82,7 +84,8 @@ function AppLayout() {
     pathname === '/event-flow/bartending-levels' ||
     pathname === '/package-listing' ||
     pathname === '/packages/decor-levels' ||
-    pathname.startsWith('/packages/')
+    pathname.startsWith('/packages/') ||
+    pathname.startsWith('/user-dashboard')
 
   return (
     <>
@@ -102,7 +105,7 @@ function AppLayout() {
         <Route path="/book-consultation" element={<BookConsultationPage />} />
         <Route path="/consultation-confirmation" element={<ConsultationConfirmation />} />
         <Route path="/cart" element={<CartPage />} />
-        <Route path="/single-package-checkout" element={<SinglePackageCheckout />} />
+        <Route path="/single-package-cart" element={<SinglePackageCheckout />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
         <Route path="/sample-test-booking" element={<SampleTasteBooking />} />
@@ -129,6 +132,15 @@ function AppLayout() {
         <Route path="/contact" element={<ContactUsPage />} />
         <Route path="/vendor-registration" element={<VendorRegistration />} />
         <Route path="/fallback-screen" element={<FallbackPage />} />
+
+        {/* Dashboard Layout Wrapper */}
+        <Route path="/user-dashboard" element={<DashboardLayout />}>
+          {/* Default route */}
+          <Route index element={<ActiveBookings />} />
+
+          {/* Child routes */}
+          <Route path="active-booking" element={<ActiveBookings />} />
+        </Route>
       </Routes>
       {!hideGlobalChrome && <Footer />}
     </>
