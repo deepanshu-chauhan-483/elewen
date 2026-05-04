@@ -1,11 +1,79 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import CustomSelect from '../components/common/CustomSelect'
+import { submitVendorRegistration } from '../lib/api'
 
-// INPUT
-function Input({ label, placeholder }) {
+const SERVICE_OPTIONS = ['Decor', 'Catering Services', 'Sheesha Services', 'Bartending']
+const EVENT_TYPE_OPTIONS = [
+  'Wedding',
+  'Birthday',
+  'Anniversary',
+  'House Party',
+  'Corporate',
+  'Baby Shower',
+  'Private Dinner',
+]
+
+const INITIAL_FORM = {
+  businessName: '',
+  contactPersonName: '',
+  phone: '',
+  email: '',
+  operatingLocation: '',
+  teamSize: '',
+  websiteSocialPortfolio: '',
+  establishedIn: '',
+  serviceCategories: [],
+  eventType: '',
+  portfolioLink: '',
+  workSample: null,
+  verificationDocument: null,
+}
+
+function extractCity(operatingLocation) {
+  const trimmed = operatingLocation.trim()
+  if (!trimmed) return ''
+
+  return trimmed.split(',')[0]?.trim() || trimmed
+}
+
+function estimateExperienceYears(establishedIn) {
+  const year = Number.parseInt(establishedIn, 10)
+  if (!Number.isFinite(year)) return ''
+
+  const currentYear = new Date().getFullYear()
+  if (year > currentYear || year < 1900) return ''
+
+  return String(Math.max(currentYear - year, 0))
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(new Error(`Failed to read ${file.name}`))
+    reader.readAsDataURL(file)
+  })
+}
+
+async function toUploadPayload(file) {
+  if (!file) return null
+
+  return {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    dataUrl: await readFileAsDataUrl(file),
+  }
+}
+
+function Input({ label, name, placeholder, value, onChange }) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[14px] text-[#364022]">{label}</label>
       <input
+        name={name}
+        value={value}
+        onChange={onChange}
         placeholder={placeholder}
         className="bg-white border border-[#E5E5E5] p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874]"
       />
@@ -13,12 +81,14 @@ function Input({ label, placeholder }) {
   )
 }
 
-// PHONE INPUT
-function PhoneInput() {
+function PhoneInput({ value, onChange }) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[14px] text-[#364022]">Phone number*</label>
       <input
+        name="phone"
+        value={value}
+        onChange={onChange}
         placeholder="Enter mobile number"
         className="flex-1 bg-white border border-[#E5E5E5] p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874]"
       />
@@ -26,102 +96,102 @@ function PhoneInput() {
   )
 }
 
-function MultiSelect({ label }) {
-  const options = ['Decor', 'Catering Services', 'Sheesha Services', 'Bartending']
-
-  const [selected, setSelected] = useState(['Decor', 'Catering Services'])
+function MultiSelect({ label, selected, onChange }) {
   const [inputValue, setInputValue] = useState('')
   const [open, setOpen] = useState(false)
+  const ref = useRef(null)
 
-  const ref = useRef()
-
-  // close dropdown on outside click
   useEffect(() => {
-    const handleClick = e => {
-      if (!ref.current.contains(e.target)) {
+    const handleClick = event => {
+      if (!ref.current?.contains(event.target)) {
         setOpen(false)
       }
     }
+
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
   const addItem = value => {
-    if (!value.trim()) return
-    if (!selected.includes(value)) {
-      setSelected([...selected, value])
-    }
+    const trimmed = value.trim()
+    if (!trimmed || selected.includes(trimmed)) return
+
+    onChange([...selected, trimmed])
     setInputValue('')
+    setOpen(false)
   }
 
   const removeItem = item => {
-    setSelected(selected.filter(i => i !== item))
+    onChange(selected.filter(selectedItem => selectedItem !== item))
   }
 
-  const filteredOptions = options.filter(
-    opt => !selected.includes(opt) && opt.toLowerCase().includes(inputValue.toLowerCase())
+  const filteredOptions = SERVICE_OPTIONS.filter(
+    option => !selected.includes(option) && option.toLowerCase().includes(inputValue.toLowerCase())
   )
 
   return (
     <div className="flex flex-col gap-2 relative" ref={ref}>
       <label className="text-[14px] text-[#364022]">{label}</label>
 
-      {/* INPUT BOX */}
       <div
         className="bg-white border border-[#E5E5E5] rounded-md p-2 flex flex-wrap items-center gap-2 cursor-text"
         onClick={() => setOpen(true)}
       >
-        {/* TAGS */}
-        {selected.map((item, i) => (
+        {selected.map(item => (
           <span
-            key={i}
+            key={item}
             className="bg-[#BFAC9B] px-3 py-1 rounded-full text-[12px] text-[#591902] flex items-center gap-1"
           >
             {item}
-            <button onClick={() => removeItem(item)}>×</button>
+            <button
+              type="button"
+              onClick={event => {
+                event.stopPropagation()
+                removeItem(item)
+              }}
+            >
+              x
+            </button>
           </span>
         ))}
 
-        {/* INPUT */}
         <input
           value={inputValue}
-          onChange={e => {
-            setInputValue(e.target.value)
+          onChange={event => {
+            setInputValue(event.target.value)
             setOpen(true)
           }}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
               addItem(inputValue)
             }
           }}
-          placeholder="Select or type..."
+          placeholder={selected.length ? 'Select or type...' : 'Select services'}
           className="flex-1 min-w-[120px] outline-none text-[13px]"
         />
 
-        {/* DROPDOWN ICON */}
         <span
-          onClick={e => {
-            e.stopPropagation() // prevent parent click
-            setOpen(prev => !prev)
+          onClick={event => {
+            event.stopPropagation()
+            setOpen(previous => !previous)
           }}
           className="ml-auto cursor-pointer text-[#591902] text-[12px]"
         >
-          {open ? '▲' : '▼'}
+          {open ? '^' : 'v'}
         </span>
       </div>
 
-      {/* DROPDOWN */}
       {open && (
         <div className="absolute top-full mt-1 w-full bg-white border border-[#E5E5E5] rounded-md shadow-sm z-10">
           {filteredOptions.length > 0 ? (
-            filteredOptions.map((opt, i) => (
+            filteredOptions.map(option => (
               <div
-                key={i}
-                onClick={() => addItem(opt)}
-                className="px-3 py-2 text-[13px] cursor-pointer hover:bg-[#F5F2EC]"
+                key={option}
+                onClick={() => addItem(option)}
+                className="px-3 py-2 text-[13px] cursor-pointer hover:bg-black hover:text-white"
               >
-                {opt}
+                {option}
               </div>
             ))
           ) : (
@@ -135,32 +205,57 @@ function MultiSelect({ label }) {
   )
 }
 
-// SELECT
-function Select({ label }) {
+function Select({ label, value, onChange }) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[14px] text-[#364022]">{label}</label>
 
-      <select className="bg-white border border-[#E5E5E5] p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874]">
-        <option>Select all that apply</option>
-        <option>Wedding</option>
-        <option>Birthday</option>
-        <option>Corporate</option>
-      </select>
+      <div className="relative">
+        <CustomSelect
+          value={value}
+          options={EVENT_TYPE_OPTIONS}
+          onChange={onChange}
+          placeholder="Select event type"
+          buttonClassName="w-full bg-white border border-[#E5E5E5] p-3 rounded-md outline-none text-left text-[14px] text-[#364022]"
+          menuClassName="fixed z-[999] overflow-hidden rounded-md border border-[#E5E5E5] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.1)]"
+          optionClassName="w-full px-3 py-2 text-left text-[13px] text-[#364022] hover:bg-black hover:text-white"
+          selectedOptionClassName="bg-[#F5F2EC]"
+          arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#591902]"
+          ariaLabel={label}
+        />
+      </div>
     </div>
   )
 }
 
-// UPLOAD
-function Upload({ label, full }) {
+function Upload({ label, full, file, onChange, accept }) {
+  const inputRef = useRef(null)
+
   return (
     <div className={`flex flex-col gap-2 ${full ? 'w-full' : ''}`}>
       <label className="text-[14px] text-[#364022]">{label}</label>
 
-      <div className="flex items-center justify-between bg-white border border-[#E5E5E5] p-3 rounded-md">
-        <span className="text-gray-400 text-[14px]">Upload file</span>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={event => {
+          onChange(event.target.files?.[0] ?? null)
+          event.target.value = ''
+        }}
+      />
 
-        <button type="button" className="bg-[#BFAC9B] px-3 py-1 rounded-md text-[12px]">
+      <div className="flex items-center justify-between bg-white border border-[#E5E5E5] p-3 rounded-md">
+        <span className={`text-[14px] ${file ? 'text-[#364022]' : 'text-gray-400'}`}>
+          {file?.name || 'Upload file'}
+        </span>
+
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="bg-[#BFAC9B] px-3 py-1 rounded-md text-[12px]"
+        >
           <svg
             width="16"
             height="16"
@@ -182,9 +277,94 @@ function Upload({ label, full }) {
 }
 
 export default function VendorRegistration() {
+  const [formData, setFormData] = useState(INITIAL_FORM)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState('')
+  const [submitError, setSubmitError] = useState('')
+
+  const payloadPreview = useMemo(
+    () => ({
+      city: extractCity(formData.operatingLocation),
+      experienceYears: estimateExperienceYears(formData.establishedIn),
+    }),
+    [formData.establishedIn, formData.operatingLocation]
+  )
+
+  const handleInputChange = event => {
+    const { name, value } = event.target
+    setFormData(previous => ({ ...previous, [name]: value }))
+    setSubmitError('')
+  }
+
+  const setFileValue = (field, file) => {
+    setFormData(previous => ({ ...previous, [field]: file }))
+    setSubmitError('')
+  }
+
+  const validateForm = () => {
+    if (!formData.businessName.trim()) return 'Business name is required'
+    if (!formData.contactPersonName.trim()) return 'Primary contact name is required'
+    if (!formData.phone.trim()) return 'Phone number is required'
+    if (!formData.email.trim()) return 'Email address is required'
+    if (!formData.operatingLocation.trim()) return 'Operating location is required'
+    if (!formData.websiteSocialPortfolio.trim()) return 'Website / Social / Portfolio is required'
+    if (!formData.serviceCategories.length) return 'Select at least one service'
+    if (!formData.eventType) return 'Select an event type'
+    if (!formData.verificationDocument) return 'Verification document is required'
+    return ''
+  }
+
+  const handleSubmit = async event => {
+    event.preventDefault()
+    setSubmitError('')
+    setSubmitMessage('')
+
+    const validationError = validateForm()
+    if (validationError) {
+      setSubmitError(validationError)
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const [workSamplePayload, verificationDocumentPayload] = await Promise.all([
+        toUploadPayload(formData.workSample),
+        toUploadPayload(formData.verificationDocument),
+      ])
+
+      const response = await submitVendorRegistration({
+        business_name: formData.businessName.trim(),
+        contact_person_name: formData.contactPersonName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        city: payloadPreview.city,
+        operating_location: formData.operatingLocation.trim(),
+        team_size: formData.teamSize.trim(),
+        website_social_portfolio: formData.websiteSocialPortfolio.trim(),
+        established_in: formData.establishedIn.trim(),
+        service_category: formData.serviceCategories,
+        event_types: [formData.eventType],
+        portfolio_link: formData.portfolioLink.trim(),
+        experience_years: payloadPreview.experienceYears,
+        description: '',
+        work_sample: workSamplePayload,
+        verification_document: verificationDocumentPayload,
+      })
+
+      setSubmitMessage(response.message || "We've received your application and will review it shortly.")
+      setFormData(INITIAL_FORM)
+      setTimeout(() => setSubmitMessage(''), 5000)
+    } catch (error) {
+      setSubmitError(error.message || 'Failed to submit vendor registration. Please try again.')
+      console.error('[VendorRegistration] submission error:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="w-full">
-      {/* HEADER */}
       <section
         className="text-center py-[clamp(60px,8vw,120px)] px-[clamp(20px,6vw,120px)] md:mt-10"
         style={{ backgroundColor: '#591902' }}
@@ -202,60 +382,151 @@ export default function VendorRegistration() {
         </p>
       </section>
 
-      {/* FORM SECTION */}
-      <section className="py-[clamp(50px,6vw,100px)] px-[clamp(80px,10vw,200px)] bg-[#F8F4ED]">
-        {/* BASIC DETAILS */}
-        <div className=" mx-auto">
-          <h2
-            className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
-            style={{ fontFamily: "'Malgin', serif" }}
-          >
-            Basic Details
-          </h2>
+      <form onSubmit={handleSubmit}>
+        <section className="py-[clamp(50px,6vw,100px)] px-[clamp(80px,10vw,200px)] bg-[#F8F4ED]">
+          <div className="mx-auto">
+            <h2
+              className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
+              style={{ fontFamily: "'Malgin', serif" }}
+            >
+              Basic Details
+            </h2>
 
-          <div className="grid md:grid-cols-2 gap-[clamp(20px,3vw,30px)]">
-            <Input label="Business Name*" placeholder="Enter your business name" />
-            <Input label="Primary Contact Name*" placeholder="Enter full name" />
+            <div className="grid md:grid-cols-2 gap-[clamp(20px,3vw,30px)]">
+              <Input
+                label="Business Name*"
+                name="businessName"
+                value={formData.businessName}
+                onChange={handleInputChange}
+                placeholder="Enter your business name"
+              />
+              <Input
+                label="Primary Contact Name*"
+                name="contactPersonName"
+                value={formData.contactPersonName}
+                onChange={handleInputChange}
+                placeholder="Enter full name"
+              />
 
-            <PhoneInput />
-            <Input label="Email Address*" placeholder="Enter email address" />
+              <PhoneInput value={formData.phone} onChange={handleInputChange} />
+              <Input
+                label="Email Address*"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter email address"
+              />
 
-            <Input label="Operating Location*" placeholder="City & service area" />
-            <Input label="Team Size" placeholder="e.g. 8 members" />
+              <Input
+                label="Operating Location*"
+                name="operatingLocation"
+                value={formData.operatingLocation}
+                onChange={handleInputChange}
+                placeholder="City & service area"
+              />
+              <Input
+                label="Team Size"
+                name="teamSize"
+                value={formData.teamSize}
+                onChange={handleInputChange}
+                placeholder="e.g. 8 members"
+              />
 
-            <Input label="Website / Social / Portfolio*" placeholder="Paste link" />
-            <Input label="Established In" placeholder="e.g. 2021" />
+              <Input
+                label="Website / Social / Portfolio*"
+                name="websiteSocialPortfolio"
+                value={formData.websiteSocialPortfolio}
+                onChange={handleInputChange}
+                placeholder="Paste link"
+              />
+              <Input
+                label="Established In"
+                name="establishedIn"
+                value={formData.establishedIn}
+                onChange={handleInputChange}
+                placeholder="e.g. 2021"
+              />
+            </div>
           </div>
-        </div>
-      </section>
-      <section className="px-[clamp(80px,10vw,200px)] bg-[#FFFFFF]">
-        {/* COMPANY DETAILS */}
-        <div className="mx-auto my-[clamp(50px,6vw,80px)]">
-          <h2
-            className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
-            style={{ fontFamily: "'Malgin', serif" }}
-          >
-            Company Details
-          </h2>
+        </section>
 
-          <div className="flex flex-col gap-[clamp(20px,3vw,30px)]">
-            <MultiSelect label="Services You Offer*" />
-            <Select label="Event Types You Cater To*" />
+        <section className="px-[clamp(80px,10vw,200px)] bg-[#FFFFFF]">
+          <div className="mx-auto my-[clamp(50px,6vw,80px)]">
+            <h2
+              className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
+              style={{ fontFamily: "'Malgin', serif" }}
+            >
+              Company Details
+            </h2>
 
-            <div className="grid md:grid-cols-2 gap-[clamp(20px,3vw,40px)]">
-              <Input label="Portfolio Link" placeholder="Paste your portfolio link" />
-              <Upload label="Upload Work Samples" />
+            <div className="flex flex-col gap-[clamp(20px,3vw,30px)]">
+              <MultiSelect
+                label="Services You Offer*"
+                selected={formData.serviceCategories}
+                onChange={serviceCategories => {
+                  setFormData(previous => ({ ...previous, serviceCategories }))
+                  setSubmitError('')
+                }}
+              />
+              <Select
+                label="Event Types You Cater To*"
+                value={formData.eventType}
+                onChange={event => {
+                  setFormData(previous => ({ ...previous, eventType: event.target.value }))
+                  setSubmitError('')
+                }}
+              />
+
+              <div className="grid md:grid-cols-2 gap-[clamp(20px,3vw,40px)]">
+                <Input
+                  label="Portfolio Link"
+                  name="portfolioLink"
+                  value={formData.portfolioLink}
+                  onChange={handleInputChange}
+                  placeholder="Paste your portfolio link"
+                />
+                <Upload
+                  label="Upload Work Samples"
+                  file={formData.workSample}
+                  onChange={file => setFileValue('workSample', file)}
+                  accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                />
+              </div>
+
+              <Upload
+                label="Verification Document*"
+                full
+                file={formData.verificationDocument}
+                onChange={file => setFileValue('verificationDocument', file)}
+                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+              />
             </div>
 
-            <Upload label="Verification Document*" full />
-          </div>
+            <div className="mt-8">
+              {submitError ? (
+                <div className="rounded-md bg-[#FFE6E6] px-4 py-3 text-sm text-[#8F2D1F]">
+                  {submitError}
+                </div>
+              ) : null}
+              {submitMessage ? (
+                <div className="rounded-md bg-[#E8F5E9] px-4 py-3 text-sm text-[#2E7D32]">
+                  {submitMessage}
+                </div>
+              ) : null}
+            </div>
 
-          {/* BUTTON */}
-          <div className="flex justify-end mt-10">
-            <button className="bg-[#C4A874] text-white px-10 py-3 rounded-full">Submit</button>
+            <div className="flex justify-end mt-10">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[#C4A874] text-white px-10 py-3 rounded-full disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </form>
     </div>
   )
 }

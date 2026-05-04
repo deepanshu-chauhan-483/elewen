@@ -260,3 +260,7 @@ export function submitContact(body) {
 export function submitPlannerLead(lead) {
   return apiPost('/planner-leads', lead)
 }
+
+export function submitVendorRegistration(body) {
+  return apiPost('/vendor/register', body)
+}

@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_terms_tldr_blocks",
+  "info": {
+    "displayName": "tldr-block"
+  },
+  "options": {},
+  "attributes": {
+    "heading": {
+      "type": "string"
+    },
+    "intro": {
+      "type": "text"
+    },
+    "bullets": {
+      "type": "component",
+      "component": "terms.tldr-bullet",
+      "repeatable": true
+    },
+    "closingNote": {
+      "type": "text"
+    },
+    "showOnBookingPage": {
+      "type": "boolean"
+    }
+  },
+  "config": {}
+}
