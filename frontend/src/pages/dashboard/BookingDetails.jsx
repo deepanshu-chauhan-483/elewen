@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { BookingSummaryCard, DashboardEmptyState, DashboardErrorState, DashboardLoadingState, DashboardPageIntro, DashboardSelectorList, DetailGrid, SectionCard, StatusPill } from '../../components/dashboard/DashboardUI'
-import { useDashboardBooking, useDashboardBookings } from '../../hooks/useDashboardData'
+import { useDashboardBooking, useDashboardBookings, useDashboardCancelBooking } from '../../hooks/useDashboardData'
 import { formatDashboardCurrency, formatDashboardDate } from '../../components/dashboard/dashboardUtils'
 
 function PaymentSummary({ booking }) {
@@ -31,6 +31,9 @@ export default function BookingDetails() {
   const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useDashboardBookings('all')
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedBookingId = searchParams.get('bookingId') || ''
+  const [showCancellationForm, setShowCancellationForm] = useState(false)
+  const [cancellationReason, setCancellationReason] = useState('')
+  const cancelBookingMutation = useDashboardCancelBooking()
 
   useEffect(() => {
     if (!bookings.length) return
@@ -42,6 +45,11 @@ export default function BookingDetails() {
   }, [bookings, searchParams, selectedBookingId, setSearchParams])
 
   const { data: booking, isLoading: bookingLoading, error: bookingError } = useDashboardBooking(selectedBookingId)
+
+  useEffect(() => {
+    setShowCancellationForm(false)
+    setCancellationReason('')
+  }, [selectedBookingId])
 
   if (bookingsLoading) {
     return <DashboardLoadingState title="Loading booking details..." />
@@ -173,6 +181,74 @@ export default function BookingDetails() {
                 ) : (
                   <p className="text-sm text-[#6B7280]">No payment records are attached to this booking yet.</p>
                 )}
+              </SectionCard>
+
+              <SectionCard title="Booking Actions" subtitle="Reach the team or request a cancellation for this booking.">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      to={`/user-dashboard/messages?bookingId=${booking.id}`}
+                      className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90"
+                    >
+                      Message Admin
+                    </Link>
+
+                    {booking.status !== 'cancelled' && booking.status !== 'completed' ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowCancellationForm(current => !current)}
+                        className="rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
+                      >
+                        {showCancellationForm ? 'Hide Cancellation' : 'Cancel Booking'}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {showCancellationForm ? (
+                    <form
+                      onSubmit={async event => {
+                        event.preventDefault()
+                        await cancelBookingMutation.mutateAsync({
+                          bookingId: booking.id,
+                          body: {
+                            reason: cancellationReason.trim() || undefined,
+                            policyAcknowledged: true,
+                          },
+                        })
+                        setShowCancellationForm(false)
+                        setCancellationReason('')
+                      }}
+                      className="rounded-2xl bg-white p-4"
+                    >
+                      <p className="text-sm text-[#6B7280]">
+                        Cancellation policy acknowledgment is required before submitting this request.
+                      </p>
+                      <textarea
+                        value={cancellationReason}
+                        onChange={event => setCancellationReason(event.target.value)}
+                        rows={4}
+                        placeholder="Share your cancellation reason (optional)..."
+                        className="mt-4 w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
+                      />
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          type="submit"
+                          disabled={cancelBookingMutation.isPending}
+                          className="rounded-full bg-[#591902] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {cancelBookingMutation.isPending ? 'Submitting...' : 'Proceed Cancellation'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowCancellationForm(false)}
+                          className="rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
+                        >
+                          Abort
+                        </button>
+                      </div>
+                    </form>
+                  ) : null}
+                </div>
               </SectionCard>
             </>
           ) : null}

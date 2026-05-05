@@ -27,6 +27,15 @@ export default function MessagesUpdates() {
     () => bookings.find(booking => booking.id === selectedBookingId) ?? null,
     [bookings, selectedBookingId]
   )
+  const activeBookings = useMemo(
+    () => bookings.filter(booking => booking.bookingCategory !== 'previous'),
+    [bookings]
+  )
+  const previousBookings = useMemo(
+    () => bookings.filter(booking => booking.bookingCategory === 'previous'),
+    [bookings]
+  )
+  const isReadOnlyThread = selectedBooking?.bookingCategory === 'previous'
 
   if (bookingsLoading) {
     return <DashboardLoadingState title="Loading booking messages..." />
@@ -66,6 +75,50 @@ export default function MessagesUpdates() {
         />
       ) : (
         <>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <SectionCard
+              title="Active Booking"
+              subtitle="Live threads where you can keep chatting with your planner."
+            >
+              {activeBookings.length ? (
+                <DashboardSelectorList
+                  items={activeBookings}
+                  selectedId={selectedBookingId}
+                  onSelect={bookingId => {
+                    const next = new URLSearchParams(searchParams)
+                    next.set('bookingId', bookingId)
+                    setSearchParams(next, { replace: true })
+                  }}
+                  getLabel={item => item.package?.title || item.event?.name || 'Booking'}
+                  getSubLabel={item => `${item.statusLabel} · ${formatDashboardDate(item.eventDate)}`}
+                />
+              ) : (
+                <p className="text-sm text-[#6B7280]">No active booking threads right now.</p>
+              )}
+            </SectionCard>
+
+            <SectionCard
+              title="Previous Booking"
+              subtitle="Read-only message history for completed or cancelled bookings."
+            >
+              {previousBookings.length ? (
+                <DashboardSelectorList
+                  items={previousBookings}
+                  selectedId={selectedBookingId}
+                  onSelect={bookingId => {
+                    const next = new URLSearchParams(searchParams)
+                    next.set('bookingId', bookingId)
+                    setSearchParams(next, { replace: true })
+                  }}
+                  getLabel={item => item.package?.title || item.event?.name || 'Booking'}
+                  getSubLabel={item => `${item.statusLabel} · ${formatDashboardDate(item.eventDate)}`}
+                />
+              ) : (
+                <p className="text-sm text-[#6B7280]">Past booking threads will appear here automatically.</p>
+              )}
+            </SectionCard>
+          </div>
+
           <DashboardSelectorList
             items={bookings}
             selectedId={selectedBookingId}
@@ -83,7 +136,11 @@ export default function MessagesUpdates() {
           ) : (
             <SectionCard
               title={selectedBooking?.package?.title || selectedBooking?.event?.name || 'Booking Messages'}
-              subtitle={selectedBooking ? `Latest status: ${selectedBooking.statusLabel}` : 'Conversation thread'}
+              subtitle={
+                selectedBooking
+                  ? `${selectedBooking.bookingCategory === 'previous' ? 'Read only' : 'Live thread'} · Latest status: ${selectedBooking.statusLabel}`
+                  : 'Conversation thread'
+              }
             >
               <div className="space-y-4 rounded-3xl bg-[#EEE8E1] p-4">
                 {thread?.messages?.length ? (
@@ -110,24 +167,30 @@ export default function MessagesUpdates() {
                 )}
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-5 space-y-3">
-                <textarea
-                  value={draft}
-                  onChange={event => setDraft(event.target.value)}
-                  placeholder="Write a message for your planner or support team..."
-                  rows={4}
-                  className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#591902]"
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={!draft.trim() || sendMessageMutation.isPending || !thread?.id}
-                    className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {sendMessageMutation.isPending ? 'Sending...' : 'Send Message'}
-                  </button>
+              {isReadOnlyThread ? (
+                <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-[#6B7280]">
+                  This booking thread is now read only because the booking has moved to previous bookings.
                 </div>
-              </form>
+              ) : (
+                <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+                  <textarea
+                    value={draft}
+                    onChange={event => setDraft(event.target.value)}
+                    placeholder="Write a message for your planner or support team..."
+                    rows={4}
+                    className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#591902]"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={!draft.trim() || sendMessageMutation.isPending || !thread?.id}
+                      className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {sendMessageMutation.isPending ? 'Sending...' : 'Send Message'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </SectionCard>
           )}
         </>

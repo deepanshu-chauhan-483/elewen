@@ -2,13 +2,40 @@ import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 import { DASHBOARD } from '../../constants/dashboard'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
-import { getStoredJwt } from '../../lib/api'
+import { useEffect, useState } from 'react'
+import { getStoredJwt, getValidStoredJwt } from '../../lib/api'
 
 const DashboardLayout = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const token = getStoredJwt()
+  const [token, setToken] = useState(() => getStoredJwt())
+
+  useEffect(() => {
+    const syncToken = () => setToken(getStoredJwt())
+
+    window.addEventListener('elewen-auth-change', syncToken)
+    window.addEventListener('storage', syncToken)
+
+    return () => {
+      window.removeEventListener('elewen-auth-change', syncToken)
+      window.removeEventListener('storage', syncToken)
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    getValidStoredJwt().then(nextToken => {
+      if (!active) return
+      if (nextToken !== token) {
+        setToken(nextToken)
+      }
+    })
+
+    return () => {
+      active = false
+    }
+  }, [token])
 
   useEffect(() => {
     if (token) return

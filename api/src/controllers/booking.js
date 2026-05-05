@@ -62,6 +62,9 @@ const validateCoupon = async (couponId, subtotal) => {
 export const createBooking = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
+    const isSampleTastingCheckout = String(req.body?.checkoutMode ?? '').trim() === 'sample-tasting'
+    const fallbackEventDate = req.body?.eventDate ? new Date(req.body.eventDate) : null
+    const fallbackGuestCount = Number(req.body?.guestCount ?? 0)
 
     const cart = await prisma.cart.findFirst({
       where: { userId },
@@ -71,10 +74,19 @@ export const createBooking = async (req, res, next) => {
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' })
     }
-    if (!cart.eventDate) {
+    const resolvedEventDate =
+      cart.eventDate ??
+      (isSampleTastingCheckout && fallbackEventDate && !Number.isNaN(fallbackEventDate.getTime())
+        ? fallbackEventDate
+        : null)
+    const resolvedGuestCount =
+      cart.guestCount ??
+      (isSampleTastingCheckout ? Math.max(1, fallbackGuestCount || 1) : null)
+
+    if (!resolvedEventDate) {
       return res.status(400).json({ error: 'Event date is required — update your cart first' })
     }
-    if (!cart.guestCount) {
+    if (!resolvedGuestCount) {
       return res.status(400).json({ error: 'Guest count is required — update your cart first' })
     }
 
@@ -108,8 +120,8 @@ export const createBooking = async (req, res, next) => {
         data: {
           userId,
           packageId,
-          eventDate: cart.eventDate,
-          guestCount: cart.guestCount,
+          eventDate: resolvedEventDate,
+          guestCount: resolvedGuestCount,
           status: 'new',
           totalPrice: totalPrice.toFixed(2),
           advanceAmount: advanceAmount.toFixed(2),

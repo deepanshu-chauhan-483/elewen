@@ -23,15 +23,37 @@ function decodeJwtPayload(token) {
   }
 }
 
+function isJwtExpired(token, skewMs = 30 * 1000) {
+  const payload = decodeJwtPayload(token)
+  const expSeconds = Number(payload?.exp ?? 0)
+
+  if (!expSeconds) return false
+
+  return Date.now() >= expSeconds * 1000 - skewMs
+}
+
+function isJwtLike(token) {
+  return typeof token === 'string' && token.split('.').length === 3
+}
+
 function getRawStoredJwt() {
   return localStorage.getItem('elewen_jwt') || localStorage.getItem('accessToken') || ''
 }
 
 export function getStoredJwt() {
   const jwt = getRawStoredJwt()
+
+  if (!jwt) return ''
+
+  if (!isJwtLike(jwt)) {
+    clearStoredJwt()
+    return ''
+  }
+
   if (jwt && !localStorage.getItem('elewen_jwt')) {
     localStorage.setItem('elewen_jwt', jwt)
   }
+
   return jwt
 }
 
@@ -93,6 +115,22 @@ async function refreshJwt() {
   }
 
   return refreshPromise
+}
+
+export async function getValidStoredJwt() {
+  const token = getStoredJwt()
+  if (!token) return ''
+
+  if (!isJwtExpired(token)) {
+    return token
+  }
+
+  try {
+    return await refreshJwt()
+  } catch {
+    clearStoredJwt()
+    return ''
+  }
 }
 
 async function request(method, path, body, opts = {}) {
@@ -201,8 +239,8 @@ export const wishlistRemove = (token, packageId) =>
 
 /* -- Bookings ---------------------------------------------------------------- */
 
-export const bookingCreate = token =>
-  apiPost('/bookings', {}, { headers: { Authorization: `Bearer ${token}` } })
+export const bookingCreate = (token, body = {}) =>
+  apiPost('/bookings', body, { headers: { Authorization: `Bearer ${token}` } })
 
 export const bookingList = (token, params = {}) =>
   apiGet(withQuery('/bookings', params), { headers: { Authorization: `Bearer ${token}` } })

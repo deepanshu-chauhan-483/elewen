@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import {
   authLogout,
+  bookingCancel,
   authMe,
   bookingGet,
   bookingGetTimeline,
@@ -8,11 +10,16 @@ import {
   clearStoredJwt,
   dashboardGetHelp,
   dashboardGetSummary,
+  getValidStoredJwt,
   getStoredJwt,
   messageGetOrCreateThread,
   messageSend,
+  notificationList,
   notificationGetUnreadCount,
+  notificationMarkAllRead,
+  notificationMarkRead,
   sampleTasteList,
+  sampleTasteRecordDecision,
   supportCreate,
   supportGet,
   supportList,
@@ -25,8 +32,41 @@ function createAuthRequiredError(message = 'AUTH_REQUIRED') {
   return error
 }
 
+function useDashboardToken() {
+  const [token, setToken] = useState(() => getStoredJwt())
+
+  useEffect(() => {
+    const syncToken = () => setToken(getStoredJwt())
+
+    window.addEventListener('elewen-auth-change', syncToken)
+    window.addEventListener('storage', syncToken)
+
+    return () => {
+      window.removeEventListener('elewen-auth-change', syncToken)
+      window.removeEventListener('storage', syncToken)
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    getValidStoredJwt().then(nextToken => {
+      if (!active) return
+      if (nextToken !== token) {
+        setToken(nextToken)
+      }
+    })
+
+    return () => {
+      active = false
+    }
+  }, [token])
+
+  return token
+}
+
 async function withDashboardToken(task) {
-  const token = getStoredJwt()
+  const token = await getValidStoredJwt()
   if (!token) {
     throw createAuthRequiredError()
   }
@@ -35,7 +75,7 @@ async function withDashboardToken(task) {
 }
 
 function useAuthedDashboardQuery({ queryKey, queryFn, enabled = true, staleTime = 60 * 1000 }) {
-  const token = getStoredJwt()
+  const token = useDashboardToken()
 
   return useQuery({
     queryKey: [...queryKey, token || 'guest'],
@@ -72,6 +112,23 @@ export function useDashboardNotificationCount() {
     queryFn: async token => {
       const response = await notificationGetUnreadCount(token)
       return Number(response?.count ?? 0)
+    },
+  })
+}
+
+export function useDashboardNotifications(params = {}) {
+  const unreadOnly = params?.unreadOnly === true
+  const limit = Number(params?.limit ?? 10)
+
+  return useAuthedDashboardQuery({
+    queryKey: ['dashboard', 'notifications', unreadOnly ? 'unread' : 'all', limit],
+    staleTime: 15 * 1000,
+    queryFn: async token => {
+      const response = await notificationList(token, { limit, unreadOnly })
+      return {
+        notifications: response?.notifications ?? [],
+        unreadCount: Number(response?.unreadCount ?? 0),
+      }
     },
   })
 }
@@ -177,6 +234,30 @@ export function useDashboardSendMessage() {
   })
 }
 
+export function useDashboardMarkNotificationRead() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: notificationId => withDashboardToken(token => notificationMarkRead(token, notificationId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'notification-count'] })
+    },
+  })
+}
+
+export function useDashboardMarkAllNotificationsRead() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => withDashboardToken(token => notificationMarkAllRead(token)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'notification-count'] })
+    },
+  })
+}
+
 export function useDashboardCreateTicket() {
   const queryClient = useQueryClient()
 
@@ -184,6 +265,40 @@ export function useDashboardCreateTicket() {
     mutationFn: body => withDashboardToken(token => supportCreate(token, body)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'support-tickets'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
+    },
+  })
+}
+
+export function useDashboardCancelBooking() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ bookingId, body }) => withDashboardToken(token => bookingCancel(token, bookingId, body)),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'booking', variables?.bookingId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'booking-timeline', variables?.bookingId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'thread', variables?.bookingId],
+      })
+    },
+  })
+}
+
+export function useDashboardSampleTasteDecision() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ sampleId, body }) =>
+      withDashboardToken(token => sampleTasteRecordDecision(token, sampleId, body)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'sample-tastes'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
     },
   })

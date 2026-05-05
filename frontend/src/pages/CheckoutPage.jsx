@@ -245,22 +245,34 @@ function PaymentOptionPopup({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       {/* BACKDROP */}
-      <div className="fixed inset-0 z-40 bg-blur" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* POPUP */}
-      <div className="relative w-[92%] max-w-md rounded-[20px] bg-white p-5 shadow-xl border border-[#00000033]">
+      <div
+        className="relative z-50 w-full max-w-md rounded-[20px] border border-[#00000033] bg-white p-5 shadow-xl"
+        onClick={e => e.stopPropagation()}
+      >
         {/* HEADER */}
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-[16px] font-semibold " style={{fontFamily: "'Poppins', sans-serif",}}>Choose Your Payment Option</h2>
-            <p className="text-[12px] text-gray-500 mt-1">
+            <h2
+              className="text-[16px] font-semibold"
+              style={{ fontFamily: "'Poppins', sans-serif" }}
+            >
+              Choose Your Payment Option
+            </h2>
+            <p className="mt-1 text-[12px] text-gray-500">
               Secure your booking with an advance or pay in full for added benefits.
             </p>
           </div>
 
-          <button onClick={onClose} className="text-[18px]">
+          <button type="button" onClick={onClose} className="text-[18px] leading-none">
             ✕
           </button>
         </div>
@@ -268,7 +280,7 @@ function PaymentOptionPopup({
         {/* OPTIONS */}
         <div className="mt-5 space-y-5">
           {/* ADVANCE */}
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex cursor-pointer items-start gap-3">
             <input
               type="radio"
               checked={selected === 'advance'}
@@ -281,21 +293,21 @@ function PaymentOptionPopup({
             </div>
 
             <div className="flex-1">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <p className="text-[12px] font-medium">Pay Advance (30%)</p>
                 <p className="text-[14px] font-medium">
                   ₹{Number(advanceAmount).toLocaleString('en-IN')}
                 </p>
               </div>
 
-              <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+              <p className="mt-1 text-[11px] leading-snug text-gray-500">
                 Secure your booking today and pay the remaining amount closer to your event date.
               </p>
             </div>
           </label>
 
           {/* FULL */}
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex cursor-pointer items-start gap-3">
             <input
               type="radio"
               checked={selected === 'full'}
@@ -308,14 +320,14 @@ function PaymentOptionPopup({
             </div>
 
             <div className="flex-1">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <p className="text-[12px] font-medium">Pay Full Amount</p>
                 <p className="text-[14px] font-medium">
                   ₹{Number(fullAmount).toLocaleString('en-IN')}
                 </p>
               </div>
 
-              <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+              <p className="mt-1 text-[11px] leading-snug text-gray-500">
                 Pay the full amount now and get a discount on your total booking.
               </p>
             </div>
@@ -324,10 +336,11 @@ function PaymentOptionPopup({
 
         {/* CTA */}
         <button
+          type="button"
           onClick={() => onConfirm(selected)}
-          className="mt-6 w-full flex items-center justify-between rounded-full bg-[#D4BA8E] py-2 pl-5 pr-2"
+          className="mt-6 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-2 pl-5 pr-2"
         >
-          <span className="text-white text-[14px] font-medium">Confirm Booking</span>
+          <span className="text-[14px] font-medium text-white">Confirm Booking</span>
 
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
             <svg className="h-[18px] w-[18px] text-[#D4BA8E]" viewBox="0 0 20 20" fill="none">
@@ -467,7 +480,21 @@ export default function CheckoutPage() {
         })
       }
 
-      const bookingResponse = await bookingCreate(token)
+      const sampleBookingDate =
+        cart?.eventDate && String(cart.eventDate).slice(0, 10)
+          ? String(cart.eventDate).slice(0, 10)
+          : new Date().toISOString().slice(0, 10)
+
+      const bookingResponse = await bookingCreate(
+        token,
+        isSampleTastingCheckout
+          ? {
+              checkoutMode: 'sample-tasting',
+              eventDate: sampleBookingDate,
+              guestCount: 1,
+            }
+          : {}
+      )
       const booking = bookingResponse?.booking
 
       if (!booking?.id) {
@@ -502,6 +529,40 @@ export default function CheckoutPage() {
         paymentType,
       })
 
+      if (orderResponse?.testMode) {
+        const verifyResponse = await paymentVerify(token, {
+          paymentId: orderResponse.paymentId,
+          razorpayOrderId: orderResponse.razorpayOrderId,
+          razorpayPaymentId: `test_payment_${orderResponse.paymentId}`,
+          razorpaySignature: 'test_signature_bypass',
+          paymentMethod,
+          testBypass: true,
+        })
+
+        setIsSubmitting(false)
+        navigate('/booking-confirmation', {
+          state: {
+            booking: verifyResponse?.booking || booking,
+            payment: {
+              advanceAmount: orderResponse.amount,
+              balanceDue,
+            },
+            checkoutInfo: {
+              fullName,
+              phone,
+              email,
+              eventDate: isSampleTastingCheckout ? sessionDetails.dateLabel : eventDate,
+              eventTime: isSampleTastingCheckout ? sessionDetails.timeLabel : eventTime,
+              eventAddress: isSampleTastingCheckout ? sessionDetails.address : eventAddress,
+              pinCode,
+              guestCount,
+              checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
+            },
+          },
+        })
+        return
+      }
+
       const scriptLoaded = await loadRazorpayScript()
       if (!scriptLoaded || !window.Razorpay) {
         throw new Error('Razorpay checkout could not be loaded.')
@@ -524,7 +585,7 @@ export default function CheckoutPage() {
         },
         handler: async response => {
           try {
-            await paymentVerify(token, {
+            const verifyResponse = await paymentVerify(token, {
               paymentId: orderResponse.paymentId,
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
@@ -534,7 +595,7 @@ export default function CheckoutPage() {
 
             navigate('/booking-confirmation', {
               state: {
-                booking,
+                booking: verifyResponse?.booking || booking,
                 payment: {
                   advanceAmount: orderResponse.amount,
                   balanceDue,

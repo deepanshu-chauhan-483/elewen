@@ -96,6 +96,32 @@ export default function SupportHelp() {
         {help?.responseExpectationText ? (
           <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-[#6B7280]">{help.responseExpectationText}</div>
         ) : null}
+        <div className="mt-4 flex flex-wrap gap-3">
+          {help?.whatsappNumber ? (
+            <a
+              href={`https://wa.me/${String(help.whatsappNumber).replace(/[^\d]/g, '')}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90"
+            >
+              Call / WhatsApp
+            </a>
+          ) : null}
+          {help?.supportEmail ? (
+            <a
+              href={`mailto:${help.supportEmail}`}
+              className="rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
+            >
+              Email
+            </a>
+          ) : null}
+          <a
+            href="/user-dashboard/messages"
+            className="rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
+          >
+            Message Admin
+          </a>
+        </div>
       </SectionCard>
 
       <SectionCard title="Create a Ticket" subtitle="Open a new support request for a booking or a general question.">

@@ -1,4 +1,4 @@
-import { strapiServerGet } from './strapi.js'
+import { strapiGet } from './strapi.js'
 
 const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'
 
@@ -154,7 +154,7 @@ async function fetchPackagesByIds(ids = []) {
     'publicationState=preview',
   ].join('&')
 
-  const result = await strapiServerGet(`/api/packages?${query}`)
+  const result = await strapiGet(`/packages?${query}`)
   return new Map((result?.data ?? []).map(pkg => [String(pkg.id), mapPackagePreview(pkg)]))
 }
 
@@ -169,7 +169,7 @@ async function fetchEventsByIds(ids = []) {
     'publicationState=preview',
   ].join('&')
 
-  const result = await strapiServerGet(`/api/events?${query}`)
+  const result = await strapiGet(`/events?${query}`)
   return new Map((result?.data ?? []).map(event => [String(event.id), mapEventPreview(event)]))
 }
 
@@ -183,7 +183,7 @@ async function fetchAddressesByIds(ids = []) {
     'publicationState=preview',
   ].join('&')
 
-  const result = await strapiServerGet(`/api/addresses?${query}`)
+  const result = await strapiGet(`/addresses?${query}`)
   return new Map((result?.data ?? []).map(address => [String(address.id), mapAddressPreview(address)]))
 }
 
@@ -197,7 +197,7 @@ async function fetchVendorsByIds(ids = []) {
     'publicationState=preview',
   ].join('&')
 
-  const result = await strapiServerGet(`/api/vendors?${query}`)
+  const result = await strapiGet(`/vendors?${query}`)
   return new Map((result?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)]))
 }
 
@@ -376,7 +376,7 @@ export async function enrichSavedPackages(items = []) {
 }
 
 export async function fetchDashboardHelpContent() {
-  const result = await strapiServerGet('/api/global-setting?publicationState=preview')
+  const result = await strapiGet('/global-setting', { publicationState: 'preview' })
   const data = result?.data ?? result ?? {}
 
   return {
