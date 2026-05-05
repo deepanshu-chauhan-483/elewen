@@ -35,7 +35,7 @@ export function getStoredJwt() {
   return jwt
 }
 
-function setStoredJwt(jwt) {
+export function setStoredJwt(jwt) {
   if (!jwt) return
   localStorage.setItem('elewen_jwt', jwt)
   localStorage.setItem('accessToken', jwt)
@@ -52,6 +52,18 @@ function createAuthRequiredError(message = 'AUTH_REQUIRED') {
   const error = new Error(message)
   error.code = 'AUTH_REQUIRED'
   return error
+}
+
+function withQuery(path, params = {}) {
+  const search = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return
+    search.set(key, String(value))
+  })
+
+  const query = search.toString()
+  return query ? `${path}?${query}` : path
 }
 
 async function refreshJwt() {
@@ -192,6 +204,20 @@ export const wishlistRemove = (token, packageId) =>
 export const bookingCreate = token =>
   apiPost('/bookings', {}, { headers: { Authorization: `Bearer ${token}` } })
 
+export const bookingList = (token, params = {}) =>
+  apiGet(withQuery('/bookings', params), { headers: { Authorization: `Bearer ${token}` } })
+
+export const bookingGet = (token, bookingId) =>
+  apiGet(`/bookings/${bookingId}`, { headers: { Authorization: `Bearer ${token}` } })
+
+export const bookingGetTimeline = (token, bookingId) =>
+  apiGet(`/bookings/${bookingId}/timeline`, { headers: { Authorization: `Bearer ${token}` } })
+
+export const bookingCancel = (token, bookingId, body = {}) =>
+  apiPost(`/bookings/${bookingId}/cancel`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const bookingAddNote = (token, bookingId, body) =>
   apiPost(`/bookings/${bookingId}/notes`, body, { headers: { Authorization: `Bearer ${token}` } })
 
@@ -202,6 +228,84 @@ export const paymentCreateOrder = (token, body) =>
 
 export const paymentVerify = (token, body) =>
   apiPost('/payments/verify', body, { headers: { Authorization: `Bearer ${token}` } })
+
+export const paymentGetByBooking = (token, bookingId) =>
+  apiGet(withQuery('/payments', { bookingId }), { headers: { Authorization: `Bearer ${token}` } })
+
+/* -- Sample Taste ----------------------------------------------------------- */
+
+export const sampleTasteList = token =>
+  apiGet('/sample-taste', { headers: { Authorization: `Bearer ${token}` } })
+
+export const sampleTasteGet = (token, sampleId) =>
+  apiGet(`/sample-taste/${sampleId}`, { headers: { Authorization: `Bearer ${token}` } })
+
+export const sampleTasteRecordDecision = (token, sampleId, body) =>
+  apiPost(`/sample-taste/${sampleId}/decision`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+/* -- Messages --------------------------------------------------------------- */
+
+export const messageGetUnreadCount = token =>
+  apiGet('/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } })
+
+export const messageGetOrCreateThread = (token, bookingId) =>
+  apiPost(
+    '/messages/threads',
+    { bookingId },
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+
+export const messageGetThread = (token, bookingId) =>
+  apiGet(`/messages/threads/${bookingId}`, { headers: { Authorization: `Bearer ${token}` } })
+
+export const messageSend = (token, body) =>
+  apiPost('/messages', body, { headers: { Authorization: `Bearer ${token}` } })
+
+/* -- Support ---------------------------------------------------------------- */
+
+export const supportList = (token, params = {}) =>
+  apiGet(withQuery('/support', params), { headers: { Authorization: `Bearer ${token}` } })
+
+export const supportGet = (token, ticketId) =>
+  apiGet(`/support/${ticketId}`, { headers: { Authorization: `Bearer ${token}` } })
+
+export const supportCreate = (token, body) =>
+  apiPost('/support', body, { headers: { Authorization: `Bearer ${token}` } })
+
+export const supportReply = (token, ticketId, body) =>
+  apiPost(`/support/${ticketId}/messages`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+/* -- Notifications ---------------------------------------------------------- */
+
+export const notificationList = (token, params = {}) =>
+  apiGet(withQuery('/notifications', params), {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const notificationGetUnreadCount = token =>
+  apiGet('/notifications/unread-count', { headers: { Authorization: `Bearer ${token}` } })
+
+export const notificationMarkRead = (token, notificationId) =>
+  request('PATCH', `/notifications/${notificationId}/read`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const notificationMarkAllRead = token =>
+  request('PATCH', '/notifications/read-all', null, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+/* -- Dashboard -------------------------------------------------------------- */
+
+export const dashboardGetHelp = token =>
+  apiGet('/dashboard/customer/help', { headers: { Authorization: `Bearer ${token}` } })
+
+export const dashboardGetSummary = token =>
+  apiGet('/dashboard/customer/summary', { headers: { Authorization: `Bearer ${token}` } })
 
 /* ── Consultation ─────────────────────────────────────────────────────────── */
 

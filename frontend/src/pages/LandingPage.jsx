@@ -323,16 +323,17 @@ const PlanEventSection = () => {
                 </span>
                 <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
                   <svg
-                    className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                    className="w-[20px] h-[20px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                    viewBox="0 0 20 20"
                     fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
+                      d="M5.83301 5.83337H14.1663M14.1663 5.83337V14.1667M14.1663 5.83337L5.83301 14.1667"
+                      stroke="#CDB17E"
+                      strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M7 17L17 7M17 7H9M17 7v8"
                     />
                   </svg>
                 </div>
@@ -597,16 +598,17 @@ const PlanEventSection = () => {
                     </span>
                     <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
                       <svg
-                        className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                        className="w-[15px] h-[15px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                        viewBox="0 0 20 20"
                         fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M5.83301 5.83337H14.1663M14.1663 5.83337V14.1667M14.1663 5.83337L5.83301 14.1667"
+                          stroke="#CDB17E"
+                          strokeWidth="1.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M7 17L17 7M17 7H9M17 7v8"
                         />
                       </svg>
                     </div>
@@ -756,7 +758,7 @@ const WhatToPlanSection = () => {
                   {s.cta_label ?? 'View All'}
                 </span>
                 <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
-                  <svg
+                  {/* <svg
                     className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -767,6 +769,21 @@ const WhatToPlanSection = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       d="M7 17L17 7M17 7H9M17 7v8"
+                    />
+                  </svg> */}
+
+                  <svg
+                    className="w-[20px] h-[20px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M5.83301 5.83337H14.1663M14.1663 5.83337V14.1667M14.1663 5.83337L5.83301 14.1667"
+                      stroke="#CDB17E"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </div>
@@ -1037,16 +1054,17 @@ const WhatToPlanSection = () => {
                     </span>
                     <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
                       <svg
-                        className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                        className="w-[15px] h-[15px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                        viewBox="0 0 20 20"
                         fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M5.83301 5.83337H14.1663M14.1663 5.83337V14.1667M14.1663 5.83337L5.83301 14.1667"
+                          stroke="#CDB17E"
+                          strokeWidth="1.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M7 17L17 7M17 7H9M17 7v8"
                         />
                       </svg>
                     </div>
@@ -1908,14 +1926,14 @@ const BetterWaySection = () => {
             </svg>
 
             <h5
-              className="absolute left-[21%] top-1/2 w-[30%]  -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[24px] leading-[0.95] font-serif"
+              className="absolute left-[45%] top-1/2 w-[30%]  -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[24px] leading-[0.95] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               {s.left_label ?? 'Event Planner'}
             </h5>
 
             <h5
-              className="absolute left-[79%] top-1/2 w-[28%] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[24px] leading-[0.95] font-serif"
+              className="absolute left-[55%] top-1/2 w-[28%] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[24px] leading-[0.95] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               {s.right_label ?? 'DIY'}
@@ -1949,14 +1967,14 @@ const BetterWaySection = () => {
 
         {/* --- DIAGRAM TEXTS --- */}
         <h5
-          className="hidden lg:block absolute lg:left-[calc(50%-129px)] xl:left-[calc(50%-150.5px)] lg:top-[576px] xl:top-[742px] lg:w-[160px] xl:w-[185px] -translate-x-1/2 -translate-y-1/2 text-center  text-[#591902] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
+          className="hidden lg:block absolute lg:left-[calc(50%-157px)] xl:left-[calc(50%-183px)] lg:top-[576px] xl:top-[742px] lg:w-[160px] xl:w-[185px] -translate-x-1/2 -translate-y-1/2 text-center  text-[#591902] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.left_label ?? 'Event Planner'}
         </h5>
 
         <h5
-          className="hidden lg:block absolute lg:left-[calc(50%+129px)] xl:left-[calc(50%+150.5px)] lg:top-[576px] xl:top-[742px] lg:w-[68px] xl:w-[80px] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
+          className="hidden lg:block absolute lg:left-[calc(50%+157px)] xl:left-[calc(50%+183px)] lg:top-[576px] xl:top-[742px] lg:w-[68px] xl:w-[80px] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] lg:text-[23px] xl:text-[27px] leading-[1] font-serif"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           {s.right_label ?? 'DIY'}
@@ -2256,7 +2274,7 @@ const ChecklistSection = () => {
       </div>
 
       <h2
-        className="text-[24px] md:text-[61px] leading-[1.1] md:leading-[1] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
+        className="text-[24px] md:text-[61px] leading-[1.1] md:leading-[1.20] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
         <span className="reveal-wrapper">
@@ -2701,7 +2719,7 @@ const PackagesSection = () => {
       {/* --- 1. Top Headings --- */}
       <div className="flex flex-col items-center text-center px-5 md:px-6 z-20 relative pt-0 md:pt-16">
         <h2
-          className="text-[#2D2D2D] text-[24px] md:text-[61px] leading-[1] max-w-[353px] md:max-w-[1050px] mb-[16px] md:mb-6 font-serif reveal-heading"
+          className="text-[#2D2D2D] text-[24px] md:text-[61px] leading-[1.20] max-w-[353px] md:max-w-[1050px] mb-[16px] md:mb-6 font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
@@ -2722,7 +2740,7 @@ const PackagesSection = () => {
         </p>
 
         <h3
-          className="text-[#000000] md:text-[#2D2D2D] text-[20px] md:text-[32px] leading-[1] font-serif reveal-heading"
+          className="text-[#000000] md:text-[#2D2D2D] text-[20px] md:text-[32px] leading-[1.20] font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
@@ -2732,7 +2750,7 @@ const PackagesSection = () => {
       </div>
 
       {/* --- 2. Carousel - 3D cylinder --- */}
-      <div className="relative w-full overflow-x-hidden mt-[24px] md:-mt-10">
+      <div className="relative w-full overflow-x-hidden mt-[24px] md:mt-8">
         {/* Top curved edge (Hidden on mobile to save space, z-0 to stay behind cards) */}
         <div
           className="absolute left-1/2 -translate-x-1/2 top-0 w-[1440px] max-w-[100vw] h-[100px] z-0 pointer-events-none hidden md:block"
@@ -3056,14 +3074,16 @@ const PackagesSection = () => {
           <svg
             width="28"
             height="28"
-            viewBox="0 0 24 24"
+            viewBox="0 0 28 28"
             fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <path d="M15 18l-6-6 6-6" />
+            <path
+              d="M22.167 13.9997H5.83366M5.83366 13.9997L14.0003 22.1663M5.83366 13.9997L14.0003 5.83301"
+              stroke="white"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
 
@@ -3084,14 +3104,16 @@ const PackagesSection = () => {
           <svg
             width="28"
             height="28"
-            viewBox="0 0 24 24"
+            viewBox="0 0 28 28"
             fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <path d="M9 18l6-6-6-6" />
+            <path
+              d="M5.83301 13.9997H22.1663M22.1663 13.9997L13.9997 22.1663M22.1663 13.9997L13.9997 5.83301"
+              stroke="white"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </div>
@@ -3226,7 +3248,7 @@ const CelebrationFeelingSection = () => {
         />
 
         <div className="sticky top-[180px] md:top-[250px] z-10 flex flex-col items-center">
-          <h2 className="w-full max-w-[353px] md:w-[1148px] md:max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[24px] md:text-[48px] lg:text-[96px] leading-[1] md:leading-[1.24] text-center font-malgin drop-shadow-sm px-4 reveal-heading">
+          <h2 className="w-full max-w-[353px] md:w-[1260px] md:max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[24px] md:text-[48px] lg:text-[96px] leading-[1] md:leading-[1.24] text-center font-malgin drop-shadow-sm px-4 reveal-heading">
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 Every celebration <br className="block md:hidden" />
@@ -3438,16 +3460,17 @@ const PlanningGuidesSection = () => {
                 </span>
                 <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm">
                   <svg
-                    className="w-[18px] h-[18px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                    className="w-[20px] h-[20px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                    viewBox="0 0 20 20"
                     fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
+                      d="M5.83301 5.83337H14.1663M14.1663 5.83337V14.1667M14.1663 5.83337L5.83301 14.1667"
+                      stroke="#CDB17E"
+                      strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M7 17L17 7M17 7H9M17 7v8"
                     />
                   </svg>
                 </div>
@@ -3701,16 +3724,17 @@ const PlanningGuidesSection = () => {
                     </span>
                     <div className="w-[27px] h-[27px] bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-sm">
                       <svg
-                        className="w-[15px] h-[15px] text-[#CDB17E] group-hover:rotate-45 transition-transform"
+                        className="w-[15px] h-[15px] text-[#D4BA8E] group-hover:text-[#C6AB7F] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45"
+                        viewBox="0 0 20 20"
                         fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M5.83301 5.83337H14.1663M14.1663 5.83337V14.1667M14.1663 5.83337L5.83301 14.1667"
+                          stroke="#CDB17E"
+                          strokeWidth="1.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M7 17L17 7M17 7H9M17 7v8"
                         />
                       </svg>
                     </div>
@@ -3999,7 +4023,7 @@ const TestimonialsSection = () => {
               className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] bg-[#CDB17E] rounded-[55px] md:rounded-[96px] flex items-center justify-center hover:bg-[#bfa06b] transition-colors shrink-0"
             >
               <svg
-                className="w-[16.18px] h-[16.18px] md:w-[18px] md:h-[18px]"
+                className="w-[20px] h-[20px] md:w-[22px] md:h-[22px]"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="white"
@@ -4038,7 +4062,7 @@ const TestimonialsSection = () => {
               className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] bg-[#CDB17E] rounded-[55px] md:rounded-[96px] flex items-center justify-center hover:bg-[#bfa06b] transition-colors shrink-0"
             >
               <svg
-                className="w-[16.18px] h-[16.18px] md:w-[18px] md:h-[18px]"
+                className="w-[20px] h-[20px] md:w-[22px] md:h-[22px]"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="white"

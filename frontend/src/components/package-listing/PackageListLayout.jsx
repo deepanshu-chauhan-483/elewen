@@ -3,19 +3,22 @@ import NavHeader from '../NavHeader'
 import Footer from '../Footer'
 import CustomSelect from '../common/CustomSelect'
 
-function ArrowIcon({ direction = 'left' }) {
-  const rotationClass = direction === 'right' ? '' : 'rotate-180'
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
 
   return (
     <svg
-      viewBox="0 0 24 24"
-      className={`h-5 w-5 ${rotationClass}`}
+      className={`h-6 w-6 ${rotationClass}`}
+      viewBox="0 0 36 36"
       fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
+      xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M5 12h14" strokeLinecap="round" />
-      <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#FAFAFA"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -130,13 +133,18 @@ export default function PackageListLayout({
             <span className="mr-5 text-[15px] font-medium text-white">{ctaButtonText}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
               <svg
-                className="h-[18px] w-[18px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                viewBox="0 0 20 20"
                 fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2.5"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                <path
+                  d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                  stroke="#CDB17E"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
           </Link>

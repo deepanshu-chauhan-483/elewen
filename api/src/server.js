@@ -21,6 +21,7 @@ import supportRoutes from './routes/support.js'
 import packageRoutes from './routes/package.js'
 import notificationRoutes from './routes/notification.js'
 import wishlistRoutes from './routes/wishlist.js'
+import dashboardRoutes from './routes/dashboard.js'
 import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -100,6 +101,7 @@ app.use('/support', supportRoutes)
 app.use('/packages', packageRoutes)
 app.use('/notifications', notificationRoutes)
 app.use('/wishlist', wishlistRoutes)
+app.use('/dashboard', dashboardRoutes)
 
 // ─── Dev-only test pages ──────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {

@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma.js'
 import { strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
+import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
 
 const DEFAULT_ADVANCE_PCT = 30
 
@@ -221,17 +222,25 @@ export const createBooking = async (req, res, next) => {
 export const listBookings = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
+    const type = String(req.query?.type ?? 'all').trim().toLowerCase()
 
     const bookings = await prisma.booking.findMany({
       where: { userId },
       include: {
         items: true,
         statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+        payments: {
+          where: { status: 'success' },
+          orderBy: { createdAt: 'desc' },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    res.json({ bookings })
+    const enrichedBookings = await enrichBookings(bookings)
+    const filteredBookings = filterBookingsByType(enrichedBookings, type)
+
+    res.json({ bookings: filteredBookings })
   } catch (err) {
     next(err)
   }
@@ -251,13 +260,16 @@ export const getBooking = async (req, res, next) => {
         timeline: { orderBy: { timelineDate: 'asc' } },
         vendorAssignments: true,
         payments: { orderBy: { createdAt: 'desc' } },
+        cancellation: true,
       },
     })
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
-    res.json({ booking })
+    const [enrichedBooking] = await enrichBookings([booking])
+
+    res.json({ booking: enrichedBooking })
   } catch (err) {
     next(err)
   }

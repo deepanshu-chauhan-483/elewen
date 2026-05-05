@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useLenis } from './useLenis'
 import NavHeader from './components/NavHeader'
 import Footer from './components/Footer'
@@ -43,6 +43,15 @@ import Terms from './pages/LegalPages'
 import ContactUsPage from './pages/ContactUsPage'
 import VendorRegistration from './pages/VendorRegistrationForm'
 import FallbackPage from './pages/FallbackScreen'
+import DashboardLayout from './components/dashboard/DashboardLayout'
+import ActiveBookings from './pages/dashboard/ActiveBookings'
+import DashboardSampleTasteBooking from './pages/dashboard/SampleTasteBooking'
+import BookingTimeline from './pages/dashboard/BookingTimeline'
+import BookingDetails from './pages/dashboard/BookingDetails'
+import MessagesUpdates from './pages/dashboard/MessagesUpdates'
+import PreviousBookings from './pages/dashboard/PreviousBookings'
+import SavedPackages from './pages/dashboard/SavedPackages'
+import SupportHelp from './pages/dashboard/SupportHelp'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -82,7 +91,8 @@ function AppLayout() {
     pathname === '/event-flow/bartending-levels' ||
     pathname === '/package-listing' ||
     pathname === '/packages/decor-levels' ||
-    pathname.startsWith('/packages/')
+    pathname.startsWith('/packages/') ||
+    pathname.startsWith('/user-dashboard')
 
   return (
     <>
@@ -102,7 +112,7 @@ function AppLayout() {
         <Route path="/book-consultation" element={<BookConsultationPage />} />
         <Route path="/consultation-confirmation" element={<ConsultationConfirmation />} />
         <Route path="/cart" element={<CartPage />} />
-        <Route path="/single-package-checkout" element={<SinglePackageCheckout />} />
+        <Route path="/single-package-cart" element={<SinglePackageCheckout />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
         <Route path="/sample-test-booking" element={<SampleTasteBooking />} />
@@ -129,6 +139,18 @@ function AppLayout() {
         <Route path="/contact" element={<ContactUsPage />} />
         <Route path="/vendor-registration" element={<VendorRegistration />} />
         <Route path="/fallback-screen" element={<FallbackPage />} />
+
+        <Route path="/user-dashboard" element={<DashboardLayout />}>
+          <Route index element={<Navigate to="active-booking" replace />} />
+          <Route path="active-booking" element={<ActiveBookings />} />
+          <Route path="sample-taste" element={<DashboardSampleTasteBooking />} />
+          <Route path="timeline" element={<BookingTimeline />} />
+          <Route path="details" element={<BookingDetails />} />
+          <Route path="messages" element={<MessagesUpdates />} />
+          <Route path="previous" element={<PreviousBookings />} />
+          <Route path="saved" element={<SavedPackages />} />
+          <Route path="support" element={<SupportHelp />} />
+        </Route>
       </Routes>
       {!hideGlobalChrome && <Footer />}
     </>

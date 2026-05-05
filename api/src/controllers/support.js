@@ -1,7 +1,5 @@
 import prisma from '../lib/prisma.js'
 
-// ─── POST /support ────────────────────────────────────────────────────────────
-// Customer creates a support ticket.
 export const createTicket = async (req, res, next) => {
   try {
     const { bookingId, subject, message, priority = 'medium' } = req.body
@@ -36,7 +34,12 @@ export const createTicket = async (req, res, next) => {
           },
         },
       },
-      include: { messages: true },
+      include: {
+        messages: {
+          where: { isInternalNote: false },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     })
 
     res.status(201).json({ ticket })
@@ -45,15 +48,12 @@ export const createTicket = async (req, res, next) => {
   }
 }
 
-// ─── GET /support ─────────────────────────────────────────────────────────────
-// List tickets. User sees their own; admin query param `all=true` returns all.
 export const getTickets = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
     const { all, status, priority, page = '1', limit = '20' } = req.query
 
     const where = {}
-    // Non-admin users always see only their own tickets
     if (all !== 'true') where.userId = userId
     if (status) where.status = status
     if (priority) where.priority = priority
@@ -69,8 +69,9 @@ export const getTickets = async (req, res, next) => {
         skip,
         include: {
           messages: {
+            where: all === 'true' ? undefined : { isInternalNote: false },
             orderBy: { createdAt: 'desc' },
-            take: 1, // latest message preview
+            take: 1,
           },
         },
       }),
@@ -83,8 +84,6 @@ export const getTickets = async (req, res, next) => {
   }
 }
 
-// ─── GET /support/:id ─────────────────────────────────────────────────────────
-// Get a single ticket with all messages.
 export const getTicket = async (req, res, next) => {
   try {
     const { id } = req.params
@@ -93,17 +92,15 @@ export const getTicket = async (req, res, next) => {
     const ticket = await prisma.supportTicket.findUnique({
       where: { id },
       include: {
-        messages: { orderBy: { createdAt: 'asc' } },
+        messages: {
+          where: { isInternalNote: false },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     })
 
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' })
-
-    // Users can only view their own tickets (admins bypass with any userId)
-    if (ticket.userId !== userId) {
-      // Allow if the caller is an admin — no role system yet, so we allow here
-      // and rely on the frontend/admin panel to gate access
-    }
+    if (ticket.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
     res.json({ ticket })
   } catch (err) {
@@ -111,18 +108,17 @@ export const getTicket = async (req, res, next) => {
   }
 }
 
-// ─── POST /support/:id/messages ───────────────────────────────────────────────
-// Add a reply or internal note to a ticket.
 export const addMessage = async (req, res, next) => {
   try {
     const { id } = req.params
-    const { message, isInternalNote = false, attachmentUrl } = req.body
+    const { message, attachmentUrl } = req.body
     const userId = String(req.user.id)
 
     if (!message) return res.status(400).json({ error: 'message is required' })
 
     const ticket = await prisma.supportTicket.findUnique({ where: { id } })
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' })
+    if (ticket.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
     if (ticket.status === 'closed') {
       return res.status(400).json({ error: 'Cannot reply to a closed ticket' })
     }
@@ -132,13 +128,12 @@ export const addMessage = async (req, res, next) => {
         ticketId: id,
         senderId: userId,
         message,
-        isInternalNote: Boolean(isInternalNote),
+        isInternalNote: false,
         attachmentUrl: attachmentUrl ?? null,
       },
     })
 
-    // Re-open ticket if it was resolved and customer replies
-    if (ticket.status === 'resolved' && ticket.userId === userId) {
+    if (ticket.status === 'resolved') {
       await prisma.supportTicket.update({
         where: { id },
         data: { status: 'in_progress' },
@@ -151,8 +146,6 @@ export const addMessage = async (req, res, next) => {
   }
 }
 
-// ─── PATCH /support/:id ───────────────────────────────────────────────────────
-// (Admin) Update ticket status or priority.
 export const updateTicket = async (req, res, next) => {
   try {
     const { id } = req.params

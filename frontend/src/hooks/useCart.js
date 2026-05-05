@@ -55,6 +55,26 @@ function buildCartItemTitle(title, selectedOptions) {
   return `${title}${CART_META_SEPARATOR}${JSON.stringify({ selectedOptions: normalized })}`
 }
 
+function parseSelectedOptionsFromCartItemTitle(title = '') {
+  const rawTitle = String(title ?? '')
+  const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+  if (!metaPart) return {}
+
+  try {
+    const parsed = JSON.parse(metaPart)
+    return normalizeSelectedOptions(parsed?.selectedOptions)
+  } catch {
+    return {}
+  }
+}
+
+function haveSameSelectedOptions(left, right) {
+  return (
+    JSON.stringify(normalizeSelectedOptions(left)) ===
+    JSON.stringify(normalizeSelectedOptions(right))
+  )
+}
+
 function createGuestCartItemId() {
   return `guest_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 }
@@ -431,6 +451,69 @@ export function useCart() {
       if (!item) throw new Error('Cart item not found')
 
       const normalizedSelectedOptions = normalizeSelectedOptions(selectedOptions)
+      const currentSelectedOptions = parseSelectedOptionsFromCartItemTitle(item.title)
+      const currentQuantity = Math.max(1, Number(item.quantity ?? 1))
+      const isChangingSelection = !haveSameSelectedOptions(
+        currentSelectedOptions,
+        normalizedSelectedOptions
+      )
+
+      if (isChangingSelection && currentQuantity > 1) {
+        const snapshot = await fetchPackageSnapshot(item.packageId)
+        const unitPrice = Number(item.unitPrice ?? snapshot.basePrice ?? 0)
+        const nextSelectionKey = buildSelectionKey(normalizedSelectedOptions)
+        const matchingEditedItem = guestCart.items.find(
+          entry =>
+            entry.id !== item.id &&
+            String(entry.packageId) === String(item.packageId) &&
+            String(entry.packageElementId ?? '') === String(nextSelectionKey ?? '')
+        )
+        const nextItems = guestCart.items.flatMap(entry => {
+          if (entry.id === item.id) {
+            return {
+              ...entry,
+              quantity: currentQuantity - 1,
+              totalPrice: (unitPrice * (currentQuantity - 1)).toFixed(2),
+            }
+          }
+
+          if (matchingEditedItem && entry.id === matchingEditedItem.id) {
+            const mergedQuantity = Math.max(1, Number(entry.quantity ?? 1)) + 1
+            return {
+              ...entry,
+              quantity: mergedQuantity,
+              totalPrice: (Number(entry.unitPrice ?? unitPrice) * mergedQuantity).toFixed(2),
+            }
+          }
+
+          return entry
+        })
+
+        if (!matchingEditedItem) {
+          nextItems.push({
+            id: createGuestCartItemId(),
+            packageId: String(item.packageId),
+            packageElementId: nextSelectionKey,
+            addonId: item.addonId ?? null,
+            title: buildCartItemTitle(
+              String(item.title ?? '').split(CART_META_SEPARATOR)[0] || snapshot.title,
+              normalizedSelectedOptions
+            ),
+            quantity: 1,
+            unitPrice: unitPrice.toFixed(2),
+            totalPrice: unitPrice.toFixed(2),
+            createdAt: new Date().toISOString(),
+          })
+        }
+
+        const nextCart = writeGuestCart({ ...guestCart, items: nextItems })
+        setCart(nextCart)
+        setItemCount(getItemCount(nextCart))
+        setError('')
+        dispatchCartChange(nextCart)
+        return nextCart
+      }
+
       const nextSelectionKey = buildSelectionKey(normalizedSelectedOptions)
       const baseTitle = String(item.title ?? '').split(CART_META_SEPARATOR)[0] || item.title
       const nextTitle = buildCartItemTitle(baseTitle, normalizedSelectedOptions)
@@ -457,7 +540,11 @@ export function useCart() {
           })
           .filter(entry => entry.id !== item.id)
       } else {
-        const nextQuantity = Number(quantity ?? item.quantity ?? 1)
+        const requestedQuantity = Number(quantity ?? item.quantity ?? 1)
+        const nextQuantity =
+          !isChangingSelection && currentQuantity > 1 && requestedQuantity === 1
+            ? currentQuantity
+            : requestedQuantity
         nextItems = guestCart.items.map(entry =>
           entry.id === item.id
             ? {
@@ -480,7 +567,39 @@ export function useCart() {
     }
 
     try {
-      const data = await cartUpdate(token, { itemId, quantity, selectedOptions })
+      const currentItem = (cart?.items ?? []).find(entry => String(entry.id) === String(itemId))
+      const currentQuantity = Math.max(1, Number(currentItem?.quantity ?? 1))
+      const currentSelectedOptions = parseSelectedOptionsFromCartItemTitle(currentItem?.title ?? '')
+      const normalizedSelectedOptions = normalizeSelectedOptions(selectedOptions)
+      const isChangingSelection =
+        currentItem && !haveSameSelectedOptions(currentSelectedOptions, normalizedSelectedOptions)
+
+      if (currentItem && isChangingSelection && currentQuantity > 1) {
+        await cartUpdateItem(token, itemId, { quantity: currentQuantity - 1 })
+        const data = await cartAddItem(token, {
+          packageId: Number(currentItem.packageId),
+          quantity: 1,
+          selectedOptions: normalizedSelectedOptions,
+        })
+        const nextCart = data.cart ?? null
+        setCart(nextCart)
+        setItemCount(getItemCount(nextCart))
+        setError('')
+        dispatchCartChange(nextCart)
+        return nextCart
+      }
+
+      const requestedQuantity = Number(quantity ?? currentItem?.quantity ?? 1)
+      const nextQuantity =
+        currentItem && !isChangingSelection && currentQuantity > 1 && requestedQuantity === 1
+          ? currentQuantity
+          : requestedQuantity
+
+      const data = await cartUpdate(token, {
+        itemId,
+        quantity: nextQuantity,
+        selectedOptions,
+      })
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))

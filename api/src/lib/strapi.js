@@ -184,6 +184,14 @@ export async function strapiGetMe(jwt) {
   return res.json()
 }
 
+// ---------------- GET USER BY ID ----------------
+export async function strapiGetUserById(userId) {
+  return requestJson(`/api/users/${userId}`, {
+    headers: buildHeaders(),
+    prefixApi: false,
+  })
+}
+
 // ---------------- FIND USER BY EMAIL ----------------
 export async function strapiFindUserByEmail(email) {
   const res = await fetch(

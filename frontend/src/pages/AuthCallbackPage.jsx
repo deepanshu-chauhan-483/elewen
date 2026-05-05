@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { authGoogleSession } from '../lib/api'
+import { authGoogleSession, setStoredJwt } from '../lib/api'
 
 function parseAuthErrorDetails(error) {
   const message = String(error?.message ?? '')
@@ -48,9 +48,7 @@ export default function AuthCallbackPage() {
 
     authGoogleSession(access_token)
       .then(({ jwt, user }) => {
-        // Store JWT for use in authenticated API calls
-        localStorage.setItem('elewen_jwt', jwt)
-        window.dispatchEvent(new Event('elewen-auth-change'))
+        setStoredJwt(jwt)
         localStorage.setItem('elewen_user', JSON.stringify(user))
         sessionStorage.removeItem('elewen_auth_origin')
         navigate('/', { replace: true })

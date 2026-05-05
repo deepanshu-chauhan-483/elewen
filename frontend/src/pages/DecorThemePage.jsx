@@ -31,7 +31,7 @@ function ThemeArrow({ direction = 'left' }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className={`h-7 w-7 ${rotationClass}`}
+      className={`h-6 w-6 ${rotationClass}`}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
@@ -151,7 +151,7 @@ export default function DecorThemePage() {
       afterPagination={
         <Link
           to={skipToPackages}
-          className="my-5 flex items-center gap-3 rounded-full bg-[#1F1F1F] px-5 py-2.5 text-[11px] font-medium text-white transition-colors hover:bg-black md:text-[12px]"
+          className="my-5 flex items-center gap-3 rounded-full bg-[#CDB17E] px-5 py-2.5 text-[11px] font-medium text-white transition-colors hover:bg-[#c9ad7f] md:text-[12px]"
         >
           <span>Skip to Package Listing</span>
           <ThemeArrow direction="right" />

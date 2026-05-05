@@ -187,6 +187,14 @@ function getCartItemSummary(item) {
   }
 }
 
+function getCartItemQuantity(item) {
+  return Math.max(1, Number(item?.quantity ?? 1))
+}
+
+function getPriceSummaryCategoryLabel(item) {
+  return getPackageSubtitle(item?.packageData)
+}
+
 function EmptyCart() {
   return (
     <div className="rounded-2xl border border-[#95796066] bg-white p-8 text-center">
@@ -473,6 +481,7 @@ function SinglePackageCard({
   const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
   const packageImage = item.packageData?.images?.[0] ?? ''
   const packageTitle = item.packageData?.title || item.displayTitle
+  const packageQuantity = getCartItemQuantity(item)
   const selectedElements = getSelectedElements(item)
   const packageSubtitle = getPackageSubtitle(item.packageData)
   const eventLocation = detailsForm.eventCity?.trim() || 'Add city / area'
@@ -496,6 +505,11 @@ function SinglePackageCard({
           >
             {packageTitle}
           </h3>
+          {packageQuantity > 1 ? (
+            <p className="mt-1 text-[10px] md:text-[12px] text-[#957960]">
+              {packageQuantity} packages selected
+            </p>
+          ) : null}
           <p className="text-[10px] md:text-[12px] text-[#6A6864]">
             {eventLocation} · {eventDate}
           </p>
@@ -707,6 +721,14 @@ function DeleteIcon() {
   )
 }
 
+const CATEGORY_ICONS = {
+  Decor: '🌸',
+  Catering: '🍽️',
+  Sheesha: '💨',
+  Bartending: '🍸',
+  Furniture: '🪑',
+}
+
 function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
   const groupedItems = cartItems.reduce((groups, item) => {
     const category = getPackageSubtitle(item.packageData)
@@ -717,11 +739,13 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
       return groups
     }
 
+    const icon = CATEGORY_ICONS[category] || ''
+
     groups.push({
       category,
-      icon: '',
+      icon,
       border: 'border-[#95796066]',
-      bg: 'bg-[#FCFAF7]',
+      bg: 'bg-[#F8F4ED]',
       packages: [item],
     })
 
@@ -740,12 +764,15 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
               {group.icon ? `${group.icon} ` : ''}
               {group.category}
             </h2>
-            <span className="text-sm text-gray-500">{group.packages.length} packages</span>
+            <span className="text-sm text-gray-500">
+              {group.packages.reduce((sum, item) => sum + getCartItemQuantity(item), 0)} packages
+            </span>
           </div>
 
-          <div className="space-y-4 p-4">
+          <div className="space-y-4 p-4 bg-[#FFFFFF]">
             {group.packages.map(item => {
               const isPending = pendingItemId === item.id
+              const packageQuantity = getCartItemQuantity(item)
               const packageHref = getCartPackageHref(
                 item.packageData,
                 item.selectedOptions,
@@ -763,25 +790,31 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                   key={item.id}
                   className="relative flex gap-4 rounded-lg border border-[#94949433] bg-[#FFFFFF] p-4"
                 >
-                  <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-lg bg-[#FFFFFF]" />
-
                   <div className="flex-1 pl-2">
                     <div className="flex justify-between gap-4">
-                      {packageHref ? (
-                        <Link
-                          to={packageHref}
-                          className="font-medium text-[#2C2C2C] transition-colors hover:text-[#5A1E0E]"
-                        >
-                          {packageTitle}
-                        </Link>
-                      ) : (
-                        <h3
-                          className="font-medium text-[#2C2C2C]"
-                          style={{ fontFamily: "'Poppins'" }}
-                        >
-                          {packageTitle}
-                        </h3>
-                      )}
+                      <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
+                      <div className="flex min-w-0 items-center gap-2">
+                        {packageHref ? (
+                          <Link
+                            to={packageHref}
+                            className="font-medium text-[#2C2C2C] transition-colors hover:text-[#5A1E0E]"
+                          >
+                            {packageTitle}
+                          </Link>
+                        ) : (
+                          <h3
+                            className="font-medium text-[#2C2C2C]"
+                            style={{ fontFamily: "'Poppins'" }}
+                          >
+                            {packageTitle}
+                          </h3>
+                        )}
+                        {packageQuantity > 1 ? (
+                          <span className="rounded-full bg-[#EFE7DC] px-2 py-1 text-xs font-medium text-[#591902]">
+                            x{packageQuantity}
+                          </span>
+                        ) : null}
+                      </div>
 
                       <div className="text-right">
                         <p className="font-semibold text-[#2C2C2C]">
@@ -795,7 +828,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                       {tags.map(tag => (
                         <span
                           key={`${item.id}-${tag}`}
-                          className="rounded-full bg-[#EFE7DC] px-2 py-1 text-xs text-[#6B4F3B]"
+                          className="rounded-full bg-[#EFE7DC] px-2 py-1 text-xs text-[#591902]"
                         >
                           {tag}
                         </span>
@@ -804,7 +837,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
 
                     <div className="mt-4 flex items-center gap-2">
                       <Link
-                        to={`/single-package-checkout?itemId=${encodeURIComponent(item.id)}`}
+                        to={`/single-package-cart?itemId=${encodeURIComponent(item.id)}`}
                         className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100"
                         aria-label="View package"
                         title="View package"
@@ -898,6 +931,25 @@ function PriceSummaryCard({
     item,
     summary: getCartItemSummary(item),
   }))
+  const categorySummaries = itemSummaries.reduce((groups, entry) => {
+    const category = getPriceSummaryCategoryLabel(entry.item)
+    const existingGroup = groups.find(group => group.category === category)
+
+    if (existingGroup) {
+      existingGroup.total += Number(entry.summary.total ?? 0)
+      existingGroup.count += getCartItemQuantity(entry.item)
+      return groups
+    }
+
+    groups.push({
+      category,
+      total: Number(entry.summary.total ?? 0),
+      count: getCartItemQuantity(entry.item),
+    })
+
+    return groups
+  }, [])
+  const totalPackageCount = cartItems.reduce((sum, item) => sum + getCartItemQuantity(item), 0)
   const computedSubtotal = itemSummaries.reduce(
     (sum, entry) => sum + Number(entry.summary.total ?? 0),
     0
@@ -917,48 +969,60 @@ function PriceSummaryCard({
           <h2 className="text-[16px] font-medium" style={{ fontFamily: "'Poppins'" }}>
             Price Summary
           </h2>
-          <span className="text-sm">{cartItems.length} packages</span>
+          <span className="text-sm">{totalPackageCount} packages</span>
         </div>
 
         <div className="p-5 space-y-4">
           {/* PACKAGES */}
           <div className="space-y-2">
-            {itemSummaries.map(({ item, summary }) => (
-              <div key={item.id} className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[#2C2C2C]">
-                    {singleItem
-                      ? `Base Package — ${item.packageData?.title || item.displayTitle}`
-                      : `${item.packageData?.title || item.displayTitle}`}
-                  </span>
-                  <span className="font-medium">{formatCurrency(summary.total)}</span>
-                </div>
-                {summary.rows.map(row => (
-                  <div
-                    key={`${item.id}-${row.label}`}
-                    className="flex justify-between text-gray-500"
-                  >
-                    <span>{row.label}</span>
-                    <span>{formatCurrency(row.total)}</span>
+            {singleItem
+              ? itemSummaries.map(({ item, summary }) => (
+                  <div key={item.id} className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-[#767676]">
+                        {singleItem
+                          ? `Base Package — ${item.packageData?.title || item.displayTitle}`
+                          : `${item.packageData?.title || item.displayTitle}`}
+                        {getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''}
+                      </span>
+                      <span className="font-medium text-[#1C1C1C]">
+                        {formatCurrency(summary.total)}
+                      </span>
+                    </div>
+                    {summary.rows.map(row => (
+                      <div
+                        key={`${item.id}-${row.label}`}
+                        className="flex justify-between text-gray-500"
+                      >
+                        <span>{row.label}</span>
+                        <span>{formatCurrency(row.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              : categorySummaries.map(group => (
+                  <div key={group.category} className="flex justify-between text-sm">
+                    <span className="text-[#767676]">{group.category}</span>
+                    <span className="font-medium text-[#1C1C1C]">
+                      {formatCurrency(group.total)}
+                    </span>
                   </div>
                 ))}
-              </div>
-            ))}
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
 
           {/* CALCULATIONS */}
-          <div className="space-y-2 text-sm text-gray-600">
+          <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span>Subtotal (before GST)</span>
-              <span>{formatCurrency(computedSubtotal)}</span>
+              <span className="text-[#787575]">Subtotal (before GST)</span>
+              <span className="text-[#1C1C1C]">{formatCurrency(computedSubtotal)}</span>
             </div>
 
             {discountAmount > 0 && (
               <div className="flex justify-between text-[#6B1D0C]">
-                <span>Discount coupon applied</span>
-                <span>-{formatCurrency(discountAmount)}</span>
+                <span className="text-[#787575]">Discount coupon applied</span>
+                <span className="text-[#787575]">-{formatCurrency(discountAmount)}</span>
               </div>
             )}
           </div>
@@ -967,18 +1031,22 @@ function PriceSummaryCard({
 
           {/* TOTAL */}
           <div className="flex justify-between items-center bg-[#F3F0EA] rounded-[12px] px-4 py-3">
-            <span className="font-medium">Total Amount</span>
-            <span className="text-lg font-semibold">{formatCurrency(computedTotal)}</span>
+            <span className="font-medium text-[#1C1C1C]">Total Amount</span>
+            <span className="text-lg font-medium text-[#1C1C1C]">
+              {formatCurrency(computedTotal)}
+            </span>
           </div>
 
           {/* ADVANCE */}
           <div className="flex justify-between items-center bg-[#EFEFEF] rounded-[12px] px-4 py-3">
-            <span className="font-medium">Advance Payable (30%)</span>
-            <span className="text-lg font-semibold">{formatCurrency(advancePayable)}</span>
+            <span className="font-medium text-[#1C1C1C]">Advance Payable (30%)</span>
+            <span className="text-lg font-medium text-[#1C1C1C]">
+              {formatCurrency(advancePayable)}
+            </span>
           </div>
 
           {/* BALANCE */}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-[#767676]">
             Balance: {formatCurrency(balanceDue)} due on event day
           </p>
         </div>
@@ -1031,13 +1099,18 @@ function PriceSummaryCard({
           <span className="mr-5 text-[15px] font-medium text-white">Proceed to Checkout</span>
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
             <svg
-              className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+              className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+              viewBox="0 0 20 20"
               fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2.5"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+              <path
+                d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
         </button>
@@ -1092,7 +1165,35 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   const basePath = `/packages/${serviceSlug}/${packageId}`
   return queryString ? `${basePath}?${queryString}` : basePath
 }
-
+const TrustBadges = () => {
+  const items = [
+    {
+      icon: '✅',
+      text: 'Verified Vendors',
+    },
+    {
+      icon: '💰',
+      text: 'Best Price Guarantee',
+    },
+    {
+      icon: '🔄',
+      text: 'Easy Rescheduling',
+    },
+  ]
+ 
+  return (
+    <div className="mt-4 rounded-xl border border-[#95796066] bg-[#FFFFFF] px-4 py-3">
+      <div className="flex flex-col gap-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center gap-1 text-[12px] text-[#333]">
+            <span className="text-[12px]">{item.icon}</span>
+            <span className="font-medium">{item.text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 export default function CartPage() {
   const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
@@ -1442,6 +1543,7 @@ export default function CartPage() {
                 />
               }
             />
+            <TrustBadges />
           </div>
         </div>
       )}

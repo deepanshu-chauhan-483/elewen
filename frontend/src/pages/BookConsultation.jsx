@@ -329,10 +329,14 @@ const BookConsultationPage = () => {
             <textarea
               name="vision_notes"
               value={form.vision_notes}
-              onChange={handleChange}
+              onChange={e => {
+                handleChange(e)
+                e.target.style.height = 'auto'
+                e.target.style.height = e.target.scrollHeight + 'px'
+              }}
               placeholder="Notes (Optional)"
-              rows={3}
-              className="mt-5 w-full pb-1  pt-2 resize-none border-b border-[#1F1F1F]/20 bg-transparent px-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
+              rows={1}
+              className="mt-5 w-full pt-2 pb-1 resize-none border-b border-[#1F1F1F]/20 bg-transparent px-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90 overflow-hidden"
               style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
             />
 
@@ -363,13 +367,18 @@ const BookConsultationPage = () => {
                 </span>
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                   <svg
-                    className="h-[18px] w-[18px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                    className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                    viewBox="0 0 20 20"
                     fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M9 7h8v8" />
+                    <path
+                      d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                      stroke="#CDB17E"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
               </button>

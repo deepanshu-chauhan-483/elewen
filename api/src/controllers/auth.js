@@ -8,6 +8,7 @@ import {
   strapiServerPost,
   strapiServerPut,
   strapiGetMe,
+  strapiGetUserById,
   strapiFindUserByEmail,
   strapiCreateUser
 } from '../lib/strapi.js'
@@ -369,7 +370,7 @@ export const logout = async (req, res, next) => {
 // ─── GET /auth/me ──────────────────────────────────────────────────────────────
 export const me = async (req, res, next) => {
   try {
-    const user = await strapiGetMe(req.token)
+    const user = await strapiGetUserById(req.user.id)
     const profile = await findCustomerProfile(user.id)
     res.json({ user: sanitizeUser(user), profile: sanitizeProfile(profile) })
   } catch (err) {
