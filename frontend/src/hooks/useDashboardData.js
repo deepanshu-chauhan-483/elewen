@@ -238,7 +238,8 @@ export function useDashboardMarkNotificationRead() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: notificationId => withDashboardToken(token => notificationMarkRead(token, notificationId)),
+    mutationFn: notificationId =>
+      withDashboardToken(token => notificationMarkRead(token, notificationId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'notifications'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'notification-count'] })
@@ -274,7 +275,8 @@ export function useDashboardCancelBooking() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ bookingId, body }) => withDashboardToken(token => bookingCancel(token, bookingId, body)),
+    mutationFn: ({ bookingId, body }) =>
+      withDashboardToken(token => bookingCancel(token, bookingId, body)),
     onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
@@ -308,7 +310,8 @@ export function useDashboardReplyToTicket() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ ticketId, body }) => withDashboardToken(token => supportReply(token, ticketId, body)),
+    mutationFn: ({ ticketId, body }) =>
+      withDashboardToken(token => supportReply(token, ticketId, body)),
     onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'support-tickets'] })
       queryClient.invalidateQueries({

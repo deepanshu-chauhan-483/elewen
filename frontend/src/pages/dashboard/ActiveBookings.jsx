@@ -1,5 +1,11 @@
 import { Link } from 'react-router-dom'
-import { DashboardErrorState, DashboardEmptyState, DashboardLoadingState, DashboardPageIntro, BookingSummaryCard } from '../../components/dashboard/DashboardUI'
+import {
+  DashboardErrorState,
+  DashboardEmptyState,
+  DashboardLoadingState,
+  DashboardPageIntro,
+  BookingSummaryCard,
+} from '../../components/dashboard/DashboardUI'
 import { useDashboardBookings } from '../../hooks/useDashboardData'
 import { formatDashboardCurrency } from '../../components/dashboard/dashboardUtils'
 

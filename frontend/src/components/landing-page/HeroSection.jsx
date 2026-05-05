@@ -81,8 +81,7 @@ const HERO_RIGHT_CARDS_FALLBACK = [
   { label: 'Anniversary', tagline: 'Let us help you celebrate your love story' },
   { label: 'House Party', tagline: 'Turn your home into the party spot' },
 ]
-const getTrailingWWord = (value, fallback) =>
-  String(value ?? fallback).replace(/^[Ww]/, '')
+const getTrailingWWord = (value, fallback) => String(value ?? fallback).replace(/^[Ww]/, '')
 
 const toAbsoluteMediaUrl = url => {
   const value = String(url ?? '').trim()
@@ -815,7 +814,10 @@ const HeroSection = () => {
                 ]
                 const extra = extras[i] ?? ''
                 const resolvedLabel = card.label ? String(card.label).trim() : ''
-                const resolvedDesc = (card.tagline || card.description || card.desc || '') ? String(card.tagline || card.description || card.desc).trim() : ''
+                const resolvedDesc =
+                  card.tagline || card.description || card.desc || ''
+                    ? String(card.tagline || card.description || card.desc).trim()
+                    : ''
 
                 return (
                   <div

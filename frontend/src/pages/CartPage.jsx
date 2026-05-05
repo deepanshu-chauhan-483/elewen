@@ -1180,7 +1180,7 @@ const TrustBadges = () => {
       text: 'Easy Rescheduling',
     },
   ]
- 
+
   return (
     <div className="mt-4 rounded-xl border border-[#95796066] bg-[#FFFFFF] px-4 py-3">
       <div className="flex flex-col gap-2">

@@ -1,7 +1,19 @@
 import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { DashboardEmptyState, DashboardErrorState, DashboardLoadingState, DashboardPageIntro, DashboardSelectorList, SectionCard, StatusPill } from '../../components/dashboard/DashboardUI'
-import { useDashboardBooking, useDashboardBookings, useDashboardBookingTimeline } from '../../hooks/useDashboardData'
+import {
+  DashboardEmptyState,
+  DashboardErrorState,
+  DashboardLoadingState,
+  DashboardPageIntro,
+  DashboardSelectorList,
+  SectionCard,
+  StatusPill,
+} from '../../components/dashboard/DashboardUI'
+import {
+  useDashboardBooking,
+  useDashboardBookings,
+  useDashboardBookingTimeline,
+} from '../../hooks/useDashboardData'
 import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
 
 function titleizeStatus(value = '') {
@@ -11,7 +23,11 @@ function titleizeStatus(value = '') {
 }
 
 export default function BookingTimeline() {
-  const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useDashboardBookings('all')
+  const {
+    data: bookings = [],
+    isLoading: bookingsLoading,
+    error: bookingsError,
+  } = useDashboardBookings('all')
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedBookingId = searchParams.get('bookingId') || ''
 
@@ -24,8 +40,16 @@ export default function BookingTimeline() {
     setSearchParams(next, { replace: true })
   }, [bookings, searchParams, selectedBookingId, setSearchParams])
 
-  const { data: booking, isLoading: bookingLoading, error: bookingError } = useDashboardBooking(selectedBookingId)
-  const { data: timeline = [], isLoading: timelineLoading, error: timelineError } = useDashboardBookingTimeline(selectedBookingId)
+  const {
+    data: booking,
+    isLoading: bookingLoading,
+    error: bookingError,
+  } = useDashboardBooking(selectedBookingId)
+  const {
+    data: timeline = [],
+    isLoading: timelineLoading,
+    error: timelineError,
+  } = useDashboardBookingTimeline(selectedBookingId)
 
   const timelineItems = useMemo(() => {
     if (timeline.length > 0) return timeline
@@ -95,12 +119,21 @@ export default function BookingTimeline() {
                     <div key={item.id} className="rounded-2xl border border-[#E5DED6] bg-white p-5">
                       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                         <div>
-                          <h3 className="text-lg font-medium text-[#2E2E2E]">{item.title || 'Timeline update'}</h3>
-                          <p className="mt-2 text-sm text-[#6B7280]">{item.description || 'Update shared by your team.'}</p>
+                          <h3 className="text-lg font-medium text-[#2E2E2E]">
+                            {item.title || 'Timeline update'}
+                          </h3>
+                          <p className="mt-2 text-sm text-[#6B7280]">
+                            {item.description || 'Update shared by your team.'}
+                          </p>
                         </div>
                         <div className="space-y-2 md:text-right">
-                          <StatusPill label={titleizeStatus(item.status || 'pending')} status={item.status} />
-                          <p className="text-sm text-[#6B7280]">{formatDashboardDate(item.timelineDate)}</p>
+                          <StatusPill
+                            label={titleizeStatus(item.status || 'pending')}
+                            status={item.status}
+                          />
+                          <p className="text-sm text-[#6B7280]">
+                            {formatDashboardDate(item.timelineDate)}
+                          </p>
                         </div>
                       </div>
                     </div>

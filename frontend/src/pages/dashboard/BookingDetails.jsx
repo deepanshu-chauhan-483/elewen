@@ -1,8 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { BookingSummaryCard, DashboardEmptyState, DashboardErrorState, DashboardLoadingState, DashboardPageIntro, DashboardSelectorList, DetailGrid, SectionCard, StatusPill } from '../../components/dashboard/DashboardUI'
-import { useDashboardBooking, useDashboardBookings, useDashboardCancelBooking } from '../../hooks/useDashboardData'
-import { formatDashboardCurrency, formatDashboardDate } from '../../components/dashboard/dashboardUtils'
+import {
+  BookingSummaryCard,
+  DashboardEmptyState,
+  DashboardErrorState,
+  DashboardLoadingState,
+  DashboardPageIntro,
+  DashboardSelectorList,
+  DetailGrid,
+  SectionCard,
+  StatusPill,
+} from '../../components/dashboard/DashboardUI'
+import {
+  useDashboardBooking,
+  useDashboardBookings,
+  useDashboardCancelBooking,
+} from '../../hooks/useDashboardData'
+import {
+  formatDashboardCurrency,
+  formatDashboardDate,
+} from '../../components/dashboard/dashboardUtils'
 
 function PaymentSummary({ booking }) {
   return (
@@ -28,7 +45,11 @@ function PaymentSummary({ booking }) {
 }
 
 export default function BookingDetails() {
-  const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useDashboardBookings('all')
+  const {
+    data: bookings = [],
+    isLoading: bookingsLoading,
+    error: bookingsError,
+  } = useDashboardBookings('all')
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedBookingId = searchParams.get('bookingId') || ''
   const [showCancellationForm, setShowCancellationForm] = useState(false)
@@ -44,7 +65,11 @@ export default function BookingDetails() {
     setSearchParams(next, { replace: true })
   }, [bookings, searchParams, selectedBookingId, setSearchParams])
 
-  const { data: booking, isLoading: bookingLoading, error: bookingError } = useDashboardBooking(selectedBookingId)
+  const {
+    data: booking,
+    isLoading: bookingLoading,
+    error: bookingError,
+  } = useDashboardBooking(selectedBookingId)
 
   useEffect(() => {
     setShowCancellationForm(false)
@@ -107,7 +132,10 @@ export default function BookingDetails() {
                   items={[
                     { label: 'Event', value: booking.event?.name || 'Not assigned yet' },
                     { label: 'Date', value: formatDashboardDate(booking.eventDate) },
-                    { label: 'Guests', value: booking.guestCount ? `${booking.guestCount} guests` : 'Pending' },
+                    {
+                      label: 'Guests',
+                      value: booking.guestCount ? `${booking.guestCount} guests` : 'Pending',
+                    },
                     { label: 'Location', value: booking.locationSummary || 'Venue not shared yet' },
                     { label: 'Status', value: booking.statusLabel },
                     { label: 'Booking ID', value: booking.id },
@@ -115,25 +143,38 @@ export default function BookingDetails() {
                 />
               </SectionCard>
 
-              <SectionCard title="Selected Items" subtitle="Package elements snapped into this booking.">
+              <SectionCard
+                title="Selected Items"
+                subtitle="Package elements snapped into this booking."
+              >
                 {booking.items?.length ? (
                   <div className="space-y-3">
                     {booking.items.map(item => (
-                      <div key={item.id} className="flex flex-col gap-2 rounded-2xl bg-white p-4 md:flex-row md:items-center md:justify-between">
+                      <div
+                        key={item.id}
+                        className="flex flex-col gap-2 rounded-2xl bg-white p-4 md:flex-row md:items-center md:justify-between"
+                      >
                         <div>
                           <p className="text-sm font-medium text-[#2E2E2E]">{item.title}</p>
                           <p className="mt-1 text-xs text-[#6B7280]">Qty {item.quantity}</p>
                         </div>
-                        <div className="text-sm text-[#2E2E2E]">{formatDashboardCurrency(item.totalPrice)}</div>
+                        <div className="text-sm text-[#2E2E2E]">
+                          {formatDashboardCurrency(item.totalPrice)}
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-[#6B7280]">No line items were stored for this booking yet.</p>
+                  <p className="text-sm text-[#6B7280]">
+                    No line items were stored for this booking yet.
+                  </p>
                 )}
               </SectionCard>
 
-              <SectionCard title="Vendor Coordination" subtitle="Assigned partners for this booking.">
+              <SectionCard
+                title="Vendor Coordination"
+                subtitle="Assigned partners for this booking."
+              >
                 {booking.vendorAssignments?.length ? (
                   <div className="space-y-3">
                     {booking.vendorAssignments.map(assignment => (
@@ -144,7 +185,8 @@ export default function BookingDetails() {
                               {assignment.vendor?.companyName || `Vendor #${assignment.vendorId}`}
                             </p>
                             <p className="mt-1 text-xs text-[#6B7280]">
-                              {assignment.vendor?.locationCity || 'City pending'} · {assignment.vendor?.serviceArea || 'Service area pending'}
+                              {assignment.vendor?.locationCity || 'City pending'} ·{' '}
+                              {assignment.vendor?.serviceArea || 'Service area pending'}
                             </p>
                           </div>
                           <StatusPill
@@ -156,7 +198,9 @@ export default function BookingDetails() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-[#6B7280]">Vendor assignments have not been added yet.</p>
+                  <p className="text-sm text-[#6B7280]">
+                    Vendor assignments have not been added yet.
+                  </p>
                 )}
               </SectionCard>
 
@@ -164,26 +208,40 @@ export default function BookingDetails() {
                 {booking.payments?.length ? (
                   <div className="space-y-3">
                     {booking.payments.map(payment => (
-                      <div key={payment.id} className="flex flex-col gap-3 rounded-2xl bg-white p-4 md:flex-row md:items-center md:justify-between">
+                      <div
+                        key={payment.id}
+                        className="flex flex-col gap-3 rounded-2xl bg-white p-4 md:flex-row md:items-center md:justify-between"
+                      >
                         <div>
                           <p className="text-sm font-medium text-[#2E2E2E]">
-                            {String(payment.paymentType || 'payment').replace(/\b\w/g, char => char.toUpperCase())}
+                            {String(payment.paymentType || 'payment').replace(/\b\w/g, char =>
+                              char.toUpperCase()
+                            )}
                           </p>
-                          <p className="mt-1 text-xs text-[#6B7280]">{formatDashboardDate(payment.createdAt)}</p>
+                          <p className="mt-1 text-xs text-[#6B7280]">
+                            {formatDashboardDate(payment.createdAt)}
+                          </p>
                         </div>
                         <div className="flex items-center gap-4">
                           <StatusPill label={payment.status} status={payment.status} />
-                          <span className="text-sm text-[#2E2E2E]">{formatDashboardCurrency(payment.amount)}</span>
+                          <span className="text-sm text-[#2E2E2E]">
+                            {formatDashboardCurrency(payment.amount)}
+                          </span>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-[#6B7280]">No payment records are attached to this booking yet.</p>
+                  <p className="text-sm text-[#6B7280]">
+                    No payment records are attached to this booking yet.
+                  </p>
                 )}
               </SectionCard>
 
-              <SectionCard title="Booking Actions" subtitle="Reach the team or request a cancellation for this booking.">
+              <SectionCard
+                title="Booking Actions"
+                subtitle="Reach the team or request a cancellation for this booking."
+              >
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-wrap gap-3">
                     <Link
@@ -221,7 +279,8 @@ export default function BookingDetails() {
                       className="rounded-2xl bg-white p-4"
                     >
                       <p className="text-sm text-[#6B7280]">
-                        Cancellation policy acknowledgment is required before submitting this request.
+                        Cancellation policy acknowledgment is required before submitting this
+                        request.
                       </p>
                       <textarea
                         value={cancellationReason}
@@ -236,7 +295,9 @@ export default function BookingDetails() {
                           disabled={cancelBookingMutation.isPending}
                           className="rounded-full bg-[#591902] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {cancelBookingMutation.isPending ? 'Submitting...' : 'Proceed Cancellation'}
+                          {cancelBookingMutation.isPending
+                            ? 'Submitting...'
+                            : 'Proceed Cancellation'}
                         </button>
                         <button
                           type="button"

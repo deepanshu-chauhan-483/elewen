@@ -289,11 +289,7 @@ export const messageGetUnreadCount = token =>
   apiGet('/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } })
 
 export const messageGetOrCreateThread = (token, bookingId) =>
-  apiPost(
-    '/messages/threads',
-    { bookingId },
-    { headers: { Authorization: `Bearer ${token}` } }
-  )
+  apiPost('/messages/threads', { bookingId }, { headers: { Authorization: `Bearer ${token}` } })
 
 export const messageGetThread = (token, bookingId) =>
   apiGet(`/messages/threads/${bookingId}`, { headers: { Authorization: `Bearer ${token}` } })

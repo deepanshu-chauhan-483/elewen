@@ -131,9 +131,12 @@ export default function Terms() {
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <div className="w-[254px]  shrink-0" >
+        <div className="w-[254px]  shrink-0">
           <div className="sticky top-[22px] bg-[#FAFAFA] p-5 text-[14px]">
-            <div className="max-h-[calc(90vh-12px)] overflow-y-auto pr-2 hide-scrollbar" data-lenis-prevent>
+            <div
+              className="max-h-[calc(90vh-12px)] overflow-y-auto pr-2 hide-scrollbar"
+              data-lenis-prevent
+            >
               <ul className="space-y-3">
                 {termsData.map(section => (
                   <li key={section.id}>

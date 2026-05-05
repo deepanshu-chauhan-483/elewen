@@ -36,7 +36,10 @@ function normalizeTermsData(data) {
             ? `${section.sectionNumber}. `
             : ''
         const title = `${sectionNumber}${sectionTitleText || `Section ${sectionIndex + 1}`}`.trim()
-        const sectionId = slugify(sectionTitleText || `section-${sectionIndex + 1}`, `section-${sectionIndex + 1}`)
+        const sectionId = slugify(
+          sectionTitleText || `section-${sectionIndex + 1}`,
+          `section-${sectionIndex + 1}`
+        )
         const clauses = Array.isArray(section?.clauses) ? section.clauses : []
 
         const directContent = clauses
@@ -76,7 +79,9 @@ function normalizeTermsData(data) {
           children,
         }
       })
-      .filter(section => section.title && (section.content.length > 0 || section.children.length > 0)),
+      .filter(
+        section => section.title && (section.content.length > 0 || section.children.length > 0)
+      ),
   }
 }
 

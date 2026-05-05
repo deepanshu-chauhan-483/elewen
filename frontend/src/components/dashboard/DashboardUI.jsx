@@ -46,7 +46,9 @@ export function DashboardPageIntro({ title, subtitle, meta }) {
     <div className="space-y-1">
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-serif text-[#2E2E2E]">{title}</h1>
-        {meta ? <span className="text-xs uppercase tracking-[0.18em] text-[#8F8F8F]">{meta}</span> : null}
+        {meta ? (
+          <span className="text-xs uppercase tracking-[0.18em] text-[#8F8F8F]">{meta}</span>
+        ) : null}
       </div>
       {subtitle ? <p className="text-sm text-[#6B7280]">{subtitle}</p> : null}
     </div>
@@ -123,7 +125,9 @@ export function DashboardSelectorList({
             }`}
           >
             <div className="text-sm font-medium text-[#2E2E2E]">{getLabel(item)}</div>
-            {getSubLabel ? <div className="mt-1 text-xs text-[#6B7280]">{getSubLabel(item)}</div> : null}
+            {getSubLabel ? (
+              <div className="mt-1 text-xs text-[#6B7280]">{getSubLabel(item)}</div>
+            ) : null}
           </button>
         )
       })}
@@ -185,7 +189,9 @@ export function BookingSummaryCard({
         </div>
       </div>
 
-      {footerContent ? <div className="mt-6 border-t border-[#E4DED8] pt-5">{footerContent}</div> : null}
+      {footerContent ? (
+        <div className="mt-6 border-t border-[#E4DED8] pt-5">{footerContent}</div>
+      ) : null}
     </div>
   )
 }
@@ -194,7 +200,10 @@ export function DetailGrid({ items }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {items.map(item => (
-        <div key={item.label} className="rounded-2xl bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.03)]">
+        <div
+          key={item.label}
+          className="rounded-2xl bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.03)]"
+        >
           <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">{item.label}</p>
           <p className="mt-2 text-sm text-[#2E2E2E]">{item.value || 'Not shared yet'}</p>
         </div>

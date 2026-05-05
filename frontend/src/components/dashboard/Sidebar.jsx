@@ -100,8 +100,16 @@ export default function Sidebar() {
       </div>
 
       <div className="flex flex-col gap-1 px-4 py-6">
-        <SidebarItem to="/user-dashboard/active-booking" label="Active Booking" Icon={DashboardIcon} />
-        <SidebarItem to="/user-dashboard/sample-taste" label="Sample Taste Booking" Icon={TasteIcon} />
+        <SidebarItem
+          to="/user-dashboard/active-booking"
+          label="Active Booking"
+          Icon={DashboardIcon}
+        />
+        <SidebarItem
+          to="/user-dashboard/sample-taste"
+          label="Sample Taste Booking"
+          Icon={TasteIcon}
+        />
         <SidebarItem to="/user-dashboard/timeline" label="Booking Timeline" Icon={TimelineIcon} />
         <SidebarItem to="/user-dashboard/details" label="Booking Details" Icon={DetailsIcon} />
         <SidebarItem to="/user-dashboard/messages" label="Messages & Updates" Icon={MessageIcon} />

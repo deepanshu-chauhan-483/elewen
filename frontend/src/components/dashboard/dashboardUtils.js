@@ -25,10 +25,7 @@ export function formatDashboardDate(value) {
 }
 
 export function getInitials(value = '') {
-  const parts = String(value)
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
+  const parts = String(value).trim().split(/\s+/).filter(Boolean)
 
   return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')
 }

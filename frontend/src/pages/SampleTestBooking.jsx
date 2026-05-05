@@ -24,7 +24,9 @@ function getServiceLabel(pkg) {
 }
 
 function getPackageItems(pkg, quantity) {
-  const breakdownItems = (Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : [])
+  const breakdownItems = (
+    Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : []
+  )
     .map(entry => {
       const label =
         entry?.label ??
@@ -47,7 +49,12 @@ function getPackageItems(pkg, quantity) {
       const amount = Number(String(amountValue ?? '').replace(/[^0-9.-]+/g, ''))
 
       return label && Number.isFinite(amount) && amount > 0
-        ? { id: `${label}-${amount}`, name: label, desc: 'Included in your selected package', price: amount }
+        ? {
+            id: `${label}-${amount}`,
+            name: label,
+            desc: 'Included in your selected package',
+            price: amount,
+          }
         : null
     })
     .filter(Boolean)
@@ -126,7 +133,10 @@ export default function SampleTasteBooking() {
         if (!SAMPLE_TASTE_SERVICE_SLUGS.has(serviceSlug)) return null
 
         const packageItems = getPackageItems(pkg, Number(item?.quantity ?? 1))
-        const selectedCountText = buildSelectedCountText(packageItems.length, Number(item?.quantity ?? 1))
+        const selectedCountText = buildSelectedCountText(
+          packageItems.length,
+          Number(item?.quantity ?? 1)
+        )
 
         return {
           id: item.id,
@@ -230,7 +240,13 @@ export default function SampleTasteBooking() {
         <div className="flex-1 space-y-6">
           <div className="flex flex-row border border-[#0383E4] bg-[#EAF5FF] rounded-xl px-4 py-3">
             <div className="flex items-start mr-2">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <path
                   d="M9.9974 13.3334V10.0001M9.9974 6.66675H10.0057M18.3307 10.0001C18.3307 14.6025 14.5998 18.3334 9.9974 18.3334C5.39502 18.3334 1.66406 14.6025 1.66406 10.0001C1.66406 5.39771 5.39502 1.66675 9.9974 1.66675C14.5998 1.66675 18.3307 5.39771 18.3307 10.0001Z"
                   stroke="#0383E4"
@@ -262,10 +278,16 @@ export default function SampleTasteBooking() {
 
           <div className="space-y-5">
             {tastingPackages.map(pkg => (
-              <div key={pkg.id} className="border border-[#95796066] rounded-xl overflow-hidden bg-white">
+              <div
+                key={pkg.id}
+                className="border border-[#95796066] rounded-xl overflow-hidden bg-white"
+              >
                 <div className="px-5 py-4 flex justify-between items-start border-b border-[#95796033]">
                   <div>
-                    <h2 className="text-[18px] font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+                    <h2
+                      className="text-[18px] font-medium text-[#2C2C2C]"
+                      style={{ fontFamily: "'Poppins'" }}
+                    >
                       {pkg.title}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">{pkg.desc}</p>
@@ -276,16 +298,26 @@ export default function SampleTasteBooking() {
                   </span>
                 </div>
 
-                <div className="p-4 space-y-3 max-h-[240px] overflow-y-auto pr-1 hide-scrollbar mr-2" data-lenis-prevent>
+                <div
+                  className="p-4 space-y-3 max-h-[240px] overflow-y-auto pr-1 hide-scrollbar mr-2"
+                  data-lenis-prevent
+                >
                   {pkg.items.map(item => (
                     <div
                       key={item.id}
                       className="max-h-[44px] rounded-xl px-4 py-3 flex items-center justify-between gap-4 transition bg-[#E7E7DF]"
                     >
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <input type="checkbox" checked readOnly className="mt-1 accent-[#2C2C2C] shrink-0" />
+                        <input
+                          type="checkbox"
+                          checked
+                          readOnly
+                          className="mt-1 accent-[#2C2C2C] shrink-0"
+                        />
                         <div className="min-w-0">
-                          <p className="text-[#2C2C2C] font-medium text-[12px] leading-5">{item.name}</p>
+                          <p className="text-[#2C2C2C] font-medium text-[12px] leading-5">
+                            {item.name}
+                          </p>
                           <p className="text-gray-500 text-[11px] leading-4 mt-1">{item.desc}</p>
                         </div>
                       </div>
@@ -322,7 +354,10 @@ export default function SampleTasteBooking() {
         <div className="flex-1 space-y-6">
           <div className="border border-[#95796066] rounded-xl p-5 bg-white">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[18px] font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+              <h3
+                className="text-[18px] font-medium text-[#2C2C2C]"
+                style={{ fontFamily: "'Poppins'" }}
+              >
                 Delivery Details
               </h3>
               <span className="text-sm text-gray-500">Standard Est: 3-4 days</span>
@@ -330,7 +365,13 @@ export default function SampleTasteBooking() {
 
             <div className="border-b border-[#2D2D2D] pb-3 flex items-center gap-2">
               <span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path
                     d="M13.3307 6.66658C13.3307 9.99525 9.63806 13.4619 8.39806 14.5326C8.28254 14.6194 8.14193 14.6664 7.9974 14.6664C7.85286 14.6664 7.71225 14.6194 7.59673 14.5326C6.35673 13.4619 2.66406 9.99525 2.66406 6.66658C2.66406 5.2521 3.22597 3.89554 4.22616 2.89535C5.22635 1.89516 6.58291 1.33325 7.9974 1.33325C9.41188 1.33325 10.7684 1.89516 11.7686 2.89535C12.7688 3.89554 13.3307 5.2521 13.3307 6.66658Z"
                     stroke="#1C1C1C"
@@ -355,7 +396,13 @@ export default function SampleTasteBooking() {
             <div className="mt-4 bg-[#FEE6D3] border border-[#F39A2D] rounded-xl p-4 flex items-center justify-between gap-4">
               <div className="flex flex-row gap-x-4">
                 <div className="flex items-center">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path
                       d="M3.33618 11.6667C3.17848 11.6673 3.02387 11.623 2.8903 11.5392C2.75674 11.4554 2.6497 11.3354 2.58163 11.1931C2.51356 11.0509 2.48725 10.8922 2.50576 10.7356C2.52426 10.579 2.58683 10.4309 2.68618 10.3084L10.9362 1.80839C10.9981 1.73696 11.0824 1.68868 11.1753 1.6715C11.2683 1.65431 11.3643 1.66923 11.4476 1.71381C11.531 1.75838 11.5967 1.82997 11.634 1.91681C11.6712 2.00365 11.6779 2.10059 11.6528 2.19172L10.0528 7.20839C10.0057 7.33466 9.98982 7.47049 10.0067 7.60423C10.0235 7.73797 10.0726 7.86562 10.1496 7.97624C10.2266 8.08686 10.3293 8.17715 10.4489 8.23935C10.5685 8.30156 10.7014 8.33383 10.8362 8.33339H16.6695C16.8272 8.33285 16.9818 8.37707 17.1154 8.46091C17.2489 8.54474 17.356 8.66476 17.4241 8.80701C17.4921 8.94926 17.5184 9.1079 17.4999 9.26451C17.4814 9.42111 17.4189 9.56926 17.3195 9.69172L9.06951 18.1917C9.00762 18.2632 8.92329 18.3114 8.83036 18.3286C8.73742 18.3458 8.6414 18.3309 8.55807 18.2863C8.47473 18.2417 8.40902 18.1701 8.37173 18.0833C8.33444 17.9965 8.32778 17.8995 8.35284 17.8084L9.95284 12.7917C10 12.6655 10.0159 12.5296 9.99902 12.3959C9.98217 12.2621 9.93313 12.1345 9.8561 12.0239C9.77907 11.9132 9.67636 11.823 9.55678 11.7608C9.43719 11.6985 9.3043 11.6663 9.16951 11.6667H3.33618Z"
                       fill="#FFAA32"
@@ -417,7 +464,9 @@ export default function SampleTasteBooking() {
                     ))}
                   </div>
 
-                  {index < summaryPackages.length - 1 ? <hr className="my-4 border-[#0000001A]" /> : null}
+                  {index < summaryPackages.length - 1 ? (
+                    <hr className="my-4 border-[#0000001A]" />
+                  ) : null}
                 </div>
               ))}
 

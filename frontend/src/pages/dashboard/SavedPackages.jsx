@@ -1,5 +1,9 @@
 import { Link } from 'react-router-dom'
-import { DashboardEmptyState, DashboardPageIntro, SectionCard } from '../../components/dashboard/DashboardUI'
+import {
+  DashboardEmptyState,
+  DashboardPageIntro,
+  SectionCard,
+} from '../../components/dashboard/DashboardUI'
 import { useWishlist } from '../../hooks/useWishlist'
 import { formatDashboardCurrency } from '../../components/dashboard/dashboardUtils'
 
@@ -31,7 +35,10 @@ export default function SavedPackages() {
       />
 
       {isLoading ? (
-        <SectionCard title="Loading saved packages" subtitle="Fetching your latest wishlist picks." />
+        <SectionCard
+          title="Loading saved packages"
+          subtitle="Fetching your latest wishlist picks."
+        />
       ) : null}
 
       {!isLoading && wishlist.length === 0 ? (
@@ -54,7 +61,9 @@ export default function SavedPackages() {
             action={
               <div className="text-right">
                 <p className="text-sm text-[#8F8F8F]">Starting from</p>
-                <p className="mt-1 text-base text-[#2E2E2E]">{formatDashboardCurrency(item.basePrice)}</p>
+                <p className="mt-1 text-base text-[#2E2E2E]">
+                  {formatDashboardCurrency(item.basePrice)}
+                </p>
               </div>
             }
           >
@@ -73,11 +82,16 @@ export default function SavedPackages() {
 
               <div className="flex-1 space-y-3">
                 <p className="text-sm text-[#6B7280]">
-                  {item.events?.[0]?.name ? `Best suited for ${item.events[0].name}.` : 'Saved for later review.'}
+                  {item.events?.[0]?.name
+                    ? `Best suited for ${item.events[0].name}.`
+                    : 'Saved for later review.'}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {(item.serviceCategories || []).map(category => (
-                    <span key={category.id || category.slug} className="rounded-full bg-white px-3 py-1 text-xs text-[#591902]">
+                    <span
+                      key={category.id || category.slug}
+                      className="rounded-full bg-white px-3 py-1 text-xs text-[#591902]"
+                    >
                       {category.name}
                     </span>
                   ))}

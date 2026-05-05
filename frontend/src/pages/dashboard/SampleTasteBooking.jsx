@@ -75,10 +75,14 @@ export default function SampleTasteBooking() {
                   selectedId={activeSampleId}
                   onSelect={setSelectedSampleId}
                   getLabel={item => item.package?.title || 'Sample Taste Request'}
-                  getSubLabel={item => `${item.statusLabel} · ${formatDashboardDate(item.bookingDate)}`}
+                  getSubLabel={item =>
+                    `${item.statusLabel} · ${formatDashboardDate(item.bookingDate)}`
+                  }
                 />
               ) : (
-                <p className="text-sm text-[#6B7280]">No ongoing sample taste requests right now.</p>
+                <p className="text-sm text-[#6B7280]">
+                  No ongoing sample taste requests right now.
+                </p>
               )}
             </SectionCard>
 
@@ -92,10 +96,14 @@ export default function SampleTasteBooking() {
                   selectedId={activeSampleId}
                   onSelect={setSelectedSampleId}
                   getLabel={item => item.package?.title || 'Sample Taste Request'}
-                  getSubLabel={item => `${item.statusLabel} · ${formatDashboardDate(item.bookingDate)}`}
+                  getSubLabel={item =>
+                    `${item.statusLabel} · ${formatDashboardDate(item.bookingDate)}`
+                  }
                 />
               ) : (
-                <p className="text-sm text-[#6B7280]">Completed sample taste requests will appear here.</p>
+                <p className="text-sm text-[#6B7280]">
+                  Completed sample taste requests will appear here.
+                </p>
               )}
             </SectionCard>
           </div>
@@ -103,10 +111,7 @@ export default function SampleTasteBooking() {
           {selectedSample ? (
             <SectionCard
               title={selectedSample.package?.title || 'Sample Taste Request'}
-              subtitle={[
-                selectedSample.event?.name,
-                `${selectedSample.guestCount || 'TBD'} guests`,
-              ]
+              subtitle={[selectedSample.event?.name, `${selectedSample.guestCount || 'TBD'} guests`]
                 .filter(Boolean)
                 .join(' · ')}
               action={
@@ -118,19 +123,25 @@ export default function SampleTasteBooking() {
             >
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-2xl bg-white p-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Requested For</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+                    Requested For
+                  </p>
                   <p className="mt-2 text-sm text-[#2E2E2E]">
                     {formatDashboardDate(selectedSample.bookingDate)}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white p-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Delivery Date</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+                    Delivery Date
+                  </p>
                   <p className="mt-2 text-sm text-[#2E2E2E]">
                     {formatDashboardDate(selectedSample.deliveryDate)}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white p-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Expiry Window</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+                    Expiry Window
+                  </p>
                   <p className="mt-2 text-sm text-[#2E2E2E]">
                     {typeof selectedSample.daysUntilExpiry === 'number'
                       ? `${Math.max(selectedSample.daysUntilExpiry, 0)} day${
@@ -142,14 +153,18 @@ export default function SampleTasteBooking() {
                 <div className="rounded-2xl bg-white p-4">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Decision</p>
                   <p className="mt-2 text-sm text-[#2E2E2E]">
-                    {selectedSample.decision ? selectedSample.decision.replace(/_/g, ' ') : 'Pending'}
+                    {selectedSample.decision
+                      ? selectedSample.decision.replace(/_/g, ' ')
+                      : 'Pending'}
                   </p>
                 </div>
               </div>
 
               <div className="mt-5 grid gap-5 xl:grid-cols-2">
                 <div className="rounded-2xl bg-white p-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Booking Summary Card</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+                    Booking Summary Card
+                  </p>
                   <p className="mt-3 text-sm text-[#2E2E2E]">
                     {selectedSample.package?.title || 'Sample Taste Request'}
                   </p>
@@ -165,7 +180,10 @@ export default function SampleTasteBooking() {
                   {selectedSample.vendors?.length ? (
                     <div className="mt-3 space-y-3">
                       {selectedSample.vendors.map(vendor => (
-                        <div key={vendor.id} className="rounded-2xl bg-[#F6EEE6] px-4 py-3 text-sm text-[#591902]">
+                        <div
+                          key={vendor.id}
+                          className="rounded-2xl bg-[#F6EEE6] px-4 py-3 text-sm text-[#591902]"
+                        >
                           <p>{vendor.vendor?.companyName || `Vendor #${vendor.vendorId}`}</p>
                           <p className="mt-1 text-xs text-[#8C5A2C]">
                             {vendor.menuItems || 'Menu items will appear here once assigned.'}
@@ -181,7 +199,9 @@ export default function SampleTasteBooking() {
                 </div>
 
                 <div className="rounded-2xl bg-white p-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Feedback Section</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+                    Feedback Section
+                  </p>
                   <textarea
                     value={feedbackDraft[selectedSample.id] || ''}
                     onChange={event =>
@@ -197,7 +217,9 @@ export default function SampleTasteBooking() {
                 </div>
 
                 <div className="rounded-2xl bg-white p-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Primary Decisions</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+                    Primary Decisions
+                  </p>
                   <div className="mt-3 flex flex-wrap gap-3">
                     {selectedSample.status === 'delivered' ? (
                       <>

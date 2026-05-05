@@ -1,12 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { DashboardEmptyState, DashboardErrorState, DashboardLoadingState, DashboardPageIntro, DashboardSelectorList, MessageBubble, SectionCard } from '../../components/dashboard/DashboardUI'
-import { useDashboardBookings, useDashboardSendMessage, useDashboardSession, useDashboardThread } from '../../hooks/useDashboardData'
+import {
+  DashboardEmptyState,
+  DashboardErrorState,
+  DashboardLoadingState,
+  DashboardPageIntro,
+  DashboardSelectorList,
+  MessageBubble,
+  SectionCard,
+} from '../../components/dashboard/DashboardUI'
+import {
+  useDashboardBookings,
+  useDashboardSendMessage,
+  useDashboardSession,
+  useDashboardThread,
+} from '../../hooks/useDashboardData'
 import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
 
 export default function MessagesUpdates() {
   const { data: session } = useDashboardSession()
-  const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useDashboardBookings('all')
+  const {
+    data: bookings = [],
+    isLoading: bookingsLoading,
+    error: bookingsError,
+  } = useDashboardBookings('all')
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedBookingId = searchParams.get('bookingId') || ''
   const [draft, setDraft] = useState('')
@@ -20,7 +37,11 @@ export default function MessagesUpdates() {
     setSearchParams(next, { replace: true })
   }, [bookings, searchParams, selectedBookingId, setSearchParams])
 
-  const { data: thread, isLoading: threadLoading, error: threadError } = useDashboardThread(selectedBookingId)
+  const {
+    data: thread,
+    isLoading: threadLoading,
+    error: threadError,
+  } = useDashboardThread(selectedBookingId)
   const sendMessageMutation = useDashboardSendMessage()
 
   const selectedBooking = useMemo(
@@ -90,7 +111,9 @@ export default function MessagesUpdates() {
                     setSearchParams(next, { replace: true })
                   }}
                   getLabel={item => item.package?.title || item.event?.name || 'Booking'}
-                  getSubLabel={item => `${item.statusLabel} · ${formatDashboardDate(item.eventDate)}`}
+                  getSubLabel={item =>
+                    `${item.statusLabel} · ${formatDashboardDate(item.eventDate)}`
+                  }
                 />
               ) : (
                 <p className="text-sm text-[#6B7280]">No active booking threads right now.</p>
@@ -111,10 +134,14 @@ export default function MessagesUpdates() {
                     setSearchParams(next, { replace: true })
                   }}
                   getLabel={item => item.package?.title || item.event?.name || 'Booking'}
-                  getSubLabel={item => `${item.statusLabel} · ${formatDashboardDate(item.eventDate)}`}
+                  getSubLabel={item =>
+                    `${item.statusLabel} · ${formatDashboardDate(item.eventDate)}`
+                  }
                 />
               ) : (
-                <p className="text-sm text-[#6B7280]">Past booking threads will appear here automatically.</p>
+                <p className="text-sm text-[#6B7280]">
+                  Past booking threads will appear here automatically.
+                </p>
               )}
             </SectionCard>
           </div>
@@ -135,7 +162,11 @@ export default function MessagesUpdates() {
             <DashboardLoadingState title="Loading messages for this booking..." />
           ) : (
             <SectionCard
-              title={selectedBooking?.package?.title || selectedBooking?.event?.name || 'Booking Messages'}
+              title={
+                selectedBooking?.package?.title ||
+                selectedBooking?.event?.name ||
+                'Booking Messages'
+              }
               subtitle={
                 selectedBooking
                   ? `${selectedBooking.bookingCategory === 'previous' ? 'Read only' : 'Live thread'} · Latest status: ${selectedBooking.statusLabel}`
@@ -152,7 +183,9 @@ export default function MessagesUpdates() {
                       />
                       <p
                         className={`text-xs text-[#6B7280] ${
-                          String(message.senderId) === String(session?.user?.id) ? 'text-right' : 'text-left'
+                          String(message.senderId) === String(session?.user?.id)
+                            ? 'text-right'
+                            : 'text-left'
                         }`}
                       >
                         {formatDashboardDate(message.createdAt)}
@@ -169,7 +202,8 @@ export default function MessagesUpdates() {
 
               {isReadOnlyThread ? (
                 <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-[#6B7280]">
-                  This booking thread is now read only because the booking has moved to previous bookings.
+                  This booking thread is now read only because the booking has moved to previous
+                  bookings.
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="mt-5 space-y-3">

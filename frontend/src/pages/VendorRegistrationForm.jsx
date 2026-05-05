@@ -352,7 +352,9 @@ export default function VendorRegistration() {
         verification_document: verificationDocumentPayload,
       })
 
-      setSubmitMessage(response.message || "We've received your application and will review it shortly.")
+      setSubmitMessage(
+        response.message || "We've received your application and will review it shortly."
+      )
       setFormData(INITIAL_FORM)
       setTimeout(() => setSubmitMessage(''), 5000)
     } catch (error) {
