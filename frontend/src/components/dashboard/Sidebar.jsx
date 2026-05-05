@@ -66,10 +66,11 @@ const HelpIcon = ({ isActive }) => (
 
 // 🔹 REUSABLE NAV ITEM
 
-const SidebarItem = ({ to, label, Icon }) => {
+const SidebarItem = ({ to, label, Icon, onClick }) => {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive }) =>
         `flex items-center gap-2 rounded-xl px-4 py-3 text-sm transition-all ${
           isActive ? 'bg-[#E7E0DA]' : ''
@@ -95,39 +96,103 @@ const SidebarItem = ({ to, label, Icon }) => {
 
 // 🔹 SIDEBAR
 
-const Sidebar = () => {
+const CloseIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M5 5L15 15M15 5L5 15" stroke="#591902" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+)
+
+const Sidebar = ({ isMobileOpen = false, onMobileClose = () => {} }) => {
   return (
-    <div
-      className="flex flex-col"
-      style={{
-        width: DASHBOARD.SIDEBAR_WIDTH,
-        backgroundColor: DASHBOARD.COLORS.SIDEBAR_BG,
-      }}
-    >
-      {/* Logo */}
-      <div className="bg-[#FAFAFA] py-5 pl-5">
-        <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
+    <>
+      <div
+        className={`fixed inset-0 z-30 bg-black/30 transition-opacity md:hidden ${
+          isMobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={onMobileClose}
+        aria-hidden="true"
+      />
+
+      <div
+        className={`fixed inset-0 z-40 flex h-screen w-screen flex-col transition-transform duration-300 md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${
+          isMobileOpen ? 'translate-x-0' : 'translate-x-full'
+        } md:flex`}
+        style={{
+          backgroundColor: DASHBOARD.COLORS.SIDEBAR_BG,
+        }}
+      >
+        <div className="flex h-[63px] items-center justify-between border-l-[0.5px] border-[#591902] bg-[#FAFAFA] px-6 md:hidden">
+          <h1 className="text-3xl text-[#591902]">ELEWEN</h1>
+          <button type="button" aria-label="Close sidebar" onClick={onMobileClose}>
+            <CloseIcon />
+          </button>
+        </div>
+
+        {/* Logo */}
+        <div className="hidden h-[63px] w-[260px] border-r-[0.5px] border-[#591902] bg-[#FAFAFA] pl-[40px] pt-[15px] md:block">
+          <h1 className="text-3xl text-[#591902]">ELEWEN</h1>
+        </div>
+
+        {/* Menu */}
+        <div className="flex flex-1 flex-col gap-5 px-5 py-6 sm:px-6 md:gap-1 md:px-4">
+          <SidebarItem
+            to="/dashboard/active-booking"
+            label="Active Booking"
+            Icon={DashboardIcon}
+            onClick={onMobileClose}
+          />
+
+          <SidebarItem
+            to="/dashboard/sample-taste"
+            label="Sample Taste Booking"
+            Icon={TasteIcon}
+            onClick={onMobileClose}
+          />
+
+          <SidebarItem
+            to="/dashboard/timeline"
+            label="Booking Timeline"
+            Icon={TimelineIcon}
+            onClick={onMobileClose}
+          />
+
+          <SidebarItem
+            to="/dashboard/details"
+            label="Booking Details"
+            Icon={DetailsIcon}
+            onClick={onMobileClose}
+          />
+
+          <SidebarItem
+            to="/dashboard/messages"
+            label="Messages & Updates"
+            Icon={MessageIcon}
+            onClick={onMobileClose}
+          />
+
+          <SidebarItem
+            to="/dashboard/previous"
+            label="Previous Bookings"
+            Icon={HistoryIcon}
+            onClick={onMobileClose}
+          />
+
+          <SidebarItem
+            to="/dashboard/saved"
+            label="Saved Packages"
+            Icon={BookmarkIcon}
+            onClick={onMobileClose}
+          />
+
+          <SidebarItem
+            to="/dashboard/support"
+            label="Support & Help"
+            Icon={HelpIcon}
+            onClick={onMobileClose}
+          />
+        </div>
       </div>
-
-      {/* Menu */}
-      <div className="flex flex-col gap-1 px-4 py-6">
-        <SidebarItem to="/dashboard/active-booking" label="Active Booking" Icon={DashboardIcon} />
-
-        <SidebarItem to="/dashboard/sample-taste" label="Sample Taste Booking" Icon={TasteIcon} />
-
-        <SidebarItem to="/dashboard/timeline" label="Booking Timeline" Icon={TimelineIcon} />
-
-        <SidebarItem to="/dashboard/details" label="Booking Details" Icon={DetailsIcon} />
-
-        <SidebarItem to="/dashboard/messages" label="Messages & Updates" Icon={MessageIcon} />
-
-        <SidebarItem to="/dashboard/previous" label="Previous Bookings" Icon={HistoryIcon} />
-
-        <SidebarItem to="/dashboard/saved" label="Saved Packages" Icon={BookmarkIcon} />
-
-        <SidebarItem to="/dashboard/support" label="Support & Help" Icon={HelpIcon} />
-      </div>
-    </div>
+    </>
   )
 }
 
