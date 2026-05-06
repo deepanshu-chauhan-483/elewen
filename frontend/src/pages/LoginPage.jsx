@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
-import { authLogin } from '../lib/api'
+import { authLogin, setStoredJwt } from '../lib/api'
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const confirmed = searchParams.get('confirmed') === 'true'
-  const redirectTarget = searchParams.get('redirect') || '/'
+  const redirectTarget =
+    location.state?.from || decodeURIComponent(searchParams.get('redirect') || '') || '/'
   const authError = searchParams.get('authError') || ''
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,9 +32,8 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const data = await authLogin({ email, password })
-      localStorage.setItem('elewen_jwt', data.jwt)
-      window.dispatchEvent(new Event('elewen-auth-change'))
-      navigate(redirectTarget)
+      setStoredJwt(data.jwt)
+      navigate(redirectTarget, { replace: true })
     } catch (err) {
       if (err.message?.includes('GOOGLE_ACCOUNT_USE_GOOGLE')) {
         setError('This account was created with Google. Please continue with Google to sign in.')

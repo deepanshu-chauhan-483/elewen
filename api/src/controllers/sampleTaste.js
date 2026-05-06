@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma.js'
 import { strapiServerGet } from '../lib/strapi.js'
+import { enrichSampleTastes } from '../lib/dashboardData.js'
 
 const ALLOWED_TRANSITIONS = {
   new: ['assigned', 'cancelled'],
@@ -53,7 +54,7 @@ export const listSampleTastes = async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     })
 
-    res.json({ samples })
+    res.json({ samples: await enrichSampleTastes(samples) })
   } catch (err) {
     next(err)
   }
@@ -72,7 +73,9 @@ export const getSampleTaste = async (req, res, next) => {
     if (!sample) return res.status(404).json({ error: 'Sample taste booking not found' })
     if (sample.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
-    res.json({ sample })
+    const [enrichedSample] = await enrichSampleTastes([sample])
+
+    res.json({ sample: enrichedSample })
   } catch (err) {
     next(err)
   }

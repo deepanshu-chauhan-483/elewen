@@ -35,7 +35,6 @@ export default function CustomSelect({
 
   useEffect(() => {
     if (!isOpen) {
-      setMenuStyle(null)
       blurHandledRef.current = false
       return undefined
     }

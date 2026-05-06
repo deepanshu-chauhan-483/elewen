@@ -370,7 +370,16 @@ export const logout = async (req, res, next) => {
 export const me = async (req, res, next) => {
   try {
     const user = await strapiGetMe(req.token)
-    const profile = await findCustomerProfile(user.id)
+    let profile = null
+
+    try {
+      profile = await findCustomerProfile(user.id)
+    } catch (err) {
+      if (!isStrapiCredentialError(err)) {
+        throw err
+      }
+    }
+
     res.json({ user: sanitizeUser(user), profile: sanitizeProfile(profile) })
   } catch (err) {
     next(err)

@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma.js'
 import { strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
+import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
 
 const DEFAULT_ADVANCE_PCT = 30
 
@@ -61,6 +62,9 @@ const validateCoupon = async (couponId, subtotal) => {
 export const createBooking = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
+    const isSampleTastingCheckout = String(req.body?.checkoutMode ?? '').trim() === 'sample-tasting'
+    const fallbackEventDate = req.body?.eventDate ? new Date(req.body.eventDate) : null
+    const fallbackGuestCount = Number(req.body?.guestCount ?? 0)
 
     const cart = await prisma.cart.findFirst({
       where: { userId },
@@ -70,10 +74,19 @@ export const createBooking = async (req, res, next) => {
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' })
     }
-    if (!cart.eventDate) {
+    const resolvedEventDate =
+      cart.eventDate ??
+      (isSampleTastingCheckout && fallbackEventDate && !Number.isNaN(fallbackEventDate.getTime())
+        ? fallbackEventDate
+        : null)
+    const resolvedGuestCount =
+      cart.guestCount ??
+      (isSampleTastingCheckout ? Math.max(1, fallbackGuestCount || 1) : null)
+
+    if (!resolvedEventDate) {
       return res.status(400).json({ error: 'Event date is required — update your cart first' })
     }
-    if (!cart.guestCount) {
+    if (!resolvedGuestCount) {
       return res.status(400).json({ error: 'Guest count is required — update your cart first' })
     }
 
@@ -107,8 +120,8 @@ export const createBooking = async (req, res, next) => {
         data: {
           userId,
           packageId,
-          eventDate: cart.eventDate,
-          guestCount: cart.guestCount,
+          eventDate: resolvedEventDate,
+          guestCount: resolvedGuestCount,
           status: 'new',
           totalPrice: totalPrice.toFixed(2),
           advanceAmount: advanceAmount.toFixed(2),
@@ -221,17 +234,25 @@ export const createBooking = async (req, res, next) => {
 export const listBookings = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
+    const type = String(req.query?.type ?? 'all').trim().toLowerCase()
 
     const bookings = await prisma.booking.findMany({
       where: { userId },
       include: {
         items: true,
         statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+        payments: {
+          where: { status: 'success' },
+          orderBy: { createdAt: 'desc' },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    res.json({ bookings })
+    const enrichedBookings = await enrichBookings(bookings)
+    const filteredBookings = filterBookingsByType(enrichedBookings, type)
+
+    res.json({ bookings: filteredBookings })
   } catch (err) {
     next(err)
   }
@@ -251,13 +272,16 @@ export const getBooking = async (req, res, next) => {
         timeline: { orderBy: { timelineDate: 'asc' } },
         vendorAssignments: true,
         payments: { orderBy: { createdAt: 'desc' } },
+        cancellation: true,
       },
     })
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
-    res.json({ booking })
+    const [enrichedBooking] = await enrichBookings([booking])
+
+    res.json({ booking: enrichedBooking })
   } catch (err) {
     next(err)
   }

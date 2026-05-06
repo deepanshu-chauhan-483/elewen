@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import ScallopBulbCurtain from './common/ScallopBulbCurtain'
-import { authLogout, getStoredJwt } from '../lib/api'
+import { authLogout, clearStoredJwt, getStoredJwt } from '../lib/api'
 import { useCart } from '../hooks/useCart'
 
 const BASE_LINKS = [
@@ -77,6 +77,7 @@ const GLASS_BLUR_MOBILE = 'blur(1px)'
 const GLASS_BLUR_DESKTOP = 'blur(1px)'
 const BLACK_NAV_ACCENT_PATHS = ['/book-consultation', '/consultation-confirmation']
 const WHITE_NAV_BG_PATHS = ['/faqs', '/legalpages']
+const DASHBOARD_HOME_PATH = '/user-dashboard/active-booking'
 
 const parseRgb = color => {
   const match = color?.match(/rgba?\(([^)]+)\)/i)
@@ -342,11 +343,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     } catch {
       // Ignore logout API failures and continue clearing local session state.
     }
-    localStorage.removeItem('elewen_jwt')
-    localStorage.removeItem('accessToken')
+    clearStoredJwt()
     setIsLoggedIn(false)
     setOpen(false)
-    window.dispatchEvent(new Event('elewen-auth-change'))
     navigate('/')
   }
 
@@ -598,7 +597,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             </button>
             {isLoggedIn ? (
               <Link
-                to="/account"
+                to={DASHBOARD_HOME_PATH}
                 onClick={() => setOpen(false)}
                 aria-label="Dashboard"
                 className={overlayActionClass}
@@ -632,7 +631,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           <div className="ml-auto hidden items-center  gap-3 md:flex">
             {isLoggedIn ? (
               <Link
-                to="/account"
+                to={DASHBOARD_HOME_PATH}
                 onClick={() => setOpen(false)}
                 aria-label="Dashboard"
                 className={overlayActionClass}
@@ -704,23 +703,24 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               {isLoggedIn ? (
                 <div className="flex flex-wrap gap-4">
                   <Link
-                    to="/account"
+                    to={DASHBOARD_HOME_PATH}
                     onClick={() => setOpen(false)}
                     className="group flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F]"
                   >
                     <span className="mr-5 text-[15px] font-medium text-white">My Account</span>
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                       <svg
-                        className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        viewBox="0 0 20 20"
                         fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M7 17L17 7M17 7H9M17 7v8"
                         />
                       </svg>
                     </div>
@@ -733,16 +733,17 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                     <span className="mr-5 text-[15px] font-medium text-white">Logout</span>
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                       <svg
-                        className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        viewBox="0 0 20 20"
                         fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M7 17L17 7M17 7H9M17 7v8"
                         />
                       </svg>
                     </div>

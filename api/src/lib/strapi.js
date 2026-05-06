@@ -7,8 +7,8 @@
  * - Content create/update endpoints expect `{ data: ... }`
  */
 
-const BASE = process.env.STRAPI_URL || 'http://localhost:1337'
-const SERVER_TOKEN = process.env.STRAPI_ADMIN_TOKEN || process.env.STRAPI_API_TOKEN || null
+const getBase = () => process.env.STRAPI_URL || 'http://localhost:1337'
+const getServerToken = () => process.env.STRAPI_ADMIN_TOKEN || process.env.STRAPI_API_TOKEN || null
 
 const normalizePath = (path, { prefixApi = true } = {}) => {
   if (!path.startsWith('/')) return prefixApi ? `/api/${path}` : `/${path}`
@@ -18,8 +18,9 @@ const normalizePath = (path, { prefixApi = true } = {}) => {
 
 const buildHeaders = extraHeaders => {
   const headers = { ...extraHeaders }
-  if (SERVER_TOKEN) {
-    headers.Authorization = `Bearer ${SERVER_TOKEN}`
+  const serverToken = getServerToken()
+  if (serverToken) {
+    headers.Authorization = `Bearer ${serverToken}`
   }
   return headers
 }
@@ -46,7 +47,7 @@ const requestJson = async (
   path,
   { method = 'GET', headers = {}, body, prefixApi = true } = {}
 ) => {
-  const res = await fetch(`${BASE}${normalizePath(path, { prefixApi })}`, {
+  const res = await fetch(`${getBase()}${normalizePath(path, { prefixApi })}`, {
     method,
     headers,
     ...(body !== undefined && { body: JSON.stringify(body) }),
@@ -59,9 +60,28 @@ const requestJson = async (
   return res.json()
 }
 
+const requestRaw = async (path, { method = 'GET', headers = {}, body, prefixApi = true } = {}) => {
+  const res = await fetch(`${getBase()}${normalizePath(path, { prefixApi })}`, {
+    method,
+    headers,
+    ...(body !== undefined && { body }),
+  })
+
+  if (!res.ok) {
+    throw await makeStrapiError(res, `${method} ${path} failed`)
+  }
+
+  const contentType = res.headers.get('content-type') || ''
+  if (contentType.includes('application/json')) {
+    return res.json()
+  }
+
+  return res.text()
+}
+
 // ---------------- GET ----------------
 export async function strapiGet(path, params = {}) {
-  const url = new URL(normalizePath(path), BASE)
+  const url = new URL(normalizePath(path), getBase())
 
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null) {
@@ -84,6 +104,15 @@ export async function strapiPost(path, body) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,
+  })
+}
+
+// ---------------- PUBLIC UPLOAD ----------------
+export async function strapiUpload(path, formData) {
+  return requestRaw(path, {
+    method: 'POST',
+    body: formData,
+    prefixApi: !path.startsWith('/api/'),
   })
 }
 
@@ -133,9 +162,19 @@ export async function strapiServerDelete(path) {
   })
 }
 
+// ---------------- SERVER UPLOAD ----------------
+export async function strapiServerUpload(path, formData) {
+  return requestRaw(path, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: formData,
+    prefixApi: !path.startsWith('/api/'),
+  })
+}
+
 // ---------------- GET ME ----------------
 export async function strapiGetMe(jwt) {
-  const res = await fetch(`${BASE}/api/users/me`, {
+  const res = await fetch(`${getBase()}/api/users/me`, {
     headers: {
       Authorization: `Bearer ${jwt}`,
     },
@@ -145,11 +184,22 @@ export async function strapiGetMe(jwt) {
   return res.json()
 }
 
+// ---------------- GET USER BY ID ----------------
+export async function strapiGetUserById(userId) {
+  return requestJson(`/api/users/${userId}`, {
+    headers: buildHeaders(),
+    prefixApi: false,
+  })
+}
+
 // ---------------- FIND USER BY EMAIL ----------------
 export async function strapiFindUserByEmail(email) {
-  const res = await fetch(`${BASE}/api/users?filters[email][$eq]=${encodeURIComponent(email)}`, {
-    headers: buildHeaders(),
-  })
+  const res = await fetch(
+    `${getBase()}/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
+    {
+      headers: buildHeaders(),
+    }
+  )
 
   if (!res.ok) {
     throw await makeStrapiError(res, 'Failed to find user by email')

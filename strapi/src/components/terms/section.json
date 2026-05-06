@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_terms_sections",
+  "info": {
+    "displayName": "section"
+  },
+  "options": {},
+  "attributes": {
+    "sectionNumber": {
+      "type": "integer"
+    },
+    "title": {
+      "type": "string"
+    },
+    "clauses": {
+      "type": "component",
+      "component": "terms.clause",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

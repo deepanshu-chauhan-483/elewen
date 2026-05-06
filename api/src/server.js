@@ -4,7 +4,8 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 import { readFileSync } from 'fs'
-import { join } from 'path'
+import { join, resolve } from 'path'
+import { fileURLToPath } from 'url'
 import authRoutes from './routes/auth.js'
 import vendorRoutes from './routes/vendor.js'
 import plannerLeadRoutes from './routes/plannerLead.js'
@@ -20,10 +21,13 @@ import supportRoutes from './routes/support.js'
 import packageRoutes from './routes/package.js'
 import notificationRoutes from './routes/notification.js'
 import wishlistRoutes from './routes/wishlist.js'
+import dashboardRoutes from './routes/dashboard.js'
 import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
+dotenv.config({ path: resolve(__dirname, '../../.env') })
 dotenv.config()
 
 const app = express()
@@ -49,7 +53,7 @@ app.use(
 // express.json() would parse and discard the raw body, breaking HMAC verification.
 app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook)
 
-app.use(express.json())
+app.use(express.json({ limit: '15mb' }))
 app.use(cookieParser())
 
 // ─── Swagger UI (CDN-served, no package dependency) ───────────────────────────
@@ -97,6 +101,7 @@ app.use('/support', supportRoutes)
 app.use('/packages', packageRoutes)
 app.use('/notifications', notificationRoutes)
 app.use('/wishlist', wishlistRoutes)
+app.use('/dashboard', dashboardRoutes)
 
 // ─── Dev-only test pages ──────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {

@@ -1,94 +1,83 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useCart } from '../hooks/useCart'
+import { usePackages } from '../hooks/usePackages'
+import { normalizeServiceSlug } from '../lib/packageFilters'
 
-const PACKAGES = [
-  {
-    id: 'royal-feast',
-    title: 'Royal Feast Package',
-    tag: 'Catering',
-    desc: 'A premium multi-course curated for corporate & social events.',
-    items: [
-      {
-        id: 'paneer-tikka',
-        name: 'Paneer Tikka Starter',
-        desc: 'Tandoor smoked, mint chutney',
-        price: '₹180',
-      },
-      {
-        id: 'dal-makhani',
-        name: 'Dal Makhani + Naan',
-        desc: 'Slow-cooked black lentil, butter naan',
-        price: '₹180',
-      },
-      {
-        id: 'mutton-biryani',
-        name: 'Mutton Biryani',
-        desc: 'Dum-cooked, saffron, raita',
-        price: '₹180',
-      },
-      {
-        id: 'gulab-jamun',
-        name: 'Gulab Jamun (Dessert)',
-        desc: 'Rose syrup, warm serve',
-        price: '₹180',
-      },
-      {
-        id: 'gulab-jamun',
-        name: 'Gulab Jamun (Dessert)',
-        desc: 'Rose syrup, warm serve',
-        price: '₹180',
-      },
-      {
-        id: 'gulab-jamun',
-        name: 'Gulab Jamun (Dessert)',
-        desc: 'Rose syrup, warm serve',
-        price: '₹180',
-      },
-    ],
-    selectedCountText: '2 of 12 items selected',
-  },
-  {
-    id: 'signature-bar',
-    title: 'Signature Bar Package',
-    tag: 'Bartending',
-    desc: 'Handcrafted cocktails, mocktails & live bar experience for your tasting.',
-    items: [
-      {
-        id: 'mojito-classic',
-        name: 'Mojito Classic',
-        desc: 'Rum, mint, lime, soda',
-        price: '₹180',
-      },
-      {
-        id: 'mango-tango',
-        name: 'Mango Tango Mocktail',
-        desc: 'Fresh mango, ginger, sparkling water',
-        price: '₹180',
-      },
-      {
-        id: 'old-fashioned',
-        name: 'Old Fashioned',
-        desc: 'Whiskey, bitters, orange peel',
-        price: '₹180',
-      },
-      {
-        id: 'old-fashioned',
-        name: 'Old Fashioned',
-        desc: 'Whiskey, bitters, orange peel',
-        price: '₹180',
-      },
-      {
-        id: 'old-fashioned',
-        name: 'Old Fashioned',
-        desc: 'Whiskey, bitters, orange peel',
-        price: '₹180',
-      },
-    ],
-    selectedCountText: '2 of 3 items selected',
-  },
-]
+const SAMPLE_TASTE_SERVICE_SLUGS = new Set(['catering', 'bartending'])
+const EXPRESS_DELIVERY_FEE = 300
+// const PLATFORM_FEE = 80
+const GST_RATE = 0.18
 
-const SELECTED_ITEMS = new Set(['paneer-tikka', 'dal-makhani', 'mojito-classic', 'mango-tango'])
+function formatCurrency(value) {
+  const amount = Number(value ?? 0)
+  return `Rs${amount.toLocaleString('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`
+}
+
+function getServiceLabel(pkg) {
+  const slug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
+  if (!slug) return 'Package'
+  return slug.replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function getPackageItems(pkg, quantity) {
+  const breakdownItems = (
+    Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : []
+  )
+    .map(entry => {
+      const label =
+        entry?.label ??
+        entry?.title ??
+        entry?.name ??
+        entry?.text ??
+        entry?.description ??
+        entry?.item ??
+        ''
+
+      const amountValue =
+        entry?.amount ??
+        entry?.price ??
+        entry?.value ??
+        entry?.cost ??
+        entry?.total ??
+        entry?.rate ??
+        entry?.base_price
+
+      const amount = Number(String(amountValue ?? '').replace(/[^0-9.-]+/g, ''))
+
+      return label && Number.isFinite(amount) && amount > 0
+        ? {
+            id: `${label}-${amount}`,
+            name: label,
+            desc: 'Included in your selected package',
+            price: amount,
+          }
+        : null
+    })
+    .filter(Boolean)
+
+  if (breakdownItems.length > 0) return breakdownItems
+
+  const inclusionItems = (Array.isArray(pkg?.detail_inclusions) ? pkg.detail_inclusions : [])
+    .filter(Boolean)
+    .slice(0, 6)
+    .map((text, index) => ({
+      id: `${pkg?.id ?? 'pkg'}-inc-${index}`,
+      name: text,
+      desc: 'Included in your selected package',
+      price: Number(pkg?.base_price ?? 0) / Math.max(1, Math.min(quantity || 1, 4)),
+    }))
+
+  return inclusionItems
+}
+
+function buildSelectedCountText(itemCount, quantity) {
+  if (!itemCount) return '0 items selected'
+  return `${Math.min(itemCount, Math.max(1, quantity || 1))} of ${itemCount} items selected`
+}
 
 function EditIcon() {
   return (
@@ -120,6 +109,123 @@ function DeleteIcon() {
 export default function SampleTasteBooking() {
   const [selectedDelivery, setSelectedDelivery] = useState(true)
   const navigate = useNavigate()
+  const location = useLocation()
+  const { cart, loading } = useCart()
+  const { data: packages = [] } = usePackages()
+
+  const packageLookup = useMemo(
+    () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
+    [packages]
+  )
+
+  const incomingSampleTasteItems = location.state?.sampleTasteItems
+  const incomingItems = useMemo(
+    () => (Array.isArray(incomingSampleTasteItems) ? incomingSampleTasteItems : []),
+    [incomingSampleTasteItems]
+  )
+
+  const fallbackCartItems = useMemo(() => {
+    const items = Array.isArray(cart?.items) ? cart.items : []
+
+    return items
+      .map(item => {
+        const pkg = packageLookup.get(String(item.packageId)) ?? null
+        const serviceSlug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
+
+        if (!SAMPLE_TASTE_SERVICE_SLUGS.has(serviceSlug)) return null
+
+        const packageItems = getPackageItems(pkg, Number(item?.quantity ?? 1))
+        const selectedCountText = buildSelectedCountText(
+          packageItems.length,
+          Number(item?.quantity ?? 1)
+        )
+
+        return {
+          id: item.id,
+          title: pkg?.title ?? item?.title ?? 'Selected package',
+          tag: getServiceLabel(pkg),
+          desc: pkg?.description ?? 'Selected from your cart for tasting.',
+          items: packageItems,
+          quantity: Number(item?.quantity ?? 1),
+          totalPrice: Number(item?.totalPrice ?? 0),
+          selectedCountText,
+        }
+      })
+      .filter(Boolean)
+  }, [cart, packageLookup])
+
+  const tastingPackages = useMemo(() => {
+    if (incomingItems.length > 0) {
+      return incomingItems
+        .map(item => {
+          const pkg = item?.packageData ?? null
+          const serviceSlug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
+
+          if (!SAMPLE_TASTE_SERVICE_SLUGS.has(serviceSlug)) return null
+
+          const packageItems = getPackageItems(pkg, Number(item?.quantity ?? 1))
+          const selectedCountText = buildSelectedCountText(
+            packageItems.length,
+            Number(item?.quantity ?? 1)
+          )
+
+          return {
+            id: item.id,
+            title: pkg?.title ?? item?.displayTitle ?? item?.title ?? 'Selected package',
+            tag: getServiceLabel(pkg),
+            desc: pkg?.description ?? 'Selected from your cart for tasting.',
+            items: packageItems,
+            quantity: Number(item?.quantity ?? 1),
+            totalPrice: Number(item?.totalPrice ?? 0),
+            selectedCountText,
+          }
+        })
+        .filter(Boolean)
+    }
+
+    return fallbackCartItems
+  }, [fallbackCartItems, incomingItems])
+
+  const summaryPackages = tastingPackages.map(pkg => ({
+    ...pkg,
+    selectedItems: pkg.items.slice(0, Math.max(1, Math.min(2, pkg.items.length))),
+  }))
+
+  const summaryItemCount = summaryPackages.reduce((sum, pkg) => sum + pkg.selectedItems.length, 0)
+  const subtotal = tastingPackages.reduce((sum, pkg) => sum + pkg.totalPrice, 0)
+  const gstAmount = Math.round(subtotal * GST_RATE)
+  const deliveryFee = tastingPackages.length > 0 ? 80 : 0
+  const expressFee = selectedDelivery ? EXPRESS_DELIVERY_FEE : 0
+  const totalAmount = subtotal + gstAmount + deliveryFee + expressFee
+
+  if (loading && incomingItems.length === 0) {
+    return (
+      <div className="bg-[#FAF9F7] min-h-screen px-4 md:px-8 lg:px-16 py-10 mt-10">
+        <div className="rounded-2xl border border-[#95796066] bg-white p-8 text-center text-gray-500">
+          Loading tasting packages...
+        </div>
+      </div>
+    )
+  }
+
+  if (!tastingPackages.length) {
+    return (
+      <div className="bg-[#FAF9F7] min-h-screen px-4 md:px-8 lg:px-16 py-10 mt-10">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-[#95796066] bg-white p-8 text-center">
+          <p className="text-[24px] font-semibold text-[#1C1C1C]">No tasting packages found</p>
+          <p className="mt-2 text-gray-500">
+            Add catering or bartending packages to your cart to use sample test booking.
+          </p>
+          <Link
+            to="/cart"
+            className="mx-auto mt-6 flex w-fit items-center rounded-full bg-[#D4BA8E] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#C6AB7F]"
+          >
+            Back to Cart
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-[#FAF9F7] min-h-screen px-4 md:px-8 lg:px-16 py-10 mt-10">
@@ -133,7 +239,6 @@ export default function SampleTasteBooking() {
       </div>
 
       <div className="flex flex-col gap-[clamp(24px,5vw,100px)] md:flex-row">
-        {/* LEFT SIDE */}
         <div className="flex-1 space-y-6">
           <div className="flex flex-row border border-[#0383E4] bg-[#EAF5FF] rounded-xl px-4 py-3">
             <div className="flex items-start mr-2">
@@ -154,7 +259,7 @@ export default function SampleTasteBooking() {
             </div>
             <div className="flex flex-col ml-2">
               <p className="text-[#0383E4] text-[12px] font-medium">
-                Items are tasting portions only — not full servings.
+                Items are tasting portions only - not full servings.
               </p>
               <p className="text-[#00477C] text-[11px] mt-1">
                 Your feedback helps confirm your final event order.
@@ -174,7 +279,7 @@ export default function SampleTasteBooking() {
           </div>
 
           <div className="space-y-5">
-            {PACKAGES.map(pkg => (
+            {tastingPackages.map(pkg => (
               <div
                 key={pkg.id}
                 className="border border-[#95796066] rounded-xl overflow-hidden bg-white"
@@ -199,44 +304,36 @@ export default function SampleTasteBooking() {
                   className="p-4 space-y-3 max-h-[240px] overflow-y-auto pr-1 hide-scrollbar mr-2"
                   data-lenis-prevent
                 >
-                  {pkg.items.map(item => {
-                    const selected = SELECTED_ITEMS.has(item.id)
-
-                    return (
-                      <div
-                        key={item.id}
-                        className={`max-h-[44px] rounded-xl px-4 py-3 flex items-center justify-between gap-4 transition ${
-                          selected ? 'bg-[#E7E7DF]' : 'bg-[#F5F5F5]'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            readOnly
-                            className="mt-1 accent-[#2C2C2C] shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <p className="text-[#2C2C2C] font-medium text-[12px] leading-5">
-                              {item.name}
-                            </p>
-                            <p className="text-gray-500 text-[11px] leading-4 mt-1">{item.desc}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 shrink-0">
-                          {selected && (
-                            <div className="flex items-center gap-3 bg-white rounded-full px-3 py-1">
-                              <button className="text-lg leading-none">−</button>
-                              <span className="text-sm">1</span>
-                              <button className="text-lg leading-none">+</button>
-                            </div>
-                          )}
-                          <p className="text-[#2C2C2C] font-medium">{item.price}</p>
+                  {pkg.items.map(item => (
+                    <div
+                      key={item.id}
+                      className="max-h-[44px] rounded-xl px-4 py-3 flex items-center justify-between gap-4 transition bg-[#E7E7DF]"
+                    >
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked
+                          readOnly
+                          className="mt-1 accent-[#2C2C2C] shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[#2C2C2C] font-medium text-[12px] leading-5">
+                            {item.name}
+                          </p>
+                          <p className="text-gray-500 text-[11px] leading-4 mt-1">{item.desc}</p>
                         </div>
                       </div>
-                    )
-                  })}
+
+                      <div className="flex items-center gap-4 shrink-0">
+                        <div className="flex items-center gap-3 bg-white rounded-full px-3 py-1">
+                          <button className="text-lg leading-none">-</button>
+                          <span className="text-sm">{pkg.quantity}</span>
+                          <button className="text-lg leading-none">+</button>
+                        </div>
+                        <p className="text-[#2C2C2C] font-medium">{formatCurrency(item.price)}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="px-5 pb-4 flex items-center justify-between">
@@ -256,7 +353,6 @@ export default function SampleTasteBooking() {
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="flex-1 space-y-6">
           <div className="border border-[#95796066] rounded-xl p-5 bg-white">
             <div className="flex items-center justify-between mb-4">
@@ -294,7 +390,7 @@ export default function SampleTasteBooking() {
               </span>
               <input
                 type="text"
-                placeholder="Enter delivery address"
+                placeholder={cart?.eventCity || 'Enter delivery address'}
                 className="w-full outline-none bg-transparent"
               />
             </div>
@@ -317,10 +413,10 @@ export default function SampleTasteBooking() {
                 </div>
                 <div className="flex flex-col">
                   <h4 className="text-[#E48E03] text-[12px]" style={{ fontFamily: "'Poppins'" }}>
-                    Get it faster — Express Delivery
+                    Get it faster - Express Delivery
                   </h4>
                   <p className="text-[#E48E03] text-[11px] mt-1">
-                    Delivery in 2 days for ₹300 extra
+                    Delivery in 2 days for {formatCurrency(EXPRESS_DELIVERY_FEE)} extra
                   </p>
                 </div>
               </div>
@@ -336,8 +432,8 @@ export default function SampleTasteBooking() {
             </div>
 
             <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-              <span>Standard: ₹0 included</span>
-              <span>Express: +₹300</span>
+              <span>Standard: {formatCurrency(0)} included</span>
+              <span>Express: +{formatCurrency(EXPRESS_DELIVERY_FEE)}</span>
             </div>
           </div>
 
@@ -346,82 +442,64 @@ export default function SampleTasteBooking() {
               <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
                 Tasting Summary
               </h3>
-              <span className="text-sm">4 items selected</span>
+              <span className="text-sm">{summaryItemCount} items selected</span>
             </div>
 
             <div className="p-5 space-y-5">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-[#2C2C2C]">Royal Feast Package</p>
-                    <span className="bg-[#E7E0DA] text-[#591902] text-[12px] px-2 py-1 rounded-full">
-                      Catering
-                    </span>
+              {summaryPackages.map((pkg, index) => (
+                <div key={pkg.id}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-[#2C2C2C]">{pkg.title}</p>
+                      <span className="bg-[#E7E0DA] text-[#591902] text-[12px] px-2 py-1 rounded-full">
+                        {pkg.tag}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Paneer Tikka Starter</span>
-                    <span>₹180</span>
+                  <div className="space-y-2 text-sm">
+                    {pkg.selectedItems.map(item => (
+                      <div key={item.id} className="flex justify-between">
+                        <span className="text-gray-600">{item.name}</span>
+                        <span>{formatCurrency(item.price)}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Dal Makhani + Naan</span>
-                    <span>₹240</span>
-                  </div>
-                </div>
-              </div>
 
-              <hr className="my-4 border-[#0000001A]" />
-
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <p className="font-medium text-[#2C2C2C]">Signature Bar Pkg</p>
-                  <span className="bg-[#E7E0DA] text-[#591902] text-[12px] px-2 py-1 rounded-full">
-                    Bartending
-                  </span>
+                  {index < summaryPackages.length - 1 ? (
+                    <hr className="my-4 border-[#0000001A]" />
+                  ) : null}
                 </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Mojito Classic</span>
-                    <span>₹200</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Mango Tango Mocktail</span>
-                    <span>₹150</span>
-                  </div>
-                </div>
-              </div>
+              ))}
 
               <hr className="my-4 border-[#0000001A]" />
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Subtotal (4 items)</span>
-                  <span>₹770</span>
+                  <span className="text-gray-500">Subtotal ({summaryItemCount} items)</span>
+                  <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">GST (18%)</span>
-                  <span>₹120</span>
+                  <span>{formatCurrency(gstAmount)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Delivery Fee</span>
-                  <span>₹80</span>
+                  <span>{formatCurrency(deliveryFee)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Express Delivery</span>
-                  <span className="text-[#E48E03]">+₹300</span>
+                  <span className="text-[#E48E03]">+{formatCurrency(expressFee)}</span>
                 </div>
-                <div className="flex justify-between">
+                {/* <div className="flex justify-between">
                   <span className="text-gray-500">Platform Fee</span>
-                  <span>₹80</span>
-                </div>
+                  <span>{formatCurrency(PLATFORM_FEE)}</span>
+                </div> */}
               </div>
 
               <div className="bg-[#F8F4ED] rounded-lg px-4 py-3 flex justify-between items-center font-medium">
                 <span>Total Amount</span>
-                <span>₹1,180</span>
+                <span>{formatCurrency(totalAmount)}</span>
               </div>
             </div>
           </div>
@@ -437,9 +515,9 @@ export default function SampleTasteBooking() {
                   state: {
                     checkoutMode: 'sample-tasting',
                     sampleSessionDetails: {
-                      dateLabel: 'Saturday, 14 June',
+                      dateLabel: cart?.eventDate || 'Saturday, 14 June',
                       timeLabel: '2:00 PM',
-                      address: 'E-22 Vaishali nagar, jaipur, rajasthan',
+                      address: cart?.eventCity || 'E-22 Vaishali nagar, jaipur, rajasthan',
                     },
                   },
                 })

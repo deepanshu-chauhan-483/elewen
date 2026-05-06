@@ -1,8 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { DASHBOARD } from '../../constants/dashboard'
 
-// 🔹 ICONS (all defined here, reusable)
-
 const DashboardIcon = ({ isActive }) => (
   <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
     <rect x="2" y="2" width="5" height="5" rx="1" stroke={isActive ? '#591902' : '#E7E0DA'} />
@@ -72,15 +70,12 @@ const SidebarItem = ({ to, label, Icon, onClick }) => {
       to={to}
       onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center gap-2 rounded-xl px-4 py-3 text-sm transition-all ${
-          isActive ? 'bg-[#E7E0DA]' : ''
-        }`
+        `flex items-center gap-2 rounded-xl px-4 py-3 text-sm transition-all ${isActive ? 'bg-[#E7E0DA]' : ''}`
       }
     >
       {({ isActive }) => (
         <>
           <Icon isActive={isActive} />
-
           <span
             style={{
               color: isActive ? DASHBOARD.COLORS.ACTIVE_TEXT : DASHBOARD.COLORS.SIDEBAR_TEXT,
@@ -94,15 +89,13 @@ const SidebarItem = ({ to, label, Icon, onClick }) => {
   )
 }
 
-// 🔹 SIDEBAR
-
 const CloseIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
     <path d="M5 5L15 15M15 5L5 15" stroke="#591902" strokeWidth="1.8" strokeLinecap="round" />
   </svg>
 )
 
-const Sidebar = ({ isMobileOpen = false, onMobileClose = () => {} }) => {
+export default function Sidebar({ isMobileOpen = false, onMobileClose = () => {} }) {
   return (
     <>
       <div
@@ -113,87 +106,76 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose = () => {} }) => {
         aria-hidden="true"
       />
 
-      <div
+      <aside
         className={`fixed inset-0 z-40 flex h-screen w-screen flex-col transition-transform duration-300 md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${
           isMobileOpen ? 'translate-x-0' : 'translate-x-full'
-        } md:flex`}
+        }`}
         style={{
           backgroundColor: DASHBOARD.COLORS.SIDEBAR_BG,
         }}
       >
-        <div className="flex h-[63px] items-center justify-between border-l-[0.5px] border-[#591902] bg-[#FAFAFA] px-6 md:hidden">
-          <h1 className="text-3xl text-[#591902]">ELEWEN</h1>
+        <div className="flex h-[63px] items-center justify-between bg-[#FAFAFA] px-6 md:hidden">
+          <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
           <button type="button" aria-label="Close sidebar" onClick={onMobileClose}>
             <CloseIcon />
           </button>
         </div>
 
-        {/* Logo */}
-        <div className="hidden h-[63px] w-[260px] border-r-[0.5px] border-[#591902] bg-[#FAFAFA] pl-[40px] pt-[15px] md:block">
-          <h1 className="text-3xl text-[#591902]">ELEWEN</h1>
+        <div className="hidden bg-[#FAFAFA] py-4 pl-5 h-[66px] md:block border-r-[0.5px] border-[#591902]">
+          <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
         </div>
 
-        {/* Menu */}
-        <div className="flex flex-1 flex-col gap-5 px-5 py-6 sm:px-6 md:gap-1 md:px-4">
+        <div className="flex flex-col gap-1 px-4 pt-6">
           <SidebarItem
-            to="/dashboard/active-booking"
+            to="/user-dashboard/active-booking"
             label="Active Booking"
             Icon={DashboardIcon}
             onClick={onMobileClose}
           />
-
           <SidebarItem
-            to="/dashboard/sample-taste"
+            to="/user-dashboard/sample-taste"
             label="Sample Taste Booking"
             Icon={TasteIcon}
             onClick={onMobileClose}
           />
-
           <SidebarItem
-            to="/dashboard/timeline"
+            to="/user-dashboard/timeline"
             label="Booking Timeline"
             Icon={TimelineIcon}
             onClick={onMobileClose}
           />
-
           <SidebarItem
-            to="/dashboard/details"
+            to="/user-dashboard/details"
             label="Booking Details"
             Icon={DetailsIcon}
             onClick={onMobileClose}
           />
-
           <SidebarItem
-            to="/dashboard/messages"
+            to="/user-dashboard/messages"
             label="Messages & Updates"
             Icon={MessageIcon}
             onClick={onMobileClose}
           />
-
           <SidebarItem
-            to="/dashboard/previous"
+            to="/user-dashboard/previous"
             label="Previous Bookings"
             Icon={HistoryIcon}
             onClick={onMobileClose}
           />
-
           <SidebarItem
-            to="/dashboard/saved"
+            to="/user-dashboard/saved"
             label="Saved Packages"
             Icon={BookmarkIcon}
             onClick={onMobileClose}
           />
-
           <SidebarItem
-            to="/dashboard/support"
+            to="/user-dashboard/support"
             label="Support & Help"
             Icon={HelpIcon}
             onClick={onMobileClose}
           />
         </div>
-      </div>
+      </aside>
     </>
   )
 }
-
-export default Sidebar

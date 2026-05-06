@@ -1,7 +1,5 @@
 import prisma from '../lib/prisma.js'
 
-// ─── POST /messages/threads ───────────────────────────────────────────────────
-// Get or create a message thread for a booking (idempotent).
 export const getOrCreateThread = async (req, res, next) => {
   try {
     const { bookingId } = req.body
@@ -11,11 +9,7 @@ export const getOrCreateThread = async (req, res, next) => {
 
     const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
-
-    // Only the booking owner or admins should access — check ownership
-    if (booking.userId !== userId) {
-      // allow through for admins (no role check here — enforce at route level if needed)
-    }
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
     const thread = await prisma.messageThread.upsert({
       where: { bookingId },
@@ -35,8 +29,6 @@ export const getOrCreateThread = async (req, res, next) => {
   }
 }
 
-// ─── GET /messages/threads/:bookingId ─────────────────────────────────────────
-// Get thread + all messages for a booking.
 export const getThread = async (req, res, next) => {
   try {
     const { bookingId } = req.params
@@ -45,6 +37,7 @@ export const getThread = async (req, res, next) => {
     const thread = await prisma.messageThread.findUnique({
       where: { bookingId },
       include: {
+        booking: true,
         messages: {
           orderBy: { createdAt: 'asc' },
           include: { attachments: true, readStatus: true },
@@ -53,11 +46,16 @@ export const getThread = async (req, res, next) => {
     })
 
     if (!thread) return res.status(404).json({ error: 'Thread not found' })
+    if (thread.booking?.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
-    // Mark all unread messages as read for this user
     const unreadIds = thread.messages
-      .filter(m => m.senderId !== userId && !m.readStatus.some(r => r.userId === userId))
-      .map(m => m.id)
+      .filter(message => {
+        return (
+          message.senderId !== userId &&
+          !message.readStatus.some(readStatus => readStatus.userId === userId)
+        )
+      })
+      .map(message => message.id)
 
     if (unreadIds.length > 0) {
       await prisma.messageReadStatus.createMany({
@@ -66,14 +64,17 @@ export const getThread = async (req, res, next) => {
       })
     }
 
-    res.json({ thread })
+    res.json({
+      thread: {
+        ...thread,
+        booking: undefined,
+      },
+    })
   } catch (err) {
     next(err)
   }
 }
 
-// ─── POST /messages ───────────────────────────────────────────────────────────
-// Send a message to a thread.
 export const sendMessage = async (req, res, next) => {
   try {
     const { threadId, messageText, messageType = 'text', attachments = [] } = req.body
@@ -84,8 +85,12 @@ export const sendMessage = async (req, res, next) => {
       return res.status(400).json({ error: 'messageText or at least one attachment is required' })
     }
 
-    const thread = await prisma.messageThread.findUnique({ where: { id: threadId } })
+    const thread = await prisma.messageThread.findUnique({
+      where: { id: threadId },
+      include: { booking: true },
+    })
     if (!thread) return res.status(404).json({ error: 'Thread not found' })
+    if (thread.booking?.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
     const validTypes = ['text', 'system', 'status_update']
     const finalType = validTypes.includes(messageType) ? messageType : 'text'
@@ -99,9 +104,9 @@ export const sendMessage = async (req, res, next) => {
         attachments:
           attachments.length > 0
             ? {
-                create: attachments.map(a => ({
-                  fileUrl: a.fileUrl,
-                  fileType: a.fileType ?? null,
+                create: attachments.map(attachment => ({
+                  fileUrl: attachment.fileUrl,
+                  fileType: attachment.fileType ?? null,
                 })),
               }
             : undefined,
@@ -115,15 +120,22 @@ export const sendMessage = async (req, res, next) => {
   }
 }
 
-// ─── PATCH /messages/:id/read ─────────────────────────────────────────────────
-// Mark a specific message as read by the current user.
 export const markRead = async (req, res, next) => {
   try {
     const { id } = req.params
     const userId = String(req.user.id)
 
-    const message = await prisma.message.findUnique({ where: { id } })
+    const message = await prisma.message.findUnique({
+      where: { id },
+      include: {
+        thread: {
+          include: { booking: true },
+        },
+      },
+    })
+
     if (!message) return res.status(404).json({ error: 'Message not found' })
+    if (message.thread?.booking?.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
     await prisma.messageReadStatus.upsert({
       where: { messageId_userId: { messageId: id, userId } },
@@ -137,17 +149,23 @@ export const markRead = async (req, res, next) => {
   }
 }
 
-// ─── GET /messages/unread-count ───────────────────────────────────────────────
-// Count unread messages across all threads for the current user.
 export const getUnreadCount = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
 
-    // Messages not sent by user and not yet in their read status
     const count = await prisma.message.count({
       where: {
         senderId: { not: userId },
         readStatus: { none: { userId } },
+        thread: {
+          is: {
+            booking: {
+              is: {
+                userId,
+              },
+            },
+          },
+        },
       },
     })
 

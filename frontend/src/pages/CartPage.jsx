@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
 import { useServiceAreas } from '../hooks/useServiceAreas'
+import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+const TEMP_BYPASS_PINCODE_VALIDATION = true
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -55,6 +57,14 @@ function getServiceAreaByPincode(value = '', serviceAreas = []) {
 }
 
 function getPincodeValidationState(value = '', serviceAreas = [], isLoadingServiceAreas = false) {
+  if (TEMP_BYPASS_PINCODE_VALIDATION) {
+    return {
+      isChecking: false,
+      isValid: true,
+      message: '',
+    }
+  }
+
   const normalizedPincode = normalizePincode(value)
 
   if (!normalizedPincode) {
@@ -224,6 +234,8 @@ function formatDisplayDate(value) {
     year: 'numeric',
   })
 }
+
+const SAMPLE_TASTE_SERVICE_SLUGS = new Set(['catering', 'bartending'])
 
 function getPackageSubtitle(pkg) {
   const service = pkg?.service_slugs?.[0]
@@ -919,6 +931,8 @@ function PriceSummaryCard({
   cart,
   singleItem = false,
   onCheckout,
+  onSampleTasteBooking,
+  showSampleTasteBooking = false,
   pincodeCard = null,
   isCheckoutDisabled = false,
 }) {
@@ -1062,6 +1076,27 @@ function PriceSummaryCard({
           Secure payment · Instant confirmation · Easy cancellation
         </div>
 
+        {showSampleTasteBooking ? (
+          <button
+            type="button"
+            onClick={onSampleTasteBooking}
+            className="mx-auto mb-4 flex w-full items-center justify-between rounded-full bg-[#F3F0EA] py-1.5 pl-6 pr-1.5 text-[#6B5B4D] transition-colors hover:bg-[#EBE4D9]"
+          >
+            <span className="mr-5 text-[15px] font-medium">Book Sample Test Booking</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
+              <svg
+                className="h-[18px] w-[18px] text-[#957960]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+              </svg>
+            </div>
+          </button>
+        ) : null}
+
         {/* {formError ? <p className="mb-4 text-sm text-[#B42318]">{formError}</p> : null} */}
 
         <button
@@ -1096,42 +1131,14 @@ function PriceSummaryCard({
   )
 }
 
-const TrustBadges = () => {
-  const items = [
-    {
-      icon: '✅',
-      text: 'Verified Vendors',
-    },
-    {
-      icon: '💰',
-      text: 'Best Price Guarantee',
-    },
-    {
-      icon: '🔄',
-      text: 'Easy Rescheduling',
-    },
-  ]
+function isSampleTasteEligibleItem(item) {
+  const serviceSlugs = Array.isArray(item?.packageData?.service_slugs)
+    ? item.packageData.service_slugs
+    : []
 
-  return (
-    <div className="mt-4 rounded-xl border border-[#95796066] bg-[#FFFFFF] px-4 py-3">
-      <div className="flex flex-col gap-2">
-        {items.map((item, index) => (
-          <div key={index} className="flex items-center gap-1 text-[12px] text-[#333]">
-            <span className="text-[12px]">{item.icon}</span>
-            <span className="font-medium">{item.text}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+  return serviceSlugs.some(serviceSlug =>
+    SAMPLE_TASTE_SERVICE_SLUGS.has(normalizeServiceSlug(serviceSlug))
   )
-}
-
-function normalizeServiceSlug(value = '') {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/-single$/, '')
-    .replace(/-services?$/, '')
 }
 
 function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
@@ -1167,7 +1174,35 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   const basePath = `/packages/${serviceSlug}/${packageId}`
   return queryString ? `${basePath}?${queryString}` : basePath
 }
+const TrustBadges = () => {
+  const items = [
+    {
+      icon: '✅',
+      text: 'Verified Vendors',
+    },
+    {
+      icon: '💰',
+      text: 'Best Price Guarantee',
+    },
+    {
+      icon: '🔄',
+      text: 'Easy Rescheduling',
+    },
+  ]
 
+  return (
+    <div className="mt-4 rounded-xl border border-[#95796066] bg-[#FFFFFF] px-4 py-3">
+      <div className="flex flex-col gap-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center gap-1 text-[12px] text-[#333]">
+            <span className="text-[12px]">{item.icon}</span>
+            <span className="font-medium">{item.text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 export default function CartPage() {
   const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
@@ -1220,7 +1255,11 @@ export default function CartPage() {
   )
   const hasItems = cartItems.length > 0
   const hasSingleItem = cartItems.length === 1
-  const isCheckoutDisabled = !isPincodeValid
+  const isCheckoutDisabled = TEMP_BYPASS_PINCODE_VALIDATION ? false : !isPincodeValid
+  const showSampleTasteBooking = useMemo(
+    () => cartItems.some(isSampleTasteEligibleItem),
+    [cartItems]
+  )
   const suggestedPackages = useMemo(
     () => getSuggestedPackages(packages, cartItems),
     [packages, cartItems]
@@ -1374,6 +1413,14 @@ export default function CartPage() {
     validatePincode(pincode)
   }
 
+  const handleSampleTasteBooking = () => {
+    navigate('/sample-test-booking', {
+      state: {
+        sampleTasteItems: cartItems.filter(isSampleTasteEligibleItem),
+      },
+    })
+  }
+
   return (
     <div className="min-h-screen bg-white px-4 pb-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-6">
@@ -1492,6 +1539,8 @@ export default function CartPage() {
               cart={cart}
               singleItem={hasSingleItem}
               onCheckout={() => (isLoggedIn ? navigate('/checkout') : navigate('/login'))}
+              onSampleTasteBooking={handleSampleTasteBooking}
+              showSampleTasteBooking={showSampleTasteBooking}
               isCheckoutDisabled={isCheckoutDisabled}
               pincodeCard={
                 <PincodeCard

@@ -56,13 +56,13 @@ const StatusBadge = ({ status }) => {
   return <span className={`inline-block rounded-full px-3 py-1 text-xs ${tone}`}>{label}</span>
 }
 
-const BookingCard = ({ status = 'in-progress' }) => {
+function BookingCard({ status = 'in-progress' }) {
   const [open, setOpen] = useState(false)
   const isConfirmed = status === 'confirmed'
 
   return (
     <div
-      className={`rounded-2xl bg-[#F3F3F3] p-6 transition-all ${
+      className={`rounded-2xl bg-[#FFFFFF] p-6 transition-all ${
         status === 'in-progress'
           ? 'border-l-4 border-[#C07318]'
           : status === 'upcoming'
@@ -178,7 +178,7 @@ const BookingCard = ({ status = 'in-progress' }) => {
               <span className="pt-0.5">
                 <NextStepIcon />
               </span>
-              <span className="pl-3 text-[14px] md:text-[18px] leading-[1.35] text-[#957960]">
+              <span className="pl-3 text-[14px] leading-[1.35] text-[#957960] md:text-[18px]">
                 Vendor will contact you within 24 hrs to confirm setup details
               </span>
             </div>
@@ -203,7 +203,7 @@ const BookingCard = ({ status = 'in-progress' }) => {
   )
 }
 
-const ActiveBookings = () => {
+export default function ActiveBookings() {
   return (
     <div className="space-y-6 bg-[#F2F2F2]">
       <div>
@@ -217,5 +217,3 @@ const ActiveBookings = () => {
     </div>
   )
 }
-
-export default ActiveBookings

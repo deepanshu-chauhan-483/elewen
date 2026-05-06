@@ -81,8 +81,7 @@ const HERO_RIGHT_CARDS_FALLBACK = [
   { label: 'Anniversary', tagline: 'Let us help you celebrate your love story' },
   { label: 'House Party', tagline: 'Turn your home into the party spot' },
 ]
-const getTrailingWWord = (value, fallback) =>
-  String(value ?? fallback).replace(/^[Ww]/, fallback.slice(1, 2))
+const getTrailingWWord = (value, fallback) => String(value ?? fallback).replace(/^[Ww]/, '')
 
 const toAbsoluteMediaUrl = url => {
   const value = String(url ?? '').trim()
@@ -125,19 +124,20 @@ const HeroSection = () => {
     ? hero.left_taglines
     : HERO_LEFT_TAGLINES_FALLBACK
 
-  // Merge Strapi cards with defaults to ensure all 3 cards are populated
+  // Merge Strapi cards with defaults while preserving the full CMS card list.
   const strapiCards = Array.isArray(hero.right_cards) ? hero.right_cards : []
-  const rightCards = HERO_RIGHT_CARDS_FALLBACK.map((defaultCard, idx) => ({
-    ...defaultCard,
-    ...(strapiCards[idx] || {}),
-  }))
+  const cardCount = Math.max(HERO_RIGHT_CARDS_FALLBACK.length, strapiCards.length)
+  const rightCards = Array.from({ length: cardCount }, (_, idx) => {
+    const defaultCard = HERO_RIGHT_CARDS_FALLBACK[idx] || {}
+    const strapiCard = strapiCards[idx] || {}
 
-  // Debug: Log card data
-  useEffect(() => {
-    console.log('[HeroSection] strapiCards:', strapiCards)
-    console.log('[HeroSection] rightCards merged:', rightCards)
-    console.log('[HeroSection] hero.right_cards from CMS:', hero.right_cards)
-  }, [strapiCards, rightCards, hero])
+    return {
+      ...defaultCard,
+      ...strapiCard,
+      label: strapiCard.label || defaultCard.label || '',
+      tagline: strapiCard.tagline || strapiCard.description || defaultCard.tagline || '',
+    }
+  })
   const bandTokens = Array.isArray(hero.band_tokens) ? hero.band_tokens.filter(Boolean) : []
   const heroBand1Tokens = buildBandTokens(bandTokens.slice(0, 2), BAND1_TOKENS)
   const heroBand2Tokens = buildBandTokens(bandTokens.slice(2, 4), BAND2_TOKENS)
@@ -813,8 +813,11 @@ const HeroSection = () => {
                   'md:border-t-0 border-t border-white/20',
                 ]
                 const extra = extras[i] ?? ''
-                const resolvedLabel = card.label ?? ''
-                const resolvedDesc = card.tagline ?? card.desc ?? ''
+                const resolvedLabel = card.label ? String(card.label).trim() : ''
+                const resolvedDesc =
+                  card.tagline || card.description || card.desc || ''
+                    ? String(card.tagline || card.description || card.desc).trim()
+                    : ''
 
                 return (
                   <div
@@ -824,12 +827,10 @@ const HeroSection = () => {
                   >
                     <div className="absolute top-4 left-3 right-2 flex flex-col gap-1.5 md:top-5 md:left-4 md:right-3 md:gap-2.5 lg:left-5 lg:right-auto lg:w-45 lg:gap-3">
                       <h3
-                        className="text-[10px] sm:text-[11px] md:text-[12px] lg:text-sm font-bold tracking-[0.14em] lg:tracking-widest uppercase truncate reveal-heading text-[#FAFAFA]"
+                        className="text-[10px] sm:text-[11px] md:text-[12px] lg:text-sm font-bold tracking-[0.14em] lg:tracking-widest uppercase truncate text-[#FAFAFA]"
                         style={{ fontFamily: "'Malgin', serif" }}
                       >
-                        <span className="reveal-wrapper">
-                          <span className="reveal-text">{resolvedLabel}</span>
-                        </span>
+                        {resolvedLabel}
                       </h3>
                       <p className="text-[9px] md:text-[11px] lg:text-xs font-light opacity-90 leading-[1.3] line-clamp-3 text-[#FAFAFA]">
                         {resolvedDesc}

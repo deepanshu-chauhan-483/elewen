@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useLenis } from './useLenis'
 import NavHeader from './components/NavHeader'
 import Footer from './components/Footer'
@@ -45,6 +45,13 @@ import VendorRegistration from './pages/VendorRegistrationForm'
 import FallbackPage from './pages/FallbackScreen'
 import DashboardLayout from './components/dashboard/DashboardLayout'
 import ActiveBookings from './pages/dashboard/ActiveBookings'
+import DashboardSampleTasteBooking from './pages/dashboard/SampleTasteBooking'
+import BookingTimeline from './pages/dashboard/BookingTimeline'
+import BookingDetails from './pages/dashboard/BookingDetails'
+import MessagesUpdates from './pages/dashboard/MessagesUpdates'
+import PreviousBookings from './pages/dashboard/PreviousBookings'
+import SavedPackages from './pages/dashboard/SavedPackages'
+import SupportHelp from './pages/dashboard/SupportHelp'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -133,13 +140,16 @@ function AppLayout() {
         <Route path="/vendor-registration" element={<VendorRegistration />} />
         <Route path="/fallback-screen" element={<FallbackPage />} />
 
-        {/* Dashboard Layout Wrapper */}
         <Route path="/user-dashboard" element={<DashboardLayout />}>
-          {/* Default route */}
-          <Route index element={<ActiveBookings />} />
-
-          {/* Child routes */}
+          <Route index element={<Navigate to="active-booking" replace />} />
           <Route path="active-booking" element={<ActiveBookings />} />
+          <Route path="sample-taste" element={<DashboardSampleTasteBooking />} />
+          <Route path="timeline" element={<BookingTimeline />} />
+          <Route path="details" element={<BookingDetails />} />
+          <Route path="messages" element={<MessagesUpdates />} />
+          <Route path="previous" element={<PreviousBookings />} />
+          <Route path="saved" element={<SavedPackages />} />
+          <Route path="support" element={<SupportHelp />} />
         </Route>
       </Routes>
       {!hideGlobalChrome && <Footer />}

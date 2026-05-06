@@ -1,0 +1,46 @@
+{
+  "kind": "singleType",
+  "collectionName": "terms_and_condition",
+  "info": {
+    "singularName": "terms-and-conditions",
+    "pluralName": "terms-and-condition",
+    "displayName": "TermsAndConditions"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "effectiveDate": {
+      "type": "date"
+    },
+    "lastUpdated": {
+      "type": "date"
+    },
+    "contactEmail": {
+      "type": "email"
+    },
+    "governingLaw": {
+      "type": "text"
+    },
+    "jurisdiction": {
+      "type": "text"
+    },
+    "sections": {
+      "type": "component",
+      "component": "terms.section",
+      "repeatable": true
+    },
+    "tldr": {
+      "type": "component",
+      "component": "terms.tldr-block",
+      "repeatable": false
+    }
+  }
+}

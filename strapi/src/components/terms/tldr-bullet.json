@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_terms_tldr_bullets",
+  "info": {
+    "displayName": "tldr-bullet"
+  },
+  "options": {},
+  "attributes": {
+    "icon": {
+      "type": "string"
+    },
+    "text": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

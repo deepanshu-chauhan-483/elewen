@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_terms_clauses",
+  "info": {
+    "displayName": "clause"
+  },
+  "options": {},
+  "attributes": {
+    "clauseNumber": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content": {
+      "type": "text"
+    },
+    "applicableTo": {
+      "type": "enumeration",
+      "enum": [
+        "all",
+        "customer",
+        "vendor"
+      ]
+    },
+    "isHighlighted": {
+      "type": "boolean"
+    }
+  },
+  "config": {}
+}

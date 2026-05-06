@@ -1,7 +1,15 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { DASHBOARD } from '../../constants/dashboard'
-import { authLogout } from '../../lib/api'
+import {
+  useDashboardLogout,
+  useDashboardNotificationCount,
+  useDashboardNotifications,
+  useDashboardMarkAllNotificationsRead,
+  useDashboardMarkNotificationRead,
+  useDashboardSession,
+} from '../../hooks/useDashboardData'
+import { getInitials } from './dashboardUtils'
 
 const SearchIcon = () => (
   <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -60,7 +68,7 @@ const MenuIcon = () => (
   </>
 )
 
-const SearchBar = () => {
+function SearchBar() {
   return (
     <div className="hidden items-center gap-2 rounded-full bg-[#F0F0F0] md:flex md:w-[300px]">
       <button
@@ -101,32 +109,15 @@ const ActionButton = ({ children, to, onClick, className = '', ariaLabel, disabl
   )
 }
 
-const useDashboardLogout = () => {
+const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
   const navigate = useNavigate()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const logoutMutation = useDashboardLogout()
 
   const handleLogout = async () => {
-    if (isLoggingOut) return
-
-    setIsLoggingOut(true)
-    try {
-      await authLogout()
-    } catch {
-      // Continue local logout even if the API call fails.
-    } finally {
-      localStorage.removeItem('elewen_jwt')
-      localStorage.removeItem('accessToken')
-      window.dispatchEvent(new Event('elewen-auth-change'))
-      setIsLoggingOut(false)
-      navigate('/')
-    }
+    if (logoutMutation.isPending) return
+    await logoutMutation.mutateAsync()
+    navigate('/', { replace: true })
   }
-
-  return { isLoggingOut, handleLogout }
-}
-
-const UserMenu = () => {
-  const { isLoggingOut, handleLogout } = useDashboardLogout()
 
   return (
     <div className="flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto sm:flex-nowrap">
@@ -143,10 +134,12 @@ const UserMenu = () => {
         <ActionButton
           onClick={handleLogout}
           ariaLabel="Logout"
-          disabled={isLoggingOut}
+          disabled={logoutMutation.isPending}
           className="min-w-[78px] bg-[#D4BA8E] text-[#FAFAFA] hover:bg-[#c7aa76] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          <span className="whitespace-nowrap">{isLoggingOut ? 'Logging out' : 'Logout'}</span>
+          <span className="whitespace-nowrap">
+            {logoutMutation.isPending ? 'Logging out' : 'Logout'}
+          </span>
           <LogoutIcon />
         </ActionButton>
       </div>
@@ -154,20 +147,28 @@ const UserMenu = () => {
       <div className="flex items-center gap-3">
         <button
           type="button"
+          onClick={onOpenNotifications}
           aria-label="Notifications"
           className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#262626] transition-colors hover:bg-[#F3F3F3]"
         >
-          <BellIcon />
+          <BellIcon count={unreadCount} />
         </button>
 
-        <div className="h-8 w-8 shrink-0 rounded-full bg-[radial-gradient(circle_at_35%_30%,#8eb8ff_0%,#597ce3_35%,#202a5f_100%)]" />
+        {avatarNode}
       </div>
     </div>
   )
 }
 
 const MobileBottomActions = () => {
-  const { isLoggingOut, handleLogout } = useDashboardLogout()
+  const navigate = useNavigate()
+  const logoutMutation = useDashboardLogout()
+
+  const handleLogout = async () => {
+    if (logoutMutation.isPending) return
+    await logoutMutation.mutateAsync()
+    navigate('/', { replace: true })
+  }
 
   return (
     <div className="fixed h-[63px] inset-x-0 bottom-0 z-30 bg-[#222815] px-5 py-4 md:hidden ">
@@ -175,10 +176,12 @@ const MobileBottomActions = () => {
         <ActionButton
           onClick={handleLogout}
           ariaLabel="Logout"
-          disabled={isLoggingOut}
+          disabled={logoutMutation.isPending}
           className="h-[40px] max-w-[80px] rounded-[12px] bg-[#D4BA8E] px-3 text-[12px] font-medium text-[#FAFAFA] hover:bg-[#c7aa76] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          <span className="whitespace-nowrap">{isLoggingOut ? 'Logging out' : 'Logout'}</span>
+          <span className="whitespace-nowrap">
+            {logoutMutation.isPending ? 'Logging out' : 'Logout'}
+          </span>
           <LogoutIcon className="h-3 w-3 shrink-0" />
         </ActionButton>
 
@@ -196,6 +199,40 @@ const MobileBottomActions = () => {
 }
 
 const Navbar = ({ onMobileMenuOpen }) => {
+  const navigate = useNavigate()
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
+  const { data: session } = useDashboardSession()
+  const { data: notificationCount = 0 } = useDashboardNotificationCount()
+  const { data: notificationData, isLoading: notificationsLoading } = useDashboardNotifications({
+    limit: 12,
+  })
+  const markReadMutation = useDashboardMarkNotificationRead()
+  const markAllReadMutation = useDashboardMarkAllNotificationsRead()
+
+  const displayName = [session?.profile?.first_name, session?.profile?.last_name]
+    .filter(Boolean)
+    .join(' ')
+  const fallbackName = [session?.user?.first_name, session?.user?.last_name]
+    .filter(Boolean)
+    .join(' ')
+  const name = displayName || fallbackName || session?.user?.email || 'Customer'
+  const notifications = useMemo(
+    () => notificationData?.notifications ?? [],
+    [notificationData?.notifications]
+  )
+  const unreadCount = Number(notificationData?.unreadCount ?? notificationCount ?? 0)
+  const avatarNode = session?.profile?.photoUrl ? (
+    <img
+      src={session.profile.photoUrl}
+      alt={name}
+      className="h-8 w-8 shrink-0 rounded-full object-cover"
+    />
+  ) : (
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#8eb8ff_0%,#597ce3_35%,#202a5f_100%)] text-[10px] font-medium text-white">
+      {getInitials(name) || 'CU'}
+    </div>
+  )
+
   return (
     <>
       <header
@@ -217,7 +254,11 @@ const Navbar = ({ onMobileMenuOpen }) => {
         </div>
 
         <div className="hidden md:block">
-          <UserMenu />
+          <UserMenu
+            unreadCount={unreadCount}
+            onOpenNotifications={() => setIsNotificationModalOpen(true)}
+            avatarNode={avatarNode}
+          />
         </div>
 
         <div className="flex items-center gap-4 md:hidden">
@@ -242,12 +283,18 @@ const Navbar = ({ onMobileMenuOpen }) => {
           <button
             type="button"
             aria-label="Notifications"
+            onClick={() => setIsNotificationModalOpen(true)}
             className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#262626]"
           >
             <BellIcon />
+            {unreadCount > 0 ? (
+              <span className="absolute right-0 top-0 min-w-4 rounded-full bg-[#591902] px-1 text-center text-[10px] leading-4 text-white">
+                {unreadCount}
+              </span>
+            ) : null}
           </button>
 
-          <div className="h-8 w-8 shrink-0 rounded-full bg-[radial-gradient(circle_at_35%_30%,#8eb8ff_0%,#597ce3_35%,#202a5f_100%)]" />
+          {avatarNode}
 
           <button
             type="button"
@@ -261,8 +308,242 @@ const Navbar = ({ onMobileMenuOpen }) => {
       </header>
 
       <MobileBottomActions />
+      <NotificationModal
+        open={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        isLoading={notificationsLoading}
+        markReadMutation={markReadMutation}
+        markAllReadMutation={markAllReadMutation}
+        navigate={navigate}
+      />
     </>
   )
 }
 
 export default Navbar
+
+function formatNotificationTime(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+}
+
+function resolveNotificationLink(linkUrl) {
+  const url = String(linkUrl ?? '').trim()
+  if (!url) return ''
+
+  const bookingMatch = url.match(/^\/dashboard\/bookings\/([^/?#]+)/i)
+  if (bookingMatch?.[1]) {
+    return `/user-dashboard/details?bookingId=${bookingMatch[1]}`
+  }
+
+  if (url.startsWith('/dashboard')) {
+    return url.replace(/^\/dashboard/i, '/user-dashboard')
+  }
+
+  return url
+}
+
+function NotificationModal({
+  open,
+  onClose,
+  notifications,
+  unreadCount,
+  isLoading,
+  markReadMutation,
+  markAllReadMutation,
+  navigate,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-start justify-end px-6 pt-20">
+      <div className="absolute inset-0 bg-black/20" onClick={onClose} aria-hidden="true" />
+
+      <div className="relative z-10 w-full max-w-md rounded-[28px] border border-[#E4DED8] bg-white shadow-[0_18px_60px_rgba(17,24,39,0.16)]">
+        <div className="flex items-center justify-between border-b border-[#EFE7E1] px-5 py-4">
+          <div>
+            <h2 className="text-base font-medium text-[#2E2E2E]">Notifications</h2>
+            <p className="mt-1 text-xs text-[#6B7280]">
+              {unreadCount > 0 ? `${unreadCount} unread updates` : 'You are all caught up'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => markAllReadMutation.mutate()}
+              disabled={!unreadCount || markAllReadMutation.isPending}
+              className="text-xs font-medium text-[#591902] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Mark all read
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-lg leading-none text-[#6B7280]"
+              aria-label="Close notifications"
+            >
+              x
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto px-3 py-3">
+          {isLoading ? (
+            <div className="rounded-2xl bg-[#F7F5F2] px-4 py-6 text-sm text-[#6B7280]">
+              Loading notifications...
+            </div>
+          ) : notifications.length ? (
+            <div className="space-y-3">
+              {notifications.map(notification => (
+                <button
+                  key={notification.id}
+                  type="button"
+                  onClick={async () => {
+                    if (!notification.isRead) {
+                      await markReadMutation.mutateAsync(notification.id)
+                    }
+
+                    const nextPath = resolveNotificationLink(notification.linkUrl)
+                    if (nextPath) {
+                      navigate(nextPath)
+                      onClose()
+                    }
+                  }}
+                  className={`block w-full rounded-2xl border px-4 py-3 text-left transition ${
+                    notification.isRead
+                      ? 'border-[#E8E1DA] bg-[#FAFAFA]'
+                      : 'border-[#E7D2C4] bg-[#FFF8F2]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-[#2E2E2E]">{notification.title}</p>
+                      {notification.message ? (
+                        <p className="mt-1 text-sm text-[#6B7280]">{notification.message}</p>
+                      ) : null}
+                      <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-[#9CA3AF]">
+                        {formatNotificationTime(notification.createdAt)}
+                      </p>
+                    </div>
+
+                    {!notification.isRead ? (
+                      <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[#C68B1E]" />
+                    ) : null}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-[#F7F5F2] px-4 py-6 text-sm text-[#6B7280]">
+              No notifications yet.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// export default function Navbar() {
+//   const navigate = useNavigate()
+//   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
+//   const { data: session } = useDashboardSession()
+//   const { data: notificationCount = 0 } = useDashboardNotificationCount()
+//   const { data: notificationData, isLoading: notificationsLoading } = useDashboardNotifications({
+//     limit: 12,
+//   })
+//   const markReadMutation = useDashboardMarkNotificationRead()
+//   const markAllReadMutation = useDashboardMarkAllNotificationsRead()
+//   const logoutMutation = useDashboardLogout()
+
+//   const displayName = [session?.profile?.first_name, session?.profile?.last_name]
+//     .filter(Boolean)
+//     .join(' ')
+//   const fallbackName = [session?.user?.first_name, session?.user?.last_name]
+//     .filter(Boolean)
+//     .join(' ')
+//   const name = displayName || fallbackName || session?.user?.email || 'Customer'
+//   const notifications = useMemo(
+//     () => notificationData?.notifications ?? [],
+//     [notificationData?.notifications]
+//   )
+//   const unreadCount = Number(notificationData?.unreadCount ?? notificationCount ?? 0)
+
+//   return (
+//     <>
+//       <header
+//         className="fixed top-0 right-0 z-20 flex items-center justify-between px-6"
+//         style={{
+//           height: DASHBOARD.NAVBAR_HEIGHT,
+//           left: DASHBOARD.SIDEBAR_WIDTH,
+//           backgroundColor: DASHBOARD.COLORS.NAVBAR_BG,
+//           borderBottom: `1px solid ${DASHBOARD.COLORS.NAVBAR_BORDER}`,
+//         }}
+//       >
+//         <SearchBar />
+
+//         <div className="flex items-center gap-4">
+//           <Link to="/" className="text-sm text-[#111827]">
+//             Back to Website
+//           </Link>
+
+//           <button
+//             type="button"
+//             onClick={async () => {
+//               await logoutMutation.mutateAsync()
+//               navigate('/', { replace: true })
+//             }}
+//             className="rounded-full bg-[#C6A15B] px-4 py-2 text-sm text-white"
+//           >
+//             {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+//           </button>
+
+//           <button
+//             type="button"
+//             onClick={() => setIsNotificationModalOpen(true)}
+//             className="rounded-full p-1 transition hover:bg-[#F3EADF]"
+//             aria-label="Open notifications"
+//           >
+//             <NotificationBell count={unreadCount} />
+//           </button>
+
+//           {session?.profile?.photoUrl ? (
+//             <img
+//               src={session.profile.photoUrl}
+//               alt={name}
+//               className="h-9 w-9 rounded-full object-cover"
+//             />
+//           ) : (
+//             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D1D5DB] text-xs font-medium text-[#374151]">
+//               {getInitials(name) || 'CU'}
+//             </div>
+//           )}
+//         </div>
+//       </header>
+
+//       <NotificationModal
+//         open={isNotificationModalOpen}
+//         onClose={() => setIsNotificationModalOpen(false)}
+//         notifications={notifications}
+//         unreadCount={unreadCount}
+//         isLoading={notificationsLoading}
+//         markReadMutation={markReadMutation}
+//         markAllReadMutation={markAllReadMutation}
+//         navigate={navigate}
+//       />
+//     </>
+//   )
+// }

@@ -1,41 +1,55 @@
 import { useNavigate } from 'react-router-dom'
+import fallbackBooking from '../../assets/images/fallbackBooking.png'
 
-const EmptyBookings = () => {
+export default function EmptyBooking({
+  title = 'No active bookings yet',
+  body = 'Start planning your event to see it here',
+  actionLabel = 'Explore Packages',
+  actionTo = '/',
+}) {
   const navigate = useNavigate()
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
-      <div className="flex flex-col items-center text-center">
-        {/* Illustration */}
+    <div className="-m-6 -mb-28 flex min-h-[calc(100vh-63px)] w-auto items-center justify-center bg-white px-6 py-12 md:-mb-6">
+      <div className="flex max-w-[420px] flex-col items-center text-center">
         <div className="mb-6">
-          <img
-            src="../assets//images/fallbackBooking.png"
-            alt="No bookings"
-            className="w-[220px] md:w-[260px]"
-          />
+          <img src={fallbackBooking} alt="No bookings" className="w-[220px] md:w-[260px]" />
         </div>
 
-        {/* Heading */}
         <h2
-          className="text-[28px] md:text-[32px] leading-tight text-[#2E2E2E]"
+          className="text-[28px] leading-tight text-[#2E2E2E] md:text-[32px]"
           style={{ fontFamily: "'Playfair Display', serif" }}
         >
-          No active bookings yet
+          {title}
         </h2>
 
-        {/* Sub text */}
-        <p className="mt-2 text-[14px] text-[#7A7A7A]">Start planning your event to see it here</p>
+        <p className="mt-2 text-[14px] text-[#7A7A7A]">{body}</p>
 
-        {/* CTA Button */}
         <button
-          onClick={() => navigate('/')}
-          className="mt-6 flex items-center gap-2 rounded-full bg-[#C6A15B] px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
+          type="button"
+          onClick={() => navigate(actionTo)}
+          className="mt-6 flex items-center gap-2 rounded-full bg-[#CDB17E] px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
         >
-          Explore Packages →
+          {actionLabel}
+          <span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.33325 8.00065H12.6666M12.6666 8.00065L7.99992 3.33398M12.6666 8.00065L7.99992 12.6673"
+                stroke="#FAFAFA"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
         </button>
       </div>
     </div>
   )
 }
-
-export default EmptyBookings

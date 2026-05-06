@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
-import { authRegister } from '../lib/api'
+import { authRegister, setStoredJwt } from '../lib/api'
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
@@ -56,9 +56,8 @@ export default function SignUpPage() {
         setEmailPending(true)
         return
       }
-      localStorage.setItem('elewen_jwt', data.jwt)
-      window.dispatchEvent(new Event('elewen-auth-change'))
-      navigate('/')
+      setStoredJwt(data.jwt)
+      navigate('/', { replace: true })
     } catch (err) {
       if (err.message?.includes('409')) {
         setError('An account with this email already exists.')
