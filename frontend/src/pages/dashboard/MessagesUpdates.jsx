@@ -5,8 +5,8 @@ import {
   DashboardErrorState,
   DashboardLoadingState,
   DashboardPageIntro,
-  DashboardSelectorList,
-  MessageBubble,
+
+  
   SectionCard,
 } from '../../components/dashboard/DashboardUI'
 import {
@@ -16,15 +16,15 @@ import {
   useDashboardMarkNotificationRead,
   useDashboardNotifications,
   useDashboardSendMessage,
-  useDashboardSession,
+  // useDashboardSession,
   useDashboardThread,
 } from '../../hooks/useDashboardData'
-import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
+// import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 export default function MessagesUpdates() {
   const navigate = useNavigate()
-  const { data: session } = useDashboardSession()
+  // const { data: session } = useDashboardSession()
   const {
     data: bookings = [],
     isLoading: bookingsLoading,
@@ -32,7 +32,7 @@ export default function MessagesUpdates() {
   } = useDashboardBookings('all')
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedBookingId = searchParams.get('bookingId') || ''
-  const [draft, setDraft] = useState('')
+  // const [draft, setDraft] = useState('')
   const { data: notificationData, isLoading: notificationsLoading } = useDashboardNotifications({
     limit: 100,
   })
@@ -50,30 +50,30 @@ export default function MessagesUpdates() {
   }, [bookings, searchParams, selectedBookingId, setSearchParams])
 
   const {
-    data: thread,
-    isLoading: threadLoading,
+    // data: thread,
+    // isLoading: threadLoading,
     error: threadError,
   } = useDashboardThread(selectedBookingId)
-  const sendMessageMutation = useDashboardSendMessage()
+  // const sendMessageMutation = useDashboardSendMessage()
 
-  const selectedBooking = useMemo(
-    () => bookings.find(booking => booking.id === selectedBookingId) ?? null,
-    [bookings, selectedBookingId]
-  )
-  const activeBookings = useMemo(
-    () => bookings.filter(booking => booking.bookingCategory !== 'previous'),
-    [bookings]
-  )
-  const previousBookings = useMemo(
-    () => bookings.filter(booking => booking.bookingCategory === 'previous'),
-    [bookings]
-  )
+  // const selectedBooking = useMemo(
+  //   () => bookings.find(booking => booking.id === selectedBookingId) ?? null,
+  //   [bookings, selectedBookingId]
+  // )
+  // const activeBookings = useMemo(
+  //   () => bookings.filter(booking => booking.bookingCategory !== 'previous'),
+  //   [bookings]
+  // )
+  // const previousBookings = useMemo(
+  //   () => bookings.filter(booking => booking.bookingCategory === 'previous'),
+  //   [bookings]
+  // )
   const notifications = useMemo(
     () => notificationData?.notifications ?? [],
     [notificationData?.notifications]
   )
   const unreadNotificationCount = Number(notificationData?.unreadCount ?? 0)
-  const isReadOnlyThread = selectedBooking?.bookingCategory === 'previous'
+  // const isReadOnlyThread = selectedBooking?.bookingCategory === 'previous'
 
   if (bookingsLoading) {
     return <DashboardLoadingState title="Loading booking messages..." />
@@ -94,18 +94,18 @@ export default function MessagesUpdates() {
     )
   }
 
-  const handleSubmit = async event => {
-    event.preventDefault()
-    if (!draft.trim() || !thread?.id || !selectedBookingId) return
+  // const handleSubmit = async event => {
+  //   event.preventDefault()
+  //   if (!draft.trim() || !thread?.id || !selectedBookingId) return
 
-    await sendMessageMutation.mutateAsync({
-      threadId: thread.id,
-      bookingId: selectedBookingId,
-      messageText: draft.trim(),
-    })
+  //   await sendMessageMutation.mutateAsync({
+  //     threadId: thread.id,
+  //     bookingId: selectedBookingId,
+  //     messageText: draft.trim(),
+  //   })
 
-    setDraft('')
-  }
+  //   setDraft('')
+  // }
 
   return (
     <div className="space-y-6">

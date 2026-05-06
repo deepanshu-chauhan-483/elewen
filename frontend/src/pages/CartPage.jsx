@@ -347,36 +347,36 @@ function getSelectedElements(item) {
   }))
 }
 
-function getSuggestedAddons(cartItems) {
-  const seen = new Set()
+// function getSuggestedAddons(cartItems) {
+//   const seen = new Set()
 
-  return cartItems
-    .flatMap(item => {
-      const packageData = item?.packageData
-      const packageSubtitle = getPackageSubtitle(packageData)
-      const packageTitle = packageData?.title || item?.displayTitle || 'Selected package'
-      const addons = Array.isArray(packageData?.detail_addons) ? packageData.detail_addons : []
+//   return cartItems
+//     .flatMap(item => {
+//       const packageData = item?.packageData
+//       const packageSubtitle = getPackageSubtitle(packageData)
+//       const packageTitle = packageData?.title || item?.displayTitle || 'Selected package'
+//       const addons = Array.isArray(packageData?.detail_addons) ? packageData.detail_addons : []
 
-      return addons
-        .map(addon => String(addon ?? '').trim())
-        .filter(Boolean)
-        .map(addon => ({
-          id: `${item.id}-${addon}`,
-          packageId: packageData?.id,
-          addonTitle: addon,
-          title: addon,
-          subtitle: `${packageSubtitle} · ${packageTitle}`,
-          price: 'Add-on',
-          dedupeKey: `${String(packageData?.id ?? item?.packageId ?? '')}::${addon.toLowerCase()}`,
-        }))
-    })
-    .filter(addon => {
-      if (seen.has(addon.dedupeKey)) return false
-      seen.add(addon.dedupeKey)
-      return true
-    })
-    .slice(0, 4)
-}
+//       return addons
+//         .map(addon => String(addon ?? '').trim())
+//         .filter(Boolean)
+//         .map(addon => ({
+//           id: `${item.id}-${addon}`,
+//           packageId: packageData?.id,
+//           addonTitle: addon,
+//           title: addon,
+//           subtitle: `${packageSubtitle} · ${packageTitle}`,
+//           price: 'Add-on',
+//           dedupeKey: `${String(packageData?.id ?? item?.packageId ?? '')}::${addon.toLowerCase()}`,
+//         }))
+//     })
+//     .filter(addon => {
+//       if (seen.has(addon.dedupeKey)) return false
+//       seen.add(addon.dedupeKey)
+//       return true
+//     })
+//     .slice(0, 4)
+// }
 
 function getSuggestedAddonsWithPricing(cartItems) {
   const seen = new Set()
