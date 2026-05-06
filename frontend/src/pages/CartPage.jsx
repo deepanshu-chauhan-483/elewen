@@ -1073,7 +1073,7 @@ function PriceSummaryCard({
       </div> */}
       <div className="rounded-xl border border-[#95796066] p-5">
         <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
-          Secure payment · Instant confirmation · Easy cancellation
+          🔒 Secure payment · Instant confirmation · Easy cancellation
         </div>
 
         {showSampleTasteBooking ? (
