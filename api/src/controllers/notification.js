@@ -1,7 +1,5 @@
 import prisma from '../lib/prisma.js'
 
-// ─── GET /notifications ────────────────────────────────────────────────────────
-// Returns paginated notifications for the authenticated user, newest first.
 export const getNotifications = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -34,7 +32,6 @@ export const getNotifications = async (req, res, next) => {
   }
 }
 
-// ─── PATCH /notifications/:id/read ────────────────────────────────────────────
 export const markRead = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -55,7 +52,6 @@ export const markRead = async (req, res, next) => {
   }
 }
 
-// ─── PATCH /notifications/read-all ────────────────────────────────────────────
 export const markAllRead = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -71,7 +67,20 @@ export const markAllRead = async (req, res, next) => {
   }
 }
 
-// ─── GET /notifications/unread-count ──────────────────────────────────────────
+export const clearAllNotifications = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+
+    const { count } = await prisma.notification.deleteMany({
+      where: { userId },
+    })
+
+    res.json({ ok: true, deletedCount: count })
+  } catch (err) {
+    next(err)
+  }
+}
+
 export const getUnreadCount = async (req, res, next) => {
   try {
     const userId = String(req.user.id)

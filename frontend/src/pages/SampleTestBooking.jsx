@@ -118,9 +118,11 @@ export default function SampleTasteBooking() {
     [packages]
   )
 
-  const incomingItems = Array.isArray(location.state?.sampleTasteItems)
-    ? location.state.sampleTasteItems
-    : []
+  const incomingSampleTasteItems = location.state?.sampleTasteItems
+  const incomingItems = useMemo(
+    () => (Array.isArray(incomingSampleTasteItems) ? incomingSampleTasteItems : []),
+    [incomingSampleTasteItems]
+  )
 
   const fallbackCartItems = useMemo(() => {
     const items = Array.isArray(cart?.items) ? cart.items : []
@@ -150,7 +152,7 @@ export default function SampleTasteBooking() {
         }
       })
       .filter(Boolean)
-  }, [cart?.items, packageLookup])
+  }, [cart, packageLookup])
 
   const tastingPackages = useMemo(() => {
     if (incomingItems.length > 0) {

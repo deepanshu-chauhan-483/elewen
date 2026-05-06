@@ -4,6 +4,7 @@ import {
   authLogout,
   bookingCancel,
   authMe,
+  authUpdateProfile,
   bookingGet,
   bookingGetTimeline,
   bookingList,
@@ -14,6 +15,7 @@ import {
   getStoredJwt,
   messageGetOrCreateThread,
   messageSend,
+  notificationClearAll,
   notificationList,
   notificationGetUnreadCount,
   notificationMarkAllRead,
@@ -101,6 +103,17 @@ export function useDashboardSummary() {
     queryFn: async token => {
       const response = await dashboardGetSummary(token)
       return response?.summary ?? {}
+    },
+  })
+}
+
+export function useDashboardUpdateProfile() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: body => withDashboardToken(token => authUpdateProfile(token, body)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'session'] })
     },
   })
 }
@@ -252,6 +265,18 @@ export function useDashboardMarkAllNotificationsRead() {
 
   return useMutation({
     mutationFn: () => withDashboardToken(token => notificationMarkAllRead(token)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'notification-count'] })
+    },
+  })
+}
+
+export function useDashboardClearAllNotifications() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => withDashboardToken(token => notificationClearAll(token)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'notifications'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'notification-count'] })

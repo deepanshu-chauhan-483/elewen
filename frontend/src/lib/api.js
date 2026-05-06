@@ -208,6 +208,8 @@ export const authLogin = body => apiPost('/auth/login', body)
 export const authLogout = () => apiPost('/auth/logout')
 export const authRefresh = () => apiPost('/auth/refresh')
 export const authMe = token => apiGet('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+export const authUpdateProfile = (token, body) =>
+  request('PATCH', '/auth/profile', body, { headers: { Authorization: `Bearer ${token}` } })
 export const authForgotPassword = email => apiPost('/auth/forgot-password', { email })
 export const authResetPassword = body => apiPost('/auth/reset-password', body)
 export const authGoogleSession = access_token => apiPost('/auth/google/session', { access_token })
@@ -330,6 +332,11 @@ export const notificationMarkRead = (token, notificationId) =>
 
 export const notificationMarkAllRead = token =>
   request('PATCH', '/notifications/read-all', null, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const notificationClearAll = token =>
+  apiDel('/notifications', {
     headers: { Authorization: `Bearer ${token}` },
   })
 

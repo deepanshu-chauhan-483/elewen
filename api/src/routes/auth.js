@@ -224,6 +224,7 @@ router.post('/google/session', googleSession)
  *             properties:
  *               first_name: { type: string }
  *               last_name: { type: string }
+ *               phone: { type: string }
  *               date_of_birth: { type: string, format: date, example: "1995-06-15" }
  *               preferred_language: { type: string, example: "en" }
  *               profile_photo_url: { type: string, description: "External photo URL. Set to null to clear." }

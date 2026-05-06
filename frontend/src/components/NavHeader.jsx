@@ -710,16 +710,17 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                     <span className="mr-5 text-[15px] font-medium text-white">My Account</span>
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                       <svg
-                        className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        viewBox="0 0 20 20"
                         fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M7 17L17 7M17 7H9M17 7v8"
                         />
                       </svg>
                     </div>
@@ -732,16 +733,17 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                     <span className="mr-5 text-[15px] font-medium text-white">Logout</span>
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                       <svg
-                        className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        viewBox="0 0 20 20"
                         fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M7 17L17 7M17 7H9M17 7v8"
                         />
                       </svg>
                     </div>

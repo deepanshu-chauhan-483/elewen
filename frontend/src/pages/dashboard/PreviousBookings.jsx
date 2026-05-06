@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom'
 import {
   BookingSummaryCard,
-  DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
   DashboardPageIntro,
 } from '../../components/dashboard/DashboardUI'
 import { useDashboardBookings } from '../../hooks/useDashboardData'
 import { formatDashboardCurrency } from '../../components/dashboard/dashboardUtils'
+import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 function getBookAgainHref(booking) {
   const serviceSlug = String(booking?.package?.serviceCategories?.[0]?.slug ?? '')
@@ -35,6 +35,15 @@ export default function PreviousBookings() {
     return <DashboardErrorState title="We could not load previous bookings." />
   }
 
+  if (bookings.length === 0) {
+    return (
+      <EmptyBooking
+        title="No previous bookings yet"
+        body="Past events will be listed here once their date passes or they are marked complete."
+      />
+    )
+  }
+
   return (
     <div className="space-y-6">
       <DashboardPageIntro
@@ -42,13 +51,6 @@ export default function PreviousBookings() {
         subtitle="Look back at completed or past events with their final payment snapshot."
         meta={`${bookings.length} past`}
       />
-
-      {bookings.length === 0 ? (
-        <DashboardEmptyState
-          title="No previous bookings yet"
-          body="Past events will be listed here once their date passes or they are marked complete."
-        />
-      ) : null}
 
       {bookings.map(booking => (
         <BookingSummaryCard

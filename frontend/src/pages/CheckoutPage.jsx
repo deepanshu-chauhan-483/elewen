@@ -343,7 +343,12 @@ function PaymentOptionPopup({
           <span className="text-[14px] font-medium text-white">Confirm Booking</span>
 
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
-            <svg className="h-[18px] w-[18px] text-[#D4BA8E]" viewBox="0 0 20 20" fill="none">
+            <svg
+              className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path
                 d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
                 stroke="currentColor"

@@ -48,11 +48,15 @@ function buildSelectionKey(selectedOptions) {
   return `pkgopt_${hash.toString(36)}`
 }
 
-function buildCartItemTitle(title, selectedOptions) {
+function buildCartItemTitle(title, selectedOptions, extraMeta = {}) {
   const normalized = normalizeSelectedOptions(selectedOptions)
-  if (!Object.keys(normalized).length) return title
+  const meta = {
+    ...extraMeta,
+    ...(Object.keys(normalized).length ? { selectedOptions: normalized } : {}),
+  }
+  if (!Object.keys(meta).length) return title
 
-  return `${title}${CART_META_SEPARATOR}${JSON.stringify({ selectedOptions: normalized })}`
+  return `${title}${CART_META_SEPARATOR}${JSON.stringify(meta)}`
 }
 
 function parseSelectedOptionsFromCartItemTitle(title = '') {
@@ -160,20 +164,30 @@ async function migrateGuestCartToServer(token) {
   if (!guestCart.items.length) return null
 
   for (const item of guestCart.items) {
+    const rawTitle = String(item?.title ?? '')
+    const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+    let parsedMeta = {}
+
+    if (metaPart) {
+      try {
+        parsedMeta = JSON.parse(metaPart) ?? {}
+      } catch {
+        parsedMeta = {}
+      }
+    }
+
     await cartAddItem(token, {
       packageId: Number(item.packageId),
       quantity: Number(item.quantity ?? 1),
-      selectedOptions: (() => {
-        const rawTitle = String(item?.title ?? '')
-        const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
-        if (!metaPart) return undefined
-        try {
-          const parsed = JSON.parse(metaPart)
-          return parsed?.selectedOptions ?? undefined
-        } catch {
-          return undefined
-        }
-      })(),
+      selectedOptions: parsedMeta?.selectedOptions ?? undefined,
+      addon:
+        parsedMeta?.itemType === 'addon'
+          ? {
+              id: parsedMeta?.addonId,
+              name: parsedMeta?.addonTitle,
+              price: Number(item?.unitPrice ?? 0),
+            }
+          : undefined,
     })
   }
 
@@ -278,18 +292,32 @@ export function useCart() {
     }
   }, [])
 
-  const addPackage = async ({ packageId, quantity = 1, selectedOptions }) => {
+  const addPackage = async ({ packageId, quantity = 1, selectedOptions, addon = null }) => {
     const token = getToken()
+    const addonId = addon?.id != null ? String(addon.id) : null
+    const addonTitle = String(addon?.name ?? '').trim()
+    const addonUnitPrice = Number(addon?.price ?? 0)
+    const isAddon = Boolean(addonId && addonTitle)
 
     if (!token) {
       const snapshot = await fetchPackageSnapshot(packageId)
       const guestCart = readGuestCart()
-      const selectionKey = buildSelectionKey(selectedOptions)
+      const selectionKey = isAddon ? null : buildSelectionKey(selectedOptions)
       const existing = guestCart.items.find(
         item =>
           String(item.packageId) === String(packageId) &&
-          String(item.packageElementId ?? '') === String(selectionKey ?? '')
+          String(item.packageElementId ?? '') === String(selectionKey ?? '') &&
+          String(item.addonId ?? '') === String(addonId ?? '')
       )
+      const unitPrice = isAddon ? addonUnitPrice : snapshot.basePrice
+      const itemTitle = isAddon
+        ? buildCartItemTitle(addonTitle, selectedOptions, {
+            itemType: 'addon',
+            addonTitle,
+            addonId,
+            parentPackageId: String(packageId),
+          })
+        : buildCartItemTitle(snapshot.title, selectedOptions)
 
       let nextItems
       if (existing) {
@@ -299,7 +327,7 @@ export function useCart() {
           return {
             ...item,
             quantity: nextQuantity,
-            totalPrice: (snapshot.basePrice * nextQuantity).toFixed(2),
+            totalPrice: (unitPrice * nextQuantity).toFixed(2),
           }
         })
       } else {
@@ -307,11 +335,11 @@ export function useCart() {
           id: createGuestCartItemId(),
           packageId: String(packageId),
           packageElementId: selectionKey,
-          addonId: null,
-          title: buildCartItemTitle(snapshot.title, selectedOptions),
+          addonId,
+          title: itemTitle,
           quantity,
-          unitPrice: snapshot.basePrice.toFixed(2),
-          totalPrice: (snapshot.basePrice * quantity).toFixed(2),
+          unitPrice: unitPrice.toFixed(2),
+          totalPrice: (unitPrice * quantity).toFixed(2),
           createdAt: new Date().toISOString(),
         })
       }
@@ -325,7 +353,7 @@ export function useCart() {
     }
 
     try {
-      const data = await cartAddItem(token, { packageId, quantity, selectedOptions })
+      const data = await cartAddItem(token, { packageId, quantity, selectedOptions, addon })
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))

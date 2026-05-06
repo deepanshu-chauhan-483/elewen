@@ -1,11 +1,20 @@
+import { useEffect, useState } from 'react'
 import Sidebar from './Sidebar'
-import Navbar from './Navbar'
+import Navbar from './navbar'
 import { DASHBOARD } from '../../constants/dashboard'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
 import { getStoredJwt, getValidStoredJwt } from '../../lib/api'
 
 const DashboardLayout = () => {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    document.body.style.overflow = isMobileSidebarOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobileSidebarOpen])
+
   const navigate = useNavigate()
   const location = useLocation()
   const [token, setToken] = useState(() => getStoredJwt())
@@ -55,20 +64,27 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="flex h-screen w-full">
-      <Sidebar />
+    <div className="min-h-screen w-full overflow-x-hidden md:flex">
+      {/* Sidebar */}
+      <Sidebar
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
+      />
 
-      <div className="flex flex-1 flex-col">
-        <Navbar />
+      {/* Right Section */}
+      <div className="flex w-full flex-col md:ml-[260px] md:flex-1">
+        <Navbar onMobileMenuOpen={() => setIsMobileSidebarOpen(true)} />
 
         <main
-          className="flex-1 overflow-y-auto p-6"
+          className="flex-1 overflow-y-auto pb-28 md:pb-6"
           style={{
-            backgroundColor: '#FAFAFA',
+            backgroundColor: '#F2F2F2',
             marginTop: DASHBOARD.NAVBAR_HEIGHT,
           }}
         >
-          <Outlet />
+          <div className="px-6 py-6 md:px-8 md:py-8">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

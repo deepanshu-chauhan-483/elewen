@@ -1,11 +1,8 @@
 import { Link } from 'react-router-dom'
-import {
-  DashboardEmptyState,
-  DashboardPageIntro,
-  SectionCard,
-} from '../../components/dashboard/DashboardUI'
+import { DashboardPageIntro, SectionCard } from '../../components/dashboard/DashboardUI'
 import { useWishlist } from '../../hooks/useWishlist'
 import { formatDashboardCurrency } from '../../components/dashboard/dashboardUtils'
+import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 function getPackageHref(item) {
   const serviceSlug = String(item?.serviceCategories?.[0]?.slug ?? '')
@@ -26,6 +23,17 @@ function getPackageHref(item) {
 export default function SavedPackages() {
   const { wishlist = [], isLoading, toggleSavedPackage, pendingPackageId } = useWishlist()
 
+  if (!isLoading && wishlist.length === 0) {
+    return (
+      <EmptyBooking
+        title="Nothing saved yet"
+        body="Use the heart icon on package cards and your saved shortlist will appear here."
+        actionLabel="Browse Packages"
+        actionTo="/package-listing"
+      />
+    )
+  }
+
   return (
     <div className="space-y-6 hide-scrollbar py-6">
       <DashboardPageIntro
@@ -38,15 +46,6 @@ export default function SavedPackages() {
         <SectionCard
           title="Loading saved packages"
           subtitle="Fetching your latest wishlist picks."
-        />
-      ) : null}
-
-      {!isLoading && wishlist.length === 0 ? (
-        <DashboardEmptyState
-          title="Nothing saved yet"
-          body="Use the heart icon on package cards and your saved shortlist will appear here."
-          actionLabel="Browse Packages"
-          actionTo="/package-listing"
         />
       ) : null}
 
@@ -99,9 +98,26 @@ export default function SavedPackages() {
                 <div className="flex flex-wrap gap-3 pt-2">
                   <Link
                     to={getPackageHref(item)}
-                    className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90"
+                    className="flex rounded-full gap-2 bg-[#CDB17E] px-5 py-3 text-sm text-white transition hover:opacity-90 items-center"
                   >
-                    Resume Package →
+                    Resume Package
+                    <span>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M3.33325 8.00065H12.6666M12.6666 8.00065L7.99992 3.33398M12.6666 8.00065L7.99992 12.6673"
+                          stroke="#FAFAFA"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
                   </Link>
                   <button
                     type="button"

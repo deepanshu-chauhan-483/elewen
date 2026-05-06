@@ -271,7 +271,7 @@ export default function SingleProductPageContent({
                   <img
                     src={activeImage}
                     alt={title}
-                    className="w-full object-cover border-[#727355] border-r-2 border-b-2 border-l-2"
+                    className="w-full object-cover border-[#727355] border-r-2 border-b-2 border-l-2 bg-[#F2F2F2]"
                     style={{
                       height: 'clamp(26.25rem, 70vw, 58.375rem)',
                     }}

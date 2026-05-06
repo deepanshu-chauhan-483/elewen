@@ -6,6 +6,7 @@ import { useServiceAreas } from '../hooks/useServiceAreas'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+const TEMP_BYPASS_PINCODE_VALIDATION = true
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -56,6 +57,14 @@ function getServiceAreaByPincode(value = '', serviceAreas = []) {
 }
 
 function getPincodeValidationState(value = '', serviceAreas = [], isLoadingServiceAreas = false) {
+  if (TEMP_BYPASS_PINCODE_VALIDATION) {
+    return {
+      isChecking: false,
+      isValid: true,
+      message: '',
+    }
+  }
+
   const normalizedPincode = normalizePincode(value)
 
   if (!normalizedPincode) {
@@ -166,6 +175,13 @@ function getPackageBreakdownRows(pkg) {
 }
 
 function getCartItemSummary(item) {
+  if (item?.itemType === 'addon') {
+    return {
+      rows: [],
+      total: Number(item?.totalPrice ?? 0),
+    }
+  }
+
   const quantity = Math.max(1, Number(item?.quantity ?? 1))
   const breakdownRows = getPackageBreakdownRows(item?.packageData)
 
@@ -192,6 +208,15 @@ function getCartItemQuantity(item) {
 }
 
 function getPriceSummaryCategoryLabel(item) {
+  if (item?.itemType === 'addon') {
+    return 'Add-ons'
+  }
+
+  return getPackageSubtitle(item?.packageData)
+}
+
+function getCartGroupLabel(item) {
+  if (item?.itemType === 'addon') return 'Add-ons'
   return getPackageSubtitle(item?.packageData)
 }
 
@@ -344,6 +369,43 @@ function getSuggestedAddons(cartItems) {
           price: 'Add-on',
           dedupeKey: `${String(packageData?.id ?? item?.packageId ?? '')}::${addon.toLowerCase()}`,
         }))
+    })
+    .filter(addon => {
+      if (seen.has(addon.dedupeKey)) return false
+      seen.add(addon.dedupeKey)
+      return true
+    })
+    .slice(0, 4)
+}
+
+function getSuggestedAddonsWithPricing(cartItems) {
+  const seen = new Set()
+
+  return cartItems
+    .flatMap(item => {
+      const packageData = item?.packageData
+      const packageSubtitle = getPackageSubtitle(packageData)
+      const packageTitle = packageData?.title || item?.displayTitle || 'Selected package'
+      const addons = Array.isArray(packageData?.detail_addons) ? packageData.detail_addons : []
+
+      return addons
+        .filter(addon => addon && addon.visibility !== false)
+        .map(addon => {
+          const addonTitle = String(addon?.name ?? addon?.title ?? '').trim()
+          const addonId = String(addon?.id ?? addonTitle)
+
+          return {
+            id: `${item.id}-${addonId}`,
+            packageId: packageData?.id,
+            addon,
+            addonTitle,
+            title: addonTitle,
+            subtitle: `${packageSubtitle} / ${packageTitle}`,
+            price: formatCurrency(Number(addon?.price ?? 0)),
+            dedupeKey: `${String(packageData?.id ?? item?.packageId ?? '')}::${addonId.toLowerCase()}`,
+          }
+        })
+        .filter(addon => addon.title)
     })
     .filter(addon => {
       if (seen.has(addon.dedupeKey)) return false
@@ -722,7 +784,7 @@ const CATEGORY_ICONS = {
 
 function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
   const groupedItems = cartItems.reduce((groups, item) => {
-    const category = getPackageSubtitle(item.packageData)
+    const category = getCartGroupLabel(item)
     const existingGroup = groups.find(group => group.category === category)
 
     if (existingGroup) {
@@ -770,11 +832,20 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                 item.id
               )
               const packageTitle = item.displayTitle || item.packageData?.title || 'Selected item'
-              const selectedElements = getSelectedElements(item)
+              const selectedElements =
+                item?.itemType === 'addon'
+                  ? [
+                      {
+                        label: 'Add-on item',
+                        value: item.displayTitle || item.addonTitle || 'Add-on',
+                      },
+                    ]
+                  : getSelectedElements(item)
               const tags = selectedElements
                 .map(element => element.value)
                 .filter(Boolean)
                 .slice(0, 4)
+              const canViewPackage = item?.itemType !== 'addon' && packageHref
 
               return (
                 <div
@@ -785,7 +856,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                     <div className="flex justify-between gap-4">
                       <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
                       <div className="flex min-w-0 items-center gap-2">
-                        {packageHref ? (
+                        {canViewPackage ? (
                           <Link
                             to={packageHref}
                             className="font-medium text-[#2C2C2C] transition-colors hover:text-[#5A1E0E]"
@@ -827,14 +898,16 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                     </div>
 
                     <div className="mt-4 flex items-center gap-2">
-                      <Link
-                        to={`/single-package-cart?itemId=${encodeURIComponent(item.id)}`}
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100"
-                        aria-label="View package"
-                        title="View package"
-                      >
-                        <EyeIcon />
-                      </Link>
+                      {item?.itemType !== 'addon' ? (
+                        <Link
+                          to={`/single-package-cart?itemId=${encodeURIComponent(item.id)}`}
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100"
+                          aria-label="View package"
+                          title="View package"
+                        >
+                          <EyeIcon />
+                        </Link>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => onRemoveItem(item.id)}
@@ -966,9 +1039,11 @@ function PriceSummaryCard({
                   <div key={item.id} className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-[#767676]">
-                        {singleItem
-                          ? `Base Package — ${item.displayTitle || item.packageData?.title || 'Selected item'}`
-                          : `${item.displayTitle || item.packageData?.title || 'Selected item'}`}
+                        {item?.itemType === 'addon'
+                          ? `Add-on — ${item.displayTitle || item.addonTitle || 'Selected item'}`
+                          : singleItem
+                            ? `Base Package — ${item.displayTitle || item.packageData?.title || 'Selected item'}`
+                            : `${item.displayTitle || item.packageData?.title || 'Selected item'}`}
                         {getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''}
                       </span>
                       <span className="font-medium text-[#1C1C1C]">
@@ -1226,7 +1301,7 @@ export default function CartPage() {
     [cartItems]
   )
 
-  const suggestedPackages = useMemo(() => getSuggestedAddons(cartItems), [cartItems])
+  const suggestedPackages = useMemo(() => getSuggestedAddonsWithPricing(cartItems), [cartItems])
 
   useEffect(() => {
     setDetailsForm({
@@ -1389,12 +1464,10 @@ export default function CartPage() {
 
     setAddingAddonId(pkg.id)
     try {
-      const addonTitle = String(pkg.addonTitle || pkg.title || 'Add-on').trim()
-
       await addPackage({
         packageId: Number(pkg.packageId),
         quantity: 1,
-        addonTitle,
+        addon: pkg.addon,
       })
     } catch (err) {
       console.error('[cart] addon add failed', err)

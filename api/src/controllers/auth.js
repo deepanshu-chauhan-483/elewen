@@ -402,7 +402,8 @@ export const getProfile = async (req, res, next) => {
 export const updateProfile = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { first_name, last_name, date_of_birth, preferred_language, profile_photo_url } = req.body
+    const { first_name, last_name, phone, date_of_birth, preferred_language, profile_photo_url } =
+      req.body
 
     const existing = await findCustomerProfile(userId)
 
@@ -428,12 +429,19 @@ export const updateProfile = async (req, res, next) => {
       updated = result.data
     }
 
-    // Also sync first_name / last_name back to Strapi user for consistency
-    if (first_name !== undefined || last_name !== undefined) {
-      await strapiAdminPut(`/api/users/${userId}`, {
-        ...(first_name !== undefined && { first_name }),
-        ...(last_name !== undefined && { last_name }),
-      })
+    // Also sync shared customer fields back to the Strapi user record for consistency.
+    if (first_name !== undefined || last_name !== undefined || phone !== undefined) {
+      try {
+        await strapiAdminPut(`/api/users/${userId}`, {
+          ...(first_name !== undefined && { first_name }),
+          ...(last_name !== undefined && { last_name }),
+          ...(phone !== undefined && { phone }),
+        })
+      } catch (err) {
+        if (!isStrapiCredentialError(err)) {
+          throw err
+        }
+      }
     }
 
     res.json({ profile: sanitizeProfile(updated) })

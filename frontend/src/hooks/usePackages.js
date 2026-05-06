@@ -205,6 +205,29 @@ function buildTextList(items, keys = ['text', 'title', 'name', 'label']) {
   )
 }
 
+function buildAddonList(items = []) {
+  const seen = new Set()
+
+  return (Array.isArray(items) ? items : [])
+    .filter(item => item && item.visibility !== false)
+    .map(item => ({
+      id: item?.id != null ? String(item.id) : '',
+      name: String(item?.name ?? item?.title ?? item?.text ?? '').trim(),
+      description: String(item?.description ?? '').trim(),
+      price: Number(item?.price ?? 0),
+      unit: String(item?.unit ?? '').trim(),
+      max_quantity: Number(item?.max_quantity ?? 1),
+      visibility: item?.visibility !== false,
+    }))
+    .filter(item => {
+      if (!item.name) return false
+      const key = `${item.id}::${item.name.toLowerCase()}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
 function normalizePackage(pkg, index = 0) {
   const serviceCategories = normaliseRelationArray(pkg.service_categories)
   const packageThemes = getNestedPackageThemes(pkg)
@@ -264,7 +287,7 @@ function normalizePackage(pkg, index = 0) {
       .filter(Boolean),
     detail_sections: getNestedPackageSections(pkg),
     detail_inclusions: buildDetailHighlights(pkg),
-    detail_addons: buildTextList(getNestedPackageAddons(pkg), ['name', 'title', 'text']),
+    detail_addons: buildAddonList(getNestedPackageAddons(pkg)),
     detail_exclusions: buildTextList(getNestedPackageExclusions(pkg)),
     detail_price_breakdown: getNestedPackagePriceBreakdowns(pkg),
     detail_accordion_sections: buildAccordionSections(pkg),

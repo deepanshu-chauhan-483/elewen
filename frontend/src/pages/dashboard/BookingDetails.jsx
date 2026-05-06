@@ -1,320 +1,265 @@
-import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import {
-  BookingSummaryCard,
-  DashboardEmptyState,
-  DashboardErrorState,
-  DashboardLoadingState,
-  DashboardPageIntro,
-  DashboardSelectorList,
-  DetailGrid,
-  SectionCard,
-  StatusPill,
-} from '../../components/dashboard/DashboardUI'
-import {
-  useDashboardBooking,
-  useDashboardBookings,
-  useDashboardCancelBooking,
-} from '../../hooks/useDashboardData'
+import { useState } from 'react'
+import { useDashboardBookings, useDashboardCancelBooking } from '../../hooks/useDashboardData'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
 } from '../../components/dashboard/dashboardUtils'
 
-function PaymentSummary({ booking }) {
+const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+
+function getSelectedItemDisplay(title = '') {
+  const rawTitle = String(title ?? '')
+  const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+
+  if (!metaPart) return rawTitle
+
+  try {
+    const parsed = JSON.parse(metaPart)
+    const selectedOptions = parsed?.selectedOptions
+
+    if (selectedOptions && typeof selectedOptions === 'object') {
+      const values = Object.values(selectedOptions).filter(Boolean)
+      if (values.length) return values.join(', ')
+    }
+  } catch {
+    return rawTitle.split(CART_META_SEPARATOR)[0] || rawTitle
+  }
+
+  return rawTitle.split(CART_META_SEPARATOR)[0] || rawTitle
+}
+
+const CalendarIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path
+      d="M6.6 1.6V5M13.3 1.6V5M2.5 8.3H17.5M4.1 3.3H15.8C16.7 3.3 17.5 4 17.5 5V16.6C17.5 17.5 16.7 18.3 15.8 18.3H4.1C3.2 18.3 2.5 17.5 2.5 16.6V5C2.5 4 3.2 3.3 4.1 3.3Z"
+      stroke="#1C1C1C"
+      strokeWidth="1.5"
+    />
+  </svg>
+)
+
+const ArrowIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="#fff" strokeWidth="1.5" />
+  </svg>
+)
+
+const StatusBadge = ({ status }) => {
+  const styles = {
+    confirmed: 'bg-[#E0F6ED] text-[#238E64]',
+    'in-progress': 'bg-[#FEF1DE] text-[#C07318]',
+    upcoming: 'bg-[#E0EAFD] text-[#3061C6]',
+  }
+
+  const labels = {
+    confirmed: 'Confirmed',
+    'in-progress': 'In Progress',
+    upcoming: 'Upcoming',
+  }
+
   return (
-    <div className="space-y-2 text-sm text-[#111827]">
-      <div className="flex items-center justify-between gap-6">
-        <span>Total</span>
-        <span>{formatDashboardCurrency(booking?.paymentSummary?.totalPrice)}</span>
+    <span
+      className={`rounded-full px-3 py-1 text-xs ${styles[status] || 'bg-[#F3F3F3] text-[#2E2E2E]'}`}
+    >
+      {labels[status] || status}
+    </span>
+  )
+}
+
+function BookingAccordionCard({ booking }) {
+  const [open, setOpen] = useState(false)
+  const [showCancel, setShowCancel] = useState(false)
+  const [reason, setReason] = useState('')
+  const cancelMutation = useDashboardCancelBooking()
+
+  const borderColor =
+    booking.status === 'confirmed'
+      ? 'border-[#238E64]'
+      : booking.status === 'in-progress'
+        ? 'border-[#C07318]'
+        : 'border-[#3061C6]'
+
+  return (
+    <div
+      className={`rounded-2xl border-l-4 bg-white p-6 shadow-sm transition hover:shadow-md ${borderColor}`}
+    >
+      <div className="cursor-pointer" onClick={() => setOpen(prev => !prev)}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3 md:justify-start">
+              <h3 className="text-[17px] font-medium leading-tight text-[#2E2E2E] md:text-lg">
+                {booking.package?.title || 'Booking'}
+              </h3>
+
+              <div className="shrink-0 md:pt-0.5">
+                <StatusBadge status={booking.status} />
+              </div>
+            </div>
+
+            <p className="mt-1 text-sm text-gray-500">
+              {booking.event?.name} · {booking.locationSummary}
+            </p>
+          </div>
+
+          {!open ? (
+            <div className="mt-2 hidden shrink-0 gap-[24px] text-sm md:flex md:gap-[32px]">
+              <div className="flex flex-col">
+                <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
+                <p className="font-medium">
+                  {formatDashboardCurrency(booking.paymentSummary?.amountPaid)}
+                </p>
+              </div>
+              <div className="flex flex-col">
+                <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
+                <p className="font-medium">
+                  {formatDashboardCurrency(booking.paymentSummary?.amountDue)}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+          <CalendarIcon />
+          {formatDashboardDate(booking.eventDate)}
+        </div>
+
+        {!open ? (
+          <div className="mt-4 flex gap-10 text-sm md:hidden">
+            <div className="flex flex-col">
+              <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
+              <p className="font-medium">
+                {formatDashboardCurrency(booking.paymentSummary?.amountPaid)}
+              </p>
+            </div>
+
+            <div className="flex flex-col">
+              <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
+              <p className="font-medium">
+                {formatDashboardCurrency(booking.paymentSummary?.amountDue)}
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
-      <div className="flex items-center justify-between gap-6">
-        <span>Advance</span>
-        <span>{formatDashboardCurrency(booking?.paymentSummary?.advanceAmount)}</span>
-      </div>
-      <div className="flex items-center justify-between gap-6">
-        <span>Paid</span>
-        <span>{formatDashboardCurrency(booking?.paymentSummary?.amountPaid)}</span>
-      </div>
-      <div className="flex items-center justify-between gap-6 font-medium">
-        <span>Balance</span>
-        <span>{formatDashboardCurrency(booking?.paymentSummary?.amountDue)}</span>
-      </div>
+
+      {open ? (
+        <>
+          <div className="mt-6 grid grid-cols-2 gap-6 border-t border-[#00000033] pt-6 text-sm md:grid-cols-3">
+            <div>
+              <p className="text-[11px] text-[#767676]">EVENT</p>
+              <p>{booking.event?.name}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">GUESTS</p>
+              <p>{booking.guestCount || 'Pending'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">LOCATION</p>
+              <p>{booking.locationSummary}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
+              <p>{formatDashboardCurrency(booking.paymentSummary?.amountPaid)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
+              <p>{formatDashboardCurrency(booking.paymentSummary?.amountDue)}</p>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h4 className="mb-3 text-[11px] text-[#767676]">SELECTED ITEMS</h4>
+            <div className="space-y-2">
+              {booking.items?.map(item => (
+                <div key={item.id} className="flex justify-between rounded-xl bg-[#F3F3F3] p-3">
+                  <span className="text-sm">{getSelectedItemDisplay(item.title)}</span>
+                  <span className="text-sm font-medium">
+                    {formatDashboardCurrency(item.totalPrice)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h4 className="mb-3 text-[11px] text-[#767676]">PAYMENTS</h4>
+            {booking.payments?.map(payment => (
+              <div key={payment.id} className="mb-2 flex justify-between rounded-xl border p-3">
+                <span className="text-sm text-[#2E2E2E]">{payment.paymentType}</span>
+                <span className="text-sm font-medium">
+                  {formatDashboardCurrency(payment.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button className="flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2 text-white">
+              Message Admin <ArrowIcon />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCancel(prev => !prev)}
+              className="rounded-full px-5 py-2 bg-[#FFFFFF] border border-[#C6A15B] text-[#C6A15B]"
+            >
+              Cancel Booking
+            </button>
+          </div>
+
+          {showCancel ? (
+            <div className="mt-4 rounded-xl border border-red-200 bg-[#FFF5F5] p-4">
+              <textarea
+                value={reason}
+                onChange={event => setReason(event.target.value)}
+                placeholder="Reason..."
+                className="w-full rounded-lg p-3 bg-[#FFFFFF]"
+              />
+
+              <div className="mt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    cancelMutation.mutate({
+                      bookingId: booking.id,
+                      body: { reason },
+                    })
+                  }
+                  className="rounded-full bg-[#591902] px-4 py-2 text-white"
+                >
+                  Confirm
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowCancel(false)}
+                  className="rounded-full px-4 py-2 bg-[#FFFFFF] text-[#C6A15B]"
+                >
+                  Abort
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </>
+      ) : null}
     </div>
   )
 }
 
-export default function BookingDetails() {
-  const {
-    data: bookings = [],
-    isLoading: bookingsLoading,
-    error: bookingsError,
-  } = useDashboardBookings('all')
-  const [searchParams, setSearchParams] = useSearchParams()
-  const selectedBookingId = searchParams.get('bookingId') || ''
-  const [showCancellationForm, setShowCancellationForm] = useState(false)
-  const [cancellationReason, setCancellationReason] = useState('')
-  const cancelBookingMutation = useDashboardCancelBooking()
-
-  useEffect(() => {
-    if (!bookings.length) return
-    if (selectedBookingId && bookings.some(booking => booking.id === selectedBookingId)) return
-
-    const next = new URLSearchParams(searchParams)
-    next.set('bookingId', bookings[0].id)
-    setSearchParams(next, { replace: true })
-  }, [bookings, searchParams, selectedBookingId, setSearchParams])
-
-  const {
-    data: booking,
-    isLoading: bookingLoading,
-    error: bookingError,
-  } = useDashboardBooking(selectedBookingId)
-
-  useEffect(() => {
-    setShowCancellationForm(false)
-    setCancellationReason('')
-  }, [selectedBookingId])
-
-  if (bookingsLoading) {
-    return <DashboardLoadingState title="Loading booking details..." />
-  }
-
-  if (bookingsError || bookingError) {
-    return <DashboardErrorState title="We could not load this booking detail view." />
-  }
+export default function BookingDetailsAccordion() {
+  const { data: bookings = [] } = useDashboardBookings('all')
 
   return (
-    <div className="space-y-6">
-      <DashboardPageIntro
-        title="Booking Details"
-        subtitle="Review package selections, event information, and payment history."
-        meta={`${bookings.length} bookings`}
-      />
+    <div className="space-y-6 bg-[#F2F2F2]">
+      <div>
+        <h1 className="text-2xl font-serif text-[#2E2E2E]">Booking Details</h1>
+        <p className="text-sm text-gray-500">Click on a booking to view full details</p>
+      </div>
 
-      {bookings.length === 0 ? (
-        <DashboardEmptyState
-          title="No booking details yet"
-          body="Once you place a booking, the full package and payment breakdown will be available here."
-          actionLabel="Explore Packages"
-          actionTo="/package-listing"
-        />
-      ) : (
-        <>
-          <DashboardSelectorList
-            items={bookings}
-            selectedId={selectedBookingId}
-            onSelect={bookingId => {
-              const next = new URLSearchParams(searchParams)
-              next.set('bookingId', bookingId)
-              setSearchParams(next, { replace: true })
-            }}
-            getLabel={item => item.package?.title || item.event?.name || 'Booking'}
-            getSubLabel={item => `${item.statusLabel} · ${formatDashboardDate(item.eventDate)}`}
-          />
-
-          {bookingLoading ? (
-            <DashboardLoadingState title="Loading selected booking..." />
-          ) : booking ? (
-            <>
-              <BookingSummaryCard
-                booking={booking}
-                rightContent={<PaymentSummary booking={booking} />}
-                footerContent={
-                  <div className="text-sm text-[#6B7280]">
-                    Booking ID: <span className="font-medium text-[#2E2E2E]">{booking.id}</span>
-                  </div>
-                }
-              />
-
-              <SectionCard title="Event Snapshot" subtitle="Core details shared for this booking.">
-                <DetailGrid
-                  items={[
-                    { label: 'Event', value: booking.event?.name || 'Not assigned yet' },
-                    { label: 'Date', value: formatDashboardDate(booking.eventDate) },
-                    {
-                      label: 'Guests',
-                      value: booking.guestCount ? `${booking.guestCount} guests` : 'Pending',
-                    },
-                    { label: 'Location', value: booking.locationSummary || 'Venue not shared yet' },
-                    { label: 'Status', value: booking.statusLabel },
-                    { label: 'Booking ID', value: booking.id },
-                  ]}
-                />
-              </SectionCard>
-
-              <SectionCard
-                title="Selected Items"
-                subtitle="Package elements snapped into this booking."
-              >
-                {booking.items?.length ? (
-                  <div className="space-y-3">
-                    {booking.items.map(item => (
-                      <div
-                        key={item.id}
-                        className="flex flex-col gap-2 rounded-2xl bg-white p-4 md:flex-row md:items-center md:justify-between"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-[#2E2E2E]">{item.title}</p>
-                          <p className="mt-1 text-xs text-[#6B7280]">Qty {item.quantity}</p>
-                        </div>
-                        <div className="text-sm text-[#2E2E2E]">
-                          {formatDashboardCurrency(item.totalPrice)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-[#6B7280]">
-                    No line items were stored for this booking yet.
-                  </p>
-                )}
-              </SectionCard>
-
-              <SectionCard
-                title="Vendor Coordination"
-                subtitle="Assigned partners for this booking."
-              >
-                {booking.vendorAssignments?.length ? (
-                  <div className="space-y-3">
-                    {booking.vendorAssignments.map(assignment => (
-                      <div key={assignment.id} className="rounded-2xl bg-white p-4">
-                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-[#2E2E2E]">
-                              {assignment.vendor?.companyName || `Vendor #${assignment.vendorId}`}
-                            </p>
-                            <p className="mt-1 text-xs text-[#6B7280]">
-                              {assignment.vendor?.locationCity || 'City pending'} ·{' '}
-                              {assignment.vendor?.serviceArea || 'Service area pending'}
-                            </p>
-                          </div>
-                          <StatusPill
-                            label={String(assignment.status || 'assigned').replace(/_/g, ' ')}
-                            status={assignment.status}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-[#6B7280]">
-                    Vendor assignments have not been added yet.
-                  </p>
-                )}
-              </SectionCard>
-
-              <SectionCard title="Payments" subtitle="Recorded payments linked to this booking.">
-                {booking.payments?.length ? (
-                  <div className="space-y-3">
-                    {booking.payments.map(payment => (
-                      <div
-                        key={payment.id}
-                        className="flex flex-col gap-3 rounded-2xl bg-white p-4 md:flex-row md:items-center md:justify-between"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-[#2E2E2E]">
-                            {String(payment.paymentType || 'payment').replace(/\b\w/g, char =>
-                              char.toUpperCase()
-                            )}
-                          </p>
-                          <p className="mt-1 text-xs text-[#6B7280]">
-                            {formatDashboardDate(payment.createdAt)}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <StatusPill label={payment.status} status={payment.status} />
-                          <span className="text-sm text-[#2E2E2E]">
-                            {formatDashboardCurrency(payment.amount)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-[#6B7280]">
-                    No payment records are attached to this booking yet.
-                  </p>
-                )}
-              </SectionCard>
-
-              <SectionCard
-                title="Booking Actions"
-                subtitle="Reach the team or request a cancellation for this booking."
-              >
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-wrap gap-3">
-                    <Link
-                      to={`/user-dashboard/messages?bookingId=${booking.id}`}
-                      className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90"
-                    >
-                      Message Admin
-                    </Link>
-
-                    {booking.status !== 'cancelled' && booking.status !== 'completed' ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowCancellationForm(current => !current)}
-                        className="rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
-                      >
-                        {showCancellationForm ? 'Hide Cancellation' : 'Cancel Booking'}
-                      </button>
-                    ) : null}
-                  </div>
-
-                  {showCancellationForm ? (
-                    <form
-                      onSubmit={async event => {
-                        event.preventDefault()
-                        await cancelBookingMutation.mutateAsync({
-                          bookingId: booking.id,
-                          body: {
-                            reason: cancellationReason.trim() || undefined,
-                            policyAcknowledged: true,
-                          },
-                        })
-                        setShowCancellationForm(false)
-                        setCancellationReason('')
-                      }}
-                      className="rounded-2xl bg-white p-4"
-                    >
-                      <p className="text-sm text-[#6B7280]">
-                        Cancellation policy acknowledgment is required before submitting this
-                        request.
-                      </p>
-                      <textarea
-                        value={cancellationReason}
-                        onChange={event => setCancellationReason(event.target.value)}
-                        rows={4}
-                        placeholder="Share your cancellation reason (optional)..."
-                        className="mt-4 w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
-                      />
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        <button
-                          type="submit"
-                          disabled={cancelBookingMutation.isPending}
-                          className="rounded-full bg-[#591902] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {cancelBookingMutation.isPending
-                            ? 'Submitting...'
-                            : 'Proceed Cancellation'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowCancellationForm(false)}
-                          className="rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
-                        >
-                          Abort
-                        </button>
-                      </div>
-                    </form>
-                  ) : null}
-                </div>
-              </SectionCard>
-            </>
-          ) : null}
-        </>
-      )}
+      {bookings.map(booking => (
+        <BookingAccordionCard key={booking.id} booking={booking} />
+      ))}
     </div>
   )
 }

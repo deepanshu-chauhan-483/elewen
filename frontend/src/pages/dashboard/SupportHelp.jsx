@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
   DashboardPageIntro,
@@ -20,6 +19,7 @@ import {
   useDashboardSupportTickets,
 } from '../../hooks/useDashboardData'
 import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
+import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 export default function SupportHelp() {
   const { data: session } = useDashboardSession()
@@ -63,6 +63,15 @@ export default function SupportHelp() {
 
   if (helpError || ticketsError || ticketError) {
     return <DashboardErrorState title="We could not load support details right now." />
+  }
+
+  if (tickets.length === 0) {
+    return (
+      <EmptyBooking
+        title="No support tickets yet"
+        body="Your open and resolved support tickets will appear here once you create one."
+      />
+    )
   }
 
   const handleCreateTicket = async event => {
@@ -222,86 +231,79 @@ export default function SupportHelp() {
         </form>
       </SectionCard>
 
-      {tickets.length === 0 ? (
-        <DashboardEmptyState
-          title="No support tickets yet"
-          body="Your open and resolved support tickets will appear here once you create one."
+      <>
+        <DashboardSelectorList
+          items={tickets}
+          selectedId={selectedTicketId}
+          onSelect={ticketId => {
+            const next = new URLSearchParams(searchParams)
+            next.set('ticketId', ticketId)
+            setSearchParams(next, { replace: true })
+          }}
+          getLabel={item => item.subject}
+          getSubLabel={item =>
+            `${item.status.replace(/_/g, ' ')} · ${formatDashboardDate(item.createdAt)}`
+          }
         />
-      ) : (
-        <>
-          <DashboardSelectorList
-            items={tickets}
-            selectedId={selectedTicketId}
-            onSelect={ticketId => {
-              const next = new URLSearchParams(searchParams)
-              next.set('ticketId', ticketId)
-              setSearchParams(next, { replace: true })
-            }}
-            getLabel={item => item.subject}
-            getSubLabel={item =>
-              `${item.status.replace(/_/g, ' ')} · ${formatDashboardDate(item.createdAt)}`
+
+        {ticketLoading ? (
+          <DashboardLoadingState title="Loading selected support ticket..." />
+        ) : selectedTicket && ticket ? (
+          <SectionCard
+            title={selectedTicket.subject}
+            subtitle={
+              selectedTicket.bookingId
+                ? `Linked booking: ${selectedTicket.bookingId}`
+                : 'General support request'
             }
-          />
-
-          {ticketLoading ? (
-            <DashboardLoadingState title="Loading selected support ticket..." />
-          ) : selectedTicket && ticket ? (
-            <SectionCard
-              title={selectedTicket.subject}
-              subtitle={
-                selectedTicket.bookingId
-                  ? `Linked booking: ${selectedTicket.bookingId}`
-                  : 'General support request'
-              }
-              action={
-                <StatusPill
-                  label={selectedTicket.status.replace(/_/g, ' ')}
-                  status={selectedTicket.status}
-                />
-              }
-            >
-              <div className="space-y-4 rounded-3xl bg-[#EEE8E1] p-4">
-                {ticket.messages?.map(message => (
-                  <div key={message.id} className="space-y-2">
-                    <MessageBubble
-                      message={message}
-                      isOwnMessage={String(message.senderId) === String(session?.user?.id)}
-                    />
-                    <p
-                      className={`text-xs text-[#6B7280] ${
-                        String(message.senderId) === String(session?.user?.id)
-                          ? 'text-right'
-                          : 'text-left'
-                      }`}
-                    >
-                      {formatDashboardDate(message.createdAt)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <form onSubmit={handleReply} className="mt-5 space-y-3">
-                <textarea
-                  rows={4}
-                  value={reply}
-                  onChange={event => setReply(event.target.value)}
-                  className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
-                  placeholder="Reply to this support ticket..."
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={!reply.trim() || replyMutation.isPending}
-                    className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            action={
+              <StatusPill
+                label={selectedTicket.status.replace(/_/g, ' ')}
+                status={selectedTicket.status}
+              />
+            }
+          >
+            <div className="space-y-4 rounded-3xl bg-[#EEE8E1] p-4">
+              {ticket.messages?.map(message => (
+                <div key={message.id} className="space-y-2">
+                  <MessageBubble
+                    message={message}
+                    isOwnMessage={String(message.senderId) === String(session?.user?.id)}
+                  />
+                  <p
+                    className={`text-xs text-[#6B7280] ${
+                      String(message.senderId) === String(session?.user?.id)
+                        ? 'text-right'
+                        : 'text-left'
+                    }`}
                   >
-                    {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
-                  </button>
+                    {formatDashboardDate(message.createdAt)}
+                  </p>
                 </div>
-              </form>
-            </SectionCard>
-          ) : null}
-        </>
-      )}
+              ))}
+            </div>
+
+            <form onSubmit={handleReply} className="mt-5 space-y-3">
+              <textarea
+                rows={4}
+                value={reply}
+                onChange={event => setReply(event.target.value)}
+                className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
+                placeholder="Reply to this support ticket..."
+              />
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={!reply.trim() || replyMutation.isPending}
+                  className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
+                </button>
+              </div>
+            </form>
+          </SectionCard>
+        ) : null}
+      </>
     </div>
   )
 }

@@ -61,6 +61,21 @@ function buildStoredCartItemTitle(title, selectedOptions, addonTitle = '') {
   return buildCartItemTitle(title, normalized)
 }
 
+function normalizeSectionItems(value) {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (Array.isArray(value?.data)) return value.data
+  return []
+}
+
+function getPackageAddons(pkg) {
+  const sections = normalizeSectionItems(pkg?.packages)
+
+  return sections.flatMap(section =>
+    Array.isArray(section?.addons) ? section.addons : normalizeSectionItems(section?.addons)
+  )
+}
+
 // ─── Helper: recalculate cart totals ─────────────────────────────────────────
 // couponIdOverride: pass null to explicitly remove coupon, a string to set one,
 // or undefined to keep whatever couponId is already on the cart.
@@ -137,20 +152,41 @@ export const getCart = async (req, res, next) => {
 export const addItem = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { packageId, quantity = 1, selectedOptions, addonTitle = '' } = req.body
+    const { packageId, quantity = 1, selectedOptions, addonTitle = '', addon = null } = req.body
 
     if (!packageId) return res.status(400).json({ error: 'packageId is required' })
     if (quantity < 1) return res.status(400).json({ error: 'quantity must be at least 1' })
 
     // Fetch package from Strapi — use filter by id (Strapi v5 single entry needs documentId, filter by id works)
-    const { data: pkgs } = await strapiGet('/packages', { 'filters[id][$eq]': packageId })
+    const { data: pkgs } = await strapiGet('/packages', {
+      'filters[id][$eq]': packageId,
+      'populate[packages][on][package.decorpackages][populate][addons]': 'true',
+      'populate[packages][on][package.sheeshapackage][populate][addons]': 'true',
+      'populate[packages][on][package.bartendingpackage][populate][addons]': 'true',
+    })
     const pkg = pkgs?.[0]
     if (!pkg) return res.status(404).json({ error: 'Package not found' })
 
-    const unitPrice = Number(pkg.base_price)
+    const requestedAddonId = addon?.id != null ? String(addon.id) : ''
+    const requestedAddonTitle = String(addon?.name ?? addonTitle ?? '').trim()
+    const matchedAddon = getPackageAddons(pkg).find(entry => {
+      const entryId = String(entry?.id ?? '')
+      const entryName = String(entry?.name ?? entry?.title ?? '').trim()
+
+      return (
+        (requestedAddonId && entryId === requestedAddonId) ||
+        (requestedAddonTitle && entryName.toLowerCase() === requestedAddonTitle.toLowerCase())
+      )
+    })
+    const addonId = matchedAddon?.id != null ? String(matchedAddon.id) : ''
+    const trimmedAddonTitle = String(
+      matchedAddon?.name ?? matchedAddon?.title ?? requestedAddonTitle
+    ).trim()
+    const isAddon = Boolean(addonId && trimmedAddonTitle)
+    const unitPrice = isAddon ? Number(matchedAddon?.price ?? 0) : Number(pkg.base_price)
     const title = pkg.title
-    const selectionKey = buildSelectionKey(selectedOptions)
-    const storedTitle = buildStoredCartItemTitle(title, selectedOptions, addonTitle)
+    const selectionKey = isAddon ? null : buildSelectionKey(selectedOptions)
+    const storedTitle = buildStoredCartItemTitle(title, selectedOptions, trimmedAddonTitle)
 
     // Get or create cart
     let cart = await prisma.cart.findFirst({ where: { userId } })
@@ -164,7 +200,7 @@ export const addItem = async (req, res, next) => {
         cartId: cart.id,
         packageId: String(packageId),
         packageElementId: selectionKey,
-        addonId: null,
+        addonId: addonId || null,
       },
     })
 
@@ -180,6 +216,7 @@ export const addItem = async (req, res, next) => {
           cartId: cart.id,
           packageId: String(packageId),
           packageElementId: selectionKey,
+          addonId: addonId || null,
           title: storedTitle,
           quantity,
           unitPrice: unitPrice.toFixed(2),

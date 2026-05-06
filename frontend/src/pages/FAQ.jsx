@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useFaqCategories, useFaqItems } from '../hooks/useFaqItems'
 
 const formatCategoryLabel = value =>
@@ -13,19 +13,13 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(0)
   const { data: faqs = [] } = useFaqItems()
   const { data: categories = [] } = useFaqCategories()
-
-  useEffect(() => {
-    if (!categories.length) return
-    if (!activeCategory || !categories.includes(activeCategory)) {
-      setActiveCategory(categories[0])
-      setOpenIndex(0)
-    }
-  }, [activeCategory, categories])
+  const resolvedActiveCategory =
+    activeCategory && categories.includes(activeCategory) ? activeCategory : (categories[0] ?? '')
 
   const visibleFaqs = useMemo(() => {
-    if (!activeCategory) return faqs
-    return faqs.filter(item => item.category === activeCategory)
-  }, [activeCategory, faqs])
+    if (!resolvedActiveCategory) return faqs
+    return faqs.filter(item => item.category === resolvedActiveCategory)
+  }, [faqs, resolvedActiveCategory])
 
   return (
     <div className="w-full">
@@ -48,7 +42,7 @@ export default function FAQ() {
             <aside className="self-start pb-6 lg:sticky lg:top-28 lg:pb-0 ">
               <ul className="space-y-6 text-[16px] ">
                 {categories.map(category => {
-                  const isActive = activeCategory === category
+                  const isActive = resolvedActiveCategory === category
 
                   return (
                     <li key={category}>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTermsAndConditions } from '../hooks/useTermsAndConditions'
 
 const fallbackTermsData = [
@@ -48,19 +48,17 @@ export default function Terms() {
     [termsData]
   )
   const [activeId, setActiveId] = useState(defaultActiveId)
-
-  useEffect(() => {
-    const validIds = new Set(
-      termsData.flatMap(section => [
-        section.id,
-        ...(section.children?.map(child => child.id) ?? []),
-      ])
-    )
-
-    if (!validIds.has(activeId)) {
-      setActiveId(defaultActiveId)
-    }
-  }, [activeId, defaultActiveId, termsData])
+  const validIds = useMemo(
+    () =>
+      new Set(
+        termsData.flatMap(section => [
+          section.id,
+          ...(section.children?.map(child => child.id) ?? []),
+        ])
+      ),
+    [termsData]
+  )
+  const resolvedActiveId = validIds.has(activeId) ? activeId : defaultActiveId
 
   const pageTitle = cmsTerms?.pageTitle ?? 'Terms & Conditions'
   const pageSubtitle =
@@ -164,7 +162,9 @@ export default function Terms() {
                           document.getElementById(child.id)?.scrollIntoView({ behavior: 'smooth' })
                         }}
                         className={`cursor-pointer pl-3 ${
-                          activeId === child.id ? 'text-[#6a8f4e] font-medium' : 'text-gray-600'
+                          resolvedActiveId === child.id
+                            ? 'text-[#6a8f4e] font-medium'
+                            : 'text-gray-600'
                         }`}
                         title={getChildIndexLabel(child)}
                       >

@@ -52,6 +52,7 @@ import MessagesUpdates from './pages/dashboard/MessagesUpdates'
 import PreviousBookings from './pages/dashboard/PreviousBookings'
 import SavedPackages from './pages/dashboard/SavedPackages'
 import SupportHelp from './pages/dashboard/SupportHelp'
+import ProfilePage from './pages/dashboard/ProfilePage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -142,6 +143,7 @@ function AppLayout() {
 
         <Route path="/user-dashboard" element={<DashboardLayout />}>
           <Route index element={<Navigate to="active-booking" replace />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="active-booking" element={<ActiveBookings />} />
           <Route path="sample-taste" element={<DashboardSampleTasteBooking />} />
           <Route path="timeline" element={<BookingTimeline />} />
