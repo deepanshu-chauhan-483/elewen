@@ -253,7 +253,7 @@ export default function BookingDetailsAccordion() {
   return (
     <div className="space-y-6 bg-[#F2F2F2] p-6">
       <div>
-        <h1 className="text-2xl font-serif text-[#2E2E2E]">Booking Details</h1>
+        <h1 className="text-2xl text-[#2E2E2E]">Booking Details</h1>
         <p className="text-sm text-gray-500">Click on a booking to view full details</p>
       </div>
 

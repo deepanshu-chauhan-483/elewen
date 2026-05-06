@@ -338,7 +338,7 @@ function PaymentOptionPopup({
         <button
           type="button"
           onClick={() => onConfirm(selected)}
-          className="mt-6 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-2 pl-5 pr-2"
+          className="group mt-6 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-2 pl-5 pr-2"
         >
           <span className="text-[14px] font-medium text-white">Confirm Booking</span>
 
@@ -361,6 +361,35 @@ function PaymentOptionPopup({
         </button>
       </div>
     </div>
+  )
+}
+
+function SpecialRequest({ preferences, onChange, onSubmit, message }) {
+  return (
+    <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
+      {/* TITLE */}
+      <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+        Special Request
+      </h2>
+
+      <p className="mb-4 mt-1 text-sm text-gray-500">
+        Add any preferences or instructions for your order
+      </p>
+
+      {/* INPUT */}
+      <div className="flex flex-col gap-3">
+        <input
+          type="text"
+          value={preferences}
+          onChange={e => onChange(e.target.value)}
+          placeholder="Write Message"
+          className="w-full border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
+        />
+      </div>
+
+      {/* MESSAGE */}
+      {message && <p className="mt-2 text-sm text-[#5A1E0E]">{message}</p>}
+    </form>
   )
 }
 
@@ -397,6 +426,13 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('upi')
   const [formError, setFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [preferences, setPreferences] = useState('')
+  const [message, setMessage] = useState('')
+
+  const onSubmit = e => {
+    e.preventDefault()
+    setMessage('Request added successfully')
+  }
 
   const packageLookup = useMemo(
     () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
@@ -705,10 +741,18 @@ export default function CheckoutPage() {
                 <p className="text-[12px] font-medium text-[#0383E4]">
                   {sessionDetails.dateLabel} - {sessionDetails.timeLabel}
                 </p>
+
                 <p className="mt-1 text-[11px] text-[#00477C]">{sessionDetails.address}</p>
               </div>
             </div>
-          ) : null}
+          ) : (
+            <SpecialRequest
+              preferences={preferences}
+              onChange={setPreferences}
+              onSubmit={onSubmit}
+              message={message}
+            />
+          )}
 
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#1F2A16] px-5 py-3 text-white">
@@ -805,7 +849,7 @@ export default function CheckoutPage() {
             </h2>
             <p className="mt-3 text-[14px] text-[#7A7A7A]">{pageContent.detailsIntro}</p>
 
-            <div className="mt-10 space-y-4">
+            <div className="mt-10 space-y-3">
               <input
                 type="text"
                 value={fullName}
@@ -842,19 +886,68 @@ export default function CheckoutPage() {
                 </h3>
 
                 <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <input
-                    type="date"
-                    min={getMinEventDate()}
-                    value={eventDate}
-                    onChange={event => setEventDate(event.target.value)}
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
-                  />
-                  <input
-                    type="time"
-                    value={eventTime}
-                    onChange={event => setEventTime(event.target.value)}
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
-                  />
+                  {/* EVENT DATE */}
+                  <div className="relative">
+                    <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2">
+                      {/* Calendar SVG */}
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M5.33333 1.33334V4.00001M10.6667 1.33334V4.00001M2 6.66668H14M3.33333 2.66668H12.6667C13.403 2.66668 14 3.26363 14 4.00001V13.3333C14 14.0697 13.403 14.6667 12.6667 14.6667H3.33333C2.59695 14.6667 2 14.0697 2 13.3333V4.00001C2 3.26363 2.59695 2.66668 3.33333 2.66668Z"
+                          stroke="#2D2D2D"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+
+                    <input
+                      type="text"
+                      min={getMinEventDate()}
+                      value={eventDate}
+                      placeholder="Event Date"
+                      onChange={event => setEventDate(event.target.value)}
+                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 pl-10 text-[16px] text-[#2C2C2C] outline-none"
+                    />
+                  </div>
+
+                  {/* EVENT TIME */}
+                  <div className="relative">
+                    <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2">
+                      {/* Time SVG */}
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M6.66406 1.33334H9.33073M7.9974 9.33334L9.9974 7.33334M13.3307 9.33334C13.3307 12.2789 10.9429 14.6667 7.9974 14.6667C5.05188 14.6667 2.66406 12.2789 2.66406 9.33334C2.66406 6.38782 5.05188 4.00001 7.9974 4.00001C10.9429 4.00001 13.3307 6.38782 13.3307 9.33334Z"
+                          stroke="#2D2D2D"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={eventTime}
+                      placeholder="Event Time"
+                      onChange={event => setEventTime(event.target.value)}
+                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 pl-10 text-[16px] text-[#2C2C2C] outline-none"
+                    />
+                  </div>
+
+                  {/* ADDRESS */}
                   <input
                     type="text"
                     value={eventAddress}
@@ -862,6 +955,8 @@ export default function CheckoutPage() {
                     placeholder="Event Address"
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
                   />
+
+                  {/* PIN CODE */}
                   <input
                     type="text"
                     value={pinCode}
@@ -869,6 +964,8 @@ export default function CheckoutPage() {
                     placeholder="PIN Code"
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
                   />
+
+                  {/* GUESTS */}
                   <input
                     type="number"
                     min="1"

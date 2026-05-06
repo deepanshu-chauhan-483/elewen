@@ -234,7 +234,7 @@ const Navbar = ({ onMobileMenuOpen }) => {
       className="h-8 w-8 shrink-0 rounded-full object-cover"
     />
   ) : (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#8eb8ff_0%,#597ce3_35%,#202a5f_100%)] text-[10px] font-medium text-white">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#D9D9D9] text-[10px] font-medium text-white">
       {getInitials(name) || 'CU'}
     </div>
   )

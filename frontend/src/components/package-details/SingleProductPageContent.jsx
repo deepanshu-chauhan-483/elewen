@@ -6,25 +6,29 @@ import PackageCard from '../package-listing/PackageCard'
 
 function QuantityControl({ quantity, onDecrement, onIncrement }) {
   return (
-    <div className="mt-6 flex items-center gap-3">
-      <p className="text-[16px] font-medium text-[#591902]">Quantity :</p>
-      <div className="inline-flex items-center overflow-hidden rounded-[4px] border border-[#B08B5A] bg-[#FFF7EA]">
+    <div className="mt-6 flex items-center gap-2">
+      <p className="text-[12px] font-medium text-[#591902]">Quantity :</p>
+
+      <div className="flex items-center border border-[#D9D9D9] bg-white">
+        {/* Minus */}
         <button
           type="button"
           onClick={onDecrement}
-          className="flex h-8 w-8 items-center justify-center text-[18px] leading-none text-[#75431F] transition-colors hover:bg-[#F6E5C7]"
-          aria-label="Decrease quantity"
+          className="flex h-[28px] w-[28px] items-center justify-center border-r border-[#D9D9D9] text-[18px] font-light text-black"
         >
-          -
+          −
         </button>
-        <span className="flex h-8 min-w-[34px] items-center justify-center border-x border-[#B08B5A] px-2 text-[13px] font-medium text-[#75431F]">
+
+        {/* Quantity */}
+        <div className="flex h-[28px] w-[28px] items-center justify-center text-[16px] font-medium text-black">
           {quantity}
-        </span>
+        </div>
+
+        {/* Plus */}
         <button
           type="button"
           onClick={onIncrement}
-          className="flex h-8 w-8 items-center justify-center text-[18px] leading-none text-[#75431F] transition-colors hover:bg-[#F6E5C7]"
-          aria-label="Increase quantity"
+          className="flex h-[28px] w-[28px] items-center justify-center border-l border-[#D9D9D9] text-[18px] font-light text-black"
         >
           +
         </button>
@@ -32,7 +36,6 @@ function QuantityControl({ quantity, onDecrement, onIncrement }) {
     </div>
   )
 }
-
 function AccordionSection({ title, body, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
