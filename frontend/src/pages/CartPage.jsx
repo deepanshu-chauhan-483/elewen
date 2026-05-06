@@ -18,7 +18,7 @@ function formatCurrency(value) {
 function getMinEventDate() {
   const today = new Date()
   const minDate = new Date(today)
-  minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
+  minDate.setDate(minDate.getDate() + 6)
 
   const year = minDate.getFullYear()
   const month = String(minDate.getMonth() + 1).padStart(2, '0')
@@ -244,6 +244,9 @@ function parseCartItemTitle(value = '') {
     return {
       displayTitle: displayTitle || rawTitle,
       selectedOptions: {},
+      itemType: 'package',
+      addonTitle: '',
+      parentPackageId: '',
     }
   }
 
@@ -255,50 +258,42 @@ function parseCartItemTitle(value = '') {
         parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
           ? parsed.selectedOptions
           : {},
+      itemType: parsed?.itemType ?? 'package',
+      addonTitle: parsed?.addonTitle ?? '',
+      parentPackageId: parsed?.parentPackageId ?? '',
     }
   } catch {
     return {
       displayTitle: displayTitle || rawTitle,
       selectedOptions: {},
+      itemType: 'package',
+      addonTitle: '',
+      parentPackageId: '',
     }
   }
 }
 
 function getSelectedElements(item) {
-  console.log('[CartPage] getSelectedElements - item:', item)
-  console.log('[CartPage] getSelectedElements - customization:', item?.customization)
-  console.log('[CartPage] getSelectedElements - selectedOptions:', item?.selectedOptions)
-
-  // First, check if item has selectedOptions (from decorSelectedOptions)
   const selectedOptions = item?.selectedOptions ?? {}
   if (Object.keys(selectedOptions).length > 0) {
-    console.log('[CartPage] Using selectedOptions:', selectedOptions)
     const selected = Object.entries(selectedOptions)
       .map(([label, value]) => ({
-        label: label.replace(/_\d+$/, ''), // Remove index suffix for display
+        label: label.replace(/_\d+$/, ''),
         value,
       }))
       .filter(element => element.label && element.value)
 
     if (selected.length) {
-      console.log('[CartPage] Final selected elements from selectedOptions:', selected)
       return selected
     }
   }
 
-  // Fallback to customization.sections (Decor package format)
   if (item?.customization?.sections && Array.isArray(item.customization.sections)) {
-    console.log('[CartPage] Found sections:', item.customization.sections)
     const selected = []
 
-    item.customization.sections.forEach((section, idx) => {
-      console.log(`[CartPage] Processing section ${idx}:`, section)
-
+    item.customization.sections.forEach(section => {
       if (section.type === 'choice-row' && Array.isArray(section.items)) {
-        console.log(`[CartPage] Choice-row section "${section.title}":`, section.items)
-        // For choice-row, get the selected item's title
-        const selectedItem = section.items.find(item => typeof item !== 'string' && item.selected)
-        console.log(`[CartPage] Selected item in "${section.title}":`, selectedItem)
+        const selectedItem = section.items.find(it => typeof it !== 'string' && it.selected)
 
         if (selectedItem && selectedItem.title) {
           selected.push({
@@ -307,20 +302,17 @@ function getSelectedElements(item) {
           })
         }
       } else if (section.type === 'text-row' && Array.isArray(section.items)) {
-        console.log(`[CartPage] Text-row section "${section.title}":`, section.items)
-        // For text-row, add all items
-        section.items.forEach(item => {
-          if (typeof item === 'string' && item) {
+        section.items.forEach(it => {
+          if (typeof it === 'string' && it) {
             selected.push({
               label: section.title,
-              value: item,
+              value: it,
             })
           }
         })
       }
     })
 
-    console.log('[CartPage] Final selected elements from sections:', selected)
     if (selected.length) return selected
   }
 
@@ -330,36 +322,40 @@ function getSelectedElements(item) {
   }))
 }
 
-function getPrimaryServiceSlug(pkg) {
-  return normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
-}
+function getSuggestedAddons(cartItems) {
+  const seen = new Set()
 
-function getSuggestedPackages(packages, cartItems) {
-  const packageIdsInCart = new Set(cartItems.map(item => String(item.packageId)))
-  const matchingServiceSlugs = [
-    ...new Set(cartItems.map(item => getPrimaryServiceSlug(item.packageData)).filter(Boolean)),
-  ]
+  return cartItems
+    .flatMap(item => {
+      const packageData = item?.packageData
+      const packageSubtitle = getPackageSubtitle(packageData)
+      const packageTitle = packageData?.title || item?.displayTitle || 'Selected package'
+      const addons = Array.isArray(packageData?.detail_addons) ? packageData.detail_addons : []
 
-  return packages
-    .filter(pkg => !packageIdsInCart.has(String(pkg.id)))
-    .filter(pkg => {
-      if (!matchingServiceSlugs.length) return true
-      return matchingServiceSlugs.includes(getPrimaryServiceSlug(pkg))
+      return addons
+        .map(addon => String(addon ?? '').trim())
+        .filter(Boolean)
+        .map(addon => ({
+          id: `${item.id}-${addon}`,
+          packageId: packageData?.id,
+          addonTitle: addon,
+          title: addon,
+          subtitle: `${packageSubtitle} · ${packageTitle}`,
+          price: 'Add-on',
+          dedupeKey: `${String(packageData?.id ?? item?.packageId ?? '')}::${addon.toLowerCase()}`,
+        }))
+    })
+    .filter(addon => {
+      if (seen.has(addon.dedupeKey)) return false
+      seen.add(addon.dedupeKey)
+      return true
     })
     .slice(0, 4)
-    .map(pkg => ({
-      id: pkg.id,
-      title: pkg.title,
-      price: formatCurrency(pkg.base_price),
-      subtitle: getPackageSubtitle(pkg),
-      serviceSlug: getPrimaryServiceSlug(pkg),
-    }))
 }
 
 function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
   return (
     <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
-      {/* TITLE */}
       <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
         Enter Pincode
       </h2>
@@ -368,7 +364,6 @@ function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
         Enter your pincode to check service availability and charges.
       </p>
 
-      {/* INPUT */}
       <div className="flex flex-col gap-3">
         <input
           type="text"
@@ -378,20 +373,18 @@ function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
           className="w-full border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
         />
 
-        {/* hidden submit (same pattern) */}
         <button type="submit" disabled={isChecking || !pincode.trim()} className="hidden">
           {isChecking ? 'Checking...' : 'Check'}
         </button>
       </div>
 
-      {/* NOTE */}
       <p className="mt-2 text-xs text-gray-500">Service availability depends on your location</p>
 
-      {/* MESSAGE */}
       {message && <p className="mt-2 text-sm text-[#5A1E0E]">{message}</p>}
     </form>
   )
 }
+
 function CouponCard({
   couponCode,
   couponMessage,
@@ -480,7 +473,7 @@ function SinglePackageCard({
   const isPending = pendingItemId === item.id
   const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
   const packageImage = item.packageData?.images?.[0] ?? ''
-  const packageTitle = item.packageData?.title || item.displayTitle
+  const packageTitle = item.displayTitle || item.packageData?.title || 'Selected item'
   const packageQuantity = getCartItemQuantity(item)
   const selectedElements = getSelectedElements(item)
   const packageSubtitle = getPackageSubtitle(item.packageData)
@@ -516,12 +509,11 @@ function SinglePackageCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
-        {/* EDIT */}
+      <div className="grid grid-cols-1 gap-2 w-full sm:grid-cols-2">
         {packageHref ? (
           <Link
             to={packageHref}
-            className="flex items-center justify-center gap-2 w-full h-[40px] rounded-full bg-[#2E3A1F] text-[13px] font-medium text-white"
+            className="flex h-[40px] w-full items-center justify-center gap-2 rounded-full bg-[#2E3A1F] text-[13px] font-medium text-white"
           >
             <EditIcon />
             Edit Package
@@ -529,19 +521,18 @@ function SinglePackageCard({
         ) : (
           <button
             type="button"
-            className="flex items-center justify-center gap-2 w-full h-[40px] rounded-full bg-[#2E3A1F] text-[13px] font-medium text-white"
+            className="flex h-[40px] w-full items-center justify-center gap-2 rounded-full bg-[#2E3A1F] text-[13px] font-medium text-white"
           >
             <EditIcon />
             Edit Package
           </button>
         )}
 
-        {/* DELETE */}
         <button
           type="button"
           onClick={() => onRemoveItem(item.id)}
           disabled={isPending}
-          className="flex items-center justify-center gap-2 w-full h-[40px] rounded-full bg-[#6B1D0C] text-[13px] font-medium text-white disabled:opacity-60"
+          className="flex h-[40px] w-full items-center justify-center gap-2 rounded-full bg-[#6B1D0C] text-[13px] font-medium text-white disabled:opacity-60"
         >
           <DeleteIcon />
           {isPending ? 'Updating...' : 'Delete Package'}
@@ -757,7 +748,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
       {groupedItems.map(group => (
         <div
           key={group.category}
-          className={`rounded-lg border ${group.border} ${group.bg} overflow-hidden`}
+          className={`overflow-hidden rounded-lg border ${group.border} ${group.bg}`}
         >
           <div className="flex justify-between border-b border-[#95796033] px-4 py-3">
             <h2 className="font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
@@ -769,7 +760,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
             </span>
           </div>
 
-          <div className="space-y-4 p-4 bg-[#FFFFFF]">
+          <div className="space-y-4 bg-[#FFFFFF] p-4">
             {group.packages.map(item => {
               const isPending = pendingItemId === item.id
               const packageQuantity = getCartItemQuantity(item)
@@ -778,7 +769,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                 item.selectedOptions,
                 item.id
               )
-              const packageTitle = item.packageData?.title || item.displayTitle
+              const packageTitle = item.displayTitle || item.packageData?.title || 'Selected item'
               const selectedElements = getSelectedElements(item)
               const tags = selectedElements
                 .map(element => element.value)
@@ -866,12 +857,11 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
   )
 }
 
-function SuggestedPackages({ packages = [] }) {
+function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
   if (!packages.length) return null
 
   return (
     <div className="rounded-[16px] border border-[#E5E5E5] bg-white p-5">
-      {/* HEADER */}
       <div className="mb-5">
         <h2
           className="text-[20px] font-semibold text-[#2C2C2C]"
@@ -882,41 +872,39 @@ function SuggestedPackages({ packages = [] }) {
         <p className="text-sm text-gray-500">Enhance your event with these popular extras</p>
       </div>
 
-      {/* GRID */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {packages.map(pkg => (
-          <div
-            key={pkg.id}
-            className="flex items-center justify-between rounded-[16px] bg-[#F5F5F5] px-3 py-4 gap-3"
-          >
-            {/* LEFT CONTENT */}
-            <div className="flex-1 min-w-0">
-              <p className="text-[16px] font-medium text-[#2C2C2C] truncate">{pkg.title}</p>
+        {packages.map(pkg => {
+          const isAdding = addingAddonId === pkg.id
 
-              <p className="text-sm text-gray-500 truncate">
-                {pkg.subtitle || 'Pro set + napkins'}
-              </p>
-
-              <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
-            </div>
-
-            {/* BUTTON */}
-            <Link
-              to={getCartPackageHref({
-                id: pkg.id,
-                documentId: pkg.id,
-                service_slugs: [pkg.serviceSlug],
-              })}
-              className="shrink-0 rounded-full bg-[#957960] px-5 py-2 text-sm font-medium text-white whitespace-nowrap"
+          return (
+            <div
+              key={pkg.id}
+              className="flex items-center justify-between gap-3 rounded-[16px] bg-[#F5F5F5] px-3 py-4"
             >
-              + Add
-            </Link>
-          </div>
-        ))}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[16px] font-medium text-[#2C2C2C]">{pkg.title}</p>
+                <p className="truncate text-sm text-gray-500">
+                  {pkg.subtitle || 'Perfect add-on for your package'}
+                </p>
+                <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onAdd(pkg)}
+                disabled={isAdding || !pkg.packageId}
+                className="shrink-0 whitespace-nowrap rounded-full bg-[#957960] px-5 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAdding ? 'Adding...' : '+ Add'}
+              </button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
+
 function PriceSummaryCard({
   cartItems,
   cart,
@@ -963,8 +951,7 @@ function PriceSummaryCard({
     <div className="space-y-4">
       {pincodeCard}
 
-      <div className="rounded-[16px] overflow-hidden border border-[#E5E5E5] bg-white">
-        {/* HEADER */}
+      <div className="overflow-hidden rounded-[16px] border border-[#E5E5E5] bg-white">
         <div className="flex items-center justify-between bg-[#1F2A14] px-5 py-4 text-white">
           <h2 className="text-[16px] font-medium" style={{ fontFamily: "'Poppins'" }}>
             Price Summary
@@ -972,8 +959,7 @@ function PriceSummaryCard({
           <span className="text-sm">{totalPackageCount} packages</span>
         </div>
 
-        <div className="p-5 space-y-4">
-          {/* PACKAGES */}
+        <div className="space-y-4 p-5">
           <div className="space-y-2">
             {singleItem
               ? itemSummaries.map(({ item, summary }) => (
@@ -981,8 +967,8 @@ function PriceSummaryCard({
                     <div className="flex justify-between">
                       <span className="text-[#767676]">
                         {singleItem
-                          ? `Base Package — ${item.packageData?.title || item.displayTitle}`
-                          : `${item.packageData?.title || item.displayTitle}`}
+                          ? `Base Package — ${item.displayTitle || item.packageData?.title || 'Selected item'}`
+                          : `${item.displayTitle || item.packageData?.title || 'Selected item'}`}
                         {getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''}
                       </span>
                       <span className="font-medium text-[#1C1C1C]">
@@ -1012,7 +998,6 @@ function PriceSummaryCard({
 
           <hr className="my-4 border-[#0000001A]" />
 
-          {/* CALCULATIONS */}
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-[#787575]">Subtotal (before GST)</span>
@@ -1029,39 +1014,26 @@ function PriceSummaryCard({
 
           <hr className="my-4 border-[#0000001A]" />
 
-          {/* TOTAL */}
-          <div className="flex justify-between items-center bg-[#F3F0EA] rounded-[12px] px-4 py-3">
+          <div className="flex items-center justify-between rounded-[12px] bg-[#F3F0EA] px-4 py-3">
             <span className="font-medium text-[#1C1C1C]">Total Amount</span>
             <span className="text-lg font-medium text-[#1C1C1C]">
               {formatCurrency(computedTotal)}
             </span>
           </div>
 
-          {/* ADVANCE */}
-          <div className="flex justify-between items-center bg-[#EFEFEF] rounded-[12px] px-4 py-3">
+          <div className="flex items-center justify-between rounded-[12px] bg-[#EFEFEF] px-4 py-3">
             <span className="font-medium text-[#1C1C1C]">Advance Payable (30%)</span>
             <span className="text-lg font-medium text-[#1C1C1C]">
               {formatCurrency(advancePayable)}
             </span>
           </div>
 
-          {/* BALANCE */}
           <p className="text-xs text-[#767676]">
             Balance: {formatCurrency(balanceDue)} due on event day
           </p>
         </div>
       </div>
 
-      {/* CHECKOUT BUTTON (unchanged)
-      <div className="rounded-[14px] border border-[#E6D9C8] bg-white p-4">
-        <button
-          type="button"
-          onClick={onCheckout}
-          className="w-full rounded-full bg-[#D4BA8E] py-3 text-white font-medium"
-        >
-          Proceed to Checkout →
-        </button>
-      </div> */}
       <div className="rounded-xl border border-[#95796066] p-5">
         <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
           Secure payment · Instant confirmation · Easy cancellation
@@ -1087,8 +1059,6 @@ function PriceSummaryCard({
             </div>
           </button>
         ) : null}
-
-        {/* {formError ? <p className="mb-4 text-sm text-[#B42318]">{formError}</p> : null} */}
 
         <button
           type="button"
@@ -1165,20 +1135,12 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   const basePath = `/packages/${serviceSlug}/${packageId}`
   return queryString ? `${basePath}?${queryString}` : basePath
 }
+
 const TrustBadges = () => {
   const items = [
-    {
-      icon: '✅',
-      text: 'Verified Vendors',
-    },
-    {
-      icon: '💰',
-      text: 'Best Price Guarantee',
-    },
-    {
-      icon: '🔄',
-      text: 'Easy Rescheduling',
-    },
+    { icon: '✅', text: 'Verified Vendors' },
+    { icon: '💰', text: 'Best Price Guarantee' },
+    { icon: '🔄', text: 'Easy Rescheduling' },
   ]
 
   return (
@@ -1194,6 +1156,7 @@ const TrustBadges = () => {
     </div>
   )
 }
+
 export default function CartPage() {
   const navigate = useNavigate()
   const { data: packages = [] } = usePackages()
@@ -1207,7 +1170,9 @@ export default function CartPage() {
     applyCoupon,
     clearCoupon,
     updateCartDetails,
+    addPackage,
   } = useCart()
+
   const [couponCode, setCouponCode] = useState('')
   const [couponMessage, setCouponMessage] = useState('')
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
@@ -1224,37 +1189,44 @@ export default function CartPage() {
     eventCity: '',
     guestCount: '',
   })
+  const [addingAddonId, setAddingAddonId] = useState('')
 
   const items = useMemo(() => cart?.items ?? [], [cart?.items])
   const packageLookup = useMemo(
     () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
     [packages]
   )
+
   const cartItems = useMemo(
     () =>
       items.map(item => {
         const parsedTitle = parseCartItemTitle(item.title)
+        const isAddonItem = parsedTitle.itemType === 'addon'
 
         return {
           ...item,
-          displayTitle: parsedTitle.displayTitle,
+          displayTitle: isAddonItem
+            ? parsedTitle.addonTitle || parsedTitle.displayTitle
+            : parsedTitle.displayTitle,
           selectedOptions: parsedTitle.selectedOptions,
+          itemType: parsedTitle.itemType,
+          addonTitle: parsedTitle.addonTitle,
           packageData: packageLookup.get(String(item.packageId)) ?? null,
         }
       }),
     [items, packageLookup]
   )
+
   const hasItems = cartItems.length > 0
   const hasSingleItem = cartItems.length === 1
   const isCheckoutDisabled = !isPincodeValid
+
   const showSampleTasteBooking = useMemo(
     () => cartItems.some(isSampleTasteEligibleItem),
     [cartItems]
   )
-  const suggestedPackages = useMemo(
-    () => getSuggestedPackages(packages, cartItems),
-    [packages, cartItems]
-  )
+
+  const suggestedPackages = useMemo(() => getSuggestedAddons(cartItems), [cartItems])
 
   useEffect(() => {
     setDetailsForm({
@@ -1412,6 +1384,25 @@ export default function CartPage() {
     })
   }
 
+  const handleAddSuggestedAddon = async pkg => {
+    if (!pkg?.packageId || addingAddonId) return
+
+    setAddingAddonId(pkg.id)
+    try {
+      const addonTitle = String(pkg.addonTitle || pkg.title || 'Add-on').trim()
+
+      await addPackage({
+        packageId: Number(pkg.packageId),
+        quantity: 1,
+        addonTitle,
+      })
+    } catch (err) {
+      console.error('[cart] addon add failed', err)
+    } finally {
+      setAddingAddonId('')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white px-4 pb-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-6">
@@ -1462,66 +1453,14 @@ export default function CartPage() {
                 onRemoveItem={handleRemoveItem}
               />
             )}
-            {/* 
-            <div className="rounded-[14px] border border-[#E6D9C8] bg-white p-4">
-              <div className="mb-4">
-                <h2 className="text-[16px] font-medium text-[#2C2C2C]">Event Details</h2>
-                <p className="mt-1 text-[12px] text-[#8B8B8B]">
-                  These values are stored on the cart and used during booking.
-                </p>
-              </div>
 
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                {(!hasSingleItem || showDateEditor) && (
-                  <DetailField
-                    label="Event Date"
-                    type="date"
-                    min={getMinEventDate()}
-                    value={detailsForm.eventDate}
-                    onChange={event =>
-                      setDetailsForm(prev => ({ ...prev, eventDate: event.target.value }))
-                    }
-                    onBlur={handleBlurCartDetails}
-                  />
-                )}
-                {(!hasSingleItem || showCityEditor) && (
-                  <DetailField
-                    label="City / Area"
-                    value={detailsForm.eventCity}
-                    onChange={event =>
-                      setDetailsForm(prev => ({ ...prev, eventCity: event.target.value }))
-                    }
-                    onBlur={handleBlurCartDetails}
-                    placeholder="Enter city"
-                  />
-                )}
-                <DetailField
-                  label="Guest Count"
-                  type="number"
-                  min="1"
-                  value={detailsForm.guestCount}
-                  onChange={event =>
-                    setDetailsForm(prev => ({ ...prev, guestCount: event.target.value }))
-                  }
-                  onBlur={handleBlurCartDetails}
-                  placeholder="Number of guests"
-                />
-              </div>
+            <SuggestedPackages
+              packages={suggestedPackages}
+              onAdd={handleAddSuggestedAddon}
+              addingAddonId={addingAddonId}
+            />
 
-              <div className="mt-4 rounded-[10px] border border-dashed border-[#E6D9C8] bg-[#FCFAF7] px-4 py-3 text-[12px] text-[#8B8B8B]">
-                {detailsForm.eventDate || detailsForm.eventCity || detailsForm.guestCount
-                  ? `${detailsForm.eventCity || 'Event city'}, ${formatDisplayDate(
-                      detailsForm.eventDate
-                    )}, ${detailsForm.guestCount || '0'} guests`
-                  : 'Add your event date, city, and guest count to help us prepare checkout.'}
-              </div>
-            </div> */}
-
-            <SuggestedPackages packages={suggestedPackages} />
-
-            {error ? (
-              <p className="text-sm text-[#8F2D1F]">{parseApiError({ message: error })}</p>
-            ) : null}
+            {error ? <p className="text-sm text-[#8F2D1F]">{parseApiError({ message: error })}</p> : null}
           </div>
 
           <div className="flex-1">

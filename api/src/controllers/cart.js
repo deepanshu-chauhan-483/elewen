@@ -46,6 +46,21 @@ function buildCartItemTitle(title, selectedOptions) {
   return `${title}${CART_META_SEPARATOR}${JSON.stringify({ selectedOptions: normalized })}`
 }
 
+function buildStoredCartItemTitle(title, selectedOptions, addonTitle = '') {
+  const normalized = normalizeSelectedOptions(selectedOptions)
+  const trimmedAddonTitle = String(addonTitle ?? '').trim()
+
+  if (trimmedAddonTitle) {
+    return `${trimmedAddonTitle}${CART_META_SEPARATOR}${JSON.stringify({
+      selectedOptions: normalized,
+      itemType: 'addon',
+      addonTitle: trimmedAddonTitle,
+    })}`
+  }
+
+  return buildCartItemTitle(title, normalized)
+}
+
 // ─── Helper: recalculate cart totals ─────────────────────────────────────────
 // couponIdOverride: pass null to explicitly remove coupon, a string to set one,
 // or undefined to keep whatever couponId is already on the cart.
@@ -122,7 +137,7 @@ export const getCart = async (req, res, next) => {
 export const addItem = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { packageId, quantity = 1, selectedOptions } = req.body
+    const { packageId, quantity = 1, selectedOptions, addonTitle = '' } = req.body
 
     if (!packageId) return res.status(400).json({ error: 'packageId is required' })
     if (quantity < 1) return res.status(400).json({ error: 'quantity must be at least 1' })
@@ -135,7 +150,7 @@ export const addItem = async (req, res, next) => {
     const unitPrice = Number(pkg.base_price)
     const title = pkg.title
     const selectionKey = buildSelectionKey(selectedOptions)
-    const storedTitle = buildCartItemTitle(title, selectedOptions)
+    const storedTitle = buildStoredCartItemTitle(title, selectedOptions, addonTitle)
 
     // Get or create cart
     let cart = await prisma.cart.findFirst({ where: { userId } })
