@@ -89,7 +89,7 @@ function BookingAccordionCard({ booking }) {
             <div className="flex items-start justify-between gap-3 md:justify-start">
               <h3 className="text-[17px] font-medium leading-tight text-[#2E2E2E] md:text-lg">
                 {booking.package?.title || 'Booking'}
-              </h3>
+              </h3> 
 
               <div className="shrink-0 md:pt-0.5">
                 <StatusBadge status={booking.status} />
@@ -251,7 +251,7 @@ export default function BookingDetailsAccordion() {
   const { data: bookings = [] } = useDashboardBookings('all')
 
   return (
-    <div className="space-y-6 bg-[#F2F2F2]">
+    <div className="space-y-6 bg-[#F2F2F2] p-6">
       <div>
         <h1 className="text-2xl font-serif text-[#2E2E2E]">Booking Details</h1>
         <p className="text-sm text-gray-500">Click on a booking to view full details</p>
