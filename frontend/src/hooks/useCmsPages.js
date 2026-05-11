@@ -216,8 +216,19 @@ function normalizeLandingPageSections(sections = {}) {
 
   if (normalized.hero && typeof normalized.hero === 'object') {
     const hero = normalized.hero
+    const heroSectionImages = normalizeSectionImages(hero._sectionImages)
+    const heroVideo =
+      hero.video ??
+      hero.hero_video ??
+      hero.background_video ??
+      heroSectionImages.find(item =>
+        String(item?.mime ?? item?.data?.attributes?.mime ?? '').startsWith('video/')
+      ) ??
+      null
+
     normalized.hero = {
       ...hero,
+      video: heroVideo,
       eyebrow: hero.eyebrow ?? hero.pre_heading ?? hero.kicker ?? hero.heading_1 ?? hero.title_1,
       heading: hero.heading ?? hero.heading_2 ?? hero.title ?? hero.title_2,
       search_line_1:
@@ -396,7 +407,7 @@ export async function fetchLandingPageData() {
   if (USE_FALLBACK) return LANDING_PAGE_FALLBACK
   try {
     const { data } = await strapiGet('/landing-page', {
-      'populate[sections][populate]': '*',
+      'populate[sections][populate]': 'images',
     })
     return mergePageSections(
       LANDING_PAGE_FALLBACK,
