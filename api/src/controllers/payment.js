@@ -3,8 +3,7 @@ import prisma from '../lib/prisma.js'
 import razorpay from '../lib/razorpay.js'
 import { notify } from '../lib/notify.js'
 
-const TEST_PAYMENT_KEY_ID =
-  process.env.RAZORPAY_TEST_KEY_ID || 'rzp_test_elewen_dashboard_bypass'
+const TEST_PAYMENT_KEY_ID = process.env.RAZORPAY_TEST_KEY_ID || 'rzp_test_elewen_dashboard_bypass'
 const TEST_MODE_ENABLED =
   process.env.ENABLE_TEST_PAYMENT_BYPASS === 'true' ||
   !process.env.RAZORPAY_KEY_ID ||
@@ -309,7 +308,9 @@ export const verifyPayment = async (req, res, next) => {
       data: {
         status: 'success',
         providerPaymentId:
-          razorpayPaymentId || gatewayPaymentData.id || `test_payment_${payment.id.replace(/-/g, '')}`,
+          razorpayPaymentId ||
+          gatewayPaymentData.id ||
+          `test_payment_${payment.id.replace(/-/g, '')}`,
         paymentMethod: finalMethod,
       },
     })
@@ -349,7 +350,11 @@ export const verifyPayment = async (req, res, next) => {
       message: `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} ${payment.paymentType} payment confirmed.`,
       linkUrl: `/dashboard/bookings/${payment.bookingId}`,
       emailTemplate: 'payment_success',
-      emailData: { bookingId: payment.bookingId, amount: payment.amount, paymentType: payment.paymentType },
+      emailData: {
+        bookingId: payment.bookingId,
+        amount: payment.amount,
+        paymentType: payment.paymentType,
+      },
     }).catch(() => {})
 
     res.json({ payment: updatedPayment, booking: confirmedBooking })
@@ -444,7 +449,11 @@ export const handleWebhook = async (req, res) => {
                 message: `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} advance payment confirmed.`,
                 linkUrl: `/dashboard/bookings/${payment.bookingId}`,
                 emailTemplate: 'payment_success',
-                emailData: { bookingId: payment.bookingId, amount: payment.amount, paymentType: payment.paymentType },
+                emailData: {
+                  bookingId: payment.bookingId,
+                  amount: payment.amount,
+                  paymentType: payment.paymentType,
+                },
               }).catch(() => {})
             }
           }
@@ -470,7 +479,9 @@ export const handleWebhook = async (req, res) => {
             },
           })
           // Notify user of failed payment
-          const failedBooking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
+          const failedBooking = await prisma.booking.findUnique({
+            where: { id: payment.bookingId },
+          })
           if (failedBooking) {
             notify(failedBooking.userId, {
               type: 'payment',

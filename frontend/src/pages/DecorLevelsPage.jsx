@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PackageCard from '../components/package-listing/PackageCard'
 import PackageListLayout from '../components/package-listing/PackageListLayout'
 import { usePackages } from '../hooks/usePackages'
@@ -25,7 +25,8 @@ const PKG_LOCAL_IMAGES = [
   [pkgImg5, pkgImg1, pkgImg8],
 ]
 
-const CARDS_PER_ROW = 3
+const DESKTOP_CARDS_PER_ROW = 3
+const MOBILE_CARDS_PER_ROW = 1
 
 function isNumericId(value) {
   return /^\d+$/.test(String(value ?? '').trim())
@@ -87,6 +88,10 @@ export default function DecorLevelsPage() {
   const { data: packages = [] } = usePackages()
   const [sortValue, setSortValue] = useState('price-desc')
   const [searchParams] = useSearchParams()
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.innerWidth >= 768
+  })
 
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
@@ -95,6 +100,24 @@ export default function DecorLevelsPage() {
   const serviceId = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
   const { data: levels = [] } = useBudgetLevelOptions(serviceId)
+  const cardsPerRow = isDesktopViewport ? DESKTOP_CARDS_PER_ROW : MOBILE_CARDS_PER_ROW
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const handleViewportChange = event => {
+      setIsDesktopViewport(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange)
+      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    }
+
+    mediaQuery.addListener(handleViewportChange)
+    return () => mediaQuery.removeListener(handleViewportChange)
+  }, [])
 
   // Independent pagination state for each level
   const [pagination, setPagination] = useState({
@@ -136,8 +159,8 @@ export default function DecorLevelsPage() {
   }, [filteredPackages, sortValue])
 
   const getPaginatedPackages = (items, page) => {
-    const start = page * CARDS_PER_ROW
-    return items.slice(start, start + CARDS_PER_ROW)
+    const start = page * cardsPerRow
+    return items.slice(start, start + cardsPerRow)
   }
 
   const levelSections = useMemo(
@@ -153,7 +176,7 @@ export default function DecorLevelsPage() {
     [levels, sortedPackages]
   )
 
-  const getTotalPages = items => Math.max(1, Math.ceil(items.length / CARDS_PER_ROW))
+  const getTotalPages = items => Math.max(1, Math.ceil(items.length / cardsPerRow))
 
   const updatePage = (levelKey, totalPages, newPage) => {
     setPagination(prev => ({
@@ -216,7 +239,7 @@ export default function DecorLevelsPage() {
                 <span className="text-[21px] text-black font-medium">{level.label}</span>
                 <Link
                   to={buildViewAllLink(level)}
-                  className="flex items-center gap-1 text-[16px] text-[#727355] "
+                  className="flex items-center gap-1 text-[16px] text-[#727355]"
                 >
                   <span>View all</span>
                   <span className="shrink-0">
@@ -227,9 +250,18 @@ export default function DecorLevelsPage() {
 
               <div className="relative overflow-visible">
                 {visiblePackages.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2 sm:justify-items-stretch lg:grid-cols-3">
                     {visiblePackages.map((pkg, index) => (
-                      <PackageCard key={`${level.id}-${pkg.id ?? pkg.title}-${index}`} pkg={pkg} />
+                      <div
+                        key={`${level.id}-${pkg.id ?? pkg.title}-${index}`}
+                        className="w-full max-w-[250px] md:max-w-none"
+                      >
+                        <PackageCard
+                          pkg={pkg}
+                          className="h-[475px] md:h-auto"
+                          compactMode={!isDesktopViewport}
+                        />
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -243,7 +275,7 @@ export default function DecorLevelsPage() {
                   </div>
                 )}
 
-                <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 md:block">
+                <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2">
                   {/* LEFT ARROW */}
                   <button
                     type="button"

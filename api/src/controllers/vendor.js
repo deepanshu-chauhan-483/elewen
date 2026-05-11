@@ -73,7 +73,7 @@ async function uploadFileToStrapi(file) {
     uploaded = await strapiUpload('/api/upload', formData)
   }
 
-  return Array.isArray(uploaded) ? uploaded[0] ?? null : null
+  return Array.isArray(uploaded) ? (uploaded[0] ?? null) : null
 }
 
 async function createVendorDocument(vendorId, documentType, uploadId) {

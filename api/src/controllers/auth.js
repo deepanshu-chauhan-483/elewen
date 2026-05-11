@@ -9,7 +9,7 @@ import {
   strapiServerPut,
   strapiGetMe,
   strapiFindUserByEmail,
-  strapiCreateUser
+  strapiCreateUser,
 } from '../lib/strapi.js'
 
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
@@ -90,7 +90,10 @@ const isJwtLike = token => typeof token === 'string' && token.split('.').length 
 
 const isVerifiedGoogleEmail = value => value === true || value === 'true'
 
-const isGoogleProvider = provider => String(provider ?? '').trim().toLowerCase() === 'google'
+const isGoogleProvider = provider =>
+  String(provider ?? '')
+    .trim()
+    .toLowerCase() === 'google'
 
 const isStrapiCredentialError = err =>
   (err?.status === 401 || err?.status === 403) &&
@@ -111,12 +114,20 @@ const extractGoogleProfile = payload => {
 }
 
 const exchangeGoogleAccessTokenForStrapiSession = async accessToken => {
-  const url = new URL('/api/auth/google/callback', process.env.STRAPI_URL || 'http://localhost:1337')
+  const url = new URL(
+    '/api/auth/google/callback',
+    process.env.STRAPI_URL || 'http://localhost:1337'
+  )
   url.searchParams.set('access_token', accessToken)
 
   try {
     const res = await fetch(url.toString(), { redirect: 'manual' })
-    console.log('[exchangeGoogleAccessTokenForStrapiSession] Status:', res.status, 'URL:', url.toString())
+    console.log(
+      '[exchangeGoogleAccessTokenForStrapiSession] Status:',
+      res.status,
+      'URL:',
+      url.toString()
+    )
 
     const redirectLocation = res.headers.get('location')
     if (redirectLocation) {
@@ -140,7 +151,10 @@ const exchangeGoogleAccessTokenForStrapiSession = async accessToken => {
     }
 
     const payload = await res.json().catch(() => null)
-    console.log('[exchangeGoogleAccessTokenForStrapiSession] Success, got user:', payload?.user?.email)
+    console.log(
+      '[exchangeGoogleAccessTokenForStrapiSession] Success, got user:',
+      payload?.user?.email
+    )
 
     if (!payload?.jwt || !payload?.user) {
       console.error('[exchangeGoogleAccessTokenForStrapiSession] Missing jwt or user in response')
@@ -546,7 +560,9 @@ export const googleSession = async (req, res, next) => {
         user = strapiOAuthSession.user
         console.log('[googleSession] ✓ Got user from Strapi OAuth:', user.email)
       } else {
-        console.error('[googleSession] ✗ Strapi OAuth callback failed. Token may be invalid or Strapi Google OAuth not configured.')
+        console.error(
+          '[googleSession] ✗ Strapi OAuth callback failed. Token may be invalid or Strapi Google OAuth not configured.'
+        )
       }
     }
 

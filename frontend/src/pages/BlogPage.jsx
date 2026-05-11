@@ -148,30 +148,41 @@ const BlogPage = () => {
         </div>
       </section>
 
-      <section className=" md:px-10 lg:px-[96px] lg:py-20">
+      <section className="px-5 pt-10 pb-5 md:px-10 lg:px-[96px] lg:py-20">
         <div className="mx-auto grid max-w-[1720px] gap-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-16">
-          <aside className="reveal-border-y relative border-b border-[#A7AE98] pb-5 lg:sticky lg:top-28 lg:border-b-0 lg:pb-0 lg:pr-10 self-start">
+          <aside className="reveal-border-y relative border-b border-[#A7AE98] px-[10px] pb-5 lg:sticky lg:top-28 lg:border-b-0 lg:pb-0 lg:pr-10 lg:px-0 self-start">
             <div className="absolute right-0 top-0 hidden h-full w-[1px] bg-[#A7AE98] lg:block border-fill-y" />
-            <div className="flex flex-wrap gap-x-8 gap-y-4 lg:block lg:space-y-8">
-              {categories.map(category => {
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[12px] md:text-[16px] lg:block lg:space-y-8">
+              {categories.map((category, index) => {
                 const active = activeCategory === category
                 return (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => setActiveCategory(category)}
-                    className={`reveal-on-scroll relative text-left text-[16px] w-full leading-[1.5] ${
-                      active ? 'text-[#202716]' : 'text-[#9B9A92]'
-                    }`}
-                    style={{
-                      fontFamily: "'Poppins', sans-serif",
-                      fontWeight: 500,
-                      letterSpacing: '0',
-                    }}
-                  >
-                    <RevealLine delay="0s">{category}</RevealLine>
-                    {active && <span className="mt-2 block h-[1px] w-[42px] bg-[#A7AE98]" />}
-                  </button>
+                  <div key={category} className="flex items-center lg:block">
+                    <button
+                      type="button"
+                      onClick={() => setActiveCategory(category)}
+                      className={`reveal-on-scroll relative text-left text-[16px] leading-[1.5] lg:w-full ${
+                        active ? 'text-[#202716]' : 'text-[#9B9A92]'
+                      }`}
+                      style={{
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: 500,
+                        letterSpacing: '0',
+                      }}
+                    >
+                      <span className="relative inline-block md:pb-[15px]">
+                        <RevealLine delay="0s">{category}</RevealLine>
+                        <span
+                          className={`absolute bottom-0 left-0 h-px bg-[#A7AE98] transition-all duration-300 ease-out ${
+                            active ? 'w-full opacity-100' : 'w-0 opacity-0'
+                          }`}
+                        />
+                      </span>
+                    </button>
+
+                    {index < categories.length - 1 ? (
+                      <span className="ml-4 text-[#202716] lg:hidden">|</span>
+                    ) : null}
+                  </div>
                 )
               })}
             </div>
@@ -196,7 +207,7 @@ const BlogPage = () => {
             {visiblePosts.map((post, index) => (
               <article
                 key={post.title}
-                className={`grid gap-8 border-b border-[#DDD7CE] py-8 md:py-10 lg:items-start lg:gap-10 ${
+                className={`grid gap-8 border-b border-[#DDD7CE] pb-8 md:py-10 lg:items-start lg:gap-10 ${
                   index % 2 === 0
                     ? 'lg:grid-cols-[minmax(0,1fr)_276px]'
                     : 'lg:grid-cols-[276px_minmax(0,1fr)]'

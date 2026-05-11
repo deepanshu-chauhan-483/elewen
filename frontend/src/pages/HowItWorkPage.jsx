@@ -342,6 +342,7 @@ const EventDashboardSection = () => {
     <section className="relative flex w-full justify-center overflow-hidden bg-[#FAFAFA] px-6 py-16 pt-0 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
       <ScallopBulbCurtain
         count={10}
+        mobileCount={6}
         outerColor="#6C2205"
         innerColor="#E9E2DA"
         wireColorClass="bg-[#6C2205]/40"
@@ -350,7 +351,7 @@ const EventDashboardSection = () => {
       />
 
       <div className="relative flex w-full max-w-[1180px] flex-col gap-3 pt-[132px] lg:flex-row lg:items-center lg:gap-6 lg:pt-[170px]">
-        <div className="flex w-full flex-col lg:max-w-[496px] reveal-on-scroll">
+        <div className="flex w-full flex-col lg:max-w-[496px] reveal-on-scroll pl-3 md:pl-0">
           <h2
             className="max-w-[420px] text-[48px] leading-[0.95] text-[#6C2205] min-[540px]:text-[61px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
@@ -397,7 +398,7 @@ const EventDashboardSection = () => {
           </div>
         </div>
 
-        <div className="flex w-full flex-1">
+        <div className="flex w-full flex-1 mt-5 md:mt-0">
           <div
             className="card-reveal flex w-full flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_24px_70px_rgba(117,72,33,0.12)]"
             style={{ '--delay': '0.14s' }}
@@ -437,7 +438,7 @@ const NeedToKnowSection = () => {
   return (
     <section className="flex w-full justify-center bg-[#FAFAFA] px-6 py-16 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
       <div className="flex w-full max-w-[1180px] flex-col lg:flex-row lg:items-start lg:justify-between lg:gap-3">
-        <div className="flex w-full max-w-[496px] flex-col reveal-on-scroll">
+        <div className="flex w-full max-w-[496px] flex-col reveal-on-scroll pl-3 md:pl-0">
           <h2
             className="text-[30px] leading-[1.08] text-[#6C2205] min-[540px]:text-[41px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
@@ -453,7 +454,7 @@ const NeedToKnowSection = () => {
           </p>
         </div>
 
-        <div className="flex w-full flex-1">
+        <div className="flex w-full flex-1 mt-5 md:mt-0">
           <div
             className="card-reveal flex w-full flex-col rounded-[24px] bg-white px-5 shadow-[0_24px_70px_rgba(117,72,33,0.12)] min-[540px]:px-6 lg:px-7"
             style={{ '--delay': '0.12s' }}

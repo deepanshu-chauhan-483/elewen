@@ -366,7 +366,7 @@ function PaymentOptionPopup({
 
 function SpecialRequest({ preferences, onChange, onSubmit, message }) {
   return (
-    <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
+    <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5 bg-[#FFFFFF]">
       {/* TITLE */}
       <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
         Special Request
@@ -448,10 +448,11 @@ export default function CheckoutPage() {
     [cart?.items, packageLookup]
   )
 
-  const itemCount = useMemo(
-    () => cartItems.reduce((sum, item) => sum + Number(item?.quantity ?? 0), 0),
-    [cartItems]
-  )
+  // const itemCount = useMemo(
+  //   () => cartItems.reduce((sum, item) => sum + Number(item?.quantity ?? 0), 0),
+  //   [cartItems]
+  // )
+
   const itemSummaries = useMemo(
     () =>
       cartItems.map(item => ({
@@ -681,7 +682,7 @@ export default function CheckoutPage() {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-[#FAF9F7] px-4 pt-24 md:px-8 lg:px-16">
+      <div className="min-h-screen bg-[#FFFFFF] px-4 pt-24 md:px-8 lg:px-16">
         <div className="mx-auto max-w-3xl rounded-2xl border border-[#95796066] bg-white p-8 text-center">
           <p className="text-[24px] font-semibold text-[#1C1C1C]">Sign in to continue checkout</p>
           <p className="mt-2 text-gray-500">Your checkout is linked to your account cart.</p>
@@ -724,7 +725,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 pt-24 md:px-8 lg:px-16">
+    <div className="min-h-screen bg-[#FFFFFF] px-5 py-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-10">
         <h2 className="text-4xl text-[#2C2C2C]">{pageContent.heading}</h2>
         <p className="mt-2 text-gray-500">{pageContent.intro}</p>
@@ -777,15 +778,9 @@ export default function CheckoutPage() {
                           <span>Base Package - {packageName}</span>
                           <span>{formatCurrency(summary.total)}</span>
                         </div>
-                        {summary.rows.map(row => (
-                          <div
-                            key={`${item.id}-${row.label}`}
-                            className="flex justify-between text-gray-600"
-                          >
-                            <span>{row.label}</span>
-                            <span>{formatCurrency(row.total)}</span>
-                          </div>
-                        ))}
+                        {itemSummaries.length > 1 ? (
+                          <hr className="my-4 border-[#0000001A]" />
+                        ) : null}
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -793,15 +788,6 @@ export default function CheckoutPage() {
                           <span>{label}</span>
                           <span>{formatCurrency(summary.total)}</span>
                         </div>
-                        {summary.rows.map(row => (
-                          <div
-                            key={`${item.id}-${row.label}`}
-                            className="flex justify-between text-gray-500"
-                          >
-                            <span>{row.label}</span>
-                            <span>{formatCurrency(row.total)}</span>
-                          </div>
-                        ))}
                       </div>
                     )}
                   </div>
@@ -811,12 +797,11 @@ export default function CheckoutPage() {
               <hr className="my-4 border-[#0000001A]" />
 
               <div className="space-y-2 text-gray-600">
-                <SummaryRow label="Items" value={String(itemCount)} />
                 <SummaryRow label="Subtotal" value={formatCurrency(computedSubtotal)} />
                 <SummaryRow
                   label="Discount coupon applied"
                   value={`-${formatCurrency(discountAmount)}`}
-                  valueClassName="font-medium text-[#B42318]"
+                  valueClassName="font-medium text-[#767676]"
                 />
               </div>
 
@@ -855,7 +840,7 @@ export default function CheckoutPage() {
                 value={fullName}
                 onChange={event => setFullName(event.target.value)}
                 placeholder="Full Name"
-                className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
               />
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -864,14 +849,15 @@ export default function CheckoutPage() {
                   value={phone}
                   onChange={event => setPhone(event.target.value)}
                   placeholder="Phone Number"
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                 />
+
                 <input
                   type="email"
                   value={email}
                   onChange={event => setEmail(event.target.value)}
                   placeholder="Email Address"
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                 />
               </div>
             </div>
@@ -888,8 +874,7 @@ export default function CheckoutPage() {
                 <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                   {/* EVENT DATE */}
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2">
-                      {/* Calendar SVG */}
+                    <div className="pointer-events-none absolute left-0 top-[2px] z-10">
                       <svg
                         width="20"
                         height="20"
@@ -908,19 +893,17 @@ export default function CheckoutPage() {
                     </div>
 
                     <input
-                      type="text"
+                      type="date"
                       min={getMinEventDate()}
                       value={eventDate}
-                      placeholder="Event Date"
                       onChange={event => setEventDate(event.target.value)}
-                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 pl-10 text-[16px] text-[#2C2C2C] outline-none"
+                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] pl-10 text-[16px] text-[#2C2C2C] outline-none [&::-webkit-calendar-picker-indicator]:opacity-0"
                     />
                   </div>
 
                   {/* EVENT TIME */}
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2">
-                      {/* Time SVG */}
+                    <div className="pointer-events-none absolute left-0 top-[2px] z-10">
                       <svg
                         width="20"
                         height="20"
@@ -939,11 +922,10 @@ export default function CheckoutPage() {
                     </div>
 
                     <input
-                      type="text"
+                      type="time"
                       value={eventTime}
-                      placeholder="Event Time"
                       onChange={event => setEventTime(event.target.value)}
-                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 pl-10 text-[16px] text-[#2C2C2C] outline-none"
+                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] pl-10 text-[16px] text-[#2C2C2C] outline-none [&::-webkit-calendar-picker-indicator]:opacity-0"
                     />
                   </div>
 
@@ -953,7 +935,7 @@ export default function CheckoutPage() {
                     value={eventAddress}
                     onChange={event => setEventAddress(event.target.value)}
                     placeholder="Event Address"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                   />
 
                   {/* PIN CODE */}
@@ -962,7 +944,7 @@ export default function CheckoutPage() {
                     value={pinCode}
                     onChange={event => setPinCode(event.target.value)}
                     placeholder="PIN Code"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                   />
 
                   {/* GUESTS */}
@@ -972,7 +954,7 @@ export default function CheckoutPage() {
                     value={guestCount}
                     onChange={event => setGuestCount(event.target.value)}
                     placeholder="Number of Guests"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none md:col-span-2"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none md:col-span-2"
                   />
                 </div>
               </div>

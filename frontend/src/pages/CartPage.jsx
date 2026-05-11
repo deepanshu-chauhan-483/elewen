@@ -498,27 +498,29 @@ function SinglePackageCard({
 
   return (
     <div className="space-y-6">
-      <div className="relative flex gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
+      <div className="relative flex items-center gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
         <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
-        <div className="ml-2 h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+        <div className="ml-2 h-20 w-20 shrink-0 self-center overflow-hidden rounded-lg bg-gray-200">
           {packageImage ? (
             <img src={packageImage} alt={packageTitle} className="h-full w-full object-cover" />
           ) : null}
         </div>
 
-        <div className="items-start">
+        <div className="min-w-0 flex-1 items-start">
           <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
-          <h3
-            className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
-            style={{ fontFamily: "'Poppins'" }}
-          >
-            {packageTitle}
-          </h3>
-          {packageQuantity > 1 ? (
-            <p className="mt-1 text-[10px] md:text-[12px] text-[#957960]">
-              {packageQuantity} packages selected
-            </p>
-          ) : null}
+          <div className="flex items-center gap-2">
+            <h3
+              className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
+              style={{ fontFamily: "'Poppins'" }}
+            >
+              {packageTitle}
+            </h3>
+            {packageQuantity > 1 ? (
+              <span className="rounded-full bg-[#D9D9D9] px-2 py-1 text-[10px] font-medium leading-none text-[#1C1C1C]">
+                x{packageQuantity}
+              </span>
+            ) : null}
+          </div>
           <p className="text-[10px] md:text-[12px] text-[#6A6864]">
             {eventLocation} · {eventDate}
           </p>
@@ -603,11 +605,12 @@ function SinglePackageCard({
         </div>
 
         <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
-          <div className="flex justify-between rounded-lg bg-[#F5F5F5] p-4">
+          <div className="flex items-start justify-between rounded-lg bg-[#F5F5F5] p-4">
             {editingField === 'city' ? (
               <div className="w-full space-y-3">
                 <div>
                   <p className="text-sm text-gray-500">City / Area</p>
+
                   <input
                     type="text"
                     value={detailsForm.eventCity}
@@ -616,6 +619,7 @@ function SinglePackageCard({
                     className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"
                   />
                 </div>
+
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
@@ -624,6 +628,7 @@ function SinglePackageCard({
                   >
                     Cancel
                   </button>
+
                   <button
                     type="button"
                     onClick={() => onSaveDetails('city')}
@@ -636,22 +641,29 @@ function SinglePackageCard({
               </div>
             ) : (
               <>
-                <div>
+                <div className="min-w-0 flex-1 pr-4">
                   <p className="text-sm text-gray-500">City / Area</p>
-                  <p className="font-medium">{eventLocation}</p>
+
+                  <p className="font-medium break-words">{eventLocation}</p>
                 </div>
-                <button type="button" onClick={onEditCity} className="text-sm text-[#957960]">
+
+                <button
+                  type="button"
+                  onClick={onEditCity}
+                  className="shrink-0 text-sm text-[#727355]"
+                >
                   Edit
                 </button>
               </>
             )}
           </div>
 
-          <div className="flex justify-between rounded-lg bg-[#F3F3F3] p-4">
+          <div className="flex items-start justify-between rounded-lg bg-[#F3F3F3] p-4">
             {editingField === 'date' ? (
               <div className="w-full space-y-3">
                 <div>
                   <p className="text-sm text-gray-500">Event Date</p>
+
                   <input
                     type="date"
                     min={getMinEventDate()}
@@ -660,6 +672,7 @@ function SinglePackageCard({
                     className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"
                   />
                 </div>
+
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
@@ -668,6 +681,7 @@ function SinglePackageCard({
                   >
                     Cancel
                   </button>
+
                   <button
                     type="button"
                     onClick={() => onSaveDetails('date')}
@@ -680,11 +694,17 @@ function SinglePackageCard({
               </div>
             ) : (
               <>
-                <div>
+                <div className="min-w-0 flex-1 pr-4">
                   <p className="text-sm text-gray-500">Event Date</p>
+
                   <p className="font-medium">{eventDate}</p>
                 </div>
-                <button type="button" onClick={onEditDate} className="text-sm text-[#957960]">
+
+                <button
+                  type="button"
+                  onClick={onEditDate}
+                  className="shrink-0 text-sm text-[#727355]"
+                >
                   Edit
                 </button>
               </>
@@ -732,7 +752,7 @@ function DeleteIcon() {
 
 const CATEGORY_ICONS = {
   Decor: '🌸',
-  Catering: '🍽️',
+  Catering: '🍽',
   Sheesha: '💨',
   Bartending: '🍸',
   Furniture: '🪑',
@@ -940,6 +960,8 @@ function PriceSummaryCard({
     item,
     summary: getCartItemSummary(item),
   }))
+  const singleCartEntry = singleItem ? (itemSummaries[0] ?? null) : null
+  const singleItemElements = singleCartEntry ? getSelectedElements(singleCartEntry.item) : []
   const categorySummaries = itemSummaries.reduce((groups, entry) => {
     const category = getPriceSummaryCategoryLabel(entry.item)
     const existingGroup = groups.find(group => group.category === category)
@@ -982,34 +1004,43 @@ function PriceSummaryCard({
         </div>
 
         <div className="p-5 space-y-4">
-          {/* PACKAGES */}
-          <div className="space-y-2">
-            {singleItem
-              ? itemSummaries.map(({ item, summary }) => (
-                  <div key={item.id} className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-[#767676]">
-                        {singleItem
-                          ? `Base Package — ${item.packageData?.title || item.displayTitle}`
-                          : `${item.packageData?.title || item.displayTitle}`}
-                        {getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''}
-                      </span>
-                      <span className="font-medium text-[#1C1C1C]">
-                        {formatCurrency(summary.total)}
-                      </span>
-                    </div>
-                    {summary.rows.map(row => (
-                      <div
-                        key={`${item.id}-${row.label}`}
-                        className="flex justify-between text-gray-500"
-                      >
-                        <span>{row.label}</span>
-                        <span>{formatCurrency(row.total)}</span>
-                      </div>
-                    ))}
+          {singleItem ? (
+            <>
+              {singleCartEntry ? (
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-[#1C1C1C]">
+                      Base Package -{' '}
+                      {singleCartEntry.item.packageData?.title || singleCartEntry.item.displayTitle}
+                    </span>
+                    <span className="text-[#1C1C1C]">
+                      {formatCurrency(
+                        singleCartEntry.item.unitPrice ?? singleCartEntry.summary.total
+                      )}
+                    </span>
                   </div>
-                ))
-              : categorySummaries.map(group => (
+
+                  <hr className="my-4 border-[#0000001A]" />
+
+                  {singleItemElements.map(element => (
+                    <div
+                      key={`${element.label}-${element.value}`}
+                      className="flex justify-between text-gray-600"
+                    >
+                      <span>{element.value}</span>
+                      <span>Included</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <hr className="my-4 border-[#0000001A]" />
+            </>
+          ) : (
+            <>
+              {/* PACKAGES */}
+              <div className="space-y-2">
+                {categorySummaries.map(group => (
                   <div key={group.category} className="flex justify-between text-sm">
                     <span className="text-[#767676]">{group.category}</span>
                     <span className="font-medium text-[#1C1C1C]">
@@ -1017,26 +1048,28 @@ function PriceSummaryCard({
                     </span>
                   </div>
                 ))}
-          </div>
-
-          <hr className="my-4 border-[#0000001A]" />
-
-          {/* CALCULATIONS */}
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-[#787575]">Subtotal (before GST)</span>
-              <span className="text-[#1C1C1C]">{formatCurrency(computedSubtotal)}</span>
-            </div>
-
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-[#6B1D0C]">
-                <span className="text-[#787575]">Discount coupon applied</span>
-                <span className="text-[#787575]">-{formatCurrency(discountAmount)}</span>
               </div>
-            )}
-          </div>
 
-          <hr className="my-4 border-[#0000001A]" />
+              <hr className="my-4 border-[#0000001A]" />
+
+              {/* CALCULATIONS */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[#787575]">Subtotal (before GST)</span>
+                  <span className="text-[#1C1C1C]">{formatCurrency(computedSubtotal)}</span>
+                </div>
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-[#6B1D0C]">
+                    <span className="text-[#787575]">Discount coupon applied</span>
+                    <span className="text-[#787575]">-{formatCurrency(discountAmount)}</span>
+                  </div>
+                )}
+              </div>
+
+              <hr className="my-4 border-[#0000001A]" />
+            </>
+          )}
 
           {/* TOTAL */}
           <div className="flex justify-between items-center bg-[#F3F0EA] rounded-[12px] px-4 py-3">
@@ -1422,7 +1455,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 pb-10 pt-24 md:px-8 lg:px-16">
+    <div className="min-h-screen bg-white px-5 pb-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-6">
         <h2 className="text-[24px] text-[#1C1C1C] md:text-[36px]">Review Your Event</h2>
         <p className="text-gray-500">Check your selections and confirm details before checkout.</p>

@@ -701,39 +701,16 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               }}
             >
               {isLoggedIn ? (
-                <div className="flex flex-wrap gap-4">
-                  <Link
-                    to={DASHBOARD_HOME_PATH}
-                    onClick={() => setOpen(false)}
-                    className="group flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F]"
-                  >
-                    <span className="mr-5 text-[15px] font-medium text-white">My Account</span>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
-                      <svg
-                        className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-                  </Link>
+                <div>
                   <button
                     onClick={handleLogout}
-                    className="group flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F]"
+                    className="group flex w-fit items-center rounded-full bg-[#FFFFFF] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#F7F7F7]"
                     type="button"
                   >
-                    <span className="mr-5 text-[15px] font-medium text-white">Logout</span>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
+                    <span className="mr-5 text-[15px] font-medium text-[#CDB17E]">Logout</span>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#CDB17E] shadow-sm">
                       <svg
-                        className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                        className="h-[20px] w-[20px] text-[#FFFFFF] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#FAFAFA]"
                         viewBox="0 0 20 20"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
@@ -753,12 +730,12 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 <Link
                   to="/login"
                   onClick={() => setOpen(false)}
-                  className="group flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F]"
+                  className="group flex w-fit items-center rounded-full bg-[#FFFFFF] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#FAFAFA]"
                 >
-                  <span className="mr-5 text-[15px] font-medium text-white">Login</span>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
+                  <span className="mr-5 text-[15px] font-medium text-[#CDB17E]">Login</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#CDB17E] shadow-sm">
                     <svg
-                      className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                      className="h-[20px] w-[20px] text-[#FFFFFF] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#FAFAFA]"
                       viewBox="0 0 20 20"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"

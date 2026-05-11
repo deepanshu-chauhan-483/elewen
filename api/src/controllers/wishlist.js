@@ -1,8 +1,4 @@
-import {
-  strapiServerDelete,
-  strapiServerGet,
-  strapiServerPost,
-} from '../lib/strapi.js'
+import { strapiServerDelete, strapiServerGet, strapiServerPost } from '../lib/strapi.js'
 import { enrichSavedPackages } from '../lib/dashboardData.js'
 
 const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'

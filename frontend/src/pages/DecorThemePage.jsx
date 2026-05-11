@@ -1,5 +1,5 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useDecorThemeOptions } from '../hooks/useEventTypes'
 import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
@@ -24,20 +24,26 @@ const SERVICES_FLOW_STEPS = [
 ]
 
 const FALLBACK_THEME_IMAGES = [themeImg1, themeImg2, themeImg3, themeImg4]
+const DESKTOP_CARDS_PER_PAGE = 4
+const MOBILE_CARDS_PER_PAGE = 1
 
 function ThemeArrow({ direction = 'left' }) {
   const rotationClass = direction === 'right' ? '' : 'rotate-180'
 
   return (
     <svg
-      viewBox="0 0 24 24"
       className={`h-6 w-6 ${rotationClass}`}
+      viewBox="0 0 24 24"
       fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
+      xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M5 12h14" strokeLinecap="round" />
-      <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M5 12H19M12 19L19 12L12 5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -64,7 +70,7 @@ function ThemeCard({
   return (
     <Link
       to={`/packages/decor-levels?${params.toString()}`}
-      className="group flex max-h-[384px] w-full max-w-[298px] flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[8px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1"
+      className="group flex h-[350px] w-full max-w-[250px] md:h-auto md:max-h-[384px] md:max-w-[298px] flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[8px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1"
     >
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
         <img src={image} alt={theme.label} className="h-full w-full object-cover" />
@@ -84,6 +90,11 @@ function ThemeCard({
 export default function DecorThemePage() {
   const [searchParams] = useSearchParams()
   const [searchValue, setSearchValue] = useState('')
+  const [touchStartX, setTouchStartX] = useState(null)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.innerWidth >= 768
+  })
 
   const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
   const eventId = searchParams.get('event')?.toLowerCase() ?? ''
@@ -93,12 +104,42 @@ export default function DecorThemePage() {
   const flow = searchParams.get('flow') ?? ''
 
   const { data: themes = [] } = useDecorThemeOptions(serviceId)
+  const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${searchValue.trim().toLowerCase()}`
+  const [paginationState, setPaginationState] = useState({
+    key: paginationKey,
+    pageIndex: 0,
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const handleViewportChange = event => {
+      setIsDesktopViewport(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange)
+      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    }
+
+    mediaQuery.addListener(handleViewportChange)
+    return () => mediaQuery.removeListener(handleViewportChange)
+  }, [])
 
   const filteredThemes = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
     if (!query) return themes
     return themes.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
   }, [searchValue, themes])
+  const cardsPerPage = isDesktopViewport ? DESKTOP_CARDS_PER_PAGE : MOBILE_CARDS_PER_PAGE
+  const totalPages = Math.max(1, Math.ceil(filteredThemes.length / cardsPerPage))
+  const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
+  const safePageIndex = Math.min(activePageIndex, totalPages - 1)
+  const visibleThemes = filteredThemes.slice(
+    safePageIndex * cardsPerPage,
+    safePageIndex * cardsPerPage + cardsPerPage
+  )
 
   const backTo = useMemo(() => {
     return buildServiceSelectionBackTo({
@@ -122,6 +163,35 @@ export default function DecorThemePage() {
     return `/packages/decor-levels?${params.toString()}`
   }, [categoryId, eventId, eventNumericId, flow, serviceId, serviceSlug])
 
+  const goPrev = () =>
+    setPaginationState(current => {
+      const currentPageIndex = current.key === paginationKey ? current.pageIndex : 0
+      return { key: paginationKey, pageIndex: Math.max(0, currentPageIndex - 1) }
+    })
+
+  const goNext = () =>
+    setPaginationState(current => {
+      const currentPageIndex = current.key === paginationKey ? current.pageIndex : 0
+      return { key: paginationKey, pageIndex: Math.min(totalPages - 1, currentPageIndex + 1) }
+    })
+
+  const handleTouchStart = e => {
+    setTouchStartX(e.changedTouches[0]?.clientX ?? null)
+  }
+
+  const handleTouchEnd = e => {
+    if (touchStartX == null) return
+
+    const endX = e.changedTouches[0]?.clientX ?? touchStartX
+    const deltaX = endX - touchStartX
+    const swipeThreshold = 40
+
+    if (deltaX > swipeThreshold) goPrev()
+    if (deltaX < -swipeThreshold) goNext()
+
+    setTouchStartX(null)
+  }
+
   if (!categoryId || (flow !== SERVICES_FLOW_KEY && !eventId)) {
     return (
       <Navigate
@@ -142,12 +212,19 @@ export default function DecorThemePage() {
       showSearch
       searchPlaceholder="Search Theme Name"
       searchValue={searchValue}
-      onSearchChange={e => setSearchValue(e.target.value)}
+      onSearchChange={e => {
+        setSearchValue(e.target.value)
+        setPaginationState({
+          key: `${categoryId}:${eventId}:${serviceSlug}:${e.target.value.trim().toLowerCase()}`,
+          pageIndex: 0,
+        })
+      }}
       showBackButton
       backTo={backTo}
       showPagination
-      paginationCount={Math.max(filteredThemes.length, 1)}
-      activePaginationIndex={0}
+      paginationCount={totalPages}
+      activePaginationIndex={safePageIndex}
+      mobilePaginationWindow={5}
       afterPagination={
         <Link
           to={skipToPackages}
@@ -159,13 +236,17 @@ export default function DecorThemePage() {
       }
     >
       <div className="flex h-full w-full flex-col justify-between gap-3 overflow-visible">
-        <div className="relative flex flex-1 items-center overflow-visible">
+        <div
+          className="relative flex flex-1 items-center overflow-visible"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="mx-auto flex w-full flex-col">
             <div className="flex w-full flex-col gap-3 md:gap-4">
               <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
-                {filteredThemes.map((theme, index) => (
+                {visibleThemes.map((theme, index) => (
                   <ThemeCard
-                    key={theme.id ?? theme.slug ?? index}
+                    key={theme.id ?? theme.slug ?? `${safePageIndex}-${index}`}
                     categoryId={categoryId}
                     eventId={eventId}
                     eventNumericId={eventNumericId}
@@ -175,7 +256,9 @@ export default function DecorThemePage() {
                     theme={theme}
                     image={
                       theme.preview_image ||
-                      FALLBACK_THEME_IMAGES[index % FALLBACK_THEME_IMAGES.length]
+                      FALLBACK_THEME_IMAGES[
+                        (safePageIndex * cardsPerPage + index) % FALLBACK_THEME_IMAGES.length
+                      ]
                     }
                   />
                 ))}
@@ -183,10 +266,12 @@ export default function DecorThemePage() {
             </div>
           </div>
 
-          <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 md:block">
+          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2">
             <button
               type="button"
-              className="pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5]"
+              onClick={goPrev}
+              disabled={safePageIndex === 0}
+              className="pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[80px] w-[40px] md:h-[104px] md:w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5]"
               aria-label="Previous themes"
             >
               <ThemeArrow direction="left" />
@@ -194,7 +279,9 @@ export default function DecorThemePage() {
 
             <button
               type="button"
-              className="pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5]"
+              onClick={goNext}
+              disabled={safePageIndex >= totalPages - 1}
+              className="pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[80px] w-[40px] md:h-[104px] md:w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5]"
               aria-label="Next themes"
             >
               <ThemeArrow direction="right" />

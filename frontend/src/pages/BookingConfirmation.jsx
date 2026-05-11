@@ -162,17 +162,16 @@ export default function BookingConfirmation() {
 
           <div className="mb-8 flex flex-wrap gap-4">
             <Link
+              to="/cart"
+              className="rounded-full bg-[#D8C9AF] px-3 py-2 text-[12px] text-[#6B5B4D]"
+            >
+              Download Receipt
+            </Link>
+            <Link
               to="/"
               className="rounded-full border border-[#957960] px-3 py-2 text-[12px] text-[#957960]"
             >
               Back to Home
-            </Link>
-
-            <Link
-              to="/cart"
-              className="rounded-full bg-[#D8C9AF] px-3 py-2 text-[12px] text-[#6B5B4D]"
-            >
-              View Cart
             </Link>
           </div>
 

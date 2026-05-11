@@ -1,10 +1,6 @@
 import { Router } from 'express'
 import { requireAuth } from '../middleware/auth.js'
-import {
-  addWishlistItem,
-  getWishlist,
-  removeWishlistItem,
-} from '../controllers/wishlist.js'
+import { addWishlistItem, getWishlist, removeWishlistItem } from '../controllers/wishlist.js'
 
 const router = Router()
 

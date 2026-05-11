@@ -15,48 +15,56 @@ export const getCustomerSummary = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
 
-    const [bookings, pendingSampleTasteCount, unreadMessagesCount, openSupportTicketsCount, unreadNotificationsCount, savedPackages] =
-      await Promise.all([
-        prisma.booking.findMany({
-          where: { userId },
-          select: { id: true, status: true, eventDate: true },
-        }),
-        prisma.sampleTasteBooking.count({
-          where: {
-            userId,
-            status: { not: 'completed' },
-          },
-        }),
-        prisma.message.count({
-          where: {
-            senderId: { not: userId },
-            readStatus: { none: { userId } },
-            thread: {
-              is: {
-                booking: {
-                  is: {
-                    userId,
-                  },
+    const [
+      bookings,
+      pendingSampleTasteCount,
+      unreadMessagesCount,
+      openSupportTicketsCount,
+      unreadNotificationsCount,
+      savedPackages,
+    ] = await Promise.all([
+      prisma.booking.findMany({
+        where: { userId },
+        select: { id: true, status: true, eventDate: true },
+      }),
+      prisma.sampleTasteBooking.count({
+        where: {
+          userId,
+          status: { not: 'completed' },
+        },
+      }),
+      prisma.message.count({
+        where: {
+          senderId: { not: userId },
+          readStatus: { none: { userId } },
+          thread: {
+            is: {
+              booking: {
+                is: {
+                  userId,
                 },
               },
             },
           },
-        }),
-        prisma.supportTicket.count({
-          where: {
-            userId,
-            status: { in: ['open', 'in_progress'] },
-          },
-        }),
-        prisma.notification.count({
-          where: { userId, isRead: false },
-        }),
-        strapiServerGet(
-          `/api/saved-packages?filters[user][id][$eq]=${userId}&pagination[page]=1&pagination[pageSize]=1&publicationState=preview`
-        ),
-      ])
+        },
+      }),
+      prisma.supportTicket.count({
+        where: {
+          userId,
+          status: { in: ['open', 'in_progress'] },
+        },
+      }),
+      prisma.notification.count({
+        where: { userId, isRead: false },
+      }),
+      strapiServerGet(
+        `/api/saved-packages?filters[user][id][$eq]=${userId}&pagination[page]=1&pagination[pageSize]=1&publicationState=preview`
+      ),
+    ])
 
-    const activeBookingsCount = bookings.filter(booking => getBookingCategory(booking) === 'active').length
+    const activeBookingsCount = bookings.filter(
+      booking => getBookingCategory(booking) === 'active'
+    ).length
     const previousBookingsCount = bookings.filter(
       booking => getBookingCategory(booking) === 'previous'
     ).length

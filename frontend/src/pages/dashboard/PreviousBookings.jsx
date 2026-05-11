@@ -75,13 +75,13 @@ function PreviousBookingCard({ booking }) {
   const isCancelled = ['cancelled', 'canceled'].includes(normalizedStatus)
   const title = booking?.package?.title || booking?.event?.name || 'Booking'
   const subtitle = [booking?.event?.name, booking?.locationSummary].filter(Boolean).join(' · ')
-  const detailHref = `/user-dashboard/details?bookingId=${booking.id}`
+  // const accentColor = isCancelled ? '#591902' : '#238E64'
 
   return (
     <div
-      className={`rounded-2xl border-t-4 bg-white p-6 shadow-sm transition hover:shadow-md ${
-        isCancelled ? 'border-[#591902]' : 'border-[#238E64]'
-      }`}
+      className={`rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md ${
+        open ? 'border-t-4' : 'border-l-4'
+      } ${isCancelled ? 'border-[#591902]' : 'border-[#238E64]'}`}
       onClick={() => setOpen(current => !current)}
     >
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -104,7 +104,7 @@ function PreviousBookingCard({ booking }) {
 
           {subtitle ? <p className="mt-1 text-sm text-gray-500">{subtitle}</p> : null}
 
-          <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+          <div className="mt-4 flex items-center gap-2 text-sm text-[#1C1C1C]">
             <CalendarIcon />
             <span>{formatDashboardDate(booking?.eventDate)}</span>
           </div>
@@ -120,23 +120,16 @@ function PreviousBookingCard({ booking }) {
 
           <div className="flex flex-wrap gap-3 lg:justify-end">
             <Link
-              to={detailHref}
-              onClick={event => event.stopPropagation()}
-              className="flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2 text-white hover:opacity-90"
-            >
-              Open Details <ArrowIcon />
-            </Link>
-            <Link
               to={getBookAgainHref(booking)}
               onClick={event => event.stopPropagation()}
-              className="inline-flex rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
+              className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-5 py-2 text-white hover:opacity-90"
             >
-              Book Again
+              Book Again <ArrowIcon />
             </Link>
             <Link
               to={`/user-dashboard/support?bookingId=${booking.id}`}
               onClick={event => event.stopPropagation()}
-              className="inline-flex rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
+              className="inline-flex rounded-full border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] px-5 py-3 text-sm"
             >
               Refer a Friend
             </Link>

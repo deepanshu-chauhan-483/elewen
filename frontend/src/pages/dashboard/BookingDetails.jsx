@@ -81,9 +81,12 @@ function BookingAccordionCard({ booking }) {
 
   return (
     <div
-      className={`rounded-2xl border-l-4 bg-white p-6 shadow-sm transition hover:shadow-md ${borderColor}`}
+      className={`rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md ${
+        open ? 'border-t-4' : 'border-l-4'
+      } ${borderColor}`}
+      onClick={() => setOpen(prev => !prev)}
     >
-      <div className="cursor-pointer" onClick={() => setOpen(prev => !prev)}>
+      <div className="cursor-pointer">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3 md:justify-start">
@@ -119,7 +122,7 @@ function BookingAccordionCard({ booking }) {
           ) : null}
         </div>
 
-        <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+        <div className="mt-4 flex items-center gap-2 text-sm text-[#1C1C1C]">
           <CalendarIcon />
           {formatDashboardDate(booking.eventDate)}
         </div>
@@ -195,21 +198,30 @@ function BookingAccordionCard({ booking }) {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <button className="flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2 text-white">
+            <button
+              onClick={event => event.stopPropagation()}
+              className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-5 py-2 text-white"
+            >
               Message Admin <ArrowIcon />
             </button>
 
             <button
               type="button"
-              onClick={() => setShowCancel(prev => !prev)}
-              className="rounded-full px-5 py-2 bg-[#FFFFFF] border border-[#C6A15B] text-[#C6A15B]"
+              onClick={event => {
+                event.stopPropagation()
+                setShowCancel(prev => !prev)
+              }}
+              className="rounded-full px-5 py-2 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-[#C6A15B]"
             >
               Cancel Booking
             </button>
           </div>
 
           {showCancel ? (
-            <div className="mt-4 rounded-xl border border-red-200 bg-[#FFF5F5] p-4">
+            <div
+              className="mt-4 rounded-xl border border-red-200 bg-[#FFF5F5] p-4"
+              onClick={event => event.stopPropagation()}
+            >
               <textarea
                 value={reason}
                 onChange={event => setReason(event.target.value)}
@@ -220,21 +232,25 @@ function BookingAccordionCard({ booking }) {
               <div className="mt-3 flex gap-3">
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={event => {
+                    event.stopPropagation()
                     cancelMutation.mutate({
                       bookingId: booking.id,
                       body: { reason },
                     })
-                  }
-                  className="rounded-full bg-[#591902] px-4 py-2 text-white"
+                  }}
+                  className="rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-white"
                 >
                   Confirm
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setShowCancel(false)}
-                  className="rounded-full px-4 py-2 bg-[#FFFFFF] text-[#C6A15B]"
+                  onClick={event => {
+                    event.stopPropagation()
+                    setShowCancel(false)
+                  }}
+                  className="rounded-full px-4 py-2 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-[#C6A15B]"
                 >
                   Abort
                 </button>

@@ -47,7 +47,7 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
   return (
     <Link
       to={destination}
-      className="group flex h-full max-h-[340px] w-full max-w-[235px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[340px]"
+      className="group flex h-[340px] max-w-[235px] md:w-full md:max-w-[235px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[340px]"
     >
       <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
         {service.image ? (
@@ -105,7 +105,7 @@ export default function ServicePage() {
       <div className="flex h-full w-full justify-center">
         <div className="relative left-1/2 w-screen -translate-x-1/2">
           <div className="mx-auto w-full max-w-[1280px]">
-            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5 md:gap-4">
+            <div className="grid w-full grid-cols-1 justify-items-center gap-3 sm:grid-cols-2 md:grid-cols-5 md:justify-items-stretch md:gap-4">
               {services.map(service => (
                 <ServiceCard
                   key={service.id ?? service.slug}

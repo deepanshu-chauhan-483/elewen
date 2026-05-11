@@ -50,8 +50,25 @@ export default function EventFlowLayout({
   showPagination = false,
   paginationCount = 0,
   activePaginationIndex = 0,
+  mobilePaginationWindow = null,
   afterPagination = null,
 }) {
+  const mobileWindowSize =
+    typeof mobilePaginationWindow === 'number' && mobilePaginationWindow > 0
+      ? Math.floor(mobilePaginationWindow)
+      : null
+  const mobileWindowStart =
+    mobileWindowSize && paginationCount > mobileWindowSize
+      ? Math.max(
+          0,
+          Math.min(
+            activePaginationIndex - Math.floor(mobileWindowSize / 2),
+            paginationCount - mobileWindowSize
+          )
+        )
+      : 0
+  const mobileWindowEnd = mobileWindowSize ? mobileWindowStart + mobileWindowSize : paginationCount
+
   useEffect(() => {
     const html = document.documentElement
     const body = document.body
@@ -77,7 +94,7 @@ export default function EventFlowLayout({
     <main className="bg-[#F8F4ED] text-[#2D2D2D] ">
       <NavHeader />
 
-      <div className="flex h-[100svh] flex-col overflow-hidden pt-6 min-[540px]:pt-8 md:pt-10 ">
+      <div className="flex h-[100svh] flex-col overflow-hidden pt-10 min-[540px]:pt-8 md:pt-10 ">
         <section
           className="event-flow-scroll hide-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#F8F4ED]"
           data-lenis-prevent
@@ -136,13 +153,17 @@ export default function EventFlowLayout({
                 <div className="mt-5 flex items-center justify-center gap-2">
                   {Array.from({ length: paginationCount }).map((_, index) => {
                     const isActive = index === activePaginationIndex
+                    const isOutsideMobileWindow =
+                      mobileWindowSize != null &&
+                      paginationCount > mobileWindowSize &&
+                      (index < mobileWindowStart || index >= mobileWindowEnd)
 
                     return (
                       <span
                         key={index}
                         className={`h-2.5 rounded-full transition-all ${
                           isActive ? 'w-10 bg-[#7A341C]' : 'w-2.5 bg-[#D0C7BE]'
-                        }`}
+                        } ${isOutsideMobileWindow ? 'hidden md:inline-flex' : 'inline-flex'}`}
                       />
                     )
                   })}
@@ -159,11 +180,11 @@ export default function EventFlowLayout({
         </section>
 
         {/* ✅ ONLY FIX HERE */}
-        <section className="h-[55px] shrink-0 bg-[#591902] sm:h-[70px] fix bottom-0">
-          <div className="h-full px-4 sm:px-6">
-            <div className="mx-auto flex h-full w-full lg:w-[calc(100%-200px)] lg:max-w-none items-center justify-between gap-6">
+        <section className="min-h-[64px] shrink-0 bg-[#591902] py-2 sm:h-[70px] sm:min-h-0 sm:py-0 fix bottom-0">
+          <div className="h-full px-3 sm:px-6">
+            <div className="mx-auto flex h-full w-full items-end justify-between gap-3 lg:w-[calc(100%-200px)] lg:max-w-none sm:items-center sm:gap-6">
               {steps.length > 0 ? (
-                <div className="flex flex-wrap items-start gap-x-0 gap-y-3">
+                <div className="flex flex-wrap items-start gap-x-0 gap-y-1.5 sm:gap-y-3">
                   {steps.map((step, index) => {
                     const isActive = step.id === currentStep
                     const isCompleted = step.id < currentStep
@@ -176,7 +197,7 @@ export default function EventFlowLayout({
                     // ✅ Show connector if:
                     // 1. Not last step
                     // 2. OR next step is placeholder (for trailing dashed line)
-                    const showConnector = !isLastStep || nextIsPlaceholder
+                    const showConnector = !isLastStep || isPlaceholderStep
 
                     return (
                       <div key={step.id} className="flex flex-col items-start">
@@ -200,15 +221,15 @@ export default function EventFlowLayout({
                               className={`mt-[16px] h-px border-t border-dashed border-[#A46A4A]
                 ${
                   nextIsPlaceholder
-                    ? 'w-[25px] sm:w-[40px] md:w-[57px] opacity-60'
-                    : 'w-[25px] sm:w-[40px] md:w-[57px]'
+                    ? 'w-[20px] sm:w-[40px] md:w-[57px] opacity-60'
+                    : 'w-[20px] sm:w-[40px] md:w-[57px]'
                 }`}
                             />
                           )}
                         </div>
 
                         {/* LABEL */}
-                        <span className="mt-1.5 block w-8 text-center text-[10px] leading-[1.2] text-[#E8CDB8] sm:text-[11px]">
+                        <span className="mt-1 block w-8 text-center text-[9px] leading-[1.15] text-[#E8CDB8] sm:mt-1.5 sm:text-[11px]">
                           {step.label}
                         </span>
                       </div>
@@ -220,10 +241,10 @@ export default function EventFlowLayout({
               {showBackButton && backTo ? (
                 <Link
                   to={backTo}
-                  className="items-center gap-2 rounded-full bg-[#FAFAFA33] px-4 mr-2 py-2.5 text-[14px] leading-none text-white transition-colors hover:bg-[#CDB17E] md:flex"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#FAFAFA33] px-3 py-2 text-[11px] leading-none text-white transition-colors hover:bg-[#CDB17E] sm:mr-2 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-[14px]"
                 >
                   <ArrowIcon direction="left" />
-                  <span>Previous</span>
+                  <span className="whitespace-nowrap">Previous</span>
                 </Link>
               ) : null}
             </div>

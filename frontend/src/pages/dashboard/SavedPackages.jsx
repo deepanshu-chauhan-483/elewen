@@ -63,12 +63,12 @@ function SkeletonCard() {
   )
 }
 
-function PackageCard({ item, isPending, onRemove, reverse = false }) {
+function PackageCard({ item, isPending, onRemove }) {
   const href = getPackageHref(item)
 
   return (
     <div className="group relative rounded-2xl border border-[#EDE5DA] bg-white overflow-hidden transition-all duration-300">
-      <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+      <div className="flex flex-col lg:flex-row">
         {/* ── Image panel ── */}
         <div className="relative h-52 lg:h-auto lg:w-64 flex-shrink-0 overflow-hidden">
           {item.imageUrl ? (
@@ -102,8 +102,8 @@ function PackageCard({ item, isPending, onRemove, reverse = false }) {
                 {(item.serviceCategories || []).map(cat => (
                   <span
                     key={cat.id || cat.slug}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FBF7F3] border border-[#EDE5DA] text-[10px] uppercase tracking-widest text-[#8C4A22]"
-                    style={{ fontFamily: 'poppins' }}
+                    className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FBF7F3] border border-[#EDE5DA] text-[10px] uppercase tracking-widest text-[#CDB17E]"
+                    style={{ fontFamily: 'Poppins' }}
                   >
                     {cat.name}
                   </span>
@@ -111,7 +111,10 @@ function PackageCard({ item, isPending, onRemove, reverse = false }) {
               </div>
 
               {/* Title */}
-              <h3 className="text-[17px] font-semibold text-[#2E1A0E] leading-snug tracking-tight">
+              <h3
+                className="text-[17px] font-semibold text-[#2E1A0E] leading-snug tracking-tight"
+                style={{ fontFamily: 'Poppins' }}
+              >
                 {item.title || 'Saved Package'}
               </h3>
 
@@ -128,7 +131,7 @@ function PackageCard({ item, isPending, onRemove, reverse = false }) {
               <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A89080] mb-1">
                 Starting from
               </p>
-              <p className="text-xl font-bold text-[#2E1A0E] leading-none">
+              <p className="text-xl font-bold text-[#1C1C1C] leading-none">
                 {formatDashboardCurrency(item.basePrice)}
               </p>
             </div>
@@ -141,7 +144,7 @@ function PackageCard({ item, isPending, onRemove, reverse = false }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               to={href}
-              className="inline-flex items-center gap-2 bg-[#591902] hover:bg-[#7A2408] text-[#F5E6CC] text-sm px-5 py-2.5 rounded-xl transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-[#CDB17E] hover:bg-[#C6AB7F] text-[#F5E6CC] text-sm px-5 py-2.5 rounded-full transition-colors duration-200"
             >
               Resume Booking
               <ArrowIcon />
@@ -151,7 +154,7 @@ function PackageCard({ item, isPending, onRemove, reverse = false }) {
               type="button"
               disabled={isPending}
               onClick={onRemove}
-              className="inline-flex items-center gap-1.5 border border-[#EDE5DA] text-[#9C8878] hover:text-[#C07318] text-sm px-5 py-2.5 rounded-xl transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-sm px-5 py-2.5 rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPending ? (
                 <>
@@ -233,14 +236,13 @@ export default function SavedPackages() {
       {/* ── Package cards ── */}
       {!isLoading && (
         <div className="space-y-4">
-          {wishlist.map((item, index) => {
+          {wishlist.map(item => {
             const isPending = String(pendingPackageId) === String(item.packageId)
             return (
               <PackageCard
                 key={item.id || item.packageId}
                 item={item}
                 isPending={isPending}
-                reverse={index % 2 === 1}
                 onRemove={() => toggleSavedPackage({ packageId: item.packageId })}
               />
             )

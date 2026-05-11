@@ -90,7 +90,7 @@ export default function BartendingLevelsPage() {
       showBackButton
       backTo={backTo}
     >
-      <div className="flex h-[50svh] w-full items-start">
+      <div className="flex pb-6 md:h-[50svh] w-full items-start md:pb-0">
         <div className="flex w-full flex-col gap-4 md:flex-row md:gap-4">
           {levels.map(level => (
             <LevelCard

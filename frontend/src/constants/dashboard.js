@@ -7,7 +7,7 @@ export const DASHBOARD = {
     NAVBAR_BG: '#FAFAFA',
     NAVBAR_BORDER: '#591902',
 
-    SIDEBAR_TEXT: '#E7E0DA',
+    SIDEBAR_TEXT: '#FAFAFA',
     ACTIVE_TEXT: '#591902',
     ACTIVE_BG: '#E7E0DA',
   },

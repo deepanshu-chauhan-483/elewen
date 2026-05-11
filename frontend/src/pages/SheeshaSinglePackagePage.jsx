@@ -91,8 +91,8 @@ function normalizeSelectedOptions(selectedOptions = {}) {
   )
 }
 
-function buildSheeshaSelectedOptions(customization) {
-  const selectedFlavor = String(customization?.data?.selectedFlavor ?? '').trim()
+function buildSheeshaSelectedOptions(customization, { fallbackFlavor = '' } = {}) {
+  const selectedFlavor = String(customization?.data?.selectedFlavor ?? fallbackFlavor ?? '').trim()
   return normalizeSelectedOptions(
     selectedFlavor
       ? {
@@ -277,7 +277,6 @@ export default function SheeshaSinglePackagePage() {
     .map(item => ({ ...item, serviceSlug: 'sheesha' }))
 
   const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null
-  const isAddToCartDisabled = !selectedFlavor
   const packageTitle = pkg.title || SHEESHA_CONTENT.title
   const packagePrice = pkg.price || SHEESHA_CONTENT.price
   const packageIntro = pkg.description || SHEESHA_CONTENT.intro
@@ -312,7 +311,9 @@ export default function SheeshaSinglePackagePage() {
     setIsAddingToCart(true)
 
     try {
-      const selectedOptions = buildSheeshaSelectedOptions(activeCustomization)
+      const selectedOptions = buildSheeshaSelectedOptions(activeCustomization, {
+        fallbackFlavor: flavors[0]?.title ?? '',
+      })
 
       if (cartItemId) {
         await updateCartItemDetails({
@@ -351,7 +352,7 @@ export default function SheeshaSinglePackagePage() {
       relatedProducts={relatedProducts}
       addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
       addToCartMessage={addToCartMessage}
-      disableAddToCart={isAddToCartDisabled || isAddingToCart}
+      disableAddToCart={isAddingToCart}
       onAddToCart={handlePackageAddToCart}
       quantity={quantity}
       onDecrement={handleDecrease}

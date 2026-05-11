@@ -19,17 +19,17 @@ function FilterPill({
   disabled = false,
 }) {
   return (
-    <div className={`relative w-full sm:w-auto ${widthClass}`}>
+    <div className={`relative min-w-0 ${widthClass}`}>
       <CustomSelect
         value={value}
         options={options}
         onChange={onChange}
         disabled={disabled}
         placeholder={label}
-        buttonClassName="flex h-[34px] w-full items-center rounded-full bg-[#F7F0E6] pl-4 pr-9 text-left text-[14px] leading-none text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
-        arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#7A2B08]"
-        menuClassName="fixed z-[999] overflow-hidden border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
-        optionClassName="flex w-full whitespace-nowrap items-center bg-[#F7F0E6] px-6 py-3 text-left text-[14px] leading-none text-[#7A2B08] transition-colors hover:bg-black hover:text-white"
+        buttonClassName="flex h-[38px] min-w-0 w-full items-center rounded-full bg-[#F7F0E6] pl-4 pr-9 text-left text-[14px] leading-[18px] text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
+        arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 shrink-0 -translate-y-1/2 text-[#7A2B08]"
+        menuClassName="fixed z-[999] overflow-hidden rounded-[16px] border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+        optionClassName="flex w-full min-w-0 whitespace-nowrap items-center bg-[#F7F0E6] px-6 py-3 text-left text-[14px] leading-[18px] text-[#7A2B08] transition-colors hover:bg-black hover:text-white"
         selectedOptionClassName=""
       />
     </div>
@@ -66,6 +66,7 @@ export default function PackageResultsHero({
 }) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
   const eventId = searchParams.get('eventId') ?? ''
@@ -99,12 +100,16 @@ export default function PackageResultsHero({
 
   const resolvedServiceId =
     serviceIdParam || (selectedService?.id != null ? String(selectedService.id) : '')
+
   const isDecorService = serviceSlug === 'decor'
+
   const { data: allThemes = [] } = useDecorThemeOptions(isDecorService ? resolvedServiceId : '')
+
   const { data: allLevels = [] } = useBudgetLevelOptions(resolvedServiceId)
 
   const themes = useMemo(() => {
     if (!isDecorService) return []
+
     return (Array.isArray(allThemes) ? allThemes : []).map(theme => ({
       value: theme.slug,
       label: theme.label ?? titleizeSlug(theme.slug),
@@ -130,14 +135,17 @@ export default function PackageResultsHero({
 
       if (!value) {
         nextParams.delete(key)
+
         if (key === 'category') {
           nextParams.delete('event')
           nextParams.delete('eventId')
         }
+
         if (key === 'service') {
           nextParams.delete('serviceId')
           nextParams.delete('theme')
         }
+
         setSearchParams(nextParams)
         return
       }
@@ -146,12 +154,14 @@ export default function PackageResultsHero({
         nextParams.set('category', value)
         nextParams.delete('event')
         nextParams.delete('eventId')
+
         setSearchParams(nextParams)
         return
       }
 
       if (key === 'service') {
         const normalizedValue = normalizeServiceSlug(value)
+
         const matchedService =
           services.find(service => normalizeServiceSlug(service.slug) === normalizedValue) ?? null
 
@@ -165,6 +175,7 @@ export default function PackageResultsHero({
             flow,
           })
         )
+
         return
       }
 
@@ -227,13 +238,15 @@ export default function PackageResultsHero({
 
   return (
     <section
-      className={`relative mt-0 max-h-[244px] w-full overflow-hidden bg-[#591902] py-8 sm:py-10 ${className}`}
+      className={`relative mt-0 w-full overflow-hidden bg-[#591902] py-6 sm:py-8 ${className}`}
     >
-      <div className="mx-15 flex w-full max-w-[1220px] flex-col justify-center">
-        <div className="flex w-full flex-col gap-3 text-white lg:flex-row lg:items-center lg:gap-8">
-          <span className="shrink-0 text-[14px] leading-none text-white/90">{title}</span>
+      <div className="mx-auto w-full max-w-[1220px] px-4 sm:px-6 lg:px-8">
+        <div className="flex w-full flex-col gap-4 text-white lg:flex-row lg:items-center lg:gap-8">
+          <span className="shrink-0 text-[14px] font-medium leading-[20px] text-white/90">
+            {title}
+          </span>
 
-          <div className="flex w-full max-w-[553px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center">
             {displayFilters.map(filter => (
               <FilterPill
                 key={`${filter.label}-${filter.widthClass ?? ''}`}

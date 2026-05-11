@@ -76,7 +76,7 @@ const DashboardLayout = () => {
         <Navbar onMobileMenuOpen={() => setIsMobileSidebarOpen(true)} />
 
         <main
-          className="flex-1 overflow-y-auto p-6 pb-28 md:pb-6"
+          className="flex-1 overflow-y-auto md:p-6 pb-28 md:pb-6"
           style={{
             backgroundColor: '#F2F2F2',
             marginTop: DASHBOARD.NAVBAR_HEIGHT,

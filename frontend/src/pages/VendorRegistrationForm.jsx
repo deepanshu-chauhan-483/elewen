@@ -385,7 +385,7 @@ export default function VendorRegistration() {
       </section>
 
       <form onSubmit={handleSubmit}>
-        <section className="py-[clamp(50px,6vw,100px)] px-[clamp(80px,10vw,200px)] bg-[#F8F4ED]">
+        <section className="py-[clamp(50px,6vw,100px)] px-[clamp(10px,10vw,200px)] bg-[#F8F4ED]">
           <div className="mx-auto">
             <h2
               className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
@@ -452,7 +452,7 @@ export default function VendorRegistration() {
           </div>
         </section>
 
-        <section className="px-[clamp(80px,10vw,200px)] bg-[#FFFFFF]">
+        <section className="px-[clamp(10px,10vw,200px)] bg-[#FFFFFF]">
           <div className="mx-auto my-[clamp(50px,6vw,80px)]">
             <h2
               className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
