@@ -1,4 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useDashboardBooking, useDashboardSession } from '../hooks/useDashboardData'
+import {
+  buildReceiptData,
+  downloadReceipt,
+  formatReceiptDate,
+  getReceiptPaymentSummary,
+} from '../lib/receipt'
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -9,15 +16,7 @@ function formatCurrency(value) {
 }
 
 function formatDate(value) {
-  if (!value) return 'Not provided'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Not provided'
-  return date.toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  return formatReceiptDate(value, { includeWeekday: true })
 }
 
 function Detail({ label, value }) {
@@ -90,14 +89,34 @@ const SAMPLE_TASTING_STEPS = [
 
 export default function BookingConfirmation() {
   const { state } = useLocation()
-  const booking = state?.booking ?? null
+  const bookingIdFromQuery = new URLSearchParams(window.location.search).get('bookingId')
+  const bookingId = state?.booking?.id ?? bookingIdFromQuery ?? ''
+  const { data: dashboardBooking } = useDashboardBooking(bookingId)
+  const { data: session } = useDashboardSession()
+  const booking = dashboardBooking ?? state?.booking ?? null
   const payment = state?.payment ?? null
   const checkoutInfo = state?.checkoutInfo ?? {}
   const isSampleTastingBooking = checkoutInfo?.checkoutMode === 'sample-tasting'
+  const customer = {
+    fullName:
+      checkoutInfo?.fullName ||
+      [session?.profile?.first_name, session?.profile?.last_name].filter(Boolean).join(' ') ||
+      [session?.user?.first_name, session?.user?.last_name].filter(Boolean).join(' ') ||
+      '',
+    email: checkoutInfo?.email || session?.user?.email || '',
+    phone: checkoutInfo?.phone || session?.user?.phone || '',
+  }
+  const paymentSummary = getReceiptPaymentSummary({
+    booking,
+    payment,
+    checkoutInfo,
+    isSampleTastingBooking,
+  })
   const sessionDetails = {
-    dateLabel: checkoutInfo?.eventDate ?? 'Saturday, 14 June',
-    timeLabel: checkoutInfo?.eventTime ?? '2:00 PM',
-    address: checkoutInfo?.eventAddress ?? 'E-22 Vaishali nagar, jaipur, rajasthan',
+    dateLabel: checkoutInfo?.eventDate ?? booking?.eventDate ?? '',
+    timeLabel: checkoutInfo?.eventTime ?? '',
+    address:
+      checkoutInfo?.eventAddress ?? booking?.address?.summary ?? booking?.locationSummary ?? '',
   }
   const pageContent = isSampleTastingBooking
     ? {
@@ -111,12 +130,31 @@ export default function BookingConfirmation() {
     : {
         heading: 'Booking Confirmed!',
         intro: 'Your event has been successfully booked. Details below.',
-        amountLabel: 'Advance Paid',
-        amountSubtext: 'Balance due before event',
-        steps: DEFAULT_STEPS,
+        amountLabel: paymentSummary.primaryLabel,
+        amountSubtext: paymentSummary.isFullyPaid
+          ? 'No balance is pending for this booking.'
+          : 'Balance due before event',
+        steps: paymentSummary.isFullyPaid
+          ? [
+              ...DEFAULT_STEPS.slice(0, 3),
+              {
+                title: 'Payment Completed',
+                desc: 'Your booking has already been fully paid and your receipt is ready to download.',
+              },
+            ]
+          : DEFAULT_STEPS,
       }
 
-  const packageLabel = booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package'
+  const packageLabel =
+    booking?.package?.title ||
+    (booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package')
+  const receiptData = buildReceiptData({
+    booking,
+    payment,
+    checkoutInfo,
+    customer,
+    isSampleTastingBooking,
+  })
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">
@@ -161,18 +199,19 @@ export default function BookingConfirmation() {
           ) : null}
 
           <div className="mb-8 flex flex-wrap gap-4">
-            <Link
-              to="/"
-              className="rounded-full border border-[#957960] px-3 py-2 text-[12px] text-[#957960]"
+            <button
+              type="button"
+              onClick={() => downloadReceipt(receiptData)}
+              className="rounded-full bg-[#D8C9AF] px-4 py-2 text-[12px] text-[#6B5B4D]"
             >
-              Back to Home
-            </Link>
+              Download Receipt
+            </button>
 
             <Link
-              to="/cart"
-              className="rounded-full bg-[#D8C9AF] px-3 py-2 text-[12px] text-[#6B5B4D]"
+              to="/"
+              className="rounded-full border border-[#957960] px-4 py-2 text-[12px] text-[#957960]"
             >
-              View Cart
+              Back to Home
             </Link>
           </div>
 
@@ -188,11 +227,15 @@ export default function BookingConfirmation() {
 
             <div className="text-right">
               <p className="text-lg font-semibold text-[#957960]">
-                {formatCurrency(payment?.advanceAmount ?? booking?.advanceAmount)}
+                {formatCurrency(paymentSummary.amountPaid)}
               </p>
-              <p className="text-sm text-gray-700">
-                {formatCurrency(payment?.balanceDue ?? booking?.remainingAmount)}
-              </p>
+              {pageContent.amountSubtext ? (
+                <p className="text-sm text-gray-700">
+                  {paymentSummary.isFullyPaid
+                    ? 'Fully paid'
+                    : formatCurrency(paymentSummary.amountDue)}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -204,13 +247,21 @@ export default function BookingConfirmation() {
               label="Event Date"
               value={formatDate(checkoutInfo?.eventDate ?? booking?.eventDate)}
             />
-            <Detail label="Location" value={checkoutInfo?.eventAddress || 'Not provided'} />
+            <Detail
+              label="Location"
+              value={
+                checkoutInfo?.eventAddress ||
+                booking?.address?.summary ||
+                booking?.locationSummary ||
+                'Not provided'
+              }
+            />
             <Detail
               label="Guests"
               value={checkoutInfo?.guestCount || booking?.guestCount || 'Not provided'}
             />
             <Detail label="Package" value={packageLabel} />
-            <Detail label="Contact" value={checkoutInfo?.fullName || 'Not provided'} />
+            <Detail label="Contact" value={customer.fullName || 'Not provided'} />
           </div>
 
           <hr className="my-4 border-[#0000001A]" />

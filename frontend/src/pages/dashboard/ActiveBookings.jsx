@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useDashboardBookings } from '../../hooks/useDashboardData'
+import { useDashboardBookings, useDashboardSession } from '../../hooks/useDashboardData'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
 } from '../../components/dashboard/dashboardUtils'
 import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
+import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
 
 const CloseToggleIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -77,10 +78,7 @@ function getSubtitle(booking) {
 }
 
 function getNextStepText(booking) {
-  return (
-    booking?.latestStatusLog?.note ||
-    `Latest status: ${booking?.statusLabel || 'In Progress'}`
-  )
+  return booking?.latestStatusLog?.note || `Latest status: ${booking?.statusLabel || 'In Progress'}`
 }
 
 const StatusBadge = ({ status }) => (
@@ -89,7 +87,7 @@ const StatusBadge = ({ status }) => (
   </span>
 )
 
-function BookingCard({ booking }) {
+function BookingCard({ booking, session }) {
   const [open, setOpen] = useState(false)
   const status = normalizeStatus(booking?.status)
   const isConfirmed = status === 'confirmed'
@@ -98,6 +96,17 @@ function BookingCard({ booking }) {
   const location = booking?.locationSummary || 'Location pending'
   const amountPaid = formatDashboardCurrency(booking?.paymentSummary?.amountPaid)
   const amountDue = formatDashboardCurrency(booking?.paymentSummary?.amountDue)
+  const receiptData = buildReceiptData({
+    booking,
+    customer: {
+      fullName:
+        [session?.profile?.first_name, session?.profile?.last_name].filter(Boolean).join(' ') ||
+        [session?.user?.first_name, session?.user?.last_name].filter(Boolean).join(' ') ||
+        '',
+      email: session?.user?.email || '',
+      phone: session?.user?.phone || '',
+    },
+  })
 
   return (
     <div
@@ -122,13 +131,26 @@ function BookingCard({ booking }) {
             </div>
           </div>
 
-          {!isConfirmed ? <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p> : null}
+          {!isConfirmed ? (
+            <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p>
+          ) : null}
         </div>
 
         {isConfirmed ? (
           <div className="hidden shrink-0 items-start gap-3 md:flex">
             {open ? (
               <>
+                <button
+                  type="button"
+                  onClick={event => {
+                    event.stopPropagation()
+                    downloadReceipt(receiptData)
+                  }}
+                  className="rounded-full border border-[#CDB17E] px-4 py-2 text-sm text-[#957960]"
+                >
+                  Download Receipt
+                </button>
+
                 <Link
                   to={`/user-dashboard/details?bookingId=${booking.id}`}
                   className="flex items-center rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white"
@@ -221,7 +243,18 @@ function BookingCard({ booking }) {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end md:hidden">
+          <div className="mt-6 flex flex-wrap justify-end gap-3 md:hidden">
+            <button
+              type="button"
+              onClick={event => {
+                event.stopPropagation()
+                downloadReceipt(receiptData)
+              }}
+              className="rounded-full border border-[#CDB17E] px-6 py-3 text-[14px] font-medium text-[#957960]"
+            >
+              Download Receipt
+            </button>
+
             <Link
               to={`/user-dashboard/details?bookingId=${booking.id}`}
               className="flex items-center rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white"
@@ -242,6 +275,7 @@ function BookingCard({ booking }) {
 
 export default function ActiveBookings() {
   const { data: bookings = [], isLoading, error } = useDashboardBookings('active')
+  const { data: session } = useDashboardSession()
 
   if (isLoading) {
     return <DashboardLoadingState title="Loading active bookings..." />
@@ -270,7 +304,7 @@ export default function ActiveBookings() {
       </div>
 
       {bookings.map(booking => (
-        <BookingCard key={booking.id} booking={booking} />
+        <BookingCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>
   )

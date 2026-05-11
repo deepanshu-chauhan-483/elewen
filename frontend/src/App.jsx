@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useLenis } from './useLenis'
 import NavHeader from './components/NavHeader'
 import Footer from './components/Footer'
@@ -54,6 +54,38 @@ import SavedPackages from './pages/dashboard/SavedPackages'
 import SupportHelp from './pages/dashboard/SupportHelp'
 import ProfilePage from './pages/dashboard/ProfilePage'
 
+function GoogleAuthRedirectBridge() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const hashValue = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash
+    const hashParams = new URLSearchParams(hashValue)
+    const accessToken = searchParams.get('access_token') || hashParams.get('access_token')
+    const error = searchParams.get('error') || hashParams.get('error')
+    const errorDescription =
+      searchParams.get('error_description') || hashParams.get('error_description')
+
+    if (!accessToken && !error && !errorDescription) {
+      return
+    }
+
+    if (location.pathname === '/auth/callback') {
+      return
+    }
+
+    const nextParams = new URLSearchParams()
+    if (accessToken) nextParams.set('access_token', accessToken)
+    if (error) nextParams.set('error', error)
+    if (errorDescription) nextParams.set('error_description', errorDescription)
+
+    navigate(`/auth/callback?${nextParams.toString()}`, { replace: true })
+  }, [location, navigate])
+
+  return null
+}
+
 function ScrollToTop() {
   const { pathname } = useLocation()
   const lenisRef = useLenis()
@@ -97,6 +129,7 @@ function AppLayout() {
 
   return (
     <>
+      <GoogleAuthRedirectBridge />
       <ScrollToTop />
       {!hideGlobalChrome && <NavHeader />}
       <Routes>

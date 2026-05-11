@@ -1,31 +1,49 @@
 import { useState } from 'react'
-import { useDashboardBookings, useDashboardCancelBooking } from '../../hooks/useDashboardData'
+import {
+  useDashboardBookings,
+  useDashboardCancelBooking,
+  useDashboardSession,
+} from '../../hooks/useDashboardData'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
 } from '../../components/dashboard/dashboardUtils'
+import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 
 function getSelectedItemDisplay(title = '') {
   const rawTitle = String(title ?? '')
-  const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+  const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
 
-  if (!metaPart) return rawTitle
+  if (!metaPart) return displayTitle || rawTitle
 
   try {
     const parsed = JSON.parse(metaPart)
+    const itemType = parsed?.itemType ?? 'package'
+    const addonTitle = String(parsed?.addonTitle ?? '').trim()
     const selectedOptions = parsed?.selectedOptions
+
+    if (itemType === 'addon') {
+      const optionValues =
+        selectedOptions && typeof selectedOptions === 'object'
+          ? Object.values(selectedOptions).filter(Boolean)
+          : []
+
+      return optionValues.length
+        ? `${addonTitle || displayTitle || rawTitle} (${optionValues.join(', ')})`
+        : addonTitle || displayTitle || rawTitle
+    }
 
     if (selectedOptions && typeof selectedOptions === 'object') {
       const values = Object.values(selectedOptions).filter(Boolean)
       if (values.length) return values.join(', ')
     }
   } catch {
-    return rawTitle.split(CART_META_SEPARATOR)[0] || rawTitle
+    return displayTitle || rawTitle
   }
 
-  return rawTitle.split(CART_META_SEPARATOR)[0] || rawTitle
+  return displayTitle || rawTitle
 }
 
 const CalendarIcon = () => (
@@ -66,11 +84,22 @@ const StatusBadge = ({ status }) => {
   )
 }
 
-function BookingAccordionCard({ booking }) {
+function BookingAccordionCard({ booking, session }) {
   const [open, setOpen] = useState(false)
   const [showCancel, setShowCancel] = useState(false)
   const [reason, setReason] = useState('')
   const cancelMutation = useDashboardCancelBooking()
+  const receiptData = buildReceiptData({
+    booking,
+    customer: {
+      fullName:
+        [session?.profile?.first_name, session?.profile?.last_name].filter(Boolean).join(' ') ||
+        [session?.user?.first_name, session?.user?.last_name].filter(Boolean).join(' ') ||
+        '',
+      email: session?.user?.email || '',
+      phone: session?.user?.phone || '',
+    },
+  })
 
   const borderColor =
     booking.status === 'confirmed'
@@ -89,7 +118,7 @@ function BookingAccordionCard({ booking }) {
             <div className="flex items-start justify-between gap-3 md:justify-start">
               <h3 className="text-[17px] font-medium leading-tight text-[#2E2E2E] md:text-lg">
                 {booking.package?.title || 'Booking'}
-              </h3> 
+              </h3>
 
               <div className="shrink-0 md:pt-0.5">
                 <StatusBadge status={booking.status} />
@@ -185,7 +214,10 @@ function BookingAccordionCard({ booking }) {
           <div className="mt-6">
             <h4 className="mb-3 text-[11px] text-[#767676]">PAYMENTS</h4>
             {booking.payments?.map(payment => (
-              <div key={payment.id} className="mb-2 flex justify-between rounded-xl border p-3">
+              <div
+                key={payment.id}
+                className="mb-2 flex justify-between rounded-xl  bg-[#F3F3F3] p-3"
+              >
                 <span className="text-sm text-[#2E2E2E]">{payment.paymentType}</span>
                 <span className="text-sm font-medium">
                   {formatDashboardCurrency(payment.amount)}
@@ -195,6 +227,14 @@ function BookingAccordionCard({ booking }) {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => downloadReceipt(receiptData)}
+              className="rounded-full border border-[#C6A15B] bg-[#FFFFFF] px-5 py-2 text-[#C6A15B]"
+            >
+              Download Receipt
+            </button>
+
             <button className="flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2 text-white">
               Message Admin <ArrowIcon />
             </button>
@@ -249,16 +289,17 @@ function BookingAccordionCard({ booking }) {
 
 export default function BookingDetailsAccordion() {
   const { data: bookings = [] } = useDashboardBookings('all')
+  const { data: session } = useDashboardSession()
 
   return (
-    <div className="space-y-6 bg-[#F2F2F2] p-6">
+    <div className="space-y-6 ">
       <div>
         <h1 className="text-2xl text-[#2E2E2E]">Booking Details</h1>
         <p className="text-sm text-gray-500">Click on a booking to view full details</p>
       </div>
 
       {bookings.map(booking => (
-        <BookingAccordionCard key={booking.id} booking={booking} />
+        <BookingAccordionCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>
   )

@@ -141,7 +141,7 @@ function PackageCard({ item, isPending, onRemove, reverse = false }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               to={href}
-              className="inline-flex items-center gap-2 bg-[#591902] hover:bg-[#7A2408] text-[#F5E6CC] text-sm px-5 py-2.5 rounded-xl transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-[#7A2408] text-[#F5E6CC] text-sm px-5 py-2.5 rounded-xl transition-colors duration-200"
             >
               Resume Booking
               <ArrowIcon />
@@ -204,7 +204,7 @@ export default function SavedPackages() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F4F0] p-6">
+    <div className="min-h-screen ">
       {/* ── Page header ── */}
       <div className="mb-8">
         <div className="flex items-center gap-2.5 mb-1.5">

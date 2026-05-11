@@ -4,6 +4,7 @@ import SingleProductPageContent from '../components/package-details/SingleProduc
 import { getServiceProductDetails } from '../data/serviceProductDetails'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCart } from '../hooks/useCart'
+import { usePackageReviews } from '../hooks/usePackageReviews'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -279,6 +280,11 @@ export default function PackageDetailsPage() {
         .map(item => ({ ...item, serviceSlug: normalizedService })),
     [normalizedService, packagesData, pkg]
   )
+  const { data: packageReviews = [] } = usePackageReviews({
+    id: pkg?.id,
+    documentId: pkg?.documentId,
+    title: pkg?.title,
+  })
 
   useEffect(() => {
     const defaultOptions = buildDefaultSelectedOptions(details.configurableGroups)
@@ -388,6 +394,7 @@ export default function PackageDetailsPage() {
         setAddToCartMessage('')
         setQuantity(current => current + 1)
       }}
+      testimonials={packageReviews}
     />
   )
 }

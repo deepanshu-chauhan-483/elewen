@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js'
-import { strapiGet, strapiServerGet } from '../lib/strapi.js'
+import { strapiGet } from '../lib/strapi.js'
 
 const cartInclude = {
   items: { orderBy: { createdAt: 'asc' } },
@@ -10,6 +10,46 @@ const getCartWithItems = cartId =>
     where: { id: cartId },
     include: cartInclude,
   })
+
+const getCouponSnapshot = async couponId => {
+  if (!couponId) return null
+
+  try {
+    const { data: coupons } = await strapiGet('/coupons', {
+      'filters[id][$eq]': couponId,
+    })
+    const coupon = coupons?.[0]
+    if (!coupon) return null
+
+    return {
+      id: String(coupon.id),
+      code: coupon.code ?? '',
+      discount_type: coupon.discount_type ?? '',
+      discount_value: coupon.discount_value ?? 0,
+      is_active: Boolean(coupon.is_active),
+    }
+  } catch {
+    return null
+  }
+}
+
+const attachCouponDetails = async cart => {
+  if (!cart) return cart
+
+  const coupon = await getCouponSnapshot(cart.couponId)
+
+  return {
+    ...cart,
+    couponCode: coupon?.code ?? null,
+    coupon: coupon
+      ? {
+          code: coupon.code,
+          discount_type: coupon.discount_type,
+          discount_value: coupon.discount_value,
+        }
+      : null,
+  }
+}
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 
@@ -71,9 +111,12 @@ function normalizeSectionItems(value) {
 function getPackageAddons(pkg) {
   const sections = normalizeSectionItems(pkg?.packages)
 
-  return sections.flatMap(section =>
-    Array.isArray(section?.addons) ? section.addons : normalizeSectionItems(section?.addons)
-  )
+  return [
+    ...sections.flatMap(section =>
+      Array.isArray(section?.addons) ? section.addons : normalizeSectionItems(section?.addons)
+    ),
+    ...normalizeSectionItems(pkg?.reusable_addons),
+  ]
 }
 
 // ─── Helper: recalculate cart totals ─────────────────────────────────────────
@@ -94,7 +137,9 @@ const recalcCart = async (cartId, couponIdOverride) => {
   let discountAmount = 0
   if (couponId) {
     try {
-      const { data: coupons } = await strapiServerGet(`/api/coupons?filters[id][$eq]=${couponId}`)
+      const { data: coupons } = await strapiGet('/coupons', {
+        'filters[id][$eq]': couponId,
+      })
       const coupon = coupons?.[0]
       if (coupon?.is_active) {
         if (coupon.discount_type === 'percentage') {
@@ -142,7 +187,7 @@ export const getCart = async (req, res, next) => {
     await recalcCart(cart.id)
     cart = await getCartWithItems(cart.id)
 
-    res.json({ cart })
+    res.json({ cart: await attachCouponDetails(cart) })
   } catch (err) {
     next(err)
   }
@@ -160,6 +205,7 @@ export const addItem = async (req, res, next) => {
     // Fetch package from Strapi — use filter by id (Strapi v5 single entry needs documentId, filter by id works)
     const { data: pkgs } = await strapiGet('/packages', {
       'filters[id][$eq]': packageId,
+      'populate[reusable_addons]': 'true',
       'populate[packages][on][package.decorpackages][populate][addons]': 'true',
       'populate[packages][on][package.sheeshapackage][populate][addons]': 'true',
       'populate[packages][on][package.bartendingpackage][populate][addons]': 'true',
@@ -229,7 +275,7 @@ export const addItem = async (req, res, next) => {
 
     const updated = await getCartWithItems(cart.id)
 
-    res.status(201).json({ cart: updated })
+    res.status(201).json({ cart: await attachCouponDetails(updated) })
   } catch (err) {
     next(err)
   }
@@ -265,7 +311,7 @@ export const updateItem = async (req, res, next) => {
 
     const cart = await getCartWithItems(item.cart.id)
 
-    res.json({ cart })
+    res.json({ cart: await attachCouponDetails(cart) })
   } catch (err) {
     next(err)
   }
@@ -291,7 +337,7 @@ export const removeItem = async (req, res, next) => {
 
     const cart = await getCartWithItems(cartId)
 
-    res.json({ cart })
+    res.json({ cart: await attachCouponDetails(cart) })
   } catch (err) {
     next(err)
   }
@@ -365,7 +411,7 @@ export const updateCart = async (req, res, next) => {
 
       const updatedCart = await getCartWithItems(item.cart.id)
 
-      return res.json({ cart: updatedCart })
+      return res.json({ cart: await attachCouponDetails(updatedCart) })
     }
 
     const updated = await prisma.cart.update({
@@ -380,7 +426,7 @@ export const updateCart = async (req, res, next) => {
       include: cartInclude,
     })
 
-    res.json({ cart: updated })
+    res.json({ cart: await attachCouponDetails(updated) })
   } catch (err) {
     next(err)
   }
@@ -398,9 +444,10 @@ export const applyCoupon = async (req, res, next) => {
     if (!cart) return res.status(404).json({ error: 'Cart not found' })
 
     // Find coupon in Strapi by code
-    const { data: coupons } = await strapiServerGet(
-      `/api/coupons?filters[code][$eq]=${encodeURIComponent(code.toUpperCase())}&filters[is_active][$eq]=true`
-    )
+    const { data: coupons } = await strapiGet('/coupons', {
+      'filters[code][$eq]': code.toUpperCase(),
+      'filters[is_active][$eq]': true,
+    })
 
     if (!coupons?.length) {
       return res.status(404).json({ error: 'Invalid or inactive coupon code' })
@@ -408,6 +455,18 @@ export const applyCoupon = async (req, res, next) => {
 
     const coupon = coupons[0]
     const now = new Date()
+
+    const existingUsage = await prisma.couponUsage.findFirst({
+      where: {
+        couponId: String(coupon.id),
+        userId,
+      },
+      select: { id: true },
+    })
+
+    if (existingUsage) {
+      return res.status(400).json({ error: 'You have already used this coupon' })
+    }
 
     if (coupon.valid_from && new Date(coupon.valid_from) > now) {
       return res.status(400).json({ error: 'This coupon is not yet active' })
@@ -425,7 +484,7 @@ export const applyCoupon = async (req, res, next) => {
     const updated = await getCartWithItems(cart.id)
 
     res.json({
-      cart: updated,
+      cart: await attachCouponDetails(updated),
       coupon: {
         code: coupon.code,
         discount_type: coupon.discount_type,
@@ -450,7 +509,7 @@ export const removeCoupon = async (req, res, next) => {
 
     const updated = await getCartWithItems(cart.id)
 
-    res.json({ cart: updated })
+    res.json({ cart: await attachCouponDetails(updated) })
   } catch (err) {
     next(err)
   }

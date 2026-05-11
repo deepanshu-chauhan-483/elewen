@@ -269,7 +269,7 @@ export default function CategoryPage() {
                 <div className="flex min-w-0 items-center gap-4">
                   <span
                     className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[24px] ${
-                      isActive ? 'bg-white/15' : 'bg-[#EFE4D2]'
+                      isActive ? 'bg-[#EADEC8]' : 'bg-[#EFE4D2]'
                     }`}
                   >
                     <span
@@ -277,7 +277,7 @@ export default function CategoryPage() {
                         isActive ? 'text-white' : 'text-[#8C4A22]'
                       }`}
                     >
-                      {category.badge || category.name?.charAt(0)?.toUpperCase()}
+                      <img src={category.icon} alt="" />
                     </span>
                   </span>
                   <div className="min-w-0 max-w-[203px]">
@@ -285,14 +285,14 @@ export default function CategoryPage() {
                       {category.name}
                     </h2>
                     <p
-                      className={`mt-1 text-[12px] leading-[1.45] ${isActive ? 'text-white/75' : 'text-[#8F8B86]'}`}
+                      className={`mt-1 text-[11px] leading-[1.45] ${isActive ? 'text-white/75' : 'text-[#8F8B86]'}`}
                     >
                       {category.description}
                     </p>
                   </div>
                 </div>
 
-                <span className="flex h-6 w-6 ml-2 shrink-0 items-center justify-center transition-transform group-hover:translate-x-1">
+                <span className="flex h-6 w-6 ml-4 shrink-0 items-center justify-center transition-transform group-hover:translate-x-1">
                   <CategoryArrow />
                 </span>
               </button>

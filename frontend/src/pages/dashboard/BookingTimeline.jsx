@@ -289,7 +289,7 @@ export default function BookingTimeline() {
   const pct = timeline.length > 0 ? Math.round((done / timeline.length) * 100) : 0
 
   return (
-    <div className="min-h-screen bg-[#F7F4F0] p-6">
+    <div className="min-h-screen ">
       {/* ── Page Header ── */}
       <div className="mb-8">
         <div className="flex items-center gap-2.5 mb-1.5">

@@ -10,6 +10,8 @@ import {
   paymentVerify,
 } from '../lib/api'
 
+const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
   return `Rs${amount.toLocaleString('en-IN', {
@@ -159,7 +161,73 @@ function getPackageBreakdownRows(pkg) {
     .filter(Boolean)
 }
 
+function parseCartItemTitle(value = '') {
+  const rawTitle = String(value ?? '')
+  const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+
+  if (!metaPart) {
+    return {
+      displayTitle: displayTitle || rawTitle,
+      selectedOptions: {},
+      itemType: 'package',
+      addonTitle: '',
+      parentPackageId: '',
+    }
+  }
+
+  try {
+    const parsed = JSON.parse(metaPart)
+    return {
+      displayTitle: displayTitle || rawTitle,
+      selectedOptions:
+        parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
+          ? parsed.selectedOptions
+          : {},
+      itemType: parsed?.itemType ?? 'package',
+      addonTitle: parsed?.addonTitle ?? '',
+      parentPackageId: parsed?.parentPackageId ?? '',
+    }
+  } catch {
+    return {
+      displayTitle: displayTitle || rawTitle,
+      selectedOptions: {},
+      itemType: 'package',
+      addonTitle: '',
+      parentPackageId: '',
+    }
+  }
+}
+
+function getCartItemDisplayName(item) {
+  if (item?.itemType === 'addon') {
+    return item?.displayTitle || item?.addonTitle || 'Add-on'
+  }
+
+  return item?.packageData?.title || item?.displayTitle || item?.title || 'Package'
+}
+
+function getCartItemNoteLabel(item) {
+  const itemName = getCartItemDisplayName(item)
+  const quantity = Math.max(1, Number(item?.quantity ?? 1))
+  const selectedOptions = item?.selectedOptions ?? {}
+  const optionValues = Object.values(selectedOptions).filter(Boolean)
+  const optionSuffix = optionValues.length ? ` [${optionValues.join(', ')}]` : ''
+
+  if (item?.itemType === 'addon') {
+    return `Add-on: ${itemName} x${quantity}${optionSuffix}`
+  }
+
+  return `Package: ${itemName} x${quantity}${optionSuffix}`
+}
+
 function getCartItemSummary(item) {
+  if (item?.itemType === 'addon') {
+    return {
+      rows: [],
+      total: Number(item?.totalPrice ?? 0),
+    }
+  }
+
   const quantity = Math.max(1, Number(item?.quantity ?? 1))
   const breakdownRows = getPackageBreakdownRows(item?.packageData)
 
@@ -338,17 +406,12 @@ function PaymentOptionPopup({
         <button
           type="button"
           onClick={() => onConfirm(selected)}
-          className="group mt-6 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-2 pl-5 pr-2"
+          className="mt-6 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-2 pl-5 pr-2"
         >
           <span className="text-[14px] font-medium text-white">Confirm Booking</span>
 
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
-            <svg
-              className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg className="h-[18px] w-[18px] text-[#D4BA8E]" viewBox="0 0 20 20" fill="none">
               <path
                 d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
                 stroke="currentColor"
@@ -361,35 +424,6 @@ function PaymentOptionPopup({
         </button>
       </div>
     </div>
-  )
-}
-
-function SpecialRequest({ preferences, onChange, onSubmit, message }) {
-  return (
-    <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
-      {/* TITLE */}
-      <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
-        Special Request
-      </h2>
-
-      <p className="mb-4 mt-1 text-sm text-gray-500">
-        Add any preferences or instructions for your order
-      </p>
-
-      {/* INPUT */}
-      <div className="flex flex-col gap-3">
-        <input
-          type="text"
-          value={preferences}
-          onChange={e => onChange(e.target.value)}
-          placeholder="Write Message"
-          className="w-full border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
-        />
-      </div>
-
-      {/* MESSAGE */}
-      {message && <p className="mt-2 text-sm text-[#5A1E0E]">{message}</p>}
-    </form>
   )
 }
 
@@ -426,13 +460,6 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('upi')
   const [formError, setFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [preferences, setPreferences] = useState('')
-  const [message, setMessage] = useState('')
-
-  const onSubmit = e => {
-    e.preventDefault()
-    setMessage('Request added successfully')
-  }
 
   const packageLookup = useMemo(
     () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
@@ -441,10 +468,14 @@ export default function CheckoutPage() {
 
   const cartItems = useMemo(
     () =>
-      (cart?.items ?? []).map(item => ({
-        ...item,
-        packageData: packageLookup.get(String(item.packageId)) ?? null,
-      })),
+      (cart?.items ?? []).map(item => {
+        const parsedTitle = parseCartItemTitle(item?.title)
+        return {
+          ...item,
+          ...parsedTitle,
+          packageData: packageLookup.get(String(item.packageId)) ?? null,
+        }
+      }),
     [cart?.items, packageLookup]
   )
 
@@ -551,6 +582,7 @@ export default function CheckoutPage() {
             `Tasting date: ${sessionDetails.dateLabel || 'Not provided'}`,
             `Tasting time: ${sessionDetails.timeLabel || 'Not provided'}`,
             `Tasting address: ${sessionDetails.address || 'Not provided'}`,
+            `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
           ].join('\n')
         : [
             `Contact name: ${fullName.trim()}`,
@@ -561,6 +593,7 @@ export default function CheckoutPage() {
             `Event address: ${eventAddress.trim()}`,
             `PIN code: ${pinCode || 'Not provided'}`,
             `Guest count: ${guestCount}`,
+            `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
           ].join('\n')
 
       await bookingAddNote(token, booking.id, { note: extraDetails }).catch(() => {})
@@ -581,12 +614,15 @@ export default function CheckoutPage() {
         })
 
         setIsSubmitting(false)
-        navigate('/booking-confirmation', {
+        navigate(`/booking-confirmation?bookingId=${booking.id}`, {
           state: {
             booking: verifyResponse?.booking || booking,
             payment: {
               advanceAmount: orderResponse.amount,
-              balanceDue,
+              amountPaid: orderResponse.amount,
+              paymentType,
+              totalAmount: computedTotal,
+              balanceDue: Math.max(0, computedTotal - Number(orderResponse.amount ?? 0)),
             },
             checkoutInfo: {
               fullName,
@@ -598,6 +634,11 @@ export default function CheckoutPage() {
               pinCode,
               guestCount,
               checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
+              selectedItems: cartItems.map(item => ({
+                id: item?.id,
+                title: getCartItemNoteLabel(item),
+                amount: Number(item?.totalPrice ?? 0),
+              })),
             },
           },
         })
@@ -634,12 +675,15 @@ export default function CheckoutPage() {
               paymentMethod,
             })
 
-            navigate('/booking-confirmation', {
+            navigate(`/booking-confirmation?bookingId=${booking.id}`, {
               state: {
                 booking: verifyResponse?.booking || booking,
                 payment: {
                   advanceAmount: orderResponse.amount,
-                  balanceDue,
+                  amountPaid: orderResponse.amount,
+                  paymentType,
+                  totalAmount: computedTotal,
+                  balanceDue: Math.max(0, computedTotal - Number(orderResponse.amount ?? 0)),
                 },
                 checkoutInfo: {
                   fullName,
@@ -651,6 +695,11 @@ export default function CheckoutPage() {
                   pinCode,
                   guestCount,
                   checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
+                  selectedItems: cartItems.map(item => ({
+                    id: item?.id,
+                    title: getCartItemNoteLabel(item),
+                    amount: Number(item?.totalPrice ?? 0),
+                  })),
                 },
               },
             })
@@ -741,18 +790,10 @@ export default function CheckoutPage() {
                 <p className="text-[12px] font-medium text-[#0383E4]">
                   {sessionDetails.dateLabel} - {sessionDetails.timeLabel}
                 </p>
-
                 <p className="mt-1 text-[11px] text-[#00477C]">{sessionDetails.address}</p>
               </div>
             </div>
-          ) : (
-            <SpecialRequest
-              preferences={preferences}
-              onChange={setPreferences}
-              onSubmit={onSubmit}
-              message={message}
-            />
-          )}
+          ) : null}
 
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#1F2A16] px-5 py-3 text-white">
@@ -763,15 +804,16 @@ export default function CheckoutPage() {
 
             <div className="space-y-4 p-5 text-sm">
               {itemSummaries.map(({ item, summary }, index) => {
-                const packageName = item.packageData?.title || item.title
+                const packageName = getCartItemDisplayName(item)
                 const serviceName = normalizeServiceSlug(item.packageData?.service_slugs?.[0] ?? '')
+                const isAddonItem = item?.itemType === 'addon'
                 const label = serviceName
                   ? `${serviceName.charAt(0).toUpperCase()}${serviceName.slice(1)} (${item.quantity} package${Number(item.quantity) > 1 ? 's' : ''})`
                   : `${packageName} (${item.quantity})`
 
                 return (
                   <div key={item.id}>
-                    {index === 0 ? (
+                    {index === 0 && !isAddonItem ? (
                       <div className="space-y-2">
                         <div className="flex justify-between text-base font-medium">
                           <span>Base Package - {packageName}</span>
@@ -790,7 +832,9 @@ export default function CheckoutPage() {
                     ) : (
                       <div className="space-y-2">
                         <div className="flex justify-between text-gray-600">
-                          <span>{label}</span>
+                          <span>
+                            {isAddonItem ? `Add-on - ${packageName} (${item.quantity})` : label}
+                          </span>
                           <span>{formatCurrency(summary.total)}</span>
                         </div>
                         {summary.rows.map(row => (
@@ -849,7 +893,7 @@ export default function CheckoutPage() {
             </h2>
             <p className="mt-3 text-[14px] text-[#7A7A7A]">{pageContent.detailsIntro}</p>
 
-            <div className="mt-10 space-y-3">
+            <div className="mt-10 space-y-4">
               <input
                 type="text"
                 value={fullName}
@@ -886,68 +930,19 @@ export default function CheckoutPage() {
                 </h3>
 
                 <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                  {/* EVENT DATE */}
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2">
-                      {/* Calendar SVG */}
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M5.33333 1.33334V4.00001M10.6667 1.33334V4.00001M2 6.66668H14M3.33333 2.66668H12.6667C13.403 2.66668 14 3.26363 14 4.00001V13.3333C14 14.0697 13.403 14.6667 12.6667 14.6667H3.33333C2.59695 14.6667 2 14.0697 2 13.3333V4.00001C2 3.26363 2.59695 2.66668 3.33333 2.66668Z"
-                          stroke="#2D2D2D"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-
-                    <input
-                      type="text"
-                      min={getMinEventDate()}
-                      value={eventDate}
-                      placeholder="Event Date"
-                      onChange={event => setEventDate(event.target.value)}
-                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 pl-10 text-[16px] text-[#2C2C2C] outline-none"
-                    />
-                  </div>
-
-                  {/* EVENT TIME */}
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2">
-                      {/* Time SVG */}
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M6.66406 1.33334H9.33073M7.9974 9.33334L9.9974 7.33334M13.3307 9.33334C13.3307 12.2789 10.9429 14.6667 7.9974 14.6667C5.05188 14.6667 2.66406 12.2789 2.66406 9.33334C2.66406 6.38782 5.05188 4.00001 7.9974 4.00001C10.9429 4.00001 13.3307 6.38782 13.3307 9.33334Z"
-                          stroke="#2D2D2D"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-
-                    <input
-                      type="text"
-                      value={eventTime}
-                      placeholder="Event Time"
-                      onChange={event => setEventTime(event.target.value)}
-                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 pl-10 text-[16px] text-[#2C2C2C] outline-none"
-                    />
-                  </div>
-
-                  {/* ADDRESS */}
+                  <input
+                    type="date"
+                    min={getMinEventDate()}
+                    value={eventDate}
+                    onChange={event => setEventDate(event.target.value)}
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  />
+                  <input
+                    type="time"
+                    value={eventTime}
+                    onChange={event => setEventTime(event.target.value)}
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  />
                   <input
                     type="text"
                     value={eventAddress}
@@ -955,8 +950,6 @@ export default function CheckoutPage() {
                     placeholder="Event Address"
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
                   />
-
-                  {/* PIN CODE */}
                   <input
                     type="text"
                     value={pinCode}
@@ -964,8 +957,6 @@ export default function CheckoutPage() {
                     placeholder="PIN Code"
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
                   />
-
-                  {/* GUESTS */}
                   <input
                     type="number"
                     min="1"

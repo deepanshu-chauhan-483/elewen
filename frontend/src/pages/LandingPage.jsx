@@ -42,6 +42,7 @@ import img4 from '../assets/images/img8f9e.jpg'
 import img5 from '../assets/images/img6a98.jpg'
 import bulb1 from '../assets/lightbulb_images/bulb1.png'
 import bulb2 from '../assets/lightbulb_images/bulb2.png'
+import { useHowItWorksLandingPage } from '../hooks/useHowItWorksLandingPage'
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin)
 
@@ -1181,7 +1182,7 @@ const CoinIcon = () => (
   </svg>
 )
 
-const howSteps = [
+/* const howSteps = [
   {
     id: 1,
     title: 'You Dream It. We Handle The Rest',
@@ -1225,19 +1226,73 @@ const howSteps = [
     icon: CoinIcon,
   },
 ]
+*/
+
+gsap.registerPlugin(ScrollTrigger)
+
+const iconByIndex = index => {
+  const icons = [ThoughtBubbleIcon, ChecklistIcon, GridIcon, PlusIcon, LightbulbIcon, CoinIcon]
+  return icons[index % icons.length]
+}
+
+const normalizeText = value => (value == null ? '' : String(value))
 
 const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
+  const { data: howItWorks = { title: '', sections: [] } } = useHowItWorksLandingPage()
+  const [activeStepIndex, setActiveStepIndex] = useState(0)
+
+  const steps = useMemo(() => {
+    const list = Array.isArray(howItWorks.sections) ? howItWorks.sections : []
+    return list.map((section, index) => ({
+      id: section.section_id ?? index + 1,
+      title: normalizeText(section.title),
+      desc: normalizeText(section.desc),
+      image: section.image ?? null,
+      side: index % 2 === 0 ? 'right' : 'left',
+    }))
+  }, [howItWorks.sections])
+
   const containerRef = useRef(null)
   const stepsWrapRef = useRef(null)
-  gsap.config({
-    autoSleep: 60,
-    force3D: true,
-    nullTargetWarn: false,
-  })
-  ScrollTrigger.config({
-    limitCallbacks: true,
-    ignoreMobileResize: true,
-  })
+
+  // ── Icon renderer ──────────────────────────────────────────
+  // stepIndex: position of this step in the list
+  // activeStepIndex: currently highlighted step
+  // white = active OR already passed (index <= activeStepIndex)
+  const renderIcon = (step, stepIndex) => {
+    const isWhite = stepIndex <= activeStepIndex
+
+    const imgStyle = {
+      transition: 'filter 0.4s ease',
+      filter: isWhite
+        ? 'brightness(0) invert(1)' // pure white
+        : 'brightness(0) invert(1) opacity(0.25)', // dim for future steps
+    }
+
+    if (step.image) {
+      return (
+        <img
+          src={step.image}
+          alt={step.title}
+          className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px] object-contain"
+          style={imgStyle}
+        />
+      )
+    }
+
+    // Fallback SVG icon — apply white via className
+    const FallbackIcon = iconByIndex(stepIndex)
+    return (
+      <span style={imgStyle} className="block">
+        <FallbackIcon />
+      </span>
+    )
+  }
+
+  // ── GSAP scroll animations ──────────────────────────────────
+  gsap.config({ autoSleep: 60, force3D: true, nullTargetWarn: false })
+  ScrollTrigger.config({ limitCallbacks: true, ignoreMobileResize: true })
+
   useLayoutEffect(() => {
     if (disableScrollAnimations || !isVisible) return
     const container = containerRef.current
@@ -1246,6 +1301,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 
     const progressLine = container.querySelector('.progress-line-active')
     const stepElements = gsap.utils.toArray('.step-item', stepsWrap)
+
     const revealTexts = (elements, baseDelay = 0) => {
       elements.forEach((element, index) => {
         if (element.classList.contains('is-visible')) return
@@ -1263,6 +1319,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     }
 
     const revealedSteps = new WeakSet()
+
     const animateStepContent = step => {
       if (revealedSteps.has(step)) return
       revealedSteps.add(step)
@@ -1276,20 +1333,17 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         defaults: { duration: 0.45, ease: 'power2.out', overwrite: 'auto' },
       })
 
-      if (leftContent) {
+      if (leftContent)
         stepTimeline.to(leftContent, { x: 0, opacity: 1, clearProps: 'transform' }, 0)
-      }
-
-      if (rightContent) {
+      if (rightContent)
         stepTimeline.to(
           rightContent,
           { x: 0, opacity: 1, clearProps: 'transform' },
           leftContent ? 0.12 : 0
         )
-      }
     }
 
-    let activeStepIndex = 0
+    let currentActiveIndex = 0
 
     const setActiveStepLine = (
       stepItems,
@@ -1306,16 +1360,17 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         step.classList.toggle('is-step-active', index === nextIndex)
       })
 
-      const wasInactive = activeStepIndex === -1
-      activeStepIndex = nextIndex
+      const wasInactive = currentActiveIndex === -1
+      currentActiveIndex = nextIndex
+
+      // ✅ Update React state so icons re-render with correct white filter
+      setActiveStepIndex(nextIndex)
 
       gsap.killTweensOf(progressLine)
 
       if (immediate) {
         gsap.set(progressLine, { top: targetTop, height: targetHeight, opacity: 1 })
-        if (revealContent) {
-          requestAnimationFrame(() => animateStepContent(targetStep))
-        }
+        if (revealContent) requestAnimationFrame(() => animateStepContent(targetStep))
         return
       }
 
@@ -1346,9 +1401,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         ease: 'none',
         overwrite: 'auto',
         onStart: () => {
-          if (revealContent) {
-            gsap.delayedCall(0.06, () => animateStepContent(targetStep))
-          }
+          if (revealContent) gsap.delayedCall(0.06, () => animateStepContent(targetStep))
         },
       })
     }
@@ -1365,14 +1418,13 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         const rect = step.getBoundingClientRect()
         const stepCenter = rect.top + rect.height / 2
         const distance = Math.abs(stepCenter - center)
-
         if (distance < nearestDistance) {
           nearestDistance = distance
           nearestStepIndex = index
         }
       })
 
-      const shouldRevealContent = nearestStepIndex !== activeStepIndex
+      const shouldRevealContent = nearestStepIndex !== currentActiveIndex
 
       if (reposition || shouldRevealContent) {
         setActiveStepLine(stepItems, nearestStepIndex, {
@@ -1402,31 +1454,21 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         onUpdate: updateStepHighlights,
       })
 
-      // Heading reveal ("HOW 11 WORKS")
       revealHeading()
 
       stepElements.forEach(step => {
         const leftContent = step.querySelector('.left-content')
         const rightContent = step.querySelector('.right-content')
-        if (leftContent) {
-          gsap.set(leftContent, { x: -88, opacity: 0, force3D: true })
-        }
-
-        if (rightContent) {
-          gsap.set(rightContent, { x: 88, opacity: 0, force3D: true })
-        }
-
-        // 3. Containers â€” matched the 0.2s delay here as well
+        if (leftContent) gsap.set(leftContent, { x: -88, opacity: 0, force3D: true })
+        if (rightContent) gsap.set(rightContent, { x: 88, opacity: 0, force3D: true })
       })
     }, container)
 
     updateStepHighlights({ reposition: true, immediate: true })
 
-    // ðŸ”¥ FORCE FIRST STEP TEXT
     const firstStep = stepElements[0]
-    if (firstStep) {
-      animateStepContent(firstStep)
-    }
+    if (firstStep) animateStepContent(firstStep)
+
     if (progressLine && stepElements[0]) {
       gsap.set(progressLine, {
         top: stepElements[0].offsetTop,
@@ -1465,7 +1507,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       ctx.revert()
       observer.disconnect()
     }
-  }, [disableScrollAnimations, isVisible])
+  }, [disableScrollAnimations, isVisible, steps.length])
 
   return (
     <section
@@ -1476,7 +1518,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     >
       <h2 className="text-[24px] md:text-[61px] text-center mb-32 tracking-wide font-serif font-display reveal-heading">
         <span className="reveal-wrapper">
-          <span className="reveal-text">HOW 11 WORKS</span>
+          <span className="reveal-text">{howItWorks.title || 'HOW IT WORKS'}</span>
         </span>
       </h2>
 
@@ -1484,8 +1526,10 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         ref={stepsWrapRef}
         className="relative w-full max-w-[1000px] mx-auto flex flex-col items-center px-4 md:px-0"
       >
+        {/* Vertical line */}
         <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-white opacity-20 -translate-x-1/2" />
 
+        {/* Active progress line */}
         <div
           className="progress-line progress-line-active absolute left-1/2 w-[2px] bg-white -translate-x-1/2 z-30"
           style={{
@@ -1494,105 +1538,112 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
             opacity: 0,
             willChange: 'top, height, opacity',
             backfaceVisibility: 'hidden',
-            boxShadow: 'none',
           }}
         />
 
-        {howSteps.map(step => {
-          const IconComponent = step.icon
-          return (
-            <div
-              key={step.id}
-              className="step-item relative w-full flex items-start justify-between mb-[50px] md:mb-10 last:mb-0"
-            >
-              {step.side === 'right' ? (
-                <>
-                  <div className="left-content w-1/2 pr-4 md:pr-20 flex justify-end items-start mt-8 step-reveal opacity-0 min-w-0">
-                    <span className="reveal-wrapper">
-                      <span className="reveal-text reveal-text-x-left">
-                        <IconComponent />
-                      </span>
+        {steps.map((step, index) => (
+          <div
+            key={step.id}
+            className="step-item relative w-full flex items-start justify-between mb-[50px] md:mb-10 last:mb-0"
+          >
+            {step.side === 'right' ? (
+              <>
+                {/* Icon LEFT */}
+                <div className="left-content w-1/2 pr-4 md:pr-20 flex justify-end items-start mt-8 step-reveal opacity-0 min-w-0">
+                  <span className="reveal-wrapper">
+                    <span className="reveal-text reveal-text-x-left">
+                      {renderIcon(step, index)}
                     </span>
-                  </div>
-                  <div className="right-content w-1/2 min-w-0 pl-4 md:pl-20 flex flex-col items-start self-stretch text-left relative z-20 opacity-0">
-                    <div
-                      className="reveal-wrapper reveal-wrapper-circle reveal-wrapper-circle-right step-reveal mb-2 md:mb-6"
-                      style={{ display: 'inline-flex' }}
-                    >
-                      <div className="reveal-text reveal-text-x-right reveal-circle-text">
-                        <div
-                          className="w-[40px] h-[40px] md:w-[60px] md:h-[60px] bg-[#CDB17E] rounded-[40px] md:rounded-full flex items-center justify-center text-[18px] md:text-[22px] font-serif"
-                          style={{
-                            boxShadow:
-                              '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
-                          }}
-                        >
-                          {step.id}
-                        </div>
+                  </span>
+                </div>
+
+                {/* Text RIGHT */}
+                <div className="right-content w-1/2 min-w-0 pl-4 md:pl-20 flex flex-col items-start self-stretch text-left relative z-20 opacity-0">
+                  <div
+                    className="reveal-wrapper reveal-wrapper-circle reveal-wrapper-circle-right step-reveal mb-2 md:mb-6"
+                    style={{ display: 'inline-flex' }}
+                  >
+                    <div className="reveal-text reveal-text-x-right reveal-circle-text">
+                      <div
+                        className="w-[40px] h-[40px] md:w-[60px] md:h-[60px] bg-[#CDB17E] rounded-[40px] md:rounded-full flex items-center justify-center text-[18px] md:text-[22px] font-serif"
+                        style={{
+                          boxShadow:
+                            '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
+                        }}
+                      >
+                        {step.id}
                       </div>
                     </div>
-                    <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
-                      <span className="reveal-wrapper">
-                        <span className="reveal-text">{step.title}</span>
-                      </span>
-                    </h3>
-                    <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
-                      <span className="reveal-wrapper">
-                        <span className="reveal-text">{step.desc}</span>
-                      </span>
-                    </p>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="left-content w-1/2 min-w-0 pr-4 md:pr-20 flex flex-col items-start md:items-end text-left md:text-right relative z-20 step-reveal opacity-0 self-stretch">
-                    <div
-                      className="reveal-wrapper reveal-wrapper-circle reveal-wrapper-circle-left step-reveal mb-2 md:mb-6"
-                      style={{ display: 'inline-flex' }}
-                    >
-                      <div className="reveal-text reveal-text-x-left reveal-circle-text">
-                        <div
-                          className="w-[40px] h-[40px] md:w-[60px] md:h-[60px] bg-[#CDB17E] rounded-[40px] md:rounded-full flex items-center justify-center text-[18px] md:text-[22px] font-serif"
-                          style={{
-                            boxShadow:
-                              '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
-                          }}
-                        >
-                          {step.id}
-                        </div>
+
+                  <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                    <span className="reveal-wrapper">
+                      <span className="reveal-text">{step.title}</span>
+                    </span>
+                  </h3>
+
+                  <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                    <span className="reveal-wrapper">
+                      <span className="reveal-text">{step.desc}</span>
+                    </span>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Text LEFT */}
+                <div className="left-content w-1/2 min-w-0 pr-4 md:pr-20 flex flex-col items-start md:items-end text-left md:text-right relative z-20 step-reveal opacity-0 self-stretch">
+                  <div
+                    className="reveal-wrapper reveal-wrapper-circle reveal-wrapper-circle-left step-reveal mb-2 md:mb-6"
+                    style={{ display: 'inline-flex' }}
+                  >
+                    <div className="reveal-text reveal-text-x-left reveal-circle-text">
+                      <div
+                        className="w-[40px] h-[40px] md:w-[60px] md:h-[60px] bg-[#CDB17E] rounded-[40px] md:rounded-full flex items-center justify-center text-[18px] md:text-[22px] font-serif"
+                        style={{
+                          boxShadow:
+                            '-25px 18px 12px rgba(0,0,0,0.03), -14px 10px 10px rgba(0,0,0,0.1), -6px 4px 8px rgba(0,0,0,0.16), -2px 1px 4px rgba(0,0,0,0.19)',
+                        }}
+                      >
+                        {step.id}
                       </div>
                     </div>
-                    <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
-                      <span className="reveal-wrapper">
-                        <span className="reveal-text">{step.title}</span>
-                      </span>
-                    </h3>
-                    <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
-                      <span className="reveal-wrapper">
-                        <span className="reveal-text">{step.desc}</span>
-                      </span>
-                    </p>
                   </div>
-                  <div className="right-content w-1/2 min-w-0 pl-4 md:pl-20 flex justify-start items-start mt-8 step-reveal opacity-0">
+
+                  <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
                     <span className="reveal-wrapper">
-                      <span className="reveal-text reveal-text-x-right">
-                        <IconComponent />
-                      </span>
+                      <span className="reveal-text">{step.title}</span>
                     </span>
-                  </div>
-                </>
-              )}
-            </div>
-          )
-        })}
+                  </h3>
+
+                  <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                    <span className="reveal-wrapper">
+                      <span className="reveal-text">{step.desc}</span>
+                    </span>
+                  </p>
+                </div>
+
+                {/* Icon RIGHT */}
+                <div className="right-content w-1/2 min-w-0 pl-4 md:pl-20 flex justify-start items-start mt-8 step-reveal opacity-0">
+                  <span className="reveal-wrapper">
+                    <span className="reveal-text reveal-text-x-right">
+                      {renderIcon(step, index)}
+                    </span>
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
       </div>
     </section>
   )
 }
 
 const CTASection = () => {
-  const { data: cms = {} } = useLandingPage()
-  const s = cms.consultation_cta ?? {}
+  // ✅ Now using useHowItWorksLandingPage instead of useLandingPage
+  const { data: howItWorks = { cta: {} } } = useHowItWorksLandingPage()
+  const s = howItWorks.cta ?? {}
 
   return (
     <section data-nav-theme="dark" className="w-full flex justify-center bg-[#591902] font-sans">
@@ -1603,7 +1654,7 @@ const CTASection = () => {
         >
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              {s.heading ?? 'Confused, Excited or somewhere in between?'}
+              {s.heading || 'Confused, Excited or somewhere in between?'}
             </span>
           </span>
         </h2>
@@ -1611,7 +1662,7 @@ const CTASection = () => {
         <p className="text-[#FFFFFF] opacity-50 text-[12px] md:text-[16px] font-normal leading-[1.5] text-center max-w-[723px] mt-[32px] reveal-on-scroll">
           <span className="reveal-wrapper">
             <span className="reveal-text">
-              {s.body ??
+              {s.body ||
                 "Drop your details, and we'll get in touch. You're just one call away from turning the confusion into a clear, sorted plan."}
             </span>
           </span>
@@ -1624,7 +1675,7 @@ const CTASection = () => {
               className="group flex flex-row justify-center items-center gap-[12.2px] bg-[#CDB17E] rounded-[42.6878px] w-[180.98px] min-h-[36px] h-[36px] pl-[18.2948px] pr-[3.04913px] py-0 md:rounded-[56px] md:w-[243px] md:h-[44px] md:min-h-0 md:pl-[24px] md:pr-[4px] md:py-[4px] hover:bg-[#bfa06b] transition-colors"
             >
               <span className="text-[#FAFAFA] text-[12px] md:text-[16px] font-medium leading-[150%] tracking-wide w-[120px] h-[18px] md:w-auto md:h-auto whitespace-nowrap">
-                {s.cta_label ?? 'Book a Consultation'}
+                Book a Consultation
               </span>
 
               <div className="w-[36px] h-[36px] bg-[#FAFAFA] rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">

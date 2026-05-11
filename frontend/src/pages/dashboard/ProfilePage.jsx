@@ -1,14 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   DashboardErrorState,
   DashboardLoadingState,
   DashboardPageIntro,
   SectionCard,
 } from '../../components/dashboard/DashboardUI'
-import {
-  useDashboardSession,
-  useDashboardUpdateProfile,
-} from '../../hooks/useDashboardData'
+import { useDashboardSession, useDashboardUpdateProfile } from '../../hooks/useDashboardData'
 import { getInitials } from '../../components/dashboard/dashboardUtils'
 
 function buildFullName(session) {
@@ -57,29 +54,16 @@ function ProfileValue({ value }) {
 }
 
 export default function ProfilePage() {
-  const {
-    data: session,
-    isLoading: sessionLoading,
-    error: sessionError,
-  } = useDashboardSession()
+  const { data: session, isLoading: sessionLoading, error: sessionError } = useDashboardSession()
   const updateProfileMutation = useDashboardUpdateProfile()
   const [isEditing, setIsEditing] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
-  const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    date_of_birth: '',
-  })
-
-  useEffect(() => {
-    if (!session) return
-    setForm(buildInitialForm(session))
-  }, [session])
+  const initialForm = useMemo(() => buildInitialForm(session), [session])
+  const [form, setForm] = useState(initialForm)
 
   const fullName = useMemo(() => buildFullName(session), [session])
   const photoUrl = session?.profile?.photoUrl || null
+  const displayForm = isEditing ? form : initialForm
 
   if (sessionLoading) {
     return <DashboardLoadingState title="Loading your profile..." />
@@ -95,7 +79,7 @@ export default function ProfilePage() {
   }
 
   const handleCancel = () => {
-    setForm(buildInitialForm(session))
+    setForm(initialForm)
     setIsEditing(false)
     setSaveMessage('')
   }
@@ -104,7 +88,6 @@ export default function ProfilePage() {
     event.preventDefault()
     setSaveMessage('')
 
-    const initialForm = buildInitialForm(session)
     const payload = {}
 
     if (form.first_name.trim() !== initialForm.first_name) {
@@ -127,61 +110,28 @@ export default function ProfilePage() {
 
     await updateProfileMutation.mutateAsync(payload)
 
+    setForm(initialForm)
     setIsEditing(false)
     setSaveMessage('Profile updated successfully.')
   }
 
   return (
-    <div className="space-y-6">
+    <div className="">
       <DashboardPageIntro
         title="Profile Snapshot"
         subtitle="Review the personal details connected to your Elewen dashboard account."
       />
 
-      <SectionCard
-        action={
-          <div className="flex items-center gap-3">
-            {saveMessage ? (
-              <span className="text-xs font-medium text-[#12803D]">{saveMessage}</span>
-            ) : null}
-            {isEditing ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="rounded-full border border-[#D6CDC3] px-4 py-2 text-sm text-[#2E2E2E] transition hover:bg-[#ECE7E1]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  form="profile-form"
-                  disabled={updateProfileMutation.isPending}
-                  className="rounded-full bg-[#C6A15B] px-4 py-2 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setSaveMessage('')
-                  setIsEditing(true)
-                }}
-                className="rounded-full bg-[#C6A15B] px-4 py-2 text-sm text-white transition hover:opacity-90"
-              >
-                Edit basic info
-              </button>
-            )}
-          </div>
-        }
-      >
+      <SectionCard>
         <form id="profile-form" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
               {photoUrl ? (
-                <img src={photoUrl} alt={fullName} className="h-20 w-20 rounded-full object-cover" />
+                <img
+                  src={photoUrl}
+                  alt={fullName}
+                  className="h-20 w-20 rounded-full object-cover"
+                />
               ) : (
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#E5E7EB] text-xl font-medium text-[#4B5563]">
                   {getInitials(fullName) || 'CU'}
@@ -195,6 +145,41 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              {saveMessage ? (
+                <span className="text-xs font-medium text-[#12803D]">{saveMessage}</span>
+              ) : null}
+              {isEditing ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="rounded-full border border-[#D6CDC3] px-4 py-2 text-sm text-[#2E2E2E] transition hover:bg-[#ECE7E1]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    form="profile-form"
+                    disabled={updateProfileMutation.isPending}
+                    className="rounded-full bg-[#C6A15B] px-4 py-2 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSaveMessage('')
+                    setIsEditing(true)
+                  }}
+                  className="rounded-full bg-[#C6A15B] px-4 py-2 text-sm text-white transition hover:opacity-90"
+                >
+                  Edit basic info
+                </button>
+              )}
+            </div>
           </div>
 
           {updateProfileMutation.error ? (
@@ -206,29 +191,35 @@ export default function ProfilePage() {
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <ProfileField label="First Name">
               {isEditing ? (
-                <ProfileInput value={form.first_name} onChange={handleFieldChange('first_name')} />
+                <ProfileInput
+                  value={displayForm.first_name}
+                  onChange={handleFieldChange('first_name')}
+                />
               ) : (
-                <ProfileValue value={form.first_name} />
+                <ProfileValue value={displayForm.first_name} />
               )}
             </ProfileField>
 
             <ProfileField label="Last Name">
               {isEditing ? (
-                <ProfileInput value={form.last_name} onChange={handleFieldChange('last_name')} />
+                <ProfileInput
+                  value={displayForm.last_name}
+                  onChange={handleFieldChange('last_name')}
+                />
               ) : (
-                <ProfileValue value={form.last_name} />
+                <ProfileValue value={displayForm.last_name} />
               )}
             </ProfileField>
 
             <ProfileField label="Email">
-              <ProfileValue value={form.email} />
+              <ProfileValue value={displayForm.email} />
             </ProfileField>
 
             <ProfileField label="Phone Number">
               {isEditing ? (
-                <ProfileInput value={form.phone} onChange={handleFieldChange('phone')} />
+                <ProfileInput value={displayForm.phone} onChange={handleFieldChange('phone')} />
               ) : (
-                <ProfileValue value={form.phone} />
+                <ProfileValue value={displayForm.phone} />
               )}
             </ProfileField>
 
@@ -236,14 +227,13 @@ export default function ProfilePage() {
               {isEditing ? (
                 <ProfileInput
                   type="date"
-                  value={form.date_of_birth}
+                  value={displayForm.date_of_birth}
                   onChange={handleFieldChange('date_of_birth')}
                 />
               ) : (
-                <ProfileValue value={form.date_of_birth} />
+                <ProfileValue value={displayForm.date_of_birth} />
               )}
             </ProfileField>
-
           </div>
         </form>
       </SectionCard>

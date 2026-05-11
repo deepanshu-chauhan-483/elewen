@@ -1,9 +1,15 @@
 import prisma from '../lib/prisma.js'
-import { strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
+import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
 import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
 
 const DEFAULT_ADVANCE_PCT = 30
+
+const createBadRequestError = message => {
+  const error = new Error(message)
+  error.status = 400
+  return error
+}
 
 // ─── Valid status transitions (customer-facing + system) ─────────────────────
 const ALLOWED_TRANSITIONS = {
@@ -29,11 +35,27 @@ const getAdvancePct = async () => {
 }
 
 // ─── Helper: re-validate coupon before booking ────────────────────────────────
-const validateCoupon = async (couponId, subtotal) => {
+const validateCoupon = async (couponId, subtotal, userId) => {
   try {
-    const { data: coupons } = await strapiServerGet(`/api/coupons?filters[id][$eq]=${couponId}`)
+    const { data: coupons } = await strapiGet('/coupons', {
+      'filters[id][$eq]': couponId,
+    })
     const coupon = coupons?.[0]
     if (!coupon?.is_active) return { valid: false, discount: 0, couponId: null }
+
+    if (userId) {
+      const existingUsage = await prisma.couponUsage.findFirst({
+        where: {
+          couponId: String(coupon.id),
+          userId: String(userId),
+        },
+        select: { id: true },
+      })
+
+      if (existingUsage) {
+        return { valid: false, discount: 0, couponId: null }
+      }
+    }
 
     const now = new Date()
     if (coupon.valid_from && new Date(coupon.valid_from) > now)
@@ -99,7 +121,7 @@ export const createBooking = async (req, res, next) => {
     let discountAmount = 0
     let validCouponId = null
     if (cart.couponId) {
-      const couponResult = await validateCoupon(cart.couponId, subtotal)
+      const couponResult = await validateCoupon(cart.couponId, subtotal, userId)
       if (couponResult.valid) {
         discountAmount = couponResult.discount
         validCouponId = couponResult.couponId
@@ -158,6 +180,18 @@ export const createBooking = async (req, res, next) => {
 
       // Record coupon usage if applicable
       if (validCouponId) {
+        const existingUsage = await tx.couponUsage.findFirst({
+          where: {
+            couponId: validCouponId,
+            userId,
+          },
+          select: { id: true },
+        })
+
+        if (existingUsage) {
+          throw createBadRequestError('You have already used this coupon')
+        }
+
         await tx.couponUsage.create({
           data: {
             couponId: validCouponId,
@@ -173,13 +207,24 @@ export const createBooking = async (req, res, next) => {
     // Increment coupon used_count in Strapi (outside transaction — non-critical)
     if (validCouponId) {
       try {
-        const { data: coupons } = await strapiServerGet(
-          `/api/coupons?filters[id][$eq]=${validCouponId}`
-        )
-        const coupon = coupons?.[0]
-        await strapiAdminPut(`/api/coupons/${coupon.documentId}`, {
-          data: { used_count: (coupon.used_count ?? 0) + 1 },
+        const { data: coupons } = await strapiGet('/coupons', {
+          'filters[id][$eq]': validCouponId,
         })
+        const coupon = coupons?.[0]
+        if (coupon?.documentId) {
+          const nextUsedCount = Number(coupon.used_count ?? 0) + 1
+          const maxUses =
+            coupon.max_uses === null || coupon.max_uses === undefined
+              ? null
+              : Number(coupon.max_uses)
+
+          await strapiAdminPut(`/api/coupons/${coupon.documentId}`, {
+            data: {
+              used_count: nextUsedCount,
+              ...(maxUses !== null && nextUsedCount >= maxUses ? { is_active: false } : {}),
+            },
+          })
+        }
       } catch {
         // Non-critical — coupon usage still recorded in coupon_usage table
       }
@@ -254,6 +299,9 @@ export const listBookings = async (req, res, next) => {
 
     res.json({ bookings: filteredBookings })
   } catch (err) {
+    if (err?.status === 400) {
+      return res.status(400).json({ error: err.message })
+    }
     next(err)
   }
 }

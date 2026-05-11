@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "addons",
+  "info": {
+    "singularName": "addon",
+    "pluralName": "addons",
+    "displayName": "Addon"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "price": {
+      "type": "decimal",
+      "required": true
+    },
+    "unit": {
+      "type": "string"
+    },
+    "max_quantity": {
+      "type": "integer",
+      "default": 1
+    },
+    "visibility": {
+      "type": "boolean",
+      "default": true
+    },
+    "pricing_rules": {
+      "type": "component",
+      "component": "package.package-pricing-rule",
+      "repeatable": true
+    },
+    "packages": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::package.package",
+      "mappedBy": "reusable_addons"
+    }
+  }
+}

@@ -304,3 +304,143 @@ export const INHOUSE_PLANNER_PAGE_FALLBACK = {
     body: "If you'd like me to plan your event end to end, leave your details and we'll take it from there.",
   },
 }
+
+export const HOW_IT_WORK_PAGE_FALLBACK = {
+  hero: {
+    eyebrow: 'PLANNING MADE SIMPLE',
+    heading: 'How It Works',
+    description_line_1: 'From browsing to celebration —',
+    description_line_2: 'a few simple steps is all it takes.',
+    cta_label: 'Plan with Elewen',
+    cta_url: '/in-house-planner',
+    bottom_note: '- no chaos, no coordination stress',
+    hero_tags: [
+      'BIRTHDAYS',
+      'ANNIVERSARIES',
+      'HOUSE PARTIES',
+      'BABY SHOWERS',
+      'CORPORATE',
+      'RELIGIOUS',
+    ],
+  },
+  idea_to_celebration: {
+    heading: 'From Idea to Celebration.',
+    description:
+      'Choose your event, explore curated options, and move through each step with clarity — from planning to final setup.',
+    steps: [
+      {
+        number: '1',
+        title: 'Choose Your Event & Services',
+        description:
+          'Browse by event type — birthdays, anniversaries, house parties, and more. Select from curated decor, catering, and add-on services.',
+      },
+      {
+        number: '2',
+        title: 'Pick a Package & Customize',
+        description:
+          'Choose a package that suits your scale and vision. Add, swap, or adjust elements to make it truly yours — no package is one-size-fits-all.',
+      },
+      {
+        number: '3',
+        title: 'Review & Pay Advance',
+        description:
+          'Review your full order summary — pricing, timelines, inclusions. Confirm with a small advance payment to lock in your date and package.',
+      },
+      {
+        number: '4',
+        title: 'Elewen Reviews & Confirms',
+        description:
+          'Our team reviews your booking, coordinates with vendors, and sends you a confirmation within 24 hours. You’re kept in the loop at every step.',
+      },
+      {
+        number: '5',
+        title: 'Event Execution',
+        description:
+          'Sit back and celebrate. Our in-house planners and vetted vendors execute everything on the day — from setup to teardown.',
+      },
+    ],
+  },
+  dashboard: {
+    heading_line_1: 'Your Dashboard.',
+    heading_line_2: 'Everything in One Place.',
+    description:
+      'Once your booking is confirmed, you get access to your personal event dashboard — where everything lives, from order details to vendor updates.',
+    highlights: [
+      'Zero missed updates',
+      'Vendor coordination handled',
+      'Dedicated event planner assigned',
+      'Full timeline visibility',
+    ],
+    dashboard_title: 'My Event Dashboard',
+    features: [
+      {
+        title: 'Order Tracking',
+        description: 'Real-time status of every vendor and service in your package.',
+      },
+      {
+        title: 'Live Updates',
+        description: 'Instant notifications on confirmations, changes, and reminders.',
+      },
+      {
+        title: 'Direct Communication',
+        description: 'Message our team or your planner directly from the dashboard.',
+      },
+      {
+        title: '24/7 Support',
+        description: 'Need help? Our team is reachable before, during, and after your event.',
+      },
+    ],
+  },
+  banner: {
+    text: 'Plan with clarity. Celebrate with ease.',
+  },
+  faq: {
+    heading_line_1: 'Everything You',
+    heading_line_2: 'Need to Know.',
+    description: 'Still unsure? Here are the answers to the most common questions.',
+    faqs: [
+      {
+        question: 'How is pricing determined?',
+        answer:
+          'Pricing depends on your event type, selected services, and chosen package. Every package displays a clear starting price, and any add-ons are shown before you confirm. No hidden charges.',
+      },
+      {
+        question: 'Can I customise a package after booking?',
+        answer:
+          'Yes. Depending on timelines and availability, our team can help you adjust services, decor elements, and package selections after your initial booking.',
+      },
+      {
+        question: 'How do I reach support during the event?',
+        answer:
+          'You can reach your assigned planner directly through your event dashboard, and our support team remains available for urgent coordination needs throughout the event.',
+      },
+      {
+        question: 'Are vendors pre-vetted by Elewen?',
+        answer:
+          'Yes. Elewen works with vetted vendor partners so quality, timing, and reliability are maintained across your celebration.',
+      },
+      {
+        question: 'What happens if a vendor cancels last-minute?',
+        answer:
+          'If a last-minute issue comes up, our team steps in immediately to coordinate an alternative from our vendor network and keep the event on track.',
+      },
+      {
+        question: 'What is the cancellation policy?',
+        answer:
+          'Cancellation terms depend on the booking stage and vendor commitments. Your planner will walk you through the applicable policy before confirmation.',
+      },
+    ],
+  },
+  final_cta: {
+    eyebrow: 'READY WHEN YOU ARE',
+    heading_line_1: 'Your Celebration Is',
+    heading_line_2: 'Just a Few Steps Away.',
+    description:
+      'No stress. No juggling. Just a beautiful, well-planned event — handled by people who care about getting it right.',
+    primary_cta_label: 'Start Booking',
+    primary_cta_url: '/login',
+    secondary_cta_label: 'Book a Consultation',
+    secondary_cta_url: '/book-consultation',
+    footer_note: 'Trusted by 500+ hosts across Jaipur, Delhi & Mumbai',
+  },
+}

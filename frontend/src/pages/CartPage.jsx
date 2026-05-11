@@ -6,13 +6,21 @@ import { useServiceAreas } from '../hooks/useServiceAreas'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
-const TEMP_BYPASS_PINCODE_VALIDATION = true
+const TEMP_BYPASS_PINCODE_VALIDATION = false
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
   return `Rs${amount.toLocaleString('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+  })}`
+}
+
+function formatCompactCurrency(value) {
+  const amount = Number(value ?? 0)
+  return `₹${amount.toLocaleString('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   })}`
 }
 
@@ -347,6 +355,15 @@ function getSelectedElements(item) {
   }))
 }
 
+function buildAddonDedupeKey(addon = {}) {
+  const normalizedTitle = String(addon?.name ?? addon?.title ?? '')
+    .trim()
+    .toLowerCase()
+  const normalizedPrice = String(Number(addon?.price ?? 0))
+
+  return `${normalizedTitle}::${normalizedPrice}`
+}
+
 // function getSuggestedAddons(cartItems) {
 //   const seen = new Set()
 
@@ -402,7 +419,7 @@ function getSuggestedAddonsWithPricing(cartItems) {
             title: addonTitle,
             subtitle: `${packageSubtitle} / ${packageTitle}`,
             price: formatCurrency(Number(addon?.price ?? 0)),
-            dedupeKey: `${String(packageData?.id ?? item?.packageId ?? '')}::${addonId.toLowerCase()}`,
+            dedupeKey: buildAddonDedupeKey(addon),
           }
         })
         .filter(addon => addon.title)
@@ -485,7 +502,7 @@ function CouponCard({
               Coupon Applied: {cart?.couponCode ?? couponCode ?? 'SAVE2000'}
             </p>
             <p className="text-sm text-gray-500">
-              {formatCurrency(cart.discountAmount)} has been deducted from your total
+              {formatCompactCurrency(cart.discountAmount)} has been deducted from your total
             </p>
           </div>
           <button
@@ -1390,9 +1407,9 @@ export default function CartPage() {
     setIsApplyingCoupon(true)
     setCouponMessage('')
     try {
-      const response = await applyCoupon(couponCode.trim())
+      await applyCoupon(couponCode.trim())
       setCouponCode('')
-      setCouponMessage(`Coupon applied: ${response?.coupon?.code ?? ''}`.trim())
+      setCouponMessage('')
     } catch (err) {
       setCouponMessage(parseApiError(err))
     } finally {
@@ -1533,7 +1550,9 @@ export default function CartPage() {
               addingAddonId={addingAddonId}
             />
 
-            {error ? <p className="text-sm text-[#8F2D1F]">{parseApiError({ message: error })}</p> : null}
+            {error ? (
+              <p className="text-sm text-[#8F2D1F]">{parseApiError({ message: error })}</p>
+            ) : null}
           </div>
 
           <div className="flex-1">

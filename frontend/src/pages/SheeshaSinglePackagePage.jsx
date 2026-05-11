@@ -3,6 +3,7 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
+import { usePackageReviews } from '../hooks/usePackageReviews'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
@@ -259,6 +260,11 @@ export default function SheeshaSinglePackagePage() {
         : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
     [packageDetails, packageId, packagesData]
   )
+  const { data: packageReviews = [] } = usePackageReviews({
+    id: pkg?.id,
+    documentId: pkg?.documentId,
+    title: pkg?.title,
+  })
 
   if (isPackageLoading) {
     return null
@@ -369,6 +375,7 @@ export default function SheeshaSinglePackagePage() {
           onSelectFlavor={handleSelectFlavor}
         />
       }
+      testimonials={packageReviews}
     />
   )
 }

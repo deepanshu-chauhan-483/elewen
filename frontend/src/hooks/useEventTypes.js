@@ -6,7 +6,7 @@ import {
   SERVICE_CARDS_FALLBACK,
 } from '../data/eventTypes'
 
-const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? '/cms'
 
 const CATEGORY_FALLBACK_OPTIONS = [
   {
@@ -132,7 +132,17 @@ const blocksToText = blocks => {
 const toAbsoluteStrapiUrl = url => {
   if (!url || typeof url !== 'string') return null
   if (url.startsWith('http://') || url.startsWith('https://')) return url
-  return `${STRAPI_BASE}${url.startsWith('/') ? '' : '/'}${url}`
+
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : 'http://localhost'
+  const normalizedBase =
+    STRAPI_BASE.startsWith('http://') || STRAPI_BASE.startsWith('https://')
+      ? STRAPI_BASE
+      : `${origin}${STRAPI_BASE.startsWith('/') ? '' : '/'}${STRAPI_BASE}`
+
+  return `${normalizedBase}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 const slugify = value =>
@@ -143,6 +153,16 @@ const slugify = value =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
+const getBudgetLevelSlug = level => {
+  const label = String(level?.label ?? level?.name ?? '').trim()
+
+  if (/^level\s+\d+$/i.test(label)) {
+    return slugify(label)
+  }
+
+  return String(level?.slug ?? '').trim() || slugify(label)
+}
+
 const badgeFromName = name => (name?.trim()?.charAt(0) ?? '').toUpperCase()
 
 const mapEventCategory = event => ({
@@ -152,6 +172,7 @@ const mapEventCategory = event => ({
   slug: event.slug?.trim() || slugify(event.name),
   description: event.tagline?.trim() || blocksToText(event.description),
   badge: badgeFromName(event.name),
+  icon: toAbsoluteStrapiUrl(event.icon?.url),
 })
 
 const mapEventCard = event => ({
@@ -224,7 +245,7 @@ const mapWizardOption = (item, index) => ({
 const mapLevelOption = (level, index) => ({
   id: level.id ?? index,
   label: level.label ?? `Level ${index + 1}`,
-  slug: level.slug ?? slugify(level.label ?? `level-${index + 1}`),
+  slug: getBudgetLevelSlug(level) || slugify(level.label ?? `level-${index + 1}`),
   description: level.description ?? 'Choose the package level that matches your event scale.',
   price: level.starting_price
     ? `Starting ${Number(level.starting_price).toLocaleString('en-IN')}`
@@ -285,6 +306,7 @@ export function useEventCategoryOptions() {
         const { data } = await strapiGet('/events', {
           'filters[parent_event][id][$null]': 'true',
           'filters[is_active][$eq]': 'true',
+          'populate[0]': 'icon',
           sort: 'name:asc',
         })
         return data.map(mapEventCategory)

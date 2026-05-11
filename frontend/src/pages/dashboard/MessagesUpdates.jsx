@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
   DashboardPageIntro,
-
-  
   SectionCard,
 } from '../../components/dashboard/DashboardUI'
 import {
@@ -15,7 +13,6 @@ import {
   useDashboardMarkAllNotificationsRead,
   useDashboardMarkNotificationRead,
   useDashboardNotifications,
-  useDashboardSendMessage,
   // useDashboardSession,
   useDashboardThread,
 } from '../../hooks/useDashboardData'
@@ -108,7 +105,7 @@ export default function MessagesUpdates() {
   // }
 
   return (
-    <div className="space-y-6">
+    <div className="">
       <DashboardPageIntro
         title="Messages & Updates"
         subtitle="Stay in touch with your event team and keep every booking conversation in one place."
@@ -116,25 +113,20 @@ export default function MessagesUpdates() {
       />
 
       <>
-        <SectionCard
-          title="Notifications"
-          subtitle="Every planner update and system notification is collected here."
-          action={
-            <button
-              type="button"
-              onClick={() => clearAllNotificationsMutation.mutate()}
-              disabled={!notifications.length || clearAllNotificationsMutation.isPending}
-              className="text-sm font-medium text-[#8F2D1F] transition disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {clearAllNotificationsMutation.isPending ? 'Clearing...' : 'Clear all'}
-            </button>
-          }
-        >
+        <SectionCard>
           {notificationsLoading ? (
             <DashboardLoadingState title="Loading notifications..." />
           ) : notifications.length ? (
             <div className="space-y-3">
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => clearAllNotificationsMutation.mutate()}
+                  disabled={!notifications.length || clearAllNotificationsMutation.isPending}
+                  className="text-sm font-medium text-[#8F2D1F] transition disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {clearAllNotificationsMutation.isPending ? 'Clearing...' : 'Clear all'}
+                </button>
                 <button
                   type="button"
                   onClick={() => markAllReadMutation.mutate()}
@@ -192,8 +184,6 @@ export default function MessagesUpdates() {
             />
           )}
         </SectionCard>
-
-        
       </>
     </div>
   )

@@ -85,6 +85,12 @@
       "target": "api::booking-review.booking-review",
       "mappedBy": "package"
     },
+    "reusable_addons": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::addon.addon",
+      "inversedBy": "packages"
+    },
     "packages": {
       "type": "dynamiczone",
       "components": [

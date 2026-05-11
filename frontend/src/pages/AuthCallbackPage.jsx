@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { authGoogleSession, setStoredJwt } from '../lib/api'
 
 function parseAuthErrorDetails(error) {
@@ -33,13 +33,16 @@ function parseAuthErrorDetails(error) {
 export default function AuthCallbackPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const called = useRef(false)
 
   useEffect(() => {
     if (called.current) return
     called.current = true
 
-    const access_token = searchParams.get('access_token')
+    const hashValue = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash
+    const hashParams = new URLSearchParams(hashValue)
+    const access_token = searchParams.get('access_token') || hashParams.get('access_token')
 
     if (!access_token) {
       navigate('/?auth=error', { replace: true })
@@ -65,7 +68,7 @@ export default function AuthCallbackPage() {
 
         navigate(`${origin}?authError=google_failed`, { replace: true })
       })
-  }, [searchParams, navigate])
+  }, [searchParams, location.hash, navigate])
 
   return (
     <div style={styles.page}>

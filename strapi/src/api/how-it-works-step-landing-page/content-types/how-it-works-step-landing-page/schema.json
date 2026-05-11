@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "how_it_works_step_landing_pages",
+  "info": {
+    "singularName": "how-it-works-step-landing-page",
+    "pluralName": "how-it-works-step-landing-pages",
+    "displayName": "How_It_Works_Step_Landing_page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Title": {
+      "type": "string"
+    },
+    "Sections": {
+      "type": "component",
+      "component": "shared.sections",
+      "repeatable": true
+    },
+    "bottom_heading": {
+      "type": "string"
+    },
+    "Bottom_Content": {
+      "type": "text"
+    }
+  }
+}

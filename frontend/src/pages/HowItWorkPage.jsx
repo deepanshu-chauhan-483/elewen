@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ScallopBulbCurtain from '../components/common/ScallopBulbCurtain'
+import { useHowItWorkPage } from '../hooks/useCmsPages'
 
 const HERO_TAGS = [
   'BIRTHDAYS',
@@ -223,7 +224,9 @@ const RevealLine = ({
   </span>
 )
 
-const IdeaToCelebrationSection = () => {
+const IdeaToCelebrationSection = ({ section }) => {
+  const steps = Array.isArray(section?.steps) ? section.steps : IDEA_TO_CELEBRATION_STEPS
+
   return (
     <section className="relative flex w-full justify-center overflow-hidden bg-[#E7E0DA] px-6 py-16 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-60">
@@ -239,19 +242,16 @@ const IdeaToCelebrationSection = () => {
             className="text-[40px] leading-[1] text-[#7A341C] min-[540px]:text-[52px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            <RevealLine>From Idea to Celebration.</RevealLine>
+            <RevealLine>{section?.heading ?? 'From Idea to Celebration.'}</RevealLine>
           </h2>
           <p className="mx-auto mt-5 max-w-[760px] text-[14px] leading-[1.6] text-[#9A7A67] min-[540px]:text-[15px] lg:text-[16px]">
-            <RevealLine>
-              Choose your event, explore curated options, and move through each step with clarity —
-              from planning to final setup.
-            </RevealLine>
+            <RevealLine>{section?.description}</RevealLine>
           </p>
         </div>
 
         <div className="relative mt-14 flex w-full max-w-[980px] flex-col gap-8 md:gap-12">
           <div className="flex flex-col gap-8 md:hidden">
-            {IDEA_TO_CELEBRATION_STEPS.map((step, index) => (
+            {steps.map((step, index) => (
               <div
                 key={step.number}
                 className="relative flex pl-8 card-reveal"
@@ -311,7 +311,8 @@ const IdeaToCelebrationSection = () => {
               ))}
 
               {IDEA_TO_CELEBRATION_CARDS.map(card => {
-                const step = IDEA_TO_CELEBRATION_STEPS[card.stepIndex]
+                const step = steps[card.stepIndex]
+                if (!step) return null
                 return (
                   <div
                     key={step.number}
@@ -337,7 +338,17 @@ const IdeaToCelebrationSection = () => {
   )
 }
 
-const EventDashboardSection = () => {
+const EventDashboardSection = ({ section }) => {
+  const highlights = Array.isArray(section?.highlights)
+    ? section.highlights
+    : [
+        'Zero missed updates',
+        'Vendor coordination handled',
+        'Dedicated event planner assigned',
+        'Full timeline visibility',
+      ]
+  const features = Array.isArray(section?.features) ? section.features : DASHBOARD_FEATURES
+
   return (
     <section className="relative flex w-full justify-center overflow-hidden bg-[#FAFAFA] px-6 py-16 pt-0 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
       <ScallopBulbCurtain
@@ -355,24 +366,18 @@ const EventDashboardSection = () => {
             className="max-w-[420px] text-[48px] leading-[0.95] text-[#6C2205] min-[540px]:text-[61px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            <RevealLine>Your Dashboard.</RevealLine>
-            <RevealLine delay="0.06s">Everything in One Place.</RevealLine>
+            <RevealLine>{section?.heading_line_1 ?? 'Your Dashboard.'}</RevealLine>
+            <RevealLine delay="0.06s">
+              {section?.heading_line_2 ?? 'Everything in One Place.'}
+            </RevealLine>
           </h2>
 
           <p className="mt-8 max-w-[396px] text-[12px] leading-[1.5] text-[#B29078] min-[540px]:text-[16px]">
-            <RevealLine delay="0.12s">
-              Once your booking is confirmed, you get access to your personal event dashboard —
-              where everything lives, from order details to vendor updates.
-            </RevealLine>
+            <RevealLine delay="0.12s">{section?.description}</RevealLine>
           </p>
 
           <div className="mt-10 flex flex-col gap-4">
-            {[
-              'Zero missed updates',
-              'Vendor coordination handled',
-              'Dedicated event planner assigned',
-              'Full timeline visibility',
-            ].map((item, index) => (
+            {highlights.map((item, index) => (
               <div
                 key={item}
                 className="anim-element slide-from-left flex items-center gap-3"
@@ -404,17 +409,17 @@ const EventDashboardSection = () => {
           >
             <div className="flex min-h-[72px] items-center rounded-full bg-[#3E4E22] px-7 py-5">
               <span className="text-[12px] font-medium leading-[1.3] text-[#FAFAFA] min-[540px]:text-[16px]">
-                My Event Dashboard
+                {section?.dashboard_title ?? 'My Event Dashboard'}
               </span>
             </div>
 
             <div className="flex w-full flex-col gap-3 p-4 min-[540px]:p-5 lg:grid lg:grid-cols-2 lg:gap-4 lg:p-7">
-              {DASHBOARD_FEATURES.map(feature => (
+              {features.map((feature, index) => (
                 <div
                   key={feature.title}
                   className="flex min-h-[170px] flex-col rounded-[14px] bg-[#F4EEE6] p-5 min-[540px]:min-h-[182px] min-[540px]:p-6"
                 >
-                  <div className="h-9 w-9 text-[#7A341C]">{feature.icon}</div>
+                  <div className="h-9 w-9 text-[#7A341C]">{DASHBOARD_FEATURES[index]?.icon}</div>
                   <h3 className="mt-5 text-[12px] min-[540px]:text-[16px] font-medium leading-[1.15] text-[#7A341C]">
                     {feature.title}
                   </h3>
@@ -431,8 +436,9 @@ const EventDashboardSection = () => {
   )
 }
 
-const NeedToKnowSection = () => {
+const NeedToKnowSection = ({ section }) => {
   const [openIndex, setOpenIndex] = useState(0)
+  const faqs = Array.isArray(section?.faqs) ? section.faqs : HOW_IT_WORK_FAQS
 
   return (
     <section className="flex w-full justify-center bg-[#FAFAFA] px-6 py-16 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
@@ -442,14 +448,12 @@ const NeedToKnowSection = () => {
             className="text-[30px] leading-[1.08] text-[#6C2205] min-[540px]:text-[41px] lg:text-[61px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            <RevealLine>Everything You</RevealLine>
-            <RevealLine delay="0.06s">Need to Know.</RevealLine>
+            <RevealLine>{section?.heading_line_1 ?? 'Everything You'}</RevealLine>
+            <RevealLine delay="0.06s">{section?.heading_line_2 ?? 'Need to Know.'}</RevealLine>
           </h2>
 
           <p className="mt-8 max-w-[280px] text-[18px] leading-[1.45] text-[#A78974]">
-            <RevealLine delay="0.12s">
-              Still unsure? Here are the answers to the most common questions.
-            </RevealLine>
+            <RevealLine delay="0.12s">{section?.description}</RevealLine>
           </p>
         </div>
 
@@ -458,7 +462,7 @@ const NeedToKnowSection = () => {
             className="card-reveal flex w-full flex-col rounded-[24px] bg-white px-5 shadow-[0_24px_70px_rgba(117,72,33,0.12)] min-[540px]:px-6 lg:px-7"
             style={{ '--delay': '0.12s' }}
           >
-            {HOW_IT_WORK_FAQS.map((faq, index) => {
+            {faqs.map((faq, index) => {
               const isOpen = openIndex === index
 
               return (
@@ -526,14 +530,14 @@ const NeedToKnowSection = () => {
   )
 }
 
-const FinalCtaSection = () => {
+const FinalCtaSection = ({ section }) => {
   return (
     <section className="relative flex w-full justify-center overflow-hidden bg-[#591902] px-6 pt-14 pb-4 min-[540px]:px-10 min-[540px]:pt-16 min-[540px]:pb-6 lg:px-20 xl:px-[100px]">
       <div className="relative flex w-full max-w-[980px] flex-col items-center text-center reveal-on-scroll">
         <div className="flex flex-col items-center">
           <div className="anim-element slide-from-bottom h-px w-20 bg-[#D4BA8E]" />
           <span className="mt-4 text-[12px] uppercase leading-[1.3] tracking-[0.04em] text-[#D4BA8E]">
-            <RevealLine delay="0.05s">READY WHEN YOU ARE</RevealLine>
+            <RevealLine delay="0.05s">{section?.eyebrow ?? 'READY WHEN YOU ARE'}</RevealLine>
           </span>
         </div>
 
@@ -541,15 +545,14 @@ const FinalCtaSection = () => {
           className="mt-5 max-w-[980px] text-[30px] leading-[0.96] text-white min-[540px]:text-[41px] lg:text-[61px]"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          <RevealLine delay="0.08s">Your Celebration Is</RevealLine>
-          <RevealLine delay="0.14s">Just a Few Steps Away.</RevealLine>
+          <RevealLine delay="0.08s">{section?.heading_line_1 ?? 'Your Celebration Is'}</RevealLine>
+          <RevealLine delay="0.14s">
+            {section?.heading_line_2 ?? 'Just a Few Steps Away.'}
+          </RevealLine>
         </h2>
 
         <p className="mt-6 max-w-[760px] text-[12px] leading-[1.55] text-[#D6B8A7] min-[540px]:text-[16px]">
-          <RevealLine delay="0.18s">
-            No stress. No juggling. Just a beautiful, well-planned event — handled by people who
-            care about getting it right.
-          </RevealLine>
+          <RevealLine delay="0.18s">{section?.description}</RevealLine>
         </p>
 
         <div
@@ -557,10 +560,12 @@ const FinalCtaSection = () => {
           style={{ '--delay': '0.24s' }}
         >
           <Link
-            to="/login"
+            to={section?.primary_cta_url ?? '/login'}
             className="group flex min-h-[56px] w-full max-w-[280px] items-center justify-between rounded-full bg-[#D4BA8E] pl-8 pr-2 text-white transition-colors hover:bg-[#c9ad7f]"
           >
-            <span className="text-[16px] font-medium leading-[1.3]">Start Booking</span>
+            <span className="text-[16px] font-medium leading-[1.3]">
+              {section?.primary_cta_label ?? 'Start Booking'}
+            </span>
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white">
               <svg
                 className="h-[20px] w-[20px] text-[#CDB17E] transition-transform duration-300 group-hover:rotate-45"
@@ -579,10 +584,10 @@ const FinalCtaSection = () => {
           </Link>
 
           <Link
-            to="/book-consultation"
+            to={section?.secondary_cta_url ?? '/book-consultation'}
             className="flex min-h-[56px] w-full max-w-[280px] items-center justify-center rounded-full bg-white px-8 text-[16px] font-medium leading-[1.3] text-[#C89F5D] transition-colors "
           >
-            Book a Consultation
+            {section?.secondary_cta_label ?? 'Book a Consultation'}
           </Link>
         </div>
 
@@ -591,7 +596,9 @@ const FinalCtaSection = () => {
           style={{ '--delay': '0.3s' }}
         >
           <span className="text-[#C89F5D]">✦</span>
-          <span>Trusted by 500+ hosts across Jaipur, Delhi &amp; Mumbai</span>
+          <span>
+            {section?.footer_note ?? 'Trusted by 500+ hosts across Jaipur, Delhi & Mumbai'}
+          </span>
           <span className="text-[#C89F5D]">✦</span>
         </div>
       </div>
@@ -622,7 +629,9 @@ const StepCard = ({ step, align = 'left' }) => {
   )
 }
 
-const HowItWorkHeroSection = () => {
+const HowItWorkHeroSection = ({ section }) => {
+  const heroTags = Array.isArray(section?.hero_tags) ? section.hero_tags : HERO_TAGS
+
   return (
     <section
       data-nav-surface="transparent"
@@ -638,7 +647,7 @@ const HowItWorkHeroSection = () => {
                 <div className="py-4">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text w-full max-w-[542px] text-[12px] uppercase leading-[1.5] tracking-[0] text-[#CDB17E]">
-                      PLANNING MADE SIMPLE
+                      {section?.eyebrow ?? 'PLANNING MADE SIMPLE'}
                     </span>
                   </span>
 
@@ -648,7 +657,7 @@ const HowItWorkHeroSection = () => {
                   >
                     <span className="reveal-wrapper block">
                       <span className="reveal-text text-[48px] leading-[1] min-[540px]:text-[64px] lg:text-[80px]">
-                        How It Works
+                        {section?.heading ?? 'How It Works'}
                       </span>
                     </span>
                   </h1>
@@ -656,12 +665,12 @@ const HowItWorkHeroSection = () => {
                   <p className="mt-5 w-full max-w-[253px] text-[16px] leading-[1.5] text-white/60 min-[540px]:mt-6">
                     <span className="reveal-wrapper block">
                       <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
-                        From browsing to celebration &mdash;
+                        {section?.description_line_1 ?? 'From browsing to celebration —'}
                       </span>
                     </span>
                     <span className="reveal-wrapper block">
                       <span className="reveal-text" style={{ animationDelay: '0.14s' }}>
-                        a few simple steps is all it takes.
+                        {section?.description_line_2 ?? 'a few simple steps is all it takes.'}
                       </span>
                     </span>
                   </p>
@@ -669,11 +678,11 @@ const HowItWorkHeroSection = () => {
                   <span className="mt-8 inline-block reveal-wrapper reveal-wrapper--overflow-visible min-[540px]:mt-10">
                     <span className="reveal-text" style={{ animationDelay: '0.2s' }}>
                       <Link
-                        to="/in-house-planner"
+                        to={section?.cta_url ?? '/in-house-planner'}
                         className="group flex w-fit items-center rounded-full bg-[#FFFFFF] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#FFFFFF]"
                       >
                         <span className="mr-5 text-[15px] font-medium text-[#CDB17E]">
-                          Plan with Elewen
+                          {section?.cta_label ?? 'Plan with Elewen'}
                         </span>
                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#CDB17E]  shadow-sm">
                           <svg
@@ -708,7 +717,7 @@ const HowItWorkHeroSection = () => {
                     className="reveal-text reveal-text-x-right inline-block"
                     style={{ animationDelay: '0.12s' }}
                   >
-                    - no chaos, no coordination stress
+                    {section?.bottom_note ?? '- no chaos, no coordination stress'}
                   </span>
                 </span>
               </p>
@@ -718,7 +727,7 @@ const HowItWorkHeroSection = () => {
 
         <div className="anim-element slide-from-bottom is-visible relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-6 py-3 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-3 md:px-20 xl:px-[100px]">
           <div className="flex flex-wrap items-center justify-start text-[#CDB17E] w-full gap-2 min-[540px]:gap-2 md:gap-2 lg:gap-8 xl:gap-12">
-            {HERO_TAGS.map((tag, index) => (
+            {heroTags.map((tag, index) => (
               <div
                 key={tag}
                 className="flex items-center h-8 whitespace-nowrap gap-1 md:gap-2 lg:gap-6"
@@ -751,6 +760,7 @@ const HowItWorkHeroSection = () => {
 
 const HowItWorkPage = () => {
   const pageRef = useRef(null)
+  const { data: cms = {} } = useHowItWorkPage()
 
   useEffect(() => {
     const page = pageRef.current
@@ -818,11 +828,11 @@ const HowItWorkPage = () => {
 
   return (
     <main ref={pageRef} className="how-it-work-page w-full bg-[#591902]">
-      <HowItWorkHeroSection />
+      <HowItWorkHeroSection section={cms.hero} />
 
-      <IdeaToCelebrationSection />
+      <IdeaToCelebrationSection section={cms.idea_to_celebration} />
 
-      <EventDashboardSection />
+      <EventDashboardSection section={cms.dashboard} />
 
       <section className="flex w-full justify-center bg-[#364022] px-6 py-5 min-[540px]:px-10 min-[540px]:py-6 lg:px-20 xl:px-[100px]">
         <div className="flex w-full max-w-[1180px] items-center justify-center">
@@ -830,14 +840,14 @@ const HowItWorkPage = () => {
             className="text-center text-[20px] leading-[1.2] text-[#D4BA8E] min-[540px]:text-[23px] lg:text-[27px]"
             style={{ fontFamily: "'Malgin', serif" }}
           >
-            <RevealLine>Plan with clarity. Celebrate with ease.</RevealLine>
+            <RevealLine>{cms.banner?.text ?? 'Plan with clarity. Celebrate with ease.'}</RevealLine>
           </p>
         </div>
       </section>
 
-      <NeedToKnowSection />
+      <NeedToKnowSection section={cms.faq} />
 
-      <FinalCtaSection />
+      <FinalCtaSection section={cms.final_cta} />
     </main>
   )
 }

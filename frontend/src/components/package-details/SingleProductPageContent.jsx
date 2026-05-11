@@ -171,26 +171,6 @@ const TRUST_ITEMS = [
   { label: 'Real Flowers', Icon: FlowerIcon },
 ]
 
-const TESTIMONIALS = [
-  {
-    name: 'Sneha Shah',
-    date: '25th Feb, 2025',
-    quote:
-      "Elewen handled everything for my dad's 60th decor, lights, and seating were exactly as promised.",
-  },
-  {
-    name: 'Sneha Shah',
-    date: '25th Feb, 2025',
-    quote:
-      'Guests kept asking who planned the setup because it looked so put-together but still homey.',
-  },
-  {
-    name: 'Sneha Shah',
-    date: '25th Feb, 2025',
-    quote: 'Good',
-  },
-]
-
 export default function SingleProductPageContent({
   title,
   price,
@@ -210,6 +190,7 @@ export default function SingleProductPageContent({
   isAddingToCart = false,
   onAddToCart,
   ctaButtonText = 'Book a Consultation',
+  testimonials = [],
 }) {
   const initialDisplayImage = sideImages[0] ?? mainImage
   const [selectedImage, setSelectedImage] = useState(null)
@@ -227,7 +208,7 @@ export default function SingleProductPageContent({
       <NavHeader />
       <section className="relative pb-16 pt-8 md:pt-14.5">
         <div
-          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start md:justify-between"
+          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start"
           style={{
             maxWidth: '1540px',
             gap: 'clamp(1.5rem, 2.2vw, 2rem)',
@@ -287,8 +268,8 @@ export default function SingleProductPageContent({
           <div
             className="mx-auto w-full min-w-0 flex-1 lg:mx-0"
             style={{
-              maxWidth: 'clamp(20rem, 45vw, 40.75rem)',
-              paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
+              maxWidth: '42rem',
+              paddingLeft: 'clamp(1.5rem, 4vw, 4rem)',
             }}
           >
             <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
@@ -432,27 +413,35 @@ export default function SingleProductPageContent({
               Moments They Loved
             </p>
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-              {TESTIMONIALS.map((item, index) => (
-                <article
-                  key={`${item.name}-${index}`}
-                  className="border border-[#D8CEC2] bg-white p-3 rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.06)]"
-                >
-                  <div className="flex items-center justify-between gap-3 pb-2">
-                    <p className="text-[15px] md:text-[27px] font-semibold text-[#2D2D2D]">
-                      {item.name}
+              {testimonials.length > 0 ? (
+                testimonials.map((item, index) => (
+                  <article
+                    key={`${item.id ?? item.name}-${index}`}
+                    className="border border-[#D8CEC2] bg-white p-3 rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.06)]"
+                  >
+                    <div className="flex items-center justify-between gap-3 pb-2">
+                      <p className="text-[15px] md:text-[27px] font-semibold text-[#2D2D2D]">
+                        {item.name}
+                      </p>
+                      <p className="text-[12px] md:text-[16px] text-[#2D2D2D]">{item.date}</p>
+                    </div>
+                    <img
+                      src={item.image || mainImage}
+                      alt={`${item.name} event`}
+                      className="mt-3 h-[324px] w-full object-cover"
+                    />
+                    <p className="mt-3 text-[12px] md:text-[16px] leading-[1.6] text-[#2D2D2D]">
+                      {item.quote}
                     </p>
-                    <p className="text-[12px] md:text-[16px] text-[#2D2D2D]">{item.date}</p>
-                  </div>
-                  <img
-                    src={mainImage}
-                    alt={`${item.name} event`}
-                    className="mt-3 h-[324px] w-full object-cover"
-                  />
-                  <p className="mt-3 text-[12px] md:text-[16px] leading-[1.6] text-[#2D2D2D]">
-                    {item.quote}
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-[18px] border border-[#D8CEC2] bg-white px-6 py-8 text-[#2D2D2D] md:col-span-3">
+                  <p className="text-[14px] leading-[1.6]">
+                    No reviews are available for this package yet.
                   </p>
-                </article>
-              ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
