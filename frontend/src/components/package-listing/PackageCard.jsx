@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
 
@@ -37,10 +37,14 @@ function getPackageHref(serviceSlug, packageId) {
   return `/packages/decor-single/${packageId}`
 }
 
-export default function PackageCard({ pkg }) {
+export default function PackageCard({ pkg, className = '', compactMode = false }) {
   const images = pkg.images || []
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showAllIncludes, setShowAllIncludes] = useState(false)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.innerWidth >= 768
+  })
   const navigate = useNavigate()
   const location = useLocation()
   const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
@@ -59,8 +63,32 @@ export default function PackageCard({ pkg }) {
   const saved = isSaved(wishlistPackageId)
   const isWishlistPending = String(pendingPackageId) === String(wishlistPackageId)
   const tags = Array.isArray(pkg.tags) ? pkg.tags : []
-  const hasMoreIncludes = tags.length > 4
-  const visibleTags = showAllIncludes ? tags : tags.slice(0, 4)
+  const shouldUseCompactMode = compactMode || !isDesktopViewport
+  const initialVisibleTagCount = shouldUseCompactMode ? 2 : 4
+  const hasMoreIncludes = tags.length > initialVisibleTagCount
+  const visibleTags = showAllIncludes ? tags : tags.slice(0, initialVisibleTagCount)
+  const descriptionText = String(pkg.description ?? '')
+  const visibleDescription =
+    shouldUseCompactMode && descriptionText.length > 110
+      ? `${descriptionText.slice(0, 110).trim()}...`
+      : descriptionText
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const handleViewportChange = event => {
+      setIsDesktopViewport(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange)
+      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    }
+
+    mediaQuery.addListener(handleViewportChange)
+    return () => mediaQuery.removeListener(handleViewportChange)
+  }, [])
 
   // 🔥LOOP LOGIC (important)
   const goToPrevious = () => {
@@ -110,7 +138,7 @@ export default function PackageCard({ pkg }) {
           navigate(packageHref)
         }
       }}
-      className="flex min-h-[380px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1"
+      className={`flex min-h-[380px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
     >
       {/* Image Container */}
       <div
@@ -211,10 +239,7 @@ export default function PackageCard({ pkg }) {
       {/* Content */}
       <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
         <div className="flex items-center justify-between gap-3">
-          <h3
-            className="text-[16px] font-medium text-[#2D2D2D]"
-            style={{ fontFamily: "'Poppins'" }}
-          >
+          <h3 className="text-[16px] font-medium text-[#2D2D2D]" style={{ fontFamily: 'Poppins' }}>
             {pkg.title}
           </h3>
           <span className="rounded-full bg-black/5 px-2 py-1 text-[12px] text-[#2D2D2D]">
@@ -222,10 +247,10 @@ export default function PackageCard({ pkg }) {
           </span>
         </div>
 
-        <p className="mt-2 text-[12px] text-[#767676]">{pkg.description}</p>
+        <p className="mt-2 text-[12px] text-[#767676]">{visibleDescription}</p>
 
         <div className="mt-3">
-          <p className="text-[12px] font-medium">Includes :</p>
+          <p className="text-[12px] font-medium text-[#2D2D2D]">Includes :</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {visibleTags.map((tag, i) => (
               <span

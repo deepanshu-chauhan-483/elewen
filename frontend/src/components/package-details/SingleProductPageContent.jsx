@@ -208,7 +208,7 @@ export default function SingleProductPageContent({
       <NavHeader />
       <section className="relative pb-16 pt-8 md:pt-14.5">
         <div
-          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start"
+          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start md:justify-between"
           style={{
             maxWidth: '1540px',
             gap: 'clamp(1.5rem, 2.2vw, 2rem)',
@@ -217,11 +217,31 @@ export default function SingleProductPageContent({
           }}
         >
           <div
-            className="md:sticky top-15 md:self-start md:shrink-0"
+            className="top-15 md:sticky md:self-start md:shrink-0"
             style={{ top: desktopSectionTop }}
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-start">
-              <div className="flex flex-row items-center gap-2 overflow-x-auto pt-2 md:flex-col md:items-end md:space-y-2 md:gap-0 md:overflow-visible">
+              {/* Main Image */}
+              <div
+                className="order-1 pt-8 md:pt-0 mx-auto w-full shrink-0 md:order-2"
+                style={{
+                  maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
+                }}
+              >
+                <div>
+                  <img
+                    src={activeImage}
+                    alt={title}
+                    className="w-full border-l-2 border-r-2 border-b-2 border-[#727355] object-cover"
+                    style={{
+                      height: 'clamp(26.25rem, 70vw, 58.375rem)',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Side Images */}
+              <div className="order-2 flex flex-row items-center justify-center gap-2 overflow-x-auto px-1 pb-2 md:order-1 md:flex-col md:items-end md:justify-start md:space-y-2 md:gap-0 md:overflow-visible md:px-0 md:pb-0 md:pt-2">
                 {sideImages.map((image, index) => (
                   <button
                     type="button"
@@ -244,32 +264,14 @@ export default function SingleProductPageContent({
                   </button>
                 ))}
               </div>
-
-              <div
-                className="mx-auto w-full shrink-0"
-                style={{
-                  maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
-                }}
-              >
-                <div>
-                  <img
-                    src={activeImage}
-                    alt={title}
-                    className="w-full object-cover border-[#727355] border-r-2 border-b-2 border-l-2 bg-[#F2F2F2]"
-                    style={{
-                      height: 'clamp(26.25rem, 70vw, 58.375rem)',
-                    }}
-                  />
-                </div>
-              </div>
             </div>
           </div>
 
           <div
             className="mx-auto w-full min-w-0 flex-1 lg:mx-0"
             style={{
-              maxWidth: '42rem',
-              paddingLeft: 'clamp(1.5rem, 4vw, 4rem)',
+              maxWidth: 'clamp(20rem, 45vw, 40.75rem)',
+              paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
             }}
           >
             <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
@@ -298,7 +300,7 @@ export default function SingleProductPageContent({
               onClick={onAddToCart}
               className={`group ${promptContent ? 'mt-4' : 'mt-5'} flex w-full items-center justify-between rounded-full pl-6 pr-1.5 py-1.5 text-[13px] font-medium transition-colors ${
                 addToCartDisabled
-                  ? 'cursor-not-allowed bg-[#CFCBC5] text-[#8A847E]'
+                  ? 'cursor-not-allowed bg-[#CDB17E] text-[#8A847E]'
                   : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
               }`}
             >
@@ -309,7 +311,7 @@ export default function SingleProductPageContent({
                 }`}
               >
                 <svg
-                  className={`h-[18px] w-[18px] transition-transform duration-300 ease-out ${
+                  className={`h-[24px] w-[24px] transition-transform duration-300 ease-out ${
                     addToCartDisabled ? '' : 'group-hover:rotate-none'
                   }`}
                   fill="none"
@@ -347,9 +349,9 @@ export default function SingleProductPageContent({
       </section>
 
       <section className="pb-16">
-        <div className="mx-auto w-full max-w-[1540px]">
+        <div className="mx-auto md:w-full max-w-[1540px]">
           {relatedProducts.length > 0 ? (
-            <div className="mt-4 lg:mt-8 px-4 sm:px-[50px] lg:px-[100px]">
+            <div className="mt-4 lg:mt-8 px-[20px] sm:px-[50px] lg:px-[100px]">
               <p
                 className="text-[22px] md:text-[32px] font-semibold text-[#2D2D2D]"
                 style={{ fontFamily: "'Malgin', serif" }}
@@ -364,7 +366,7 @@ export default function SingleProductPageContent({
             </div>
           ) : null}
 
-          <div className="mt-8 bg-[#E7E0DA] py-6 px-4 sm:px-[40px] lg:px-[60px]">
+          <div className="mt-8 bg-[#E7E0DA] py-6 px-6 sm:px-[40px] lg:px-[60px]">
             <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-5">
               {TRUST_ITEMS.map(({ label, Icon }) => (
                 <div key={label} className="flex flex-col items-center text-center text-[#3A312A]">
@@ -388,24 +390,29 @@ export default function SingleProductPageContent({
             </p>
             <Link
               to="/book-consultation"
-              className="mx-auto group mt-8 flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5  transition-colors hover:bg-[#C6AB7F]"
+              className="mx-auto group mt-8 flex w-fit items-center rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#C6AB7F]"
             >
               <span className="mr-5 text-[15px] font-medium text-white">{ctaButtonText}</span>
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
                 <svg
-                  className="h-[18px] w-[18px] text-[#D4BA8E] transition-colors transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                  className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                  viewBox="0 0 20 20"
                   fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                  <path
+                    d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </div>
             </Link>
           </div>
 
-          <div className="mt-10 lg:mt-14 px-4 sm:px-[50px] lg:px-[100px]">
+          <div className="mt-10 lg:mt-14 px-6 sm:px-[50px] lg:px-[100px]">
             <p
               className="text-[22px] font-semibold text-[#2D2D2D] md:text-[32px]"
               style={{ fontFamily: "'Malgin', serif" }}
@@ -447,38 +454,38 @@ export default function SingleProductPageContent({
         </div>
       </section>
 
-      <section className="pb-16 ">
-        <div className="fixed bottom-0 left-0 w-full h-[60px] md:h-[70px] bg-[#591902] text-white z-50 px-[50px] lg:px-[100px]">
-          <div className="max-w-[1400px] mx-auto flex items-center justify-between py-4">
+      <section className="pb-16">
+        <div className="fixed bottom-0 left-0 z-50 w-full bg-[#591902] px-4 text-white sm:px-6 md:h-[70px] md:px-[50px] lg:px-[100px]">
+          <div className="mx-auto flex min-h-[60px] max-w-[1400px] items-center justify-between gap-3 py-2 md:py-4">
             {/* Left */}
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold">{title}</h2>
+            <div className="flex min-w-0 items-center gap-2 md:gap-3">
+              <h2 className="truncate text-sm font-semibold sm:text-base md:text-lg">{title}</h2>
               <span>•</span>
-              <span>{price}</span>
+              <span className="shrink-0 text-sm sm:text-base">{price}</span>
             </div>
 
             {/* Right */}
-            <div className="flex items-center gap-6">
-              <button className="underline">View Options</button>
+            <div className="flex shrink-0 items-center gap-2 sm:gap-4 md:gap-6">
+              <button className="text-xs underline sm:text-sm md:text-base">View Options</button>
 
               <button
-                className={`group flex items-center rounded-full pl-6 pr-1.5 py-1.5 text-[13px] font-medium transition-colors ${
+                className={`group flex items-center rounded-full py-1.5 pl-3 pr-1 text-[12px] font-medium transition-colors sm:pl-4 sm:pr-1.5 sm:text-[13px] md:pl-6 ${
                   addToCartDisabled
-                    ? 'cursor-not-allowed bg-[#CFCBC5] text-[#8A847E]'
+                    ? 'cursor-not-allowed bg-[#CDB17E] text-[#8A847E]'
                     : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
                 }`}
                 disabled={addToCartDisabled}
                 type="button"
                 onClick={onAddToCart}
               >
-                <span className="mr-5">{addToCartButtonLabel}</span>
+                <span className="mr-2 sm:mr-3 md:mr-5">{addToCartButtonLabel}</span>
                 <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ${
+                  className={`flex h-7 w-7 items-center justify-center rounded-full shadow-sm sm:h-8 sm:w-8 ${
                     addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
                   }`}
                 >
                   <svg
-                    className={`h-[18px] w-[18px] transition-transform duration-300 ease-out ${
+                    className={`h-[24px] w-[24px] transition-transform duration-300 ease-out ${
                       addToCartDisabled ? '' : 'group-hover:rotate-none'
                     }`}
                     fill="none"

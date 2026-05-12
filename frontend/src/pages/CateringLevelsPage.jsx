@@ -84,7 +84,7 @@ export default function CateringLevelsPage() {
       showBackButton
       backTo={backTo}
     >
-      <div className="flex h-[50svh] w-full items-start">
+      <div className="flex w-full items-start pb-6 md:h-[50svh] md:pb-0">
         <div className="flex w-full flex-col gap-4 md:flex-row md:gap-4">
           {levels.map(level => (
             <LevelCard

@@ -1,7 +1,9 @@
 import Razorpay from 'razorpay'
 
 const isPlaceholderCredential = value => {
-  const normalized = String(value ?? '').trim().toLowerCase()
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase()
   return !normalized || normalized.includes('placeholder')
 }
 

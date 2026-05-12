@@ -22,20 +22,65 @@ const SERVICES_FLOW_STEPS = [
 ]
 
 const DESKTOP_CARDS_PER_PAGE = 4
+const MOBILE_CARDS_PER_PAGE = 1
 
 function CategoryArrow({ direction = 'right' }) {
   const rotationClass = direction === 'left' ? 'rotate-180' : ''
 
   return (
+    // <svg
+    //   viewBox="0 0 24 24"
+    //   fill="none"
+    //   stroke="currentColor"
+    //   strokeWidth="1.8"
+    //   className={`h-6 w-6 ${rotationClass}`}
+    // >
+    //   <path d="M5 12h14" strokeLinecap="round" />
+    //   <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    // </svg>
     <svg
+      className={`h-6 w-6 ${rotationClass}`}
       viewBox="0 0 24 24"
       fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      className={`h-6 w-6 ${rotationClass}`}
+      xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M5 12h14" strokeLinecap="round" />
-      <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M5 12H19M12 19L19 12L12 5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function EventArrow({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? 'rotate-180' : ''
+
+  return (
+    // <svg
+    //   viewBox="0 0 24 24"
+    //   fill="none"
+    //   stroke="currentColor"
+    //   strokeWidth="1.8"
+    //   className={`h-6 w-6 ${rotationClass}`}
+    // >
+    //   <path d="M5 12h14" strokeLinecap="round" />
+    //   <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    // </svg>
+    <svg
+      className={`h-[24px] w-[24px] md:h-[36px] md:w-[36px] ${rotationClass}`}
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M7.5 18H28.5M18 7.5L28.5 18L18 28.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -66,7 +111,7 @@ function EventCard({
   return (
     <Link
       to={destination}
-      className="group flex h-full max-h-[424px] w-full max-w-[298px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px]"
+      className="group flex h-[400px] w-full max-w-[250px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px] md:max-w-[298px]"
     >
       <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
         {event.image ? (
@@ -96,6 +141,10 @@ export default function CategoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchValue, setSearchValue] = useState('')
   const [touchStartX, setTouchStartX] = useState(null)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.innerWidth >= 768
+  })
   const requestedCategorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const serviceSlug = normalizeServiceSlug(searchParams.get('service') ?? '')
   const serviceId = searchParams.get('serviceId') ?? ''
@@ -119,6 +168,23 @@ export default function CategoryPage() {
     key: paginationKey,
     pageIndex: 0,
   })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const handleViewportChange = event => {
+      setIsDesktopViewport(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange)
+      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    }
+
+    mediaQuery.addListener(handleViewportChange)
+    return () => mediaQuery.removeListener(handleViewportChange)
+  }, [])
 
   useEffect(() => {
     if (!categories.length || !selectedCategoryId || requestedCategorySlug === selectedCategoryId)
@@ -157,12 +223,13 @@ export default function CategoryPage() {
     )
   }, [events, searchValue])
 
-  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / DESKTOP_CARDS_PER_PAGE))
+  const cardsPerPage = isDesktopViewport ? DESKTOP_CARDS_PER_PAGE : MOBILE_CARDS_PER_PAGE
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / cardsPerPage))
   const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
   const safePageIndex = Math.min(activePageIndex, totalPages - 1)
   const visibleEvents = filteredEvents.slice(
-    safePageIndex * DESKTOP_CARDS_PER_PAGE,
-    safePageIndex * DESKTOP_CARDS_PER_PAGE + DESKTOP_CARDS_PER_PAGE
+    safePageIndex * cardsPerPage,
+    safePageIndex * cardsPerPage + cardsPerPage
   )
 
   const selectCategory = categorySlug => {
@@ -247,6 +314,7 @@ export default function CategoryPage() {
       showPagination
       paginationCount={totalPages}
       activePaginationIndex={safePageIndex}
+      mobilePaginationWindow={5}
       showBackButton={isServicesFlow}
       backTo={isServicesFlow ? servicesFlowBackTo : null}
     >
@@ -322,25 +390,25 @@ export default function CategoryPage() {
             </div>
           </div>
 
-          <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-screen -translate-x-1/2 md:block">
+          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2">
             <button
               type="button"
               onClick={goPrev}
               disabled={safePageIndex === 0}
-              className="pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
+              className="pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[80px] w-[40px] md:h-[104px] md:w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
               aria-label="Previous cards"
             >
-              <CategoryArrow direction="left" />
+              <EventArrow direction="left" />
             </button>
 
             <button
               type="button"
               onClick={goNext}
               disabled={safePageIndex >= totalPages - 1}
-              className="pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
+              className="pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[80px] w-[40px] md:h-[104px] md:w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
               aria-label="Next cards"
             >
-              <CategoryArrow direction="right" />
+              <EventArrow direction="right" />
             </button>
           </div>
         </div>

@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react'
 import bulb1 from '../../assets/lightbulb_images/bulb1.png'
 import bulb2 from '../../assets/lightbulb_images/bulb2.png'
 
 export default function ScallopBulbCurtain({
   count = 15,
+  mobileCount = null,
   outerColor = '#CDB17E',
   innerColor = '#591902',
   wireColorClass = 'bg-[#591902]/40',
@@ -10,7 +12,31 @@ export default function ScallopBulbCurtain({
   showBulbs = true,
   fitToWidth = false,
 }) {
-  const scallopCount = Array.from({ length: count })
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.innerWidth >= 768
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const handleViewportChange = event => {
+      setIsDesktopViewport(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange)
+      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    }
+
+    mediaQuery.addListener(handleViewportChange)
+    return () => mediaQuery.removeListener(handleViewportChange)
+  }, [])
+
+  const resolvedCount =
+    !isDesktopViewport && typeof mobileCount === 'number' && mobileCount > 0 ? mobileCount : count
+  const scallopCount = Array.from({ length: resolvedCount })
   const itemClass = fitToWidth
     ? 'relative min-w-0 flex-1 h-[34px] md:h-[76px]'
     : 'relative shrink-0 w-[60px] h-[34px] md:w-[136px] md:h-[76px]'

@@ -658,6 +658,20 @@ p {
   }
 }
 
+.dashboard-shell {
+  min-height: var(--door-viewport-height);
+}
+
+.dashboard-main {
+  min-height: calc(var(--door-viewport-height) - 126px);
+}
+
+@media (min-width: 768px) {
+  .dashboard-main {
+    min-height: 0;
+  }
+}
+
 @media (max-width: 767px) {
   .door-section__gate {
     width: 100vw;

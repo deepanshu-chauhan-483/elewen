@@ -103,9 +103,9 @@ function PreviousBookingCard({ booking, session }) {
 
   return (
     <div
-      className={`rounded-2xl border-t-4 bg-white p-6 shadow-sm transition hover:shadow-md ${
-        isCancelled ? 'border-[#591902]' : 'border-[#238E64]'
-      }`}
+      className={`rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md ${
+        open ? 'border-t-4' : 'border-l-4'
+      } ${isCancelled ? 'border-[#591902]' : 'border-[#238E64]'}`}
       onClick={() => setOpen(current => !current)}
     >
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -128,7 +128,7 @@ function PreviousBookingCard({ booking, session }) {
 
           {subtitle ? <p className="mt-1 text-sm text-gray-500">{subtitle}</p> : null}
 
-          <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+          <div className="mt-4 flex items-center gap-2 text-sm text-[#1C1C1C]">
             <CalendarIcon />
             <span>{formatDashboardDate(booking?.eventDate)}</span>
           </div>
@@ -165,7 +165,7 @@ function PreviousBookingCard({ booking, session }) {
             <Link
               to={`/user-dashboard/support?bookingId=${booking.id}`}
               onClick={event => event.stopPropagation()}
-              className="inline-flex rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
+              className="inline-flex rounded-full border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] px-5 py-3 text-sm"
             >
               Refer a Friend
             </Link>

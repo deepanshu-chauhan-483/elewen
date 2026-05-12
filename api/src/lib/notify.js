@@ -46,7 +46,10 @@ const createInApp = async (userId, type, title, message, linkUrl) => {
 //   })
 //
 // Always fire-and-forget — never throws. Callers should NOT await this.
-export const notify = async (userId, { type, title, message, linkUrl, emailTemplate, emailData }) => {
+export const notify = async (
+  userId,
+  { type, title, message, linkUrl, emailTemplate, emailData }
+) => {
   // 1. In-app notification (DB)
   await createInApp(userId, type, title, message, linkUrl)
 

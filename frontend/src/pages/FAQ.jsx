@@ -25,10 +25,12 @@ export default function FAQ() {
     <div className="w-full">
       {/* HEADER */}
       <section
-        className="w-full text-center py-[80px] mt-6 md:mt-10"
+        className="w-full text-center px-[10px] md:px-0 py-[80px] mt-6  md:mt-10"
         style={{ backgroundColor: '#591902' }}
       >
-        <h1 className="text-white text-[80px] leading-tight">Frequently Asked Questions</h1>
+        <h1 className="text-white text-[40px] md:text-[60px] lg:text-[80px] leading-tight">
+          Frequently Asked Questions
+        </h1>
         <p className="text-white/70 mt-4 text-[16px]">
           Everything you need to know about planning, booking, and experiencing Elewen.
         </p>
@@ -38,14 +40,15 @@ export default function FAQ() {
       <section className="max-w-[1200px] mx-auto py-[60px]  ">
         <div className="grid gap-10 lg:grid-cols-[250px_minmax(0,1fr)] ">
           {/* LEFT MENU */}
-          <div className="border-b border-[#364022] lg:border-b-0 lg:border-r lg:pr-6 ">
+          <div className="border-b border-[#364022] lg:border-b-0 lg:border-r lg:pr-6 px-[10px] md:px-0">
             <aside className="self-start pb-6 lg:sticky lg:top-28 lg:pb-0 ">
-              <ul className="space-y-6 text-[16px] ">
+              <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[12px] md:text-[16px] lg:block lg:space-y-6">
                 {categories.map(category => {
                   const isActive = resolvedActiveCategory === category
+                  const categoryIndex = categories.indexOf(category)
 
                   return (
-                    <li key={category}>
+                    <li key={category} className="flex items-center lg:block">
                       <button
                         type="button"
                         onClick={() => {
@@ -56,7 +59,7 @@ export default function FAQ() {
                           isActive ? 'font-medium text-[#364022]' : 'text-[#737373]'
                         }`}
                       >
-                        <span className="relative inline-block pb-[15px]">
+                        <span className="relative inline-block md:pb-[15px]">
                           {formatCategoryLabel(category)}
                           <span
                             className={`absolute bottom-0 left-0 h-px bg-[#364022] transition-all duration-300 ease-out ${
@@ -65,6 +68,10 @@ export default function FAQ() {
                           />
                         </span>
                       </button>
+
+                      {categoryIndex < categories.length - 1 ? (
+                        <span className="ml-4 text-[#364022] lg:hidden">|</span>
+                      ) : null}
                     </li>
                   )
                 })}

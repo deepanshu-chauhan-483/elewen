@@ -115,7 +115,9 @@ function BookingCard({ booking, session }) {
           ? 'border-l-4 border-[#C07318]'
           : status === 'upcoming'
             ? 'border-l-4 border-[#3061C6]'
-            : 'border-t-4 border-[#238E64]'
+            : open
+              ? 'border-t-4 border-[#238E64]'
+              : 'border-l-4 border-[#238E64]'
       }`}
       onClick={isConfirmed ? () => setOpen(current => !current) : undefined}
     >
@@ -179,7 +181,7 @@ function BookingCard({ booking, session }) {
           </div>
         ) : null}
 
-        {!isConfirmed ? (
+        {!open ? (
           <div className="mt-2 hidden shrink-0 gap-[24px] text-sm md:flex md:gap-[32px]">
             <div className="flex flex-col">
               <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>

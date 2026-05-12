@@ -135,7 +135,8 @@ export const markRead = async (req, res, next) => {
     })
 
     if (!message) return res.status(404).json({ error: 'Message not found' })
-    if (message.thread?.booking?.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+    if (message.thread?.booking?.userId !== userId)
+      return res.status(403).json({ error: 'Forbidden' })
 
     await prisma.messageReadStatus.upsert({
       where: { messageId_userId: { messageId: id, userId } },

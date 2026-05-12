@@ -466,22 +466,22 @@ function mergeTemplateSections(templateSections = [], existingSections = []) {
   })
 }
 
-function isCustomizationComplete(sections = []) {
-  const requiredSections = (Array.isArray(sections) ? sections : []).filter(
-    section =>
-      section.type === 'choice-row' &&
-      section.required !== false &&
-      Array.isArray(section.items) &&
-      section.items.length
-  )
+// function isCustomizationComplete(sections = []) {
+//   const requiredSections = (Array.isArray(sections) ? sections : []).filter(
+//     section =>
+//       section.type === 'choice-row' &&
+//       section.required !== false &&
+//       Array.isArray(section.items) &&
+//       section.items.length
+//   )
 
-  // No selectable options means the package is already complete
-  if (requiredSections.length === 0) return true
+//   // No selectable options means the package is already complete
+//   if (requiredSections.length === 0) return true
 
-  return requiredSections.every(section =>
-    section.items.some(item => typeof item !== 'string' && item.selected)
-  )
-}
+//   return requiredSections.every(section =>
+//     section.items.some(item => typeof item !== 'string' && item.selected)
+//   )
+// }
 
 function normalizeSelectedOptions(selectedOptions = {}) {
   return Object.fromEntries(
@@ -492,7 +492,7 @@ function normalizeSelectedOptions(selectedOptions = {}) {
   )
 }
 
-function buildDecorSelectedOptions(customization) {
+function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = false } = {}) {
   const selectedSections = (customization?.data?.sections ?? []).filter(
     section => section?.type === 'choice-row'
   )
@@ -506,15 +506,19 @@ function buildDecorSelectedOptions(customization) {
           const selectedItem = (section.items ?? []).find(
             item => typeof item !== 'string' && item.selected
           )
+          const fallbackItem = useFirstChoiceFallback
+            ? (section.items ?? []).find(item => typeof item !== 'string')
+            : null
+          const resolvedItem = selectedItem ?? fallbackItem
 
           console.log(
-            `[buildDecorSelectedOptions] section[${idx}] title="${section.title}", selectedItem:`,
-            selectedItem
+            `[buildDecorSelectedOptions] section[${idx}] title="${section.title}", resolvedItem:`,
+            resolvedItem
           )
 
           // Use index as unique key to prevent overwriting when multiple sections have same title
           const key = `${section.title}_${idx}`
-          return [key, selectedItem?.title ?? '']
+          return [key, resolvedItem?.title ?? '']
         })
         .filter(([, value]) => Boolean(value))
     )
@@ -882,7 +886,9 @@ export default function DecorSinglePackagePage() {
 
     setIsAddingToCart(true)
 
-    const selectedOpts = buildDecorSelectedOptions(activeCustomization)
+    const selectedOpts = buildDecorSelectedOptions(activeCustomization, {
+      useFirstChoiceFallback: true,
+    })
 
     try {
       if (cartItemId) {
@@ -909,7 +915,7 @@ export default function DecorSinglePackagePage() {
     }
   }
 
-  const isDisabled = !isCustomizationComplete(sections) || isAddingToCart
+  const isDisabled = isAddingToCart
   const packageTitle =
     pkg.title || getDecorDetailSections(pkg)[0]?.theme_name || DECOR_CONTENT.title
   const packagePrice = pkg.price || DECOR_CONTENT.price

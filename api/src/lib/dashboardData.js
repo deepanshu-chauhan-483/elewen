@@ -184,7 +184,9 @@ async function fetchAddressesByIds(ids = []) {
   ].join('&')
 
   const result = await strapiGet(`/addresses?${query}`)
-  return new Map((result?.data ?? []).map(address => [String(address.id), mapAddressPreview(address)]))
+  return new Map(
+    (result?.data ?? []).map(address => [String(address.id), mapAddressPreview(address)])
+  )
 }
 
 async function fetchVendorsByIds(ids = []) {

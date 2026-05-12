@@ -102,8 +102,7 @@ export const createBooking = async (req, res, next) => {
         ? fallbackEventDate
         : null)
     const resolvedGuestCount =
-      cart.guestCount ??
-      (isSampleTastingCheckout ? Math.max(1, fallbackGuestCount || 1) : null)
+      cart.guestCount ?? (isSampleTastingCheckout ? Math.max(1, fallbackGuestCount || 1) : null)
 
     if (!resolvedEventDate) {
       return res.status(400).json({ error: 'Event date is required — update your cart first' })
@@ -279,7 +278,9 @@ export const createBooking = async (req, res, next) => {
 export const listBookings = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const type = String(req.query?.type ?? 'all').trim().toLowerCase()
+    const type = String(req.query?.type ?? 'all')
+      .trim()
+      .toLowerCase()
 
     const bookings = await prisma.booking.findMany({
       where: { userId },

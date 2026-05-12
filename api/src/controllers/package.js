@@ -6,8 +6,8 @@ const matchesThreshold = (value, count) => {
   const v = value.trim()
   if (v.startsWith('>=')) return count >= parseInt(v.slice(2))
   if (v.startsWith('<=')) return count <= parseInt(v.slice(2))
-  if (v.startsWith('>'))  return count >  parseInt(v.slice(1))
-  if (v.startsWith('<'))  return count <  parseInt(v.slice(1))
+  if (v.startsWith('>')) return count > parseInt(v.slice(1))
+  if (v.startsWith('<')) return count < parseInt(v.slice(1))
   if (v.includes('-')) {
     const [min, max] = v.split('-').map(Number)
     return count >= min && count <= max
@@ -156,9 +156,7 @@ export const wizardFilter = async (req, res, next) => {
 
     const pagination = `pagination[page]=${page}&pagination[pageSize]=${pageSize}`
 
-    const qs = [baseFilters, answerFilters, populate, pagination]
-      .filter(Boolean)
-      .join('&')
+    const qs = [baseFilters, answerFilters, populate, pagination].filter(Boolean).join('&')
 
     const result = await strapiServerGet(`/api/packages?${qs}`)
 
@@ -188,7 +186,7 @@ export const calculatePrice = async (req, res, next) => {
     if (!pkg) return res.status(404).json({ error: 'Package not found' })
 
     const basePrice = Number(pkg.base_price)
-    const count = guestCount ? parseInt(guestCount, 10) : (pkg.min_guests || 0)
+    const count = guestCount ? parseInt(guestCount, 10) : pkg.min_guests || 0
 
     let adjustedPrice = basePrice
     const breakdown = []

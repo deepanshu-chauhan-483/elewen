@@ -43,6 +43,18 @@ const SHEESHA_CONTENT = {
   ],
 }
 
+const SHEESHA_FLAVOR_DESCRIPTION_FALLBACKS = {
+  'love 66': 'A fruity-minty blend with a cool, sweet finish.',
+  'lady killer': 'A smooth mixed-fruit flavor with a rich, sweet profile.',
+  'blue melon': 'A juicy melon blend with a refreshing, icy touch.',
+  'mango tango icy': 'Sweet mango flavor balanced with an extra cooling finish.',
+  'berlin nights': 'A bold fruit-forward mix with a slightly cool aftertaste.',
+  'hurrem sultan': 'A fragrant, sweet blend with a smooth, elegant finish.',
+  'double apple': 'A classic apple flavor with warm spice notes.',
+  mint: 'Intense icy mint for extreme cooling',
+  'turkish mastic': 'A creamy, aromatic flavor with a distinctive herbal sweetness.',
+}
+
 function buildSheeshaAccordionSections(pkg) {
   return Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
     ? pkg.detail_accordion_sections
@@ -92,8 +104,8 @@ function normalizeSelectedOptions(selectedOptions = {}) {
   )
 }
 
-function buildSheeshaSelectedOptions(customization) {
-  const selectedFlavor = String(customization?.data?.selectedFlavor ?? '').trim()
+function buildSheeshaSelectedOptions(customization, { fallbackFlavor = '' } = {}) {
+  const selectedFlavor = String(customization?.data?.selectedFlavor ?? fallbackFlavor ?? '').trim()
   return normalizeSelectedOptions(
     selectedFlavor
       ? {
@@ -127,7 +139,32 @@ function isSheeshaPackage(pkg) {
   return Array.isArray(pkg?.service_slugs) && pkg.service_slugs.includes('sheesha')
 }
 
+function getSheeshaFlavorDescription(flavor) {
+  const strapiDescription = String(flavor?.description ?? '').trim()
+  if (strapiDescription) return strapiDescription
+
+  const normalizedTitle = String(flavor?.title ?? '')
+    .trim()
+    .toLowerCase()
+  return SHEESHA_FLAVOR_DESCRIPTION_FALLBACKS[normalizedTitle] ?? ''
+}
+
 function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusions }) {
+  const [hiddenTooltipFlavor, setHiddenTooltipFlavor] = useState('')
+
+  useEffect(() => {
+    if (!selectedFlavor) return undefined
+
+    const timeoutId = window.setTimeout(() => {
+      setHiddenTooltipFlavor(selectedFlavor)
+    }, 3000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [selectedFlavor])
+
+  const visibleTooltipFlavor =
+    selectedFlavor && hiddenTooltipFlavor !== selectedFlavor ? selectedFlavor : ''
+
   if (!flavors || flavors.length === 0) {
     return (
       <div>
@@ -137,32 +174,90 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
     )
   }
 
+  const midpoint = Math.ceil(flavors.length / 2)
+  const leftFlavors = flavors.slice(0, midpoint)
+  const rightFlavors = flavors.slice(midpoint)
+
   return (
     <div>
       {/* Flavors */}
       <div>
         <p className="text-[16px] font-semibold text-[#2D2D2D]">Flavors</p>
 
-        <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 max-h-none">
-          {flavors.map((flavor, index) => (
-            <label key={index} className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="flavor"
-                checked={selectedFlavor === flavor.title}
-                onChange={() => onSelectFlavor(flavor.title)}
-                className="mt-1 accent-[#591902]"
-              />
+        <div className="mt-4 grid gap-x-6 gap-y-4 overflow-visible md:grid-cols-2 md:items-start">
+          <div className="space-y-4 overflow-visible">
+            {leftFlavors.map((flavor, index) => (
+              <label
+                key={`${flavor.title}-${index}`}
+                className="relative flex w-fit items-start gap-3 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name="flavor"
+                  checked={selectedFlavor === flavor.title}
+                  onChange={() => onSelectFlavor(flavor.title)}
+                  className="mt-1 accent-[#591902]"
+                />
 
-              <div>
-                <p className="text-[13px] text-[#591902]">{flavor.title}</p>
+                <div>
+                  <p className="text-[13px] text-[#591902]">{flavor.title}</p>
+                </div>
 
-                {flavor.description && (
-                  <p className="text-[11px] text-[#591902] opacity-50">{flavor.description}</p>
-                )}
-              </div>
-            </label>
-          ))}
+                {visibleTooltipFlavor === flavor.title && getSheeshaFlavorDescription(flavor) ? (
+                  <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-[142px] -translate-y-[100%]">
+                    <div className="relative rounded-[12px] bg-black px-4 py-2">
+                      <p className="max-w-[110px] text-center text-[9px] font-medium leading-[1.3] text-white">
+                        {getSheeshaFlavorDescription(flavor)}
+                      </p>
+                      <div
+                        className="absolute bottom-[-1.5px] right-33 h-[9px] w-[10px] bg-black"
+                        style={{
+                          clipPath: 'polygon(0% 100%, 35% 0%, 100% 70.23%)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </label>
+            ))}
+          </div>
+
+          <div className="space-y-4 overflow-visible justify-self-end">
+            {rightFlavors.map((flavor, index) => (
+              <label
+                key={`${flavor.title}-${index + midpoint}`}
+                className="relative flex w-fit items-start gap-3 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name="flavor"
+                  checked={selectedFlavor === flavor.title}
+                  onChange={() => onSelectFlavor(flavor.title)}
+                  className="mt-1 accent-[#591902]"
+                />
+
+                <div>
+                  <p className="text-[13px] text-[#591902]">{flavor.title}</p>
+                </div>
+
+                {visibleTooltipFlavor === flavor.title && getSheeshaFlavorDescription(flavor) ? (
+                  <div className="pointer-events-none absolute right-full top-1/2 z-20 mr-2 w-[142px] -translate-y-[100%]">
+                    <div className="relative rounded-[12px] bg-black px-4 py-2">
+                      <p className="max-w-[110px] text-center text-[9px] font-medium leading-[1.3] text-white">
+                        {getSheeshaFlavorDescription(flavor)}
+                      </p>
+                      <div
+                        className="absolute bottom-[-1px] left-33.5 h-[9px] w-[10px] bg-black"
+                        style={{
+                          clipPath: 'polygon(100% 100%, 65% 0%, 0% 70.23%)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -283,7 +378,6 @@ export default function SheeshaSinglePackagePage() {
     .map(item => ({ ...item, serviceSlug: 'sheesha' }))
 
   const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null
-  const isAddToCartDisabled = !selectedFlavor
   const packageTitle = pkg.title || SHEESHA_CONTENT.title
   const packagePrice = pkg.price || SHEESHA_CONTENT.price
   const packageIntro = pkg.description || SHEESHA_CONTENT.intro
@@ -318,7 +412,9 @@ export default function SheeshaSinglePackagePage() {
     setIsAddingToCart(true)
 
     try {
-      const selectedOptions = buildSheeshaSelectedOptions(activeCustomization)
+      const selectedOptions = buildSheeshaSelectedOptions(activeCustomization, {
+        fallbackFlavor: flavors[0]?.title ?? '',
+      })
 
       if (cartItemId) {
         await updateCartItemDetails({
@@ -357,7 +453,7 @@ export default function SheeshaSinglePackagePage() {
       relatedProducts={relatedProducts}
       addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
       addToCartMessage={addToCartMessage}
-      disableAddToCart={isAddToCartDisabled || isAddingToCart}
+      disableAddToCart={isAddingToCart}
       onAddToCart={handlePackageAddToCart}
       quantity={quantity}
       onDecrement={handleDecrease}

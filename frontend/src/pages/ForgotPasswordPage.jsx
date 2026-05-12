@@ -116,7 +116,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div
-            className="flex min-w-0 w-full flex-col items-stretch gap-[16px]"
+            className="flex min-w-0 w-full flex-col items-stretch gap-[16px] pt-5"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             <button

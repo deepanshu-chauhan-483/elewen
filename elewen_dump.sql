@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2vE9rlIbvM2yaA2xc5ZTmUjKJfDatzmTHr8OobJvPSeEGs4xMyzqhH3iqiLdmpC
+\restrict vipmx36K0Xoiar4zHDcL26PbEBRo1M0PvJQVHxRhh1smJBue7udAgO5U0HviSXR
 
 -- Dumped from database version 16.13
 -- Dumped by pg_dump version 16.13
@@ -8218,6 +8218,10 @@ a23a5c50-ec48-4156-b7dc-cb0e9a7246a9	d9905d5c-bf79-4e84-afd3-08a1c6f76652	11	pkg
 87e96fbe-ca24-485c-89fd-f21e7f0929a1	87368c3b-5aa2-40fe-a617-3a173f3e7923	45	pkgopt_12r88m7	\N	Floating Moments - Level 1||__ELEWEN_META__||{"selectedOptions":{"Choose 1_0":"Loose Helium 10 heart shaped balloons with sign","Choose 1_1":"2 small standees (10 years)"}}	2	5150.00	10300.00	2026-04-30 10:00:55.375
 c8c9c583-761a-459f-bb05-4a2eb05a8a30	bd701c11-67d4-449e-a97a-f4035d698c98	60	pkgopt_12r88m7	\N	Floating Moments - Level 1||__ELEWEN_META__||{"selectedOptions":{"Choose 1_0":"Loose Helium 10 heart shaped balloons with sign","Choose 1_1":"2 small standees (10 years)"}}	1	5150.00	5150.00	2026-05-10 04:30:58.221
 fe0e0e2b-4898-469e-b402-2df4264b104a	bd701c11-67d4-449e-a97a-f4035d698c98	60	\N	16	Ballons||__ELEWEN_META__||{"selectedOptions":{},"itemType":"addon","addonTitle":"Ballons"}	1	500.00	500.00	2026-05-10 04:31:11.101
+a63d49bc-e74a-4c11-9515-996e15a8f515	b5770703-7716-4690-870b-52d084f30f59	44	pkgopt_ws1hot	\N	The House Special - Premium Bartending Service||__ELEWEN_META__||{"selectedOptions":{"Backdrop style":"Textured backdrop","Entry setup":"Floral entrance","Photo corners":"Baby corner"}}	1	6050.00	6050.00	2026-05-11 10:21:05.239
+6f3f40c0-9cf1-41e9-be14-6e793c828e70	b5770703-7716-4690-870b-52d084f30f59	60	pkgopt_ntgw55	\N	Floating Moments - Level 1||__ELEWEN_META__||{"selectedOptions":{"Choose 1_0":"Loose Helium 10 heart shaped balloons with sign","Choose 1_1":"Balloon Arch with sign"}}	1	5150.00	5150.00	2026-05-11 10:36:31.185
+271fef23-2eca-4919-ace6-f13a49be0f1c	b5770703-7716-4690-870b-52d084f30f59	60	\N	16	Ballons||__ELEWEN_META__||{"selectedOptions":{},"itemType":"addon","addonTitle":"Ballons"}	1	500.00	500.00	2026-05-11 11:39:37.364
+c9ea2d7e-b9d9-4e4c-84e6-1b5a953d05a8	b2aab31d-2dcc-4527-80a5-02d2a870cb8f	65	\N	\N	Simply Elevated 2	1	500.00	500.00	2026-05-11 13:22:14.023
 \.
 
 
@@ -8240,10 +8244,10 @@ d9905d5c-bf79-4e84-afd3-08a1c6f76652	30	\N	\N	\N	\N	\N	76600.00	0.00	76600.00	20
 87f6e8d2-7b0e-48d0-b6d5-a9092368ff1f	32	\N	\N	\N	12wqwqee	\N	0.00	0.00	0.00	2026-04-30 10:04:03.178	2026-05-05 07:24:36.542
 24546b00-f117-4ab4-b7f0-4f87d343967b	28	\N	\N	\N	\N	\N	11900.00	0.00	11900.00	2026-04-28 07:26:44.153	2026-04-29 06:57:28.471
 5de4cc52-9674-4e2b-98f2-8d6198e6f5f0	29	\N	\N	\N	\N	\N	0.00	0.00	0.00	2026-04-29 07:54:59.005	2026-04-29 07:56:21.631
-b2aab31d-2dcc-4527-80a5-02d2a870cb8f	33	\N	\N	\N	\N	\N	0.00	0.00	0.00	2026-05-10 05:55:59.957	2026-05-10 06:47:34.755
 6a0714bc-5a50-48bc-b4a9-a41309d3efee	35	\N	\N	\N	\N	\N	0.00	0.00	0.00	2026-05-10 06:49:58.293	2026-05-10 06:59:36.1
-b5770703-7716-4690-870b-52d084f30f59	36	\N	\N	\N	G-14 Shayona city - 4 ,near Shayona International School , Ghatlodia ,ahmedabad	\N	0.00	0.00	0.00	2026-05-10 07:01:03.249	2026-05-11 07:33:15.249
+b5770703-7716-4690-870b-52d084f30f59	36	\N	\N	\N	G-14 Shayona city - 4 ,near Shayona International School , Ghatlodia ,ahmedabad	\N	11700.00	0.00	11700.00	2026-05-10 07:01:03.249	2026-05-11 12:11:59.575
 bd701c11-67d4-449e-a97a-f4035d698c98	34	\N	\N	\N	\N	\N	5650.00	0.00	5650.00	2026-05-08 08:18:46.578	2026-05-10 05:35:05.834
+b2aab31d-2dcc-4527-80a5-02d2a870cb8f	33	\N	\N	\N	\N	\N	500.00	0.00	500.00	2026-05-10 05:55:59.957	2026-05-11 13:25:32.082
 \.
 
 
@@ -8477,8 +8481,9 @@ e3c14b27-b148-4aa2-b990-065f303e886e	32	53864f97f848ffe83241712ebc09f249f5ed74aa
 9d50bf64-816c-4093-93fe-5ec9d2f956cd	32	e30a1ea560d07ae7ffea0edb8e9c03a6d0aaef096b7d3068ad4d80ed8c1099f23aa63566428f5f1e	::ffff:172.18.0.1	Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36	2026-06-04 05:15:49.103	2026-05-05 05:15:32.752
 4aa099a0-d411-456a-967c-2bf6573f9268	32	e01b650d8f462a7948ab5192599fe0f09d9e9149d66bc208df848f7b282965907aaffc48e05aa52e	::ffff:172.18.0.1	Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36	2026-06-04 05:19:56.782	2026-05-05 05:19:45.975
 6e89e4a8-9725-4768-992e-f96899be5b12	32	170f789f7e212961c9b8a3f03561abd92ac67ca9dc848d2d6361d15c5f531b52f849ff6d2d199376	::ffff:172.18.0.1	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36	2026-06-04 05:21:20.342	2026-05-05 05:20:27.324
+d105e6cd-8fd0-4454-b585-8efd9ea8571e	33	da2803387691efe25258d0783f79932a893b95bf0b5a6ca4d46fc0708ff46c2f5aadea4ed583edd6	::ffff:172.18.0.1	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36	2026-06-10 13:20:42.132	2026-05-11 12:12:29.243
 35dc504e-25fb-4ab7-b317-e1f07a6a1768	35	8b2fb3bf0d985b92e33a29d524edfa1f50cd88be4d5befdcf6fd0d65c34eb3a55dea312200027712	::ffff:172.18.0.1	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36	2026-06-09 06:51:59.98	2026-05-10 06:51:59.981
-be6752d2-c455-4928-9792-7fe79663f8b0	36	282dda2350d20b48e886f1efad9e832e5447a59dc6016a5f1a9e55635bdcd245644a51ba228e617b	::ffff:172.18.0.1	Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36	2026-06-10 07:25:27.454	2026-05-10 07:01:01.618
+be6752d2-c455-4928-9792-7fe79663f8b0	36	7a80ffec8f35262264ce982369be67a8280049bb5cf5a24717202e6d20520c6481531eb8d916a9e7	::ffff:172.18.0.1	Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36	2026-06-10 10:35:39.911	2026-05-10 07:01:01.618
 \.
 
 
@@ -8554,6 +8559,7 @@ COPY public.about_page_cmps (id, entity_id, cmp_id, component_type, field, "orde
 
 COPY public.addons (id, document_id, name, description, price, unit, max_quantity, visibility, created_at, updated_at, published_at, created_by_id, updated_by_id, locale) FROM stdin;
 1	mjj3qfxk8z7qkb60bxf2fdjv	Ballons2	Ballons2	100.00	pis	1	t	2026-05-10 07:47:28.992	2026-05-10 07:47:28.992	2026-05-10 07:47:28.949	2	2	\N
+2	h1mej216iexvri3qk8g17mey	Hostess for Registeration 	1 Female hostess (8 hours shift) 	5000.00	person	1	t	2026-05-11 12:46:24.871	2026-05-11 12:46:24.871	2026-05-11 12:46:24.862	2	2	\N
 \.
 
 
@@ -10357,12 +10363,28 @@ COPY public.components_package_decorpackages (id, theme_name, color_palette, bal
 21	Exhibition Essentials 3	\N	\N	\N	\N	We will need set-up team / exhibition organizer's number & basic guidlines to cordinate further 	Need additional branding, lighting, or customisation? Go ahead and book — our team will connect with you to understand your requirements and suggest suitable add-ons.	Exhibition halls, trade fairs, expos, and indoor convention venues.	It strikes the right balance between cost and impact, offering better branding and usability without going fully custom.	Everything from Essentials 2, and then some. The same solid Octonorm frame, lockable cabinet, and LED spotlights — but now with a plasma screen that makes your brand impossible to ignore. Two name fascias flanking your stall, a display stand of your choice, and a card holder or QR easel to make follow-ups effortless. And the real differentiator — a hostess who brings your brand to life, engages every passerby, and makes sure no visitor walks away without knowing exactly who you are.	For brands that mean business. This is the setup you choose when you want to walk into an exhibition and own the room — a plasma screen drawing eyes from across the hall, a hostess turning footfall into conversations, and every detail dialled in from storage to signage. Whether you're launching something big, closing deals, or building presence in a competitive space, Exhibition Essentials 3 makes sure you're not just participating — you're leading.
 22	Exhibition Essentials 3	\N	\N	\N	\N	We will need set-up team / exhibition organizer's number & basic guidlines to cordinate further 	Need additional branding, lighting, or customisation? Go ahead and book — our team will connect with you to understand your requirements and suggest suitable add-ons.	Exhibition halls, trade fairs, expos, and indoor convention venues.	It strikes the right balance between cost and impact, offering better branding and usability without going fully custom.	Everything from Essentials 2, and then some. The same solid Octonorm frame, lockable cabinet, and LED spotlights — but now with a plasma screen that makes your brand impossible to ignore. Two name fascias flanking your stall, a display stand of your choice, and a card holder or QR easel to make follow-ups effortless. And the real differentiator — a hostess who brings your brand to life, engages every passerby, and makes sure no visitor walks away without knowing exactly who you are.	For brands that mean business. This is the setup you choose when you want to walk into an exhibition and own the room — a plasma screen drawing eyes from across the hall, a hostess turning footfall into conversations, and every detail dialled in from storage to signage. Whether you're launching something big, closing deals, or building presence in a competitive space, Exhibition Essentials 3 makes sure you're not just participating — you're leading.
 23	Stall Upgrade 1	\N	\N	\N	\N	We will need set-up team / exhibition organizer's number & basic guidlines to cordinate further 	Need additional branding, lighting, or customisation? Go ahead and book — our team will connect with you to understand your requirements and suggest suitable add-ons.	Standard booths where organisers provide basic structure and exhibitors want to improve visibility and engagement.	It focuses on what actually matters, getting noticed and capturing leads, without overcomplicating the setup.	A bold roll-up standee that announces your brand before anyone even reaches your stall. A printed table cover or vinyl wrap that turns a plain organiser-issue table into a branded statement. Clip-on LED lights that put the spotlight exactly where you want it. A brochure stand or garment rack to keep your display sharp and organised. And the smartest addition — a QR easel and Scan & Win prompt that turns every passerby into a potential lead. Simple, focused, and built to make your presence felt.	For exhibitors who already have a booth but want to show up like they mean it. This upgrade strips away everything unnecessary and focuses on two things — looking good and collecting leads. Whether you're working with an organiser-provided stall or layering onto an existing setup, Stall Upgrade 1 gives your brand the polish and the tools to stand out, spark conversations, and leave the event with a list of people who actually want to hear from you.
+39	Simply Elevated 3	\N	\N	\N	\N	Branding guidelines to be shared by the client as per Elewen proposed timelines. Power to be provided by the venue / cutomer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Hotel banquets, seminar halls, and meeting venues.	It adds just the right amount of add on structure and branding, enough to elevate the experience while keeping things simple and cost-effective.	Directional sunboards at entry, a 6x8 ft registration backdrop with branded table facade, 2 LED standees and 2 printed branding standees across the venue. A raised stage platform with branded podium, your choice of static or LED screen backdrop, ample face lighting, and a full sound setup — 2 cordless mics, 1 podium mic, mixer, and operator included.	For events that need to run like clockwork — from a well-signed entrance to a stage that's fully mic'd and ready. Built for conferences, seminars, and corporate meets where the setup needs to feel professional without requiring a full production team.
 24	Stall Upgrade 1	\N	\N	\N	\N	We will need set-up team / exhibition organizer's number & basic guidlines to cordinate further 	Need additional branding, lighting, or customisation? Go ahead and book — our team will connect with you to understand your requirements and suggest suitable add-ons.	Standard booths where organisers provide basic structure and exhibitors want to improve visibility and engagement.	It focuses on what actually matters, getting noticed and capturing leads, without overcomplicating the setup.	A bold roll-up standee that announces your brand before anyone even reaches your stall. A printed table cover or vinyl wrap that turns a plain organiser-issue table into a branded statement. Clip-on LED lights that put the spotlight exactly where you want it. A brochure stand or garment rack to keep your display sharp and organised. And the smartest addition — a QR easel and Scan & Win prompt that turns every passerby into a potential lead. Simple, focused, and built to make your presence felt.	For exhibitors who already have a booth but want to show up like they mean it. This upgrade strips away everything unnecessary and focuses on two things — looking good and collecting leads. Whether you're working with an organiser-provided stall or layering onto an existing setup, Stall Upgrade 1 gives your brand the polish and the tools to stand out, spark conversations, and leave the event with a list of people who actually want to hear from you.
 25	Stall Upgarde 2	\N	\N	\N	\N	We will need set-up team / exhibition organizer's number & basic guidlines to cordinate further 	Need additional branding, lighting, or customisation? Go ahead and book — our team will connect with you to understand your requirements and suggest suitable add-ons.	Standard booths where organisers provide basic structure and exhibitors want to improve visibility and engagement.	It focuses on what actually matters, getting noticed and capturing leads, without overcomplicating the setup.	\N	\N
 26	Stall Upgarde 2	\N	\N	\N	\N	We will need set-up team / exhibition organizer's number & basic guidlines to cordinate further 	Need additional branding, lighting, or customisation? Go ahead and book — our team will connect with you to understand your requirements and suggest suitable add-ons.	Standard booths where organisers provide basic structure and exhibitors want to improve visibility and engagement.	It focuses on what actually matters, getting noticed and capturing leads, without overcomplicating the setup.	\N	\N
 27	Stall Upgarde 3	\N	\N	\N	\N	Branding designs and screen content to be shared by the exhibitor. Engagement format and giveaway mechanics can be customised based on campaign goals.	Need additional branding, lighting, or customisation? Go ahead and book — our team will connect with you to understand your requirements and suggest suitable add-ons.	Standard booths where organisers provide basic structure and exhibitors want to improve visibility and engagement.	It focuses on what actually matters, getting noticed and capturing leads, without overcomplicating the setup.	\N	\N
 29	Stall Upgarde 3	\N	\N	\N	\N	Branding designs and screen content to be shared by the exhibitor. Engagement format and giveaway mechanics can be customised based on campaign goals.	Need additional branding, lighting, or customisation? Go ahead and book — our team will connect with you to understand your requirements and suggest suitable add-ons.	Standard booths where organisers provide basic structure and exhibitors want to improve visibility and engagement.	It focuses on what actually matters, getting noticed and capturing leads, without overcomplicating the setup.	\N	\N
 30	Floating Moments - Level 1	\N	11	A small area for our team to work, access to water and electricity.	\N	A small area for our team to work, access to water and electricity.	Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t	Entry points, backdrop areas, living / bed rooms, terraces, or party corners - anywhere you want an instant pop of celebration.	It’s effortless, cheerful, and instantly elevates the space without overdoing it.	\N	\N
+31	Simply Elevated 1	\N	\N	\N	\N	Branding guidelines to be shared by the client as per Elewen proposed timelines	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Hotel banquets, seminar halls, and meeting venues.	It adds just the right amount of add on structure and branding, enough to elevate the experience while keeping things simple and cost-effective.	A crisp 6x8 ft registration backdrop that sets the scene the moment your attendees walk in — professional, polished, and unmistakably yours. A hotel check-in table positioned right in front to keep arrivals smooth and organised. Four 4x8 ft branded standees placed across the venue so your identity travels with every guest, from entrance to exit. And a pack of 20 PVC name badges with lanyards — because nothing says "we planned this well" like a badge that actually looks good around someone's neck.	For organisers who want their event to feel put-together from the first impression to the last. Whether it's a corporate conference, a dealer meet, or a seminar, Simply Elevated 1 takes care of the two things that matter most — a registration experience that doesn't feel like a queue at a government office, and branding that travels with your attendees through every part of the venue. Efficient on budget, generous on impact.
+32	Simply Elevated 1	\N	\N	\N	\N	Branding guidelines to be shared by the client as per Elewen proposed timelines	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Hotel banquets, seminar halls, and meeting venues.	It adds just the right amount of add on structure and branding, enough to elevate the experience while keeping things simple and cost-effective.	A crisp 6x8 ft registration backdrop that sets the scene the moment your attendees walk in — professional, polished, and unmistakably yours. A hotel check-in table positioned right in front to keep arrivals smooth and organised. Four 4x8 ft branded standees placed across the venue so your identity travels with every guest, from entrance to exit. And a pack of 20 PVC name badges with lanyards — because nothing says "we planned this well" like a badge that actually looks good around someone's neck.	For organisers who want their event to feel put-together from the first impression to the last. Whether it's a corporate conference, a dealer meet, or a seminar, Simply Elevated 1 takes care of the two things that matter most — a registration experience that doesn't feel like a queue at a government office, and branding that travels with your attendees through every part of the venue. Efficient on budget, generous on impact.
+33	Simply Elevated 2	\N	\N	\N	\N	Branding guidelines to be shared by the client as per Elewen proposed timelines. Power to be provided by the venue / cutomer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Hotel banquets, seminar halls, and meeting venues.	It adds just the right amount of add on structure and branding, enough to elevate the experience while keeping things simple and cost-effective.	Everything from Simply Elevated 1 — the registration backdrop, hotel check-in table, four branded standees, and PVC badges — now anchored by a proper stage. An LED screen (8–12 ft wide, 6–8 ft tall) that makes every slide and every speaker unmissable. A 2.5 ft raised platform with a clean paint or carpet finish that gives your presenters the presence they deserve. A branded podium as the centrepiece. And stage lighting that makes sure no one in the room is squinting — faces lit, ambience set, every seat a good seat.	For events where someone has something important to say and deserves to be heard — and seen. Whether it's a corporate address, a product launch presentation, or a seminar with multiple speakers, Simply Elevated 2 builds the stage that makes it all feel intentional. The registration is handled, the branding is consistent, and the moment your first speaker steps up, the room knows this was put together by people who care about the details.
+35	Simply Elevated 2	\N	\N	\N	\N	Branding guidelines to be shared by the client as per Elewen proposed timelines. Power to be provided by the venue / cutomer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Hotel banquets, seminar halls, and meeting venues.	It adds just the right amount of add on structure and branding, enough to elevate the experience while keeping things simple and cost-effective.	Everything from Simply Elevated 1 — the registration backdrop, hotel check-in table, four branded standees, and PVC badges — now anchored by a proper stage. An LED screen (8–12 ft wide, 6–8 ft tall) that makes every slide and every speaker unmissable. A 2.5 ft raised platform with a clean paint or carpet finish that gives your presenters the presence they deserve. A branded podium as the centrepiece. And stage lighting that makes sure no one in the room is squinting — faces lit, ambience set, every seat a good seat.	For events where someone has something important to say and deserves to be heard — and seen. Whether it's a corporate address, a product launch presentation, or a seminar with multiple speakers, Simply Elevated 2 builds the stage that makes it all feel intentional. The registration is handled, the branding is consistent, and the moment your first speaker steps up, the room knows this was put together by people who care about the details.
+40	AV & Tech Basics 1	\N	\N	\N	\N	Require power from the venue. All presentation content to be taken care by customer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Hotel banquets, seminar halls, and indoor meeting venues.	It adds just the right amount of add on structure and branding, enough to elevate the experience while keeping things simple and cost-effective.	A clean, reliable AV setup that makes sure every word is heard and every slide is seen. Basic sound system with 1 cordless mic, 1 podium mic, and a mixer — all managed by an on-ground operator. A projector with screen that delivers clear visuals for any presentation or session. Simple, functional, and everything a mid-sized seminar or meeting needs to run without a hitch.	\N
+36	Simply Elevated 3	\N	\N	\N	\N	Branding guidelines to be shared by the client as per Elewen proposed timelines. Power to be provided by the venue / cutomer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Hotel banquets, seminar halls, and meeting venues.	It adds just the right amount of add on structure and branding, enough to elevate the experience while keeping things simple and cost-effective.	Directional sunboards at entry, a 6x8 ft registration backdrop with branded table facade, 2 LED standees and 2 printed branding standees across the venue. A raised stage platform with branded podium, your choice of static or LED screen backdrop, ample face lighting, and a full sound setup — 2 cordless mics, 1 podium mic, mixer, and operator included.	For events that need to run like clockwork — from a well-signed entrance to a stage that's fully mic'd and ready. Built for conferences, seminars, and corporate meets where the setup needs to feel professional without requiring a full production team.
+41	AV & Tech Basics 1	\N	\N	\N	\N	Require power from the venue. All presentation content to be taken care by customer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Hotel banquets, seminar halls, and indoor meeting venues.	It adds just the right amount of add on structure and branding, enough to elevate the experience while keeping things simple and cost-effective.	A clean, reliable AV setup that makes sure every word is heard and every slide is seen. Basic sound system with 1 cordless mic, 1 podium mic, and a mixer — all managed by an on-ground operator. A projector with screen that delivers clear visuals for any presentation or session. Simple, functional, and everything a mid-sized seminar or meeting needs to run without a hitch.	\N
+42	AV & Tech Essential Kit 2	\N	\N	\N	\N	Require power from the venue. All presentation content to be taken care by customer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Corporate conferences, seminars, and dealer meets with multiple speakers and structured presentation flow.	It goes beyond basic AV by adding control tools and backup support, ensuring presentations run smoothly without interruptions.	A full sound system with 2 cordless mics, 1 podium mic, and a mixer — covering every speaker, every session, every corner of the room. A large LED screen (8–12 ft wide) that makes every slide impossible to miss. A presentation clicker and backup laptop so no speaker is ever caught scrambling. And an on-ground operator managing it all, live, from setup to the final sign-off.	\N
+43	AV & Tech Essential Kit 2	\N	\N	\N	\N	Require power from the venue. All presentation content to be taken care by customer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Corporate conferences, seminars, and dealer meets with multiple speakers and structured presentation flow.	It goes beyond basic AV by adding control tools and backup support, ensuring presentations run smoothly without interruptions.	A full sound system with 2 cordless mics, 1 podium mic, and a mixer — covering every speaker, every session, every corner of the room. A large LED screen (8–12 ft wide) that makes every slide impossible to miss. A presentation clicker and backup laptop so no speaker is ever caught scrambling. And an on-ground operator managing it all, live, from setup to the final sign-off.	\N
+44	AV & Tech Essential Kit Pro 3	\N	\N	\N	\N	Require power from the venue. All presentation content to be taken care by customer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Conferences, dealer meets, product presentations, and corporate events where smooth execution and high-quality AV delivery are critical.	It removes all technical uncertainty, ensuring speakers, presentations, and transitions run seamlessly throughout the event.	A pro-grade sound system with 4 speakers, 3 cordless mics, 1 podium mic, 1 lapel mic, and a digital mixer — so every voice in the room is crystal clear. A large LED screen (up to 16 ft wide) with 2 confidence monitors facing the stage, so speakers never lose their place. Stage wash and ambient lighting, a presentation clicker, backup laptop, and 1–2 experienced technicians managing everything live. Built for events where technical failure simply isn't an option.	\N
+45	AV & Tech Essential Kit Pro 3	\N	\N	\N	\N	Require power from the venue. All presentation content to be taken care by customer 	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Conferences, dealer meets, product presentations, and corporate events where smooth execution and high-quality AV delivery are critical.	It removes all technical uncertainty, ensuring speakers, presentations, and transitions run seamlessly throughout the event.	A pro-grade sound system with 4 speakers, 3 cordless mics, 1 podium mic, 1 lapel mic, and a digital mixer — so every voice in the room is crystal clear. A large LED screen (up to 16 ft wide) with 2 confidence monitors facing the stage, so speakers never lose their place. Stage wash and ambient lighting, a presentation clicker, backup laptop, and 1–2 experienced technicians managing everything live. Built for events where technical failure simply isn't an option.	\N
+46	Stage Setup 2	\N	\N	\N	\N	Require power from the venue. Design guidlines to be shared by the customer as per Elewen timelines	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Conferences, dealer meets, product presentations, and corporate events where smooth execution and high-quality AV delivery are critical.	Stage is the main focus area and It creates a clean stage that supports speakers without overcomplicating the setup. 	A clean 2.5 ft platform (16 ft long) with carpet or paint finish, neatly skirted and edge-finished so every angle looks polished. Branded podium at centre, steps for easy stage access, and 3 chairs with a centre table for panel sessions. Your choice of a printed fabric backdrop or a full LED stage backdrop (12–16 ft) as the visual anchor behind it all. Thirty cue cards to keep speakers on track, and an optional show runner to make sure the whole thing flows without a hitch.	\N
+47	Stage Setup 2	\N	\N	\N	\N	Require power from the venue. Design guidlines to be shared by the customer as per Elewen timelines	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Conferences, dealer meets, product presentations, and corporate events where smooth execution and high-quality AV delivery are critical.	Stage is the main focus area and It creates a clean stage that supports speakers without overcomplicating the setup. 	A clean 2.5 ft platform (16 ft long) with carpet or paint finish, neatly skirted and edge-finished so every angle looks polished. Branded podium at centre, steps for easy stage access, and 3 chairs with a centre table for panel sessions. Your choice of a printed fabric backdrop or a full LED stage backdrop (12–16 ft) as the visual anchor behind it all. Thirty cue cards to keep speakers on track, and an optional show runner to make sure the whole thing flows without a hitch.	\N
+48	Stage Setup 3	\N	\N	\N	\N	Require power from the venue. Design guidlines to be shared by the customer as per Elewen timelines	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Conferences, dealer meets, product presentations, and corporate events where smooth execution and high-quality AV delivery are critical.	Stage is the main focus area and It creates a clean stage that supports speakers without overcomplicating the setup. 	Everything from Stage Setup 2, now with side panels that make the stage feel complete from every angle. A 2.5 ft platform with skirting and edge finishing, branded podium, and steps — all anchored by a 12–16 ft backdrop with matching side wings in your choice of printed fabric or full LED. Three chairs, a centre table, speaker name placards, and 30 cue cards for polished, well-organised sessions. Optional show runner available to keep the entire flow running on time.	\N
+49	Stage Setup 3	\N	\N	\N	\N	Require power from the venue. Design guidlines to be shared by the customer as per Elewen timelines	Need additional branding, elements or customisation? Go ahead and book, our team will connect with you to understand your requirements and suggest suitable add-ons. Setup will be adapted to venue specifications. 	Conferences, dealer meets, product presentations, and corporate events where smooth execution and high-quality AV delivery are critical.	Stage is the main focus area and It creates a clean stage that supports speakers without overcomplicating the setup. 	Everything from Stage Setup 2, now with side panels that make the stage feel complete from every angle. A 2.5 ft platform with skirting and edge finishing, branded podium, and steps — all anchored by a 12–16 ft backdrop with matching side wings in your choice of printed fabric or full LED. Three chairs, a centre table, speaker name placards, and 30 cue cards for polished, well-organised sessions. Optional show runner available to keep the entire flow running on time.	\N
 \.
 
 
@@ -10389,6 +10411,22 @@ COPY public.components_package_decorpackages_budget_level_lnk (id, decorpackages
 28	29	13
 19	20	14
 25	26	14
+30	31	1
+31	32	10
+32	33	5
+34	35	14
+35	36	3
+38	39	13
+39	40	1
+40	41	10
+41	42	5
+42	43	14
+43	44	3
+44	45	13
+45	46	5
+46	47	14
+47	48	3
+48	49	13
 \.
 
 
@@ -10397,8 +10435,13 @@ COPY public.components_package_decorpackages_budget_level_lnk (id, decorpackages
 --
 
 COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, component_type, field, "order") FROM stdin;
+837	46	418	package.inclusions	inclustions	1
 135	11	43	package.package-element	elements	19
+838	46	419	package.inclusions	inclustions	2
+839	46	420	package.inclusions	inclustions	3
+840	46	421	package.inclusions	inclustions	4
 124	11	85	package.inclusions	inclustions	18
+841	46	422	package.inclusions	inclustions	5
 125	11	86	package.inclusions	inclustions	20
 126	11	87	package.inclusions	inclustions	22
 127	11	88	package.inclusions	inclustions	23
@@ -10440,6 +10483,22 @@ COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, compon
 256	14	42	shared.price-breakdown-item	price_breakdown	1
 257	14	43	shared.price-breakdown-item	price_breakdown	2
 258	14	44	shared.price-breakdown-item	price_breakdown	3
+842	46	423	package.inclusions	inclustions	6
+843	46	424	package.inclusions	inclustions	7
+844	46	425	package.inclusions	inclustions	8
+845	46	426	package.inclusions	inclustions	9
+846	46	273	shared.price-covers-item	price_covers	1
+847	46	274	shared.price-covers-item	price_covers	2
+848	46	275	shared.price-covers-item	price_covers	3
+849	46	276	shared.price-covers-item	price_covers	4
+850	47	427	package.inclusions	inclustions	1
+851	47	428	package.inclusions	inclustions	2
+852	47	429	package.inclusions	inclustions	3
+853	47	430	package.inclusions	inclustions	4
+854	47	431	package.inclusions	inclustions	5
+855	47	432	package.inclusions	inclustions	6
+666	36	326	package.inclusions	inclustions	14
+667	36	327	package.inclusions	inclustions	15
 121	11	82	package.inclusions	inclustions	3
 122	11	83	package.inclusions	inclustions	10
 123	11	84	package.inclusions	inclustions	12
@@ -10466,7 +10525,61 @@ COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, compon
 303	17	158	shared.price-covers-item	price_covers	2
 304	17	159	shared.price-covers-item	price_covers	3
 305	17	160	shared.price-covers-item	price_covers	4
+668	36	328	package.inclusions	inclustions	16
+856	47	433	package.inclusions	inclustions	7
+857	47	434	package.inclusions	inclustions	8
+858	47	435	package.inclusions	inclustions	9
 306	17	56	shared.price-breakdown-item	price_breakdown	1
+616	35	292	package.inclusions	inclustions	1
+617	35	293	package.inclusions	inclustions	2
+618	35	294	package.inclusions	inclustions	3
+619	35	295	package.inclusions	inclustions	4
+620	35	296	package.inclusions	inclustions	5
+621	35	297	package.inclusions	inclustions	6
+622	35	298	package.inclusions	inclustions	7
+623	35	229	shared.price-covers-item	price_covers	1
+624	35	230	shared.price-covers-item	price_covers	2
+625	35	231	shared.price-covers-item	price_covers	3
+626	35	232	shared.price-covers-item	price_covers	4
+669	36	329	package.inclusions	inclustions	17
+670	36	330	package.inclusions	inclustions	18
+671	36	331	package.inclusions	inclustions	19
+630	36	302	package.inclusions	inclustions	8
+661	36	322	package.inclusions	inclustions	9
+631	36	303	package.inclusions	inclustions	10
+663	36	323	package.inclusions	inclustions	11
+664	36	324	package.inclusions	inclustions	12
+665	36	325	package.inclusions	inclustions	13
+640	36	235	shared.price-covers-item	price_covers	4
+641	36	236	shared.price-covers-item	price_covers	6
+714	39	347	package.inclusions	inclustions	1
+715	39	348	package.inclusions	inclustions	2
+527	31	270	package.inclusions	inclustions	1
+528	31	271	package.inclusions	inclustions	4
+529	31	272	package.inclusions	inclustions	6
+530	31	273	package.inclusions	inclustions	8
+531	31	213	shared.price-covers-item	price_covers	2
+532	31	214	shared.price-covers-item	price_covers	3
+533	31	215	shared.price-covers-item	price_covers	5
+534	31	216	shared.price-covers-item	price_covers	7
+543	32	274	package.inclusions	inclustions	1
+544	32	275	package.inclusions	inclustions	2
+545	32	276	package.inclusions	inclustions	3
+546	32	277	package.inclusions	inclustions	4
+547	32	217	shared.price-covers-item	price_covers	1
+548	32	218	shared.price-covers-item	price_covers	2
+549	32	219	shared.price-covers-item	price_covers	3
+550	32	220	shared.price-covers-item	price_covers	4
+716	39	349	package.inclusions	inclustions	3
+717	39	350	package.inclusions	inclustions	4
+718	39	351	package.inclusions	inclustions	5
+719	39	352	package.inclusions	inclustions	6
+720	39	353	package.inclusions	inclustions	7
+721	39	354	package.inclusions	inclustions	8
+722	39	355	package.inclusions	inclustions	9
+723	39	356	package.inclusions	inclustions	10
+724	39	357	package.inclusions	inclustions	11
+725	39	358	package.inclusions	inclustions	12
 1	3	60	package.inclusions	inclustions	9
 2	3	61	package.inclusions	inclustions	10
 63	3	72	package.inclusions	inclustions	11
@@ -10484,6 +10597,27 @@ COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, compon
 515	30	267	package.inclusions	inclustions	2
 516	30	268	package.inclusions	inclustions	3
 517	30	269	package.inclusions	inclustions	4
+726	39	359	package.inclusions	inclustions	13
+565	33	221	shared.price-covers-item	price_covers	1
+566	33	222	shared.price-covers-item	price_covers	3
+567	33	223	shared.price-covers-item	price_covers	5
+568	33	224	shared.price-covers-item	price_covers	6
+727	39	360	package.inclusions	inclustions	14
+728	39	361	package.inclusions	inclustions	15
+729	39	245	shared.price-covers-item	price_covers	1
+730	39	246	shared.price-covers-item	price_covers	2
+731	39	247	shared.price-covers-item	price_covers	3
+732	39	248	shared.price-covers-item	price_covers	4
+859	47	277	shared.price-covers-item	price_covers	1
+860	47	278	shared.price-covers-item	price_covers	2
+861	47	279	shared.price-covers-item	price_covers	3
+862	47	280	shared.price-covers-item	price_covers	4
+787	44	390	package.inclusions	inclustions	1
+815	44	265	shared.price-covers-item	price_covers	2
+816	44	266	shared.price-covers-item	price_covers	3
+788	44	391	package.inclusions	inclustions	4
+789	44	392	package.inclusions	inclustions	5
+817	44	267	shared.price-covers-item	price_covers	6
 518	30	70	package.package-element	elements	1
 519	30	71	package.package-element	elements	2
 520	30	16	package.package-addon	addons	1
@@ -10560,6 +10694,23 @@ COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, compon
 401	22	177	shared.price-covers-item	price_covers	1
 402	22	178	shared.price-covers-item	price_covers	2
 403	22	179	shared.price-covers-item	price_covers	3
+818	44	268	shared.price-covers-item	price_covers	7
+790	44	393	package.inclusions	inclustions	8
+791	44	394	package.inclusions	inclustions	9
+792	44	395	package.inclusions	inclustions	10
+793	44	396	package.inclusions	inclustions	11
+794	44	397	package.inclusions	inclustions	12
+795	44	398	package.inclusions	inclustions	13
+796	44	399	package.inclusions	inclustions	14
+797	44	400	package.inclusions	inclustions	15
+798	44	401	package.inclusions	inclustions	16
+799	44	402	package.inclusions	inclustions	17
+800	44	403	package.inclusions	inclustions	18
+819	45	404	package.inclusions	inclustions	1
+820	45	405	package.inclusions	inclustions	2
+821	45	406	package.inclusions	inclustions	3
+822	45	407	package.inclusions	inclustions	4
+823	45	408	package.inclusions	inclustions	5
 404	22	180	shared.price-covers-item	price_covers	4
 405	23	211	package.inclusions	inclustions	1
 406	23	212	package.inclusions	inclustions	2
@@ -10605,6 +10756,65 @@ COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, compon
 446	26	194	shared.price-covers-item	price_covers	2
 447	26	195	shared.price-covers-item	price_covers	3
 448	26	196	shared.price-covers-item	price_covers	4
+863	48	436	package.inclusions	inclustions	1
+864	48	437	package.inclusions	inclustions	2
+865	48	438	package.inclusions	inclustions	3
+866	48	439	package.inclusions	inclustions	4
+867	48	440	package.inclusions	inclustions	5
+868	48	441	package.inclusions	inclustions	6
+869	48	442	package.inclusions	inclustions	7
+870	48	443	package.inclusions	inclustions	8
+871	48	444	package.inclusions	inclustions	9
+872	48	445	package.inclusions	inclustions	10
+873	48	281	shared.price-covers-item	price_covers	1
+874	48	282	shared.price-covers-item	price_covers	2
+875	48	283	shared.price-covers-item	price_covers	3
+876	48	284	shared.price-covers-item	price_covers	4
+877	49	446	package.inclusions	inclustions	1
+878	49	447	package.inclusions	inclustions	2
+879	49	448	package.inclusions	inclustions	3
+880	49	449	package.inclusions	inclustions	4
+881	49	450	package.inclusions	inclustions	5
+882	49	451	package.inclusions	inclustions	6
+883	49	452	package.inclusions	inclustions	7
+884	49	453	package.inclusions	inclustions	8
+885	49	454	package.inclusions	inclustions	9
+886	49	455	package.inclusions	inclustions	10
+887	49	285	shared.price-covers-item	price_covers	1
+888	49	286	shared.price-covers-item	price_covers	2
+889	49	287	shared.price-covers-item	price_covers	3
+890	49	288	shared.price-covers-item	price_covers	4
+739	40	249	shared.price-covers-item	price_covers	1
+733	40	362	package.inclusions	inclustions	2
+740	40	250	shared.price-covers-item	price_covers	3
+741	40	251	shared.price-covers-item	price_covers	4
+734	40	363	package.inclusions	inclustions	5
+742	40	252	shared.price-covers-item	price_covers	6
+735	40	364	package.inclusions	inclustions	7
+736	40	365	package.inclusions	inclustions	8
+737	40	366	package.inclusions	inclustions	9
+738	40	367	package.inclusions	inclustions	10
+753	41	368	package.inclusions	inclustions	1
+754	41	369	package.inclusions	inclustions	2
+755	41	370	package.inclusions	inclustions	3
+756	41	371	package.inclusions	inclustions	4
+757	41	372	package.inclusions	inclustions	5
+758	41	373	package.inclusions	inclustions	6
+759	41	253	shared.price-covers-item	price_covers	1
+760	41	254	shared.price-covers-item	price_covers	2
+761	41	255	shared.price-covers-item	price_covers	3
+762	41	256	shared.price-covers-item	price_covers	4
+824	45	409	package.inclusions	inclustions	6
+825	45	410	package.inclusions	inclustions	7
+826	45	411	package.inclusions	inclustions	8
+827	45	412	package.inclusions	inclustions	9
+828	45	413	package.inclusions	inclustions	10
+829	45	414	package.inclusions	inclustions	11
+830	45	415	package.inclusions	inclustions	12
+831	45	416	package.inclusions	inclustions	13
+832	45	417	package.inclusions	inclustions	14
+833	45	269	shared.price-covers-item	price_covers	1
+834	45	270	shared.price-covers-item	price_covers	2
 458	27	197	shared.price-covers-item	price_covers	1
 459	27	198	shared.price-covers-item	price_covers	2
 449	27	239	package.inclusions	inclustions	3
@@ -10631,6 +10841,44 @@ COPY public.components_package_decorpackages_cmps (id, entity_id, cmp_id, compon
 498	29	206	shared.price-covers-item	price_covers	2
 499	29	207	shared.price-covers-item	price_covers	3
 500	29	208	shared.price-covers-item	price_covers	4
+835	45	271	shared.price-covers-item	price_covers	3
+836	45	272	shared.price-covers-item	price_covers	4
+551	33	278	package.inclusions	inclustions	2
+552	33	279	package.inclusions	inclustions	4
+553	33	280	package.inclusions	inclustions	7
+554	33	281	package.inclusions	inclustions	8
+555	33	282	package.inclusions	inclustions	9
+556	33	283	package.inclusions	inclustions	10
+557	33	284	package.inclusions	inclustions	11
+657	36	321	package.inclusions	inclustions	1
+627	36	299	package.inclusions	inclustions	5
+628	36	300	package.inclusions	inclustions	7
+638	36	233	shared.price-covers-item	price_covers	2
+639	36	234	shared.price-covers-item	price_covers	3
+763	42	374	package.inclusions	inclustions	1
+764	42	375	package.inclusions	inclustions	2
+765	42	376	package.inclusions	inclustions	3
+766	42	377	package.inclusions	inclustions	4
+767	42	378	package.inclusions	inclustions	5
+768	42	379	package.inclusions	inclustions	6
+769	42	380	package.inclusions	inclustions	7
+770	42	381	package.inclusions	inclustions	8
+771	42	257	shared.price-covers-item	price_covers	1
+772	42	258	shared.price-covers-item	price_covers	2
+773	42	259	shared.price-covers-item	price_covers	3
+774	42	260	shared.price-covers-item	price_covers	4
+775	43	382	package.inclusions	inclustions	1
+776	43	383	package.inclusions	inclustions	2
+777	43	384	package.inclusions	inclustions	3
+778	43	385	package.inclusions	inclustions	4
+779	43	386	package.inclusions	inclustions	5
+780	43	387	package.inclusions	inclustions	6
+781	43	388	package.inclusions	inclustions	7
+782	43	389	package.inclusions	inclustions	8
+783	43	261	shared.price-covers-item	price_covers	1
+784	43	262	shared.price-covers-item	price_covers	2
+785	43	263	shared.price-covers-item	price_covers	3
+786	43	264	shared.price-covers-item	price_covers	4
 \.
 
 
@@ -10657,6 +10905,22 @@ COPY public.components_package_decorpackages_policy_lnk (id, decorpackages_id, p
 27	27	1
 29	29	2
 30	30	2
+31	31	1
+32	32	2
+33	33	1
+35	35	2
+36	36	1
+39	39	2
+40	40	1
+41	41	2
+42	42	1
+43	43	2
+44	44	1
+45	45	2
+46	46	1
+47	47	2
+48	48	1
+49	49	2
 \.
 
 
@@ -10683,6 +10947,22 @@ COPY public.components_package_decorpackages_theme_lnk (id, decorpackages_id, th
 27	27	5
 29	29	11
 30	30	9
+31	31	5
+32	32	11
+33	33	5
+35	35	11
+36	36	5
+39	39	11
+40	40	5
+41	41	11
+42	42	5
+43	43	11
+44	44	5
+45	45	11
+46	46	5
+47	47	11
+48	48	5
+49	49	11
 \.
 
 
@@ -10949,6 +11229,152 @@ COPY public.components_package_inclusions (id, text, group_title, choice_group_l
 267	Balloon Arch with sign	\N	choose 1	arch	t
 268	Balloon Bouquet	\N	Choose 1	balloons	t
 269	2 small standees (10 years)	\N	Choose 1	arch	t
+270	Registration backdrop (6x8ft.)	Registration Setup	Registration Setup	Registration Setup	\N
+271	Hotel table (required by the hotel) to be placed in front for check-in	Registration Setup	Registration Setup	Registration Setup	\N
+272	4 printed branding standees (4x8 ft) 	Branding Elements	Branding Elements	Branding Elements	\N
+273	PVC name badges with lanyards (pack of 20)	Attendee Collaterals	Attendee Collaterals	Attendee Collaterals	\N
+274	Registration backdrop (6x8ft.)	Registration Setup	Registration Setup	Registration Setup	\N
+275	Hotel table (required by the hotel) to be placed in front for check-in	Registration Setup	Registration Setup	Registration Setup	\N
+276	4 printed branding standees (4x8 ft) 	Branding Elements	Branding Elements	Branding Elements	\N
+277	PVC name badges with lanyards (pack of 20)	Attendee Collaterals	Attendee Collaterals	Attendee Collaterals	\N
+278	Registration backdrop (6x8ft.)	Registration Setup	Registration Setup	Registration Setup	\N
+279	Hotel table (required by the hotel) to be placed in front for check-in	Registration Setup	Registration Setup	Registration Setup	\N
+280	4 printed branding standees (4x8ft.)	Branding Elements	Branding Elements	Branding Elements	\N
+281	PVC name badges with lanyards (pack of 20)	Attendee Collaterals	Attendee Collaterals	Attendee Collaterals	\N
+282	LED screen (8–12 ft width | 6–8 ft height)	Stage Setup	Stage Setup	Stage Setup	\N
+283	2.5 ft platform with paint finish or carpet	Stage Setup	Stage Setup	Stage Setup	\N
+284	Basic podium with branding	Stage Setup	Stage Setup	Stage Setup	\N
+292	Registration backdrop (6x8ft.)	Registration Setup	Registration Setup	Registration Setup	\N
+293	Hotel table (required by the hotel) to be placed in front for check-in	Registration Setup	Registration Setup	Registration Setup	\N
+294	4 printed branding standees (4x8ft.)	Branding Elements	Branding Elements	Branding Elements	\N
+295	PVC name badges with lanyards (pack of 20)	Attendee Collaterals	Attendee Collaterals	Attendee Collaterals	\N
+296	LED screen (8–12 ft width | 6–8 ft height)	Stage Setup	Stage Setup	Stage Setup	\N
+297	2.5 ft platform with paint finish or carpet	Stage Setup	Stage Setup	Stage Setup	\N
+298	Basic podium with branding	Stage Setup	Stage Setup	Stage Setup	\N
+321	2 printed sunboards with easel stands (can be used as welcome, directional, or information signage; content customisable available)	Directional & Entry Branding	Directional & Entry Branding	Directional & Entry Branding	\N
+299	Registration backdrop (6x8ft.)	Registration Setup	Registration Setup	Registration Setup	\N
+300	Hotel to provide a table for the registeration desk | branded facade to cover it 	Registration Setup	Registration Setup	Registration Setup	\N
+302	2 LED standees (content to be sized and provided by the customer)	Branding Elements	Branding Elements	Branding Elements	\N
+322	2 printed branding standees (4x8 ft)	Branding Elements	Branding Elements	Branding Elements	\N
+303	Printed PVC name badges with lanyards (pack of 20)	Attendee Collaterals	Attendee Collaterals	Attendee Collaterals	\N
+323	Static printed backdrop (8x12 ft)	Stage Backdrop (Choose 1)	Stage Backdrop (Choose 1)	Stage Backdrop (Choose 1)	t
+324	LED screen (8–12 ft width | 6–8 ft height) (Price will vary according to your choice) 	Stage Backdrop (Choose 1)	Stage Backdrop (Choose 1)	Stage Backdrop (Choose 1)	t
+325	2.5 ft platform with paint finish or carpet	Stage Setup	Stage Setup	Stage Setup	\N
+326	Basic podium with branding	Stage Setup	Stage Setup	Stage Setup	\N
+327	Basic sound system (speaker)	Technical Setup	Technical Setup	Technical Setup	\N
+328	2 cordless microphones and 1 podium mic	Technical Setup	Technical Setup	Technical Setup	\N
+329	1 Basic mixer	Technical Setup	Technical Setup	Technical Setup	\N
+330	1 Operator	Technical Setup	Technical Setup	Technical Setup	\N
+331	Ample stage face lighting 	Stage Lighting	Stage Lighting	Stage Lighting	\N
+347	2 printed sunboards with easel stands (can be used as welcome, directional, or information signage; content customisable available)	Directional & Entry Branding	Directional & Entry Branding	Directional & Entry Branding	\N
+348	Registration backdrop (6x8ft.)	Registration Setup	Registration Setup	Registration Setup	\N
+349	Hotel to provide a table for the registeration desk | branded facade to cover it 	Registration Setup	Registration Setup	Registration Setup	\N
+350	2 LED standees (content to be sized and provided by the customer)	Branding Elements	Branding Elements	Branding Elements	\N
+351	2 printed branding standees (4x8 ft)	Branding Elements	Branding Elements	Branding Elements	\N
+352	Printed PVC name badges with lanyards (pack of 20)	Attendee Collaterals	Attendee Collaterals	Attendee Collaterals	\N
+353	Static printed backdrop (8x12 ft)	Stage Backdrop (Choose 1)	Stage Backdrop (Choose 1)	Stage Backdrop (Choose 1)	t
+354	LED screen (8–12 ft width | 6–8 ft height) (Price will vary according to your choice) 	Stage Backdrop (Choose 1)	Stage Backdrop (Choose 1)	Stage Backdrop (Choose 1)	t
+355	2.5 ft platform with paint finish or carpet	Stage Setup	Stage Setup	Stage Setup	\N
+356	Basic podium with branding	Stage Setup	Stage Setup	Stage Setup	\N
+357	Basic sound system (speaker)	Technical Setup	Technical Setup	Technical Setup	\N
+358	2 cordless microphones and 1 podium mic	Technical Setup	Technical Setup	Technical Setup	\N
+359	1 Basic mixer	Technical Setup	Technical Setup	Technical Setup	\N
+360	1 Operator	Technical Setup	Technical Setup	Technical Setup	\N
+361	Ample stage face lighting 	Stage Lighting	Stage Lighting	Stage Lighting	\N
+362	Basic sound system (1-2 speakers)	Audio Setup	Audio Setup	Audio Setup	\N
+363	1 cordless microphone	Audio Setup	Audio Setup	Audio Setup	\N
+364	1 podium microphone	Audio Setup	Audio Setup	Audio Setup	\N
+365	Basic mixer	Audio Setup	Audio Setup	Audio Setup	\N
+366	Projector with screen (suitable for small to mid-sized rooms)	Visual Setup	Visual Setup	Visual Setup	\N
+367	1 technician/operator for basic support	Control & Operation	Control & Operation	Control & Operation	\N
+368	Basic sound system (1-2 speakers)	Audio Setup	Audio Setup	Audio Setup	\N
+369	1 cordless microphone	Audio Setup	Audio Setup	Audio Setup	\N
+370	1 podium microphone	Audio Setup	Audio Setup	Audio Setup	\N
+371	Basic mixer	Audio Setup	Audio Setup	Audio Setup	\N
+372	Projector with screen (suitable for small to mid-sized rooms)	Visual Setup	Visual Setup	Visual Setup	\N
+373	1 technician/operator for basic support	Control & Operation	Control & Operation	Control & Operation	\N
+374	Sound system with 2-3 speakers (based on room size)	Audio Setup	Audio Setup	Audio Setup	\N
+375	2 cordless microphones	Audio Setup	Audio Setup	Audio Setup	\N
+376	1 podium microphone	Audio Setup	Audio Setup	Audio Setup	\N
+377	Basic mixer	Audio Setup	Audio Setup	Audio Setup	\N
+378	LED screen (8–12 ft width | 6–8 ft height)	Visual Setup	Visual Setup	Visual Setup	\N
+379	Presentation clicker for speakers	Presentation Support	Presentation Support	Presentation Support	\N
+380	Laptop for presentation backup	Presentation Support	Presentation Support	Presentation Support	\N
+381	1 technician/operator for setup and live support	Control & Operation	Control & Operation	Control & Operation	\N
+382	Sound system with 2-3 speakers (based on room size)	Audio Setup	Audio Setup	Audio Setup	\N
+383	2 cordless microphones	Audio Setup	Audio Setup	Audio Setup	\N
+384	1 podium microphone	Audio Setup	Audio Setup	Audio Setup	\N
+385	Basic mixer	Audio Setup	Audio Setup	Audio Setup	\N
+386	LED screen (8–12 ft width | 6–8 ft height)	Visual Setup	Visual Setup	Visual Setup	\N
+387	Presentation clicker for speakers	Presentation Support	Presentation Support	Presentation Support	\N
+388	Laptop for presentation backup	Presentation Support	Presentation Support	Presentation Support	\N
+389	1 technician/operator for setup and live support	Control & Operation	Control & Operation	Control & Operation	\N
+390	Sound system with 4 speakers (Varies on room size)	Audio Setup	Audio Setup	Audio Setup	\N
+391	3 cordless microphones	Audio Setup	Audio Setup	Audio Setup	\N
+392	1 podium microphone	Audio Setup	Audio Setup	Audio Setup	\N
+393	1 Collar/lapel microphone for speakers	Audio Setup	Audio Setup	Audio Setup	\N
+394	Digital mixer 	Audio Setup	Audio Setup	Audio Setup	\N
+395	LED screen (8–16 ft width | 6–8 ft height) & LED riser	Visual Setup	Visual Setup	Visual Setup	\N
+396	2 Confidence monitor (speaker-facing screen)	Visual Setup	Visual Setup	Visual Setup	\N
+397	2.5 inches platform	Visual Setup	Visual Setup	Visual Setup	\N
+398	1 laptop 	Presentation & Control	Presentation & Control	Presentation & Control	\N
+399	Presentation clicker	Presentation & Control	Presentation & Control	Presentation & Control	\N
+400	Stage wash lighting for speakers	Lighting	Lighting	Lighting	\N
+401	Basic ambient lighting for presentation clarity	Lighting	Lighting	Lighting	\N
+402	1–2 experienced technicians/operators for live management and troubleshooting	Technical Crew	Technical Crew	Technical Crew	\N
+403	Experienced Show Runner (based on availibility | will need content & showflow a day prior to the event) 	Recomended Add on (Optional) 	Recomended Add on (Optional) 	Recomended Add on (Optional) 	\N
+404	Sound system with 4 speakers (Varies on room size)	Audio Setup	Audio Setup	Audio Setup	\N
+405	3 cordless microphones	Audio Setup	Audio Setup	Audio Setup	\N
+406	1 podium microphone	Audio Setup	Audio Setup	Audio Setup	\N
+407	1 Collar/lapel microphone for speakers	Audio Setup	Audio Setup	Audio Setup	\N
+408	Digital mixer 	Audio Setup	Audio Setup	Audio Setup	\N
+409	LED screen (8–16 ft width | 6–8 ft height) & LED riser	Visual Setup	Visual Setup	Visual Setup	\N
+410	2 Confidence monitor (speaker-facing screen)	Visual Setup	Visual Setup	Visual Setup	\N
+411	2.5 inches platform	Visual Setup	Visual Setup	Visual Setup	\N
+412	1 laptop 	Presentation & Control	Presentation & Control	Presentation & Control	\N
+413	Presentation clicker	Presentation & Control	Presentation & Control	Presentation & Control	\N
+414	Stage wash lighting for speakers	Lighting	Lighting	Lighting	\N
+415	Basic ambient lighting for presentation clarity	Lighting	Lighting	Lighting	\N
+416	1–2 experienced technicians/operators for live management and troubleshooting	Technical Crew	Technical Crew	Technical Crew	\N
+417	Experienced Show Runner (based on availibility | will need content & showflow a day prior to the event) 	Recomended Add on (Optional) 	Recomended Add on (Optional) 	Recomended Add on (Optional) 	\N
+418	2.5 ft platform with carpet or paint finish (16 ft. in length) 	Stage Setup	Stage Setup	Stage Setup	\N
+419	Stage skirting and edge finishing	Stage Setup	Stage Setup	Stage Setup	\N
+420	Podium with branding	Stage Setup	Stage Setup	Stage Setup	\N
+421	Steps to access stage 	Stage Setup	Stage Setup	Stage Setup	\N
+422	Printed or fabric stage backdrop 12-16 ft. 	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	t
+423	LED Stage backdrop 12-16 ft. 	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	t
+424	30 cue cards 	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	\N
+425	3  chairs 	Seating on stage	Seating on stage	Seating on stage	\N
+426	1 center table 	Seating on stage	Seating on stage	Seating on stage	\N
+427	2.5 ft platform with carpet or paint finish (16 ft. in length) 	Stage Setup	Stage Setup	Stage Setup	\N
+428	Stage skirting and edge finishing	Stage Setup	Stage Setup	Stage Setup	\N
+429	Podium with branding	Stage Setup	Stage Setup	Stage Setup	\N
+430	Steps to access stage 	Stage Setup	Stage Setup	Stage Setup	\N
+431	Printed or fabric stage backdrop 12-16 ft. 	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	t
+432	LED Stage backdrop 12-16 ft. 	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	t
+433	30 cue cards 	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	\N
+434	3  chairs 	Seating on stage	Seating on stage	Seating on stage	\N
+435	1 center table 	Seating on stage	Seating on stage	Seating on stage	\N
+436	2.5 ft platform with carpet or paint finish (16 ft. in length) 	Stage Setup	Stage Setup	Stage Setup	\N
+437	Stage skirting and edge finishing	Stage Setup	Stage Setup	Stage Setup	\N
+438	Podium with branding	Stage Setup	Stage Setup	Stage Setup	\N
+439	Steps to access stage 	Stage Setup	Stage Setup	Stage Setup	\N
+440	Printed or fabric stage backdrop 12-16 ft. with 2 static side panels / wings	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	t
+441	LED Stage backdrop 12-16 ft. with 2 LED side panels / wings	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	t
+442	30 cue cards 	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	\N
+443	3  chairs 	Seating on stage	Seating on stage	Seating on stage	\N
+444	1 center table 	Seating on stage	Seating on stage	Seating on stage	\N
+445	Name placards for speakers	Seating on stage	Seating on stage	Seating on stage	\N
+446	2.5 ft platform with carpet or paint finish (16 ft. in length) 	Stage Setup	Stage Setup	Stage Setup	\N
+447	Stage skirting and edge finishing	Stage Setup	Stage Setup	Stage Setup	\N
+448	Podium with branding	Stage Setup	Stage Setup	Stage Setup	\N
+449	Steps to access stage 	Stage Setup	Stage Setup	Stage Setup	\N
+450	Printed or fabric stage backdrop 12-16 ft. with 2 static side panels / wings	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	t
+451	LED Stage backdrop 12-16 ft. with 2 LED side panels / wings	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	t
+452	30 cue cards 	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	Backdrop & Branding (Choose 1)	\N
+453	3  chairs 	Seating on stage	Seating on stage	Seating on stage	\N
+454	1 center table 	Seating on stage	Seating on stage	Seating on stage	\N
+455	Name placards for speakers	Seating on stage	Seating on stage	Seating on stage	\N
 \.
 
 
@@ -11475,6 +11901,70 @@ COPY public.components_shared_price_covers_items (id, text) FROM stdin;
 210	Professional Setup
 211	Final Dismantling
 212	Cordination with decor team handled end-to-end to ensure timely setup.
+213	Printing & Fabrication
+214	Installation & Setup
+215	On-ground coordination
+216	Dismantaling post event
+217	Printing & Fabrication
+218	Installation & Setup
+219	On-ground coordination
+220	Dismantaling post event
+221	Printing & Fabrication
+222	Installation & Setup
+223	On-ground coordination
+224	Dismantaling post event 
+229	Printing & Fabrication
+230	Installation & Setup
+231	On-ground coordination
+232	Dismantaling post event 
+233	Printing & Fabrication
+234	Installation & Setup
+235	On-ground coordination
+236	Dismantaling post event 
+245	Printing & Fabrication
+246	Installation & Setup
+247	On-ground coordination
+248	Dismantaling post event 
+249	Printing & Fabrication
+250	Installation & Setup
+251	On-ground coordination
+252	Dismantaling post event 
+253	Printing & Fabrication
+254	Installation & Setup
+255	On-ground coordination
+256	Dismantaling post event 
+257	Printing & Fabrication
+258	Installation & Setup
+259	On-ground coordination
+260	Dismantaling post event 
+261	Printing & Fabrication
+262	Installation & Setup
+263	On-ground coordination
+264	Dismantaling post event 
+265	Printing & Fabrication
+266	Installation & Setup
+267	On-ground coordination
+268	Dismantaling post event 
+269	Printing & Fabrication
+270	Installation & Setup
+271	On-ground coordination
+272	Dismantaling post event 
+273	Printing & Fabrication
+274	Installation & Setup
+275	On-ground coordination
+276	Dismantaling post event 
+277	Printing & Fabrication
+278	Installation & Setup
+279	On-ground coordination
+280	Dismantaling post event 
+281	Printing & Fabrication
+282	Installation & Setup
+283	On-ground coordination
+284	Dismantaling post event 
+285	Printing & Fabrication
+286	Installation & Setup
+287	On-ground coordination
+288	Dismantaling post event 
 \.
 
 
@@ -11888,12 +12378,12 @@ COPY public.events (id, document_id, name, slug, description, is_active, is_feat
 198	bc3x6ykkl25jl4s934xnwqd6	New Years Eve Party	new-years-eve-party	\N	f	t	11	Ring in the new year in style	2026-03-25 07:20:21.709	2026-04-27 06:49:19.938	2026-04-27 06:49:19.967	1	2	\N
 199	zi8spouall4dp3lrh3g3xdu4	Product Launch	product-launch	\N	f	t	2	Setting the stage for your big reveal	2026-03-25 07:52:39.525	2026-04-27 06:51:44.191	2026-04-27 06:51:44.222	1	2	\N
 200	abrx8hr17h9ex2u5xq5vz8c7	Networking Events	networking-events	\N	f	t	6	Thoughtful setups that spark great conversations	2026-03-25 08:08:40.672	2026-04-27 06:52:05.913	2026-04-27 06:52:05.956	1	2	\N
-105	qh464qr5l3xtgpdvsgkn2dq8	Seminar / Conference	seminar-conference	\N	f	t	4	Comfortable setups designed for focus and flow	2026-03-25 08:06:45.837	2026-04-27 06:52:38.347	\N	1	2	\N
-201	qh464qr5l3xtgpdvsgkn2dq8	Seminar / Conference	seminar-conference	\N	f	t	4	Comfortable setups designed for focus and flow	2026-03-25 08:06:45.837	2026-04-27 06:52:38.347	2026-04-27 06:52:38.379	1	2	\N
 1	xfcpgl2p1sfu83x3iogq02bd	Corporate	corporate	[{"type": "paragraph", "children": [{"text": "Conferences, launches & more", "type": "text"}]}]	t	f	2	\N	2026-03-17 12:09:17.259	2026-05-09 06:20:35.066	\N	1	2	\N
 203	xfcpgl2p1sfu83x3iogq02bd	Corporate	corporate	[{"type": "paragraph", "children": [{"text": "Conferences, launches & more", "type": "text"}]}]	t	f	2	\N	2026-03-17 12:09:17.259	2026-05-09 06:20:35.066	2026-05-09 06:20:35.188	1	2	\N
 204	zif83g4ct84h2s47acr8d9vn	Religious	religious	[{"type": "paragraph", "children": [{"text": "Puja, ceremonies & rituals", "type": "text"}]}]	t	f	3	\N	2026-03-20 12:56:15.144	2026-05-09 06:21:13.797	2026-05-09 06:21:13.896	1	2	\N
 205	ngr5ijolzyh2caio5m4d2pfo	Social 	social	[{"type": "paragraph", "children": [{"text": "Birthdays, parties & more", "type": "text"}]}]	t	f	1	\N	2026-03-17 12:10:34.876	2026-05-09 06:22:15.939	2026-05-09 06:22:16.036	1	2	\N
+105	qh464qr5l3xtgpdvsgkn2dq8	Seminar / Conference	seminar-conference	\N	t	t	4	Comfortable setups designed for focus and flow	2026-03-25 08:06:45.837	2026-05-11 12:00:30.428	\N	1	2	\N
+206	qh464qr5l3xtgpdvsgkn2dq8	Seminar / Conference	seminar-conference	\N	t	t	4	Comfortable setups designed for focus and flow	2026-03-25 08:06:45.837	2026-05-11 12:00:30.428	2026-05-11 12:00:30.49	1	2	\N
 \.
 
 
@@ -11902,6 +12392,14 @@ COPY public.events (id, document_id, name, slug, description, is_active, is_feat
 --
 
 COPY public.events_packages_lnk (id, event_id, package_id, package_ord, event_ord) FROM stdin;
+70	206	62	1	1
+71	105	63	2	0
+73	206	65	2	1
+74	105	66	3	0
+77	206	69	3	1
+78	105	70	4	0
+79	206	71	4	1
+80	105	72	5	0
 5	7	3	1	1
 7	107	9	1	0
 48	179	22	1	1
@@ -11918,6 +12416,13 @@ COPY public.events_packages_lnk (id, event_id, package_id, package_ord, event_or
 39	1	41	1	2
 45	176	11	1	1
 46	176	36	2	1
+81	206	73	5	1
+82	105	74	6	0
+83	206	75	6	1
+84	105	76	7	0
+85	206	77	7	1
+86	105	78	8	0
+87	206	79	8	1
 54	203	44	1	2
 55	96	46	1	0
 56	182	47	1	1
@@ -11932,6 +12437,7 @@ COPY public.events_packages_lnk (id, event_id, package_id, package_ord, event_or
 65	96	57	6	1
 66	182	59	6	1
 67	178	60	1	1
+68	105	61	1	0
 \.
 
 
@@ -11971,7 +12477,6 @@ COPY public.events_parent_event_lnk (id, event_id, inv_event_id, event_ord) FROM
 220	199	203	3
 221	183	203	4
 222	200	203	5
-223	201	203	6
 224	181	204	1
 225	180	204	2
 226	176	205	1
@@ -11992,6 +12497,7 @@ COPY public.events_parent_event_lnk (id, event_id, inv_event_id, event_ord) FROM
 241	197	205	16
 242	196	205	17
 243	189	205	18
+244	206	203	6
 \.
 
 
@@ -13010,6 +13516,22 @@ COPY public.packages (id, document_id, title, slug, description, base_price, is_
 57	l5w9aq4rrv68cqtt3hvjrdmv	Stall Upgarde 3	stall-upgarde-3	[{"type": "paragraph", "children": [{"text": "A simple upgrade package designed to enhance the look and visibility of your exhibition stall. Ideal for exhibitors who want to move beyond the standard setup and create a more polished, brand-forward presence.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-09 08:48:40.806	2026-05-09 08:49:30.39	\N	2	2	\N
 59	l5w9aq4rrv68cqtt3hvjrdmv	Stall Upgarde 3	stall-upgarde-3	[{"type": "paragraph", "children": [{"text": "A simple upgrade package designed to enhance the look and visibility of your exhibition stall. Ideal for exhibitors who want to move beyond the standard setup and create a more polished, brand-forward presence.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-09 08:48:40.806	2026-05-09 08:49:30.39	2026-05-09 08:49:31.002	2	2	\N
 60	scgf7f6e859w6lbts46ixyf5	Floating Moments - Level 1	floating-moments-level-1	[{"type": "paragraph", "children": [{"text": "A simple yet romantic balloon setup with personalized photos creating floating memories.Floating hearts, personalised balloon accents, and milestone standees that instantly turn any corner into a celebration", "type": "text"}]}]	5150.00	f	t	f	\N	t	\N	\N	2026-04-22 12:06:23.005	2026-05-10 04:30:12.502	2026-05-10 04:30:12.891	2	2	\N
+74	pzs0q5zkbvtcis06h3vg52ns	AV & Tech Essential Kit Pro 3	av-and-tech-essential-kit-pro-3	[{"type": "paragraph", "children": [{"text": "A complete audio-visual and technical setup designed for seamless execution, multiple speakers, and high-quality presentation delivery. This package covers all essential equipment, control systems, and on-ground support to ensure a smooth and uninterrupted event experience.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-11 13:02:23.291	2026-05-11 13:04:36.276	\N	2	2	\N
+61	octzv9paia0z11f8aj53gb4h	Simply Elevated 1	simply-elevated-1	[{"type": "paragraph", "children": [{"text": "A thoughtfully curated set of essentials that enhances the overall event experience without overdoing the setup. Designed for conferences, seminars, and dealer meets that require clean branding and smooth registration, while staying efficient on cost.", "type": "text"}]}]	500.00	f	t	f	Collaterals priced at ₹75 per piece for PVC name badges & lanyards. Pack of 20 included. Branding guidelines to be shared by client as per Elewen proposed timelines.	t	Simply Elevated 1 – Clean Event Branding & Registration Setup	A clean conference and seminar setup with registration backdrop, 4 branding standees, and PVC name badges. Polished, efficient, and cost-effective.	2026-05-11 11:59:19.892	2026-05-11 11:59:22.68	\N	2	2	\N
+62	octzv9paia0z11f8aj53gb4h	Simply Elevated 1	simply-elevated-1	[{"type": "paragraph", "children": [{"text": "A thoughtfully curated set of essentials that enhances the overall event experience without overdoing the setup. Designed for conferences, seminars, and dealer meets that require clean branding and smooth registration, while staying efficient on cost.", "type": "text"}]}]	500.00	f	t	f	Collaterals priced at ₹75 per piece for PVC name badges & lanyards. Pack of 20 included. Branding guidelines to be shared by client as per Elewen proposed timelines.	t	Simply Elevated 1 – Clean Event Branding & Registration Setup	A clean conference and seminar setup with registration backdrop, 4 branding standees, and PVC name badges. Polished, efficient, and cost-effective.	2026-05-11 11:59:19.892	2026-05-11 11:59:22.68	2026-05-11 11:59:22.759	2	2	\N
+63	ie4jckug3ieqmsspz4hq271f	Simply Elevated 2	simply-elevated-2	[{"type": "paragraph", "children": [{"text": "This package combines essential branding with a structured stage setup, making it suitable for events with speaker sessions, presentations, or formal addresses.", "type": "text"}]}]	500.00	f	t	f	Collaterals at ₹75 per piece for PVC badges & lanyards. Pack of 20 included. Power to be provided by venue/customer. Branding guidelines to be shared as per Elewen timelines.	t	Simply Elevated 2 – Stage Setup, LED Screen & Event Branding	A complete conference setup with registration backdrop, LED screen, stage platform, branded podium, standees and PVC badges. Built for speaker sessions and formal presentations.	2026-05-11 12:11:37.776	2026-05-11 12:13:52.09	\N	2	2	\N
+65	ie4jckug3ieqmsspz4hq271f	Simply Elevated 2	simply-elevated-2	[{"type": "paragraph", "children": [{"text": "This package combines essential branding with a structured stage setup, making it suitable for events with speaker sessions, presentations, or formal addresses.", "type": "text"}]}]	500.00	f	t	f	Collaterals at ₹75 per piece for PVC badges & lanyards. Pack of 20 included. Power to be provided by venue/customer. Branding guidelines to be shared as per Elewen timelines.	t	Simply Elevated 2 – Stage Setup, LED Screen & Event Branding	A complete conference setup with registration backdrop, LED screen, stage platform, branded podium, standees and PVC badges. Built for speaker sessions and formal presentations.	2026-05-11 12:11:37.776	2026-05-11 12:13:52.09	2026-05-11 12:13:52.232	2	2	\N
+70	v77t85c85u69i5qdztw80gtl	AV & Tech Basics 1	av-and-tech-basics-1	[{"type": "paragraph", "children": [{"text": "A reliable audio-visual setup designed for  mid-sized conferences, seminars, and meetings. This package ensures clear sound coverage and a strong visual experience for smooth and professional event execution.", "type": "text"}]}]	0.00	f	t	f	\N	t	\N	\N	2026-05-11 12:50:33.799	2026-05-11 12:51:51.104	\N	2	2	\N
+66	foie89l5ojboq3z3zrzzxf17	Simply Elevated 3	simply-elevated-3	[{"type": "paragraph", "children": [{"text": "This package brings together registration, branding, stage setup, and curated collaterals to ensure a smooth and professional event flow.", "type": "text"}]}]	500.00	f	t	f	Stage backdrop is a choice — static print (8x12 ft) or LED screen (8–12 ft), price varies accordingly. PVC badges ₹75/piece, pack of 20. Add-on hostess available at ₹5,000 for 8-hour shift. Technical setup includes operator — confirm mic and sound requirements at booking. Power by venue. Branding guidelines per Elewen timelines.	t	Simply Elevated 3 – Stage, Sound & Full Event Branding Setup	A professional conference package with LED standees, registration backdrop, stage platform, sound system with operator, and choice of static or LED screen backdrop. Everything handled, nothing missed.	2026-05-11 12:25:13.582	2026-05-11 12:39:26.596	\N	2	2	\N
+69	foie89l5ojboq3z3zrzzxf17	Simply Elevated 3	simply-elevated-3	[{"type": "paragraph", "children": [{"text": "This package brings together registration, branding, stage setup, and curated collaterals to ensure a smooth and professional event flow.", "type": "text"}]}]	500.00	f	t	f	Stage backdrop is a choice — static print (8x12 ft) or LED screen (8–12 ft), price varies accordingly. PVC badges ₹75/piece, pack of 20. Add-on hostess available at ₹5,000 for 8-hour shift. Technical setup includes operator — confirm mic and sound requirements at booking. Power by venue. Branding guidelines per Elewen timelines.	t	Simply Elevated 3 – Stage, Sound & Full Event Branding Setup	A professional conference package with LED standees, registration backdrop, stage platform, sound system with operator, and choice of static or LED screen backdrop. Everything handled, nothing missed.	2026-05-11 12:25:13.582	2026-05-11 12:39:26.596	2026-05-11 12:39:26.747	2	2	\N
+71	v77t85c85u69i5qdztw80gtl	AV & Tech Basics 1	av-and-tech-basics-1	[{"type": "paragraph", "children": [{"text": "A reliable audio-visual setup designed for  mid-sized conferences, seminars, and meetings. This package ensures clear sound coverage and a strong visual experience for smooth and professional event execution.", "type": "text"}]}]	0.00	f	t	f	\N	t	\N	\N	2026-05-11 12:50:33.799	2026-05-11 12:51:51.104	2026-05-11 12:51:51.206	2	2	\N
+72	k39lj9zdlkvzswpw85ke26or	AV & Tech Essential Kit 2	av-and-tech-essential-kit-2	[{"type": "paragraph", "children": [{"text": "A reliable audio-visual setup designed for small to mid-sized conferences, seminars, and meetings. This package covers essential sound and presentation requirements to ensure smooth communication and uninterrupted sessions.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-11 12:57:46.154	2026-05-11 12:57:46.154	\N	2	2	\N
+73	k39lj9zdlkvzswpw85ke26or	AV & Tech Essential Kit 2	av-and-tech-essential-kit-2	[{"type": "paragraph", "children": [{"text": "A reliable audio-visual setup designed for small to mid-sized conferences, seminars, and meetings. This package covers essential sound and presentation requirements to ensure smooth communication and uninterrupted sessions.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-11 12:57:46.154	2026-05-11 12:57:46.154	2026-05-11 12:57:46.277	2	2	\N
+75	pzs0q5zkbvtcis06h3vg52ns	AV & Tech Essential Kit Pro 3	av-and-tech-essential-kit-pro-3	[{"type": "paragraph", "children": [{"text": "A complete audio-visual and technical setup designed for seamless execution, multiple speakers, and high-quality presentation delivery. This package covers all essential equipment, control systems, and on-ground support to ensure a smooth and uninterrupted event experience.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-11 13:02:23.291	2026-05-11 13:04:36.276	2026-05-11 13:04:36.46	2	2	\N
+76	uns8g177dkqlvnjf3lk32ekr	Stage Setup 2	stage-setup-2	[{"type": "paragraph", "children": [{"text": "A well-structured stage setup designed to focus on creating a clean stage presence with essential seating, branding, and functional elements for smooth sessions.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-11 13:11:21.852	2026-05-11 13:11:21.852	\N	2	2	\N
+77	uns8g177dkqlvnjf3lk32ekr	Stage Setup 2	stage-setup-2	[{"type": "paragraph", "children": [{"text": "A well-structured stage setup designed to focus on creating a clean stage presence with essential seating, branding, and functional elements for smooth sessions.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-11 13:11:21.852	2026-05-11 13:11:21.852	2026-05-11 13:11:21.974	2	2	\N
+78	qtgw8posxu8ornfapzo08n0u	Stage Setup 3	stage-setup-3	[{"type": "paragraph", "children": [{"text": "A well-structured stage setup designed to focus on creating a clean stage presence with essential seating, branding, and functional elements for smooth sessions.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-11 13:17:32.264	2026-05-11 13:17:32.264	\N	2	2	\N
+79	qtgw8posxu8ornfapzo08n0u	Stage Setup 3	stage-setup-3	[{"type": "paragraph", "children": [{"text": "A well-structured stage setup designed to focus on creating a clean stage presence with essential seating, branding, and functional elements for smooth sessions.", "type": "text"}]}]	500.00	f	t	f	\N	t	\N	\N	2026-05-11 13:17:32.264	2026-05-11 13:17:32.264	2026-05-11 13:17:32.387	2	2	\N
 \.
 
 
@@ -13066,6 +13588,22 @@ COPY public.packages_cmps (id, entity_id, cmp_id, component_type, field, "order"
 130	59	29	package.decorpackages	packages	1
 131	28	3	package.decorpackages	packages	1
 132	60	30	package.decorpackages	packages	1
+134	61	31	package.decorpackages	packages	1
+135	62	32	package.decorpackages	packages	1
+139	63	33	package.decorpackages	packages	1
+140	65	35	package.decorpackages	packages	1
+145	66	36	package.decorpackages	packages	1
+146	69	39	package.decorpackages	packages	1
+148	70	40	package.decorpackages	packages	1
+149	71	41	package.decorpackages	packages	1
+150	72	42	package.decorpackages	packages	1
+151	73	43	package.decorpackages	packages	1
+153	74	44	package.decorpackages	packages	1
+154	75	45	package.decorpackages	packages	1
+155	76	46	package.decorpackages	packages	1
+156	77	47	package.decorpackages	packages	1
+157	78	48	package.decorpackages	packages	1
+158	79	49	package.decorpackages	packages	1
 \.
 
 
@@ -13082,6 +13620,12 @@ COPY public.packages_reusable_addons_lnk (id, package_id, addon_id, addon_ord, p
 6	23	1	1	5
 7	26	1	1	6
 8	27	1	1	7
+9	70	2	1	1
+10	71	2	1	1
+11	72	2	0	2
+12	73	2	0	2
+13	74	2	1	3
+14	75	2	1	3
 \.
 
 
@@ -13099,6 +13643,9 @@ COPY public.packages_service_categories_lnk (id, package_id, service_category_id
 105	57	2	1	8
 106	59	123	1	8
 107	60	123	0	1
+108	61	2	0	9
+109	62	123	0	9
+110	63	2	0	10
 83	11	121	1	1
 84	10	121	0	2
 85	36	121	0	3
@@ -13122,10 +13669,23 @@ COPY public.packages_service_categories_lnk (id, package_id, service_category_id
 56	26	84	0	4
 58	28	2	0	1
 62	24	84	1	5
+112	65	123	0	10
+113	66	2	0	11
+116	69	123	0	11
+117	70	2	0	12
+118	71	123	0	12
+119	72	2	0	13
+120	73	123	0	13
+121	74	2	0	14
 95	46	2	0	3
 96	47	123	0	3
 97	48	2	1	4
 98	50	123	1	4
+122	75	123	0	14
+123	76	2	0	15
+124	77	123	0	15
+125	78	2	0	16
+126	79	123	0	16
 \.
 
 
@@ -13571,7 +14131,12 @@ COPY public.strapi_sessions (id, document_id, user_id, session_id, child_id, dev
 306	sxj0brjioox5cgelrqta7leu	2	f1efae2d07a03e7826da2ae791842c48	84805ab507c3981f243dac0701195c0c	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-11 07:44:19.397	2026-06-10 04:50:20.555	rotated	session	2026-05-11 05:44:19.399	2026-05-11 06:28:28.081	2026-05-11 05:44:19.404	\N	\N	\N
 309	rlpmjzmj611rorkixny2qa6v	2	8a440a9fb2dac51b81711cee74fdf112	\N	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-11 09:31:27.255	2026-06-10 06:59:55.789	active	session	2026-05-11 07:31:27.256	2026-05-11 07:31:27.256	2026-05-11 07:31:27.259	\N	\N	\N
 308	ibp3d6m8qsngzgw4gr8foiov	2	81df006b29b0fbc15b1d0eca4868b2e3	8a440a9fb2dac51b81711cee74fdf112	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-11 08:59:55.789	2026-06-10 06:59:55.789	rotated	session	2026-05-11 06:59:55.79	2026-05-11 07:31:27.287	2026-05-11 06:59:55.797	\N	\N	\N
+310	izh525xo9bdo4bxg9mfb103b	2	4f046684dcb3e577e6f93d0e22afe2f5	\N	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-11 11:36:17.285	2026-06-10 09:36:17.285	active	session	2026-05-11 09:36:17.286	2026-05-11 09:36:17.286	2026-05-11 09:36:17.307	\N	\N	\N
 302	pig16wkkriw9p8a6rxe9bhqi	2	bf6bfa2bfe853705400421396ea40a85	61b82d88f4f334fee789c6ebfb070ed4	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-10 08:42:35.934	2026-06-09 06:42:35.934	rotated	session	2026-05-10 06:42:35.934	2026-05-10 07:16:25.728	2026-05-10 06:42:35.934	\N	\N	\N
+311	y4ewmxovg6god3r14l1uu98l	2	bd45882bb0c5fdfcf296b71cf3f7d2ed	5e10c2f18384ad0042417285d088d436	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-11 13:48:05.917	2026-06-10 11:48:05.917	rotated	session	2026-05-11 11:48:05.918	2026-05-11 12:20:06.112	2026-05-11 11:48:05.94	\N	\N	\N
+312	f8bvs1ai4qm1btwqgrek9ok3	2	5e10c2f18384ad0042417285d088d436	2d7771240e83762203e2617a317be6eb	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-11 14:20:06.076	2026-06-10 11:48:05.917	rotated	session	2026-05-11 12:20:06.077	2026-05-11 12:50:17.556	2026-05-11 12:20:06.084	\N	\N	\N
+314	b8ppnp31dmgroossnpj4lxs7	2	80eb85dcef0b6d48dab9ef191a9d1776	\N	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-11 15:21:03.007	2026-06-10 11:48:05.917	active	session	2026-05-11 13:21:03.036	2026-05-11 13:21:03.036	2026-05-11 13:21:03.067	\N	\N	\N
+313	ifqagdv76jysjg3d4olrr332	2	2d7771240e83762203e2617a317be6eb	80eb85dcef0b6d48dab9ef191a9d1776	2d87ffbf-6d12-4003-a96f-30c6b17fec89	admin	2026-05-11 14:50:17.538	2026-06-10 11:48:05.917	rotated	session	2026-05-11 12:50:17.539	2026-05-11 13:21:03.164	2026-05-11 12:50:17.539	\N	\N	\N
 \.
 
 
@@ -14103,7 +14668,7 @@ SELECT pg_catalog.setval('public.addons_cmps_id_seq', 1, false);
 -- Name: addons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.addons_id_seq', 1, true);
+SELECT pg_catalog.setval('public.addons_id_seq', 2, true);
 
 
 --
@@ -14348,35 +14913,35 @@ SELECT pg_catalog.setval('public.components_package_category_items_id_seq', 38, 
 -- Name: components_package_decorpackages_budget_level_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_budget_level_lnk_id_seq', 29, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_budget_level_lnk_id_seq', 48, true);
 
 
 --
 -- Name: components_package_decorpackages_cmps_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_cmps_id_seq', 526, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_cmps_id_seq', 890, true);
 
 
 --
 -- Name: components_package_decorpackages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_id_seq', 30, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_id_seq', 49, true);
 
 
 --
 -- Name: components_package_decorpackages_policy_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_policy_lnk_id_seq', 30, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_policy_lnk_id_seq', 49, true);
 
 
 --
 -- Name: components_package_decorpackages_theme_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_decorpackages_theme_lnk_id_seq', 30, true);
+SELECT pg_catalog.setval('public.components_package_decorpackages_theme_lnk_id_seq', 49, true);
 
 
 --
@@ -14390,7 +14955,7 @@ SELECT pg_catalog.setval('public.components_package_flavors_id_seq', 84, true);
 -- Name: components_package_inclusions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_inclusions_id_seq', 269, true);
+SELECT pg_catalog.setval('public.components_package_inclusions_id_seq', 455, true);
 
 
 --
@@ -14411,7 +14976,7 @@ SELECT pg_catalog.setval('public.components_package_package_addons_id_seq', 16, 
 -- Name: components_package_package_elements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_package_package_elements_id_seq', 71, true);
+SELECT pg_catalog.setval('public.components_package_package_elements_id_seq', 85, true);
 
 
 --
@@ -14467,7 +15032,7 @@ SELECT pg_catalog.setval('public.components_shared_price_breakdown_items_id_seq'
 -- Name: components_shared_price_covers_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.components_shared_price_covers_items_id_seq', 212, true);
+SELECT pg_catalog.setval('public.components_shared_price_covers_items_id_seq', 288, true);
 
 
 --
@@ -14572,21 +15137,21 @@ SELECT pg_catalog.setval('public.customer_profiles_user_lnk_id_seq', 3, true);
 -- Name: events_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.events_id_seq', 205, true);
+SELECT pg_catalog.setval('public.events_id_seq', 206, true);
 
 
 --
 -- Name: events_packages_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.events_packages_lnk_id_seq', 67, true);
+SELECT pg_catalog.setval('public.events_packages_lnk_id_seq', 87, true);
 
 
 --
 -- Name: events_parent_event_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.events_parent_event_lnk_id_seq', 243, true);
+SELECT pg_catalog.setval('public.events_parent_event_lnk_id_seq', 244, true);
 
 
 --
@@ -14747,28 +15312,28 @@ SELECT pg_catalog.setval('public.navigation_menus_id_seq', 4, true);
 -- Name: packages_cmps_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.packages_cmps_id_seq', 132, true);
+SELECT pg_catalog.setval('public.packages_cmps_id_seq', 158, true);
 
 
 --
 -- Name: packages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.packages_id_seq', 60, true);
+SELECT pg_catalog.setval('public.packages_id_seq', 79, true);
 
 
 --
 -- Name: packages_reusable_addons_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.packages_reusable_addons_lnk_id_seq', 8, true);
+SELECT pg_catalog.setval('public.packages_reusable_addons_lnk_id_seq', 14, true);
 
 
 --
 -- Name: packages_service_categories_lnk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.packages_service_categories_lnk_id_seq', 107, true);
+SELECT pg_catalog.setval('public.packages_service_categories_lnk_id_seq', 126, true);
 
 
 --
@@ -14957,7 +15522,7 @@ SELECT pg_catalog.setval('public.strapi_releases_id_seq', 1, false);
 -- Name: strapi_sessions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.strapi_sessions_id_seq', 309, true);
+SELECT pg_catalog.setval('public.strapi_sessions_id_seq', 314, true);
 
 
 --
@@ -21913,5 +22478,5 @@ ALTER TABLE ONLY public.vendors_user_lnk
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2vE9rlIbvM2yaA2xc5ZTmUjKJfDatzmTHr8OobJvPSeEGs4xMyzqhH3iqiLdmpC
+\unrestrict vipmx36K0Xoiar4zHDcL26PbEBRo1M0PvJQVHxRhh1smJBue7udAgO5U0HviSXR
 

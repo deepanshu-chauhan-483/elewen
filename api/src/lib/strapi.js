@@ -43,10 +43,7 @@ const makeStrapiError = async (res, fallbackMessage) => {
   return error
 }
 
-const requestJson = async (
-  path,
-  { method = 'GET', headers = {}, body, prefixApi = true } = {}
-) => {
+const requestJson = async (path, { method = 'GET', headers = {}, body, prefixApi = true } = {}) => {
   const res = await fetch(`${getBase()}${normalizePath(path, { prefixApi })}`, {
     method,
     headers,

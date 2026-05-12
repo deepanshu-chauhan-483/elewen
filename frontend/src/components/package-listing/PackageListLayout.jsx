@@ -96,7 +96,11 @@ export default function PackageListLayout({
                       key={pageNumber}
                       type="button"
                       onClick={() => onPageSelect?.(pageNumber)}
-                      className={isActive ? 'text-[#A94618]' : 'text-[#A94618]/80'}
+                      className={
+                        isActive
+                          ? 'text-[#A94618] font-semibold'
+                          : 'text-[#A94618]/80 font-semibold'
+                      }
                     >
                       {pageNumber}
                     </button>
