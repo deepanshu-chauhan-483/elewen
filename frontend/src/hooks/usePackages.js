@@ -259,7 +259,41 @@ function buildAddonList(items = []) {
     })
 }
 
+function getSectionInclusionImages(section) {
+  const inclusions = Array.isArray(section?.inclusions)
+    ? section.inclusions
+    : Array.isArray(section?.inclustions)
+      ? section.inclustions
+      : []
+
+  return inclusions
+    .flatMap(item => normaliseMediaArray(item?.images))
+    .map(image => {
+      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
+      return toAbsoluteStrapiUrl(image?.url)
+    })
+    .filter(Boolean)
+}
+
+function getSectionBackdropImages(section) {
+  return normaliseMediaArray(section?.backdrop_images)
+    .map(image => {
+      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
+      return toAbsoluteStrapiUrl(image?.url)
+    })
+    .filter(Boolean)
+}
+
 function normalizePackage(pkg, index = 0) {
+  const detailSections = getNestedPackageSections(pkg)
+  const packageImages = normaliseMediaArray(pkg.images)
+    .map(image => {
+      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
+      return toAbsoluteStrapiUrl(image?.url)
+    })
+    .filter(Boolean)
+  const inclusionImages = detailSections.flatMap(getSectionInclusionImages)
+  const backdropImages = detailSections.flatMap(getSectionBackdropImages)
   const serviceCategories = normaliseRelationArray(pkg.service_categories)
   const packageThemes = getNestedPackageThemes(pkg)
   const budgetLevels = getNestedPackageBudgetLevels(pkg)
@@ -310,13 +344,8 @@ function normalizePackage(pkg, index = 0) {
     ).filter(Boolean),
     level_slug: getBudgetLevelSlug(primaryBudgetLevel),
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
-    images: normaliseMediaArray(pkg.images)
-      .map(image => {
-        if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
-        return toAbsoluteStrapiUrl(image?.url)
-      })
-      .filter(Boolean),
-    detail_sections: getNestedPackageSections(pkg),
+    images: uniqueValues([...packageImages, ...inclusionImages, ...backdropImages]),
+    detail_sections: detailSections,
     detail_inclusions: buildDetailHighlights(pkg),
     detail_addons: buildAddonList(getNestedPackageAddons(pkg)),
     detail_exclusions: buildTextList(getNestedPackageExclusions(pkg)),

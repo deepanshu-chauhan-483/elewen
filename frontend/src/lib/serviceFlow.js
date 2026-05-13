@@ -13,6 +13,7 @@ export const SERVICE_PAGE_ALLOWED_SLUGS = [
   'decor',
   'catering',
   'bar-tending',
+  'sheesha',
   'sheesha-services',
   'furniture',
 ]

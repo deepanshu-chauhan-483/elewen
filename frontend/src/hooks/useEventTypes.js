@@ -240,6 +240,7 @@ const mapWizardOption = (item, index) => ({
   description:
     typeof item?.description === 'string' ? item.description : blocksToText(item?.description),
   starting_price: item?.starting_price ?? item?.base_price ?? null,
+  display_order: item?.display_order ?? null,
 })
 
 const mapLevelOption = (level, index) => ({
@@ -250,7 +251,21 @@ const mapLevelOption = (level, index) => ({
   price: level.starting_price
     ? `Starting ${Number(level.starting_price).toLocaleString('en-IN')}`
     : '',
+  display_order: level.display_order ?? null,
 })
+
+const sortByDisplayOrder = items =>
+  [...(Array.isArray(items) ? items : [])].sort((a, b) => {
+    const aOrder = Number.isFinite(Number(a?.display_order)) ? Number(a.display_order) : Infinity
+    const bOrder = Number.isFinite(Number(b?.display_order)) ? Number(b.display_order) : Infinity
+
+    if (aOrder !== bOrder) return aOrder - bOrder
+
+    return String(a?.label ?? '').localeCompare(String(b?.label ?? ''), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    })
+  })
 
 const resolveWizardStepsFromStrapi = async serviceCategoryId => {
   if (!serviceCategoryId) return { steps: [] }
@@ -511,7 +526,7 @@ export function useBudgetLevelOptions(serviceCategoryId) {
           'filters[is_active][$eq]': 'true',
           sort: 'display_order:asc',
         })
-        return data.map(mapLevelOption)
+        return sortByDisplayOrder(data.map(mapLevelOption))
       } catch {
         return LEVELS_FALLBACK
       }
@@ -523,6 +538,8 @@ export function useBudgetLevelOptions(serviceCategoryId) {
 
   return {
     ...wizardQuery,
-    data: step?.options?.length ? step.options.map(mapLevelOption) : budgetLevelsQuery.data,
+    data: step?.options?.length
+      ? sortByDisplayOrder(step.options.map(mapLevelOption))
+      : budgetLevelsQuery.data,
   }
 }

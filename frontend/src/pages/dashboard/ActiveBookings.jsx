@@ -7,6 +7,7 @@ import {
 } from '../../components/dashboard/dashboardUtils'
 import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
+import { getBookingPackageNamesText } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
 
 const CloseToggleIcon = () => (
@@ -72,7 +73,11 @@ function getStatusTone(status) {
 }
 
 function getSubtitle(booking) {
-  return [booking?.event?.name, booking?.package?.serviceCategories?.[0]?.name]
+  return [
+    // booking?.detailSubtitle,
+    booking?.event?.name,
+    booking?.package?.serviceCategories?.[0]?.name,
+  ]
     .filter(Boolean)
     .join(' · ')
 }
@@ -91,7 +96,7 @@ function BookingCard({ booking, session }) {
   const [open, setOpen] = useState(false)
   const status = normalizeStatus(booking?.status)
   const isConfirmed = status === 'confirmed'
-  const title = booking?.package?.title || booking?.event?.name || 'Booking'
+  const title = getBookingPackageNamesText(booking, booking?.event?.name || 'Booking')
   const subtitle = getSubtitle(booking)
   const location = booking?.locationSummary || 'Location pending'
   const amountPaid = formatDashboardCurrency(booking?.paymentSummary?.amountPaid)
@@ -133,9 +138,7 @@ function BookingCard({ booking, session }) {
             </div>
           </div>
 
-          {!isConfirmed ? (
-            <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p>
-          ) : null}
+          <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p>
         </div>
 
         {isConfirmed ? (
@@ -206,8 +209,8 @@ function BookingCard({ booking, session }) {
         <>
           <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-[#00000033] pt-4 text-sm">
             <div>
-              <p className="text-[11px] text-[#767676]">EVENT TYPE</p>
-              <p>{booking?.event?.name || 'Event pending'}</p>
+              <p className="text-[11px] text-[#767676]">PACKAGE</p>
+              <p>{getBookingPackageNamesText(booking, booking?.event?.name || 'Event pending')}</p>
             </div>
 
             <div>
@@ -217,7 +220,7 @@ function BookingCard({ booking, session }) {
 
             <div>
               <p className="text-[11px] text-[#767676]">LOCATION</p>
-              <p>{location}</p>
+              <p>{location || 'Location pending'}</p>
             </div>
 
             <div>

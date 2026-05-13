@@ -240,7 +240,7 @@ export default function PackageResultsHero({
     <section
       className={`relative mt-0 w-full overflow-hidden bg-[#591902] py-6 sm:py-8 ${className}`}
     >
-      <div className="mx-auto w-full max-w-[1220px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-2 w-full max-w-[1220px] px-4 sm:px-6 lg:px-8">
         <div className="flex w-full flex-col gap-4 text-white lg:flex-row lg:items-center lg:gap-8">
           <span className="shrink-0 text-[14px] font-medium leading-[20px] text-white/90">
             {title}

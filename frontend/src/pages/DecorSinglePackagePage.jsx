@@ -178,6 +178,11 @@ function buildKeyDecorText(pkg) {
 }
 
 function buildDecorMediaGallery(pkg) {
+  const inclusionImages = getDecorDetailSections(pkg)
+    .flatMap(section =>
+      (Array.isArray(section?.inclustions) ? section.inclustions : []).flatMap(getInclusionImages)
+    )
+    .filter(Boolean)
   const backdropImages = getDecorDetailSections(pkg)
     .flatMap(section => normaliseMediaArray(section?.backdrop_images))
     .map(image => {
@@ -186,7 +191,45 @@ function buildDecorMediaGallery(pkg) {
     })
     .filter(Boolean)
 
-  return uniqueValues([...backdropImages, ...(Array.isArray(pkg?.images) ? pkg.images : [])])
+  return uniqueValues([
+    ...(Array.isArray(pkg?.images) ? pkg.images : []),
+    ...inclusionImages,
+    ...backdropImages,
+  ])
+}
+
+function getInclusionImages(inclusion) {
+  return normaliseMediaArray(inclusion?.images)
+    .map(image => {
+      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
+      return toAbsoluteStrapiUrl(image?.url)
+    })
+    .filter(Boolean)
+}
+
+function buildDecorImageMetaMap(pkg) {
+  const entries = getDecorDetailSections(pkg).flatMap(section => {
+    const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
+
+    return inclusions.flatMap(inclusion => {
+      const images = getInclusionImages(inclusion)
+      const heading =
+        cleanText(inclusion?.choice_group_label) ||
+        cleanText(inclusion?.group_title) ||
+        cleanText(inclusion?.choice_group_key)
+      const text = cleanText(inclusion?.text)
+
+      return images.map(image => [
+        image,
+        {
+          heading,
+          text,
+        },
+      ])
+    })
+  })
+
+  return Object.fromEntries(entries)
 }
 
 function groupItemsByTitle(items = []) {
@@ -277,6 +320,7 @@ function createChoiceItem({ inclusion, element, fallbackTitle }) {
     title,
     description: descriptionParts.join('\n'),
     price,
+    images: getInclusionImages(inclusion),
     selected: false,
   }
 }
@@ -417,11 +461,26 @@ function serializeSections(sections = []) {
           : {
               title: item.title,
               description: item.description,
+              images: Array.isArray(item.images) ? item.images : [],
               price: item.price,
               selected: Boolean(item.selected),
             }
       ),
     }))
+  )
+}
+
+function getSelectedChoiceImages(sections = []) {
+  return uniqueValues(
+    (Array.isArray(sections) ? sections : []).flatMap(section => {
+      if (section?.type !== 'choice-row') return []
+
+      const selectedItem = (Array.isArray(section.items) ? section.items : []).find(
+        item => typeof item !== 'string' && item.selected
+      )
+
+      return Array.isArray(selectedItem?.images) ? selectedItem.images : []
+    })
   )
 }
 
@@ -757,6 +816,7 @@ export default function DecorSinglePackagePage() {
     () => serializeSections(sectionTemplate),
     [sectionTemplate]
   )
+  const imageMetaByUrl = useMemo(() => buildDecorImageMetaMap(pkg), [pkg])
 
   useEffect(() => {
     if (!pkg) return
@@ -808,15 +868,16 @@ export default function DecorSinglePackagePage() {
     return <Navigate to={backHref} replace />
   }
 
+  const sections = activeCustomization?.data?.sections ?? []
   const galleryImages = buildDecorMediaGallery(pkg)
+  const selectedChoiceImages = getSelectedChoiceImages(sections)
   const sourceImages = galleryImages.length
     ? galleryImages
     : pkg.images?.length
       ? pkg.images
       : PKG_LOCAL_IMAGES[0]
-  const sideImages = Array.from({ length: 5 }).map(
-    (_, index) => sourceImages[index % sourceImages.length]
-  )
+  const activeMainImage = selectedChoiceImages[0] ?? sourceImages[0]
+  const sideImages = sourceImages
   const relatedProducts = packagesData
     .filter(
       item =>
@@ -826,7 +887,6 @@ export default function DecorSinglePackagePage() {
     )
     .slice(0, 3)
     .map(item => ({ ...item, serviceSlug: 'decor' }))
-  const sections = activeCustomization?.data?.sections ?? []
   const quantity = customizations.length
   const message = activeCustomization?.data?.message ?? ''
 
@@ -947,8 +1007,9 @@ export default function DecorSinglePackagePage() {
         />
       }
       accordionSections={accordionSections}
-      mainImage={sourceImages[0] ?? sideImages[0]}
+      mainImage={activeMainImage ?? sideImages[0]}
       sideImages={sideImages}
+      imageMetaByUrl={imageMetaByUrl}
       relatedProducts={relatedProducts}
       addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
       addToCartMessage={addToCartMessage}

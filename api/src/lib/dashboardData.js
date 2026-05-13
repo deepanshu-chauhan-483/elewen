@@ -22,6 +22,8 @@ const SAMPLE_STATUS_LABELS = {
   cancelled: 'Cancelled',
 }
 
+const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+
 function uniqueStrings(values = []) {
   return [...new Set(values.map(value => String(value ?? '').trim()).filter(Boolean))]
 }
@@ -58,6 +60,75 @@ function getFirstMediaUrl(value) {
       item.url ??
       null
   )
+}
+
+function uniqueValues(values = []) {
+  return [...new Set((Array.isArray(values) ? values : []).filter(Boolean))]
+}
+
+function normalizeDynamicZoneItems(value) {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (Array.isArray(value?.data)) return value.data
+  return []
+}
+
+function getNestedPackageSections(pkg) {
+  return normalizeDynamicZoneItems(pkg?.packages)
+}
+
+function getNestedPackageElements(pkg) {
+  return getNestedPackageSections(pkg).flatMap(section =>
+    Array.isArray(section?.elements) ? section.elements : []
+  )
+}
+
+function getNestedPackageInclusions(pkg) {
+  return getNestedPackageSections(pkg).flatMap(section => {
+    if (Array.isArray(section?.inclusions)) return section.inclusions
+    if (Array.isArray(section?.inclustions)) return section.inclustions
+    return []
+  })
+}
+
+function getNestedPackageAddons(pkg) {
+  return [
+    ...getNestedPackageSections(pkg).flatMap(section => {
+      if (Array.isArray(section?.addons)) return section.addons
+      if (Array.isArray(section?.addons?.data)) return section.addons.data
+      return []
+    }),
+    ...normalizeRelation(pkg?.reusable_addons),
+  ]
+}
+
+function getPackageDetailInclusions(pkg) {
+  return uniqueValues([
+    ...getNestedPackageInclusions(pkg).map(item => item?.text),
+    ...getNestedPackageElements(pkg).map(item => item?.title),
+    ...getNestedPackageElements(pkg).map(item => item?.service?.name),
+  ]).slice(0, 12)
+}
+
+function getPackageDetailAddons(pkg) {
+  const seen = new Set()
+
+  return getNestedPackageAddons(pkg)
+    .map(item => ({
+      id: item?.id != null ? String(item.id) : '',
+      name: String(item?.name ?? item?.title ?? item?.text ?? '').trim(),
+      description: String(item?.description ?? '').trim(),
+      price: roundCurrency(item?.price),
+      unit: String(item?.unit ?? '').trim(),
+      max_quantity: Number(item?.max_quantity ?? 1),
+    }))
+    .filter(item => {
+      if (!item.name) return false
+      const key = `${item.id}::${item.name.toLowerCase()}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
 }
 
 export function toNumber(value) {
@@ -101,6 +172,8 @@ export function mapPackagePreview(pkg) {
       slug: category.slug ?? '',
     })),
     events: normalizeRelation(pkg.events).map(mapEventPreview).filter(Boolean),
+    detail_inclusions: getPackageDetailInclusions(pkg),
+    detail_addons: getPackageDetailAddons(pkg),
   }
 }
 
@@ -150,6 +223,11 @@ async function fetchPackagesByIds(ids = []) {
     'populate[0]=images',
     'populate[1]=service_categories',
     'populate[2]=events',
+    'populate[3]=packages.elements.service',
+    'populate[4]=packages.inclusions',
+    'populate[5]=packages.inclustions',
+    'populate[6]=packages.addons',
+    'populate[7]=reusable_addons',
     `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
     'publicationState=preview',
   ].join('&')
@@ -210,6 +288,85 @@ function getLatestStatusLog(statusLogs = []) {
     if (!latest) return current
     return new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
   }, null)
+}
+
+function getSelectedItemDisplay(title = '') {
+  const rawTitle = String(title ?? '')
+  const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+
+  if (!metaPart) return displayTitle || rawTitle
+
+  try {
+    const parsed = JSON.parse(metaPart)
+    const itemType = parsed?.itemType ?? 'package'
+    const addonTitle = String(parsed?.addonTitle ?? '').trim()
+    const selectedOptions = parsed?.selectedOptions
+
+    if (itemType === 'addon') {
+      const optionValues =
+        selectedOptions && typeof selectedOptions === 'object'
+          ? Object.values(selectedOptions).filter(Boolean)
+          : []
+
+      return optionValues.length
+        ? `${addonTitle || displayTitle || rawTitle} (${optionValues.join(', ')})`
+        : addonTitle || displayTitle || rawTitle
+    }
+
+    if (selectedOptions && typeof selectedOptions === 'object') {
+      const values = Object.values(selectedOptions).filter(Boolean)
+      if (values.length) return values.join(', ')
+    }
+  } catch {
+    return displayTitle || rawTitle
+  }
+
+  return displayTitle || rawTitle
+}
+
+function getBookingSelectedItems(booking) {
+  return (Array.isArray(booking?.items) ? booking.items : [])
+    .map(item => getSelectedItemDisplay(item?.title))
+    .map(value => String(value ?? '').trim())
+    .filter(Boolean)
+}
+
+function buildSelectedItemsSummary(items = []) {
+  const uniqueItems = [...new Set(items)]
+  if (!uniqueItems.length) return ''
+  if (uniqueItems.length <= 2) return uniqueItems.join(' · ')
+  return `${uniqueItems.slice(0, 2).join(' · ')} +${uniqueItems.length - 2} more`
+}
+
+function getBookingMetaFromNotes(notes = []) {
+  const visibleNotes = (Array.isArray(notes) ? notes : [])
+    .filter(note => note && note.isInternal !== true)
+    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+
+  for (const note of visibleNotes) {
+    const text = String(note?.note ?? '')
+    if (!text) continue
+
+    const addressMatch =
+      text.match(/(?:Event|Tasting) address:\s*(.+)/i) ?? text.match(/Address:\s*(.+)/i)
+    const timeMatch = text.match(/Event time:\s*(.+)/i) ?? text.match(/Tasting time:\s*(.+)/i)
+    const pinMatch = text.match(/PIN code:\s*(.+)/i)
+    const selectedItemsMatch = text.match(/Selected items:\s*(.+)/i)
+
+    return {
+      eventAddress: addressMatch?.[1]?.trim() ?? '',
+      eventTime: timeMatch?.[1]?.trim() ?? '',
+      pinCode: pinMatch?.[1]?.trim() ?? '',
+      selectedItemsText: selectedItemsMatch?.[1]?.trim() ?? '',
+    }
+  }
+
+  return {
+    eventAddress: '',
+    eventTime: '',
+    pinCode: '',
+    selectedItemsText: '',
+  }
 }
 
 export function getBookingCategory(booking) {
@@ -287,16 +444,30 @@ export async function enrichBookings(bookings = []) {
     const addressPreview = addressMap.get(String(booking.eventAddressId)) ?? null
     const paymentSummary = getPaymentSummary(booking)
     const latestStatusLog = getLatestStatusLog(booking.statusLogs)
+    const noteMeta = getBookingMetaFromNotes(booking.notes)
+    const selectedItems = getBookingSelectedItems(booking)
+    const selectedItemsSummary =
+      buildSelectedItemsSummary(selectedItems) || noteMeta.selectedItemsText || ''
+    const fallbackSubtitle = [eventPreview?.name, packagePreview?.serviceCategories?.[0]?.name]
+      .filter(Boolean)
+      .join(' · ')
+    const detailSubtitle = fallbackSubtitle || selectedItemsSummary
 
     return {
       ...booking,
       bookingCategory: getBookingCategory(booking),
       statusLabel: BOOKING_STATUS_LABELS[booking.status] ?? booking.status ?? 'Unknown',
       latestStatusLog,
-      locationSummary: addressPreview?.summary ?? '',
+      selectedItems,
+      selectedItemsSummary,
+      displaySubtitle: selectedItemsSummary || fallbackSubtitle,
+      detailSubtitle,
+      locationSummary: addressPreview?.summary ?? noteMeta.eventAddress ?? '',
       package: packagePreview,
       event: eventPreview,
       address: addressPreview,
+      eventTime: noteMeta.eventTime,
+      pinCode: noteMeta.pinCode,
       paymentSummary,
       vendorAssignments: Array.isArray(booking.vendorAssignments)
         ? booking.vendorAssignments.map(assignment => ({

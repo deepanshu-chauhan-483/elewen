@@ -179,6 +179,7 @@ export default function SingleProductPageContent({
   accordionSections = [],
   mainImage,
   sideImages = [],
+  imageMetaByUrl = {},
   quantity = 1,
   onDecrement,
   onIncrement,
@@ -192,16 +193,67 @@ export default function SingleProductPageContent({
   ctaButtonText = 'Book a Consultation',
   testimonials = [],
 }) {
-  const initialDisplayImage = sideImages[0] ?? mainImage
-  const [selectedImage, setSelectedImage] = useState(null)
+  const imageGalleryKey = [mainImage ?? '', ...sideImages].join('|')
+  const desktopSectionTop = '58px'
+  const addToCartDisabled = disableAddToCart || isAddingToCart
+  const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
+
+  return (
+    <ProductImageLayout
+      key={imageGalleryKey}
+      title={title}
+      price={price}
+      intro={intro}
+      customContent={customContent}
+      accordionSections={accordionSections}
+      mainImage={mainImage}
+      sideImages={sideImages}
+      imageMetaByUrl={imageMetaByUrl}
+      quantity={quantity}
+      onDecrement={onDecrement}
+      onIncrement={onIncrement}
+      promptContent={promptContent}
+      addToCartDisabled={addToCartDisabled}
+      addToCartButtonLabel={addToCartButtonLabel}
+      addToCartMessage={addToCartMessage}
+      relatedProducts={relatedProducts}
+      onAddToCart={onAddToCart}
+      ctaButtonText={ctaButtonText}
+      testimonials={testimonials}
+      desktopSectionTop={desktopSectionTop}
+    />
+  )
+}
+
+function ProductImageLayout({
+  title,
+  price,
+  intro,
+  customContent,
+  accordionSections,
+  mainImage,
+  sideImages,
+  imageMetaByUrl,
+  quantity,
+  onDecrement,
+  onIncrement,
+  promptContent,
+  addToCartDisabled,
+  addToCartButtonLabel,
+  addToCartMessage,
+  relatedProducts,
+  onAddToCart,
+  ctaButtonText,
+  testimonials,
+  desktopSectionTop,
+}) {
+  const initialDisplayImage = mainImage ?? sideImages[0]
+  const [selectedImage, setSelectedImage] = useState(mainImage ?? null)
   const activeImage =
     selectedImage && [mainImage, ...sideImages].includes(selectedImage)
       ? selectedImage
       : initialDisplayImage
-  const desktopSectionTop = '58px'
-
-  const addToCartDisabled = disableAddToCart || isAddingToCart
-  const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
+  const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
 
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
@@ -228,7 +280,7 @@ export default function SingleProductPageContent({
                   maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
                 }}
               >
-                <div>
+                <div className="relative">
                   <img
                     src={activeImage}
                     alt={title}
@@ -237,6 +289,15 @@ export default function SingleProductPageContent({
                       height: 'clamp(26.25rem, 70vw, 58.375rem)',
                     }}
                   />
+                  {activeImageMeta?.heading || activeImageMeta?.text ? (
+                    <div className="absolute bottom-3 right-3 max-w-[75%] rounded-[10px] bg-[#591902]/88 px-3 py-2 text-right text-white">
+                      {activeImageMeta?.heading ? (
+                        <p className="text-[11px] font-semibold leading-[1.3]">
+                          {activeImageMeta.heading}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

@@ -144,7 +144,11 @@ export function BookingSummaryCard({
 }) {
   const meta = getStatusMeta(booking?.status)
   const title = booking?.package?.title || booking?.event?.name || 'Customer Booking'
-  const subtitle = [booking?.event?.name, booking?.package?.serviceCategories?.[0]?.name]
+  const subtitle = [
+    booking?.displaySubtitle,
+    booking?.event?.name,
+    booking?.package?.serviceCategories?.[0]?.name,
+  ]
     .filter(Boolean)
     .join(' · ')
 

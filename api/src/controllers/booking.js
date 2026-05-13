@@ -5,10 +5,236 @@ import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
 
 const DEFAULT_ADVANCE_PCT = 30
 
+const BOOKING_TIMELINE_STEPS = [
+  {
+    key: 'inquiry',
+    title: 'Inquiry / Booking Placed',
+    description: 'Your booking request has been received and logged in the system.',
+  },
+  {
+    key: 'internal_review',
+    title: 'Internal Review & Confirmation',
+    description: 'Our team is reviewing the booking details and confirming the next steps.',
+  },
+  {
+    key: 'information_collection',
+    title: 'Information Collection',
+    description: 'We are collecting any booking details needed before planning begins.',
+  },
+  {
+    key: 'planning_preparation',
+    title: 'Planning & Preparation',
+    description: 'Vendor coordination, logistics, and event preparation are underway.',
+  },
+  {
+    key: 'pre_event_final_checks',
+    title: 'Pre-event Final Checks',
+    description: 'Final checks are in progress before the event day execution begins.',
+  },
+  {
+    key: 'event_day_execution',
+    title: 'Event Day / Execution',
+    description: 'Your event is now in live execution with the on-ground team.',
+  },
+  {
+    key: 'event_complete',
+    title: 'Event Complete',
+    description: 'The event has concluded and wrap-up is now in progress.',
+  },
+  {
+    key: 'post_event_follow_up',
+    title: 'Post Event Follow Up',
+    description: 'Final follow-ups, feedback, and any closing items are being completed.',
+  },
+]
+
+const STATUS_TO_TIMELINE_INDEX = {
+  new: 0,
+  confirmed: 1,
+  info_collection: 2,
+  planning: 3,
+  pre_event: 4,
+  execution: 5,
+  post_event: 7,
+}
+
+const TIMELINE_STEP_INDEX_BY_TITLE = new Map(
+  BOOKING_TIMELINE_STEPS.map((step, index) => [step.title, index])
+)
+
 const createBadRequestError = message => {
   const error = new Error(message)
   error.status = 400
   return error
+}
+
+const toCurrencyNumber = value => {
+  if (value == null) return 0
+  if (typeof value?.toNumber === 'function') return value.toNumber()
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const normalizeTimelineStatus = status => {
+  if (status === 'completed') return 'completed'
+  if (status === 'blocked') return 'blocked'
+  if (status === 'in_progress') return 'in_progress'
+  return 'pending'
+}
+
+function getTimelineStepDate(stepKey, booking) {
+  if (!booking?.eventDate) return null
+
+  const eventDate = new Date(booking.eventDate)
+  if (Number.isNaN(eventDate.getTime())) return null
+
+  const day = 24 * 60 * 60 * 1000
+  const date = new Date(eventDate)
+
+  switch (stepKey) {
+    case 'pre_event_final_checks':
+      date.setTime(date.getTime() - 2 * day)
+      return date
+    case 'event_day_execution':
+    case 'event_complete':
+      return date
+    case 'post_event_follow_up':
+      date.setTime(date.getTime() + 2 * day)
+      return date
+    default:
+      return null
+  }
+}
+
+function getTimelineStatesForBooking(booking, paymentSummary = null) {
+  if (!booking) return BOOKING_TIMELINE_STEPS.map(() => 'pending')
+
+  if (booking.status === 'completed') {
+    return BOOKING_TIMELINE_STEPS.map(() => 'completed')
+  }
+
+  const timelineStates = BOOKING_TIMELINE_STEPS.map(() => 'pending')
+
+  if (booking.status === 'cancelled') {
+    const previousStatus = String(booking?.statusLogs?.[0]?.previousStatus ?? '').trim()
+    const previousIndex = STATUS_TO_TIMELINE_INDEX[previousStatus]
+
+    if (Number.isInteger(previousIndex)) {
+      timelineStates.forEach((_, index) => {
+        if (index < previousIndex) timelineStates[index] = 'completed'
+      })
+      timelineStates[previousIndex] = 'blocked'
+    }
+
+    return timelineStates
+  }
+
+  const currentIndex = STATUS_TO_TIMELINE_INDEX[booking.status]
+  if (!Number.isInteger(currentIndex)) return timelineStates
+
+  timelineStates.forEach((_, index) => {
+    if (index < currentIndex) timelineStates[index] = 'completed'
+    if (index === currentIndex) timelineStates[index] = 'in_progress'
+  })
+
+  if (booking.status === 'pre_event' && paymentSummary && Number(paymentSummary.amountDue) > 0) {
+    timelineStates[currentIndex] = 'blocked'
+  }
+
+  if (booking.status === 'post_event') {
+    timelineStates[6] = 'completed'
+    timelineStates[7] = 'in_progress'
+  }
+
+  return timelineStates
+}
+
+async function ensureBookingTimeline(tx, booking) {
+  const existingEntries = await tx.bookingTimeline.findMany({
+    where: { bookingId: booking.id },
+    orderBy: [{ timelineDate: 'asc' }, { createdAt: 'asc' }],
+  })
+
+  const existingMap = new Map(existingEntries.map(entry => [entry.title, entry]))
+
+  if (existingEntries.length < BOOKING_TIMELINE_STEPS.length) {
+    const missingEntries = BOOKING_TIMELINE_STEPS.filter(step => !existingMap.has(step.title)).map(
+      step => ({
+        bookingId: booking.id,
+        title: step.title,
+        description: step.description,
+        timelineDate: getTimelineStepDate(step.key, booking),
+        status: 'pending',
+      })
+    )
+
+    if (missingEntries.length) {
+      await tx.bookingTimeline.createMany({ data: missingEntries })
+    }
+  }
+
+  const paymentSummary = {
+    amountDue: Math.max(
+      toCurrencyNumber(booking.totalPrice) -
+        toCurrencyNumber(
+          (
+            await tx.payment.aggregate({
+              where: {
+                bookingId: booking.id,
+                status: 'success',
+              },
+              _sum: {
+                amount: true,
+              },
+            })
+          )._sum.amount
+        ),
+      0
+    ),
+  }
+
+  const statusLogs =
+    booking.statusLogs ??
+    (await tx.bookingStatusLog.findMany({
+      where: { bookingId: booking.id },
+      orderBy: { createdAt: 'desc' },
+      take: 1,
+    }))
+  const bookingWithLogs = { ...booking, statusLogs }
+  const timelineStates = getTimelineStatesForBooking(bookingWithLogs, paymentSummary)
+  const timelineEntries = await tx.bookingTimeline.findMany({
+    where: { bookingId: booking.id },
+    orderBy: [{ createdAt: 'asc' }],
+  })
+
+  await Promise.all(
+    timelineEntries.map(entry => {
+      const stepIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(entry.title)
+      if (!Number.isInteger(stepIndex)) {
+        return Promise.resolve(null)
+      }
+
+      const step = BOOKING_TIMELINE_STEPS[stepIndex]
+      const nextStatus = normalizeTimelineStatus(timelineStates[stepIndex])
+      const nextDescription =
+        booking.status === 'pre_event' &&
+        step?.key === 'pre_event_final_checks' &&
+        paymentSummary.amountDue > 0
+          ? 'Final checks are in progress. Remaining payment must be completed before execution can begin.'
+          : entry.description || step?.description || null
+      const nextTimelineDate = entry.timelineDate ?? getTimelineStepDate(step?.key, booking)
+
+      return tx.bookingTimeline.update({
+        where: { id: entry.id },
+        data: {
+          status: nextStatus,
+          description: nextDescription,
+          timelineDate: nextTimelineDate,
+        },
+      })
+    })
+  )
 }
 
 // ─── Valid status transitions (customer-facing + system) ─────────────────────
@@ -200,6 +426,11 @@ export const createBooking = async (req, res, next) => {
         })
       }
 
+      await ensureBookingTimeline(tx, {
+        ...newBooking,
+        statusLogs: [{ previousStatus: null }],
+      })
+
       return newBooking
     })
 
@@ -286,6 +517,10 @@ export const listBookings = async (req, res, next) => {
       where: { userId },
       include: {
         items: true,
+        notes: {
+          where: { isInternal: false },
+          orderBy: { createdAt: 'desc' },
+        },
         statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
         payments: {
           where: { status: 'success' },
@@ -317,6 +552,10 @@ export const getBooking = async (req, res, next) => {
       where: { id },
       include: {
         items: true,
+        notes: {
+          where: { isInternal: false },
+          orderBy: { createdAt: 'desc' },
+        },
         statusLogs: { orderBy: { createdAt: 'asc' } },
         timeline: { orderBy: { timelineDate: 'asc' } },
         vendorAssignments: true,
@@ -359,12 +598,41 @@ export const updateStatus = async (req, res, next) => {
       })
     }
 
+    if (booking.status === 'pre_event' && status === 'execution') {
+      const successfulPayments = await prisma.payment.findMany({
+        where: {
+          bookingId: id,
+          status: 'success',
+        },
+      })
+
+      const amountPaid = successfulPayments.reduce(
+        (sum, payment) => sum + toCurrencyNumber(payment.amount),
+        0
+      )
+      const totalPrice = toCurrencyNumber(booking.totalPrice)
+      const remainingAmount = Math.max(totalPrice - amountPaid, 0)
+
+      if (remainingAmount > 0) {
+        return res.status(400).json({
+          error: 'Remaining payment must be completed before moving to execution stage.',
+          code: 'PAYMENT_PENDING',
+          paymentSummary: {
+            totalPrice: Number(totalPrice.toFixed(2)),
+            amountPaid: Number(amountPaid.toFixed(2)),
+            remainingAmount: Number(remainingAmount.toFixed(2)),
+            isFullyPaid: false,
+          },
+        })
+      }
+    }
+
     const updated = await prisma.$transaction(async tx => {
       const updatedBooking = await tx.booking.update({
         where: { id },
         data: { status },
       })
-      await tx.bookingStatusLog.create({
+      const statusLog = await tx.bookingStatusLog.create({
         data: {
           bookingId: id,
           previousStatus: booking.status,
@@ -372,6 +640,10 @@ export const updateStatus = async (req, res, next) => {
           changedBy: userId,
           note: note ?? null,
         },
+      })
+      await ensureBookingTimeline(tx, {
+        ...updatedBooking,
+        statusLogs: [statusLog],
       })
       return updatedBooking
     })
@@ -502,13 +774,27 @@ export const getTimeline = async (req, res, next) => {
     const userId = String(req.user.id)
     const { id } = req.params
 
-    const booking = await prisma.booking.findUnique({ where: { id } })
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    })
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
-    const timeline = await prisma.bookingTimeline.findMany({
-      where: { bookingId: id },
-      orderBy: { timelineDate: 'asc' },
+    const timeline = await prisma.$transaction(async tx => {
+      await ensureBookingTimeline(tx, booking)
+      const entries = await tx.bookingTimeline.findMany({
+        where: { bookingId: id },
+        orderBy: [{ createdAt: 'asc' }],
+      })
+
+      return entries.sort((left, right) => {
+        const leftIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(left.title) ?? Number.MAX_SAFE_INTEGER
+        const rightIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(right.title) ?? Number.MAX_SAFE_INTEGER
+        return leftIndex - rightIndex
+      })
     })
 
     res.json({ timeline })
