@@ -207,7 +207,7 @@ export default function SavedPackages() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F4F0] p-6">
+    <div className="min-h-screen ">
       {/* ── Page header ── */}
       <div className="mb-8">
         <div className="flex items-center gap-2.5 mb-1.5">

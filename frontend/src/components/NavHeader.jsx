@@ -178,7 +178,12 @@ function DashboardIcon() {
 
 function CartIcon({ color = '#FAFAFA' }) {
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      className="h-[24px] w-[24px] md:w-[32px] md:h-[32px]"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         d="M16 17.2002C16 18.2611 15.5786 19.2785 14.8284 20.0286C14.0783 20.7788 13.0609 21.2002 12 21.2002C10.9391 21.2002 9.92172 20.7788 9.17157 20.0286C8.42143 19.2785 8 18.2611 8 17.2002M3.103 13.2342H20.897M3.4 12.6672C3.14036 13.0134 3 13.4345 3 13.8672V27.2002C3 27.7306 3.21071 28.2393 3.58579 28.6144C3.96086 28.9895 4.46957 29.2002 5 29.2002H19C19.5304 29.2002 20.0391 28.9895 20.4142 28.6144C20.7893 28.2393 21 27.7306 21 27.2002V13.8672C21 13.4345 20.8596 13.0134 20.6 12.6672L18.6 10.0002C18.4137 9.7518 18.1721 9.5502 17.8944 9.41134C17.6167 9.27249 17.3105 9.2002 17 9.2002H7C6.68951 9.2002 6.38328 9.27249 6.10557 9.41134C5.82786 9.5502 5.58629 9.7518 5.4 10.0002L3.4 12.6672Z"
         stroke={color}
@@ -203,7 +208,7 @@ function CartButton({ count, className, iconColor }) {
     >
       <CartIcon color={iconColor} />
       {count > 0 ? (
-        <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#D4BA8E] px-1 text-[11px] font-semibold leading-none text-[#111110]">
+        <span className="absolute -right-1 -top-1 flex h-[18px] w-[18px] md:min-h-5 md:min-w-5 items-center justify-center rounded-full bg-[#D4BA8E] px-1 text-[8px] md:text-[11px] font-semibold leading-none text-[#111110]">
           {count > 99 ? '99+' : count}
         </span>
       ) : null}

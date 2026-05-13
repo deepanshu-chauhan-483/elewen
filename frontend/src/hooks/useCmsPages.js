@@ -4,6 +4,7 @@ import {
   LANDING_PAGE_FALLBACK,
   ABOUT_PAGE_FALLBACK,
   INHOUSE_PLANNER_PAGE_FALLBACK,
+  HOW_IT_WORK_PAGE_FALLBACK,
 } from '../data/cmsPages'
 
 function mergeSectionData(fallbackValue, cmsValue) {
@@ -169,6 +170,26 @@ function normalizeCmsEntry(entry) {
     : entry
 }
 
+function normalizeSectionKey(sectionKey) {
+  const raw = String(sectionKey ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  const aliases = {
+    hero_section: 'hero',
+    idea_to_celebration: 'idea_to_celebration',
+    dashboard_section: 'dashboard',
+    middle_banner: 'banner',
+    faq_section: 'faq',
+    final_cta_section: 'final_cta',
+  }
+
+  return aliases[raw] ?? raw
+}
+
 function normalizeHeroCard(card = {}) {
   const normalizedCard = normalizeCmsEntry(card) ?? {}
 
@@ -195,8 +216,19 @@ function normalizeLandingPageSections(sections = {}) {
 
   if (normalized.hero && typeof normalized.hero === 'object') {
     const hero = normalized.hero
+    const heroSectionImages = normalizeSectionImages(hero._sectionImages)
+    const heroVideo =
+      hero.video ??
+      hero.hero_video ??
+      hero.background_video ??
+      heroSectionImages.find(item =>
+        String(item?.mime ?? item?.data?.attributes?.mime ?? '').startsWith('video/')
+      ) ??
+      null
+
     normalized.hero = {
       ...hero,
+      video: heroVideo,
       eyebrow: hero.eyebrow ?? hero.pre_heading ?? hero.kicker ?? hero.heading_1 ?? hero.title_1,
       heading: hero.heading ?? hero.heading_2 ?? hero.title ?? hero.title_2,
       search_line_1:
@@ -254,6 +286,7 @@ function normalizeLandingPageSections(sections = {}) {
 function parseSections(sections = []) {
   const result = sections.reduce((acc, s) => {
     if (s?.section_key && s?.content_json) {
+      const normalizedKey = normalizeSectionKey(s.section_key)
       const content =
         s.content_json && typeof s.content_json === 'object'
           ? {
@@ -262,8 +295,8 @@ function parseSections(sections = []) {
             }
           : s.content_json
 
-      acc[s.section_key] = content
-      console.log(`[parseSections] Parsed section: ${s.section_key}`, content)
+      acc[normalizedKey] = content
+      console.log(`[parseSections] Parsed section: ${s.section_key} -> ${normalizedKey}`, content)
     } else {
       console.warn('[parseSections] Invalid section:', s)
     }
@@ -374,7 +407,7 @@ export async function fetchLandingPageData() {
   if (USE_FALLBACK) return LANDING_PAGE_FALLBACK
   try {
     const { data } = await strapiGet('/landing-page', {
-      'populate[sections][populate]': '*',
+      'populate[sections][populate]': 'images',
     })
     return mergePageSections(
       LANDING_PAGE_FALLBACK,
@@ -435,6 +468,31 @@ export function useInHousePlannerPage() {
     queryKey: ['cms-page', 'in-house-planner'],
     queryFn: fetchInHousePlannerPageData,
     placeholderData: INHOUSE_PLANNER_PAGE_FALLBACK,
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+  })
+}
+
+/**
+ * useHowItWorkPage
+ * Fetches How It Work Page Single Type from Strapi.
+ * Returns a keyed map: { hero, idea_to_celebration, dashboard, faq, final_cta, ... }
+ */
+export function useHowItWorkPage() {
+  return useQuery({
+    queryKey: ['cms-page', 'how-it-work'],
+    queryFn: async () => {
+      if (USE_FALLBACK) return HOW_IT_WORK_PAGE_FALLBACK
+      try {
+        const { data } = await strapiGet('/how-it-works', {
+          'populate[sections][populate]': '*',
+        })
+        return mergePageSections(HOW_IT_WORK_PAGE_FALLBACK, parseSections(data?.sections ?? []))
+      } catch {
+        return HOW_IT_WORK_PAGE_FALLBACK
+      }
+    },
+    placeholderData: HOW_IT_WORK_PAGE_FALLBACK,
     staleTime: 10 * 60 * 1000,
     retry: 1,
   })

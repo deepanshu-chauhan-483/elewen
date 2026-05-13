@@ -1,9 +1,10 @@
 import { Router } from 'express'
 import {
+  clearAllNotifications,
   getNotifications,
-  markRead,
-  markAllRead,
   getUnreadCount,
+  markAllRead,
+  markRead,
 } from '../controllers/notification.js'
 import { requireAuth } from '../middleware/auth.js'
 
@@ -34,6 +35,20 @@ router.use(requireAuth)
  *         description: Paginated notifications with unread count
  */
 router.get('/', getNotifications)
+
+/**
+ * @openapi
+ * /notifications:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Delete all notifications for the authenticated user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Count of notifications deleted
+ */
+router.delete('/', clearAllNotifications)
 
 /**
  * @openapi

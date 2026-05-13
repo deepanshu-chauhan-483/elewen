@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
@@ -36,14 +36,12 @@ function QuantityControl({ quantity, onDecrement, onIncrement }) {
     </div>
   )
 }
-function AccordionSection({ title, body, defaultOpen = false }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-
+function AccordionSection({ title, body, isOpen = false, onToggle }) {
   return (
     <div className="border-t border-[#36402280] py-4">
       <button
         type="button"
-        onClick={() => setIsOpen(open => !open)}
+        onClick={onToggle}
         className="flex w-full items-center justify-between gap-4 text-left outline-none focus:outline-none focus-visible:outline-none"
       >
         <span className="text-[16px] leading-none text-[#6B7152] font-semibold">{title}</span>
@@ -118,6 +116,27 @@ function PricingIcon() {
   )
 }
 
+function RelatedProductsArrow({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? 'rotate-180' : ''
+
+  return (
+    <svg
+      className={`h-[20px] w-[20px] ${rotationClass}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M5 12H19M12 19L19 12L12 5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function SupportIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="50" height="64" viewBox="0 0 50 64" fill="none">
@@ -171,26 +190,6 @@ const TRUST_ITEMS = [
   { label: 'Real Flowers', Icon: FlowerIcon },
 ]
 
-const TESTIMONIALS = [
-  {
-    name: 'Sneha Shah',
-    date: '25th Feb, 2025',
-    quote:
-      "Elewen handled everything for my dad's 60th decor, lights, and seating were exactly as promised.",
-  },
-  {
-    name: 'Sneha Shah',
-    date: '25th Feb, 2025',
-    quote:
-      'Guests kept asking who planned the setup because it looked so put-together but still homey.',
-  },
-  {
-    name: 'Sneha Shah',
-    date: '25th Feb, 2025',
-    quote: 'Good',
-  },
-]
-
 export default function SingleProductPageContent({
   title,
   price,
@@ -210,24 +209,68 @@ export default function SingleProductPageContent({
   isAddingToCart = false,
   onAddToCart,
   ctaButtonText = 'Book a Consultation',
+  testimonials = [],
 }) {
   const initialDisplayImage = sideImages[0] ?? mainImage
   const [selectedImage, setSelectedImage] = useState(null)
+  const [openAccordionIndex, setOpenAccordionIndex] = useState(0)
+  const [relatedPageIndex, setRelatedPageIndex] = useState(0)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.innerWidth >= 768
+  })
   const activeImage =
     selectedImage && [mainImage, ...sideImages].includes(selectedImage)
       ? selectedImage
       : initialDisplayImage
   const desktopSectionTop = '58px'
+  const desktopMediaHeight = `calc(100vh - ${desktopSectionTop} - 24px)`
 
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
+  const relatedCardsPerPage = isDesktopViewport ? 3 : 1
+  const relatedTotalPages = Math.max(1, Math.ceil(relatedProducts.length / relatedCardsPerPage))
+  const safeRelatedPageIndex = Math.min(relatedPageIndex, relatedTotalPages - 1)
+  const visibleRelatedProducts = isDesktopViewport
+    ? relatedProducts
+    : relatedProducts.slice(
+        safeRelatedPageIndex * relatedCardsPerPage,
+        safeRelatedPageIndex * relatedCardsPerPage + relatedCardsPerPage
+      )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const handleViewportChange = event => {
+      setIsDesktopViewport(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange)
+      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    }
+
+    mediaQuery.addListener(handleViewportChange)
+    return () => mediaQuery.removeListener(handleViewportChange)
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRelatedPageIndex(0)
+  }, [relatedProducts.length])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRelatedPageIndex(current => Math.min(current, relatedTotalPages - 1))
+  }, [relatedTotalPages])
 
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
       <NavHeader />
       <section className="relative pb-16 pt-8 md:pt-14.5">
         <div
-          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start md:justify-between"
+          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start"
           style={{
             maxWidth: '1540px',
             gap: 'clamp(1.5rem, 2.2vw, 2rem)',
@@ -237,30 +280,44 @@ export default function SingleProductPageContent({
         >
           <div
             className="top-15 md:sticky md:self-start md:shrink-0"
-            style={{ top: desktopSectionTop }}
+            style={{
+              top: desktopSectionTop,
+              maxHeight: isDesktopViewport ? desktopMediaHeight : undefined,
+            }}
           >
-            <div className="flex flex-col gap-4 md:flex-row md:items-start">
+            <div
+              className="flex flex-col gap-4 md:flex-row md:items-start"
+              style={{
+                height: isDesktopViewport ? desktopMediaHeight : undefined,
+              }}
+            >
               {/* Main Image */}
               <div
-                className="order-1 pt-8 md:pt-0 mx-auto w-full shrink-0 md:order-2"
+                className="order-1 pt-8 md:pt-0 mx-auto w-full shrink-0 md:order-2 md:h-full"
                 style={{
                   maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
                 }}
               >
-                <div>
+                <div className="md:h-full">
                   <img
                     src={activeImage}
                     alt={title}
                     className="w-full border-l-2 border-r-2 border-b-2 border-[#727355] object-cover"
                     style={{
-                      height: 'clamp(26.25rem, 70vw, 58.375rem)',
+                      height: isDesktopViewport ? '100%' : 'clamp(26.25rem, 70vw, 58.375rem)',
                     }}
                   />
                 </div>
               </div>
 
               {/* Side Images */}
-              <div className="order-2 flex flex-row items-center justify-center gap-2 overflow-x-auto px-1 pb-2 md:order-1 md:flex-col md:items-end md:justify-start md:space-y-2 md:gap-0 md:overflow-visible md:px-0 md:pb-0 md:pt-2">
+              <div
+                className="side-images-scroll order-2 flex w-full flex-row items-center justify-start gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] md:order-1 md:h-full md:w-auto md:flex-col md:items-end md:justify-start md:space-y-2 md:gap-0 md:overflow-y-auto md:overflow-x-hidden md:px-0 md:pb-0 md:pt-2"
+                style={{
+                  msOverflowStyle: 'none',
+                  scrollBehavior: 'smooth',
+                }}
+              >
                 {sideImages.map((image, index) => (
                   <button
                     type="button"
@@ -287,12 +344,18 @@ export default function SingleProductPageContent({
           </div>
 
           <div
-            className="mx-auto w-full min-w-0 flex-1 lg:mx-0"
+            className="mx-auto w-full min-w-0 flex-1 pl-0 md:ml-6 lg:mx-0 lg:ml-10"
             style={{
-              maxWidth: 'clamp(20rem, 45vw, 40.75rem)',
-              paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
+              maxWidth: '42rem',
             }}
           >
+            <style>
+              {`
+                .side-images-scroll::-webkit-scrollbar {
+                  display: none;
+                }
+              `}
+            </style>
             <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
               <h1
                 className=" text-[28px] leading-[0.95] text-[#591902] sm:text-[36px] md:text-[36px]"
@@ -359,7 +422,10 @@ export default function SingleProductPageContent({
                   key={section.title}
                   title={section.title}
                   body={section.body}
-                  defaultOpen={index === 0}
+                  isOpen={openAccordionIndex === index}
+                  onToggle={() =>
+                    setOpenAccordionIndex(current => (current === index ? -1 : index))
+                  }
                 />
               ))}
             </div>
@@ -371,16 +437,50 @@ export default function SingleProductPageContent({
         <div className="mx-auto md:w-full max-w-[1540px]">
           {relatedProducts.length > 0 ? (
             <div className="mt-4 lg:mt-8 px-[20px] sm:px-[50px] lg:px-[100px]">
-              <p
-                className="text-[22px] md:text-[32px] font-semibold text-[#2D2D2D]"
-                style={{ fontFamily: "'Malgin', serif" }}
-              >
-                You might also like:
-              </p>
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="flex items-center justify-between gap-4">
+                <p
+                  className="text-[22px] md:text-[32px] font-semibold text-[#2D2D2D]"
+                  style={{ fontFamily: "'Malgin', serif" }}
+                >
+                  You might also like:
+                </p>
+              </div>
+
+              <div className="mt-4 hidden grid-cols-1 gap-4 sm:grid-cols-2 md:grid md:grid-cols-3">
                 {relatedProducts.map(product => (
                   <PackageCard key={product.id ?? product.title} pkg={product} />
                 ))}
+              </div>
+
+              <div className="relative mt-4 flex items-center md:hidden">
+                <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[calc(100%+40px)] -translate-x-1/2">
+                  <button
+                    type="button"
+                    onClick={() => setRelatedPageIndex(current => Math.max(0, current - 1))}
+                    disabled={safeRelatedPageIndex === 0}
+                    className="pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[72px] w-[36px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
+                    aria-label="Previous related product"
+                  >
+                    <RelatedProductsArrow direction="left" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setRelatedPageIndex(current => Math.min(relatedTotalPages - 1, current + 1))
+                    }
+                    disabled={safeRelatedPageIndex >= relatedTotalPages - 1}
+                    className="pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[72px] w-[36px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
+                    aria-label="Next related product"
+                  >
+                    <RelatedProductsArrow direction="right" />
+                  </button>
+                </div>
+
+                <div className="mx-auto w-full max-w-[250px]">
+                  {visibleRelatedProducts.map(product => (
+                    <PackageCard key={product.id ?? product.title} pkg={product} />
+                  ))}
+                </div>
               </div>
             </div>
           ) : null}
@@ -439,27 +539,35 @@ export default function SingleProductPageContent({
               Moments They Loved
             </p>
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-              {TESTIMONIALS.map((item, index) => (
-                <article
-                  key={`${item.name}-${index}`}
-                  className="border border-[#D8CEC2] bg-white p-3 rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.06)]"
-                >
-                  <div className="flex items-center justify-between gap-3 pb-2">
-                    <p className="text-[15px] md:text-[27px] font-semibold text-[#2D2D2D]">
-                      {item.name}
+              {testimonials.length > 0 ? (
+                testimonials.map((item, index) => (
+                  <article
+                    key={`${item.id ?? item.name}-${index}`}
+                    className="border border-[#D8CEC2] bg-white p-3 rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.06)]"
+                  >
+                    <div className="flex items-center justify-between gap-3 pb-2">
+                      <p className="text-[15px] md:text-[27px] font-semibold text-[#2D2D2D]">
+                        {item.name}
+                      </p>
+                      <p className="text-[12px] md:text-[16px] text-[#2D2D2D]">{item.date}</p>
+                    </div>
+                    <img
+                      src={item.image || mainImage}
+                      alt={`${item.name} event`}
+                      className="mt-3 h-[324px] w-full object-cover"
+                    />
+                    <p className="mt-3 text-[12px] md:text-[16px] leading-[1.6] text-[#2D2D2D]">
+                      {item.quote}
                     </p>
-                    <p className="text-[12px] md:text-[16px] text-[#2D2D2D]">{item.date}</p>
-                  </div>
-                  <img
-                    src={mainImage}
-                    alt={`${item.name} event`}
-                    className="mt-3 h-[324px] w-full object-cover"
-                  />
-                  <p className="mt-3 text-[12px] md:text-[16px] leading-[1.6] text-[#2D2D2D]">
-                    {item.quote}
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-[18px] border border-[#D8CEC2] bg-white px-6 py-8 text-[#2D2D2D] md:col-span-3">
+                  <p className="text-[14px] leading-[1.6]">
+                    No reviews are available for this package yet.
                   </p>
-                </article>
-              ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -214,7 +214,7 @@ export function DetailGrid({ items }) {
 
 export function SectionCard({ title, subtitle, children, action }) {
   return (
-    <section className="rounded-[28px] bg-[#F3F3F3] p-6">
+    <section className="rounded-[28px] bg-[#F3F3F3] ">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-xl font-medium text-[#2E2E2E]">{title}</h2>

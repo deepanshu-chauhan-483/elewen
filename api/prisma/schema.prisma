@@ -485,6 +485,7 @@ model CouponUsage {
 
   booking   Booking  @relation(fields: [bookingId], references: [id])
 
+  @@unique([couponId, userId])
   @@map("coupon_usage")
 }
 

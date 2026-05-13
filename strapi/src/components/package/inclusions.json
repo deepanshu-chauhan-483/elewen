@@ -19,6 +19,16 @@
     },
     "is_choice_group": {
       "type": "boolean"
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   },
   "config": {}

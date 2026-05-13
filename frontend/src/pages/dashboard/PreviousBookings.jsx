@@ -6,12 +6,13 @@ import {
   DashboardPageIntro,
   StatusPill,
 } from '../../components/dashboard/DashboardUI'
-import { useDashboardBookings } from '../../hooks/useDashboardData'
+import { useDashboardBookings, useDashboardSession } from '../../hooks/useDashboardData'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
 } from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
+import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 
@@ -50,32 +51,55 @@ const ArrowIcon = () => (
 
 function getSelectedItemDisplay(title = '') {
   const rawTitle = String(title ?? '')
-  const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+  const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
 
-  if (!metaPart) return rawTitle
+  if (!metaPart) return displayTitle || rawTitle
 
   try {
     const parsed = JSON.parse(metaPart)
+    const itemType = parsed?.itemType ?? 'package'
+    const addonTitle = String(parsed?.addonTitle ?? '').trim()
     const selectedOptions = parsed?.selectedOptions
+
+    if (itemType === 'addon') {
+      const optionValues =
+        selectedOptions && typeof selectedOptions === 'object'
+          ? Object.values(selectedOptions).filter(Boolean)
+          : []
+
+      return optionValues.length
+        ? `${addonTitle || displayTitle || rawTitle} (${optionValues.join(', ')})`
+        : addonTitle || displayTitle || rawTitle
+    }
 
     if (selectedOptions && typeof selectedOptions === 'object') {
       const values = Object.values(selectedOptions).filter(Boolean)
       if (values.length) return values.join(', ')
     }
   } catch {
-    return rawTitle.split(CART_META_SEPARATOR)[0] || rawTitle
+    return displayTitle || rawTitle
   }
 
-  return rawTitle.split(CART_META_SEPARATOR)[0] || rawTitle
+  return displayTitle || rawTitle
 }
 
-function PreviousBookingCard({ booking }) {
+function PreviousBookingCard({ booking, session }) {
   const [open, setOpen] = useState(false)
   const normalizedStatus = String(booking?.status ?? '').toLowerCase()
   const isCancelled = ['cancelled', 'canceled'].includes(normalizedStatus)
   const title = booking?.package?.title || booking?.event?.name || 'Booking'
   const subtitle = [booking?.event?.name, booking?.locationSummary].filter(Boolean).join(' · ')
-  // const accentColor = isCancelled ? '#591902' : '#238E64'
+  const receiptData = buildReceiptData({
+    booking,
+    customer: {
+      fullName:
+        [session?.profile?.first_name, session?.profile?.last_name].filter(Boolean).join(' ') ||
+        [session?.user?.first_name, session?.user?.last_name].filter(Boolean).join(' ') ||
+        '',
+      email: session?.user?.email || '',
+      phone: session?.user?.phone || '',
+    },
+  })
 
   return (
     <div
@@ -119,13 +143,25 @@ function PreviousBookingCard({ booking }) {
           </div>
 
           <div className="flex flex-wrap gap-3 lg:justify-end">
+            <button
+              type="button"
+              onClick={event => {
+                event.stopPropagation()
+                downloadReceipt(receiptData)
+              }}
+              className="inline-flex rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
+            >
+              Download Receipt
+            </button>
+
             <Link
               to={getBookAgainHref(booking)}
               onClick={event => event.stopPropagation()}
-              className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-5 py-2 text-white hover:opacity-90"
+              className="flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2 text-white hover:opacity-90"
             >
               Book Again <ArrowIcon />
             </Link>
+
             <Link
               to={`/user-dashboard/support?bookingId=${booking.id}`}
               onClick={event => event.stopPropagation()}
@@ -214,6 +250,7 @@ function PreviousBookingCard({ booking }) {
 
 export default function PreviousBookings() {
   const { data: bookings = [], isLoading, error } = useDashboardBookings('previous')
+  const { data: session } = useDashboardSession()
 
   if (isLoading) {
     return <DashboardLoadingState title="Loading previous bookings..." />
@@ -241,7 +278,7 @@ export default function PreviousBookings() {
       />
 
       {bookings.map(booking => (
-        <PreviousBookingCard key={booking.id} booking={booking} />
+        <PreviousBookingCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>
   )

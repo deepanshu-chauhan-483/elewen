@@ -57,6 +57,7 @@ export default function SignUpPage() {
         return
       }
       setStoredJwt(data.jwt)
+      localStorage.setItem('elewen_user', JSON.stringify(data.user))
       navigate('/', { replace: true })
     } catch (err) {
       if (err.message?.includes('409')) {

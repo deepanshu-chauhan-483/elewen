@@ -110,7 +110,7 @@ export default function ContactUsPage() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="mx-auto flex w-full flex-col px-4 py-6 mt-8 md:mt-0 min-[540px]:mt-15  min-[540px]:px-8 min-[540px]:py-2">
+          <div className="mx-auto flex w-full flex-col px-4 py-6 mt-8 min-[540px]:mt-15  min-[540px]:px-8 min-[540px]:py-2">
             <div className="flex w-full flex-col justify-start">
               <div className=" flex w-full  flex-col gap-[16px] min-[540px]:gap-[24px]">
                 <div className="flex w-full flex-col items-center gap-[8px]">

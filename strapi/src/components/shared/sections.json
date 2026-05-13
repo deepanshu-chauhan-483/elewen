@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_shared_sections",
+  "info": {
+    "displayName": "Sections"
+  },
+  "options": {},
+  "attributes": {
+    "section_id": {
+      "type": "integer"
+    },
+    "Heading": {
+      "type": "string"
+    },
+    "Content": {
+      "type": "text"
+    },
+    "Icon": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    }
+  },
+  "config": {}
+}

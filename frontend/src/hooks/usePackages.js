@@ -32,12 +32,40 @@ function toAbsoluteStrapiUrl(url) {
   if (!url || typeof url !== 'string') return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
 
-  const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  const base = import.meta.env.VITE_STRAPI_URL ?? '/cms'
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : 'http://localhost'
+  const normalizedBase =
+    base.startsWith('http://') || base.startsWith('https://')
+      ? base
+      : `${origin}${base.startsWith('/') ? '' : '/'}${base}`
+
+  return `${normalizedBase}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 function uniqueValues(values) {
   return [...new Set((Array.isArray(values) ? values : []).filter(Boolean))]
+}
+
+function slugify(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function getBudgetLevelSlug(level) {
+  const label = String(level?.label ?? level?.name ?? '').trim()
+
+  if (/^level\s+\d+$/i.test(label)) {
+    return slugify(label)
+  }
+
+  return String(level?.slug ?? '').trim() || slugify(label)
 }
 
 function normaliseDynamicZoneItems(value) {
@@ -66,9 +94,12 @@ function getNestedPackageInclusions(pkg) {
 }
 
 function getNestedPackageAddons(pkg) {
-  return getNestedPackageSections(pkg).flatMap(section =>
-    Array.isArray(section?.addons) ? section.addons : []
-  )
+  return [
+    ...getNestedPackageSections(pkg).flatMap(section =>
+      Array.isArray(section?.addons) ? section.addons : []
+    ),
+    ...normaliseRelationArray(pkg?.reusable_addons),
+  ]
 }
 
 function getNestedPackageExclusions(pkg) {
@@ -205,6 +236,29 @@ function buildTextList(items, keys = ['text', 'title', 'name', 'label']) {
   )
 }
 
+function buildAddonList(items = []) {
+  const seen = new Set()
+
+  return (Array.isArray(items) ? items : [])
+    .filter(item => item && item.visibility !== false)
+    .map(item => ({
+      id: item?.id != null ? String(item.id) : '',
+      name: String(item?.name ?? item?.title ?? item?.text ?? '').trim(),
+      description: String(item?.description ?? '').trim(),
+      price: Number(item?.price ?? 0),
+      unit: String(item?.unit ?? '').trim(),
+      max_quantity: Number(item?.max_quantity ?? 1),
+      visibility: item?.visibility !== false,
+    }))
+    .filter(item => {
+      if (!item.name) return false
+      const key = `${item.id}::${item.name.toLowerCase()}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
 function normalizePackage(pkg, index = 0) {
   const serviceCategories = normaliseRelationArray(pkg.service_categories)
   const packageThemes = getNestedPackageThemes(pkg)
@@ -254,7 +308,7 @@ function normalizePackage(pkg, index = 0) {
         typeof theme === 'string' ? [theme] : [theme?.slug, theme?.name]
       )
     ).filter(Boolean),
-    level_slug: primaryBudgetLevel?.slug ?? '',
+    level_slug: getBudgetLevelSlug(primaryBudgetLevel),
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
     images: normaliseMediaArray(pkg.images)
       .map(image => {
@@ -264,7 +318,7 @@ function normalizePackage(pkg, index = 0) {
       .filter(Boolean),
     detail_sections: getNestedPackageSections(pkg),
     detail_inclusions: buildDetailHighlights(pkg),
-    detail_addons: buildTextList(getNestedPackageAddons(pkg), ['name', 'title', 'text']),
+    detail_addons: buildAddonList(getNestedPackageAddons(pkg)),
     detail_exclusions: buildTextList(getNestedPackageExclusions(pkg)),
     detail_price_breakdown: getNestedPackagePriceBreakdowns(pkg),
     detail_accordion_sections: buildAccordionSections(pkg),
@@ -277,6 +331,7 @@ function getPackagePopulateParams() {
   return {
     'populate[images]': 'true',
     'populate[events][populate][0]': 'parent_event',
+    'populate[reusable_addons]': 'true',
     'populate[service_categories][populate][0]': 'parent_category',
     'populate[packages][on][package.decorpackages][populate][elements][populate]': 'service',
     'populate[packages][on][package.decorpackages][populate][addons]': 'true',

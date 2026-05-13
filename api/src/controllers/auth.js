@@ -99,6 +99,44 @@ const isStrapiCredentialError = err =>
   (err?.status === 401 || err?.status === 403) &&
   /missing or invalid credentials/i.test(String(err?.message ?? ''))
 
+const mapUserRow = row => {
+  if (!row) return null
+
+  return {
+    id: Number(row.id),
+    email: row.email,
+    provider: row.provider,
+    confirmed: Boolean(row.confirmed),
+    blocked: Boolean(row.blocked),
+    first_name: row.first_name ?? null,
+    last_name: row.last_name ?? null,
+    phone: row.phone ?? null,
+  }
+}
+
+const findUserByEmailFromDatabase = async email => {
+  const [row] = await prisma.$queryRaw`
+    SELECT id, email, provider, confirmed, blocked, first_name, last_name, phone
+    FROM public.up_users
+    WHERE lower(email) = lower(${email})
+    LIMIT 1
+  `
+
+  return mapUserRow(row)
+}
+
+const findUserByEmailForAuth = async email => {
+  try {
+    return await strapiFindUserByEmail(email)
+  } catch (err) {
+    if (!isStrapiCredentialError(err)) {
+      throw err
+    }
+
+    return findUserByEmailFromDatabase(email)
+  }
+}
+
 const extractGoogleProfile = payload => {
   const fullName = typeof payload?.name === 'string' ? payload.name.trim() : ''
   const nameParts = fullName ? fullName.split(/\s+/) : []
@@ -299,7 +337,7 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ error: 'Email and password are required' })
     }
 
-    const existingUser = await strapiFindUserByEmail(email)
+    const existingUser = await findUserByEmailForAuth(email)
     if (existingUser && isGoogleProvider(existingUser.provider)) {
       return res.status(409).json({
         error: 'This account was created with Google. Please continue with Google to sign in.',
@@ -416,7 +454,8 @@ export const getProfile = async (req, res, next) => {
 export const updateProfile = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { first_name, last_name, date_of_birth, preferred_language, profile_photo_url } = req.body
+    const { first_name, last_name, phone, date_of_birth, preferred_language, profile_photo_url } =
+      req.body
 
     const existing = await findCustomerProfile(userId)
 
@@ -442,12 +481,19 @@ export const updateProfile = async (req, res, next) => {
       updated = result.data
     }
 
-    // Also sync first_name / last_name back to Strapi user for consistency
-    if (first_name !== undefined || last_name !== undefined) {
-      await strapiAdminPut(`/api/users/${userId}`, {
-        ...(first_name !== undefined && { first_name }),
-        ...(last_name !== undefined && { last_name }),
-      })
+    // Also sync shared customer fields back to the Strapi user record for consistency.
+    if (first_name !== undefined || last_name !== undefined || phone !== undefined) {
+      try {
+        await strapiAdminPut(`/api/users/${userId}`, {
+          ...(first_name !== undefined && { first_name }),
+          ...(last_name !== undefined && { last_name }),
+          ...(phone !== undefined && { phone }),
+        })
+      } catch (err) {
+        if (!isStrapiCredentialError(err)) {
+          throw err
+        }
+      }
     }
 
     res.json({ profile: sanitizeProfile(updated) })
@@ -582,7 +628,7 @@ export const googleSession = async (req, res, next) => {
       googleName = extractGoogleProfile(tokenInfo)
 
       // Find existing Strapi user by email
-      user = await strapiFindUserByEmail(tokenInfo.email)
+      user = await findUserByEmailForAuth(tokenInfo.email)
 
       if (user && !isGoogleProvider(user.provider)) {
         return res.status(409).json({

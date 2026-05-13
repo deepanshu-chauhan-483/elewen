@@ -3,6 +3,7 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
+import { usePackageReviews } from '../hooks/usePackageReviews'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -745,6 +746,11 @@ export default function DecorSinglePackagePage() {
         : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
     [packageDetails, packageId, packagesData]
   )
+  const { data: packageReviews = [] } = usePackageReviews({
+    id: pkg?.id,
+    documentId: pkg?.documentId,
+    title: pkg?.title,
+  })
 
   const sectionTemplate = useMemo(() => buildDecorCustomizationSections(pkg), [pkg])
   const sectionTemplateSignature = useMemo(
@@ -951,6 +957,7 @@ export default function DecorSinglePackagePage() {
       quantity={quantity}
       onDecrement={handleDecrease}
       onIncrement={handleIncrease}
+      testimonials={packageReviews}
     />
   )
 }

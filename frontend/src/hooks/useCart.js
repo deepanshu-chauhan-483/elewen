@@ -7,6 +7,7 @@ import {
   cartRemoveItem,
   cartUpdate,
   cartUpdateItem,
+  getValidStoredJwt,
   getStoredJwt,
 } from '../lib/api'
 
@@ -18,6 +19,15 @@ function getToken() {
   return getStoredJwt()
 }
 
+// ─── FIXED: always resolves, never throws — a 401 refresh returns '' ──────────
+async function getServerToken() {
+  try {
+    return (await getValidStoredJwt()) ?? ''
+  } catch {
+    return ''
+  }
+}
+
 function getItemCount(cart) {
   return (cart?.items ?? []).reduce((sum, item) => sum + Number(item?.quantity ?? 0), 0)
 }
@@ -26,7 +36,6 @@ function normalizeSelectedOptions(selectedOptions) {
   if (!selectedOptions || typeof selectedOptions !== 'object' || Array.isArray(selectedOptions)) {
     return {}
   }
-
   return Object.fromEntries(
     Object.entries(selectedOptions)
       .map(([key, value]) => [String(key ?? '').trim(), String(value ?? '').trim()])
@@ -44,22 +53,23 @@ function buildSelectionKey(selectedOptions) {
   for (let index = 0; index < serialized.length; index += 1) {
     hash = ((hash << 5) + hash + serialized.charCodeAt(index)) >>> 0
   }
-
   return `pkgopt_${hash.toString(36)}`
 }
 
-function buildCartItemTitle(title, selectedOptions) {
+function buildCartItemTitle(title, selectedOptions, extraMeta = {}) {
   const normalized = normalizeSelectedOptions(selectedOptions)
-  if (!Object.keys(normalized).length) return title
-
-  return `${title}${CART_META_SEPARATOR}${JSON.stringify({ selectedOptions: normalized })}`
+  const meta = {
+    ...extraMeta,
+    ...(Object.keys(normalized).length ? { selectedOptions: normalized } : {}),
+  }
+  if (!Object.keys(meta).length) return title
+  return `${title}${CART_META_SEPARATOR}${JSON.stringify(meta)}`
 }
 
 function parseSelectedOptionsFromCartItemTitle(title = '') {
   const rawTitle = String(title ?? '')
   const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
   if (!metaPart) return {}
-
   try {
     const parsed = JSON.parse(metaPart)
     return normalizeSelectedOptions(parsed?.selectedOptions)
@@ -90,21 +100,26 @@ function buildEmptyGuestCart() {
     discountAmount: '0.00',
     total: '0.00',
     couponId: null,
+    couponCode: null,
   }
 }
 
+// ─── FIXED: preserve couponId / couponCode / discountAmount on every recalc ───
 function withGuestCartTotals(cart) {
   const items = Array.isArray(cart?.items) ? cart.items : []
   const subtotal = items.reduce((sum, item) => sum + Number(item?.totalPrice ?? 0), 0)
+  const discountAmount = Math.min(Number(cart?.discountAmount ?? 0), subtotal)
+  const total = Math.max(0, subtotal - discountAmount)
 
   return {
     ...buildEmptyGuestCart(),
     ...cart,
     items,
     subtotal: subtotal.toFixed(2),
-    discountAmount: '0.00',
-    total: subtotal.toFixed(2),
-    couponId: null,
+    discountAmount: discountAmount.toFixed(2),
+    total: total.toFixed(2),
+    couponId: cart?.couponId ?? null,
+    couponCode: cart?.couponCode ?? null,
   }
 }
 
@@ -128,10 +143,67 @@ function clearGuestCartStorage() {
   localStorage.removeItem(GUEST_CART_KEY)
 }
 
-function createGuestCartUnsupportedError(message) {
-  const error = new Error(message)
-  error.code = 'AUTH_REQUIRED'
-  return error
+// ─── NEW: validate coupon via Strapi public API (no auth needed) ──────────────
+// Field names match the backend cart.js controller exactly:
+//   code, is_active, discount_type, discount_value,
+//   max_uses, used_count, valid_from, valid_to
+async function fetchAndValidateCoupon(code) {
+  const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+  const url = new URL('/api/coupons', base)
+  url.searchParams.set('filters[code][$eq]', String(code).trim().toUpperCase())
+
+  let payload
+  try {
+    const res = await fetch(url.toString())
+    if (!res.ok) throw new Error('Could not verify coupon. Please try again.')
+    payload = await res.json()
+  } catch {
+    throw new Error('Could not verify coupon. Please try again.')
+  }
+
+  const raw = payload?.data?.[0]
+  if (!raw) throw new Error('Invalid or expired coupon code.')
+
+  // Strapi v4 nests fields under .attributes; v5 returns them flat
+  const c = raw.attributes ?? raw
+
+  if (!c.is_active) throw new Error('Invalid or expired coupon code.')
+
+  const now = new Date()
+  if (c.valid_from && new Date(c.valid_from) > now) {
+    throw new Error('This coupon is not yet active.')
+  }
+  if (c.valid_to && new Date(c.valid_to) < now) {
+    throw new Error('This coupon has expired.')
+  }
+  if (
+    c.max_uses !== null &&
+    c.max_uses !== undefined &&
+    Number(c.used_count ?? 0) >= Number(c.max_uses)
+  ) {
+    throw new Error('This coupon has reached its usage limit.')
+  }
+
+  return {
+    id: String(raw.id),
+    code: String(c.code ?? code).toUpperCase(),
+    discount_type: String(c.discount_type ?? 'fixed'), // 'fixed' | 'percentage'
+    discount_value: Number(c.discount_value ?? 0),
+    min_order_value: Number(c.min_order_value ?? 0),
+  }
+}
+
+// ─── NEW: compute discount from coupon + subtotal ────────────────────────────
+function computeDiscount(coupon, subtotal) {
+  if (coupon.min_order_value > 0 && subtotal < coupon.min_order_value) {
+    throw new Error(
+      `Minimum order of Rs${coupon.min_order_value.toLocaleString('en-IN')} required for this coupon.`
+    )
+  }
+  if (coupon.discount_type === 'percentage') {
+    return Math.min((subtotal * coupon.discount_value) / 100, subtotal)
+  }
+  return Math.min(coupon.discount_value, subtotal)
 }
 
 async function fetchPackageSnapshot(packageId) {
@@ -140,18 +212,17 @@ async function fetchPackageSnapshot(packageId) {
   url.searchParams.set('filters[id][$eq]', String(packageId))
 
   const res = await fetch(url.toString())
-  if (!res.ok) {
-    throw new Error('Package not found')
-  }
+  if (!res.ok) throw new Error('Package not found')
 
   const payload = await res.json()
   const pkg = payload?.data?.[0]
   if (!pkg) throw new Error('Package not found')
 
+  const attrs = pkg.attributes ?? pkg
   return {
     id: pkg.id,
-    title: pkg.title ?? 'Package',
-    basePrice: Number(pkg.base_price ?? 0),
+    title: attrs.title ?? 'Package',
+    basePrice: Number(attrs.base_price ?? 0),
   }
 }
 
@@ -160,20 +231,29 @@ async function migrateGuestCartToServer(token) {
   if (!guestCart.items.length) return null
 
   for (const item of guestCart.items) {
+    const rawTitle = String(item?.title ?? '')
+    const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+    let parsedMeta = {}
+    if (metaPart) {
+      try {
+        parsedMeta = JSON.parse(metaPart) ?? {}
+      } catch {
+        parsedMeta = {}
+      }
+    }
+
     await cartAddItem(token, {
       packageId: Number(item.packageId),
       quantity: Number(item.quantity ?? 1),
-      selectedOptions: (() => {
-        const rawTitle = String(item?.title ?? '')
-        const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
-        if (!metaPart) return undefined
-        try {
-          const parsed = JSON.parse(metaPart)
-          return parsed?.selectedOptions ?? undefined
-        } catch {
-          return undefined
-        }
-      })(),
+      selectedOptions: parsedMeta?.selectedOptions ?? undefined,
+      addon:
+        parsedMeta?.itemType === 'addon'
+          ? {
+              id: parsedMeta?.addonId,
+              name: parsedMeta?.addonTitle,
+              price: Number(item?.unitPrice ?? 0),
+            }
+          : undefined,
     })
   }
 
@@ -181,10 +261,7 @@ async function migrateGuestCartToServer(token) {
   if (guestCart.eventDate) nextDetails.eventDate = guestCart.eventDate
   if (guestCart.eventCity) nextDetails.eventCity = guestCart.eventCity
   if (guestCart.guestCount != null) nextDetails.guestCount = Number(guestCart.guestCount)
-
-  if (Object.keys(nextDetails).length) {
-    await cartUpdate(token, nextDetails)
-  }
+  if (Object.keys(nextDetails).length) await cartUpdate(token, nextDetails)
 
   clearGuestCartStorage()
   return guestCart
@@ -224,7 +301,13 @@ export function useCart() {
     }
 
     const syncCart = async () => {
-      const token = getToken()
+      const hasStoredToken = !!getToken()
+      if (!hasStoredToken) {
+        syncGuestCart()
+        return
+      }
+
+      const token = await getServerToken() // never throws
       if (!token) {
         syncGuestCart()
         return
@@ -245,9 +328,7 @@ export function useCart() {
         console.error('[cart] sync failed', err)
         setError(err.message ?? 'Failed to load cart')
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        if (!cancelled) setLoading(false)
       }
     }
 
@@ -278,18 +359,32 @@ export function useCart() {
     }
   }, [])
 
-  const addPackage = async ({ packageId, quantity = 1, selectedOptions }) => {
-    const token = getToken()
+  const addPackage = async ({ packageId, quantity = 1, selectedOptions, addon = null }) => {
+    const token = await getServerToken()
+    const addonId = addon?.id != null ? String(addon.id) : null
+    const addonTitle = String(addon?.name ?? '').trim()
+    const addonUnitPrice = Number(addon?.price ?? 0)
+    const isAddon = Boolean(addonId && addonTitle)
 
     if (!token) {
       const snapshot = await fetchPackageSnapshot(packageId)
       const guestCart = readGuestCart()
-      const selectionKey = buildSelectionKey(selectedOptions)
+      const selectionKey = isAddon ? null : buildSelectionKey(selectedOptions)
       const existing = guestCart.items.find(
         item =>
           String(item.packageId) === String(packageId) &&
-          String(item.packageElementId ?? '') === String(selectionKey ?? '')
+          String(item.packageElementId ?? '') === String(selectionKey ?? '') &&
+          String(item.addonId ?? '') === String(addonId ?? '')
       )
+      const unitPrice = isAddon ? addonUnitPrice : snapshot.basePrice
+      const itemTitle = isAddon
+        ? buildCartItemTitle(addonTitle, selectedOptions, {
+            itemType: 'addon',
+            addonTitle,
+            addonId,
+            parentPackageId: String(packageId),
+          })
+        : buildCartItemTitle(snapshot.title, selectedOptions)
 
       let nextItems
       if (existing) {
@@ -299,7 +394,7 @@ export function useCart() {
           return {
             ...item,
             quantity: nextQuantity,
-            totalPrice: (snapshot.basePrice * nextQuantity).toFixed(2),
+            totalPrice: (unitPrice * nextQuantity).toFixed(2),
           }
         })
       } else {
@@ -307,11 +402,11 @@ export function useCart() {
           id: createGuestCartItemId(),
           packageId: String(packageId),
           packageElementId: selectionKey,
-          addonId: null,
-          title: buildCartItemTitle(snapshot.title, selectedOptions),
+          addonId,
+          title: itemTitle,
           quantity,
-          unitPrice: snapshot.basePrice.toFixed(2),
-          totalPrice: (snapshot.basePrice * quantity).toFixed(2),
+          unitPrice: unitPrice.toFixed(2),
+          totalPrice: (unitPrice * quantity).toFixed(2),
           createdAt: new Date().toISOString(),
         })
       }
@@ -325,7 +420,7 @@ export function useCart() {
     }
 
     try {
-      const data = await cartAddItem(token, { packageId, quantity, selectedOptions })
+      const data = await cartAddItem(token, { packageId, quantity, selectedOptions, addon })
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))
@@ -339,23 +434,17 @@ export function useCart() {
   }
 
   const updateItemQuantity = async (itemId, quantity) => {
-    const token = getToken()
+    const token = await getServerToken()
 
     if (!token) {
       const guestCart = readGuestCart()
       const item = guestCart.items.find(entry => entry.id === itemId)
       if (!item) throw new Error('Cart item not found')
-
       const nextItems = guestCart.items.map(entry =>
         entry.id === itemId
-          ? {
-              ...entry,
-              quantity,
-              totalPrice: (Number(entry.unitPrice ?? 0) * quantity).toFixed(2),
-            }
+          ? { ...entry, quantity, totalPrice: (Number(entry.unitPrice ?? 0) * quantity).toFixed(2) }
           : entry
       )
-
       const nextCart = writeGuestCart({ ...guestCart, items: nextItems })
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))
@@ -379,7 +468,7 @@ export function useCart() {
   }
 
   const removeItem = async itemId => {
-    const token = getToken()
+    const token = await getServerToken()
 
     if (!token) {
       const guestCart = readGuestCart()
@@ -409,7 +498,7 @@ export function useCart() {
   }
 
   const updateCartDetails = async body => {
-    const token = getToken()
+    const token = await getServerToken()
 
     if (!token) {
       const guestCart = readGuestCart()
@@ -443,7 +532,7 @@ export function useCart() {
   }
 
   const updateCartItemDetails = async ({ itemId, quantity, selectedOptions }) => {
-    const token = getToken()
+    const token = await getServerToken()
 
     if (!token) {
       const guestCart = readGuestCart()
@@ -476,7 +565,6 @@ export function useCart() {
               totalPrice: (unitPrice * (currentQuantity - 1)).toFixed(2),
             }
           }
-
           if (matchingEditedItem && entry.id === matchingEditedItem.id) {
             const mergedQuantity = Math.max(1, Number(entry.quantity ?? 1)) + 1
             return {
@@ -485,7 +573,6 @@ export function useCart() {
               totalPrice: (Number(entry.unitPrice ?? unitPrice) * mergedQuantity).toFixed(2),
             }
           }
-
           return entry
         })
 
@@ -517,7 +604,6 @@ export function useCart() {
       const nextSelectionKey = buildSelectionKey(normalizedSelectedOptions)
       const baseTitle = String(item.title ?? '').split(CART_META_SEPARATOR)[0] || item.title
       const nextTitle = buildCartItemTitle(baseTitle, normalizedSelectedOptions)
-
       const duplicateItem = guestCart.items.find(
         entry =>
           entry.id !== item.id &&
@@ -595,11 +681,7 @@ export function useCart() {
           ? currentQuantity
           : requestedQuantity
 
-      const data = await cartUpdate(token, {
-        itemId,
-        quantity: nextQuantity,
-        selectedOptions,
-      })
+      const data = await cartUpdate(token, { itemId, quantity: nextQuantity, selectedOptions })
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))
@@ -612,42 +694,81 @@ export function useCart() {
     }
   }
 
+  // ─── FIXED: no 401s ───────────────────────────────────────────────────────
+  // Logged-in  → Express API  (unchanged, was always correct)
+  // Guest      → Strapi public GET /api/coupons, apply discount locally
   const applyCoupon = async code => {
-    const token = getToken()
-    if (!token) {
-      throw createGuestCartUnsupportedError('Sign in to apply coupon codes.')
+    const token = await getServerToken() // never throws; '' if not logged in
+
+    if (token) {
+      // Logged-in path — same as before
+      try {
+        const data = await cartApplyCoupon(token, { code })
+        const nextCart = data.cart ?? null
+        setCart(nextCart)
+        setItemCount(getItemCount(nextCart))
+        setError('')
+        dispatchCartChange(nextCart)
+        return data
+      } catch (err) {
+        setError(err.message ?? 'Failed to apply coupon')
+        throw err
+      }
     }
-    try {
-      const data = await cartApplyCoupon(token, { code })
-      const nextCart = data.cart ?? null
-      setCart(nextCart)
-      setItemCount(getItemCount(nextCart))
-      setError('')
-      dispatchCartChange(nextCart)
-      return data
-    } catch (err) {
-      setError(err.message ?? 'Failed to apply coupon')
-      throw err
-    }
+
+    // Guest path — no network call to Express, no 401
+    const coupon = await fetchAndValidateCoupon(code) // throws user-friendly Error on failure
+    const guestCart = readGuestCart()
+    const subtotal = guestCart.items.reduce((sum, item) => sum + Number(item?.totalPrice ?? 0), 0)
+    const discountAmount = computeDiscount(coupon, subtotal) // throws if min order not met
+
+    const nextCart = writeGuestCart({
+      ...guestCart,
+      couponId: coupon.id,
+      couponCode: coupon.code,
+      discountAmount: discountAmount.toFixed(2),
+    })
+
+    setCart(nextCart)
+    setItemCount(getItemCount(nextCart))
+    setError('')
+    dispatchCartChange(nextCart)
+    return { cart: nextCart }
   }
 
+  // ─── FIXED: no 401s ───────────────────────────────────────────────────────
   const clearCoupon = async () => {
-    const token = getToken()
-    if (!token) {
-      throw createGuestCartUnsupportedError('Sign in to remove coupon codes.')
+    const token = await getServerToken() // never throws
+
+    if (token) {
+      try {
+        const data = await cartRemoveCoupon(token)
+        const nextCart = data.cart ?? null
+        setCart(nextCart)
+        setItemCount(getItemCount(nextCart))
+        setError('')
+        dispatchCartChange(nextCart)
+        return nextCart
+      } catch (err) {
+        setError(err.message ?? 'Failed to remove coupon')
+        throw err
+      }
     }
-    try {
-      const data = await cartRemoveCoupon(token)
-      const nextCart = data.cart ?? null
-      setCart(nextCart)
-      setItemCount(getItemCount(nextCart))
-      setError('')
-      dispatchCartChange(nextCart)
-      return nextCart
-    } catch (err) {
-      setError(err.message ?? 'Failed to remove coupon')
-      throw err
-    }
+
+    // Guest path — just strip coupon from localStorage
+    const guestCart = readGuestCart()
+    const nextCart = writeGuestCart({
+      ...guestCart,
+      couponId: null,
+      couponCode: null,
+      discountAmount: '0.00',
+    })
+
+    setCart(nextCart)
+    setItemCount(getItemCount(nextCart))
+    setError('')
+    dispatchCartChange(nextCart)
+    return nextCart
   }
 
   return {

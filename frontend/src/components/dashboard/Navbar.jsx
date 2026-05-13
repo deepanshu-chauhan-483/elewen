@@ -149,7 +149,13 @@ const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
           <BellIcon count={unreadCount} />
         </button>
 
-        {avatarNode}
+        <Link
+          to="/user-dashboard/profile"
+          aria-label="Open profile"
+          className="flex shrink-0 items-center justify-center rounded-full"
+        >
+          {avatarNode}
+        </Link>
       </div>
     </div>
   )
@@ -289,7 +295,13 @@ const Navbar = ({ onMobileMenuOpen }) => {
             ) : null}
           </button>
 
-          {avatarNode}
+          <Link
+            to="/user-dashboard/profile"
+            aria-label="Open profile"
+            className="flex shrink-0 items-center justify-center rounded-full"
+          >
+            {avatarNode}
+          </Link>
 
           <button
             type="button"
@@ -363,11 +375,11 @@ function NotificationModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-end px-6 pt-20">
+    <div className="fixed inset-0 z-40 flex items-start justify-end px-6 pt-20 hide-scrollbar">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative z-10 w-full max-w-md rounded-[28px] border border-[#E4DED8] bg-white shadow-[0_18px_60px_rgba(17,24,39,0.16)]">
-        <div className="flex items-center justify-between border-b border-[#EFE7E1] px-5 py-4">
+      <div className="relative z-10 w-full max-w-md rounded-[28px] border border-[#E4DED8] bg-white shadow-[0_18px_60px_rgba(17,24,39,0.16)] hide-scrollbar">
+        <div className="flex items-center hide-scrollbar justify-between border-b border-[#EFE7E1] px-5 py-4">
           <div>
             <h2 className="text-base font-medium text-[#2E2E2E]">Notifications</h2>
             <p className="mt-1 text-xs text-[#6B7280]">

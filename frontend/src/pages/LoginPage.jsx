@@ -33,6 +33,7 @@ export default function LoginPage() {
     try {
       const data = await authLogin({ email, password })
       setStoredJwt(data.jwt)
+      localStorage.setItem('elewen_user', JSON.stringify(data.user))
       navigate(redirectTarget, { replace: true })
     } catch (err) {
       if (err.message?.includes('GOOGLE_ACCOUNT_USE_GOOGLE')) {

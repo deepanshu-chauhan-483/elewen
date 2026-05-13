@@ -656,11 +656,13 @@ const HeroSection = () => {
           }}
         >
           <video
+            key={heroVideoSrc}
             autoPlay
             muted
             loop
             playsInline
             preload="auto"
+            src={heroVideoSrc}
             onError={() => {
               // Helps diagnose "video not showing" vs "video offscreen" during hero animations.
               console.error('Hero video failed to load:', heroVideoSrc)
@@ -672,9 +674,7 @@ const HeroSection = () => {
               height: '100%',
               objectFit: 'cover',
             }}
-          >
-            <source src={heroVideoSrc} type="video/mp4" />
-          </video>
+          />
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.22)' }} />
 
           {/* Mobile Gradients for text readability */}

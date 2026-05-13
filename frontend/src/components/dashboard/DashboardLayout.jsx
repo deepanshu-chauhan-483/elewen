@@ -82,7 +82,9 @@ const DashboardLayout = () => {
             marginTop: DASHBOARD.NAVBAR_HEIGHT,
           }}
         >
-          <Outlet />
+          <div className="px-6 py-6 md:px-8 md:py-8">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
