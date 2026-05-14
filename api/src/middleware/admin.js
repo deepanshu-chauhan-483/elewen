@@ -22,8 +22,7 @@ const ADMIN_USER_IDS = new Set(
 )
 
 const ALLOW_ALL_AUTHENTICATED =
-  process.env.ADMIN_ALLOW_ALL_AUTHENTICATED === 'true' &&
-  process.env.NODE_ENV !== 'production'
+  process.env.ADMIN_ALLOW_ALL_AUTHENTICATED === 'true' && process.env.NODE_ENV !== 'production'
 
 const USE_LEGACY_ADMIN_FALLBACKS = process.env.ADMIN_ACCESS_USE_LEGACY_FALLBACKS === 'true'
 

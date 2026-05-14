@@ -160,7 +160,9 @@ async function fetchVendorsByIds(ids = []) {
   ].join('&')
 
   const response = await strapiServerGet(`/api/vendors?${query}`)
-  return new Map((response?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)]))
+  return new Map(
+    (response?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)])
+  )
 }
 
 async function enrichBookingsWithCustomer(bookings = []) {
@@ -276,7 +278,9 @@ function buildBookingPaymentSnapshot(booking) {
     .filter(payment => payment.status === 'success')
     .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
   const failedPaymentsCount = bookingPayments.filter(payment => payment.status === 'failed').length
-  const pendingPaymentsCount = bookingPayments.filter(payment => payment.status === 'pending').length
+  const pendingPaymentsCount = bookingPayments.filter(
+    payment => payment.status === 'pending'
+  ).length
   const latestPayment = bookingPayments[0] ?? null
   const totalPrice = toNumber(booking?.totalPrice)
   const scheduledRemainingAmount = toNumber(booking?.remainingAmount)
@@ -391,7 +395,9 @@ async function fetchVendorDirectory({
         leadTimeDays: vendor.lead_time_days ?? null,
         registrationData: vendor.registration_data ?? null,
         documentsCount: Array.isArray(vendor.vendor_documents) ? vendor.vendor_documents.length : 0,
-        portfolioCount: Array.isArray(vendor.vendor_portfolios) ? vendor.vendor_portfolios.length : 0,
+        portfolioCount: Array.isArray(vendor.vendor_portfolios)
+          ? vendor.vendor_portfolios.length
+          : 0,
         activeAssignmentsCount: vendorAssignments.filter(assignment =>
           ['assigned', 'confirmed'].includes(assignment.status)
         ).length,
@@ -567,22 +573,20 @@ export async function getAdminOverview(req, res, next) {
         take: 8,
       }),
       safeStrapiServerGet(
-        '/api/vendors?filters[vendor_status][$eq]=pending&publicationState=preview&pagination[page]=1&pagination[pageSize]=5'
-      ,
+        '/api/vendors?filters[vendor_status][$eq]=pending&publicationState=preview&pagination[page]=1&pagination[pageSize]=5',
         { data: [], meta: { pagination: { total: 0 } } }
       ),
     ])
 
     const paymentSummary = buildPaymentSummaryFromPayments(allPayments)
-    const pendingVendorAmount = pendingPayouts.reduce((sum, payout) => sum + toNumber(payout.amount), 0)
+    const pendingVendorAmount = pendingPayouts.reduce(
+      (sum, payout) => sum + toNumber(payout.amount),
+      0
+    )
     const [recent, upcoming, allAlertUsers] = await Promise.all([
       enrichBookingsWithCustomer(recentBookings),
       enrichBookingsWithCustomer(upcomingBookings),
-      fetchUsersByIds(
-        alerts
-          .map(alert => alert.resolvedBy)
-          .filter(Boolean)
-      ),
+      fetchUsersByIds(alerts.map(alert => alert.resolvedBy).filter(Boolean)),
     ])
     const unassignedUpcomingCount = upcoming.filter(
       booking => (booking.vendorAssignments?.length ?? 0) === 0
@@ -678,11 +682,15 @@ export async function getAdminOverview(req, res, next) {
         })),
         alerts: alerts.map(alert => ({
           ...alert,
-          resolvedByUser: alert.resolvedBy ? allAlertUsers.get(String(alert.resolvedBy)) ?? null : null,
+          resolvedByUser: alert.resolvedBy
+            ? (allAlertUsers.get(String(alert.resolvedBy)) ?? null)
+            : null,
         })),
         overdueAlerts: overdueAlerts.map(alert => ({
           ...alert,
-          resolvedByUser: alert.resolvedBy ? allAlertUsers.get(String(alert.resolvedBy)) ?? null : null,
+          resolvedByUser: alert.resolvedBy
+            ? (allAlertUsers.get(String(alert.resolvedBy)) ?? null)
+            : null,
         })),
       },
     })
@@ -738,7 +746,8 @@ export async function listAdminBookings(req, res, next) {
     const metrics = {
       total,
       active: enrichedBookings.filter(booking => getBookingCategory(booking) === 'active').length,
-      previous: enrichedBookings.filter(booking => getBookingCategory(booking) === 'previous').length,
+      previous: enrichedBookings.filter(booking => getBookingCategory(booking) === 'previous')
+        .length,
     }
 
     res.json({
@@ -803,7 +812,9 @@ export async function updateAdminBookingStatus(req, res, next) {
     const adminId = String(req.user.id)
 
     if (!BOOKING_STATUSES.includes(status)) {
-      return res.status(400).json({ error: `status must be one of: ${BOOKING_STATUSES.join(', ')}` })
+      return res
+        .status(400)
+        .json({ error: `status must be one of: ${BOOKING_STATUSES.join(', ')}` })
     }
 
     const booking = await prisma.booking.findUnique({
@@ -987,7 +998,9 @@ export async function updateAdminSampleTasteStatus(req, res, next) {
 
     const updated = await prisma.$transaction(async tx => {
       if (status === 'assigned' && vendorId) {
-        const existingAssignment = sample.vendors.find(vendor => String(vendor.vendorId) === vendorId)
+        const existingAssignment = sample.vendors.find(
+          vendor => String(vendor.vendorId) === vendorId
+        )
 
         if (!existingAssignment) {
           await tx.sampleTasteVendor.create({
@@ -1059,7 +1072,8 @@ export async function getAdminVendorWorkspace(req, res, next) {
           vendor.vendorStatus === 'approved' && Number(vendor.activeAssignmentsCount ?? 0) > 0
       )
       .sort(
-        (left, right) => Number(right.activeAssignmentsCount ?? 0) - Number(left.activeAssignmentsCount ?? 0)
+        (left, right) =>
+          Number(right.activeAssignmentsCount ?? 0) - Number(left.activeAssignmentsCount ?? 0)
       )
     const unassignedVendors = result.vendors
       .filter(
@@ -1300,10 +1314,7 @@ export async function getAdminMessageThread(req, res, next) {
 
     const [enrichedBooking, users] = await Promise.all([
       enrichBookingsWithCustomer([thread.booking]),
-      fetchUsersByIds([
-        thread.booking.userId,
-        ...thread.messages.map(message => message.senderId),
-      ]),
+      fetchUsersByIds([thread.booking.userId, ...thread.messages.map(message => message.senderId)]),
     ])
 
     res.json({
@@ -1433,64 +1444,71 @@ export async function getAdminPaymentSummary(req, res, next) {
 
 export async function getAdminPaymentWorkspace(req, res, next) {
   try {
-    const [payments, refunds, payouts, activeBookings, postEventBookings, settingsResponse, couponsResponse] =
-      await Promise.all([
-        prisma.payment.findMany({
-          include: {
-            refunds: true,
-            booking: true,
-          },
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.refund.findMany({
-          include: {
-            payment: {
-              include: {
-                booking: true,
-              },
+    const [
+      payments,
+      refunds,
+      payouts,
+      activeBookings,
+      postEventBookings,
+      settingsResponse,
+      couponsResponse,
+    ] = await Promise.all([
+      prisma.payment.findMany({
+        include: {
+          refunds: true,
+          booking: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.refund.findMany({
+        include: {
+          payment: {
+            include: {
+              booking: true,
             },
           },
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.vendorPayout.findMany({
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.booking.findMany({
-          where: {
-            status: {
-              notIn: ['completed', 'cancelled'],
-            },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.vendorPayout.findMany({
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.booking.findMany({
+        where: {
+          status: {
+            notIn: ['completed', 'cancelled'],
           },
-          include: {
-            items: true,
-            notes: true,
-            statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
-            payments: { orderBy: { createdAt: 'desc' } },
-            vendorAssignments: true,
-          },
-          orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
-          take: 20,
-        }),
-        prisma.booking.findMany({
-          where: {
-            status: 'post_event',
-          },
-          include: {
-            items: true,
-            notes: true,
-            statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
-            payments: { orderBy: { createdAt: 'desc' } },
-            vendorAssignments: true,
-          },
-          orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
-          take: 20,
-        }),
-        safeStrapiServerGet('/api/global-setting?publicationState=preview', { data: null }),
-        safeStrapiServerGet(
-          '/api/coupons?publicationState=preview&pagination[page]=1&pagination[pageSize]=10&sort[0]=createdAt:desc',
-          { data: [] }
-        ),
-      ])
+        },
+        include: {
+          items: true,
+          notes: true,
+          statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+          payments: { orderBy: { createdAt: 'desc' } },
+          vendorAssignments: true,
+        },
+        orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
+        take: 20,
+      }),
+      prisma.booking.findMany({
+        where: {
+          status: 'post_event',
+        },
+        include: {
+          items: true,
+          notes: true,
+          statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+          payments: { orderBy: { createdAt: 'desc' } },
+          vendorAssignments: true,
+        },
+        orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
+        take: 20,
+      }),
+      safeStrapiServerGet('/api/global-setting?publicationState=preview', { data: null }),
+      safeStrapiServerGet(
+        '/api/coupons?publicationState=preview&pagination[page]=1&pagination[pageSize]=10&sort[0]=createdAt:desc',
+        { data: [] }
+      ),
+    ])
 
     const [enrichedActiveBookings, enrichedPostEventBookings, vendors] = await Promise.all([
       enrichBookingsWithCustomer(activeBookings),
@@ -1576,7 +1594,9 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           refundsPendingCount,
           vendorPayoutPendingAmount: Number(vendorPayoutPendingAmount.toFixed(2)),
           totalOutstanding: Number(totalOutstanding.toFixed(2)),
-          advancePaymentPercentage: Number(settingsResponse?.data?.advance_payment_percentage ?? 30),
+          advancePaymentPercentage: Number(
+            settingsResponse?.data?.advance_payment_percentage ?? 30
+          ),
         },
         customerPayments: {
           activeBookings: activeBookingPayments,
@@ -1715,7 +1735,9 @@ export async function listAdminRefunds(req, res, next) {
     res.json({
       refunds: refunds.map(refund => ({
         ...refund,
-        bookingSummary: refund.bookingId ? bookingMap.get(String(refund.bookingId)) ?? null : null,
+        bookingSummary: refund.bookingId
+          ? (bookingMap.get(String(refund.bookingId)) ?? null)
+          : null,
       })),
     })
   } catch (err) {
@@ -1847,7 +1869,8 @@ export async function updateAdminCoupon(req, res, next) {
     if (req.body.code !== undefined) payload.code = normalizeText(req.body.code).toUpperCase()
     if (req.body.discount_type !== undefined)
       payload.discount_type = normalizeText(req.body.discount_type).toLowerCase()
-    if (req.body.discount_value !== undefined) payload.discount_value = Number(req.body.discount_value)
+    if (req.body.discount_value !== undefined)
+      payload.discount_value = Number(req.body.discount_value)
     if (req.body.max_uses !== undefined) payload.max_uses = req.body.max_uses
     if (req.body.valid_from !== undefined) payload.valid_from = req.body.valid_from
     if (req.body.valid_to !== undefined) payload.valid_to = req.body.valid_to
@@ -2000,7 +2023,9 @@ export async function updateAdminSupportTicket(req, res, next) {
     const priority = normalizeText(req.body.priority).toLowerCase()
 
     if (status && !SUPPORT_STATUSES.includes(status)) {
-      return res.status(400).json({ error: `status must be one of: ${SUPPORT_STATUSES.join(', ')}` })
+      return res
+        .status(400)
+        .json({ error: `status must be one of: ${SUPPORT_STATUSES.join(', ')}` })
     }
 
     if (priority && !SUPPORT_PRIORITIES.includes(priority)) {
@@ -2134,7 +2159,9 @@ export async function listAdminAlerts(req, res, next) {
     res.json({
       alerts: alerts.map(alert => ({
         ...alert,
-        resolvedByUser: alert.resolvedBy ? resolvedUsers.get(String(alert.resolvedBy)) ?? null : null,
+        resolvedByUser: alert.resolvedBy
+          ? (resolvedUsers.get(String(alert.resolvedBy)) ?? null)
+          : null,
       })),
       summary: {
         total,

@@ -38,11 +38,7 @@ import {
   deleteAssignment,
   updateAssignment,
 } from '../controllers/vendorAssignment.js'
-import {
-  createVendorPayout,
-  processRefund,
-  updateVendorPayout,
-} from '../controllers/payment.js'
+import { createVendorPayout, processRefund, updateVendorPayout } from '../controllers/payment.js'
 
 const router = Router()
 

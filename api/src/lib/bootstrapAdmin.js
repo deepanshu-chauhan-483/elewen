@@ -42,8 +42,7 @@ async function syncUserForDefaultAdmin(userId) {
 
 function isDuplicateCredentialError(err) {
   return (
-    err?.status === 400 &&
-    /email or username are already taken/i.test(String(err?.message ?? ''))
+    err?.status === 400 && /email or username are already taken/i.test(String(err?.message ?? ''))
   )
 }
 
@@ -88,7 +87,9 @@ export async function bootstrapDefaultAdmin() {
   }
 
   const existingUser = await findUserByEmailFromDatabase(DEFAULT_ADMIN_EMAIL)
-  const baseUser = existingUser?.id ? existingUser : (await createDefaultAdminUser())?.user ?? null
+  const baseUser = existingUser?.id
+    ? existingUser
+    : ((await createDefaultAdminUser())?.user ?? null)
 
   if (!baseUser?.id) {
     return { user: null, credentialsReady: false, mode: 'missing' }

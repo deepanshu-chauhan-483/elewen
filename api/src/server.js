@@ -166,7 +166,7 @@ async function start() {
         console.log(`[admin-bootstrap] Login password: ${credentials.password}`)
       } else {
         console.log(
-          '[admin-bootstrap] Existing user detected. Default password could not be enforced, so use that account\'s current password or change DEV_ADMIN_EMAIL.'
+          "[admin-bootstrap] Existing user detected. Default password could not be enforced, so use that account's current password or change DEV_ADMIN_EMAIL."
         )
       }
     }
