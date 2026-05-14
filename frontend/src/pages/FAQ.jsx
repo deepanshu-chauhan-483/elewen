@@ -37,18 +37,20 @@ export default function FAQ() {
       </section>
 
       {/* CONTENT */}
-      <section className="max-w-[1200px] mx-auto py-[60px]  ">
-        <div className="grid gap-10 lg:grid-cols-[250px_minmax(0,1fr)] ">
+      <section>
+        <div className="mx-auto grid max-w-[1200px] gap-10 px-[10px] py-[60px] md:relative md:grid-cols-[250px_minmax(0,1fr)] md:px-6 lg:px-0">
+          <div className="absolute bottom-0 left-[282px] top-0 hidden w-px bg-[#A7AE98] md:block" />
+
           {/* LEFT MENU */}
-          <div className="border-b border-[#364022] lg:border-b-0 lg:border-r lg:pr-6 px-[10px] md:px-0">
-            <aside className="self-start pb-6 lg:sticky lg:top-28 lg:pb-0 ">
-              <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[12px] md:text-[16px] lg:block lg:space-y-6">
+          <div className="border-b border-[#364022] px-[10px] md:border-b-0 md:px-0 md:pr-6">
+            <aside className="self-start pb-6 md:sticky md:top-28 md:pb-0">
+              <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[12px] md:block md:space-y-6 md:text-[16px]">
                 {categories.map(category => {
                   const isActive = resolvedActiveCategory === category
                   const categoryIndex = categories.indexOf(category)
 
                   return (
-                    <li key={category} className="flex items-center lg:block">
+                    <li key={category} className="flex items-center md:block">
                       <button
                         type="button"
                         onClick={() => {
@@ -59,7 +61,7 @@ export default function FAQ() {
                           isActive ? 'font-medium text-[#364022]' : 'text-[#737373]'
                         }`}
                       >
-                        <span className="relative inline-block md:pb-[15px]">
+                        <span className="relative inline-block md:pb-[8px]">
                           {formatCategoryLabel(category)}
                           <span
                             className={`absolute bottom-0 left-0 h-px bg-[#364022] transition-all duration-300 ease-out ${
@@ -70,7 +72,7 @@ export default function FAQ() {
                       </button>
 
                       {categoryIndex < categories.length - 1 ? (
-                        <span className="ml-4 text-[#364022] lg:hidden">|</span>
+                        <span className="ml-4 text-[#364022] md:hidden">|</span>
                       ) : null}
                     </li>
                   )
@@ -80,7 +82,7 @@ export default function FAQ() {
           </div>
 
           {/* FAQ BOX */}
-          <div className="min-w-0 lg:pl-10">
+          <div className="min-w-0 md:pl-10">
             <div className="bg-[#f7f7f7] p-8">
               {visibleFaqs.map((item, index) => (
                 <div
@@ -92,10 +94,32 @@ export default function FAQ() {
                   <button
                     type="button"
                     onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                    className="flex w-full items-center justify-between text-left"
+                    className="flex w-full items-start justify-between gap-6 text-left"
                   >
                     <h3 className="text-[27px] font-serif">{item.q}</h3>
-                    <span className="text-[24px]">{openIndex === index ? '-' : '+'}</span>
+                    <span
+                      className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center text-[#1C1C1C] transition-transform duration-300 ease-out"
+                      style={{
+                        transform: openIndex === index ? 'rotate(180deg)' : 'rotate(0deg)',
+                      }}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      >
+                        {openIndex === index ? (
+                          <path d="M6 12h12" strokeLinecap="round" />
+                        ) : (
+                          <>
+                            <path d="M6 12h12" strokeLinecap="round" />
+                            <path d="M12 6v12" strokeLinecap="round" />
+                          </>
+                        )}
+                      </svg>
+                    </span>
                   </button>
 
                   <div

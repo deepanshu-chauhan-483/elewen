@@ -155,14 +155,8 @@ function inferServiceSlugsFromSections(pkg) {
   })
 }
 
-function getPackageTags(pkg) {
-  const elementTags = getNestedPackageElements(pkg).flatMap(element => [
-    element?.service?.name,
-    element?.title,
-  ])
-  const inclusionTags = getNestedPackageInclusions(pkg).map(inclusion => inclusion?.text)
-
-  return uniqueValues([...elementTags, ...inclusionTags]).slice(0, 5)
+function buildPackageIncludes(pkg) {
+  return buildTextList(getNestedPackageInclusions(pkg)).slice(0, 12)
 }
 
 function buildPriceCoverText(section) {
@@ -264,6 +258,7 @@ function normalizePackage(pkg, index = 0) {
   const packageThemes = getNestedPackageThemes(pkg)
   const budgetLevels = getNestedPackageBudgetLevels(pkg)
   const primaryBudgetLevel = budgetLevels[0] ?? null
+  const packageIncludes = buildPackageIncludes(pkg)
   const serviceSlugs = uniqueValues(
     serviceCategories
       .flatMap(service => [
@@ -288,7 +283,8 @@ function normalizePackage(pkg, index = 0) {
     description: blocksToText(pkg.description),
     price: pkg.base_price ? `₹${Number(pkg.base_price).toLocaleString('en-IN')}` : '',
     base_price: pkg.base_price ?? 0,
-    tags: getPackageTags(pkg).concat('More'),
+    includes: packageIncludes,
+    tags: packageIncludes,
     event_slugs: normaliseRelationArray(pkg.events)
       .map(event => event?.slug)
       .filter(Boolean),

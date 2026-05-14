@@ -65,7 +65,11 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
   const currentImage = images[currentIndex]
   const saved = isSaved(wishlistPackageId)
   const isWishlistPending = String(pendingPackageId) === String(wishlistPackageId)
-  const tags = useMemo(() => (Array.isArray(pkg.tags) ? pkg.tags : []), [pkg.tags])
+  const tags = useMemo(() => {
+    if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
+    if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
+    return []
+  }, [pkg.includes, pkg.tags])
   const shouldUseCompactMode = compactMode || !isDesktopViewport
   const hasMoreIncludes = tags.length > visibleTagCount
   const visibleTags = showAllIncludes ? tags : tags.slice(0, visibleTagCount)
@@ -143,7 +147,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
 
         if (measureContainer.scrollHeight > availableHeight) {
           tagNodes[index].style.display = 'none'
-          fittedCount = index
+          fittedCount = Math.max(index, 1)
           break
         }
       }
@@ -221,7 +225,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           navigate(packageHref)
         }
       }}
-      className={`relative flex h-[475px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
+      className={`relative flex h-[500px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
     >
       {/* Image Container */}
       <div
@@ -320,7 +324,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
       </div>
 
       {/* Content */}
-      <div className="flex h-[158px] flex-col px-1 pb-1 pt-3">
+      <div className="flex h-[200px] flex-col px-1 pb-1 pt-3">
         <div className="flex items-center justify-between gap-3">
           <h3
             className="line-clamp-1 text-[16px] font-medium text-[#2D2D2D]"

@@ -74,8 +74,8 @@ export default function ContactUsPage() {
 
   return (
     <div className="w-full bg-white px-4 pb-12 md:px-4 lg:px-6" data-nav-theme="glass">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-6 lg:flex-row">
-        <div className="hidden lg:block lg:w-[48%] lg:shrink-0">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-6 md:flex-row">
+        <div className="hidden md:block md:w-[48%] md:shrink-0">
           <div className="sticky top-10">
             <div
               className="relative flex min-h-[90vh] w-full flex-col justify-end overflow-hidden rounded-[20px] p-12"
@@ -100,9 +100,73 @@ export default function ContactUsPage() {
                   you.
                 </p>
 
-                <div className="mt-6 flex items-center gap-6 text-[14px] text-white/80">
-                  <span>xyz@gmail.com</span>
-                  <span>+91 7652872986</span>
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-white/80">
+                  <div className="flex flex-wrap items-center md:gap-2 lg:gap-6 text-[14px] font-medium">
+                    <a
+                      href="mailto:xyz@gmail.com"
+                      className="flex items-center transition-opacity hover:opacity-100"
+                    >
+                      <span className="flex h-7 w-7 items-center justify-start text-white">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                        >
+                          <rect x="3" y="5" width="18" height="14" rx="2.5" />
+                          <path
+                            d="m4.5 7 6.62 5.29a1.4 1.4 0 0 0 1.76 0L19.5 7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <span>xyz@gmail.com</span>
+                    </a>
+
+                    <a
+                      href="tel:+917652872986"
+                      className="flex items-center transition-opacity hover:opacity-100"
+                    >
+                      <span className="flex h-7 w-7 items-center justify-start text-white">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                        >
+                          <path
+                            d="M21 16.2v2.6a1.8 1.8 0 0 1-1.96 1.8A17.83 17.83 0 0 1 3.4 4.96 1.8 1.8 0 0 1 5.2 3h2.6a1.8 1.8 0 0 1 1.8 1.55l.28 2.24a1.8 1.8 0 0 1-.51 1.49l-1.64 1.64a14.5 14.5 0 0 0 6.35 6.35l1.64-1.64a1.8 1.8 0 0 1 1.49-.51l2.24.28A1.8 1.8 0 0 1 21 16.2Z"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <span>+91 7652872986</span>
+                    </a>
+                  </div>
+
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                    className="flex h-7 w-7 items-center justify-start text-white transition-opacity hover:opacity-100"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="5" />
+                      <circle cx="12" cy="12" r="4.2" />
+                      <circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none" />
+                    </svg>
+                  </a>
                 </div>
               </div>
             </div>
