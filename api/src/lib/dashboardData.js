@@ -211,6 +211,14 @@ export function mapVendorPreview(vendor) {
     serviceArea: vendor.service_area ?? '',
     experienceYears: vendor.experience_years ?? null,
     minimumPrice: roundCurrency(vendor.minimum_price),
+    serviceCategories: normalizeRelation(vendor.vendor_services)
+      .map(item => item?.service ?? item)
+      .filter(Boolean)
+      .map(service => ({
+        id: String(service.id),
+        name: service.name ?? '',
+        slug: service.slug ?? '',
+      })),
   }
 }
 

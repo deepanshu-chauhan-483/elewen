@@ -1,0 +1,101 @@
+import { Router } from 'express'
+import { requireAdminAccess } from '../middleware/adminAccess.js'
+import {
+  addAdminBookingNote,
+  addAdminSupportMessage,
+  createAdminCoupon,
+  getAdminBooking,
+  getAdminMessageThread,
+  getAdminOverview,
+  getAdminPaymentWorkspace,
+  getAdminPaymentSummary,
+  getAdminSession,
+  getAdminSettings,
+  getAdminSupportTicket,
+  getAdminVendorWorkspace,
+  listAdminAlerts,
+  listAdminBookings,
+  listAdminCoupons,
+  listAdminMessageThreads,
+  listAdminPayments,
+  listAdminRefunds,
+  listAdminSampleTastes,
+  listAdminSupportTickets,
+  listAdminVendorAssignments,
+  listAdminVendorPayouts,
+  listAdminVendors,
+  sendAdminMessage,
+  updateAdminAlert,
+  updateAdminBookingStatus,
+  updateAdminCoupon,
+  updateAdminSampleTasteStatus,
+  updateAdminSettings,
+  updateAdminSupportTicket,
+  updateAdminVendor,
+} from '../controllers/admin.js'
+import {
+  createAssignment,
+  deleteAssignment,
+  updateAssignment,
+} from '../controllers/vendorAssignment.js'
+import {
+  createVendorPayout,
+  processRefund,
+  updateVendorPayout,
+} from '../controllers/payment.js'
+
+const router = Router()
+
+router.use(requireAdminAccess)
+
+router.get('/session', getAdminSession)
+router.get('/overview', getAdminOverview)
+
+router.get('/bookings', listAdminBookings)
+router.get('/bookings/:id', getAdminBooking)
+router.patch('/bookings/:id/status', updateAdminBookingStatus)
+router.post('/bookings/:id/notes', addAdminBookingNote)
+
+router.get('/sample-taste', listAdminSampleTastes)
+router.patch('/sample-taste/:id/status', updateAdminSampleTasteStatus)
+
+router.get('/vendors', listAdminVendors)
+router.get('/vendors/workspace', getAdminVendorWorkspace)
+router.patch('/vendors/:id', updateAdminVendor)
+
+router.get('/vendor-assignments', listAdminVendorAssignments)
+router.post('/vendor-assignments', createAssignment)
+router.patch('/vendor-assignments/:id', updateAssignment)
+router.delete('/vendor-assignments/:id', deleteAssignment)
+
+router.get('/messages/threads', listAdminMessageThreads)
+router.get('/messages/threads/:bookingId', getAdminMessageThread)
+router.post('/messages', sendAdminMessage)
+
+router.get('/payments/summary', getAdminPaymentSummary)
+router.get('/payments/workspace', getAdminPaymentWorkspace)
+router.get('/payments', listAdminPayments)
+
+router.get('/refunds', listAdminRefunds)
+router.patch('/refunds/:id', processRefund)
+
+router.get('/vendor-payouts', listAdminVendorPayouts)
+router.post('/vendor-payouts', createVendorPayout)
+router.patch('/vendor-payouts/:id', updateVendorPayout)
+
+router.get('/coupons', listAdminCoupons)
+router.post('/coupons', createAdminCoupon)
+router.patch('/coupons/:id', updateAdminCoupon)
+
+router.get('/settings', getAdminSettings)
+router.patch('/settings', updateAdminSettings)
+
+router.get('/support', listAdminSupportTickets)
+router.get('/support/:id', getAdminSupportTicket)
+router.patch('/support/:id', updateAdminSupportTicket)
+router.post('/support/:id/messages', addAdminSupportMessage)
+
+router.get('/alerts', listAdminAlerts)
+router.patch('/alerts/:id', updateAdminAlert)
+
+export default router

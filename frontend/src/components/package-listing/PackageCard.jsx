@@ -146,7 +146,7 @@ function PackageIncludes({
                 type="button"
                 onClick={event => {
                   event.stopPropagation()
-                  setShowAllIncludes(true)
+                  setShowAllIncludes(false)
                 }}
                 className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
               >
@@ -291,7 +291,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           navigate(packageHref)
         }
       }}
-      className={`relative flex h-[475px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
+      className={`relative flex h-[500px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
     >
       {/* Image Container */}
       <div
@@ -390,7 +390,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
       </div>
 
       {/* Content */}
-      <div className="flex h-[158px] flex-col px-1 pb-1 pt-3">
+      <div className="flex h-[200px] flex-col px-1 pb-1 pt-3">
         <div className="flex items-center justify-between gap-3">
           <h3
             className="line-clamp-1 text-[16px] font-medium text-[#2D2D2D]"
