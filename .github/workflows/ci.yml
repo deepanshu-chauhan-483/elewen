@@ -11,9 +11,8 @@ permissions:
   packages: write
 
 jobs:
-  # ── Express API ──────────────────────────────────────────
   test-api:
-    name: API — Test
+    name: API - Test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -40,9 +39,8 @@ jobs:
       - name: Run tests
         run: npm test
 
-  # ── Frontend ─────────────────────────────────────────────
   lint-frontend:
-    name: Frontend — Lint
+    name: Frontend - Lint
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -66,16 +64,35 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  # ── Docker builds (on merge to main only) ────────────────
+  build-admin-panel:
+    name: Admin Panel - Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin-pannel
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
   build-images:
     name: Build & Push Docker Images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    needs: [test-api, lint-frontend]
+    needs: [test-api, lint-frontend, build-admin-panel]
 
     strategy:
       matrix:
-        service: [api, strapi, frontend]
+        service: [api, strapi, frontend, admin-pannel]
 
     steps:
       - uses: actions/checkout@v4
