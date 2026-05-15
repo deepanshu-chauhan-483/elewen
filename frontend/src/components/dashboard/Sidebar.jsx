@@ -201,6 +201,12 @@ export default function Sidebar({ isMobileOpen = false, onMobileClose = () => {}
             onClick={onMobileClose}
           />
           <SidebarItem
+            to="/user-dashboard/sample-taste"
+            label="Sample Booking"
+            Icon={DashboardIcon}
+            onClick={onMobileClose}
+          />
+          <SidebarItem
             to="/user-dashboard/timeline"
             label="Booking Timeline"
             Icon={TimelineIcon}

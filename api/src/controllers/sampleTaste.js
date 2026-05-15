@@ -87,8 +87,6 @@ export const updateStatus = async (req, res, next) => {
     const userId = String(req.user.id)
     const { status, vendorId, menuItems } = req.body
 
-    if (!status) return res.status(400).json({ error: 'status is required' })
-
     const sample = await prisma.sampleTasteBooking.findUnique({
       where: { id: req.params.id },
     })
@@ -133,13 +131,6 @@ export const recordDecision = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
     const { decision, decisionNotes, vendorId, rating, feedbackText } = req.body
-
-    const VALID_DECISIONS = ['convert_full', 'save', 'cancel', 'expired']
-    if (!decision || !VALID_DECISIONS.includes(decision)) {
-      return res.status(400).json({
-        error: 'decision must be one of: convert_full, save, cancel, expired',
-      })
-    }
 
     const sample = await prisma.sampleTasteBooking.findUnique({
       where: { id: req.params.id },

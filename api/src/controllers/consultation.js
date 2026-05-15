@@ -17,17 +17,6 @@ export const createConsultation = async (req, res, next) => {
       vision_notes,
     } = req.body
 
-    if (!full_name || !email || !phone) {
-      return res.status(400).json({
-        error: 'Required fields missing',
-        fields: {
-          ...(!full_name && { full_name: 'Required' }),
-          ...(!email && { email: 'Required' }),
-          ...(!phone && { phone: 'Required' }),
-        },
-      })
-    }
-
     const guestCountInt = guest_count
       ? parseInt(String(guest_count).split('-')[0], 10) || null
       : null

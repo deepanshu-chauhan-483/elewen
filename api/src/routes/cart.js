@@ -9,6 +9,13 @@ import {
   applyCoupon,
   removeCoupon,
 } from '../controllers/cart.js'
+import { validate } from '../middleware/validate.js'
+import {
+  addItemSchema,
+  updateItemSchema,
+  updateCartSchema,
+  applyCouponSchema,
+} from '../schemas/cart.js'
 
 const router = Router()
 
@@ -44,7 +51,7 @@ router.use(requireAuth)
  *         description: Updated cart
  */
 router.get('/', getCart)
-router.patch('/', updateCart)
+router.patch('/', validate(updateCartSchema), updateCart)
 
 /**
  * @openapi
@@ -78,7 +85,7 @@ router.patch('/', updateCart)
  *       404:
  *         description: Package not found in Strapi
  */
-router.post('/items', addItem)
+router.post('/items', validate(addItemSchema), addItem)
 
 /**
  * @openapi
@@ -121,7 +128,7 @@ router.post('/items', addItem)
  *       404:
  *         description: Cart item not found
  */
-router.put('/items/:itemId', updateItem)
+router.put('/items/:itemId', validate(updateItemSchema), updateItem)
 router.delete('/items/:itemId', removeItem)
 
 /**
@@ -157,7 +164,7 @@ router.delete('/items/:itemId', removeItem)
  *       200:
  *         description: Coupon removed, totals recalculated
  */
-router.post('/coupon', applyCoupon)
+router.post('/coupon', validate(applyCouponSchema), applyCoupon)
 router.delete('/coupon', removeCoupon)
 
 export default router

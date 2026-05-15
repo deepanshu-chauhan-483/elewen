@@ -16,6 +16,25 @@ import { useWishlist } from '../../hooks/useWishlist'
 import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
+function StarRating({ value, onChange }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star === value ? 0 : star)}
+          className={`text-xl leading-none transition-colors ${
+            star <= value ? 'text-[#C6A15B]' : 'text-[#D7CEC4] hover:text-[#C6A15B]'
+          }`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function SampleTasteBooking() {
   const navigate = useNavigate()
   const { data: samples = [], isLoading, error } = useDashboardSampleTastes()
@@ -23,6 +42,7 @@ export default function SampleTasteBooking() {
   const { toggleSavedPackage, pendingPackageId } = useWishlist()
   const [selectedSampleId, setSelectedSampleId] = useState('')
   const [feedbackDraft, setFeedbackDraft] = useState({})
+  const [vendorRatings, setVendorRatings] = useState({})
 
   const ongoingSamples = useMemo(
     () => samples.filter(sample => sample.status !== 'completed' && sample.status !== 'cancelled'),
@@ -174,21 +194,45 @@ export default function SampleTasteBooking() {
                 </p>
               </div>
 
+              {/* Section B — Vendor Comparison */}
               <div className="rounded-2xl bg-white p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Vendors</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+                  {(selectedSample.vendors?.length ?? 0) > 1 ? 'Vendor Comparison' : 'Vendor'}
+                </p>
                 {selectedSample.vendors?.length ? (
                   <div className="mt-3 space-y-3">
-                    {selectedSample.vendors.map(vendor => (
-                      <div
-                        key={vendor.id}
-                        className="rounded-2xl bg-[#F6EEE6] px-4 py-3 text-sm text-[#591902]"
-                      >
-                        <p>{vendor.vendor?.companyName || `Vendor #${vendor.vendorId}`}</p>
-                        <p className="mt-1 text-xs text-[#8C5A2C]">
-                          {vendor.menuItems || 'Menu items will appear here once assigned.'}
-                        </p>
-                      </div>
-                    ))}
+                    {selectedSample.vendors.map(vendor => {
+                      const ratingKey = `${selectedSample.id}_${vendor.vendorId}`
+                      return (
+                        <div
+                          key={vendor.id}
+                          className="rounded-2xl border border-[#EDE5DA] bg-[#FBF7F3] px-4 py-4"
+                        >
+                          <p className="text-sm font-medium text-[#591902]">
+                            {vendor.vendor?.companyName || `Vendor #${vendor.vendorId}`}
+                          </p>
+                          <p className="mt-1 text-xs text-[#8C5A2C]">
+                            {vendor.menuItems || 'Menu items will appear here once assigned.'}
+                          </p>
+                          <div className="mt-3 flex items-center gap-3">
+                            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8F8F8F]">
+                              Rate
+                            </p>
+                            <StarRating
+                              value={vendorRatings[ratingKey] ?? 0}
+                              onChange={rating =>
+                                setVendorRatings(prev => ({ ...prev, [ratingKey]: rating }))
+                              }
+                            />
+                            {vendorRatings[ratingKey] > 0 && (
+                              <span className="text-xs text-[#C6A15B]">
+                                {vendorRatings[ratingKey]}/5
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 ) : (
                   <p className="mt-3 text-sm text-[#6B7280]">
@@ -197,9 +241,11 @@ export default function SampleTasteBooking() {
                 )}
               </div>
 
+              {/* Section C — Feedback */}
               <div className="rounded-2xl bg-white p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
-                  Feedback Section
+                <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Feedback</p>
+                <p className="mt-1 text-xs text-[#6B7280]">
+                  Rating and feedback are optional — decisions unlock regardless.
                 </p>
                 <textarea
                   value={feedbackDraft[selectedSample.id] || ''}
@@ -210,7 +256,7 @@ export default function SampleTasteBooking() {
                     }))
                   }
                   rows={4}
-                  placeholder="Add tasting feedback for this request..."
+                  placeholder="Share your overall tasting experience..."
                   className="mt-3 w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
                 />
               </div>
@@ -227,12 +273,19 @@ export default function SampleTasteBooking() {
                         disabled={decisionMutation.isPending}
                         onClick={async () => {
                           const vendorId = selectedSample.vendors?.[0]?.vendorId
+                          const ratings = selectedSample.vendors
+                            ?.map(v => ({
+                              vendorId: v.vendorId,
+                              rating: vendorRatings[`${selectedSample.id}_${v.vendorId}`] ?? null,
+                            }))
+                            .filter(r => r.rating !== null)
                           await decisionMutation.mutateAsync({
                             sampleId: selectedSample.id,
                             body: {
                               decision: 'convert_full',
                               vendorId,
                               feedbackText: feedbackDraft[selectedSample.id] || undefined,
+                              vendorRatings: ratings.length ? ratings : undefined,
                             },
                           })
                           navigate('/checkout?mode=sample-tasting')
@@ -249,11 +302,18 @@ export default function SampleTasteBooking() {
                           String(pendingPackageId) === String(selectedSample.packageId)
                         }
                         onClick={async () => {
+                          const ratings = selectedSample.vendors
+                            ?.map(v => ({
+                              vendorId: v.vendorId,
+                              rating: vendorRatings[`${selectedSample.id}_${v.vendorId}`] ?? null,
+                            }))
+                            .filter(r => r.rating !== null)
                           await decisionMutation.mutateAsync({
                             sampleId: selectedSample.id,
                             body: {
                               decision: 'save',
                               feedbackText: feedbackDraft[selectedSample.id] || undefined,
+                              vendorRatings: ratings.length ? ratings : undefined,
                             },
                           })
                           await toggleSavedPackage({ packageId: selectedSample.packageId })
@@ -269,11 +329,18 @@ export default function SampleTasteBooking() {
                         type="button"
                         disabled={decisionMutation.isPending}
                         onClick={async () => {
+                          const ratings = selectedSample.vendors
+                            ?.map(v => ({
+                              vendorId: v.vendorId,
+                              rating: vendorRatings[`${selectedSample.id}_${v.vendorId}`] ?? null,
+                            }))
+                            .filter(r => r.rating !== null)
                           await decisionMutation.mutateAsync({
                             sampleId: selectedSample.id,
                             body: {
                               decision: 'cancel',
                               feedbackText: feedbackDraft[selectedSample.id] || undefined,
+                              vendorRatings: ratings.length ? ratings : undefined,
                             },
                           })
                         }}

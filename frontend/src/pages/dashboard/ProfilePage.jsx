@@ -17,13 +17,21 @@ function buildFullName(session) {
   )
 }
 
+function normalizeDateOnly(value) {
+  if (!value) return ''
+  const stringValue = String(value).trim()
+  if (!stringValue) return ''
+  const [datePart = ''] = stringValue.split('T')
+  return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : stringValue
+}
+
 function buildInitialForm(session) {
   return {
     first_name: session?.profile?.first_name || session?.user?.first_name || '',
     last_name: session?.profile?.last_name || session?.user?.last_name || '',
     email: session?.user?.email || '',
     phone: session?.user?.phone || '',
-    date_of_birth: session?.profile?.date_of_birth || '',
+    date_of_birth: normalizeDateOnly(session?.profile?.date_of_birth),
   }
 }
 
@@ -172,6 +180,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => {
                     setSaveMessage('')
+                    setForm(buildInitialForm(session))
                     setIsEditing(true)
                   }}
                   className="rounded-full bg-[#C6A15B] px-4 py-2 text-sm text-white transition hover:opacity-90"
@@ -231,7 +240,7 @@ export default function ProfilePage() {
                   onChange={handleFieldChange('date_of_birth')}
                 />
               ) : (
-                <ProfileValue value={displayForm.date_of_birth} />
+                <ProfileValue value={normalizeDateOnly(displayForm.date_of_birth)} />
               )}
             </ProfileField>
           </div>

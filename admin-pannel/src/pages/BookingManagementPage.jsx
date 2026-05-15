@@ -29,7 +29,8 @@ export default function BookingManagementPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedId, setSelectedId] = useState('')
   const [statusInput, setStatusInput] = useState('')
-  const [note, setNote] = useState('')
+  const [statusNote, setStatusNote] = useState('')
+  const [internalNote, setInternalNote] = useState('')
   const [vendorId, setVendorId] = useState('')
 
   const bookingsQuery = useAdminBookings({ search, bucket, status: statusFilter, limit: 24 })
@@ -54,6 +55,8 @@ export default function BookingManagementPage() {
 
   useEffect(() => {
     setStatusInput(booking?.status ?? '')
+    setStatusNote('')
+    setInternalNote('')
     setVendorId('')
   }, [booking?.id])
 
@@ -163,8 +166,8 @@ export default function BookingManagementPage() {
                       <option value="cancelled">Cancelled</option>
                     </SelectField>
                     <TextAreaField
-                      value={note}
-                      onChange={event => setNote(event.target.value)}
+                      value={statusNote}
+                      onChange={event => setStatusNote(event.target.value)}
                       placeholder="Add the context that should be recorded in the status log."
                     />
                     <ActionButton
@@ -174,7 +177,7 @@ export default function BookingManagementPage() {
                           bookingId: booking.id,
                           body: {
                             status: statusInput,
-                            note,
+                            note: statusNote,
                           },
                         })
                       }
@@ -188,18 +191,18 @@ export default function BookingManagementPage() {
                   <h3 className="text-lg font-semibold text-[#2B211B]">Internal Note</h3>
                   <TextAreaField
                     className="mt-4 w-full"
-                    value={note}
-                    onChange={event => setNote(event.target.value)}
+                    value={internalNote}
+                    onChange={event => setInternalNote(event.target.value)}
                     placeholder="Share internal context, dependencies, or customer nuances."
                   />
                   <ActionButton
                     className="mt-4"
                     tone="ghost"
-                    disabled={addNoteMutation.isPending || !note.trim()}
+                    disabled={addNoteMutation.isPending || !internalNote.trim()}
                     onClick={() =>
                       addNoteMutation.mutate({
                         bookingId: booking.id,
-                        body: { note },
+                        body: { note: internalNote },
                       })
                     }
                   >

@@ -1,5 +1,7 @@
 import { Router } from 'express'
 import { registerVendor } from '../controllers/vendor.js'
+import { validate } from '../middleware/validate.js'
+import { registerVendorSchema } from '../schemas/vendor.js'
 
 const router = Router()
 
@@ -57,6 +59,6 @@ const router = Router()
  *       409:
  *         description: Vendor with this email already exists
  */
-router.post('/register', registerVendor)
+router.post('/register', validate(registerVendorSchema), registerVendor)
 
 export default router

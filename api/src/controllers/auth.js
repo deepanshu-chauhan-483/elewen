@@ -17,11 +17,60 @@ const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 // ─── Customer profile helpers ─────────────────────────────────────────────────
 
 /** Find existing customer profile for a Strapi user ID */
+const mapCustomerProfileRow = row => {
+  if (!row) return null
+
+  return {
+    id: Number(row.id),
+    documentId: row.document_id ?? null,
+    first_name: row.first_name ?? null,
+    last_name: row.last_name ?? null,
+    profile_photo_url: row.profile_photo_url ?? null,
+    date_of_birth: row.date_of_birth ?? null,
+    preferred_language: row.preferred_language ?? 'en',
+  }
+}
+
+const findCustomerProfileInDatabase = async userId => {
+  const parsedUserId = Number.parseInt(String(userId ?? ''), 10)
+
+  if (!Number.isInteger(parsedUserId)) {
+    return null
+  }
+
+  const [row] = await prisma.$queryRaw`
+    SELECT
+      cp.id,
+      cp.document_id,
+      cp.first_name,
+      cp.last_name,
+      cp.profile_photo_url,
+      cp.date_of_birth,
+      cp.preferred_language
+    FROM public.customer_profiles cp
+    INNER JOIN public.customer_profiles_user_lnk lnk
+      ON lnk.customer_profile_id = cp.id
+    WHERE lnk.user_id = ${parsedUserId}
+    ORDER BY cp.id DESC
+    LIMIT 1
+  `
+
+  return mapCustomerProfileRow(row)
+}
+
 const findCustomerProfile = async userId => {
-  const { data } = await strapiServerGet(
-    `/api/customer-profiles?filters[user][id][$eq]=${userId}&populate=profile_photo`
-  )
-  return data?.[0] ?? null
+  try {
+    const { data } = await strapiServerGet(
+      `/api/customer-profiles?filters[user][id][$eq]=${userId}&populate=profile_photo`
+    )
+    return data?.[0] ?? null
+  } catch (err) {
+    if (!isStrapiCredentialError(err)) {
+      throw err
+    }
+
+    return findCustomerProfileInDatabase(userId)
+  }
 }
 
 /**
@@ -40,9 +89,122 @@ const createCustomerProfile = async ({ userId, firstName, lastName, profilePhoto
         preferred_language: 'en',
       },
     })
-  } catch {
-    // Non-fatal — profile creation failure should not block login/register
+  } catch (err) {
+    if (!isStrapiCredentialError(err)) {
+      // Non-fatal — profile creation failure should not block login/register
+      return
+    }
+
+    const parsedUserId = Number.parseInt(String(userId ?? ''), 10)
+    if (!Number.isInteger(parsedUserId)) {
+      return
+    }
+
+    const [created] = await prisma.$queryRaw`
+      INSERT INTO public.customer_profiles (
+        document_id,
+        first_name,
+        last_name,
+        profile_photo_url,
+        preferred_language,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        ${crypto.randomBytes(12).toString('hex')},
+        ${firstName ?? null},
+        ${lastName ?? null},
+        ${profilePhotoUrl},
+        ${'en'},
+        NOW(),
+        NOW()
+      )
+      RETURNING id, document_id, first_name, last_name, profile_photo_url, date_of_birth, preferred_language
+    `
+
+    if (created?.id) {
+      await prisma.$executeRaw`
+        INSERT INTO public.customer_profiles_user_lnk (customer_profile_id, user_id)
+        VALUES (${created.id}, ${parsedUserId})
+        ON CONFLICT (customer_profile_id, user_id) DO NOTHING
+      `
+    }
   }
+}
+
+const upsertCustomerProfileInDatabase = async ({
+  userId,
+  first_name,
+  last_name,
+  date_of_birth,
+  preferred_language,
+  profile_photo_url,
+}) => {
+  const parsedUserId = Number.parseInt(String(userId ?? ''), 10)
+
+  if (!Number.isInteger(parsedUserId)) {
+    throw new Error(`Invalid Strapi user id: ${userId}`)
+  }
+
+  const existing = await findCustomerProfileInDatabase(parsedUserId)
+
+  if (!existing) {
+    const [created] = await prisma.$queryRaw`
+      INSERT INTO public.customer_profiles (
+        document_id,
+        first_name,
+        last_name,
+        profile_photo_url,
+        date_of_birth,
+        preferred_language,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        ${crypto.randomBytes(12).toString('hex')},
+        ${first_name ?? null},
+        ${last_name ?? null},
+        ${profile_photo_url ?? null},
+        ${date_of_birth ?? null}::date,
+        ${preferred_language ?? 'en'},
+        NOW(),
+        NOW()
+      )
+      RETURNING id, document_id, first_name, last_name, profile_photo_url, date_of_birth, preferred_language
+    `
+
+    await prisma.$executeRaw`
+      INSERT INTO public.customer_profiles_user_lnk (customer_profile_id, user_id)
+      VALUES (${created.id}, ${parsedUserId})
+      ON CONFLICT (customer_profile_id, user_id) DO NOTHING
+    `
+
+    return mapCustomerProfileRow(created)
+  }
+
+  const [updated] = await prisma.$queryRaw`
+    UPDATE public.customer_profiles
+    SET
+      first_name = CASE WHEN ${first_name !== undefined} THEN ${first_name} ELSE first_name END,
+      last_name = CASE WHEN ${last_name !== undefined} THEN ${last_name} ELSE last_name END,
+      profile_photo_url = CASE
+        WHEN ${profile_photo_url !== undefined} THEN ${profile_photo_url}
+        ELSE profile_photo_url
+      END,
+      date_of_birth = CASE
+        WHEN ${date_of_birth !== undefined} THEN ${date_of_birth}::date
+        ELSE date_of_birth
+      END,
+      preferred_language = CASE
+        WHEN ${preferred_language !== undefined} THEN ${preferred_language}
+        ELSE preferred_language
+      END,
+      updated_at = NOW()
+    WHERE id = ${existing.id}
+    RETURNING id, document_id, first_name, last_name, profile_photo_url, date_of_birth, preferred_language
+  `
+
+  return mapCustomerProfileRow(updated)
 }
 const REFRESH_COOKIE = 'elewen_refresh'
 
@@ -123,6 +285,39 @@ const findUserByEmailFromDatabase = async email => {
   `
 
   return mapUserRow(row)
+}
+
+const syncUserFieldsInDatabase = async ({
+  userId,
+  first_name,
+  last_name,
+  phone,
+  preferred_language,
+  date_of_birth,
+}) => {
+  const parsedUserId = Number.parseInt(String(userId ?? ''), 10)
+
+  if (!Number.isInteger(parsedUserId)) {
+    throw new Error(`Invalid Strapi user id: ${userId}`)
+  }
+
+  await prisma.$executeRaw`
+    UPDATE public.up_users
+    SET
+      first_name = CASE WHEN ${first_name !== undefined} THEN ${first_name} ELSE first_name END,
+      last_name = CASE WHEN ${last_name !== undefined} THEN ${last_name} ELSE last_name END,
+      phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
+      preferred_language = CASE
+        WHEN ${preferred_language !== undefined} THEN ${preferred_language}
+        ELSE preferred_language
+      END,
+      date_of_birth = CASE
+        WHEN ${date_of_birth !== undefined} THEN ${date_of_birth}::date
+        ELSE date_of_birth
+      END,
+      updated_at = NOW()
+    WHERE id = ${parsedUserId}
+  `
 }
 
 const findUserByEmailForAuth = async email => {
@@ -266,19 +461,6 @@ export const register = async (req, res, next) => {
   try {
     const { email, password, first_name, last_name, phone } = req.body
 
-    if (!email || !password || !first_name || !last_name || !phone) {
-      return res.status(400).json({
-        error: 'All fields are required',
-        fields: {
-          ...(!email && { email: 'Required' }),
-          ...(!password && { password: 'Required' }),
-          ...(!first_name && { first_name: 'Required' }),
-          ...(!last_name && { last_name: 'Required' }),
-          ...(!phone && { phone: 'Required' }),
-        },
-      })
-    }
-
     // Auto-generate username — never shown to user
     const username = `${email.split('@')[0]}_${crypto.randomBytes(3).toString('hex')}`
 
@@ -332,10 +514,6 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' })
-    }
 
     const existingUser = await findUserByEmailForAuth(email)
     if (existingUser && isGoogleProvider(existingUser.provider)) {
@@ -468,31 +646,60 @@ export const updateProfile = async (req, res, next) => {
     }
 
     let updated
-    if (!existing) {
-      // Create profile if somehow missing (e.g. legacy accounts)
-      const result = await strapiServerPost('/api/customer-profiles', {
-        data: { user: parseInt(userId, 10), preferred_language: 'en', ...profileData },
+    try {
+      if (!existing) {
+        // Create profile if somehow missing (e.g. legacy accounts)
+        const result = await strapiServerPost('/api/customer-profiles', {
+          data: { user: parseInt(userId, 10), preferred_language: 'en', ...profileData },
+        })
+        updated = result.data
+      } else {
+        const targetId = existing.documentId ?? existing.id
+        const result = await strapiServerPut(`/api/customer-profiles/${targetId}`, {
+          data: profileData,
+        })
+        updated = result.data
+      }
+    } catch (err) {
+      if (!isStrapiCredentialError(err)) {
+        throw err
+      }
+
+      updated = await upsertCustomerProfileInDatabase({
+        userId,
+        ...profileData,
       })
-      updated = result.data
-    } else {
-      const result = await strapiServerPut(`/api/customer-profiles/${existing.documentId}`, {
-        data: profileData,
-      })
-      updated = result.data
     }
 
-    // Also sync shared customer fields back to the Strapi user record for consistency.
-    if (first_name !== undefined || last_name !== undefined || phone !== undefined) {
+    // Keep the underlying Strapi user row in sync so /auth/me reflects the latest
+    // dashboard edits even when the admin user endpoint is unavailable.
+    if (
+      first_name !== undefined ||
+      last_name !== undefined ||
+      phone !== undefined ||
+      preferred_language !== undefined ||
+      date_of_birth !== undefined
+    ) {
       try {
         await strapiAdminPut(`/api/users/${userId}`, {
           ...(first_name !== undefined && { first_name }),
           ...(last_name !== undefined && { last_name }),
           ...(phone !== undefined && { phone }),
+          ...(preferred_language !== undefined && { preferred_language }),
+          ...(date_of_birth !== undefined && { date_of_birth }),
         })
       } catch (err) {
-        if (!isStrapiCredentialError(err)) {
-          throw err
-        }
+        console.warn(
+          `[auth.updateProfile] Falling back to direct user sync for user ${userId}: ${err.message}`
+        )
+        await syncUserFieldsInDatabase({
+          userId,
+          first_name,
+          last_name,
+          phone,
+          preferred_language,
+          date_of_birth,
+        })
       }
     }
 
@@ -506,7 +713,6 @@ export const updateProfile = async (req, res, next) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body
-    if (!email) return res.status(400).json({ error: 'Email is required' })
 
     // Strapi sends the reset email — we just proxy the call
     await strapiPost('/api/auth/forgot-password', { email })
@@ -524,16 +730,6 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res, next) => {
   try {
     const { code, password, passwordConfirmation } = req.body
-
-    if (!code || !password || !passwordConfirmation) {
-      return res
-        .status(400)
-        .json({ error: 'code, password, and passwordConfirmation are required' })
-    }
-
-    if (password !== passwordConfirmation) {
-      return res.status(400).json({ error: 'Passwords do not match' })
-    }
 
     const result = await strapiPost('/api/auth/reset-password', {
       code,

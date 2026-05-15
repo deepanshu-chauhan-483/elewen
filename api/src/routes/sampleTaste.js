@@ -7,6 +7,12 @@ import {
   updateStatus,
   recordDecision,
 } from '../controllers/sampleTaste.js'
+import { validate } from '../middleware/validate.js'
+import {
+  createSampleTasteSchema,
+  updateStatusSchema,
+  recordDecisionSchema,
+} from '../schemas/sampleTaste.js'
 
 const router = Router()
 
@@ -61,7 +67,7 @@ router.use(requireAuth)
  *                   items:
  *                     $ref: '#/components/schemas/SampleTaste'
  */
-router.post('/', createSampleTaste)
+router.post('/', validate(createSampleTasteSchema), createSampleTaste)
 router.get('/', listSampleTastes)
 
 /**
@@ -114,7 +120,7 @@ router.get('/:id', getSampleTaste)
  *       403:
  *         description: Forbidden
  */
-router.patch('/:id/status', updateStatus)
+router.patch('/:id/status', validate(updateStatusSchema), updateStatus)
 
 /**
  * @openapi
@@ -148,6 +154,6 @@ router.patch('/:id/status', updateStatus)
  *       403:
  *         description: Forbidden
  */
-router.post('/:id/decision', recordDecision)
+router.post('/:id/decision', validate(recordDecisionSchema), recordDecision)
 
 export default router

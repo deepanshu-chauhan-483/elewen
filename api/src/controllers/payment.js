@@ -111,14 +111,6 @@ export const createOrder = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    if (!bookingId || !paymentType) {
-      return res.status(400).json({ error: 'bookingId and paymentType are required' })
-    }
-
-    if (!['advance', 'remaining', 'full'].includes(paymentType)) {
-      return res.status(400).json({ error: 'paymentType must be advance, remaining, or full' })
-    }
-
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: { payments: { where: { status: 'success' } } },
@@ -226,12 +218,6 @@ export const verifyPayment = async (req, res, next) => {
       testBypass = false,
     } = req.body
     const userId = String(req.user.id)
-
-    if (!paymentId || !razorpayOrderId) {
-      return res.status(400).json({
-        error: 'paymentId and razorpayOrderId are required',
-      })
-    }
 
     // Find the Payment record
     const payment = await prisma.payment.findUnique({
@@ -600,8 +586,6 @@ export const requestRefund = async (req, res, next) => {
     const { paymentId, reason } = req.body
     const userId = String(req.user.id)
 
-    if (!paymentId) return res.status(400).json({ error: 'paymentId is required' })
-
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
       include: { booking: true, refunds: true },
@@ -648,10 +632,6 @@ export const processRefund = async (req, res, next) => {
     const { id } = req.params
     const { action } = req.body // 'approve' | 'reject'
     const adminId = String(req.user.id)
-
-    if (!['approve', 'reject'].includes(action)) {
-      return res.status(400).json({ error: 'action must be approve or reject' })
-    }
 
     const refund = await prisma.refund.findUnique({
       where: { id },
@@ -766,10 +746,6 @@ export const createVendorPayout = async (req, res, next) => {
   try {
     const { vendorId, bookingId, amount, paymentMethod } = req.body
 
-    if (!vendorId || !bookingId || !amount) {
-      return res.status(400).json({ error: 'vendorId, bookingId, and amount are required' })
-    }
-
     const validMethods = ['portal', 'offline']
     const method = validMethods.includes(paymentMethod) ? paymentMethod : 'offline'
 
@@ -795,10 +771,6 @@ export const updateVendorPayout = async (req, res, next) => {
   try {
     const { id } = req.params
     const { status, referenceId } = req.body
-
-    if (!['paid', 'failed'].includes(status)) {
-      return res.status(400).json({ error: 'status must be paid or failed' })
-    }
 
     const payout = await prisma.vendorPayout.findUnique({ where: { id } })
     if (!payout) return res.status(404).json({ error: 'Vendor payout not found' })

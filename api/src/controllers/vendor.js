@@ -1,3 +1,5 @@
+import crypto from 'crypto'
+import prisma from '../lib/prisma.js'
 import { strapiPost, strapiServerPost, strapiServerUpload, strapiUpload } from '../lib/strapi.js'
 
 function toTrimmedString(value) {
@@ -51,6 +53,60 @@ function shouldFallbackToPublicStrapi(err) {
     message.includes('missing or invalid credentials') ||
     message.includes('unauthorized')
   )
+}
+
+async function findVendorByEmailInDatabase(email) {
+  const normalizedEmail = toTrimmedString(email).toLowerCase()
+  if (!normalizedEmail) return null
+
+  const [row] = await prisma.$queryRaw`
+    SELECT id, email
+    FROM public.vendors
+    WHERE lower(email) = ${normalizedEmail}
+    LIMIT 1
+  `
+
+  return row ?? null
+}
+
+async function createVendorInDatabase(payload) {
+  const [created] = await prisma.$queryRaw`
+    INSERT INTO public.vendors (
+      document_id,
+      company_name,
+      contact_person,
+      email,
+      phone,
+      location_city,
+      service_area,
+      experience_years,
+      team_size,
+      vendor_status,
+      is_available,
+      registration_data,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${crypto.randomBytes(12).toString('hex')},
+      ${payload.company_name},
+      ${payload.contact_person},
+      ${payload.email},
+      ${payload.phone},
+      ${payload.location_city},
+      ${payload.service_area},
+      ${payload.experience_years},
+      ${payload.team_size},
+      ${payload.vendor_status},
+      ${true},
+      ${payload.registration_data},
+      NOW(),
+      NOW()
+    )
+    RETURNING id, document_id
+  `
+
+  return created ?? null
 }
 
 async function uploadFileToStrapi(file) {
@@ -142,24 +198,6 @@ export const registerVendor = async (req, res, next) => {
     const workSample = req.body.work_sample ?? null
     const verificationDocument = req.body.verification_document ?? null
 
-    const missing = []
-    if (!businessName) missing.push('business_name')
-    if (!contactPersonName) missing.push('contact_person_name')
-    if (!email) missing.push('email')
-    if (!phone) missing.push('phone')
-    if (!city) missing.push('city')
-    if (!serviceCategories.length) missing.push('service_category')
-    if (!websiteSocialPortfolio) missing.push('website_social_portfolio')
-    if (!eventTypes.length) missing.push('event_types')
-    if (!verificationDocument) missing.push('verification_document')
-
-    if (missing.length) {
-      return res.status(400).json({
-        error: 'Required fields missing',
-        fields: Object.fromEntries(missing.map(field => [field, 'Required'])),
-      })
-    }
-
     const registrationData = {
       service_category: serviceCategories,
       event_types: eventTypes,
@@ -197,7 +235,21 @@ export const registerVendor = async (req, res, next) => {
         throw err
       }
 
-      createdVendor = await strapiPost('/vendors', payload)
+      try {
+        createdVendor = await strapiPost('/vendors', payload)
+      } catch (publicErr) {
+        if (!shouldFallbackToPublicStrapi(publicErr)) {
+          throw publicErr
+        }
+
+        const existingVendor = await findVendorByEmailInDatabase(email)
+        if (existingVendor) {
+          return res.status(409).json({ error: 'A vendor with this email already exists' })
+        }
+
+        const created = await createVendorInDatabase(payload.data)
+        createdVendor = { data: created }
+      }
     }
 
     const vendorId = createdVendor?.data?.id

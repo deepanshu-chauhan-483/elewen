@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
 
@@ -37,20 +37,77 @@ function getPackageHref(serviceSlug, packageId) {
   return `/packages/decor-single/${packageId}`
 }
 
-function PackageIncludes({
-  includeKey,
-  tags,
-  visibleDescription,
-  isDesktopViewport,
-  compactMode,
-  onCardClick,
-}) {
+export default function PackageCard({ pkg, className = '', compactMode = false }) {
+  const images = pkg.images || []
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [showAllIncludes, setShowAllIncludes] = useState(false)
-  const [measuredVisibleTagCount, setMeasuredVisibleTagCount] = useState(0)
+  const [visibleTagCount, setVisibleTagCount] = useState(0)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.innerWidth >= 768
+  })
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
+  const packageId = pkg.documentId ?? pkg.id
+  const wishlistPackageId = pkg.id ?? pkg.documentId
+  const serviceSlug = String(pkg.serviceSlug ?? pkg.service_slugs?.[0] ?? '')
+    .trim()
+    .toLowerCase()
+  const basePackageHref = getPackageHref(serviceSlug, packageId)
+  const packageHref = `${basePackageHref}${location.search || ''}`
+
+  const startX = useRef(0)
+  const endX = useRef(0)
   const visibleTagsViewportRef = useRef(null)
   const hiddenTagsMeasureRef = useRef(null)
 
+  const currentImage = images[currentIndex]
+  const saved = isSaved(wishlistPackageId)
+  const isWishlistPending = String(pendingPackageId) === String(wishlistPackageId)
+  const tags = useMemo(() => {
+    if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
+    if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
+    return []
+  }, [pkg.includes, pkg.tags])
+  const shouldUseCompactMode = compactMode || !isDesktopViewport
+  const hasMoreIncludes = tags.length > visibleTagCount
+  const visibleTags = showAllIncludes ? tags : tags.slice(0, visibleTagCount)
+  const descriptionText = String(pkg.description ?? '')
+  const visibleDescription =
+    shouldUseCompactMode && descriptionText.length > 110
+      ? `${descriptionText.slice(0, 110).trim()}...`
+      : descriptionText
+
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const handleViewportChange = event => {
+      setIsDesktopViewport(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange)
+      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    }
+
+    mediaQuery.addListener(handleViewportChange)
+    return () => mediaQuery.removeListener(handleViewportChange)
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowAllIncludes(false)
+  }, [pkg.id, pkg.documentId, tags.length, isDesktopViewport, compactMode])
+
+  useEffect(() => {
+    if (showAllIncludes) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setVisibleTagCount(tags.length)
+      return undefined
+    }
+
     const calculateVisibleTags = () => {
       const viewport = visibleTagsViewportRef.current
       const measureContainer = hiddenTagsMeasureRef.current
@@ -61,7 +118,7 @@ function PackageIncludes({
       const availableWidth = viewport.clientWidth
 
       if (!availableHeight || !availableWidth) {
-        setMeasuredVisibleTagCount(tags.length)
+        setVisibleTagCount(tags.length)
         return
       }
 
@@ -90,7 +147,7 @@ function PackageIncludes({
 
         if (measureContainer.scrollHeight > availableHeight) {
           tagNodes[index].style.display = 'none'
-          fittedCount = index
+          fittedCount = Math.max(index, 1)
           break
         }
       }
@@ -99,7 +156,7 @@ function PackageIncludes({
         moreNode.style.display = 'none'
       }
 
-      setMeasuredVisibleTagCount(fittedCount)
+      setVisibleTagCount(fittedCount)
     }
 
     calculateVisibleTags()
@@ -118,130 +175,7 @@ function PackageIncludes({
     }
 
     return () => resizeObserver.disconnect()
-  }, [tags, visibleDescription, isDesktopViewport, compactMode])
-
-  const visibleTagCount = showAllIncludes ? tags.length : measuredVisibleTagCount
-  const hasMoreIncludes = tags.length > visibleTagCount
-  const visibleTags = showAllIncludes ? tags : tags.slice(0, visibleTagCount)
-
-  return (
-    <>
-      <div className="mt-3 flex min-h-0 flex-1 flex-col">
-        <p className="text-[12px] font-medium">Includes :</p>
-        <div
-          ref={visibleTagsViewportRef}
-          className={`mt-2 min-h-0 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {visibleTags.map((tag, i) => (
-              <span
-                key={i}
-                className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
-              >
-                {tag}
-              </span>
-            ))}
-            {hasMoreIncludes && !showAllIncludes ? (
-              <button
-                type="button"
-                onClick={event => {
-                  event.stopPropagation()
-                  setShowAllIncludes(false)
-                }}
-                className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
-              >
-                More
-              </button>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0">
-        <div
-          key={includeKey}
-          ref={hiddenTagsMeasureRef}
-          className="flex flex-wrap gap-1.5"
-          style={{ position: 'absolute', visibility: 'hidden' }}
-        >
-          {tags.map((tag, index) => (
-            <span
-              key={`${tag}-${index}`}
-              data-tag-index={index}
-              className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
-            >
-              {tag}
-            </span>
-          ))}
-          <button
-            type="button"
-            data-more-tag
-            onClick={onCardClick}
-            className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
-          >
-            More
-          </button>
-        </div>
-      </div>
-    </>
-  )
-}
-
-export default function PackageCard({ pkg, className = '', compactMode = false }) {
-  const images = pkg.images || []
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return window.innerWidth >= 768
-  })
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
-  const packageId = pkg.documentId ?? pkg.id
-  const wishlistPackageId = pkg.id ?? pkg.documentId
-  const serviceSlug = String(pkg.serviceSlug ?? pkg.service_slugs?.[0] ?? '')
-    .trim()
-    .toLowerCase()
-  const basePackageHref = getPackageHref(serviceSlug, packageId)
-  const packageHref = `${basePackageHref}${location.search || ''}`
-
-  const startX = useRef(0)
-  const endX = useRef(0)
-
-  const currentImage = images[currentIndex]
-  const saved = isSaved(wishlistPackageId)
-  const isWishlistPending = String(pendingPackageId) === String(wishlistPackageId)
-  const tags = Array.isArray(pkg.tags) ? pkg.tags : []
-  const includeKey = [
-    pkg.id ?? '',
-    pkg.documentId ?? '',
-    isDesktopViewport ? 'desktop' : 'mobile',
-    compactMode ? 'compact' : 'regular',
-    tags.length,
-  ].join('|')
-  const shouldUseCompactMode = compactMode || !isDesktopViewport
-  const descriptionText = String(pkg.description ?? '')
-  const visibleDescription =
-    shouldUseCompactMode && descriptionText.length > 110
-      ? `${descriptionText.slice(0, 110).trim()}...`
-      : descriptionText
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-
-    const mediaQuery = window.matchMedia('(min-width: 768px)')
-    const handleViewportChange = event => {
-      setIsDesktopViewport(event.matches)
-    }
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleViewportChange)
-      return () => mediaQuery.removeEventListener('change', handleViewportChange)
-    }
-
-    mediaQuery.addListener(handleViewportChange)
-    return () => mediaQuery.removeListener(handleViewportChange)
-  }, [])
+  }, [showAllIncludes, tags, visibleDescription, isDesktopViewport, compactMode])
 
   // 🔥LOOP LOGIC (important)
   const goToPrevious = () => {
@@ -407,15 +341,61 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           {visibleDescription}
         </p>
 
-        <PackageIncludes
-          key={includeKey}
-          includeKey={includeKey}
-          tags={tags}
-          visibleDescription={visibleDescription}
-          isDesktopViewport={isDesktopViewport}
-          compactMode={compactMode}
-          onCardClick={event => event.stopPropagation()}
-        />
+        <div className="mt-3 flex min-h-0 flex-1 flex-col">
+          <p className="text-[12px] font-medium">Includes :</p>
+          <div
+            ref={visibleTagsViewportRef}
+            className={`mt-2 min-h-0 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {visibleTags.map((tag, i) => (
+                <span
+                  key={i}
+                  className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
+                >
+                  {tag}
+                </span>
+              ))}
+              {hasMoreIncludes && !showAllIncludes ? (
+                <button
+                  type="button"
+                  onClick={event => {
+                    event.stopPropagation()
+                    setShowAllIncludes(true)
+                  }}
+                  className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
+                >
+                  More
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0">
+        <div
+          ref={hiddenTagsMeasureRef}
+          className="flex flex-wrap gap-1.5"
+          style={{ position: 'absolute', visibility: 'hidden' }}
+        >
+          {tags.map((tag, index) => (
+            <span
+              key={`${tag}-${index}`}
+              data-tag-index={index}
+              className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
+            >
+              {tag}
+            </span>
+          ))}
+          <button
+            type="button"
+            data-more-tag
+            className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
+          >
+            More
+          </button>
+        </div>
       </div>
     </article>
   )

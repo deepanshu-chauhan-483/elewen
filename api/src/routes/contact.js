@@ -1,5 +1,7 @@
 import { Router } from 'express'
 import { createContact } from '../controllers/contact.js'
+import { validate } from '../middleware/validate.js'
+import { createContactSchema } from '../schemas/contact.js'
 
 const router = Router()
 
@@ -28,6 +30,6 @@ const router = Router()
  *       400:
  *         description: Required fields missing
  */
-router.post('/', createContact)
+router.post('/', validate(createContactSchema), createContact)
 
 export default router
