@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { getFieldErrors } from '../lib/formErrors'
 import { authResetPassword } from '../lib/api'
 
 const NewPasswordIcon = () => (
@@ -42,15 +43,18 @@ export default function ResetPasswordPage() {
   const [confirm, setConfirm] = useState('')
   const [status, setStatus] = useState('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   async function handleSubmit(e) {
     e.preventDefault()
 
     if (password !== confirm) {
+      setFieldErrors({ confirm: 'Passwords do not match.' })
       setErrorMsg('Passwords do not match.')
       return
     }
     if (password.length < 8) {
+      setFieldErrors({ password: 'Password must be at least 8 characters.' })
       setErrorMsg('Password must be at least 8 characters.')
       return
     }
@@ -61,11 +65,18 @@ export default function ResetPasswordPage() {
 
     setStatus('loading')
     setErrorMsg('')
+    setFieldErrors({})
 
     try {
       await authResetPassword({ code, password, passwordConfirmation: confirm })
       setStatus('success')
-    } catch {
+    } catch (err) {
+      const nextFieldErrors = getFieldErrors(err, { passwordConfirmation: 'confirm' })
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFieldErrors(nextFieldErrors)
+        setStatus('idle')
+        return
+      }
       setStatus('error')
       setErrorMsg('Reset link is invalid or has expired. Please request a new one.')
     }
@@ -115,12 +126,19 @@ export default function ResetPasswordPage() {
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => {
+                setPassword(e.target.value)
+                setFieldErrors(prev => ({ ...prev, password: '' }))
+                setErrorMsg('')
+              }}
               placeholder="Minimum 8 characters"
               autoComplete="new-password"
               required
               className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
             />
+            {fieldErrors.password ? (
+              <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.password}</p>
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-[8px] w-full min-w-0">
@@ -130,12 +148,19 @@ export default function ResetPasswordPage() {
             <input
               type="password"
               value={confirm}
-              onChange={e => setConfirm(e.target.value)}
+              onChange={e => {
+                setConfirm(e.target.value)
+                setFieldErrors(prev => ({ ...prev, confirm: '' }))
+                setErrorMsg('')
+              }}
               placeholder="Repeat your password"
               autoComplete="new-password"
               required
               className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
             />
+            {fieldErrors.confirm ? (
+              <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.confirm}</p>
+            ) : null}
           </div>
         </div>
 

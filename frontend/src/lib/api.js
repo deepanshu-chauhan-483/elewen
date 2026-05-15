@@ -76,6 +76,17 @@ function createAuthRequiredError(message = 'AUTH_REQUIRED') {
   return error
 }
 
+function parseApiErrorPayload(raw) {
+  if (!raw) return null
+
+  try {
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 function withQuery(path, params = {}) {
   const search = new URLSearchParams()
 
@@ -179,18 +190,37 @@ async function request(method, path, body, opts = {}) {
   }
 
   if (!res.ok) {
-    const msg = await res.text().catch(() => '')
+    const raw = await res.text().catch(() => '')
+    const parsed = parseApiErrorPayload(raw)
+    const apiMessage =
+      typeof parsed?.message === 'string'
+        ? parsed.message
+        : typeof parsed?.error === 'string'
+          ? parsed.error
+          : raw
+
     if (res.status === 401) {
       console.error('[api] request unauthorized', {
         method,
         path,
-        message: msg,
+        message: raw,
         retried: _retried,
         jwtPayload: decodeJwtPayload(bearerToken),
       })
-      throw createAuthRequiredError(`API ${res.status} on ${method} ${path}: ${msg}`)
+      throw createAuthRequiredError(`API ${res.status} on ${method} ${path}: ${raw}`)
     }
-    throw new Error(`API ${res.status} on ${method} ${path}: ${msg}`)
+
+    const error = new Error(apiMessage || `API ${res.status} on ${method} ${path}`)
+    error.status = res.status
+    error.method = method
+    error.path = path
+    error.response = parsed
+    error.fieldErrors =
+      parsed?.fields && typeof parsed.fields === 'object' && !Array.isArray(parsed.fields)
+        ? parsed.fields
+        : null
+    error.rawMessage = raw
+    throw error
   }
 
   return res.json()

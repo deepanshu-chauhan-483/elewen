@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import bgImage from '../assets/images/contact.png'
+import { getFieldErrors, getGlobalErrorMessage } from '../lib/formErrors'
 import { submitContact } from '../lib/api'
 
 export default function ContactUsPage() {
@@ -13,37 +14,36 @@ export default function ContactUsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
   const [submitError, setSubmitError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const handleInputChange = e => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     setSubmitError('')
+    setFieldErrors(prev => ({ ...prev, [name]: '' }))
+  }
+
+  const validateForm = () => {
+    const nextErrors = {}
+
+    if (!formData.firstName.trim()) nextErrors.firstName = 'First name is required'
+    if (!formData.lastName.trim()) nextErrors.lastName = 'Last name is required'
+    if (!formData.email.trim()) nextErrors.email = 'Email is required'
+    if (!formData.phone.trim()) nextErrors.phone = 'Phone number is required'
+    if (!formData.message.trim()) nextErrors.message = 'Message is required'
+
+    return nextErrors
   }
 
   const handleSubmit = async e => {
     e.preventDefault()
     setSubmitError('')
     setSubmitMessage('')
+    setFieldErrors({})
 
-    // Validation
-    if (!formData.firstName.trim()) {
-      setSubmitError('First name is required')
-      return
-    }
-    if (!formData.lastName.trim()) {
-      setSubmitError('Last name is required')
-      return
-    }
-    if (!formData.email.trim()) {
-      setSubmitError('Email is required')
-      return
-    }
-    if (!formData.phone.trim()) {
-      setSubmitError('Phone number is required')
-      return
-    }
-    if (!formData.message.trim()) {
-      setSubmitError('Message is required')
+    const validationErrors = validateForm()
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors)
       return
     }
 
@@ -65,7 +65,12 @@ export default function ContactUsPage() {
       // Clear success message after 5 seconds
       setTimeout(() => setSubmitMessage(''), 5000)
     } catch (err) {
-      setSubmitError(err.message || 'Failed to send message. Please try again.')
+      const nextFieldErrors = getFieldErrors(err)
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFieldErrors(nextFieldErrors)
+      } else {
+        setSubmitError(getGlobalErrorMessage(err, 'Failed to send message. Please try again.'))
+      }
       console.error('[ContactUsPage] submission error:', err)
     } finally {
       setIsSubmitting(false)
@@ -147,6 +152,9 @@ export default function ContactUsPage() {
                         placeholder="Name"
                         className="h-[40px] w-full rounded-[6px] border border-[rgba(45,45,45,0.25)] bg-[#F8F4ED] px-[16px] py-[8px] text-[14px] text-[#364022] placeholder:text-[#BFAC9B] transition-colors focus:border-[#CDB17E] focus:outline-none min-[540px]:text-[16px]"
                       />
+                      {fieldErrors.firstName ? (
+                        <p className="text-[12px] text-[#8F2D1F]">{fieldErrors.firstName}</p>
+                      ) : null}
                     </div>
 
                     <div className="flex flex-1 flex-col gap-[8px]">
@@ -161,6 +169,9 @@ export default function ContactUsPage() {
                         placeholder="Name"
                         className="h-[40px] w-full rounded-[6px] border border-[rgba(45,45,45,0.25)] bg-[#F8F4ED] px-[16px] py-[8px] text-[14px] text-[#364022] placeholder:text-[#BFAC9B] transition-colors focus:border-[#CDB17E] focus:outline-none min-[540px]:text-[16px]"
                       />
+                      {fieldErrors.lastName ? (
+                        <p className="text-[12px] text-[#8F2D1F]">{fieldErrors.lastName}</p>
+                      ) : null}
                     </div>
                   </div>
 
@@ -176,6 +187,9 @@ export default function ContactUsPage() {
                       placeholder="email@"
                       className="h-[40px] w-full rounded-[6px] border border-[rgba(45,45,45,0.25)] bg-[#F8F4ED] px-[16px] py-[8px] text-[14px] text-[#364022] placeholder:text-[#BFAC9B] transition-colors focus:border-[#CDB17E] focus:outline-none min-[540px]:text-[16px]"
                     />
+                    {fieldErrors.email ? (
+                      <p className="text-[12px] text-[#8F2D1F]">{fieldErrors.email}</p>
+                    ) : null}
                   </div>
 
                   <div className="flex w-full flex-col gap-[8px]">
@@ -190,6 +204,9 @@ export default function ContactUsPage() {
                       placeholder="Enter your phone number"
                       className="h-[40px] w-full rounded-[6px] border border-[rgba(45,45,45,0.25)] bg-[#F8F4ED] px-[16px] py-[8px] text-[14px] text-[#364022] placeholder:text-[#BFAC9B] transition-colors focus:border-[#CDB17E] focus:outline-none min-[540px]:text-[16px]"
                     />
+                    {fieldErrors.phone ? (
+                      <p className="text-[12px] text-[#8F2D1F]">{fieldErrors.phone}</p>
+                    ) : null}
                   </div>
 
                   <div className="flex w-full flex-col gap-[8px]">
@@ -204,6 +221,9 @@ export default function ContactUsPage() {
                       placeholder="Tell us how we can help"
                       className="w-full resize-none rounded-[6px] border border-[rgba(45,45,45,0.25)] bg-[#F8F4ED] px-[16px] py-[12px] text-[14px] text-[#364022] placeholder:text-[#BFAC9B] transition-colors focus:border-[#CDB17E] focus:outline-none min-[540px]:text-[16px]"
                     />
+                    {fieldErrors.message ? (
+                      <p className="text-[12px] text-[#8F2D1F]">{fieldErrors.message}</p>
+                    ) : null}
                   </div>
 
                   <div className="flex w-full flex-col items-center gap-[16px] pt-2">
