@@ -59,6 +59,20 @@
       "default": false,
       "configurable": false
     },
+    "is_admin": {
+      "type": "boolean",
+      "default": false
+    },
+    "admin_role": {
+      "type": "enumeration",
+      "enum": [
+        "super_admin",
+        "operations",
+        "support",
+        "finance"
+      ],
+      "default": "operations"
+    },
     "role": {
       "type": "relation",
       "relation": "manyToOne",

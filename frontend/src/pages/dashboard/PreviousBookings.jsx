@@ -88,7 +88,9 @@ function PreviousBookingCard({ booking, session }) {
   const normalizedStatus = String(booking?.status ?? '').toLowerCase()
   const isCancelled = ['cancelled', 'canceled'].includes(normalizedStatus)
   const title = booking?.package?.title || booking?.event?.name || 'Booking'
-  const subtitle = [booking?.event?.name, booking?.locationSummary].filter(Boolean).join(' · ')
+  const subtitle = [booking?.detailSubtitle, booking?.event?.name, booking?.locationSummary]
+    .filter(Boolean)
+    .join(' · ')
   const receiptData = buildReceiptData({
     booking,
     customer: {
@@ -178,7 +180,7 @@ function PreviousBookingCard({ booking, session }) {
           <div className="mt-6 grid grid-cols-2 gap-6 border-t border-[#00000033] pt-6 text-sm md:grid-cols-3">
             <div>
               <p className="text-[11px] text-[#767676]">EVENT</p>
-              <p>{booking.event?.name || 'Not shared yet'}</p>
+              <p>{booking.detailSubtitle || booking.event?.name || 'Not shared yet'}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">DATE</p>

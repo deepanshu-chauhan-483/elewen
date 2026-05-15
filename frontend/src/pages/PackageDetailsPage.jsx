@@ -322,9 +322,7 @@ export default function PackageDetailsPage() {
   }
 
   const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
-  const sideImages = Array.from({ length: 5 }).map(
-    (_, index) => sourceImages[index % sourceImages.length]
-  )
+  const sideImages = sourceImages
   const packageTitle = pkg.title || details.heroBadge
   const packagePrice = pkg.price || ''
   const packageIntro = pkg.description || details.intro

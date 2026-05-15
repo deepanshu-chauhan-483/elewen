@@ -204,12 +204,17 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
                 </div>
 
                 {visibleTooltipFlavor === flavor.title && getSheeshaFlavorDescription(flavor) ? (
-                  <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-[142px] -translate-y-[82%]">
+                  <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-[142px] -translate-y-[100%]">
                     <div className="relative rounded-[12px] bg-black px-4 py-2">
                       <p className="max-w-[110px] text-center text-[9px] font-medium leading-[1.3] text-white">
                         {getSheeshaFlavorDescription(flavor)}
                       </p>
-                      <div className="absolute bottom-[-7px] right-2 h-0 w-0 border-l-[3px] border-r-[8px] border-t-[9px] border-l-transparent border-r-transparent border-t-black" />
+                      <div
+                        className="absolute bottom-[-1.5px] right-33 h-[9px] w-[10px] bg-black"
+                        style={{
+                          clipPath: 'polygon(0% 100%, 35% 0%, 100% 70.23%)',
+                        }}
+                      />
                     </div>
                   </div>
                 ) : null}
@@ -236,12 +241,17 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
                 </div>
 
                 {visibleTooltipFlavor === flavor.title && getSheeshaFlavorDescription(flavor) ? (
-                  <div className="pointer-events-none absolute right-full top-1/2 z-20 mr-2 w-[142px] -translate-y-[82%]">
+                  <div className="pointer-events-none absolute right-full top-1/2 z-20 mr-2 w-[142px] -translate-y-[100%]">
                     <div className="relative rounded-[12px] bg-black px-4 py-2">
                       <p className="max-w-[110px] text-center text-[9px] font-medium leading-[1.3] text-white">
                         {getSheeshaFlavorDescription(flavor)}
                       </p>
-                      <div className="absolute bottom-[-7px] left-2 h-0 w-0 border-l-[8px] border-r-[3px] border-t-[9px] border-l-transparent border-r-transparent border-t-black" />
+                      <div
+                        className="absolute bottom-[-1px] left-33.5 h-[9px] w-[10px] bg-black"
+                        style={{
+                          clipPath: 'polygon(100% 100%, 65% 0%, 0% 70.23%)',
+                        }}
+                      />
                     </div>
                   </div>
                 ) : null}

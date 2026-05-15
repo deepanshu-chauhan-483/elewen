@@ -129,6 +129,22 @@ services:
       - api
       - strapi
 
+  admin-panel:
+    build:
+      context: ./admin-pannel
+      dockerfile: Dockerfile
+    container_name: elewen_admin_panel
+    restart: always
+    env_file: .env
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    ports:
+      - "5174:5174"
+    volumes:
+      - ./admin-pannel/src:/app/src
+    depends_on:
+      - api
+
   nginx:
     image: nginx:alpine
     container_name: elewen_nginx

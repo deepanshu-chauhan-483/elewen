@@ -22,9 +22,11 @@ import packageRoutes from './routes/package.js'
 import notificationRoutes from './routes/notification.js'
 import wishlistRoutes from './routes/wishlist.js'
 import dashboardRoutes from './routes/dashboard.js'
+import adminRoutes from './routes/admin.js'
 import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
+import { bootstrapDefaultAdmin, getDefaultAdminCredentials } from './lib/bootstrapAdmin.js'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 dotenv.config({ path: resolve(__dirname, '../../.env') })
@@ -33,18 +35,39 @@ dotenv.config()
 const app = express()
 const PORT = Number(process.env.PORT || 3000)
 
+function parseAllowedOrigins() {
+  const defaults = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'http://localhost:80',
+  ]
+
+  const configured = String(process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean)
+
+  return [...new Set([...defaults, ...configured])]
+}
+
+const allowedOrigins = parseAllowedOrigins()
+
 // ─── Security & parsing ────────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false })) // CSP disabled so Swagger UI loads
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(',') || [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://localhost:80',
-      'http://localhost:5174',
-    ],
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+
+      return callback(new Error(`CORS blocked for origin ${origin}`))
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
   })
 )
 
@@ -102,6 +125,7 @@ app.use('/packages', packageRoutes)
 app.use('/notifications', notificationRoutes)
 app.use('/wishlist', wishlistRoutes)
 app.use('/dashboard', dashboardRoutes)
+app.use('/admin', adminRoutes)
 
 // ─── Dev-only test pages ──────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {
@@ -120,13 +144,43 @@ app.get('/healthz', (_req, res) => res.json({ ok: true }))
 app.use(errorHandler)
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-const server = app.listen(PORT, () => {
-  console.log(`API running on port ${PORT}`)
-  console.log(`Swagger docs: http://localhost:${PORT}/api-docs`)
-})
+let server = null
+
+async function start() {
+  const credentials = getDefaultAdminCredentials()
+  let defaultAdminState = null
+
+  try {
+    defaultAdminState = await bootstrapDefaultAdmin()
+  } catch (err) {
+    console.error('[server.start] Default admin bootstrap warning:', err)
+  }
+
+  server = app.listen(PORT, () => {
+    console.log(`API running on port ${PORT}`)
+    console.log(`Swagger docs: http://localhost:${PORT}/api-docs`)
+
+    if (process.env.NODE_ENV !== 'production' && defaultAdminState?.user?.id) {
+      console.log(`[admin-bootstrap] Login email: ${credentials.email}`)
+      if (defaultAdminState.credentialsReady) {
+        console.log(`[admin-bootstrap] Login password: ${credentials.password}`)
+      } else {
+        console.log(
+          "[admin-bootstrap] Existing user detected. Default password could not be enforced, so use that account's current password or change DEV_ADMIN_EMAIL."
+        )
+      }
+    }
+  })
+}
 
 const shutdown = async () => {
+  if (!server) {
+    process.exit(0)
+  }
+
   server.close(() => process.exit(0))
 }
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
+
+start()

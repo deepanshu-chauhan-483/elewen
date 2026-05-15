@@ -1,11 +1,9 @@
 name: Deploy
 
 on:
-  # Auto-deploy to staging on every merge to main
   push:
     branches: [main]
 
-  # Manual trigger for staging or production
   workflow_dispatch:
     inputs:
       environment:
@@ -22,9 +20,8 @@ permissions:
   packages: read
 
 jobs:
-  # ── Staging (auto on merge) ───────────────────────────────
   deploy-staging:
-    name: Deploy → Staging
+    name: Deploy to Staging
     runs-on: ubuntu-latest
     environment: staging
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event.inputs.environment == 'staging')
@@ -38,12 +35,12 @@ jobs:
           echo "Images: ghcr.io/${GITHUB_REPOSITORY,,}/api:main"
           echo "        ghcr.io/${GITHUB_REPOSITORY,,}/strapi:main"
           echo "        ghcr.io/${GITHUB_REPOSITORY,,}/frontend:main"
+          echo "        ghcr.io/${GITHUB_REPOSITORY,,}/admin-pannel:main"
 
-  # ── Production (manual approval required) ────────────────
   deploy-production:
-    name: Deploy → Production
+    name: Deploy to Production
     runs-on: ubuntu-latest
-    environment: production          # requires manual approval gate in GitHub settings
+    environment: production
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
     needs: deploy-staging
 
@@ -56,3 +53,4 @@ jobs:
           echo "Images: ghcr.io/${GITHUB_REPOSITORY,,}/api:main"
           echo "        ghcr.io/${GITHUB_REPOSITORY,,}/strapi:main"
           echo "        ghcr.io/${GITHUB_REPOSITORY,,}/frontend:main"
+          echo "        ghcr.io/${GITHUB_REPOSITORY,,}/admin-pannel:main"

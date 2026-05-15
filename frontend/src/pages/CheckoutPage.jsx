@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
+import { getPackageLineLabel } from '../lib/bookingDisplay'
 import {
   bookingAddNote,
   bookingCreate,
@@ -18,14 +19,6 @@ function formatCurrency(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
-}
-
-function normalizeServiceSlug(value = '') {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/-single$/, '')
-    .replace(/-services?$/, '')
 }
 
 function getMinEventDate() {
@@ -666,7 +659,7 @@ export default function CheckoutPage() {
               checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
               selectedItems: cartItems.map(item => ({
                 id: item?.id,
-                title: getCartItemNoteLabel(item),
+                title: item?.title,
                 amount: Number(item?.totalPrice ?? 0),
               })),
             },
@@ -727,7 +720,7 @@ export default function CheckoutPage() {
                   checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
                   selectedItems: cartItems.map(item => ({
                     id: item?.id,
-                    title: getCartItemNoteLabel(item),
+                    title: item?.title,
                     amount: Number(item?.totalPrice ?? 0),
                   })),
                 },
@@ -826,7 +819,6 @@ export default function CheckoutPage() {
           ) : (
             <SpecialRequest preferences={''} onChange={() => {}} />
           )}
-
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#1F2A16] px-5 py-3 text-white">
               <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
@@ -837,34 +829,28 @@ export default function CheckoutPage() {
             <div className="space-y-4 p-5 text-sm">
               {itemSummaries.map(({ item, summary }, index) => {
                 const packageName = getCartItemDisplayName(item)
-                const serviceName = normalizeServiceSlug(item.packageData?.service_slugs?.[0] ?? '')
                 const isAddonItem = item?.itemType === 'addon'
-                const label = serviceName
-                  ? `${serviceName.charAt(0).toUpperCase()}${serviceName.slice(1)} (${item.quantity} package${Number(item.quantity) > 1 ? 's' : ''})`
-                  : `${packageName} (${item.quantity})`
+                const packageLineLabel = getPackageLineLabel(item?.title, packageName)
 
                 return (
                   <div key={item.id}>
-                    {index === 0 && !isAddonItem ? (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-base font-medium">
-                          <span>Base Package - {packageName}</span>
-                          <span>{formatCurrency(summary.total)}</span>
-                        </div>
-                        {itemSummaries.length > 1 ? (
-                          <hr className="my-4 border-[#0000001A]" />
-                        ) : null}
+                    <div className="space-y-2">
+                      <div
+                        className={`flex justify-between ${
+                          isAddonItem ? 'text-gray-600' : 'text-base font-medium'
+                        }`}
+                      >
+                        <span>
+                          {isAddonItem
+                            ? `Add-on - ${packageName} (${item.quantity})`
+                            : `${packageLineLabel}${Number(item.quantity) > 1 ? ` (${item.quantity})` : ''}`}
+                        </span>
+                        <span>{formatCurrency(summary.total)}</span>
                       </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-gray-600">
-                          <span>
-                            {isAddonItem ? `Add-on - ${packageName} (${item.quantity})` : label}
-                          </span>
-                          <span>{formatCurrency(summary.total)}</span>
-                        </div>
-                      </div>
-                    )}
+                      {index < itemSummaries.length - 1 ? (
+                        <hr className="my-4 border-[#0000001A]" />
+                      ) : null}
+                    </div>
                   </div>
                 )
               })}

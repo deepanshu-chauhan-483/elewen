@@ -86,6 +86,29 @@ const sanitizeProfile = profile => {
   }
 }
 
+const findUserAddresses = async userId => {
+  const { data } = await strapiServerGet(
+    `/api/addresses?filters[user][id][$eq]=${userId}&sort=createdAt:desc&pagination[pageSize]=25`
+  )
+  return Array.isArray(data) ? data : []
+}
+
+const sanitizeAddress = address => {
+  if (!address) return null
+
+  const attrs = address.attributes ?? address
+  return {
+    id: address.id,
+    documentId: address.documentId ?? null,
+    line1: attrs.line1 ?? '',
+    line2: attrs.line2 ?? '',
+    city: attrs.city ?? '',
+    state: attrs.state ?? '',
+    pincode: attrs.pincode ?? '',
+    country: attrs.country ?? 'India',
+  }
+}
+
 const isJwtLike = token => typeof token === 'string' && token.split('.').length === 3
 
 const isVerifiedGoogleEmail = value => value === true || value === 'true'
@@ -423,6 +446,7 @@ export const me = async (req, res, next) => {
   try {
     const user = await strapiGetMe(req.token)
     let profile = null
+    let addresses = []
 
     try {
       profile = await findCustomerProfile(user.id)
@@ -432,7 +456,19 @@ export const me = async (req, res, next) => {
       }
     }
 
-    res.json({ user: sanitizeUser(user), profile: sanitizeProfile(profile) })
+    try {
+      addresses = await findUserAddresses(user.id)
+    } catch (err) {
+      if (!isStrapiCredentialError(err)) {
+        throw err
+      }
+    }
+
+    res.json({
+      user: sanitizeUser(user),
+      profile: sanitizeProfile(profile),
+      addresses: addresses.map(sanitizeAddress).filter(Boolean),
+    })
   } catch (err) {
     next(err)
   }

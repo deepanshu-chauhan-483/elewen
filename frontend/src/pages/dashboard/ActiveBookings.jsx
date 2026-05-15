@@ -7,6 +7,7 @@ import {
 } from '../../components/dashboard/dashboardUtils'
 import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
+import { getBookingPackageNamesText } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
 
 const CloseToggleIcon = () => (
@@ -52,27 +53,30 @@ const DetailsArrowIcon = () => (
 )
 
 function normalizeStatus(status) {
-  const value = String(status ?? '').toLowerCase()
-
-  if (value === 'confirmed') return 'confirmed'
-  if (['new', 'info_collection'].includes(value)) return 'upcoming'
-  return 'in-progress'
+  return String(status ?? '')
+    .trim()
+    .toLowerCase()
 }
 
-function getStatusLabel(status) {
-  if (status === 'confirmed') return 'Confirmed'
-  if (status === 'upcoming') return 'Upcoming'
-  return 'In Progress'
+function getStatusLabel(status, statusLabel) {
+  if (statusLabel) return statusLabel
+
+  return String(status ?? 'In Progress')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
 }
 
 function getStatusTone(status) {
-  if (status === 'confirmed') return 'bg-[#E0F6ED] text-[#238E64]'
-  if (status === 'upcoming') return 'bg-[#E0EAFD] text-[#3061C6]'
+  if (status === 'completed') return 'bg-[#E0F6ED] text-[#238E64]'
   return 'bg-[#FEF1DE] text-[#C07318]'
 }
 
 function getSubtitle(booking) {
-  return [booking?.event?.name, booking?.package?.serviceCategories?.[0]?.name]
+  return [
+    // booking?.detailSubtitle,
+    booking?.event?.name,
+    booking?.package?.serviceCategories?.[0]?.name,
+  ]
     .filter(Boolean)
     .join(' · ')
 }
@@ -81,17 +85,16 @@ function getNextStepText(booking) {
   return booking?.latestStatusLog?.note || `Latest status: ${booking?.statusLabel || 'In Progress'}`
 }
 
-const StatusBadge = ({ status }) => (
+const StatusBadge = ({ status, label }) => (
   <span className={`inline-block rounded-full px-3 py-1 text-xs ${getStatusTone(status)}`}>
-    {getStatusLabel(status)}
+    {getStatusLabel(status, label)}
   </span>
 )
 
 function BookingCard({ booking, session }) {
   const [open, setOpen] = useState(false)
   const status = normalizeStatus(booking?.status)
-  const isConfirmed = status === 'confirmed'
-  const title = booking?.package?.title || booking?.event?.name || 'Booking'
+  const title = getBookingPackageNamesText(booking, booking?.event?.name || 'Booking')
   const subtitle = getSubtitle(booking)
   const location = booking?.locationSummary || 'Location pending'
   const amountPaid = formatDashboardCurrency(booking?.paymentSummary?.amountPaid)
@@ -111,15 +114,15 @@ function BookingCard({ booking, session }) {
   return (
     <div
       className={`rounded-2xl bg-[#FFFFFF] p-6 transition-all ${
-        status === 'in-progress'
-          ? 'border-l-4 border-[#C07318]'
-          : status === 'upcoming'
-            ? 'border-l-4 border-[#3061C6]'
-            : open
-              ? 'border-t-4 border-[#238E64]'
-              : 'border-l-4 border-[#238E64]'
+        status === 'completed'
+          ? open
+            ? 'border-t-4 border-[#238E64]'
+            : 'border-l-4 border-[#238E64]'
+          : open
+            ? 'border-t-4 border-[#C07318]'
+            : 'border-l-4 border-[#C07318]'
       }`}
-      onClick={isConfirmed ? () => setOpen(current => !current) : undefined}
+      onClick={() => setOpen(current => !current)}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -129,57 +132,53 @@ function BookingCard({ booking, session }) {
             </h3>
 
             <div className="shrink-0 md:pt-0.5">
-              <StatusBadge status={status} />
+              <StatusBadge status={status} label={booking?.statusLabel} />
             </div>
           </div>
 
-          {!open ? (
-            <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p>
-          ) : null}
+          <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p>
         </div>
 
-        {isConfirmed ? (
-          <div className="hidden shrink-0 items-start gap-3 md:flex">
-            {open ? (
-              <>
-                <button
-                  type="button"
-                  onClick={event => {
-                    event.stopPropagation()
-                    downloadReceipt(receiptData)
-                  }}
-                  className="rounded-full border border-[#CDB17E] px-4 py-2 text-sm text-[#957960]"
-                >
-                  Download Receipt
-                </button>
+        <div className="hidden shrink-0 items-start gap-3 md:flex">
+          {open ? (
+            <>
+              <button
+                type="button"
+                onClick={event => {
+                  event.stopPropagation()
+                  downloadReceipt(receiptData)
+                }}
+                className="rounded-full border border-[#CDB17E] px-4 py-2 text-sm text-[#957960]"
+              >
+                Download Receipt
+              </button>
 
-                <Link
-                  to={`/user-dashboard/details?bookingId=${booking.id}`}
-                  className="flex items-center rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white"
-                  aria-label="View booking details"
-                  onClick={event => event.stopPropagation()}
-                >
-                  View Details
-                  <span className="pl-2">
-                    <DetailsArrowIcon />
-                  </span>
-                </Link>
+              <Link
+                to={`/user-dashboard/details?bookingId=${booking.id}`}
+                className="flex items-center rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white"
+                aria-label="View booking details"
+                onClick={event => event.stopPropagation()}
+              >
+                View Details
+                <span className="pl-2">
+                  <DetailsArrowIcon />
+                </span>
+              </Link>
 
-                <button
-                  type="button"
-                  onClick={event => {
-                    event.stopPropagation()
-                    setOpen(false)
-                  }}
-                  aria-label="Collapse booking card"
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#957960] transition-colors hover:bg-[#E9E3DC]"
-                >
-                  <CloseToggleIcon />
-                </button>
-              </>
-            ) : null}
-          </div>
-        ) : null}
+              <button
+                type="button"
+                onClick={event => {
+                  event.stopPropagation()
+                  setOpen(false)
+                }}
+                aria-label="Collapse booking card"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-[#957960] transition-colors hover:bg-[#E9E3DC]"
+              >
+                <CloseToggleIcon />
+              </button>
+            </>
+          ) : null}
+        </div>
 
         {!open ? (
           <div className="mt-2 hidden shrink-0 gap-[24px] text-sm md:flex md:gap-[32px]">
@@ -195,19 +194,33 @@ function BookingCard({ booking, session }) {
         ) : null}
       </div>
 
-      {!open ? (
-        <div className="mt-4 flex items-center gap-2 text-sm">
-          <CalendarIcon />
-          <span>{formatDashboardDate(booking?.eventDate)}</span>
+      <div className="mt-4 flex items-center gap-2 text-sm">
+        <CalendarIcon />
+        <span>{formatDashboardDate(booking?.eventDate)}</span>
+      </div>
+
+      {open ? (
+        <div className="mt-6 flex flex-wrap justify-end gap-3 md:hidden">
+          <Link
+            to={`/user-dashboard/details?bookingId=${booking.id}`}
+            className="flex items-center rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white"
+            aria-label="View booking details"
+            onClick={event => event.stopPropagation()}
+          >
+            View Details
+            <span className="pl-3">
+              <DetailsArrowIcon />
+            </span>
+          </Link>
         </div>
       ) : null}
 
-      {isConfirmed && open ? (
+      {open ? (
         <>
           <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-[#00000033] pt-4 text-sm">
             <div>
-              <p className="text-[11px] text-[#767676]">EVENT TYPE</p>
-              <p>{booking?.event?.name || 'Event pending'}</p>
+              <p className="text-[11px] text-[#767676]">PACKAGE</p>
+              <p>{getBookingPackageNamesText(booking, booking?.event?.name || 'Event pending')}</p>
             </div>
 
             <div>
@@ -217,7 +230,7 @@ function BookingCard({ booking, session }) {
 
             <div>
               <p className="text-[11px] text-[#767676]">LOCATION</p>
-              <p>{location}</p>
+              <p>{location || 'Location pending'}</p>
             </div>
 
             <div>

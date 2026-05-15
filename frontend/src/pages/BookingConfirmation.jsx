@@ -6,6 +6,7 @@ import {
   formatReceiptDate,
   getReceiptPaymentSummary,
 } from '../lib/receipt'
+import { getBookingPackageNamesText } from '../lib/bookingDisplay'
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -145,9 +146,10 @@ export default function BookingConfirmation() {
           : DEFAULT_STEPS,
       }
 
-  const packageLabel =
-    booking?.package?.title ||
-    (booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package')
+  const packageLabel = getBookingPackageNamesText(
+    booking,
+    booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package'
+  )
   const receiptData = buildReceiptData({
     booking,
     payment,

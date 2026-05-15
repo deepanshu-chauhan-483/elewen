@@ -1,6 +1,10 @@
 import { jsPDF } from 'jspdf'
-
-const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+import {
+  getBookingPackageNamesText,
+  getPackageLineLabel,
+  getPackageLineSubtitle,
+  parseBookingItemTitle,
+} from './bookingDisplay'
 
 function toNumber(value) {
   if (value == null) return null
@@ -108,28 +112,17 @@ export function getReceiptCustomerName(customer = {}) {
 
 export function getReceiptItemTitle(title = '') {
   const rawTitle = String(title ?? '')
-  const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+  const { displayTitle, itemType, addonTitle, selectedOptions } = parseBookingItemTitle(rawTitle)
 
-  if (!metaPart) return displayTitle || rawTitle
+  const optionValues =
+    selectedOptions && typeof selectedOptions === 'object'
+      ? Object.values(selectedOptions).filter(Boolean)
+      : []
 
-  try {
-    const parsed = JSON.parse(metaPart)
-    const itemType = parsed?.itemType ?? 'package'
-    const addonTitle = String(parsed?.addonTitle ?? '').trim()
-    const selectedOptions =
-      parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
-        ? Object.values(parsed.selectedOptions).filter(Boolean)
-        : []
-
-    if (itemType === 'addon') {
-      return selectedOptions.length
-        ? `${addonTitle || displayTitle || rawTitle} (${selectedOptions.join(', ')})`
-        : addonTitle || displayTitle || rawTitle
-    }
-
-    if (selectedOptions.length) return selectedOptions.join(', ')
-  } catch {
-    return displayTitle || rawTitle
+  if (itemType === 'addon') {
+    return optionValues.length
+      ? `${addonTitle || displayTitle || rawTitle} (${optionValues.join(', ')})`
+      : addonTitle || displayTitle || rawTitle
   }
 
   return displayTitle || rawTitle
@@ -199,20 +192,38 @@ export function buildReceiptData({
     checkoutInfo,
     isSampleTastingBooking,
   })
-  const packageTitle =
-    booking?.package?.title ||
-    (booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package')
+  const checkoutPackageNames = Array.isArray(checkoutInfo?.selectedItems)
+    ? [
+        ...new Set(
+          checkoutInfo.selectedItems
+            .map(item => parseBookingItemTitle(item?.title))
+            .filter(item => item.itemType !== 'addon')
+            .map(item => String(item?.displayTitle ?? '').trim())
+            .filter(Boolean)
+        ),
+      ]
+    : []
+  const packageTitle = booking
+    ? getBookingPackageNamesText(
+        booking,
+        booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package'
+      )
+    : checkoutPackageNames.length
+      ? checkoutPackageNames.join(', ')
+      : 'Selected package'
   const lineItems =
     Array.isArray(booking?.items) && booking.items.length
       ? booking.items.map(item => ({
           id: item?.id ?? `${item?.title ?? 'item'}-${item?.totalPrice ?? 0}`,
-          title: getReceiptItemTitle(item?.title),
+          title: getPackageLineLabel(item?.title, getReceiptItemTitle(item?.title)),
+          subtitle: getPackageLineSubtitle(item?.title),
           amount: pickNumber(item?.totalPrice),
         }))
       : Array.isArray(checkoutInfo?.selectedItems)
         ? checkoutInfo.selectedItems.map(item => ({
             id: item?.id ?? `${item?.title ?? 'item'}-${item?.amount ?? 0}`,
-            title: getReceiptItemTitle(item?.title),
+            title: getPackageLineLabel(item?.title, getReceiptItemTitle(item?.title)),
+            subtitle: getPackageLineSubtitle(item?.title),
             amount: pickNumber(item?.amount),
           }))
         : []
@@ -494,7 +505,6 @@ function createReceiptPdf(receiptData) {
   y += 10
   drawSectionTitle('Order Details')
   drawInfoGrid([
-    { label: 'Package', value: receiptData.packageTitle },
     {
       label: 'Event Date',
       value: formatReceiptDate(receiptData.eventDate, { includeWeekday: true }),
@@ -508,7 +518,10 @@ function createReceiptPdf(receiptData) {
   drawTable(
     ['Item', 'Amount'],
     receiptData.lineItems.length
-      ? receiptData.lineItems.map(item => [item.title, formatReceiptCurrency(item.amount)])
+      ? receiptData.lineItems.map(item => [
+          item.subtitle ? `${item.title}\n${item.subtitle}` : item.title,
+          formatReceiptCurrency(item.amount),
+        ])
       : [
           [
             'No line items available',

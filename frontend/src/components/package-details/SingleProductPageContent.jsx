@@ -198,6 +198,7 @@ export default function SingleProductPageContent({
   accordionSections = [],
   mainImage,
   sideImages = [],
+  imageMetaByUrl = {},
   quantity = 1,
   onDecrement,
   onIncrement,
@@ -211,9 +212,65 @@ export default function SingleProductPageContent({
   ctaButtonText = 'Book a Consultation',
   testimonials = [],
 }) {
-  const initialDisplayImage = sideImages[0] ?? mainImage
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [openAccordionIndex, setOpenAccordionIndex] = useState(0)
+  const imageGalleryKey = [mainImage ?? '', ...sideImages].join('|')
+  const desktopSectionTop = '58px'
+  const addToCartDisabled = disableAddToCart || isAddingToCart
+  const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
+
+  return (
+    <ProductImageLayout
+      key={`${imageGalleryKey}|accordion:${accordionSections.map(section => section.title ?? '').join('|')}`}
+      title={title}
+      price={price}
+      intro={intro}
+      customContent={customContent}
+      accordionSections={accordionSections}
+      mainImage={mainImage}
+      sideImages={sideImages}
+      imageMetaByUrl={imageMetaByUrl}
+      quantity={quantity}
+      onDecrement={onDecrement}
+      onIncrement={onIncrement}
+      promptContent={promptContent}
+      addToCartDisabled={addToCartDisabled}
+      addToCartButtonLabel={addToCartButtonLabel}
+      addToCartMessage={addToCartMessage}
+      relatedProducts={relatedProducts}
+      onAddToCart={onAddToCart}
+      ctaButtonText={ctaButtonText}
+      testimonials={testimonials}
+      desktopSectionTop={desktopSectionTop}
+    />
+  )
+}
+
+function ProductImageLayout({
+  title,
+  price,
+  intro,
+  customContent,
+  accordionSections,
+  mainImage,
+  sideImages,
+  imageMetaByUrl,
+  quantity,
+  onDecrement,
+  onIncrement,
+  promptContent,
+  addToCartDisabled,
+  addToCartButtonLabel,
+  addToCartMessage,
+  relatedProducts,
+  onAddToCart,
+  ctaButtonText,
+  testimonials,
+  desktopSectionTop,
+}) {
+  const initialDisplayImage = mainImage ?? sideImages[0]
+  const [selectedImage, setSelectedImage] = useState(() => mainImage ?? sideImages[0] ?? null)
+  const [openAccordionIndex, setOpenAccordionIndex] = useState(
+    accordionSections.length > 0 ? 0 : -1
+  )
   const [relatedPageIndex, setRelatedPageIndex] = useState(0)
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (typeof window === 'undefined') return true
@@ -223,20 +280,15 @@ export default function SingleProductPageContent({
     selectedImage && [mainImage, ...sideImages].includes(selectedImage)
       ? selectedImage
       : initialDisplayImage
-  const desktopSectionTop = '58px'
-  const desktopMediaHeight = `calc(100vh - ${desktopSectionTop} - 24px)`
-
-  const addToCartDisabled = disableAddToCart || isAddingToCart
-  const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
-  const relatedCardsPerPage = isDesktopViewport ? 3 : 1
-  const relatedTotalPages = Math.max(1, Math.ceil(relatedProducts.length / relatedCardsPerPage))
+  const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
+  const desktopMediaHeight = 'clamp(32rem, calc(100vh - 8rem), 58.375rem)'
+  const relatedProductsPerPage = isDesktopViewport ? 3 : 1
+  const relatedTotalPages = Math.max(1, Math.ceil(relatedProducts.length / relatedProductsPerPage))
   const safeRelatedPageIndex = Math.min(relatedPageIndex, relatedTotalPages - 1)
-  const visibleRelatedProducts = isDesktopViewport
-    ? relatedProducts
-    : relatedProducts.slice(
-        safeRelatedPageIndex * relatedCardsPerPage,
-        safeRelatedPageIndex * relatedCardsPerPage + relatedCardsPerPage
-      )
+  const visibleRelatedProducts = relatedProducts.slice(
+    safeRelatedPageIndex * relatedProductsPerPage,
+    safeRelatedPageIndex * relatedProductsPerPage + relatedProductsPerPage
+  )
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -246,31 +298,19 @@ export default function SingleProductPageContent({
       setIsDesktopViewport(event.matches)
     }
 
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleViewportChange)
-      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    mediaQuery.addEventListener('change', handleViewportChange)
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleViewportChange)
     }
-
-    mediaQuery.addListener(handleViewportChange)
-    return () => mediaQuery.removeListener(handleViewportChange)
   }, [])
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setRelatedPageIndex(0)
-  }, [relatedProducts.length])
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setRelatedPageIndex(current => Math.min(current, relatedTotalPages - 1))
-  }, [relatedTotalPages])
 
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
       <NavHeader />
       <section className="relative pb-16 pt-8 md:pt-14.5">
         <div
-          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start"
+          className="relative mx-auto flex flex-col border-t-2 border-[#2D2D2D] md:flex-row md:items-start md:justify-between"
           style={{
             maxWidth: '1540px',
             gap: 'clamp(1.5rem, 2.2vw, 2rem)',
@@ -298,7 +338,7 @@ export default function SingleProductPageContent({
                   maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
                 }}
               >
-                <div className="md:h-full">
+                <div className="relative">
                   <img
                     src={activeImage}
                     alt={title}
@@ -307,6 +347,15 @@ export default function SingleProductPageContent({
                       height: isDesktopViewport ? '100%' : 'clamp(26.25rem, 70vw, 58.375rem)',
                     }}
                   />
+                  {activeImageMeta?.heading || activeImageMeta?.text ? (
+                    <div className="absolute bottom-3 right-3 max-w-[75%] rounded-[10px] bg-[#591902]/88 px-3 py-2 text-right text-white">
+                      {activeImageMeta?.heading ? (
+                        <p className="text-[11px] font-semibold leading-[1.3]">
+                          {activeImageMeta.heading}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -346,7 +395,8 @@ export default function SingleProductPageContent({
           <div
             className="mx-auto w-full min-w-0 flex-1 pl-0 md:ml-6 lg:mx-0 lg:ml-10"
             style={{
-              maxWidth: '42rem',
+              maxWidth: 'clamp(20rem, 45vw, 40.75rem)',
+              paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
             }}
           >
             <style>

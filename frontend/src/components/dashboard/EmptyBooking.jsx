@@ -10,8 +10,8 @@ export default function EmptyBooking({
   const navigate = useNavigate()
 
   return (
-    <div className="-m-6 -mb-28 flex min-h-[calc(100vh-63px)] w-auto items-center justify-center bg-white px-6 py-12 md:-mb-6">
-      <div className="flex max-w-[420px] flex-col items-center text-center">
+    <div className="flex min-h-full w-full flex-1 items-center justify-center">
+      <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
         <div className="mb-6">
           <img src={fallbackBooking} alt="No bookings" className="w-[220px] md:w-[260px]" />
         </div>

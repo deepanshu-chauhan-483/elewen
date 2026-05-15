@@ -561,29 +561,27 @@ function SinglePackageCard({
 
   return (
     <div className="space-y-6">
-      <div className="relative flex items-center gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
+      <div className="relative flex gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
         <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
-        <div className="ml-2 h-20 w-20 shrink-0 self-center overflow-hidden rounded-lg bg-gray-200">
+        <div className="ml-2 h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200">
           {packageImage ? (
             <img src={packageImage} alt={packageTitle} className="h-full w-full object-cover" />
           ) : null}
         </div>
 
-        <div className="min-w-0 flex-1 items-start">
+        <div className="items-start">
           <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
-          <div className="flex items-center gap-2">
-            <h3
-              className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
-              style={{ fontFamily: "'Poppins'" }}
-            >
-              {packageTitle}
-            </h3>
-            {packageQuantity > 1 ? (
-              <span className="rounded-full bg-[#D9D9D9] px-2 py-1 text-[10px] font-medium leading-none text-[#1C1C1C]">
-                x{packageQuantity}
-              </span>
-            ) : null}
-          </div>
+          <h3
+            className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
+            style={{ fontFamily: "'Poppins'" }}
+          >
+            {packageTitle}
+          </h3>
+          {packageQuantity > 1 ? (
+            <p className="mt-1 text-[10px] md:text-[12px] text-[#957960]">
+              {packageQuantity} packages selected
+            </p>
+          ) : null}
           <p className="text-[10px] md:text-[12px] text-[#6A6864]">
             {eventLocation} · {eventDate}
           </p>
@@ -666,12 +664,11 @@ function SinglePackageCard({
         </div>
 
         <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
-          <div className="flex items-start justify-between rounded-lg bg-[#F5F5F5] p-4">
+          <div className="flex justify-between rounded-lg bg-[#F5F5F5] p-4">
             {editingField === 'city' ? (
               <div className="w-full space-y-3">
                 <div>
                   <p className="text-sm text-gray-500">City / Area</p>
-
                   <input
                     type="text"
                     value={detailsForm.eventCity}
@@ -680,7 +677,6 @@ function SinglePackageCard({
                     className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"
                   />
                 </div>
-
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
@@ -689,7 +685,6 @@ function SinglePackageCard({
                   >
                     Cancel
                   </button>
-
                   <button
                     type="button"
                     onClick={() => onSaveDetails('city')}
@@ -702,29 +697,22 @@ function SinglePackageCard({
               </div>
             ) : (
               <>
-                <div className="min-w-0 flex-1 pr-4">
+                <div>
                   <p className="text-sm text-gray-500">City / Area</p>
-
-                  <p className="font-medium break-words">{eventLocation}</p>
+                  <p className="font-medium">{eventLocation}</p>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={onEditCity}
-                  className="shrink-0 text-sm text-[#727355]"
-                >
+                <button type="button" onClick={onEditCity} className="text-sm text-[#957960]">
                   Edit
                 </button>
               </>
             )}
           </div>
 
-          <div className="flex items-start justify-between rounded-lg bg-[#F3F3F3] p-4">
+          <div className="flex justify-between rounded-lg bg-[#F3F3F3] p-4">
             {editingField === 'date' ? (
               <div className="w-full space-y-3">
                 <div>
                   <p className="text-sm text-gray-500">Event Date</p>
-
                   <input
                     type="date"
                     min={getMinEventDate()}
@@ -733,7 +721,6 @@ function SinglePackageCard({
                     className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"
                   />
                 </div>
-
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
@@ -742,7 +729,6 @@ function SinglePackageCard({
                   >
                     Cancel
                   </button>
-
                   <button
                     type="button"
                     onClick={() => onSaveDetails('date')}
@@ -755,17 +741,11 @@ function SinglePackageCard({
               </div>
             ) : (
               <>
-                <div className="min-w-0 flex-1 pr-4">
+                <div>
                   <p className="text-sm text-gray-500">Event Date</p>
-
                   <p className="font-medium">{eventDate}</p>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={onEditDate}
-                  className="shrink-0 text-sm text-[#727355]"
-                >
+                <button type="button" onClick={onEditDate} className="text-sm text-[#957960]">
                   Edit
                 </button>
               </>
@@ -813,7 +793,7 @@ function DeleteIcon() {
 
 const CATEGORY_ICONS = {
   Decor: '🌸',
-  Catering: '🍽',
+  Catering: '🍽️',
   Sheesha: '💨',
   Bartending: '🍸',
   Furniture: '🪑',
@@ -1029,8 +1009,6 @@ function PriceSummaryCard({
     item,
     summary: getCartItemSummary(item),
   }))
-  // const singleCartEntry = singleItem ? (itemSummaries[0] ?? null) : null
-  // const singleItemElements = singleCartEntry ? getSelectedElements(singleCartEntry.item) : []
   const categorySummaries = itemSummaries.reduce((groups, entry) => {
     const category = getPriceSummaryCategoryLabel(entry.item)
     const existingGroup = groups.find(group => group.category === category)
@@ -1516,7 +1494,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-5 pb-10 pt-24 md:px-8 lg:px-16">
+    <div className="min-h-screen bg-white px-4 pb-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-6">
         <h2 className="text-[24px] text-[#1C1C1C] md:text-[36px]">Review Your Event</h2>
         <p className="text-gray-500">Check your selections and confirm details before checkout.</p>

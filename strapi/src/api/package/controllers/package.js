@@ -28,6 +28,101 @@ const normalizeAddon = addon => ({
   visibility: addon?.visibility !== false,
 });
 
+const nestedPackagePopulate = {
+  images: true,
+  events: {
+    populate: {
+      parent_event: true,
+    },
+  },
+  service_categories: {
+    populate: {
+      parent_category: true,
+    },
+  },
+  packages: {
+    on: {
+      'package.decorpackages': {
+        populate: {
+          elements: {
+            populate: {
+              service: true,
+            },
+          },
+          addons: true,
+          inclustions: {
+            populate: {
+              images: true,
+            },
+          },
+          policy: true,
+          price_covers: true,
+          price_breakdown: true,
+          theme: true,
+          budget_level: true,
+          backdrop_images: true,
+        },
+      },
+      'package.sheeshapackage': {
+        populate: {
+          elements: {
+            populate: {
+              service: true,
+            },
+          },
+          addons: true,
+          inclusions: true,
+          policy: true,
+          price_covers: true,
+          flavor: true,
+        },
+      },
+      'package.bartendingpackage': {
+        populate: {
+          addons: true,
+          inclusions: true,
+          exclusions: true,
+          policy: true,
+          price_covers: true,
+          price_breakdown: true,
+          budget_level: true,
+        },
+      },
+    },
+  },
+};
+
+const mergeEntryWithNestedPackages = (entry, nestedEntry) => {
+  if (!entry || !nestedEntry) return entry;
+
+  return {
+    ...entry,
+    images: nestedEntry.images ?? entry.images,
+    events: nestedEntry.events ?? entry.events,
+    service_categories: nestedEntry.service_categories ?? entry.service_categories,
+    packages: nestedEntry.packages ?? entry.packages,
+  };
+};
+
+const enrichEntriesWithNestedPackages = async (entries, strapi) => {
+  const items = Array.isArray(entries) ? entries.filter(entry => entry?.documentId) : [];
+  if (!items.length) return entries;
+
+  const nestedEntries = await strapi.documents('api::package.package').findMany({
+    documentId: items.map(entry => entry.documentId),
+    status: 'published',
+    populate: nestedPackagePopulate,
+  });
+
+  const nestedByDocumentId = new Map(
+    (Array.isArray(nestedEntries) ? nestedEntries : []).map(entry => [entry.documentId, entry])
+  );
+
+  return entries.map(entry =>
+    mergeEntryWithNestedPackages(entry, nestedByDocumentId.get(entry.documentId))
+  );
+};
+
 const attachReusableAddons = async (entry, strapi) => {
   if (!entry?.id) return entry;
 
@@ -48,28 +143,40 @@ const attachReusableAddons = async (entry, strapi) => {
 
 module.exports = createCoreController('api::package.package', ({ strapi }) => ({
   async find(ctx) {
+    if (ctx?.query?.populate?.packages?.on?.['package.decorpackages']?.populate?.inclustions?.populate) {
+      delete ctx.query.populate.packages.on['package.decorpackages'].populate.inclustions.populate;
+    }
+
     const response = await super.find(ctx);
 
     if (!Array.isArray(response?.data) || response.data.length === 0) {
       return response;
     }
 
+    const enrichedEntries = await enrichEntriesWithNestedPackages(response.data, strapi);
+
     return {
       ...response,
-      data: await Promise.all(response.data.map(entry => attachReusableAddons(entry, strapi))),
+      data: await Promise.all(enrichedEntries.map(entry => attachReusableAddons(entry, strapi))),
     };
   },
 
   async findOne(ctx) {
+    if (ctx?.query?.populate?.packages?.on?.['package.decorpackages']?.populate?.inclustions?.populate) {
+      delete ctx.query.populate.packages.on['package.decorpackages'].populate.inclustions.populate;
+    }
+
     const response = await super.findOne(ctx);
 
     if (!response?.data) {
       return response;
     }
 
+    const [enrichedEntry] = await enrichEntriesWithNestedPackages([response.data], strapi);
+
     return {
       ...response,
-      data: await attachReusableAddons(response.data, strapi),
+      data: await attachReusableAddons(enrichedEntry ?? response.data, strapi),
     };
   },
 }));

@@ -57,14 +57,14 @@ const DashboardLayout = () => {
 
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA] px-6 text-center text-sm text-[#6B7280]">
+      <div className="flex min-h-[var(--door-viewport-height)] items-center justify-center bg-[#FAFAFA] px-6 text-center text-sm text-[#6B7280] md:min-h-screen">
         Loading your customer dashboard...
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden md:flex">
+    <div className="dashboard-shell min-h-[var(--door-viewport-height)] w-full overflow-x-hidden bg-[#F2F2F2] md:flex md:min-h-screen">
       {/* Sidebar */}
       <Sidebar
         isMobileOpen={isMobileSidebarOpen}
@@ -72,17 +72,17 @@ const DashboardLayout = () => {
       />
 
       {/* Right Section */}
-      <div className="flex w-full flex-col md:ml-[260px] md:flex-1">
+      <div className="flex min-h-[var(--door-viewport-height)] w-full flex-col bg-[#F2F2F2] md:ml-[260px] md:min-h-screen md:flex-1">
         <Navbar onMobileMenuOpen={() => setIsMobileSidebarOpen(true)} />
 
         <main
-          className="flex-1 overflow-y-auto md:p-6 pb-28 md:pb-6"
+          className="dashboard-main flex flex-1 flex-col overflow-y-auto pb-28 md:min-h-0 md:p-6 md:pb-6"
           style={{
             backgroundColor: '#F2F2F2',
             marginTop: DASHBOARD.NAVBAR_HEIGHT,
           }}
         >
-          <div className="px-6 py-6 md:px-8 md:py-8">
+          <div className="flex flex-1 flex-col px-6 py-6 md:px-8 md:py-8">
             <Outlet />
           </div>
         </main>

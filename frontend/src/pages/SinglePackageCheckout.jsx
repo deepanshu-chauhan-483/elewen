@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
@@ -43,6 +43,9 @@ function parseCartItemTitle(value = '') {
     return {
       displayTitle: displayTitle || rawTitle,
       selectedOptions: {},
+      itemType: 'package',
+      addonTitle: '',
+      parentPackageId: '',
     }
   }
 
@@ -54,11 +57,17 @@ function parseCartItemTitle(value = '') {
         parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
           ? parsed.selectedOptions
           : {},
+      itemType: parsed?.itemType ?? 'package',
+      addonTitle: parsed?.addonTitle ?? '',
+      parentPackageId: parsed?.parentPackageId ?? '',
     }
   } catch {
     return {
       displayTitle: displayTitle || rawTitle,
       selectedOptions: {},
+      itemType: 'package',
+      addonTitle: '',
+      parentPackageId: '',
     }
   }
 }
@@ -78,6 +87,68 @@ function getSelectedElements(item) {
     title: highlight,
     desc: 'Included with this package',
   }))
+}
+
+function getPackageSubtitle(pkg) {
+  const service = pkg?.service_slugs?.[0]
+  if (!service) return 'Selected package'
+
+  return String(service)
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function buildAddonDedupeKey(addon = {}) {
+  const normalizedTitle = String(addon?.name ?? addon?.title ?? '')
+    .trim()
+    .toLowerCase()
+  const normalizedPrice = String(Number(addon?.price ?? 0))
+
+  return `${normalizedTitle}::${normalizedPrice}`
+}
+
+function getSuggestedAddonsWithPricing(item) {
+  const packageData = item?.packageData
+  if (!packageData) return []
+
+  const seen = new Set()
+  const packageSubtitle = getPackageSubtitle(packageData)
+  const packageTitle = packageData?.title || item?.displayTitle || 'Selected package'
+  const addons = Array.isArray(packageData?.detail_addons) ? packageData.detail_addons : []
+
+  return addons
+    .filter(addon => addon && addon.visibility !== false)
+    .map(addon => {
+      const addonTitle = String(addon?.name ?? addon?.title ?? '').trim()
+      const addonId = String(addon?.id ?? addonTitle)
+
+      return {
+        id: `${item.id}-${addonId}`,
+        packageId: packageData?.id,
+        addon,
+        title: addonTitle,
+        subtitle: `${packageSubtitle} / ${packageTitle}`,
+        price: formatCurrency(Number(addon?.price ?? 0)),
+        dedupeKey: buildAddonDedupeKey(addon),
+      }
+    })
+    .filter(addon => {
+      if (!addon.title || seen.has(addon.dedupeKey)) return false
+      seen.add(addon.dedupeKey)
+      return true
+    })
+    .slice(0, 4)
+}
+
+function getPackageRelationIds(item) {
+  const ids = [
+    item?.packageId,
+    item?.packageData?.id,
+    item?.packageData?.documentId,
+    item?.parentPackageId,
+  ]
+
+  return new Set(ids.map(value => String(value ?? '').trim()).filter(Boolean))
 }
 
 function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
@@ -158,11 +229,60 @@ function DeleteIcon() {
   )
 }
 
+function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
+  if (!packages.length) return null
+
+  return (
+    <div className="mt-6 rounded-[16px] border border-[#E5E5E5] bg-white p-5">
+      <div className="mb-5">
+        <h2
+          className="text-[20px] font-semibold text-[#2C2C2C]"
+          style={{ fontFamily: "'Poppins'" }}
+        >
+          Suggested Add-ons
+        </h2>
+        <p className="text-sm text-gray-500">Enhance your event with these popular extras</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+        {packages.map(pkg => {
+          const isAdding = addingAddonId === pkg.id
+
+          return (
+            <div
+              key={pkg.id}
+              className="flex items-center justify-between gap-3 rounded-[16px] bg-[#F5F5F5] px-3 py-4"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[16px] font-medium text-[#2C2C2C]">{pkg.title}</p>
+                <p className="truncate text-sm text-gray-500">
+                  {pkg.subtitle || 'Perfect add-on for your package'}
+                </p>
+                <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onAdd(pkg)}
+                disabled={isAdding || !pkg.packageId}
+                className="shrink-0 whitespace-nowrap rounded-full bg-[#957960] px-5 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAdding ? 'Adding...' : '+ Add'}
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function SinglePackageCheckout() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { cart, loading } = useCart()
+  const { cart, loading, addPackage } = useCart()
   const { data: packages = [] } = usePackages()
+  const [addingAddonId, setAddingAddonId] = useState('')
   const itemId = searchParams.get('itemId') ?? ''
 
   const packageLookup = useMemo(
@@ -179,9 +299,35 @@ export default function SinglePackageCheckout() {
       ...cartItem,
       displayTitle: parsedTitle.displayTitle,
       selectedOptions: parsedTitle.selectedOptions,
+      itemType: parsedTitle.itemType,
+      addonTitle: parsedTitle.addonTitle,
+      parentPackageId: parsedTitle.parentPackageId,
       packageData: packageLookup.get(String(cartItem.packageId)) ?? null,
     }
   }, [cart?.items, itemId, packageLookup])
+
+  const relatedAddonItems = useMemo(() => {
+    const relatedPackageIds = getPackageRelationIds(item)
+
+    return (cart?.items ?? [])
+      .map(entry => {
+        const parsedTitle = parseCartItemTitle(entry.title)
+        return {
+          ...entry,
+          displayTitle: parsedTitle.addonTitle || parsedTitle.displayTitle,
+          selectedOptions: parsedTitle.selectedOptions,
+          itemType: parsedTitle.itemType,
+          addonTitle: parsedTitle.addonTitle,
+          parentPackageId: parsedTitle.parentPackageId,
+        }
+      })
+      .filter(entry => {
+        if (entry.itemType !== 'addon') return false
+
+        const entryRelationIds = getPackageRelationIds(entry)
+        return Array.from(entryRelationIds).some(id => relatedPackageIds.has(id))
+      })
+  }, [cart?.items, item])
 
   if (!loading && !item) return <Navigate to="/cart" replace />
   if (!item) return null
@@ -195,8 +341,31 @@ export default function SinglePackageCheckout() {
   const eventLocation = cart?.eventCity || 'Add city / area'
   const eventDate = formatDisplayDate(cart?.eventDate)
   const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
-  const advancePayable = Number(item.totalPrice ?? 0) * 0.3
-  const balanceDue = Number(item.totalPrice ?? 0) - advancePayable
+  const suggestedPackages = getSuggestedAddonsWithPricing(item)
+  const addonTotal = relatedAddonItems.reduce(
+    (sum, addonItem) => sum + Number(addonItem.totalPrice ?? 0),
+    0
+  )
+  const totalAmount = Number(item.totalPrice ?? 0) + addonTotal
+  const advancePayable = totalAmount * 0.3
+  const balanceDue = totalAmount - advancePayable
+
+  const handleAddSuggestedAddon = async pkg => {
+    if (!pkg?.packageId || addingAddonId) return
+
+    setAddingAddonId(pkg.id)
+    try {
+      await addPackage({
+        packageId: Number(pkg.packageId),
+        quantity: 1,
+        addon: pkg.addon,
+      })
+    } catch (err) {
+      console.error('[single-package-checkout] addon add failed', err)
+    } finally {
+      setAddingAddonId('')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white px-4 py-8 md:px-8 md:pt-24 lg:px-16">
@@ -290,6 +459,11 @@ export default function SinglePackageCheckout() {
               </div>
             </div>
           </div>
+          <SuggestedPackages
+            packages={suggestedPackages}
+            onAdd={handleAddSuggestedAddon}
+            addingAddonId={addingAddonId}
+          />
         </div>
 
         <div className="flex-1">
@@ -315,11 +489,25 @@ export default function SinglePackageCheckout() {
                 </div>
               ))}
 
+              {relatedAddonItems.length ? <hr className="my-4 border-[#0000001A]" /> : null}
+
+              {relatedAddonItems.map(addonItem => (
+                <div key={addonItem.id} className="flex justify-between text-gray-600">
+                  <span>
+                    Add-on — {addonItem.addonTitle || addonItem.displayTitle}
+                    {Number(addonItem.quantity ?? 1) > 1
+                      ? ` x${Number(addonItem.quantity ?? 1)}`
+                      : ''}
+                  </span>
+                  <span>{formatCurrency(addonItem.totalPrice)}</span>
+                </div>
+              ))}
+
               <hr className="my-4 border-[#0000001A]" />
 
               <div className="flex justify-between rounded-lg bg-[#F8F4ED] px-4 py-3 font-medium">
                 <span>Total Amount</span>
-                <span>{formatCurrency(item.totalPrice)}</span>
+                <span>{formatCurrency(totalAmount)}</span>
               </div>
 
               <div className="flex justify-between rounded-lg bg-[#F1F1F1] px-4 py-3 font-medium">
