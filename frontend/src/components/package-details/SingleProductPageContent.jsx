@@ -193,14 +193,12 @@ export default function SingleProductPageContent({
   ctaButtonText = 'Book a Consultation',
   testimonials = [],
 }) {
-  const imageGalleryKey = [mainImage ?? '', ...sideImages].join('|')
   const desktopSectionTop = '58px'
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
 
   return (
     <ProductImageLayout
-      key={imageGalleryKey}
       title={title}
       price={price}
       intro={intro}
@@ -248,12 +246,19 @@ function ProductImageLayout({
   desktopSectionTop,
 }) {
   const initialDisplayImage = mainImage ?? sideImages[0]
-  const [selectedImage, setSelectedImage] = useState(mainImage ?? null)
+  const [selectedImage, setSelectedImage] = useState({
+    image: null,
+    baseMainImage: mainImage ?? null,
+  })
   const activeImage =
-    selectedImage && [mainImage, ...sideImages].includes(selectedImage)
-      ? selectedImage
+    selectedImage.baseMainImage === (mainImage ?? null) &&
+    selectedImage.image &&
+    [mainImage, ...sideImages].includes(selectedImage.image)
+      ? selectedImage.image
       : initialDisplayImage
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
+  const mainImageHeight = 'clamp(26.25rem, calc(100vh - 8.25rem), 58.375rem)'
+  const sideImagesMaxHeight = 'calc((clamp(5.125rem, 6.5vw, 6.4375rem) * 5) + 2rem)'
 
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
@@ -286,7 +291,7 @@ function ProductImageLayout({
                     alt={title}
                     className="w-full border-l-2 border-r-2 border-b-2 border-[#727355] object-cover"
                     style={{
-                      height: 'clamp(26.25rem, 70vw, 58.375rem)',
+                      height: mainImageHeight,
                     }}
                   />
                   {activeImageMeta?.heading || activeImageMeta?.text ? (
@@ -302,12 +307,23 @@ function ProductImageLayout({
               </div>
 
               {/* Side Images */}
-              <div className="order-2 flex flex-row items-center justify-center gap-2 overflow-x-auto px-1 pb-2 md:order-1 md:flex-col md:items-end md:justify-start md:space-y-2 md:gap-0 md:overflow-visible md:px-0 md:pb-0 md:pt-2">
+              <div
+                className="order-2 flex touch-pan-x flex-row items-center justify-center gap-2 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:order-1 md:max-h-[unset] md:flex-col md:items-end md:justify-start md:space-y-2 md:gap-0 md:overflow-x-visible md:overflow-y-auto md:px-0 md:pb-0 md:pt-2"
+                style={{
+                  maxHeight: sideImagesMaxHeight,
+                }}
+                data-lenis-prevent
+              >
                 {sideImages.map((image, index) => (
                   <button
                     type="button"
                     key={`${image}-${index}`}
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() =>
+                      setSelectedImage({
+                        image,
+                        baseMainImage: mainImage ?? null,
+                      })
+                    }
                     className={`shrink-0 overflow-hidden rounded-[12px] transition-opacity ${
                       activeImage === image ? 'opacity-100' : 'opacity-40'
                     }`}

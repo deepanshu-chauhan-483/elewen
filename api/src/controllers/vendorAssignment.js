@@ -14,6 +14,22 @@ export const createAssignment = async (req, res, next) => {
     const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
 
+    const existingAssignment = await prisma.vendorAssignment.findFirst({
+      where: {
+        bookingId,
+        vendorId: String(vendorId),
+        status: {
+          in: ['assigned', 'confirmed'],
+        },
+      },
+    })
+
+    if (existingAssignment) {
+      return res
+        .status(409)
+        .json({ error: 'This vendor is already actively assigned to the booking' })
+    }
+
     const assignment = await prisma.vendorAssignment.create({
       data: {
         bookingId,

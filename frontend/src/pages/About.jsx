@@ -362,7 +362,7 @@ const About = () => {
                     style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
                   />
                   <div
-                    className="absolute top-0 left-0 w-full h-[36px] min-[661px]:h-[60px] bg-[#F8F4ED]"
+                    className="absolute top-0 left-0 w-full h-[30px] min-[661px]:h-[60px] bg-[#F8F4ED]"
                     style={{ borderRadius: '0 0 50% 50% / 0 0 100% 100%' }}
                   />
 
@@ -1011,7 +1011,7 @@ const About = () => {
         {/* --- Call To Action Section --- */}
         {/* Frame 271 */}
         <div className="w-full bg-[#591902] shrink-0">
-          <div className="max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] py-12 min-[661px]:py-5">
+          <div className="max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] py-12 min-[661px]:py-10">
             <div className="flex flex-col items-center text-center gap-4">
               <h3
                 className="text-[#FFFFFF] text-[28px] min-[661px]:text-[40px] lg:text-[47px] font-normal leading-[1.05] m-0"
@@ -1039,7 +1039,7 @@ const About = () => {
             <div className="mt-8 min-[661px]:mt-10 flex flex-row flex-wrap items-center justify-center gap-4">
               <button className="flex flex-row items-center justify-between w-full max-w-[220px] min-[661px]:w-[208px] h-[44px] bg-[#CDB17E] rounded-[56px] pl-[24px] pr-[4px] py-[4px] hover:bg-[#c2a472] transition-colors group">
                 <span
-                  className="text-[#591902] text-[16px] font-medium leading-[150%]"
+                  className="text-[#FFFFFF] text-[16px] font-medium leading-[150%]"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
                   {vc.ctas?.[0]?.label ?? 'Customer Login'}
@@ -1051,7 +1051,7 @@ const About = () => {
                     height="20"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#591902"
+                    stroke="#CDB17E"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1063,9 +1063,9 @@ const About = () => {
                 </div>
               </button>
 
-              <button className="flex flex-row items-center justify-center w-full max-w-[220px] min-[661px]:w-[169px] h-[44px] bg-[#FAFAFA] rounded-[56px] px-[24px] py-[4px] hover:bg-[#eaeaea] transition-colors">
+              <button className="flex flex-row items-center justify-center w-full max-w-[220px] min-[661px]:w-[169px] h-[44px] bg-[#FAFAFA] rounded-[56px] px-[24px] py-[4px] hover:bg-[#FFFFFF] transition-colors">
                 <span
-                  className="text-[#591902] text-[16px] font-medium leading-[150%]"
+                  className="text-[#CDB17E] text-[16px] font-medium leading-[150%]"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
                   {vc.ctas?.[1]?.label ?? 'Join as Vendor'}

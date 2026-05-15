@@ -334,7 +334,64 @@ async function fetchVendorDirectoryFromDatabase({
       )
   `
 
-  const vendors = rows.map(mapVendorDirectoryRow)
+  const vendorIds = rows.map(vendor => String(vendor.id))
+  const [assignments, payouts, bankInfo] = await Promise.all([
+    vendorIds.length
+      ? prisma.vendorAssignment.findMany({
+          where: { vendorId: { in: vendorIds } },
+        })
+      : [],
+    vendorIds.length
+      ? prisma.vendorPayout.findMany({
+          where: { vendorId: { in: vendorIds } },
+        })
+      : [],
+    vendorIds.length
+      ? prisma.vendorBankInfo.findMany({
+          where: { vendorId: { in: vendorIds } },
+        })
+      : [],
+  ])
+
+  const bankInfoMap = new Map(bankInfo.map(item => [String(item.vendorId), item]))
+  const assignmentsByVendor = assignments.reduce((map, assignment) => {
+    const key = String(assignment.vendorId)
+    const next = map.get(key) ?? []
+    next.push(assignment)
+    map.set(key, next)
+    return map
+  }, new Map())
+  const payoutsByVendor = payouts.reduce((map, payout) => {
+    const key = String(payout.vendorId)
+    const next = map.get(key) ?? []
+    next.push(payout)
+    map.set(key, next)
+    return map
+  }, new Map())
+
+  const vendors = rows.map(vendor => {
+    const vendorId = String(vendor.id)
+    const vendorAssignments = assignmentsByVendor.get(vendorId) ?? []
+    const vendorPayouts = payoutsByVendor.get(vendorId) ?? []
+
+    return {
+      ...mapVendorDirectoryRow(vendor),
+      activeAssignmentsCount: vendorAssignments.filter(assignment =>
+        ['assigned', 'confirmed'].includes(assignment.status)
+      ).length,
+      completedAssignmentsCount: vendorAssignments.filter(
+        assignment => assignment.status === 'completed'
+      ).length,
+      pendingPayoutAmount: Number(
+        vendorPayouts
+          .filter(payout => payout.status === 'pending')
+          .reduce((sum, payout) => sum + toNumber(payout.amount), 0)
+          .toFixed(2)
+      ),
+      bankInfo: bankInfoMap.get(vendorId) ?? null,
+    }
+  })
+
   return {
     vendors,
     pagination: {
@@ -1262,13 +1319,13 @@ export async function getAdminVendorWorkspace(req, res, next) {
     })
 
     const pendingRequests = result.vendors
-      .filter(vendor => vendor.vendorStatus === 'pending')
-      .sort((left, right) => right.documentsCount - left.documentsCount)
-    const assignedVendors = result.vendors
       .filter(
         vendor =>
-          vendor.vendorStatus === 'approved' && Number(vendor.activeAssignmentsCount ?? 0) > 0
+          vendor.vendorStatus === 'pending' && Number(vendor.activeAssignmentsCount ?? 0) === 0
       )
+      .sort((left, right) => right.documentsCount - left.documentsCount)
+    const assignedVendors = result.vendors
+      .filter(vendor => Number(vendor.activeAssignmentsCount ?? 0) > 0)
       .sort(
         (left, right) =>
           Number(right.activeAssignmentsCount ?? 0) - Number(left.activeAssignmentsCount ?? 0)

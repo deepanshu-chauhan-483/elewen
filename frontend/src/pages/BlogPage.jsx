@@ -38,21 +38,81 @@ const RevealLine = ({ children, delay, className = '' }) => (
   </span>
 )
 
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg
+      className={`h-[20px] w-[20px] md:w-[36px] md:h-[36px] ${rotationClass}`}
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#FAFAFA"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const buildPaginationItems = (currentPage, totalPages) => {
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, index) => index + 1)
+
+  if (currentPage <= 3) return [1, 2, 3, 'ellipsis', totalPages]
+
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages]
+  }
+
+  return [1, 'ellipsis', currentPage, 'ellipsis', totalPages]
+}
+
 const BlogPage = () => {
   const pageRef = useRef(null)
+  const blogListTopRef = useRef(null)
   const [activeCategory, setActiveCategory] = useState('All')
+  const [currentPage, setCurrentPage] = useState(1)
   const { data: blogCategories = [] } = useBlogCategories()
   const { data: blogPosts = [] } = useBlogs({ limit: 50 })
+  const blogsPerPage = 3
 
-  const categories = useMemo(
-    () => ['All', ...(Array.isArray(blogCategories) ? blogCategories : [])],
-    [blogCategories]
-  )
+  const categories = useMemo(() => {
+    const fetchedCategories = Array.isArray(blogCategories) ? blogCategories : []
+    const postCategories = Array.isArray(blogPosts)
+      ? blogPosts.map(post => post?.category).filter(Boolean)
+      : []
+
+    return ['All', ...new Set([...fetchedCategories, ...postCategories])]
+  }, [blogCategories, blogPosts])
 
   const visiblePosts = useMemo(() => {
     if (activeCategory === 'All') return blogPosts
     return blogPosts.filter(post => post.category === activeCategory)
   }, [activeCategory, blogPosts])
+
+  const totalPages = Math.max(1, Math.ceil(visiblePosts.length / blogsPerPage))
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const paginationItems = useMemo(
+    () => buildPaginationItems(safeCurrentPage, totalPages),
+    [safeCurrentPage, totalPages]
+  )
+
+  const paginatedPosts = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * blogsPerPage
+    return visiblePosts.slice(startIndex, startIndex + blogsPerPage)
+  }, [blogsPerPage, safeCurrentPage, visiblePosts])
+
+  useEffect(() => {
+    if (!blogListTopRef.current) return
+
+    blogListTopRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }, [activeCategory])
 
   useEffect(() => {
     const page = pageRef.current
@@ -107,7 +167,7 @@ const BlogPage = () => {
   }, [activeCategory])
 
   return (
-    <main ref={pageRef} className="blog-page min-h-screen bg-[#F7F4EE] font-sans text-[#202716]">
+    <main ref={pageRef} className="blog-page min-h-screen text-[#202716]">
       <section
         data-nav-theme="glass"
         data-nav-surface="transparent"
@@ -125,8 +185,8 @@ const BlogPage = () => {
               </h1>
             </div>
 
-            <div className="mt-12 grid gap-6 md:grid-cols-[1.08fr_0.92fr] lg:grid-cols-[664px_560px] lg:items-start lg:justify-start lg:gap-4 lg:pl-[100px]">
-              <div className="anim-element slide-from-bottom h-[320px] overflow-hidden md:h-[480px] lg:h-[380px] lg:w-[664px]">
+            <div className="mx-auto mt-12 grid max-w-[1280px] gap-6 md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:items-start md:justify-center lg:gap-4">
+              <div className="anim-element slide-from-bottom h-[320px] overflow-hidden md:h-[420px] lg:h-[380px]">
                 <img
                   src={heroLeft}
                   alt="Celebration moment"
@@ -134,7 +194,7 @@ const BlogPage = () => {
                 />
               </div>
               <div
-                className="anim-element slide-from-bottom h-[220px] overflow-hidden self-start md:mt-16 md:h-[300px] lg:mt-0 lg:h-[260px] lg:w-[560px]"
+                className="anim-element slide-from-bottom h-[220px] overflow-hidden self-start md:h-[260px] lg:h-[260px]"
                 style={{ '--delay': '0s' }}
               >
                 <img
@@ -148,19 +208,23 @@ const BlogPage = () => {
         </div>
       </section>
 
-      <section className="px-5 pt-10 pb-5 md:px-10 lg:px-[96px] lg:py-20">
-        <div className="mx-auto grid max-w-[1720px] gap-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-16">
-          <aside className="reveal-border-y relative border-b border-[#A7AE98] px-[10px] pb-5 lg:sticky lg:top-28 lg:border-b-0 lg:pb-0 lg:pr-10 lg:px-0 self-start">
-            <div className="absolute right-0 top-0 hidden h-full w-[1px] bg-[#A7AE98] lg:block border-fill-y" />
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[12px] md:text-[16px] lg:block lg:space-y-8">
+      <section className="bg-[#FFFFFF]">
+        <div className="mx-auto grid max-w-[1720px] gap-10 px-5 pt-10 pb-5 md:relative md:grid-cols-[220px_minmax(0,1fr)] md:gap-16 md:px-10 md:py-20 lg:px-[96px]">
+          <div className="absolute bottom-0 left-[252px] top-0 hidden w-px bg-[#A7AE98] md:block" />
+
+          <aside className="self-start border-b border-[#A7AE98] px-[10px] pb-5 md:sticky md:top-28 md:border-b-0 md:pb-0 md:pr-10 md:px-0">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[12px] md:block md:space-y-8 md:text-[16px]">
               {categories.map((category, index) => {
                 const active = activeCategory === category
                 return (
-                  <div key={category} className="flex items-center lg:block">
+                  <div key={category} className="flex items-center md:block">
                     <button
                       type="button"
-                      onClick={() => setActiveCategory(category)}
-                      className={`reveal-on-scroll relative text-left text-[16px] leading-[1.5] lg:w-full ${
+                      onClick={() => {
+                        setActiveCategory(category)
+                        setCurrentPage(1)
+                      }}
+                      className={`relative text-left text-[16px] leading-[1.5] md:w-full ${
                         active ? 'text-[#202716]' : 'text-[#9B9A92]'
                       }`}
                       style={{
@@ -169,8 +233,8 @@ const BlogPage = () => {
                         letterSpacing: '0',
                       }}
                     >
-                      <span className="relative inline-block md:pb-[15px]">
-                        <RevealLine delay="0s">{category}</RevealLine>
+                      <span className="relative inline-block md:pb-[8px]">
+                        {category}
                         <span
                           className={`absolute bottom-0 left-0 h-px bg-[#A7AE98] transition-all duration-300 ease-out ${
                             active ? 'w-full opacity-100' : 'w-0 opacity-0'
@@ -180,7 +244,7 @@ const BlogPage = () => {
                     </button>
 
                     {index < categories.length - 1 ? (
-                      <span className="ml-4 text-[#202716] lg:hidden">|</span>
+                      <span className="ml-4 text-[#202716] md:hidden">|</span>
                     ) : null}
                   </div>
                 )
@@ -189,8 +253,10 @@ const BlogPage = () => {
           </aside>
 
           <div>
+            <div ref={blogListTopRef} />
+
             {visiblePosts.length === 0 ? (
-              <div className="anim-element slide-from-bottom border-b border-[#DDD7CE] py-10">
+              <div className="border-b border-[#DDD7CE] py-10">
                 <p
                   className="max-w-[640px] text-[16px] leading-[1.5] text-[#9B9A92]"
                   style={{
@@ -204,20 +270,17 @@ const BlogPage = () => {
               </div>
             ) : null}
 
-            {visiblePosts.map((post, index) => (
+            {paginatedPosts.map((post, index) => (
               <article
                 key={post.title}
-                className={`grid gap-8 border-b border-[#DDD7CE] pb-8 md:py-10 lg:items-start lg:gap-10 ${
+                className={`grid gap-8 border-b border-[#DDD7CE] pt-2 pb-8 md:items-start md:gap-10 md:py-10 ${
                   index % 2 === 0
-                    ? 'lg:grid-cols-[minmax(0,1fr)_276px]'
-                    : 'lg:grid-cols-[276px_minmax(0,1fr)]'
+                    ? 'md:grid-cols-[minmax(0,1fr)_276px]'
+                    : 'md:grid-cols-[276px_minmax(0,1fr)]'
                 }`}
               >
                 {index % 2 === 1 && (
-                  <div
-                    className="anim-element slide-from-left order-2 h-[256px] w-full overflow-hidden lg:order-1 lg:w-[276px]"
-                    style={{ '--delay': '0s' }}
-                  >
+                  <div className="order-2 h-[256px] w-full overflow-hidden md:order-1 md:w-[276px]">
                     <img
                       src={resolveCoverImage(post)}
                       alt={post.title}
@@ -226,10 +289,7 @@ const BlogPage = () => {
                   </div>
                 )}
 
-                <div
-                  className={`anim-element slide-from-right ${index % 2 === 1 ? 'order-1 lg:order-2' : ''}`}
-                  style={{ '--delay': '0s' }}
-                >
+                <div className={index % 2 === 1 ? 'order-1 md:order-2' : ''}>
                   <p
                     className="text-[16px] leading-[1.5] text-[#A77B45]"
                     style={{
@@ -243,7 +303,7 @@ const BlogPage = () => {
 
                   <Link to={`/blogs/${post.slug}`} className="block">
                     <h2
-                      className="mt-3 max-w-[760px] text-[32px] leading-[1] text-[#171717] transition-colors duration-300 hover:text-[#6D2005] lg:text-[36px]"
+                      className="mt-3 max-w-[760px] text-[32px] leading-[1] text-[#171717] transition-colors duration-300 hover:text-[#6D2005] md:text-[36px]"
                       style={{ fontFamily: "'Malgin', serif", fontWeight: 400, letterSpacing: '0' }}
                     >
                       {post.title}
@@ -295,10 +355,7 @@ const BlogPage = () => {
                 </div>
 
                 {index % 2 === 0 && (
-                  <div
-                    className="anim-element slide-from-right h-[256px] w-full overflow-hidden lg:w-[276px]"
-                    style={{ '--delay': '0.5s' }}
-                  >
+                  <div className="h-[256px] w-full overflow-hidden md:w-[276px]">
                     <img
                       src={resolveCoverImage(post)}
                       alt={post.title}
@@ -308,6 +365,62 @@ const BlogPage = () => {
                 )}
               </article>
             ))}
+
+            {visiblePosts.length > 0 ? (
+              <div className="mt-12 flex items-center justify-center gap-4 text-[#8C3B11] md:mt-16 md:gap-8">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                  disabled={safeCurrentPage <= 1}
+                  className="flex h-[48px] w-[48px] md:h-[64px] md:w-[64px] items-center justify-center rounded-full bg-[#7A2606] text-white transition-colors hover:bg-[#8f3210] disabled:opacity-40"
+                  aria-label="Previous blog page"
+                >
+                  <ArrowIcon direction="left" />
+                </button>
+
+                <div className="flex items-center gap-4 text-[18px] md:gap-8">
+                  {paginationItems.map((item, index) => {
+                    if (item === 'ellipsis') {
+                      return (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="text-[20px] font-medium text-[#B89F92]"
+                          style={{ fontFamily: "'Poppins', sans-serif" }}
+                        >
+                          ...
+                        </span>
+                      )
+                    }
+
+                    const isActive = item === safeCurrentPage
+
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setCurrentPage(item)}
+                        className={`min-w-[20px] text-center text-[18px] transition-colors ${
+                          isActive ? 'font-semibold text-[#7A2606]' : 'font-medium text-[#B89F92]'
+                        }`}
+                        style={{ fontFamily: "'Poppins', sans-serif" }}
+                      >
+                        {item}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                  disabled={safeCurrentPage >= totalPages}
+                  className="flex h-[48px] w-[48px] md:h-[64px] md:w-[64px] items-center justify-center rounded-full bg-[#7A2606] text-white transition-colors hover:bg-[#8f3210] disabled:opacity-40"
+                  aria-label="Next blog page"
+                >
+                  <ArrowIcon direction="right" />
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

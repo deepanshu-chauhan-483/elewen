@@ -19,6 +19,7 @@ export default function CustomSelect({
   optionClassName = '',
   selectedOptionClassName = '',
   arrowClassName = '',
+  renderArrow,
   menuOffset = 2,
   ariaLabel,
 }) {
@@ -116,15 +117,19 @@ export default function CustomSelect({
         <span className="truncate">{displayLabel}</span>
       </button>
 
-      <svg
-        viewBox="0 0 12 12"
-        className={arrowClassName}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      >
-        <path d="m2.5 4.5 3.5 3 3.5-3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      {renderArrow ? (
+        <span className={arrowClassName}>{renderArrow({ isOpen })}</span>
+      ) : (
+        <svg
+          viewBox="0 0 12 12"
+          className={arrowClassName}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
+          <path d="m2.5 4.5 3.5 3 3.5-3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
 
       {isOpen && !disabled && menuStyle
         ? createPortal(

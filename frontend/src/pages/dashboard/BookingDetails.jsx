@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   useDashboardBookings,
+  useDashboardBookingTimeline,
   useDashboardCancelBooking,
   useDashboardSession,
 } from '../../hooks/useDashboardData'
@@ -97,6 +98,64 @@ function buildAddonDetailRows(booking) {
     .filter(Boolean)
 }
 
+const TIMELINE_DISPLAY_ORDER = [
+  'Inquiry / Booking Placed',
+  'Internal Review & Confirmation',
+  'Information Collection',
+  'Planning & Preparation',
+  'Pre-event Final Checks',
+  'Event Day / Execution',
+  'Event Complete',
+  'Post Event Follow Up',
+]
+
+function normalizeTimelineItem(item) {
+  const rawStatus = String(item?.status ?? '')
+    .trim()
+    .toLowerCase()
+
+  const status =
+    rawStatus === 'active'
+      ? 'in_progress'
+      : rawStatus === 'in_progress'
+        ? 'in_progress'
+        : rawStatus === 'completed'
+          ? 'completed'
+          : rawStatus === 'blocked'
+            ? 'blocked'
+            : 'pending'
+
+  return {
+    id: item?.id ?? `${item?.title}-${item?.timelineDate ?? ''}`,
+    title: item?.title ?? 'Timeline Step',
+    description: item?.description ?? '',
+    timelineDate: item?.timelineDate ?? '',
+    status,
+  }
+}
+
+function sortTimelineItems(items = []) {
+  const orderMap = new Map(TIMELINE_DISPLAY_ORDER.map((title, index) => [title, index]))
+
+  return [...items].sort((left, right) => {
+    const leftIndex = orderMap.get(left?.title) ?? Number.MAX_SAFE_INTEGER
+    const rightIndex = orderMap.get(right?.title) ?? Number.MAX_SAFE_INTEGER
+
+    if (leftIndex !== rightIndex) return leftIndex - rightIndex
+    return String(left?.title ?? '').localeCompare(String(right?.title ?? ''))
+  })
+}
+
+function getCurrentTimelineStage(timeline = []) {
+  const inProgressStage = timeline.find(item => item.status === 'in_progress')
+  if (inProgressStage) return inProgressStage
+
+  const blockedStage = timeline.find(item => item.status === 'blocked')
+  if (blockedStage) return blockedStage
+
+  return null
+}
+
 const CalendarIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
     <path
@@ -115,22 +174,20 @@ const ArrowIcon = () => (
 
 const StatusBadge = ({ status }) => {
   const styles = {
-    confirmed: 'bg-[#E0F6ED] text-[#238E64]',
-    'in-progress': 'bg-[#FEF1DE] text-[#C07318]',
-    upcoming: 'bg-[#E0EAFD] text-[#3061C6]',
+    completed: 'bg-[#E0F6ED] text-[#238E64]',
   }
 
-  const labels = {
-    confirmed: 'Confirmed',
-    'in-progress': 'In Progress',
-    upcoming: 'Upcoming',
-  }
+  const label = String(status ?? 'In Progress')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
 
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs ${styles[status] || 'bg-[#F3F3F3] text-[#2E2E2E]'}`}
+      className={`rounded-full px-3 py-1 text-xs ${
+        styles[status] || 'bg-[#FEF1DE] text-[#C07318]'
+      }`}
     >
-      {labels[status] || status}
+      {label}
     </span>
   )
 }
@@ -143,6 +200,7 @@ function BookingAccordionCard({ booking, session }) {
   const packageIncludesRows = buildPackageIncludesRows(booking)
   const addonDetailRows = buildAddonDetailRows(booking)
   const cancelMutation = useDashboardCancelBooking()
+  const { data: timelineData = [] } = useDashboardBookingTimeline(open ? booking?.id : null)
   const receiptData = buildReceiptData({
     booking,
     customer: {
@@ -154,13 +212,15 @@ function BookingAccordionCard({ booking, session }) {
       phone: session?.user?.phone || '',
     },
   })
+  const currentTimelineStage = useMemo(() => {
+    const timeline = Array.isArray(timelineData)
+      ? sortTimelineItems(timelineData.map(normalizeTimelineItem))
+      : []
 
-  const borderColor =
-    booking.status === 'confirmed'
-      ? 'border-[#238E64]'
-      : booking.status === 'in-progress'
-        ? 'border-[#C07318]'
-        : 'border-[#3061C6]'
+    return getCurrentTimelineStage(timeline)
+  }, [timelineData])
+
+  const borderColor = booking.status === 'completed' ? 'border-[#238E64]' : 'border-[#C07318]'
 
   return (
     <div
@@ -306,6 +366,20 @@ function BookingAccordionCard({ booking, session }) {
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : null}
+
+          {currentTimelineStage ? (
+            <div className="mt-6">
+              <h4 className="mb-3 text-[11px] text-[#767676]">CURRENT STAGE</h4>
+              <div className="rounded-xl bg-[#F3F3F3] p-3">
+                <span className="block text-sm">{currentTimelineStage.title}</span>
+                {currentTimelineStage.description ? (
+                  <span className="mt-1 block text-xs text-[#767676]">
+                    {currentTimelineStage.description}
+                  </span>
+                ) : null}
               </div>
             </div>
           ) : null}

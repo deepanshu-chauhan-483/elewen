@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react'
 import {
-  ActionButton,
   EmptyState,
   ErrorState,
-  FieldList,
-  InputField,
   LoadingState,
-  MetricCard,
-  PageIntro,
-  Panel,
   SelectField,
-  StatusBadge,
-  TextAreaField,
 } from '../components/ui/AdminUI'
 import {
   useAdminBookings,
@@ -26,107 +18,209 @@ import {
 } from '../hooks/useAdminData'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
 
-const paymentSections = [
-  { key: 'customer', label: 'Customer Payment History' },
-  { key: 'vendor', label: 'Vendor Payment History' },
-  { key: 'coupon', label: 'Generate Discount Coupon' },
-  { key: 'settings', label: 'Advance Payment Settings' },
-]
+// ---------------------------------------------------------------------------
+// Shared primitives — consistent with BookingManagementPage style
+// ---------------------------------------------------------------------------
 
-const customerTabs = [
-  { key: 'active', label: 'Active Bookings' },
-  { key: 'post_event', label: 'Post-Event Pending' },
-  { key: 'failed', label: 'Failed Payments' },
-  { key: 'completed', label: 'Completed Payments' },
-]
+const badgeMap = {
+  confirmed: 'bg-[#DDF7E5] text-[#16A34A]',
+  active: 'bg-[#DDF7E5] text-[#16A34A]',
+  success: 'bg-[#DDF7E5] text-[#16A34A]',
+  paid: 'bg-[#DDF7E5] text-[#16A34A]',
+  resolved: 'bg-[#DDF7E5] text-[#16A34A]',
+  pending: 'bg-[#FCE7CF] text-[#C57A1E]',
+  requested: 'bg-[#FCE7CF] text-[#C57A1E]',
+  failed: 'bg-[#FFF3F3] text-[#8A1C1C]',
+  cancelled: 'bg-[#FFF3F3] text-[#8A1C1C]',
+  refunded: 'bg-[#E5E7EB] text-[#4B5563]',
+  inactive: 'bg-[#E5E7EB] text-[#4B5563]',
+  offline: 'bg-[#E5E7EB] text-[#4B5563]',
+  portal: 'bg-[#DBEAFE] text-[#0383E4]',
+  assigned: 'bg-[#DDF7E5] text-[#16A34A]',
+  unassigned: 'bg-[#FCE7CF] text-[#C57A1E]',
+}
 
-const vendorTabs = [
-  { key: 'pending', label: 'Pending Vendor Payments' },
-  { key: 'paid', label: 'Paid Vendors' },
-]
-
-function SectionTabs({ items, value, onChange }) {
+function Badge({ status, label }) {
+  const key = status?.toLowerCase() ?? ''
+  const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const text = label ?? (key.charAt(0).toUpperCase() + key.slice(1)) ?? '—'
   return (
-    <div className="flex flex-wrap gap-2">
-      {items.map(item => (
-        <button
-          key={item.key}
-          type="button"
-          onClick={() => onChange(item.key)}
-          className={`rounded-full px-4 py-2 text-sm transition ${
-            value === item.key ? 'bg-[#5D2E17] text-white' : 'bg-white text-[#6F6257]'
-          }`}
-        >
-          {item.label}
-        </button>
-      ))}
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}>
+      {text}
+    </span>
+  )
+}
+
+function MetricCard({ label, value, helper }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-2xl border-t-[3px] border-t-[#D4BA8E] bg-white px-5 py-5">
+      <span className="text-[11px] uppercase tracking-widest text-[#8F8F8F]">{label}</span>
+      <span className="text-[26px] font-semibold leading-none text-[#1C1C1C]">{value}</span>
+      <span className="text-xs text-[#6B7280]">{helper}</span>
     </div>
   )
 }
 
+function SectionLabel({ children }) {
+  return <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#767676]">{children}</p>
+}
+
+function Input({ type = 'text', value, onChange, placeholder, className = '' }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className={`h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition ${className}`}
+    />
+  )
+}
+
+function Textarea({ value, onChange, placeholder, rows = 3 }) {
+  return (
+    <textarea
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      rows={rows}
+      className="w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition resize-none"
+    />
+  )
+}
+
+function PrimaryBtn({ children, onClick, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {children}
+    </button>
+  )
+}
+
+function GhostBtn({ children, onClick, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {children}
+    </button>
+  )
+}
+
+function DangerBtn({ children, onClick, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#FECACA] bg-[#FFF3F3] px-5 text-sm font-semibold text-[#8A1C1C] transition hover:bg-[#FFE4E4] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {children}
+    </button>
+  )
+}
+
+// Section tabs (main nav + sub-tabs)
+function Tabs({ items, value, onChange, size = 'md' }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map(item => {
+        const isActive = value === item.key
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onChange(item.key)}
+            className={[
+              'rounded-full border transition',
+              size === 'sm'
+                ? 'px-3 py-1 text-xs font-semibold'
+                : 'px-4 py-2 text-sm font-semibold',
+              isActive
+                ? 'border-[#D4BA8E] bg-[#D4BA8E] text-[#FAFAFA]'
+                : 'border-[#E4DED8] bg-white text-[#6B7280] hover:border-[#D4BA8E] hover:text-[#7A5C2E]',
+            ].join(' ')}
+          >
+            {item.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Row cards
+// ---------------------------------------------------------------------------
+
 function BookingPaymentRow({ booking }) {
   return (
-    <div className="rounded-[24px] bg-white px-4 py-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <p className="text-base font-medium text-[#2B211B]">
-            {booking.customer?.name || 'Customer'} / {booking.package?.title || booking.id}
-          </p>
-          <p className="mt-1 text-sm text-[#6F6257]">
-            {formatDate(booking.eventDate)} / {booking.locationSummary || 'Venue pending'}
-          </p>
-          <p className="mt-2 text-sm text-[#6F6257]">
-            Paid {formatCurrency(booking.paidAmount)} / Remaining {formatCurrency(booking.outstandingAmount)}
-          </p>
+    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-[#1C1C1C]">
+          {booking.customer?.name || 'Customer'}
+          <span className="ml-2 font-normal text-[#6B7280]">/ {booking.package?.title || booking.id}</span>
+        </p>
+        <p className="mt-1 text-xs text-[#8F8F8F]">
+          {formatDate(booking.eventDate)}
+          {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
+        </p>
+        <div className="mt-2 flex gap-4 text-sm">
+          <span>
+            <span className="text-[#8F8F8F]">Paid </span>
+            <span className="font-medium text-[#2D2D2D]">{formatCurrency(booking.paidAmount)}</span>
+          </span>
+          <span>
+            <span className="text-[#8F8F8F]">Remaining </span>
+            <span className="font-medium text-[#2D2D2D]">{formatCurrency(booking.outstandingAmount)}</span>
+          </span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge status={booking.status} label={booking.statusLabel} />
-          <StatusBadge
-            status={booking.vendorAssignments?.length ? 'confirmed' : 'pending'}
-            label={booking.vendorAssignments?.length ? 'Vendor assigned' : 'Vendor unassigned'}
-          />
-        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Badge status={booking.status} label={booking.statusLabel} />
+        <Badge
+          status={booking.vendorAssignments?.length ? 'assigned' : 'unassigned'}
+          label={booking.vendorAssignments?.length ? 'Vendor assigned' : 'No vendor'}
+        />
       </div>
     </div>
   )
 }
 
 function PaymentRecordRow({ payment, showRefundActions = false, onRefundAction, isRefundBusy = false }) {
+  const pendingRefund = payment.refunds?.find(r => r.status === 'requested')
   return (
-    <div className="rounded-[24px] bg-white px-4 py-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <p className="text-base font-medium text-[#2B211B]">
-            {payment.bookingSummary?.customer?.name || 'Customer'} /{' '}
-            {payment.bookingSummary?.package?.title || payment.bookingId}
-          </p>
-          <p className="mt-1 text-sm text-[#6F6257]">
-            {payment.paymentType} / {formatCurrency(payment.amount)} / {formatDateTime(payment.createdAt)}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge status={payment.status} />
-          <StatusBadge status={payment.paymentMethod} label={payment.paymentMethod || 'Method pending'} />
-          {showRefundActions && payment.refunds?.some(refund => refund.status === 'requested') ? (
-            <>
-              <ActionButton
-                className="min-h-9 px-3"
-                disabled={isRefundBusy}
-                onClick={() => onRefundAction?.(payment.refunds.find(refund => refund.status === 'requested')?.id, 'approve')}
-              >
-                Approve Refund
-              </ActionButton>
-              <ActionButton
-                tone="danger"
-                className="min-h-9 px-3"
-                disabled={isRefundBusy}
-                onClick={() => onRefundAction?.(payment.refunds.find(refund => refund.status === 'requested')?.id, 'reject')}
-              >
-                Reject Refund
-              </ActionButton>
-            </>
-          ) : null}
-        </div>
+    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-[#1C1C1C]">
+          {payment.bookingSummary?.customer?.name || 'Customer'}
+          <span className="ml-2 font-normal text-[#6B7280]">/ {payment.bookingSummary?.package?.title || payment.bookingId}</span>
+        </p>
+        <p className="mt-1 text-xs text-[#8F8F8F]">
+          {payment.paymentType} · {formatCurrency(payment.amount)} · {formatDateTime(payment.createdAt)}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge status={payment.status} />
+        <Badge status={payment.paymentMethod} label={payment.paymentMethod || 'Method pending'} />
+        {showRefundActions && pendingRefund && (
+          <>
+            <PrimaryBtn disabled={isRefundBusy} onClick={() => onRefundAction?.(pendingRefund.id, 'approve')}>
+              Approve Refund
+            </PrimaryBtn>
+            <DangerBtn disabled={isRefundBusy} onClick={() => onRefundAction?.(pendingRefund.id, 'reject')}>
+              Reject
+            </DangerBtn>
+          </>
+        )}
       </div>
     </div>
   )
@@ -134,52 +228,372 @@ function PaymentRecordRow({ payment, showRefundActions = false, onRefundAction, 
 
 function PayoutRow({ payout, onMark, isBusy = false }) {
   return (
-    <div className="rounded-[24px] bg-white px-4 py-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <p className="text-base font-medium text-[#2B211B]">
-            {payout.vendor?.companyName || payout.vendorId} / {formatCurrency(payout.amount)}
-          </p>
-          <p className="mt-1 text-sm text-[#6F6257]">
-            {payout.bookingSummary?.package?.title || payout.bookingId} / {formatDateTime(payout.createdAt)}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge status={payout.status} />
-          <StatusBadge status={payout.paymentMethod} label={payout.paymentMethod || 'Offline'} />
-          {payout.status === 'pending' ? (
-            <>
-              <ActionButton className="min-h-9 px-3" disabled={isBusy} onClick={() => onMark?.(payout.id, 'paid')}>
-                Mark Paid
-              </ActionButton>
-              <ActionButton tone="danger" className="min-h-9 px-3" disabled={isBusy} onClick={() => onMark?.(payout.id, 'failed')}>
-                Mark Failed
-              </ActionButton>
-            </>
-          ) : null}
-        </div>
+    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-[#1C1C1C]">
+          {payout.vendor?.companyName || payout.vendorId}
+          <span className="ml-2 font-normal text-[#6B7280]">· {formatCurrency(payout.amount)}</span>
+        </p>
+        <p className="mt-1 text-xs text-[#8F8F8F]">
+          {payout.bookingSummary?.package?.title || payout.bookingId} · {formatDateTime(payout.createdAt)}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge status={payout.status} />
+        <Badge status={payout.paymentMethod} label={payout.paymentMethod || 'Offline'} />
+        {payout.status === 'pending' && (
+          <>
+            <PrimaryBtn disabled={isBusy} onClick={() => onMark?.(payout.id, 'paid')}>
+              Mark Paid
+            </PrimaryBtn>
+            <DangerBtn disabled={isBusy} onClick={() => onMark?.(payout.id, 'failed')}>
+              Mark Failed
+            </DangerBtn>
+          </>
+        )}
       </div>
     </div>
   )
 }
 
-export default function PaymentManagementPage() {
-  const [section, setSection] = useState('customer')
-  const [customerTab, setCustomerTab] = useState('active')
-  const [vendorTab, setVendorTab] = useState('pending')
+// ---------------------------------------------------------------------------
+// Section: Customer Payments
+// ---------------------------------------------------------------------------
+const customerTabs = [
+  { key: 'active', label: 'Active Bookings' },
+  { key: 'post_event', label: 'Post-Event Pending' },
+  { key: 'failed', label: 'Failed Payments' },
+  { key: 'completed', label: 'Completed' },
+]
+
+function CustomerPayments({ customerPayments, processRefundMutation }) {
+  const [tab, setTab] = useState('active')
+
+  const lists = {
+    active: customerPayments.activeBookings ?? [],
+    post_event: customerPayments.postEventPending ?? [],
+    failed: customerPayments.failedPayments ?? [],
+    completed: customerPayments.completedPayments ?? [],
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg text-[#1C1C1C]">
+          Customer Payments
+        </h2>
+
+        <div className="ml-auto w-full max-w-[260px] md:w-[260px]">
+          <SelectField
+            value={tab}
+            onChange={setTab}
+            placeholder="Select Tab"
+            className="h-[42px] rounded-full border border-[#E4DED8] bg-white px-4 text-sm font-medium text-[#1C1C1C]"
+          >
+            {customerTabs.map((item) => (
+              <option key={item.key} value={item.key}>
+                {item.label}
+              </option>
+            ))}
+          </SelectField>
+        </div>
+      </div>
+
+      {/* Active bookings */}
+      {tab === 'active' && (
+        lists.active.length ? (
+          <div className="space-y-2.5">
+            {lists.active.map((b) => (
+              <BookingPaymentRow key={b.id} booking={b} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No active booking balances"
+            body="Active bookings with payment context will appear here."
+          />
+        )
+      )}
+
+      {/* Post-event */}
+      {tab === 'post_event' && (
+        lists.post_event.length ? (
+          <div className="space-y-2.5">
+            {lists.post_event.map((b) => (
+              <div
+                key={b.id}
+                className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[#1C1C1C]">
+                    {b.customer?.name || 'Customer'}
+                    <span className="ml-2 font-normal text-[#6B7280]">
+                      / {b.package?.title || b.id}
+                    </span>
+                  </p>
+
+                  <p className="mt-1 text-xs text-[#8F8F8F]">
+                    Balance due:{' '}
+                    <span className="font-medium text-[#2D2D2D]">
+                      {formatCurrency(b.outstandingAmount)}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Badge status={b.status} label={b.statusLabel} />
+
+                  <Badge
+                    status={
+                      b.outstandingAmount > 0 ? 'pending' : 'resolved'
+                    }
+                    label={
+                      b.outstandingAmount > 0
+                        ? 'Reminder needed'
+                        : 'Settled'
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No post-event pending payments"
+            body="Outstanding post-event balances will appear here."
+          />
+        )
+      )}
+
+      {/* Failed */}
+      {tab === 'failed' && (
+        lists.failed.length ? (
+          <div className="space-y-2.5">
+            {lists.failed.map((p) => (
+              <PaymentRecordRow
+                key={p.id}
+                payment={p}
+                showRefundActions
+                isRefundBusy={processRefundMutation.isPending}
+                onRefundAction={(refundId, action) =>
+                  refundId &&
+                  processRefundMutation.mutate({
+                    refundId,
+                    body: { action },
+                  })
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No failed payments"
+            body="Failed transactions needing follow-up will appear here."
+          />
+        )
+      )}
+
+      {/* Completed */}
+      {tab === 'completed' && (
+        lists.completed.length ? (
+          <div className="space-y-2.5">
+            {lists.completed.map((p) => (
+              <PaymentRecordRow key={p.id} payment={p} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No completed payments"
+            body="Successful and refunded records will appear here."
+          />
+        )
+      )}
+    </div>
+  )
+}
+// ---------------------------------------------------------------------------
+// Section: Vendor Payments
+// ---------------------------------------------------------------------------
+const vendorTabs = [
+  { key: 'pending', label: 'Pending Payouts' },
+  { key: 'paid', label: 'Paid' },
+]
+
+function VendorPayments({ vendorPayments, vendorsQuery, bookingsQuery, createVendorPayoutMutation, updateVendorPayoutMutation }) {
+  const [tab, setTab] = useState('pending')
   const [vendorId, setVendorId] = useState('')
   const [bookingId, setBookingId] = useState('')
   const [payoutAmount, setPayoutAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('offline')
-  const [couponForm, setCouponForm] = useState({
-    code: '',
-    discount_type: 'percentage',
-    discount_value: '',
-    max_uses: '',
-    valid_from: '',
-    valid_to: '',
+
+  return (
+    <div className="space-y-5">
+
+      {/* Create payout form */}
+      <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
+        <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Create Vendor Payout</h3>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <SelectField
+            value={vendorId}
+            onChange={setVendorId}
+            placeholder="Select vendor"
+            className="min-h-10 bg-[#F3F3F3]"
+          >
+            <option value="">Select vendor…</option>
+            {(vendorsQuery.data?.vendors ?? []).map(v => (
+              <option key={v.id} value={v.id}>{v.companyName}</option>
+            ))}
+          </SelectField>
+          <SelectField
+            value={bookingId}
+            onChange={setBookingId}
+            placeholder="Select booking"
+            className="min-h-10 bg-[#F3F3F3]"
+          >
+            <option value="">Select booking…</option>
+            {(bookingsQuery.data?.bookings ?? []).map(b => (
+              <option key={b.id} value={b.id}>{b.package?.title || b.event?.name || b.id}</option>
+            ))}
+          </SelectField>
+          <Input
+            type="number"
+            value={payoutAmount}
+            onChange={e => setPayoutAmount(e.target.value)}
+            placeholder="Amount (₹)"
+            className='rounded-full'
+          />
+          <SelectField
+            value={paymentMethod}
+            onChange={setPaymentMethod}
+            placeholder="Select payment method"
+            className="min-h-10 bg-[#F3F3F3]"
+          >
+            <option value="offline">Offline</option>
+            <option value="portal">Portal</option>
+          </SelectField>
+        </div>
+        <div className="mt-4">
+          <PrimaryBtn
+            disabled={createVendorPayoutMutation.isPending || !vendorId || !bookingId || !payoutAmount}
+            onClick={() => createVendorPayoutMutation.mutate({ vendorId, bookingId, amount: Number(payoutAmount), paymentMethod })}
+          >
+            {createVendorPayoutMutation.isPending ? 'Creating…' : 'Create Payout'}
+          </PrimaryBtn>
+        </div>
+      </div>
+
+      <Tabs items={vendorTabs} value={tab} onChange={setTab} size="sm" />
+
+      {tab === 'pending' && (
+        (vendorPayments.pending ?? []).length ? (
+          <div className="space-y-2.5">
+            {vendorPayments.pending.map(p => (
+              <PayoutRow
+                key={p.id}
+                payout={p}
+                isBusy={updateVendorPayoutMutation.isPending}
+                onMark={(id, status) => updateVendorPayoutMutation.mutate({ payoutId: id, body: { status } })}
+              />
+            ))}
+          </div>
+        ) : <EmptyState title="No pending vendor payouts" body="Pending payout approvals will appear here." />
+      )}
+
+      {tab === 'paid' && (
+        (vendorPayments.paid ?? []).length
+          ? <div className="space-y-2.5">{vendorPayments.paid.map(p => <PayoutRow key={p.id} payout={p} />)}</div>
+          : <EmptyState title="No paid vendors yet" body="Paid settlements will appear here once processed." />
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Section: Coupons
+// ---------------------------------------------------------------------------
+function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) {
+  const [form, setForm] = useState({
+    code: '', discount_type: 'percentage', discount_value: '',
+    max_uses: '', valid_from: '', valid_to: '',
   })
-  const [settingsForm, setSettingsForm] = useState({
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+  return (
+    <div className="space-y-5">
+      {/* Create form */}
+      <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
+        <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Generate Discount Coupon</h3>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <Input value={form.code} onChange={e => set('code', e.target.value)} placeholder="Coupon code" />
+          <SelectField
+            value={form.discount_type}
+            onChange={v => set('discount_type', v)}
+            placeholder="Discount type"
+            className="min-h-10 rounded-lg bg-[#F3F3F3]"
+          >
+            <option value="percentage">Percentage (%)</option>
+            <option value="flat">Flat amount (₹)</option>
+          </SelectField>
+          <Input type="number" value={form.discount_value} onChange={e => set('discount_value', e.target.value)} placeholder="Discount value" />
+          <Input type="number" value={form.max_uses} onChange={e => set('max_uses', e.target.value)} placeholder="Max uses (optional)" />
+          <div>
+            <p className="mb-1 text-xs text-[#8F8F8F]">Valid from</p>
+            <Input type="date" value={form.valid_from} onChange={e => set('valid_from', e.target.value)} />
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-[#8F8F8F]">Valid to</p>
+            <Input type="date" value={form.valid_to} onChange={e => set('valid_to', e.target.value)} />
+          </div>
+        </div>
+        <div className="mt-4">
+          <PrimaryBtn
+            disabled={createCouponMutation.isPending || !form.code || !form.discount_value}
+            onClick={() => createCouponMutation.mutate({
+              ...form,
+              discount_value: Number(form.discount_value),
+              max_uses: form.max_uses ? Number(form.max_uses) : null,
+            })}
+          >
+            {createCouponMutation.isPending ? 'Creating…' : 'Create Coupon'}
+          </PrimaryBtn>
+        </div>
+      </div>
+
+      {/* Coupon list */}
+      {coupons.length ? (
+        <div className="space-y-2.5">
+          {coupons.map(coupon => (
+            <div key={coupon.id} className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
+              <div>
+                <p className="text-sm font-semibold text-[#1C1C1C]">{coupon.code}</p>
+                <p className="mt-1 text-xs text-[#8F8F8F]">
+                  {coupon.discount_type === 'percentage' ? `${coupon.discount_value}% off` : `₹${coupon.discount_value} off`}
+                  {' · '}Valid {formatDate(coupon.valid_from)} → {formatDate(coupon.valid_to)}
+                  {coupon.max_uses ? ` · Max ${coupon.max_uses} uses` : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge status={coupon.is_active ? 'active' : 'inactive'} label={coupon.is_active ? 'Active' : 'Inactive'} />
+                <GhostBtn onClick={() => updateCouponMutation.mutate({ couponId: coupon.id, body: { is_active: !coupon.is_active } })}>
+                  {coupon.is_active ? 'Disable' : 'Enable'}
+                </GhostBtn>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState title="No coupons yet" body="Create your first coupon above to manage promotional offers." />
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Section: Settings
+// ---------------------------------------------------------------------------
+function SettingsSection({ workspaceSettings, updateSettingsMutation }) {
+  const [form, setForm] = useState({
     advance_payment_percentage: '',
     primary_phone: '',
     support_email: '',
@@ -187,6 +601,94 @@ export default function PaymentManagementPage() {
     support_availability_text: '',
     response_expectation_text: '',
   })
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+  useEffect(() => {
+    if (!workspaceSettings) return
+    setForm({
+      advance_payment_percentage: workspaceSettings.advance_payment_percentage ?? '',
+      primary_phone: workspaceSettings.primary_phone ?? '',
+      support_email: workspaceSettings.support_email ?? '',
+      whatsapp_number: workspaceSettings.whatsapp_number ?? '',
+      support_availability_text: workspaceSettings.support_availability_text ?? '',
+      response_expectation_text: workspaceSettings.response_expectation_text ?? '',
+    })
+  }, [workspaceSettings?.documentId, workspaceSettings?.updatedAt])
+
+  return (
+    <div className="space-y-5">
+      {/* Current values */}
+      <div className="grid grid-cols-2 gap-4 rounded-2xl border border-[#E4DED8] bg-white p-5 md:grid-cols-4">
+        {[
+          { label: 'Advance %', value: `${form.advance_payment_percentage || 0}%` },
+          { label: 'Phone', value: form.primary_phone || '—' },
+          { label: 'Email', value: form.support_email || '—' },
+          { label: 'WhatsApp', value: form.whatsapp_number || '—' },
+        ].map(f => (
+          <div key={f.label}>
+            <p className="text-[11px] uppercase tracking-widest text-[#8F8F8F]">{f.label}</p>
+            <p className="mt-0.5 text-sm font-medium text-[#2D2D2D]">{f.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Edit form */}
+      <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
+        <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Edit Settings</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="mb-1 text-xs text-[#8F8F8F]">Advance payment %</p>
+            <Input type="number" value={form.advance_payment_percentage} onChange={e => set('advance_payment_percentage', e.target.value)} placeholder="e.g. 30" />
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-[#8F8F8F]">Primary phone</p>
+            <Input value={form.primary_phone} onChange={e => set('primary_phone', e.target.value)} placeholder="+91 …" />
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-[#8F8F8F]">Support email</p>
+            <Input value={form.support_email} onChange={e => set('support_email', e.target.value)} placeholder="support@…" />
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-[#8F8F8F]">WhatsApp number</p>
+            <Input value={form.whatsapp_number} onChange={e => set('whatsapp_number', e.target.value)} placeholder="+91 …" />
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-[#8F8F8F]">Support availability note</p>
+            <Textarea value={form.support_availability_text} onChange={e => set('support_availability_text', e.target.value)} placeholder="e.g. Mon–Sat, 10am–7pm" rows={2} />
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-[#8F8F8F]">Response expectation note</p>
+            <Textarea value={form.response_expectation_text} onChange={e => set('response_expectation_text', e.target.value)} placeholder="e.g. Replies within 4 hours" rows={2} />
+          </div>
+        </div>
+        <div className="mt-4">
+          <PrimaryBtn
+            disabled={updateSettingsMutation.isPending}
+            onClick={() => updateSettingsMutation.mutate({ ...form, advance_payment_percentage: Number(form.advance_payment_percentage || 0) })}
+          >
+            {updateSettingsMutation.isPending ? 'Saving…' : 'Save Settings'}
+          </PrimaryBtn>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main sections config
+// ---------------------------------------------------------------------------
+const mainSections = [
+  { key: 'customer', label: 'Customer Payments' },
+  { key: 'vendor', label: 'Vendor Payouts' },
+  { key: 'coupon', label: 'Discount Coupons' },
+  { key: 'settings', label: 'Settings' },
+]
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+export default function PaymentManagementPage() {
+  const [section, setSection] = useState('customer')
 
   const workspaceQuery = useAdminPaymentWorkspace()
   const vendorsQuery = useAdminVendors({ limit: 100, status: 'approved' })
@@ -198,27 +700,8 @@ export default function PaymentManagementPage() {
   const updateCouponMutation = useAdminUpdateCoupon()
   const updateSettingsMutation = useAdminUpdateSettings()
 
-  useEffect(() => {
-    const settings = workspaceQuery.data?.settings
-    if (!settings) return
-
-    setSettingsForm({
-      advance_payment_percentage: settings.advance_payment_percentage ?? '',
-      primary_phone: settings.primary_phone ?? '',
-      support_email: settings.support_email ?? '',
-      whatsapp_number: settings.whatsapp_number ?? '',
-      support_availability_text: settings.support_availability_text ?? '',
-      response_expectation_text: settings.response_expectation_text ?? '',
-    })
-  }, [workspaceQuery.data?.settings?.documentId, workspaceQuery.data?.settings?.updatedAt])
-
-  if (workspaceQuery.isLoading) {
-    return <LoadingState label="Loading payment operations..." />
-  }
-
-  if (workspaceQuery.error) {
-    return <ErrorState label="Payment operations could not be loaded right now." />
-  }
+  if (workspaceQuery.isLoading) return <LoadingState label="Loading payment operations…" />
+  if (workspaceQuery.error) return <ErrorState label="Payment operations could not be loaded right now." />
 
   const workspace = workspaceQuery.data ?? {}
   const summary = workspace.summary ?? {}
@@ -228,304 +711,65 @@ export default function PaymentManagementPage() {
 
   return (
     <div className="space-y-6">
-      <PageIntro
-        title="Payment Management"
-        subtitle="Live payment operations arranged using the IA breakdown: customer history, vendor settlements, discount coupons, and advance payment controls."
-      />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      {/* ── Header ── */}
+      <div>
+        <h1 className="text-2xl text-[#1C1C1C]">Payment Management</h1>
+        <p className="mt-1 text-sm text-[#6B7280]">
+          Manage customer payments, vendor payouts, discount coupons, and advance settings.
+        </p>
+      </div>
+
+      {/* ── Metrics ── */}
+      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-5">
         <MetricCard label="Collected" value={formatCurrency(summary.collectedAmount)} helper="Successful payments" />
         <MetricCard label="Pending" value={formatCurrency(summary.pendingAmount)} helper="Open payment records" />
-        <MetricCard label="Outstanding" value={formatCurrency(summary.totalOutstanding)} helper="Remaining booking balance" />
+        <MetricCard label="Outstanding" value={formatCurrency(summary.totalOutstanding)} helper="Remaining balances" />
         <MetricCard label="Vendor Payouts" value={formatCurrency(summary.vendorPayoutPendingAmount)} helper="Pending settlements" />
         <MetricCard label="Advance %" value={`${summary.advancePaymentPercentage ?? 30}%`} helper="Global default" />
       </div>
 
-      <Panel
-        title="Payment Management Workspace"
-        subtitle="Choose an IA section and manage the full payment lifecycle from one place."
-        action={<SectionTabs items={paymentSections} value={section} onChange={setSection} />}
-      >
-        {section === 'customer' ? (
-          <div className="space-y-6">
-            <SectionTabs items={customerTabs} value={customerTab} onChange={setCustomerTab} />
+      {/* ── Section tabs ── */}
+      <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#767676]">Section</p>
+        <Tabs items={mainSections} value={section} onChange={setSection} />
+      </div>
 
-            {customerTab === 'active' ? (
-              (customerPayments.activeBookings ?? []).length ? (
-                <div className="space-y-3">
-                  {customerPayments.activeBookings.map(booking => (
-                    <BookingPaymentRow key={booking.id} booking={booking} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No active booking balances" body="Active bookings with payment context will appear here." />
-              )
-            ) : null}
+      {/* ── Content area ── */}
+      <div>
+        {section === 'customer' && (
+          <CustomerPayments
+            customerPayments={customerPayments}
+            processRefundMutation={processRefundMutation}
+          />
+        )}
 
-            {customerTab === 'post_event' ? (
-              (customerPayments.postEventPending ?? []).length ? (
-                <div className="space-y-3">
-                  {customerPayments.postEventPending.map(booking => (
-                    <div key={booking.id} className="rounded-[24px] bg-white px-4 py-4">
-                      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-                        <div>
-                          <p className="text-base font-medium text-[#2B211B]">
-                            {booking.customer?.name || 'Customer'} / {booking.package?.title || booking.id}
-                          </p>
-                          <p className="mt-1 text-sm text-[#6F6257]">
-                            Post-event balance due {formatCurrency(booking.outstandingAmount)}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <StatusBadge status={booking.status} label={booking.statusLabel} />
-                          <StatusBadge status={booking.outstandingAmount > 0 ? 'pending' : 'resolved'} label={booking.outstandingAmount > 0 ? 'Reminder needed' : 'Settled'} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No post-event pending payments" body="Outstanding post-event booking balances will appear here." />
-              )
-            ) : null}
+        {section === 'vendor' && (
+          <VendorPayments
+            vendorPayments={vendorPayments}
+            vendorsQuery={vendorsQuery}
+            bookingsQuery={bookingsQuery}
+            createVendorPayoutMutation={createVendorPayoutMutation}
+            updateVendorPayoutMutation={updateVendorPayoutMutation}
+          />
+        )}
 
-            {customerTab === 'failed' ? (
-              (customerPayments.failedPayments ?? []).length ? (
-                <div className="space-y-3">
-                  {customerPayments.failedPayments.map(payment => (
-                    <PaymentRecordRow
-                      key={payment.id}
-                      payment={payment}
-                      showRefundActions
-                      isRefundBusy={processRefundMutation.isPending}
-                      onRefundAction={(refundId, action) =>
-                        refundId
-                          ? processRefundMutation.mutate({
-                              refundId,
-                              body: { action },
-                            })
-                          : null
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No failed payments" body="Failed transactions needing follow-up will appear here." />
-              )
-            ) : null}
+        {section === 'coupon' && (
+          <CouponSection
+            coupons={coupons}
+            createCouponMutation={createCouponMutation}
+            updateCouponMutation={updateCouponMutation}
+          />
+        )}
 
-            {customerTab === 'completed' ? (
-              (customerPayments.completedPayments ?? []).length ? (
-                <div className="space-y-3">
-                  {customerPayments.completedPayments.map(payment => (
-                    <PaymentRecordRow key={payment.id} payment={payment} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No completed payments" body="Successful and refunded payment records will appear here." />
-              )
-            ) : null}
-          </div>
-        ) : null}
+        {section === 'settings' && (
+          <SettingsSection
+            workspaceSettings={workspace.settings}
+            updateSettingsMutation={updateSettingsMutation}
+          />
+        )}
+      </div>
 
-        {section === 'vendor' ? (
-          <div className="space-y-6">
-            <div className="rounded-[26px] bg-[#FBF7F4] p-5">
-              <h3 className="text-lg font-semibold text-[#2B211B]">Create Vendor Payout</h3>
-              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <SelectField value={vendorId} onChange={setVendorId}>
-                  <option value="">Select vendor</option>
-                  {(vendorsQuery.data?.vendors ?? []).map(vendor => (
-                    <option key={vendor.id} value={vendor.id}>
-                      {vendor.companyName}
-                    </option>
-                  ))}
-                </SelectField>
-                <SelectField value={bookingId} onChange={setBookingId}>
-                  <option value="">Select booking</option>
-                  {(bookingsQuery.data?.bookings ?? []).map(booking => (
-                    <option key={booking.id} value={booking.id}>
-                      {booking.package?.title || booking.event?.name || booking.id}
-                    </option>
-                  ))}
-                </SelectField>
-                <InputField type="number" value={payoutAmount} onChange={event => setPayoutAmount(event.target.value)} placeholder="Amount" />
-                <SelectField value={paymentMethod} onChange={setPaymentMethod}>
-                  <option value="offline">Offline</option>
-                  <option value="portal">Portal</option>
-                </SelectField>
-              </div>
-              <ActionButton
-                className="mt-4"
-                disabled={createVendorPayoutMutation.isPending || !vendorId || !bookingId || !payoutAmount}
-                onClick={() =>
-                  createVendorPayoutMutation.mutate({
-                    vendorId,
-                    bookingId,
-                    amount: Number(payoutAmount),
-                    paymentMethod,
-                  })
-                }
-              >
-                Create Payout
-              </ActionButton>
-            </div>
-
-            <SectionTabs items={vendorTabs} value={vendorTab} onChange={setVendorTab} />
-
-            {vendorTab === 'pending' ? (
-              (vendorPayments.pending ?? []).length ? (
-                <div className="space-y-3">
-                  {vendorPayments.pending.map(payout => (
-                    <PayoutRow
-                      key={payout.id}
-                      payout={payout}
-                      isBusy={updateVendorPayoutMutation.isPending}
-                      onMark={(payoutId, status) =>
-                        updateVendorPayoutMutation.mutate({
-                          payoutId,
-                          body: { status },
-                        })
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No pending vendor payments" body="Pending vendor payout approvals will appear here." />
-              )
-            ) : null}
-
-            {vendorTab === 'paid' ? (
-              (vendorPayments.paid ?? []).length ? (
-                <div className="space-y-3">
-                  {vendorPayments.paid.map(payout => (
-                    <PayoutRow key={payout.id} payout={payout} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No paid vendors yet" body="Paid vendor settlements will appear here once processed." />
-              )
-            ) : null}
-          </div>
-        ) : null}
-
-        {section === 'coupon' ? (
-          <div className="space-y-6">
-            <div className="rounded-[26px] bg-[#FBF7F4] p-5">
-              <h3 className="text-lg font-semibold text-[#2B211B]">Generate Discount Coupon</h3>
-              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                <InputField value={couponForm.code} onChange={event => setCouponForm(current => ({ ...current, code: event.target.value }))} placeholder="Code" />
-                <SelectField value={couponForm.discount_type} onChange={value => setCouponForm(current => ({ ...current, discount_type: value }))}>
-                  <option value="percentage">Percentage</option>
-                  <option value="flat">Flat</option>
-                </SelectField>
-                <InputField type="number" value={couponForm.discount_value} onChange={event => setCouponForm(current => ({ ...current, discount_value: event.target.value }))} placeholder="Discount value" />
-                <InputField type="number" value={couponForm.max_uses} onChange={event => setCouponForm(current => ({ ...current, max_uses: event.target.value }))} placeholder="Max uses" />
-                <InputField type="date" value={couponForm.valid_from} onChange={event => setCouponForm(current => ({ ...current, valid_from: event.target.value }))} />
-                <InputField type="date" value={couponForm.valid_to} onChange={event => setCouponForm(current => ({ ...current, valid_to: event.target.value }))} />
-              </div>
-              <ActionButton
-                className="mt-4"
-                disabled={createCouponMutation.isPending || !couponForm.code || !couponForm.discount_value}
-                onClick={() =>
-                  createCouponMutation.mutate({
-                    ...couponForm,
-                    discount_value: Number(couponForm.discount_value),
-                    max_uses: couponForm.max_uses ? Number(couponForm.max_uses) : null,
-                  })
-                }
-              >
-                Create Coupon
-              </ActionButton>
-            </div>
-
-            {coupons.length ? (
-              <div className="space-y-3">
-                {coupons.map(coupon => (
-                  <div key={coupon.id} className="rounded-[24px] bg-white px-4 py-4">
-                    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                      <div>
-                        <p className="text-base font-medium text-[#2B211B]">{coupon.code}</p>
-                        <p className="mt-1 text-sm text-[#6F6257]">
-                          {coupon.discount_type} / {coupon.discount_value}
-                          {coupon.discount_type === 'percentage' ? '%' : ' INR'} / Valid {formatDate(coupon.valid_from)} to {formatDate(coupon.valid_to)}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <StatusBadge status={coupon.is_active ? 'success' : 'failed'} label={coupon.is_active ? 'Active' : 'Inactive'} />
-                        <ActionButton
-                          tone="ghost"
-                          className="min-h-9 px-3"
-                          onClick={() =>
-                            updateCouponMutation.mutate({
-                              couponId: coupon.id,
-                              body: { is_active: !coupon.is_active },
-                            })
-                          }
-                        >
-                          {coupon.is_active ? 'Disable' : 'Enable'}
-                        </ActionButton>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="No coupons available" body="Create your first coupon to manage promotional offers." />
-            )}
-          </div>
-        ) : null}
-
-        {section === 'settings' ? (
-          <div className="space-y-6">
-            <FieldList
-              items={[
-                { label: 'Advance payment percentage', value: `${settingsForm.advance_payment_percentage || 0}%` },
-                { label: 'Primary phone', value: settingsForm.primary_phone },
-                { label: 'Support email', value: settingsForm.support_email },
-                { label: 'WhatsApp number', value: settingsForm.whatsapp_number },
-              ]}
-            />
-
-            <div className="rounded-[26px] bg-[#FBF7F4] p-5">
-              <h3 className="text-lg font-semibold text-[#2B211B]">Advance Payment Settings</h3>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <InputField
-                  type="number"
-                  value={settingsForm.advance_payment_percentage}
-                  onChange={event => setSettingsForm(current => ({ ...current, advance_payment_percentage: event.target.value }))}
-                  placeholder="Advance payment percentage"
-                />
-                <InputField value={settingsForm.primary_phone} onChange={event => setSettingsForm(current => ({ ...current, primary_phone: event.target.value }))} placeholder="Primary phone" />
-                <InputField value={settingsForm.support_email} onChange={event => setSettingsForm(current => ({ ...current, support_email: event.target.value }))} placeholder="Support email" />
-                <InputField value={settingsForm.whatsapp_number} onChange={event => setSettingsForm(current => ({ ...current, whatsapp_number: event.target.value }))} placeholder="WhatsApp number" />
-                <TextAreaField
-                  value={settingsForm.support_availability_text}
-                  onChange={event => setSettingsForm(current => ({ ...current, support_availability_text: event.target.value }))}
-                  placeholder="Support availability text"
-                />
-                <TextAreaField
-                  value={settingsForm.response_expectation_text}
-                  onChange={event => setSettingsForm(current => ({ ...current, response_expectation_text: event.target.value }))}
-                  placeholder="Response expectation text"
-                />
-              </div>
-              <ActionButton
-                className="mt-4"
-                disabled={updateSettingsMutation.isPending}
-                onClick={() =>
-                  updateSettingsMutation.mutate({
-                    ...settingsForm,
-                    advance_payment_percentage: Number(settingsForm.advance_payment_percentage || 0),
-                  })
-                }
-              >
-                {updateSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
-              </ActionButton>
-            </div>
-          </div>
-        ) : null}
-      </Panel>
     </div>
   )
 }

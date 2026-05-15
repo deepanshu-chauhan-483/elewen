@@ -421,7 +421,10 @@ const EventDashboardSection = ({ section }) => {
                   className="flex min-h-[170px] flex-col rounded-[14px] bg-[#F4EEE6] p-5 min-[540px]:min-h-[182px] min-[540px]:p-6"
                 >
                   <div className="h-9 w-9 text-[#7A341C]">{DASHBOARD_FEATURES[index]?.icon}</div>
-                  <h3 className="mt-5 text-[12px] min-[540px]:text-[16px] font-medium leading-[1.15] text-[#7A341C]">
+                  <h3
+                    className="mt-5 text-[12px] min-[540px]:text-[16px] font-medium leading-[1.15] text-[#7A341C]"
+                    style={{ fontFamily: 'Poppins' }}
+                  >
                     {feature.title}
                   </h3>
                   <p className="mt-3 max-w-[250px] text-[10px] leading-[1.5] text-[#C0A48E] min-[540px]:text-[14px]">

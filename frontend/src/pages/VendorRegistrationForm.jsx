@@ -30,6 +30,22 @@ const INITIAL_FORM = {
   verificationDocument: null,
 }
 
+function DropdownArrow({ isOpen }) {
+  if (isOpen) {
+    return (
+      <svg width="11" height="9" viewBox="0 0 11 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5.19531 0L-0.00083971 9H10.3915L5.19531 0Z" fill="#591902" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg width="11" height="9" viewBox="0 0 11 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.19531 9L10.3915 0H-0.00083971L5.19531 9Z" fill="#591902" />
+    </svg>
+  )
+}
+
 function extractCity(operatingLocation) {
   const trimmed = operatingLocation.trim()
   if (!trimmed) return ''
@@ -179,9 +195,9 @@ function MultiSelect({ label, selected, onChange, error }) {
             event.stopPropagation()
             setOpen(previous => !previous)
           }}
-          className="ml-auto cursor-pointer text-[#591902] text-[12px]"
+          className="ml-auto flex cursor-pointer items-center justify-center text-[#591902]"
         >
-          {open ? '^' : 'v'}
+          <DropdownArrow isOpen={open} />
         </span>
       </div>
 
@@ -224,7 +240,8 @@ function Select({ label, value, onChange, error }) {
           menuClassName="fixed z-[999] overflow-hidden rounded-md border border-[#E5E5E5] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.1)]"
           optionClassName="w-full px-3 py-2 text-left text-[13px] text-[#364022] hover:bg-black hover:text-white"
           selectedOptionClassName="bg-[#F5F2EC]"
-          arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#591902]"
+          arrowClassName="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+          renderArrow={({ isOpen }) => <DropdownArrow isOpen={isOpen} />}
           ariaLabel={label}
         />
       </div>

@@ -1,3 +1,5 @@
+import { Children } from 'react'
+import CustomSelect from '../common/CustomSelect'
 import { formatCount, sentenceCase } from '../../lib/formatters'
 
 const statusToneMap = {
@@ -33,7 +35,7 @@ export function PageIntro({ title, subtitle, action }) {
     <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
         <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Operational Console</p>
-        <h1 className="admin-serif mt-2 text-2xl text-[#2E2E2E] md:text-[30px]">{title}</h1>
+        <h1 className="mt-2 text-2xl text-[#2E2E2E] md:text-[30px]">{title}</h1>
         {subtitle ? <p className="mt-2 max-w-3xl text-sm text-[#6B7280]">{subtitle}</p> : null}
       </div>
       {action ? <div>{action}</div> : null}
@@ -45,7 +47,7 @@ export function MetricCard({ label, value, helper }) {
   return (
     <div className="rounded-[28px] bg-[#F3F3F3] p-6">
       <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">{label}</p>
-      <p className="mt-2 text-[30px] leading-none tracking-[-0.02em] text-[#111827] admin-serif">{value}</p>
+      <p className="mt-2 text-[30px] leading-none tracking-[-0.02em] text-[#111827]">{value}</p>
       {helper ? <p className="mt-3 text-sm text-[#6B7280]">{helper}</p> : null}
     </div>
   )
@@ -93,15 +95,40 @@ export function SearchField({ value, onChange, placeholder = 'Search' }) {
   )
 }
 
-export function SelectField({ value, onChange, children }) {
+function createOptionsFromChildren(children) {
+  return Children.toArray(children)
+    .filter(child => child?.type === 'option')
+    .map(child => ({
+      value: child.props.value ?? '',
+      label: child.props.children,
+    }))
+}
+
+export function SelectField({
+  value,
+  onChange,
+  children,
+  options,
+  placeholder = 'Select',
+  disabled = false,
+  className = '',
+}) {
+  const normalizedOptions = options ?? createOptionsFromChildren(children)
+
   return (
-    <select
+    <CustomSelect
       value={value}
+      options={normalizedOptions}
+      disabled={disabled}
+      placeholder={placeholder}
+      ariaLabel={placeholder}
       onChange={event => onChange(event.target.value)}
-      className="min-h-11 rounded-2xl border border-[#E4DED8] bg-white px-4 text-sm text-[#2E2E2E] outline-none transition focus:border-[#C6A15B]"
-    >
-      {children}
-    </select>
+      buttonClassName={`min-h-11 w-full rounded-3xl border border-[#94949433] bg-white px-4 pr-10 text-left text-sm text-[#2E2E2E] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      arrowClassName="pointer-events-none absolute right-4 top-1/2 h-3 w-3 -translate-y-1/2 text-[#8F8F8F]"
+      menuClassName="fixed z-[9999] overflow-hidden rounded-2xl border border-[#94949433] bg-white p-1 shadow-[0_14px_32px_rgba(17,24,39,0.12)]"
+      optionClassName="flex w-full min-w-0 whitespace-nowrap bg-[#FFFFFF] px-6 py-3 text-left text-[14px] leading-[18px] text-[#2E2E2E] transition-colors hover:bg-black hover:text-white"
+      // selectedOptionClassName="bg-black text-white"
+    />
   )
 }
 

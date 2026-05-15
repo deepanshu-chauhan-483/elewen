@@ -44,10 +44,10 @@ const titleizeSlug = value =>
     .join(' ')
 
 const DEFAULT_WIDTHS = {
-  category: 'sm:w-[118px]',
-  service: 'sm:w-[132px]',
-  theme: 'sm:w-[110px]',
-  level: 'sm:w-[106px]',
+  category: 'sm:w-fit',
+  service: 'sm:w-fit',
+  theme: 'sm:w-fit',
+  level: 'sm:w-fit',
 }
 
 const CATEGORY_ORDER = ['social', 'corporate', 'religious']

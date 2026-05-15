@@ -320,6 +320,12 @@ export default function VendorManagementPage() {
                       assignVendorMutation.mutate({
                         bookingId,
                         vendorId: selectedVendor.id,
+                      }, {
+                        onSuccess: () => {
+                          setTab('assigned')
+                          setSelectedId(selectedVendor.id)
+                          setBookingId('')
+                        },
                       })
                     }
                   >

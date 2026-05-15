@@ -143,7 +143,7 @@ const PlanEventSection = () => {
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
   const safePage = Math.min(page, totalPages - 1)
   const mobileCardWidth = 322
-  const mobileCardGap = 20
+  const mobileCardGap = 16
   const edgeFadeMask =
     slideDirection === 'prev'
       ? 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 9%, black 22%, black 86%, rgba(0,0,0,0.5) 95%, transparent 100%)'
@@ -397,7 +397,7 @@ const PlanEventSection = () => {
         <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8 min-w-0">
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden min-w-0">
-            <div className="relative min-h-[460px] md:min-h-0">
+            <div className="relative min-h-[400px] md:min-h-0">
               <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
@@ -424,7 +424,7 @@ const PlanEventSection = () => {
 
               <div
                 ref={carouselViewportRef}
-                className="w-[300px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
+                className="w-[322px] max-w-full mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
                 style={{
                   maskImage: isCarouselSliding ? edgeFadeMask : 'none',
                   WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
@@ -663,7 +663,7 @@ const WhatToPlanSection = () => {
   const totalPages = Math.max(1, Math.ceil(filteredCards.length / currentCardsPerPage))
   const safePage = Math.min(page, totalPages - 1)
   const mobileCardWidth = 322
-  const mobileCardGap = 20
+  const mobileCardGap = 16
 
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
@@ -864,7 +864,7 @@ const WhatToPlanSection = () => {
 
         <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
-            <div className="relative min-h-[460px] lg:min-h-0">
+            <div className="relative min-h-[400px] lg:min-h-0">
               {/* Mobile Left Navigation Arrow */}
               <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
@@ -1977,20 +1977,20 @@ const BetterWaySection = () => {
             </svg>
 
             <h5
-              className="absolute left-[45%] top-1/2 w-[30%]  -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[24px] leading-[0.95] font-serif"
+              className="absolute left-[28%] top-1/2 w-[34%] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[24px] leading-[0.95] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               {s.left_label ?? 'Event Planner'}
             </h5>
 
             <h5
-              className="absolute left-[55%] top-1/2 w-[28%] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[24px] leading-[0.95] font-serif"
+              className="absolute left-[72%] top-1/2 w-[22%] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[24px] leading-[0.95] font-serif"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               {s.right_label ?? 'DIY'}
             </h5>
 
-            <div className="absolute left-1/2 top-1/2 flex h-[56px] w-[48px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+            <div className="absolute left-1/2 top-1/2 flex h-[72px] w-[64px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
               <img
                 src={centerLogo}
                 alt="11 Logo"
@@ -2314,7 +2314,7 @@ const ChecklistSection = () => {
             bulbCount: mobileBulbCount,
             itemHeightClass: 'h-[40.94px]',
             topHeightClass: 'h-[40.94px]',
-            innerHeightClass: 'h-[40.94px]',
+            innerHeightClass: 'h-[33px]',
             bulbImageSizeClass: 'w-[20px] h-auto relative z-10',
             beamSizeClass: 'w-[44px] h-[44px] blur-[4px]',
             beamBlurEven: 'blur-[5px]',
@@ -2837,12 +2837,14 @@ const PackagesSection = () => {
                 height="24"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#FAFAFA"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <path d="M15 18l-6-6 6-6" />
+                <path
+                  d="M19 12H5M12 5L5 12L12 19"
+                  stroke="#FAFAFA"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
             <button
@@ -2855,12 +2857,14 @@ const PackagesSection = () => {
                 height="24"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#FAFAFA"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <path d="M9 18l6-6-6-6" />
+                <path
+                  d="M5 12H19M12 5L19 12L12 19"
+                  stroke="#FAFAFA"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -3584,7 +3588,7 @@ const PlanningGuidesSection = () => {
         <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
-            <div className="relative min-h-[460px] md:min-h-0">
+            <div className="relative min-h-[400px] md:min-h-0">
               <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
                 <button
                   onClick={goToPrevPage}
