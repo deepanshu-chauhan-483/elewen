@@ -22,6 +22,7 @@ const SERVICES_FLOW_STEPS = [
 ]
 
 const DESKTOP_CARDS_PER_PAGE = 4
+const SMALL_SCREEN_CARDS_PER_PAGE = 2
 const MOBILE_CARDS_PER_PAGE = 1
 
 function CategoryArrow({ direction = 'right' }) {
@@ -141,9 +142,9 @@ export default function CategoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchValue, setSearchValue] = useState('')
   const [touchStartX, setTouchStartX] = useState(null)
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return window.innerWidth >= 768
+  const [viewportWidth, setViewportWidth] = useState(() => {
+    if (typeof window === 'undefined') return 1024
+    return window.innerWidth
   })
   const requestedCategorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const serviceSlug = normalizeServiceSlug(searchParams.get('service') ?? '')
@@ -172,18 +173,12 @@ export default function CategoryPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
 
-    const mediaQuery = window.matchMedia('(min-width: 768px)')
-    const handleViewportChange = event => {
-      setIsDesktopViewport(event.matches)
+    const handleViewportChange = () => {
+      setViewportWidth(window.innerWidth)
     }
 
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleViewportChange)
-      return () => mediaQuery.removeEventListener('change', handleViewportChange)
-    }
-
-    mediaQuery.addListener(handleViewportChange)
-    return () => mediaQuery.removeListener(handleViewportChange)
+    window.addEventListener('resize', handleViewportChange)
+    return () => window.removeEventListener('resize', handleViewportChange)
   }, [])
 
   useEffect(() => {
@@ -223,7 +218,12 @@ export default function CategoryPage() {
     )
   }, [events, searchValue])
 
-  const cardsPerPage = isDesktopViewport ? DESKTOP_CARDS_PER_PAGE : MOBILE_CARDS_PER_PAGE
+  const cardsPerPage =
+    viewportWidth >= 768
+      ? DESKTOP_CARDS_PER_PAGE
+      : viewportWidth >= 640
+        ? SMALL_SCREEN_CARDS_PER_PAGE
+        : MOBILE_CARDS_PER_PAGE
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / cardsPerPage))
   const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
   const safePageIndex = Math.min(activePageIndex, totalPages - 1)
@@ -319,7 +319,7 @@ export default function CategoryPage() {
       backTo={isServicesFlow ? servicesFlowBackTo : null}
     >
       <div className="flex h-full w-full flex-col justify-between gap-6 overflow-visible">
-        <div className="flex w-full flex-col gap-2 md:flex-row md:gap-2 my-7">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:gap-2 my-7">
           {categories.map(category => {
             const isActive = category.slug === selectedCategoryId
 

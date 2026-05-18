@@ -118,7 +118,7 @@ export default function Terms() {
             placeholder="Select section"
             buttonClassName="flex w-full items-center rounded-xl border border-[#E5E5E5] bg-white px-4 py-3 text-left text-[14px] font-medium text-[#3a3a3a] outline-none"
             arrowClassName="pointer-events-none absolute right-4 top-1/2 h-3 w-3 -translate-y-1/2 text-[#3a3a3a]"
-            menuClassName="fixed z-[999] overflow-hidden rounded-xl border border-[#E5E5E5] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
+            menuClassName="fixed overflow-hidden rounded-xl border border-[#E5E5E5] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
             optionClassName="flex w-full items-center bg-white px-4 py-3 text-left text-[14px] font-medium text-[#3a3a3a] transition-colors hover:bg-[#F7F7F7]"
             selectedOptionClassName="bg-[#F7F7F7]"
             ariaLabel="Select legal section"

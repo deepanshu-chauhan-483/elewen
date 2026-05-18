@@ -634,7 +634,6 @@ function DecorOptionButton({ item, wide = false, onClick }) {
     >
       <p
         className={`text-[12px] leading-[1.3] ${item.selected ? 'text-[#591902]' : 'text-[#937032]'}`}
-        style={{ fontWeight: 600 }}
       >
         {item.title}
       </p>

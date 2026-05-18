@@ -472,9 +472,26 @@ export function useCart() {
 
     if (!token) {
       const guestCart = readGuestCart()
+      const currentItem = guestCart.items.find(item => String(item.id) === String(itemId))
+      if (!currentItem) throw new Error('Cart item not found')
+
+      const currentQuantity = Math.max(1, Number(currentItem.quantity ?? 1))
+      const nextItems =
+        currentQuantity > 1
+          ? guestCart.items.map(item =>
+              String(item.id) === String(itemId)
+                ? {
+                    ...item,
+                    quantity: currentQuantity - 1,
+                    totalPrice: (Number(item.unitPrice ?? 0) * (currentQuantity - 1)).toFixed(2),
+                  }
+                : item
+            )
+          : guestCart.items.filter(item => String(item.id) !== String(itemId))
+
       const nextCart = writeGuestCart({
         ...guestCart,
-        items: guestCart.items.filter(item => item.id !== itemId),
+        items: nextItems,
       })
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))
@@ -484,7 +501,12 @@ export function useCart() {
     }
 
     try {
-      const data = await cartRemoveItem(token, itemId)
+      const currentItem = (cart?.items ?? []).find(item => String(item.id) === String(itemId))
+      const currentQuantity = Math.max(1, Number(currentItem?.quantity ?? 1))
+      const data =
+        currentQuantity > 1
+          ? await cartUpdateItem(token, itemId, { quantity: currentQuantity - 1 })
+          : await cartRemoveItem(token, itemId)
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))

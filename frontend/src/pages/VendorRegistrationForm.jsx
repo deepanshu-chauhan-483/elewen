@@ -233,7 +233,7 @@ function Select({ label, value, onChange }) {
           onChange={onChange}
           placeholder="Select event type"
           buttonClassName="w-full bg-white border border-[#E5E5E5] p-3 rounded-md outline-none text-left text-[14px] text-[#364022]"
-          menuClassName="fixed z-[999] overflow-hidden rounded-md border border-[#E5E5E5] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.1)]"
+          menuClassName="fixed overflow-hidden rounded-md border border-[#E5E5E5] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.1)]"
           optionClassName="w-full px-3 py-2 text-left text-[13px] text-[#364022] hover:bg-black hover:text-white"
           selectedOptionClassName="bg-[#F5F2EC]"
           arrowClassName="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"

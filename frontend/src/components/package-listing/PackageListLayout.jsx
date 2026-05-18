@@ -65,7 +65,7 @@ export default function PackageListLayout({
                 ]}
                 buttonClassName="flex h-9 w-full items-center rounded-full bg-[#D9D9D9] pl-4 pr-9 text-left text-[12px] text-[#2D2D2D] outline-none ring-1 ring-black/10"
                 arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
-                menuClassName="fixed z-[999] rounded-[16px] overflow-hidden border border-black/10 bg-[#D9D9D9] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+                menuClassName="fixed rounded-[16px] overflow-hidden border border-black/10 bg-[#D9D9D9] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
                 optionClassName="flex w-full whitespace-nowrap items-center bg-[#D9D9D9] px-4 py-3 text-left text-[12px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
                 selectedOptionClassName=""
                 ariaLabel="Sort packages"
@@ -137,7 +137,7 @@ export default function PackageListLayout({
             <span className="mr-5 text-[15px] font-medium text-white">{ctaButtonText}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
               <svg
-                className="h-[20px] w-[20px] text-[#D4BA8E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
+                className="h-[20px] w-[20px] text-[#CDB17E] transition-transform duration-300 ease-out group-hover:rotate-45 group-hover:text-[#C6AB7F]"
                 viewBox="0 0 20 20"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"

@@ -99,9 +99,9 @@ export default function EventFlowLayout({
           className="event-flow-scroll hide-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#F8F4ED]"
           data-lenis-prevent
         >
-          <div className="px-4 py-3 sm:px-6 sm:py-4 md:py-5">
+          <div className="p-6 sm:px-6 sm:py-4 md:py-5">
             <div className="mx-auto flex w-full lg:w-[calc(100%-200px)] lg:max-w-none flex-col">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div className="flex w-full max-w-[328px] flex-col gap-[12px] md:max-w-[440px] md:pt-20">
                   {' '}
                   <h1

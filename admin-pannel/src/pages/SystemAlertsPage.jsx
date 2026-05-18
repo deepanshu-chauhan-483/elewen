@@ -208,7 +208,7 @@ export default function SystemAlertsPage() {
 
       {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1C1C1C]">System Alerts</h1>
+        <h1 className="text-2xl text-[#1C1C1C]">System Alerts</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
           Track failed payments, operational gaps, and escalations. Acknowledge, snooze, or resolve from here.
         </p>

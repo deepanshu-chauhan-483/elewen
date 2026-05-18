@@ -53,6 +53,26 @@ function StatusBadge({ status, label }) {
   )
 }
 
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg
+      className={`h-6 w-6 ${rotationClass}`}
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Shared form primitives
 // ---------------------------------------------------------------------------
@@ -410,9 +430,29 @@ export default function BookingManagementPage() {
   const [search, setSearch]           = useState('')
   const [bucket, setBucket]           = useState('all')
   const [statusFilter, setStatusFilter] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
 
-  const bookingsQuery = useAdminBookings({ search, bucket, status: statusFilter, limit: 24 })
+  const bookingsQuery = useAdminBookings({
+    search,
+    bucket,
+    status: statusFilter,
+    page: currentPage,
+    limit: PAGE_SIZE,
+  })
   const bookings      = bookingsQuery.data?.bookings ?? []
+  const totalBookings = Number(bookingsQuery.data?.total ?? 0)
+  const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, bucket, statusFilter])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
 
   if (bookingsQuery.isLoading) return <LoadingState label="Loading bookings…" />
   if (bookingsQuery.error)     return <ErrorState label="Bookings could not be loaded right now." />
@@ -474,7 +514,7 @@ export default function BookingManagementPage() {
       {/* ── Results count ── */}
       <div className="flex items-baseline gap-2">
         <span className="text-base font-semibold text-[#1C1C1C]">
-          {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
+          {totalBookings} booking{totalBookings !== 1 ? 's' : ''}
         </span>
         {statusFilter && (
           <span className="text-sm text-[#8F8F8F]">in "{statusFilter}" stage</span>
@@ -483,10 +523,34 @@ export default function BookingManagementPage() {
 
       {/* ── Accordion list ── */}
       {bookings.length ? (
-        <div className="space-y-3">
-          {bookings.map(booking => (
-            <BookingAccordionCard key={booking.id} booking={booking} />
-          ))}
+        <div>
+          <div className="space-y-3">
+            {bookings.map(booking => (
+              <BookingAccordionCard key={booking.id} booking={booking} />
+            ))}
+          </div>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+               <ArrowIcon direction="left" />
+            </button>
+            <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+              {currentPage} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+               <ArrowIcon direction="right" />
+            </button>
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">

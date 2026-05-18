@@ -175,14 +175,22 @@ export default function Sidebar({ isMobileOpen = false, onMobileClose = () => {}
       />
 
       <aside
-        className={`fixed inset-0 z-40 flex h-screen w-screen flex-col transition-transform duration-300 md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${
-          isMobileOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed inset-x-0 top-0 z-40 flex h-screen w-screen flex-col overflow-hidden bg-[#591902] md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${
+          isMobileOpen
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100'
         }`}
         style={{
           backgroundColor: DASHBOARD.COLORS.SIDEBAR_BG,
+          clipPath:
+            isMobileOpen || typeof window === 'undefined' || window.innerWidth >= 768
+              ? 'inset(0% 0% 0% 0%)'
+              : 'inset(0% 0% 100% 0%)',
+          transition:
+            'clip-path 0.72s cubic-bezier(0.32,0,0.15,1), opacity 0.32s ease, transform 0.3s ease',
         }}
       >
-        <div className="flex h-[63px] items-center justify-between bg-[#FAFAFA] px-6 md:hidden">
+        <div className="flex h-[68px] items-center justify-between bg-[#FAFAFA] px-4 md:hidden">
           <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
           <button type="button" aria-label="Close sidebar" onClick={onMobileClose}>
             <CloseIcon />

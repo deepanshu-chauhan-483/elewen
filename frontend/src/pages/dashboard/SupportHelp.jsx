@@ -3,11 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import {
   DashboardErrorState,
   DashboardLoadingState,
-  DashboardPageIntro,
-  DashboardSelectorList,
   MessageBubble,
-  SectionCard,
-  StatusPill,
+  SelectField,
 } from '../../components/dashboard/DashboardUI'
 import {
   useDashboardBookings,
@@ -19,8 +16,141 @@ import {
   useDashboardSupportTickets,
 } from '../../hooks/useDashboardData'
 import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
-import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
+// ---------------------------------------------------------------------------
+// Shared primitives
+// ---------------------------------------------------------------------------
+
+const ticketStatusBadge = {
+  open: 'bg-[#DBEAFE] text-[#0383E4]',
+  in_progress: 'bg-[#FCE7CF] text-[#C57A1E]',
+  resolved: 'bg-[#DDF7E5] text-[#16A34A]',
+  closed: 'bg-[#E5E7EB] text-[#4B5563]',
+}
+
+function TicketBadge({ status }) {
+  const key = status?.toLowerCase() ?? ''
+  const cls = ticketStatusBadge[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const text = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${cls}`}
+    >
+      {text}
+    </span>
+  )
+}
+
+// Contact info card
+function ContactCard({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-[#EDE8E1] bg-white p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
+        {label}
+      </p>
+      <p className="mt-2 text-sm text-[#2E2E2E]">{value || 'Not shared yet'}</p>
+    </div>
+  )
+}
+
+// Form input
+function FormInput({ label, value, onChange, placeholder, type = 'text' }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-sm font-medium text-[#2E2E2E]">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm text-[#2E2E2E] placeholder:text-[#B0AAA4] outline-none focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B] transition"
+      />
+    </div>
+  )
+}
+
+// Form textarea
+function FormTextarea({ label, value, onChange, placeholder, rows = 4 }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <span className="text-sm font-medium text-[#2E2E2E]">{label}</span>}
+      <textarea
+        rows={rows}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm text-[#2E2E2E] placeholder:text-[#B0AAA4] outline-none focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B] transition resize-none"
+      />
+    </div>
+  )
+}
+
+// Gold primary button
+function GoldBtn({ children, type = 'button', onClick, disabled }) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex items-center justify-center rounded-full bg-[#C6A15B] px-6 py-2.5 text-sm text-white transition hover:bg-[#B8914D] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {children}
+    </button>
+  )
+}
+
+// Ghost button
+function OutlineBtn({ children, href, onClick }) {
+  const cls =
+    'inline-flex items-center justify-center rounded-full border border-[#D2C9BF] px-6 py-2.5 text-sm font-semibold text-[#591902] transition hover:border-[#C6A15B] hover:bg-[#FBF7F3] hover:-translate-y-px'
+  if (href)
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={cls}>
+        {children}
+      </a>
+    )
+  return (
+    <button type="button" onClick={onClick} className={cls}>
+      {children}
+    </button>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Ticket list item
+// ---------------------------------------------------------------------------
+function TicketItem({ ticket, isActive, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'w-full rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-px',
+        isActive
+          ? 'border-[#C6A15B] bg-[#FBF7F3] shadow-[0_2px_12px_rgba(198,161,91,0.12)]'
+          : 'border-[#EDE8E1] bg-white hover:border-[#C6A15B] hover:bg-[#FBF7F3]',
+      ].join(' ')}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="truncate text-sm font-semibold text-[#1C1C1C]">{ticket.subject}</p>
+          <p className="mt-0.5 text-xs text-[#8F8F8F]">{formatDashboardDate(ticket.createdAt)}</p>
+        </div>
+        <TicketBadge status={ticket.status} />
+      </div>
+    </button>
+  )
+}
+
+const ArrowIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="#fff" strokeWidth="1.5" />
+  </svg>
+)
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 export default function SupportHelp() {
   const { data: session } = useDashboardSession()
   const { data: bookings = [] } = useDashboardBookings('all')
@@ -30,15 +160,17 @@ export default function SupportHelp() {
     isLoading: ticketsLoading,
     error: ticketsError,
   } = useDashboardSupportTickets()
+
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedTicketId = searchParams.get('ticketId') || ''
+
   const [newTicket, setNewTicket] = useState({ bookingId: '', subject: '', message: '' })
   const [reply, setReply] = useState('')
+  const setField = (field, val) => setNewTicket(f => ({ ...f, [field]: val }))
 
   useEffect(() => {
     if (!tickets.length) return
-    if (selectedTicketId && tickets.some(ticket => ticket.id === selectedTicketId)) return
-
+    if (selectedTicketId && tickets.some(t => t.id === selectedTicketId)) return
     const next = new URLSearchParams(searchParams)
     next.set('ticketId', tickets[0].id)
     setSearchParams(next, { replace: true })
@@ -53,257 +185,224 @@ export default function SupportHelp() {
   const replyMutation = useDashboardReplyToTicket()
 
   const selectedTicket = useMemo(
-    () => tickets.find(item => item.id === selectedTicketId) ?? null,
+    () => tickets.find(t => t.id === selectedTicketId) ?? null,
     [tickets, selectedTicketId]
   )
 
-  if (helpLoading || ticketsLoading) {
-    return <DashboardLoadingState title="Loading support and help..." />
-  }
+  if (helpLoading || ticketsLoading) return <DashboardLoadingState title="Loading support…" />
+  if (helpError || ticketsError || ticketError)
+    return <DashboardErrorState title="Support details could not be loaded right now." />
 
-  if (helpError || ticketsError || ticketError) {
-    return <DashboardErrorState title="We could not load support details right now." />
-  }
-
-  if (tickets.length === 0) {
-    return (
-      <EmptyBooking
-        title="No support tickets yet"
-        body="Your open and resolved support tickets will appear here once you create one."
-      />
-    )
-  }
-
-  const handleCreateTicket = async event => {
-    event.preventDefault()
+  const handleCreateTicket = async e => {
+    e.preventDefault()
     if (!newTicket.subject.trim() || !newTicket.message.trim()) return
-
     await createTicketMutation.mutateAsync({
       bookingId: newTicket.bookingId || undefined,
       subject: newTicket.subject.trim(),
       message: newTicket.message.trim(),
       priority: 'medium',
     })
-
     setNewTicket({ bookingId: '', subject: '', message: '' })
   }
 
-  const handleReply = async event => {
-    event.preventDefault()
+  const handleReply = async e => {
+    e.preventDefault()
     if (!reply.trim() || !selectedTicketId) return
-
-    await replyMutation.mutateAsync({
-      ticketId: selectedTicketId,
-      body: { message: reply.trim() },
-    })
-
+    await replyMutation.mutateAsync({ ticketId: selectedTicketId, body: { message: reply.trim() } })
     setReply('')
   }
 
   return (
     <div className="space-y-6">
-      <DashboardPageIntro
-        title="Support & Help"
-        subtitle="Reach the Elewen team, raise a ticket, and continue open conversations from one place."
-        meta={`${tickets.length} tickets`}
-      />
+      {/* ── Header ── */}
+      <div>
+        <h1 className="text-2xl text-[#1C1C1C]">Support & Help</h1>
+        <p className="mt-1 text-sm text-[#6B7280]">
+          Reach the Elewen team, raise a ticket, and continue open conversations.
+        </p>
+      </div>
 
-      <SectionCard
-        title="Direct Support"
-        subtitle="Live contact details from your dashboard settings."
-      >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl bg-white p-4">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Phone</p>
-            <p className="mt-2 text-sm text-[#2E2E2E]">{help?.primaryPhone || 'Not shared yet'}</p>
-          </div>
-          <div className="rounded-2xl bg-white p-4">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Email</p>
-            <p className="mt-2 text-sm text-[#2E2E2E]">{help?.supportEmail || 'Not shared yet'}</p>
-          </div>
-          <div className="rounded-2xl bg-white p-4">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">WhatsApp</p>
-            <p className="mt-2 text-sm text-[#2E2E2E]">
-              {help?.whatsappNumber || 'Not shared yet'}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white p-4">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Availability</p>
-            <p className="mt-2 text-sm text-[#2E2E2E]">
-              {help?.supportAvailabilityText || 'Availability text not set yet'}
-            </p>
-          </div>
+      {/* ── Direct support contact ── */}
+      <div className="rounded-2xl border border-[#EDE8E1] bg-[#FBF7F3] p-5">
+        <h2 className="mb-1 text-xl text-[#1C1C1C]">Direct Support</h2>
+        <p className="mb-4 text-sm text-[#8F8F8F]">
+          Live contact details from your dashboard settings.
+        </p>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ContactCard label="Phone" value={help?.primaryPhone} />
+          <ContactCard label="Email" value={help?.supportEmail} />
+          <ContactCard label="WhatsApp" value={help?.whatsappNumber} />
+          <ContactCard label="Availability" value={help?.supportAvailabilityText} />
         </div>
-        {help?.responseExpectationText ? (
-          <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-[#6B7280]">
+
+        {help?.responseExpectationText && (
+          <p className="mt-3 rounded-2xl border border-[#EDE8E1] bg-white px-4 py-3 text-sm text-[#6B7280]">
             {help.responseExpectationText}
-          </div>
-        ) : null}
-        <div className="mt-4 flex flex-wrap gap-3">
-          {help?.whatsappNumber ? (
-            <a
-              href={`https://wa.me/${String(help.whatsappNumber).replace(/[^\d]/g, '')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90"
-            >
-              Call / WhatsApp
-            </a>
-          ) : null}
-          {help?.supportEmail ? (
-            <a
-              href={`mailto:${help.supportEmail}`}
-              className="rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
-            >
-              Email
-            </a>
-          ) : null}
-          <a
-            href="/user-dashboard/messages"
-            className="rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
-          >
-            Message Admin
-          </a>
-        </div>
-      </SectionCard>
+          </p>
+        )}
 
-      <SectionCard
-        title="Create a Ticket"
-        subtitle="Open a new support request for a booking or a general question."
-      >
+        <div className="mt-4 flex flex-wrap gap-3">
+          {help?.whatsappNumber && (
+            <GoldBtn href={`https://wa.me/${String(help.whatsappNumber).replace(/[^\d]/g, '')}`}>
+              Call / WhatsApp
+            </GoldBtn>
+          )}
+          {help?.supportEmail && (
+            <OutlineBtn href={`mailto:${help.supportEmail}`}>Email Us</OutlineBtn>
+          )}
+          <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-5 py-2 text-white">
+            Message Admin <ArrowIcon />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Create a ticket ── */}
+      <div className="rounded-2xl border border-[#EDE8E1] bg-[#FBF7F3] p-5">
+        <h2 className="mb-1 text-xl text-[#1C1C1C]">Create a Ticket</h2>
+        <p className="mb-5 text-sm text-[#8F8F8F]">
+          Open a new support request for a booking or a general question.
+        </p>
+
         <form onSubmit={handleCreateTicket} className="grid gap-4 lg:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm text-[#2E2E2E]">Related booking</span>
-            <select
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-[#2E2E2E]">Related booking</span>
+            <SelectField
               value={newTicket.bookingId}
-              onChange={event =>
-                setNewTicket(current => ({ ...current, bookingId: event.target.value }))
-              }
-              className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
+              onChange={value => setField('bookingId', value)}
+              placeholder="Related booking"
             >
               <option value="">General support</option>
-              {bookings.map(booking => (
-                <option key={booking.id} value={booking.id}>
-                  {booking.package?.title || booking.event?.name || booking.id}
+              {bookings.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.package?.title || b.event?.name || b.id}
                 </option>
               ))}
-            </select>
-          </label>
+            </SelectField>
+          </div>
 
-          <label className="space-y-2">
-            <span className="text-sm text-[#2E2E2E]">Subject</span>
-            <input
-              value={newTicket.subject}
-              onChange={event =>
-                setNewTicket(current => ({ ...current, subject: event.target.value }))
-              }
-              className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
-              placeholder="Tell us what you need help with"
-            />
-          </label>
+          <FormInput
+            label="Subject"
+            value={newTicket.subject}
+            onChange={e => setField('subject', e.target.value)}
+            placeholder="Tell us what you need help with"
+          />
 
-          <label className="space-y-2 lg:col-span-2">
-            <span className="text-sm text-[#2E2E2E]">Message</span>
-            <textarea
-              rows={4}
+          <div className="lg:col-span-2">
+            <FormTextarea
+              label="Message"
               value={newTicket.message}
-              onChange={event =>
-                setNewTicket(current => ({ ...current, message: event.target.value }))
-              }
-              className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
-              placeholder="Share the issue, update, or request in a little detail"
+              onChange={e => setField('message', e.target.value)}
+              placeholder="Share the issue or request in a little detail…"
             />
-          </label>
+          </div>
 
           <div className="lg:col-span-2 flex justify-end">
-            <button
+            <GoldBtn
               type="submit"
               disabled={
                 !newTicket.subject.trim() ||
                 !newTicket.message.trim() ||
                 createTicketMutation.isPending
               }
-              className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {createTicketMutation.isPending ? 'Creating...' : 'Create Ticket'}
-            </button>
+              {createTicketMutation.isPending ? 'Creating…' : 'Create Ticket'}
+            </GoldBtn>
           </div>
         </form>
-      </SectionCard>
+      </div>
 
-      <>
-        <DashboardSelectorList
-          items={tickets}
-          selectedId={selectedTicketId}
-          onSelect={ticketId => {
-            const next = new URLSearchParams(searchParams)
-            next.set('ticketId', ticketId)
-            setSearchParams(next, { replace: true })
-          }}
-          getLabel={item => item.subject}
-          getSubLabel={item =>
-            `${item.status.replace(/_/g, ' ')} · ${formatDashboardDate(item.createdAt)}`
-          }
-        />
+      {/* ── My tickets ── */}
+      <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
+        {/* Ticket list */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl text-[#1C1C1C]">My Tickets</h2>
+            <span className="text-sm text-[#8F8F8F]">{tickets.length} total</span>
+          </div>
+          {tickets.map(t => (
+            <TicketItem
+              key={t.id}
+              ticket={t}
+              isActive={t.id === selectedTicketId}
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.set('ticketId', t.id)
+                setSearchParams(next, { replace: true })
+              }}
+            />
+          ))}
+        </div>
 
-        {ticketLoading ? (
-          <DashboardLoadingState title="Loading selected support ticket..." />
-        ) : selectedTicket && ticket ? (
-          <SectionCard
-            title={selectedTicket.subject}
-            subtitle={
-              selectedTicket.bookingId
-                ? `Linked booking: ${selectedTicket.bookingId}`
-                : 'General support request'
-            }
-            action={
-              <StatusPill
-                label={selectedTicket.status.replace(/_/g, ' ')}
-                status={selectedTicket.status}
-              />
-            }
-          >
-            <div className="space-y-4 rounded-3xl bg-[#EEE8E1] p-4">
-              {ticket.messages?.map(message => (
-                <div key={message.id} className="space-y-2">
-                  <MessageBubble
-                    message={message}
-                    isOwnMessage={String(message.senderId) === String(session?.user?.id)}
-                  />
-                  <p
-                    className={`text-xs text-[#6B7280] ${
-                      String(message.senderId) === String(session?.user?.id)
-                        ? 'text-right'
-                        : 'text-left'
-                    }`}
-                  >
-                    {formatDashboardDate(message.createdAt)}
-                  </p>
+        {/* Ticket conversation */}
+        <div>
+          {ticketLoading ? (
+            <DashboardLoadingState title="Loading ticket…" />
+          ) : selectedTicket && ticket ? (
+            <div className="flex flex-col gap-4">
+              {/* Ticket header */}
+              <div className="rounded-2xl border border-[#EDE8E1] bg-white p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-semibold text-[#1C1C1C]">
+                      {selectedTicket.subject}
+                    </h2>
+                    <p className="mt-1 text-xs text-[#8F8F8F]">
+                      {selectedTicket.bookingId
+                        ? `Linked to booking #${selectedTicket.bookingId}`
+                        : 'General support request'}
+                      {' · '}Opened {formatDashboardDate(selectedTicket.createdAt)}
+                    </p>
+                  </div>
+                  <TicketBadge status={selectedTicket.status} />
                 </div>
-              ))}
-            </div>
-
-            <form onSubmit={handleReply} className="mt-5 space-y-3">
-              <textarea
-                rows={4}
-                value={reply}
-                onChange={event => setReply(event.target.value)}
-                className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
-                placeholder="Reply to this support ticket..."
-              />
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={!reply.trim() || replyMutation.isPending}
-                  className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
-                </button>
               </div>
-            </form>
-          </SectionCard>
-        ) : null}
-      </>
+
+              {/* Message thread */}
+              <div className="rounded-2xl border border-[#EDE8E1] bg-[#EEE8E1] p-4">
+                {ticket.messages?.length ? (
+                  <div className="space-y-4">
+                    {ticket.messages.map(msg => (
+                      <div key={msg.id} className="space-y-1">
+                        <MessageBubble
+                          message={msg}
+                          isOwnMessage={String(msg.senderId) === String(session?.user?.id)}
+                        />
+                        <p
+                          className={`text-xs text-[#8F8F8F] ${String(msg.senderId) === String(session?.user?.id) ? 'text-right' : 'text-left'}`}
+                        >
+                          {formatDashboardDate(msg.createdAt)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="py-4 text-center text-sm text-[#8F8F8F]">
+                    No messages yet on this ticket.
+                  </p>
+                )}
+              </div>
+
+              {/* Reply box */}
+              <div className="rounded-2xl border border-[#EDE8E1] bg-[#FBF7F3] p-5">
+                <form onSubmit={handleReply} className="flex flex-col gap-3">
+                  <FormTextarea
+                    value={reply}
+                    onChange={e => setReply(e.target.value)}
+                    placeholder="Reply to this support ticket…"
+                    rows={3}
+                  />
+                  <div className="flex justify-end">
+                    <GoldBtn type="submit" disabled={!reply.trim() || replyMutation.isPending}>
+                      {replyMutation.isPending ? 'Sending…' : 'Send Reply'}
+                    </GoldBtn>
+                  </div>
+                </form>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
     </div>
   )
 }

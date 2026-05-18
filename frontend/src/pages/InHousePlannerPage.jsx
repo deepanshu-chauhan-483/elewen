@@ -2191,7 +2191,7 @@ const CelebrationFormSection = () => {
                     ]}
                     buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
                     arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
-                    menuClassName="fixed z-[999] overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
+                    menuClassName="fixed overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
                     optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
                     selectedOptionClassName=""
                     ariaLabel="Type of Event"
@@ -2234,7 +2234,7 @@ const CelebrationFormSection = () => {
                     options={['1â15', '15â30', '30â50', '50â100', '100+']}
                     buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
                     arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
-                    menuClassName="fixed z-[999] overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
+                    menuClassName="fixed overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
                     optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
                     selectedOptionClassName=""
                     ariaLabel="Estimated Guest Count"
@@ -2265,7 +2265,7 @@ const CelebrationFormSection = () => {
                     ]}
                     buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
                     arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
-                    menuClassName="fixed z-[999] overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
+                    menuClassName="fixed overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
                     optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
                     selectedOptionClassName=""
                     ariaLabel="Venue Type"
