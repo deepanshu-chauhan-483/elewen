@@ -189,15 +189,20 @@ export default function BookingTimeline() {
   const [selectedId, setSelectedId] = useState('')
   const [payingBookingId, setPayingBookingId] = useState('')
 
+  const orderBookings = useMemo(
+    () => bookings.filter(booking => booking?.isSampleTasteBooking !== true),
+    [bookings]
+  )
+
   useEffect(() => {
-    if (!bookings.length) return
-    if (selectedId && bookings.some(booking => booking.id === selectedId)) return
-    setSelectedId(bookings[0].id)
-  }, [bookings, selectedId])
+    if (!orderBookings.length) return
+    if (selectedId && orderBookings.some(booking => booking.id === selectedId)) return
+    setSelectedId(orderBookings[0].id)
+  }, [orderBookings, selectedId])
 
   const selectedBooking = useMemo(
-    () => bookings.find(booking => booking.id === selectedId) ?? bookings[0] ?? null,
-    [bookings, selectedId]
+    () => orderBookings.find(booking => booking.id === selectedId) ?? orderBookings[0] ?? null,
+    [orderBookings, selectedId]
   )
 
   const {
@@ -306,11 +311,11 @@ export default function BookingTimeline() {
     return <DashboardErrorState title="We could not load your booking timeline." />
   }
 
-  if (!bookings.length) {
+  if (!orderBookings.length) {
     return (
       <DashboardErrorState
-        title="No bookings available yet."
-        body="Once a booking is created, its timeline and status updates will appear here."
+        title="No order bookings available yet."
+        body="Only full order bookings appear here. Sample taste bookings stay in the Sample Taste section."
       />
     )
   }
@@ -322,12 +327,12 @@ export default function BookingTimeline() {
           <h1 className="text-2xl text-[#2E2E2E]">Booking Timeline</h1>
         </div>
         <p className="text-sm text-[#8C7B6B]">
-          Follow the milestones and key updates for each booking - {bookings.length} bookings
+          Follow the milestones and key updates for each booking - {orderBookings.length} bookings
         </p>
       </div>
 
       <div className="mb-8 flex flex-wrap gap-3">
-        {bookings.map(booking => (
+        {orderBookings.map(booking => (
           <button
             key={booking.id}
             type="button"

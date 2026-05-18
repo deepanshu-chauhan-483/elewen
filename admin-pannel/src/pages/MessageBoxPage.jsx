@@ -3,7 +3,6 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
-  PageIntro,
   StatusBadge,
 } from '../components/ui/AdminUI'
 import {
@@ -47,7 +46,6 @@ function Avatar({ name = '', size = 'md' }) {
 function ThreadCard({ threadItem, isSelected, onClick }) {
   const customerName = threadItem.bookingSummary?.customer?.name || 'Customer'
   const packageTitle = threadItem.bookingSummary?.package?.title || threadItem.bookingId
-  const preview = threadItem.latestMessage?.messageText || 'No messages yet'
   const unread = threadItem.unreadCount || 0
   const isArchived = isArchivedThread(threadItem)
   const time = getLatestThreadTime(threadItem)
@@ -81,9 +79,6 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
           </div>
 
           <p className="mt-0.5 truncate text-xs text-[#6B7280]">{packageTitle}</p>
-
-          <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#8F8F8F]">{preview}</p>
-
           {time && (
             <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-[#8F8F8F]">
               {formatDateTime(time)}
@@ -183,17 +178,19 @@ export default function MessageBoxPage() {
   const booking = thread?.bookingSummary
 
   return (
-    <div className="flex flex-col gap-6 xl:min-h-[calc(100vh-180px)]">
-      <PageIntro
-        title="Message Box"
-        subtitle="Review booking conversations, post planner updates, and manage completed booking history."
-      />
+    <div className="flex min-h-0 flex-col h-fit gap-6 overflow-hidden xl:h-[calc(100dvh-144px)]">
+      <div>
+        <h1 className="text-2xl  text-[#1C1C1C]">Message Box</h1>
+        <p className="mt-1 text-sm text-[#6B7280]">
+          Review booking conversations, post planner updates, and manage completed booking history.
+        </p>
+      </div>
 
       {/* Three-column layout */}
-      <div className="grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[320px_1fr_280px]">
+      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_280px]">
 
         {/* ── Column 1: Thread List ── */}
-        <div className="flex flex-col gap-4 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:min-h-0">
+        <div className="flex min-h-0 flex-col gap-4 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:h-full xl:overflow-hidden" data-lenis-prevent>
 
           {/* Search */}
           <div className="relative">
@@ -245,7 +242,7 @@ export default function MessageBoxPage() {
           </div>
 
           {/* Thread cards */}
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 hide-scrollbar" data-lenis-prevent>
             {visibleThreads.length ? (
               visibleThreads.map(threadItem => (
                 <ThreadCard
@@ -265,7 +262,7 @@ export default function MessageBoxPage() {
         </div>
 
         {/* ── Column 2: Conversation ── */}
-        <div className="flex min-h-0 flex-col gap-0 overflow-hidden rounded-[20px] border border-[#E4DED8] bg-white">
+        <div className="flex min-h-0 flex-col gap-0 overflow-hidden rounded-[20px] border border-[#E4DED8] bg-white xl:sticky xl:top-0 xl:h-full">
 
           {thread ? (
             <>
@@ -301,7 +298,7 @@ export default function MessageBoxPage() {
               </div>
 
               {/* Messages scroll area */}
-              <div className="flex min-h-[360px] flex-1 flex-col gap-5 overflow-y-auto px-5 py-5 xl:min-h-0">
+              <div className="flex min-h-[360px] flex-1 flex-col gap-5 overflow-y-auto hide-scrollbar px-5 py-5 xl:min-h-0" data-lenis-prevent>
                 {thread.messages?.length ? (
                   thread.messages.map(message => {
                     const isAdmin =
@@ -353,7 +350,7 @@ export default function MessageBoxPage() {
                   </div>
 
                   {/* Textarea + send */}
-                  <div className="flex gap-3">
+                  <div className="flex items-end gap-3">
                     <textarea
                       value={messageText}
                       onChange={e => setMessageText(e.target.value)}
@@ -378,7 +375,7 @@ export default function MessageBoxPage() {
                         })
                         setMessageText('')
                       }}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center self-end rounded-full bg-[#591902] text-white shadow-[0_4px_12px_rgba(89,25,2,0.25)] transition hover:bg-[#7A2B08] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-12 shrink-0 items-center justify-center gap-2 self-end rounded-full bg-[#591902] px-4 text-white shadow-[0_4px_12px_rgba(89,25,2,0.25)] transition hover:bg-[#7A2B08] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {sendMessageMutation.isPending ? (
                         <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -394,6 +391,9 @@ export default function MessageBoxPage() {
                           />
                         </svg>
                       )}
+                      <span className="hidden text-sm font-medium sm:inline">
+                        {sendMessageMutation.isPending ? 'Sending' : 'Send'}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -410,7 +410,7 @@ export default function MessageBoxPage() {
         </div>
 
         {/* ── Column 3: Booking Context ── */}
-        <div className="flex flex-col gap-3 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:min-h-0">
+        <div className="flex min-h-0 flex-col gap-3 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:h-full xl:overflow-y-auto hide-scrollbar" data-lenis-prevent>
           <div className="border-b border-[#E4DED8] pb-3">
             <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Booking Context</p>
             <p className="mt-1 text-xs text-[#6B7280]">Metadata for the selected conversation</p>

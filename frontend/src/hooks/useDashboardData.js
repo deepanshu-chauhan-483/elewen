@@ -233,7 +233,7 @@ export function useDashboardThread(bookingId, options = {}) {
         return response?.thread ?? null
       } catch (error) {
         const message = String(error?.message ?? '')
-        const isNotFound = message.includes('API 404')
+        const isNotFound = Number(error?.status) === 404 || message.includes('API 404')
 
         if (!isNotFound || !createIfMissing) {
           if (isNotFound) return null

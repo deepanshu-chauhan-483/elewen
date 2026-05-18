@@ -1,24 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
-  DashboardPageIntro,
-  MessageBubble,
-  SectionCard,
-  StatusPill,
 } from '../../components/dashboard/DashboardUI'
 import {
   useDashboardBookings,
-  useDashboardClearAllNotifications,
-  useDashboardMarkAllNotificationsRead,
-  useDashboardMarkNotificationRead,
-  useDashboardNotifications,
   useDashboardSendMessage,
   useDashboardSession,
   useDashboardThread,
 } from '../../hooks/useDashboardData'
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function isPreviousBooking(booking) {
   return String(booking?.bookingCategory ?? '').toLowerCase() === 'previous'
@@ -26,10 +22,8 @@ function isPreviousBooking(booking) {
 
 function formatTimestamp(value) {
   if (!value) return ''
-
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-
   return new Intl.DateTimeFormat('en-IN', {
     day: '2-digit',
     month: 'short',
@@ -38,12 +32,178 @@ function formatTimestamp(value) {
   }).format(date)
 }
 
-function formatMessageType(type) {
-  return String(type ?? 'text')
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, char => char.toUpperCase())
+function formatBookingDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
 }
 
+function formatMessageType(type) {
+  return String(type ?? 'text').replaceAll('_', ' ')
+}
+
+function getInitials(name = '') {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
+// ---------------------------------------------------------------------------
+// Status badge (mirrors admin StatusBadge)
+// ---------------------------------------------------------------------------
+const statusMap = {
+  active: 'bg-[#DDF7E5] text-[#16A34A]',
+  confirmed: 'bg-[#DBEAFE] text-[#0383E4]',
+  pending: 'bg-[#FCE7CF] text-[#C57A1E]',
+  delivered: 'bg-[#EDE9FE] text-[#6D28D9]',
+  completed: 'bg-[#E5E7EB] text-[#4B5563]',
+  cancelled: 'bg-[#FEE2E2] text-[#B91C1C]',
+  resolved: 'bg-[#E5E7EB] text-[#4B5563]',
+}
+
+function StatusBadge({ status, label }) {
+  const key = String(status ?? '').toLowerCase()
+  const cls = statusMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${cls}`}
+    >
+      {text}
+    </span>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Avatar
+// ---------------------------------------------------------------------------
+function Avatar({ name = '', size = 'md', tone = 'brand' }) {
+  const initials = getInitials(name) || '?'
+  const sizeClass = size === 'sm' ? 'h-8 w-8 text-[10px]' : 'h-10 w-10 text-xs'
+  const toneClass = tone === 'gold' ? 'bg-[#C6A15B] text-white' : 'bg-[#591902] text-[#FAFAFA]'
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${sizeClass} ${toneClass}`}
+    >
+      {initials}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Thread card
+// ---------------------------------------------------------------------------
+function ThreadCard({ booking, isSelected, onClick, latestMessage }) {
+  const packageTitle = booking?.package?.title || booking?.event?.name || 'Booking'
+  const isArchived = isPreviousBooking(booking)
+  const eventDate = formatBookingDate(booking?.eventDate)
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group w-full rounded-2xl border p-4 text-left transition-all duration-200 ${
+        isSelected
+          ? 'border-[#591902] bg-[#F7EEE8] shadow-[0_4px_16px_rgba(89,25,2,0.10)]'
+          : 'border-[#E4DED8] bg-white hover:border-[#C6A15B] hover:bg-[#FDFAF7]'
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <Avatar name={packageTitle} size="md" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p
+              className={`truncate text-sm font-semibold ${
+                isSelected ? 'text-[#591902]' : 'text-[#1C1C1C]'
+              }`}
+            >
+              {packageTitle}
+            </p>
+            {isArchived ? (
+              <span className="rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] text-[#4B5563]">
+                Closed
+              </span>
+            ) : (
+              <span className="rounded-full bg-[#DDF7E5] px-2 py-0.5 text-[10px] text-[#16A34A]">
+                Live
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 truncate text-xs text-[#6B7280]">
+            {booking?.statusLabel || 'Booking'}
+            {eventDate ? ` · ${eventDate}` : ''}
+          </p>
+          {latestMessage?.createdAt && (
+            <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-[#8F8F8F]">
+              {formatTimestamp(latestMessage.createdAt)}
+            </p>
+          )}
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Message bubble (customer perspective)
+// ---------------------------------------------------------------------------
+function MessageBubble({ message, isOwnMessage }) {
+  const senderName = isOwnMessage ? 'You' : 'Elewen team'
+  const typeLabel = formatMessageType(message.messageType)
+
+  return (
+    <div className={`flex gap-2 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
+      <Avatar name={senderName} size="sm" tone={isOwnMessage ? 'gold' : 'brand'} />
+      <div
+        className={`flex max-w-[75%] flex-col gap-1 ${isOwnMessage ? 'items-end' : 'items-start'}`}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.14em] text-[#8F8F8F]">
+            {senderName}
+          </span>
+          <span className="text-[10px] text-[#8F8F8F]">·</span>
+          <span className="text-[10px] text-[#8F8F8F]">{typeLabel}</span>
+        </div>
+        <div
+          className={`rounded-2xl px-4 py-3 ${
+            isOwnMessage
+              ? 'rounded-tr-sm bg-[#591902] text-[#FAFAFA]'
+              : 'rounded-tl-sm bg-white text-[#1C1C1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
+          }`}
+        >
+          <p className="text-sm leading-6 whitespace-pre-wrap">{message.messageText}</p>
+        </div>
+        <p className="text-[10px] text-[#8F8F8F]">{formatTimestamp(message.createdAt)}</p>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Context row
+// ---------------------------------------------------------------------------
+function ContextRow({ label, value, children }) {
+  return (
+    <div className="rounded-xl border border-[#E4DED8] bg-white p-4">
+      <p className="text-[10px] uppercase tracking-[0.18em] text-[#8F8F8F]">{label}</p>
+      <div className="mt-2">
+        {children ?? <p className="text-sm text-[#2D2D2D]">{value || '—'}</p>}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 export default function MessagesUpdates() {
   const navigate = useNavigate()
   const { data: session } = useDashboardSession()
@@ -54,27 +214,15 @@ export default function MessagesUpdates() {
   } = useDashboardBookings('all')
   const [searchParams, setSearchParams] = useSearchParams()
   const [draft, setDraft] = useState('')
-  const requestedTab = searchParams.get('tab') === 'previous' ? 'previous' : 'active'
-  const {
-    data: notificationData,
-    isLoading: notificationsLoading,
-    error: notificationsError,
-  } = useDashboardNotifications({
-    limit: 100,
-  })
-  const markReadMutation = useDashboardMarkNotificationRead()
-  const markAllReadMutation = useDashboardMarkAllNotificationsRead()
-  const clearAllNotificationsMutation = useDashboardClearAllNotifications()
+  const [search, setSearch] = useState('')
+  const messagesEndRef = useRef(null)
+
   const sendMessageMutation = useDashboardSendMessage()
 
-  const activeBookings = useMemo(
-    () => bookings.filter(booking => !isPreviousBooking(booking)),
-    [bookings]
-  )
-  const previousBookings = useMemo(
-    () => bookings.filter(booking => isPreviousBooking(booking)),
-    [bookings]
-  )
+  const activeBookings = useMemo(() => bookings.filter(b => !isPreviousBooking(b)), [bookings])
+  const previousBookings = useMemo(() => bookings.filter(b => isPreviousBooking(b)), [bookings])
+
+  const requestedTab = searchParams.get('tab') === 'previous' ? 'previous' : 'active'
   const activeTab =
     requestedTab === 'previous'
       ? previousBookings.length > 0 || activeBookings.length === 0
@@ -83,15 +231,28 @@ export default function MessagesUpdates() {
       : activeBookings.length > 0 || previousBookings.length === 0
         ? 'active'
         : 'previous'
-  const visibleBookings = activeTab === 'previous' ? previousBookings : activeBookings
+
+  const baseBookings = activeTab === 'previous' ? previousBookings : activeBookings
+
+  const visibleBookings = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return baseBookings
+    return baseBookings.filter(b =>
+      [b?.package?.title, b?.event?.name, b?.statusLabel]
+        .filter(Boolean)
+        .some(v => v.toLowerCase().includes(term))
+    )
+  }, [baseBookings, search])
+
   const requestedBookingId = searchParams.get('bookingId') || ''
-  const selectedBookingId = visibleBookings.some(booking => booking.id === requestedBookingId)
+  const selectedBookingId = visibleBookings.some(b => b.id === requestedBookingId)
     ? requestedBookingId
     : visibleBookings[0]?.id || ''
 
   const selectedBooking =
-    visibleBookings.find(booking => booking.id === selectedBookingId) ?? visibleBookings[0] ?? null
+    visibleBookings.find(b => b.id === selectedBookingId) ?? visibleBookings[0] ?? null
   const isReadOnlyThread = isPreviousBooking(selectedBooking)
+
   const {
     data: thread,
     isLoading: threadLoading,
@@ -100,20 +261,16 @@ export default function MessagesUpdates() {
     createIfMissing: !isReadOnlyThread,
   })
 
-  const notifications = useMemo(
-    () => notificationData?.notifications ?? [],
-    [notificationData?.notifications]
-  )
-  const unreadNotificationCount = Number(notificationData?.unreadCount ?? 0)
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [thread?.messages?.length])
 
   if (bookingsLoading) {
     return <DashboardLoadingState title="Loading booking messages..." />
   }
-
-  if (bookingsError || threadError || notificationsError) {
+  if (bookingsError || threadError) {
     return <DashboardErrorState title="We could not load your messages and updates." />
   }
-
   if (bookings.length === 0) {
     return (
       <DashboardEmptyState
@@ -125,110 +282,118 @@ export default function MessagesUpdates() {
     )
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault()
-    if (!draft.trim() || !thread?.id || !selectedBooking?.id || isReadOnlyThread) return
+  function switchTab(tab) {
+    const next = new URLSearchParams(searchParams)
+    next.set('tab', tab)
+    next.delete('bookingId')
+    setSearchParams(next, { replace: true })
+  }
 
+  function selectBooking(id) {
+    const next = new URLSearchParams(searchParams)
+    next.set('bookingId', id)
+    next.set('tab', activeTab)
+    setSearchParams(next, { replace: true })
+  }
+
+  async function handleSubmit() {
+    if (!draft.trim() || !thread?.id || !selectedBooking?.id || isReadOnlyThread) return
     await sendMessageMutation.mutateAsync({
       threadId: thread.id,
       bookingId: selectedBooking.id,
       messageText: draft.trim(),
       messageType: 'text',
     })
-
     setDraft('')
   }
 
   return (
-    <div className="space-y-6">
-      <DashboardPageIntro
-        title="Messages & Updates"
-        subtitle="Track booking-specific chat history, planner updates, and read-only past conversations in one place."
-        meta={`${activeBookings.length} active / ${previousBookings.length} previous`}
-      />
+    <div className="flex min-h-0 flex-col gap-6 overflow-hidden xl:h-[calc(100dvh-140px)] ">
+      {/* ── Header ── */}
+      <div>
+        <h1 className="text-2xl text-[#1C1C1C]">Messages & Updates</h1>
+        <p className="mt-1 text-sm text-[#6B7280]">
+          Track booking-specific conversations with the Elewen team. Previous bookings stay visible
+          as read-only history.
+        </p>
+      </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr_0.9fr]">
-        <SectionCard
-          title="Booking Threads"
-          subtitle="Active bookings stay writable. Previous bookings become read-only history."
+      {/* ── Three-column layout ── */}
+      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_280px]">
+        {/* ── Column 1: Thread list ── */}
+        <div
+          className="flex min-h-0 flex-col gap-4 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:overflow-hidden "
+          data-lenis-prevent
         >
-          <div className="space-y-4">
-            <div className="inline-flex rounded-full bg-white p-1">
-              <button
-                type="button"
-                onClick={() => {
-                  const next = new URLSearchParams(searchParams)
-                  next.set('tab', 'active')
-                  setSearchParams(next, { replace: true })
-                }}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  activeTab === 'active' ? 'bg-[#591902] text-white' : 'text-[#6B7280]'
-                }`}
-              >
-                Active Bookings
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = new URLSearchParams(searchParams)
-                  next.set('tab', 'previous')
-                  setSearchParams(next, { replace: true })
-                }}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  activeTab === 'previous' ? 'bg-[#591902] text-white' : 'text-[#6B7280]'
-                }`}
-              >
-                Previous Bookings
-              </button>
-            </div>
+          {/* Search */}
+          <div className="relative">
+            <svg
+              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8F8F8F]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+              />
+            </svg>
+            <input
+              type="search"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by package or event…"
+              className="w-full rounded-full border border-[#E4DED8] bg-[#F7F5F2] py-2.5 pl-9 pr-4 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] focus:bg-white"
+            />
+          </div>
 
+          {/* Tabs */}
+          <div className="flex gap-1 rounded-full bg-[#F3F3F3] p-1 ">
+            {[
+              { key: 'active', label: 'Active', count: activeBookings.length },
+              { key: 'previous', label: 'Previous', count: previousBookings.length },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => switchTab(tab.key)}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-all duration-200 ${
+                  activeTab === tab.key
+                    ? 'bg-[#C7AA76] text-white shadow-sm'
+                    : 'text-[#6B7280] hover:text-[#2D2D2D]'
+                }`}
+              >
+                {tab.label}
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                    activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-[#E8E2DA] text-[#6B7280]'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Thread cards */}
+          <div
+            className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 xl:max-h-[720px] hide-scrollbar"
+            data-lenis-prevent
+          >
             {visibleBookings.length ? (
-              <div className="space-y-3">
-                {visibleBookings.map(booking => {
-                  const isSelected = booking.id === selectedBooking?.id
-                  const latestThreadMessage =
+              visibleBookings.map(booking => (
+                <ThreadCard
+                  key={booking.id}
+                  booking={booking}
+                  isSelected={selectedBooking?.id === booking.id}
+                  onClick={() => selectBooking(booking.id)}
+                  latestMessage={
                     selectedBooking?.id === booking.id ? thread?.messages?.at(-1) : null
-
-                  return (
-                    <button
-                      key={booking.id}
-                      type="button"
-                      onClick={() => {
-                        const next = new URLSearchParams(searchParams)
-                        next.set('bookingId', booking.id)
-                        next.set('tab', activeTab)
-                        setSearchParams(next, { replace: true })
-                      }}
-                      className={`block w-full rounded-3xl border px-4 py-4 text-left transition ${
-                        isSelected
-                          ? 'border-[#591902] bg-[#F4E7DE]'
-                          : 'border-[#E4DED8] bg-white hover:border-[#C6A15B]'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-medium text-[#2E2E2E]">
-                            {booking?.package?.title || booking?.event?.name || 'Booking'}
-                          </p>
-                          <p className="mt-1 text-xs text-[#6B7280]">
-                            {booking?.statusLabel || 'Booking'} ·{' '}
-                            {formatBookingDate(booking?.eventDate)}
-                          </p>
-                          <p className="mt-2 text-xs text-[#8F8F8F]">
-                            {latestThreadMessage?.messageText ||
-                              booking?.displaySubtitle ||
-                              'Open this thread to view conversation history.'}
-                          </p>
-                        </div>
-                        <StatusPill
-                          label={isPreviousBooking(booking) ? 'Read only' : 'Live'}
-                          status={isPreviousBooking(booking) ? 'completed' : booking?.status}
-                        />
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
+                  }
+                />
+              ))
             ) : (
               <DashboardEmptyState
                 title={activeTab === 'active' ? 'No active booking threads' : 'No previous threads'}
@@ -240,228 +405,242 @@ export default function MessagesUpdates() {
               />
             )}
           </div>
-        </SectionCard>
+        </div>
 
-        <SectionCard
-          title={selectedBooking?.package?.title || 'Conversation'}
-          subtitle={
-            selectedBooking
-              ? `${selectedBooking?.statusLabel || 'Booking'} · ${selectedBooking?.locationSummary || 'Event details in progress'}`
-              : 'Choose a booking thread'
-          }
-          action={
-            selectedBooking ? (
-              <StatusPill
-                label={isReadOnlyThread ? 'Read only history' : 'Message input enabled'}
-                status={isReadOnlyThread ? 'completed' : selectedBooking?.status}
-              />
-            ) : null
-          }
-        >
-          {!selectedBooking ? (
-            <DashboardEmptyState
-              title="No conversation selected"
-              body="Choose a booking from the left to open its message history."
-            />
-          ) : threadLoading ? (
-            <DashboardLoadingState title="Loading selected conversation..." />
-          ) : (
-            <div className="space-y-5">
-              <div className="rounded-3xl bg-white p-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <StatusPill
-                    label={selectedBooking?.statusLabel || 'Status'}
-                    status={selectedBooking?.status}
-                  />
-                  <span className="text-xs uppercase tracking-[0.16em] text-[#8F8F8F]">
-                    {selectedBooking?.event?.name ||
-                      selectedBooking?.displaySubtitle ||
-                      'Booking thread'}
-                  </span>
+        {/* ── Column 2: Conversation ── */}
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#E4DED8] bg-white xl:h-full">
+          {selectedBooking ? (
+            <>
+              {/* Conversation header */}
+              <div className="flex items-center justify-between gap-4 border-b border-[#E4DED8] px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <Avatar name="Elewen team" size="md" />
+                  <div>
+                    <p className="text-sm font-semibold text-[#1C1C1C]">Elewen team</p>
+                    <p className="text-xs text-[#6B7280]">Your planner & support</p>
+                  </div>
                 </div>
+                <StatusBadge
+                  status={isReadOnlyThread ? 'resolved' : selectedBooking?.status}
+                  label={isReadOnlyThread ? 'Read only' : selectedBooking?.statusLabel}
+                />
               </div>
 
-              <div className="max-h-[520px] space-y-4 overflow-y-auto rounded-3xl bg-white p-4">
-                {thread?.messages?.length ? (
-                  thread.messages.map(message => {
-                    const isOwnMessage = String(message.senderId) === String(session?.user?.id)
+              {/* Package banner */}
+              <div className="border-b border-[#E4DED8] bg-[#F7F5F2] px-5 py-3">
+                <p className="text-xs text-[#6B7280]">
+                  <span className="font-medium text-[#2D2D2D]">
+                    {selectedBooking?.package?.title || selectedBooking?.event?.name || 'Booking'}
+                  </span>
+                  {selectedBooking?.eventDate ? (
+                    <span className="ml-2 text-[#8F8F8F]">
+                      · {formatBookingDate(selectedBooking.eventDate)}
+                    </span>
+                  ) : null}
+                </p>
+              </div>
 
-                    return (
-                      <div key={message.id}>
-                        <div className={`${isOwnMessage ? 'text-right' : 'text-left'} mb-1`}>
-                          <span className="text-[11px] uppercase tracking-[0.16em] text-[#8F8F8F]">
-                            {isOwnMessage ? 'You' : 'Elewen team'} ·{' '}
-                            {formatMessageType(message.messageType)}
-                          </span>
-                        </div>
-                        <MessageBubble message={message} isOwnMessage={isOwnMessage} />
-                        <p
-                          className={`mt-1 text-xs text-[#8F8F8F] ${
-                            isOwnMessage ? 'text-right' : 'text-left'
-                          }`}
-                        >
-                          {formatTimestamp(message.createdAt)}
-                        </p>
-                      </div>
-                    )
-                  })
+              {/* Messages */}
+              <div
+                className="flex min-h-[360px] flex-1 flex-col gap-5 overflow-y-auto hide-scrollbar px-5 py-5 xl:min-h-0"
+                data-lenis-prevent
+              >
+                {threadLoading ? (
+                  <DashboardLoadingState title="Loading selected conversation..." />
+                ) : thread?.messages?.length ? (
+                  <>
+                    {thread.messages.map(message => {
+                      const isOwnMessage = String(message.senderId) === String(session?.user?.id)
+                      return (
+                        <MessageBubble
+                          key={message.id}
+                          message={message}
+                          isOwnMessage={isOwnMessage}
+                        />
+                      )
+                    })}
+                    <div ref={messagesEndRef} />
+                  </>
                 ) : (
-                  <DashboardEmptyState
-                    title={isReadOnlyThread ? 'No previous messages' : 'No messages yet'}
-                    body={
-                      isReadOnlyThread
-                        ? 'This previous booking has no stored conversation history.'
-                        : 'Start the conversation here. Your message will appear in this booking thread.'
-                    }
-                  />
+                  <div className="flex flex-1 items-center justify-center">
+                    <DashboardEmptyState
+                      title={isReadOnlyThread ? 'No previous messages' : 'No messages yet'}
+                      body={
+                        isReadOnlyThread
+                          ? 'This previous booking has no stored conversation history.'
+                          : 'Start the conversation here. Your message will appear in this booking thread.'
+                      }
+                    />
+                  </div>
                 )}
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-3 rounded-3xl bg-white p-4">
+              {/* Compose */}
+              <div className="border-t border-[#E4DED8] bg-[#FAFAFA] px-5 py-4">
                 {isReadOnlyThread ? (
-                  <div className="rounded-2xl border border-dashed border-[#D6CDC3] bg-[#F7F5F2] p-4 text-sm text-[#6B7280]">
-                    This booking is in your previous tab, so the conversation stays visible but
-                    read-only.
+                  <div className="mb-3 flex items-center gap-2 rounded-xl border border-dashed border-[#D6CDC3] bg-white px-4 py-3 text-xs text-[#6B7280]">
+                    <svg
+                      className="h-4 w-4 shrink-0 text-[#8F8F8F]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    This booking is in your previous tab — the conversation is read-only.
                   </div>
                 ) : null}
 
-                <textarea
-                  rows={4}
-                  value={draft}
-                  onChange={event => setDraft(event.target.value)}
-                  disabled={isReadOnlyThread || sendMessageMutation.isPending}
-                  className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none disabled:cursor-not-allowed disabled:bg-[#F7F5F2]"
-                  placeholder={
-                    isReadOnlyThread
-                      ? 'This conversation is read-only.'
-                      : 'Type your message to the Elewen team...'
-                  }
-                />
-                <div className="flex justify-end">
+                <div className="flex items-end gap-3">
+                  <textarea
+                    value={draft}
+                    onChange={e => setDraft(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleSubmit()
+                      }
+                    }}
+                    disabled={isReadOnlyThread || sendMessageMutation.isPending}
+                    placeholder={
+                      isReadOnlyThread
+                        ? 'Read-only thread.'
+                        : 'Type your message to the Elewen team…'
+                    }
+                    rows={3}
+                    className="flex-1 resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
+                  />
                   <button
-                    type="submit"
+                    type="button"
                     disabled={
                       isReadOnlyThread ||
                       !draft.trim() ||
                       sendMessageMutation.isPending ||
                       !thread?.id
                     }
-                    className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={handleSubmit}
+                    className="flex h-12 shrink-0 items-center justify-center gap-2 self-end rounded-full bg-[#591902] px-4 text-white shadow-[0_4px_12px_rgba(89,25,2,0.25)] transition hover:bg-[#7A2B08] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {sendMessageMutation.isPending ? 'Sending...' : 'Send Message'}
+                    <span className="hidden text-sm font-medium sm:inline">
+                      {sendMessageMutation.isPending ? 'Sending' : 'Send'}
+                    </span>
+                    <span>
+                      {sendMessageMutation.isPending ? (
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M3 12L20 3L14 21L11 13L3 12Z"
+                          />
+                        </svg>
+                      )}
+                    </span>
                   </button>
                 </div>
-              </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center px-6 py-20">
+              <DashboardEmptyState
+                title="No conversation selected"
+                body="Pick a thread from the list to read the conversation and reply."
+              />
             </div>
           )}
-        </SectionCard>
+        </div>
 
-        <SectionCard
-          title="Updates"
-          subtitle="Planner notifications and operational nudges land here."
+        {/* ── Column 3: Booking Details ── */}
+        <div
+          className="flex min-h-0 flex-col gap-3 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:overflow-y-auto hide-scrollbar"
+          data-lenis-prevent
         >
-          {notificationsLoading ? (
-            <DashboardLoadingState title="Loading notifications..." />
-          ) : notifications.length ? (
-            <div className="space-y-3">
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => clearAllNotificationsMutation.mutate()}
-                  disabled={!notifications.length || clearAllNotificationsMutation.isPending}
-                  className="text-sm font-medium text-[#8F2D1F] transition disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {clearAllNotificationsMutation.isPending ? 'Clearing...' : 'Clear all'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => markAllReadMutation.mutate()}
-                  disabled={!unreadNotificationCount || markAllReadMutation.isPending}
-                  className="text-sm font-medium text-[#591902] transition disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {markAllReadMutation.isPending ? 'Marking...' : 'Mark all read'}
-                </button>
-              </div>
+          <div className="border-b border-[#E4DED8] pb-3">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+              Booking Details
+            </p>
+            <p className="mt-1 text-xs text-[#6B7280]">Quick reference for this conversation</p>
+          </div>
 
-              {notifications.map(notification => (
-                <button
-                  key={notification.id}
-                  type="button"
-                  onClick={async () => {
-                    if (!notification.isRead) {
-                      await markReadMutation.mutateAsync(notification.id)
-                    }
+          {selectedBooking ? (
+            <div className="flex flex-col gap-3">
+              <ContextRow label="Booking ID">
+                <p className="truncate text-sm text-[#2D2D2D]">{selectedBooking.id || '—'}</p>
+              </ContextRow>
+              <ContextRow label="Package">
+                <p className="text-sm text-[#2D2D2D]">{selectedBooking.package?.title || '—'}</p>
+              </ContextRow>
+              <ContextRow label="Event Type">
+                <p className="text-sm text-[#2D2D2D]">
+                  {selectedBooking.event?.name || selectedBooking.displaySubtitle || '—'}
+                </p>
+              </ContextRow>
+              <ContextRow label="Event Date">
+                <p className="text-sm text-[#2D2D2D]">
+                  {formatBookingDate(selectedBooking.eventDate) || '—'}
+                </p>
+              </ContextRow>
+              <ContextRow label="Location">
+                <p className="text-sm text-[#2D2D2D]">{selectedBooking.locationSummary || '—'}</p>
+              </ContextRow>
+              <ContextRow label="Booking Stage">
+                <StatusBadge status={selectedBooking.status} label={selectedBooking.statusLabel} />
+              </ContextRow>
+              <ContextRow label="Vendor Assignments">
+                <p className="text-sm text-[#2D2D2D]">
+                  {selectedBooking.vendorAssignments?.length
+                    ? `${selectedBooking.vendorAssignments.length} vendor${
+                        selectedBooking.vendorAssignments.length > 1 ? 's' : ''
+                      } linked`
+                    : 'None assigned yet'}
+                </p>
+              </ContextRow>
 
-                    const nextPath = resolveNotificationLink(notification.linkUrl)
-                    if (nextPath) navigate(nextPath)
-                  }}
-                  className={`block w-full rounded-2xl border px-4 py-4 text-left transition ${
-                    notification.isRead
-                      ? 'border-[#E8E1DA] bg-white'
-                      : 'border-[#E7D2C4] bg-[#FFF8F2]'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-[#2E2E2E]">
-                        {notification.title || 'Notification'}
-                      </p>
-                      {notification.message ? (
-                        <p className="mt-1 text-sm text-[#6B7280]">{notification.message}</p>
-                      ) : null}
-                      <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-[#9CA3AF]">
-                        {formatTimestamp(notification.createdAt)}
-                      </p>
-                    </div>
-                    {!notification.isRead ? (
-                      <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[#C68B1E]" />
-                    ) : null}
-                  </div>
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => navigate(`/user-dashboard/details?bookingId=${selectedBooking.id}`)}
+                className="mt-2 inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B]"
+              >
+                View Full Booking
+              </button>
             </div>
           ) : (
-            <DashboardEmptyState
-              title="No updates yet"
-              body="New planner notes, booking updates, and support nudges will appear here."
-            />
+            <div className="flex flex-1 items-center justify-center py-10">
+              <DashboardEmptyState
+                title="No context"
+                body="Select a conversation to load booking details."
+              />
+            </div>
           )}
-        </SectionCard>
+        </div>
       </div>
     </div>
   )
-}
-
-function formatBookingDate(value) {
-  if (!value) return 'Date pending'
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Date pending'
-
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
-function resolveNotificationLink(linkUrl) {
-  const url = String(linkUrl ?? '').trim()
-  if (!url) return ''
-
-  const messageMatch = url.match(/^\/dashboard\/messages\?bookingId=([^&#]+)/i)
-  if (messageMatch?.[1]) {
-    return `/user-dashboard/messages?bookingId=${messageMatch[1]}`
-  }
-
-  const bookingMatch = url.match(/^\/dashboard\/bookings\/([^/?#]+)/i)
-  if (bookingMatch?.[1]) {
-    return `/user-dashboard/details?bookingId=${bookingMatch[1]}`
-  }
-
-  if (url.startsWith('/dashboard')) {
-    return url.replace(/^\/dashboard/i, '/user-dashboard')
-  }
-
-  return url
 }

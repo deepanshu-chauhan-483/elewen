@@ -33,6 +33,11 @@ const priorityDot = {
   high: 'bg-red-500',
 }
 
+function isArchivedTicket(ticket) {
+  const status = String(ticket?.status ?? '').toLowerCase()
+  return status === 'resolved' || status === 'closed'
+}
+
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
   const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
@@ -202,6 +207,14 @@ export default function SupportPage() {
 
   const ticketsQuery = useAdminSupportTickets({ search, status, priority, limit: 24 })
   const ticketList = ticketsQuery.data?.tickets ?? []
+  const activeTickets = useMemo(
+    () => ticketList.filter(ticket => !isArchivedTicket(ticket)),
+    [ticketList]
+  )
+  const archivedTickets = useMemo(
+    () => ticketList.filter(ticket => isArchivedTicket(ticket)),
+    [ticketList]
+  )
 
   const selectedListTicket = useMemo(
     () => ticketList.find(t => t.id === selectedId) ?? ticketList[0] ?? null,
@@ -245,7 +258,7 @@ export default function SupportPage() {
 
       {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1C1C1C]">Help & Support</h1>
+        <h1 className="text-2xl  text-[#1C1C1C]">Help & Support</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
           Manage customer tickets, update their status, and reply with public messages or internal notes.
         </p>

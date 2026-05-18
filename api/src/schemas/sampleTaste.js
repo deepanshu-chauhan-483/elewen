@@ -39,4 +39,12 @@ export const recordDecisionSchema = Joi.object({
     'number.max': 'Rating must be between 1 and 5',
   }),
   feedbackText: Joi.string().max(1000).allow('', null).optional(),
+  vendorRatings: Joi.array()
+    .items(
+      Joi.object({
+        vendorId: Joi.string().required(),
+        rating: Joi.number().integer().min(1).max(5).allow(null).optional(),
+      })
+    )
+    .optional(),
 })

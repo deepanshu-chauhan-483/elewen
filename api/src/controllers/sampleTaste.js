@@ -130,7 +130,7 @@ export const updateStatus = async (req, res, next) => {
 export const recordDecision = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { decision, decisionNotes, vendorId, rating, feedbackText } = req.body
+    const { decision, decisionNotes, vendorId, rating, feedbackText, vendorRatings } = req.body
 
     const sample = await prisma.sampleTasteBooking.findUnique({
       where: { id: req.params.id },
@@ -144,29 +144,65 @@ export const recordDecision = async (req, res, next) => {
         .json({ error: 'Decision can only be recorded for delivered sample taste bookings' })
     }
 
-    // update vendor feedback if provided
-    if (vendorId && (rating || feedbackText)) {
-      const vendor = sample.vendors.find(v => v.vendorId === String(vendorId))
-      if (vendor) {
-        await prisma.sampleTasteVendor.update({
-          where: { id: vendor.id },
-          data: {
-            rating: rating || undefined,
-            feedbackText: feedbackText || undefined,
-          },
+    const normalizedVendorRatings = Array.isArray(vendorRatings)
+      ? vendorRatings
+          .map(entry => ({
+            vendorId: String(entry?.vendorId ?? '').trim(),
+            rating:
+              entry?.rating === null || entry?.rating === undefined ? null : Number(entry.rating),
+          }))
+          .filter(
+            entry =>
+              entry.vendorId &&
+              Number.isInteger(entry.rating) &&
+              entry.rating >= 1 &&
+              entry.rating <= 5
+          )
+      : []
+
+    const updated = await prisma.$transaction(async tx => {
+      if (normalizedVendorRatings.length) {
+        await Promise.all(
+          normalizedVendorRatings.map(async entry => {
+            const matchedVendor = sample.vendors.find(v => String(v.vendorId) === entry.vendorId)
+            if (!matchedVendor) return
+
+            await tx.sampleTasteVendor.update({
+              where: { id: matchedVendor.id },
+              data: { rating: entry.rating },
+            })
+          })
+        )
+      }
+
+      if (vendorId && (rating || feedbackText)) {
+        const matchedVendor = sample.vendors.find(v => String(v.vendorId) === String(vendorId))
+        if (matchedVendor) {
+          await tx.sampleTasteVendor.update({
+            where: { id: matchedVendor.id },
+            data: {
+              rating: rating || undefined,
+              feedbackText: feedbackText || undefined,
+            },
+          })
+        }
+      } else if (feedbackText && sample.vendors.length === 1) {
+        await tx.sampleTasteVendor.update({
+          where: { id: sample.vendors[0].id },
+          data: { feedbackText },
         })
       }
-    }
 
-    const updated = await prisma.sampleTasteBooking.update({
-      where: { id: sample.id },
-      data: {
-        decision,
-        decisionNotes: decisionNotes || null,
-        status: 'completed',
-        feedbackSubmitted: !!(rating || feedbackText),
-      },
-      include: { vendors: true },
+      return tx.sampleTasteBooking.update({
+        where: { id: sample.id },
+        data: {
+          decision,
+          decisionNotes: decisionNotes || null,
+          status: 'completed',
+          feedbackSubmitted: Boolean(normalizedVendorRatings.length || rating || feedbackText),
+        },
+        include: { vendors: true },
+      })
     })
 
     res.json({ sample: updated })

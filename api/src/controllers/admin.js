@@ -180,11 +180,7 @@ async function fetchVendorsByIds(ids = []) {
     return new Map(
       (response?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)])
     )
-  } catch (err) {
-    if (!isStrapiCredentialError(err)) {
-      throw err
-    }
-
+  } catch {
     const parsedIds = uniqueIds.map(value => Number.parseInt(value, 10)).filter(Number.isFinite)
     if (!parsedIds.length) return new Map()
 
@@ -229,6 +225,98 @@ async function fetchVendorsByIds(ids = []) {
         },
       ])
     )
+  }
+}
+
+async function fetchCouponsFromDatabase({ search = '', page = 1, limit = 12 } = {}) {
+  const trimmedSearch = normalizeText(search)
+  const offset = Math.max(page - 1, 0) * limit
+  const searchPattern = `%${trimmedSearch}%`
+
+  const coupons = await prisma.$queryRaw`
+    SELECT
+      c.id,
+      c.document_id,
+      c.code,
+      c.discount_type,
+      c.discount_value,
+      c.max_uses,
+      c.used_count,
+      c.valid_from,
+      c.valid_to,
+      c.is_active,
+      c.created_at
+    FROM public.coupons c
+    WHERE (
+      ${trimmedSearch} = ''
+      OR COALESCE(c.code, '') ILIKE ${searchPattern}
+    )
+    ORDER BY c.created_at DESC, c.id DESC
+    OFFSET ${offset}
+    LIMIT ${limit}
+  `
+
+  const [countRow] = await prisma.$queryRaw`
+    SELECT COUNT(*)::int AS total
+    FROM public.coupons c
+    WHERE (
+      ${trimmedSearch} = ''
+      OR COALESCE(c.code, '') ILIKE ${searchPattern}
+    )
+  `
+
+  return {
+    coupons: coupons.map(coupon => ({
+      id: String(coupon.id),
+      documentId: coupon.document_id ?? null,
+      code: coupon.code ?? '',
+      discount_type: coupon.discount_type ?? 'percentage',
+      discount_value: Number(coupon.discount_value ?? 0),
+      max_uses: coupon.max_uses ?? null,
+      used_count: coupon.used_count ?? 0,
+      valid_from: coupon.valid_from ?? null,
+      valid_to: coupon.valid_to ?? null,
+      is_active: Boolean(coupon.is_active),
+    })),
+    total: Number(countRow?.total ?? 0),
+    page,
+    pages: Math.max(1, Math.ceil(Number(countRow?.total ?? 0) / limit)),
+  }
+}
+
+async function fetchAdminSettingsFromDatabase() {
+  const [settings] = await prisma.$queryRaw`
+    SELECT
+      gs.id,
+      gs.document_id,
+      gs.primary_phone,
+      gs.support_email,
+      gs.support_availability_text,
+      gs.advance_payment_percentage,
+      gs.whatsapp_number,
+      gs.response_expectation_text,
+      gs.created_at,
+      gs.updated_at,
+      gs.published_at
+    FROM public.global_settings gs
+    ORDER BY gs.updated_at DESC NULLS LAST, gs.id DESC
+    LIMIT 1
+  `
+
+  if (!settings) return null
+
+  return {
+    id: String(settings.id),
+    documentId: settings.document_id ?? null,
+    primary_phone: settings.primary_phone ?? '',
+    support_email: settings.support_email ?? '',
+    support_availability_text: settings.support_availability_text ?? '',
+    advance_payment_percentage: settings.advance_payment_percentage ?? null,
+    whatsapp_number: settings.whatsapp_number ?? '',
+    response_expectation_text: settings.response_expectation_text ?? '',
+    createdAt: settings.created_at ?? null,
+    updatedAt: settings.updated_at ?? null,
+    publishedAt: settings.published_at ?? null,
   }
 }
 
@@ -585,11 +673,7 @@ async function fetchVendorDirectory({
   try {
     response = await strapiServerGet(`/api/vendors?${query.join('&')}`)
     vendors = response?.data ?? []
-  } catch (err) {
-    if (!isStrapiCredentialError(err)) {
-      throw err
-    }
-
+  } catch {
     return fetchVendorDirectoryFromDatabase({
       search,
       status,
@@ -1734,7 +1818,7 @@ export async function getAdminPaymentSummary(req, res, next) {
           },
         },
       }),
-      strapiServerGet('/api/global-setting?publicationState=preview'),
+      safeStrapiServerGet('/api/global-setting?publicationState=preview', { data: null }),
     ])
 
     const paymentSummary = buildPaymentSummaryFromPayments(payments)
@@ -2126,25 +2210,30 @@ export async function listAdminCoupons(req, res, next) {
       query.push(`filters[code][$containsi]=${encodeURIComponent(search)}`)
     }
 
-    const response = await strapiServerGet(`/api/coupons?${query.join('&')}`)
+    try {
+      const response = await strapiServerGet(`/api/coupons?${query.join('&')}`)
 
-    res.json({
-      coupons: (response?.data ?? []).map(coupon => ({
-        id: String(coupon.id),
-        documentId: coupon.documentId ?? null,
-        code: coupon.code ?? '',
-        discount_type: coupon.discount_type ?? 'percentage',
-        discount_value: Number(coupon.discount_value ?? 0),
-        max_uses: coupon.max_uses ?? null,
-        used_count: coupon.used_count ?? 0,
-        valid_from: coupon.valid_from ?? null,
-        valid_to: coupon.valid_to ?? null,
-        is_active: Boolean(coupon.is_active),
-      })),
-      total: response?.meta?.pagination?.total ?? 0,
-      page: response?.meta?.pagination?.page ?? page,
-      pages: response?.meta?.pagination?.pageCount ?? 1,
-    })
+      return res.json({
+        coupons: (response?.data ?? []).map(coupon => ({
+          id: String(coupon.id),
+          documentId: coupon.documentId ?? null,
+          code: coupon.code ?? '',
+          discount_type: coupon.discount_type ?? 'percentage',
+          discount_value: Number(coupon.discount_value ?? 0),
+          max_uses: coupon.max_uses ?? null,
+          used_count: coupon.used_count ?? 0,
+          valid_from: coupon.valid_from ?? null,
+          valid_to: coupon.valid_to ?? null,
+          is_active: Boolean(coupon.is_active),
+        })),
+        total: response?.meta?.pagination?.total ?? 0,
+        page: response?.meta?.pagination?.page ?? page,
+        pages: response?.meta?.pagination?.pageCount ?? 1,
+      })
+    } catch {
+      const result = await fetchCouponsFromDatabase({ search, page, limit })
+      return res.json(result)
+    }
   } catch (err) {
     next(err)
   }
@@ -2209,8 +2298,13 @@ export async function updateAdminCoupon(req, res, next) {
 
 export async function getAdminSettings(req, res, next) {
   try {
-    const settings = await strapiServerGet('/api/global-setting?publicationState=preview')
-    res.json({ settings: settings?.data ?? settings ?? null })
+    try {
+      const settings = await strapiServerGet('/api/global-setting?publicationState=preview')
+      return res.json({ settings: settings?.data ?? settings ?? null })
+    } catch {
+      const settings = await fetchAdminSettingsFromDatabase()
+      return res.json({ settings })
+    }
   } catch (err) {
     next(err)
   }

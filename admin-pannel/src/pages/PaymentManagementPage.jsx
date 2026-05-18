@@ -7,10 +7,12 @@ import {
 } from '../components/ui/AdminUI'
 import {
   useAdminBookings,
+  useAdminCoupons,
   useAdminCreateCoupon,
   useAdminCreateVendorPayout,
   useAdminPaymentWorkspace,
   useAdminProcessRefund,
+  useAdminSettings,
   useAdminUpdateCoupon,
   useAdminUpdateSettings,
   useAdminUpdateVendorPayout,
@@ -512,12 +514,161 @@ function VendorPayments({ vendorPayments, vendorsQuery, bookingsQuery, createVen
 // ---------------------------------------------------------------------------
 // Section: Coupons
 // ---------------------------------------------------------------------------
+const BLANK_COUPON_FORM = {
+  code: '',
+  discount_type: 'percentage',
+  discount_value: '',
+  max_uses: '',
+  used_count: '0',
+  valid_from: '',
+  valid_to: '',
+  is_active: true,
+}
+
+function CouponRow({ coupon, updateCouponMutation }) {
+  const [editing, setEditing] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const setE = (key, val) => setEditForm(f => ({ ...f, [key]: val }))
+
+  function openEdit() {
+    setEditForm({
+      discount_type: coupon.discount_type ?? 'percentage',
+      discount_value: String(coupon.discount_value ?? ''),
+      max_uses: coupon.max_uses != null ? String(coupon.max_uses) : '',
+      valid_from: coupon.valid_from ?? '',
+      valid_to: coupon.valid_to ?? '',
+    })
+    setEditing(true)
+  }
+
+  function saveEdit() {
+    updateCouponMutation.mutate(
+      {
+        couponId: coupon.id,
+        body: {
+          discount_type: editForm.discount_type,
+          discount_value: Number(editForm.discount_value),
+          max_uses: editForm.max_uses ? Number(editForm.max_uses) : null,
+          valid_from: editForm.valid_from || null,
+          valid_to: editForm.valid_to || null,
+        },
+      },
+      { onSuccess: () => setEditing(false) }
+    )
+  }
+
+  return (
+    <div className="rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 space-y-3">
+      {/* Row header */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-[#1C1C1C]">{coupon.code}</p>
+          <p className="mt-1 text-xs text-[#8F8F8F]">
+            {coupon.discount_type === 'percentage'
+              ? `${coupon.discount_value}% off`
+              : `₹${coupon.discount_value} off`}
+            {coupon.valid_from || coupon.valid_to
+              ? ` · Valid ${formatDate(coupon.valid_from)} → ${formatDate(coupon.valid_to)}`
+              : ''}
+            {coupon.max_uses ? ` · Max ${coupon.max_uses} uses` : ' · Unlimited uses'}
+            {` · Used ${coupon.used_count ?? 0} times`}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge
+            status={coupon.is_active ? 'active' : 'inactive'}
+            label={coupon.is_active ? 'Active' : 'Inactive'}
+          />
+          <GhostBtn
+            disabled={updateCouponMutation.isPending}
+            onClick={() =>
+              updateCouponMutation.mutate({
+                couponId: coupon.id,
+                body: { is_active: !coupon.is_active },
+              })
+            }
+          >
+            {coupon.is_active ? 'Disable' : 'Enable'}
+          </GhostBtn>
+          <GhostBtn onClick={editing ? () => setEditing(false) : openEdit}>
+            {editing ? 'Cancel' : 'Edit'}
+          </GhostBtn>
+        </div>
+      </div>
+
+      {/* Inline edit form */}
+      {editing && (
+        <div className="border-t border-[#E4DED8] pt-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <SelectField
+              value={editForm.discount_type}
+              onChange={v => setE('discount_type', v)}
+              className="min-h-10 bg-[#F3F3F3]"
+            >
+              <option value="percentage">Percentage (%)</option>
+              <option value="flat">Flat amount (₹)</option>
+            </SelectField>
+            <Input
+              type="number"
+              value={editForm.discount_value}
+              onChange={e => setE('discount_value', e.target.value)}
+              placeholder="Discount value"
+            />
+            <Input
+              type="number"
+              value={editForm.max_uses}
+              onChange={e => setE('max_uses', e.target.value)}
+              placeholder="Max uses (blank = unlimited)"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="mb-1 text-xs text-[#8F8F8F]">Valid from</p>
+                <Input
+                  type="date"
+                  value={editForm.valid_from}
+                  onChange={e => setE('valid_from', e.target.value)}
+                />
+              </div>
+              <div>
+                <p className="mb-1 text-xs text-[#8F8F8F]">Valid to</p>
+                <Input
+                  type="date"
+                  value={editForm.valid_to}
+                  onChange={e => setE('valid_to', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <PrimaryBtn
+              disabled={updateCouponMutation.isPending || !editForm.discount_value}
+              onClick={saveEdit}
+            >
+              {updateCouponMutation.isPending ? 'Saving…' : 'Save Changes'}
+            </PrimaryBtn>
+            <GhostBtn onClick={() => setEditing(false)}>Cancel</GhostBtn>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) {
-  const [form, setForm] = useState({
-    code: '', discount_type: 'percentage', discount_value: '',
-    max_uses: '', valid_from: '', valid_to: '',
-  })
+  const [form, setForm] = useState(BLANK_COUPON_FORM)
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+  function handleCreate() {
+    createCouponMutation.mutate(
+      {
+        ...form,
+        discount_value: Number(form.discount_value),
+        max_uses: form.max_uses ? Number(form.max_uses) : null,
+        used_count: Number(form.used_count || 0),
+      },
+      { onSuccess: () => setForm(BLANK_COUPON_FORM) }
+    )
+  }
 
   return (
     <div className="space-y-5">
@@ -525,7 +676,11 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
         <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Generate Discount Coupon</h3>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <Input value={form.code} onChange={e => set('code', e.target.value)} placeholder="Coupon code" />
+          <Input
+            value={form.code}
+            onChange={e => set('code', e.target.value.toUpperCase())}
+            placeholder="Coupon code (e.g. SAVE20)"
+          />
           <SelectField
             value={form.discount_type}
             onChange={v => set('discount_type', v)}
@@ -535,8 +690,18 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
             <option value="percentage">Percentage (%)</option>
             <option value="flat">Flat amount (₹)</option>
           </SelectField>
-          <Input type="number" value={form.discount_value} onChange={e => set('discount_value', e.target.value)} placeholder="Discount value" />
-          <Input type="number" value={form.max_uses} onChange={e => set('max_uses', e.target.value)} placeholder="Max uses (optional)" />
+          <Input
+            type="number"
+            value={form.discount_value}
+            onChange={e => set('discount_value', e.target.value)}
+            placeholder={form.discount_type === 'percentage' ? 'Discount % (e.g. 20)' : 'Discount ₹ (e.g. 500)'}
+          />
+          <Input
+            type="number"
+            value={form.max_uses}
+            onChange={e => set('max_uses', e.target.value)}
+            placeholder="Max uses (blank = unlimited)"
+          />
           <div>
             <p className="mb-1 text-xs text-[#8F8F8F]">Valid from</p>
             <Input type="date" value={form.valid_from} onChange={e => set('valid_from', e.target.value)} />
@@ -549,11 +714,7 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
         <div className="mt-4">
           <PrimaryBtn
             disabled={createCouponMutation.isPending || !form.code || !form.discount_value}
-            onClick={() => createCouponMutation.mutate({
-              ...form,
-              discount_value: Number(form.discount_value),
-              max_uses: form.max_uses ? Number(form.max_uses) : null,
-            })}
+            onClick={handleCreate}
           >
             {createCouponMutation.isPending ? 'Creating…' : 'Create Coupon'}
           </PrimaryBtn>
@@ -564,22 +725,11 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
       {coupons.length ? (
         <div className="space-y-2.5">
           {coupons.map(coupon => (
-            <div key={coupon.id} className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
-              <div>
-                <p className="text-sm font-semibold text-[#1C1C1C]">{coupon.code}</p>
-                <p className="mt-1 text-xs text-[#8F8F8F]">
-                  {coupon.discount_type === 'percentage' ? `${coupon.discount_value}% off` : `₹${coupon.discount_value} off`}
-                  {' · '}Valid {formatDate(coupon.valid_from)} → {formatDate(coupon.valid_to)}
-                  {coupon.max_uses ? ` · Max ${coupon.max_uses} uses` : ''}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge status={coupon.is_active ? 'active' : 'inactive'} label={coupon.is_active ? 'Active' : 'Inactive'} />
-                <GhostBtn onClick={() => updateCouponMutation.mutate({ couponId: coupon.id, body: { is_active: !coupon.is_active } })}>
-                  {coupon.is_active ? 'Disable' : 'Enable'}
-                </GhostBtn>
-              </div>
-            </div>
+            <CouponRow
+              key={coupon.id}
+              coupon={coupon}
+              updateCouponMutation={updateCouponMutation}
+            />
           ))}
         </div>
       ) : (
@@ -605,6 +755,12 @@ function SettingsSection({ workspaceSettings, updateSettingsMutation }) {
 
   useEffect(() => {
     if (!workspaceSettings) return
+    // Only populate if at least one field has a real value (guards against empty objects)
+    const hasData = workspaceSettings.advance_payment_percentage != null
+      || workspaceSettings.primary_phone
+      || workspaceSettings.support_email
+      || workspaceSettings.whatsapp_number
+    if (!hasData) return
     setForm({
       advance_payment_percentage: workspaceSettings.advance_payment_percentage ?? '',
       primary_phone: workspaceSettings.primary_phone ?? '',
@@ -613,7 +769,7 @@ function SettingsSection({ workspaceSettings, updateSettingsMutation }) {
       support_availability_text: workspaceSettings.support_availability_text ?? '',
       response_expectation_text: workspaceSettings.response_expectation_text ?? '',
     })
-  }, [workspaceSettings?.documentId, workspaceSettings?.updatedAt])
+  }, [workspaceSettings?.documentId, workspaceSettings?.updatedAt, workspaceSettings?.advance_payment_percentage])
 
   return (
     <div className="space-y-5">
@@ -691,6 +847,8 @@ export default function PaymentManagementPage() {
   const [section, setSection] = useState('customer')
 
   const workspaceQuery = useAdminPaymentWorkspace()
+  const couponsQuery = useAdminCoupons({ limit: 50 })
+  const settingsQuery = useAdminSettings()
   const vendorsQuery = useAdminVendors({ limit: 100, status: 'approved' })
   const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 100 })
   const processRefundMutation = useAdminProcessRefund()
@@ -700,14 +858,19 @@ export default function PaymentManagementPage() {
   const updateCouponMutation = useAdminUpdateCoupon()
   const updateSettingsMutation = useAdminUpdateSettings()
 
-  if (workspaceQuery.isLoading) return <LoadingState label="Loading payment operations…" />
-  if (workspaceQuery.error) return <ErrorState label="Payment operations could not be loaded right now." />
+  if (workspaceQuery.isLoading) {
+    return <LoadingState label="Loading payment operations…" />
+  }
+  if (workspaceQuery.error) {
+    return <ErrorState label="Payment operations could not be loaded right now." />
+  }
 
   const workspace = workspaceQuery.data ?? {}
   const summary = workspace.summary ?? {}
   const customerPayments = workspace.customerPayments ?? {}
   const vendorPayments = workspace.vendorPayments ?? {}
-  const coupons = workspace.coupons ?? []
+  const coupons = couponsQuery.data?.coupons ?? workspace.coupons ?? []
+  const settings = settingsQuery.data ?? workspace.settings ?? null
 
   return (
     <div className="space-y-6">
@@ -726,7 +889,11 @@ export default function PaymentManagementPage() {
         <MetricCard label="Pending" value={formatCurrency(summary.pendingAmount)} helper="Open payment records" />
         <MetricCard label="Outstanding" value={formatCurrency(summary.totalOutstanding)} helper="Remaining balances" />
         <MetricCard label="Vendor Payouts" value={formatCurrency(summary.vendorPayoutPendingAmount)} helper="Pending settlements" />
-        <MetricCard label="Advance %" value={`${summary.advancePaymentPercentage ?? 30}%`} helper="Global default" />
+        <MetricCard
+          label="Advance %"
+          value={`${settings?.advance_payment_percentage ?? summary.advancePaymentPercentage ?? 30}%`}
+          helper="Global default"
+        />
       </div>
 
       {/* ── Section tabs ── */}
@@ -764,7 +931,7 @@ export default function PaymentManagementPage() {
 
         {section === 'settings' && (
           <SettingsSection
-            workspaceSettings={workspace.settings}
+            workspaceSettings={settings}
             updateSettingsMutation={updateSettingsMutation}
           />
         )}
