@@ -327,7 +327,7 @@ export default function AdminLayout() {
         </nav>
       </aside>
 
-      <div className="flex  min-h-screen w-full flex-col bg-[#F2F2F2] md:ml-[260px] md:flex-1">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col bg-[#F2F2F2] md:ml-[260px]">
         <header className="fixed left-0 right-0 top-0 z-20 h-[68px] border-b border-[#E4DED8] bg-[#FAFAFA] px-4 py-3 sm:px-6 md:left-[260px]">
           <div className="flex h-full w-full items-center justify-between">
             <div className="flex items-center gap-3">
@@ -408,10 +408,10 @@ export default function AdminLayout() {
         </header>
 
         <main
-          className="flex flex-1 flex-col overflow-y-auto pb-20 md:min-h-0"
+          className="flex min-w-0 flex-1 flex-col overflow-y-auto pb-20 md:min-h-0"
           style={{ marginTop: '68px', backgroundColor: '#F2F2F2' }}
         >
-          <div className="flex flex-1 flex-col px-6 py-6 md:px-8 md:py-8">
+          <div className="flex min-w-0 flex-1 flex-col px-6 py-6 md:px-8 md:py-8">
             <Outlet />
           </div>
         </main>

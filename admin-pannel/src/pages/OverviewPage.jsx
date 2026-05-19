@@ -14,23 +14,40 @@ import { formatCount, formatCurrency, formatDate } from '../lib/formatters'
 // StatusBadge
 // ---------------------------------------------------------------------------
 const badgeClasses = {
-  urgent:    'bg-red-100 text-red-800',
-  overdue:   'bg-amber-100 text-amber-800',
-  pending:   'bg-blue-50 text-blue-700',
-  confirmed: 'bg-green-100 text-green-800',
-  new:       'bg-[#F5EDD9] text-[#7A5C2E]',
-  high:      'bg-red-100 text-red-800',
-  medium:    'bg-amber-100 text-amber-800',
-  low:       'bg-green-100 text-green-800',
-  open:      'bg-gray-100 text-gray-700',
-  healthy:   'bg-green-100 text-green-800',
-  warning:   'bg-amber-100 text-amber-800',
-  error:     'bg-red-100 text-red-800',
+  urgent: 'bg-[#FFF1F0] text-[#591902]',
+  overdue: 'bg-[#FFF4E5] text-[#C07318]',
+  pending: 'bg-[#EEF4FF] text-[#3061C6]',
+  confirmed: 'bg-[#EAF8F1] text-[#238E64]',
+
+  new: 'bg-[#EEF4FF] text-[#3061C6]',
+
+  high: 'bg-[#FFF1F0] text-[#591902]',
+  medium: 'bg-[#FFF4E5] text-[#C07318]',
+  low: 'bg-[#F3F4F6] text-[#6B7280]',
+
+  open: 'bg-[#F3F4F6] text-[#6B7280]',
+
+  healthy: 'bg-[#EAF8F1] text-[#238E64]',
+  warning: 'bg-[#FFF4E5] text-[#C07318]',
+  error: 'bg-[#FFF1F0] text-[#591902]',
+  in_progress: 'bg-[#FFF4E5] text-[#C07318]',
+  success: 'text-[#238E64] bg-[#EAF8F1]',
+  resolved: 'text-[#238E64] bg-[#EAF8F1]',
 }
 
+const getStatusKey = status => status?.toLowerCase()?.replace(/[\s-]+/g, '_') ?? ''
+const getStatusBadgeClasses = status => {
+  const key = getStatusKey(status)
+  return {
+    key,
+    cls: badgeClasses[key] ?? 'bg-[#FFF4E5] text-[#C07318]',
+  }
+}
+
+const getTextColorHex = cls => cls.match(/text-\[(#[0-9A-Fa-f]{3,8})\]/)?.[1] ?? null
+
 function StatusBadge({ status, label }) {
-  const key = status?.toLowerCase() ?? ''
-  const cls = badgeClasses[key] ?? 'bg-gray-100 text-gray-700'
+  const { key, cls } = getStatusBadgeClasses(status)
   const text = label ?? (key.charAt(0).toUpperCase() + key.slice(1)) ?? '—'
   return (
     <span
@@ -139,24 +156,24 @@ function AlertItem({ alert }) {
 // RevenueCard
 // ---------------------------------------------------------------------------
 const revenueVariants = {
-  good:    'border-green-200 bg-green-50',
-  warn:    'border-red-200 bg-red-50',
-  default: 'border-[#F0EBE3] bg-white',
+  good: 'border-l-[#238E64]',
+  warn: 'border-l-[#591902]',
+  default: 'border-l-[#3061C6]',
 }
 const revenueLabelVariants = {
-  good:    'text-green-700',
-  warn:    'text-red-700',
-  default: 'text-gray-400',
+  good: 'text-[#238E64]',
+  warn: 'text-[#591902]',
+  default: 'text-[#6B7280]',
 }
 const revenueValueVariants = {
-  good:    'text-green-800',
-  warn:    'text-red-800',
-  default: 'text-gray-900',
+  good: 'text-[#238E64]',
+  warn: 'text-[#591902]',
+  default: 'text-[#1F2937]',
 }
 
 function RevenueCard({ label, value, variant = 'default' }) {
   return (
-    <div className={`rounded-xl border p-4 ${revenueVariants[variant]}`}>
+    <div className={`rounded-xl border-l-[3px] p-4 ${revenueVariants[variant]}`}>
       <p className={`text-[11px] font-normal uppercase tracking-widest ${revenueLabelVariants[variant]}`}>
         {label}
       </p>
@@ -170,17 +187,13 @@ function RevenueCard({ label, value, variant = 'default' }) {
 // ---------------------------------------------------------------------------
 // HealthCard
 // ---------------------------------------------------------------------------
-const healthBorderVariants = {
-  healthy: 'border-l-green-500',
-  warning: 'border-l-amber-400',
-  error:   'border-l-red-500',
-}
-
 function HealthCard({ item }) {
-  const borderCls = healthBorderVariants[item.status] ?? 'border-l-gray-300'
+  const { cls } = getStatusBadgeClasses(item.status)
+  const borderColor = getTextColorHex(cls) ?? '#D1D5DB'
   return (
     <div
-      className={`rounded-xl border border-[#F0EBE3] border-l-[3px] bg-white p-4 ${borderCls}`}
+      className="rounded-xl border border-[#F0EBE3] border-l-[3px] bg-white p-4"
+      style={{ borderLeftColor: borderColor }}
     >
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
@@ -231,11 +244,11 @@ export default function OverviewPage() {
   const [tab, setTab] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const overviewQuery = useAdminOverview()
-  const overview         = overviewQuery.data ?? {}
-  const metrics          = overview.metrics ?? {}
-  const pendingActions   = overview.pendingActions ?? []
+  const overview = overviewQuery.data ?? {}
+  const metrics = overview.metrics ?? {}
+  const pendingActions = overview.pendingActions ?? []
   const healthIndicators = overview.systemHealth ?? []
-  const overdueAlerts    = overview.overdueAlerts?.length
+  const overdueAlerts = overview.overdueAlerts?.length
     ? overview.overdueAlerts
     : overview.alerts ?? []
   const upcomingBookings = overview.upcomingBookings ?? []
@@ -296,7 +309,7 @@ export default function OverviewPage() {
       </div>
 
       {/* ── Booking metrics ── */}
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Total Bookings"
           value={formatCount(metrics.totalBookings)}
@@ -324,7 +337,7 @@ export default function OverviewPage() {
       </div>
 
       {/* ── Financial / misc metrics ── */}
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Upcoming Events"
           value={formatCount(metrics.upcomingEventsCount)}
@@ -352,7 +365,7 @@ export default function OverviewPage() {
       </div>
 
       {/* ── Pending Actions + Overdue Alerts ── */}
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Pending Actions" subtitle="Approvals, messages & missing data">
           {pendingActions.length ? (
             <div className="space-y-2.5">
@@ -393,50 +406,50 @@ export default function OverviewPage() {
         {filteredBookings.length ? (
           <div>
             <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-2">
-              <thead>
-                <tr className="text-left">
-                  {TABLE_COLS.map(col => (
-                    <th
-                      key={col}
-                      className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400"
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedBookings.map(booking => (
-                  <tr key={booking.id} className="bg-white">
-                    <td className="rounded-l-xl px-3 py-3.5 text-sm text-gray-800">
-                      {formatDate(booking.eventDate)}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm font-semibold text-[#1C1C1C]">
-                      {booking.event?.name || booking.package?.title || booking.id}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm text-gray-500">
-                      {booking.locationSummary || 'Venue pending'}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm text-gray-800">
-                      {booking.customer?.name || 'Customer'}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm text-gray-500">
-                      {booking.package?.serviceCategories?.[0]?.name || 'General service'}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm">
-                      <StatusBadge
-                        status={booking.vendorAssignments?.length ? 'confirmed' : 'pending'}
-                        label={booking.vendorAssignments?.length ? 'Assigned' : 'Unassigned'}
-                      />
-                    </td>
-                    <td className="rounded-r-xl px-3 py-3.5 text-sm">
-                      <StatusBadge status={booking.status} label={booking.statusLabel} />
-                    </td>
+              <table className="min-w-full border-separate border-spacing-y-2">
+                <thead>
+                  <tr className="text-left">
+                    {TABLE_COLS.map(col => (
+                      <th
+                        key={col}
+                        className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400"
+                      >
+                        {col}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {paginatedBookings.map(booking => (
+                    <tr key={booking.id} className="bg-white">
+                      <td className="rounded-l-xl px-3 py-3.5 text-sm text-gray-800">
+                        {formatDate(booking.eventDate)}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm font-semibold text-[#1C1C1C]">
+                        {booking.event?.name || booking.package?.title || booking.id}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm text-gray-500">
+                        {booking.locationSummary || 'Venue pending'}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm text-gray-800">
+                        {booking.customer?.name || 'Customer'}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm text-gray-500">
+                        {booking.package?.serviceCategories?.[0]?.name || 'General service'}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm">
+                        <StatusBadge
+                          status={booking.vendorAssignments?.length ? 'confirmed' : 'pending'}
+                          label={booking.vendorAssignments?.length ? 'Assigned' : 'Unassigned'}
+                        />
+                      </td>
+                      <td className="rounded-r-xl px-3 py-3.5 text-sm">
+                        <StatusBadge status={booking.status} label={booking.statusLabel} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
@@ -467,7 +480,7 @@ export default function OverviewPage() {
       </Panel>
 
       {/* ── Revenue Snapshot + System Health ── */}
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Revenue Snapshot" subtitle="Payment collection summary">
           <div className="grid grid-cols-2 gap-3">
             <RevenueCard

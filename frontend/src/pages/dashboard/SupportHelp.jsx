@@ -22,10 +22,10 @@ import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
 // ---------------------------------------------------------------------------
 
 const ticketStatusBadge = {
-  open: 'bg-[#DBEAFE] text-[#0383E4]',
-  in_progress: 'bg-[#FCE7CF] text-[#C57A1E]',
-  resolved: 'bg-[#DDF7E5] text-[#16A34A]',
-  closed: 'bg-[#E5E7EB] text-[#4B5563]',
+  open: 'bg-[#EEF4FF] text-[#3061C6]',
+  in_progress: 'bg-[#FFF4E5] text-[#C07318]',
+  resolved: 'bg-[#EAF8F1] text-[#238E64]',
+  closed: 'bg-[#F3F4F6] text-[#6B7280]',
 }
 
 function TicketBadge({ status }) {
@@ -34,7 +34,7 @@ function TicketBadge({ status }) {
   const text = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${cls}`}
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs whitespace-nowrap ${cls}`}
     >
       {text}
     </span>

@@ -18,19 +18,22 @@ import { formatDateTime } from '../lib/formatters'
 // ---------------------------------------------------------------------------
 
 const badgeMap = {
-  open: 'bg-[#DBEAFE] text-[#0383E4]',
-  in_progress: 'bg-[#FCE7CF] text-[#C57A1E]',
-  resolved: 'bg-[#DDF7E5] text-[#16A34A]',
-  closed: 'bg-[#E5E7EB] text-[#4B5563]',
-  low: 'bg-[#E5E7EB] text-[#4B5563]',
-  medium: 'bg-[#FCE7CF] text-[#C57A1E]',
-  high: 'bg-[#FFF3F3] text-[#8A1C1C]',
+  // Status
+  open:        'bg-[#EEF4FF] text-[#3061C6]',
+  in_progress: 'bg-[#FFF4E5] text-[#C07318]',
+  resolved:    'bg-[#EAF8F1] text-[#238E64]',
+  closed:      'bg-[#F3F4F6] text-[#6B7280]',
+
+  // Severity
+  low:         'bg-[#F3F4F6] text-[#6B7280]',
+  medium:      'bg-[#FFF4E5] text-[#C07318]',
+  high:        'bg-[#FFF1F0] text-[#591902]',
 }
 
 const priorityDot = {
   low: 'bg-gray-400',
-  medium: 'bg-amber-400',
-  high: 'bg-red-500',
+  medium: 'bg-[#C07318]',
+  high: 'bg-[#591902]',
 }
 
 function Badge({ status, label }) {
@@ -340,20 +343,20 @@ export default function SupportPage() {
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex-1 min-w-[140px]">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Status</p>
-                  <Select value={statusInput} onChange={setStatusInput}>
+                  <SelectField value={statusInput} onChange={setStatusInput}>
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
-                  </Select>
+                  </SelectField>
                 </div>
                 <div className="flex-1 min-w-[140px]">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Priority</p>
-                  <Select value={priorityInput} onChange={setPriorityInput}>
+                  <SelectField value={priorityInput} onChange={setPriorityInput}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
-                  </Select>
+                  </SelectField>
                 </div>
                 <PrimaryBtn
                   disabled={updateTicketMutation.isPending}

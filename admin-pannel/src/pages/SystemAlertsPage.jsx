@@ -8,33 +8,33 @@ import { formatDateTime } from '../lib/formatters'
 // ---------------------------------------------------------------------------
 
 const severityBadge = {
-  low:      'bg-[#E5E7EB] text-[#4B5563]',
-  medium:   'bg-[#FCE7CF] text-[#C57A1E]',
-  high:     'bg-[#FFF3F3] text-[#8A1C1C]',
-  critical: 'bg-[#8A1C1C] text-white',
+  low:      'bg-[#F3F4F6] text-[#6B7280]', // grey
+  medium:   'bg-[#FFF4E5] text-[#C07318]', // orange
+  high:     'bg-[#FFF1F0] text-[#591902]', // danger red
+  critical: 'bg-[#591902] text-white',     // strong danger
 }
 
 const statusBadge = {
-  new:          'bg-[#DBEAFE] text-[#0383E4]',
-  acknowledged: 'bg-[#FCE7CF] text-[#C57A1E]',
-  snoozed:      'bg-[#E5E7EB] text-[#4B5563]',
-  resolved:     'bg-[#DDF7E5] text-[#16A34A]',
+  new:          'bg-[#EEF4FF] text-[#3061C6]', // blue
+  acknowledged: 'bg-[#FFF4E5] text-[#C07318]', // medium/orange
+  snoozed:      'bg-[#F3F4F6] text-[#6B7280]', // grey
+  resolved:     'bg-[#EAF8F1] text-[#238E64]', // success green
 }
 
 // Left border accent per severity
 const severityBorder = {
   low:      'border-l-gray-300',
-  medium:   'border-l-amber-400',
-  high:     'border-l-red-400',
-  critical: 'border-l-red-700',
+  medium:   'border-l-[#C07318]',
+  high:     'border-l-[#591902]',
+  critical: 'border-l-[#591902]',
 }
 
 // Severity dot colour
 const severityDot = {
   low:      'bg-gray-400',
-  medium:   'bg-amber-400',
-  high:     'bg-red-400',
-  critical: 'bg-red-700',
+  medium:   'bg-[#C07318]',
+  high:     'bg-[#591902]',
+  critical: 'bg-[#591902]',
 }
 
 function Badge({ status, map, fallback = 'bg-[#E5E7EB] text-[#4B5563]' }) {
