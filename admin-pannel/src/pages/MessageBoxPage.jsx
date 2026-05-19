@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  StatusBadge,
-} from '../components/ui/AdminUI'
+import { EmptyState, ErrorState, LoadingState, StatusBadge } from '../components/ui/AdminUI'
 import {
   useAdminMessageThread,
   useAdminMessageThreads,
@@ -64,7 +59,9 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
         <Avatar name={customerName} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className={`truncate text-sm font-semibold ${isSelected ? 'text-[#591902]' : 'text-[#1C1C1C]'}`}>
+            <p
+              className={`truncate text-sm font-semibold ${isSelected ? 'text-[#591902]' : 'text-[#1C1C1C]'}`}
+            >
               {customerName}
             </p>
             {unread > 0 ? (
@@ -140,30 +137,36 @@ export default function MessageBoxPage() {
   const messagesEndRef = useRef(null)
 
   const threadsQuery = useAdminMessageThreads({ search })
-  const allThreads = threadsQuery.data?.threads ?? []
+  const allThreads = useMemo(() => threadsQuery.data?.threads ?? [], [threadsQuery.data?.threads])
   const activeThreads = useMemo(() => allThreads.filter(t => !isArchivedThread(t)), [allThreads])
   const archivedThreads = useMemo(() => allThreads.filter(t => isArchivedThread(t)), [allThreads])
-  const visibleThreads = threadTab === 'archived' ? archivedThreads : activeThreads
+  const effectiveThreadTab = useMemo(() => {
+    if (threadTab === 'active' && activeThreads.length === 0 && archivedThreads.length > 0) {
+      return 'archived'
+    }
+    if (threadTab === 'archived' && archivedThreads.length === 0 && activeThreads.length > 0) {
+      return 'active'
+    }
+    return threadTab
+  }, [activeThreads.length, archivedThreads.length, threadTab])
+  const visibleThreads = effectiveThreadTab === 'archived' ? archivedThreads : activeThreads
+  const effectiveSelectedBookingId = useMemo(() => {
+    if (visibleThreads.some(thread => thread.bookingId === selectedBookingId)) {
+      return selectedBookingId
+    }
+    return visibleThreads[0]?.bookingId ?? ''
+  }, [selectedBookingId, visibleThreads])
 
   const selectedThreadListItem = useMemo(
-    () => visibleThreads.find(t => t.bookingId === selectedBookingId) ?? visibleThreads[0] ?? null,
-    [selectedBookingId, visibleThreads]
+    () =>
+      visibleThreads.find(t => t.bookingId === effectiveSelectedBookingId) ??
+      visibleThreads[0] ??
+      null,
+    [effectiveSelectedBookingId, visibleThreads]
   )
 
   const threadQuery = useAdminMessageThread(selectedThreadListItem?.bookingId)
   const sendMessageMutation = useAdminSendMessage()
-
-  useEffect(() => {
-    if (threadTab === 'active' && activeThreads.length === 0 && archivedThreads.length > 0)
-      setThreadTab('archived')
-    if (threadTab === 'archived' && archivedThreads.length === 0 && activeThreads.length > 0)
-      setThreadTab('active')
-  }, [activeThreads.length, archivedThreads.length, threadTab])
-
-  useEffect(() => {
-    if (selectedThreadListItem && selectedThreadListItem.bookingId !== selectedBookingId)
-      setSelectedBookingId(selectedThreadListItem.bookingId)
-  }, [selectedBookingId, selectedThreadListItem])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -188,10 +191,11 @@ export default function MessageBoxPage() {
 
       {/* Three-column layout */}
       <div className="grid min-h-0 flex-1 gap-4 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_280px]">
-
         {/* ── Column 1: Thread List ── */}
-        <div className="flex min-h-0 flex-col gap-4 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:h-full xl:overflow-hidden" data-lenis-prevent>
-
+        <div
+          className="flex min-h-0 flex-col gap-4 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:h-full xl:overflow-hidden"
+          data-lenis-prevent
+        >
           {/* Search */}
           <div className="relative">
             <svg
@@ -200,7 +204,10 @@ export default function MessageBoxPage() {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
                 d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
               />
             </svg>
@@ -224,7 +231,7 @@ export default function MessageBoxPage() {
                 type="button"
                 onClick={() => setThreadTab(tab.key)}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-all duration-200 ${
-                  threadTab === tab.key
+                  effectiveThreadTab === tab.key
                     ? 'bg-[#591902] text-white shadow-sm'
                     : 'text-[#6B7280] hover:text-[#2D2D2D]'
                 }`}
@@ -232,7 +239,9 @@ export default function MessageBoxPage() {
                 {tab.label}
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    threadTab === tab.key ? 'bg-white/20 text-white' : 'bg-[#E8E2DA] text-[#6B7280]'
+                    effectiveThreadTab === tab.key
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[#E8E2DA] text-[#6B7280]'
                   }`}
                 >
                   {tab.count}
@@ -242,7 +251,10 @@ export default function MessageBoxPage() {
           </div>
 
           {/* Thread cards */}
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 hide-scrollbar" data-lenis-prevent>
+          <div
+            className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 hide-scrollbar"
+            data-lenis-prevent
+          >
             {visibleThreads.length ? (
               visibleThreads.map(threadItem => (
                 <ThreadCard
@@ -263,7 +275,6 @@ export default function MessageBoxPage() {
 
         {/* ── Column 2: Conversation ── */}
         <div className="flex min-h-0 flex-col gap-0 overflow-hidden rounded-[20px] border border-[#E4DED8] bg-white xl:sticky xl:top-0 xl:h-full">
-
           {thread ? (
             <>
               {/* Conversation header */}
@@ -298,14 +309,14 @@ export default function MessageBoxPage() {
               </div>
 
               {/* Messages scroll area */}
-              <div className="flex min-h-[360px] flex-1 flex-col gap-5 overflow-y-auto hide-scrollbar px-5 py-5 xl:min-h-0" data-lenis-prevent>
+              <div
+                className="flex min-h-[360px] flex-1 flex-col gap-5 overflow-y-auto hide-scrollbar px-5 py-5 xl:min-h-0"
+                data-lenis-prevent
+              >
                 {thread.messages?.length ? (
                   thread.messages.map(message => {
-                    const isAdmin =
-                      String(message.senderId) !== String(booking?.customer?.id)
-                    return (
-                      <MessageBubble key={message.id} message={message} isAdmin={isAdmin} />
-                    )
+                    const isAdmin = String(message.senderId) !== String(booking?.customer?.id)
+                    return <MessageBubble key={message.id} message={message} isAdmin={isAdmin} />
                   })
                 ) : (
                   <div className="flex flex-1 items-center justify-center">
@@ -322,8 +333,16 @@ export default function MessageBoxPage() {
               <div className="border-t border-[#E4DED8] bg-[#FAFAFA] px-5 py-4">
                 {isReadOnly ? (
                   <div className="mb-3 flex items-center gap-2 rounded-xl border border-dashed border-[#D6CDC3] bg-white px-4 py-3 text-xs text-[#6B7280]">
-                    <svg className="h-4 w-4 shrink-0 text-[#8F8F8F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                    <svg
+                      className="h-4 w-4 shrink-0 text-[#8F8F8F]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
                         d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
@@ -356,9 +375,7 @@ export default function MessageBoxPage() {
                       onChange={e => setMessageText(e.target.value)}
                       disabled={isReadOnly}
                       placeholder={
-                        isReadOnly
-                          ? 'Read-only thread.'
-                          : 'Write your message to the customer…'
+                        isReadOnly ? 'Read-only thread.' : 'Write your message to the customer…'
                       }
                       rows={3}
                       className="flex-1 resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
@@ -379,14 +396,31 @@ export default function MessageBoxPage() {
                     >
                       {sendMessageMutation.isPending ? (
                         <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor"
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                           />
                         </svg>
                       ) : (
-                        <svg className="h-5 w-5 translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        <svg
+                          className="h-5 w-5 translate-x-0.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
                             d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                           />
                         </svg>
@@ -410,9 +444,14 @@ export default function MessageBoxPage() {
         </div>
 
         {/* ── Column 3: Booking Context ── */}
-        <div className="flex min-h-0 flex-col gap-3 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:h-full xl:overflow-y-auto hide-scrollbar" data-lenis-prevent>
+        <div
+          className="flex min-h-0 flex-col gap-3 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:h-full xl:overflow-y-auto hide-scrollbar"
+          data-lenis-prevent
+        >
           <div className="border-b border-[#E4DED8] pb-3">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Booking Context</p>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+              Booking Context
+            </p>
             <p className="mt-1 text-xs text-[#6B7280]">Metadata for the selected conversation</p>
           </div>
 
@@ -461,7 +500,6 @@ export default function MessageBoxPage() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   )

@@ -1,12 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  PageIntro,
-  SelectField,
-} from '../components/ui/AdminUI'
+import { useState } from 'react'
+import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
 import { useAdminOverview } from '../hooks/useAdminData'
 import { formatCount, formatCurrency, formatDate } from '../lib/formatters'
 
@@ -14,24 +7,24 @@ import { formatCount, formatCurrency, formatDate } from '../lib/formatters'
 // StatusBadge
 // ---------------------------------------------------------------------------
 const badgeClasses = {
-  urgent:    'bg-red-100 text-red-800',
-  overdue:   'bg-amber-100 text-amber-800',
-  pending:   'bg-blue-50 text-blue-700',
+  urgent: 'bg-red-100 text-red-800',
+  overdue: 'bg-amber-100 text-amber-800',
+  pending: 'bg-blue-50 text-blue-700',
   confirmed: 'bg-green-100 text-green-800',
-  new:       'bg-[#F5EDD9] text-[#7A5C2E]',
-  high:      'bg-red-100 text-red-800',
-  medium:    'bg-amber-100 text-amber-800',
-  low:       'bg-green-100 text-green-800',
-  open:      'bg-gray-100 text-gray-700',
-  healthy:   'bg-green-100 text-green-800',
-  warning:   'bg-amber-100 text-amber-800',
-  error:     'bg-red-100 text-red-800',
+  new: 'bg-[#F5EDD9] text-[#7A5C2E]',
+  high: 'bg-red-100 text-red-800',
+  medium: 'bg-amber-100 text-amber-800',
+  low: 'bg-green-100 text-green-800',
+  open: 'bg-gray-100 text-gray-700',
+  healthy: 'bg-green-100 text-green-800',
+  warning: 'bg-amber-100 text-amber-800',
+  error: 'bg-red-100 text-red-800',
 }
 
 function StatusBadge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
   const cls = badgeClasses[key] ?? 'bg-gray-100 text-gray-700'
-  const text = label ?? (key.charAt(0).toUpperCase() + key.slice(1)) ?? '—'
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] tracking-wide whitespace-nowrap ${cls}`}
@@ -89,9 +82,7 @@ function Panel({ title, subtitle, children, action }) {
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base text-[#1C1C1C]">{title}</h2>
-          {subtitle && (
-            <p className="mt-1 text-[13px] text-gray-400">{subtitle}</p>
-          )}
+          {subtitle && <p className="mt-1 text-[13px] text-gray-400">{subtitle}</p>}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>
@@ -139,25 +130,27 @@ function AlertItem({ alert }) {
 // RevenueCard
 // ---------------------------------------------------------------------------
 const revenueVariants = {
-  good:    'border-green-200 bg-green-50',
-  warn:    'border-red-200 bg-red-50',
+  good: 'border-green-200 bg-green-50',
+  warn: 'border-red-200 bg-red-50',
   default: 'border-[#F0EBE3] bg-white',
 }
 const revenueLabelVariants = {
-  good:    'text-green-700',
-  warn:    'text-red-700',
+  good: 'text-green-700',
+  warn: 'text-red-700',
   default: 'text-gray-400',
 }
 const revenueValueVariants = {
-  good:    'text-green-800',
-  warn:    'text-red-800',
+  good: 'text-green-800',
+  warn: 'text-red-800',
   default: 'text-gray-900',
 }
 
 function RevenueCard({ label, value, variant = 'default' }) {
   return (
     <div className={`rounded-xl border p-4 ${revenueVariants[variant]}`}>
-      <p className={`text-[11px] font-normal uppercase tracking-widest ${revenueLabelVariants[variant]}`}>
+      <p
+        className={`text-[11px] font-normal uppercase tracking-widest ${revenueLabelVariants[variant]}`}
+      >
         {label}
       </p>
       <p className={`mt-2 text-[22px] font-semibold leading-none ${revenueValueVariants[variant]}`}>
@@ -173,15 +166,13 @@ function RevenueCard({ label, value, variant = 'default' }) {
 const healthBorderVariants = {
   healthy: 'border-l-green-500',
   warning: 'border-l-amber-400',
-  error:   'border-l-red-500',
+  error: 'border-l-red-500',
 }
 
 function HealthCard({ item }) {
   const borderCls = healthBorderVariants[item.status] ?? 'border-l-gray-300'
   return (
-    <div
-      className={`rounded-xl border border-[#F0EBE3] border-l-[3px] bg-white p-4 ${borderCls}`}
-    >
+    <div className={`rounded-xl border border-[#F0EBE3] border-l-[3px] bg-white p-4 ${borderCls}`}>
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
           {item.label}
@@ -222,8 +213,13 @@ function TableFilter({ active, onChange }) {
 // Main page
 // ---------------------------------------------------------------------------
 const TABLE_COLS = [
-  'Event Date', 'Event Type', 'Location',
-  'Customer', 'Service', 'Vendor', 'Status',
+  'Event Date',
+  'Event Type',
+  'Location',
+  'Customer',
+  'Service',
+  'Vendor',
+  'Status',
 ]
 const TABLE_PAGE_SIZE = 10
 
@@ -231,34 +227,23 @@ export default function OverviewPage() {
   const [tab, setTab] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const overviewQuery = useAdminOverview()
-  const overview         = overviewQuery.data ?? {}
-  const metrics          = overview.metrics ?? {}
-  const pendingActions   = overview.pendingActions ?? []
+  const overview = overviewQuery.data ?? {}
+  const metrics = overview.metrics ?? {}
+  const pendingActions = overview.pendingActions ?? []
   const healthIndicators = overview.systemHealth ?? []
-  const overdueAlerts    = overview.overdueAlerts?.length
+  const overdueAlerts = overview.overdueAlerts?.length
     ? overview.overdueAlerts
-    : overview.alerts ?? []
+    : (overview.alerts ?? [])
   const upcomingBookings = overview.upcomingBookings ?? []
 
   const filteredBookings =
-    tab === 'all'
-      ? upcomingBookings
-      : upcomingBookings.filter(b => b.status === tab)
+    tab === 'all' ? upcomingBookings : upcomingBookings.filter(b => b.status === tab)
   const totalPages = Math.max(1, Math.ceil(filteredBookings.length / TABLE_PAGE_SIZE))
+  const visiblePage = Math.min(currentPage, totalPages)
   const paginatedBookings = filteredBookings.slice(
-    (currentPage - 1) * TABLE_PAGE_SIZE,
-    currentPage * TABLE_PAGE_SIZE
+    (visiblePage - 1) * TABLE_PAGE_SIZE,
+    visiblePage * TABLE_PAGE_SIZE
   )
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [tab])
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
 
   if (overviewQuery.isLoading) {
     return <LoadingState label="Loading operational overview..." />
@@ -270,13 +255,10 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
-
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl tracking-tight text-[#1C1C1C]">
-            Overview
-          </h1>
+          <h1 className="text-2xl tracking-tight text-[#1C1C1C]">Overview</h1>
           <p className="mt-1 text-sm text-gray-400">
             Admin snapshot ·{' '}
             {new Date().toLocaleDateString('en-IN', {
@@ -361,10 +343,7 @@ export default function OverviewPage() {
               ))}
             </div>
           ) : (
-            <EmptyState
-              title="No pending actions"
-              body="No outstanding action items right now."
-            />
+            <EmptyState title="No pending actions" body="No outstanding action items right now." />
           )}
         </Panel>
 
@@ -388,55 +367,63 @@ export default function OverviewPage() {
       <Panel
         title="Upcoming Events"
         subtitle="Next 15 days"
-        action={<TableFilter active={tab} onChange={setTab} />}
+        action={
+          <TableFilter
+            active={tab}
+            onChange={value => {
+              setTab(value)
+              setCurrentPage(1)
+            }}
+          />
+        }
       >
         {filteredBookings.length ? (
           <div>
             <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-2">
-              <thead>
-                <tr className="text-left">
-                  {TABLE_COLS.map(col => (
-                    <th
-                      key={col}
-                      className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400"
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedBookings.map(booking => (
-                  <tr key={booking.id} className="bg-white">
-                    <td className="rounded-l-xl px-3 py-3.5 text-sm text-gray-800">
-                      {formatDate(booking.eventDate)}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm font-semibold text-[#1C1C1C]">
-                      {booking.event?.name || booking.package?.title || booking.id}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm text-gray-500">
-                      {booking.locationSummary || 'Venue pending'}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm text-gray-800">
-                      {booking.customer?.name || 'Customer'}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm text-gray-500">
-                      {booking.package?.serviceCategories?.[0]?.name || 'General service'}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm">
-                      <StatusBadge
-                        status={booking.vendorAssignments?.length ? 'confirmed' : 'pending'}
-                        label={booking.vendorAssignments?.length ? 'Assigned' : 'Unassigned'}
-                      />
-                    </td>
-                    <td className="rounded-r-xl px-3 py-3.5 text-sm">
-                      <StatusBadge status={booking.status} label={booking.statusLabel} />
-                    </td>
+              <table className="min-w-full border-separate border-spacing-y-2">
+                <thead>
+                  <tr className="text-left">
+                    {TABLE_COLS.map(col => (
+                      <th
+                        key={col}
+                        className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400"
+                      >
+                        {col}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {paginatedBookings.map(booking => (
+                    <tr key={booking.id} className="bg-white">
+                      <td className="rounded-l-xl px-3 py-3.5 text-sm text-gray-800">
+                        {formatDate(booking.eventDate)}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm font-semibold text-[#1C1C1C]">
+                        {booking.event?.name || booking.package?.title || booking.id}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm text-gray-500">
+                        {booking.locationSummary || 'Venue pending'}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm text-gray-800">
+                        {booking.customer?.name || 'Customer'}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm text-gray-500">
+                        {booking.package?.serviceCategories?.[0]?.name || 'General service'}
+                      </td>
+                      <td className="px-3 py-3.5 text-sm">
+                        <StatusBadge
+                          status={booking.vendorAssignments?.length ? 'confirmed' : 'pending'}
+                          label={booking.vendorAssignments?.length ? 'Assigned' : 'Unassigned'}
+                        />
+                      </td>
+                      <td className="rounded-r-xl px-3 py-3.5 text-sm">
+                        <StatusBadge status={booking.status} label={booking.statusLabel} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
@@ -449,7 +436,7 @@ export default function OverviewPage() {
                 <ArrowIcon direction="left" />
               </button>
               <div className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#6B7280]">
-                {currentPage} / {totalPages}
+                {visiblePage} / {totalPages}
               </div>
               <button
                 type="button"
@@ -508,7 +495,6 @@ export default function OverviewPage() {
           )}
         </Panel>
       </div>
-
     </div>
   )
 }

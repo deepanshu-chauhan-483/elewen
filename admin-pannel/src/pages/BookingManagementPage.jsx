@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
 import {
   useAdminAddBookingNote,
@@ -202,10 +202,6 @@ function BookingAccordionCard({ booking }) {
   const updateStatusMutation = useAdminUpdateBookingStatus()
   const addNoteMutation = useAdminAddBookingNote()
   const createAssignmentMutation = useAdminCreateVendorAssignment()
-
-  useEffect(() => {
-    setStatusInput(booking.status ?? '')
-  }, [booking.id])
 
   const borderColor = borderColorMap[booking.status?.toLowerCase()] ?? 'border-[#CDB17E]'
   const subtitle = getSubtitle(booking)
@@ -479,19 +475,9 @@ export default function BookingManagementPage() {
     page: currentPage,
     limit: PAGE_SIZE,
   })
-  const bookings      = bookingsQuery.data?.bookings ?? []
+  const bookings = bookingsQuery.data?.bookings ?? []
   const totalBookings = Number(bookingsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [search, bucket, statusFilter])
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
 
   if (bookingsQuery.isLoading) return <LoadingState label="Loading bookings…" />
   if (bookingsQuery.error) return <ErrorState label="Bookings could not be loaded right now." />
@@ -521,14 +507,20 @@ export default function BookingManagementPage() {
             <input
               type="text"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => {
+                setSearch(e.target.value)
+                setCurrentPage(1)
+              }}
               placeholder="Search"
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
           <SelectField
             value={bucket}
-            onChange={setBucket}
+            onChange={value => {
+              setBucket(value)
+              setCurrentPage(1)
+            }}
             className="min-h-10 rounded-full bg-[#F3F3F3]"
           >
             <option value="all">All Buckets</option>
@@ -540,7 +532,10 @@ export default function BookingManagementPage() {
           </SelectField>
           <SelectField
             value={statusFilter}
-            onChange={setStatusFilter}
+            onChange={value => {
+              setStatusFilter(value)
+              setCurrentPage(1)
+            }}
             className="min-h-10 rounded-full bg-[#F3F3F3]"
           >
             <option value="">All Stages</option>
@@ -562,7 +557,9 @@ export default function BookingManagementPage() {
         <span className="text-base font-semibold text-[#1C1C1C]">
           {totalBookings} booking{totalBookings !== 1 ? 's' : ''}
         </span>
-        {statusFilter && <span className="text-sm text-[#8F8F8F]">in "{statusFilter}" stage</span>}
+        {statusFilter && (
+          <span className="text-sm text-[#8F8F8F]">in &quot;{statusFilter}&quot; stage</span>
+        )}
       </div>
 
       {/* ── Accordion list ── */}
@@ -570,7 +567,10 @@ export default function BookingManagementPage() {
         <div>
           <div className="space-y-3">
             {bookings.map(booking => (
-              <BookingAccordionCard key={booking.id} booking={booking} />
+              <BookingAccordionCard
+                key={`${booking.id}:${booking.status ?? ''}`}
+                booking={booking}
+              />
             ))}
           </div>
 
@@ -581,10 +581,10 @@ export default function BookingManagementPage() {
               disabled={currentPage === 1}
               className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
             >
-               <ArrowIcon direction="left" />
+              <ArrowIcon direction="left" />
             </button>
             <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
-              {currentPage} / {totalPages}
+              {Math.min(currentPage, totalPages)} / {totalPages}
             </div>
             <button
               type="button"
@@ -592,7 +592,7 @@ export default function BookingManagementPage() {
               disabled={currentPage === totalPages}
               className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
             >
-               <ArrowIcon direction="right" />
+              <ArrowIcon direction="right" />
             </button>
           </div>
         </div>

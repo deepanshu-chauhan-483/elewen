@@ -291,7 +291,8 @@ export function useAdminMessageThread(bookingId) {
   return useAuthedAdminQuery({
     queryKey: ['admin', 'message-thread', bookingId],
     enabled: Boolean(bookingId),
-    queryFn: token => adminMessageThread(token, bookingId).then(response => response?.thread ?? null),
+    queryFn: token =>
+      adminMessageThread(token, bookingId).then(response => response?.thread ?? null),
   })
 }
 
@@ -454,7 +455,8 @@ export function useAdminSupportTicket(ticketId) {
   return useAuthedAdminQuery({
     queryKey: ['admin', 'support-ticket', ticketId],
     enabled: Boolean(ticketId),
-    queryFn: token => adminSupportTicket(token, ticketId).then(response => response?.ticket ?? null),
+    queryFn: token =>
+      adminSupportTicket(token, ticketId).then(response => response?.ticket ?? null),
   })
 }
 

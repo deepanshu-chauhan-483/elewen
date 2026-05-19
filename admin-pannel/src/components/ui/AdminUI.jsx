@@ -34,7 +34,9 @@ export function PageIntro({ title, subtitle, action }) {
   return (
     <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Operational Console</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
+          Operational Console
+        </p>
         <h1 className="mt-2 text-2xl text-[#2E2E2E] md:text-[30px]">{title}</h1>
         {subtitle ? <p className="mt-2 max-w-3xl text-sm text-[#6B7280]">{subtitle}</p> : null}
       </div>
@@ -55,9 +57,7 @@ export function MetricCard({ label, value, helper }) {
 
 export function Panel({ title, subtitle, action, children, className = '' }) {
   return (
-    <section
-      className={`rounded-[28px] bg-[#F3F3F3] p-6 ${className}`}
-    >
+    <section className={`rounded-[28px] bg-[#F3F3F3] p-6 ${className}`}>
       {(title || subtitle || action) && (
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
@@ -167,9 +167,9 @@ export function ActionButton({
       ? 'bg-[#F3F3F3] text-[#262626] hover:bg-[#E8E8E8]'
       : tone === 'gold'
         ? 'bg-[#D4BA8E] text-[#FAFAFA] hover:bg-[#c7aa76]'
-      : tone === 'danger'
-        ? 'bg-[#9C3E34] text-white hover:bg-[#892F26]'
-        : 'bg-[#591902] text-white hover:opacity-90'
+        : tone === 'danger'
+          ? 'bg-[#9C3E34] text-white hover:bg-[#892F26]'
+          : 'bg-[#591902] text-white hover:opacity-90'
 
   return (
     <button
@@ -212,7 +212,10 @@ export function FieldList({ items }) {
   return (
     <div className="grid gap-3 md:grid-cols-2">
       {items.map(item => (
-        <div key={item.label} className="rounded-2xl bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.03)]">
+        <div
+          key={item.label}
+          className="rounded-2xl bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.03)]"
+        >
           <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">{item.label}</p>
           <p className="mt-2 text-sm text-[#2E2E2E]">{item.value || 'Not available'}</p>
         </div>

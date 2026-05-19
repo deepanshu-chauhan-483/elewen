@@ -142,7 +142,7 @@ export default function BookingStatusTrackerPage() {
   const [activeStage, setActiveStage] = useState('all')
   const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 60 })
 
-  const bookings = bookingsQuery.data?.bookings ?? []
+  const bookings = useMemo(() => bookingsQuery.data?.bookings ?? [], [bookingsQuery.data?.bookings])
 
   const counts = useMemo(() => {
     const map = { all: bookings.length }
@@ -196,7 +196,7 @@ export default function BookingStatusTrackerPage() {
           {filtered.length} booking{filtered.length !== 1 ? 's' : ''}
         </span>
         {activeStage !== 'all' && (
-          <span className="text-sm text-[#8F8F8F]">in "{activeLabel}" stage</span>
+          <span className="text-sm text-[#8F8F8F]">in &quot;{activeLabel}&quot; stage</span>
         )}
       </div>
 

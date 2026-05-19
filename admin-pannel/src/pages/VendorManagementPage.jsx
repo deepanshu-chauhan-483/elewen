@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { EmptyState, ErrorState, LoadingState } from '../components/ui/AdminUI'
 import {
   useAdminBookings,
@@ -15,23 +15,23 @@ import { formatCurrency } from '../lib/formatters'
 // ---------------------------------------------------------------------------
 
 const badgeMap = {
-  pending:     'bg-[#FCE7CF] text-[#C57A1E]',
-  approved:    'bg-[#DDF7E5] text-[#16A34A]',
-  rejected:    'bg-[#FFF3F3] text-[#8A1C1C]',
-  inactive:    'bg-[#E5E7EB] text-[#4B5563]',
-  available:   'bg-[#DDF7E5] text-[#16A34A]',
+  pending: 'bg-[#FCE7CF] text-[#C57A1E]',
+  approved: 'bg-[#DDF7E5] text-[#16A34A]',
+  rejected: 'bg-[#FFF3F3] text-[#8A1C1C]',
+  inactive: 'bg-[#E5E7EB] text-[#4B5563]',
+  available: 'bg-[#DDF7E5] text-[#16A34A]',
   unavailable: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  assigned:    'bg-[#DDF7E5] text-[#16A34A]',
-  confirmed:   'bg-[#DDF7E5] text-[#16A34A]',
-  completed:   'bg-[#E5E7EB] text-[#4B5563]',
-  cancelled:   'bg-[#FFF3F3] text-[#8A1C1C]',
-  success:     'bg-[#DDF7E5] text-[#16A34A]',
-  failed:      'bg-[#FFF3F3] text-[#8A1C1C]',
+  assigned: 'bg-[#DDF7E5] text-[#16A34A]',
+  confirmed: 'bg-[#DDF7E5] text-[#16A34A]',
+  completed: 'bg-[#E5E7EB] text-[#4B5563]',
+  cancelled: 'bg-[#FFF3F3] text-[#8A1C1C]',
+  success: 'bg-[#DDF7E5] text-[#16A34A]',
+  failed: 'bg-[#FFF3F3] text-[#8A1C1C]',
 }
 
 // Left border accent per vendor status
 const borderColorMap = {
-  pending:  'border-[#C57A1E]',
+  pending: 'border-[#C57A1E]',
   approved: 'border-[#16A34A]',
   rejected: 'border-[#8A1C1C]',
   inactive: 'border-[#9CA3AF]',
@@ -40,9 +40,11 @@ const borderColorMap = {
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
   const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
-  const text = label ?? (key.charAt(0).toUpperCase() + key.slice(1)) ?? '—'
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}
+    >
       {text}
     </span>
   )
@@ -50,8 +52,12 @@ function Badge({ status, label }) {
 
 function MetricCard({ label, value, helper, accent }) {
   return (
-    <div className={`flex flex-col gap-1 rounded-2xl border bg-white px-5 py-5 ${accent ? 'border-t-[3px] border-t-[#D4BA8E] border-[#E4DED8]' : 'border-[#E4DED8]'}`}>
-      <span className="text-[11px] font-semibold uppercase tracking-widest text-[#8F8F8F]">{label}</span>
+    <div
+      className={`flex flex-col gap-1 rounded-2xl border bg-white px-5 py-5 ${accent ? 'border-t-[3px] border-t-[#D4BA8E] border-[#E4DED8]' : 'border-[#E4DED8]'}`}
+    >
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-[#8F8F8F]">
+        {label}
+      </span>
       <span className="text-[26px] font-bold leading-none text-[#1C1C1C]">{value}</span>
       <span className="text-xs text-[#6B7280]">{helper}</span>
     </div>
@@ -84,8 +90,12 @@ function Input({ type = 'text', value, onChange, placeholder }) {
 
 function PrimaryBtn({ children, onClick, disabled }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+    >
       {children}
     </button>
   )
@@ -93,8 +103,12 @@ function PrimaryBtn({ children, onClick, disabled }) {
 
 function GhostBtn({ children, onClick, disabled }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+    >
       {children}
     </button>
   )
@@ -102,21 +116,34 @@ function GhostBtn({ children, onClick, disabled }) {
 
 function DangerBtn({ children, onClick, disabled }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#FECACA] bg-[#FFF3F3] px-5 text-sm font-semibold text-[#8A1C1C] transition hover:bg-[#FFE4E4] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#FECACA] bg-[#FFF3F3] px-5 text-sm font-semibold text-[#8A1C1C] transition hover:bg-[#FFE4E4] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+    >
       {children}
     </button>
   )
 }
 
 function SectionLabel({ children }) {
-  return <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">{children}</p>
+  return (
+    <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">
+      {children}
+    </p>
+  )
 }
 
 function ChevronIcon({ open }) {
   return (
-    <svg className={`h-5 w-5 text-[#8F8F8F] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg
+      className={`h-5 w-5 text-[#8F8F8F] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
     </svg>
   )
@@ -125,8 +152,12 @@ function ChevronIcon({ open }) {
 function SearchIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"
-        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.5"
+        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+      />
     </svg>
   )
 }
@@ -139,13 +170,21 @@ function filterVendors(vendors, { search, category, location, availability }) {
   const c = category?.trim().toLowerCase() ?? ''
   const l = location?.trim().toLowerCase() ?? ''
   return vendors.filter(v => {
-    if (availability === 'available'   && !v.isAvailable) return false
-    if (availability === 'unavailable' &&  v.isAvailable) return false
-    if (c && !(v.serviceCategories ?? []).some(sc => sc.name?.toLowerCase().includes(c))) return false
+    if (availability === 'available' && !v.isAvailable) return false
+    if (availability === 'unavailable' && v.isAvailable) return false
+    if (c && !(v.serviceCategories ?? []).some(sc => sc.name?.toLowerCase().includes(c)))
+      return false
     if (l && !v.locationCity?.toLowerCase().includes(l)) return false
     if (!s) return true
-    return [v.companyName, v.contactPerson, v.locationCity,
-      ...(v.serviceCategories ?? []).map(sc => sc.name)].join(' ').toLowerCase().includes(s)
+    return [
+      v.companyName,
+      v.contactPerson,
+      v.locationCity,
+      ...(v.serviceCategories ?? []).map(sc => sc.name),
+    ]
+      .join(' ')
+      .toLowerCase()
+      .includes(s)
   })
 }
 
@@ -153,36 +192,37 @@ function filterVendors(vendors, { search, category, location, availability }) {
 // Vendor Accordion Card — mirrors BookingAccordionCard pattern
 // ---------------------------------------------------------------------------
 function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
-  const [open, setOpen]               = useState(false)
+  const [open, setOpen] = useState(false)
   const [vendorStatus, setVendorStatus] = useState(vendor.vendorStatus ?? 'pending')
-  const [isAvailable, setIsAvailable]  = useState(Boolean(vendor.isAvailable))
-  const [minimumPrice, setMinimumPrice] = useState(vendor.minimumPrice ? String(vendor.minimumPrice) : '')
-  const [leadTimeDays, setLeadTimeDays] = useState(vendor.leadTimeDays ? String(vendor.leadTimeDays) : '')
-  const [bookingId, setBookingId]      = useState('')
+  const [isAvailable, setIsAvailable] = useState(Boolean(vendor.isAvailable))
+  const [minimumPrice, setMinimumPrice] = useState(
+    vendor.minimumPrice ? String(vendor.minimumPrice) : ''
+  )
+  const [leadTimeDays, setLeadTimeDays] = useState(
+    vendor.leadTimeDays ? String(vendor.leadTimeDays) : ''
+  )
+  const [bookingId, setBookingId] = useState('')
 
-  const updateVendorMutation      = useAdminUpdateVendor()
-  const assignVendorMutation      = useAdminCreateVendorAssignment()
-  const updateAssignmentMutation  = useAdminUpdateVendorAssignment()
-  const assignmentsQuery          = useAdminVendorAssignments({ vendorId: vendor.id, enabled: open })
-
-  useEffect(() => {
-    setVendorStatus(vendor.vendorStatus ?? 'pending')
-    setIsAvailable(Boolean(vendor.isAvailable))
-    setMinimumPrice(vendor.minimumPrice ? String(vendor.minimumPrice) : '')
-    setLeadTimeDays(vendor.leadTimeDays ? String(vendor.leadTimeDays) : '')
-  }, [vendor.id])
+  const updateVendorMutation = useAdminUpdateVendor()
+  const assignVendorMutation = useAdminCreateVendorAssignment()
+  const updateAssignmentMutation = useAdminUpdateVendorAssignment()
+  const assignmentsQuery = useAdminVendorAssignments({ vendorId: vendor.id, enabled: open })
 
   const borderColor = borderColorMap[vendor.vendorStatus?.toLowerCase()] ?? 'border-[#CDB17E]'
   const isBusy = updateVendorMutation.isPending
 
-  const serviceNames = (vendor.serviceCategories ?? []).map(s => s.name).filter(Boolean).join(', ')
+  const serviceNames = (vendor.serviceCategories ?? [])
+    .map(s => s.name)
+    .filter(Boolean)
+    .join(', ')
 
   return (
-    <div className={[
-      'rounded-2xl bg-white shadow-sm transition-all hover:shadow-md',
-      open ? `border-t-4 ${borderColor}` : `border-l-4 ${borderColor}`,
-    ].join(' ')}>
-
+    <div
+      className={[
+        'rounded-2xl bg-white shadow-sm transition-all hover:shadow-md',
+        open ? `border-t-4 ${borderColor}` : `border-l-4 ${borderColor}`,
+      ].join(' ')}
+    >
       {/* ── Header — always visible ── */}
       <div className="cursor-pointer p-5" onClick={() => setOpen(p => !p)}>
         <div className="flex items-start justify-between gap-4">
@@ -201,9 +241,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
               {vendor.contactPerson || 'Contact pending'}
               {vendor.locationCity ? ` · ${vendor.locationCity}` : ''}
             </p>
-            {serviceNames && (
-              <p className="mt-0.5 text-xs text-[#8F8F8F]">{serviceNames}</p>
-            )}
+            {serviceNames && <p className="mt-0.5 text-xs text-[#8F8F8F]">{serviceNames}</p>}
           </div>
 
           <div className="flex shrink-0 items-start gap-6">
@@ -211,7 +249,9 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
               <div className="hidden gap-6 text-sm md:flex">
                 <div className="flex flex-col items-end">
                   <p className="text-[11px] text-[#767676]">MIN PRICE</p>
-                  <p className="font-medium text-[#2D2D2D]">{formatCurrency(vendor.minimumPrice)}</p>
+                  <p className="font-medium text-[#2D2D2D]">
+                    {formatCurrency(vendor.minimumPrice)}
+                  </p>
                 </div>
                 <div className="flex flex-col items-end">
                   <p className="text-[11px] text-[#767676]">ACTIVE BOOKINGS</p>
@@ -240,20 +280,25 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
 
       {/* ── Expanded content ── */}
       {open && (
-        <div className="border-t border-[#00000019] px-5 pb-6 pt-5" onClick={e => e.stopPropagation()}>
-
+        <div
+          className="border-t border-[#00000019] px-5 pb-6 pt-5"
+          onClick={e => e.stopPropagation()}
+        >
           {/* Vendor details grid */}
           <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
             {[
-              { label: 'COMPANY',         value: vendor.companyName },
-              { label: 'CONTACT',         value: vendor.contactPerson },
-              { label: 'EMAIL',           value: vendor.email },
-              { label: 'PHONE',           value: vendor.phone },
-              { label: 'CITY',            value: vendor.locationCity },
-              { label: 'SERVICES',        value: serviceNames || '—' },
-              { label: 'MIN PRICE',       value: formatCurrency(vendor.minimumPrice) },
+              { label: 'COMPANY', value: vendor.companyName },
+              { label: 'CONTACT', value: vendor.contactPerson },
+              { label: 'EMAIL', value: vendor.email },
+              { label: 'PHONE', value: vendor.phone },
+              { label: 'CITY', value: vendor.locationCity },
+              { label: 'SERVICES', value: serviceNames || '—' },
+              { label: 'MIN PRICE', value: formatCurrency(vendor.minimumPrice) },
               { label: 'PENDING PAYOUTS', value: formatCurrency(vendor.pendingPayoutAmount) },
-              { label: 'LEAD TIME',       value: vendor.leadTimeDays ? `${vendor.leadTimeDays} days` : '—' },
+              {
+                label: 'LEAD TIME',
+                value: vendor.leadTimeDays ? `${vendor.leadTimeDays} days` : '—',
+              },
               { label: 'ACTIVE BOOKINGS', value: String(vendor.activeAssignmentsCount ?? 0) },
             ].map(f => (
               <div key={f.label}>
@@ -279,18 +324,31 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                 </div>
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Availability</p>
-                  <Select value={isAvailable ? 'true' : 'false'} onChange={v => setIsAvailable(v === 'true')}>
+                  <Select
+                    value={isAvailable ? 'true' : 'false'}
+                    onChange={v => setIsAvailable(v === 'true')}
+                  >
                     <option value="true">Available</option>
                     <option value="false">Unavailable</option>
                   </Select>
                 </div>
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Minimum price (₹)</p>
-                  <Input type="number" value={minimumPrice} onChange={e => setMinimumPrice(e.target.value)} placeholder="e.g. 5000" />
+                  <Input
+                    type="number"
+                    value={minimumPrice}
+                    onChange={e => setMinimumPrice(e.target.value)}
+                    placeholder="e.g. 5000"
+                  />
                 </div>
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Lead time (days)</p>
-                  <Input type="number" value={leadTimeDays} onChange={e => setLeadTimeDays(e.target.value)} placeholder="e.g. 3" />
+                  <Input
+                    type="number"
+                    value={leadTimeDays}
+                    onChange={e => setLeadTimeDays(e.target.value)}
+                    placeholder="e.g. 3"
+                  />
                 </div>
               </div>
 
@@ -361,9 +419,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                 </div>
                 <PrimaryBtn
                   disabled={assignVendorMutation.isPending || !bookingId}
-                  onClick={() =>
-                    assignVendorMutation.mutate({ bookingId, vendorId: vendor.id })
-                  }
+                  onClick={() => assignVendorMutation.mutate({ bookingId, vendorId: vendor.id })}
                 >
                   Assign Vendor
                 </PrimaryBtn>
@@ -377,7 +433,10 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
             {(assignmentsQuery.data?.assignments ?? []).length ? (
               <div className="space-y-2">
                 {assignmentsQuery.data.assignments.map(a => (
-                  <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#F3F3F3] px-4 py-3">
+                  <div
+                    key={a.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#F3F3F3] px-4 py-3"
+                  >
                     <div>
                       <p className="text-sm font-medium text-[#2D2D2D]">
                         {a.booking?.package?.title || a.booking?.id || a.bookingId}
@@ -392,7 +451,10 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                       {a.status === 'assigned' && (
                         <GhostBtn
                           onClick={() =>
-                            updateAssignmentMutation.mutate({ assignmentId: a.id, body: { status: 'confirmed' } })
+                            updateAssignmentMutation.mutate({
+                              assignmentId: a.id,
+                              body: { status: 'confirmed' },
+                            })
                           }
                         >
                           Confirm
@@ -401,7 +463,10 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                       {a.status === 'confirmed' && (
                         <GhostBtn
                           onClick={() =>
-                            updateAssignmentMutation.mutate({ assignmentId: a.id, body: { status: 'completed' } })
+                            updateAssignmentMutation.mutate({
+                              assignmentId: a.id,
+                              body: { status: 'completed' },
+                            })
                           }
                         >
                           Complete
@@ -412,10 +477,11 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#8F8F8F]">No booking assignments linked to this vendor yet.</p>
+              <p className="text-sm text-[#8F8F8F]">
+                No booking assignments linked to this vendor yet.
+              </p>
             )}
           </div>
-
         </div>
       )}
     </div>
@@ -426,8 +492,8 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
 // Tab pills
 // ---------------------------------------------------------------------------
 const vendorTabs = [
-  { key: 'pending',    label: 'Pending Requests' },
-  { key: 'assigned',   label: 'Assigned' },
+  { key: 'pending', label: 'Pending Requests' },
+  { key: 'assigned', label: 'Assigned' },
   { key: 'unassigned', label: 'Unassigned' },
 ]
 
@@ -435,23 +501,26 @@ const vendorTabs = [
 // Page
 // ---------------------------------------------------------------------------
 export default function VendorManagementPage() {
-  const [tab, setTab]               = useState('pending')
-  const [search, setSearch]         = useState('')
-  const [category, setCategory]     = useState('')
-  const [location, setLocation]     = useState('')
+  const [tab, setTab] = useState('pending')
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('')
+  const [location, setLocation] = useState('')
   const [availability, setAvailability] = useState('')
 
   const workspaceQuery = useAdminVendorWorkspace()
-  const bookingsQuery  = useAdminBookings({ bucket: 'active', limit: 100 })
+  const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 100 })
 
   const workspace = workspaceQuery.data ?? {}
-  const summary   = workspace.summary ?? {}
+  const summary = workspace.summary ?? {}
 
-  const vendorGroups = {
-    pending:    workspace.pendingRequests  ?? [],
-    assigned:   workspace.assignedVendors  ?? [],
-    unassigned: workspace.unassignedVendors ?? [],
-  }
+  const vendorGroups = useMemo(
+    () => ({
+      pending: workspace.pendingRequests ?? [],
+      assigned: workspace.assignedVendors ?? [],
+      unassigned: workspace.unassignedVendors ?? [],
+    }),
+    [workspace.assignedVendors, workspace.pendingRequests, workspace.unassignedVendors]
+  )
 
   const activeList = useMemo(
     () => filterVendors(vendorGroups[tab] ?? [], { search, category, location, availability }),
@@ -459,11 +528,10 @@ export default function VendorManagementPage() {
   )
 
   if (workspaceQuery.isLoading) return <LoadingState label="Loading vendors…" />
-  if (workspaceQuery.error)     return <ErrorState label="Vendor data could not be loaded right now." />
+  if (workspaceQuery.error) return <ErrorState label="Vendor data could not be loaded right now." />
 
   return (
     <div className="space-y-6">
-
       {/* ── Header ── */}
       <div>
         <h1 className="text-2xl  text-[#1C1C1C]">Vendor Management</h1>
@@ -474,10 +542,30 @@ export default function VendorManagementPage() {
 
       {/* ── Metrics ── */}
       <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Pending Requests"   value={String(summary.pendingRequests  ?? 0)} helper="Registrations waiting review"  accent />
-        <MetricCard label="Assigned Vendors"   value={String(summary.assignedVendors  ?? 0)} helper="Attached to active bookings" accent/>
-        <MetricCard label="Unassigned Vendors" value={String(summary.unassignedVendors ?? 0)} helper="Approved but not linked" accent/>
-        <MetricCard label="Available Now"      value={String(summary.availableNow     ?? 0)} helper="Ready for assignment" accent/>
+        <MetricCard
+          label="Pending Requests"
+          value={String(summary.pendingRequests ?? 0)}
+          helper="Registrations waiting review"
+          accent
+        />
+        <MetricCard
+          label="Assigned Vendors"
+          value={String(summary.assignedVendors ?? 0)}
+          helper="Attached to active bookings"
+          accent
+        />
+        <MetricCard
+          label="Unassigned Vendors"
+          value={String(summary.unassignedVendors ?? 0)}
+          helper="Approved but not linked"
+          accent
+        />
+        <MetricCard
+          label="Available Now"
+          value={String(summary.availableNow ?? 0)}
+          helper="Ready for assignment"
+          accent
+        />
       </div>
 
       {/* ── Tab bar ── */}
@@ -499,10 +587,12 @@ export default function VendorManagementPage() {
               ].join(' ')}
             >
               {t.label}
-              <span className={[
-                'rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
-                tab === t.key ? 'bg-white/30 text-white' : 'bg-[#F0EBE3] text-[#8C7D70]',
-              ].join(' ')}>
+              <span
+                className={[
+                  'rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
+                  tab === t.key ? 'bg-white/30 text-white' : 'bg-[#F0EBE3] text-[#8C7D70]',
+                ].join(' ')}
+              >
                 {(vendorGroups[t.key] ?? []).length}
               </span>
             </button>
@@ -519,7 +609,9 @@ export default function VendorManagementPage() {
           {/* Search */}
           <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] px-2.5 py-1.5 text-[#A19B94]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
-              <span className="h-3.5 w-3.5"><SearchIcon /></span>
+              <span className="h-3.5 w-3.5">
+                <SearchIcon />
+              </span>
             </span>
             <input
               type="text"
@@ -558,7 +650,7 @@ export default function VendorManagementPage() {
         <div className="space-y-3">
           {activeList.map(vendor => (
             <VendorAccordionCard
-              key={vendor.id}
+              key={`${vendor.id}:${vendor.vendorStatus ?? ''}:${vendor.isAvailable ? '1' : '0'}:${vendor.minimumPrice ?? ''}:${vendor.leadTimeDays ?? ''}`}
               vendor={vendor}
               tab={tab}
               bookingsQuery={bookingsQuery}
@@ -570,7 +662,6 @@ export default function VendorManagementPage() {
           <EmptyState title="No vendors found" body="Try a different search term or switch tabs." />
         </div>
       )}
-
     </div>
   )
 }

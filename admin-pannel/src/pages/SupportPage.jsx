@@ -1,10 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  SelectField,
-} from '../components/ui/AdminUI'
+import { useMemo, useState } from 'react'
+import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
 import {
   useAdminAddSupportMessage,
   useAdminSupportTicket,
@@ -33,31 +28,16 @@ const priorityDot = {
   high: 'bg-red-500',
 }
 
-function isArchivedTicket(ticket) {
-  const status = String(ticket?.status ?? '').toLowerCase()
-  return status === 'resolved' || status === 'closed'
-}
-
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
   const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
   const text = label ?? key.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) ?? '—'
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}
+    >
       {text}
     </span>
-  )
-}
-
-function Input({ value, onChange, placeholder, className = '' }) {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={`h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition ${className}`}
-    />
   )
 }
 
@@ -172,7 +152,9 @@ function TicketItem({ item, isActive, onClick }) {
 function MessageBubble({ entry }) {
   const isNote = entry.isInternalNote
   return (
-    <div className={`rounded-2xl px-4 py-3.5 ${isNote ? 'bg-[#F5EDD9] border border-[#E4C98A]' : 'bg-white border border-[#E4DED8]'}`}>
+    <div
+      className={`rounded-2xl px-4 py-3.5 ${isNote ? 'bg-[#F5EDD9] border border-[#E4C98A]' : 'bg-white border border-[#E4DED8]'}`}
+    >
       <div className="flex items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-[#2D2D2D]">
@@ -198,7 +180,6 @@ export default function SupportPage() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [priority, setPriority] = useState('')
-  const [queueTab, setQueueTab] = useState('active')
   const [selectedId, setSelectedId] = useState('')
   const [statusInput, setStatusInput] = useState('open')
   const [priorityInput, setPriorityInput] = useState('medium')
@@ -206,16 +187,7 @@ export default function SupportPage() {
   const [isInternalNote, setIsInternalNote] = useState(false)
 
   const ticketsQuery = useAdminSupportTickets({ search, status, priority, limit: 24 })
-  const ticketList = ticketsQuery.data?.tickets ?? []
-  const activeTickets = useMemo(
-    () => ticketList.filter(ticket => !isArchivedTicket(ticket)),
-    [ticketList]
-  )
-  const archivedTickets = useMemo(
-    () => ticketList.filter(ticket => isArchivedTicket(ticket)),
-    [ticketList]
-  )
-
+  const ticketList = useMemo(() => ticketsQuery.data?.tickets ?? [], [ticketsQuery.data?.tickets])
   const selectedListTicket = useMemo(
     () => ticketList.find(t => t.id === selectedId) ?? ticketList[0] ?? null,
     [selectedId, ticketList]
@@ -226,51 +198,28 @@ export default function SupportPage() {
   const addMessageMutation = useAdminAddSupportMessage()
 
   const ticket = ticketQuery.data ?? selectedListTicket
-  const isReadOnly = isArchivedTicket(ticket)
-
-  useEffect(() => {
-    if (queueTab === 'active' && activeTickets.length === 0 && archivedTickets.length > 0) {
-      setQueueTab('archived')
-      return
-    }
-
-    if (queueTab === 'archived' && archivedTickets.length === 0 && activeTickets.length > 0) {
-      setQueueTab('active')
-    }
-  }, [activeTickets.length, archivedTickets.length, queueTab])
-
-  useEffect(() => {
-    if (selectedListTicket && selectedListTicket.id !== selectedId) {
-      setSelectedId(selectedListTicket.id)
-    }
-  }, [selectedId, selectedListTicket])
-
-  useEffect(() => {
-    setStatusInput(ticket?.status ?? 'open')
-    setPriorityInput(ticket?.priority ?? 'medium')
-  }, [ticket?.id, ticket?.priority, ticket?.status])
+  const statusValue = ticket?.id === selectedId ? statusInput : (ticket?.status ?? 'open')
+  const priorityValue = ticket?.id === selectedId ? priorityInput : (ticket?.priority ?? 'medium')
 
   if (ticketsQuery.isLoading) return <LoadingState label="Loading support tickets…" />
   if (ticketsQuery.error) return <ErrorState label="Support tickets are unavailable right now." />
 
   return (
     <div className="space-y-6">
-
       {/* ── Header ── */}
       <div>
         <h1 className="text-2xl text-[#1C1C1C]">Help & Support</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
-          Manage customer tickets, update their status, and reply with public messages or internal notes.
+          Manage customer tickets, update their status, and reply with public messages or internal
+          notes.
         </p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-
         {/* ════════════════════════════════
             LEFT — Ticket queue
         ════════════════════════════════ */}
         <div className="flex flex-col gap-4">
-
           {/* Filters */}
           <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#8F8F8F]">
@@ -342,7 +291,6 @@ export default function SupportPage() {
         ════════════════════════════════ */}
         {ticket ? (
           <div className="flex flex-col gap-5">
-
             {/* ── Ticket header ── */}
             <div className="rounded-2xl border border-[#E4DED8] bg-white p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -366,7 +314,7 @@ export default function SupportPage() {
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex-1 min-w-[140px]">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Status</p>
-                  <Select value={statusInput} onChange={setStatusInput}>
+                  <Select value={statusValue} onChange={setStatusInput}>
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
                     <option value="resolved">Resolved</option>
@@ -375,7 +323,7 @@ export default function SupportPage() {
                 </div>
                 <div className="flex-1 min-w-[140px]">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Priority</p>
-                  <Select value={priorityInput} onChange={setPriorityInput}>
+                  <Select value={priorityValue} onChange={setPriorityInput}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -386,7 +334,7 @@ export default function SupportPage() {
                   onClick={() =>
                     updateTicketMutation.mutate({
                       ticketId: ticket.id,
-                      body: { status: statusInput, priority: priorityInput },
+                      body: { status: statusValue, priority: priorityValue },
                     })
                   }
                 >
@@ -400,9 +348,7 @@ export default function SupportPage() {
               <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Conversation</h3>
               <div className="max-h-[360px] space-y-2.5 overflow-y-auto pr-1">
                 {ticket.messages?.length ? (
-                  ticket.messages.map(entry => (
-                    <MessageBubble key={entry.id} entry={entry} />
-                  ))
+                  ticket.messages.map(entry => <MessageBubble key={entry.id} entry={entry} />)
                 ) : (
                   <EmptyState
                     title="No messages yet"
@@ -459,11 +405,12 @@ export default function SupportPage() {
                 >
                   {addMessageMutation.isPending
                     ? 'Sending…'
-                    : isInternalNote ? 'Save Note' : 'Send Reply'}
+                    : isInternalNote
+                      ? 'Save Note'
+                      : 'Send Reply'}
                 </PrimaryBtn>
               </div>
             </div>
-
           </div>
         ) : (
           <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">

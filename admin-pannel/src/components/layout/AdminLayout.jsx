@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getStoredAdminJwt } from '../../lib/api'
 import { getInitials } from '../../lib/formatters'
@@ -42,9 +42,13 @@ const SampleBookingIcon = ({ isActive }) => {
 
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M1.6665 9.99784H18.3332M16.6665 9.99784V16.6645C16.6665 17.1065 16.4909 17.5305 16.1783 17.843C15.8658 18.1556 15.4419 18.3312 14.9998 18.3312H4.99984C4.55781 18.3312 4.13389 18.1556 3.82133 17.843C3.50877 17.5305 3.33317 17.1065 3.33317 16.6645V9.99784M3.33317 6.6645L16.6665 3.33117M7.38317 5.64784L7.00817 4.1395C6.95444 3.9272 6.94308 3.70638 6.97474 3.48969C7.0064 3.27299 7.08045 3.06465 7.19267 2.87659C7.30489 2.68852 7.45307 2.52442 7.62875 2.39366C7.80442 2.2629 8.00415 2.16804 8.2165 2.1145L9.83317 1.7145C10.046 1.66091 10.2674 1.64989 10.4845 1.68208C10.7017 1.71427 10.9103 1.78904 11.0985 1.90209C11.2866 2.01514 11.4506 2.16425 11.581 2.34085C11.7113 2.51745 11.8055 2.71806 11.8582 2.93117L12.2332 4.43117" stroke={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M1.6665 9.99784H18.3332M16.6665 9.99784V16.6645C16.6665 17.1065 16.4909 17.5305 16.1783 17.843C15.8658 18.1556 15.4419 18.3312 14.9998 18.3312H4.99984C4.55781 18.3312 4.13389 18.1556 3.82133 17.843C3.50877 17.5305 3.33317 17.1065 3.33317 16.6645V9.99784M3.33317 6.6645L16.6665 3.33117M7.38317 5.64784L7.00817 4.1395C6.95444 3.9272 6.94308 3.70638 6.97474 3.48969C7.0064 3.27299 7.08045 3.06465 7.19267 2.87659C7.30489 2.68852 7.45307 2.52442 7.62875 2.39366C7.80442 2.2629 8.00415 2.16804 8.2165 2.1145L9.83317 1.7145C10.046 1.66091 10.2674 1.64989 10.4845 1.68208C10.7017 1.71427 10.9103 1.78904 11.0985 1.90209C11.2866 2.01514 11.4506 2.16425 11.581 2.34085C11.7113 2.51745 11.8055 2.71806 11.8582 2.93117L12.2332 4.43117"
+        stroke={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
-
   )
 }
 const BookingIcon = ({ isActive }) => {
@@ -52,7 +56,12 @@ const BookingIcon = ({ isActive }) => {
 
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M1.6665 5.0013H4.99984M1.6665 8.33464H4.99984M1.6665 11.668H4.99984M1.6665 15.0013H4.99984M12.4998 1.66797V18.3346M12.4998 5.83464H16.6665M12.4998 10.0013H16.6665M12.4998 14.168H16.6665M4.99984 1.66797H14.9998C15.9203 1.66797 16.6665 2.41416 16.6665 3.33464V16.668C16.6665 17.5884 15.9203 18.3346 14.9998 18.3346H4.99984C4.07936 18.3346 3.33317 17.5884 3.33317 16.668V3.33464C3.33317 2.41416 4.07936 1.66797 4.99984 1.66797Z" stroke={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M1.6665 5.0013H4.99984M1.6665 8.33464H4.99984M1.6665 11.668H4.99984M1.6665 15.0013H4.99984M12.4998 1.66797V18.3346M12.4998 5.83464H16.6665M12.4998 10.0013H16.6665M12.4998 14.168H16.6665M4.99984 1.66797H14.9998C15.9203 1.66797 16.6665 2.41416 16.6665 3.33464V16.668C16.6665 17.5884 15.9203 18.3346 14.9998 18.3346H4.99984C4.07936 18.3346 3.33317 17.5884 3.33317 16.668V3.33464C3.33317 2.41416 4.07936 1.66797 4.99984 1.66797Z"
+        stroke={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -167,11 +176,6 @@ const navigation = [
   { to: '/alerts', label: 'System Alerts', icon: AlertIcon },
 ]
 
-function routeTitle(pathname) {
-  const item = navigation.find(entry => pathname.startsWith(entry.to))
-  return item?.label ?? 'Admin Panel'
-}
-
 export default function AdminLayout() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -179,8 +183,6 @@ export default function AdminLayout() {
   const token = getStoredAdminJwt()
   const logoutMutation = useAdminLogout()
   const sessionQuery = useAdminSession()
-  const title = useMemo(() => routeTitle(location.pathname), [location.pathname])
-
   useEffect(() => {
     if (!token) {
       const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
@@ -263,14 +265,18 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#F2F2F2] md:flex">
       <div
-        className={`fixed inset-0 z-30 bg-black/30 transition md:hidden ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
-          }`}
+        className={`fixed inset-0 z-30 bg-black/30 transition md:hidden ${
+          mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
         onClick={() => setMobileOpen(false)}
       />
 
       <aside
-        className={`fixed inset-x-0 top-0 z-40 flex h-screen w-screen flex-col overflow-hidden bg-[#591902] md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${mobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100'
-          }`}
+        className={`fixed inset-x-0 top-0 z-40 flex h-screen w-screen flex-col overflow-hidden bg-[#591902] md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${
+          mobileOpen
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100'
+        }`}
         style={{
           clipPath:
             mobileOpen || typeof window === 'undefined' || window.innerWidth >= 768
@@ -304,7 +310,8 @@ export default function AdminLayout() {
               to={item.to}
               onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-2 rounded-xl px-4 py-3 text-sm transition-all ${isActive ? 'bg-[#E7E0DA] text-[#591902]' : 'text-[#FAFAFA] md:text-[#FAFAFA]'
+                `flex items-center gap-2 rounded-xl px-4 py-3 text-sm transition-all ${
+                  isActive ? 'bg-[#E7E0DA] text-[#591902]' : 'text-[#FAFAFA] md:text-[#FAFAFA]'
                 }`
               }
               style={({ isActive }) => ({

@@ -18,9 +18,25 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-query': ['@tanstack/react-query'],
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined
+
+            if (
+              id.includes('/react/') ||
+              id.includes('\\react\\') ||
+              id.includes('/react-dom/') ||
+              id.includes('\\react-dom\\') ||
+              id.includes('/react-router-dom/') ||
+              id.includes('\\react-router-dom\\')
+            ) {
+              return 'vendor-react'
+            }
+
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query'
+            }
+
+            return undefined
           },
         },
       },

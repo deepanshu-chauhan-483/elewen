@@ -113,8 +113,6 @@ function withQuery(path, params = {}) {
 async function request(method, path, body, opts = {}) {
   const { _retried = false, headers: extraHeaders = {}, ...rest } = opts
   const authHeader = extraHeaders.Authorization
-  const bearerToken =
-    typeof authHeader === 'string' && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
 
   const res = await fetch(`${BASE}${path}`, {
     method,
