@@ -215,6 +215,14 @@ function getCartItemQuantity(item) {
   return Math.max(1, Number(item?.quantity ?? 1))
 }
 
+function getSummaryIncludedItems(item) {
+  if (item?.itemType === 'addon') return []
+
+  return getSelectedElements(item)
+    .map(element => String(element?.value ?? '').trim())
+    .filter(Boolean)
+}
+
 function getPriceSummaryCategoryLabel(item) {
   if (item?.itemType === 'addon') {
     return 'Add-ons'
@@ -433,6 +441,15 @@ function getSuggestedAddonsWithPricing(cartItems) {
 }
 
 function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
+  const isValid =
+    pincode.trim().length > 5
+      ? message?.toLowerCase().includes('not available')
+        ? false
+        : message
+          ? true
+          : null
+      : null
+
   return (
     <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
       <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
@@ -444,22 +461,73 @@ function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
       </p>
 
       <div className="flex flex-col gap-3">
-        <input
-          type="text"
-          value={pincode}
-          onChange={e => onChange(e.target.value)}
-          placeholder="Enter pincode"
-          className="w-full border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            value={pincode}
+            onChange={e => onChange(e.target.value)}
+            placeholder="Enter pincode"
+            className="w-full border-b border-[#2D2D2D] bg-transparent py-2 pr-10 text-[14px] text-[#2C2C2C] focus:outline-none"
+          />
+
+          {/* Status Icon */}
+          <div className="absolute right-1 top-1/2 -translate-y-1/2">
+            {!isChecking && isValid === true && (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#2E3A1F"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-circle-check-icon lucide-circle-check"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            )}
+
+            {!isChecking && isValid === false && (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#591902"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-circle-x-icon lucide-circle-x"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="m15 9-6 6" />
+                <path d="m9 9 6 6" />
+              </svg>
+            )}
+          </div>
+        </div>
 
         <button type="submit" disabled={isChecking || !pincode.trim()} className="hidden">
           {isChecking ? 'Checking...' : 'Check'}
         </button>
       </div>
 
-      <p className="mt-2 text-xs text-gray-500">Service availability depends on your location</p>
+      <p className="mt-2 text-xs text-gray-500">
+        Service only available at Delhi, Gurgaon and Noida.
+      </p>
 
-      {message && <p className="mt-2 text-sm text-[#5A1E0E]">{message}</p>}
+      {/* {message && (
+        <p
+          className={`mt-2 text-sm ${isValid ? 'text-green-600' : 'text-red-500'
+            }`}
+        >
+          {message}
+        </p>
+      )} */}
     </form>
   )
 }
@@ -571,17 +639,19 @@ function SinglePackageCard({
 
         <div className="items-start">
           <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
-          <h3
-            className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
-            style={{ fontFamily: "'Poppins'" }}
-          >
-            {packageTitle}
-          </h3>
-          {packageQuantity > 1 ? (
-            <p className="mt-1 text-[10px] md:text-[12px] text-[#957960]">
-              {packageQuantity} packages selected
-            </p>
-          ) : null}
+          <div className="flex min-w-0 items-center gap-2">
+            <h3
+              className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
+              style={{ fontFamily: "'Poppins'" }}
+            >
+              {packageTitle}
+            </h3>
+            {packageQuantity > 1 ? (
+              <span className="rounded-full bg-[#EFE7DC] px-2 py-1 text-[10px] md:text-[12px] font-medium text-[#591902]">
+                x{packageQuantity}
+              </span>
+            ) : null}
+          </div>
           <p className="text-[10px] md:text-[12px] text-[#6A6864]">
             {eventLocation} · {eventDate}
           </p>
@@ -1055,7 +1125,7 @@ function PriceSummaryCard({
               ? itemSummaries.map(({ item, summary }) => (
                   <div key={item.id} className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-[#767676]">
+                      <span className="text-[#767676] gap-x-2">
                         {item?.itemType === 'addon'
                           ? `Add-on — ${item.displayTitle || item.addonTitle || 'Selected item'}`
                           : singleItem
@@ -1067,15 +1137,26 @@ function PriceSummaryCard({
                         {formatCurrency(summary.total)}
                       </span>
                     </div>
-                    {summary.rows.map(row => (
-                      <div
-                        key={`${item.id}-${row.label}`}
-                        className="flex justify-between text-gray-500"
-                      >
-                        <span>{row.label}</span>
-                        <span>{formatCurrency(row.total)}</span>
-                      </div>
-                    ))}
+                    <hr className="my-4 border-[#0000001A]" />
+                    {item?.itemType === 'addon'
+                      ? summary.rows.map(row => (
+                          <div
+                            key={`${item.id}-${row.label}`}
+                            className="flex justify-between text-gray-500"
+                          >
+                            <span>{row.label}</span>
+                            <span>{formatCurrency(row.total)}</span>
+                          </div>
+                        ))
+                      : getSummaryIncludedItems(item).map(selectedItem => (
+                          <div
+                            key={`${item.id}-${selectedItem}`}
+                            className="flex justify-between text-[#767676]"
+                          >
+                            <span>{selectedItem}</span>
+                            <span className="text-[#1C1C1C]">Included</span>
+                          </div>
+                        ))}
                   </div>
                 ))
               : categorySummaries.map(group => (

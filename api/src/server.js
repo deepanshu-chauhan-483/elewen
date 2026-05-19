@@ -27,10 +27,18 @@ import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { bootstrapDefaultAdmin, getDefaultAdminCredentials } from './lib/bootstrapAdmin.js'
+import { connectRedis, disconnectRedis } from './lib/cache.js'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
-dotenv.config({ path: resolve(__dirname, '../../.env') })
-dotenv.config()
+const dotenvPaths = [
+  resolve(__dirname, '../.env'),
+  resolve(__dirname, '../../.env'),
+  resolve(process.cwd(), '.env'),
+]
+
+for (const path of [...new Set(dotenvPaths)]) {
+  dotenv.config({ path, override: false })
+}
 
 const app = express()
 const PORT = Number(process.env.PORT || 3000)
@@ -148,6 +156,8 @@ app.use(errorHandler)
 let server = null
 
 async function start() {
+  await connectRedis()
+
   const credentials = getDefaultAdminCredentials()
   let defaultAdminState = null
 
@@ -175,6 +185,8 @@ async function start() {
 }
 
 const shutdown = async () => {
+  await disconnectRedis()
+
   if (!server) {
     process.exit(0)
   }

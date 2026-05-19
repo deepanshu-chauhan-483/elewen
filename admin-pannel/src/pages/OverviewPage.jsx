@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   EmptyState,
   ErrorState,
   LoadingState,
   PageIntro,
+  SelectField,
 } from '../components/ui/AdminUI'
 import { useAdminOverview } from '../hooks/useAdminData'
 import { formatCount, formatCurrency, formatDate } from '../lib/formatters'
@@ -40,6 +41,25 @@ function StatusBadge({ status, label }) {
   )
 }
 
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg
+      className={`h-6 w-6 ${rotationClass}`}
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 // ---------------------------------------------------------------------------
 // MetricCard
 // ---------------------------------------------------------------------------
@@ -175,27 +195,25 @@ function HealthCard({ item }) {
 }
 
 // ---------------------------------------------------------------------------
-// TableTabs
+// TableFilter
 // ---------------------------------------------------------------------------
 const TABLE_TABS = ['all', 'confirmed', 'pending', 'new']
 
-function TableTabs({ active, onChange }) {
+function TableFilter({ active, onChange }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {TABLE_TABS.map(t => (
-        <button
-          key={t}
-          onClick={() => onChange(t)}
-          className={[
-            'rounded-full border px-3.5 py-1 text-xs font-semibold capitalize transition',
-            active === t
-              ? 'border-[#D4BA8E] bg-[#D4BA8E] text-[#FAFAFA]'
-              : 'border-[#E4DED8] bg-white text-[#6B7280] hover:border-[#D4BA8E]',
-          ].join(' ')}
-        >
-          {t === 'all' ? 'All' : t}
-        </button>
-      ))}
+    <div className="w-[160px]">
+      <SelectField
+        value={active}
+        onChange={onChange}
+        placeholder="Filter status"
+        className="min-h-9 rounded-full border-[#E4DED8] bg-white py-2 text-xs font-semibold capitalize text-[#6B7280]"
+      >
+        {TABLE_TABS.map(tab => (
+          <option key={tab} value={tab}>
+            {tab === 'all' ? 'All' : tab}
+          </option>
+        ))}
+      </SelectField>
     </div>
   )
 }
@@ -207,19 +225,12 @@ const TABLE_COLS = [
   'Event Date', 'Event Type', 'Location',
   'Customer', 'Service', 'Vendor', 'Status',
 ]
+const TABLE_PAGE_SIZE = 10
 
 export default function OverviewPage() {
   const [tab, setTab] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
   const overviewQuery = useAdminOverview()
-
-  if (overviewQuery.isLoading) {
-    return <LoadingState label="Loading operational overview..." />
-  }
-
-  if (overviewQuery.error) {
-    return <ErrorState label="Overview data could not be loaded right now." />
-  }
-
   const overview         = overviewQuery.data ?? {}
   const metrics          = overview.metrics ?? {}
   const pendingActions   = overview.pendingActions ?? []
@@ -233,6 +244,29 @@ export default function OverviewPage() {
     tab === 'all'
       ? upcomingBookings
       : upcomingBookings.filter(b => b.status === tab)
+  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / TABLE_PAGE_SIZE))
+  const paginatedBookings = filteredBookings.slice(
+    (currentPage - 1) * TABLE_PAGE_SIZE,
+    currentPage * TABLE_PAGE_SIZE
+  )
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [tab])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  if (overviewQuery.isLoading) {
+    return <LoadingState label="Loading operational overview..." />
+  }
+
+  if (overviewQuery.error) {
+    return <ErrorState label="Overview data could not be loaded right now." />
+  }
 
   return (
     <div className="space-y-6">
@@ -240,7 +274,7 @@ export default function OverviewPage() {
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl tracking-tight text-gray-900">
+          <h1 className="text-2xl tracking-tight text-[#1C1C1C]">
             Overview
           </h1>
           <p className="mt-1 text-sm text-gray-400">
@@ -253,12 +287,12 @@ export default function OverviewPage() {
             })}
           </p>
         </div>
-        <Link
+        {/* <Link
           to="/alerts"
           className="inline-flex min-h-11 items-center rounded-[8px] bg-[#D4BA8E] px-4 text-sm font-medium text-[#FAFAFA] transition hover:bg-[#c7aa76]"
         >
           Review Alerts
-        </Link>
+        </Link> */}
       </div>
 
       {/* ── Booking metrics ── */}
@@ -354,10 +388,11 @@ export default function OverviewPage() {
       <Panel
         title="Upcoming Events"
         subtitle="Next 15 days"
-        action={<TableTabs active={tab} onChange={setTab} />}
+        action={<TableFilter active={tab} onChange={setTab} />}
       >
         {filteredBookings.length ? (
-          <div className="overflow-x-auto">
+          <div>
+            <div className="overflow-x-auto">
             <table className="min-w-full border-separate border-spacing-y-2">
               <thead>
                 <tr className="text-left">
@@ -372,7 +407,7 @@ export default function OverviewPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredBookings.map(booking => (
+                {paginatedBookings.map(booking => (
                   <tr key={booking.id} className="bg-white">
                     <td className="rounded-l-xl px-3 py-3.5 text-sm text-gray-800">
                       {formatDate(booking.eventDate)}
@@ -402,6 +437,29 @@ export default function OverviewPage() {
                 ))}
               </tbody>
             </table>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ArrowIcon direction="left" />
+              </button>
+              <div className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#6B7280]">
+                {currentPage} / {totalPages}
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ArrowIcon direction="right" />
+              </button>
+            </div>
           </div>
         ) : (
           <EmptyState title="No events" body="No bookings match this filter." />

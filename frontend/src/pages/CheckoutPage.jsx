@@ -66,11 +66,11 @@ function loadRazorpayScript() {
   })
 }
 
-function SummaryRow({ label, value, valueClassName = 'text-[#2C2C2C] font-medium' }) {
+function SummaryRow({ label, value }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span>{label}</span>
-      <span className={valueClassName}>{value}</span>
+      <span className="text-[#767676]">{label}</span>
+      <span className="text-[#1C1C1C] font-medium">{value}</span>
     </div>
   )
 }
@@ -240,6 +240,21 @@ function getCartItemSummary(item) {
     rows,
     total: rows.reduce((sum, row) => sum + row.total, 0),
   }
+}
+
+function getCartItemQuantity(item) {
+  return Math.max(1, Number(item?.quantity ?? 1))
+}
+
+function getBookingSummaryCategoryLabel(item) {
+  if (item?.itemType === 'addon') return 'Add-ons'
+
+  const service = item?.packageData?.service_slugs?.[0]
+  if (!service) return 'Packages'
+
+  return String(service)
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
 }
 
 function PaymentMethod({ selected, onChange }) {
@@ -513,6 +528,34 @@ export default function CheckoutPage() {
         summary: getCartItemSummary(item),
       })),
     [cartItems]
+  )
+  const packageSummaryGroups = useMemo(
+    () =>
+      itemSummaries
+        .filter(({ item }) => item?.itemType !== 'addon')
+        .reduce((groups, entry) => {
+          const category = getBookingSummaryCategoryLabel(entry.item)
+          const existingGroup = groups.find(group => group.category === category)
+
+          if (existingGroup) {
+            existingGroup.total += Number(entry.summary.total ?? 0)
+            existingGroup.count += getCartItemQuantity(entry.item)
+            return groups
+          }
+
+          groups.push({
+            category,
+            total: Number(entry.summary.total ?? 0),
+            count: getCartItemQuantity(entry.item),
+          })
+
+          return groups
+        }, []),
+    [itemSummaries]
+  )
+  const addonSummaryItems = useMemo(
+    () => itemSummaries.filter(({ item }) => item?.itemType === 'addon'),
+    [itemSummaries]
   )
   const computedSubtotal = useMemo(
     () => itemSummaries.reduce((sum, entry) => sum + Number(entry.summary.total ?? 0), 0),
@@ -827,42 +870,65 @@ export default function CheckoutPage() {
             </div>
 
             <div className="space-y-4 p-5 text-sm">
-              {itemSummaries.map(({ item, summary }, index) => {
-                const packageName = getCartItemDisplayName(item)
-                const isAddonItem = item?.itemType === 'addon'
-                const packageLineLabel = getPackageLineLabel(item?.title, packageName)
+              {itemSummaries.length ? (
+                <div className="space-y-4">
+                  {(() => {
+                    const firstPackageEntry = itemSummaries.find(
+                      ({ item }) => item?.itemType !== 'addon'
+                    )
 
-                return (
-                  <div key={item.id}>
-                    <div className="space-y-2">
-                      <div
-                        className={`flex justify-between ${
-                          isAddonItem ? 'text-gray-600' : 'text-base font-medium'
-                        }`}
-                      >
-                        <span>
-                          {isAddonItem
-                            ? `Add-on - ${packageName} (${item.quantity})`
-                            : `${packageLineLabel}${Number(item.quantity) > 1 ? ` (${item.quantity})` : ''}`}
-                        </span>
-                        <span>{formatCurrency(summary.total)}</span>
+                    if (!firstPackageEntry) return null
+
+                    const packageName = getCartItemDisplayName(firstPackageEntry.item)
+                    const packageLineLabel = getPackageLineLabel(
+                      firstPackageEntry.item?.title,
+                      packageName
+                    )
+                    const quantityLabel =
+                      getCartItemQuantity(firstPackageEntry.item) > 1
+                        ? ` (${getCartItemQuantity(firstPackageEntry.item)})`
+                        : ''
+
+                    return (
+                      <div className="flex justify-between text-base font-medium text-[#2C2C2C]">
+                        <span>{`${packageLineLabel}${quantityLabel}`}</span>
+                        <span>{formatCurrency(firstPackageEntry.summary.total)}</span>
                       </div>
-                      {index < itemSummaries.length - 1 ? (
-                        <hr className="my-4 border-[#0000001A]" />
-                      ) : null}
-                    </div>
-                  </div>
-                )
-              })}
+                    )
+                  })()}
+
+                  {packageSummaryGroups.length || addonSummaryItems.length ? (
+                    <hr className="border-[#0000001A]" />
+                  ) : null}
+
+                  {packageSummaryGroups.map(group => (
+                    <SummaryRow
+                      key={group.category}
+                      label={`${group.category} (${group.count} ${group.count === 1 ? 'package' : 'packages'})`}
+                      value={formatCurrency(group.total)}
+                    />
+                  ))}
+
+                  {addonSummaryItems.map(({ item, summary }) => (
+                    <SummaryRow
+                      key={item.id}
+                      label={`Add-on - ${getCartItemDisplayName(item)} (${getCartItemQuantity(item)})`}
+                      value={formatCurrency(summary.total)}
+                    />
+                  ))}
+                </div>
+              ) : null}
 
               <hr className="my-4 border-[#0000001A]" />
 
               <div className="space-y-2 text-gray-600">
-                <SummaryRow label="Subtotal" value={formatCurrency(computedSubtotal)} />
+                <SummaryRow
+                  label="Subtotal (before GST)"
+                  value={formatCurrency(computedSubtotal)}
+                />
                 <SummaryRow
                   label="Discount coupon applied"
                   value={`-${formatCurrency(discountAmount)}`}
-                  valueClassName="font-medium text-[#767676]"
                 />
               </div>
 

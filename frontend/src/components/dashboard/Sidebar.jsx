@@ -1,9 +1,10 @@
+import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { DASHBOARD } from '../../constants/dashboard'
 
 const getIconStroke = isActive => (isActive ? '#591902' : '#FAFAFA')
 
-const DashboardIcon = ({ isActive }) => {
+const DashboardIcon = memo(function DashboardIcon({ isActive }) {
   const strokeColor = getIconStroke(isActive)
 
   return (
@@ -14,9 +15,9 @@ const DashboardIcon = ({ isActive }) => {
       <rect x="2" y="10" width="5" height="4" rx="1" stroke={strokeColor} />
     </svg>
   )
-}
+})
 
-const TimelineIcon = ({ isActive }) => {
+const TimelineIcon = memo(function TimelineIcon({ isActive }) {
   const strokeColor = getIconStroke(isActive)
 
   return (
@@ -29,7 +30,6 @@ const TimelineIcon = ({ isActive }) => {
           strokeLinejoin="round"
         />
       </g>
-
       <defs>
         <clipPath id="clip0_3495_1583">
           <rect width="16" height="16" fill="white" />
@@ -37,9 +37,9 @@ const TimelineIcon = ({ isActive }) => {
       </defs>
     </svg>
   )
-}
+})
 
-const DetailsIcon = ({ isActive }) => {
+const DetailsIcon = memo(function DetailsIcon({ isActive }) {
   const strokeColor = getIconStroke(isActive)
 
   return (
@@ -52,9 +52,9 @@ const DetailsIcon = ({ isActive }) => {
       />
     </svg>
   )
-}
+})
 
-const MessageIcon = ({ isActive }) => {
+const MessageIcon = memo(function MessageIcon({ isActive }) {
   const strokeColor = getIconStroke(isActive)
 
   return (
@@ -67,7 +67,6 @@ const MessageIcon = ({ isActive }) => {
           strokeLinejoin="round"
         />
       </g>
-
       <defs>
         <clipPath id="clip0_3495_1591">
           <rect width="16" height="16" fill="white" />
@@ -75,9 +74,9 @@ const MessageIcon = ({ isActive }) => {
       </defs>
     </svg>
   )
-}
+})
 
-const HistoryIcon = ({ isActive }) => {
+const HistoryIcon = memo(function HistoryIcon({ isActive }) {
   const strokeColor = getIconStroke(isActive)
 
   return (
@@ -90,9 +89,9 @@ const HistoryIcon = ({ isActive }) => {
       />
     </svg>
   )
-}
+})
 
-const BookmarkIcon = ({ isActive }) => {
+const BookmarkIcon = memo(function BookmarkIcon({ isActive }) {
   const strokeColor = getIconStroke(isActive)
 
   return (
@@ -105,9 +104,9 @@ const BookmarkIcon = ({ isActive }) => {
       />
     </svg>
   )
-}
+})
 
-const HelpIcon = ({ isActive }) => {
+const HelpIcon = memo(function HelpIcon({ isActive }) {
   const strokeColor = getIconStroke(isActive)
 
   return (
@@ -120,7 +119,6 @@ const HelpIcon = ({ isActive }) => {
           strokeLinejoin="round"
         />
       </g>
-
       <defs>
         <clipPath id="clip0_3495_1603">
           <rect width="16" height="16" fill="white" />
@@ -128,11 +126,20 @@ const HelpIcon = ({ isActive }) => {
       </defs>
     </svg>
   )
-}
+})
 
-// 🔹 REUSABLE NAV ITEM
+const SIDEBAR_ITEMS = [
+  { to: '/user-dashboard/active-booking', label: 'Active Booking', Icon: DashboardIcon },
+  { to: '/user-dashboard/sample-taste', label: 'Sample Booking', Icon: DashboardIcon },
+  { to: '/user-dashboard/timeline', label: 'Booking Timeline', Icon: TimelineIcon },
+  { to: '/user-dashboard/details', label: 'Booking Details', Icon: DetailsIcon },
+  { to: '/user-dashboard/messages', label: 'Messages & Updates', Icon: MessageIcon },
+  { to: '/user-dashboard/previous', label: 'Previous Bookings', Icon: HistoryIcon },
+  { to: '/user-dashboard/saved', label: 'Saved Packages', Icon: BookmarkIcon },
+  { to: '/user-dashboard/support', label: 'Support & Help', Icon: HelpIcon },
+]
 
-const SidebarItem = ({ to, label, Icon, onClick }) => {
+const SidebarItem = memo(function SidebarItem({ to, label, Icon, onClick }) {
   return (
     <NavLink
       to={to}
@@ -155,7 +162,7 @@ const SidebarItem = ({ to, label, Icon, onClick }) => {
       )}
     </NavLink>
   )
-}
+})
 
 const CloseIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -175,14 +182,22 @@ export default function Sidebar({ isMobileOpen = false, onMobileClose = () => {}
       />
 
       <aside
-        className={`fixed inset-0 z-40 flex h-screen w-screen flex-col transition-transform duration-300 md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${
-          isMobileOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed inset-x-0 top-0 z-40 flex h-screen w-screen flex-col overflow-hidden bg-[#591902] md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${
+          isMobileOpen
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100'
         }`}
         style={{
           backgroundColor: DASHBOARD.COLORS.SIDEBAR_BG,
+          clipPath:
+            isMobileOpen || typeof window === 'undefined' || window.innerWidth >= 768
+              ? 'inset(0% 0% 0% 0%)'
+              : 'inset(0% 0% 100% 0%)',
+          transition:
+            'clip-path 0.72s cubic-bezier(0.32,0,0.15,1), opacity 0.32s ease, transform 0.3s ease',
         }}
       >
-        <div className="flex h-[63px] items-center justify-between bg-[#FAFAFA] px-6 md:hidden">
+        <div className="flex h-[68px] items-center justify-between bg-[#FAFAFA] px-4 md:hidden">
           <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
           <button type="button" aria-label="Close sidebar" onClick={onMobileClose}>
             <CloseIcon />
@@ -194,54 +209,15 @@ export default function Sidebar({ isMobileOpen = false, onMobileClose = () => {}
         </div>
 
         <div className="flex flex-col gap-1 px-4 pt-6">
-          <SidebarItem
-            to="/user-dashboard/active-booking"
-            label="Active Booking"
-            Icon={DashboardIcon}
-            onClick={onMobileClose}
-          />
-          <SidebarItem
-            to="/user-dashboard/sample-taste"
-            label="Sample Booking"
-            Icon={DashboardIcon}
-            onClick={onMobileClose}
-          />
-          <SidebarItem
-            to="/user-dashboard/timeline"
-            label="Booking Timeline"
-            Icon={TimelineIcon}
-            onClick={onMobileClose}
-          />
-          <SidebarItem
-            to="/user-dashboard/details"
-            label="Booking Details"
-            Icon={DetailsIcon}
-            onClick={onMobileClose}
-          />
-          <SidebarItem
-            to="/user-dashboard/messages"
-            label="Messages & Updates"
-            Icon={MessageIcon}
-            onClick={onMobileClose}
-          />
-          <SidebarItem
-            to="/user-dashboard/previous"
-            label="Previous Bookings"
-            Icon={HistoryIcon}
-            onClick={onMobileClose}
-          />
-          <SidebarItem
-            to="/user-dashboard/saved"
-            label="Saved Packages"
-            Icon={BookmarkIcon}
-            onClick={onMobileClose}
-          />
-          <SidebarItem
-            to="/user-dashboard/support"
-            label="Support & Help"
-            Icon={HelpIcon}
-            onClick={onMobileClose}
-          />
+          {SIDEBAR_ITEMS.map(item => (
+            <SidebarItem
+              key={item.to}
+              to={item.to}
+              label={item.label}
+              Icon={item.Icon}
+              onClick={onMobileClose}
+            />
+          ))}
         </div>
       </aside>
     </>

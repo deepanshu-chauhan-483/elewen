@@ -89,6 +89,10 @@ function getSelectedElements(item) {
   }))
 }
 
+function getCartItemQuantity(item) {
+  return Math.max(1, Number(item?.quantity ?? 1))
+}
+
 function getPackageSubtitle(pkg) {
   const service = pkg?.service_slugs?.[0]
   if (!service) return 'Selected package'
@@ -342,6 +346,7 @@ export default function SinglePackageCheckout() {
   const eventDate = formatDisplayDate(cart?.eventDate)
   const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
   const suggestedPackages = getSuggestedAddonsWithPricing(item)
+  const packageQuantity = getCartItemQuantity(item)
   const addonTotal = relatedAddonItems.reduce(
     (sum, addonItem) => sum + Number(addonItem.totalPrice ?? 0),
     0
@@ -388,12 +393,19 @@ export default function SinglePackageCheckout() {
 
             <div className="items-start">
               <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
-              <h3
-                className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
-                style={{ fontFamily: "'Poppins'" }}
-              >
-                {packageTitle}
-              </h3>
+              <div className="flex min-w-0 items-center gap-2">
+                <h3
+                  className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
+                  style={{ fontFamily: "'Poppins'" }}
+                >
+                  {packageTitle}
+                </h3>
+                {packageQuantity > 1 ? (
+                  <span className="rounded-full bg-[#EFE7DC] px-2 py-1 text-[10px] md:text-[12px] font-medium text-[#591902]">
+                    x{packageQuantity}
+                  </span>
+                ) : null}
+              </div>
               <p className="text-[10px] md:text-[12px] text-[#6A6864]">
                 {eventLocation} · {eventDate}
               </p>
@@ -476,16 +488,19 @@ export default function SinglePackageCheckout() {
 
             <div className="space-y-3 p-4 text-sm">
               <div className="flex justify-between font-medium">
-                <span>Base Package — {packageTitle}</span>
-                <span>{formatCurrency(item.unitPrice)}</span>
+                <span>
+                  Base Package — {packageTitle}
+                  {packageQuantity > 1 ? ` x${packageQuantity}` : ''}
+                </span>
+                <span>{formatCurrency(item.totalPrice)}</span>
               </div>
 
               <hr className="my-4 border-[#0000001A]" />
 
               {elements.map(element => (
-                <div key={element.title} className="flex justify-between text-gray-600">
+                <div key={element.title} className="flex justify-between text-[#767676]">
                   <span>{element.title}</span>
-                  <span>Included</span>
+                  <span className="text-[#1C1C1C]">Included</span>
                 </div>
               ))}
 

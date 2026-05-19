@@ -151,6 +151,8 @@ model UserSession {
   expiresAt    DateTime
   createdAt    DateTime @default(now())
 
+  @@index([userId])
+  @@index([expiresAt])
   @@map("user_sessions")
 }
 
@@ -165,6 +167,7 @@ model OAuthAccount {
   createdAt      DateTime @default(now())
 
   @@unique([provider, providerUserId])
+  @@index([userId])
   @@map("oauth_accounts")
 }
 
@@ -186,6 +189,7 @@ model Cart {
 
   items          CartItem[]
 
+  @@index([userId])
   @@map("carts")
 }
 
@@ -241,6 +245,11 @@ model Booking {
   supportTickets    SupportTicket[]
   sampleBookings    SampleTasteBooking[]
 
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
   @@map("bookings")
 }
 
@@ -350,6 +359,8 @@ model SampleTasteBooking {
   vendors           SampleTasteVendor[]
   booking           Booking?          @relation(fields: [bookingId], references: [id])
 
+  @@index([userId])
+  @@index([userId, status])
   @@map("sample_taste_bookings")
 }
 
@@ -386,6 +397,8 @@ model Payment {
   refunds           Refund[]
   logs              PaymentLog[]
 
+  @@index([bookingId, status])
+  @@index([status])
   @@map("payments")
 }
 
@@ -557,6 +570,8 @@ model SupportTicket {
   booking   Booking?            @relation(fields: [bookingId], references: [id])
   messages  SupportMessage[]
 
+  @@index([userId])
+  @@index([userId, status])
   @@map("support_tickets")
 }
 
@@ -586,6 +601,9 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("notifications")
 }
 
@@ -604,6 +622,9 @@ model Alert {
   resolvedAt        DateTime?
   createdAt         DateTime      @default(now())
 
+  @@index([status])
+  @@index([severity, status])
+  @@index([createdAt(sort: Desc)])
   @@map("alerts")
 }
 

@@ -258,7 +258,7 @@ export default function SupportPage() {
 
       {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl  text-[#1C1C1C]">Help & Support</h1>
+        <h1 className="text-2xl text-[#1C1C1C]">Help & Support</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
           Manage customer tickets, update their status, and reply with public messages or internal notes.
         </p>

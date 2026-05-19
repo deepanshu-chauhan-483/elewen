@@ -14,6 +14,18 @@ export default defineConfig(({ mode }) => {
         webp: { quality: 80 },
       }),
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-animation': ['framer-motion', 'gsap'],
+            'vendor-ui': ['swiper'],
+            'vendor-query': ['@tanstack/react-query'],
+          },
+        },
+      },
+    },
     server: {
       host: '0.0.0.0',
       port: 5173,

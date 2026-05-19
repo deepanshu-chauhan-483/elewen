@@ -2,6 +2,7 @@ import prisma from '../lib/prisma.js'
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
 import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
+import { invalidateDashboardCache } from './dashboard.js'
 
 const DEFAULT_ADVANCE_PCT = 30
 
@@ -499,6 +500,7 @@ export const createBooking = async (req, res, next) => {
       },
     }).catch(() => {})
 
+    invalidateDashboardCache(userId).catch(() => {})
     res.status(201).json({ booking: fullBooking })
   } catch (err) {
     next(err)
@@ -512,28 +514,49 @@ export const listBookings = async (req, res, next) => {
     const type = String(req.query?.type ?? 'all')
       .trim()
       .toLowerCase()
+    const page = Math.max(1, Number(req.query?.page ?? 1))
+    const limit = Math.min(50, Math.max(1, Number(req.query?.limit ?? 20)))
+    const skip = (page - 1) * limit
 
-    const bookings = await prisma.booking.findMany({
-      where: { userId },
-      include: {
-        items: true,
-        notes: {
-          where: { isInternal: false },
-          orderBy: { createdAt: 'desc' },
+    const [bookings, total] = await Promise.all([
+      prisma.booking.findMany({
+        where: { userId },
+        include: {
+          items: {
+            select: { id: true, title: true, quantity: true, unitPrice: true, totalPrice: true },
+          },
+          notes: {
+            where: { isInternal: false },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+          },
+          statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+          payments: {
+            where: { status: 'success' },
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, amount: true, paymentType: true, createdAt: true },
+          },
         },
-        statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
-        payments: {
-          where: { status: 'success' },
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      prisma.booking.count({ where: { userId } }),
+    ])
 
     const enrichedBookings = await enrichBookings(bookings)
     const filteredBookings = filterBookingsByType(enrichedBookings, type)
 
-    res.json({ bookings: filteredBookings })
+    res.json({
+      bookings: filteredBookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: skip + limit < total,
+      },
+    })
   } catch (err) {
     if (err?.status === 400) {
       return res.status(400).json({ error: err.message })
@@ -675,6 +698,7 @@ export const updateStatus = async (req, res, next) => {
       },
     }).catch(() => {})
 
+    invalidateDashboardCache(userId).catch(() => {})
     res.json({ booking: updated })
   } catch (err) {
     next(err)

@@ -373,7 +373,7 @@ export default function SampleTastePage() {
 
       {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl  text-[#1C1C1C]">Sample Taste Booking</h1>
+        <h1 className="text-2xl text-[#1C1C1C]">Sample Taste Booking</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
           Track tasting requests from submission through vendor assignment, delivery, and completion.
         </p>

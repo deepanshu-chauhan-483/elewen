@@ -280,9 +280,17 @@ const isGoogleProvider = provider =>
     .trim()
     .toLowerCase() === 'google'
 
-const isStrapiCredentialError = err =>
-  (err?.status === 401 || err?.status === 403) &&
-  /missing or invalid credentials/i.test(String(err?.message ?? ''))
+const isStrapiCredentialError = err => {
+  if (err?.status !== 401 && err?.status !== 403) return false
+
+  const message = String(err?.message ?? '').toLowerCase()
+  return (
+    !message ||
+    message.includes('forbidden') ||
+    message.includes('missing or invalid credentials') ||
+    message.includes('unauthorized')
+  )
+}
 
 const mapUserRow = row => {
   if (!row) return null
@@ -308,6 +316,59 @@ const findUserByEmailFromDatabase = async email => {
   `
 
   return mapUserRow(row)
+}
+
+const findUserByIdFromDatabase = async userId => {
+  const parsedUserId = Number.parseInt(String(userId ?? ''), 10)
+
+  if (!Number.isInteger(parsedUserId)) {
+    return null
+  }
+
+  const [row] = await prisma.$queryRaw`
+    SELECT id, email, provider, confirmed, blocked, first_name, last_name, phone
+    FROM public.up_users
+    WHERE id = ${parsedUserId}
+    LIMIT 1
+  `
+
+  return mapUserRow(row)
+}
+
+const findUserAddressesFromDatabase = async userId => {
+  const parsedUserId = Number.parseInt(String(userId ?? ''), 10)
+
+  if (!Number.isInteger(parsedUserId)) {
+    return []
+  }
+
+  const rows = await prisma.$queryRaw`
+    SELECT
+      a.id,
+      a.document_id,
+      a.line_1,
+      a.line_2,
+      a.city,
+      a.state,
+      a.pincode,
+      a.country
+    FROM public.addresses a
+    INNER JOIN public.addresses_user_lnk lnk
+      ON lnk.address_id = a.id
+    WHERE lnk.user_id = ${parsedUserId}
+    ORDER BY COALESCE(lnk.address_ord, 0) ASC, a.created_at DESC, a.id DESC
+  `
+
+  return rows.map(row => ({
+    id: Number(row.id),
+    documentId: row.document_id ?? null,
+    line1: row.line_1 ?? '',
+    line2: row.line_2 ?? '',
+    city: row.city ?? '',
+    state: row.state ?? '',
+    pincode: row.pincode ?? '',
+    country: row.country ?? 'India',
+  }))
 }
 
 const syncUserFieldsInDatabase = async ({
@@ -622,24 +683,30 @@ export const logout = async (req, res, next) => {
 // ─── GET /auth/me ──────────────────────────────────────────────────────────────
 export const me = async (req, res, next) => {
   try {
-    const user = await strapiGetMe(req.token)
+    let user = null
+    try {
+      user = await strapiGetMe(req.token)
+    } catch {
+      user = await findUserByIdFromDatabase(req.user?.id)
+    }
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid or expired token' })
+    }
+
     let profile = null
     let addresses = []
 
     try {
       profile = await findCustomerProfile(user.id)
     } catch (err) {
-      if (!isStrapiCredentialError(err)) {
-        throw err
-      }
+      profile = await findCustomerProfileInDatabase(user.id)
     }
 
     try {
       addresses = await findUserAddresses(user.id)
-    } catch (err) {
-      if (!isStrapiCredentialError(err)) {
-        throw err
-      }
+    } catch {
+      addresses = await findUserAddressesFromDatabase(user.id)
     }
 
     res.json({

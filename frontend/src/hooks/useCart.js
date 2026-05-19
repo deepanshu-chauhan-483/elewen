@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   cartAddItem,
   cartApplyCoupon,
@@ -267,6 +267,22 @@ async function migrateGuestCartToServer(token) {
   return guestCart
 }
 
+function debounce(fn, ms) {
+  let timer
+  return function (...args) {
+    clearTimeout(timer)
+    return new Promise((resolve, reject) => {
+      timer = setTimeout(async () => {
+        try {
+          resolve(await fn.apply(this, args))
+        } catch (err) {
+          reject(err)
+        }
+      }, ms)
+    })
+  }
+}
+
 export function dispatchCartChange(cart) {
   window.dispatchEvent(new CustomEvent(CART_EVENT, { detail: { cart } }))
 }
@@ -472,9 +488,26 @@ export function useCart() {
 
     if (!token) {
       const guestCart = readGuestCart()
+      const currentItem = guestCart.items.find(item => String(item.id) === String(itemId))
+      if (!currentItem) throw new Error('Cart item not found')
+
+      const currentQuantity = Math.max(1, Number(currentItem.quantity ?? 1))
+      const nextItems =
+        currentQuantity > 1
+          ? guestCart.items.map(item =>
+              String(item.id) === String(itemId)
+                ? {
+                    ...item,
+                    quantity: currentQuantity - 1,
+                    totalPrice: (Number(item.unitPrice ?? 0) * (currentQuantity - 1)).toFixed(2),
+                  }
+                : item
+            )
+          : guestCart.items.filter(item => String(item.id) !== String(itemId))
+
       const nextCart = writeGuestCart({
         ...guestCart,
-        items: guestCart.items.filter(item => item.id !== itemId),
+        items: nextItems,
       })
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))
@@ -484,7 +517,12 @@ export function useCart() {
     }
 
     try {
-      const data = await cartRemoveItem(token, itemId)
+      const currentItem = (cart?.items ?? []).find(item => String(item.id) === String(itemId))
+      const currentQuantity = Math.max(1, Number(currentItem?.quantity ?? 1))
+      const data =
+        currentQuantity > 1
+          ? await cartUpdateItem(token, itemId, { quantity: currentQuantity - 1 })
+          : await cartRemoveItem(token, itemId)
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))
@@ -697,7 +735,7 @@ export function useCart() {
   // ─── FIXED: no 401s ───────────────────────────────────────────────────────
   // Logged-in  → Express API  (unchanged, was always correct)
   // Guest      → Strapi public GET /api/coupons, apply discount locally
-  const applyCoupon = async code => {
+  const applyCoupon = useCallback(async code => {
     const token = await getServerToken() // never throws; '' if not logged in
 
     if (token) {
@@ -734,7 +772,9 @@ export function useCart() {
     setError('')
     dispatchCartChange(nextCart)
     return { cart: nextCart }
-  }
+  }, [])
+
+  const debouncedApplyCoupon = useRef(debounce(applyCoupon, 500)).current
 
   // ─── FIXED: no 401s ───────────────────────────────────────────────────────
   const clearCoupon = async () => {
@@ -783,6 +823,7 @@ export function useCart() {
     removeItem,
     updateCartDetails,
     applyCoupon,
+    debouncedApplyCoupon,
     clearCoupon,
   }
 }

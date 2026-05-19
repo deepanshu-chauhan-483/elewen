@@ -5,18 +5,6 @@ import { getInitials } from '../../lib/formatters'
 import { ActionButton } from '../ui/AdminUI'
 import { useAdminLogout, useAdminSession } from '../../hooks/useAdminData'
 
-const navigation = [
-  { to: '/overview', label: 'Overview' },
-  { to: '/sample-taste', label: 'Sample Taste Booking' },
-  { to: '/bookings', label: 'Booking Management' },
-  { to: '/tracker', label: 'Booking Status Tracker' },
-  { to: '/vendors', label: 'Vendor Management' },
-  { to: '/messages', label: 'Message Box' },
-  { to: '/payments', label: 'Payment Management' },
-  { to: '/support', label: 'Help & Support' },
-  { to: '/alerts', label: 'System Alerts' },
-]
-
 const LogoutIcon = ({ className = 'h-4 w-4', stroke = '#FAFAFA' }) => (
   <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
@@ -27,6 +15,157 @@ const LogoutIcon = ({ className = 'h-4 w-4', stroke = '#FAFAFA' }) => (
     />
   </svg>
 )
+
+const CloseIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M5 5L15 15M15 5L5 15" stroke="#591902" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+)
+
+const getIconStroke = isActive => (isActive ? '#591902' : '#FAFAFA')
+
+const OverviewIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="2" y="2" width="5" height="5" rx="1" stroke={stroke} />
+      <rect x="9" y="2" width="5" height="3" rx="1" stroke={stroke} />
+      <rect x="9" y="8" width="5" height="6" rx="1" stroke={stroke} />
+      <rect x="2" y="10" width="5" height="4" rx="1" stroke={stroke} />
+    </svg>
+  )
+}
+
+const SampleBookingIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1.6665 9.99784H18.3332M16.6665 9.99784V16.6645C16.6665 17.1065 16.4909 17.5305 16.1783 17.843C15.8658 18.1556 15.4419 18.3312 14.9998 18.3312H4.99984C4.55781 18.3312 4.13389 18.1556 3.82133 17.843C3.50877 17.5305 3.33317 17.1065 3.33317 16.6645V9.99784M3.33317 6.6645L16.6665 3.33117M7.38317 5.64784L7.00817 4.1395C6.95444 3.9272 6.94308 3.70638 6.97474 3.48969C7.0064 3.27299 7.08045 3.06465 7.19267 2.87659C7.30489 2.68852 7.45307 2.52442 7.62875 2.39366C7.80442 2.2629 8.00415 2.16804 8.2165 2.1145L9.83317 1.7145C10.046 1.66091 10.2674 1.64989 10.4845 1.68208C10.7017 1.71427 10.9103 1.78904 11.0985 1.90209C11.2866 2.01514 11.4506 2.16425 11.581 2.34085C11.7113 2.51745 11.8055 2.71806 11.8582 2.93117L12.2332 4.43117" stroke={stroke} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+
+  )
+}
+const BookingIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1.6665 5.0013H4.99984M1.6665 8.33464H4.99984M1.6665 11.668H4.99984M1.6665 15.0013H4.99984M12.4998 1.66797V18.3346M12.4998 5.83464H16.6665M12.4998 10.0013H16.6665M12.4998 14.168H16.6665M4.99984 1.66797H14.9998C15.9203 1.66797 16.6665 2.41416 16.6665 3.33464V16.668C16.6665 17.5884 15.9203 18.3346 14.9998 18.3346H4.99984C4.07936 18.3346 3.33317 17.5884 3.33317 16.668V3.33464C3.33317 2.41416 4.07936 1.66797 4.99984 1.66797Z" stroke={stroke} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+const TrackerIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8 4V8L10.6667 9.33333M14.6667 8C14.6667 11.6819 11.6819 14.6667 8 14.6667C4.3181 14.6667 1.33333 11.6819 1.33333 8C1.33333 4.3181 4.3181 1.33333 8 1.33333C11.6819 1.33333 14.6667 4.3181 14.6667 8Z"
+        stroke={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const VendorIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 13.3333H14M3.33333 13.3333V5.33333L8 2L12.6667 5.33333V13.3333M6 7.33333H10M6 10H10"
+        stroke={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const MessageIcon = ({ isActive }) => {
+  const strokeColor = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g clipPath="url(#clip0_3495_1591)">
+        <path
+          d="M1.99462 10.8951C2.09265 11.1424 2.11447 11.4133 2.05729 11.6731L1.34729 13.8664C1.32441 13.9777 1.33033 14.0929 1.36447 14.2012C1.39862 14.3095 1.45987 14.4073 1.5424 14.4853C1.62494 14.5633 1.72603 14.6189 1.83609 14.6469C1.94615 14.6748 2.06153 14.6742 2.17129 14.6451L4.44662 13.9798C4.69177 13.9312 4.94564 13.9524 5.17929 14.0411C6.60288 14.7059 8.21553 14.8466 9.73272 14.4383C11.2499 14.0299 12.5741 13.0989 13.4718 11.8094C14.3694 10.5198 14.7827 8.95472 14.6388 7.39015C14.4949 5.82557 13.8031 4.36209 12.6853 3.25791C11.5676 2.15373 10.0958 1.47981 8.52954 1.35504C6.96333 1.23028 5.40338 1.6627 4.12492 2.57601C2.84646 3.48931 1.93164 4.82481 1.54189 6.34687C1.15213 7.86894 1.31247 9.47975 1.99462 10.8951Z"
+          stroke={strokeColor}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+
+      <defs>
+        <clipPath id="clip0_3495_1591">
+          <rect width="16" height="16" fill="white" />
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}
+
+const PaymentIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 4.66667C2 3.93029 2.59695 3.33333 3.33333 3.33333H12.6667C13.403 3.33333 14 3.93029 14 4.66667V11.3333C14 12.0697 13.403 12.6667 12.6667 12.6667H3.33333C2.59695 12.6667 2 12.0697 2 11.3333V4.66667ZM2 6H14M10.6667 9.66667H11.3333"
+        stroke={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const HelpIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8 10.6667V8M8 5.33333H8.00667M14.6667 8C14.6667 11.6819 11.6819 14.6667 8 14.6667C4.3181 14.6667 1.33333 11.6819 1.33333 8C1.33333 4.3181 4.3181 1.33333 8 1.33333C11.6819 1.33333 14.6667 4.3181 14.6667 8Z"
+        stroke={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const AlertIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8 6V8.66667M8 11.3333H8.00667M6.86 2.68667L1.80667 11.1267C1.69022 11.3284 1.62832 11.5569 1.62711 11.7899C1.62589 12.0228 1.68541 12.252 1.79975 12.4549C1.91409 12.6578 2.0792 12.8275 2.27886 12.9473C2.47853 13.0671 2.70577 13.1329 2.93867 13.138H13.0613C13.2942 13.1329 13.5215 13.0671 13.7211 12.9473C13.9208 12.8275 14.0859 12.6578 14.2003 12.4549C14.3146 12.252 14.3741 12.0228 14.3729 11.7899C14.3717 11.5569 14.3098 11.3284 14.1933 11.1267L9.14 2.68667C9.01861 2.49078 8.84903 2.32941 8.64746 2.21797C8.44589 2.10654 8.21919 2.04878 7.98889 2.05019C7.75858 2.05159 7.5326 2.11213 7.33241 2.22601C7.13223 2.33989 6.96464 2.50332 6.84533 2.70067L6.86 2.68667Z"
+        stroke={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const navigation = [
+  { to: '/overview', label: 'Overview', icon: OverviewIcon },
+  { to: '/sample-taste', label: 'Sample Taste Booking', icon: SampleBookingIcon },
+  { to: '/bookings', label: 'Booking Management', icon: BookingIcon },
+  { to: '/tracker', label: 'Booking Status Tracker', icon: TrackerIcon },
+  { to: '/vendors', label: 'Vendor Management', icon: VendorIcon },
+  { to: '/messages', label: 'Message Box', icon: MessageIcon },
+  { to: '/payments', label: 'Payment Management', icon: PaymentIcon },
+  { to: '/support', label: 'Help & Support', icon: HelpIcon },
+  { to: '/alerts', label: 'System Alerts', icon: AlertIcon },
+]
 
 function routeTitle(pathname) {
   const item = navigation.find(entry => pathname.startsWith(entry.to))
@@ -130,18 +269,26 @@ export default function AdminLayout() {
       />
 
       <aside
-        className={`fixed inset-0 z-40 flex h-screen w-screen flex-col bg-[#591902] transition-transform duration-300 md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${mobileOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
+        className={`fixed inset-x-0 top-0 z-40 flex h-screen w-screen flex-col overflow-hidden bg-[#591902] md:left-0 md:top-0 md:h-screen md:w-[260px] md:translate-x-0 ${mobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100'
           }`}
+        style={{
+          clipPath:
+            mobileOpen || typeof window === 'undefined' || window.innerWidth >= 768
+              ? 'inset(0% 0% 0% 0%)'
+              : 'inset(0% 0% 100% 0%)',
+          transition:
+            'clip-path 0.72s cubic-bezier(0.32,0,0.15,1), opacity 0.32s ease, transform 0.3s ease',
+        }}
       >
-        <div className="flex h-[63px] items-center justify-between bg-[#FAFAFA] px-6 md:hidden">
-          <h1 className="admin-serif text-3xl text-[#591902]">ELEWEN</h1>
+        <div className="flex h-[68px] items-center justify-between bg-[#FAFAFA] px-4 md:hidden">
+          <h1 className="text-3xl text-[#591902]">ELEWEN</h1>
           <button type="button" aria-label="Close sidebar" onClick={() => setMobileOpen(false)}>
-            <span className="text-xl text-[#591902]">x</span>
+            <CloseIcon />
           </button>
         </div>
 
         <div className="hidden h-[66px] border-r border-[#591902] bg-[#FAFAFA] py-4 pl-5 md:block">
-          <h1 className="admin-serif text-3xl text-[#591902]">ELEWEN</h1>
+          <h1 className="text-3xl text-[#591902]">ELEWEN</h1>
         </div>
 
         <div className="px-4 pt-6">
@@ -157,7 +304,7 @@ export default function AdminLayout() {
               to={item.to}
               onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center rounded-xl px-4 py-3 text-sm transition-all ${isActive ? 'bg-[#E7E0DA] text-[#591902]' : 'text-[#FAFAFA] md:text-[#FAFAFA]'
+                `flex items-center gap-2 rounded-xl px-4 py-3 text-sm transition-all ${isActive ? 'bg-[#E7E0DA] text-[#591902]' : 'text-[#FAFAFA] md:text-[#FAFAFA]'
                 }`
               }
               style={({ isActive }) => ({
@@ -165,7 +312,16 @@ export default function AdminLayout() {
                 color: isActive ? '#591902' : '#FAFAFA',
               })}
             >
-              {item.label}
+              {({ isActive }) => {
+                const Icon = item.icon
+
+                return (
+                  <>
+                    <Icon isActive={isActive} />
+                    <span>{item.label}</span>
+                  </>
+                )
+              }}
             </NavLink>
           ))}
         </nav>
@@ -174,18 +330,11 @@ export default function AdminLayout() {
       <div className="flex  min-h-screen w-full flex-col bg-[#F2F2F2] md:ml-[260px] md:flex-1">
         <header className="fixed left-0 right-0 top-0 z-20 h-[68px] border-b border-[#E4DED8] bg-[#FAFAFA] px-4 py-3 sm:px-6 md:left-[260px]">
           <div className="flex h-full w-full items-center justify-between">
-            {/* LEFT SIDE */}
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setMobileOpen(true)}
-                className="group flex flex-col gap-1 p-0.5 md:hidden"
-              >
-                <span className="h-0.5 w-7 bg-[#262626]" />
-                <span className="h-0.5 w-5 bg-[#262626]" />
-              </button>
+              <div className="md:hidden">
+                <h1 className="text-3xl text-[#1C1C1C]">ELEWEN</h1>
+              </div>
 
-              {/* Search */}
               <div className="hidden items-center rounded-full bg-[#F0F0F0] lg:flex lg:w-[300px]">
                 <div className="flex w-full items-center gap-2 px-3 py-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#591902] text-[#FAFAFA]">
@@ -206,9 +355,23 @@ export default function AdminLayout() {
               </div>
             </div>
 
-            {/* RIGHT SIDE */}
+            <div className="flex items-center gap-4 md:hidden">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#D9D9D9] text-[10px] font-medium text-white">
+                {getInitials(displayName)}
+              </div>
+
+              <button
+                type="button"
+                aria-label="Open sidebar"
+                onClick={() => setMobileOpen(true)}
+                className="group flex flex-col gap-1 p-0.5"
+              >
+                <span className="h-0.5 w-7 bg-[#262626]" />
+                <span className="h-0.5 w-5 bg-[#262626]" />
+              </button>
+            </div>
+
             <div className="hidden md:flex items-center gap-5">
-              {/* User Info */}
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#D9D9D9] text-[10px] font-medium text-white">
                   {getInitials(displayName)}
@@ -233,7 +396,7 @@ export default function AdminLayout() {
                 }}
                 ariaLabel="Logout"
                 disabled={logoutMutation.isPending}
-                className="min-w-[78px] bg-[#D4BA8E] text-[#FAFAFA] hover:bg-[#c7aa76] disabled:cursor-not-allowed disabled:opacity-70"
+                className="min-w-[78px] bg-[#CDB17E] text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <span className="whitespace-nowrap">
                   {logoutMutation.isPending ? 'Logging out' : 'Logout'}

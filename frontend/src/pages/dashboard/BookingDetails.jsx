@@ -403,12 +403,12 @@ function BookingAccordionCard({ booking, session }) {
             <button
               type="button"
               onClick={() => downloadReceipt(receiptData)}
-              className="rounded-full border border-[#C6A15B] bg-[#FFFFFF] px-5 py-2 text-[#C6A15B]"
+              className="rounded-full border border-[#C6A15B] bg-[#FFFFFF] px-5 py-2 text-[#CDB17E]"
             >
               Download Receipt
             </button>
 
-            <button className="flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2 text-white">
+            <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-5 py-2 text-white">
               Message Admin <ArrowIcon />
             </button>
 
@@ -418,7 +418,7 @@ function BookingAccordionCard({ booking, session }) {
                 event.stopPropagation()
                 setShowCancel(prev => !prev)
               }}
-              className="rounded-full px-5 py-2 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-[#C6A15B]"
+              className="rounded-full px-5 py-2 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-[#CDB17E]"
             >
               Cancel Booking
             </button>

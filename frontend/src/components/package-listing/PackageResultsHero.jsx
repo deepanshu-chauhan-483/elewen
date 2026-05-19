@@ -28,7 +28,7 @@ function FilterPill({
         placeholder={label}
         buttonClassName="flex h-[38px] min-w-0 w-full items-center rounded-full bg-[#F7F0E6] pl-4 pr-9 text-left text-[14px] leading-[18px] text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
         arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 shrink-0 -translate-y-1/2 text-[#7A2B08]"
-        menuClassName="fixed z-[999] overflow-hidden rounded-[16px] border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+        menuClassName="fixed overflow-hidden rounded-[16px] border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
         optionClassName="flex w-full min-w-0 whitespace-nowrap items-center bg-[#F7F0E6] px-6 py-3 text-left text-[14px] leading-[18px] text-[#7A2B08] transition-colors hover:bg-black hover:text-white"
         selectedOptionClassName=""
       />

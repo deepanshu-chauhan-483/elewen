@@ -1,13 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
-  DashboardPageIntro,
   MessageBubble,
-  SectionCard,
-  StatusPill,
+  SelectField,
 } from '../../components/dashboard/DashboardUI'
 import {
   useDashboardBookings,
@@ -18,26 +15,142 @@ import {
   useDashboardSupportTicket,
   useDashboardSupportTickets,
 } from '../../hooks/useDashboardData'
+import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
 
-function isClosedTicket(ticket) {
-  return ['resolved', 'closed'].includes(String(ticket?.status ?? '').toLowerCase())
+// ---------------------------------------------------------------------------
+// Shared primitives
+// ---------------------------------------------------------------------------
+
+const ticketStatusBadge = {
+  open: 'bg-[#DBEAFE] text-[#0383E4]',
+  in_progress: 'bg-[#FCE7CF] text-[#C57A1E]',
+  resolved: 'bg-[#DDF7E5] text-[#16A34A]',
+  closed: 'bg-[#E5E7EB] text-[#4B5563]',
 }
 
-function formatDateTime(value) {
-  if (!value) return ''
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date)
+function TicketBadge({ status }) {
+  const key = status?.toLowerCase() ?? ''
+  const cls = ticketStatusBadge[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const text = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${cls}`}
+    >
+      {text}
+    </span>
+  )
 }
 
+// Contact info card
+function ContactCard({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-[#EDE8E1] bg-white p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
+        {label}
+      </p>
+      <p className="mt-2 text-sm text-[#2E2E2E]">{value || 'Not shared yet'}</p>
+    </div>
+  )
+}
+
+// Form input
+function FormInput({ label, value, onChange, placeholder, type = 'text' }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-sm font-medium text-[#2E2E2E]">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm text-[#2E2E2E] placeholder:text-[#B0AAA4] outline-none focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B] transition"
+      />
+    </div>
+  )
+}
+
+// Form textarea
+function FormTextarea({ label, value, onChange, placeholder, rows = 4 }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <span className="text-sm font-medium text-[#2E2E2E]">{label}</span>}
+      <textarea
+        rows={rows}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm text-[#2E2E2E] placeholder:text-[#B0AAA4] outline-none focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B] transition resize-none"
+      />
+    </div>
+  )
+}
+
+// Gold primary button
+function GoldBtn({ children, type = 'button', onClick, disabled }) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex items-center justify-center rounded-full bg-[#C6A15B] px-6 py-2.5 text-sm text-white transition hover:bg-[#B8914D] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {children}
+    </button>
+  )
+}
+
+// Ghost button
+function OutlineBtn({ children, href, onClick }) {
+  const cls =
+    'inline-flex items-center justify-center rounded-full border border-[#D2C9BF] px-6 py-2.5 text-sm font-semibold text-[#591902] transition hover:border-[#C6A15B] hover:bg-[#FBF7F3] hover:-translate-y-px'
+  if (href)
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={cls}>
+        {children}
+      </a>
+    )
+  return (
+    <button type="button" onClick={onClick} className={cls}>
+      {children}
+    </button>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Ticket list item
+// ---------------------------------------------------------------------------
+function TicketItem({ ticket, isActive, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'w-full rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-px',
+        isActive
+          ? 'border-[#C6A15B] bg-[#FBF7F3] shadow-[0_2px_12px_rgba(198,161,91,0.12)]'
+          : 'border-[#EDE8E1] bg-white hover:border-[#C6A15B] hover:bg-[#FBF7F3]',
+      ].join(' ')}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="truncate text-sm font-semibold text-[#1C1C1C]">{ticket.subject}</p>
+          <p className="mt-0.5 text-xs text-[#8F8F8F]">{formatDashboardDate(ticket.createdAt)}</p>
+        </div>
+        <TicketBadge status={ticket.status} />
+      </div>
+    </button>
+  )
+}
+
+const ArrowIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="#fff" strokeWidth="1.5" />
+  </svg>
+)
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 export default function SupportHelp() {
   const { data: session } = useDashboardSession()
   const { data: bookings = [] } = useDashboardBookings('all')
@@ -47,438 +160,261 @@ export default function SupportHelp() {
     isLoading: ticketsLoading,
     error: ticketsError,
   } = useDashboardSupportTickets()
+
   const [searchParams, setSearchParams] = useSearchParams()
-  const requestedTab = searchParams.get('tab') === 'closed' ? 'closed' : 'active'
-  const bookingFilter = searchParams.get('kind') || 'all'
+  // const selectedTicketId = searchParams.get('ticketId') || ''
+
   const [newTicket, setNewTicket] = useState({ bookingId: '', subject: '', message: '' })
   const [reply, setReply] = useState('')
-  const createTicketMutation = useDashboardCreateTicket()
-  const replyMutation = useDashboardReplyToTicket()
-
-  const activeTickets = useMemo(() => tickets.filter(ticket => !isClosedTicket(ticket)), [tickets])
-  const closedTickets = useMemo(() => tickets.filter(ticket => isClosedTicket(ticket)), [tickets])
-  const activeTab =
-    requestedTab === 'closed'
-      ? closedTickets.length > 0 || activeTickets.length === 0
-        ? 'closed'
-        : 'active'
-      : activeTickets.length > 0 || closedTickets.length === 0
-        ? 'active'
-        : 'closed'
-  const visibleTicketsBase = activeTab === 'closed' ? closedTickets : activeTickets
-  const visibleTickets = useMemo(() => {
-    if (bookingFilter === 'booking') {
-      return visibleTicketsBase.filter(ticket => ticket.bookingId)
-    }
-
-    if (bookingFilter === 'general') {
-      return visibleTicketsBase.filter(ticket => !ticket.bookingId)
-    }
-
-    return visibleTicketsBase
-  }, [bookingFilter, visibleTicketsBase])
+  const setField = (field, val) => setNewTicket(f => ({ ...f, [field]: val }))
   const requestedTicketId = searchParams.get('ticketId') || ''
-  const selectedTicketId = visibleTickets.some(ticket => ticket.id === requestedTicketId)
+  const selectedTicketId = tickets.some(ticket => ticket.id === requestedTicketId)
     ? requestedTicketId
-    : visibleTickets[0]?.id || ''
+    : tickets[0]?.id || ''
+  useEffect(() => {
+    if (!tickets.length) return
+    if (selectedTicketId && tickets.some(t => t.id === selectedTicketId)) return
+    const next = new URLSearchParams(searchParams)
+    next.set('ticketId', tickets[0].id)
+    setSearchParams(next, { replace: true })
+  }, [tickets, searchParams, selectedTicketId, setSearchParams])
 
-  const selectedTicket =
-    visibleTickets.find(item => item.id === selectedTicketId) ?? visibleTickets[0] ?? null
+  // const selectedTicket =
+  //   visibleTickets.find(item => item.id === selectedTicketId) ?? visibleTickets[0] ?? null
   const {
     data: ticket,
     isLoading: ticketLoading,
     error: ticketError,
-  } = useDashboardSupportTicket(selectedTicket?.id)
-  const isReadOnlyTicket = isClosedTicket(ticket ?? selectedTicket)
+  } = useDashboardSupportTicket(selectedTicketId)
+  const createTicketMutation = useDashboardCreateTicket()
+  const replyMutation = useDashboardReplyToTicket()
 
-  if (helpLoading || ticketsLoading) {
-    return <DashboardLoadingState title="Loading support and help..." />
-  }
+  const selectedTicket = useMemo(
+    () => tickets.find(t => t.id === selectedTicketId) ?? null,
+    [tickets, selectedTicketId]
+  )
 
-  if (helpError || ticketsError || ticketError) {
-    return <DashboardErrorState title="We could not load support details right now." />
-  }
+  if (helpLoading || ticketsLoading) return <DashboardLoadingState title="Loading support…" />
+  if (helpError || ticketsError || ticketError)
+    return <DashboardErrorState title="Support details could not be loaded right now." />
 
-  async function handleCreateTicket(event) {
-    event.preventDefault()
+  const handleCreateTicket = async e => {
+    e.preventDefault()
     if (!newTicket.subject.trim() || !newTicket.message.trim()) return
-
     const response = await createTicketMutation.mutateAsync({
       bookingId: newTicket.bookingId || undefined,
       subject: newTicket.subject.trim(),
       message: newTicket.message.trim(),
       priority: 'medium',
     })
-
-    const createdTicketId = response?.ticket?.id
+    const createdTicketId = response?.ticket?.id || ''
     setNewTicket({ bookingId: '', subject: '', message: '' })
 
     if (createdTicketId) {
       const next = new URLSearchParams(searchParams)
       next.set('ticketId', createdTicketId)
       next.set('tab', 'active')
-      next.set('kind', bookingFilter)
       setSearchParams(next, { replace: true })
     }
   }
 
-  async function handleReply(event) {
-    event.preventDefault()
-    if (!reply.trim() || !selectedTicket?.id || isReadOnlyTicket) return
-
-    await replyMutation.mutateAsync({
-      ticketId: selectedTicket.id,
-      body: { message: reply.trim() },
-    })
-
+  const handleReply = async e => {
+    e.preventDefault()
+    if (!reply.trim() || !selectedTicketId) return
+    await replyMutation.mutateAsync({ ticketId: selectedTicketId, body: { message: reply.trim() } })
     setReply('')
   }
 
   return (
     <div className="space-y-6">
-      <DashboardPageIntro
-        title="Support & Help"
-        subtitle="Use direct support channels, open a ticket, and continue active conversations from one workspace."
-        meta={`${activeTickets.length} active / ${closedTickets.length} closed`}
-      />
+      {/* ── Header ── */}
+      <div>
+        <h1 className="text-2xl text-[#1C1C1C]">Support & Help</h1>
+        <p className="mt-1 text-sm text-[#6B7280]">
+          Reach the Elewen team, raise a ticket, and continue open conversations.
+        </p>
+      </div>
 
-      <SectionCard
-        title="Support Channels"
-        subtitle="Choose the fastest way to reach the Elewen support team."
-      >
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl bg-white p-5">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
-              Call / WhatsApp
-            </p>
-            <p className="mt-3 text-sm text-[#2E2E2E]">
-              {help?.whatsappNumber || help?.primaryPhone || 'Not shared yet'}
-            </p>
-            <p className="mt-2 text-sm text-[#6B7280]">
-              Use this if you want the contact info and prefer to speak outside the portal.
-            </p>
-            {help?.whatsappNumber || help?.primaryPhone ? (
-              <a
-                href={`https://wa.me/${String(help?.whatsappNumber || help?.primaryPhone).replace(/[^\d]/g, '')}`}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90"
-              >
-                Call / WhatsApp
-              </a>
-            ) : null}
-          </div>
+      {/* ── Direct support contact ── */}
+      <div className="rounded-2xl border border-[#EDE8E1] bg-[#FBF7F3] p-5">
+        <h2 className="mb-1 text-xl text-[#1C1C1C]">Direct Support</h2>
+        <p className="mb-4 text-sm text-[#8F8F8F]">
+          Live contact details from your dashboard settings.
+        </p>
 
-          <div className="rounded-3xl bg-white p-5">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Email</p>
-            <p className="mt-3 text-sm text-[#2E2E2E]">{help?.supportEmail || 'Not shared yet'}</p>
-            <p className="mt-2 text-sm text-[#6B7280]">
-              Send a direct email to the admin team without leaving your dashboard context.
-            </p>
-            {help?.supportEmail ? (
-              <a
-                href={`mailto:${help.supportEmail}`}
-                className="mt-4 inline-flex rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
-              >
-                Email Support
-              </a>
-            ) : null}
-          </div>
-
-          <div className="rounded-3xl bg-white p-5">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">Message Admin</p>
-            <p className="mt-3 text-sm text-[#2E2E2E]">Portal chat and support tickets</p>
-            <p className="mt-2 text-sm text-[#6B7280]">
-              Send a message inside the portal and keep it tied to your booking or support ticket.
-            </p>
-            <a
-              href="/user-dashboard/messages"
-              className="mt-4 inline-flex rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
-            >
-              Open Messages
-            </a>
-          </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ContactCard label="Phone" value={help?.primaryPhone} />
+          <ContactCard label="Email" value={help?.supportEmail} />
+          <ContactCard label="WhatsApp" value={help?.whatsappNumber} />
+          <ContactCard label="Availability" value={help?.supportAvailabilityText} />
         </div>
 
-        {(help?.supportAvailabilityText || help?.responseExpectationText) && (
-          <div className="mt-4 rounded-3xl bg-white p-5 text-sm text-[#6B7280]">
-            <p>{help?.supportAvailabilityText || 'Availability details not set yet.'}</p>
-            {help?.responseExpectationText ? (
-              <p className="mt-2">{help.responseExpectationText}</p>
-            ) : null}
-          </div>
+        {help?.responseExpectationText && (
+          <p className="mt-3 rounded-2xl border border-[#EDE8E1] bg-white px-4 py-3 text-sm text-[#6B7280]">
+            {help.responseExpectationText}
+          </p>
         )}
-      </SectionCard>
 
-      <SectionCard
-        title="Create a Ticket"
-        subtitle="Open a general help request or link the ticket to a booking."
-      >
+        <div className="mt-4 flex flex-wrap gap-3">
+          {help?.whatsappNumber && (
+            <GoldBtn href={`https://wa.me/${String(help.whatsappNumber).replace(/[^\d]/g, '')}`}>
+              Call / WhatsApp
+            </GoldBtn>
+          )}
+          {help?.supportEmail && (
+            <OutlineBtn href={`mailto:${help.supportEmail}`}>Email Us</OutlineBtn>
+          )}
+          <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-5 py-2 text-white">
+            Message Admin <ArrowIcon />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Create a ticket ── */}
+      <div className="rounded-2xl border border-[#EDE8E1] bg-[#FBF7F3] p-5">
+        <h2 className="mb-1 text-xl text-[#1C1C1C]">Create a Ticket</h2>
+        <p className="mb-5 text-sm text-[#8F8F8F]">
+          Open a new support request for a booking or a general question.
+        </p>
+
         <form onSubmit={handleCreateTicket} className="grid gap-4 lg:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm text-[#2E2E2E]">Related booking</span>
-            <select
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-[#2E2E2E]">Related booking</span>
+            <SelectField
               value={newTicket.bookingId}
-              onChange={event =>
-                setNewTicket(current => ({ ...current, bookingId: event.target.value }))
-              }
-              className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
+              onChange={value => setField('bookingId', value)}
+              placeholder="Related booking"
             >
               <option value="">General support</option>
-              {bookings.map(booking => (
-                <option key={booking.id} value={booking.id}>
-                  {booking.package?.title || booking.event?.name || booking.id}
+              {bookings.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.package?.title || b.event?.name || b.id}
                 </option>
               ))}
-            </select>
-          </label>
+            </SelectField>
+          </div>
 
-          <label className="space-y-2">
-            <span className="text-sm text-[#2E2E2E]">Subject</span>
-            <input
-              value={newTicket.subject}
-              onChange={event =>
-                setNewTicket(current => ({ ...current, subject: event.target.value }))
-              }
-              className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
-              placeholder="Tell us what you need help with"
-            />
-          </label>
+          <FormInput
+            label="Subject"
+            value={newTicket.subject}
+            onChange={e => setField('subject', e.target.value)}
+            placeholder="Tell us what you need help with"
+          />
 
-          <label className="space-y-2 lg:col-span-2">
-            <span className="text-sm text-[#2E2E2E]">Message</span>
-            <textarea
-              rows={4}
+          <div className="lg:col-span-2">
+            <FormTextarea
+              label="Message"
               value={newTicket.message}
-              onChange={event =>
-                setNewTicket(current => ({ ...current, message: event.target.value }))
-              }
-              className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none"
-              placeholder="Share the issue, update, or request in a little detail."
+              onChange={e => setField('message', e.target.value)}
+              placeholder="Share the issue or request in a little detail…"
             />
-          </label>
+          </div>
 
-          <div className="flex justify-end lg:col-span-2">
-            <button
+          <div className="lg:col-span-2 flex justify-end">
+            <GoldBtn
               type="submit"
               disabled={
                 !newTicket.subject.trim() ||
                 !newTicket.message.trim() ||
                 createTicketMutation.isPending
               }
-              className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {createTicketMutation.isPending ? 'Creating...' : 'Create Ticket'}
-            </button>
+              {createTicketMutation.isPending ? 'Creating…' : 'Create Ticket'}
+            </GoldBtn>
           </div>
         </form>
-      </SectionCard>
+      </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <SectionCard
-          title="Ticket Queue"
-          subtitle="Switch between active tickets and closed history."
-        >
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="inline-flex rounded-full bg-white p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = new URLSearchParams(searchParams)
-                    next.set('tab', 'active')
-                    next.set('kind', bookingFilter)
-                    setSearchParams(next, { replace: true })
-                  }}
-                  className={`rounded-full px-4 py-2 text-sm transition ${
-                    activeTab === 'active' ? 'bg-[#591902] text-white' : 'text-[#6B7280]'
-                  }`}
-                >
-                  Active Tickets
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = new URLSearchParams(searchParams)
-                    next.set('tab', 'closed')
-                    next.set('kind', bookingFilter)
-                    setSearchParams(next, { replace: true })
-                  }}
-                  className={`rounded-full px-4 py-2 text-sm transition ${
-                    activeTab === 'closed' ? 'bg-[#591902] text-white' : 'text-[#6B7280]'
-                  }`}
-                >
-                  Closed Tickets
-                </button>
-              </div>
-
-              <select
-                value={bookingFilter}
-                onChange={event => {
-                  const next = new URLSearchParams(searchParams)
-                  next.set('kind', event.target.value)
-                  next.set('tab', activeTab)
-                  setSearchParams(next, { replace: true })
-                }}
-                className="rounded-2xl border border-[#D7CEC4] bg-white px-4 py-2 text-sm outline-none"
-              >
-                <option value="all">All tickets</option>
-                <option value="booking">Booking-linked</option>
-                <option value="general">General support</option>
-              </select>
-            </div>
-
-            {visibleTickets.length ? (
-              <div className="space-y-3">
-                {visibleTickets.map(item => {
-                  const isSelected = item.id === selectedTicket?.id
-
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        const next = new URLSearchParams(searchParams)
-                        next.set('ticketId', item.id)
-                        next.set('tab', activeTab)
-                        next.set('kind', bookingFilter)
-                        setSearchParams(next, { replace: true })
-                      }}
-                      className={`block w-full rounded-3xl border px-4 py-4 text-left transition ${
-                        isSelected
-                          ? 'border-[#591902] bg-[#F4E7DE]'
-                          : 'border-[#E4DED8] bg-white hover:border-[#C6A15B]'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-medium text-[#2E2E2E]">{item.subject}</p>
-                          <p className="mt-1 text-xs text-[#6B7280]">
-                            {item.bookingId ? 'Booking-linked' : 'General support'} ·{' '}
-                            {formatDateTime(item.updatedAt || item.createdAt)}
-                          </p>
-                        </div>
-                        <StatusPill
-                          label={String(item.status ?? '').replaceAll('_', ' ')}
-                          status={item.status}
-                        />
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            ) : (
-              <DashboardEmptyState
-                title={activeTab === 'active' ? 'No active tickets' : 'No closed tickets'}
-                body={
-                  activeTab === 'active'
-                    ? 'Create a ticket above or use the support channels to start a conversation.'
-                    : 'Resolved and closed support threads will show up here as read-only history.'
-                }
-              />
-            )}
+      {/* ── My tickets ── */}
+      <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
+        {/* Ticket list */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl text-[#1C1C1C]">My Tickets</h2>
+            <span className="text-sm text-[#8F8F8F]">{tickets.length} total</span>
           </div>
-        </SectionCard>
-
-        <SectionCard
-          title={ticket?.subject || selectedTicket?.subject || 'Ticket Detail'}
-          subtitle={
-            ticket?.bookingId ? `Linked booking: ${ticket.bookingId}` : 'General support request'
-          }
-          action={
-            ticket ? (
-              <StatusPill
-                label={String(ticket.status ?? '').replaceAll('_', ' ')}
-                status={ticket.status}
-              />
-            ) : null
-          }
-        >
-          {!selectedTicket ? (
-            <DashboardEmptyState
-              title="No ticket selected"
-              body="Choose a ticket from the left to review the conversation and its status."
+          {tickets.map(t => (
+            <TicketItem
+              key={t.id}
+              ticket={t}
+              isActive={t.id === selectedTicketId}
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.set('ticketId', t.id)
+                setSearchParams(next, { replace: true })
+              }}
             />
-          ) : ticketLoading ? (
-            <DashboardLoadingState title="Loading selected ticket..." />
-          ) : ticket ? (
-            <div className="space-y-5">
-              <div className="rounded-3xl bg-white p-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <StatusPill
-                    label={String(ticket.priority ?? 'medium').replaceAll('_', ' ')}
-                    status={ticket.priority}
-                  />
-                  <span className="text-xs uppercase tracking-[0.16em] text-[#8F8F8F]">
-                    {ticket.bookingId ? 'Booking-linked ticket' : 'General support'}
-                  </span>
+          ))}
+        </div>
+
+        {/* Ticket conversation */}
+        <div>
+          {ticketLoading ? (
+            <DashboardLoadingState title="Loading ticket…" />
+          ) : selectedTicket && ticket ? (
+            <div className="flex flex-col gap-4">
+              {/* Ticket header */}
+              <div className="rounded-2xl border border-[#EDE8E1] bg-white p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-semibold text-[#1C1C1C]">
+                      {selectedTicket.subject}
+                    </h2>
+                    <p className="mt-1 text-xs text-[#8F8F8F]">
+                      {selectedTicket.bookingId
+                        ? `Linked to booking #${selectedTicket.bookingId}`
+                        : 'General support request'}
+                      {' · '}Opened {formatDashboardDate(selectedTicket.createdAt)}
+                    </p>
+                  </div>
+                  <TicketBadge status={selectedTicket.status} />
                 </div>
               </div>
 
-              <div className="max-h-[460px] space-y-4 overflow-y-auto rounded-3xl bg-white p-4">
+              {/* Message thread */}
+              <div className="rounded-2xl border border-[#EDE8E1] bg-[#EEE8E1] p-4">
                 {ticket.messages?.length ? (
-                  ticket.messages.map(message => {
-                    const isOwnMessage = String(message.senderId) === String(session?.user?.id)
-
-                    return (
-                      <div key={message.id}>
-                        <div className={`${isOwnMessage ? 'text-right' : 'text-left'} mb-1`}>
-                          <span className="text-[11px] uppercase tracking-[0.16em] text-[#8F8F8F]">
-                            {isOwnMessage ? 'You' : 'Support team'}
-                          </span>
-                        </div>
-                        <MessageBubble message={message} isOwnMessage={isOwnMessage} />
+                  <div className="space-y-4">
+                    {ticket.messages.map(msg => (
+                      <div key={msg.id} className="space-y-1">
+                        <MessageBubble
+                          message={msg}
+                          isOwnMessage={String(msg.senderId) === String(session?.user?.id)}
+                        />
                         <p
-                          className={`mt-1 text-xs text-[#8F8F8F] ${
-                            isOwnMessage ? 'text-right' : 'text-left'
-                          }`}
+                          className={`text-xs text-[#8F8F8F] ${String(msg.senderId) === String(session?.user?.id) ? 'text-right' : 'text-left'}`}
                         >
-                          {formatDateTime(message.createdAt)}
+                          {formatDashboardDate(msg.createdAt)}
                         </p>
                       </div>
-                    )
-                  })
+                    ))}
+                  </div>
                 ) : (
-                  <DashboardEmptyState
-                    title="No conversation yet"
-                    body="The opening ticket note and future replies will appear here."
-                  />
+                  <p className="py-4 text-center text-sm text-[#8F8F8F]">
+                    No messages yet on this ticket.
+                  </p>
                 )}
               </div>
 
-              <form onSubmit={handleReply} className="space-y-3 rounded-3xl bg-white p-4">
-                {isReadOnlyTicket ? (
-                  <div className="rounded-2xl border border-dashed border-[#D6CDC3] bg-[#F7F5F2] p-4 text-sm text-[#6B7280]">
-                    This ticket is closed or resolved, so the conversation stays visible as
-                    read-only history.
+              {/* Reply box */}
+              <div className="rounded-2xl border border-[#EDE8E1] bg-[#FBF7F3] p-5">
+                <form onSubmit={handleReply} className="flex flex-col gap-3">
+                  <FormTextarea
+                    value={reply}
+                    onChange={e => setReply(e.target.value)}
+                    placeholder="Reply to this support ticket…"
+                    rows={3}
+                  />
+                  <div className="flex justify-end">
+                    <GoldBtn type="submit" disabled={!reply.trim() || replyMutation.isPending}>
+                      {replyMutation.isPending ? 'Sending…' : 'Send Reply'}
+                    </GoldBtn>
                   </div>
-                ) : null}
-
-                <textarea
-                  rows={4}
-                  value={reply}
-                  onChange={event => setReply(event.target.value)}
-                  disabled={isReadOnlyTicket || replyMutation.isPending}
-                  className="w-full rounded-3xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm outline-none disabled:cursor-not-allowed disabled:bg-[#F7F5F2]"
-                  placeholder={
-                    isReadOnlyTicket
-                      ? 'This ticket is read-only.'
-                      : 'Reply to this support ticket...'
-                  }
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={!reply.trim() || replyMutation.isPending || isReadOnlyTicket}
-                    className="rounded-full bg-[#C6A15B] px-5 py-3 text-sm text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
           ) : null}
-        </SectionCard>
+        </div>
       </div>
     </div>
   )

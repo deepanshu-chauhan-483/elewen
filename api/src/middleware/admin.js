@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js'
+import { withCache, cacheDel, TTL } from '../lib/cache.js'
 
 const DEFAULT_DEV_ADMIN_EMAIL =
   process.env.NODE_ENV !== 'production'
@@ -119,7 +120,12 @@ export async function resolveAdminAccess(userId) {
     return { isAdmin: false, reason: 'INVALID_USER_ID', user: null }
   }
 
-  const row = await fetchAccessRow(parsedUserId)
+  const cacheKey = `admin:access:${parsedUserId}`
+  const cached = await withCache(cacheKey, TTL.ADMIN, async () => {
+    const row = await fetchAccessRow(parsedUserId)
+    return row
+  })
+  const row = cached
 
   if (!row) {
     return { isAdmin: false, reason: 'USER_NOT_FOUND', user: null }
@@ -164,6 +170,10 @@ export async function resolveAdminAccess(userId) {
       isStrapiAdmin: Boolean(row.is_strapi_admin),
     },
   }
+}
+
+export async function invalidateAdminCache(userId) {
+  await cacheDel(`admin:access:${userId}`)
 }
 
 export async function requireAdmin(req, res, next) {

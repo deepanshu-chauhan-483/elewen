@@ -7,6 +7,8 @@
  * - Content create/update endpoints expect `{ data: ... }`
  */
 
+import { withCache, cacheDel, TTL } from './cache.js'
+
 const getBaseCandidates = () => {
   const configured = [process.env.STRAPI_URL, process.env.VITE_STRAPI_URL, 'http://localhost:1337']
     .map(value => String(value ?? '').trim())
@@ -51,6 +53,8 @@ const makeStrapiError = async (res, fallbackMessage) => {
   return error
 }
 
+const shouldRetryWithNextBase = error => !error?.status
+
 const requestJson = async (path, { method = 'GET', headers = {}, body, prefixApi = true } = {}) => {
   const normalizedPath = normalizePath(path, { prefixApi })
   let lastError = null
@@ -69,6 +73,10 @@ const requestJson = async (path, { method = 'GET', headers = {}, body, prefixApi
 
       return res.json()
     } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
       lastError = error
     }
   }
@@ -99,6 +107,10 @@ const requestRaw = async (path, { method = 'GET', headers = {}, body, prefixApi 
 
       return res.text()
     } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
       lastError = error
     }
   }
@@ -128,6 +140,10 @@ export async function strapiGet(path, params = {}) {
 
       return res.json()
     } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
       lastError = error
     }
   }
@@ -164,10 +180,18 @@ export async function strapiAdminPut(path, body) {
 
 // ---------------- SERVER GET ----------------
 export async function strapiServerGet(path) {
-  return requestJson(path, {
-    headers: buildHeaders(),
-    prefixApi: !path.startsWith('/api/'),
-  })
+  const key = `strapi:GET:${path}`
+  return withCache(key, TTL.STRAPI, () =>
+    requestJson(path, {
+      headers: buildHeaders(),
+      prefixApi: !path.startsWith('/api/'),
+    })
+  )
+}
+
+// Call after writes to Strapi so stale cache is cleared for that path
+export async function invalidateStrapiCache(path) {
+  await cacheDel(`strapi:GET:${path}`)
 }
 
 // ---------------- SERVER POST ----------------
@@ -224,6 +248,10 @@ export async function strapiGetMe(jwt) {
       if (!res.ok) throw await makeStrapiError(res, 'Failed to fetch user')
       return res.json()
     } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
       lastError = error
     }
   }
@@ -259,6 +287,10 @@ export async function strapiFindUserByEmail(email) {
       const data = await res.json()
       return data?.[0] ?? null
     } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
       lastError = error
     }
   }
