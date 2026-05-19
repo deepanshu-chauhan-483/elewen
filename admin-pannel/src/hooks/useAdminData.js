@@ -234,10 +234,11 @@ export function useAdminUpdateVendor() {
   })
 }
 
-export function useAdminVendorWorkspace() {
+export function useAdminVendorWorkspace(params = {}) {
   return useAuthedAdminQuery({
-    queryKey: ['admin', 'vendors', 'workspace'],
-    queryFn: token => adminVendorWorkspace(token).then(response => response?.workspace ?? null),
+    queryKey: ['admin', 'vendors', 'workspace', JSON.stringify(params)],
+    queryFn: token =>
+      adminVendorWorkspace(token, params).then(response => response?.workspace ?? null),
   })
 }
 
@@ -317,10 +318,11 @@ export function useAdminPaymentSummary() {
   })
 }
 
-export function useAdminPaymentWorkspace() {
+export function useAdminPaymentWorkspace(params = {}) {
   return useAuthedAdminQuery({
-    queryKey: ['admin', 'payments', 'workspace'],
-    queryFn: token => adminPaymentWorkspace(token).then(response => response?.workspace ?? null),
+    queryKey: ['admin', 'payments', 'workspace', JSON.stringify(params)],
+    queryFn: token =>
+      adminPaymentWorkspace(token, params).then(response => response?.workspace ?? null),
   })
 }
 

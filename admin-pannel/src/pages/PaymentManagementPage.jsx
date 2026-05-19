@@ -123,6 +123,49 @@ function DangerBtn({ children, onClick, disabled }) {
   )
 }
 
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg className={`h-6 w-6 ${rotationClass}`} viewBox="0 0 36 36" fill="none">
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function PaginationControls({ currentPage, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null
+
+  return (
+    <div className="mt-4 flex justify-end gap-2">
+      <button
+        type="button"
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ArrowIcon direction="left" />
+      </button>
+      <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+        {currentPage} / {totalPages}
+      </div>
+      <button
+        type="button"
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ArrowIcon direction="right" />
+      </button>
+    </div>
+  )
+}
+
 // Section tabs (main nav + sub-tabs)
 function Tabs({ items, value, onChange, size = 'md' }) {
   return (
@@ -278,15 +321,28 @@ const customerTabs = [
   { key: 'completed', label: 'Completed' },
 ]
 
-function CustomerPayments({ customerPayments, processRefundMutation }) {
+function CustomerPayments({ processRefundMutation }) {
   const [tab, setTab] = useState('active')
-
+  const [currentPage, setCurrentPage] = useState(1)
+  const workspaceQuery = useAdminPaymentWorkspace({
+    customerTab: tab,
+    customerPage: currentPage,
+    limit: 10,
+  })
+  const customerPayments = workspaceQuery.data?.customerPayments ?? {}
   const lists = {
     active: customerPayments.activeBookings ?? [],
     post_event: customerPayments.postEventPending ?? [],
     failed: customerPayments.failedPayments ?? [],
     completed: customerPayments.completedPayments ?? [],
   }
+  const currentList = lists[tab] ?? []
+  const totalPages = Math.max(1, Number(customerPayments.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
+
+  if (workspaceQuery.isLoading) return <LoadingState label="Loading customer payments…" />
+  if (workspaceQuery.error)
+    return <ErrorState label="Customer payments are unavailable right now." />
 
   return (
     <div className="space-y-5">
@@ -297,7 +353,10 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
         <div className="ml-auto w-full max-w-[260px] md:w-[260px]">
           <SelectField
             value={tab}
-            onChange={setTab}
+            onChange={value => {
+              setTab(value)
+              setCurrentPage(1)
+            }}
             placeholder="Select Tab"
             className="h-[42px] rounded-full border border-[#E4DED8] bg-white px-4 text-sm font-medium text-[#1C1C1C]"
           >
@@ -314,9 +373,14 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
       {tab === 'active' &&
         (lists.active.length ? (
           <div className="space-y-2.5">
-            {lists.active.map(b => (
+            {currentList.map(b => (
               <BookingPaymentRow key={b.id} booking={b} />
             ))}
+            <PaginationControls
+              currentPage={visiblePage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         ) : (
           <EmptyState
@@ -329,7 +393,7 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
       {tab === 'post_event' &&
         (lists.post_event.length ? (
           <div className="space-y-2.5">
-            {lists.post_event.map(b => (
+            {currentList.map(b => (
               <div
                 key={b.id}
                 className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4"
@@ -360,6 +424,11 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
                 </div>
               </div>
             ))}
+            <PaginationControls
+              currentPage={visiblePage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         ) : (
           <EmptyState
@@ -372,7 +441,7 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
       {tab === 'failed' &&
         (lists.failed.length ? (
           <div className="space-y-2.5">
-            {lists.failed.map(p => (
+            {currentList.map(p => (
               <PaymentRecordRow
                 key={p.id}
                 payment={p}
@@ -387,6 +456,11 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
                 }
               />
             ))}
+            <PaginationControls
+              currentPage={visiblePage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         ) : (
           <EmptyState
@@ -399,9 +473,14 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
       {tab === 'completed' &&
         (lists.completed.length ? (
           <div className="space-y-2.5">
-            {lists.completed.map(p => (
+            {currentList.map(p => (
               <PaymentRecordRow key={p.id} payment={p} />
             ))}
+            <PaginationControls
+              currentPage={visiblePage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         ) : (
           <EmptyState
@@ -421,17 +500,29 @@ const vendorTabs = [
 ]
 
 function VendorPayments({
-  vendorPayments,
   vendorsQuery,
   bookingsQuery,
   createVendorPayoutMutation,
   updateVendorPayoutMutation,
 }) {
   const [tab, setTab] = useState('pending')
+  const [currentPage, setCurrentPage] = useState(1)
   const [vendorId, setVendorId] = useState('')
   const [bookingId, setBookingId] = useState('')
   const [payoutAmount, setPayoutAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('offline')
+  const workspaceQuery = useAdminPaymentWorkspace({
+    vendorTab: tab,
+    vendorPage: currentPage,
+    limit: 10,
+  })
+  const vendorPayments = workspaceQuery.data?.vendorPayments ?? {}
+  const currentList = vendorPayments[tab] ?? []
+  const totalPages = Math.max(1, Number(vendorPayments.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
+
+  if (workspaceQuery.isLoading) return <LoadingState label="Loading vendor payouts…" />
+  if (workspaceQuery.error) return <ErrorState label="Vendor payouts are unavailable right now." />
 
   return (
     <div className="space-y-5">
@@ -501,12 +592,20 @@ function VendorPayments({
         </div>
       </div>
 
-      <Tabs items={vendorTabs} value={tab} onChange={setTab} size="sm" />
+      <Tabs
+        items={vendorTabs}
+        value={tab}
+        onChange={value => {
+          setTab(value)
+          setCurrentPage(1)
+        }}
+        size="sm"
+      />
 
       {tab === 'pending' &&
         ((vendorPayments.pending ?? []).length ? (
           <div className="space-y-2.5">
-            {vendorPayments.pending.map(p => (
+            {currentList.map(p => (
               <PayoutRow
                 key={p.id}
                 payout={p}
@@ -516,6 +615,11 @@ function VendorPayments({
                 }
               />
             ))}
+            <PaginationControls
+              currentPage={visiblePage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         ) : (
           <EmptyState
@@ -527,9 +631,14 @@ function VendorPayments({
       {tab === 'paid' &&
         ((vendorPayments.paid ?? []).length ? (
           <div className="space-y-2.5">
-            {vendorPayments.paid.map(p => (
+            {currentList.map(p => (
               <PayoutRow key={p.id} payout={p} />
             ))}
+            <PaginationControls
+              currentPage={visiblePage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         ) : (
           <EmptyState
@@ -684,9 +793,17 @@ function CouponRow({ coupon, updateCouponMutation }) {
   )
 }
 
-function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) {
+function CouponSection({ createCouponMutation, updateCouponMutation }) {
   const [form, setForm] = useState(BLANK_COUPON_FORM)
+  const [currentPage, setCurrentPage] = useState(1)
+  const couponsQuery = useAdminCoupons({ page: currentPage, limit: 10 })
+  const coupons = couponsQuery.data?.coupons ?? []
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+  const totalPages = Math.max(1, Number(couponsQuery.data?.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
+
+  if (couponsQuery.isLoading) return <LoadingState label="Loading coupons…" />
+  if (couponsQuery.error) return <ErrorState label="Coupons are unavailable right now." />
 
   function handleCreate() {
     createCouponMutation.mutate(
@@ -771,6 +888,11 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
               updateCouponMutation={updateCouponMutation}
             />
           ))}
+          <PaginationControls
+            currentPage={visiblePage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       ) : (
         <EmptyState
@@ -904,7 +1026,6 @@ export default function PaymentManagementPage() {
   const [section, setSection] = useState('customer')
 
   const workspaceQuery = useAdminPaymentWorkspace()
-  const couponsQuery = useAdminCoupons({ limit: 50 })
   const settingsQuery = useAdminSettings()
   const vendorsQuery = useAdminVendors({ limit: 100, status: 'approved' })
   const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 100 })
@@ -924,9 +1045,6 @@ export default function PaymentManagementPage() {
 
   const workspace = workspaceQuery.data ?? {}
   const summary = workspace.summary ?? {}
-  const customerPayments = workspace.customerPayments ?? {}
-  const vendorPayments = workspace.vendorPayments ?? {}
-  const coupons = couponsQuery.data?.coupons ?? workspace.coupons ?? []
   const settings = settingsQuery.data ?? workspace.settings ?? null
 
   return (
@@ -979,15 +1097,11 @@ export default function PaymentManagementPage() {
       {/* ── Content area ── */}
       <div>
         {section === 'customer' && (
-          <CustomerPayments
-            customerPayments={customerPayments}
-            processRefundMutation={processRefundMutation}
-          />
+          <CustomerPayments processRefundMutation={processRefundMutation} />
         )}
 
         {section === 'vendor' && (
           <VendorPayments
-            vendorPayments={vendorPayments}
             vendorsQuery={vendorsQuery}
             bookingsQuery={bookingsQuery}
             createVendorPayoutMutation={createVendorPayoutMutation}
@@ -997,7 +1111,6 @@ export default function PaymentManagementPage() {
 
         {section === 'coupon' && (
           <CouponSection
-            coupons={coupons}
             createCouponMutation={createCouponMutation}
             updateCouponMutation={updateCouponMutation}
           />

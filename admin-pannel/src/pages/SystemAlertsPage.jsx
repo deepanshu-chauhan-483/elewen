@@ -104,6 +104,21 @@ function SearchIcon() {
   )
 }
 
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg className={`h-6 w-6 ${rotationClass}`} viewBox="0 0 36 36" fill="none">
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 // Bell icon for empty state
 function BellIcon() {
   return (
@@ -186,8 +201,16 @@ export default function SystemAlertsPage() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [severity, setSeverity] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
 
-  const alertsQuery = useAdminAlerts({ search, status, severity, limit: 24 })
+  const alertsQuery = useAdminAlerts({
+    search,
+    status,
+    severity,
+    page: currentPage,
+    limit: PAGE_SIZE,
+  })
   const updateAlertMutation = useAdminUpdateAlert()
 
   if (alertsQuery.isLoading) return <LoadingState label="Loading system alerts…" />
@@ -195,6 +218,9 @@ export default function SystemAlertsPage() {
 
   const summary = alertsQuery.data?.summary ?? {}
   const alerts = alertsQuery.data?.alerts ?? []
+  const totalAlerts = Number(alertsQuery.data?.total ?? 0)
+  const totalPages = Math.max(1, Number(alertsQuery.data?.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
 
   const handleUpdate = (alertId, newStatus) => {
     updateAlertMutation.mutate({ alertId, body: { status: newStatus } })
@@ -249,19 +275,34 @@ export default function SystemAlertsPage() {
             <input
               type="text"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => {
+                setSearch(e.target.value)
+                setCurrentPage(1)
+              }}
               placeholder="Search"
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
-          <SelectField value={severity} onChange={setSeverity}>
+          <SelectField
+            value={severity}
+            onChange={value => {
+              setSeverity(value)
+              setCurrentPage(1)
+            }}
+          >
             <option value="">All Severities</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
             <option value="critical">Critical</option>
           </SelectField>
-          <SelectField value={status} onChange={setStatus}>
+          <SelectField
+            value={status}
+            onChange={value => {
+              setStatus(value)
+              setCurrentPage(1)
+            }}
+          >
             <option value="">All States</option>
             <option value="new">New</option>
             <option value="acknowledged">Acknowledged</option>
@@ -273,8 +314,8 @@ export default function SystemAlertsPage() {
 
       {/* ── Results count ── */}
       <div className="flex items-baseline gap-2">
-        <span className="text-base font-semibold text-[#1C1C1C]">{alerts.length}</span>
-        <span className="text-sm text-[#8F8F8F]">alert{alerts.length !== 1 ? 's' : ''}</span>
+        <span className="text-base font-semibold text-[#1C1C1C]">{totalAlerts}</span>
+        <span className="text-sm text-[#8F8F8F]">alert{totalAlerts !== 1 ? 's' : ''}</span>
       </div>
 
       {/* ── Alert feed ── */}
@@ -288,6 +329,27 @@ export default function SystemAlertsPage() {
               isBusy={updateAlertMutation.isPending}
             />
           ))}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={visiblePage === 1}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowIcon direction="left" />
+            </button>
+            <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+              {visiblePage} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={visiblePage === totalPages}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowIcon direction="right" />
+            </button>
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-[#E4DED8] bg-white p-10 text-center">

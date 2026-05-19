@@ -162,30 +162,19 @@ function SearchIcon() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Filter helpers
-// ---------------------------------------------------------------------------
-function filterVendors(vendors, { search, category, location, availability }) {
-  const s = search?.trim().toLowerCase() ?? ''
-  const c = category?.trim().toLowerCase() ?? ''
-  const l = location?.trim().toLowerCase() ?? ''
-  return vendors.filter(v => {
-    if (availability === 'available' && !v.isAvailable) return false
-    if (availability === 'unavailable' && v.isAvailable) return false
-    if (c && !(v.serviceCategories ?? []).some(sc => sc.name?.toLowerCase().includes(c)))
-      return false
-    if (l && !v.locationCity?.toLowerCase().includes(l)) return false
-    if (!s) return true
-    return [
-      v.companyName,
-      v.contactPerson,
-      v.locationCity,
-      ...(v.serviceCategories ?? []).map(sc => sc.name),
-    ]
-      .join(' ')
-      .toLowerCase()
-      .includes(s)
-  })
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg className={`h-6 w-6 ${rotationClass}`} viewBox="0 0 36 36" fill="none">
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -506,26 +495,33 @@ export default function VendorManagementPage() {
   const [category, setCategory] = useState('')
   const [location, setLocation] = useState('')
   const [availability, setAvailability] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
 
-  const workspaceQuery = useAdminVendorWorkspace()
+  const workspaceQuery = useAdminVendorWorkspace({
+    tab,
+    search,
+    category,
+    location,
+    availability,
+    page: currentPage,
+    limit: PAGE_SIZE,
+  })
   const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 100 })
 
   const workspace = workspaceQuery.data ?? {}
   const summary = workspace.summary ?? {}
-
   const vendorGroups = useMemo(
     () => ({
-      pending: workspace.pendingRequests ?? [],
-      assigned: workspace.assignedVendors ?? [],
-      unassigned: workspace.unassignedVendors ?? [],
+      pending: Array.from({ length: Number(summary.pendingRequests ?? 0) }),
+      assigned: Array.from({ length: Number(summary.assignedVendors ?? 0) }),
+      unassigned: Array.from({ length: Number(summary.unassignedVendors ?? 0) }),
     }),
-    [workspace.assignedVendors, workspace.pendingRequests, workspace.unassignedVendors]
+    [summary.assignedVendors, summary.pendingRequests, summary.unassignedVendors]
   )
-
-  const activeList = useMemo(
-    () => filterVendors(vendorGroups[tab] ?? [], { search, category, location, availability }),
-    [availability, category, location, search, tab, vendorGroups]
-  )
+  const activeList = workspace.activeList ?? []
+  const totalPages = Math.max(1, Number(workspace.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
 
   if (workspaceQuery.isLoading) return <LoadingState label="Loading vendors…" />
   if (workspaceQuery.error) return <ErrorState label="Vendor data could not be loaded right now." />
@@ -578,7 +574,10 @@ export default function VendorManagementPage() {
             <button
               key={t.key}
               type="button"
-              onClick={() => setTab(t.key)}
+              onClick={() => {
+                setTab(t.key)
+                setCurrentPage(1)
+              }}
               className={[
                 'flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition',
                 tab === t.key
@@ -616,22 +615,37 @@ export default function VendorManagementPage() {
             <input
               type="text"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => {
+                setSearch(e.target.value)
+                setCurrentPage(1)
+              }}
               placeholder="Search vendors"
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
           <Input
             value={category}
-            onChange={e => setCategory(e.target.value)}
+            onChange={e => {
+              setCategory(e.target.value)
+              setCurrentPage(1)
+            }}
             placeholder="Service category"
           />
           <Input
             value={location}
-            onChange={e => setLocation(e.target.value)}
+            onChange={e => {
+              setLocation(e.target.value)
+              setCurrentPage(1)
+            }}
             placeholder="City / location"
           />
-          <Select value={availability} onChange={setAvailability}>
+          <Select
+            value={availability}
+            onChange={value => {
+              setAvailability(value)
+              setCurrentPage(1)
+            }}
+          >
             <option value="">Any Availability</option>
             <option value="available">Available</option>
             <option value="unavailable">Unavailable</option>
@@ -641,8 +655,12 @@ export default function VendorManagementPage() {
 
       {/* ── Results count ── */}
       <div className="flex items-baseline gap-2">
-        <span className="text-base font-semibold text-[#1C1C1C]">{activeList.length}</span>
-        <span className="text-sm text-[#8F8F8F]">vendor{activeList.length !== 1 ? 's' : ''}</span>
+        <span className="text-base font-semibold text-[#1C1C1C]">
+          {Number(workspace.total ?? 0)}
+        </span>
+        <span className="text-sm text-[#8F8F8F]">
+          vendor{Number(workspace.total ?? 0) !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {/* ── Accordion list ── */}
@@ -656,6 +674,27 @@ export default function VendorManagementPage() {
               bookingsQuery={bookingsQuery}
             />
           ))}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={visiblePage === 1}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowIcon direction="left" />
+            </button>
+            <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+              {visiblePage} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={visiblePage === totalPages}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowIcon direction="right" />
+            </button>
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">

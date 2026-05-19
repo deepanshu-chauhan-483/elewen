@@ -198,8 +198,8 @@ export const adminVendors = (token, params = {}) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
-export const adminVendorWorkspace = token =>
-  request('GET', '/admin/vendors/workspace', null, {
+export const adminVendorWorkspace = (token, params = {}) =>
+  request('GET', withQuery('/admin/vendors/workspace', params), null, {
     headers: { Authorization: `Bearer ${token}` },
   })
 
@@ -248,8 +248,8 @@ export const adminPayments = (token, params = {}) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
-export const adminPaymentWorkspace = token =>
-  request('GET', '/admin/payments/workspace', null, {
+export const adminPaymentWorkspace = (token, params = {}) =>
+  request('GET', withQuery('/admin/payments/workspace', params), null, {
     headers: { Authorization: `Bearer ${token}` },
   })
 

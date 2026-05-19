@@ -1050,20 +1050,23 @@ export async function listAdminBookings(req, res, next) {
     const userIds = await searchUserIds(search)
     const packageIds = await searchPackageIds(search)
     const bookingBucketFilter = buildBookingBucketFilter(bucket)
-    const where = {
+    const baseWhere = {
       ...bookingBucketFilter,
-      ...(status && BOOKING_STATUSES.includes(status) ? { status } : {}),
     }
 
     if (search) {
-      where.OR = [
+      baseWhere.OR = [
         { id: { contains: search, mode: 'insensitive' } },
         ...(userIds.length ? [{ userId: { in: userIds } }] : []),
         ...(packageIds.length ? [{ packageId: { in: packageIds } }] : []),
       ]
     }
+    const where = {
+      ...baseWhere,
+      ...(status && BOOKING_STATUSES.includes(status) ? { status } : {}),
+    }
 
-    const [bookings, total] = await Promise.all([
+    const [bookings, total, statusCountRows] = await Promise.all([
       prisma.booking.findMany({
         where,
         include: {
@@ -1079,9 +1082,23 @@ export async function listAdminBookings(req, res, next) {
         take: limit,
       }),
       prisma.booking.count({ where }),
+      prisma.booking.groupBy({
+        by: ['status'],
+        where: baseWhere,
+        _count: { _all: true },
+      }),
     ])
 
     const enrichedBookings = await enrichBookingsWithCustomer(bookings)
+    const statusCounts = BOOKING_STATUSES.reduce((acc, key) => {
+      acc[key] = 0
+      return acc
+    }, {})
+    statusCountRows.forEach(row => {
+      if (row?.status && BOOKING_STATUSES.includes(row.status)) {
+        statusCounts[row.status] = Number(row._count?._all ?? 0)
+      }
+    })
     const metrics = {
       total,
       active: enrichedBookings.filter(booking => getBookingCategory(booking) === 'active').length,
@@ -1092,6 +1109,7 @@ export async function listAdminBookings(req, res, next) {
     res.json({
       bookings: enrichedBookings,
       metrics,
+      statusCounts,
       page,
       pages: Math.max(1, Math.ceil(total / limit)),
       total,
@@ -1265,23 +1283,28 @@ export async function listAdminSampleTastes(req, res, next) {
 
     const userIds = await searchUserIds(search)
     const packageIds = await searchPackageIds(search)
-    const where = {}
+    const baseWhere = {}
 
     if (status && SAMPLE_STATUSES.includes(status)) {
-      where.status = status
+      baseWhere.status = status
     }
 
     if (search) {
-      where.OR = [
+      baseWhere.OR = [
         { id: { contains: search, mode: 'insensitive' } },
         ...(userIds.length ? [{ userId: { in: userIds } }] : []),
         ...(packageIds.length ? [{ packageId: { in: packageIds } }] : []),
       ]
     }
+    const where = { ...baseWhere }
+    if (!status) delete where.status
 
-    const [samples, total] = await Promise.all([
+    const filteredWhere =
+      status && SAMPLE_STATUSES.includes(status) ? { ...baseWhere, status } : { ...baseWhere }
+
+    const [samples, total, statusCountRows] = await Promise.all([
       prisma.sampleTasteBooking.findMany({
-        where,
+        where: filteredWhere,
         include: {
           vendors: true,
         },
@@ -1289,16 +1312,31 @@ export async function listAdminSampleTastes(req, res, next) {
         skip,
         take: limit,
       }),
-      prisma.sampleTasteBooking.count({ where }),
+      prisma.sampleTasteBooking.count({ where: filteredWhere }),
+      prisma.sampleTasteBooking.groupBy({
+        by: ['status'],
+        where,
+        _count: { _all: true },
+      }),
     ])
 
     const enrichedSamples = await enrichSamplesWithCustomer(samples)
+    const statusCounts = SAMPLE_STATUSES.reduce((acc, key) => {
+      acc[key] = 0
+      return acc
+    }, {})
+    statusCountRows.forEach(row => {
+      if (row?.status && SAMPLE_STATUSES.includes(row.status)) {
+        statusCounts[row.status] = Number(row._count?._all ?? 0)
+      }
+    })
 
     res.json({
       samples: enrichedSamples,
       page,
       pages: Math.max(1, Math.ceil(total / limit)),
       total,
+      statusCounts,
       metrics: {
         total,
         awaitingAssignment: enrichedSamples.filter(sample => sample.status === 'new').length,
@@ -1397,9 +1435,19 @@ export async function listAdminVendors(req, res, next) {
 
 export async function getAdminVendorWorkspace(req, res, next) {
   try {
+    const tab = normalizeText(req.query.tab || 'pending').toLowerCase()
+    const search = normalizeText(req.query.search)
+    const category = normalizeText(req.query.category).toLowerCase()
+    const location = normalizeText(req.query.location).toLowerCase()
+    const availability = normalizeText(req.query.availability).toLowerCase()
+    const page = toPositiveInt(req.query.page, 1)
+    const limit = Math.min(toPositiveInt(req.query.limit, 10), 50)
     const result = await fetchVendorDirectory({
+      search,
+      status: tab === 'pending' ? 'pending' : tab === 'unassigned' ? 'approved' : '',
+      availability,
       page: 1,
-      limit: 100,
+      limit: 1000,
     })
 
     const pendingRequests = result.vendors
@@ -1420,6 +1468,31 @@ export async function getAdminVendorWorkspace(req, res, next) {
           vendor.vendorStatus === 'approved' && Number(vendor.activeAssignmentsCount ?? 0) === 0
       )
       .sort((left, right) => Number(right.isAvailable) - Number(left.isAvailable))
+    const applyExtraFilters = vendors =>
+      vendors.filter(vendor => {
+        if (
+          category &&
+          !(vendor.serviceCategories ?? []).some(service =>
+            String(service?.name ?? '').toLowerCase().includes(category)
+          )
+        ) {
+          return false
+        }
+        if (location && !String(vendor.locationCity ?? '').toLowerCase().includes(location)) {
+          return false
+        }
+        return true
+      })
+    const filteredGroups = {
+      pending: applyExtraFilters(pendingRequests),
+      assigned: applyExtraFilters(assignedVendors),
+      unassigned: applyExtraFilters(unassignedVendors),
+    }
+    const activeList = filteredGroups[tab] ?? filteredGroups.pending
+    const total = activeList.length
+    const pages = Math.max(1, Math.ceil(total / limit))
+    const start = (page - 1) * limit
+    const paginatedList = activeList.slice(start, start + limit)
 
     res.json({
       workspace: {
@@ -1430,9 +1503,11 @@ export async function getAdminVendorWorkspace(req, res, next) {
           unassignedVendors: unassignedVendors.length,
           availableNow: result.vendors.filter(vendor => vendor.isAvailable).length,
         },
-        pendingRequests,
-        assignedVendors,
-        unassignedVendors,
+        activeList: paginatedList,
+        page,
+        pages,
+        total,
+        tab,
       },
     })
   } catch (err) {
@@ -1849,6 +1924,11 @@ export async function getAdminPaymentSummary(req, res, next) {
 
 export async function getAdminPaymentWorkspace(req, res, next) {
   try {
+    const limit = Math.min(toPositiveInt(req.query.limit, 10), 50)
+    const customerTab = normalizeText(req.query.customerTab || 'active').toLowerCase()
+    const customerPage = toPositiveInt(req.query.customerPage, 1)
+    const vendorTab = normalizeText(req.query.vendorTab || 'pending').toLowerCase()
+    const vendorPage = toPositiveInt(req.query.vendorPage, 1)
     const [
       payments,
       refunds,
@@ -1991,6 +2071,34 @@ export async function getAdminPaymentWorkspace(req, res, next) {
         vendor: vendors.get(String(payout.vendorId)) ?? null,
         bookingSummary: bookingMap.get(String(payout.bookingId)) ?? null,
       }))
+    const paginateList = (items, page) => {
+      const total = items.length
+      const pages = Math.max(1, Math.ceil(total / limit))
+      const safePage = Math.min(page, pages)
+      const start = (safePage - 1) * limit
+
+      return {
+        items: items.slice(start, start + limit),
+        page: safePage,
+        pages,
+        total,
+      }
+    }
+    const customerLists = {
+      active: activeBookingPayments,
+      post_event: postEventPending,
+      failed: failedPayments,
+      completed: completedPayments,
+    }
+    const vendorLists = {
+      pending: pendingVendorPayments,
+      paid: paidVendorPayments,
+    }
+    const currentCustomer = paginateList(
+      customerLists[customerTab] ?? customerLists.active,
+      customerPage
+    )
+    const currentVendor = paginateList(vendorLists[vendorTab] ?? vendorLists.pending, vendorPage)
 
     res.json({
       workspace: {
@@ -2004,14 +2112,22 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           ),
         },
         customerPayments: {
-          activeBookings: activeBookingPayments,
-          postEventPending,
-          failedPayments,
-          completedPayments,
+          activeBookings: customerTab === 'active' ? currentCustomer.items : [],
+          postEventPending: customerTab === 'post_event' ? currentCustomer.items : [],
+          failedPayments: customerTab === 'failed' ? currentCustomer.items : [],
+          completedPayments: customerTab === 'completed' ? currentCustomer.items : [],
+          tab: customerTab,
+          page: currentCustomer.page,
+          pages: currentCustomer.pages,
+          total: currentCustomer.total,
         },
         vendorPayments: {
-          pending: pendingVendorPayments,
-          paid: paidVendorPayments,
+          pending: vendorTab === 'pending' ? currentVendor.items : [],
+          paid: vendorTab === 'paid' ? currentVendor.items : [],
+          tab: vendorTab,
+          page: currentVendor.page,
+          pages: currentVendor.pages,
+          total: currentVendor.total,
         },
         coupons: (couponsResponse?.data ?? []).map(coupon => ({
           id: String(coupon.id),
@@ -2058,7 +2174,11 @@ export async function listAdminPayments(req, res, next) {
       : []
 
     const where = {
-      ...(status ? { status } : {}),
+      ...(status === 'completed'
+        ? { status: { in: ['success', 'refunded'] } }
+        : status
+          ? { status }
+          : {}),
       ...(paymentType ? { paymentType } : {}),
       ...(search && bookingIds.length ? { bookingId: { in: bookingIds } } : {}),
     }
@@ -2153,12 +2273,20 @@ export async function listAdminRefunds(req, res, next) {
 export async function listAdminVendorPayouts(req, res, next) {
   try {
     const status = normalizeText(req.query.status).toLowerCase()
+    const page = toPositiveInt(req.query.page, 1)
+    const limit = Math.min(toPositiveInt(req.query.limit, 10), 50)
+    const skip = (page - 1) * limit
     const where = status ? { status } : {}
 
-    const payouts = await prisma.vendorPayout.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    })
+    const [payouts, total] = await Promise.all([
+      prisma.vendorPayout.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.vendorPayout.count({ where }),
+    ])
 
     const [vendors, bookings] = await Promise.all([
       fetchVendorsByIds(payouts.map(payout => payout.vendorId)),
@@ -2187,6 +2315,9 @@ export async function listAdminVendorPayouts(req, res, next) {
         vendor: vendors.get(String(payout.vendorId)) ?? null,
         bookingSummary: bookingMap.get(String(payout.bookingId)) ?? null,
       })),
+      page,
+      pages: Math.max(1, Math.ceil(total / limit)),
+      total,
     })
   } catch (err) {
     next(err)
