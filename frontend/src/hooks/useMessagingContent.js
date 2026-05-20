@@ -5,6 +5,8 @@ const DEFAULT_MESSAGES = {
   cart: 'Package added to cart successfully.',
   coupon: 'Coupon applied successfully.',
   checkout: 'Checkout is ready. Review your details and continue.',
+  paymentFailed: 'Your payment could not be completed. Please try again.',
+  paymentCancelled: 'Payment cancelled. You can continue from checkout anytime.',
   bookingConfirmation: 'Your booking has been confirmed successfully.',
   bookingCancellation: 'Your booking has been cancelled successfully.',
 }
@@ -147,6 +149,22 @@ export function useCouponToastMessage() {
 
 export function useCheckoutToastMessage() {
   return useSingleTypeMessage('checkout', '/checkout-messaging', DEFAULT_MESSAGES.checkout)
+}
+
+export function usePaymentFailedToastMessage() {
+  return useSingleTypeMessage(
+    'payment-failed',
+    '/payment-failed-messaging',
+    DEFAULT_MESSAGES.paymentFailed
+  )
+}
+
+export function usePaymentCancelledToastMessage() {
+  return useSingleTypeMessage(
+    'payment-cancelled',
+    '/payment-cancelled-messaging',
+    DEFAULT_MESSAGES.paymentCancelled
+  )
 }
 
 export function useBookingConfirmationToastMessage() {

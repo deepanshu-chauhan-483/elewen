@@ -286,6 +286,10 @@ export default function BookingConfirmation() {
               label="Guests"
               value={checkoutInfo?.guestCount || booking?.guestCount || 'Not provided'}
             />
+            <Detail
+              label="Special Request"
+              value={checkoutInfo?.specialRequest || booking?.specialRequest || 'Not provided'}
+            />
             <Detail label="Package" value={packageLabel} />
             <Detail label="Contact" value={customer.fullName || 'Not provided'} />
           </div>

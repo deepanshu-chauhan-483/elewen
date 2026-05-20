@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import prisma from '../lib/prisma.js'
 import razorpay from '../lib/razorpay.js'
 import { notify } from '../lib/notify.js'
+import { invalidateDashboardCache } from './dashboard.js'
 
 const TEST_PAYMENT_KEY_ID = process.env.RAZORPAY_TEST_KEY_ID || 'rzp_test_elewen_dashboard_bypass'
 const TEST_MODE_ENABLED =
@@ -23,6 +24,30 @@ const getSuccessfulPaidAmount = booking =>
         .filter(payment => payment.status === 'success')
         .reduce((sum, payment) => sum + toNumberAmount(payment.amount), 0)
     : 0
+
+async function clearUserCart(userId) {
+  if (!userId) return
+
+  const cart = await prisma.cart.findFirst({
+    where: { userId: String(userId) },
+    select: { id: true },
+  })
+
+  if (!cart) return
+
+  await prisma.cartItem.deleteMany({ where: { cartId: cart.id } })
+  await prisma.cart.update({
+    where: { id: cart.id },
+    data: {
+      subtotal: 0,
+      discountAmount: 0,
+      total: 0,
+      couponId: null,
+      eventDate: null,
+      guestCount: null,
+    },
+  })
+}
 
 function resolvePaymentAmount(booking, paymentType) {
   const totalPrice = toNumberAmount(booking?.totalPrice)
@@ -343,6 +368,9 @@ export const verifyPayment = async (req, res, next) => {
       },
     }).catch(() => {})
 
+    await clearUserCart(payment.booking.userId).catch(() => {})
+    await invalidateDashboardCache(payment.booking.userId).catch(() => {})
+
     res.json({ payment: updatedPayment, booking: confirmedBooking })
   } catch (err) {
     next(err)
@@ -413,9 +441,10 @@ export const handleWebhook = async (req, res) => {
               metadata: { razorpayPaymentId, eventType },
             },
           })
+          const booking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
+
           // Auto-confirm booking if advance
           if (payment.paymentType === 'advance') {
-            const booking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
             if (booking?.status === 'new') {
               await prisma.booking.update({
                 where: { id: payment.bookingId },
@@ -443,6 +472,9 @@ export const handleWebhook = async (req, res) => {
               }).catch(() => {})
             }
           }
+
+          await clearUserCart(booking?.userId).catch(() => {})
+          await invalidateDashboardCache(booking?.userId).catch(() => {})
         }
       }
     }

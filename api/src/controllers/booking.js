@@ -320,7 +320,6 @@ export const createBooking = async (req, res, next) => {
     const isSampleTastingCheckout = String(req.body?.checkoutMode ?? '').trim() === 'sample-tasting'
     const fallbackEventDate = req.body?.eventDate ? new Date(req.body.eventDate) : null
     const fallbackGuestCount = Number(req.body?.guestCount ?? 0)
-    const requestedEventTime = String(req.body?.eventTime ?? '').trim()
 
     const cart = await prisma.cart.findFirst({
       where: { userId },
@@ -376,7 +375,6 @@ export const createBooking = async (req, res, next) => {
           userId,
           packageId,
           eventDate: resolvedEventDate,
-          eventTime: requestedEventTime || null,
           guestCount: resolvedGuestCount,
           status: 'new',
           totalPrice: totalPrice.toFixed(2),
@@ -469,20 +467,6 @@ export const createBooking = async (req, res, next) => {
       }
     }
 
-    // Clear cart after successful booking
-    await prisma.cartItem.deleteMany({ where: { cartId: cart.id } })
-    await prisma.cart.update({
-      where: { id: cart.id },
-      data: {
-        subtotal: 0,
-        discountAmount: 0,
-        total: 0,
-        couponId: null,
-        eventDate: null,
-        guestCount: null,
-      },
-    })
-
     // Return full booking with items
     const fullBooking = await prisma.booking.findUnique({
       where: { id: booking.id },
@@ -528,7 +512,12 @@ export const listBookings = async (req, res, next) => {
 
     const [bookings, total] = await Promise.all([
       prisma.booking.findMany({
-        where: { userId },
+        where: {
+          userId,
+          payments: {
+            some: { status: 'success' },
+          },
+        },
         include: {
           items: {
             select: { id: true, title: true, quantity: true, unitPrice: true, totalPrice: true },
@@ -549,7 +538,14 @@ export const listBookings = async (req, res, next) => {
         take: limit,
         skip,
       }),
-      prisma.booking.count({ where: { userId } }),
+      prisma.booking.count({
+        where: {
+          userId,
+          payments: {
+            some: { status: 'success' },
+          },
+        },
+      }),
     ])
 
     const enrichedBookings = await enrichBookings(bookings)
@@ -597,6 +593,12 @@ export const getBooking = async (req, res, next) => {
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+    if (
+      !Array.isArray(booking.payments) ||
+      !booking.payments.some(payment => payment.status === 'success')
+    ) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
 
     const [enrichedBooking] = await enrichBookings([booking])
 

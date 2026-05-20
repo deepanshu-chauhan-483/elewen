@@ -2,7 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useToast } from '../components/common/useToast'
 import { useCart } from '../hooks/useCart'
-import { useCheckoutToastMessage } from '../hooks/useMessagingContent'
+import {
+  useCheckoutToastMessage,
+  usePaymentCancelledToastMessage,
+  usePaymentFailedToastMessage,
+} from '../hooks/useMessagingContent'
 import { usePackages } from '../hooks/usePackages'
 import { getPackageLineLabel } from '../lib/bookingDisplay'
 import {
@@ -67,6 +71,30 @@ function loadRazorpayScript() {
     script.onerror = () => resolve(false)
     document.body.appendChild(script)
   })
+}
+
+function getPaymentErrorMessage(error) {
+  const gatewayError = error?.error ?? error?.response?.error ?? null
+
+  const message =
+    gatewayError?.description ||
+    error?.description ||
+    gatewayError?.message ||
+    error?.message ||
+    null
+
+  if (message) {
+    return message
+  }
+
+  if (
+    gatewayError?.reason === 'international_transaction_not_allowed' ||
+    error?.reason === 'international_transaction_not_allowed'
+  ) {
+    return 'International cards are not supported. Please contact our support team for help.'
+  }
+
+  return 'Payment failed. Please try again.'
 }
 
 function SummaryRow({ label, value }) {
@@ -476,7 +504,15 @@ export default function CheckoutPage() {
   const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
+  const {
+    data: paymentFailedToastMessage = 'Your payment could not be completed. Please try again.',
+  } = usePaymentFailedToastMessage()
+  const {
+    data: paymentCancelledToastMessage = 'Payment cancelled. You can continue from checkout anytime.',
+  } = usePaymentCancelledToastMessage()
   const hasShownCheckoutToastRef = useRef(false)
+  const draftBookingRef = useRef(null)
+  const paymentFailureToastShownRef = useRef(false)
   const queryParams = new URLSearchParams(location.search)
   const isSampleTastingCheckout =
     queryParams.get('mode') === 'sample-tasting' ||
@@ -501,6 +537,7 @@ export default function CheckoutPage() {
   const [guestCount, setGuestCount] = useState(
     cart?.guestCount != null ? String(cart.guestCount) : ''
   )
+  const [specialRequest, setSpecialRequest] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('upi')
   const [formError, setFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -653,20 +690,27 @@ export default function CheckoutPage() {
           ? String(cart.eventDate).slice(0, 10)
           : new Date().toISOString().slice(0, 10)
 
-      const bookingResponse = await bookingCreate(
-        token,
-        isSampleTastingCheckout
-          ? {
-              checkoutMode: 'sample-tasting',
-              eventDate: sampleBookingDate,
-              eventTime: sessionDetails.timeLabel || '',
-              guestCount: 1,
-            }
-          : {
-              eventTime: eventTime || '',
-            }
-      )
-      const booking = bookingResponse?.booking
+      let booking = draftBookingRef.current
+
+      if (!booking?.id) {
+        const bookingResponse = await bookingCreate(
+          token,
+          isSampleTastingCheckout
+            ? {
+                checkoutMode: 'sample-tasting',
+                eventDate: sampleBookingDate,
+                eventTime: sessionDetails.timeLabel || '',
+                guestCount: 1,
+              }
+            : {
+                eventTime: eventTime || '',
+              }
+        )
+        booking = bookingResponse?.booking
+        if (booking?.id) {
+          draftBookingRef.current = booking
+        }
+      }
 
       if (!booking?.id) {
         throw new Error('Booking could not be created.')
@@ -681,6 +725,7 @@ export default function CheckoutPage() {
             `Tasting date: ${sessionDetails.dateLabel || 'Not provided'}`,
             `Tasting time: ${sessionDetails.timeLabel || 'Not provided'}`,
             `Tasting address: ${sessionDetails.address || 'Not provided'}`,
+            `Special request: ${specialRequest.trim() || 'Not provided'}`,
             `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
           ].join('\n')
         : [
@@ -692,6 +737,7 @@ export default function CheckoutPage() {
             `Event address: ${eventAddress.trim()}`,
             `PIN code: ${pinCode || 'Not provided'}`,
             `Guest count: ${guestCount}`,
+            `Special request: ${specialRequest.trim() || 'Not provided'}`,
             `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
           ].join('\n')
 
@@ -732,6 +778,7 @@ export default function CheckoutPage() {
               eventAddress: isSampleTastingCheckout ? sessionDetails.address : eventAddress,
               pinCode,
               guestCount,
+              specialRequest,
               checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
               selectedItems: cartItems.map(item => ({
                 id: item?.id,
@@ -767,6 +814,7 @@ export default function CheckoutPage() {
         },
         handler: async response => {
           try {
+            paymentFailureToastShownRef.current = false
             const verifyResponse = await paymentVerify(token, {
               paymentId: orderResponse.paymentId,
               razorpayOrderId: response.razorpay_order_id,
@@ -794,6 +842,7 @@ export default function CheckoutPage() {
                   eventAddress: isSampleTastingCheckout ? sessionDetails.address : eventAddress,
                   pinCode,
                   guestCount,
+                  specialRequest,
                   checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
                   selectedItems: cartItems.map(item => ({
                     id: item?.id,
@@ -812,6 +861,10 @@ export default function CheckoutPage() {
         },
         modal: {
           ondismiss: () => {
+            if (!paymentFailureToastShownRef.current) {
+              showToast({ message: paymentCancelledToastMessage })
+            }
+            paymentFailureToastShownRef.current = false
             setIsSubmitting(false)
           },
         },
@@ -819,12 +872,19 @@ export default function CheckoutPage() {
 
       const razorpay = new window.Razorpay(options)
       razorpay.on('payment.failed', response => {
-        setFormError(response?.error?.description || 'Payment failed. Please try again.')
+        paymentFailureToastShownRef.current = true
+        showToast({ message: paymentFailedToastMessage })
+        setFormError(getPaymentErrorMessage(response))
         setIsSubmitting(false)
       })
-      razorpay.open()
+      try {
+        razorpay.open()
+      } catch (gatewayErr) {
+        setFormError(getPaymentErrorMessage(gatewayErr))
+        setIsSubmitting(false)
+      }
     } catch (err) {
-      setFormError(err.message || 'Checkout failed. Please try again.')
+      setFormError(getPaymentErrorMessage(err))
       setIsSubmitting(false)
     }
   }
@@ -895,7 +955,11 @@ export default function CheckoutPage() {
               </div>
             </div>
           ) : (
-            <SpecialRequest preferences={''} onChange={() => {}} />
+            <SpecialRequest
+              preferences={specialRequest}
+              onChange={setSpecialRequest}
+              onSubmit={event => event.preventDefault()}
+            />
           )}
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#1F2A16] px-5 py-3 text-white">

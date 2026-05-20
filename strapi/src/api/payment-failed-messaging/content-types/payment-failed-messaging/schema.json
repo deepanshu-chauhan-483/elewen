@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "payment_failed_messaging",
+  "info": {
+    "singularName": "payment-failed-messaging",
+    "pluralName": "payment-failed-messagings",
+    "displayName": "Payment Failed Messaging"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sections": {
+      "type": "component",
+      "component": "cms.content-section",
+      "repeatable": true
+    }
+  }
+}

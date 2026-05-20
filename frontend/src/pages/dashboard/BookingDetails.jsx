@@ -512,6 +512,10 @@ function BookingAccordionCard({ booking, session }) {
               <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
               <p>{formatDashboardCurrency(booking.paymentSummary?.amountDue)}</p>
             </div>
+            <div className="md:col-span-3">
+              <p className="text-[11px] text-[#767676]">SPECIAL REQUEST</p>
+              <p>{booking.specialRequest || 'Not provided'}</p>
+            </div>
           </div>
 
           <div className="mt-6">

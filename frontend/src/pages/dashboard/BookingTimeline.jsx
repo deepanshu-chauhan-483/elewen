@@ -93,6 +93,30 @@ function loadRazorpayScript() {
   })
 }
 
+function getPaymentErrorMessage(error) {
+  const gatewayError = error?.error ?? error?.response?.error ?? null
+
+  const message =
+    gatewayError?.description ||
+    error?.description ||
+    gatewayError?.message ||
+    error?.message ||
+    null
+
+  if (message) {
+    return message
+  }
+
+  if (
+    gatewayError?.reason === 'international_transaction_not_allowed' ||
+    error?.reason === 'international_transaction_not_allowed'
+  ) {
+    return 'International cards are not supported. Please contact our support team for help.'
+  }
+
+  return 'Payment failed. Please try again.'
+}
+
 function normalizeTimelineItem(item) {
   const rawStatus = String(item?.status ?? '')
     .trim()
@@ -315,13 +339,17 @@ export default function BookingTimeline() {
         })
 
         razorpay.on('payment.failed', response => {
-          reject(new Error(response?.error?.description || 'Payment failed. Please try again.'))
+          reject(new Error(getPaymentErrorMessage(response)))
         })
 
-        razorpay.open()
+        try {
+          razorpay.open()
+        } catch (gatewayErr) {
+          reject(new Error(getPaymentErrorMessage(gatewayErr)))
+        }
       })
     } catch (err) {
-      window.alert(err?.message || 'Could not start remaining payment.')
+      window.alert(getPaymentErrorMessage(err))
     } finally {
       setPayingBookingId('')
     }

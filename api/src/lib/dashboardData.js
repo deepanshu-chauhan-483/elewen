@@ -360,6 +360,7 @@ function getBookingMetaFromNotes(notes = []) {
       text.match(/(?:Event|Tasting) address:\s*(.+)/i) ?? text.match(/Address:\s*(.+)/i)
     const timeMatch = text.match(/Event time:\s*(.+)/i) ?? text.match(/Tasting time:\s*(.+)/i)
     const pinMatch = text.match(/PIN code:\s*(.+)/i)
+    const specialRequestMatch = text.match(/Special request:\s*(.+)/i)
     const selectedItemsMatch = text.match(/Selected items:\s*(.+)/i)
     const checkoutModeMatch = text.match(/Checkout mode:\s*(.+)/i)
     const tastingMarkerMatch =
@@ -373,6 +374,7 @@ function getBookingMetaFromNotes(notes = []) {
       eventAddress: addressMatch?.[1]?.trim() ?? '',
       eventTime: timeMatch?.[1]?.trim() ?? '',
       pinCode: pinMatch?.[1]?.trim() ?? '',
+      specialRequest: specialRequestMatch?.[1]?.trim() ?? '',
       selectedItemsText: selectedItemsMatch?.[1]?.trim() ?? '',
       checkoutMode,
     }
@@ -382,6 +384,7 @@ function getBookingMetaFromNotes(notes = []) {
     eventAddress: '',
     eventTime: '',
     pinCode: '',
+    specialRequest: '',
     selectedItemsText: '',
     checkoutMode: '',
   }
@@ -491,6 +494,7 @@ export async function enrichBookings(bookings = []) {
       eventTime: booking?.eventTime || noteMeta.eventTime,
       bookedAt: booking?.createdAt ?? null,
       pinCode: noteMeta.pinCode,
+      specialRequest: noteMeta.specialRequest,
       checkoutMode,
       isSampleTastingBooking,
       refundPreview,

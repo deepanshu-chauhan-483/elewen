@@ -247,6 +247,7 @@ export function buildReceiptData({
       'Not provided',
     pinCode: checkoutInfo?.pinCode || booking?.pinCode || 'Not provided',
     guestCount: checkoutInfo?.guestCount ?? booking?.guestCount ?? 'Not provided',
+    specialRequest: checkoutInfo?.specialRequest || booking?.specialRequest || 'Not provided',
     packageTitle,
     lineItems,
     payments,
@@ -513,6 +514,7 @@ function createReceiptPdf(receiptData) {
     { label: 'Event Time', value: receiptData.eventTime || 'Not provided' },
     { label: 'Address', value: receiptData.eventAddress },
     { label: 'PIN Code', value: receiptData.pinCode || 'Not provided' },
+    { label: 'Special Request', value: receiptData.specialRequest || 'Not provided' },
   ])
 
   y += 12

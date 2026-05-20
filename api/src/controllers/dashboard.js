@@ -31,7 +31,12 @@ export const getCustomerSummary = async (req, res, next) => {
         savedPackages,
       ] = await Promise.all([
         prisma.booking.findMany({
-          where: { userId },
+          where: {
+            userId,
+            payments: {
+              some: { status: 'success' },
+            },
+          },
           select: { id: true, status: true, eventDate: true },
         }),
         prisma.sampleTasteBooking.count({
