@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import CustomSelect from '../components/common/CustomSelect'
+import { getFieldErrors, getGlobalErrorMessage } from '../lib/formErrors'
 import { submitVendorRegistration } from '../lib/api'
 
 const SERVICE_OPTIONS = ['Decor', 'Catering Services', 'Sheesha Services', 'Bartending']
@@ -82,7 +83,7 @@ async function toUploadPayload(file) {
   }
 }
 
-function Input({ label, name, placeholder, value, onChange }) {
+function Input({ label, name, placeholder, value, onChange, error }) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[14px] text-[#364022]">{label}</label>
@@ -93,11 +94,12 @@ function Input({ label, name, placeholder, value, onChange }) {
         placeholder={placeholder}
         className="bg-white border border-[#E5E5E5] p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874]"
       />
+      {error ? <p className="text-[12px] text-[#8F2D1F]">{error}</p> : null}
     </div>
   )
 }
 
-function PhoneInput({ value, onChange }) {
+function PhoneInput({ value, onChange, error }) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[14px] text-[#364022]">Phone number*</label>
@@ -108,11 +110,12 @@ function PhoneInput({ value, onChange }) {
         placeholder="Enter mobile number"
         className="flex-1 bg-white border border-[#E5E5E5] p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874]"
       />
+      {error ? <p className="text-[12px] text-[#8F2D1F]">{error}</p> : null}
     </div>
   )
 }
 
-function MultiSelect({ label, selected, onChange }) {
+function MultiSelect({ label, selected, onChange, error }) {
   const [inputValue, setInputValue] = useState('')
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -217,11 +220,12 @@ function MultiSelect({ label, selected, onChange }) {
           )}
         </div>
       )}
+      {error ? <p className="text-[12px] text-[#8F2D1F]">{error}</p> : null}
     </div>
   )
 }
 
-function Select({ label, value, onChange }) {
+function Select({ label, value, onChange, error }) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[14px] text-[#364022]">{label}</label>
@@ -241,11 +245,12 @@ function Select({ label, value, onChange }) {
           ariaLabel={label}
         />
       </div>
+      {error ? <p className="text-[12px] text-[#8F2D1F]">{error}</p> : null}
     </div>
   )
 }
 
-function Upload({ label, full, file, onChange, accept }) {
+function Upload({ label, full, file, onChange, accept, error }) {
   const inputRef = useRef(null)
 
   return (
@@ -289,6 +294,7 @@ function Upload({ label, full, file, onChange, accept }) {
           </svg>
         </button>
       </div>
+      {error ? <p className="text-[12px] text-[#8F2D1F]">{error}</p> : null}
     </div>
   )
 }
@@ -298,6 +304,7 @@ export default function VendorRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
   const [submitError, setSubmitError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const payloadPreview = useMemo(
     () => ({
@@ -311,34 +318,45 @@ export default function VendorRegistration() {
     const { name, value } = event.target
     setFormData(previous => ({ ...previous, [name]: value }))
     setSubmitError('')
+    setFieldErrors(previous => ({ ...previous, [name]: '' }))
   }
 
   const setFileValue = (field, file) => {
     setFormData(previous => ({ ...previous, [field]: file }))
     setSubmitError('')
+    setFieldErrors(previous => ({ ...previous, [field]: '' }))
   }
 
   const validateForm = () => {
-    if (!formData.businessName.trim()) return 'Business name is required'
-    if (!formData.contactPersonName.trim()) return 'Primary contact name is required'
-    if (!formData.phone.trim()) return 'Phone number is required'
-    if (!formData.email.trim()) return 'Email address is required'
-    if (!formData.operatingLocation.trim()) return 'Operating location is required'
-    if (!formData.websiteSocialPortfolio.trim()) return 'Website / Social / Portfolio is required'
-    if (!formData.serviceCategories.length) return 'Select at least one service'
-    if (!formData.eventType) return 'Select an event type'
-    if (!formData.verificationDocument) return 'Verification document is required'
-    return ''
+    const nextErrors = {}
+
+    if (!formData.businessName.trim()) nextErrors.businessName = 'Business name is required'
+    if (!formData.contactPersonName.trim())
+      nextErrors.contactPersonName = 'Primary contact name is required'
+    if (!formData.phone.trim()) nextErrors.phone = 'Phone number is required'
+    if (!formData.email.trim()) nextErrors.email = 'Email address is required'
+    if (!formData.operatingLocation.trim())
+      nextErrors.operatingLocation = 'Operating location is required'
+    if (!formData.websiteSocialPortfolio.trim())
+      nextErrors.websiteSocialPortfolio = 'Website / Social / Portfolio is required'
+    if (!formData.serviceCategories.length)
+      nextErrors.serviceCategories = 'Select at least one service'
+    if (!formData.eventType) nextErrors.eventType = 'Select an event type'
+    if (!formData.verificationDocument)
+      nextErrors.verificationDocument = 'Verification document is required'
+
+    return nextErrors
   }
 
   const handleSubmit = async event => {
     event.preventDefault()
     setSubmitError('')
     setSubmitMessage('')
+    setFieldErrors({})
 
     const validationError = validateForm()
-    if (validationError) {
-      setSubmitError(validationError)
+    if (Object.keys(validationError).length > 0) {
+      setFieldErrors(validationError)
       return
     }
 
@@ -375,7 +393,27 @@ export default function VendorRegistration() {
       setFormData(INITIAL_FORM)
       setTimeout(() => setSubmitMessage(''), 5000)
     } catch (error) {
-      setSubmitError(error.message || 'Failed to submit vendor registration. Please try again.')
+      const nextFieldErrors = getFieldErrors(error, {
+        business_name: 'businessName',
+        contact_person_name: 'contactPersonName',
+        operating_location: 'operatingLocation',
+        website_social_portfolio: 'websiteSocialPortfolio',
+        service_category: 'serviceCategories',
+        event_types: 'eventType',
+        verification_document: 'verificationDocument',
+        work_sample: 'workSample',
+        portfolio_link: 'portfolioLink',
+        established_in: 'establishedIn',
+        team_size: 'teamSize',
+      })
+
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFieldErrors(nextFieldErrors)
+      } else {
+        setSubmitError(
+          getGlobalErrorMessage(error, 'Failed to submit vendor registration. Please try again.')
+        )
+      }
       console.error('[VendorRegistration] submission error:', error)
     } finally {
       setIsSubmitting(false)
@@ -418,6 +456,7 @@ export default function VendorRegistration() {
                 value={formData.businessName}
                 onChange={handleInputChange}
                 placeholder="Enter your business name"
+                error={fieldErrors.businessName}
               />
               <Input
                 label="Primary Contact Name*"
@@ -425,15 +464,21 @@ export default function VendorRegistration() {
                 value={formData.contactPersonName}
                 onChange={handleInputChange}
                 placeholder="Enter full name"
+                error={fieldErrors.contactPersonName}
               />
 
-              <PhoneInput value={formData.phone} onChange={handleInputChange} />
+              <PhoneInput
+                value={formData.phone}
+                onChange={handleInputChange}
+                error={fieldErrors.phone}
+              />
               <Input
                 label="Email Address*"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Enter email address"
+                error={fieldErrors.email}
               />
 
               <Input
@@ -442,6 +487,7 @@ export default function VendorRegistration() {
                 value={formData.operatingLocation}
                 onChange={handleInputChange}
                 placeholder="City & service area"
+                error={fieldErrors.operatingLocation}
               />
               <Input
                 label="Team Size"
@@ -449,6 +495,7 @@ export default function VendorRegistration() {
                 value={formData.teamSize}
                 onChange={handleInputChange}
                 placeholder="e.g. 8 members"
+                error={fieldErrors.teamSize}
               />
 
               <Input
@@ -457,6 +504,7 @@ export default function VendorRegistration() {
                 value={formData.websiteSocialPortfolio}
                 onChange={handleInputChange}
                 placeholder="Paste link"
+                error={fieldErrors.websiteSocialPortfolio}
               />
               <Input
                 label="Established In"
@@ -464,6 +512,7 @@ export default function VendorRegistration() {
                 value={formData.establishedIn}
                 onChange={handleInputChange}
                 placeholder="e.g. 2021"
+                error={fieldErrors.establishedIn}
               />
             </div>
           </div>
@@ -485,7 +534,9 @@ export default function VendorRegistration() {
                 onChange={serviceCategories => {
                   setFormData(previous => ({ ...previous, serviceCategories }))
                   setSubmitError('')
+                  setFieldErrors(previous => ({ ...previous, serviceCategories: '' }))
                 }}
+                error={fieldErrors.serviceCategories}
               />
               <Select
                 label="Event Types You Cater To*"
@@ -493,7 +544,9 @@ export default function VendorRegistration() {
                 onChange={event => {
                   setFormData(previous => ({ ...previous, eventType: event.target.value }))
                   setSubmitError('')
+                  setFieldErrors(previous => ({ ...previous, eventType: '' }))
                 }}
+                error={fieldErrors.eventType}
               />
 
               <div className="grid md:grid-cols-2 gap-[clamp(20px,3vw,40px)]">
@@ -503,12 +556,14 @@ export default function VendorRegistration() {
                   value={formData.portfolioLink}
                   onChange={handleInputChange}
                   placeholder="Paste your portfolio link"
+                  error={fieldErrors.portfolioLink}
                 />
                 <Upload
                   label="Upload Work Samples"
                   file={formData.workSample}
                   onChange={file => setFileValue('workSample', file)}
                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                  error={fieldErrors.workSample}
                 />
               </div>
 
@@ -518,6 +573,7 @@ export default function VendorRegistration() {
                 file={formData.verificationDocument}
                 onChange={file => setFileValue('verificationDocument', file)}
                 accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                error={fieldErrors.verificationDocument}
               />
             </div>
 

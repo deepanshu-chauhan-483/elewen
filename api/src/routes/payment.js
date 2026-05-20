@@ -12,6 +12,15 @@ import {
   updateVendorPayout,
   getVendorPayouts,
 } from '../controllers/payment.js'
+import { validate } from '../middleware/validate.js'
+import {
+  createOrderSchema,
+  verifyPaymentSchema,
+  requestRefundSchema,
+  processRefundSchema,
+  createVendorPayoutSchema,
+  updateVendorPayoutSchema,
+} from '../schemas/payment.js'
 
 const router = Router()
 
@@ -84,7 +93,7 @@ router.use(requireAuth)
  *       404:
  *         description: Booking not found
  */
-router.post('/create-order', createOrder)
+router.post('/create-order', validate(createOrderSchema), createOrder)
 
 /**
  * @openapi
@@ -139,7 +148,7 @@ router.post('/create-order', createOrder)
  *       404:
  *         description: Payment record not found
  */
-router.post('/verify', verifyPayment)
+router.post('/verify', validate(verifyPaymentSchema), verifyPayment)
 
 /**
  * @openapi
@@ -272,7 +281,7 @@ router.get('/all', getAllPayments)
  *                   items:
  *                     $ref: '#/components/schemas/Refund'
  */
-router.post('/refunds', requestRefund)
+router.post('/refunds', validate(requestRefundSchema), requestRefund)
 router.get('/refunds', getRefunds)
 
 /**
@@ -316,7 +325,7 @@ router.get('/refunds', getRefunds)
  *       502:
  *         description: Razorpay refund API call failed
  */
-router.patch('/refunds/:id', processRefund)
+router.patch('/refunds/:id', validate(processRefundSchema), processRefund)
 
 // ─── Vendor Payouts ──────────────────────────────────────────────────────────
 
@@ -382,7 +391,7 @@ router.patch('/refunds/:id', processRefund)
  *                   items:
  *                     $ref: '#/components/schemas/VendorPayout'
  */
-router.post('/vendor-payouts', createVendorPayout)
+router.post('/vendor-payouts', validate(createVendorPayoutSchema), createVendorPayout)
 router.get('/vendor-payouts', getVendorPayouts)
 
 /**
@@ -424,6 +433,6 @@ router.get('/vendor-payouts', getVendorPayouts)
  *       404:
  *         description: Vendor payout not found
  */
-router.patch('/vendor-payouts/:id', updateVendorPayout)
+router.patch('/vendor-payouts/:id', validate(updateVendorPayoutSchema), updateVendorPayout)
 
 export default router

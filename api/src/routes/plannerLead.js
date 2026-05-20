@@ -1,5 +1,7 @@
 import { Router } from 'express'
 import { createPlannerLead } from '../controllers/plannerLead.js'
+import { validate } from '../middleware/validate.js'
+import { createPlannerLeadSchema } from '../schemas/plannerLead.js'
 
 const router = Router()
 
@@ -33,6 +35,6 @@ const router = Router()
  *       400:
  *         description: Required fields missing
  */
-router.post('/', createPlannerLead)
+router.post('/', validate(createPlannerLeadSchema), createPlannerLead)
 
 export default router

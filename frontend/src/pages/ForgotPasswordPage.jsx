@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { getFieldErrors } from '../lib/formErrors'
 import { authForgotPassword } from '../lib/api'
 
 const ForgotPasswordIcon = () => (
@@ -38,16 +39,23 @@ export default function ForgotPasswordPage() {
   const [emailSent, setEmailSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setFieldErrors({})
     setLoading(true)
     try {
       await authForgotPassword(email)
       setEmailSent(true)
-    } catch {
-      setError('Failed to send reset email. Please check the address and try again.')
+    } catch (err) {
+      const nextFieldErrors = getFieldErrors(err)
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFieldErrors(nextFieldErrors)
+      } else {
+        setError('Failed to send reset email. Please check the address and try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -106,11 +114,17 @@ export default function ForgotPasswordPage() {
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  setEmail(e.target.value)
+                  setFieldErrors(prev => ({ ...prev, email: '' }))
+                }}
                 placeholder="Enter your email"
                 required
                 className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
               />
+              {fieldErrors.email ? (
+                <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.email}</p>
+              ) : null}
             </div>
             {error && <p className="text-[#C62828] text-[12px] leading-[150%]">{error}</p>}
           </div>

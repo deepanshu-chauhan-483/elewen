@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { getFieldErrors } from '../lib/formErrors'
 import { authLogin, setStoredJwt } from '../lib/api'
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
 
   const authErrorMessage =
@@ -29,6 +31,7 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setFieldErrors({})
     setLoading(true)
     try {
       const data = await authLogin({ email, password })
@@ -36,9 +39,13 @@ export default function LoginPage() {
       localStorage.setItem('elewen_user', JSON.stringify(data.user))
       navigate(redirectTarget, { replace: true })
     } catch (err) {
-      if (err.message?.includes('GOOGLE_ACCOUNT_USE_GOOGLE')) {
+      const nextFieldErrors = getFieldErrors(err)
+
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFieldErrors(nextFieldErrors)
+      } else if (err.message?.includes('GOOGLE_ACCOUNT_USE_GOOGLE')) {
         setError('This account was created with Google. Please continue with Google to sign in.')
-      } else if (err.message?.includes('403')) {
+      } else if (err.status === 403) {
         setError('Please confirm your email before logging in. Check your inbox.')
       } else {
         setError('Invalid email or password.')
@@ -93,11 +100,17 @@ export default function LoginPage() {
           <input
             type="email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => {
+              setEmail(e.target.value)
+              setFieldErrors(prev => ({ ...prev, email: '' }))
+            }}
             placeholder="Enter your email"
             required
             className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
           />
+          {fieldErrors.email ? (
+            <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.email}</p>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-[8px] w-full">
@@ -108,7 +121,10 @@ export default function LoginPage() {
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => {
+                setPassword(e.target.value)
+                setFieldErrors(prev => ({ ...prev, password: '' }))
+              }}
               placeholder="Enter your password"
               required
               className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors pr-10"
@@ -134,6 +150,9 @@ export default function LoginPage() {
               </svg>
             </button>
           </div>
+          {fieldErrors.password ? (
+            <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.password}</p>
+          ) : null}
 
           <div className="flex justify-between items-center w-full pt-[2px]">
             <label className="flex items-center gap-[4px] cursor-pointer">

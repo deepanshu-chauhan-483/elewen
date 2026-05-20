@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { getFieldErrors } from '../lib/formErrors'
 import { authForgotPassword, authResetPassword } from '../lib/api'
 
 /** 56×56 — padlock in circle + four dots (matches auth icon scale / #727355) */
@@ -139,6 +140,7 @@ export default function NewPasswordPage() {
   const [emailSent, setEmailSent] = useState(false)
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
+  const [emailFieldErrors, setEmailFieldErrors] = useState({})
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -146,16 +148,23 @@ export default function NewPasswordPage() {
   const [resetComplete, setResetComplete] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
   const [resetError, setResetError] = useState('')
+  const [resetFieldErrors, setResetFieldErrors] = useState({})
 
   async function handleResendEmail(e) {
     e.preventDefault()
     setEmailError('')
+    setEmailFieldErrors({})
     setEmailLoading(true)
     try {
       await authForgotPassword(email)
       setEmailSent(true)
-    } catch {
-      setEmailError('Failed to send reset email. Please try again.')
+    } catch (err) {
+      const nextFieldErrors = getFieldErrors(err)
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setEmailFieldErrors(nextFieldErrors)
+      } else {
+        setEmailError('Failed to send reset email. Please try again.')
+      }
     } finally {
       setEmailLoading(false)
     }
@@ -163,12 +172,18 @@ export default function NewPasswordPage() {
 
   async function handleResetPassword() {
     setResetError('')
+    setResetFieldErrors({})
     setResetLoading(true)
     try {
       await authResetPassword({ code: token, password, passwordConfirmation: confirm })
       setResetComplete(true)
-    } catch {
-      setResetError('Failed to reset password. The link may have expired.')
+    } catch (err) {
+      const nextFieldErrors = getFieldErrors(err, { passwordConfirmation: 'confirm' })
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setResetFieldErrors(nextFieldErrors)
+      } else {
+        setResetError('Failed to reset password. The link may have expired.')
+      }
     } finally {
       setResetLoading(false)
     }
@@ -241,10 +256,18 @@ export default function NewPasswordPage() {
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  setEmail(e.target.value)
+                  setEmailFieldErrors(prev => ({ ...prev, email: '' }))
+                }}
                 placeholder="Enter your email"
                 className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
               />
+              {emailFieldErrors.email ? (
+                <p className="text-[#C62828] text-[12px] leading-[150%]">
+                  {emailFieldErrors.email}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -335,7 +358,11 @@ export default function NewPasswordPage() {
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => {
+                setPassword(e.target.value)
+                setResetFieldErrors(prev => ({ ...prev, password: '' }))
+                setResetError('')
+              }}
               placeholder="Enter your password"
               autoComplete="new-password"
               className="w-full min-w-0 h-[40px] px-[16px] py-[8px] pr-10 bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
@@ -349,6 +376,9 @@ export default function NewPasswordPage() {
               <EyeIcon hidden={!showPassword} />
             </button>
           </div>
+          {resetFieldErrors.password ? (
+            <p className="text-[#C62828] text-[12px] leading-[150%]">{resetFieldErrors.password}</p>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-[8px] w-full min-w-0">
@@ -359,7 +389,11 @@ export default function NewPasswordPage() {
             <input
               type={showConfirm ? 'text' : 'password'}
               value={confirm}
-              onChange={e => setConfirm(e.target.value)}
+              onChange={e => {
+                setConfirm(e.target.value)
+                setResetFieldErrors(prev => ({ ...prev, confirm: '' }))
+                setResetError('')
+              }}
               placeholder="Confirm password"
               autoComplete="new-password"
               className="w-full min-w-0 h-[40px] px-[16px] py-[8px] pr-10 bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
@@ -373,6 +407,9 @@ export default function NewPasswordPage() {
               <EyeIcon hidden={!showConfirm} />
             </button>
           </div>
+          {resetFieldErrors.confirm ? (
+            <p className="text-[#C62828] text-[12px] leading-[150%]">{resetFieldErrors.confirm}</p>
+          ) : null}
         </div>
 
         <div className="flex w-full flex-col gap-[10px] pt-[2px]">

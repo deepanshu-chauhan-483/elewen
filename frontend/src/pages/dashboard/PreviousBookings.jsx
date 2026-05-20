@@ -83,14 +83,98 @@ function getSelectedItemDisplay(title = '') {
   return displayTitle || rawTitle
 }
 
+function ReferFriendPanel({ booking, session, onClose }) {
+  const [copied, setCopied] = useState(false)
+  const customerName =
+    [session?.profile?.first_name, session?.profile?.last_name].filter(Boolean).join(' ') ||
+    [session?.user?.first_name, session?.user?.last_name].filter(Boolean).join(' ') ||
+    'a friend'
+
+  const packageTitle = booking?.package?.title || booking?.event?.name || 'an Elewen package'
+  const message = `Hey! I recently booked "${packageTitle}" with Elewen and it was amazing. When you book, mention my name "${customerName}" and the team will apply a special discount for you. Check them out at elewen.in`
+
+  function handleCopy() {
+    navigator.clipboard.writeText(message).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    })
+  }
+
+  return (
+    <div
+      className="mt-4 rounded-2xl border border-[#E7D2C4] bg-[#FBF7F3] p-5"
+      onClick={event => event.stopPropagation()}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-[#2E2E2E]">Refer a Friend</p>
+          <p className="mt-1 text-xs text-[#6B7280]">
+            Share the message below. When your friend books and mentions your name, the admin will
+            apply a discount manually on their booking.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#8F8F8F] transition hover:bg-[#EDE5DA]"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-[#E4DED8] bg-white px-4 py-3 text-sm leading-6 text-[#2E2E2E]">
+        {message}
+      </div>
+
+      <div className="mt-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="inline-flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2.5 text-sm text-white transition hover:opacity-90"
+        >
+          {copied ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M2.5 8L6 11.5L13.5 4.5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Copied!
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="white" strokeWidth="1.5" />
+                <path
+                  d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"
+                  stroke="white"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              Copy Message
+            </>
+          )}
+        </button>
+        <p className="text-xs text-[#8F8F8F]">
+          Discount applied manually by admin when friend books
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function PreviousBookingCard({ booking, session }) {
   const [open, setOpen] = useState(false)
+  const [showRefer, setShowRefer] = useState(false)
   const normalizedStatus = String(booking?.status ?? '').toLowerCase()
   const isCancelled = ['cancelled', 'canceled'].includes(normalizedStatus)
   const title = booking?.package?.title || booking?.event?.name || 'Booking'
-  const subtitle = [booking?.detailSubtitle, booking?.event?.name, booking?.locationSummary]
-    .filter(Boolean)
-    .join(' · ')
+  const subtitle = [booking?.detailSubtitle].filter(Boolean).join(' · ')
   const receiptData = buildReceiptData({
     booking,
     customer: {
@@ -145,42 +229,55 @@ function PreviousBookingCard({ booking, session }) {
           </div>
 
           <div className="flex flex-wrap gap-3 lg:justify-end">
-            <button
-              type="button"
-              onClick={event => {
-                event.stopPropagation()
-                downloadReceipt(receiptData)
-              }}
-              className="inline-flex rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
-            >
-              Download Receipt
-            </button>
-
             <Link
               to={getBookAgainHref(booking)}
               onClick={event => event.stopPropagation()}
-              className="flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2 text-white hover:opacity-90"
+              className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-4 py-2 text-white hover:opacity-90"
             >
               Book Again <ArrowIcon />
             </Link>
 
-            <Link
-              to={`/user-dashboard/support?bookingId=${booking.id}`}
-              onClick={event => event.stopPropagation()}
-              className="inline-flex rounded-full border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] px-5 py-3 text-sm"
+            {open ? (
+              <button
+                type="button"
+                onClick={event => {
+                  event.stopPropagation()
+                  downloadReceipt(receiptData)
+                }}
+                className="inline-flex px-4 py-2 text-sm rounded-full border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]"
+              >
+                Download Receipt
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={event => {
+                event.stopPropagation()
+                setShowRefer(prev => !prev)
+              }}
+              className={`inline-flex rounded-full border px-4 py-2 text-sm transition ${
+                showRefer
+                  ? 'border-[#C6A15B] bg-[#FBF7F3] text-[#CDB17E]'
+                  : 'border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]'
+              }`}
             >
               Refer a Friend
-            </Link>
+            </button>
           </div>
         </div>
       </div>
+
+      {showRefer ? (
+        <ReferFriendPanel booking={booking} session={session} onClose={() => setShowRefer(false)} />
+      ) : null}
 
       {open ? (
         <>
           <div className="mt-6 grid grid-cols-2 gap-6 border-t border-[#00000033] pt-6 text-sm md:grid-cols-3">
             <div>
-              <p className="text-[11px] text-[#767676]">EVENT</p>
-              <p>{booking.detailSubtitle || booking.event?.name || 'Not shared yet'}</p>
+              <p className="text-[11px] text-[#767676]">PACKAGE</p>
+              <p>{title}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">DATE</p>

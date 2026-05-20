@@ -162,12 +162,15 @@ export default function SupportHelp() {
   } = useDashboardSupportTickets()
 
   const [searchParams, setSearchParams] = useSearchParams()
-  const selectedTicketId = searchParams.get('ticketId') || ''
+  // const selectedTicketId = searchParams.get('ticketId') || ''
 
   const [newTicket, setNewTicket] = useState({ bookingId: '', subject: '', message: '' })
   const [reply, setReply] = useState('')
   const setField = (field, val) => setNewTicket(f => ({ ...f, [field]: val }))
-
+  const requestedTicketId = searchParams.get('ticketId') || ''
+  const selectedTicketId = tickets.some(ticket => ticket.id === requestedTicketId)
+    ? requestedTicketId
+    : tickets[0]?.id || ''
   useEffect(() => {
     if (!tickets.length) return
     if (selectedTicketId && tickets.some(t => t.id === selectedTicketId)) return
@@ -176,6 +179,8 @@ export default function SupportHelp() {
     setSearchParams(next, { replace: true })
   }, [tickets, searchParams, selectedTicketId, setSearchParams])
 
+  // const selectedTicket =
+  //   visibleTickets.find(item => item.id === selectedTicketId) ?? visibleTickets[0] ?? null
   const {
     data: ticket,
     isLoading: ticketLoading,
@@ -196,13 +201,21 @@ export default function SupportHelp() {
   const handleCreateTicket = async e => {
     e.preventDefault()
     if (!newTicket.subject.trim() || !newTicket.message.trim()) return
-    await createTicketMutation.mutateAsync({
+    const response = await createTicketMutation.mutateAsync({
       bookingId: newTicket.bookingId || undefined,
       subject: newTicket.subject.trim(),
       message: newTicket.message.trim(),
       priority: 'medium',
     })
+    const createdTicketId = response?.ticket?.id || ''
     setNewTicket({ bookingId: '', subject: '', message: '' })
+
+    if (createdTicketId) {
+      const next = new URLSearchParams(searchParams)
+      next.set('ticketId', createdTicketId)
+      next.set('tab', 'active')
+      setSearchParams(next, { replace: true })
+    }
   }
 
   const handleReply = async e => {

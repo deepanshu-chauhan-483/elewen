@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import { getAdminBadgeClass } from '../lib/adminBadges'
+import { ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
 import { useAdminAlerts, useAdminUpdateAlert } from '../hooks/useAdminData'
 import { formatDateTime } from '../lib/formatters'
 
@@ -7,42 +8,30 @@ import { formatDateTime } from '../lib/formatters'
 // Shared primitives
 // ---------------------------------------------------------------------------
 
-const severityBadge = {
-  low:      'bg-[#F3F4F6] text-[#6B7280]', // grey
-  medium:   'bg-[#FFF4E5] text-[#C07318]', // orange
-  high:     'bg-[#FFF1F0] text-[#591902]', // danger red
-  critical: 'bg-[#591902] text-white',     // strong danger
-}
-
-const statusBadge = {
-  new:          'bg-[#EEF4FF] text-[#3061C6]', // blue
-  acknowledged: 'bg-[#FFF4E5] text-[#C07318]', // medium/orange
-  snoozed:      'bg-[#F3F4F6] text-[#6B7280]', // grey
-  resolved:     'bg-[#EAF8F1] text-[#238E64]', // success green
-}
-
 // Left border accent per severity
 const severityBorder = {
-  low:      'border-l-gray-300',
-  medium:   'border-l-[#C07318]',
-  high:     'border-l-[#591902]',
+  low: 'border-l-gray-300',
+  medium: 'border-l-[#C07318]',
+  high: 'border-l-[#591902]',
   critical: 'border-l-[#591902]',
 }
 
 // Severity dot colour
 const severityDot = {
-  low:      'bg-gray-400',
-  medium:   'bg-[#C07318]',
-  high:     'bg-[#591902]',
+  low: 'bg-gray-400',
+  medium: 'bg-[#C07318]',
+  high: 'bg-[#591902]',
   critical: 'bg-[#591902]',
 }
 
-function Badge({ status, map, fallback = 'bg-[#E5E7EB] text-[#4B5563]' }) {
+function Badge({ status, fallback = 'bg-[#E5E7EB] text-[#4B5563]' }) {
   const key = status?.toLowerCase() ?? ''
-  const cls = (map ?? {})[key] ?? fallback
+  const cls = getAdminBadgeClass(status, { preset: 'soft', fallback })
   const text = key.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) || '—'
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}
+    >
       {text}
     </span>
   )
@@ -50,23 +39,15 @@ function Badge({ status, map, fallback = 'bg-[#E5E7EB] text-[#4B5563]' }) {
 
 function MetricCard({ label, value, helper, accent }) {
   return (
-    <div className={`flex flex-col gap-1 rounded-2xl border bg-white px-5 py-5 ${accent ? 'border-t-[3px] border-t-[#D4BA8E] border-[#E4DED8]' : 'border-[#E4DED8]'}`}>
-      <span className="text-[11px] font-semibold uppercase tracking-widest text-[#8F8F8F]">{label}</span>
+    <div
+      className={`flex flex-col gap-1 rounded-2xl border bg-white px-5 py-5 ${accent ? 'border-t-[3px] border-t-[#D4BA8E] border-[#E4DED8]' : 'border-[#E4DED8]'}`}
+    >
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-[#8F8F8F]">
+        {label}
+      </span>
       <span className="text-[28px] font-bold leading-none text-[#1C1C1C]">{value}</span>
       <span className="text-xs text-[#6B7280]">{helper}</span>
     </div>
-  )
-}
-
-function Select({ value, onChange, children }) {
-  return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
-    >
-      {children}
-    </select>
   )
 }
 
@@ -113,8 +94,18 @@ function SearchIcon() {
 // Bell icon for empty state
 function BellIcon() {
   return (
-    <svg className="mx-auto mb-3 h-10 w-10 text-[#D4BA8E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    <svg
+      className="mx-auto mb-3 h-10 w-10 text-[#D4BA8E]"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+      />
     </svg>
   )
 }
@@ -123,15 +114,16 @@ function BellIcon() {
 // Alert card
 // ---------------------------------------------------------------------------
 function AlertCard({ alert, onUpdate, isBusy }) {
-  const sev    = alert.severity?.toLowerCase() ?? 'low'
-  const st     = alert.status?.toLowerCase() ?? 'new'
+  const sev = alert.severity?.toLowerCase() ?? 'low'
+  const st = alert.status?.toLowerCase() ?? 'new'
   const border = severityBorder[sev] ?? 'border-l-gray-300'
-  const dot    = severityDot[sev] ?? 'bg-gray-400'
+  const dot = severityDot[sev] ?? 'bg-gray-400'
   const resolved = st === 'resolved'
 
   return (
-    <div className={`rounded-2xl border border-[#E4DED8] border-l-[3px] bg-white px-5 py-4 transition hover:shadow-[0_2px_12px_rgba(62,39,35,0.07)] ${border}`}>
-
+    <div
+      className={`rounded-2xl border border-[#E4DED8] border-l-[3px] bg-white px-5 py-4 transition hover:shadow-[0_2px_12px_rgba(62,39,35,0.07)] ${border}`}
+    >
       {/* Top row — message + badges */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-1 min-w-0 items-start gap-3">
@@ -141,13 +133,14 @@ function AlertCard({ alert, onUpdate, isBusy }) {
             <p className="mt-1 text-xs text-[#8F8F8F]">
               {alert.alertType}
               {alert.relatedEntityType ? ` · ${alert.relatedEntityType}` : ''}
-              {' · '}{formatDateTime(alert.createdAt)}
+              {' · '}
+              {formatDateTime(alert.createdAt)}
             </p>
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <Badge status={alert.severity} map={severityBadge} />
-          <Badge status={alert.status}   map={statusBadge} />
+          <Badge status={alert.severity} />
+          <Badge status={alert.status} />
         </div>
       </div>
 
@@ -155,25 +148,16 @@ function AlertCard({ alert, onUpdate, isBusy }) {
       {!resolved && (
         <div className="mt-4 flex flex-wrap gap-2 pl-5">
           {st !== 'acknowledged' && (
-            <GhostBtn
-              disabled={isBusy}
-              onClick={() => onUpdate(alert.id, 'acknowledged')}
-            >
+            <GhostBtn disabled={isBusy} onClick={() => onUpdate(alert.id, 'acknowledged')}>
               Acknowledge
             </GhostBtn>
           )}
           {st !== 'snoozed' && (
-            <GhostBtn
-              disabled={isBusy}
-              onClick={() => onUpdate(alert.id, 'snoozed')}
-            >
+            <GhostBtn disabled={isBusy} onClick={() => onUpdate(alert.id, 'snoozed')}>
               Snooze
             </GhostBtn>
           )}
-          <PrimaryBtn
-            disabled={isBusy}
-            onClick={() => onUpdate(alert.id, 'resolved')}
-          >
+          <PrimaryBtn disabled={isBusy} onClick={() => onUpdate(alert.id, 'resolved')}>
             Resolve
           </PrimaryBtn>
         </div>
@@ -186,18 +170,18 @@ function AlertCard({ alert, onUpdate, isBusy }) {
 // Page
 // ---------------------------------------------------------------------------
 export default function SystemAlertsPage() {
-  const [search, setSearch]     = useState('')
-  const [status, setStatus]     = useState('')
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [severity, setSeverity] = useState('')
 
-  const alertsQuery        = useAdminAlerts({ search, status, severity, limit: 24 })
+  const alertsQuery = useAdminAlerts({ search, status, severity, limit: 24 })
   const updateAlertMutation = useAdminUpdateAlert()
 
   if (alertsQuery.isLoading) return <LoadingState label="Loading system alerts…" />
-  if (alertsQuery.error)     return <ErrorState label="System alerts are unavailable right now." />
+  if (alertsQuery.error) return <ErrorState label="System alerts are unavailable right now." />
 
   const summary = alertsQuery.data?.summary ?? {}
-  const alerts  = alertsQuery.data?.alerts ?? []
+  const alerts = alertsQuery.data?.alerts ?? []
 
   const handleUpdate = (alertId, newStatus) => {
     updateAlertMutation.mutate({ alertId, body: { status: newStatus } })
@@ -205,12 +189,12 @@ export default function SystemAlertsPage() {
 
   return (
     <div className="space-y-6">
-
       {/* ── Header ── */}
       <div>
         <h1 className="text-2xl text-[#1C1C1C]">System Alerts</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
-          Track failed payments, operational gaps, and escalations. Acknowledge, snooze, or resolve from here.
+          Track failed payments, operational gaps, and escalations. Acknowledge, snooze, or resolve
+          from here.
         </p>
       </div>
 
@@ -296,10 +280,11 @@ export default function SystemAlertsPage() {
         <div className="rounded-2xl border border-[#E4DED8] bg-white p-10 text-center">
           <BellIcon />
           <p className="text-base font-semibold text-[#1C1C1C]">No alerts found</p>
-          <p className="mt-1 text-sm text-[#6B7280]">The alert feed is clear for the current filters.</p>
+          <p className="mt-1 text-sm text-[#6B7280]">
+            The alert feed is clear for the current filters.
+          </p>
         </div>
       )}
-
     </div>
   )
 }

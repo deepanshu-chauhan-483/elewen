@@ -41,6 +41,22 @@ function uniqueStrings(values = []) {
   return [...new Set(values.map(value => String(value ?? '').trim()).filter(Boolean))]
 }
 
+function isStrapiCredentialError(err) {
+  if (err?.status !== 401 && err?.status !== 403) return false
+
+  const message = String(err?.message ?? '').toLowerCase()
+  return (
+    !message ||
+    message.includes('forbidden') ||
+    message.includes('missing or invalid credentials') ||
+    message.includes('unauthorized')
+  )
+}
+
+function roundCurrency(value) {
+  return Number(toNumber(value).toFixed(2))
+}
+
 function buildInFilterQuery(ids = []) {
   return uniqueStrings(ids)
     .map((id, index) => `filters[id][$in][${index}]=${encodeURIComponent(id)}`)
@@ -159,10 +175,319 @@ async function fetchVendorsByIds(ids = []) {
     `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
   ].join('&')
 
-  const response = await strapiServerGet(`/api/vendors?${query}`)
-  return new Map(
-    (response?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)])
-  )
+  try {
+    const response = await strapiServerGet(`/api/vendors?${query}`)
+    return new Map(
+      (response?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)])
+    )
+  } catch {
+    const parsedIds = uniqueIds.map(value => Number.parseInt(value, 10)).filter(Number.isFinite)
+    if (!parsedIds.length) return new Map()
+
+    const rows = await prisma.$queryRaw`
+      SELECT
+        v.id,
+        v.document_id,
+        v.company_name,
+        v.contact_person,
+        v.email,
+        v.phone,
+        v.location_city,
+        v.service_area,
+        v.experience_years,
+        v.minimum_price,
+        v.registration_data
+      FROM public.vendors v
+      WHERE v.id IN (${Prisma.join(parsedIds)})
+    `
+
+    return new Map(
+      rows.map(vendor => [
+        String(vendor.id),
+        {
+          id: String(vendor.id),
+          documentId: vendor.document_id ?? '',
+          companyName: vendor.company_name ?? '',
+          contactPerson: vendor.contact_person ?? '',
+          email: vendor.email ?? '',
+          phone: vendor.phone ?? '',
+          locationCity: vendor.location_city ?? '',
+          serviceArea: vendor.service_area ?? '',
+          experienceYears: vendor.experience_years ?? null,
+          minimumPrice: roundCurrency(vendor.minimum_price),
+          serviceCategories: Array.isArray(vendor.registration_data?.service_category)
+            ? vendor.registration_data.service_category.map(name => ({
+                id: String(name),
+                name: String(name ?? ''),
+                slug: '',
+              }))
+            : [],
+        },
+      ])
+    )
+  }
+}
+
+async function fetchCouponsFromDatabase({ search = '', page = 1, limit = 12 } = {}) {
+  const trimmedSearch = normalizeText(search)
+  const offset = Math.max(page - 1, 0) * limit
+  const searchPattern = `%${trimmedSearch}%`
+
+  const coupons = await prisma.$queryRaw`
+    SELECT
+      c.id,
+      c.document_id,
+      c.code,
+      c.discount_type,
+      c.discount_value,
+      c.max_uses,
+      c.used_count,
+      c.valid_from,
+      c.valid_to,
+      c.is_active,
+      c.created_at
+    FROM public.coupons c
+    WHERE (
+      ${trimmedSearch} = ''
+      OR COALESCE(c.code, '') ILIKE ${searchPattern}
+    )
+    ORDER BY c.created_at DESC, c.id DESC
+    OFFSET ${offset}
+    LIMIT ${limit}
+  `
+
+  const [countRow] = await prisma.$queryRaw`
+    SELECT COUNT(*)::int AS total
+    FROM public.coupons c
+    WHERE (
+      ${trimmedSearch} = ''
+      OR COALESCE(c.code, '') ILIKE ${searchPattern}
+    )
+  `
+
+  return {
+    coupons: coupons.map(coupon => ({
+      id: String(coupon.id),
+      documentId: coupon.document_id ?? null,
+      code: coupon.code ?? '',
+      discount_type: coupon.discount_type ?? 'percentage',
+      discount_value: Number(coupon.discount_value ?? 0),
+      max_uses: coupon.max_uses ?? null,
+      used_count: coupon.used_count ?? 0,
+      valid_from: coupon.valid_from ?? null,
+      valid_to: coupon.valid_to ?? null,
+      is_active: Boolean(coupon.is_active),
+    })),
+    total: Number(countRow?.total ?? 0),
+    page,
+    pages: Math.max(1, Math.ceil(Number(countRow?.total ?? 0) / limit)),
+  }
+}
+
+async function fetchAdminSettingsFromDatabase() {
+  const [settings] = await prisma.$queryRaw`
+    SELECT
+      gs.id,
+      gs.document_id,
+      gs.primary_phone,
+      gs.support_email,
+      gs.support_availability_text,
+      gs.advance_payment_percentage,
+      gs.whatsapp_number,
+      gs.response_expectation_text,
+      gs.created_at,
+      gs.updated_at,
+      gs.published_at
+    FROM public.global_settings gs
+    ORDER BY gs.updated_at DESC NULLS LAST, gs.id DESC
+    LIMIT 1
+  `
+
+  if (!settings) return null
+
+  return {
+    id: String(settings.id),
+    documentId: settings.document_id ?? null,
+    primary_phone: settings.primary_phone ?? '',
+    support_email: settings.support_email ?? '',
+    support_availability_text: settings.support_availability_text ?? '',
+    advance_payment_percentage: settings.advance_payment_percentage ?? null,
+    whatsapp_number: settings.whatsapp_number ?? '',
+    response_expectation_text: settings.response_expectation_text ?? '',
+    createdAt: settings.created_at ?? null,
+    updatedAt: settings.updated_at ?? null,
+    publishedAt: settings.published_at ?? null,
+  }
+}
+
+function mapVendorDirectoryRow(vendor) {
+  const registrationServices = Array.isArray(vendor.registration_data?.service_category)
+    ? vendor.registration_data.service_category
+    : []
+
+  return {
+    id: String(vendor.id),
+    documentId: vendor.document_id ?? null,
+    companyName: vendor.company_name ?? '',
+    contactPerson: vendor.contact_person ?? '',
+    email: vendor.email ?? '',
+    phone: vendor.phone ?? '',
+    locationCity: vendor.location_city ?? '',
+    serviceArea: vendor.service_area ?? '',
+    experienceYears: vendor.experience_years ?? null,
+    minimumPrice: roundCurrency(vendor.minimum_price),
+    serviceCategories: registrationServices.map(name => ({
+      id: String(name),
+      name: String(name ?? ''),
+      slug: '',
+    })),
+    vendorStatus: vendor.vendor_status ?? 'pending',
+    isAvailable: Boolean(vendor.is_available),
+    teamSize: vendor.team_size ?? null,
+    leadTimeDays: vendor.lead_time_days ?? null,
+    registrationData: vendor.registration_data ?? null,
+    documentsCount: 0,
+    portfolioCount: 0,
+  }
+}
+
+async function fetchVendorDirectoryFromDatabase({
+  search = '',
+  status = '',
+  availability = '',
+  page = 1,
+  limit = 12,
+} = {}) {
+  const trimmedSearch = normalizeText(search)
+  const offset = Math.max(page - 1, 0) * limit
+  const searchPattern = `%${trimmedSearch}%`
+
+  const rows = await prisma.$queryRaw`
+    SELECT
+      v.id,
+      v.document_id,
+      v.company_name,
+      v.contact_person,
+      v.email,
+      v.phone,
+      v.location_city,
+      v.service_area,
+      v.experience_years,
+      v.team_size,
+      v.minimum_price,
+      v.lead_time_days,
+      v.vendor_status,
+      v.is_available,
+      v.registration_data,
+      v.created_at,
+      v.updated_at
+    FROM public.vendors v
+    WHERE
+      (${status} = '' OR lower(COALESCE(v.vendor_status, '')) = ${status})
+      AND (
+        ${availability} = ''
+        OR (${availability} = 'available' AND COALESCE(v.is_available, false) = true)
+        OR (${availability} = 'unavailable' AND COALESCE(v.is_available, false) = false)
+      )
+      AND (
+        ${trimmedSearch} = ''
+        OR COALESCE(v.company_name, '') ILIKE ${searchPattern}
+        OR COALESCE(v.contact_person, '') ILIKE ${searchPattern}
+        OR COALESCE(v.email, '') ILIKE ${searchPattern}
+        OR COALESCE(v.phone, '') ILIKE ${searchPattern}
+        OR COALESCE(v.location_city, '') ILIKE ${searchPattern}
+      )
+    ORDER BY v.created_at DESC, v.id DESC
+    OFFSET ${offset}
+    LIMIT ${limit}
+  `
+
+  const [countRow] = await prisma.$queryRaw`
+    SELECT COUNT(*)::int AS total
+    FROM public.vendors v
+    WHERE
+      (${status} = '' OR lower(COALESCE(v.vendor_status, '')) = ${status})
+      AND (
+        ${availability} = ''
+        OR (${availability} = 'available' AND COALESCE(v.is_available, false) = true)
+        OR (${availability} = 'unavailable' AND COALESCE(v.is_available, false) = false)
+      )
+      AND (
+        ${trimmedSearch} = ''
+        OR COALESCE(v.company_name, '') ILIKE ${searchPattern}
+        OR COALESCE(v.contact_person, '') ILIKE ${searchPattern}
+        OR COALESCE(v.email, '') ILIKE ${searchPattern}
+        OR COALESCE(v.phone, '') ILIKE ${searchPattern}
+        OR COALESCE(v.location_city, '') ILIKE ${searchPattern}
+      )
+  `
+
+  const vendorIds = rows.map(vendor => String(vendor.id))
+  const [assignments, payouts, bankInfo] = await Promise.all([
+    vendorIds.length
+      ? prisma.vendorAssignment.findMany({
+          where: { vendorId: { in: vendorIds } },
+        })
+      : [],
+    vendorIds.length
+      ? prisma.vendorPayout.findMany({
+          where: { vendorId: { in: vendorIds } },
+        })
+      : [],
+    vendorIds.length
+      ? prisma.vendorBankInfo.findMany({
+          where: { vendorId: { in: vendorIds } },
+        })
+      : [],
+  ])
+
+  const bankInfoMap = new Map(bankInfo.map(item => [String(item.vendorId), item]))
+  const assignmentsByVendor = assignments.reduce((map, assignment) => {
+    const key = String(assignment.vendorId)
+    const next = map.get(key) ?? []
+    next.push(assignment)
+    map.set(key, next)
+    return map
+  }, new Map())
+  const payoutsByVendor = payouts.reduce((map, payout) => {
+    const key = String(payout.vendorId)
+    const next = map.get(key) ?? []
+    next.push(payout)
+    map.set(key, next)
+    return map
+  }, new Map())
+
+  const vendors = rows.map(vendor => {
+    const vendorId = String(vendor.id)
+    const vendorAssignments = assignmentsByVendor.get(vendorId) ?? []
+    const vendorPayouts = payoutsByVendor.get(vendorId) ?? []
+
+    return {
+      ...mapVendorDirectoryRow(vendor),
+      activeAssignmentsCount: vendorAssignments.filter(assignment =>
+        ['assigned', 'confirmed'].includes(assignment.status)
+      ).length,
+      completedAssignmentsCount: vendorAssignments.filter(
+        assignment => assignment.status === 'completed'
+      ).length,
+      pendingPayoutAmount: Number(
+        vendorPayouts
+          .filter(payout => payout.status === 'pending')
+          .reduce((sum, payout) => sum + toNumber(payout.amount), 0)
+          .toFixed(2)
+      ),
+      bankInfo: bankInfoMap.get(vendorId) ?? null,
+    }
+  })
+
+  return {
+    vendors,
+    pagination: {
+      total: Number(countRow?.total ?? vendors.length),
+      page,
+      pageCount: Math.max(1, Math.ceil(Number(countRow?.total ?? vendors.length) / limit)),
+    },
+  }
 }
 
 async function enrichBookingsWithCustomer(bookings = []) {
@@ -342,8 +667,22 @@ async function fetchVendorDirectory({
     query.push('filters[is_available][$eq]=false')
   }
 
-  const response = await strapiServerGet(`/api/vendors?${query.join('&')}`)
-  const vendors = response?.data ?? []
+  let response
+  let vendors
+
+  try {
+    response = await strapiServerGet(`/api/vendors?${query.join('&')}`)
+    vendors = response?.data ?? []
+  } catch {
+    return fetchVendorDirectoryFromDatabase({
+      search,
+      status,
+      availability,
+      page,
+      limit,
+    })
+  }
+
   const vendorIds = vendors.map(vendor => String(vendor.id))
 
   const [assignments, payouts, bankInfo] = await Promise.all([
@@ -1064,13 +1403,13 @@ export async function getAdminVendorWorkspace(req, res, next) {
     })
 
     const pendingRequests = result.vendors
-      .filter(vendor => vendor.vendorStatus === 'pending')
-      .sort((left, right) => right.documentsCount - left.documentsCount)
-    const assignedVendors = result.vendors
       .filter(
         vendor =>
-          vendor.vendorStatus === 'approved' && Number(vendor.activeAssignmentsCount ?? 0) > 0
+          vendor.vendorStatus === 'pending' && Number(vendor.activeAssignmentsCount ?? 0) === 0
       )
+      .sort((left, right) => right.documentsCount - left.documentsCount)
+    const assignedVendors = result.vendors
+      .filter(vendor => Number(vendor.activeAssignmentsCount ?? 0) > 0)
       .sort(
         (left, right) =>
           Number(right.activeAssignmentsCount ?? 0) - Number(left.activeAssignmentsCount ?? 0)
@@ -1104,15 +1443,6 @@ export async function getAdminVendorWorkspace(req, res, next) {
 export async function updateAdminVendor(req, res, next) {
   try {
     const vendorId = req.params.id
-    const vendor = await strapiServerGet(
-      `/api/vendors?filters[id][$eq]=${encodeURIComponent(vendorId)}&publicationState=preview&pagination[pageSize]=1`
-    )
-    const currentVendor = vendor?.data?.[0] ?? null
-
-    if (!currentVendor?.documentId) {
-      return res.status(404).json({ error: 'Vendor not found' })
-    }
-
     const payload = {}
     const vendorStatus = normalizeText(req.body.vendor_status).toLowerCase()
 
@@ -1136,17 +1466,82 @@ export async function updateAdminVendor(req, res, next) {
       return res.status(400).json({ error: 'At least one vendor field must be provided' })
     }
 
-    const updated = await strapiServerPut(`/api/vendors/${currentVendor.documentId}`, {
-      data: payload,
-    })
+    try {
+      const vendor = await strapiServerGet(
+        `/api/vendors?filters[id][$eq]=${encodeURIComponent(vendorId)}&publicationState=preview&pagination[pageSize]=1`
+      )
+      const currentVendor = vendor?.data?.[0] ?? null
 
-    res.json({
-      vendor: {
-        ...mapVendorPreview(updated?.data ?? currentVendor),
-        vendorStatus: updated?.data?.vendor_status ?? currentVendor.vendor_status ?? 'pending',
-        isAvailable: Boolean(updated?.data?.is_available ?? currentVendor.is_available),
-      },
-    })
+      if (!currentVendor?.documentId) {
+        return res.status(404).json({ error: 'Vendor not found' })
+      }
+
+      const updated = await strapiServerPut(`/api/vendors/${currentVendor.documentId}`, {
+        data: payload,
+      })
+
+      return res.json({
+        vendor: {
+          ...mapVendorPreview(updated?.data ?? currentVendor),
+          vendorStatus: updated?.data?.vendor_status ?? currentVendor.vendor_status ?? 'pending',
+          isAvailable: Boolean(updated?.data?.is_available ?? currentVendor.is_available),
+        },
+      })
+    } catch (err) {
+      if (!isStrapiCredentialError(err)) {
+        throw err
+      }
+
+      const parsedVendorId = Number.parseInt(String(vendorId), 10)
+      if (!Number.isFinite(parsedVendorId)) {
+        return res.status(404).json({ error: 'Vendor not found' })
+      }
+
+      const [updatedRow] = await prisma.$queryRaw`
+        UPDATE public.vendors
+        SET
+          vendor_status = CASE
+            WHEN ${payload.vendor_status !== undefined} THEN ${payload.vendor_status}
+            ELSE vendor_status
+          END,
+          is_available = CASE
+            WHEN ${payload.is_available !== undefined} THEN ${payload.is_available}
+            ELSE is_available
+          END,
+          minimum_price = CASE
+            WHEN ${payload.minimum_price !== undefined} THEN ${payload.minimum_price}
+            ELSE minimum_price
+          END,
+          lead_time_days = CASE
+            WHEN ${payload.lead_time_days !== undefined} THEN ${payload.lead_time_days}
+            ELSE lead_time_days
+          END,
+          updated_at = NOW()
+        WHERE id = ${parsedVendorId}
+        RETURNING
+          id,
+          document_id,
+          company_name,
+          contact_person,
+          email,
+          phone,
+          location_city,
+          service_area,
+          experience_years,
+          team_size,
+          minimum_price,
+          lead_time_days,
+          vendor_status,
+          is_available,
+          registration_data
+      `
+
+      if (!updatedRow) {
+        return res.status(404).json({ error: 'Vendor not found' })
+      }
+
+      res.json({ vendor: mapVendorDirectoryRow(updatedRow) })
+    }
   } catch (err) {
     next(err)
   }
@@ -1256,14 +1651,20 @@ export async function listAdminMessageThreads(req, res, next) {
       )
     )
 
-    res.json({
-      threads: visibleThreads.map((thread, index) => ({
+    const mappedThreads = visibleThreads
+      .map((thread, index) => ({
         ...thread,
         bookingSummary: bookingMap.get(thread.bookingId) ?? null,
         latestMessage: thread.messages[0] ?? null,
         unreadCount: unreadCounts[index] ?? 0,
-      })),
-    })
+      }))
+      .sort((left, right) => {
+        const leftTime = new Date(left.latestMessage?.createdAt ?? left.createdAt).getTime()
+        const rightTime = new Date(right.latestMessage?.createdAt ?? right.createdAt).getTime()
+        return rightTime - leftTime
+      })
+
+    res.json({ threads: mappedThreads })
   } catch (err) {
     next(err)
   }
@@ -1357,6 +1758,10 @@ export async function sendAdminMessage(req, res, next) {
       return res.status(404).json({ error: 'Thread not found' })
     }
 
+    if (['completed', 'cancelled'].includes(String(thread.booking?.status ?? '').toLowerCase())) {
+      return res.status(400).json({ error: 'Completed or cancelled bookings are read-only' })
+    }
+
     const finalType = ['text', 'system', 'status_update'].includes(messageType)
       ? messageType
       : 'text'
@@ -1391,7 +1796,7 @@ export async function sendAdminMessage(req, res, next) {
       type: 'message',
       title: 'New admin message',
       message: messageText || 'You have received a new update from the Elewen team.',
-      linkUrl: `/dashboard/bookings/${thread.bookingId}`,
+      linkUrl: `/dashboard/messages?bookingId=${thread.bookingId}`,
     }).catch(() => {})
 
     res.status(201).json({ message })
@@ -1413,7 +1818,7 @@ export async function getAdminPaymentSummary(req, res, next) {
           },
         },
       }),
-      strapiServerGet('/api/global-setting?publicationState=preview'),
+      safeStrapiServerGet('/api/global-setting?publicationState=preview', { data: null }),
     ])
 
     const paymentSummary = buildPaymentSummaryFromPayments(payments)
@@ -1805,25 +2210,30 @@ export async function listAdminCoupons(req, res, next) {
       query.push(`filters[code][$containsi]=${encodeURIComponent(search)}`)
     }
 
-    const response = await strapiServerGet(`/api/coupons?${query.join('&')}`)
+    try {
+      const response = await strapiServerGet(`/api/coupons?${query.join('&')}`)
 
-    res.json({
-      coupons: (response?.data ?? []).map(coupon => ({
-        id: String(coupon.id),
-        documentId: coupon.documentId ?? null,
-        code: coupon.code ?? '',
-        discount_type: coupon.discount_type ?? 'percentage',
-        discount_value: Number(coupon.discount_value ?? 0),
-        max_uses: coupon.max_uses ?? null,
-        used_count: coupon.used_count ?? 0,
-        valid_from: coupon.valid_from ?? null,
-        valid_to: coupon.valid_to ?? null,
-        is_active: Boolean(coupon.is_active),
-      })),
-      total: response?.meta?.pagination?.total ?? 0,
-      page: response?.meta?.pagination?.page ?? page,
-      pages: response?.meta?.pagination?.pageCount ?? 1,
-    })
+      return res.json({
+        coupons: (response?.data ?? []).map(coupon => ({
+          id: String(coupon.id),
+          documentId: coupon.documentId ?? null,
+          code: coupon.code ?? '',
+          discount_type: coupon.discount_type ?? 'percentage',
+          discount_value: Number(coupon.discount_value ?? 0),
+          max_uses: coupon.max_uses ?? null,
+          used_count: coupon.used_count ?? 0,
+          valid_from: coupon.valid_from ?? null,
+          valid_to: coupon.valid_to ?? null,
+          is_active: Boolean(coupon.is_active),
+        })),
+        total: response?.meta?.pagination?.total ?? 0,
+        page: response?.meta?.pagination?.page ?? page,
+        pages: response?.meta?.pagination?.pageCount ?? 1,
+      })
+    } catch {
+      const result = await fetchCouponsFromDatabase({ search, page, limit })
+      return res.json(result)
+    }
   } catch (err) {
     next(err)
   }
@@ -1888,8 +2298,13 @@ export async function updateAdminCoupon(req, res, next) {
 
 export async function getAdminSettings(req, res, next) {
   try {
-    const settings = await strapiServerGet('/api/global-setting?publicationState=preview')
-    res.json({ settings: settings?.data ?? settings ?? null })
+    try {
+      const settings = await strapiServerGet('/api/global-setting?publicationState=preview')
+      return res.json({ settings: settings?.data ?? settings ?? null })
+    } catch {
+      const settings = await fetchAdminSettingsFromDatabase()
+      return res.json({ settings })
+    }
   } catch (err) {
     next(err)
   }
@@ -2071,6 +2486,10 @@ export async function addAdminSupportMessage(req, res, next) {
       return res.status(404).json({ error: 'Ticket not found' })
     }
 
+    if (ticket.status === 'closed') {
+      return res.status(400).json({ error: 'Closed tickets are read-only' })
+    }
+
     const supportMessage = await prisma.supportMessage.create({
       data: {
         ticketId,
@@ -2081,12 +2500,14 @@ export async function addAdminSupportMessage(req, res, next) {
       },
     })
 
-    if (!isInternalNote && ticket.status === 'open') {
+    if (!isInternalNote && ['open', 'resolved'].includes(ticket.status)) {
       await prisma.supportTicket.update({
         where: { id: ticketId },
         data: { status: 'in_progress' },
       })
+    }
 
+    if (!isInternalNote) {
       notify(ticket.userId, {
         type: 'support',
         title: 'Support team replied',

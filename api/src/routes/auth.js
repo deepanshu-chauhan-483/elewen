@@ -12,6 +12,14 @@ import {
   updateProfile,
 } from '../controllers/auth.js'
 import { requireAuth } from '../middleware/auth.js'
+import { validate } from '../middleware/validate.js'
+import {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  updateProfileSchema,
+} from '../schemas/auth.js'
 
 const router = Router()
 
@@ -44,7 +52,7 @@ const router = Router()
  *       409:
  *         description: Email already registered
  */
-router.post('/register', register)
+router.post('/register', validate(registerSchema), register)
 
 /**
  * @openapi
@@ -74,7 +82,7 @@ router.post('/register', register)
  *       403:
  *         description: Email not confirmed
  */
-router.post('/login', login)
+router.post('/login', validate(loginSchema), login)
 
 /**
  * @openapi
@@ -137,7 +145,7 @@ router.get('/me', requireAuth, me)
  *       200:
  *         description: Reset link sent (always succeeds — no email enumeration)
  */
-router.post('/forgot-password', forgotPassword)
+router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword)
 
 /**
  * @openapi
@@ -162,7 +170,7 @@ router.post('/forgot-password', forgotPassword)
  *       400:
  *         description: Reset link invalid or expired
  */
-router.post('/reset-password', resetPassword)
+router.post('/reset-password', validate(resetPasswordSchema), resetPassword)
 
 /**
  * @openapi
@@ -240,6 +248,6 @@ router.post('/google/session', googleSession)
  *                   $ref: '#/components/schemas/CustomerProfile'
  */
 router.get('/profile', requireAuth, getProfile)
-router.patch('/profile', requireAuth, updateProfile)
+router.patch('/profile', requireAuth, validate(updateProfileSchema), updateProfile)
 
 export default router

@@ -7,19 +7,6 @@ export const createContact = async (req, res, next) => {
   try {
     const { firstName, lastName, email, phone, message } = req.body
 
-    if (!firstName || !lastName || !email || !phone || !message) {
-      return res.status(400).json({
-        error: 'Required fields missing',
-        fields: {
-          ...(!firstName && { firstName: 'Required' }),
-          ...(!lastName && { lastName: 'Required' }),
-          ...(!email && { email: 'Required' }),
-          ...(!phone && { phone: 'Required' }),
-          ...(!message && { message: 'Required' }),
-        },
-      })
-    }
-
     const payload = {
       data: {
         lead_type: 'contact us',

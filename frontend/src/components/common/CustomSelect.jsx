@@ -16,6 +16,8 @@ export default function CustomSelect({
   placeholder = 'Select',
   buttonClassName = '',
   menuClassName = '',
+  listClassName = '',
+  listProps = {},
   optionClassName = '',
   selectedOptionClassName = '',
   arrowClassName = '',
@@ -134,7 +136,12 @@ export default function CustomSelect({
       {isOpen && !disabled && menuStyle
         ? createPortal(
             <div ref={menuRef} className={menuClassName} style={menuStyle}>
-              <ul role="listbox" aria-label={ariaLabel ?? placeholder}>
+              <ul
+                role="listbox"
+                aria-label={ariaLabel ?? placeholder}
+                className={listClassName}
+                {...listProps}
+              >
                 {normalizedOptions.map(option => {
                   const isSelected = option.value === value
 

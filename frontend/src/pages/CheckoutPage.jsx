@@ -954,7 +954,7 @@ export default function CheckoutPage() {
         <div className="flex-1 space-y-4">
           <div className="rounded-[20px] border border-[#95796066] bg-white p-6 md:p-8">
             <h2
-              className="text-[24px] font-semibold text-[#2C2C2C]"
+              className="text-[20px] font-semibold text-[#2C2C2C]"
               style={{ fontFamily: "'Poppins'" }}
             >
               {pageContent.detailsTitle}

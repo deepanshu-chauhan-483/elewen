@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
@@ -36,12 +36,14 @@ function QuantityControl({ quantity, onDecrement, onIncrement }) {
     </div>
   )
 }
-function AccordionSection({ title, body, isOpen = false, onToggle }) {
+function AccordionSection({ title, body, defaultOpen = false }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
   return (
     <div className="border-t border-[#36402280] py-4">
       <button
         type="button"
-        onClick={onToggle}
+        onClick={() => setIsOpen(open => !open)}
         className="flex w-full items-center justify-between gap-4 text-left outline-none focus:outline-none focus-visible:outline-none"
       >
         <span className="text-[16px] leading-none text-[#6B7152] font-semibold">{title}</span>
@@ -111,27 +113,6 @@ function PricingIcon() {
       <path
         d="M50.6046 35.0421C50.6046 31.7904 50.5606 28.5387 50.5167 25.243L50.4288 20.3655C50.3849 18.7396 50.3849 17.1577 50.2091 15.4C49.8576 12.0164 48.759 8.6329 46.6937 5.8206C45.6831 4.41445 44.3648 3.22802 42.8268 2.39312C41.2888 1.55821 39.5751 1.16274 37.9053 1.16274C37.4659 1.16274 37.2462 1.3385 37.2462 1.51427C37.2462 1.69004 37.4659 1.90975 37.8614 1.95369C39.3993 2.12946 40.8934 2.65677 42.1677 3.53561C43.3981 4.41445 44.4527 5.55695 45.2436 6.87521C46.8256 9.4678 47.5726 12.5877 47.7483 15.6636C47.8362 17.1577 47.7044 18.8275 47.7044 20.4533L47.6165 25.3309C47.5726 28.5826 47.5286 31.8344 47.5286 35.13V58.9906C47.5286 59.474 47.5726 59.9134 47.6604 60.3528L47.6165 60.3089C47.4847 60.221 47.3968 60.0892 47.221 59.9573C46.8695 59.6937 46.518 59.474 46.0785 59.43C45.1118 59.3421 44.233 60.3528 43.8375 60.6604C43.6178 60.8801 43.3541 61.0998 43.3102 61.0998C43.2223 61.1438 43.1344 61.1877 43.0465 61.1438C42.9586 61.0998 42.9147 61.0559 42.8708 60.968C42.8708 60.968 42.8708 60.924 42.8268 60.924C42.8268 60.924 42.7829 60.8801 42.7389 60.8362L42.4753 60.4846L42.1677 60.0892C42.1237 60.0013 42.0359 59.9573 41.948 59.8255C41.8601 59.6937 41.7283 59.6058 41.5964 59.5179C41.157 59.1224 40.6297 58.9027 40.0145 58.8588C39.7509 58.9027 39.4433 58.9027 39.1796 59.0345C39.0478 59.0785 38.916 59.1224 38.7841 59.2103C38.6523 59.2982 38.5205 59.3421 38.4326 59.474C38.3008 59.5618 38.2129 59.6497 38.0811 59.7816L37.8174 60.0452L37.4659 60.3967L37.1583 60.7043C37.1143 60.7483 37.0704 60.7922 37.0704 60.7922H37.0265C37.0265 60.7922 37.0704 60.8362 36.9825 60.7043L36.5431 60.221L36.2794 59.9134L36.0597 59.6937C35.9718 59.6058 35.884 59.5179 35.7961 59.474C35.4885 59.2103 35.1369 59.0345 34.7854 58.9027C34.4339 58.8148 34.0384 58.7269 33.6429 58.8148C33.2474 58.8588 32.8959 59.0345 32.5883 59.2542C32.4125 59.3861 32.2807 59.5179 32.1049 59.6058C32.017 59.6497 31.9731 59.7376 31.8852 59.8255L31.7534 59.9573L31.0064 60.7483L30.8746 60.6165L30.3472 60.0452C30.2594 59.9134 30.1715 59.8694 29.9957 59.6937C29.8199 59.5179 29.6002 59.3421 29.4245 59.2103C28.6335 58.6391 27.5349 58.5072 26.7 59.0785C26.4803 59.2103 26.2606 59.3421 26.0849 59.474C25.953 59.5618 25.8212 59.6497 25.7333 59.7376C25.6454 59.8255 25.5576 59.8694 25.4697 59.9573C26.1288 51.6523 26.4364 43.3472 26.4364 34.9982V18.4759C26.4364 18.1244 26.3925 17.8168 26.3046 17.5532C26.1727 15.4439 25.953 13.3347 25.4697 11.1815C25.1621 9.81934 24.7227 8.45713 24.0635 7.13887C23.4483 5.8206 22.5695 4.59022 21.4709 3.57955C21.2512 3.35984 20.9876 3.18407 20.7679 3.00831C21.8225 2.96436 22.8331 2.92042 23.8877 2.87648C28.238 2.70071 32.5883 2.39312 36.9386 1.99764C37.2022 1.95369 37.378 1.77793 37.378 1.60216C37.378 1.42639 37.2462 1.25062 36.9386 1.20668C32.5883 0.811198 28.238 0.547545 23.8877 0.327835L17.3843 0.0641817C15.1872 -0.0237026 12.8583 -0.111587 10.4854 0.459661C9.03531 0.811198 7.58521 1.42639 6.31089 2.30523C5.08051 3.18407 4.0259 4.23868 3.14706 5.46906C1.38937 7.88588 0.378702 10.6982 0.0271644 13.5544C-0.148604 14.9166 0.554471 16.0591 1.38937 16.0591C1.5212 16.191 1.69697 16.2788 1.87273 16.1909C2.48792 15.7515 3.05917 15.3121 3.67436 14.9606L3.76225 14.9166L3.71831 14.7848L3.85013 14.7409C3.93802 14.6969 4.0259 14.6969 4.11378 14.6969C4.28955 14.6969 4.42138 14.8727 4.50926 15.0045C4.55321 15.0485 4.55321 15.0924 4.55321 15.0924C4.55321 15.1363 4.64109 15.2242 4.68503 15.2682L4.99263 15.7076C5.1684 15.9273 5.60782 16.5425 6.13512 16.8501C6.61849 17.2016 7.27762 17.2456 7.84887 17.0698C8.15646 16.9819 8.42012 16.8061 8.63983 16.5864C8.90348 16.4107 9.16713 16.1031 9.25502 16.0152L9.65049 15.6197L9.82626 15.4439C9.87021 15.4 9.87021 15.4 9.87021 15.4C9.91415 15.4 9.95809 15.356 10.002 15.4C10.046 15.4 10.046 15.4439 10.0899 15.4879L10.2217 15.6636L10.5733 16.1031L10.793 16.3667C10.9248 16.4985 11.0566 16.6304 11.1885 16.7622C11.4521 16.9819 11.7597 17.2016 12.0673 17.3334C12.1991 17.4213 12.3749 17.4653 12.5507 17.4653C12.7264 17.5092 12.9022 17.5532 13.034 17.5092C13.3856 17.4653 13.6932 17.4213 14.0008 17.2456C14.3084 17.0698 14.616 16.894 14.8796 16.6304L15.0554 16.4546C15.1433 16.4107 15.1872 16.3228 15.2311 16.2788L15.4509 16.0591C15.7145 15.7955 16.0221 15.4439 15.9342 15.5318L16.11 15.7515L16.5934 16.2788C16.6373 16.3228 16.7252 16.4107 16.8131 16.4985L17.0328 16.7183C17.2085 16.8501 17.3843 17.0259 17.5601 17.1137C17.9116 17.3774 18.3071 17.4653 18.7465 17.5092C19.142 17.5092 19.5814 17.4213 19.9769 17.2456C20.3284 17.0259 20.68 16.7622 20.9876 16.4546C21.1633 16.2788 21.2073 16.2349 21.2952 16.1031L21.5149 15.8394L21.7346 15.6197C21.7785 15.5758 21.9104 15.4439 21.8664 15.4879L22.1301 15.7076L22.5695 16.1031C22.7013 16.2349 22.8331 16.3228 23.0089 16.3667C23.1407 17.9047 23.1847 19.4866 23.2286 21.0685C23.2286 21.1125 23.2286 21.1125 23.2286 21.1564V34.9103C23.2286 43.9184 23.6241 52.9705 24.3711 61.9347C24.4151 62.2423 24.5908 62.3741 24.7666 62.3741C25.25 63.0772 26.3925 63.0333 26.9637 62.506C27.1395 62.3302 27.3152 62.1984 27.491 62.0665C27.5789 61.9787 27.6668 61.9347 27.7547 61.8908C27.7986 61.8908 27.8865 62.0226 27.9304 62.1105L28.4577 62.6817L28.5896 62.8575C28.6335 62.9014 28.7653 63.0333 28.8532 63.1212C29.029 63.253 29.2487 63.4727 29.4245 63.5606C29.6442 63.6924 29.8639 63.7803 30.0836 63.8682C30.3033 63.9121 30.567 63.9561 30.7867 64C31.1821 63.9561 31.5337 63.9121 31.8852 63.7363C32.2368 63.5606 32.5444 63.2969 32.8519 63.0333C33.0277 62.8575 33.0717 62.8136 33.1595 62.7257L33.3793 62.506L33.7747 62.0665L33.8187 62.0226C33.8187 62.0226 33.8187 62.0226 33.8626 62.0665L34.0823 62.2863L34.6096 62.8136C34.6536 62.8575 34.8733 63.1212 35.0491 63.253C35.2248 63.3848 35.4006 63.5606 35.6203 63.6485C36.0158 63.9121 36.4552 64 36.8946 64C37.2022 63.9561 37.5098 63.9121 37.7735 63.8242C37.9053 63.7803 38.0371 63.6924 38.1689 63.6045C38.3008 63.5166 38.4326 63.4288 38.5644 63.3409C38.6963 63.253 38.7841 63.1651 38.916 63.0333C39.0478 62.9014 39.0917 62.8136 39.1796 62.7696L39.5312 62.3741L39.8387 62.0226C39.8827 61.9787 39.9266 61.9347 39.9266 61.9347C39.9266 61.8908 39.9706 61.8908 39.9706 61.8468C40.0145 61.8468 40.0585 61.8468 40.1024 61.8468H40.1463C40.1463 61.8468 40.1903 61.8908 40.2342 61.9347L40.5418 62.2423L40.8934 62.5939L41.157 62.8136C41.2449 62.9014 41.3767 62.9893 41.5085 63.0772C41.948 63.4287 42.4753 63.6045 43.0026 63.6045C44.0572 63.5606 44.98 62.3741 45.2436 62.0226C45.4194 61.759 45.6831 61.4953 45.6831 61.4074C45.7709 61.2756 45.8588 61.1438 46.0346 61.1438C46.1664 61.1438 46.2982 61.1877 46.474 61.2316C46.518 61.2316 46.6498 61.3195 46.7816 61.4074L47.1331 61.6271L48.5832 62.5939C48.759 62.7257 48.9348 62.6378 49.0666 62.462C49.9015 62.462 50.6046 60.924 50.6046 59.0345V35.0421ZM20.9436 12.4559C20.7239 12.5438 20.5481 12.6756 20.3724 12.7635C20.1966 12.8953 20.0208 13.0271 19.889 13.2029C19.6693 13.4226 19.6693 13.4226 19.5375 13.5544L19.3178 13.8181L18.9662 14.2136L18.5268 13.6862L18.2192 13.4226C18.0434 13.2908 17.9116 13.115 17.7358 12.9832C17.3843 12.6756 17.0328 12.4559 16.6373 12.368C16.4176 12.324 16.2418 12.2801 16.0221 12.2801C15.8024 12.2801 15.6266 12.324 15.4069 12.368C15.0114 12.4559 14.616 12.6756 14.3084 12.9832C14.0447 13.2029 13.7371 13.5544 13.6492 13.6423L13.2977 14.0817L13.1219 14.2575C13.078 14.3014 13.078 14.3014 13.078 14.3014C13.078 14.3014 13.078 14.3014 13.078 14.3454L12.9462 14.2136L12.5067 13.7302L12.2431 13.4665L11.8476 13.115C11.3203 12.6316 10.7051 12.368 10.046 12.4119C9.73838 12.4559 9.38684 12.5438 9.12319 12.6756C8.81559 12.8513 8.55194 13.0271 8.33223 13.2908C8.24435 13.4226 8.06858 13.5544 7.98069 13.6423L7.80492 13.862L7.45339 14.3014C7.32156 14.4772 7.32156 14.4772 7.32156 14.5211C7.32156 14.5651 7.27762 14.609 7.23368 14.653C7.18973 14.7409 7.05791 14.7409 6.97002 14.6969C6.8382 14.653 6.8382 14.653 6.5306 14.3454L6.13512 13.9499L5.87147 13.7302C5.73964 13.6423 5.65176 13.5544 5.51993 13.4665C5.08051 13.115 4.55321 12.8953 3.98196 13.0271C3.63042 13.115 3.27888 13.3347 2.97129 13.5984C3.32283 11.3134 4.15773 9.07232 5.47599 7.27069C6.17907 6.30397 7.01397 5.46906 7.93675 4.80993C8.85954 4.1508 9.8702 3.71138 11.0127 3.44773C12.7704 3.05225 14.7038 3.00831 16.6812 3.00831C17.7798 3.57955 18.7465 4.32657 19.4935 5.24935C20.9436 7.05098 21.7346 9.37992 22.3058 11.7967C22.3498 11.9725 22.3937 12.1922 22.4377 12.4119C21.9982 12.1922 21.427 12.2362 20.9436 12.4559Z"
         fill="black"
-      />
-    </svg>
-  )
-}
-
-function RelatedProductsArrow({ direction = 'right' }) {
-  const rotationClass = direction === 'left' ? 'rotate-180' : ''
-
-  return (
-    <svg
-      className={`h-[20px] w-[20px] ${rotationClass}`}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M5 12H19M12 19L19 12L12 5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
       />
     </svg>
   )
@@ -212,14 +193,12 @@ export default function SingleProductPageContent({
   ctaButtonText = 'Book a Consultation',
   testimonials = [],
 }) {
-  const imageGalleryKey = [mainImage ?? '', ...sideImages].join('|')
   const desktopSectionTop = '58px'
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
 
   return (
     <ProductImageLayout
-      key={`${imageGalleryKey}|accordion:${accordionSections.map(section => section.title ?? '').join('|')}`}
       title={title}
       price={price}
       intro={intro}
@@ -267,43 +246,19 @@ function ProductImageLayout({
   desktopSectionTop,
 }) {
   const initialDisplayImage = mainImage ?? sideImages[0]
-  const [selectedImage, setSelectedImage] = useState(() => mainImage ?? sideImages[0] ?? null)
-  const [openAccordionIndex, setOpenAccordionIndex] = useState(
-    accordionSections.length > 0 ? 0 : -1
-  )
-  const [relatedPageIndex, setRelatedPageIndex] = useState(0)
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return window.innerWidth >= 768
+  const [selectedImage, setSelectedImage] = useState({
+    image: null,
+    baseMainImage: mainImage ?? null,
   })
   const activeImage =
-    selectedImage && [mainImage, ...sideImages].includes(selectedImage)
-      ? selectedImage
+    selectedImage.baseMainImage === (mainImage ?? null) &&
+    selectedImage.image &&
+    [mainImage, ...sideImages].includes(selectedImage.image)
+      ? selectedImage.image
       : initialDisplayImage
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
-  const desktopMediaHeight = 'clamp(32rem, calc(100vh - 8rem), 58.375rem)'
-  const relatedProductsPerPage = isDesktopViewport ? 3 : 1
-  const relatedTotalPages = Math.max(1, Math.ceil(relatedProducts.length / relatedProductsPerPage))
-  const safeRelatedPageIndex = Math.min(relatedPageIndex, relatedTotalPages - 1)
-  const visibleRelatedProducts = relatedProducts.slice(
-    safeRelatedPageIndex * relatedProductsPerPage,
-    safeRelatedPageIndex * relatedProductsPerPage + relatedProductsPerPage
-  )
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-
-    const mediaQuery = window.matchMedia('(min-width: 768px)')
-    const handleViewportChange = event => {
-      setIsDesktopViewport(event.matches)
-    }
-
-    mediaQuery.addEventListener('change', handleViewportChange)
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleViewportChange)
-    }
-  }, [])
+  const mainImageHeight = 'clamp(26.25rem, calc(100vh - 8.25rem), 58.375rem)'
+  const sideImagesMaxHeight = 'calc((clamp(5.125rem, 6.5vw, 6.4375rem) * 5) + 2rem)'
 
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
@@ -320,20 +275,12 @@ function ProductImageLayout({
         >
           <div
             className="top-15 md:sticky md:self-start md:shrink-0"
-            style={{
-              top: desktopSectionTop,
-              maxHeight: isDesktopViewport ? desktopMediaHeight : undefined,
-            }}
+            style={{ top: desktopSectionTop }}
           >
-            <div
-              className="flex flex-col gap-4 md:flex-row md:items-start"
-              style={{
-                height: isDesktopViewport ? desktopMediaHeight : undefined,
-              }}
-            >
+            <div className="flex flex-col gap-4 md:flex-row md:items-start">
               {/* Main Image */}
               <div
-                className="order-1 pt-8 md:pt-0 mx-auto w-full shrink-0 md:order-2 md:h-full"
+                className="order-1 pt-8 md:pt-0 mx-auto w-full shrink-0 md:order-2"
                 style={{
                   maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
                 }}
@@ -344,7 +291,7 @@ function ProductImageLayout({
                     alt={title}
                     className="w-full border-l-2 border-r-2 border-b-2 border-[#727355] object-cover"
                     style={{
-                      height: isDesktopViewport ? '100%' : 'clamp(26.25rem, 70vw, 58.375rem)',
+                      height: mainImageHeight,
                     }}
                   />
                   {activeImageMeta?.heading || activeImageMeta?.text ? (
@@ -361,17 +308,22 @@ function ProductImageLayout({
 
               {/* Side Images */}
               <div
-                className="side-images-scroll order-2 flex w-full flex-row items-center justify-start gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] md:order-1 md:h-full md:w-auto md:flex-col md:items-end md:justify-start md:space-y-2 md:gap-0 md:overflow-y-auto md:overflow-x-hidden md:px-0 md:pb-0 md:pt-2"
+                className="order-2 flex touch-pan-x flex-row items-center justify-center gap-2 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:order-1 md:max-h-[unset] md:flex-col md:items-end md:justify-start md:space-y-2 md:gap-0 md:overflow-x-visible md:overflow-y-auto md:px-0 md:pb-0 md:pt-2"
                 style={{
-                  msOverflowStyle: 'none',
-                  scrollBehavior: 'smooth',
+                  maxHeight: sideImagesMaxHeight,
                 }}
+                data-lenis-prevent
               >
                 {sideImages.map((image, index) => (
                   <button
                     type="button"
                     key={`${image}-${index}`}
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() =>
+                      setSelectedImage({
+                        image,
+                        baseMainImage: mainImage ?? null,
+                      })
+                    }
                     className={`shrink-0 overflow-hidden rounded-[12px] transition-opacity ${
                       activeImage === image ? 'opacity-100' : 'opacity-40'
                     }`}
@@ -393,19 +345,12 @@ function ProductImageLayout({
           </div>
 
           <div
-            className="mx-auto w-full min-w-0 flex-1 pl-0 md:ml-6 lg:mx-0 lg:ml-10"
+            className="mx-auto w-full min-w-0 flex-1 lg:mx-0"
             style={{
               maxWidth: 'clamp(20rem, 45vw, 40.75rem)',
               paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
             }}
           >
-            <style>
-              {`
-                .side-images-scroll::-webkit-scrollbar {
-                  display: none;
-                }
-              `}
-            </style>
             <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
               <h1
                 className=" text-[28px] leading-[0.95] text-[#591902] sm:text-[36px] md:text-[36px]"
@@ -472,10 +417,7 @@ function ProductImageLayout({
                   key={section.title}
                   title={section.title}
                   body={section.body}
-                  isOpen={openAccordionIndex === index}
-                  onToggle={() =>
-                    setOpenAccordionIndex(current => (current === index ? -1 : index))
-                  }
+                  defaultOpen={index === 0}
                 />
               ))}
             </div>
@@ -487,50 +429,16 @@ function ProductImageLayout({
         <div className="mx-auto md:w-full max-w-[1540px]">
           {relatedProducts.length > 0 ? (
             <div className="mt-4 lg:mt-8 px-[20px] sm:px-[50px] lg:px-[100px]">
-              <div className="flex items-center justify-between gap-4">
-                <p
-                  className="text-[22px] md:text-[32px] font-semibold text-[#2D2D2D]"
-                  style={{ fontFamily: "'Malgin', serif" }}
-                >
-                  You might also like:
-                </p>
-              </div>
-
-              <div className="mt-4 hidden grid-cols-1 gap-4 sm:grid-cols-2 md:grid md:grid-cols-3">
+              <p
+                className="text-[22px] md:text-[32px] font-semibold text-[#2D2D2D]"
+                style={{ fontFamily: "'Malgin', serif" }}
+              >
+                You might also like:
+              </p>
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {relatedProducts.map(product => (
                   <PackageCard key={product.id ?? product.title} pkg={product} />
                 ))}
-              </div>
-
-              <div className="relative mt-4 flex items-center md:hidden">
-                <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[calc(100%+40px)] -translate-x-1/2">
-                  <button
-                    type="button"
-                    onClick={() => setRelatedPageIndex(current => Math.max(0, current - 1))}
-                    disabled={safeRelatedPageIndex === 0}
-                    className="pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[72px] w-[36px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
-                    aria-label="Previous related product"
-                  >
-                    <RelatedProductsArrow direction="left" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setRelatedPageIndex(current => Math.min(relatedTotalPages - 1, current + 1))
-                    }
-                    disabled={safeRelatedPageIndex >= relatedTotalPages - 1}
-                    className="pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[72px] w-[36px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45"
-                    aria-label="Next related product"
-                  >
-                    <RelatedProductsArrow direction="right" />
-                  </button>
-                </div>
-
-                <div className="mx-auto w-full max-w-[250px]">
-                  {visibleRelatedProducts.map(product => (
-                    <PackageCard key={product.id ?? product.title} pkg={product} />
-                  ))}
-                </div>
               </div>
             </div>
           ) : null}

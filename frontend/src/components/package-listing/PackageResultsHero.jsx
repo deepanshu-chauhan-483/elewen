@@ -5,6 +5,7 @@ import {
   useBudgetLevelOptions,
   useDecorThemeOptions,
   useEventCategoryOptions,
+  useEventsByCategory,
   useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
 import { normalizeServiceSlug } from '../../lib/packageFilters'
@@ -29,6 +30,8 @@ function FilterPill({
         buttonClassName="flex h-[38px] min-w-0 w-full items-center rounded-full bg-[#F7F0E6] pl-4 pr-9 text-left text-[14px] leading-[18px] text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
         arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 shrink-0 -translate-y-1/2 text-[#7A2B08]"
         menuClassName="fixed overflow-hidden rounded-[16px] border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+        listClassName="hide-scrollbar max-h-[210px] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        listProps={{ 'data-lenis-prevent': true }}
         optionClassName="flex w-full min-w-0 whitespace-nowrap items-center bg-[#F7F0E6] px-6 py-3 text-left text-[14px] leading-[18px] text-[#7A2B08] transition-colors hover:bg-black hover:text-white"
         selectedOptionClassName=""
       />
@@ -45,7 +48,7 @@ const titleizeSlug = value =>
 
 const DEFAULT_WIDTHS = {
   category: 'sm:w-fit',
-  service: 'sm:w-fit',
+  event: 'sm:w-fit',
   theme: 'sm:w-fit',
   level: 'sm:w-fit',
 }
@@ -78,6 +81,7 @@ export default function PackageResultsHero({
 
   const { data: allCategories = [] } = useEventCategoryOptions()
   const { data: allServices = [] } = useFilteredServiceOptions(SERVICE_ORDER)
+  const { data: allEvents = [] } = useEventsByCategory(categorySlug)
 
   const categories = useMemo(
     () =>
@@ -91,6 +95,16 @@ export default function PackageResultsHero({
     () =>
       SERVICE_ORDER.map(slug => allServices.find(service => service.slug === slug)).filter(Boolean),
     [allServices]
+  )
+
+  const events = useMemo(
+    () =>
+      (Array.isArray(allEvents) ? allEvents : []).map(event => ({
+        value: event.slug,
+        label: event.title ?? titleizeSlug(event.slug),
+        id: event.id != null ? String(event.id) : '',
+      })),
+    [allEvents]
   )
 
   const selectedService = useMemo(
@@ -141,6 +155,10 @@ export default function PackageResultsHero({
           nextParams.delete('eventId')
         }
 
+        if (key === 'event') {
+          nextParams.delete('eventId')
+        }
+
         if (key === 'service') {
           nextParams.delete('serviceId')
           nextParams.delete('theme')
@@ -154,6 +172,17 @@ export default function PackageResultsHero({
         nextParams.set('category', value)
         nextParams.delete('event')
         nextParams.delete('eventId')
+
+        setSearchParams(nextParams)
+        return
+      }
+
+      if (key === 'event') {
+        const matchedEvent = events.find(event => event.value === value) ?? null
+
+        nextParams.set('event', value)
+        if (matchedEvent?.id) nextParams.set('eventId', matchedEvent.id)
+        else nextParams.delete('eventId')
 
         setSearchParams(nextParams)
         return
@@ -182,7 +211,17 @@ export default function PackageResultsHero({
       nextParams.set(key, value)
       setSearchParams(nextParams)
     },
-    [categorySlug, eventId, eventSlug, flow, navigate, searchParams, services, setSearchParams]
+    [
+      categorySlug,
+      eventId,
+      eventSlug,
+      events,
+      flow,
+      navigate,
+      searchParams,
+      services,
+      setSearchParams,
+    ]
   )
 
   const autoFilters = useMemo(() => {
@@ -195,14 +234,11 @@ export default function PackageResultsHero({
         onChange: event => handleFilterChange('category', event.target.value),
       },
       {
-        label: 'Services',
-        value: serviceSlug,
-        widthClass: DEFAULT_WIDTHS.service,
-        options: services.map(service => ({
-          value: normalizeServiceSlug(service.slug),
-          label: service.name === 'Rental Furniture' ? 'Furniture' : service.name,
-        })),
-        onChange: event => handleFilterChange('service', event.target.value),
+        label: 'Event',
+        value: eventSlug,
+        widthClass: DEFAULT_WIDTHS.event,
+        options: events.map(({ value, label }) => ({ value, label })),
+        onChange: event => handleFilterChange('event', event.target.value),
       },
       {
         label: 'Level',
@@ -226,10 +262,10 @@ export default function PackageResultsHero({
     categories,
     handleFilterChange,
     isDecorService,
+    eventSlug,
+    events,
     levelSlug,
     levels,
-    serviceSlug,
-    services,
     themeSlug,
     themes,
   ])

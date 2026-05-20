@@ -1,46 +1,17 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  PageIntro,
-  SelectField,
-} from '../components/ui/AdminUI'
+import { useState } from 'react'
+import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
 import { useAdminOverview } from '../hooks/useAdminData'
+import { getAdminBadgeMeta } from '../lib/adminBadges'
 import { formatCount, formatCurrency, formatDate } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
 // StatusBadge
 // ---------------------------------------------------------------------------
-const badgeClasses = {
-  urgent: 'bg-[#FFF1F0] text-[#591902]',
-  overdue: 'bg-[#FFF4E5] text-[#C07318]',
-  pending: 'bg-[#EEF4FF] text-[#3061C6]',
-  confirmed: 'bg-[#EAF8F1] text-[#238E64]',
-
-  new: 'bg-[#EEF4FF] text-[#3061C6]',
-
-  high: 'bg-[#FFF1F0] text-[#591902]',
-  medium: 'bg-[#FFF4E5] text-[#C07318]',
-  low: 'bg-[#F3F4F6] text-[#6B7280]',
-
-  open: 'bg-[#F3F4F6] text-[#6B7280]',
-
-  healthy: 'bg-[#EAF8F1] text-[#238E64]',
-  warning: 'bg-[#FFF4E5] text-[#C07318]',
-  error: 'bg-[#FFF1F0] text-[#591902]',
-  in_progress: 'bg-[#FFF4E5] text-[#C07318]',
-  success: 'text-[#238E64] bg-[#EAF8F1]',
-  resolved: 'text-[#238E64] bg-[#EAF8F1]',
-}
-
-const getStatusKey = status => status?.toLowerCase()?.replace(/[\s-]+/g, '_') ?? ''
 const getStatusBadgeClasses = status => {
-  const key = getStatusKey(status)
+  const { key, className } = getAdminBadgeMeta(status, { preset: 'soft' })
   return {
     key,
-    cls: badgeClasses[key] ?? 'bg-[#FFF4E5] text-[#C07318]',
+    cls: className,
   }
 }
 
@@ -48,7 +19,7 @@ const getTextColorHex = cls => cls.match(/text-\[(#[0-9A-Fa-f]{3,8})\]/)?.[1] ??
 
 function StatusBadge({ status, label }) {
   const { key, cls } = getStatusBadgeClasses(status)
-  const text = label ?? (key.charAt(0).toUpperCase() + key.slice(1)) ?? '—'
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] tracking-wide whitespace-nowrap ${cls}`}
@@ -106,9 +77,7 @@ function Panel({ title, subtitle, children, action }) {
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base text-[#1C1C1C]">{title}</h2>
-          {subtitle && (
-            <p className="mt-1 text-[13px] text-gray-400">{subtitle}</p>
-          )}
+          {subtitle && <p className="mt-1 text-[13px] text-gray-400">{subtitle}</p>}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>
@@ -174,7 +143,9 @@ const revenueValueVariants = {
 function RevenueCard({ label, value, variant = 'default' }) {
   return (
     <div className={`rounded-xl border-l-[3px] p-4 ${revenueVariants[variant]}`}>
-      <p className={`text-[11px] font-normal uppercase tracking-widest ${revenueLabelVariants[variant]}`}>
+      <p
+        className={`text-[11px] font-normal uppercase tracking-widest ${revenueLabelVariants[variant]}`}
+      >
         {label}
       </p>
       <p className={`mt-2 text-[22px] font-semibold leading-none ${revenueValueVariants[variant]}`}>
@@ -235,8 +206,13 @@ function TableFilter({ active, onChange }) {
 // Main page
 // ---------------------------------------------------------------------------
 const TABLE_COLS = [
-  'Event Date', 'Event Type', 'Location',
-  'Customer', 'Service', 'Vendor', 'Status',
+  'Event Date',
+  'Event Type',
+  'Location',
+  'Customer',
+  'Service',
+  'Vendor',
+  'Status',
 ]
 const TABLE_PAGE_SIZE = 10
 
@@ -250,28 +226,17 @@ export default function OverviewPage() {
   const healthIndicators = overview.systemHealth ?? []
   const overdueAlerts = overview.overdueAlerts?.length
     ? overview.overdueAlerts
-    : overview.alerts ?? []
+    : (overview.alerts ?? [])
   const upcomingBookings = overview.upcomingBookings ?? []
 
   const filteredBookings =
-    tab === 'all'
-      ? upcomingBookings
-      : upcomingBookings.filter(b => b.status === tab)
+    tab === 'all' ? upcomingBookings : upcomingBookings.filter(b => b.status === tab)
   const totalPages = Math.max(1, Math.ceil(filteredBookings.length / TABLE_PAGE_SIZE))
+  const visiblePage = Math.min(currentPage, totalPages)
   const paginatedBookings = filteredBookings.slice(
-    (currentPage - 1) * TABLE_PAGE_SIZE,
-    currentPage * TABLE_PAGE_SIZE
+    (visiblePage - 1) * TABLE_PAGE_SIZE,
+    visiblePage * TABLE_PAGE_SIZE
   )
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [tab])
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
 
   if (overviewQuery.isLoading) {
     return <LoadingState label="Loading operational overview..." />
@@ -283,13 +248,10 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
-
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl tracking-tight text-[#1C1C1C]">
-            Overview
-          </h1>
+          <h1 className="text-2xl tracking-tight text-[#1C1C1C]">Overview</h1>
           <p className="mt-1 text-sm text-gray-400">
             Admin snapshot ·{' '}
             {new Date().toLocaleDateString('en-IN', {
@@ -374,10 +336,7 @@ export default function OverviewPage() {
               ))}
             </div>
           ) : (
-            <EmptyState
-              title="No pending actions"
-              body="No outstanding action items right now."
-            />
+            <EmptyState title="No pending actions" body="No outstanding action items right now." />
           )}
         </Panel>
 
@@ -401,7 +360,15 @@ export default function OverviewPage() {
       <Panel
         title="Upcoming Events"
         subtitle="Next 15 days"
-        action={<TableFilter active={tab} onChange={setTab} />}
+        action={
+          <TableFilter
+            active={tab}
+            onChange={value => {
+              setTab(value)
+              setCurrentPage(1)
+            }}
+          />
+        }
       >
         {filteredBookings.length ? (
           <div>
@@ -462,7 +429,7 @@ export default function OverviewPage() {
                 <ArrowIcon direction="left" />
               </button>
               <div className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#6B7280]">
-                {currentPage} / {totalPages}
+                {visiblePage} / {totalPages}
               </div>
               <button
                 type="button"
@@ -521,7 +488,6 @@ export default function OverviewPage() {
           )}
         </Panel>
       </div>
-
     </div>
   )
 }

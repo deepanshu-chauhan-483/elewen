@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   cartAddItem,
   cartApplyCoupon,
@@ -265,6 +265,22 @@ async function migrateGuestCartToServer(token) {
 
   clearGuestCartStorage()
   return guestCart
+}
+
+function debounce(fn, ms) {
+  let timer
+  return function (...args) {
+    clearTimeout(timer)
+    return new Promise((resolve, reject) => {
+      timer = setTimeout(async () => {
+        try {
+          resolve(await fn.apply(this, args))
+        } catch (err) {
+          reject(err)
+        }
+      }, ms)
+    })
+  }
 }
 
 export function dispatchCartChange(cart) {
@@ -719,7 +735,7 @@ export function useCart() {
   // ─── FIXED: no 401s ───────────────────────────────────────────────────────
   // Logged-in  → Express API  (unchanged, was always correct)
   // Guest      → Strapi public GET /api/coupons, apply discount locally
-  const applyCoupon = async code => {
+  const applyCoupon = useCallback(async code => {
     const token = await getServerToken() // never throws; '' if not logged in
 
     if (token) {
@@ -756,7 +772,9 @@ export function useCart() {
     setError('')
     dispatchCartChange(nextCart)
     return { cart: nextCart }
-  }
+  }, [])
+
+  const debouncedApplyCoupon = useRef(debounce(applyCoupon, 500)).current
 
   // ─── FIXED: no 401s ───────────────────────────────────────────────────────
   const clearCoupon = async () => {
@@ -805,6 +823,7 @@ export function useCart() {
     removeItem,
     updateCartDetails,
     applyCoupon,
+    debouncedApplyCoupon,
     clearCoupon,
   }
 }

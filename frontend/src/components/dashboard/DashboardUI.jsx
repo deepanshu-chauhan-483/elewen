@@ -1,4 +1,4 @@
-import { Children } from 'react'
+import { Children, memo } from 'react'
 import { Link } from 'react-router-dom'
 import CustomSelect from '../common/CustomSelect'
 import { formatDashboardDate } from './dashboardUtils'
@@ -33,7 +33,7 @@ function getStatusMeta(status) {
   }
 }
 
-export function StatusPill({ label, status }) {
+export const StatusPill = memo(function StatusPill({ label, status }) {
   const meta = getStatusMeta(status)
 
   return (
@@ -41,9 +41,9 @@ export function StatusPill({ label, status }) {
       {label}
     </span>
   )
-}
+})
 
-export function DashboardPageIntro({ title, subtitle, meta }) {
+export const DashboardPageIntro = memo(function DashboardPageIntro({ title, subtitle, meta }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-3">
@@ -55,9 +55,9 @@ export function DashboardPageIntro({ title, subtitle, meta }) {
       {subtitle ? <p className="text-sm text-[#6B7280]">{subtitle}</p> : null}
     </div>
   )
-}
+})
 
-function StateCard({ title, body, tone = 'default' }) {
+const StateCard = memo(function StateCard({ title, body, tone = 'default' }) {
   const toneClass =
     tone === 'error'
       ? 'border border-[#F1B7B7] bg-[#FFF3F3] text-[#8A1C1C]'
@@ -69,13 +69,18 @@ function StateCard({ title, body, tone = 'default' }) {
       <p className="mt-2 text-sm">{body}</p>
     </div>
   )
-}
+})
 
-export function DashboardLoadingState({ title = 'Loading your dashboard data...' }) {
+export const DashboardLoadingState = memo(function DashboardLoadingState({
+  title = 'Loading your dashboard data...',
+}) {
   return <StateCard title={title} body="Please wait while we pull the latest customer data." />
-}
+})
 
-export function DashboardErrorState({ title = 'We could not load this section yet.', body }) {
+export const DashboardErrorState = memo(function DashboardErrorState({
+  title = 'We could not load this section yet.',
+  body,
+}) {
   return (
     <StateCard
       title={title}
@@ -83,9 +88,14 @@ export function DashboardErrorState({ title = 'We could not load this section ye
       tone="error"
     />
   )
-}
+})
 
-export function DashboardEmptyState({ title, body, actionLabel, actionTo = '/' }) {
+export const DashboardEmptyState = memo(function DashboardEmptyState({
+  title,
+  body,
+  actionLabel,
+  actionTo = '/',
+}) {
   return (
     <div className="rounded-3xl border border-dashed border-[#D6CDC3] bg-[#F7F5F2] p-8">
       <h2 className="text-lg font-medium text-[#2E2E2E]">{title}</h2>
@@ -100,7 +110,7 @@ export function DashboardEmptyState({ title, body, actionLabel, actionTo = '/' }
       ) : null}
     </div>
   )
-}
+})
 
 function createOptionsFromChildren(children) {
   return Children.toArray(children)
@@ -111,7 +121,7 @@ function createOptionsFromChildren(children) {
     }))
 }
 
-export function SelectField({
+export const SelectField = memo(function SelectField({
   value,
   onChange,
   children,
@@ -136,9 +146,9 @@ export function SelectField({
       optionClassName="flex w-full min-w-0 whitespace-nowrap bg-[#FFFFFF] px-6 py-3 text-left text-[14px] leading-[18px] text-[#2E2E2E] transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-black hover:text-white"
     />
   )
-}
+})
 
-export function DashboardSelectorList({
+export const DashboardSelectorList = memo(function DashboardSelectorList({
   items,
   selectedId,
   onSelect,
@@ -171,9 +181,9 @@ export function DashboardSelectorList({
       })}
     </div>
   )
-}
+})
 
-export function BookingSummaryCard({
+export const BookingSummaryCard = memo(function BookingSummaryCard({
   booking,
   rightContent,
   footerContent,
@@ -236,9 +246,9 @@ export function BookingSummaryCard({
       ) : null}
     </div>
   )
-}
+})
 
-export function DetailGrid({ items }) {
+export const DetailGrid = memo(function DetailGrid({ items }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {items.map(item => (
@@ -252,9 +262,9 @@ export function DetailGrid({ items }) {
       ))}
     </div>
   )
-}
+})
 
-export function SectionCard({ title, subtitle, children, action }) {
+export const SectionCard = memo(function SectionCard({ title, subtitle, children, action }) {
   return (
     <section className="rounded-[28px] bg-[#F3F3F3] ">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -267,9 +277,9 @@ export function SectionCard({ title, subtitle, children, action }) {
       <div className="mt-6">{children}</div>
     </section>
   )
-}
+})
 
-export function MessageBubble({ message, isOwnMessage }) {
+export const MessageBubble = memo(function MessageBubble({ message, isOwnMessage }) {
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
       <div
@@ -281,4 +291,4 @@ export function MessageBubble({ message, isOwnMessage }) {
       </div>
     </div>
   )
-}
+})

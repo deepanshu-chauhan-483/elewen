@@ -17,6 +17,19 @@ function formatCurrency(value) {
   })}`
 }
 
+function formatSessionDate(value) {
+  if (!value) return 'Date pending'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Date pending'
+
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+}
+
 function getServiceLabel(pkg) {
   const slug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
   if (!slug) return 'Package'
@@ -142,6 +155,7 @@ export default function SampleTasteBooking() {
 
         return {
           id: item.id,
+          packageId: item.packageId ?? pkg?.id ?? '',
           title: pkg?.title ?? item?.title ?? 'Selected package',
           tag: getServiceLabel(pkg),
           desc: pkg?.description ?? 'Selected from your cart for tasting.',
@@ -171,6 +185,7 @@ export default function SampleTasteBooking() {
 
           return {
             id: item.id,
+            packageId: item.packageId ?? pkg?.id ?? '',
             title: pkg?.title ?? item?.displayTitle ?? item?.title ?? 'Selected package',
             tag: getServiceLabel(pkg),
             desc: pkg?.description ?? 'Selected from your cart for tasting.',
@@ -515,10 +530,13 @@ export default function SampleTasteBooking() {
                   state: {
                     checkoutMode: 'sample-tasting',
                     sampleSessionDetails: {
-                      dateLabel: cart?.eventDate || 'Saturday, 14 June',
-                      timeLabel: '2:00 PM',
-                      address: cart?.eventCity || 'E-22 Vaishali nagar, jaipur, rajasthan',
+                      dateLabel: formatSessionDate(cart?.eventDate),
+                      timeLabel: 'Time pending',
+                      address: cart?.eventCity || 'Address pending',
                     },
+                    sampleTastePackageIds: tastingPackages
+                      .map(pkg => String(pkg.packageId ?? '').trim())
+                      .filter(Boolean),
                   },
                 })
               }

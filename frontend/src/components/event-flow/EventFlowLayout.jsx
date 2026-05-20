@@ -100,9 +100,9 @@ export default function EventFlowLayout({
           data-lenis-prevent
         >
           <div className="p-6 sm:px-6 sm:py-4 md:py-5">
-            <div className="mx-auto flex w-full lg:w-[calc(100%-200px)] lg:max-w-none flex-col">
+            <div className="mx-auto flex w-full md:w-[calc(100%-100px)] lg:w-[calc(100%-200px)] lg:max-w-none flex-col">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex w-full max-w-[328px] flex-col gap-[12px] md:max-w-[440px] md:pt-20">
+                <div className="flex w-full flex-col gap-[12px] md:max-w-[440px] md:pt-20">
                   {' '}
                   <h1
                     className="text-[28px] leading-[1] text-[#2D2D2D] sm:text-[32px] md:text-[36px] "
@@ -136,7 +136,9 @@ export default function EventFlowLayout({
               </div>
 
               <div className="relative mt-5 flex w-full flex-col items-center justify-start py-1">
-                <div className="flex w-full items-center justify-center px-0">{children}</div>
+                <div className="flex w-full items-center justify-center px-0 md:px-0">
+                  {children}
+                </div>
 
                 {showNextButton && nextTo ? (
                   <Link
@@ -181,8 +183,8 @@ export default function EventFlowLayout({
 
         {/* ✅ ONLY FIX HERE */}
         <section className="min-h-[64px] shrink-0 bg-[#591902] py-2 sm:h-[70px] sm:min-h-0 sm:py-0 fix bottom-0">
-          <div className="h-full px-3 sm:px-6">
-            <div className="mx-auto flex h-full w-full items-end justify-between gap-3 lg:w-[calc(100%-200px)] lg:max-w-none sm:items-center sm:gap-6">
+          <div className="h-full px-6 sm:px-6">
+            <div className="mx-auto flex h-full w-full items-end justify-between gap-3 md:w-[calc(100%-100px)] lg:w-[calc(100%-200px)] lg:max-w-none sm:items-center sm:gap-6">
               {steps.length > 0 ? (
                 <div className="flex flex-wrap items-start gap-x-0 gap-y-1.5 sm:gap-y-3">
                   {steps.map((step, index) => {
@@ -241,7 +243,7 @@ export default function EventFlowLayout({
               {showBackButton && backTo ? (
                 <Link
                   to={backTo}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#FAFAFA33] px-3 py-2 text-[11px] leading-none text-white transition-colors hover:bg-[#CDB17E] sm:mr-2 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-[14px]"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#FAFAFA33] px-3 py-2 text-[11px] leading-none text-white transition-colors hover:bg-[#FAFAFA4D] sm:mr-2 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-[14px]"
                 >
                   <ArrowIcon direction="left" />
                   <span className="whitespace-nowrap">Previous</span>

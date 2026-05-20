@@ -148,14 +148,14 @@ function BookingCard({ booking, session }) {
                   event.stopPropagation()
                   downloadReceipt(receiptData)
                 }}
-                className="rounded-full border border-[#CDB17E] px-4 py-2 text-sm text-[#957960]"
+                className="rounded-full border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E] px-4 py-2 text-sm"
               >
                 Download Receipt
               </button>
 
               <Link
                 to={`/user-dashboard/details?bookingId=${booking.id}`}
-                className="flex items-center rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white"
+                className="flex items-center rounded-full bg-[#CDB17E] hover:opacity-90 px-4 py-2 text-sm text-white"
                 aria-label="View booking details"
                 onClick={event => event.stopPropagation()}
               >

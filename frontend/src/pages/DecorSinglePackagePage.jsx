@@ -232,6 +232,30 @@ function buildDecorImageMetaMap(pkg) {
   return Object.fromEntries(entries)
 }
 
+function buildDecorTextImageMap(pkg) {
+  const entries = []
+
+  getDecorDetailSections(pkg).forEach(section => {
+    const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
+    const textGroups = groupItemsByTitle(inclusions.filter(item => !item?.is_choice_group))
+
+    textGroups.forEach(group => {
+      const sectionTitle = buildTextSectionTitle(group.title, 'Included details')
+
+      group.items.forEach(item => {
+        const text = cleanText(item?.text)
+        const images = getInclusionImages(item)
+
+        if (!text || !images.length) return
+
+        entries.push([`${sectionTitle}::${text}`, images[0]])
+      })
+    })
+  })
+
+  return Object.fromEntries(entries)
+}
+
 function groupItemsByTitle(items = []) {
   const groups = []
 
@@ -641,7 +665,7 @@ function DecorOptionButton({ item, wide = false, onClick }) {
   )
 }
 
-function DecorTextRow({ section }) {
+function DecorTextRow({ section, onItemClick }) {
   return (
     <div>
       <p
@@ -653,9 +677,29 @@ function DecorTextRow({ section }) {
       <div className="mt-3 flex flex-wrap items-center gap-y-2">
         {section.items.map((item, index) => (
           <div key={`${section.title}-${item}`} className="flex items-center">
-            <p className="text-[12px] leading-none text-[#8A5A2D]">{item}</p>
+            <button
+              type="button"
+              onClick={() => onItemClick?.(section.title, item)}
+              className={`text-[12px] leading-none text-[#8A5A2D] ${
+                onItemClick ? 'cursor-pointer' : 'cursor-default'
+              }`}
+            >
+              {item}
+            </button>
             {index < section.items.length - 1 ? (
-              <span className="mx-2 text-[12px] leading-none text-[#C7A16B]">|</span>
+              <span className="mx-2 text-[12px] leading-none text-[#C7A16B]">
+                <svg
+                  width="8"
+                  height="24"
+                  viewBox="0 0 8 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g opacity="0.5">
+                    <line x1="4.5" x2="4.5" y2="24" stroke="#364022" strokeOpacity="0.5" />
+                  </g>
+                </svg>
+              </span>
             ) : null}
           </div>
         ))}
@@ -686,7 +730,14 @@ function DecorMessageField({ value, onChange }) {
   )
 }
 
-function DecorPackageSections({ keyDecorText, sections, message, onMessageChange, onSelect }) {
+function DecorPackageSections({
+  keyDecorText,
+  sections,
+  message,
+  onMessageChange,
+  onSelect,
+  onTextItemClick,
+}) {
   return (
     <div>
       {keyDecorText ? (
@@ -706,7 +757,13 @@ function DecorPackageSections({ keyDecorText, sections, message, onMessageChange
         {sections.length ? (
           sections.map((section, index) => {
             if (section.type === 'text-row') {
-              return <DecorTextRow key={`${section.title}-${index}`} section={section} />
+              return (
+                <DecorTextRow
+                  key={`${section.title}-${index}`}
+                  section={section}
+                  onItemClick={onTextItemClick}
+                />
+              )
             }
 
             const useWideCards = section.items.some(
@@ -774,6 +831,7 @@ export default function DecorSinglePackagePage() {
   })
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [addToCartMessage, setAddToCartMessage] = useState('')
+  const [selectedTextImage, setSelectedTextImage] = useState('')
 
   const packagesData = useMemo(
     () =>
@@ -816,6 +874,7 @@ export default function DecorSinglePackagePage() {
     [sectionTemplate]
   )
   const imageMetaByUrl = useMemo(() => buildDecorImageMetaMap(pkg), [pkg])
+  const textImageBySectionItem = useMemo(() => buildDecorTextImageMap(pkg), [pkg])
 
   useEffect(() => {
     if (!pkg) return
@@ -891,6 +950,7 @@ export default function DecorSinglePackagePage() {
 
   const handleSelect = (sectionIndex, itemTitle) => {
     setAddToCartMessage('')
+    setSelectedTextImage('')
 
     setCustomizations(prev =>
       prev.map((customization, customizationIndex) => {
@@ -933,6 +993,13 @@ export default function DecorSinglePackagePage() {
           : customization
       )
     )
+  }
+
+  const handleTextItemClick = (sectionTitle, itemText) => {
+    const nextImage = textImageBySectionItem[`${sectionTitle}::${itemText}`]
+    if (!nextImage) return
+
+    setSelectedTextImage(nextImage)
   }
 
   const handlePackageAddToCart = async () => {
@@ -1008,10 +1075,11 @@ export default function DecorSinglePackagePage() {
           message={message}
           onMessageChange={handleMessageChange}
           onSelect={handleSelect}
+          onTextItemClick={handleTextItemClick}
         />
       }
       accordionSections={accordionSections}
-      mainImage={activeMainImage ?? sideImages[0]}
+      mainImage={selectedTextImage || activeMainImage || sideImages[0]}
       sideImages={sideImages}
       imageMetaByUrl={imageMetaByUrl}
       relatedProducts={relatedProducts}

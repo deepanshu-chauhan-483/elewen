@@ -5,11 +5,13 @@ import {
   useDashboardCancelBooking,
   useDashboardSession,
 } from '../../hooks/useDashboardData'
+import { usePackages } from '../../hooks/usePackages'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
 } from '../../components/dashboard/dashboardUtils'
 import {
+  getBookingPackageNames,
   getBookingPackageNamesText,
   getPackageLineLabel,
   getPackageLineSubtitle,
@@ -57,6 +59,53 @@ function buildPackageIncludesRows(booking) {
     : []
 }
 
+function normalizePackageTitle(value = '') {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+}
+
+function buildPackageIncludesSections(booking, packages = []) {
+  const packageNames = getBookingPackageNames(booking)
+  const packageCatalog = Array.isArray(packages) ? packages : []
+  const fallbackIncludes = buildPackageIncludesRows(booking)
+
+  const sections = packageNames
+    .map((packageName, index) => {
+      const normalizedPackageName = normalizePackageTitle(packageName)
+      const matchedPackage =
+        packageCatalog.find(pkg => normalizePackageTitle(pkg?.title) === normalizedPackageName) ??
+        (normalizePackageTitle(booking?.package?.title) === normalizedPackageName
+          ? booking.package
+          : null)
+
+      const includes = Array.isArray(matchedPackage?.detail_inclusions)
+        ? matchedPackage.detail_inclusions.filter(Boolean).slice(0, 12)
+        : []
+
+      if (!includes.length) return null
+
+      return {
+        id: `${booking?.id ?? 'booking'}-include-section-${index}`,
+        title: matchedPackage?.title || packageName || booking?.package?.title || 'Package',
+        includes,
+      }
+    })
+    .filter(Boolean)
+
+  if (sections.length) return sections
+
+  return fallbackIncludes.length
+    ? [
+        {
+          id: `${booking?.id ?? 'booking'}-include-section-fallback`,
+          title: booking?.package?.title || packageNames[0] || 'Package',
+          includes: fallbackIncludes,
+        },
+      ]
+    : []
+}
+
 function buildAddonDetailRows(booking) {
   const items = Array.isArray(booking?.items) ? booking.items : []
   const packageAddons = Array.isArray(booking?.package?.detail_addons)
@@ -96,6 +145,31 @@ function buildAddonDetailRows(booking) {
       }
     })
     .filter(Boolean)
+}
+
+function buildPaymentDetailRows(booking) {
+  const paymentSummary = booking?.paymentSummary ?? {}
+  const advanceAmount = paymentSummary?.advanceAmount ?? booking?.advanceAmount ?? 0
+  const remainingAmount = paymentSummary?.scheduledRemainingAmount ?? booking?.remainingAmount ?? 0
+  const totalAmount = paymentSummary?.totalPrice ?? booking?.totalPrice ?? 0
+
+  return [
+    {
+      id: `${booking?.id ?? 'booking'}-payment-advance`,
+      label: 'Advance',
+      amount: advanceAmount,
+    },
+    {
+      id: `${booking?.id ?? 'booking'}-payment-remaining`,
+      label: 'Remaining',
+      amount: remainingAmount,
+    },
+    {
+      id: `${booking?.id ?? 'booking'}-payment-total`,
+      label: 'Total',
+      amount: totalAmount,
+    },
+  ]
 }
 
 const TIMELINE_DISPLAY_ORDER = [
@@ -172,6 +246,20 @@ const ArrowIcon = () => (
   </svg>
 )
 
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      className={`h-5 w-5 text-[#8F8F8F] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  )
+}
+
 const StatusBadge = ({ status }) => {
   const styles = {
     completed: 'bg-[#E0F6ED] text-[#238E64]',
@@ -192,13 +280,21 @@ const StatusBadge = ({ status }) => {
   )
 }
 
-function BookingAccordionCard({ booking, session }) {
+function BookingAccordionCard({ booking, session, packages }) {
   const [open, setOpen] = useState(false)
   const [showCancel, setShowCancel] = useState(false)
   const [reason, setReason] = useState('')
   const selectedItemRows = buildSelectedItemRows(booking)
-  const packageIncludesRows = buildPackageIncludesRows(booking)
+  const packageNames = getBookingPackageNames(booking)
+  const packageIncludesSections = useMemo(
+    () => buildPackageIncludesSections(booking, packages),
+    [booking, packages]
+  )
+  const hasMultiplePackages = packageNames.length > 1
   const addonDetailRows = buildAddonDetailRows(booking)
+  const paymentDetailRows = useMemo(() => buildPaymentDetailRows(booking), [booking])
+  const amountPaidDisplay = paymentDetailRows[0]?.amount ?? 0
+  const remainingBalanceDisplay = paymentDetailRows[1]?.amount ?? 0
   const cancelMutation = useDashboardCancelBooking()
   const { data: timelineData = [] } = useDashboardBookingTimeline(open ? booking?.id : null)
   const receiptData = buildReceiptData({
@@ -247,22 +343,28 @@ function BookingAccordionCard({ booking, session }) {
             </p>
           </div>
 
-          {!open ? (
-            <div className="mt-2 hidden shrink-0 gap-[24px] text-sm md:flex md:gap-[32px]">
-              <div className="flex flex-col">
-                <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
-                <p className="font-medium">
-                  {formatDashboardCurrency(booking.paymentSummary?.amountPaid)}
-                </p>
+          {/* Right — amounts + chevron (hidden when open) */}
+          <div className="flex shrink-0 items-start gap-6">
+            {!open && (
+              <div className="hidden gap-[24px] text-sm md:flex md:gap-[32px]">
+                <div className="flex flex-col">
+                  <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
+                  <p className="font-medium text-[#2D2D2D]">
+                    {formatDashboardCurrency(amountPaidDisplay)}
+                  </p>
+                </div>
+
+                <div className="flex flex-col">
+                  <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
+                  <p className="font-medium text-[#2D2D2D]">
+                    {formatDashboardCurrency(remainingBalanceDisplay)}
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
-                <p className="font-medium">
-                  {formatDashboardCurrency(booking.paymentSummary?.amountDue)}
-                </p>
-              </div>
-            </div>
-          ) : null}
+            )}
+
+            <ChevronIcon open={open} />
+          </div>
         </div>
 
         <div className="mt-4 flex items-center gap-2 text-sm text-[#1C1C1C]">
@@ -274,16 +376,12 @@ function BookingAccordionCard({ booking, session }) {
           <div className="mt-4 flex gap-10 text-sm md:hidden">
             <div className="flex flex-col">
               <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
-              <p className="font-medium">
-                {formatDashboardCurrency(booking.paymentSummary?.amountPaid)}
-              </p>
+              <p className="font-medium">{formatDashboardCurrency(amountPaidDisplay)}</p>
             </div>
 
             <div className="flex flex-col">
               <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
-              <p className="font-medium">
-                {formatDashboardCurrency(booking.paymentSummary?.amountDue)}
-              </p>
+              <p className="font-medium">{formatDashboardCurrency(remainingBalanceDisplay)}</p>
             </div>
           </div>
         ) : null}
@@ -291,7 +389,7 @@ function BookingAccordionCard({ booking, session }) {
 
       {open ? (
         <>
-          <div className="mt-6 grid grid-cols-2 gap-6 border-t border-[#00000033] pt-6 text-sm md:grid-cols-3">
+          <div className="mt-6 grid grid-cols-2 gap-6 border-t border-[#00000033] py-6 text-sm md:grid-cols-3">
             <div>
               <p className="text-[11px] text-[#767676]">PACKAGE</p>
               <p>{getBookingPackageNamesText(booking, booking.event?.name || 'Not shared yet')}</p>
@@ -306,15 +404,15 @@ function BookingAccordionCard({ booking, session }) {
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
-              <p>{formatDashboardCurrency(booking.paymentSummary?.amountPaid)}</p>
+              <p>{formatDashboardCurrency(amountPaidDisplay)}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
-              <p>{formatDashboardCurrency(booking.paymentSummary?.amountDue)}</p>
+              <p>{formatDashboardCurrency(remainingBalanceDisplay)}</p>
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <h4 className="mb-3 text-[11px] text-[#767676]">SELECTED ITEMS</h4>
             <div className="space-y-2">
               {selectedItemRows.map(item => (
@@ -333,16 +431,27 @@ function BookingAccordionCard({ booking, session }) {
             </div>
           </div>
 
-          {packageIncludesRows.length ? (
-            <div className="mt-6">
+          {packageIncludesSections.length ? (
+            <div className="py-6 border-t border-[#00000033]">
               <h4 className="mb-3 text-[11px] text-[#767676]">INCLUDES</h4>
-              <div className="space-y-2">
-                {packageIncludesRows.map((item, index) => (
-                  <div
-                    key={`${booking.id}-include-${index}`}
-                    className="flex justify-between rounded-xl bg-[#F3F3F3] p-3"
-                  >
-                    <span className="text-sm">{item}</span>
+              <div className="space-y-4">
+                {packageIncludesSections.map(section => (
+                  <div key={section.id}>
+                    {hasMultiplePackages ? (
+                      <p className="mb-2 text-sm font-medium text-[#2E2E2E]">{section.title}</p>
+                    ) : null}
+                    <div className="space-y-2">
+                      <ul className="space-y-2 list-disc pl-5 text-[#767676]">
+                        {section.includes.map((item, index) => (
+                          <li
+                            key={`${section.id}-item-${index}`}
+                            className="rounded-xl text-sm text-[#767676]"
+                          >
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -350,7 +459,7 @@ function BookingAccordionCard({ booking, session }) {
           ) : null}
 
           {addonDetailRows.length ? (
-            <div className="mt-6">
+            <div className="py-6 border-t border-[#00000033]">
               <h4 className="mb-3 text-[11px] text-[#767676]">ADDON DETAILS</h4>
               <div className="space-y-2">
                 {addonDetailRows.map(item => (
@@ -371,7 +480,7 @@ function BookingAccordionCard({ booking, session }) {
           ) : null}
 
           {currentTimelineStage ? (
-            <div className="mt-6">
+            <div className="py-6 border-t border-[#00000033]">
               <h4 className="mb-3 text-[11px] text-[#767676]">CURRENT STAGE</h4>
               <div className="rounded-xl bg-[#F3F3F3] p-3">
                 <span className="block text-sm">{currentTimelineStage.title}</span>
@@ -384,31 +493,42 @@ function BookingAccordionCard({ booking, session }) {
             </div>
           ) : null}
 
-          <div className="mt-6">
+          <div className="border-t border-[#00000033] py-6">
             <h4 className="mb-3 text-[11px] text-[#767676]">PAYMENTS</h4>
-            {booking.payments?.map(payment => (
-              <div
-                key={payment.id}
-                className="mb-2 flex justify-between rounded-xl  bg-[#F3F3F3] p-3"
-              >
-                <span className="text-sm text-[#2E2E2E]">{payment.paymentType}</span>
-                <span className="text-sm font-medium">
-                  {formatDashboardCurrency(payment.amount)}
-                </span>
-              </div>
-            ))}
+
+            {/* Single background wrapper */}
+            <div className="rounded-xl bg-[#F3F3F3] p-3">
+              {paymentDetailRows.map((payment, index) => (
+                <div
+                  key={payment.id}
+                  className={index !== paymentDetailRows.length - 1 ? 'mb-3' : ''}
+                >
+                  <div
+                    className={`flex justify-between ${
+                      index === 2 ? 'border-t border-[#00000033] pt-3' : ''
+                    }`}
+                  >
+                    <span className="text-sm text-[#2E2E2E]">{payment.label}</span>
+
+                    <span className="text-sm font-medium">
+                      {formatDashboardCurrency(payment.amount)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="pt-6 flex flex-wrap gap-3 border-t border-[#00000033] justify-end">
             <button
               type="button"
               onClick={() => downloadReceipt(receiptData)}
-              className="rounded-full border border-[#C6A15B] bg-[#FFFFFF] px-5 py-2 text-[#CDB17E]"
+              className="rounded-full px-4 py-2 border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]"
             >
               Download Receipt
             </button>
 
-            <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-5 py-2 text-white">
+            <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:opacity-90 px-4 py-2 text-white">
               Message Admin <ArrowIcon />
             </button>
 
@@ -418,7 +538,7 @@ function BookingAccordionCard({ booking, session }) {
                 event.stopPropagation()
                 setShowCancel(prev => !prev)
               }}
-              className="rounded-full px-5 py-2 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-[#CDB17E]"
+              className="rounded-full px-4 py-2 border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]"
             >
               Cancel Booking
             </button>
@@ -473,6 +593,7 @@ function BookingAccordionCard({ booking, session }) {
 export default function BookingDetailsAccordion() {
   const { data: bookings = [] } = useDashboardBookings('all')
   const { data: session } = useDashboardSession()
+  const { data: packages = [] } = usePackages()
 
   return (
     <div className="space-y-6 ">
@@ -482,7 +603,12 @@ export default function BookingDetailsAccordion() {
       </div>
 
       {bookings.map(booking => (
-        <BookingAccordionCard key={booking.id} booking={booking} session={session} />
+        <BookingAccordionCard
+          key={booking.id}
+          booking={booking}
+          session={session}
+          packages={packages}
+        />
       ))}
     </div>
   )

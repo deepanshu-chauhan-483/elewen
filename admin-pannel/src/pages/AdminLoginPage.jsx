@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
             <div>
               <h1
                 className="max-w-[420px] text-[72px] leading-[0.92] text-white"
-                style={{ fontFamily: "var(--font-display)" }}
+                style={{ fontFamily: 'var(--font-display)' }}
               >
                 Welcome
                 <br />
@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
               <div className="mb-6 text-center">
                 <h2
                   className="text-[42px] text-[#364022] lg:text-[64px]"
-                  style={{ fontFamily: "var(--font-display)" }}
+                  style={{ fontFamily: 'var(--font-display)' }}
                 >
                   Admin Login
                 </h2>

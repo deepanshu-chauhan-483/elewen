@@ -14,6 +14,7 @@ import {
   getValidStoredJwt,
   getStoredJwt,
   messageGetOrCreateThread,
+  messageGetThread,
   messageSend,
   notificationClearAll,
   notificationList,
@@ -220,13 +221,28 @@ export function useDashboardSupportTicket(ticketId) {
   })
 }
 
-export function useDashboardThread(bookingId) {
+export function useDashboardThread(bookingId, options = {}) {
+  const createIfMissing = options?.createIfMissing !== false
+
   return useAuthedDashboardQuery({
-    queryKey: ['dashboard', 'thread', bookingId],
+    queryKey: ['dashboard', 'thread', bookingId, createIfMissing ? 'create' : 'readonly'],
     enabled: Boolean(bookingId),
     queryFn: async token => {
-      const response = await messageGetOrCreateThread(token, bookingId)
-      return response?.thread ?? null
+      try {
+        const response = await messageGetThread(token, bookingId)
+        return response?.thread ?? null
+      } catch (error) {
+        const message = String(error?.message ?? '')
+        const isNotFound = Number(error?.status) === 404 || message.includes('API 404')
+
+        if (!isNotFound || !createIfMissing) {
+          if (isNotFound) return null
+          throw error
+        }
+
+        const response = await messageGetOrCreateThread(token, bookingId)
+        return response?.thread ?? null
+      }
     },
   })
 }

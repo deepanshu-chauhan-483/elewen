@@ -7,7 +7,17 @@
  * - Content create/update endpoints expect `{ data: ... }`
  */
 
-const getBase = () => process.env.STRAPI_URL || 'http://localhost:1337'
+import { withCache, cacheDel, TTL } from './cache.js'
+
+const getBaseCandidates = () => {
+  const configured = [process.env.STRAPI_URL, process.env.VITE_STRAPI_URL, 'http://localhost:1337']
+    .map(value => String(value ?? '').trim())
+    .filter(Boolean)
+
+  return [...new Set(configured)]
+}
+
+const getBase = () => getBaseCandidates()[0] || 'http://localhost:1337'
 const getServerToken = () => process.env.STRAPI_ADMIN_TOKEN || process.env.STRAPI_API_TOKEN || null
 
 const normalizePath = (path, { prefixApi = true } = {}) => {
@@ -43,56 +53,102 @@ const makeStrapiError = async (res, fallbackMessage) => {
   return error
 }
 
-const requestJson = async (path, { method = 'GET', headers = {}, body, prefixApi = true } = {}) => {
-  const res = await fetch(`${getBase()}${normalizePath(path, { prefixApi })}`, {
-    method,
-    headers,
-    ...(body !== undefined && { body: JSON.stringify(body) }),
-  })
+const shouldRetryWithNextBase = error => !error?.status
 
-  if (!res.ok) {
-    throw await makeStrapiError(res, `${method} ${path} failed`)
+const requestJson = async (path, { method = 'GET', headers = {}, body, prefixApi = true } = {}) => {
+  const normalizedPath = normalizePath(path, { prefixApi })
+  let lastError = null
+
+  for (const base of getBaseCandidates()) {
+    try {
+      const res = await fetch(`${base}${normalizedPath}`, {
+        method,
+        headers,
+        ...(body !== undefined && { body: JSON.stringify(body) }),
+      })
+
+      if (!res.ok) {
+        throw await makeStrapiError(res, `${method} ${path} failed`)
+      }
+
+      return res.json()
+    } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
+      lastError = error
+    }
   }
 
-  return res.json()
+  throw lastError ?? new Error(`${method} ${path} failed`)
 }
 
 const requestRaw = async (path, { method = 'GET', headers = {}, body, prefixApi = true } = {}) => {
-  const res = await fetch(`${getBase()}${normalizePath(path, { prefixApi })}`, {
-    method,
-    headers,
-    ...(body !== undefined && { body }),
-  })
+  const normalizedPath = normalizePath(path, { prefixApi })
+  let lastError = null
 
-  if (!res.ok) {
-    throw await makeStrapiError(res, `${method} ${path} failed`)
+  for (const base of getBaseCandidates()) {
+    try {
+      const res = await fetch(`${base}${normalizedPath}`, {
+        method,
+        headers,
+        ...(body !== undefined && { body }),
+      })
+
+      if (!res.ok) {
+        throw await makeStrapiError(res, `${method} ${path} failed`)
+      }
+
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('application/json')) {
+        return res.json()
+      }
+
+      return res.text()
+    } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
+      lastError = error
+    }
   }
 
-  const contentType = res.headers.get('content-type') || ''
-  if (contentType.includes('application/json')) {
-    return res.json()
-  }
-
-  return res.text()
+  throw lastError ?? new Error(`${method} ${path} failed`)
 }
 
 // ---------------- GET ----------------
 export async function strapiGet(path, params = {}) {
-  const url = new URL(normalizePath(path), getBase())
+  let lastError = null
 
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) {
-      url.searchParams.set(k, String(v))
+  for (const base of getBaseCandidates()) {
+    try {
+      const url = new URL(normalizePath(path), base)
+
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) {
+          url.searchParams.set(k, String(v))
+        }
+      })
+
+      const res = await fetch(url.toString())
+
+      if (!res.ok) {
+        throw await makeStrapiError(res, `GET ${path} failed`)
+      }
+
+      return res.json()
+    } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
+      lastError = error
     }
-  })
-
-  const res = await fetch(url.toString())
-
-  if (!res.ok) {
-    throw await makeStrapiError(res, `GET ${path} failed`)
   }
 
-  return res.json()
+  throw lastError ?? new Error(`GET ${path} failed`)
 }
 
 // ---------------- POST ----------------
@@ -124,10 +180,18 @@ export async function strapiAdminPut(path, body) {
 
 // ---------------- SERVER GET ----------------
 export async function strapiServerGet(path) {
-  return requestJson(path, {
-    headers: buildHeaders(),
-    prefixApi: !path.startsWith('/api/'),
-  })
+  const key = `strapi:GET:${path}`
+  return withCache(key, TTL.STRAPI, () =>
+    requestJson(path, {
+      headers: buildHeaders(),
+      prefixApi: !path.startsWith('/api/'),
+    })
+  )
+}
+
+// Call after writes to Strapi so stale cache is cleared for that path
+export async function invalidateStrapiCache(path) {
+  await cacheDel(`strapi:GET:${path}`)
 }
 
 // ---------------- SERVER POST ----------------
@@ -171,14 +235,28 @@ export async function strapiServerUpload(path, formData) {
 
 // ---------------- GET ME ----------------
 export async function strapiGetMe(jwt) {
-  const res = await fetch(`${getBase()}/api/users/me`, {
-    headers: {
-      Authorization: `Bearer ${jwt}`,
-    },
-  })
+  let lastError = null
 
-  if (!res.ok) throw await makeStrapiError(res, 'Failed to fetch user')
-  return res.json()
+  for (const base of getBaseCandidates()) {
+    try {
+      const res = await fetch(`${base}/api/users/me`, {
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+      })
+
+      if (!res.ok) throw await makeStrapiError(res, 'Failed to fetch user')
+      return res.json()
+    } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
+      lastError = error
+    }
+  }
+
+  throw lastError ?? new Error('Failed to fetch user')
 }
 
 // ---------------- GET USER BY ID ----------------
@@ -191,19 +269,33 @@ export async function strapiGetUserById(userId) {
 
 // ---------------- FIND USER BY EMAIL ----------------
 export async function strapiFindUserByEmail(email) {
-  const res = await fetch(
-    `${getBase()}/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
-    {
-      headers: buildHeaders(),
-    }
-  )
+  let lastError = null
 
-  if (!res.ok) {
-    throw await makeStrapiError(res, 'Failed to find user by email')
+  for (const base of getBaseCandidates()) {
+    try {
+      const res = await fetch(
+        `${base}/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
+        {
+          headers: buildHeaders(),
+        }
+      )
+
+      if (!res.ok) {
+        throw await makeStrapiError(res, 'Failed to find user by email')
+      }
+
+      const data = await res.json()
+      return data?.[0] ?? null
+    } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
+      lastError = error
+    }
   }
 
-  const data = await res.json()
-  return data?.[0] ?? null
+  throw lastError ?? new Error('Failed to find user by email')
 }
 
 // ---------------- CREATE USER ----------------

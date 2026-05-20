@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { getFieldErrors } from '../lib/formErrors'
 import { authRegister, setStoredJwt } from '../lib/api'
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
@@ -29,6 +30,7 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [emailPending, setEmailPending] = useState(false)
   const authError = searchParams.get('authError') || ''
@@ -43,6 +45,7 @@ export default function SignUpPage() {
     e.preventDefault()
     if (!agreed) return
     setError('')
+    setFieldErrors({})
     setLoading(true)
     try {
       const data = await authRegister({
@@ -60,7 +63,14 @@ export default function SignUpPage() {
       localStorage.setItem('elewen_user', JSON.stringify(data.user))
       navigate('/', { replace: true })
     } catch (err) {
-      if (err.message?.includes('409')) {
+      const nextFieldErrors = getFieldErrors(err, {
+        first_name: 'firstName',
+        last_name: 'lastName',
+      })
+
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFieldErrors(nextFieldErrors)
+      } else if (err.status === 409) {
         setError('An account with this email already exists.')
       } else {
         setError('Registration failed. Please try again.')
@@ -127,11 +137,17 @@ export default function SignUpPage() {
             <input
               type="text"
               value={firstName}
-              onChange={e => setFirstName(e.target.value)}
+              onChange={e => {
+                setFirstName(e.target.value)
+                setFieldErrors(prev => ({ ...prev, firstName: '' }))
+              }}
               placeholder="Name"
               required
               className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
             />
+            {fieldErrors.firstName ? (
+              <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.firstName}</p>
+            ) : null}
           </div>
           <div className="flex flex-col gap-[8px] flex-1">
             <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
@@ -140,11 +156,17 @@ export default function SignUpPage() {
             <input
               type="text"
               value={lastName}
-              onChange={e => setLastName(e.target.value)}
+              onChange={e => {
+                setLastName(e.target.value)
+                setFieldErrors(prev => ({ ...prev, lastName: '' }))
+              }}
               placeholder="Name"
               required
               className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
             />
+            {fieldErrors.lastName ? (
+              <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.lastName}</p>
+            ) : null}
           </div>
         </div>
 
@@ -155,11 +177,17 @@ export default function SignUpPage() {
           <input
             type="email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => {
+              setEmail(e.target.value)
+              setFieldErrors(prev => ({ ...prev, email: '' }))
+            }}
             placeholder="email@"
             required
             className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
           />
+          {fieldErrors.email ? (
+            <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.email}</p>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-[8px] w-full">
@@ -169,11 +197,17 @@ export default function SignUpPage() {
           <input
             type="tel"
             value={phone}
-            onChange={e => setPhone(e.target.value)}
+            onChange={e => {
+              setPhone(e.target.value)
+              setFieldErrors(prev => ({ ...prev, phone: '' }))
+            }}
             placeholder="Enter your phone number"
             required
             className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
           />
+          {fieldErrors.phone ? (
+            <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.phone}</p>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-[8px] w-full">
@@ -184,7 +218,10 @@ export default function SignUpPage() {
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => {
+                setPassword(e.target.value)
+                setFieldErrors(prev => ({ ...prev, password: '' }))
+              }}
               placeholder="Enter your password"
               required
               className="w-full h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors pr-10"
@@ -213,6 +250,9 @@ export default function SignUpPage() {
           <p className="text-[#727355] text-[12px] leading-[150%]">
             Must be at least 8 characters.
           </p>
+          {fieldErrors.password ? (
+            <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.password}</p>
+          ) : null}
 
           <div className="flex items-center gap-[8px] w-full pt-[2px]">
             <input

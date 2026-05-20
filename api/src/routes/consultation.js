@@ -1,5 +1,7 @@
 import { Router } from 'express'
 import { createConsultation } from '../controllers/consultation.js'
+import { validate } from '../middleware/validate.js'
+import { createConsultationSchema } from '../schemas/consultation.js'
 
 const router = Router()
 
@@ -32,6 +34,6 @@ const router = Router()
  *       400:
  *         description: Required fields missing
  */
-router.post('/', createConsultation)
+router.post('/', validate(createConsultationSchema), createConsultation)
 
 export default router

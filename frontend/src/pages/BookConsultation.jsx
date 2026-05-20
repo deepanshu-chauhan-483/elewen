@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getFieldErrors } from '../lib/formErrors'
 import { useConsultation } from '../hooks/useConsultation'
 
 const consultationFeatures = [
@@ -41,6 +42,7 @@ const BookConsultationPage = () => {
   const pageRef = useRef(null)
   const navigate = useNavigate()
   const { mutate: submitConsultation, isPending, isError, error } = useConsultation()
+  const [fieldErrors, setFieldErrors] = useState({})
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -100,10 +102,12 @@ const BookConsultationPage = () => {
   const handleChange = event => {
     const { name, value } = event.target
     setForm(prev => ({ ...prev, [name]: value }))
+    setFieldErrors(prev => ({ ...prev, [name]: '' }))
   }
 
   const handleSubmit = event => {
     event.preventDefault()
+    setFieldErrors({})
     submitConsultation(form, {
       onSuccess: () => {
         navigate('/consultation-confirmation', {
@@ -118,6 +122,9 @@ const BookConsultationPage = () => {
             notes: form.vision_notes,
           },
         })
+      },
+      onError: submitError => {
+        setFieldErrors(getFieldErrors(submitError))
       },
     })
   }
@@ -266,6 +273,11 @@ const BookConsultationPage = () => {
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
+              {fieldErrors.full_name ? (
+                <p className="mt-2 text-[13px] leading-[1.5] text-[#B3261E]">
+                  {fieldErrors.full_name}
+                </p>
+              ) : null}
               <input
                 type="email"
                 name="email"
@@ -276,6 +288,9 @@ const BookConsultationPage = () => {
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
+              {fieldErrors.email ? (
+                <p className="mt-2 text-[13px] leading-[1.5] text-[#B3261E]">{fieldErrors.email}</p>
+              ) : null}
               <input
                 type="text"
                 name="phone"
@@ -286,6 +301,9 @@ const BookConsultationPage = () => {
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
+              {fieldErrors.phone ? (
+                <p className="mt-2 text-[13px] leading-[1.5] text-[#B3261E]">{fieldErrors.phone}</p>
+              ) : null}
               <input
                 type="text"
                 name="event_type"
@@ -296,6 +314,11 @@ const BookConsultationPage = () => {
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
+              {fieldErrors.event_type ? (
+                <p className="mt-2 text-[13px] leading-[1.5] text-[#B3261E]">
+                  {fieldErrors.event_type}
+                </p>
+              ) : null}
               <input
                 type="date"
                 name="event_date"
@@ -305,6 +328,11 @@ const BookConsultationPage = () => {
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
+              {fieldErrors.event_date ? (
+                <p className="mt-2 text-[13px] leading-[1.5] text-[#B3261E]">
+                  {fieldErrors.event_date}
+                </p>
+              ) : null}
               <input
                 type="text"
                 name="city"
@@ -315,6 +343,9 @@ const BookConsultationPage = () => {
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
+              {fieldErrors.city ? (
+                <p className="mt-2 text-[13px] leading-[1.5] text-[#B3261E]">{fieldErrors.city}</p>
+              ) : null}
               <input
                 type="text"
                 name="budget_range"
@@ -324,6 +355,11 @@ const BookConsultationPage = () => {
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
+              {fieldErrors.budget_range ? (
+                <p className="mt-2 text-[13px] leading-[1.5] text-[#B3261E]">
+                  {fieldErrors.budget_range}
+                </p>
+              ) : null}
             </div>
 
             <textarea
@@ -339,6 +375,11 @@ const BookConsultationPage = () => {
               className="mt-5 w-full pt-2 pb-1 resize-none border-b border-[#1F1F1F]/20 bg-transparent px-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90 overflow-hidden"
               style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
             />
+            {fieldErrors.vision_notes ? (
+              <p className="mt-2 text-[13px] leading-[1.5] text-[#B3261E]">
+                {fieldErrors.vision_notes}
+              </p>
+            ) : null}
 
             {isError ? (
               <p

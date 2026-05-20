@@ -199,9 +199,6 @@ export const addItem = async (req, res, next) => {
     const userId = String(req.user.id)
     const { packageId, quantity = 1, selectedOptions, addonTitle = '', addon = null } = req.body
 
-    if (!packageId) return res.status(400).json({ error: 'packageId is required' })
-    if (quantity < 1) return res.status(400).json({ error: 'quantity must be at least 1' })
-
     // Fetch package from Strapi — use filter by id (Strapi v5 single entry needs documentId, filter by id works)
     const { data: pkgs } = await strapiGet('/packages', {
       'filters[id][$eq]': packageId,
@@ -287,9 +284,6 @@ export const updateItem = async (req, res, next) => {
     const userId = String(req.user.id)
     const { itemId } = req.params
     const { quantity } = req.body
-
-    if (!quantity || quantity < 1)
-      return res.status(400).json({ error: 'quantity must be at least 1' })
 
     const item = await prisma.cartItem.findUnique({
       where: { id: itemId },
@@ -437,8 +431,6 @@ export const applyCoupon = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
     const { code } = req.body
-
-    if (!code) return res.status(400).json({ error: 'Coupon code is required' })
 
     const cart = await prisma.cart.findFirst({ where: { userId } })
     if (!cart) return res.status(404).json({ error: 'Cart not found' })

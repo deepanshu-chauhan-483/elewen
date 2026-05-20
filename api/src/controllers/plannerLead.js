@@ -16,21 +16,6 @@ export const createPlannerLead = async (req, res, next) => {
       vision_notes,
     } = req.body
 
-    if (!full_name || !email || !phone || !city || !event_type || !guest_count || !venue_type) {
-      return res.status(400).json({
-        error: 'Required fields missing',
-        fields: {
-          ...(!full_name && { full_name: 'Required' }),
-          ...(!email && { email: 'Required' }),
-          ...(!phone && { phone: 'Required' }),
-          ...(!city && { city: 'Required' }),
-          ...(!event_type && { event_type: 'Required' }),
-          ...(!guest_count && { guest_count: 'Required' }),
-          ...(!venue_type && { venue_type: 'Required' }),
-        },
-      })
-    }
-
     // guest_count from form is a range string e.g. "50-100" — store the lower bound as integer
     const guestCountInt = parseInt(String(guest_count).split('-')[0], 10) || null
 

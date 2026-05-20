@@ -91,6 +91,9 @@ export const sendMessage = async (req, res, next) => {
     })
     if (!thread) return res.status(404).json({ error: 'Thread not found' })
     if (thread.booking?.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+    if (['completed', 'cancelled'].includes(String(thread.booking?.status ?? '').toLowerCase())) {
+      return res.status(400).json({ error: 'Completed or cancelled bookings are read-only' })
+    }
 
     const validTypes = ['text', 'system', 'status_update']
     const finalType = validTypes.includes(messageType) ? messageType : 'text'
@@ -101,6 +104,11 @@ export const sendMessage = async (req, res, next) => {
         senderId: userId,
         messageText: messageText ?? null,
         messageType: finalType,
+        readStatus: {
+          create: {
+            userId,
+          },
+        },
         attachments:
           attachments.length > 0
             ? {

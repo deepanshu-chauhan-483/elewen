@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
 import { useAdminBookings } from '../hooks/useAdminData'
+import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatCurrency, formatDate } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
@@ -18,18 +19,6 @@ const stages = [
   { key: 'completed', label: 'Completed' },
 ]
 
-const badgeMap = {
-  new: 'bg-[#FCE7CF] text-[#C57A1E]',
-  confirmed: 'bg-[#DDF7E5] text-[#16A34A]',
-  info_collection: 'bg-[#DBEAFE] text-[#0383E4]',
-  planning: 'bg-[#EDE9FE] text-[#6D28D9]',
-  pre_event: 'bg-[#FCE7CF] text-[#C57A1E]',
-  execution: 'bg-[#DDF7E5] text-[#16A34A]',
-  post_event: 'bg-[#DBEAFE] text-[#0383E4]',
-  completed: 'bg-[#E5E7EB] text-[#4B5563]',
-  cancelled: 'bg-[#FFF3F3] text-[#8A1C1C]',
-}
-
 const borderColorMap = {
   new: 'border-[#C57A1E]',
   confirmed: 'border-[#16A34A]',
@@ -44,11 +33,13 @@ const borderColorMap = {
 
 function StatusBadge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
-  const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
-  const text = label ?? (key.charAt(0).toUpperCase() + key.slice(1)) ?? '-'
+  const cls = getAdminBadgeClass(status, { preset: 'vivid' })
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '-'
 
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}
+    >
       {text}
     </span>
   )
@@ -56,7 +47,13 @@ function StatusBadge({ status, label }) {
 
 function CalIcon() {
   return (
-    <svg className="h-4 w-4 text-[#8F8F8F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      className="h-4 w-4 text-[#8F8F8F]"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -64,9 +61,19 @@ function CalIcon() {
     </svg>
   )
 }
+function getSubtitle(booking) {
+  return [
+    // booking?.detailSubtitle,
+    booking?.event?.name,
+    booking?.package?.serviceCategories?.[0]?.name,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
 
 function BookingCard({ booking }) {
   const borderColor = borderColorMap[booking.status?.toLowerCase()] ?? 'border-[#CDB17E]'
+  const subtitle = getSubtitle(booking)
 
   return (
     <div
@@ -86,10 +93,7 @@ function BookingCard({ booking }) {
             </div>
           </div>
 
-          <p className="mt-1 text-sm text-[#6B7280]">
-            {booking.customer?.name || 'Customer'}
-            {booking.locationSummary ? ` - ${booking.locationSummary}` : ''}
-          </p>
+          <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
 
           <div className="mt-2 flex items-center gap-1.5 text-sm text-[#1C1C1C]">
             <CalIcon />
@@ -127,7 +131,7 @@ export default function BookingStatusTrackerPage() {
   const [activeStage, setActiveStage] = useState('all')
   const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 60 })
 
-  const bookings = bookingsQuery.data?.bookings ?? []
+  const bookings = useMemo(() => bookingsQuery.data?.bookings ?? [], [bookingsQuery.data?.bookings])
 
   const counts = useMemo(() => {
     const map = { all: bookings.length }
@@ -147,7 +151,8 @@ export default function BookingStatusTrackerPage() {
   const activeLabel = stages.find(stage => stage.key === activeStage)?.label ?? 'All Bookings'
 
   if (bookingsQuery.isLoading) return <LoadingState label="Loading booking pipeline..." />
-  if (bookingsQuery.error) return <ErrorState label="The booking tracker is unavailable right now." />
+  if (bookingsQuery.error)
+    return <ErrorState label="The booking tracker is unavailable right now." />
 
   return (
     <div className="space-y-6">
@@ -162,7 +167,11 @@ export default function BookingStatusTrackerPage() {
         <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
           Filter by Stage
         </p>
-        <SelectField value={activeStage} onChange={setActiveStage} className="min-h-10 rounded-full bg-[#F3F3F3]">
+        <SelectField
+          value={activeStage}
+          onChange={setActiveStage}
+          className="min-h-10 rounded-full bg-[#F3F3F3]"
+        >
           {stages.map(stage => (
             <option key={stage.key} value={stage.key}>
               {stage.label} ({counts[stage.key] ?? 0})
@@ -176,7 +185,7 @@ export default function BookingStatusTrackerPage() {
           {filtered.length} booking{filtered.length !== 1 ? 's' : ''}
         </span>
         {activeStage !== 'all' && (
-          <span className="text-sm text-[#8F8F8F]">in "{activeLabel}" stage</span>
+          <span className="text-sm text-[#8F8F8F]">in &quot;{activeLabel}&quot; stage</span>
         )}
       </div>
 

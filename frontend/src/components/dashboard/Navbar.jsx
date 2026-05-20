@@ -65,10 +65,10 @@ const MenuIcon = () => (
 
 function SearchBar() {
   return (
-    <div className="hidden items-center gap-2 rounded-full bg-[#F0F0F0] md:flex md:w-[300px]">
+    <div className="hidden min-w-0 items-center gap-2 rounded-full bg-[#F0F0F0] md:flex md:w-full">
       <button
         type="button"
-        className="flex w-[225px] items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md transition-all"
+        className="flex w-full min-w-0 items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md transition-all"
       >
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#591902] text-[#FAFAFA]">
           <SearchIcon />
@@ -81,7 +81,7 @@ function SearchBar() {
 
 const ActionButton = ({ children, to, onClick, className = '', ariaLabel, disabled = false }) => {
   const sharedClassName =
-    'inline-flex h-8 items-center justify-center gap-1 rounded-[8px] px-2 text-sm font-medium transition-colors'
+    'inline-flex h-8 items-center justify-center gap-1 rounded-[8px] px-2 text-[13px] font-medium transition-colors lg:px-3 lg:text-sm'
 
   if (to) {
     return (
@@ -115,12 +115,12 @@ const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
   }
 
   return (
-    <div className="flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto sm:flex-nowrap">
-      <div className="flex flex-wrap items-center justify-end gap-3">
+    <div className="flex min-w-0 items-center justify-end gap-2 lg:gap-3">
+      <div className="flex min-w-0 items-center justify-end gap-2 lg:gap-3">
         <ActionButton
           to="/"
           ariaLabel="Back to website"
-          className="min-w-[133px] bg-[#F3F3F3] text-[#262626] hover:bg-[#E8E8E8]"
+          className="bg-[#F3F3F3] text-[#262626] hover:bg-[#E8E8E8] md:min-w-[118px] lg:min-w-[133px]"
         >
           <ArrowLeftIcon />
           <span className="whitespace-nowrap">Back to Website</span>
@@ -130,7 +130,7 @@ const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
           onClick={handleLogout}
           ariaLabel="Logout"
           disabled={logoutMutation.isPending}
-          className="min-w-[78px] bg-[#D4BA8E] text-[#FAFAFA] hover:bg-[#c7aa76] disabled:cursor-not-allowed disabled:opacity-70"
+          className="bg-[#D4BA8E] text-[#FAFAFA] hover:bg-[#c7aa76] disabled:cursor-not-allowed disabled:opacity-70 md:min-w-[72px] lg:min-w-[78px]"
         >
           <span className="whitespace-nowrap">
             {logoutMutation.isPending ? 'Logging out' : 'Logout'}
@@ -139,7 +139,7 @@ const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
         </ActionButton>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 lg:gap-3">
         <button
           type="button"
           onClick={onOpenNotifications}
@@ -237,7 +237,7 @@ const Navbar = ({ onMobileMenuOpen }) => {
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-20 flex w-full h-[68px] items-center justify-between gap-3 px-4 py-3 sm:px-6 md:left-[260px] md:w-auto"
+        className="fixed top-0 left-0 right-0 z-20 flex h-[68px] w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 md:left-[260px] md:w-auto md:gap-4"
         style={{
           minHeight: DASHBOARD.NAVBAR_HEIGHT,
           backgroundColor: DASHBOARD.COLORS.NAVBAR_BG,
@@ -250,11 +250,11 @@ const Navbar = ({ onMobileMenuOpen }) => {
           </Link>
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden min-w-0 md:block md:flex-1 md:max-w-[40%] lg:max-w-[320px]">
           <SearchBar />
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden shrink-0 md:block">
           <UserMenu
             unreadCount={unreadCount}
             onOpenNotifications={() => setIsNotificationModalOpen(true)}
