@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import {
   useAdminSampleTastes,
   useAdminUpdateSampleTasteStatus,
@@ -460,6 +466,7 @@ export default function SampleTastePage() {
   const totalPages = Math.max(1, Number(samplesQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
   const statusCounts = samplesQuery.data?.statusCounts ?? {}
+  const isResultsLoading = samplesQuery.isFetching && !samplesQuery.isLoading
 
   if (samplesQuery.isLoading) return <LoadingState label="Loading sample taste bookings…" />
   if (samplesQuery.error)
@@ -558,7 +565,9 @@ export default function SampleTastePage() {
       </div>
 
       {/* ── Accordion list ── */}
-      {samples.length ? (
+      {isResultsLoading ? (
+        <SectionLoadingState label="Loading sample taste bookingsâ€¦" />
+      ) : samples.length ? (
         <div className="space-y-3">
           {samples.map(sample => (
             <SampleAccordionCard

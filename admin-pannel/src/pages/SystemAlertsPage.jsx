@@ -1,5 +1,10 @@
 import { useState } from 'react'
-import { ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import { useAdminAlerts, useAdminUpdateAlert } from '../hooks/useAdminData'
 import { formatDateTime } from '../lib/formatters'
 
@@ -221,6 +226,7 @@ export default function SystemAlertsPage() {
   const totalAlerts = Number(alertsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(alertsQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+  const isResultsLoading = alertsQuery.isFetching && !alertsQuery.isLoading
 
   const handleUpdate = (alertId, newStatus) => {
     updateAlertMutation.mutate({ alertId, body: { status: newStatus } })
@@ -319,7 +325,9 @@ export default function SystemAlertsPage() {
       </div>
 
       {/* ── Alert feed ── */}
-      {alerts.length ? (
+      {isResultsLoading ? (
+        <SectionLoadingState label="Loading system alertsâ€¦" />
+      ) : alerts.length ? (
         <div className="space-y-2.5">
           {alerts.map(alert => (
             <AlertCard

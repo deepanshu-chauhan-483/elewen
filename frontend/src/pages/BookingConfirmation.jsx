@@ -259,6 +259,10 @@ export default function BookingConfirmation() {
               }
             />
             <Detail
+              label="PIN Code"
+              value={checkoutInfo?.pinCode || booking?.pinCode || 'Not provided'}
+            />
+            <Detail
               label="Guests"
               value={checkoutInfo?.guestCount || booking?.guestCount || 'Not provided'}
             />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   adminAddBookingNote,
   adminAddSupportMessage,
@@ -95,6 +95,7 @@ function useAuthedAdminQuery({ queryKey, queryFn, enabled = true, staleTime = 30
     enabled: enabled && Boolean(token),
     retry: false,
     staleTime,
+    placeholderData: keepPreviousData,
     queryFn: () => withAdminToken(queryFn),
   })
 }
@@ -189,6 +190,7 @@ export function useAdminAddBookingNote() {
     mutationFn: ({ bookingId, body }) =>
       withAdminToken(token => adminAddBookingNote(token, bookingId, body)),
     onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
     },
   })

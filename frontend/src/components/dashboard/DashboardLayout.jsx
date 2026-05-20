@@ -18,14 +18,32 @@ const DashboardLayout = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [token, setToken] = useState(() => getStoredJwt())
+  const [authResolved, setAuthResolved] = useState(() => Boolean(getStoredJwt()))
 
   useEffect(() => {
-    const syncToken = () => setToken(getStoredJwt())
+    let active = true
+
+    const syncToken = () => {
+      if (!active) return
+      setAuthResolved(false)
+      getValidStoredJwt()
+        .then(nextToken => {
+          if (!active) return
+          setToken(nextToken || '')
+          setAuthResolved(true)
+        })
+        .catch(() => {
+          if (!active) return
+          setToken('')
+          setAuthResolved(true)
+        })
+    }
 
     window.addEventListener('elewen-auth-change', syncToken)
     window.addEventListener('storage', syncToken)
 
     return () => {
+      active = false
       window.removeEventListener('elewen-auth-change', syncToken)
       window.removeEventListener('storage', syncToken)
     }
@@ -39,6 +57,7 @@ const DashboardLayout = () => {
       if (nextToken !== token) {
         setToken(nextToken)
       }
+      setAuthResolved(true)
     })
 
     return () => {
@@ -47,15 +66,16 @@ const DashboardLayout = () => {
   }, [token])
 
   useEffect(() => {
+    if (!authResolved) return
     if (token) return
     const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
     navigate(`/login?redirect=${redirect}`, {
       replace: true,
       state: { from: `${location.pathname}${location.search}` },
     })
-  }, [location.pathname, location.search, navigate, token])
+  }, [authResolved, location.pathname, location.search, navigate, token])
 
-  if (!token) {
+  if (!authResolved || !token) {
     return (
       <div className="flex min-h-[var(--door-viewport-height)] items-center justify-center bg-[#FAFAFA] px-6 text-center text-sm text-[#6B7280] md:min-h-screen">
         Loading your customer dashboard...

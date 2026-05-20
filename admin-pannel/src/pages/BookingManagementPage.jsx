@@ -1,13 +1,68 @@
 import { useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import {
   useAdminAddBookingNote,
+  useAdminBooking,
   useAdminBookings,
   useAdminCreateVendorAssignment,
   useAdminUpdateBookingStatus,
   useAdminVendors,
 } from '../hooks/useAdminData'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
+
+// ---------------------------------------------------------------------------
+// Stage progression order - stages must follow this sequence
+// ---------------------------------------------------------------------------
+const STAGE_PROGRESSION = [
+  'new',
+  'confirmed',
+  'info_collection',
+  'planning',
+  'pre_event',
+  'execution',
+  'post_event',
+  'completed',
+]
+
+// Special case: cancelled can happen anytime
+// const SPECIAL_STATUSES = ['cancelled']
+
+function canProgressToStage(currentStatus, newStatus, remainingAmount = 0) {
+  // Special case: can always go to cancelled
+  if (newStatus === 'cancelled') return { allowed: true }
+
+  // Can't change to same status
+  if (currentStatus === newStatus) return { allowed: false, message: 'Already in this stage.' }
+
+  const currentIndex = STAGE_PROGRESSION.indexOf(currentStatus?.toLowerCase())
+  const newIndex = STAGE_PROGRESSION.indexOf(newStatus?.toLowerCase())
+
+  // If either status is not in progression order
+  if (currentIndex === -1 || newIndex === -1) {
+    return { allowed: false, message: 'Invalid stage transition.' }
+  }
+
+  // Can't go backward
+  if (newIndex < currentIndex) {
+    return { allowed: false, message: 'Cannot move back to a previous stage.' }
+  }
+
+  // Pre Event stage requires full payment
+  if (newStatus === 'pre_event' && remainingAmount > 0) {
+    return {
+      allowed: false,
+      message: `Cannot move to "Pre Event" stage. Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
+    }
+  }
+
+  return { allowed: true }
+}
 
 // ---------------------------------------------------------------------------
 // Status badge — normal text, no uppercase
@@ -185,15 +240,23 @@ function getSubtitle(booking) {
     .filter(Boolean)
     .join(' · ')
 }
+function getLatestStatusNote(statusLogs = []) {
+  return [...(Array.isArray(statusLogs) ? statusLogs : [])]
+    .reverse()
+    .find(log => String(log?.note ?? '').trim())
+}
 // ---------------------------------------------------------------------------
 // Admin Booking Accordion Card
 // ---------------------------------------------------------------------------
 function BookingAccordionCard({ booking }) {
   const [open, setOpen] = useState(false)
   const [statusInput, setStatusInput] = useState(booking.status ?? '')
-  const [note, setNote] = useState('')
+  const [statusNote, setStatusNote] = useState('')
+  const [internalNote, setInternalNote] = useState('')
   const [vendorId, setVendorId] = useState('')
+  const [statusError, setStatusError] = useState('')
 
+  const bookingQuery = useAdminBooking(open ? booking.id : null)
   const vendorsQuery = useAdminVendors({
     limit: 100,
     status: 'approved',
@@ -205,6 +268,54 @@ function BookingAccordionCard({ booking }) {
 
   const borderColor = borderColorMap[booking.status?.toLowerCase()] ?? 'border-[#CDB17E]'
   const subtitle = getSubtitle(booking)
+  const bookingDetails = bookingQuery.data ?? booking
+  const latestStatusNote = getLatestStatusNote(bookingDetails?.statusLogs)
+  const internalNotes = (Array.isArray(bookingDetails?.notes) ? bookingDetails.notes : []).filter(
+    entry => entry?.isInternal === true
+  )
+
+  const handleUpdateStatus = async () => {
+    const remainingAmount = bookingDetails?.remainingAmount ?? 0
+    const validation = canProgressToStage(booking.status, statusInput, remainingAmount)
+
+    if (!validation.allowed) {
+      setStatusError(validation.message || 'Invalid stage transition.')
+      return
+    }
+
+    setStatusError('')
+    await updateStatusMutation.mutateAsync({
+      bookingId: booking.id,
+      body: { status: statusInput, note: statusNote },
+    })
+    setStatusNote('')
+  }
+
+  const handleStatusInputChange = newStatus => {
+    setStatusInput(newStatus)
+    const remainingAmount = bookingDetails?.remainingAmount ?? 0
+    const validation = canProgressToStage(booking.status, newStatus, remainingAmount)
+    if (!validation.allowed) {
+      setStatusError(validation.message || 'Invalid stage transition.')
+    } else {
+      setStatusError('')
+    }
+  }
+
+  const handleSaveInternalNote = async () => {
+    await addNoteMutation.mutateAsync({
+      bookingId: booking.id,
+      body: { note: internalNote },
+    })
+    setInternalNote('')
+  }
+
+  // Check which status options are allowed
+  const isStatusAllowed = optionStatus => {
+    const remainingAmount = bookingDetails?.remainingAmount ?? 0
+    const validation = canProgressToStage(booking.status, optionStatus, remainingAmount)
+    return validation.allowed
+  }
 
   return (
     <div
@@ -280,17 +391,17 @@ function BookingAccordionCard({ booking }) {
           {/* Booking details grid */}
           <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
             {[
-              { label: 'CUSTOMER', value: booking.customer?.name },
-              { label: 'EMAIL', value: booking.customer?.email },
-              { label: 'PHONE', value: booking.customer?.phone },
+              { label: 'CUSTOMER', value: bookingDetails.customer?.name },
+              { label: 'EMAIL', value: bookingDetails.customer?.email },
+              { label: 'PHONE', value: bookingDetails.customer?.phone },
               {
                 label: 'GUESTS',
-                value: booking.guestCount ? String(booking.guestCount) : 'Pending',
+                value: bookingDetails.guestCount ? String(bookingDetails.guestCount) : 'Pending',
               },
-              { label: 'LOCATION', value: booking.locationSummary },
-              { label: 'ADVANCE', value: formatCurrency(booking.advanceAmount) },
-              { label: 'REMAINING', value: formatCurrency(booking.remainingAmount) },
-              { label: 'BOOKING ID', value: `#${booking.id}` },
+              { label: 'LOCATION', value: bookingDetails.locationSummary },
+              { label: 'ADVANCE', value: formatCurrency(bookingDetails.advanceAmount) },
+              { label: 'REMAINING', value: formatCurrency(bookingDetails.remainingAmount) },
+              { label: 'BOOKING ID', value: `#${bookingDetails.id}` },
             ].map(f => (
               <div key={f.label}>
                 <p className="text-[11px] tracking-[0.16em] text-[#767676]">{f.label}</p>
@@ -308,17 +419,33 @@ function BookingAccordionCard({ booking }) {
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">New stage</p>
                   <SelectField
                     value={statusInput}
-                    onChange={setStatusInput}
+                    onChange={handleStatusInputChange}
                     className="min-h-10 rounded-full bg-[#F3F3F3]"
                   >
-                    <option value="new">New</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="info_collection">Info Collection</option>
-                    <option value="planning">Planning</option>
-                    <option value="pre_event">Pre Event</option>
-                    <option value="execution">Execution</option>
-                    <option value="post_event">Post Event</option>
-                    <option value="completed">Completed</option>
+                    <option value="new" disabled={!isStatusAllowed('new')}>
+                      New
+                    </option>
+                    <option value="confirmed" disabled={!isStatusAllowed('confirmed')}>
+                      Confirmed
+                    </option>
+                    <option value="info_collection" disabled={!isStatusAllowed('info_collection')}>
+                      Info Collection
+                    </option>
+                    <option value="planning" disabled={!isStatusAllowed('planning')}>
+                      Planning
+                    </option>
+                    <option value="pre_event" disabled={!isStatusAllowed('pre_event')}>
+                      Pre Event
+                    </option>
+                    <option value="execution" disabled={!isStatusAllowed('execution')}>
+                      Execution
+                    </option>
+                    <option value="post_event" disabled={!isStatusAllowed('post_event')}>
+                      Post Event
+                    </option>
+                    <option value="completed" disabled={!isStatusAllowed('completed')}>
+                      Completed
+                    </option>
                     <option value="cancelled">Cancelled</option>
                   </SelectField>
                 </div>
@@ -326,24 +453,35 @@ function BookingAccordionCard({ booking }) {
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Note (optional)</p>
                   <input
                     type="text"
-                    value={note}
-                    onChange={e => setNote(e.target.value)}
+                    value={statusNote}
+                    onChange={e => setStatusNote(e.target.value)}
                     placeholder="Reason for change…"
                     className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
                   />
                 </div>
                 <PrimaryBtn
-                  disabled={updateStatusMutation.isPending}
-                  onClick={() =>
-                    updateStatusMutation.mutate({
-                      bookingId: booking.id,
-                      body: { status: statusInput, note },
-                    })
-                  }
+                  disabled={updateStatusMutation.isPending || !!statusError}
+                  onClick={handleUpdateStatus}
                 >
                   {updateStatusMutation.isPending ? 'Updating…' : 'Update Status'}
                 </PrimaryBtn>
               </div>
+              {statusError && (
+                <div className="mt-3 rounded-xl bg-[#FFF3F3] px-4 py-3 border border-[#FCC5C5]">
+                  <p className="text-sm text-[#8A1C1C]">{statusError}</p>
+                </div>
+              )}
+              {latestStatusNote ? (
+                <div className="mt-3 rounded-xl bg-white px-4 py-3">
+                  <p className="text-[11px] tracking-[0.16em] text-[#8F8F8F] uppercase">
+                    Latest stage note
+                  </p>
+                  <p className="mt-1.5 text-sm text-[#2D2D2D]">{latestStatusNote.note}</p>
+                  <p className="mt-1 text-xs text-[#8F8F8F]">
+                    {formatDateTime(latestStatusNote.createdAt)}
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -354,18 +492,32 @@ function BookingAccordionCard({ booking }) {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="flex-1">
                   <Textarea
-                    value={note}
-                    onChange={e => setNote(e.target.value)}
+                    value={internalNote}
+                    onChange={e => setInternalNote(e.target.value)}
                     placeholder="Add context, dependencies, or follow-ups (team-only)…"
                   />
                 </div>
                 <GhostBtn
-                  disabled={addNoteMutation.isPending || !note.trim()}
-                  onClick={() => addNoteMutation.mutate({ bookingId: booking.id, body: { note } })}
+                  disabled={addNoteMutation.isPending || !internalNote.trim()}
+                  onClick={handleSaveInternalNote}
                 >
                   {addNoteMutation.isPending ? 'Saving…' : 'Save Note'}
                 </GhostBtn>
               </div>
+              {internalNotes.length ? (
+                <div className="mt-3 space-y-2">
+                  {internalNotes.map(entry => (
+                    <div key={entry.id} className="rounded-xl bg-white px-4 py-3">
+                      <p className="text-sm text-[#2D2D2D]">{entry.note}</p>
+                      <p className="mt-1 text-xs text-[#8F8F8F]">
+                        {formatDateTime(entry.createdAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-[#8F8F8F]">No internal notes saved yet.</p>
+              )}
             </div>
           </div>
 
@@ -400,9 +552,9 @@ function BookingAccordionCard({ booking }) {
               </div>
 
               {/* Assigned vendor list */}
-              {booking.vendorAssignments?.length ? (
+              {bookingDetails.vendorAssignments?.length ? (
                 <div className="mt-3 space-y-2">
-                  {booking.vendorAssignments.map(a => (
+                  {bookingDetails.vendorAssignments.map(a => (
                     <div
                       key={a.id}
                       className="flex items-center justify-between rounded-xl bg-white px-4 py-3"
@@ -428,9 +580,9 @@ function BookingAccordionCard({ booking }) {
           {/* ── Payment History ── */}
           <div className="mt-6">
             <SectionLabel>Payment History</SectionLabel>
-            {booking.payments?.length ? (
+            {bookingDetails.payments?.length ? (
               <div className="space-y-2">
-                {booking.payments.map(p => (
+                {bookingDetails.payments.map(p => (
                   <div
                     key={p.id}
                     className="flex items-center justify-between rounded-xl bg-[#F3F3F3] px-4 py-3"
@@ -465,6 +617,7 @@ export default function BookingManagementPage() {
   const [search, setSearch] = useState('')
   const [bucket, setBucket] = useState('all')
   const [statusFilter, setStatusFilter] = useState('')
+  const [sortBy, setSortBy] = useState('latest')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
 
@@ -472,12 +625,14 @@ export default function BookingManagementPage() {
     search,
     bucket,
     status: statusFilter,
+    sortBy,
     page: currentPage,
     limit: PAGE_SIZE,
   })
   const bookings = bookingsQuery.data?.bookings ?? []
   const totalBookings = Number(bookingsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
+  const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
 
   if (bookingsQuery.isLoading) return <LoadingState label="Loading bookings…" />
   if (bookingsQuery.error) return <ErrorState label="Bookings could not be loaded right now." />
@@ -497,7 +652,7 @@ export default function BookingManagementPage() {
         <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">
           Filter Bookings
         </p>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] focus:border-[#C6A15B] px-2.5 py-1.5 text-[#A19B94]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
               <span className="h-3.5 w-3.5">
@@ -549,6 +704,17 @@ export default function BookingManagementPage() {
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </SelectField>
+          <SelectField
+            value={sortBy}
+            onChange={value => {
+              setSortBy(value)
+              setCurrentPage(1)
+            }}
+            className="min-h-10 rounded-full bg-[#F3F3F3]"
+          >
+            <option value="latest">Latest First</option>
+            <option value="event_date">By Event Date</option>
+          </SelectField>
         </div>
       </div>
 
@@ -563,7 +729,9 @@ export default function BookingManagementPage() {
       </div>
 
       {/* ── Accordion list ── */}
-      {bookings.length ? (
+      {isResultsLoading ? (
+        <SectionLoadingState label="Loading bookingsâ€¦" />
+      ) : bookings.length ? (
         <div>
           <div className="space-y-3">
             {bookings.map(booking => (

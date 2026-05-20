@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, StatusBadge } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  StatusBadge,
+} from '../components/ui/AdminUI'
 import {
   useAdminMessageThread,
   useAdminMessageThreads,
@@ -167,6 +173,7 @@ export default function MessageBoxPage() {
 
   const threadQuery = useAdminMessageThread(selectedThreadListItem?.bookingId)
   const sendMessageMutation = useAdminSendMessage()
+  const isListLoading = threadsQuery.isFetching && !threadsQuery.isLoading
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -255,7 +262,12 @@ export default function MessageBoxPage() {
             className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 hide-scrollbar"
             data-lenis-prevent
           >
-            {visibleThreads.length ? (
+            {isListLoading ? (
+              <SectionLoadingState
+                label="Loading message threads..."
+                minHeightClass="min-h-[320px]"
+              />
+            ) : visibleThreads.length ? (
               visibleThreads.map(threadItem => (
                 <ThreadCard
                   key={threadItem.id}

@@ -78,6 +78,16 @@ export async function cacheDelPattern(pattern) {
   }
 }
 
+export async function cacheDelContaining(pattern, needle) {
+  try {
+    const keys = await getRedis().keys(pattern)
+    const matchedKeys = keys.filter(key => key.includes(needle))
+    if (matchedKeys.length) await getRedis().del(...matchedKeys)
+  } catch {
+    // ignore
+  }
+}
+
 // ─── Wrap any async fn with cache-aside logic ─────────────────────────────────
 export async function withCache(key, ttlSeconds, fn) {
   const cached = await cacheGet(key)

@@ -3,7 +3,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import { getStoredJwt, paymentCreateOrder, paymentVerify } from '../../lib/api'
 import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
-import { useDashboardBookingTimeline, useDashboardBookings } from '../../hooks/useDashboardData'
+import {
+  useDashboardBooking,
+  useDashboardBookingTimeline,
+  useDashboardBookings,
+} from '../../hooks/useDashboardData'
 
 const TIMELINE_DISPLAY_ORDER = [
   'Inquiry / Booking Placed',
@@ -204,6 +208,8 @@ export default function BookingTimeline() {
     () => orderBookings.find(booking => booking.id === selectedId) ?? orderBookings[0] ?? null,
     [orderBookings, selectedId]
   )
+  const { data: selectedBookingDetails } = useDashboardBooking(selectedBooking?.id)
+  const activeBooking = selectedBookingDetails ?? selectedBooking
 
   const {
     data: timelineData = [],
@@ -245,6 +251,9 @@ export default function BookingTimeline() {
 
         await queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
         await queryClient.invalidateQueries({
+          queryKey: ['dashboard', 'booking', booking.id],
+        })
+        await queryClient.invalidateQueries({
           queryKey: ['dashboard', 'booking-timeline', booking.id],
         })
         return
@@ -277,6 +286,9 @@ export default function BookingTimeline() {
               })
 
               await queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
+              await queryClient.invalidateQueries({
+                queryKey: ['dashboard', 'booking', booking.id],
+              })
               await queryClient.invalidateQueries({
                 queryKey: ['dashboard', 'booking-timeline', booking.id],
               })
@@ -365,14 +377,14 @@ export default function BookingTimeline() {
               className="mb-1 text-lg font-semibold tracking-tight text-[#F5E6CC]"
               style={{ fontFamily: 'poppins' }}
             >
-              {selectedBooking?.package?.title || 'Booking'}
+              {activeBooking?.package?.title || 'Booking'}
             </h2>
             <p className="text-sm text-[#D4A96A]">
-              {selectedBooking?.displaySubtitle || selectedBooking?.event?.name || 'Event'} -{' '}
-              {formatDashboardDate(selectedBooking?.eventDate)}
+              {activeBooking?.displaySubtitle || activeBooking?.event?.name || 'Event'} -{' '}
+              {formatDashboardDate(activeBooking?.eventDate)}
             </p>
           </div>
-          <StatusPill status={selectedBooking?.status} label={selectedBooking?.statusLabel} />
+          <StatusPill status={activeBooking?.status} label={activeBooking?.statusLabel} />
         </div>
 
         <div className="border-b border-[#F0EBE4] bg-[#FDFAF7] px-7 py-4">
@@ -419,7 +431,7 @@ export default function BookingTimeline() {
                       </div>
                       <p className="text-xs leading-relaxed text-[#8C7B6B]">{item.description}</p>
 
-                      {selectedBooking?.status === 'pre_event' &&
+                      {activeBooking?.status === 'pre_event' &&
                       item.title === 'Pre-event Final Checks' &&
                       item.status === 'blocked' ? (
                         <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-4 py-3">
@@ -427,27 +439,27 @@ export default function BookingTimeline() {
                             <div>
                               <p className="text-[11px] text-[#A16255]">AMOUNT PAID</p>
                               <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
-                                {formatPaymentAmount(selectedBooking?.paymentSummary?.amountPaid)}
+                                {formatPaymentAmount(activeBooking?.paymentSummary?.amountPaid)}
                               </p>
                             </div>
                             <div>
                               <p className="text-[11px] text-[#A16255]">REMAINING PAYMENT</p>
                               <p className="mt-1 text-sm font-medium text-[#B42318]">
-                                {formatPaymentAmount(selectedBooking?.paymentSummary?.amountDue)}
+                                {formatPaymentAmount(activeBooking?.paymentSummary?.amountDue)}
                               </p>
                             </div>
                           </div>
 
                           <button
                             type="button"
-                            onClick={() => handlePayRemaining(selectedBooking)}
+                            onClick={() => handlePayRemaining(activeBooking)}
                             disabled={
-                              payingBookingId === selectedBooking?.id ||
-                              Number(selectedBooking?.paymentSummary?.amountDue ?? 0) <= 0
+                              payingBookingId === activeBooking?.id ||
+                              Number(activeBooking?.paymentSummary?.amountDue ?? 0) <= 0
                             }
                             className="rounded-full bg-[#CDB17E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#c3a66f] disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {payingBookingId === selectedBooking?.id
+                            {payingBookingId === activeBooking?.id
                               ? 'Opening payment...'
                               : 'Pay Remaining Payment'}
                           </button>

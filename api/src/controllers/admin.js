@@ -22,6 +22,55 @@ const BOOKING_STATUSES = [
   'cancelled',
 ]
 
+// Stage progression order - must follow this sequence
+const STAGE_PROGRESSION = [
+  'new',
+  'confirmed',
+  'info_collection',
+  'planning',
+  'pre_event',
+  'execution',
+  'post_event',
+  'completed',
+]
+
+// Validate stage progression
+function validateStageProgression(currentStatus, newStatus, remainingAmount = 0) {
+  // Special case: can always go to cancelled
+  if (newStatus === 'cancelled') return { valid: true }
+
+  // Can't change to same status
+  if (currentStatus === newStatus) {
+    return { valid: false, message: 'Already in this stage.' }
+  }
+
+  const currentIndex = STAGE_PROGRESSION.indexOf(currentStatus?.toLowerCase())
+  const newIndex = STAGE_PROGRESSION.indexOf(newStatus?.toLowerCase())
+
+  // If either status is not in progression order
+  if (currentIndex === -1 || newIndex === -1) {
+    return { valid: false, message: 'Invalid stage transition.' }
+  }
+
+  // Can't go backward
+  if (newIndex < currentIndex) {
+    return {
+      valid: false,
+      message: `Cannot move back to "${newStatus.replaceAll('_', ' ')}". Stages must progress forward.`,
+    }
+  }
+
+  // Pre Event stage requires full payment
+  if (newStatus === 'pre_event' && remainingAmount > 0) {
+    return {
+      valid: false,
+      message: `Cannot move to "Pre Event" stage. Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
+    }
+  }
+
+  return { valid: true }
+}
+
 const SAMPLE_STATUSES = ['new', 'assigned', 'delivered', 'completed']
 const ALERT_STATUSES = ['new', 'acknowledged', 'resolved', 'snoozed']
 const ALERT_SEVERITIES = ['low', 'medium', 'high', 'critical']
@@ -1043,6 +1092,7 @@ export async function listAdminBookings(req, res, next) {
     const bucket = normalizeText(req.query.bucket || 'all').toLowerCase()
     const status = normalizeText(req.query.status).toLowerCase()
     const search = normalizeText(req.query.search)
+    const sortBy = normalizeText(req.query.sortBy || 'event_date').toLowerCase()
     const page = toPositiveInt(req.query.page, 1)
     const limit = Math.min(toPositiveInt(req.query.limit, 12), 50)
     const skip = (page - 1) * limit
@@ -1066,6 +1116,9 @@ export async function listAdminBookings(req, res, next) {
       ...(status && BOOKING_STATUSES.includes(status) ? { status } : {}),
     }
 
+    const orderByClause =
+      sortBy === 'latest' ? [{ createdAt: 'desc' }] : [{ eventDate: 'asc' }, { createdAt: 'desc' }]
+
     const [bookings, total, statusCountRows] = await Promise.all([
       prisma.booking.findMany({
         where,
@@ -1077,7 +1130,7 @@ export async function listAdminBookings(req, res, next) {
           vendorAssignments: true,
           cancellation: true,
         },
-        orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
+        orderBy: orderByClause,
         skip,
         take: limit,
       }),
@@ -1186,11 +1239,20 @@ export async function updateAdminBookingStatus(req, res, next) {
       return res.status(404).json({ error: 'Booking not found' })
     }
 
-    if (status === 'execution') {
-      const totalPaid = booking.payments
-        .filter(payment => payment.status === 'success')
-        .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+    // Calculate remaining amount
+    const totalPaid = booking.payments
+      .filter(payment => payment.status === 'success')
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+    const remainingAmount = toNumber(booking.totalPrice) - totalPaid
 
+    // Validate stage progression
+    const validation = validateStageProgression(booking.status, status, remainingAmount)
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.message, code: 'INVALID_STAGE_PROGRESSION' })
+    }
+
+    // Legacy validation for execution stage (kept for backward compatibility)
+    if (status === 'execution') {
       if (totalPaid < toNumber(booking.totalPrice)) {
         return res.status(400).json({
           error: 'Remaining payment must be completed before moving to execution.',
@@ -1444,7 +1506,6 @@ export async function getAdminVendorWorkspace(req, res, next) {
     const limit = Math.min(toPositiveInt(req.query.limit, 10), 50)
     const result = await fetchVendorDirectory({
       search,
-      status: tab === 'pending' ? 'pending' : tab === 'unassigned' ? 'approved' : '',
       availability,
       page: 1,
       limit: 1000,
@@ -1473,12 +1534,19 @@ export async function getAdminVendorWorkspace(req, res, next) {
         if (
           category &&
           !(vendor.serviceCategories ?? []).some(service =>
-            String(service?.name ?? '').toLowerCase().includes(category)
+            String(service?.name ?? '')
+              .toLowerCase()
+              .includes(category)
           )
         ) {
           return false
         }
-        if (location && !String(vendor.locationCity ?? '').toLowerCase().includes(location)) {
+        if (
+          location &&
+          !String(vendor.locationCity ?? '')
+            .toLowerCase()
+            .includes(location)
+        ) {
           return false
         }
         return true

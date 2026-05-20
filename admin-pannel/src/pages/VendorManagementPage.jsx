@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { EmptyState, ErrorState, LoadingState } from '../components/ui/AdminUI'
+import { EmptyState, ErrorState, LoadingState, SectionLoadingState } from '../components/ui/AdminUI'
 import {
   useAdminBookings,
   useAdminCreateVendorAssignment,
@@ -522,6 +522,7 @@ export default function VendorManagementPage() {
   const activeList = workspace.activeList ?? []
   const totalPages = Math.max(1, Number(workspace.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+  const isResultsLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
 
   if (workspaceQuery.isLoading) return <LoadingState label="Loading vendors…" />
   if (workspaceQuery.error) return <ErrorState label="Vendor data could not be loaded right now." />
@@ -664,7 +665,9 @@ export default function VendorManagementPage() {
       </div>
 
       {/* ── Accordion list ── */}
-      {activeList.length ? (
+      {isResultsLoading ? (
+        <SectionLoadingState label="Loading vendorsâ€¦" />
+      ) : activeList.length ? (
         <div className="space-y-3">
           {activeList.map(vendor => (
             <VendorAccordionCard

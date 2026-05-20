@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import { useAdminBookings } from '../hooks/useAdminData'
 import { formatCurrency, formatDate } from '../lib/formatters'
 
@@ -168,6 +174,7 @@ export default function BookingStatusTrackerPage() {
   const totalBookings = Number(bookingsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+  const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
   const statusCounts = useMemo(
     () => bookingsQuery.data?.statusCounts ?? {},
     [bookingsQuery.data?.statusCounts]
@@ -237,7 +244,9 @@ export default function BookingStatusTrackerPage() {
         )}
       </div>
 
-      {bookings.length ? (
+      {isResultsLoading ? (
+        <SectionLoadingState label="Loading booking pipeline..." />
+      ) : bookings.length ? (
         <div className="space-y-3">
           {bookings.map(booking => (
             <BookingCard key={booking.id} booking={booking} />

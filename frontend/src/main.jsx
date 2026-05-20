@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import SmoothScroll from './SmoothScroll'
+import { CartProvider } from './hooks/useCart'
+// import { WishlistProvider } from './hooks/useWishlist'
 import { strapiGet } from './lib/strapi'
 import { fetchInHousePlannerPageData, fetchLandingPageData } from './hooks/useCmsPages'
 import './index.css'
@@ -64,9 +66,13 @@ prefetchCmsPages()
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <SmoothScroll>
-        <App />
-      </SmoothScroll>
+      <CartProvider>
+        {/* <WishlistProvider> */}
+        <SmoothScroll>
+          <App />
+        </SmoothScroll>
+        {/* </WishlistProvider> */}
+      </CartProvider>
     </QueryClientProvider>
   </React.StrictMode>
 )

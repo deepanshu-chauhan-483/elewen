@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import {
   useAdminAddSupportMessage,
   useAdminSupportTicket,
@@ -200,6 +206,7 @@ export default function SupportPage() {
   const ticket = ticketQuery.data ?? selectedListTicket
   const statusValue = ticket?.id === selectedId ? statusInput : (ticket?.status ?? 'open')
   const priorityValue = ticket?.id === selectedId ? priorityInput : (ticket?.priority ?? 'medium')
+  const isListLoading = ticketsQuery.isFetching && !ticketsQuery.isLoading
 
   if (ticketsQuery.isLoading) return <LoadingState label="Loading support tickets…" />
   if (ticketsQuery.error) return <ErrorState label="Support tickets are unavailable right now." />
@@ -268,7 +275,12 @@ export default function SupportPage() {
           </div>
 
           {/* List */}
-          {ticketList.length ? (
+          {isListLoading ? (
+            <SectionLoadingState
+              label="Loading support ticketsâ€¦"
+              minHeightClass="min-h-[320px]"
+            />
+          ) : ticketList.length ? (
             <div className="flex flex-col gap-2">
               {ticketList.map(item => (
                 <TicketItem

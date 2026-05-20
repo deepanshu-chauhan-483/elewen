@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
 import { useServiceAreas } from '../hooks/useServiceAreas'
+import { readStoredCartPinCode, writeStoredCartPinCode } from '../lib/cartPinCode'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
@@ -1349,7 +1350,7 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState('')
   const [couponMessage, setCouponMessage] = useState('')
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
-  const [pincode, setPincode] = useState('')
+  const [pincode, setPincode] = useState(() => readStoredCartPinCode())
   const [pincodeMessage, setPincodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [isPincodeValid, setIsPincodeValid] = useState(false)
@@ -1523,6 +1524,7 @@ export default function CartPage() {
     const normalizedPincode = normalizePincode(value)
 
     setPincode(normalizedPincode)
+    writeStoredCartPinCode(normalizedPincode)
     setIsPincodeValid(false)
 
     if (!normalizedPincode) {

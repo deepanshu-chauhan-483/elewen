@@ -200,6 +200,20 @@ export function LoadingState({ label = 'Loading admin data...' }) {
   )
 }
 
+export function SectionLoadingState({
+  label = 'Loading admin data...',
+  className = '',
+  minHeightClass = 'min-h-[220px]',
+}) {
+  return (
+    <div
+      className={`flex items-center justify-center rounded-3xl border border-[#E7E0DA] bg-white/80 px-6 py-10 text-sm text-[#4B5563] ${minHeightClass} ${className}`}
+    >
+      {label}
+    </div>
+  )
+}
+
 export function ErrorState({ label = 'This section could not be loaded yet.' }) {
   return (
     <div className="rounded-3xl border border-[#F1B7B7] bg-[#FFF3F3] px-6 py-6 text-sm text-[#8A1C1C]">

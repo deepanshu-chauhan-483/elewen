@@ -10,6 +10,7 @@ import {
   paymentCreateOrder,
   paymentVerify,
 } from '../lib/api'
+import { readStoredCartPinCode } from '../lib/cartPinCode'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 
@@ -490,7 +491,7 @@ export default function CheckoutPage() {
   )
   const [eventTime, setEventTime] = useState('')
   const [eventAddress, setEventAddress] = useState(cart?.eventCity ?? '')
-  const [pinCode, setPinCode] = useState('')
+  const [pinCode, setPinCode] = useState(() => readStoredCartPinCode())
   const [guestCount, setGuestCount] = useState(
     cart?.guestCount != null ? String(cart.guestCount) : ''
   )

@@ -9,6 +9,8 @@
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 const AUTH_EVENT = 'elewen-auth-change'
+const JWT_STORAGE_KEY = 'elewen_jwt'
+const LEGACY_JWT_STORAGE_KEY = 'accessToken'
 
 let refreshPromise = null
 
@@ -37,7 +39,21 @@ function isJwtLike(token) {
 }
 
 function getRawStoredJwt() {
-  return localStorage.getItem('elewen_jwt') || localStorage.getItem('accessToken') || ''
+  const legacyLocalJwt =
+    localStorage.getItem(JWT_STORAGE_KEY) || localStorage.getItem(LEGACY_JWT_STORAGE_KEY) || ''
+
+  if (legacyLocalJwt) return legacyLocalJwt
+
+  const sessionJwt =
+    sessionStorage.getItem(JWT_STORAGE_KEY) || sessionStorage.getItem(LEGACY_JWT_STORAGE_KEY) || ''
+
+  if (sessionJwt) {
+    localStorage.setItem(JWT_STORAGE_KEY, sessionJwt)
+    sessionStorage.removeItem(JWT_STORAGE_KEY)
+    sessionStorage.removeItem(LEGACY_JWT_STORAGE_KEY)
+  }
+
+  return sessionJwt
 }
 
 export function getStoredJwt() {
@@ -50,23 +66,23 @@ export function getStoredJwt() {
     return ''
   }
 
-  if (jwt && !localStorage.getItem('elewen_jwt')) {
-    localStorage.setItem('elewen_jwt', jwt)
-  }
-
   return jwt
 }
 
 export function setStoredJwt(jwt) {
   if (!jwt) return
-  localStorage.setItem('elewen_jwt', jwt)
-  localStorage.setItem('accessToken', jwt)
+  localStorage.setItem(JWT_STORAGE_KEY, jwt)
+  localStorage.setItem(LEGACY_JWT_STORAGE_KEY, jwt)
+  sessionStorage.removeItem(JWT_STORAGE_KEY)
+  sessionStorage.removeItem(LEGACY_JWT_STORAGE_KEY)
   window.dispatchEvent(new Event(AUTH_EVENT))
 }
 
 export function clearStoredJwt() {
-  localStorage.removeItem('elewen_jwt')
-  localStorage.removeItem('accessToken')
+  localStorage.removeItem(JWT_STORAGE_KEY)
+  localStorage.removeItem(LEGACY_JWT_STORAGE_KEY)
+  sessionStorage.removeItem(JWT_STORAGE_KEY)
+  sessionStorage.removeItem(LEGACY_JWT_STORAGE_KEY)
   window.dispatchEvent(new Event(AUTH_EVENT))
 }
 

@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import {
   useAdminBookings,
   useAdminCoupons,
@@ -339,6 +345,7 @@ function CustomerPayments({ processRefundMutation }) {
   const currentList = lists[tab] ?? []
   const totalPages = Math.max(1, Number(customerPayments.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+  const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
 
   if (workspaceQuery.isLoading) return <LoadingState label="Loading customer payments…" />
   if (workspaceQuery.error)
@@ -369,125 +376,131 @@ function CustomerPayments({ processRefundMutation }) {
         </div>
       </div>
 
-      {/* Active bookings */}
-      {tab === 'active' &&
-        (lists.active.length ? (
-          <div className="space-y-2.5">
-            {currentList.map(b => (
-              <BookingPaymentRow key={b.id} booking={b} />
-            ))}
-            <PaginationControls
-              currentPage={visiblePage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        ) : (
-          <EmptyState
-            title="No active booking balances"
-            body="Active bookings with payment context will appear here."
-          />
-        ))}
-
-      {/* Post-event */}
-      {tab === 'post_event' &&
-        (lists.post_event.length ? (
-          <div className="space-y-2.5">
-            {currentList.map(b => (
-              <div
-                key={b.id}
-                className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[#1C1C1C]">
-                    {b.customer?.name || 'Customer'}
-                    <span className="ml-2 font-normal text-[#6B7280]">
-                      / {b.package?.title || b.id}
-                    </span>
-                  </p>
-
-                  <p className="mt-1 text-xs text-[#8F8F8F]">
-                    Balance due:{' '}
-                    <span className="font-medium text-[#2D2D2D]">
-                      {formatCurrency(b.outstandingAmount)}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <Badge status={b.status} label={b.statusLabel} />
-
-                  <Badge
-                    status={b.outstandingAmount > 0 ? 'pending' : 'resolved'}
-                    label={b.outstandingAmount > 0 ? 'Reminder needed' : 'Settled'}
-                  />
-                </div>
+      {isSectionLoading ? (
+        <SectionLoadingState label="Loading customer paymentsâ€¦" />
+      ) : (
+        <>
+          {/* Active bookings */}
+          {tab === 'active' &&
+            (lists.active.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(b => (
+                  <BookingPaymentRow key={b.id} booking={b} />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
               </div>
-            ))}
-            <PaginationControls
-              currentPage={visiblePage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        ) : (
-          <EmptyState
-            title="No post-event pending payments"
-            body="Outstanding post-event balances will appear here."
-          />
-        ))}
-
-      {/* Failed */}
-      {tab === 'failed' &&
-        (lists.failed.length ? (
-          <div className="space-y-2.5">
-            {currentList.map(p => (
-              <PaymentRecordRow
-                key={p.id}
-                payment={p}
-                showRefundActions
-                isRefundBusy={processRefundMutation.isPending}
-                onRefundAction={(refundId, action) =>
-                  refundId &&
-                  processRefundMutation.mutate({
-                    refundId,
-                    body: { action },
-                  })
-                }
+            ) : (
+              <EmptyState
+                title="No active booking balances"
+                body="Active bookings with payment context will appear here."
               />
             ))}
-            <PaginationControls
-              currentPage={visiblePage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        ) : (
-          <EmptyState
-            title="No failed payments"
-            body="Failed transactions needing follow-up will appear here."
-          />
-        ))}
 
-      {/* Completed */}
-      {tab === 'completed' &&
-        (lists.completed.length ? (
-          <div className="space-y-2.5">
-            {currentList.map(p => (
-              <PaymentRecordRow key={p.id} payment={p} />
+          {/* Post-event */}
+          {tab === 'post_event' &&
+            (lists.post_event.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(b => (
+                  <div
+                    key={b.id}
+                    className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-[#1C1C1C]">
+                        {b.customer?.name || 'Customer'}
+                        <span className="ml-2 font-normal text-[#6B7280]">
+                          / {b.package?.title || b.id}
+                        </span>
+                      </p>
+
+                      <p className="mt-1 text-xs text-[#8F8F8F]">
+                        Balance due:{' '}
+                        <span className="font-medium text-[#2D2D2D]">
+                          {formatCurrency(b.outstandingAmount)}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Badge status={b.status} label={b.statusLabel} />
+
+                      <Badge
+                        status={b.outstandingAmount > 0 ? 'pending' : 'resolved'}
+                        label={b.outstandingAmount > 0 ? 'Reminder needed' : 'Settled'}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No post-event pending payments"
+                body="Outstanding post-event balances will appear here."
+              />
             ))}
-            <PaginationControls
-              currentPage={visiblePage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        ) : (
-          <EmptyState
-            title="No completed payments"
-            body="Successful and refunded records will appear here."
-          />
-        ))}
+
+          {/* Failed */}
+          {tab === 'failed' &&
+            (lists.failed.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PaymentRecordRow
+                    key={p.id}
+                    payment={p}
+                    showRefundActions
+                    isRefundBusy={processRefundMutation.isPending}
+                    onRefundAction={(refundId, action) =>
+                      refundId &&
+                      processRefundMutation.mutate({
+                        refundId,
+                        body: { action },
+                      })
+                    }
+                  />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No failed payments"
+                body="Failed transactions needing follow-up will appear here."
+              />
+            ))}
+
+          {/* Completed */}
+          {tab === 'completed' &&
+            (lists.completed.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PaymentRecordRow key={p.id} payment={p} />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No completed payments"
+                body="Successful and refunded records will appear here."
+              />
+            ))}
+        </>
+      )}
     </div>
   )
 }
@@ -520,6 +533,7 @@ function VendorPayments({
   const currentList = vendorPayments[tab] ?? []
   const totalPages = Math.max(1, Number(vendorPayments.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+  const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
 
   if (workspaceQuery.isLoading) return <LoadingState label="Loading vendor payouts…" />
   if (workspaceQuery.error) return <ErrorState label="Vendor payouts are unavailable right now." />
@@ -602,50 +616,56 @@ function VendorPayments({
         size="sm"
       />
 
-      {tab === 'pending' &&
-        ((vendorPayments.pending ?? []).length ? (
-          <div className="space-y-2.5">
-            {currentList.map(p => (
-              <PayoutRow
-                key={p.id}
-                payout={p}
-                isBusy={updateVendorPayoutMutation.isPending}
-                onMark={(id, status) =>
-                  updateVendorPayoutMutation.mutate({ payoutId: id, body: { status } })
-                }
+      {isSectionLoading ? (
+        <SectionLoadingState label="Loading vendor payoutsâ€¦" />
+      ) : (
+        <>
+          {tab === 'pending' &&
+            ((vendorPayments.pending ?? []).length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PayoutRow
+                    key={p.id}
+                    payout={p}
+                    isBusy={updateVendorPayoutMutation.isPending}
+                    onMark={(id, status) =>
+                      updateVendorPayoutMutation.mutate({ payoutId: id, body: { status } })
+                    }
+                  />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No pending vendor payouts"
+                body="Pending payout approvals will appear here."
               />
             ))}
-            <PaginationControls
-              currentPage={visiblePage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        ) : (
-          <EmptyState
-            title="No pending vendor payouts"
-            body="Pending payout approvals will appear here."
-          />
-        ))}
 
-      {tab === 'paid' &&
-        ((vendorPayments.paid ?? []).length ? (
-          <div className="space-y-2.5">
-            {currentList.map(p => (
-              <PayoutRow key={p.id} payout={p} />
+          {tab === 'paid' &&
+            ((vendorPayments.paid ?? []).length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PayoutRow key={p.id} payout={p} />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No paid vendors yet"
+                body="Paid settlements will appear here once processed."
+              />
             ))}
-            <PaginationControls
-              currentPage={visiblePage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        ) : (
-          <EmptyState
-            title="No paid vendors yet"
-            body="Paid settlements will appear here once processed."
-          />
-        ))}
+        </>
+      )}
     </div>
   )
 }
@@ -801,6 +821,7 @@ function CouponSection({ createCouponMutation, updateCouponMutation }) {
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
   const totalPages = Math.max(1, Number(couponsQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+  const isSectionLoading = couponsQuery.isFetching && !couponsQuery.isLoading
 
   if (couponsQuery.isLoading) return <LoadingState label="Loading coupons…" />
   if (couponsQuery.error) return <ErrorState label="Coupons are unavailable right now." />
@@ -879,7 +900,9 @@ function CouponSection({ createCouponMutation, updateCouponMutation }) {
       </div>
 
       {/* Coupon list */}
-      {coupons.length ? (
+      {isSectionLoading ? (
+        <SectionLoadingState label="Loading couponsâ€¦" />
+      ) : coupons.length ? (
         <div className="space-y-2.5">
           {coupons.map(coupon => (
             <CouponRow

@@ -10,10 +10,13 @@ import {
   getValidStoredJwt,
   getStoredJwt,
 } from '../lib/api'
+import { createContext, createElement, useContext, useMemo } from 'react'
 
 const CART_EVENT = 'elewen-cart-change'
 const GUEST_CART_KEY = 'elewen_guest_cart'
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+const CartContext = createContext(null)
+let cartSyncPromise = null
 
 function getToken() {
   return getStoredJwt()
@@ -287,7 +290,7 @@ export function dispatchCartChange(cart) {
   window.dispatchEvent(new CustomEvent(CART_EVENT, { detail: { cart } }))
 }
 
-export function useCart() {
+function useCartController() {
   const [cart, setCart] = useState(() => (getToken() ? null : readGuestCart()))
   const [itemCount, setItemCount] = useState(() =>
     getItemCount(getToken() ? null : readGuestCart())
@@ -332,9 +335,16 @@ export function useCart() {
       setIsLoggedIn(true)
       setLoading(true)
       try {
-        await migrateGuestCartToServer(token)
-        const data = await cartGet(token)
-        applyCart(data.cart ?? null)
+        const nextCart =
+          cartSyncPromise ??
+          (cartSyncPromise = (async () => {
+            await migrateGuestCartToServer(token)
+            const data = await cartGet(token)
+            return data.cart ?? null
+          })().finally(() => {
+            cartSyncPromise = null
+          }))
+        applyCart(await nextCart)
       } catch (err) {
         if (cancelled) return
         if (err?.code === 'AUTH_REQUIRED') {
@@ -349,6 +359,7 @@ export function useCart() {
     }
 
     const handleAuthChange = () => {
+      cartSyncPromise = null
       setIsLoggedIn(!!getToken())
       syncCart()
     }
@@ -359,6 +370,7 @@ export function useCart() {
         applyCart(nextCart)
         return
       }
+      cartSyncPromise = null
       syncCart()
     }
 
@@ -826,4 +838,21 @@ export function useCart() {
     debouncedApplyCoupon,
     clearCoupon,
   }
+}
+
+export function CartProvider({ children }) {
+  const cartValue = useCartController()
+  const value = useMemo(() => cartValue, [cartValue])
+
+  return createElement(CartContext.Provider, { value }, children)
+}
+
+export function useCart() {
+  const context = useContext(CartContext)
+
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider')
+  }
+
+  return context
 }
