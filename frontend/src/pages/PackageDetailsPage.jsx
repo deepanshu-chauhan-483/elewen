@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { getServiceProductDetails } from '../data/serviceProductDetails'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCart } from '../hooks/useCart'
+import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -221,6 +223,8 @@ export default function PackageDetailsPage() {
   const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
   const { data: cancellationPolicy } = useCancellationPolicy()
   const { addPackage, updateCartItemDetails } = useCart()
+  const { showToast } = useToast()
+  const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
   const cartItemId = searchParams.get('cartItemId') ?? ''
   const normalizedService = normalizeServiceSlug(service)
   const search = searchParams.toString()
@@ -352,14 +356,14 @@ export default function PackageDetailsPage() {
           quantity,
           selectedOptions: normalizeSelectedOptions(selectedOptions),
         })
-        setAddToCartMessage('Package updated.')
+        showToast({ message: cartToastMessage })
       } else {
         await addPackage({
           packageId: numericPackageId,
           quantity,
           selectedOptions: normalizeSelectedOptions(selectedOptions),
         })
-        setAddToCartMessage(quantity > 1 ? `${quantity} packages added to cart.` : 'Added to cart.')
+        showToast({ message: cartToastMessage })
       }
     } catch (err) {
       console.error('[package-details] add to cart failed', err)

@@ -24,6 +24,22 @@ export function formatDashboardDate(value) {
   }).format(date)
 }
 
+export function formatDashboardDateTime(value) {
+  if (!value) return 'Date pending'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Date pending'
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date)
+}
+
 export function getInitials(value = '') {
   const parts = String(value).trim().split(/\s+/).filter(Boolean)
 

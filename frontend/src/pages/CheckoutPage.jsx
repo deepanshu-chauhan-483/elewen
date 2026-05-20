@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useToast } from '../components/common/useToast'
 import { useCart } from '../hooks/useCart'
+import { useCheckoutToastMessage } from '../hooks/useMessagingContent'
 import { usePackages } from '../hooks/usePackages'
 import { getPackageLineLabel } from '../lib/bookingDisplay'
 import {
@@ -468,9 +470,13 @@ function SpecialRequest({ preferences, onChange, onSubmit, message }) {
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { showToast } = useToast()
   const savedUser = getSavedUser()
   const { data: packages = [] } = usePackages()
   const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
+  const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
+    useCheckoutToastMessage()
+  const hasShownCheckoutToastRef = useRef(false)
   const queryParams = new URLSearchParams(location.search)
   const isSampleTastingCheckout =
     queryParams.get('mode') === 'sample-tasting' ||
@@ -587,6 +593,29 @@ export default function CheckoutPage() {
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
   const [paymentOption, setPaymentOption] = useState('advance')
 
+  useEffect(() => {
+    if (!location.state?.showCheckoutToast || hasShownCheckoutToastRef.current) return
+
+    hasShownCheckoutToastRef.current = true
+    showToast({
+      message: location.state?.checkoutToastMessage || checkoutToastMessage,
+    })
+    navigate(location.pathname + location.search, {
+      replace: true,
+      state: {
+        ...(location.state ?? {}),
+        showCheckoutToast: false,
+      },
+    })
+  }, [
+    checkoutToastMessage,
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+    showToast,
+  ])
+
   const handleCheckout = async paymentType => {
     const token = getStoredJwt()
     if (!token) {
@@ -630,9 +659,12 @@ export default function CheckoutPage() {
           ? {
               checkoutMode: 'sample-tasting',
               eventDate: sampleBookingDate,
+              eventTime: sessionDetails.timeLabel || '',
               guestCount: 1,
             }
-          : {}
+          : {
+              eventTime: eventTime || '',
+            }
       )
       const booking = bookingResponse?.booking
 
@@ -706,6 +738,7 @@ export default function CheckoutPage() {
                 title: item?.title,
                 amount: Number(item?.totalPrice ?? 0),
               })),
+              showBookingConfirmationToast: true,
             },
           },
         })
@@ -767,6 +800,7 @@ export default function CheckoutPage() {
                     title: item?.title,
                     amount: Number(item?.totalPrice ?? 0),
                   })),
+                  showBookingConfirmationToast: true,
                 },
               },
             })

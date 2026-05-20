@@ -194,7 +194,19 @@ export default function BookingTimeline() {
   const [payingBookingId, setPayingBookingId] = useState('')
 
   const orderBookings = useMemo(
-    () => bookings.filter(booking => booking?.isSampleTasteBooking !== true),
+    () =>
+      bookings.filter(booking => {
+        const checkoutMode = String(
+          booking?.checkoutMode ?? booking?.latestStatusLog?.checkoutMode ?? ''
+        )
+          .trim()
+          .toLowerCase()
+        return (
+          booking?.isSampleTasteBooking !== true &&
+          booking?.isSampleTastingBooking !== true &&
+          checkoutMode !== 'sample-tasting'
+        )
+      }),
     [bookings]
   )
 

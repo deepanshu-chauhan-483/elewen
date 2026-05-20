@@ -13,6 +13,7 @@ import {
   useAdminCreateVendorPayout,
   useAdminPaymentWorkspace,
   useAdminProcessRefund,
+  useAdminRefunds,
   useAdminSettings,
   useAdminUpdateCoupon,
   useAdminUpdateSettings,
@@ -146,6 +147,7 @@ function ArrowIcon({ direction = 'right' }) {
 
 function PaginationControls({ currentPage, totalPages, onPageChange }) {
   if (totalPages <= 1) return null
+  const latestRefund = null
 
   return (
     <div className="mt-4 flex justify-end gap-2">
@@ -159,6 +161,11 @@ function PaginationControls({ currentPage, totalPages, onPageChange }) {
       </button>
       <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
         {currentPage} / {totalPages}
+        {latestRefund ? (
+          <p className="mt-2 text-xs text-[#8F8F8F]">
+            Refund: {formatCurrency(latestRefund.amount)} Â· {latestRefund.status}
+          </p>
+        ) : null}
       </div>
       <button
         type="button"
@@ -208,9 +215,9 @@ function BookingPaymentRow({ booking }) {
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[#1C1C1C]">
-          {booking.customer?.name || 'Customer'}
+          {booking?.customer?.name || 'Customer'}
           <span className="ml-2 font-normal text-[#6B7280]">
-            / {booking.package?.title || booking.id}
+            / {booking?.package?.title || booking.id}
           </span>
         </p>
         <p className="mt-1 text-xs text-[#8F8F8F]">
@@ -247,7 +254,11 @@ function PaymentRecordRow({
   onRefundAction,
   isRefundBusy = false,
 }) {
-  const pendingRefund = payment.refunds?.find(r => r.status === 'requested')
+  const refunds = Array.isArray(payment.refunds) ? payment.refunds : []
+  const pendingRefund = refunds.find(r => r.status === 'requested')
+  const latestRefund =
+    [...refunds].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0] ??
+    null
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
       <div className="flex-1 min-w-0">
@@ -265,21 +276,16 @@ function PaymentRecordRow({
       <div className="flex flex-wrap items-center gap-2">
         <Badge status={payment.status} />
         <Badge status={payment.paymentMethod} label={payment.paymentMethod || 'Method pending'} />
+        {latestRefund ? (
+          <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />
+        ) : null}
         {showRefundActions && pendingRefund && (
-          <>
-            <PrimaryBtn
-              disabled={isRefundBusy}
-              onClick={() => onRefundAction?.(pendingRefund.id, 'approve')}
-            >
-              Approve Refund
-            </PrimaryBtn>
-            <DangerBtn
-              disabled={isRefundBusy}
-              onClick={() => onRefundAction?.(pendingRefund.id, 'reject')}
-            >
-              Reject
-            </DangerBtn>
-          </>
+          <PrimaryBtn
+            disabled={isRefundBusy}
+            onClick={() => onRefundAction?.(pendingRefund.id, 'approve')}
+          >
+            Pay Refund
+          </PrimaryBtn>
         )}
       </div>
     </div>
@@ -326,6 +332,54 @@ const customerTabs = [
   { key: 'failed', label: 'Failed Payments' },
   { key: 'completed', label: 'Completed' },
 ]
+
+function RefundRow({ refund, processRefundMutation }) {
+  const booking = refund.bookingSummary ?? null
+
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-[#1C1C1C]">
+          {booking?.customer?.name || 'Customer'}
+          <span className="ml-2 font-normal text-[#6B7280]">
+            / {booking?.package?.title || refund.bookingId}
+          </span>
+        </p>
+        <p className="mt-1 text-xs text-[#8F8F8F]">
+          Cancelled booking · {formatDate(booking.eventDate)}
+          {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-4 text-sm">
+          <span>
+            <span className="text-[#8F8F8F]">Refund Amount </span>
+            <span className="font-medium text-[#2D2D2D]">{formatCurrency(refund.amount)}</span>
+          </span>
+          <span>
+            <span className="text-[#8F8F8F]">Requested </span>
+            <span className="font-medium text-[#2D2D2D]">{formatDateTime(refund.createdAt)}</span>
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge status={booking?.status} label={booking?.statusLabel || 'Cancelled'} />
+        <Badge status={refund.status} label={`Refund ${refund.status}`} />
+        {refund.status === 'requested' ? (
+          <PrimaryBtn
+            disabled={processRefundMutation.isPending}
+            onClick={() =>
+              processRefundMutation.mutate({
+                refundId: refund.id,
+                body: { action: 'approve' },
+              })
+            }
+          >
+            Pay Refund
+          </PrimaryBtn>
+        ) : null}
+      </div>
+    </div>
+  )
+}
 
 function CustomerPayments({ processRefundMutation }) {
   const [tab, setTab] = useState('active')
@@ -485,7 +539,19 @@ function CustomerPayments({ processRefundMutation }) {
             (lists.completed.length ? (
               <div className="space-y-2.5">
                 {currentList.map(p => (
-                  <PaymentRecordRow key={p.id} payment={p} />
+                  <PaymentRecordRow
+                    key={p.id}
+                    payment={p}
+                    showRefundActions
+                    isRefundBusy={processRefundMutation.isPending}
+                    onRefundAction={(refundId, action) =>
+                      refundId &&
+                      processRefundMutation.mutate({
+                        refundId,
+                        body: { action },
+                      })
+                    }
+                  />
                 ))}
                 <PaginationControls
                   currentPage={visiblePage}
@@ -1032,6 +1098,24 @@ function SettingsSection({ updateSettingsMutation }) {
   )
 }
 
+function RefundsSection({ processRefundMutation }) {
+  const refundsQuery = useAdminRefunds()
+  const refunds = refundsQuery.data?.refunds ?? []
+
+  if (refundsQuery.isLoading) return <LoadingState label="Loading refunds..." />
+  if (refundsQuery.error) return <ErrorState label="Refunds are unavailable right now." />
+
+  return refunds.length ? (
+    <div className="space-y-2.5">
+      {refunds.map(refund => (
+        <RefundRow key={refund.id} refund={refund} processRefundMutation={processRefundMutation} />
+      ))}
+    </div>
+  ) : (
+    <EmptyState title="No refunds yet" body="Cancelled booking refunds will appear here." />
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Main sections config
 // ---------------------------------------------------------------------------
@@ -1040,6 +1124,7 @@ const mainSections = [
   { key: 'vendor', label: 'Vendor Payouts' },
   { key: 'coupon', label: 'Discount Coupons' },
   { key: 'settings', label: 'Settings' },
+  { key: 'refunds', label: 'Refunds' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -1146,6 +1231,8 @@ export default function PaymentManagementPage() {
             updateSettingsMutation={updateSettingsMutation}
           />
         )}
+
+        {section === 'refunds' && <RefundsSection processRefundMutation={processRefundMutation} />}
       </div>
     </div>
   )

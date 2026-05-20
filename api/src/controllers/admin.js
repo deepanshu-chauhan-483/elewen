@@ -672,6 +672,30 @@ function buildBookingPaymentSnapshot(booking) {
   }
 }
 
+function buildCancelledBookingRefundSnapshot(booking) {
+  const bookingPayments = Array.isArray(booking?.payments) ? booking.payments : []
+  const successfulAmount = bookingPayments
+    .filter(payment => payment.status === 'success')
+    .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+  const refunds = bookingPayments
+    .flatMap(payment => (Array.isArray(payment?.refunds) ? payment.refunds : []))
+    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+  const latestRefund = refunds[0] ?? null
+  const requestedRefundAmount = refunds.reduce((sum, refund) => sum + toNumber(refund.amount), 0)
+
+  return {
+    ...booking,
+    paidAmount: Number(successfulAmount.toFixed(2)),
+    outstandingAmount: 0,
+    latestRefund,
+    refunds,
+    requestedRefundAmount: Number(requestedRefundAmount.toFixed(2)),
+    refundDueAmount: Number(
+      toNumber(latestRefund?.amount ?? booking?.refundPreview?.refundableAmount ?? 0).toFixed(2)
+    ),
+  }
+}
+
 async function fetchCouponById(id) {
   const response = await strapiServerGet(
     `/api/coupons?filters[id][$eq]=${encodeURIComponent(String(id))}&publicationState=preview&pagination[pageSize]=1`
@@ -2003,6 +2027,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       payouts,
       activeBookings,
       postEventBookings,
+      cancelledBookings,
       settingsResponse,
       couponsResponse,
     ] = await Promise.all([
@@ -2056,6 +2081,26 @@ export async function getAdminPaymentWorkspace(req, res, next) {
         orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
         take: 20,
       }),
+      prisma.booking.findMany({
+        where: {
+          status: 'cancelled',
+        },
+        include: {
+          items: true,
+          notes: true,
+          cancellation: true,
+          statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+          payments: {
+            include: {
+              refunds: true,
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+          vendorAssignments: true,
+        },
+        orderBy: [{ createdAt: 'desc' }],
+        take: 20,
+      }),
       safeStrapiServerGet('/api/global-setting?publicationState=preview', { data: null }),
       safeStrapiServerGet(
         '/api/coupons?publicationState=preview&pagination[page]=1&pagination[pageSize]=10&sort[0]=createdAt:desc',
@@ -2063,17 +2108,20 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       ),
     ])
 
-    const [enrichedActiveBookings, enrichedPostEventBookings, vendors] = await Promise.all([
-      enrichBookingsWithCustomer(activeBookings),
-      enrichBookingsWithCustomer(postEventBookings),
-      fetchVendorsByIds(payouts.map(payout => payout.vendorId)),
-    ])
+    const [enrichedActiveBookings, enrichedPostEventBookings, enrichedCancelledBookings, vendors] =
+      await Promise.all([
+        enrichBookingsWithCustomer(activeBookings),
+        enrichBookingsWithCustomer(postEventBookings),
+        enrichBookingsWithCustomer(cancelledBookings),
+        fetchVendorsByIds(payouts.map(payout => payout.vendorId)),
+      ])
 
     const allBookingIds = uniqueStrings([
       ...payments.map(payment => payment.bookingId),
       ...payouts.map(payout => payout.bookingId),
       ...enrichedActiveBookings.map(booking => booking.id),
       ...enrichedPostEventBookings.map(booking => booking.id),
+      ...enrichedCancelledBookings.map(booking => booking.id),
     ])
 
     const payoutBookings = allBookingIds.length
@@ -2113,6 +2161,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
     const postEventPending = enrichedPostEventBookings
       .map(buildBookingPaymentSnapshot)
       .filter(booking => booking.outstandingAmount > 0)
+    const cancelledRefunds = enrichedCancelledBookings.map(buildCancelledBookingRefundSnapshot)
     const failedPayments = payments
       .filter(payment => payment.status === 'failed')
       .map(payment => ({
@@ -2155,6 +2204,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
     const customerLists = {
       active: activeBookingPayments,
       post_event: postEventPending,
+      cancelled: cancelledRefunds,
       failed: failedPayments,
       completed: completedPayments,
     }
@@ -2182,6 +2232,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
         customerPayments: {
           activeBookings: customerTab === 'active' ? currentCustomer.items : [],
           postEventPending: customerTab === 'post_event' ? currentCustomer.items : [],
+          cancelledBookings: customerTab === 'cancelled' ? currentCustomer.items : [],
           failedPayments: customerTab === 'failed' ? currentCustomer.items : [],
           completedPayments: customerTab === 'completed' ? currentCustomer.items : [],
           tab: customerTab,

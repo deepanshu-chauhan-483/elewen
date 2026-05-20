@@ -218,6 +218,7 @@ model Booking {
   packageId        String        @db.VarChar(50)        // FK → strapi packages
   eventId          String?       @db.VarChar(50)        // FK → strapi events
   eventDate        DateTime      @db.Date
+  eventTime        String?       @db.VarChar(20)
   guestCount       Int
   eventAddressId   String?       @db.VarChar(50)        // FK → strapi addresses
   status           BookingStatus @default(new)

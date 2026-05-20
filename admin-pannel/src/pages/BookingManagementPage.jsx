@@ -231,6 +231,13 @@ function SectionLabel({ children }) {
     </p>
   )
 }
+
+function formatStageLabel(value = '') {
+  return String(value ?? '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
 function getSubtitle(booking) {
   return [
     // booking?.detailSubtitle,
@@ -682,7 +689,6 @@ export default function BookingManagementPage() {
             <option value="active">Active</option>
             <option value="today">Today</option>
             <option value="upcoming">Upcoming</option>
-            <option value="new">New</option>
             <option value="completed">Completed</option>
           </SelectField>
           <SelectField
@@ -716,6 +722,10 @@ export default function BookingManagementPage() {
             <option value="event_date">By Event Date</option>
           </SelectField>
         </div>
+        <p className="mt-3 text-xs text-[#8F8F8F]">
+          Bucket filters by booking group: Active, Today, Upcoming, or Completed. Stage filters by
+          workflow status like Confirmed or Planning. Sort only changes the order of the results.
+        </p>
       </div>
 
       {/* ── Results count ── */}
@@ -724,7 +734,9 @@ export default function BookingManagementPage() {
           {totalBookings} booking{totalBookings !== 1 ? 's' : ''}
         </span>
         {statusFilter && (
-          <span className="text-sm text-[#8F8F8F]">in &quot;{statusFilter}&quot; stage</span>
+          <span className="text-sm text-[#8F8F8F]">
+            in &quot;{formatStageLabel(statusFilter)}&quot; stage
+          </span>
         )}
       </div>
 

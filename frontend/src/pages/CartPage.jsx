@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useToast } from '../components/common/useToast'
 import { useCart } from '../hooks/useCart'
+import {
+  useCartToastMessage,
+  useCheckoutToastMessage,
+  useCouponToastMessage,
+} from '../hooks/useMessagingContent'
 import { usePackages } from '../hooks/usePackages'
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import { readStoredCartPinCode, writeStoredCartPinCode } from '../lib/cartPinCode'
@@ -1333,8 +1339,13 @@ const TrustBadges = () => {
 
 export default function CartPage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: packages = [] } = usePackages()
   const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = useServiceAreas()
+  const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
+  const { data: couponToastMessage = 'Coupon applied successfully.' } = useCouponToastMessage()
+  const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
+    useCheckoutToastMessage()
   const {
     cart,
     loading,
@@ -1492,6 +1503,7 @@ export default function CartPage() {
       await applyCoupon(couponCode.trim())
       setCouponCode('')
       setCouponMessage('')
+      showToast({ message: couponToastMessage })
     } catch (err) {
       setCouponMessage(parseApiError(err))
     } finally {
@@ -1569,6 +1581,7 @@ export default function CartPage() {
         quantity: 1,
         addon: pkg.addon,
       })
+      showToast({ message: cartToastMessage })
     } catch (err) {
       console.error('[cart] addon add failed', err)
     } finally {
@@ -1643,7 +1656,16 @@ export default function CartPage() {
               cartItems={cartItems}
               cart={cart}
               singleItem={hasSingleItem}
-              onCheckout={() => (isLoggedIn ? navigate('/checkout') : navigate('/login'))}
+              onCheckout={() =>
+                isLoggedIn
+                  ? navigate('/checkout', {
+                      state: {
+                        showCheckoutToast: true,
+                        checkoutToastMessage,
+                      },
+                    })
+                  : navigate('/login')
+              }
               onSampleTasteBooking={handleSampleTasteBooking}
               showSampleTasteBooking={showSampleTasteBooking}
               isCheckoutDisabled={isCheckoutDisabled}

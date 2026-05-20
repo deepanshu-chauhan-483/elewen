@@ -2,6 +2,10 @@ import prisma from '../lib/prisma.js'
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
 import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
+import {
+  calculateBookingRefundPreview,
+  getCancellationPolicyData,
+} from '../lib/cancellationPolicy.js'
 import { invalidateDashboardCache } from './dashboard.js'
 
 const DEFAULT_ADVANCE_PCT = 30
@@ -76,6 +80,8 @@ const toCurrencyNumber = value => {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : 0
 }
+
+const roundCurrency = value => Number(toCurrencyNumber(value).toFixed(2))
 
 const normalizeTimelineStatus = status => {
   if (status === 'completed') return 'completed'
@@ -314,6 +320,7 @@ export const createBooking = async (req, res, next) => {
     const isSampleTastingCheckout = String(req.body?.checkoutMode ?? '').trim() === 'sample-tasting'
     const fallbackEventDate = req.body?.eventDate ? new Date(req.body.eventDate) : null
     const fallbackGuestCount = Number(req.body?.guestCount ?? 0)
+    const requestedEventTime = String(req.body?.eventTime ?? '').trim()
 
     const cart = await prisma.cart.findFirst({
       where: { userId },
@@ -369,6 +376,7 @@ export const createBooking = async (req, res, next) => {
           userId,
           packageId,
           eventDate: resolvedEventDate,
+          eventTime: requestedEventTime || null,
           guestCount: resolvedGuestCount,
           status: 'new',
           totalPrice: totalPrice.toFixed(2),
@@ -534,7 +542,7 @@ export const listBookings = async (req, res, next) => {
           payments: {
             where: { status: 'success' },
             orderBy: { createdAt: 'desc' },
-            select: { id: true, amount: true, paymentType: true, createdAt: true },
+            select: { id: true, amount: true, paymentType: true, status: true, createdAt: true },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -714,7 +722,15 @@ export const cancelBooking = async (req, res, next) => {
 
     const booking = await prisma.booking.findUnique({
       where: { id },
-      include: { cancellation: true },
+      include: {
+        cancellation: true,
+        payments: {
+          include: {
+            refunds: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
     })
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
@@ -726,6 +742,37 @@ export const cancelBooking = async (req, res, next) => {
     if (booking.cancellation)
       return res.status(400).json({ error: 'A cancellation request already exists' })
 
+    const cancellationPolicy = await getCancellationPolicyData()
+    const refundPreview = calculateBookingRefundPreview(booking, cancellationPolicy)
+    const successfulPayments = (Array.isArray(booking.payments) ? booking.payments : []).filter(
+      payment => payment?.status === 'success'
+    )
+    let remainingRefundAmount = roundCurrency(refundPreview.refundableAmount)
+    const refundEntries = []
+
+    for (const payment of successfulPayments) {
+      if (remainingRefundAmount <= 0) break
+
+      const hasOpenRefund = (Array.isArray(payment.refunds) ? payment.refunds : []).some(refund =>
+        ['requested', 'processing', 'completed'].includes(String(refund?.status ?? ''))
+      )
+      if (hasOpenRefund) continue
+
+      const paymentAmount = roundCurrency(payment.amount)
+      const refundAmount = roundCurrency(Math.min(paymentAmount, remainingRefundAmount))
+      if (refundAmount <= 0) continue
+
+      refundEntries.push({
+        paymentId: payment.id,
+        bookingId: id,
+        amount: refundAmount,
+        reason:
+          reason ??
+          `Auto-created from cancellation policy (${refundPreview.windowLabel || 'booking cancellation'})`,
+      })
+      remainingRefundAmount = roundCurrency(remainingRefundAmount - refundAmount)
+    }
+
     await prisma.$transaction(async tx => {
       await tx.cancellation.create({
         data: {
@@ -733,7 +780,7 @@ export const cancelBooking = async (req, res, next) => {
           requestedBy: userId,
           reason: reason ?? null,
           policyAcknowledged,
-          status: 'requested',
+          status: 'approved',
         },
       })
       await tx.booking.update({ where: { id }, data: { status: 'cancelled' } })
@@ -746,18 +793,54 @@ export const cancelBooking = async (req, res, next) => {
           note: reason ?? 'Cancelled by customer',
         },
       })
+
+      for (const refundEntry of refundEntries) {
+        const refund = await tx.refund.create({
+          data: {
+            paymentId: refundEntry.paymentId,
+            bookingId: refundEntry.bookingId,
+            amount: refundEntry.amount,
+            reason: refundEntry.reason,
+            status: 'requested',
+          },
+        })
+
+        await tx.paymentLog.create({
+          data: {
+            paymentId: refundEntry.paymentId,
+            action: 'refund_requested',
+            performedBy: userId,
+            metadata: {
+              refundId: refund.id,
+              reason: refundEntry.reason,
+              source: 'booking_cancellation',
+              refundWindow: refundPreview.windowKey || null,
+            },
+          },
+        })
+      }
     })
 
     notify(userId, {
       type: 'booking_update',
       title: 'Booking Cancelled',
-      message: 'Your cancellation request has been submitted.',
+      message:
+        refundEntries.length > 0
+          ? 'Your booking has been cancelled and the refund request is ready for processing.'
+          : 'Your booking has been cancelled successfully.',
       linkUrl: `/dashboard/bookings/${id}`,
       emailTemplate: 'booking_cancelled',
       emailData: { bookingId: id, reason },
     }).catch(() => {})
 
-    res.json({ ok: true, message: 'Cancellation request submitted' })
+    invalidateDashboardCache(userId).catch(() => {})
+
+    res.json({
+      ok: true,
+      message: 'Booking cancelled successfully',
+      refundPreview,
+      refundsCreated: refundEntries.length,
+    })
   } catch (err) {
     next(err)
   }

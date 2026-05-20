@@ -630,7 +630,9 @@ export const requestRefund = async (req, res, next) => {
 export const processRefund = async (req, res, next) => {
   try {
     const { id } = req.params
-    const { action } = req.body // 'approve' | 'reject'
+    const normalizedAction = String(req.body?.action ?? 'pay_refund')
+      .trim()
+      .toLowerCase()
     const adminId = String(req.user.id)
 
     const refund = await prisma.refund.findUnique({
@@ -642,7 +644,7 @@ export const processRefund = async (req, res, next) => {
       return res.status(400).json({ error: `Refund is already ${refund.status}` })
     }
 
-    if (action === 'reject') {
+    if (normalizedAction === 'reject') {
       const updated = await prisma.refund.update({
         where: { id },
         data: { status: 'rejected', processedBy: adminId },
@@ -658,7 +660,7 @@ export const processRefund = async (req, res, next) => {
       return res.json({ refund: updated })
     }
 
-    // Approve: call Razorpay refund API
+    // Pay refund to the same original payment credentials via the stored provider payment id.
     if (!refund.payment.providerPaymentId) {
       return res
         .status(400)
@@ -701,7 +703,7 @@ export const processRefund = async (req, res, next) => {
     })
 
     // Notify user when refund is approved and being processed
-    if (action === 'approve') {
+    if (normalizedAction !== 'reject') {
       const refundBooking = await prisma.booking.findUnique({ where: { id: updated.bookingId } })
       if (refundBooking) {
         notify(refundBooking.userId, {

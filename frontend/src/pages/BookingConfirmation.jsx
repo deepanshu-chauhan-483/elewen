@@ -1,4 +1,7 @@
+import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useToast } from '../components/common/useToast'
+import { useBookingConfirmationToastMessage } from '../hooks/useMessagingContent'
 import { useDashboardBooking, useDashboardSession } from '../hooks/useDashboardData'
 import {
   buildReceiptData,
@@ -90,10 +93,15 @@ const SAMPLE_TASTING_STEPS = [
 
 export default function BookingConfirmation() {
   const { state } = useLocation()
+  const { showToast } = useToast()
   const bookingIdFromQuery = new URLSearchParams(window.location.search).get('bookingId')
   const bookingId = state?.booking?.id ?? bookingIdFromQuery ?? ''
   const { data: dashboardBooking } = useDashboardBooking(bookingId)
   const { data: session } = useDashboardSession()
+  const {
+    data: bookingConfirmationToastMessage = 'Your booking has been confirmed successfully.',
+  } = useBookingConfirmationToastMessage()
+  const hasShownToastRef = useRef(false)
   const booking = dashboardBooking ?? state?.booking ?? null
   const payment = state?.payment ?? null
   const checkoutInfo = state?.checkoutInfo ?? {}
@@ -157,6 +165,18 @@ export default function BookingConfirmation() {
     customer,
     isSampleTastingBooking,
   })
+
+  useEffect(() => {
+    if (state?.checkoutInfo?.showBookingConfirmationToast === false) return
+    if (hasShownToastRef.current) return
+
+    hasShownToastRef.current = true
+    showToast({ message: bookingConfirmationToastMessage })
+  }, [
+    bookingConfirmationToastMessage,
+    showToast,
+    state?.checkoutInfo?.showBookingConfirmationToast,
+  ])
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">

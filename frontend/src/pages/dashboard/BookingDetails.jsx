@@ -1,13 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useToast } from '../../components/common/useToast'
 import {
   useDashboardBookings,
   useDashboardBookingTimeline,
   useDashboardCancelBooking,
   useDashboardSession,
 } from '../../hooks/useDashboardData'
+import { useCancellationPolicy } from '../../hooks/useCancellationPolicy'
+import { useBookingCancellationToastMessage } from '../../hooks/useMessagingContent'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
+  formatDashboardDateTime,
 } from '../../components/dashboard/dashboardUtils'
 import {
   getBookingPackageNamesText,
@@ -172,6 +176,156 @@ const ArrowIcon = () => (
   </svg>
 )
 
+function CancellationPolicyModal({
+  open,
+  policyBody,
+  refundPreview,
+  booking,
+  reason,
+  hasAcceptedPolicy,
+  isSubmitting,
+  onReasonChange,
+  onAcceptanceChange,
+  onClose,
+  onConfirm,
+}) {
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/35 px-4 py-6 md:px-6 hide-scrollbar"
+      data-denis-prevent
+      style={{
+        left: typeof window !== 'undefined' && window.innerWidth >= 768 ? '260px' : '0px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[84vh] w-full max-w-[460px] overflow-y-auto rounded-[22px] bg-white p-4 shadow-[0_24px_60px_rgba(0,0,0,0.18)] md:p-5 hide-scrollbar"
+        onClick={event => event.stopPropagation()}
+        data-lenis-prevent
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-[20px] text-[#2E2E2E]">Cancel Booking</h3>
+            <p className="mt-1 text-sm leading-5 text-[#6B7280]">
+              Refund is calculated from your booking timestamp, not the event date.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[#957960] transition hover:bg-[#F3EEE8]"
+            aria-label="Close cancellation popup"
+          >
+            x
+          </button>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-[#E7D9C7] bg-[#FBF7F3] p-3">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#957960]">
+            Cancellation Policy
+          </p>
+          <p className="mt-2 whitespace-pre-line text-[13px] leading-5 text-[#364022]">
+            {policyBody || 'Cancellation policy is currently unavailable.'}
+          </p>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-[#E4DED8] bg-white p-3">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#957960]">
+            Refund Summary
+          </p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#8F8F8F]">Booked On</p>
+              <p className="mt-1 text-sm text-[#2E2E2E]">
+                {formatDashboardDateTime(refundPreview?.bookedAt || booking?.bookedAt)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#8F8F8F]">Event</p>
+              <p className="mt-1 text-sm text-[#2E2E2E]">
+                {formatDashboardDate(booking?.eventDate)}
+                {booking?.eventTime ? ` · ${booking.eventTime}` : ''}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#8F8F8F]">Window</p>
+              <p className="mt-1 text-sm text-[#2E2E2E]">
+                {refundPreview?.windowLabel || 'Policy unavailable'}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#8F8F8F]">
+                Refundable Amount
+              </p>
+              <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
+                {formatDashboardCurrency(refundPreview?.refundableAmount ?? 0)}
+              </p>
+            </div>
+          </div>
+          <p className="mt-2 text-sm leading-5 text-[#6B7280]">
+            {refundPreview?.ruleText || 'No refund rule is available for this cancellation.'}
+          </p>
+          {refundPreview?.refundNote ? (
+            <p className="mt-1.5 text-xs leading-5 text-[#8F8F8F]">{refundPreview.refundNote}</p>
+          ) : null}
+        </div>
+
+        <div className="mt-3">
+          <label
+            htmlFor="dashboard-cancel-reason"
+            className="mb-2 block text-sm font-medium text-[#2E2E2E]"
+          >
+            Reason for cancellation
+          </label>
+          <textarea
+            id="dashboard-cancel-reason"
+            value={reason}
+            onChange={event => onReasonChange(event.target.value)}
+            placeholder="Please share your reason..."
+            rows={3}
+            className="w-full rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2E2E2E] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
+          />
+        </div>
+
+        <label className="mt-3 flex items-start gap-3 rounded-2xl border border-[#E4DED8] bg-[#FFFFFF] px-4 py-3">
+          <input
+            type="checkbox"
+            checked={hasAcceptedPolicy}
+            onChange={event => onAcceptanceChange(event.target.checked)}
+            className="mt-1 h-4 w-4 accent-[#C6A15B]"
+          />
+          <span className="text-sm leading-6 text-[#2E2E2E]">
+            I have read and accept the cancellation policy and want to continue with this
+            cancellation.
+          </span>
+        </label>
+
+        <div className="mt-4 flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-[#EDE5DA] bg-white px-5 py-2.5 text-[#9C8878] transition hover:border-[#E7D3BC] hover:bg-[#FAF6F1]"
+          >
+            Back
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isSubmitting || !reason.trim() || !hasAcceptedPolicy}
+            className="rounded-full bg-[#CDB17E] px-5 py-2.5 text-white transition hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:bg-[#D7D0C6]"
+          >
+            {isSubmitting ? 'Cancelling...' : 'Accept & Continue'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const StatusBadge = ({ status }) => {
   const styles = {
     completed: 'bg-[#E0F6ED] text-[#238E64]',
@@ -193,13 +347,19 @@ const StatusBadge = ({ status }) => {
 }
 
 function BookingAccordionCard({ booking, session }) {
+  const { showToast } = useToast()
   const [open, setOpen] = useState(false)
   const [showCancel, setShowCancel] = useState(false)
   const [reason, setReason] = useState('')
+  const [hasAcceptedPolicy, setHasAcceptedPolicy] = useState(false)
   const selectedItemRows = buildSelectedItemRows(booking)
   const packageIncludesRows = buildPackageIncludesRows(booking)
   const addonDetailRows = buildAddonDetailRows(booking)
   const cancelMutation = useDashboardCancelBooking()
+  const { data: cancellationPolicy } = useCancellationPolicy()
+  const {
+    data: bookingCancellationToastMessage = 'Your booking has been cancelled successfully.',
+  } = useBookingCancellationToastMessage()
   const { data: timelineData = [] } = useDashboardBookingTimeline(open ? booking?.id : null)
   const receiptData = buildReceiptData({
     booking,
@@ -221,6 +381,19 @@ function BookingAccordionCard({ booking, session }) {
   }, [timelineData])
 
   const borderColor = booking.status === 'completed' ? 'border-[#238E64]' : 'border-[#C07318]'
+
+  useEffect(() => {
+    if (!cancelMutation.isSuccess) return
+
+    showToast({ message: bookingCancellationToastMessage })
+
+    queueMicrotask(() => {
+      setShowCancel(false)
+      setReason('')
+      setHasAcceptedPolicy(false)
+      setOpen(false)
+    })
+  }, [bookingCancellationToastMessage, cancelMutation.isSuccess, showToast])
 
   return (
     <div
@@ -265,9 +438,21 @@ function BookingAccordionCard({ booking, session }) {
           ) : null}
         </div>
 
-        <div className="mt-4 flex items-center gap-2 text-sm text-[#1C1C1C]">
+        <div className="mt-4 flex items-start gap-2 text-sm text-[#1C1C1C]">
           <CalendarIcon />
-          {formatDashboardDate(booking.eventDate)}
+          <div className="space-y-1">
+            <p>
+              <span className="text-[#767676]">Event Date:</span>{' '}
+              {formatDashboardDate(booking.eventDate)}
+              {booking.eventTime ? (
+                <span className="text-[#767676]"> · {booking.eventTime}</span>
+              ) : null}
+            </p>
+            <p>
+              <span className="text-[#767676]">Booked At:</span>{' '}
+              {formatDashboardDateTime(booking.bookedAt)}
+            </p>
+          </div>
         </div>
 
         {!open ? (
@@ -303,6 +488,21 @@ function BookingAccordionCard({ booking, session }) {
             <div>
               <p className="text-[11px] text-[#767676]">LOCATION</p>
               <p>{booking.locationSummary}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">EVENT DATE</p>
+              <p>
+                {formatDashboardDate(booking.eventDate)}
+                {booking.eventTime ? ` · ${booking.eventTime}` : ''}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">EVENT TIME</p>
+              <p>{booking.eventTime || 'Pending'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">BOOKED ON</p>
+              <p>{formatDashboardDateTime(booking.bookedAt)}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
@@ -416,56 +616,40 @@ function BookingAccordionCard({ booking, session }) {
               type="button"
               onClick={event => {
                 event.stopPropagation()
-                setShowCancel(prev => !prev)
+                setShowCancel(true)
+                setReason('')
+                setHasAcceptedPolicy(false)
               }}
               className="rounded-full px-5 py-2 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-[#CDB17E]"
             >
               Cancel Booking
             </button>
           </div>
-
-          {showCancel ? (
-            <div
-              className="mt-4 rounded-xl border border-red-200 bg-[#FFF5F5] p-4"
-              onClick={event => event.stopPropagation()}
-            >
-              <textarea
-                value={reason}
-                onChange={event => setReason(event.target.value)}
-                placeholder="Reason..."
-                className="w-full rounded-lg p-3 bg-[#FFFFFF]"
-              />
-
-              <div className="mt-3 flex gap-3">
-                <button
-                  type="button"
-                  onClick={event => {
-                    event.stopPropagation()
-                    cancelMutation.mutate({
-                      bookingId: booking.id,
-                      body: { reason },
-                    })
-                  }}
-                  className="rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-white"
-                >
-                  Confirm
-                </button>
-
-                <button
-                  type="button"
-                  onClick={event => {
-                    event.stopPropagation()
-                    setShowCancel(false)
-                  }}
-                  className="rounded-full px-4 py-2 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-[#C6A15B]"
-                >
-                  Abort
-                </button>
-              </div>
-            </div>
-          ) : null}
         </>
       ) : null}
+
+      <CancellationPolicyModal
+        open={showCancel}
+        policyBody={cancellationPolicy?.body ?? ''}
+        refundPreview={booking?.refundPreview}
+        booking={booking}
+        reason={reason}
+        hasAcceptedPolicy={hasAcceptedPolicy}
+        isSubmitting={cancelMutation.isPending}
+        onReasonChange={setReason}
+        onAcceptanceChange={setHasAcceptedPolicy}
+        onClose={() => {
+          setShowCancel(false)
+          setReason('')
+          setHasAcceptedPolicy(false)
+        }}
+        onConfirm={() => {
+          cancelMutation.mutate({
+            bookingId: booking.id,
+            body: { reason: reason.trim(), policyAcknowledged: true },
+          })
+        }}
+      />
     </div>
   )
 }
@@ -473,6 +657,16 @@ function BookingAccordionCard({ booking, session }) {
 export default function BookingDetailsAccordion() {
   const { data: bookings = [] } = useDashboardBookings('all')
   const { data: session } = useDashboardSession()
+  const visibleBookings = useMemo(
+    () =>
+      bookings.filter(booking => {
+        const normalizedStatus = String(booking?.status ?? '')
+          .trim()
+          .toLowerCase()
+        return !['cancelled', 'canceled'].includes(normalizedStatus)
+      }),
+    [bookings]
+  )
 
   return (
     <div className="space-y-6 ">
@@ -481,7 +675,7 @@ export default function BookingDetailsAccordion() {
         <p className="text-sm text-gray-500">Click on a booking to view full details</p>
       </div>
 
-      {bookings.map(booking => (
+      {visibleBookings.map(booking => (
         <BookingAccordionCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>

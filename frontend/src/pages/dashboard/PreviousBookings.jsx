@@ -173,6 +173,9 @@ function PreviousBookingCard({ booking, session }) {
   const [showRefer, setShowRefer] = useState(false)
   const normalizedStatus = String(booking?.status ?? '').toLowerCase()
   const isCancelled = ['cancelled', 'canceled'].includes(normalizedStatus)
+  const cancellationReason = isCancelled
+    ? String(booking?.latestStatusLog?.note ?? '').trim() || 'No reason provided.'
+    : ''
   const title = booking?.package?.title || booking?.event?.name || 'Booking'
   const subtitle = [booking?.detailSubtitle, booking?.event?.name, booking?.locationSummary]
     .filter(Boolean)
@@ -300,6 +303,15 @@ function PreviousBookingCard({ booking, session }) {
               <p>{formatDashboardCurrency(booking?.paymentSummary?.amountDue)}</p>
             </div>
           </div>
+
+          {isCancelled ? (
+            <div className="mt-6">
+              <h4 className="mb-3 text-[11px] text-[#767676]">CANCELLATION REASON</h4>
+              <div className="rounded-xl bg-[#F8E7E2] p-3 text-sm text-[#591902]">
+                {cancellationReason}
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-6">
             <h4 className="mb-3 text-[11px] text-[#767676]">SELECTED ITEMS</h4>
