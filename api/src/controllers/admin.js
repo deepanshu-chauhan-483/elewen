@@ -27,6 +27,7 @@ const ALERT_STATUSES = ['new', 'acknowledged', 'resolved', 'snoozed']
 const ALERT_SEVERITIES = ['low', 'medium', 'high', 'critical']
 const SUPPORT_STATUSES = ['open', 'in_progress', 'resolved', 'closed']
 const SUPPORT_PRIORITIES = ['low', 'medium', 'high']
+const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'
 
 function toPositiveInt(value, fallback) {
   const parsed = Number.parseInt(String(value ?? ''), 10)
@@ -55,6 +56,61 @@ function isStrapiCredentialError(err) {
 
 function roundCurrency(value) {
   return Number(toNumber(value).toFixed(2))
+}
+
+function toAbsoluteAssetUrl(value) {
+  if (!value) return null
+  if (/^https?:\/\//i.test(String(value))) return String(value)
+  return `${STRAPI_BASE}${value}`
+}
+
+function getFirstMediaEntry(value) {
+  if (!value) return null
+  if (Array.isArray(value)) return value[0] ?? null
+  if (Array.isArray(value?.data)) return value.data[0] ?? null
+  if (value?.data) return value.data
+  return value
+}
+
+function getMediaUrl(value) {
+  const media = getFirstMediaEntry(value)
+  return toAbsoluteAssetUrl(
+    media?.formats?.large?.url ??
+      media?.formats?.medium?.url ??
+      media?.formats?.small?.url ??
+      media?.formats?.thumbnail?.url ??
+      media?.url ??
+      null
+  )
+}
+
+function getMediaName(value) {
+  const media = getFirstMediaEntry(value)
+  return media?.name ?? null
+}
+
+function mapVendorDocumentPreview(document) {
+  if (!document) return null
+
+  return {
+    id: String(document.id),
+    documentType: document.document_type ?? 'document',
+    verified: Boolean(document.verified),
+    fileName: getMediaName(document.file),
+    fileUrl: getMediaUrl(document.file),
+  }
+}
+
+function mapVendorPortfolioPreview(portfolio) {
+  if (!portfolio) return null
+
+  return {
+    id: String(portfolio.id),
+    title: portfolio.title ?? '',
+    description: portfolio.description ?? '',
+    imageName: getMediaName(portfolio.image),
+    imageUrl: getMediaUrl(portfolio.image),
+  }
 }
 
 function buildInFilterQuery(ids = []) {
@@ -345,9 +401,13 @@ function mapVendorDirectoryRow(vendor) {
     isAvailable: Boolean(vendor.is_available),
     teamSize: vendor.team_size ?? null,
     leadTimeDays: vendor.lead_time_days ?? null,
+    createdAt: vendor.created_at ?? null,
+    updatedAt: vendor.updated_at ?? null,
     registrationData: vendor.registration_data ?? null,
     documentsCount: 0,
     portfolioCount: 0,
+    vendorDocuments: [],
+    vendorPortfolios: [],
   }
 }
 
@@ -732,11 +792,19 @@ async function fetchVendorDirectory({
         isAvailable: Boolean(vendor.is_available),
         teamSize: vendor.team_size ?? null,
         leadTimeDays: vendor.lead_time_days ?? null,
+        createdAt: vendor.createdAt ?? null,
+        updatedAt: vendor.updatedAt ?? null,
         registrationData: vendor.registration_data ?? null,
         documentsCount: Array.isArray(vendor.vendor_documents) ? vendor.vendor_documents.length : 0,
         portfolioCount: Array.isArray(vendor.vendor_portfolios)
           ? vendor.vendor_portfolios.length
           : 0,
+        vendorDocuments: (Array.isArray(vendor.vendor_documents) ? vendor.vendor_documents : [])
+          .map(mapVendorDocumentPreview)
+          .filter(Boolean),
+        vendorPortfolios: (Array.isArray(vendor.vendor_portfolios) ? vendor.vendor_portfolios : [])
+          .map(mapVendorPortfolioPreview)
+          .filter(Boolean),
         activeAssignmentsCount: vendorAssignments.filter(assignment =>
           ['assigned', 'confirmed'].includes(assignment.status)
         ).length,

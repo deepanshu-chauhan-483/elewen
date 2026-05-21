@@ -36,6 +36,7 @@ import {
 import {
   createAssignment,
   deleteAssignment,
+  reassignAssignment,
   updateAssignment,
 } from '../controllers/vendorAssignment.js'
 import { createVendorPayout, processRefund, updateVendorPayout } from '../controllers/payment.js'
@@ -61,6 +62,7 @@ router.patch('/vendors/:id', updateAdminVendor)
 
 router.get('/vendor-assignments', listAdminVendorAssignments)
 router.post('/vendor-assignments', createAssignment)
+router.post('/vendor-assignments/:id/reassign', reassignAssignment)
 router.patch('/vendor-assignments/:id', updateAssignment)
 router.delete('/vendor-assignments/:id', deleteAssignment)
 

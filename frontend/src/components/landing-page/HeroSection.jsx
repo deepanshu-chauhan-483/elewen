@@ -70,8 +70,9 @@ const renderBandCopy = tokens => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PRELOADER_DONE_KEY = 'elewen-preloader-done'
 const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+const hasSeenHeroPreloader = () =>
+  typeof window !== 'undefined' && window.__elewenHeroPreloaderSeen === true
 
 // Use a Vite import so the URL is generated correctly.
 const HERO_VIDEO_SRC = HeroVideo
@@ -153,6 +154,7 @@ const HeroSection = () => {
         ) ??
         hero._sectionImages?.[0]
     ) || HERO_VIDEO_SRC
+  const hasSeenPreloader = hasSeenHeroPreloader()
   const wrapperRef = useRef(null)
   const preloaderRef = useRef(null)
   const darkOverlayRef = useRef(null)
@@ -237,7 +239,7 @@ const HeroSection = () => {
 
     // ── React 18 Strict Mode Fix: Wrap in gsap.context() ──
     let ctx = gsap.context(() => {
-      const skipPreloader = false
+      const skipPreloader = hasSeenHeroPreloader()
 
       // Gather elements for initial state setup (filter nulls — refs may not be ready on first paint)
       const motionElements = [
@@ -282,7 +284,7 @@ const HeroSection = () => {
           delay: skipPreloader ? 0 : 2, // Hold preloader for 2s, then 1s exit = 3s total
           onComplete: () => {
             s.loadComplete = true
-            sessionStorage.setItem(PRELOADER_DONE_KEY, '1')
+            if (typeof window !== 'undefined') window.__elewenHeroPreloaderSeen = true
             window.dispatchEvent(new Event('hero-preloader-done'))
           },
         })
@@ -645,7 +647,7 @@ const HeroSection = () => {
           ref={videoWrapperRef}
           style={{
             position: 'absolute',
-            top: '100vh',
+            top: hasSeenPreloader ? 0 : '100vh',
             left: 0,
             width: '100vw',
             height: '100vh',
@@ -653,6 +655,7 @@ const HeroSection = () => {
             overflow: 'hidden',
             borderRadius: 0,
             willChange: 'top, left, width, height, border-radius, transform',
+            transform: hasSeenPreloader ? 'none' : 'scale(1.05)',
           }}
         >
           <video
@@ -844,7 +847,7 @@ const HeroSection = () => {
         </div>
 
         {/* ── z-40: preloader overlay ────────────────────────────────────────── */}
-        <HeroPreloader ref={preloaderRef} />
+        <HeroPreloader ref={preloaderRef} initiallyHidden={hasSeenPreloader} />
       </div>
     </div>
   )

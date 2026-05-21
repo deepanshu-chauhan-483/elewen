@@ -16,6 +16,7 @@ import {
   adminPaymentWorkspace,
   adminPaymentSummary,
   adminPayments,
+  adminReassignVendorAssignment,
   adminProcessRefund,
   adminRefunds,
   adminSampleTastes,
@@ -262,6 +263,22 @@ export function useAdminCreateVendorAssignment() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'vendors'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'vendors', 'workspace'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'payments', 'workspace'] })
+    },
+  })
+}
+
+export function useAdminReassignVendorAssignment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ assignmentId, body }) =>
+      withAdminToken(token => adminReassignVendorAssignment(token, assignmentId, body)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vendor-assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'booking'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vendors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vendors', 'workspace'] })
     },
   })
 }
