@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
+import BrandedImage from '../common/BrandedImage'
 
 function ImageDots({ count, currentIndex = 0 }) {
   if (count <= 1) return null
@@ -235,7 +236,13 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
         onTouchEnd={handleTouchEnd}
       >
         {currentImage ? (
-          <img src={currentImage} alt={pkg.title} className="h-[280px] w-full object-cover" />
+          <BrandedImage
+            src={currentImage}
+            alt={pkg.title}
+            position="bottom-right"
+            showLogoBg={true}
+            className="h-full w-full"
+          />
         ) : (
           <div className="flex h-[280px] w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">
             {pkg.title}

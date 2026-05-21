@@ -45,3 +45,24 @@ export function getInitials(value = '') {
 
   return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')
 }
+
+export function normalizeDashboardSearchTerm(value = '') {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+}
+
+export function matchesDashboardSearch(searchTerm, values = []) {
+  const normalizedTerm = normalizeDashboardSearchTerm(searchTerm)
+  if (!normalizedTerm) return true
+
+  const candidates = (Array.isArray(values) ? values : [values]).flatMap(value =>
+    Array.isArray(value) ? value : [value]
+  )
+
+  return candidates.some(value =>
+    String(value ?? '')
+      .toLowerCase()
+      .includes(normalizedTerm)
+  )
+}

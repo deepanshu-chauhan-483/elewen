@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { DASHBOARD } from '../../constants/dashboard'
+import { useDashboardSearch } from './useDashboardSearch'
 import {
   useDashboardLogout,
   useDashboardNotificationCount,
@@ -64,18 +65,23 @@ const MenuIcon = () => (
 )
 
 function SearchBar() {
+  const { searchTerm, setSearchTerm } = useDashboardSearch()
+
   return (
-    <div className="hidden items-center gap-2 rounded-full bg-[#F0F0F0] md:flex md:w-[300px]">
-      <button
-        type="button"
-        className="flex w-[225px] items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md transition-all"
-      >
+    <label className="hidden items-center gap-2 rounded-full bg-[#F0F0F0] md:flex md:w-[300px]">
+      <div className="flex w-full items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md transition-all">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#591902] text-[#FAFAFA]">
           <SearchIcon />
         </span>
-        <span className="text-[13px] font-medium tracking-wide text-[#262626]">Search</span>
-      </button>
-    </div>
+        <input
+          type="search"
+          value={searchTerm}
+          onChange={event => setSearchTerm(event.target.value)}
+          placeholder="Search"
+          className="w-full bg-transparent text-[13px] font-medium tracking-wide text-[#262626] placeholder:text-[#7A7A7A] outline-none"
+        />
+      </div>
+    </label>
   )
 }
 

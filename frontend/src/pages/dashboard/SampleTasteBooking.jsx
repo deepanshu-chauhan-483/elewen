@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import {
   useDashboardSampleTasteDecision,
   useDashboardSampleTastes,
 } from '../../hooks/useDashboardData'
 import { useWishlist } from '../../hooks/useWishlist'
-import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
+import {
+  formatDashboardDate,
+  matchesDashboardSearch,
+} from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 // ---------------------------------------------------------------------------
@@ -477,6 +481,7 @@ export default function SampleTasteBooking() {
   const { data: samples = [], isLoading, error } = useDashboardSampleTastes()
   const decisionMutation = useDashboardSampleTasteDecision()
   const { toggleSavedPackage, pendingPackageId } = useWishlist()
+  const { searchTerm } = useDashboardSearch()
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
@@ -485,14 +490,20 @@ export default function SampleTasteBooking() {
     const term = search.trim().toLowerCase()
     return samples.filter(s => {
       const matchesStatus = status ? s.status?.toLowerCase() === status : true
-      const matchesSearch = term
-        ? [s.package?.title, s.event?.name, s.statusLabel]
-            .filter(Boolean)
-            .some(v => v.toLowerCase().includes(term))
-        : true
-      return matchesStatus && matchesSearch
+      const matchesLocalSearch = matchesDashboardSearch(term, [
+        s.package?.title,
+        s.event?.name,
+        s.statusLabel,
+      ])
+      const matchesNavbarSearch = matchesDashboardSearch(searchTerm, [
+        s.package?.title,
+        s.event?.name,
+        s.statusLabel,
+        ...(s.vendors?.map(vendor => vendor?.vendor?.companyName) ?? []),
+      ])
+      return matchesStatus && matchesLocalSearch && matchesNavbarSearch
     })
-  }, [samples, search, status])
+  }, [samples, search, searchTerm, status])
 
   if (isLoading) {
     return <DashboardLoadingState title="Loading sample taste requests..." />

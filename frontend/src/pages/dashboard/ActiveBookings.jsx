@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { useDashboardBookings, useDashboardSession } from '../../hooks/useDashboardData'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
+  matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
-import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
+import {
+  DashboardEmptyState,
+  DashboardErrorState,
+  DashboardLoadingState,
+} from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { getBookingPackageNamesText } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
@@ -291,6 +297,18 @@ function BookingCard({ booking, session }) {
 export default function ActiveBookings() {
   const { data: bookings = [], isLoading, error } = useDashboardBookings('active')
   const { data: session } = useDashboardSession()
+  const { searchTerm } = useDashboardSearch()
+  const filteredBookings = bookings.filter(booking =>
+    matchesDashboardSearch(searchTerm, [
+      getBookingPackageNamesText(booking, booking?.event?.name || 'Booking'),
+      booking?.event?.name,
+      booking?.package?.title,
+      booking?.package?.serviceCategories?.[0]?.name,
+      booking?.locationSummary,
+      booking?.statusLabel,
+      booking?.latestStatusLog?.note,
+    ])
+  )
 
   if (isLoading) {
     return <DashboardLoadingState title="Loading active bookings..." />
@@ -311,6 +329,15 @@ export default function ActiveBookings() {
     )
   }
 
+  if (!filteredBookings.length) {
+    return (
+      <DashboardEmptyState
+        title="No active bookings match your search"
+        body="Try a different booking, event, location, or status keyword."
+      />
+    )
+  }
+
   return (
     <div className="space-y-6 bg-[#F2F2F2]">
       <div>
@@ -318,7 +345,7 @@ export default function ActiveBookings() {
         <p className="text-sm text-gray-500">Track and manage your ongoing events</p>
       </div>
 
-      {bookings.map(booking => (
+      {filteredBookings.map(booking => (
         <BookingCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>

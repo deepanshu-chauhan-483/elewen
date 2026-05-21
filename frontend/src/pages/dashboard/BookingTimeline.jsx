@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import { getStoredJwt, paymentCreateOrder, paymentVerify } from '../../lib/api'
-import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
+import {
+  formatDashboardDate,
+  matchesDashboardSearch,
+} from '../../components/dashboard/dashboardUtils'
 import {
   useDashboardBooking,
   useDashboardBookingTimeline,
@@ -216,6 +220,7 @@ export default function BookingTimeline() {
   const { data: bookings = [], isLoading, error } = useDashboardBookings('all')
   const [selectedId, setSelectedId] = useState('')
   const [payingBookingId, setPayingBookingId] = useState('')
+  const { searchTerm } = useDashboardSearch()
 
   const orderBookings = useMemo(
     () =>
@@ -233,16 +238,32 @@ export default function BookingTimeline() {
       }),
     [bookings]
   )
+  const filteredOrderBookings = useMemo(
+    () =>
+      orderBookings.filter(booking =>
+        matchesDashboardSearch(searchTerm, [
+          booking?.package?.title,
+          booking?.event?.name,
+          booking?.statusLabel,
+          booking?.locationSummary,
+          booking?.detailSubtitle,
+        ])
+      ),
+    [orderBookings, searchTerm]
+  )
 
   useEffect(() => {
-    if (!orderBookings.length) return
-    if (selectedId && orderBookings.some(booking => booking.id === selectedId)) return
-    setSelectedId(orderBookings[0].id)
-  }, [orderBookings, selectedId])
+    if (!filteredOrderBookings.length) return
+    if (selectedId && filteredOrderBookings.some(booking => booking.id === selectedId)) return
+    setSelectedId(filteredOrderBookings[0].id)
+  }, [filteredOrderBookings, selectedId])
 
   const selectedBooking = useMemo(
-    () => orderBookings.find(booking => booking.id === selectedId) ?? orderBookings[0] ?? null,
-    [orderBookings, selectedId]
+    () =>
+      filteredOrderBookings.find(booking => booking.id === selectedId) ??
+      filteredOrderBookings[0] ??
+      null,
+    [filteredOrderBookings, selectedId]
   )
   const { data: selectedBookingDetails } = useDashboardBooking(selectedBooking?.id)
   const activeBooking = selectedBookingDetails ?? selectedBooking
@@ -372,6 +393,15 @@ export default function BookingTimeline() {
     )
   }
 
+  if (!filteredOrderBookings.length) {
+    return (
+      <DashboardErrorState
+        title="No booking timelines match your search."
+        body="Try searching by package, event, status, or location."
+      />
+    )
+  }
+
   return (
     <div>
       <div className="mb-8">
@@ -379,12 +409,13 @@ export default function BookingTimeline() {
           <h1 className="text-2xl text-[#2E2E2E]">Booking Timeline</h1>
         </div>
         <p className="text-sm text-[#8C7B6B]">
-          Follow the milestones and key updates for each booking - {orderBookings.length} bookings
+          Follow the milestones and key updates for each booking - {filteredOrderBookings.length}{' '}
+          bookings
         </p>
       </div>
 
       <div className="mb-8 flex flex-wrap gap-3">
-        {orderBookings.map(booking => (
+        {filteredOrderBookings.map(booking => (
           <button
             key={booking.id}
             type="button"

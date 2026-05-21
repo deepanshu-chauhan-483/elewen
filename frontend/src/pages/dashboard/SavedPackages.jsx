@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
+import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
 import { useWishlist } from '../../hooks/useWishlist'
-import { formatDashboardCurrency } from '../../components/dashboard/dashboardUtils'
+import {
+  formatDashboardCurrency,
+  matchesDashboardSearch,
+} from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 function getPackageHref(item) {
@@ -194,6 +199,14 @@ function PackageCard({ item, isPending, onRemove }) {
 
 export default function SavedPackages() {
   const { wishlist = [], isLoading, toggleSavedPackage, pendingPackageId } = useWishlist()
+  const { searchTerm } = useDashboardSearch()
+  const filteredWishlist = wishlist.filter(item =>
+    matchesDashboardSearch(searchTerm, [
+      item?.title,
+      item?.events?.[0]?.name,
+      ...(item?.serviceCategories ?? []).map(category => category?.name),
+    ])
+  )
 
   if (!isLoading && wishlist.length === 0) {
     return (
@@ -202,6 +215,15 @@ export default function SavedPackages() {
         body="Use the heart icon on package cards and your saved shortlist will appear here."
         actionLabel="Browse Packages"
         actionTo="/package-listing"
+      />
+    )
+  }
+
+  if (!isLoading && !filteredWishlist.length) {
+    return (
+      <DashboardEmptyState
+        title="No saved packages match your search"
+        body="Try searching by package name, event, or service category."
       />
     )
   }
@@ -219,7 +241,7 @@ export default function SavedPackages() {
           </p>
           {!isLoading && wishlist.length > 0 && (
             <span className="text-xs font-semibold text-[#C6A15B] bg-[#FBF7F3] border border-[#EDE5DA] px-3 py-1 rounded-full">
-              {wishlist.length} saved
+              {filteredWishlist.length} saved
             </span>
           )}
         </div>
@@ -236,7 +258,7 @@ export default function SavedPackages() {
       {/* ── Package cards ── */}
       {!isLoading && (
         <div className="space-y-4">
-          {wishlist.map(item => {
+          {filteredWishlist.map(item => {
             const isPending = String(pendingPackageId) === String(item.packageId)
             return (
               <PackageCard

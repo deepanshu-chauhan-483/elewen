@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useToast } from '../../components/common/useToast'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
+import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
 import {
   useDashboardBookings,
   useDashboardBookingTimeline,
@@ -12,6 +14,7 @@ import {
   formatDashboardCurrency,
   formatDashboardDate,
   formatDashboardDateTime,
+  matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
 import {
   getBookingPackageNamesText,
@@ -661,6 +664,7 @@ function BookingAccordionCard({ booking, session }) {
 export default function BookingDetailsAccordion() {
   const { data: bookings = [] } = useDashboardBookings('all')
   const { data: session } = useDashboardSession()
+  const { searchTerm } = useDashboardSearch()
   const visibleBookings = useMemo(
     () =>
       bookings.filter(booking => {
@@ -671,6 +675,32 @@ export default function BookingDetailsAccordion() {
       }),
     [bookings]
   )
+  const filteredBookings = useMemo(
+    () =>
+      visibleBookings.filter(booking =>
+        matchesDashboardSearch(searchTerm, [
+          getBookingPackageNamesText(booking, 'Booking'),
+          booking?.detailSubtitle,
+          booking?.event?.name,
+          booking?.package?.title,
+          booking?.locationSummary,
+          booking?.status,
+          booking?.statusLabel,
+          booking?.specialRequest,
+          ...(booking?.items ?? []).map(item => item?.title),
+        ])
+      ),
+    [searchTerm, visibleBookings]
+  )
+
+  if (visibleBookings.length > 0 && filteredBookings.length === 0) {
+    return (
+      <DashboardEmptyState
+        title="No bookings match your search"
+        body="Try searching by booking name, package, location, item, or status."
+      />
+    )
+  }
 
   return (
     <div className="space-y-6 ">
@@ -679,7 +709,7 @@ export default function BookingDetailsAccordion() {
         <p className="text-sm text-gray-500">Click on a booking to view full details</p>
       </div>
 
-      {visibleBookings.map(booking => (
+      {filteredBookings.map(booking => (
         <BookingAccordionCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>

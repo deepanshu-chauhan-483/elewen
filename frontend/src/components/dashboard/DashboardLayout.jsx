@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './navbar'
+import { DashboardSearchProvider } from './DashboardSearchContext'
 import { DASHBOARD } from '../../constants/dashboard'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getStoredJwt, getValidStoredJwt } from '../../lib/api'
@@ -84,30 +85,32 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="dashboard-shell min-h-[var(--door-viewport-height)] w-full overflow-x-hidden bg-[#F2F2F2] md:flex md:min-h-screen">
-      {/* Sidebar */}
-      <Sidebar
-        isMobileOpen={isMobileSidebarOpen}
-        onMobileClose={() => setIsMobileSidebarOpen(false)}
-      />
+    <DashboardSearchProvider key={location.pathname}>
+      <div className="dashboard-shell min-h-[var(--door-viewport-height)] w-full overflow-x-hidden bg-[#F2F2F2] md:flex md:min-h-screen">
+        {/* Sidebar */}
+        <Sidebar
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileClose={() => setIsMobileSidebarOpen(false)}
+        />
 
-      {/* Right Section */}
-      <div className="flex min-h-[var(--door-viewport-height)] w-full flex-col bg-[#F2F2F2] md:ml-[260px] md:min-h-screen md:flex-1">
-        <Navbar onMobileMenuOpen={() => setIsMobileSidebarOpen(true)} />
+        {/* Right Section */}
+        <div className="flex min-h-[var(--door-viewport-height)] w-full flex-col bg-[#F2F2F2] md:ml-[260px] md:min-h-screen md:flex-1">
+          <Navbar onMobileMenuOpen={() => setIsMobileSidebarOpen(true)} />
 
-        <main
-          className="dashboard-main flex flex-1 flex-col overflow-y-auto pb-28 md:min-h-0 md:p-6 md:pb-6"
-          style={{
-            backgroundColor: '#F2F2F2',
-            marginTop: DASHBOARD.NAVBAR_HEIGHT,
-          }}
-        >
-          <div className="flex flex-1 flex-col px-6 py-6 md:px-6 md:py-6">
-            <Outlet />
-          </div>
-        </main>
+          <main
+            className="dashboard-main flex flex-1 flex-col overflow-y-auto pb-28 md:min-h-0 md:p-6 md:pb-6"
+            style={{
+              backgroundColor: '#F2F2F2',
+              marginTop: DASHBOARD.NAVBAR_HEIGHT,
+            }}
+          >
+            <div className="flex flex-1 flex-col px-6 py-6 md:px-6 md:py-6">
+              <Outlet />
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </DashboardSearchProvider>
   )
 }
 

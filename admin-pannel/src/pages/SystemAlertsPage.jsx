@@ -1,373 +1,483 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
+  ActionButton,
+  EmptyState,
   ErrorState,
   LoadingState,
+  SearchField,
   SectionLoadingState,
   SelectField,
+  StatusBadge,
 } from '../components/ui/AdminUI'
 import { useAdminAlerts, useAdminUpdateAlert } from '../hooks/useAdminData'
 import { formatDateTime } from '../lib/formatters'
 
-// ---------------------------------------------------------------------------
-// Shared primitives
-// ---------------------------------------------------------------------------
+const PAGE_SIZE = 10
 
-const severityBadge = {
-  low: 'bg-[#E5E7EB] text-[#4B5563]',
-  medium: 'bg-[#FCE7CF] text-[#C57A1E]',
-  high: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  critical: 'bg-[#8A1C1C] text-white',
+const severityRank = {
+  critical: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
 }
 
-const statusBadge = {
-  new: 'bg-[#DBEAFE] text-[#0383E4]',
-  acknowledged: 'bg-[#FCE7CF] text-[#C57A1E]',
-  snoozed: 'bg-[#E5E7EB] text-[#4B5563]',
-  resolved: 'bg-[#DDF7E5] text-[#16A34A]',
+const alertTypeOptions = [
+  { value: '', label: 'All alert types' },
+  { value: 'failed_payment', label: 'Payment failed' },
+  { value: 'refund_requested', label: 'Refund requested' },
+  { value: 'refund_failed', label: 'Refund failed' },
+  { value: 'booking_cancelled', label: 'Booking cancelled' },
+  { value: 'vendor_unassigned', label: 'Vendor unassigned' },
+  { value: 'overdue_action', label: 'Overdue action' },
+  { value: 'system_health', label: 'System health' },
+]
+
+function sentenceCase(value) {
+  return String(value ?? '')
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, character => character.toUpperCase())
 }
 
-// Left border accent per severity
-const severityBorder = {
-  low: 'border-l-gray-300',
-  medium: 'border-l-amber-400',
-  high: 'border-l-red-400',
-  critical: 'border-l-red-700',
+function getEntityLabel(alert) {
+  const type = sentenceCase(alert.relatedEntityType || 'System')
+  return alert.relatedEntityId ? `${type} ${alert.relatedEntityId}` : type
 }
 
-// Severity dot colour
-const severityDot = {
-  low: 'bg-gray-400',
-  medium: 'bg-amber-400',
-  high: 'bg-red-400',
-  critical: 'bg-red-700',
+function getAgeLabel(createdAt) {
+  const created = new Date(createdAt).getTime()
+  if (!Number.isFinite(created)) return 'Unknown age'
+
+  const diffHours = Math.max(0, Math.floor((Date.now() - created) / 36e5))
+  if (diffHours < 1) return 'Just now'
+  if (diffHours < 24) return `${diffHours}h old`
+
+  const diffDays = Math.floor(diffHours / 24)
+  return `${diffDays}d old`
 }
 
-function Badge({ status, map, fallback = 'bg-[#E5E7EB] text-[#4B5563]' }) {
-  const key = status?.toLowerCase() ?? ''
-  const cls = (map ?? {})[key] ?? fallback
-  const text = key.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) || '—'
+function getTriggerReason(alert) {
+  const metadata = alert.metadata && typeof alert.metadata === 'object' ? alert.metadata : {}
+  if (metadata.reason) return metadata.reason
+  if (metadata.errorDescription) return metadata.errorDescription
+  if (alert.alertType === 'failed_payment') return 'Payment gateway reported a failed payment'
+  if (alert.alertType === 'vendor_unassigned') return 'Booking still needs vendor assignment'
+  if (alert.alertType === 'booking_cancelled') return 'Customer or admin cancelled the booking'
+  if (alert.alertType === 'refund_requested') return 'Refund is waiting for admin review'
+  return 'Created by the alert workflow'
+}
+
+function getActionRoute(alert) {
+  const type = String(alert.relatedEntityType ?? '').toLowerCase()
+  if (type === 'booking') return '/bookings'
+  if (type === 'payment') return '/payments'
+  if (type === 'vendor') return '/vendors'
+  return null
+}
+
+function SummaryCard({ label, value, helper, tone = 'neutral' }) {
+  const toneClass =
+    tone === 'danger'
+      ? 'border-[#F1B7B7] bg-[#FFF3F3]'
+      : tone === 'warning'
+        ? 'border-[#F3D5B3] bg-[#FFF8ED]'
+        : 'border-[#E4DED8] bg-white'
+
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}
-    >
-      {text}
-    </span>
-  )
-}
-
-function MetricCard({ label, value, helper, accent }) {
-  return (
-    <div
-      className={`flex flex-col gap-1 rounded-2xl border bg-white px-5 py-5 ${accent ? 'border-t-[3px] border-t-[#D4BA8E] border-[#E4DED8]' : 'border-[#E4DED8]'}`}
-    >
-      <span className="text-[11px] font-semibold uppercase tracking-widest text-[#8F8F8F]">
+    <div className={`rounded-[8px] border px-5 py-4 ${toneClass}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
         {label}
-      </span>
-      <span className="text-[28px] font-bold leading-none text-[#1C1C1C]">{value}</span>
-      <span className="text-xs text-[#6B7280]">{helper}</span>
+      </p>
+      <p className="mt-2 text-[30px] leading-none text-[#1C1C1C]">{value}</p>
+      <p className="mt-2 text-xs text-[#6B7280]">{helper}</p>
     </div>
   )
 }
 
-function GhostBtn({ children, onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex h-9 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-4 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
-    >
-      {children}
-    </button>
-  )
-}
+function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
+  if (!alert) return null
 
-function PrimaryBtn({ children, onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex h-9 items-center justify-center rounded-full bg-[#CDB17E] px-4 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
-    >
-      {children}
-    </button>
-  )
-}
-
-// Search icon
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.5"
-        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-      />
-    </svg>
-  )
-}
-
-function ArrowIcon({ direction = 'right' }) {
-  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+  const route = getActionRoute(alert)
+  const metadataEntries =
+    alert.metadata && typeof alert.metadata === 'object'
+      ? Object.entries(alert.metadata).filter(([, value]) => value !== null && value !== undefined)
+      : []
 
   return (
-    <svg className={`h-6 w-6 ${rotationClass}`} viewBox="0 0 36 36" fill="none">
-      <path
-        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
-        stroke="#1C1C1C"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-// Bell icon for empty state
-function BellIcon() {
-  return (
-    <svg
-      className="mx-auto mb-3 h-10 w-10 text-[#D4BA8E]"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.5}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-      />
-    </svg>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Alert card
-// ---------------------------------------------------------------------------
-function AlertCard({ alert, onUpdate, isBusy }) {
-  const sev = alert.severity?.toLowerCase() ?? 'low'
-  const st = alert.status?.toLowerCase() ?? 'new'
-  const border = severityBorder[sev] ?? 'border-l-gray-300'
-  const dot = severityDot[sev] ?? 'bg-gray-400'
-  const resolved = st === 'resolved'
-
-  return (
-    <div
-      className={`rounded-2xl border border-[#E4DED8] border-l-[3px] bg-white px-5 py-4 transition hover:shadow-[0_2px_12px_rgba(62,39,35,0.07)] ${border}`}
-    >
-      {/* Top row — message + badges */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-1 min-w-0 items-start gap-3">
-          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${dot}`} />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#1C1C1C] leading-snug">{alert.message}</p>
-            <p className="mt-1 text-xs text-[#8F8F8F]">
-              {alert.alertType}
-              {alert.relatedEntityType ? ` · ${alert.relatedEntityType}` : ''}
-              {' · '}
-              {formatDateTime(alert.createdAt)}
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/25" onClick={onClose}>
+      <aside
+        className="h-full w-full max-w-[520px] overflow-y-auto bg-[#FAFAFA] p-6 shadow-[-16px_0_40px_rgba(17,24,39,0.18)]"
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
+              Alert Detail
             </p>
+            <h2 className="mt-2 text-xl font-semibold text-[#1C1C1C]">
+              {sentenceCase(alert.alertType)}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-[8px] border border-[#E4DED8] bg-white px-3 py-2 text-sm text-[#1C1C1C]"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="mt-6 rounded-[8px] border border-[#E4DED8] bg-white p-4">
+          <p className="text-sm font-semibold text-[#1C1C1C]">{alert.message}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <StatusBadge status={alert.severity} />
+            <StatusBadge status={alert.status} />
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <Badge status={alert.severity} map={severityBadge} />
-          <Badge status={alert.status} map={statusBadge} />
-        </div>
-      </div>
 
-      {/* Action row — only when not resolved */}
-      {!resolved && (
-        <div className="mt-4 flex flex-wrap gap-2 pl-5">
-          {st !== 'acknowledged' && (
-            <GhostBtn disabled={isBusy} onClick={() => onUpdate(alert.id, 'acknowledged')}>
-              Acknowledge
-            </GhostBtn>
-          )}
-          {st !== 'snoozed' && (
-            <GhostBtn disabled={isBusy} onClick={() => onUpdate(alert.id, 'snoozed')}>
-              Snooze
-            </GhostBtn>
-          )}
-          <PrimaryBtn disabled={isBusy} onClick={() => onUpdate(alert.id, 'resolved')}>
-            Resolve
-          </PrimaryBtn>
+        <div className="mt-5 grid gap-3">
+          <div className="rounded-[8px] border border-[#E4DED8] bg-white p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
+              Context Summary
+            </p>
+            <dl className="mt-3 grid gap-3 text-sm">
+              <div>
+                <dt className="text-[#8F8F8F]">Related item</dt>
+                <dd className="mt-1 text-[#1C1C1C]">{getEntityLabel(alert)}</dd>
+              </div>
+              <div>
+                <dt className="text-[#8F8F8F]">Reason alert was triggered</dt>
+                <dd className="mt-1 text-[#1C1C1C]">{getTriggerReason(alert)}</dd>
+              </div>
+              <div>
+                <dt className="text-[#8F8F8F]">Created</dt>
+                <dd className="mt-1 text-[#1C1C1C]">{formatDateTime(alert.createdAt)}</dd>
+              </div>
+            </dl>
+          </div>
+
+          {metadataEntries.length ? (
+            <div className="rounded-[8px] border border-[#E4DED8] bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
+                Alert Metadata
+              </p>
+              <dl className="mt-3 grid gap-2 text-sm">
+                {metadataEntries.map(([key, value]) => (
+                  <div key={key} className="grid gap-1 sm:grid-cols-[140px_1fr]">
+                    <dt className="text-[#8F8F8F]">{sentenceCase(key)}</dt>
+                    <dd className="break-words text-[#1C1C1C]">
+                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
         </div>
-      )}
+
+        <div className="mt-6 rounded-[8px] border border-[#E4DED8] bg-white p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
+            Admin Action
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {route ? (
+              <ActionButton tone="ghost" onClick={() => onNavigate(route)}>
+                Go to {sentenceCase(alert.relatedEntityType)}
+              </ActionButton>
+            ) : null}
+            {alert.status !== 'acknowledged' ? (
+              <ActionButton
+                tone="ghost"
+                disabled={isBusy}
+                onClick={() => onUpdate(alert.id, 'acknowledged')}
+              >
+                Mark acknowledged
+              </ActionButton>
+            ) : null}
+            {alert.status !== 'snoozed' ? (
+              <ActionButton
+                tone="ghost"
+                disabled={isBusy}
+                onClick={() => onUpdate(alert.id, 'snoozed')}
+              >
+                Snooze
+              </ActionButton>
+            ) : null}
+            {alert.status !== 'resolved' ? (
+              <ActionButton
+                tone="primary"
+                disabled={isBusy}
+                onClick={() => onUpdate(alert.id, 'resolved')}
+              >
+                Resolve alert
+              </ActionButton>
+            ) : null}
+          </div>
+        </div>
+      </aside>
     </div>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 export default function SystemAlertsPage() {
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [severity, setSeverity] = useState('')
+  const [alertType, setAlertType] = useState('')
+  const [sortBy, setSortBy] = useState('priority')
   const [currentPage, setCurrentPage] = useState(1)
-  const PAGE_SIZE = 10
+  const [selectedAlertId, setSelectedAlertId] = useState(null)
+  const [checkedIds, setCheckedIds] = useState([])
 
   const alertsQuery = useAdminAlerts({
     search,
     status,
     severity,
+    alertType,
+    sortBy: sortBy === 'oldest' ? 'oldest' : 'latest',
     page: currentPage,
     limit: PAGE_SIZE,
   })
   const updateAlertMutation = useAdminUpdateAlert()
 
-  if (alertsQuery.isLoading) return <LoadingState label="Loading system alerts…" />
-  if (alertsQuery.error) return <ErrorState label="System alerts are unavailable right now." />
+  const alerts = useMemo(() => {
+    const rows = alertsQuery.data?.alerts ?? []
+    if (sortBy !== 'priority') return rows
 
+    return [...rows].sort((left, right) => {
+      const rightRank = severityRank[String(right.severity ?? '').toLowerCase()] ?? 0
+      const leftRank = severityRank[String(left.severity ?? '').toLowerCase()] ?? 0
+      return rightRank - leftRank || new Date(left.createdAt) - new Date(right.createdAt)
+    })
+  }, [alertsQuery.data?.alerts, sortBy])
+
+  const selectedAlert = alerts.find(alert => alert.id === selectedAlertId) ?? null
   const summary = alertsQuery.data?.summary ?? {}
-  const alerts = alertsQuery.data?.alerts ?? []
   const totalAlerts = Number(alertsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(alertsQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
   const isResultsLoading = alertsQuery.isFetching && !alertsQuery.isLoading
+  const allVisibleChecked =
+    alerts.length > 0 && alerts.every(alert => checkedIds.includes(alert.id))
 
-  const handleUpdate = (alertId, newStatus) => {
-    updateAlertMutation.mutate({ alertId, body: { status: newStatus } })
+  const resetPage = setter => value => {
+    setter(value)
+    setCurrentPage(1)
+    setCheckedIds([])
   }
+
+  const handleUpdate = async (alertId, newStatus) => {
+    await updateAlertMutation.mutateAsync({ alertId, body: { status: newStatus } })
+  }
+
+  const handleBulkUpdate = async newStatus => {
+    await Promise.all(
+      checkedIds.map(alertId =>
+        updateAlertMutation.mutateAsync({ alertId, body: { status: newStatus } })
+      )
+    )
+    setCheckedIds([])
+  }
+
+  const toggleAllVisible = () => {
+    setCheckedIds(current =>
+      allVisibleChecked
+        ? current.filter(id => !alerts.some(alert => alert.id === id))
+        : [...new Set([...current, ...alerts.map(alert => alert.id)])]
+    )
+  }
+
+  if (alertsQuery.isLoading) return <LoadingState label="Loading system alerts..." />
+  if (alertsQuery.error) return <ErrorState label="System alerts are unavailable right now." />
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
-      <div>
+      <div className="flex flex-col gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
+          Operational Checklist
+        </p>
         <h1 className="text-2xl text-[#1C1C1C]">System Alerts</h1>
-        <p className="mt-1 text-sm text-[#6B7280]">
-          Track failed payments, operational gaps, and escalations. Acknowledge, snooze, or resolve
-          from here.
+        <p className="max-w-3xl text-sm text-[#6B7280]">
+          Quick urgency check for failed payments, booking gaps, vendor issues, and system events
+          that need admin review.
         </p>
       </div>
 
-      {/* ── Metric strip ── */}
-      <div className="grid gap-3.5 sm:grid-cols-3">
-        <MetricCard
-          label="Total Alerts"
-          value={String(summary.total ?? 0)}
-          helper="Matching current filters"
-          accent
+      <div className="grid gap-3 sm:grid-cols-3">
+        <SummaryCard
+          label="High Priority"
+          value={String(summary.highPriority ?? summary.critical ?? 0)}
+          helper="Critical or high unresolved alerts"
+          tone="danger"
         />
-        <MetricCard
-          label="Critical"
-          value={String(summary.critical ?? 0)}
-          helper="Highest severity events"
-          accent
+        <SummaryCard
+          label="Pending Attention"
+          value={String(summary.pendingAttention ?? summary.unresolved ?? 0)}
+          helper="Open alerts that need review"
+          tone="warning"
         />
-        <MetricCard
-          label="Unresolved"
-          value={String(summary.unresolved ?? 0)}
-          helper="Needs active follow-up"
-          accent
+        <SummaryCard
+          label="Informational"
+          value={String(summary.informational ?? 0)}
+          helper="Low severity or already resolved"
         />
       </div>
 
-      {/* ── Filters ── */}
-      <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#8F8F8F]">
-          Filter Alerts
-        </p>
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          {/* Search */}
-          <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] focus:border-[#C6A15B] px-2.5 py-1.5 text-[#A19B94]">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
-              <span className="h-3.5 w-3.5">
-                <SearchIcon />
-              </span>
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={e => {
-                setSearch(e.target.value)
-                setCurrentPage(1)
-              }}
-              placeholder="Search"
-              className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
-            />
-          </label>
+      <section className="rounded-[8px] border border-[#E4DED8] bg-[#F8F5F1] p-4">
+        <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+          <SearchField value={search} onChange={resetPage(setSearch)} placeholder="Search alerts" />
           <SelectField
-            value={severity}
-            onChange={value => {
-              setSeverity(value)
-              setCurrentPage(1)
-            }}
-          >
-            <option value="">All Severities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+            value={alertType}
+            onChange={resetPage(setAlertType)}
+            options={alertTypeOptions}
+          />
+          <SelectField value={severity} onChange={resetPage(setSeverity)}>
+            <option value="">All severities</option>
             <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
           </SelectField>
-          <SelectField
-            value={status}
-            onChange={value => {
-              setStatus(value)
-              setCurrentPage(1)
-            }}
-          >
-            <option value="">All States</option>
+          <SelectField value={status} onChange={resetPage(setStatus)}>
+            <option value="">All statuses</option>
             <option value="new">New</option>
             <option value="acknowledged">Acknowledged</option>
             <option value="snoozed">Snoozed</option>
             <option value="resolved">Resolved</option>
           </SelectField>
+          <SelectField value={sortBy} onChange={resetPage(setSortBy)}>
+            <option value="priority">Priority first</option>
+            <option value="latest">Latest first</option>
+            <option value="oldest">Oldest first</option>
+          </SelectField>
+        </div>
+      </section>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm text-[#6B7280]">
+          <span className="font-semibold text-[#1C1C1C]">{totalAlerts}</span> alert
+          {totalAlerts === 1 ? '' : 's'}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <ActionButton
+            tone="ghost"
+            disabled={!checkedIds.length || updateAlertMutation.isPending}
+            onClick={() => handleBulkUpdate('acknowledged')}
+          >
+            Mark acknowledged
+          </ActionButton>
+          <ActionButton
+            tone="primary"
+            disabled={!checkedIds.length || updateAlertMutation.isPending}
+            onClick={() => handleBulkUpdate('resolved')}
+          >
+            Resolve selected
+          </ActionButton>
         </div>
       </div>
 
-      {/* ── Results count ── */}
-      <div className="flex items-baseline gap-2">
-        <span className="text-base font-semibold text-[#1C1C1C]">{totalAlerts}</span>
-        <span className="text-sm text-[#8F8F8F]">alert{totalAlerts !== 1 ? 's' : ''}</span>
-      </div>
-
-      {/* ── Alert feed ── */}
       {isResultsLoading ? (
-        <SectionLoadingState label="Loading system alertsâ€¦" />
+        <SectionLoadingState label="Loading system alerts..." />
       ) : alerts.length ? (
-        <div className="space-y-2.5">
-          {alerts.map(alert => (
-            <AlertCard
-              key={alert.id}
-              alert={alert}
-              onUpdate={handleUpdate}
-              isBusy={updateAlertMutation.isPending}
-            />
-          ))}
-          <div className="mt-4 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+        <div className="overflow-hidden rounded-[8px] border border-[#E4DED8] bg-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-[980px] w-full border-collapse text-left">
+              <thead className="bg-[#F3F3F3] text-[11px] uppercase tracking-[0.16em] text-[#8F8F8F]">
+                <tr>
+                  <th className="w-12 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleChecked}
+                      onChange={toggleAllVisible}
+                    />
+                  </th>
+                  <th className="px-4 py-3">Alert Type</th>
+                  <th className="px-4 py-3">Priority</th>
+                  <th className="px-4 py-3">Related To</th>
+                  <th className="px-4 py-3">Description</th>
+                  <th className="px-4 py-3">Created</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F0EBE3] text-sm">
+                {alerts.map(alert => (
+                  <tr key={alert.id} className="align-top transition hover:bg-[#FBF7F3]">
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={checkedIds.includes(alert.id)}
+                        onChange={() =>
+                          setCheckedIds(current =>
+                            current.includes(alert.id)
+                              ? current.filter(id => id !== alert.id)
+                              : [...current, alert.id]
+                          )
+                        }
+                      />
+                    </td>
+                    <td className="px-4 py-4 font-semibold text-[#1C1C1C]">
+                      {sentenceCase(alert.alertType)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <StatusBadge status={alert.severity} />
+                    </td>
+                    <td className="px-4 py-4 text-[#4B5563]">{getEntityLabel(alert)}</td>
+                    <td className="max-w-[320px] px-4 py-4 text-[#4B5563]">{alert.message}</td>
+                    <td className="px-4 py-4 text-[#4B5563]">
+                      <div>{formatDateTime(alert.createdAt)}</div>
+                      <div className="mt-1 text-xs text-[#8F8F8F]">
+                        {getAgeLabel(alert.createdAt)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <StatusBadge status={alert.status} />
+                    </td>
+                    <td className="px-4 py-4">
+                      <ActionButton tone="ghost" onClick={() => setSelectedAlertId(alert.id)}>
+                        Review
+                      </ActionButton>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center justify-end gap-2 border-t border-[#F0EBE3] px-4 py-3">
+            <ActionButton
+              tone="ghost"
               disabled={visiblePage === 1}
-              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCurrentPage(previous => Math.max(1, previous - 1))}
             >
-              <ArrowIcon direction="left" />
-            </button>
-            <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+              Previous
+            </ActionButton>
+            <span className="px-2 text-xs font-semibold text-[#6B7280]">
               {visiblePage} / {totalPages}
-            </div>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            </span>
+            <ActionButton
+              tone="ghost"
               disabled={visiblePage === totalPages}
-              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCurrentPage(previous => Math.min(totalPages, previous + 1))}
             >
-              <ArrowIcon direction="right" />
-            </button>
+              Next
+            </ActionButton>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#E4DED8] bg-white p-10 text-center">
-          <BellIcon />
-          <p className="text-base font-semibold text-[#1C1C1C]">No alerts found</p>
-          <p className="mt-1 text-sm text-[#6B7280]">
-            The alert feed is clear for the current filters.
-          </p>
-        </div>
+        <EmptyState
+          title="No alerts found"
+          body="The alert feed is clear for the current filters."
+        />
       )}
+
+      <AlertDetailPanel
+        alert={selectedAlert}
+        isBusy={updateAlertMutation.isPending}
+        onClose={() => setSelectedAlertId(null)}
+        onNavigate={route => navigate(route)}
+        onUpdate={handleUpdate}
+      />
     </div>
   )
 }

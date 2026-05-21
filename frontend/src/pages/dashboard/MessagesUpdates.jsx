@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import {
   DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
 } from '../../components/dashboard/DashboardUI'
+import { matchesDashboardSearch } from '../../components/dashboard/dashboardUtils'
 import {
   useDashboardBookings,
   useDashboardSendMessage,
@@ -215,6 +217,7 @@ export default function MessagesUpdates() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [draft, setDraft] = useState('')
   const [search, setSearch] = useState('')
+  const { searchTerm } = useDashboardSearch()
   const messagesEndRef = useRef(null)
 
   const sendMessageMutation = useDashboardSendMessage()
@@ -235,14 +238,17 @@ export default function MessagesUpdates() {
   const baseBookings = activeTab === 'previous' ? previousBookings : activeBookings
 
   const visibleBookings = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    if (!term) return baseBookings
-    return baseBookings.filter(b =>
-      [b?.package?.title, b?.event?.name, b?.statusLabel]
-        .filter(Boolean)
-        .some(v => v.toLowerCase().includes(term))
+    return baseBookings.filter(
+      b =>
+        matchesDashboardSearch(search, [b?.package?.title, b?.event?.name, b?.statusLabel]) &&
+        matchesDashboardSearch(searchTerm, [
+          b?.package?.title,
+          b?.event?.name,
+          b?.statusLabel,
+          b?.locationSummary,
+        ])
     )
-  }, [baseBookings, search])
+  }, [baseBookings, search, searchTerm])
 
   const requestedBookingId = searchParams.get('bookingId') || ''
   const selectedBookingId = visibleBookings.some(b => b.id === requestedBookingId)

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import {
+  DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
   DashboardPageIntro,
@@ -10,6 +12,7 @@ import { useDashboardBookings, useDashboardSession } from '../../hooks/useDashbo
 import {
   formatDashboardCurrency,
   formatDashboardDate,
+  matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
@@ -362,6 +365,18 @@ function PreviousBookingCard({ booking, session }) {
 export default function PreviousBookings() {
   const { data: bookings = [], isLoading, error } = useDashboardBookings('previous')
   const { data: session } = useDashboardSession()
+  const { searchTerm } = useDashboardSearch()
+  const filteredBookings = bookings.filter(booking =>
+    matchesDashboardSearch(searchTerm, [
+      booking?.package?.title,
+      booking?.event?.name,
+      booking?.detailSubtitle,
+      booking?.locationSummary,
+      booking?.statusLabel,
+      booking?.latestStatusLog?.note,
+      ...(booking?.items ?? []).map(item => item?.title),
+    ])
+  )
 
   if (isLoading) {
     return <DashboardLoadingState title="Loading previous bookings..." />
@@ -380,15 +395,24 @@ export default function PreviousBookings() {
     )
   }
 
+  if (!filteredBookings.length) {
+    return (
+      <DashboardEmptyState
+        title="No previous bookings match your search"
+        body="Try searching by package, event, location, item, or booking status."
+      />
+    )
+  }
+
   return (
     <div className="space-y-6">
       <DashboardPageIntro
         title="Previous Bookings"
         subtitle="Look back at completed or past events with their final payment snapshot."
-        meta={`${bookings.length} past`}
+        meta={`${filteredBookings.length} past`}
       />
 
-      {bookings.map(booking => (
+      {filteredBookings.map(booking => (
         <PreviousBookingCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>
