@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import prisma from '../lib/prisma.js'
 import razorpay from '../lib/razorpay.js'
+import { createOperationalAlert } from '../lib/alerts.js'
 import { notify } from '../lib/notify.js'
 import { invalidateDashboardCache } from './dashboard.js'
 
@@ -511,21 +512,17 @@ export const handleWebhook = async (req, res) => {
             }).catch(() => {})
           }
 
-          // Create a system alert for failed payment
-          await prisma.alert.create({
-            data: {
-              alertType: 'failed_payment',
-              severity: 'high',
-              message: `Payment failed for booking ${payment.bookingId}. Reason: ${errorDescription || 'Unknown'}`,
-              metadata: {
-                bookingId: payment.bookingId,
-                paymentId: payment.id,
-                reason: errorDescription,
-              },
-              relatedEntityType: 'payment',
-              relatedEntityId: payment.id,
-              status: 'new',
+          await createOperationalAlert(prisma, {
+            alertType: 'failed_payment',
+            severity: 'high',
+            message: `Payment failed for booking ${payment.bookingId}. Reason: ${errorDescription || 'Unknown'}`,
+            metadata: {
+              bookingId: payment.bookingId,
+              paymentId: payment.id,
+              reason: errorDescription,
             },
+            relatedEntityType: 'payment',
+            relatedEntityId: payment.id,
           })
         }
       }
@@ -651,6 +648,20 @@ export const requestRefund = async (req, res, next) => {
       },
     })
 
+    await createOperationalAlert(prisma, {
+      alertType: 'refund_requested',
+      severity: 'medium',
+      message: `Refund requested for booking ${payment.bookingId}. Review payment ${paymentId}.`,
+      metadata: {
+        bookingId: payment.bookingId,
+        paymentId,
+        refundId: refund.id,
+        reason,
+      },
+      relatedEntityType: 'payment',
+      relatedEntityId: paymentId,
+    })
+
     res.status(201).json({ refund })
   } catch (err) {
     next(err)
@@ -716,6 +727,19 @@ export const processRefund = async (req, res, next) => {
       await prisma.refund.update({
         where: { id },
         data: { status: 'requested', processedBy: null },
+      })
+      await createOperationalAlert(prisma, {
+        alertType: 'refund_failed',
+        severity: 'high',
+        message: `Refund failed for booking ${refund.bookingId}. Reason: ${razorpayErr.message}`,
+        metadata: {
+          bookingId: refund.bookingId,
+          paymentId: refund.paymentId,
+          refundId: id,
+          reason: razorpayErr.message,
+        },
+        relatedEntityType: 'payment',
+        relatedEntityId: refund.paymentId,
       })
       return res.status(502).json({ error: 'Razorpay refund failed', detail: razorpayErr.message })
     }

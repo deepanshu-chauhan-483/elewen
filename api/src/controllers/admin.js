@@ -2776,14 +2776,15 @@ export async function listAdminAlerts(req, res, next) {
   try {
     const status = normalizeText(req.query.status).toLowerCase()
     const severity = normalizeText(req.query.severity).toLowerCase()
+    const alertType = normalizeText(req.query.alertType)
     const search = normalizeText(req.query.search)
+    const sortBy = normalizeText(req.query.sortBy || 'latest').toLowerCase()
     const page = toPositiveInt(req.query.page, 1)
     const limit = Math.min(toPositiveInt(req.query.limit, 20), 50)
     const skip = (page - 1) * limit
 
-    const where = {
-      ...(status && ALERT_STATUSES.includes(status) ? { status } : {}),
-      ...(severity && ALERT_SEVERITIES.includes(severity) ? { severity } : {}),
+    const baseWhere = {
+      ...(alertType ? { alertType } : {}),
       ...(search
         ? {
             OR: [
@@ -2793,11 +2794,26 @@ export async function listAdminAlerts(req, res, next) {
           }
         : {}),
     }
+    const where = {
+      ...baseWhere,
+      ...(status && ALERT_STATUSES.includes(status) ? { status } : {}),
+      ...(severity && ALERT_SEVERITIES.includes(severity) ? { severity } : {}),
+    }
+    const orderBy = sortBy === 'oldest' ? [{ createdAt: 'asc' }] : [{ createdAt: 'desc' }]
 
-    const [alerts, total, resolvedUsers, criticalCount, unresolvedCount] = await Promise.all([
+    const [
+      alerts,
+      total,
+      resolvedUsers,
+      criticalCount,
+      unresolvedCount,
+      highPriorityCount,
+      pendingAttentionCount,
+      informationalCount,
+    ] = await Promise.all([
       prisma.alert.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy,
         skip,
         take: limit,
       }),
@@ -2816,13 +2832,34 @@ export async function listAdminAlerts(req, res, next) {
       ),
       prisma.alert.count({
         where: {
-          ...(status && ALERT_STATUSES.includes(status) ? { status } : {}),
+          ...baseWhere,
           severity: 'critical',
         },
       }),
       prisma.alert.count({
         where: {
+          ...baseWhere,
           status: { not: 'resolved' },
+        },
+      }),
+      prisma.alert.count({
+        where: {
+          ...baseWhere,
+          status: { not: 'resolved' },
+          severity: { in: ['high', 'critical'] },
+        },
+      }),
+      prisma.alert.count({
+        where: {
+          ...baseWhere,
+          status: { not: 'resolved' },
+          severity: 'medium',
+        },
+      }),
+      prisma.alert.count({
+        where: {
+          ...baseWhere,
+          OR: [{ severity: 'low' }, { status: 'resolved' }],
         },
       }),
     ])
@@ -2838,6 +2875,9 @@ export async function listAdminAlerts(req, res, next) {
         total,
         critical: criticalCount,
         unresolved: unresolvedCount,
+        highPriority: highPriorityCount,
+        pendingAttention: pendingAttentionCount,
+        informational: informationalCount,
       },
       page,
       pages: Math.max(1, Math.ceil(total / limit)),

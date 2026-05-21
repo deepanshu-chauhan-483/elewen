@@ -2,6 +2,7 @@ import prisma from '../lib/prisma.js'
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
 import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
+import { createOperationalAlert } from '../lib/alerts.js'
 import {
   calculateBookingRefundPreview,
   getCancellationPolicyData,
@@ -796,6 +797,23 @@ export const cancelBooking = async (req, res, next) => {
         },
       })
 
+      await createOperationalAlert(tx, {
+        alertType: 'booking_cancelled',
+        severity: refundEntries.length > 0 ? 'medium' : 'low',
+        message:
+          refundEntries.length > 0
+            ? `Booking ${id} was cancelled and has ${refundEntries.length} refund request${refundEntries.length === 1 ? '' : 's'} pending.`
+            : `Booking ${id} was cancelled by the customer.`,
+        metadata: {
+          bookingId: id,
+          reason,
+          refundsCreated: refundEntries.length,
+          refundWindow: refundPreview.windowKey || null,
+        },
+        relatedEntityType: 'booking',
+        relatedEntityId: id,
+      })
+
       for (const refundEntry of refundEntries) {
         const refund = await tx.refund.create({
           data: {
@@ -819,6 +837,22 @@ export const cancelBooking = async (req, res, next) => {
               refundWindow: refundPreview.windowKey || null,
             },
           },
+        })
+
+        await createOperationalAlert(tx, {
+          alertType: 'refund_requested',
+          severity: 'medium',
+          message: `Refund requested from cancellation for booking ${id}. Review payment ${refundEntry.paymentId}.`,
+          metadata: {
+            bookingId: id,
+            paymentId: refundEntry.paymentId,
+            refundId: refund.id,
+            reason: refundEntry.reason,
+            source: 'booking_cancellation',
+            refundWindow: refundPreview.windowKey || null,
+          },
+          relatedEntityType: 'payment',
+          relatedEntityId: refundEntry.paymentId,
         })
       }
     })
