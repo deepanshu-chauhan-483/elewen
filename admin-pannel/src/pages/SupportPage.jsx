@@ -68,16 +68,16 @@ function Avatar({ name = '', size = 'md' }) {
 // Status badge
 // ---------------------------------------------------------------------------
 const statusStyles = {
-  open:        'bg-[#EEF4FF] text-[#3061C6]',
+  open: 'bg-[#EEF4FF] text-[#3061C6]',
   in_progress: 'bg-[#FFF4E5] text-[#C07318]',
-  resolved:    'bg-[#EAF8F1] text-[#238E64]',
-  closed:      'bg-[#F3F4F6] text-[#6B7280]',
+  resolved: 'bg-[#EAF8F1] text-[#238E64]',
+  closed: 'bg-[#F3F4F6] text-[#6B7280]',
 }
 
 const priorityStyles = {
-  low:    { dot: 'bg-[#9CA3AF]', cls: 'bg-[#F3F4F6] text-[#6B7280]' },
+  low: { dot: 'bg-[#9CA3AF]', cls: 'bg-[#F3F4F6] text-[#6B7280]' },
   medium: { dot: 'bg-[#F59E0B]', cls: 'bg-[#FFF7E6] text-[#B45309]' },
-  high:   { dot: 'bg-[#DC2626]', cls: 'bg-[#FFF1F0] text-[#DC2626]' },
+  high: { dot: 'bg-[#DC2626]', cls: 'bg-[#FFF1F0] text-[#DC2626]' },
 }
 
 function StatusBadge({ status }) {
@@ -85,7 +85,9 @@ function StatusBadge({ status }) {
   const cls = statusStyles[key] ?? 'bg-[#FFF4E5] text-[#C07318]'
   const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || '—'
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] whitespace-nowrap ${cls}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] whitespace-nowrap ${cls}`}
+    >
       {label}
     </span>
   )
@@ -96,7 +98,9 @@ function PriorityBadge({ priority }) {
   const cfg = priorityStyles[key] ?? priorityStyles.medium
   const label = key.charAt(0).toUpperCase() + key.slice(1)
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] ${cfg.cls}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] ${cfg.cls}`}
+    >
       <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
       {label}
     </span>
@@ -125,12 +129,16 @@ function TicketCard({ ticket, isSelected, onClick }) {
         <Avatar name={customerName} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className={`truncate text-sm font-semibold ${isSelected ? 'text-[#591902]' : 'text-[#1C1C1C]'}`}>
+            <p
+              className={`truncate text-sm font-semibold ${isSelected ? 'text-[#591902]' : 'text-[#1C1C1C]'}`}
+            >
               {customerName}
             </p>
             {/* Status badge mirrors unread/closed badge from MessageBox */}
             {isClosed ? (
-              <span className="rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] text-[#4B5563]">Closed</span>
+              <span className="rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] text-[#4B5563]">
+                Closed
+              </span>
             ) : (
               <StatusBadge status={ticket.status} />
             )}
@@ -163,7 +171,9 @@ function MessageBubble({ entry }) {
       <Avatar name={senderName} size="sm" />
       <div className={`flex max-w-[75%] flex-col gap-1 ${isNote ? 'items-end' : 'items-start'}`}>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.14em] text-[#8F8F8F]">{senderName}</span>
+          <span className="text-[10px] uppercase tracking-[0.14em] text-[#8F8F8F]">
+            {senderName}
+          </span>
           <span className="text-[10px] text-[#8F8F8F]">·</span>
           <span className="text-[10px] text-[#8F8F8F]">{typeLabel}</span>
         </div>
@@ -204,14 +214,14 @@ function TicketDetailPanel({
   onSaveStatus,
 }) {
   const backdropRef = useRef(null)
-  const asideRef    = useRef(null)
-  const scrollRef   = useRef(null)
-  const tlRef       = useRef(null)
-  const exitedRef   = useRef(false)
+  const asideRef = useRef(null)
+  const scrollRef = useRef(null)
+  const tlRef = useRef(null)
+  const exitedRef = useRef(false)
 
-  const [mounted, setMounted]               = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [renderedTicket, setRenderedTicket] = useState(ticket)
-  const [renderedFull, setRenderedFull]     = useState(fullTicket)
+  const [renderedFull, setRenderedFull] = useState(fullTicket)
 
   // ── Open ────────────────────────────────────────────────────────────────
   useLayoutEffect(() => {
@@ -225,12 +235,12 @@ function TicketDetailPanel({
   useEffect(() => {
     if (!mounted || !ticket || !backdropRef.current || !asideRef.current) return
     tlRef.current?.kill()
-    gsap.set(asideRef.current,   { x: '100%' })
+    gsap.set(asideRef.current, { x: '100%' })
     gsap.set(backdropRef.current, { opacity: 0, pointerEvents: 'auto' })
     tlRef.current = gsap.timeline()
     tlRef.current
       .to(backdropRef.current, { opacity: 1, duration: 0.25, ease: 'power2.out' })
-      .to(asideRef.current,    { x: '0%',   duration: 0.45, ease: 'expo.out'   }, '<0.05')
+      .to(asideRef.current, { x: '0%', duration: 0.45, ease: 'expo.out' }, '<0.05')
   }, [mounted, ticket])
 
   // ── Sync full ticket data while panel is open ───────────────────────────
@@ -262,8 +272,8 @@ function TicketDetailPanel({
       },
     })
     tlRef.current
-      .to(asideRef.current,    { x: '100%', duration: 0.35, ease: 'expo.in'    })
-      .to(backdropRef.current, { opacity: 0, duration: 0.2,  ease: 'power2.in' }, '<0.1')
+      .to(asideRef.current, { x: '100%', duration: 0.35, ease: 'expo.in' })
+      .to(backdropRef.current, { opacity: 0, duration: 0.2, ease: 'power2.in' }, '<0.1')
   }
 
   if (!mounted || !renderedTicket) return null
@@ -298,16 +308,25 @@ function TicketDetailPanel({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <StatusBadge   status={isClosed ? 'closed' : renderedTicket.status} />
+            <StatusBadge status={isClosed ? 'closed' : renderedTicket.status} />
             <PriorityBadge priority={renderedTicket.priority} />
             <button
               type="button"
-              onClick={e => { e.stopPropagation(); handleClose() }}
+              onClick={e => {
+                e.stopPropagation()
+                handleClose()
+              }}
               className="flex h-9 w-9 items-center justify-center rounded-full p-2 text-[#957960] transition hover:bg-[#F3EEE8]"
               aria-label="Close ticket"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M15 5L5 15M5 5L15 15" stroke="#1C1C1C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M15 5L5 15M5 5L15 15"
+                  stroke="#1C1C1C"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -325,7 +344,7 @@ function TicketDetailPanel({
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[120px]">
               <p className="mb-1 text-[10px] uppercase tracking-widest text-[#8F8F8F]">Status</p>
-              <SelectField value={statusInput} onChange={onStatusChange}  menuClassName="z-[9999]">
+              <SelectField value={statusInput} onChange={onStatusChange} menuClassName="z-[9999]">
                 <option value="open">Open</option>
                 <option value="in_progress">In Progress</option>
                 <option value="resolved">Resolved</option>
@@ -334,7 +353,11 @@ function TicketDetailPanel({
             </div>
             <div className="flex-1 min-w-[120px]">
               <p className="mb-1 text-[10px] uppercase tracking-widest text-[#8F8F8F]">Priority</p>
-              <SelectField value={priorityInput} onChange={onPriorityChange}  menuClassName="z-[9999]">
+              <SelectField
+                value={priorityInput}
+                onChange={onPriorityChange}
+                menuClassName="z-[9999]"
+              >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
@@ -362,9 +385,7 @@ function TicketDetailPanel({
               <SectionLoadingState label="Loading conversation…" minHeightClass="min-h-[120px]" />
             </div>
           ) : displayTicket?.messages?.length ? (
-            displayTicket.messages.map(entry => (
-              <MessageBubble key={entry.id} entry={entry} />
-            ))
+            displayTicket.messages.map(entry => <MessageBubble key={entry.id} entry={entry} />)
           ) : (
             <div className="flex flex-1 items-center justify-center">
               <EmptyState
@@ -380,8 +401,8 @@ function TicketDetailPanel({
           {/* Reply / Internal Note toggle — same pill style as tabs */}
           <div className="mb-3 flex gap-1 rounded-full bg-[#F0EDEA] p-1 w-fit">
             {[
-              { label: 'Reply',         value: false },
-              { label: 'Internal Note', value: true  },
+              { label: 'Reply', value: false },
+              { label: 'Internal Note', value: true },
             ].map(opt => (
               <button
                 key={String(opt.value)}
@@ -400,8 +421,18 @@ function TicketDetailPanel({
 
           {isInternalNote && (
             <div className="mb-3 flex items-center gap-2 rounded-xl border border-dashed border-[#FDE68A] bg-[#FFFBEB] px-4 py-2.5 text-xs text-[#B45309]">
-              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               This note is only visible to the admin team.
             </div>
@@ -412,7 +443,10 @@ function TicketDetailPanel({
               value={message}
               onChange={e => onMessageChange(e.target.value)}
               onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend() }
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  onSend()
+                }
               }}
               placeholder={
                 isInternalNote
@@ -434,12 +468,34 @@ function TicketDetailPanel({
               <span>
                 {addMessageMutation.isPending ? (
                   <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12L20 3L14 21L11 13L3 12Z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M3 12L20 3L14 21L11 13L3 12Z"
+                    />
                   </svg>
                 )}
               </span>
@@ -457,43 +513,54 @@ function TicketDetailPanel({
 const PAGE_SIZE = 10
 
 export default function SupportPage() {
-  const [search,        setSearch]        = useState('')
-  const [statusFilter,  setStatusFilter]  = useState('')
-  const [priorityFilter,setPriorityFilter]= useState('')
-  const [ticketTab,     setTicketTab]     = useState('open')    // 'open' | 'closed'
-  const [selectedId,    setSelectedId]    = useState('')
-  const [currentPage,   setCurrentPage]   = useState(1)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
+  const [ticketTab, setTicketTab] = useState('open') // 'open' | 'closed'
+  const [selectedId, setSelectedId] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Panel state
-  const [statusInput,    setStatusInput]    = useState('open')
-  const [priorityInput,  setPriorityInput]  = useState('medium')
-  const [message,        setMessage]        = useState('')
+  const [statusInput, setStatusInput] = useState('open')
+  const [priorityInput, setPriorityInput] = useState('medium')
+  const [message, setMessage] = useState('')
   const [isInternalNote, setIsInternalNote] = useState(false)
 
-  const ticketsQuery = useAdminSupportTickets({ search, status: statusFilter, priority: priorityFilter, limit: 100 })
-  const allTickets   = useMemo(() => ticketsQuery.data?.tickets ?? [], [ticketsQuery.data?.tickets])
+  const ticketsQuery = useAdminSupportTickets({
+    search,
+    status: statusFilter,
+    priority: priorityFilter,
+    limit: 100,
+  })
+  const allTickets = useMemo(() => ticketsQuery.data?.tickets ?? [], [ticketsQuery.data?.tickets])
 
-  const openTickets   = useMemo(() => allTickets.filter(t => !isClosedTicket(t)), [allTickets])
-  const closedTickets = useMemo(() => allTickets.filter(t =>  isClosedTicket(t)), [allTickets])
+  const openTickets = useMemo(() => allTickets.filter(t => !isClosedTicket(t)), [allTickets])
+  const closedTickets = useMemo(() => allTickets.filter(t => isClosedTicket(t)), [allTickets])
 
   // Auto-switch tab if current tab is empty
   const effectiveTab = useMemo(() => {
-    if (ticketTab === 'open'   && openTickets.length === 0   && closedTickets.length > 0) return 'closed'
-    if (ticketTab === 'closed' && closedTickets.length === 0 && openTickets.length > 0)   return 'open'
+    if (ticketTab === 'open' && openTickets.length === 0 && closedTickets.length > 0)
+      return 'closed'
+    if (ticketTab === 'closed' && closedTickets.length === 0 && openTickets.length > 0)
+      return 'open'
     return ticketTab
   }, [ticketTab, openTickets.length, closedTickets.length])
 
   const filteredTickets = effectiveTab === 'closed' ? closedTickets : openTickets
 
-  const totalPages  = Math.max(1, Math.ceil(filteredTickets.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(filteredTickets.length / PAGE_SIZE))
   const visiblePage = Math.min(currentPage, totalPages)
   const visibleTickets = useMemo(
     () => filteredTickets.slice((visiblePage - 1) * PAGE_SIZE, visiblePage * PAGE_SIZE),
     [filteredTickets, visiblePage]
   )
 
-  useEffect(() => { setCurrentPage(1) }, [search, effectiveTab, statusFilter, priorityFilter])
-  useEffect(() => { if (currentPage > totalPages) setCurrentPage(totalPages) }, [currentPage, totalPages])
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, effectiveTab, statusFilter, priorityFilter])
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages)
+  }, [currentPage, totalPages])
 
   // Deselect if no longer in filtered list
   useEffect(() => {
@@ -505,23 +572,23 @@ export default function SupportPage() {
     [filteredTickets, selectedId]
   )
 
-  const ticketQuery       = useAdminSupportTicket(selectedTicket?.id)
-  const updateMutation    = useAdminUpdateSupportTicket()
-  const addMessageMutation= useAdminAddSupportMessage()
+  const ticketQuery = useAdminSupportTicket(selectedTicket?.id)
+  const updateMutation = useAdminUpdateSupportTicket()
+  const addMessageMutation = useAdminAddSupportMessage()
 
-  const fullTicket     = ticketQuery.data?.id === selectedId ? ticketQuery.data : null
-  const isListLoading  = ticketsQuery.isFetching && !ticketsQuery.isLoading
+  const fullTicket = ticketQuery.data?.id === selectedId ? ticketQuery.data : null
+  const isListLoading = ticketsQuery.isFetching && !ticketsQuery.isLoading
 
   // Sync selects when ticket changes
   useEffect(() => {
     if (selectedTicket) {
-      setStatusInput(selectedTicket.status   ?? 'open')
+      setStatusInput(selectedTicket.status ?? 'open')
       setPriorityInput(selectedTicket.priority ?? 'medium')
     }
   }, [selectedTicket?.id])
 
   if (ticketsQuery.isLoading) return <LoadingState label="Loading support tickets…" />
-  if (ticketsQuery.error)     return <ErrorState   label="Support tickets are unavailable right now." />
+  if (ticketsQuery.error) return <ErrorState label="Support tickets are unavailable right now." />
 
   async function handleSend() {
     if (!message.trim() || !selectedTicket?.id) return
@@ -550,10 +617,16 @@ export default function SupportPage() {
           <div className="relative mb-4">
             <svg
               className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8F8F8F]"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+              />
             </svg>
             <input
               type="search"
@@ -584,7 +657,7 @@ export default function SupportPage() {
           {/* Open / Closed tab pills — identical to Active/Archived in MessageBox */}
           <div className="flex gap-1 rounded-full bg-[#F3F3F3] p-1">
             {[
-              { key: 'open',   label: 'Open',   count: openTickets.length   },
+              { key: 'open', label: 'Open', count: openTickets.length },
               { key: 'closed', label: 'Closed', count: closedTickets.length },
             ].map(tab => (
               <button
@@ -600,7 +673,9 @@ export default function SupportPage() {
                 {tab.label}
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    effectiveTab === tab.key ? 'bg-white/20 text-white' : 'bg-[#E8E2DA] text-[#6B7280]'
+                    effectiveTab === tab.key
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[#E8E2DA] text-[#6B7280]'
                   }`}
                 >
                   {tab.count}
@@ -627,10 +702,7 @@ export default function SupportPage() {
               />
             ))
           ) : (
-            <EmptyState
-              title="No tickets found"
-              body="Try adjusting your search or filters."
-            />
+            <EmptyState title="No tickets found" body="Try adjusting your search or filters." />
           )}
         </div>
       </div>

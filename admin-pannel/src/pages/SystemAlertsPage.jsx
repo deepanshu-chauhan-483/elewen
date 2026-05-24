@@ -185,19 +185,21 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
   const metadataEntries =
     renderedAlert.metadata && typeof renderedAlert.metadata === 'object'
       ? Object.entries(renderedAlert.metadata).filter(
-        ([, value]) => value !== null && value !== undefined
-      )
+          ([, value]) => value !== null && value !== undefined
+        )
       : []
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-end bg-black/25 transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isPanelVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
+      className={`fixed inset-0 z-50 flex justify-end bg-black/25 transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        isPanelVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
       onClick={onClose}
     >
       <aside
-        className={`h-full w-full max-w-[520px] overflow-y-auto bg-[#FAFAFA] p-6 shadow-[-16px_0_40px_rgba(17,24,39,0.18)] hide-scrollbar transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isPanelVisible ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`h-full w-full max-w-[520px] overflow-y-auto bg-[#FAFAFA] p-6 shadow-[-16px_0_40px_rgba(17,24,39,0.18)] hide-scrollbar transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isPanelVisible ? 'translate-x-0' : 'translate-x-full'
+        }`}
         onClick={event => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
@@ -205,9 +207,7 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
               Alert Detail
             </p>
-            <h2 className="mt-2 text-xl text-[#1C1C1C]">
-              {sentenceCase(renderedAlert.alertType)}
-            </h2>
+            <h2 className="mt-2 text-xl text-[#1C1C1C]">{sentenceCase(renderedAlert.alertType)}</h2>
           </div>
           <button
             type="button"
@@ -215,8 +215,20 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
             className="flex h-9 w-9 items-center justify-center rounded-full text-[#957960] transition hover:bg-[#F3EEE8] p-2"
             aria-label="Close alerts popup"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 5L5 15M5 5L15 15" stroke="#1C1C1C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 5L5 15M5 5L15 15"
+                stroke="#1C1C1C"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -245,9 +257,7 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
               </div>
               <div>
                 <dt className="text-[#8F8F8F]">Created</dt>
-                <dd className="mt-1 text-[#1C1C1C]">
-                  {formatDateTime(renderedAlert.createdAt)}
-                </dd>
+                <dd className="mt-1 text-[#1C1C1C]">{formatDateTime(renderedAlert.createdAt)}</dd>
               </div>
             </dl>
           </div>
@@ -280,8 +290,6 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
               <GhostBtn onClick={() => onNavigate(route)}>
                 Go to {sentenceCase(renderedAlert.relatedEntityType)}
               </GhostBtn>
-
-
             ) : null}
             {renderedAlert.status !== 'acknowledged' ? (
               <GhostBtn
@@ -549,11 +557,7 @@ export default function SystemAlertsPage() {
                       <StatusBadge status={alert.status} />
                     </td>
                     <td className="px-4 py-4">
-                      <PrimaryBtn
-                        onClick={() => setSelectedAlertId(alert.id)}
-                      >
-                        Review
-                      </PrimaryBtn>
+                      <PrimaryBtn onClick={() => setSelectedAlertId(alert.id)}>Review</PrimaryBtn>
                     </td>
                   </tr>
                 ))}
@@ -561,7 +565,7 @@ export default function SystemAlertsPage() {
             </table>
           </div>
           <div className="flex items-center justify-end gap-2 border-t border-[#F0EBE3] px-4 py-3">
-              <button
+            <button
               type="button"
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
@@ -580,7 +584,6 @@ export default function SystemAlertsPage() {
             >
               <ArrowIcon direction="right" />
             </button>
-
           </div>
         </div>
       ) : (

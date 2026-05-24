@@ -4,7 +4,6 @@ import {
   ErrorState,
   LoadingState,
   SectionLoadingState,
-  SelectField,
   StatusBadge,
 } from '../components/ui/AdminUI'
 import {
@@ -71,10 +70,11 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`group w-full rounded-2xl border p-4 text-left transition-all duration-200 ${isSelected
-        ? 'border-[#591902] bg-[#F7EEE8] shadow-[0_4px_16px_rgba(89,25,2,0.10)]'
-        : 'border-[#E4DED8] bg-white hover:border-[#C6A15B] hover:bg-[#FDFAF7]'
-        }`}
+      className={`group w-full rounded-2xl border p-4 text-left transition-all duration-200 ${
+        isSelected
+          ? 'border-[#591902] bg-[#F7EEE8] shadow-[0_4px_16px_rgba(89,25,2,0.10)]'
+          : 'border-[#E4DED8] bg-white hover:border-[#C6A15B] hover:bg-[#FDFAF7]'
+      }`}
     >
       <div className="flex items-start gap-3">
         <Avatar name={customerName} size="md" />
@@ -124,10 +124,11 @@ function MessageBubble({ message, isAdmin }) {
           <span className="text-[10px] text-[#8F8F8F]">{typeLabel}</span>
         </div>
         <div
-          className={`rounded-2xl px-4 py-3 ${isAdmin
-            ? 'rounded-tr-sm bg-[#591902] text-[#FAFAFA]'
-            : 'rounded-tl-sm bg-white text-[#1C1C1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
-            }`}
+          className={`rounded-2xl px-4 py-3 ${
+            isAdmin
+              ? 'rounded-tr-sm bg-[#591902] text-[#FAFAFA]'
+              : 'rounded-tl-sm bg-white text-[#1C1C1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
+          }`}
         >
           <p className="text-sm leading-6">{message.messageText}</p>
         </div>
@@ -140,12 +141,10 @@ function MessageBubble({ message, isAdmin }) {
 function MessageThreadPanel({
   thread,
   messageText,
-  messageType,
   messagesEndRef,
   sendMessageMutation,
   onClose,
   onMessageTextChange,
-  onMessageTypeChange,
   onSend,
 }) {
   const [renderedThread, setRenderedThread] = useState(thread)
@@ -170,13 +169,15 @@ function MessageThreadPanel({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-end bg-black/25 transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isPanelVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
+      className={`fixed inset-0 z-50 flex justify-end bg-black/25 transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        isPanelVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
       onClick={onClose}
     >
       <aside
-        className={`flex h-full min-h-0 w-full max-w-[760px] flex-col overflow-hidden bg-[#FAFAFA] shadow-[-16px_0_40px_rgba(17,24,39,0.18)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isPanelVisible ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`flex h-full min-h-0 w-full max-w-[760px] flex-col overflow-hidden bg-[#FAFAFA] shadow-[-16px_0_40px_rgba(17,24,39,0.18)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isPanelVisible ? 'translate-x-0' : 'translate-x-full'
+        }`}
         onClick={event => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-4 border-b border-[#E4DED8] bg-white px-5 py-4">
@@ -294,7 +295,9 @@ function MessageThreadPanel({
                 value={messageText}
                 onChange={e => onMessageTextChange(e.target.value)}
                 disabled={isReadOnly}
-                placeholder={isReadOnly ? 'Read-only thread.' : 'Write your message to the customer…'}
+                placeholder={
+                  isReadOnly ? 'Read-only thread.' : 'Write your message to the customer…'
+                }
                 rows={3}
                 className="flex-1 resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
               />
@@ -462,17 +465,19 @@ export default function MessageBoxPage() {
                 key={tab.key}
                 type="button"
                 onClick={() => setThreadTab(tab.key)}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-all duration-200 ${effectiveThreadTab === tab.key
-                  ? 'bg-[#591902] text-white shadow-sm'
-                  : 'text-[#6B7280] hover:text-[#2D2D2D]'
-                  }`}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-all duration-200 ${
+                  effectiveThreadTab === tab.key
+                    ? 'bg-[#591902] text-white shadow-sm'
+                    : 'text-[#6B7280] hover:text-[#2D2D2D]'
+                }`}
               >
                 {tab.label}
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${effectiveThreadTab === tab.key
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[#E8E2DA] text-[#6B7280]'
-                    }`}
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                    effectiveThreadTab === tab.key
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[#E8E2DA] text-[#6B7280]'
+                  }`}
                 >
                   {tab.count}
                 </span>

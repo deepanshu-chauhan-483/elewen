@@ -8,11 +8,7 @@ import {
   formatDashboardDateTime,
   matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
-import {
-  DashboardEmptyState,
-  DashboardErrorState,
-  DashboardLoadingState,
-} from '../../components/dashboard/DashboardUI'
+import { DashboardEmptyState, DashboardErrorState } from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { getBookingPackageNamesText } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
@@ -120,14 +116,15 @@ function BookingCard({ booking, session }) {
 
   return (
     <div
-      className={`rounded-2xl bg-[#FFFFFF] p-6 transition-all ${status === 'completed'
+      className={`rounded-2xl bg-[#FFFFFF] p-6 transition-all ${
+        status === 'completed'
           ? open
             ? 'border-t-4 border-[#238E64]'
             : 'border-l-4 border-[#238E64]'
           : open
             ? 'border-t-4 border-[#C07318]'
             : 'border-l-4 border-[#C07318]'
-        }`}
+      }`}
       onClick={() => setOpen(current => !current)}
     >
       <div className="flex items-start justify-between gap-4">
@@ -240,9 +237,7 @@ function BookingCard({ booking, session }) {
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">EVENT DATE</p>
-              <p>
-                {formatDashboardDate(booking.eventDate)}
-              </p>
+              <p>{formatDashboardDate(booking.eventDate)}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">EVENT TIME</p>
@@ -261,7 +256,7 @@ function BookingCard({ booking, session }) {
               <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
               <p>{amountDue}</p>
             </div>
-             <div>
+            <div>
               <p className="text-[11px] text-[#767676]">SPECIAL REQUEST</p>
               <p>{booking.specialRequest || 'Not provided'}</p>
             </div>
@@ -312,7 +307,7 @@ function BookingCard({ booking, session }) {
 }
 
 export default function ActiveBookings() {
-  const { data: bookings = [], isLoading, error } = useDashboardBookings('active')
+  const { data: bookings = [], error } = useDashboardBookings('active')
   const { data: session } = useDashboardSession()
   const { searchTerm } = useDashboardSearch()
   const filteredBookings = bookings.filter(booking =>

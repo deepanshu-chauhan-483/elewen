@@ -929,11 +929,11 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
               const selectedElements =
                 item?.itemType === 'addon'
                   ? [
-                    {
-                      label: 'Add-on item',
-                      value: item.displayTitle || item.addonTitle || 'Add-on',
-                    },
-                  ]
+                      {
+                        label: 'Add-on item',
+                        value: item.displayTitle || item.addonTitle || 'Add-on',
+                      },
+                    ]
                   : getSelectedElements(item)
               const tags = selectedElements
                 .map(element => element.value)
@@ -1130,50 +1130,50 @@ function PriceSummaryCard({
           <div className="space-y-2">
             {singleItem
               ? itemSummaries.map(({ item, summary }) => (
-                <div key={item.id} className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-[#767676] gap-x-2">
-                      {item?.itemType === 'addon'
-                        ? `Add-on — ${item.displayTitle || item.addonTitle || 'Selected item'}`
-                        : singleItem
-                          ? `Base Package — ${item.displayTitle || item.packageData?.title || 'Selected item'}`
-                          : `${item.displayTitle || item.packageData?.title || 'Selected item'}`}
-                      {getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''}
-                    </span>
+                  <div key={item.id} className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-[#767676] gap-x-2">
+                        {item?.itemType === 'addon'
+                          ? `Add-on — ${item.displayTitle || item.addonTitle || 'Selected item'}`
+                          : singleItem
+                            ? `Base Package — ${item.displayTitle || item.packageData?.title || 'Selected item'}`
+                            : `${item.displayTitle || item.packageData?.title || 'Selected item'}`}
+                        {getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''}
+                      </span>
+                      <span className="font-medium text-[#1C1C1C]">
+                        {formatCurrency(summary.total)}
+                      </span>
+                    </div>
+                    <hr className="my-4 border-[#0000001A]" />
+                    {item?.itemType === 'addon'
+                      ? summary.rows.map(row => (
+                          <div
+                            key={`${item.id}-${row.label}`}
+                            className="flex justify-between text-gray-500"
+                          >
+                            <span>{row.label}</span>
+                            <span>{formatCurrency(row.total)}</span>
+                          </div>
+                        ))
+                      : getSummaryIncludedItems(item).map(selectedItem => (
+                          <div
+                            key={`${item.id}-${selectedItem}`}
+                            className="flex justify-between text-[#767676]"
+                          >
+                            <span>{selectedItem}</span>
+                            <span className="text-[#1C1C1C]">Included</span>
+                          </div>
+                        ))}
+                  </div>
+                ))
+              : categorySummaries.map(group => (
+                  <div key={group.category} className="flex justify-between text-sm">
+                    <span className="text-[#767676]">{group.category}</span>
                     <span className="font-medium text-[#1C1C1C]">
-                      {formatCurrency(summary.total)}
+                      {formatCurrency(group.total)}
                     </span>
                   </div>
-                  <hr className="my-4 border-[#0000001A]" />
-                  {item?.itemType === 'addon'
-                    ? summary.rows.map(row => (
-                      <div
-                        key={`${item.id}-${row.label}`}
-                        className="flex justify-between text-gray-500"
-                      >
-                        <span>{row.label}</span>
-                        <span>{formatCurrency(row.total)}</span>
-                      </div>
-                    ))
-                    : getSummaryIncludedItems(item).map(selectedItem => (
-                      <div
-                        key={`${item.id}-${selectedItem}`}
-                        className="flex justify-between text-[#767676]"
-                      >
-                        <span>{selectedItem}</span>
-                        <span className="text-[#1C1C1C]">Included</span>
-                      </div>
-                    ))}
-                </div>
-              ))
-              : categorySummaries.map(group => (
-                <div key={group.category} className="flex justify-between text-sm">
-                  <span className="text-[#767676]">{group.category}</span>
-                  <span className="font-medium text-[#1C1C1C]">
-                    {formatCurrency(group.total)}
-                  </span>
-                </div>
-              ))}
+                ))}
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
@@ -1659,9 +1659,7 @@ export default function CartPage() {
             />
 
             {error ? (
-              <p className="text-sm text-[#8F2D1F]">
-                {parseApiError({ message: error })}
-              </p>
+              <p className="text-sm text-[#8F2D1F]">{parseApiError({ message: error })}</p>
             ) : null}
           </div>
 
@@ -1673,11 +1671,11 @@ export default function CartPage() {
               onCheckout={() =>
                 isLoggedIn
                   ? navigate('/checkout', {
-                    state: {
-                      showCheckoutToast: true,
-                      checkoutToastMessage,
-                    },
-                  })
+                      state: {
+                        showCheckoutToast: true,
+                        checkoutToastMessage,
+                      },
+                    })
                   : navigate('/login')
               }
               onSampleTasteBooking={handleSampleTasteBooking}

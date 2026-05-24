@@ -159,12 +159,8 @@ const ArrowIcon = () => (
 export default function SupportHelp() {
   const { data: session } = useDashboardSession()
   const { data: bookings = [] } = useDashboardBookings('all')
-  const { data: help, isLoading: helpLoading, error: helpError } = useDashboardHelp()
-  const {
-    data: tickets = [],
-    isLoading: ticketsLoading,
-    error: ticketsError,
-  } = useDashboardSupportTickets()
+  const { data: help, error: helpError } = useDashboardHelp()
+  const { data: tickets = [], error: ticketsError } = useDashboardSupportTickets()
 
   const [searchParams, setSearchParams] = useSearchParams()
   // const selectedTicketId = searchParams.get('ticketId') || ''

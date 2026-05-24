@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import gsap from 'gsap'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import {
@@ -96,7 +95,9 @@ function StatusBadge({ status, label }) {
   const cls = statusMap[key] ?? 'bg-[#FFF4E5] text-[#C07318]'
   const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '-'
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${cls}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${cls}`}
+    >
       {text}
     </span>
   )
@@ -110,7 +111,9 @@ function Avatar({ name = '', size = 'md', tone = 'brand' }) {
   const sizeClass = size === 'sm' ? 'h-8 w-8 text-[10px]' : 'h-10 w-10 text-xs'
   const toneClass = tone === 'gold' ? 'bg-[#C6A15B] text-white' : 'bg-[#591902] text-[#FAFAFA]'
   return (
-    <div className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${sizeClass} ${toneClass}`}>
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${sizeClass} ${toneClass}`}
+    >
       {initials}
     </div>
   )
@@ -129,16 +132,19 @@ function ThreadCard({ booking, isSelected, onClick, unreadCount, latestMessageTi
     <button
       type="button"
       onClick={onClick}
-      className={`group w-full rounded-2xl border p-4 text-left transition-all duration-200 ${isSelected
+      className={`group w-full rounded-2xl border p-4 text-left transition-all duration-200 ${
+        isSelected
           ? 'border-[#591902] bg-[#F7EEE8] shadow-[0_4px_16px_rgba(89,25,2,0.10)]'
           : 'border-[#E4DED8] bg-white hover:border-[#C6A15B] hover:bg-[#FDFAF7]'
-        }`}
+      }`}
     >
       <div className="flex items-start gap-3">
         <Avatar name={packageTitle} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className={`truncate text-sm font-semibold ${isSelected ? 'text-[#591902]' : 'text-[#1C1C1C]'}`}>
+            <p
+              className={`truncate text-sm font-semibold ${isSelected ? 'text-[#591902]' : 'text-[#1C1C1C]'}`}
+            >
               {packageTitle}
             </p>
             {/* Unread count badge — mirrors admin side exactly */}
@@ -147,7 +153,9 @@ function ThreadCard({ booking, isSelected, onClick, unreadCount, latestMessageTi
                 {unread}
               </span>
             ) : isArchived ? (
-              <span className="rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] text-[#4B5563]">Closed</span>
+              <span className="rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] text-[#4B5563]">
+                Closed
+              </span>
             ) : null}
           </div>
           <p className="mt-0.5 truncate text-xs text-[#6B7280]">
@@ -175,17 +183,22 @@ function MessageBubble({ message, isOwnMessage }) {
   return (
     <div className={`flex gap-2 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
       <Avatar name={senderName} size="sm" tone={isOwnMessage ? 'gold' : 'brand'} />
-      <div className={`flex max-w-[75%] flex-col gap-1 ${isOwnMessage ? 'items-end' : 'items-start'}`}>
+      <div
+        className={`flex max-w-[75%] flex-col gap-1 ${isOwnMessage ? 'items-end' : 'items-start'}`}
+      >
         <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.14em] text-[#8F8F8F]">{senderName}</span>
+          <span className="text-[10px] uppercase tracking-[0.14em] text-[#8F8F8F]">
+            {senderName}
+          </span>
           <span className="text-[10px] text-[#8F8F8F]">·</span>
           <span className="text-[10px] text-[#8F8F8F]">{typeLabel}</span>
         </div>
         <div
-          className={`rounded-2xl px-4 py-3 ${isOwnMessage
+          className={`rounded-2xl px-4 py-3 ${
+            isOwnMessage
               ? 'rounded-tr-sm bg-[#591902] text-[#FAFAFA]'
               : 'rounded-tl-sm bg-white text-[#1C1C1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
-            }`}
+          }`}
         >
           <p className="text-sm leading-6 whitespace-pre-wrap">{message.messageText}</p>
         </div>
@@ -248,7 +261,10 @@ function MessageThreadPanel({
 
   // Update renderedThread when thread data refreshes while panel is open
   useEffect(() => {
-    if (mounted && booking) setRenderedThread(thread)
+    if (mounted && booking) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRenderedThread(thread)
+    }
   }, [thread, mounted, booking])
 
   // ── Scroll to bottom instantly whenever messages change or panel opens ───
@@ -316,12 +332,21 @@ function MessageThreadPanel({
             />
             <button
               type="button"
-              onClick={e => { e.stopPropagation(); handleClose() }}
+              onClick={e => {
+                e.stopPropagation()
+                handleClose()
+              }}
               className="flex h-9 w-9 items-center justify-center rounded-full p-2 text-[#957960] transition hover:bg-[#F3EEE8]"
               aria-label="Close message thread"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M15 5L5 15M5 5L15 15" stroke="#1C1C1C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M15 5L5 15M5 5L15 15"
+                  stroke="#1C1C1C"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -332,7 +357,9 @@ function MessageThreadPanel({
           <p className="text-xs text-[#6B7280]">
             <span className="font-medium text-[#2D2D2D]">{packageTitle}</span>
             {renderedBooking?.eventDate ? (
-              <span className="ml-2 text-[#8F8F8F]">· {formatBookingDate(renderedBooking.eventDate)}</span>
+              <span className="ml-2 text-[#8F8F8F]">
+                · {formatBookingDate(renderedBooking.eventDate)}
+              </span>
             ) : null}
           </p>
         </div>
@@ -372,8 +399,18 @@ function MessageThreadPanel({
         <div className="shrink-0 border-t border-[#E4DED8] bg-[#FAFAFA] px-5 py-4">
           {isReadOnly ? (
             <div className="mb-3 flex items-center gap-2 rounded-xl border border-dashed border-[#D6CDC3] bg-white px-4 py-3 text-xs text-[#6B7280]">
-              <svg className="h-4 w-4 shrink-0 text-[#8F8F8F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="h-4 w-4 shrink-0 text-[#8F8F8F]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               This booking is closed. The thread is read-only.
             </div>
@@ -390,13 +427,17 @@ function MessageThreadPanel({
                 }
               }}
               disabled={isReadOnly || sendMessageMutation.isPending}
-              placeholder={isReadOnly ? 'Read-only thread.' : 'Type your message to the Elewen team…'}
+              placeholder={
+                isReadOnly ? 'Read-only thread.' : 'Type your message to the Elewen team…'
+              }
               rows={3}
               className="flex-1 resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
             />
             <button
               type="button"
-              disabled={isReadOnly || !draft.trim() || sendMessageMutation.isPending || !renderedThread?.id}
+              disabled={
+                isReadOnly || !draft.trim() || sendMessageMutation.isPending || !renderedThread?.id
+              }
               onClick={onSend}
               className="flex h-12 shrink-0 items-center justify-center gap-2 self-end rounded-full bg-[#591902] px-4 text-white shadow-[0_4px_12px_rgba(89,25,2,0.25)] transition hover:bg-[#7A2B08] disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -406,12 +447,34 @@ function MessageThreadPanel({
               <span>
                 {sendMessageMutation.isPending ? (
                   <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12L20 3L14 21L11 13L3 12Z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M3 12L20 3L14 21L11 13L3 12Z"
+                    />
                   </svg>
                 )}
               </span>
@@ -430,13 +493,8 @@ const PAGE_SIZE = 10
 
 export default function MessagesUpdates() {
   const { data: session } = useDashboardSession()
-  const {
-    data: bookings = [],
-    isLoading: bookingsLoading,
-    error: bookingsError,
-  } = useDashboardBookings('all')
+  const { data: bookings = [], error: bookingsError } = useDashboardBookings('all')
 
-  const [searchParams, setSearchParams] = useSearchParams()
   const [draft, setDraft] = useState('')
   const [search, setSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -451,8 +509,10 @@ export default function MessagesUpdates() {
   // Tab logic
   const [threadTab, setThreadTab] = useState('active')
   const effectiveTab = useMemo(() => {
-    if (threadTab === 'active' && activeBookings.length === 0 && previousBookings.length > 0) return 'previous'
-    if (threadTab === 'previous' && previousBookings.length === 0 && activeBookings.length > 0) return 'active'
+    if (threadTab === 'active' && activeBookings.length === 0 && previousBookings.length > 0)
+      return 'previous'
+    if (threadTab === 'previous' && previousBookings.length === 0 && activeBookings.length > 0)
+      return 'active'
     return threadTab
   }, [threadTab, activeBookings.length, previousBookings.length])
 
@@ -478,12 +538,19 @@ export default function MessagesUpdates() {
     [filteredBookings, visiblePage]
   )
 
-  useEffect(() => { setCurrentPage(1) }, [search, effectiveTab])
-  useEffect(() => { if (currentPage > totalPages) setCurrentPage(totalPages) }, [currentPage, totalPages])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, effectiveTab])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages)
+  }, [currentPage, totalPages])
 
   // Deselect if filtered away
   useEffect(() => {
     if (selectedBookingId && !filteredBookings.some(b => b.id === selectedBookingId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedBookingId('')
     }
   }, [filteredBookings, selectedBookingId])
@@ -503,7 +570,8 @@ export default function MessagesUpdates() {
   })
 
   // if (bookingsLoading) return <DashboardLoadingState title="Loading booking messages..." />
-  if (bookingsError || threadError) return <DashboardErrorState title="We could not load your messages and updates." />
+  if (bookingsError || threadError)
+    return <DashboardErrorState title="We could not load your messages and updates." />
   if (bookings.length === 0) {
     return (
       <EmptyBooking
@@ -532,7 +600,8 @@ export default function MessagesUpdates() {
       <div>
         <h1 className="text-2xl text-[#1C1C1C]">Messages &amp; Updates</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
-          Track booking-specific conversations with the Elewen team. Previous bookings stay visible as read-only history.
+          Track booking-specific conversations with the Elewen team. Previous bookings stay visible
+          as read-only history.
         </p>
       </div>
 
@@ -547,7 +616,12 @@ export default function MessagesUpdates() {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+              />
             </svg>
             <input
               type="search"
@@ -567,15 +641,19 @@ export default function MessagesUpdates() {
                 key={tab.key}
                 type="button"
                 onClick={() => setThreadTab(tab.key)}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-all duration-200 ${effectiveTab === tab.key
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-all duration-200 ${
+                  effectiveTab === tab.key
                     ? 'bg-[#591902] text-white shadow-sm'
                     : 'text-[#6B7280] hover:text-[#2D2D2D]'
-                  }`}
+                }`}
               >
                 {tab.label}
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${effectiveTab === tab.key ? 'bg-white/20 text-white' : 'bg-[#E8E2DA] text-[#6B7280]'
-                    }`}
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                    effectiveTab === tab.key
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[#E8E2DA] text-[#6B7280]'
+                  }`}
                 >
                   {tab.count}
                 </span>
@@ -604,7 +682,9 @@ export default function MessagesUpdates() {
             ))
           ) : (
             <DashboardEmptyState
-              title={effectiveTab === 'active' ? 'No active booking threads' : 'No previous threads'}
+              title={
+                effectiveTab === 'active' ? 'No active booking threads' : 'No previous threads'
+              }
               body={
                 effectiveTab === 'active'
                   ? 'When a booking becomes active, its conversation thread will show up here.'

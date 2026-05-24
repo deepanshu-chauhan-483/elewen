@@ -693,7 +693,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge status={assignment.status} />
-                           {assignment.status === 'assigned' && (
+                          {assignment.status === 'assigned' && (
                             <PrimaryBtn
                               disabled={updateAssignmentMutation.isPending}
                               onClick={() =>
@@ -722,9 +722,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                           )}
 
                           {!isExpanded ? (
-                            <PrimaryBtn
-                              onClick={() => setExpandedAssignmentId(assignment.id)}
-                            >
+                            <PrimaryBtn onClick={() => setExpandedAssignmentId(assignment.id)}>
                               View Details
                             </PrimaryBtn>
                           ) : (
@@ -751,7 +749,6 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                               </svg>
                             </button>
                           )}
-
                         </div>
                       </div>
 
@@ -1128,11 +1125,7 @@ export default function VendorManagementPage() {
             placeholder="Service category"
           />
 
-          <Input
-            value={location}
-            onChange={handleLocationChange}
-            placeholder="City / location"
-          />
+          <Input value={location} onChange={handleLocationChange} placeholder="City / location" />
 
           <SelectField value={availability} onChange={handleAvailabilityChange}>
             <option value="">Any Availability</option>
@@ -1150,12 +1143,8 @@ export default function VendorManagementPage() {
       </div>
 
       <div className="flex items-baseline gap-2">
-        <span className="text-base font-semibold text-[#1C1C1C]">
-          {visibleVendorCount}
-        </span>
-        <span className="text-sm text-[#8F8F8F]">
-          vendor{visibleVendorCount !== 1 ? 's' : ''}
-        </span>
+        <span className="text-base font-semibold text-[#1C1C1C]">{visibleVendorCount}</span>
+        <span className="text-sm text-[#8F8F8F]">vendor{visibleVendorCount !== 1 ? 's' : ''}</span>
       </div>
 
       {/* ── Accordion list ── */}

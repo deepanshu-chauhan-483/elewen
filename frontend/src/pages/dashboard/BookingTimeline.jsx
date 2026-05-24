@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
-import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
+import { DashboardErrorState } from '../../components/dashboard/DashboardUI'
 import { getStoredJwt, paymentCreateOrder, paymentVerify } from '../../lib/api'
 import {
   formatDashboardDate,
@@ -175,13 +175,14 @@ function TimelineDot({ status, isLast }) {
       <div
         className={`
           z-10 flex h-9 w-9 items-center justify-center rounded-full border-2
-          ${status === 'completed'
-            ? 'border-[#C6A15B] bg-[#C6A15B]'
-            : status === 'in_progress'
-              ? 'border-[#C07318] bg-[#FEF1DE]'
-              : status === 'blocked'
-                ? 'border-[#B42318] bg-[#FFF0F0]'
-                : 'border-[#D3D1C7] bg-[#F1EFE8]'
+          ${
+            status === 'completed'
+              ? 'border-[#C6A15B] bg-[#C6A15B]'
+              : status === 'in_progress'
+                ? 'border-[#C07318] bg-[#FEF1DE]'
+                : status === 'blocked'
+                  ? 'border-[#B42318] bg-[#FFF0F0]'
+                  : 'border-[#D3D1C7] bg-[#F1EFE8]'
           }
         `}
       >
@@ -206,8 +207,9 @@ function TimelineDot({ status, isLast }) {
 
       {!isLast ? (
         <div
-          className={`mt-0.5 min-h-[32px] w-0.5 flex-1 ${status === 'completed' ? 'bg-[#C6A15B]/20' : 'bg-[#E5DED6]'
-            }`}
+          className={`mt-0.5 min-h-[32px] w-0.5 flex-1 ${
+            status === 'completed' ? 'bg-[#C6A15B]/20' : 'bg-[#E5DED6]'
+          }`}
         />
       ) : null}
     </div>
@@ -216,7 +218,7 @@ function TimelineDot({ status, isLast }) {
 
 export default function BookingTimeline() {
   const queryClient = useQueryClient()
-  const { data: bookings = [], isLoading, error } = useDashboardBookings('all')
+  const { data: bookings = [], error } = useDashboardBookings('all')
   const [selectedId, setSelectedId] = useState('')
   const [payingBookingId, setPayingBookingId] = useState('')
   const { searchTerm } = useDashboardSearch()
@@ -267,11 +269,9 @@ export default function BookingTimeline() {
   const { data: selectedBookingDetails } = useDashboardBooking(selectedBooking?.id)
   const activeBooking = selectedBookingDetails ?? selectedBooking
 
-  const {
-    data: timelineData = [],
-    isLoading: timelineLoading,
-    error: timelineError,
-  } = useDashboardBookingTimeline(selectedBooking?.id)
+  const { data: timelineData = [], error: timelineError } = useDashboardBookingTimeline(
+    selectedBooking?.id
+  )
 
   const timeline = useMemo(
     () =>
@@ -423,16 +423,18 @@ export default function BookingTimeline() {
             onClick={() => setSelectedId(booking.id)}
             className={`
               min-w-[180px] cursor-pointer rounded-xl border-[1.5px] px-4 py-2.5 text-left transition-all duration-150
-              ${selectedBooking?.id === booking.id
-                ? 'border-[#591902] bg-[#591902] text-[#F5E6CC]'
-                : 'border-[#E5DED6] bg-white text-[#3D2B1A] hover:border-[#C6A15B] hover:shadow-sm'
+              ${
+                selectedBooking?.id === booking.id
+                  ? 'border-[#591902] bg-[#591902] text-[#F5E6CC]'
+                  : 'border-[#E5DED6] bg-white text-[#3D2B1A] hover:border-[#C6A15B] hover:shadow-sm'
               }
             `}
           >
             <p className="mb-0.5 text-sm font-semibold">{booking.package?.title || 'Booking'}</p>
             <p
-              className={`text-xs ${selectedBooking?.id === booking.id ? 'text-[#F5E6CC]/75' : 'text-[#8C7B6B]'
-                }`}
+              className={`text-xs ${
+                selectedBooking?.id === booking.id ? 'text-[#F5E6CC]/75' : 'text-[#8C7B6B]'
+              }`}
             >
               {booking.event?.name} - {formatDashboardDate(booking.eventDate)}
             </p>
@@ -499,8 +501,8 @@ export default function BookingTimeline() {
                     <p className="text-xs leading-relaxed text-[#8C7B6B]">{item.description}</p>
 
                     {activeBooking?.status === 'pre_event' &&
-                      item.title === 'Pre-event Final Checks' &&
-                      item.status === 'blocked' ? (
+                    item.title === 'Pre-event Final Checks' &&
+                    item.status === 'blocked' ? (
                       <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-4 py-3">
                         <div className="flex flex-wrap gap-6">
                           <div>
@@ -541,8 +543,7 @@ export default function BookingTimeline() {
                 </div>
               </div>
             </div>
-          ))
-          }
+          ))}
         </div>
       </div>
     </div>

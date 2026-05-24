@@ -105,12 +105,12 @@ function buildPackageIncludesSections(booking, packages = []) {
 
   return fallbackIncludes.length
     ? [
-      {
-        id: `${booking?.id ?? 'booking'}-include-section-fallback`,
-        title: booking?.package?.title || packageNames[0] || 'Package',
-        includes: fallbackIncludes,
-      },
-    ]
+        {
+          id: `${booking?.id ?? 'booking'}-include-section-fallback`,
+          title: booking?.package?.title || packageNames[0] || 'Package',
+          includes: fallbackIncludes,
+        },
+      ]
     : []
 }
 
@@ -158,24 +158,15 @@ function buildAddonDetailRows(booking) {
 function buildPaymentDetailRows(booking) {
   const paymentSummary = booking?.paymentSummary ?? {}
 
-  const advanceAmount =
-    paymentSummary?.advanceAmount ?? booking?.advanceAmount ?? 0
+  const advanceAmount = paymentSummary?.advanceAmount ?? booking?.advanceAmount ?? 0
 
-  const remainingAmount =
-    paymentSummary?.scheduledRemainingAmount ??
-    booking?.remainingAmount ??
-    0
+  const remainingAmount = paymentSummary?.scheduledRemainingAmount ?? booking?.remainingAmount ?? 0
 
-  const totalAmount =
-    paymentSummary?.totalPrice ?? booking?.totalPrice ?? 0
+  const totalAmount = paymentSummary?.totalPrice ?? booking?.totalPrice ?? 0
 
-  const advancePaidAt =
-    paymentSummary?.advancePaidAt || booking?.bookedAt || null
+  const advancePaidAt = paymentSummary?.advancePaidAt || booking?.bookedAt || null
 
-  const remainingPaidAt =
-    paymentSummary?.remainingPaidAt ||
-    booking?.remainingPaidAt ||
-    null
+  const remainingPaidAt = paymentSummary?.remainingPaidAt || booking?.remainingPaidAt || null
 
   return [
     {
@@ -331,8 +322,20 @@ function CancellationPolicyModal({
             className="flex h-9 w-9 items-center justify-center rounded-full text-[#957960] transition hover:bg-[#F3EEE8] p-2"
             aria-label="Close cancellation popup"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 5L5 15M5 5L15 15" stroke="#1C1C1C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 5L5 15M5 5L15 15"
+                stroke="#1C1C1C"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -451,8 +454,9 @@ const StatusBadge = ({ status }) => {
 
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs ${styles[status] || 'bg-[#FEF1DE] text-[#C07318]'
-        }`}
+      className={`rounded-full px-3 py-1 text-xs ${
+        styles[status] || 'bg-[#FEF1DE] text-[#C07318]'
+      }`}
     >
       {label}
     </span>
@@ -518,8 +522,9 @@ function BookingAccordionCard({ booking, session, packages }) {
 
   return (
     <div
-      className={`rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md ${open ? 'border-t-4' : 'border-l-4'
-        } ${borderColor}`}
+      className={`rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md ${
+        open ? 'border-t-4' : 'border-l-4'
+      } ${borderColor}`}
       onClick={() => setOpen(prev => !prev)}
     >
       <div className="cursor-pointer">
@@ -567,9 +572,7 @@ function BookingAccordionCard({ booking, session, packages }) {
         <div className="mt-4 flex items-start gap-2 text-sm text-[#1C1C1C]">
           <CalendarIcon />
           <div className="space-y-1">
-            <p>
-              {formatDashboardDate(booking.eventDate)}
-            </p>
+            <p>{formatDashboardDate(booking.eventDate)}</p>
           </div>
         </div>
 
@@ -605,9 +608,7 @@ function BookingAccordionCard({ booking, session, packages }) {
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">EVENT DATE</p>
-              <p>
-                {formatDashboardDate(booking.eventDate)}
-              </p>
+              <p>{formatDashboardDate(booking.eventDate)}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">EVENT TIME</p>
@@ -723,22 +724,25 @@ function BookingAccordionCard({ booking, session, packages }) {
                   className={index !== paymentDetailRows.length - 1 ? 'mb-3' : ''}
                 >
                   <div
-                    className={`flex justify-between ${payment.isTotal ? 'border-t border-[#00000033] pt-3' : ''
-                      }`}
+                    className={`flex justify-between ${
+                      payment.isTotal ? 'border-t border-[#00000033] pt-3' : ''
+                    }`}
                   >
                     <div>
-                      <p className={`text-sm ${payment.isTotal ? 'font-medium text-[#1C1C1C]' : 'text-[#2E2E2E]'}`}>
+                      <p
+                        className={`text-sm ${payment.isTotal ? 'font-medium text-[#1C1C1C]' : 'text-[#2E2E2E]'}`}
+                      >
                         {payment.label}
                       </p>
                       <p className="mt-0.5 text-xs text-[#767676]">
-                        {payment.bookedAt
-                          ? formatDashboardDateTime(payment.bookedAt)
-                          : 'Pending'}
+                        {payment.bookedAt ? formatDashboardDateTime(payment.bookedAt) : 'Pending'}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className={`text-sm font-medium ${payment.isTotal ? 'text-[#1C1C1C]' : 'text-[#2D2D2D]'}`}>
+                      <span
+                        className={`text-sm font-medium ${payment.isTotal ? 'text-[#1C1C1C]' : 'text-[#2D2D2D]'}`}
+                      >
                         {formatDashboardCurrency(payment.amount)}
                       </span>
                       {/* <StatusBadge status={p.status} /> */}
@@ -838,15 +842,15 @@ export default function BookingDetailsAccordion() {
   )
 
   if (visibleBookings.length === 0) {
-  return (
-    <EmptyBooking
-      title="No bookings available yet"
-      body="Your booking details and event information will appear here once a booking is created."
-      actionLabel="Explore Packages"
-      actionTo="/package-listing"
-    />
-  )
-}
+    return (
+      <EmptyBooking
+        title="No bookings available yet"
+        body="Your booking details and event information will appear here once a booking is created."
+        actionLabel="Explore Packages"
+        actionTo="/package-listing"
+      />
+    )
+  }
 
   if (visibleBookings.length > 0 && filteredBookings.length === 0) {
     return (

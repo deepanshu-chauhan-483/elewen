@@ -169,25 +169,25 @@ export default function BookingStatusTrackerPage() {
     [bookingsQuery.data?.statusCounts]
   )
 
-  const counts = useMemo(() => {
-    const map = {
-      all:
-        Number(statusCounts.new ?? 0) +
-        Number(statusCounts.confirmed ?? 0) +
-        Number(statusCounts.info_collection ?? 0) +
-        Number(statusCounts.planning ?? 0) +
-        Number(statusCounts.pre_event ?? 0) +
-        Number(statusCounts.execution ?? 0) +
-        Number(statusCounts.post_event ?? 0) +
-        Number(statusCounts.completed ?? 0),
-    }
-    stages.forEach(stage => {
-      if (stage.key !== 'all') {
-        map[stage.key] = Number(statusCounts[stage.key] ?? 0)
-      }
-    })
-    return map
-  }, [statusCounts])
+  // const counts = useMemo(() => {
+  //   const map = {
+  //     all:
+  //       Number(statusCounts.new ?? 0) +
+  //       Number(statusCounts.confirmed ?? 0) +
+  //       Number(statusCounts.info_collection ?? 0) +
+  //       Number(statusCounts.planning ?? 0) +
+  //       Number(statusCounts.pre_event ?? 0) +
+  //       Number(statusCounts.execution ?? 0) +
+  //       Number(statusCounts.post_event ?? 0) +
+  //       Number(statusCounts.completed ?? 0),
+  //   }
+  //   stages.forEach(stage => {
+  //     if (stage.key !== 'all') {
+  //       map[stage.key] = Number(statusCounts[stage.key] ?? 0)
+  //     }
+  //   })
+  //   return map
+  // }, [statusCounts])
 
   const activeLabel = stages.find(stage => stage.key === activeStage)?.label ?? 'All Bookings'
 

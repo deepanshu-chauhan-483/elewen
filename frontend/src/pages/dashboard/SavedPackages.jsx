@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
-import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
+// import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
 import { useWishlist } from '../../hooks/useWishlist'
 import {
   formatDashboardCurrency,

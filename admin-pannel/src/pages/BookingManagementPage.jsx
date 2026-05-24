@@ -406,10 +406,7 @@ function BookingAccordionCard({ booking }) {
 
       {/* ── Expanded content ── */}
       {open && (
-        <div
-          className="border-t border-[#00000033] px-5 py-6"
-          onClick={e => e.stopPropagation()}
-        >
+        <div className="border-t border-[#00000033] px-5 py-6" onClick={e => e.stopPropagation()}>
           {/* Booking details grid */}
           <div className="grid grid-cols-2 gap-5 md:grid-cols-4 pb-6">
             {[

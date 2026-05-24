@@ -169,8 +169,7 @@ export function ActionButton({
       ? 'border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]'
       : tone === 'gold'
         ? 'bg-[#D4BA8E] text-[#FAFAFA] hover:bg-[#c7aa76]'
-          : 'text-[#FAFAFA] bg-[#CDB17E] hover:bg-[#C6AB7F]'
-
+        : 'text-[#FAFAFA] bg-[#CDB17E] hover:bg-[#C6AB7F]'
 
   return (
     <button

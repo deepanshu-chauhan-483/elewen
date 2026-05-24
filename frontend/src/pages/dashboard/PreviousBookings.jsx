@@ -4,7 +4,6 @@ import { useDashboardSearch } from '../../components/dashboard/useDashboardSearc
 import {
   DashboardEmptyState,
   DashboardErrorState,
-  DashboardLoadingState,
   DashboardPageIntro,
   StatusPill,
 } from '../../components/dashboard/DashboardUI'
@@ -363,7 +362,7 @@ function PreviousBookingCard({ booking, session }) {
 }
 
 export default function PreviousBookings() {
-  const { data: bookings = [], isLoading, error } = useDashboardBookings('previous')
+  const { data: bookings = [], error } = useDashboardBookings('previous')
   const { data: session } = useDashboardSession()
   const { searchTerm } = useDashboardSearch()
   const filteredBookings = bookings.filter(booking =>
