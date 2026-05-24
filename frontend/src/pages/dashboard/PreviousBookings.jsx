@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import {
+  DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
   DashboardPageIntro,
@@ -10,6 +12,7 @@ import { useDashboardBookings, useDashboardSession } from '../../hooks/useDashbo
 import {
   formatDashboardCurrency,
   formatDashboardDate,
+  matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
@@ -173,6 +176,9 @@ function PreviousBookingCard({ booking, session }) {
   const [showRefer, setShowRefer] = useState(false)
   const normalizedStatus = String(booking?.status ?? '').toLowerCase()
   const isCancelled = ['cancelled', 'canceled'].includes(normalizedStatus)
+  const cancellationReason = isCancelled
+    ? String(booking?.latestStatusLog?.note ?? '').trim() || 'No reason provided.'
+    : ''
   const title = booking?.package?.title || booking?.event?.name || 'Booking'
   const subtitle = [booking?.detailSubtitle].filter(Boolean).join(' · ')
   const receiptData = buildReceiptData({
@@ -232,7 +238,7 @@ function PreviousBookingCard({ booking, session }) {
             <Link
               to={getBookAgainHref(booking)}
               onClick={event => event.stopPropagation()}
-              className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-4 py-2 text-white hover:opacity-90"
+              className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-4 py-2 text-white hover:bg-[#C6AB7F]"
             >
               Book Again <ArrowIcon />
             </Link>
@@ -301,6 +307,15 @@ function PreviousBookingCard({ booking, session }) {
             </div>
           </div>
 
+          {isCancelled ? (
+            <div className="mt-6">
+              <h4 className="mb-3 text-[11px] text-[#767676]">CANCELLATION REASON</h4>
+              <div className="rounded-xl bg-[#F8E7E2] p-3 text-sm text-[#591902]">
+                {cancellationReason}
+              </div>
+            </div>
+          ) : null}
+
           <div className="mt-6">
             <h4 className="mb-3 text-[11px] text-[#767676]">SELECTED ITEMS</h4>
             {booking.items?.length ? (
@@ -350,10 +365,22 @@ function PreviousBookingCard({ booking, session }) {
 export default function PreviousBookings() {
   const { data: bookings = [], isLoading, error } = useDashboardBookings('previous')
   const { data: session } = useDashboardSession()
+  const { searchTerm } = useDashboardSearch()
+  const filteredBookings = bookings.filter(booking =>
+    matchesDashboardSearch(searchTerm, [
+      booking?.package?.title,
+      booking?.event?.name,
+      booking?.detailSubtitle,
+      booking?.locationSummary,
+      booking?.statusLabel,
+      booking?.latestStatusLog?.note,
+      ...(booking?.items ?? []).map(item => item?.title),
+    ])
+  )
 
-  if (isLoading) {
-    return <DashboardLoadingState title="Loading previous bookings..." />
-  }
+  // if (isLoading) {
+  //   return <DashboardLoadingState title="Loading previous bookings..." />
+  // }
 
   if (error) {
     return <DashboardErrorState title="We could not load previous bookings." />
@@ -368,15 +395,24 @@ export default function PreviousBookings() {
     )
   }
 
+  if (!filteredBookings.length) {
+    return (
+      <DashboardEmptyState
+        title="No previous bookings match your search"
+        body="Try searching by package, event, location, item, or booking status."
+      />
+    )
+  }
+
   return (
     <div className="space-y-6">
       <DashboardPageIntro
         title="Previous Bookings"
         subtitle="Look back at completed or past events with their final payment snapshot."
-        meta={`${bookings.length} past`}
+        meta={`${filteredBookings.length} past`}
       />
 
-      {bookings.map(booking => (
+      {filteredBookings.map(booking => (
         <PreviousBookingCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>

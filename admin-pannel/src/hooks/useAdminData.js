@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   adminAddBookingNote,
   adminAddSupportMessage,
@@ -96,6 +96,7 @@ function useAuthedAdminQuery({ queryKey, queryFn, enabled = true, staleTime = 30
     enabled: enabled && Boolean(token),
     retry: false,
     staleTime,
+    placeholderData: keepPreviousData,
     queryFn: () => withAdminToken(queryFn),
   })
 }
@@ -190,6 +191,7 @@ export function useAdminAddBookingNote() {
     mutationFn: ({ bookingId, body }) =>
       withAdminToken(token => adminAddBookingNote(token, bookingId, body)),
     onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
     },
   })
@@ -235,10 +237,11 @@ export function useAdminUpdateVendor() {
   })
 }
 
-export function useAdminVendorWorkspace() {
+export function useAdminVendorWorkspace(params = {}) {
   return useAuthedAdminQuery({
-    queryKey: ['admin', 'vendors', 'workspace'],
-    queryFn: token => adminVendorWorkspace(token).then(response => response?.workspace ?? null),
+    queryKey: ['admin', 'vendors', 'workspace', JSON.stringify(params)],
+    queryFn: token =>
+      adminVendorWorkspace(token, params).then(response => response?.workspace ?? null),
   })
 }
 
@@ -334,10 +337,11 @@ export function useAdminPaymentSummary() {
   })
 }
 
-export function useAdminPaymentWorkspace() {
+export function useAdminPaymentWorkspace(params = {}) {
   return useAuthedAdminQuery({
-    queryKey: ['admin', 'payments', 'workspace'],
-    queryFn: token => adminPaymentWorkspace(token).then(response => response?.workspace ?? null),
+    queryKey: ['admin', 'payments', 'workspace', JSON.stringify(params)],
+    queryFn: token =>
+      adminPaymentWorkspace(token, params).then(response => response?.workspace ?? null),
   })
 }
 

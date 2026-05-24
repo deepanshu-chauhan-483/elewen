@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import { useAdminBookings } from '../hooks/useAdminData'
 import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatCurrency, formatDate } from '../lib/formatters'
@@ -61,6 +67,21 @@ function CalIcon() {
     </svg>
   )
 }
+
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg className={`h-6 w-6 ${rotationClass}`} viewBox="0 0 36 36" fill="none">
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 function getSubtitle(booking) {
   return [
     // booking?.detailSubtitle,
@@ -102,11 +123,11 @@ function BookingCard({ booking }) {
         </div>
 
         <div className="hidden shrink-0 gap-6 text-sm md:flex">
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-start">
             <p className="text-[11px] text-[#767676]">ADVANCE PAID</p>
             <p className="font-medium text-[#2D2D2D]">{formatCurrency(booking.advanceAmount)}</p>
           </div>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-start">
             <p className="text-[11px] text-[#767676]">REMAINING</p>
             <p className="font-medium text-[#2D2D2D]">{formatCurrency(booking.remainingAmount)}</p>
           </div>
@@ -129,24 +150,44 @@ function BookingCard({ booking }) {
 
 export default function BookingStatusTrackerPage() {
   const [activeStage, setActiveStage] = useState('all')
-  const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 60 })
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
+  const bookingsQuery = useAdminBookings({
+    bucket: 'active',
+    status: activeStage === 'all' ? '' : activeStage,
+    page: currentPage,
+    limit: PAGE_SIZE,
+  })
 
   const bookings = useMemo(() => bookingsQuery.data?.bookings ?? [], [bookingsQuery.data?.bookings])
+  const totalBookings = Number(bookingsQuery.data?.total ?? 0)
+  const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
+  const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
+  const statusCounts = useMemo(
+    () => bookingsQuery.data?.statusCounts ?? {},
+    [bookingsQuery.data?.statusCounts]
+  )
 
   const counts = useMemo(() => {
-    const map = { all: bookings.length }
+    const map = {
+      all:
+        Number(statusCounts.new ?? 0) +
+        Number(statusCounts.confirmed ?? 0) +
+        Number(statusCounts.info_collection ?? 0) +
+        Number(statusCounts.planning ?? 0) +
+        Number(statusCounts.pre_event ?? 0) +
+        Number(statusCounts.execution ?? 0) +
+        Number(statusCounts.post_event ?? 0) +
+        Number(statusCounts.completed ?? 0),
+    }
     stages.forEach(stage => {
       if (stage.key !== 'all') {
-        map[stage.key] = bookings.filter(booking => booking.status === stage.key).length
+        map[stage.key] = Number(statusCounts[stage.key] ?? 0)
       }
     })
     return map
-  }, [bookings])
-
-  const filtered = useMemo(() => {
-    if (activeStage === 'all') return bookings
-    return bookings.filter(booking => booking.status === activeStage)
-  }, [bookings, activeStage])
+  }, [statusCounts])
 
   const activeLabel = stages.find(stage => stage.key === activeStage)?.label ?? 'All Bookings'
 
@@ -169,12 +210,15 @@ export default function BookingStatusTrackerPage() {
         </p>
         <SelectField
           value={activeStage}
-          onChange={setActiveStage}
+          onChange={value => {
+            setActiveStage(value)
+            setCurrentPage(1)
+          }}
           className="min-h-10 rounded-full bg-[#F3F3F3]"
         >
           {stages.map(stage => (
             <option key={stage.key} value={stage.key}>
-              {stage.label} ({counts[stage.key] ?? 0})
+              {stage.label}
             </option>
           ))}
         </SelectField>
@@ -182,18 +226,41 @@ export default function BookingStatusTrackerPage() {
 
       <div className="flex items-baseline gap-2">
         <span className="text-base font-semibold text-[#1C1C1C]">
-          {filtered.length} booking{filtered.length !== 1 ? 's' : ''}
+          {totalBookings} booking{totalBookings !== 1 ? 's' : ''}
         </span>
         {activeStage !== 'all' && (
           <span className="text-sm text-[#8F8F8F]">in &quot;{activeLabel}&quot; stage</span>
         )}
       </div>
 
-      {filtered.length ? (
+      {isResultsLoading ? (
+        <SectionLoadingState label="Loading booking pipeline..." />
+      ) : bookings.length ? (
         <div className="space-y-3">
-          {filtered.map(booking => (
+          {bookings.map(booking => (
             <BookingCard key={booking.id} booking={booking} />
           ))}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={visiblePage === 1}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowIcon direction="left" />
+            </button>
+            <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+              {visiblePage} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={visiblePage === totalPages}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowIcon direction="right" />
+            </button>
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">

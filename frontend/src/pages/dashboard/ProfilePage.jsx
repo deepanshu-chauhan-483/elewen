@@ -183,7 +183,7 @@ export default function ProfilePage() {
                     setForm(buildInitialForm(session))
                     setIsEditing(true)
                   }}
-                  className="rounded-full bg-[#C6A15B] px-4 py-2 text-sm text-white transition hover:opacity-90"
+                  className="rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-sm text-white transition"
                 >
                   Edit basic info
                 </button>

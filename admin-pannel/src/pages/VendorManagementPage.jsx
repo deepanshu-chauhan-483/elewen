@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import {
   useAdminBookings,
   useAdminCreateVendorAssignment,
@@ -49,6 +55,26 @@ function MetricCard({ label, value, helper, accent }) {
   )
 }
 
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg
+      className={`h-6 w-6 ${rotationClass}`}
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 // function Select({ value, onChange, children, className = '' }) {
 //   return (
 //     <select
@@ -61,14 +87,14 @@ function MetricCard({ label, value, helper, accent }) {
 //   )
 // }
 
-function Input({ type = 'text', value, onChange, placeholder }) {
+function Input({ type = 'text', value, onChange, placeholder, className = '' }) {
   return (
     <input
       type={type}
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+      className={`w-full rounded-full border border-[#D9D2CB] px-4 py-2 text-[15px] font-medium bg-[#F5F5F5] text-[#5B534B] placeholder:text-[#A19B94] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] ${className}`}
     />
   )
 }
@@ -79,25 +105,25 @@ function PrimaryBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {children}
     </button>
   )
 }
 
-function GhostBtn({ children, onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {children}
-    </button>
-  )
-}
+// function GhostBtn({ children, onClick, disabled }) {
+//   return (
+//     <button
+//       type="button"
+//       onClick={onClick}
+//       disabled={disabled}
+//       className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
+//     >
+//       {children}
+//     </button>
+//   )
+// }
 
 function DangerBtn({ children, onClick, disabled }) {
   return (
@@ -105,7 +131,7 @@ function DangerBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#FECACA] bg-[#FFF3F3] px-5 text-sm font-semibold text-[#8A1C1C] transition hover:bg-[#FFE4E4] hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-10 items-center justify-center rounded-full px-5 text-sm  bg-[#591902] text-[#FAFAFA] hover:bg-[#651D03] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {children}
     </button>
@@ -121,7 +147,7 @@ function ExternalAction({ href, children }) {
     <a
       href={href}
       {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px"
+      className="inline-flex h-10 items-center justify-center px-5 text-sm rounded-full border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]"
     >
       {children}
     </a>
@@ -227,7 +253,7 @@ function filterVendors(vendors, { search, category, location, availability, book
 
 function FieldGrid({ items }) {
   return (
-    <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-5 md:grid-cols-4 pb-6">
       {items.map(item => (
         <div key={item.label}>
           <p className="text-[11px] tracking-[0.16em] text-[#767676]">{item.label}</p>
@@ -379,14 +405,14 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
 
           <div className="flex shrink-0 items-start gap-6">
             {!open && (
-              <div className="hidden gap-6 text-sm md:flex">
-                <div className="flex flex-col items-end">
+              <div className="hidden gap-6 text-sm items-start md:flex">
+                <div className="flex flex-col">
                   <p className="text-[11px] text-[#767676]">MIN PRICE</p>
                   <p className="font-medium text-[#2D2D2D]">
                     {formatCurrency(vendor.minimumPrice)}
                   </p>
                 </div>
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col">
                   <p className="text-[11px] text-[#767676]">ACTIVE BOOKINGS</p>
                   <p className="font-medium text-[#2D2D2D]">{vendor.activeAssignmentsCount ?? 0}</p>
                 </div>
@@ -412,7 +438,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
 
       {open && (
         <div
-          className="border-t border-[#00000019] px-5 pb-6 pt-5"
+          className="border-t border-[#00000033] px-5 py-6"
           onClick={event => event.stopPropagation()}
         >
           <FieldGrid
@@ -435,7 +461,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
             ]}
           />
 
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Registration Review</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <FieldGrid items={registrationFields} />
@@ -516,7 +542,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Vendor Controls</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -546,7 +572,6 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                     value={minimumPrice}
                     onChange={event => setMinimumPrice(event.target.value)}
                     placeholder="e.g. 5000"
-                    className="rounded-2xl"
                   />
                 </div>
                 <div>
@@ -556,37 +581,36 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                     value={leadTimeDays}
                     onChange={event => setLeadTimeDays(event.target.value)}
                     placeholder="e.g. 3"
-                    className="rounded-2xl"
                   />
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2 justify-end">
                 <PrimaryBtn disabled={isBusy} onClick={handleSaveVendor}>
                   {isBusy ? 'Saving...' : 'Save Changes'}
                 </PrimaryBtn>
-                <ExternalAction href={vendorMailto}>Email Vendor</ExternalAction>
-                <ExternalAction href={vendor.phone ? `tel:${vendor.phone}` : ''}>
-                  Call Vendor
-                </ExternalAction>
-                <ExternalAction href={websiteHref || portfolioHref}>
-                  Open Portfolio Link
-                </ExternalAction>
                 {tab === 'pending' && (
                   <>
-                    <GhostBtn disabled={isBusy} onClick={handleApprove}>
+                    <PrimaryBtn disabled={isBusy} onClick={handleApprove}>
                       Approve
-                    </GhostBtn>
+                    </PrimaryBtn>
                     <DangerBtn disabled={isBusy} onClick={handleReject}>
                       Reject and Close
                     </DangerBtn>
                   </>
                 )}
+                {/* <ExternalAction href={vendorMailto}>Email Vendor</ExternalAction>
+                <ExternalAction href={vendor.phone ? `tel:${vendor.phone}` : ''}>
+                  Call Vendor
+                </ExternalAction> */}
+                <ExternalAction href={websiteHref || portfolioHref}>
+                  Open Portfolio Link
+                </ExternalAction>
               </div>
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Assign to Active Booking</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               {vendorStatus !== 'approved' ? (
@@ -622,7 +646,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Active Booking Assignments</SectionLabel>
             {assignmentsQuery.isLoading ? (
               <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
@@ -669,17 +693,8 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge status={assignment.status} />
-                          <GhostBtn
-                            onClick={() =>
-                              setExpandedAssignmentId(current =>
-                                current === assignment.id ? '' : assignment.id
-                              )
-                            }
-                          >
-                            {isExpanded ? 'Hide Details' : 'View Details'}
-                          </GhostBtn>
-                          {assignment.status === 'assigned' && (
-                            <GhostBtn
+                           {assignment.status === 'assigned' && (
+                            <PrimaryBtn
                               disabled={updateAssignmentMutation.isPending}
                               onClick={() =>
                                 updateAssignmentMutation.mutate({
@@ -689,10 +704,11 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                               }
                             >
                               Confirm
-                            </GhostBtn>
+                            </PrimaryBtn>
                           )}
+
                           {assignment.status === 'confirmed' && (
-                            <GhostBtn
+                            <PrimaryBtn
                               disabled={updateAssignmentMutation.isPending}
                               onClick={() =>
                                 updateAssignmentMutation.mutate({
@@ -702,8 +718,40 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                               }
                             >
                               Complete
-                            </GhostBtn>
+                            </PrimaryBtn>
                           )}
+
+                          {!isExpanded ? (
+                            <PrimaryBtn
+                              onClick={() => setExpandedAssignmentId(assignment.id)}
+                            >
+                              View Details
+                            </PrimaryBtn>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedAssignmentId('')}
+                              className="flex h-9 w-9 items-center justify-center rounded-full p-2 text-[#957960] transition hover:bg-[#F3EEE8]"
+                              aria-label="Close"
+                            >
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M15 5L5 15M5 5L15 15"
+                                  stroke="#1C1C1C"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </button>
+                          )}
+
                         </div>
                       </div>
 
@@ -814,7 +862,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
             )}
           </div>
 
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Assignment History</SectionLabel>
             {historicalAssignments.length ? (
               <div className="space-y-2">
@@ -835,11 +883,11 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge status={assignment.status} />
-                      <ExternalAction
+                      {/* <ExternalAction
                         href={buildMailtoHref(vendor.email, 'Elewen vendor follow-up')}
                       >
                         Email Vendor
-                      </ExternalAction>
+                      </ExternalAction> */}
                     </div>
                   </div>
                 ))}
@@ -864,6 +912,35 @@ const vendorTabs = [
   { key: 'unassigned', label: 'Unassigned Vendors' },
 ]
 
+function getVendorTabCount(summary, key) {
+  if (key === 'pending') return Number(summary.pendingRequests ?? 0)
+  if (key === 'assigned') return Number(summary.assignedVendors ?? 0)
+  if (key === 'unassigned') return Number(summary.unassignedVendors ?? 0)
+  return 0
+}
+
+function getWorkspaceVendorList(workspace, tab) {
+  const tabList =
+    tab === 'pending'
+      ? workspace.pendingRequests
+      : tab === 'assigned'
+        ? workspace.assignedVendors
+        : workspace.unassignedVendors
+
+  if (Array.isArray(tabList) && tabList.length) return tabList
+
+  const fallbackLists = [
+    workspace.activeList,
+    workspace.vendors,
+    workspace.items,
+    workspace.rows,
+    workspace.results,
+    workspace.data,
+  ]
+
+  return fallbackLists.find(Array.isArray) ?? []
+}
+
 export default function VendorManagementPage() {
   const [tab, setTab] = useState('pending')
   const [search, setSearch] = useState('')
@@ -871,33 +948,79 @@ export default function VendorManagementPage() {
   const [location, setLocation] = useState('')
   const [availability, setAvailability] = useState('')
   const [bookingCount, setBookingCount] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
 
-  const workspaceQuery = useAdminVendorWorkspace()
+  const workspaceQuery = useAdminVendorWorkspace({
+    tab,
+    search,
+    category,
+    location,
+    availability,
+    page: currentPage,
+    limit: PAGE_SIZE,
+  })
   const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 100 })
 
   const workspace = workspaceQuery.data ?? {}
   const summary = workspace.summary ?? {}
-
   const vendorGroups = useMemo(
     () => ({
-      pending: workspace.pendingRequests ?? [],
-      assigned: workspace.assignedVendors ?? [],
-      unassigned: workspace.unassignedVendors ?? [],
+      pending: Array.isArray(workspace.pendingRequests) ? workspace.pendingRequests : [],
+      assigned: Array.isArray(workspace.assignedVendors) ? workspace.assignedVendors : [],
+      unassigned: Array.isArray(workspace.unassignedVendors) ? workspace.unassignedVendors : [],
     }),
     [workspace.assignedVendors, workspace.pendingRequests, workspace.unassignedVendors]
+  )
+  const currentTabVendors = useMemo(
+    () => getWorkspaceVendorList(workspace, tab),
+    [
+      tab,
+      workspace.assignedVendors,
+      workspace.activeList,
+      workspace.data,
+      workspace.items,
+      workspace.pendingRequests,
+      workspace.results,
+      workspace.rows,
+      workspace.unassignedVendors,
+      workspace.vendors,
+    ]
   )
 
   const activeList = useMemo(
     () =>
-      filterVendors(vendorGroups[tab] ?? [], {
+      filterVendors(currentTabVendors, {
         search,
         category,
         location,
         availability,
         bookingCount,
       }),
-    [availability, bookingCount, category, location, search, tab, vendorGroups]
+    [availability, bookingCount, category, currentTabVendors, location, search]
   )
+  const hasActiveFilters = Boolean(
+    search.trim() || category.trim() || location.trim() || availability || bookingCount
+  )
+  const visibleVendorCount = hasActiveFilters ? activeList.length : Number(workspace.total ?? 0)
+  const totalPages = Math.max(1, Number(workspace.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
+  const isResultsLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
+
+  const handleLocationChange = event => {
+    setLocation(event.target.value)
+    setCurrentPage(1)
+  }
+
+  const handleAvailabilityChange = value => {
+    setAvailability(value)
+    setCurrentPage(1)
+  }
+
+  const handleBookingCountChange = value => {
+    setBookingCount(value)
+    setCurrentPage(1)
+  }
 
   if (workspaceQuery.isLoading) return <LoadingState label="Loading vendors..." />
   if (workspaceQuery.error) return <ErrorState label="Vendor data could not be loaded right now." />
@@ -948,7 +1071,10 @@ export default function VendorManagementPage() {
             <button
               key={item.key}
               type="button"
-              onClick={() => setTab(item.key)}
+              onClick={() => {
+                setTab(item.key)
+                setCurrentPage(1)
+              }}
               className={[
                 'flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition',
                 tab === item.key
@@ -963,7 +1089,7 @@ export default function VendorManagementPage() {
                   tab === item.key ? 'bg-white/30 text-white' : 'bg-[#F0EBE3] text-[#8C7D70]',
                 ].join(' ')}
               >
-                {(vendorGroups[item.key] ?? []).length}
+                {getVendorTabCount(summary, item.key)}
               </span>
             </button>
           ))}
@@ -975,7 +1101,7 @@ export default function VendorManagementPage() {
           Filter Vendors
         </p>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] px-2.5 py-1.5 text-[#A19B94]">
+          <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F5F5F5] px-2.5 py-1.5 text-[#A19B94] border border-[#D9D2CB]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
               <span className="h-3.5 w-3.5">
                 <SearchIcon />
@@ -984,31 +1110,37 @@ export default function VendorManagementPage() {
             <input
               type="text"
               value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder="Search vendors"
-              className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
+              onChange={e => {
+                setSearch(e.target.value)
+                setCurrentPage(1)
+              }}
+              placeholder="Search"
+              className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#A19B94] focus:outline-none"
             />
           </label>
 
           <Input
             value={category}
-            onChange={event => setCategory(event.target.value)}
+            onChange={e => {
+              setCategory(e.target.value)
+              setCurrentPage(1)
+            }}
             placeholder="Service category"
           />
 
           <Input
             value={location}
-            onChange={event => setLocation(event.target.value)}
+            onChange={handleLocationChange}
             placeholder="City / location"
           />
 
-          <SelectField value={availability} onChange={setAvailability}>
+          <SelectField value={availability} onChange={handleAvailabilityChange}>
             <option value="">Any Availability</option>
             <option value="available">Available</option>
             <option value="unavailable">Unavailable</option>
           </SelectField>
 
-          <SelectField value={bookingCount} onChange={setBookingCount}>
+          <SelectField value={bookingCount} onChange={handleBookingCountChange}>
             <option value="">Booking Count</option>
             <option value="none">0 Active Bookings</option>
             <option value="one_plus">1+ Active Bookings</option>
@@ -1018,11 +1150,18 @@ export default function VendorManagementPage() {
       </div>
 
       <div className="flex items-baseline gap-2">
-        <span className="text-base font-semibold text-[#1C1C1C]">{activeList.length}</span>
-        <span className="text-sm text-[#8F8F8F]">vendor{activeList.length !== 1 ? 's' : ''}</span>
+        <span className="text-base font-semibold text-[#1C1C1C]">
+          {visibleVendorCount}
+        </span>
+        <span className="text-sm text-[#8F8F8F]">
+          vendor{visibleVendorCount !== 1 ? 's' : ''}
+        </span>
       </div>
 
-      {activeList.length ? (
+      {/* ── Accordion list ── */}
+      {isResultsLoading ? (
+        <SectionLoadingState label="Loading vendors" />
+      ) : activeList.length ? (
         <div className="space-y-3">
           {activeList.map(vendor => (
             <VendorAccordionCard
@@ -1032,10 +1171,38 @@ export default function VendorManagementPage() {
               bookingsQuery={bookingsQuery}
             />
           ))}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={visiblePage === 1}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowIcon direction="left" />
+            </button>
+            <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+              {visiblePage} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={visiblePage === totalPages}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowIcon direction="right" />
+            </button>
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">
-          <EmptyState title="No vendors found" body="Try a different filter or switch tabs." />
+          <EmptyState
+            title="No vendors found"
+            body={
+              hasActiveFilters
+                ? 'Try clearing the current filters to see matching vendors.'
+                : 'Try a different filter or switch tabs.'
+            }
+          />
         </div>
       )}
     </div>

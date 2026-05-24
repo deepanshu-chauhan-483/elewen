@@ -1,11 +1,18 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { useDashboardBookings, useDashboardSession } from '../../hooks/useDashboardData'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
+  formatDashboardDateTime,
+  matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
-import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
+import {
+  DashboardEmptyState,
+  DashboardErrorState,
+  DashboardLoadingState,
+} from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { getBookingPackageNamesText } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
@@ -113,15 +120,14 @@ function BookingCard({ booking, session }) {
 
   return (
     <div
-      className={`rounded-2xl bg-[#FFFFFF] p-6 transition-all ${
-        status === 'completed'
+      className={`rounded-2xl bg-[#FFFFFF] p-6 transition-all ${status === 'completed'
           ? open
             ? 'border-t-4 border-[#238E64]'
             : 'border-l-4 border-[#238E64]'
           : open
             ? 'border-t-4 border-[#C07318]'
             : 'border-l-4 border-[#C07318]'
-      }`}
+        }`}
       onClick={() => setOpen(current => !current)}
     >
       <div className="flex items-start justify-between gap-4">
@@ -155,7 +161,7 @@ function BookingCard({ booking, session }) {
 
               <Link
                 to={`/user-dashboard/details?bookingId=${booking.id}`}
-                className="flex items-center rounded-full bg-[#CDB17E] hover:opacity-90 px-4 py-2 text-sm text-white"
+                className="flex items-center rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-sm text-white"
                 aria-label="View booking details"
                 onClick={event => event.stopPropagation()}
               >
@@ -217,7 +223,7 @@ function BookingCard({ booking, session }) {
 
       {open ? (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-[#00000033] pt-4 text-sm">
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8 border-t border-[#00000033] pt-4 text-sm">
             <div>
               <p className="text-[11px] text-[#767676]">PACKAGE</p>
               <p>{getBookingPackageNamesText(booking, booking?.event?.name || 'Event pending')}</p>
@@ -232,7 +238,20 @@ function BookingCard({ booking, session }) {
               <p className="text-[11px] text-[#767676]">LOCATION</p>
               <p>{location || 'Location pending'}</p>
             </div>
-
+            <div>
+              <p className="text-[11px] text-[#767676]">EVENT DATE</p>
+              <p>
+                {formatDashboardDate(booking.eventDate)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">EVENT TIME</p>
+              <p>{booking.eventTime || 'Pending'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">BOOKED ON</p>
+              <p>{formatDashboardDateTime(booking.bookedAt)}</p>
+            </div>
             <div>
               <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
               <p>{amountPaid}</p>
@@ -241,6 +260,10 @@ function BookingCard({ booking, session }) {
             <div>
               <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
               <p>{amountDue}</p>
+            </div>
+             <div>
+              <p className="text-[11px] text-[#767676]">SPECIAL REQUEST</p>
+              <p>{booking.specialRequest || 'Not provided'}</p>
             </div>
           </div>
 
@@ -291,10 +314,22 @@ function BookingCard({ booking, session }) {
 export default function ActiveBookings() {
   const { data: bookings = [], isLoading, error } = useDashboardBookings('active')
   const { data: session } = useDashboardSession()
+  const { searchTerm } = useDashboardSearch()
+  const filteredBookings = bookings.filter(booking =>
+    matchesDashboardSearch(searchTerm, [
+      getBookingPackageNamesText(booking, booking?.event?.name || 'Booking'),
+      booking?.event?.name,
+      booking?.package?.title,
+      booking?.package?.serviceCategories?.[0]?.name,
+      booking?.locationSummary,
+      booking?.statusLabel,
+      booking?.latestStatusLog?.note,
+    ])
+  )
 
-  if (isLoading) {
-    return <DashboardLoadingState title="Loading active bookings..." />
-  }
+  // if (isLoading) {
+  //   return <DashboardLoadingState title="Loading active bookings..." />
+  // }
 
   if (error) {
     return <DashboardErrorState title="We could not load active bookings." />
@@ -311,6 +346,15 @@ export default function ActiveBookings() {
     )
   }
 
+  if (!filteredBookings.length) {
+    return (
+      <DashboardEmptyState
+        title="No active bookings match your search"
+        body="Try a different booking, event, location, or status keyword."
+      />
+    )
+  }
+
   return (
     <div className="space-y-6 bg-[#F2F2F2]">
       <div>
@@ -318,7 +362,7 @@ export default function ActiveBookings() {
         <p className="text-sm text-gray-500">Track and manage your ongoing events</p>
       </div>
 
-      {bookings.map(booking => (
+      {filteredBookings.map(booking => (
         <BookingCard key={booking.id} booking={booking} session={session} />
       ))}
     </div>

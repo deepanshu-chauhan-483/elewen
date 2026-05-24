@@ -156,6 +156,7 @@ const options = {
             userId: { type: 'string' },
             packageId: { type: 'string' },
             eventDate: { type: 'string', format: 'date' },
+            eventTime: { type: 'string', nullable: true, example: '18:30' },
             guestCount: { type: 'integer' },
             status: {
               type: 'string',
@@ -175,6 +176,7 @@ const options = {
             advanceAmount: { type: 'string', example: '8400.00' },
             remainingAmount: { type: 'string', example: '19600.00' },
             discountAmount: { type: 'string', example: '0.00' },
+            createdAt: { type: 'string', format: 'date-time' },
           },
         },
         BookingNote: {

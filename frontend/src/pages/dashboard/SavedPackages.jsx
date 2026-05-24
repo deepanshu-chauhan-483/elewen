@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
+import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
 import { useWishlist } from '../../hooks/useWishlist'
-import { formatDashboardCurrency } from '../../components/dashboard/dashboardUtils'
+import {
+  formatDashboardCurrency,
+  matchesDashboardSearch,
+} from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 function getPackageHref(item) {
@@ -144,7 +149,7 @@ function PackageCard({ item, isPending, onRemove }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               to={href}
-              className="inline-flex items-center gap-2 bg-[#CDB17E] hover:opacity-90 text-[#F5E6CC] text-sm px-4 py-2 rounded-full transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-[#CDB17E] hover:bg-[#C6AB7F] text-[#F5E6CC] text-sm px-4 py-2 rounded-full transition-colors duration-200"
             >
               Resume Booking
               <ArrowIcon />
@@ -194,6 +199,14 @@ function PackageCard({ item, isPending, onRemove }) {
 
 export default function SavedPackages() {
   const { wishlist = [], isLoading, toggleSavedPackage, pendingPackageId } = useWishlist()
+  const { searchTerm } = useDashboardSearch()
+  const filteredWishlist = wishlist.filter(item =>
+    matchesDashboardSearch(searchTerm, [
+      item?.title,
+      item?.events?.[0]?.name,
+      ...(item?.serviceCategories ?? []).map(category => category?.name),
+    ])
+  )
 
   if (!isLoading && wishlist.length === 0) {
     return (
@@ -205,6 +218,15 @@ export default function SavedPackages() {
       />
     )
   }
+
+  // if (!isLoading && !filteredWishlist.length) {
+  //   return (
+  //     <DashboardEmptyState
+  //       title="No saved packages match your search"
+  //       body="Try searching by package name, event, or service category."
+  //     />
+  //   )
+  // }
 
   return (
     <div className="min-h-screen ">
@@ -218,8 +240,8 @@ export default function SavedPackages() {
             Pick up where you left off on packages you bookmarked for later.
           </p>
           {!isLoading && wishlist.length > 0 && (
-            <span className="shrink-0 rounded-full border border-[#EDE5DA] bg-[#FBF7F3] px-3 py-1 text-xs font-semibold text-[#C6A15B] whitespace-nowrap">
-              {wishlist.length} saved
+            <span className="text-xs font-semibold text-[#C6A15B] bg-[#FBF7F3] border border-[#EDE5DA] px-3 py-1 rounded-full">
+              {filteredWishlist.length} saved
             </span>
           )}
         </div>
@@ -236,7 +258,7 @@ export default function SavedPackages() {
       {/* ── Package cards ── */}
       {!isLoading && (
         <div className="space-y-4">
-          {wishlist.map(item => {
+          {filteredWishlist.map(item => {
             const isPending = String(pendingPackageId) === String(item.packageId)
             return (
               <PackageCard

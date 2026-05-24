@@ -1,7 +1,9 @@
 import crypto from 'crypto'
 import prisma from '../lib/prisma.js'
 import razorpay from '../lib/razorpay.js'
+import { createOperationalAlert } from '../lib/alerts.js'
 import { notify } from '../lib/notify.js'
+import { invalidateDashboardCache } from './dashboard.js'
 
 const TEST_PAYMENT_KEY_ID = process.env.RAZORPAY_TEST_KEY_ID || 'rzp_test_elewen_dashboard_bypass'
 const TEST_MODE_ENABLED =
@@ -23,6 +25,30 @@ const getSuccessfulPaidAmount = booking =>
         .filter(payment => payment.status === 'success')
         .reduce((sum, payment) => sum + toNumberAmount(payment.amount), 0)
     : 0
+
+async function clearUserCart(userId) {
+  if (!userId) return
+
+  const cart = await prisma.cart.findFirst({
+    where: { userId: String(userId) },
+    select: { id: true },
+  })
+
+  if (!cart) return
+
+  await prisma.cartItem.deleteMany({ where: { cartId: cart.id } })
+  await prisma.cart.update({
+    where: { id: cart.id },
+    data: {
+      subtotal: 0,
+      discountAmount: 0,
+      total: 0,
+      couponId: null,
+      eventDate: null,
+      guestCount: null,
+    },
+  })
+}
 
 function resolvePaymentAmount(booking, paymentType) {
   const totalPrice = toNumberAmount(booking?.totalPrice)
@@ -343,6 +369,9 @@ export const verifyPayment = async (req, res, next) => {
       },
     }).catch(() => {})
 
+    await clearUserCart(payment.booking.userId).catch(() => {})
+    await invalidateDashboardCache(payment.booking.userId).catch(() => {})
+
     res.json({ payment: updatedPayment, booking: confirmedBooking })
   } catch (err) {
     next(err)
@@ -413,9 +442,10 @@ export const handleWebhook = async (req, res) => {
               metadata: { razorpayPaymentId, eventType },
             },
           })
+          const booking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
+
           // Auto-confirm booking if advance
           if (payment.paymentType === 'advance') {
-            const booking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
             if (booking?.status === 'new') {
               await prisma.booking.update({
                 where: { id: payment.bookingId },
@@ -443,6 +473,9 @@ export const handleWebhook = async (req, res) => {
               }).catch(() => {})
             }
           }
+
+          await clearUserCart(booking?.userId).catch(() => {})
+          await invalidateDashboardCache(booking?.userId).catch(() => {})
         }
       }
     }
@@ -479,21 +512,17 @@ export const handleWebhook = async (req, res) => {
             }).catch(() => {})
           }
 
-          // Create a system alert for failed payment
-          await prisma.alert.create({
-            data: {
-              alertType: 'failed_payment',
-              severity: 'high',
-              message: `Payment failed for booking ${payment.bookingId}. Reason: ${errorDescription || 'Unknown'}`,
-              metadata: {
-                bookingId: payment.bookingId,
-                paymentId: payment.id,
-                reason: errorDescription,
-              },
-              relatedEntityType: 'payment',
-              relatedEntityId: payment.id,
-              status: 'new',
+          await createOperationalAlert(prisma, {
+            alertType: 'failed_payment',
+            severity: 'high',
+            message: `Payment failed for booking ${payment.bookingId}. Reason: ${errorDescription || 'Unknown'}`,
+            metadata: {
+              bookingId: payment.bookingId,
+              paymentId: payment.id,
+              reason: errorDescription,
             },
+            relatedEntityType: 'payment',
+            relatedEntityId: payment.id,
           })
         }
       }
@@ -619,6 +648,20 @@ export const requestRefund = async (req, res, next) => {
       },
     })
 
+    await createOperationalAlert(prisma, {
+      alertType: 'refund_requested',
+      severity: 'medium',
+      message: `Refund requested for booking ${payment.bookingId}. Review payment ${paymentId}.`,
+      metadata: {
+        bookingId: payment.bookingId,
+        paymentId,
+        refundId: refund.id,
+        reason,
+      },
+      relatedEntityType: 'payment',
+      relatedEntityId: paymentId,
+    })
+
     res.status(201).json({ refund })
   } catch (err) {
     next(err)
@@ -630,7 +673,9 @@ export const requestRefund = async (req, res, next) => {
 export const processRefund = async (req, res, next) => {
   try {
     const { id } = req.params
-    const { action } = req.body // 'approve' | 'reject'
+    const normalizedAction = String(req.body?.action ?? 'pay_refund')
+      .trim()
+      .toLowerCase()
     const adminId = String(req.user.id)
 
     const refund = await prisma.refund.findUnique({
@@ -642,7 +687,7 @@ export const processRefund = async (req, res, next) => {
       return res.status(400).json({ error: `Refund is already ${refund.status}` })
     }
 
-    if (action === 'reject') {
+    if (normalizedAction === 'reject') {
       const updated = await prisma.refund.update({
         where: { id },
         data: { status: 'rejected', processedBy: adminId },
@@ -658,7 +703,7 @@ export const processRefund = async (req, res, next) => {
       return res.json({ refund: updated })
     }
 
-    // Approve: call Razorpay refund API
+    // Pay refund to the same original payment credentials via the stored provider payment id.
     if (!refund.payment.providerPaymentId) {
       return res
         .status(400)
@@ -683,6 +728,19 @@ export const processRefund = async (req, res, next) => {
         where: { id },
         data: { status: 'requested', processedBy: null },
       })
+      await createOperationalAlert(prisma, {
+        alertType: 'refund_failed',
+        severity: 'high',
+        message: `Refund failed for booking ${refund.bookingId}. Reason: ${razorpayErr.message}`,
+        metadata: {
+          bookingId: refund.bookingId,
+          paymentId: refund.paymentId,
+          refundId: id,
+          reason: razorpayErr.message,
+        },
+        relatedEntityType: 'payment',
+        relatedEntityId: refund.paymentId,
+      })
       return res.status(502).json({ error: 'Razorpay refund failed', detail: razorpayErr.message })
     }
 
@@ -701,7 +759,7 @@ export const processRefund = async (req, res, next) => {
     })
 
     // Notify user when refund is approved and being processed
-    if (action === 'approve') {
+    if (normalizedAction !== 'reject') {
       const refundBooking = await prisma.booking.findUnique({ where: { id: updated.bookingId } })
       if (refundBooking) {
         notify(refundBooking.userId, {

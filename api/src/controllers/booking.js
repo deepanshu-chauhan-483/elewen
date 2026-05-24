@@ -2,6 +2,11 @@ import prisma from '../lib/prisma.js'
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
 import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
+import { createOperationalAlert } from '../lib/alerts.js'
+import {
+  calculateBookingRefundPreview,
+  getCancellationPolicyData,
+} from '../lib/cancellationPolicy.js'
 import { invalidateDashboardCache } from './dashboard.js'
 
 const DEFAULT_ADVANCE_PCT = 30
@@ -76,6 +81,8 @@ const toCurrencyNumber = value => {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : 0
 }
+
+const roundCurrency = value => Number(toCurrencyNumber(value).toFixed(2))
 
 const normalizeTimelineStatus = status => {
   if (status === 'completed') return 'completed'
@@ -461,20 +468,6 @@ export const createBooking = async (req, res, next) => {
       }
     }
 
-    // Clear cart after successful booking
-    await prisma.cartItem.deleteMany({ where: { cartId: cart.id } })
-    await prisma.cart.update({
-      where: { id: cart.id },
-      data: {
-        subtotal: 0,
-        discountAmount: 0,
-        total: 0,
-        couponId: null,
-        eventDate: null,
-        guestCount: null,
-      },
-    })
-
     // Return full booking with items
     const fullBooking = await prisma.booking.findUnique({
       where: { id: booking.id },
@@ -520,7 +513,12 @@ export const listBookings = async (req, res, next) => {
 
     const [bookings, total] = await Promise.all([
       prisma.booking.findMany({
-        where: { userId },
+        where: {
+          userId,
+          payments: {
+            some: { status: 'success' },
+          },
+        },
         include: {
           items: {
             select: { id: true, title: true, quantity: true, unitPrice: true, totalPrice: true },
@@ -534,14 +532,21 @@ export const listBookings = async (req, res, next) => {
           payments: {
             where: { status: 'success' },
             orderBy: { createdAt: 'desc' },
-            select: { id: true, amount: true, paymentType: true, createdAt: true },
+            select: { id: true, amount: true, paymentType: true, status: true, createdAt: true },
           },
         },
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip,
       }),
-      prisma.booking.count({ where: { userId } }),
+      prisma.booking.count({
+        where: {
+          userId,
+          payments: {
+            some: { status: 'success' },
+          },
+        },
+      }),
     ])
 
     const enrichedBookings = await enrichBookings(bookings)
@@ -589,6 +594,12 @@ export const getBooking = async (req, res, next) => {
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+    if (
+      !Array.isArray(booking.payments) ||
+      !booking.payments.some(payment => payment.status === 'success')
+    ) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
 
     const [enrichedBooking] = await enrichBookings([booking])
 
@@ -714,7 +725,15 @@ export const cancelBooking = async (req, res, next) => {
 
     const booking = await prisma.booking.findUnique({
       where: { id },
-      include: { cancellation: true },
+      include: {
+        cancellation: true,
+        payments: {
+          include: {
+            refunds: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
     })
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
@@ -726,6 +745,37 @@ export const cancelBooking = async (req, res, next) => {
     if (booking.cancellation)
       return res.status(400).json({ error: 'A cancellation request already exists' })
 
+    const cancellationPolicy = await getCancellationPolicyData()
+    const refundPreview = calculateBookingRefundPreview(booking, cancellationPolicy)
+    const successfulPayments = (Array.isArray(booking.payments) ? booking.payments : []).filter(
+      payment => payment?.status === 'success'
+    )
+    let remainingRefundAmount = roundCurrency(refundPreview.refundableAmount)
+    const refundEntries = []
+
+    for (const payment of successfulPayments) {
+      if (remainingRefundAmount <= 0) break
+
+      const hasOpenRefund = (Array.isArray(payment.refunds) ? payment.refunds : []).some(refund =>
+        ['requested', 'processing', 'completed'].includes(String(refund?.status ?? ''))
+      )
+      if (hasOpenRefund) continue
+
+      const paymentAmount = roundCurrency(payment.amount)
+      const refundAmount = roundCurrency(Math.min(paymentAmount, remainingRefundAmount))
+      if (refundAmount <= 0) continue
+
+      refundEntries.push({
+        paymentId: payment.id,
+        bookingId: id,
+        amount: refundAmount,
+        reason:
+          reason ??
+          `Auto-created from cancellation policy (${refundPreview.windowLabel || 'booking cancellation'})`,
+      })
+      remainingRefundAmount = roundCurrency(remainingRefundAmount - refundAmount)
+    }
+
     await prisma.$transaction(async tx => {
       await tx.cancellation.create({
         data: {
@@ -733,7 +783,7 @@ export const cancelBooking = async (req, res, next) => {
           requestedBy: userId,
           reason: reason ?? null,
           policyAcknowledged,
-          status: 'requested',
+          status: 'approved',
         },
       })
       await tx.booking.update({ where: { id }, data: { status: 'cancelled' } })
@@ -746,18 +796,87 @@ export const cancelBooking = async (req, res, next) => {
           note: reason ?? 'Cancelled by customer',
         },
       })
+
+      await createOperationalAlert(tx, {
+        alertType: 'booking_cancelled',
+        severity: refundEntries.length > 0 ? 'medium' : 'low',
+        message:
+          refundEntries.length > 0
+            ? `Booking ${id} was cancelled and has ${refundEntries.length} refund request${refundEntries.length === 1 ? '' : 's'} pending.`
+            : `Booking ${id} was cancelled by the customer.`,
+        metadata: {
+          bookingId: id,
+          reason,
+          refundsCreated: refundEntries.length,
+          refundWindow: refundPreview.windowKey || null,
+        },
+        relatedEntityType: 'booking',
+        relatedEntityId: id,
+      })
+
+      for (const refundEntry of refundEntries) {
+        const refund = await tx.refund.create({
+          data: {
+            paymentId: refundEntry.paymentId,
+            bookingId: refundEntry.bookingId,
+            amount: refundEntry.amount,
+            reason: refundEntry.reason,
+            status: 'requested',
+          },
+        })
+
+        await tx.paymentLog.create({
+          data: {
+            paymentId: refundEntry.paymentId,
+            action: 'refund_requested',
+            performedBy: userId,
+            metadata: {
+              refundId: refund.id,
+              reason: refundEntry.reason,
+              source: 'booking_cancellation',
+              refundWindow: refundPreview.windowKey || null,
+            },
+          },
+        })
+
+        await createOperationalAlert(tx, {
+          alertType: 'refund_requested',
+          severity: 'medium',
+          message: `Refund requested from cancellation for booking ${id}. Review payment ${refundEntry.paymentId}.`,
+          metadata: {
+            bookingId: id,
+            paymentId: refundEntry.paymentId,
+            refundId: refund.id,
+            reason: refundEntry.reason,
+            source: 'booking_cancellation',
+            refundWindow: refundPreview.windowKey || null,
+          },
+          relatedEntityType: 'payment',
+          relatedEntityId: refundEntry.paymentId,
+        })
+      }
     })
 
     notify(userId, {
       type: 'booking_update',
       title: 'Booking Cancelled',
-      message: 'Your cancellation request has been submitted.',
+      message:
+        refundEntries.length > 0
+          ? 'Your booking has been cancelled and the refund request is ready for processing.'
+          : 'Your booking has been cancelled successfully.',
       linkUrl: `/dashboard/bookings/${id}`,
       emailTemplate: 'booking_cancelled',
       emailData: { bookingId: id, reason },
     }).catch(() => {})
 
-    res.json({ ok: true, message: 'Cancellation request submitted' })
+    invalidateDashboardCache(userId).catch(() => {})
+
+    res.json({
+      ok: true,
+      message: 'Booking cancelled successfully',
+      refundPreview,
+      refundsCreated: refundEntries.length,
+    })
   } catch (err) {
     next(err)
   }

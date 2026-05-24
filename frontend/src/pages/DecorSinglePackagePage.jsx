@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
+import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -811,6 +813,8 @@ export default function DecorSinglePackagePage() {
   const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
   const { data: cancellationPolicy } = useCancellationPolicy()
   const { addPackage, updateCartItemDetails } = useCart()
+  const { showToast } = useToast()
+  const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
   const cartItemId = searchParams.get('cartItemId') ?? ''
   const {
     customizations,
@@ -1028,7 +1032,7 @@ export default function DecorSinglePackagePage() {
           quantity,
           selectedOptions: selectedOpts,
         })
-        setAddToCartMessage('Package updated.')
+        showToast({ message: cartToastMessage })
       } else {
         await addPackage({
           packageId: Number(pkg.id),
@@ -1036,7 +1040,7 @@ export default function DecorSinglePackagePage() {
           selectedOptions: selectedOpts,
         })
         handleAddToCart()
-        setAddToCartMessage('Added to cart.')
+        showToast({ message: cartToastMessage })
       }
     } catch (err) {
       console.error('[cart-click] decor add failed', err)

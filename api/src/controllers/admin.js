@@ -22,6 +22,55 @@ const BOOKING_STATUSES = [
   'cancelled',
 ]
 
+// Stage progression order - must follow this sequence
+const STAGE_PROGRESSION = [
+  'new',
+  'confirmed',
+  'info_collection',
+  'planning',
+  'pre_event',
+  'execution',
+  'post_event',
+  'completed',
+]
+
+// Validate stage progression
+function validateStageProgression(currentStatus, newStatus, remainingAmount = 0) {
+  // Special case: can always go to cancelled
+  if (newStatus === 'cancelled') return { valid: true }
+
+  // Can't change to same status
+  if (currentStatus === newStatus) {
+    return { valid: false, message: 'Already in this stage.' }
+  }
+
+  const currentIndex = STAGE_PROGRESSION.indexOf(currentStatus?.toLowerCase())
+  const newIndex = STAGE_PROGRESSION.indexOf(newStatus?.toLowerCase())
+
+  // If either status is not in progression order
+  if (currentIndex === -1 || newIndex === -1) {
+    return { valid: false, message: 'Invalid stage transition.' }
+  }
+
+  // Can't go backward
+  if (newIndex < currentIndex) {
+    return {
+      valid: false,
+      message: `Cannot move back to "${newStatus.replaceAll('_', ' ')}". Stages must progress forward.`,
+    }
+  }
+
+  // Pre Event stage requires full payment
+  if (newStatus === 'pre_event' && remainingAmount > 0) {
+    return {
+      valid: false,
+      message: `Cannot move to "Pre Event" stage. Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
+    }
+  }
+
+  return { valid: true }
+}
+
 const SAMPLE_STATUSES = ['new', 'assigned', 'delivered', 'completed']
 const ALERT_STATUSES = ['new', 'acknowledged', 'resolved', 'snoozed']
 const ALERT_SEVERITIES = ['low', 'medium', 'high', 'critical']
@@ -683,6 +732,30 @@ function buildBookingPaymentSnapshot(booking) {
   }
 }
 
+function buildCancelledBookingRefundSnapshot(booking) {
+  const bookingPayments = Array.isArray(booking?.payments) ? booking.payments : []
+  const successfulAmount = bookingPayments
+    .filter(payment => payment.status === 'success')
+    .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+  const refunds = bookingPayments
+    .flatMap(payment => (Array.isArray(payment?.refunds) ? payment.refunds : []))
+    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+  const latestRefund = refunds[0] ?? null
+  const requestedRefundAmount = refunds.reduce((sum, refund) => sum + toNumber(refund.amount), 0)
+
+  return {
+    ...booking,
+    paidAmount: Number(successfulAmount.toFixed(2)),
+    outstandingAmount: 0,
+    latestRefund,
+    refunds,
+    requestedRefundAmount: Number(requestedRefundAmount.toFixed(2)),
+    refundDueAmount: Number(
+      toNumber(latestRefund?.amount ?? booking?.refundPreview?.refundableAmount ?? 0).toFixed(2)
+    ),
+  }
+}
+
 async function fetchCouponById(id) {
   const response = await strapiServerGet(
     `/api/coupons?filters[id][$eq]=${encodeURIComponent(String(id))}&publicationState=preview&pagination[pageSize]=1`
@@ -1111,6 +1184,7 @@ export async function listAdminBookings(req, res, next) {
     const bucket = normalizeText(req.query.bucket || 'all').toLowerCase()
     const status = normalizeText(req.query.status).toLowerCase()
     const search = normalizeText(req.query.search)
+    const sortBy = normalizeText(req.query.sortBy || 'event_date').toLowerCase()
     const page = toPositiveInt(req.query.page, 1)
     const limit = Math.min(toPositiveInt(req.query.limit, 12), 50)
     const skip = (page - 1) * limit
@@ -1118,20 +1192,26 @@ export async function listAdminBookings(req, res, next) {
     const userIds = await searchUserIds(search)
     const packageIds = await searchPackageIds(search)
     const bookingBucketFilter = buildBookingBucketFilter(bucket)
-    const where = {
+    const baseWhere = {
       ...bookingBucketFilter,
-      ...(status && BOOKING_STATUSES.includes(status) ? { status } : {}),
     }
 
     if (search) {
-      where.OR = [
+      baseWhere.OR = [
         { id: { contains: search, mode: 'insensitive' } },
         ...(userIds.length ? [{ userId: { in: userIds } }] : []),
         ...(packageIds.length ? [{ packageId: { in: packageIds } }] : []),
       ]
     }
+    const where = {
+      ...baseWhere,
+      ...(status && BOOKING_STATUSES.includes(status) ? { status } : {}),
+    }
 
-    const [bookings, total] = await Promise.all([
+    const orderByClause =
+      sortBy === 'latest' ? [{ createdAt: 'desc' }] : [{ eventDate: 'asc' }, { createdAt: 'desc' }]
+
+    const [bookings, total, statusCountRows] = await Promise.all([
       prisma.booking.findMany({
         where,
         include: {
@@ -1142,14 +1222,28 @@ export async function listAdminBookings(req, res, next) {
           vendorAssignments: true,
           cancellation: true,
         },
-        orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
+        orderBy: orderByClause,
         skip,
         take: limit,
       }),
       prisma.booking.count({ where }),
+      prisma.booking.groupBy({
+        by: ['status'],
+        where: baseWhere,
+        _count: { _all: true },
+      }),
     ])
 
     const enrichedBookings = await enrichBookingsWithCustomer(bookings)
+    const statusCounts = BOOKING_STATUSES.reduce((acc, key) => {
+      acc[key] = 0
+      return acc
+    }, {})
+    statusCountRows.forEach(row => {
+      if (row?.status && BOOKING_STATUSES.includes(row.status)) {
+        statusCounts[row.status] = Number(row._count?._all ?? 0)
+      }
+    })
     const metrics = {
       total,
       active: enrichedBookings.filter(booking => getBookingCategory(booking) === 'active').length,
@@ -1160,6 +1254,7 @@ export async function listAdminBookings(req, res, next) {
     res.json({
       bookings: enrichedBookings,
       metrics,
+      statusCounts,
       page,
       pages: Math.max(1, Math.ceil(total / limit)),
       total,
@@ -1236,11 +1331,20 @@ export async function updateAdminBookingStatus(req, res, next) {
       return res.status(404).json({ error: 'Booking not found' })
     }
 
-    if (status === 'execution') {
-      const totalPaid = booking.payments
-        .filter(payment => payment.status === 'success')
-        .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+    // Calculate remaining amount
+    const totalPaid = booking.payments
+      .filter(payment => payment.status === 'success')
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+    const remainingAmount = toNumber(booking.totalPrice) - totalPaid
 
+    // Validate stage progression
+    const validation = validateStageProgression(booking.status, status, remainingAmount)
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.message, code: 'INVALID_STAGE_PROGRESSION' })
+    }
+
+    // Legacy validation for execution stage (kept for backward compatibility)
+    if (status === 'execution') {
       if (totalPaid < toNumber(booking.totalPrice)) {
         return res.status(400).json({
           error: 'Remaining payment must be completed before moving to execution.',
@@ -1333,23 +1437,28 @@ export async function listAdminSampleTastes(req, res, next) {
 
     const userIds = await searchUserIds(search)
     const packageIds = await searchPackageIds(search)
-    const where = {}
+    const baseWhere = {}
 
     if (status && SAMPLE_STATUSES.includes(status)) {
-      where.status = status
+      baseWhere.status = status
     }
 
     if (search) {
-      where.OR = [
+      baseWhere.OR = [
         { id: { contains: search, mode: 'insensitive' } },
         ...(userIds.length ? [{ userId: { in: userIds } }] : []),
         ...(packageIds.length ? [{ packageId: { in: packageIds } }] : []),
       ]
     }
+    const where = { ...baseWhere }
+    if (!status) delete where.status
 
-    const [samples, total] = await Promise.all([
+    const filteredWhere =
+      status && SAMPLE_STATUSES.includes(status) ? { ...baseWhere, status } : { ...baseWhere }
+
+    const [samples, total, statusCountRows] = await Promise.all([
       prisma.sampleTasteBooking.findMany({
-        where,
+        where: filteredWhere,
         include: {
           vendors: true,
         },
@@ -1357,16 +1466,31 @@ export async function listAdminSampleTastes(req, res, next) {
         skip,
         take: limit,
       }),
-      prisma.sampleTasteBooking.count({ where }),
+      prisma.sampleTasteBooking.count({ where: filteredWhere }),
+      prisma.sampleTasteBooking.groupBy({
+        by: ['status'],
+        where,
+        _count: { _all: true },
+      }),
     ])
 
     const enrichedSamples = await enrichSamplesWithCustomer(samples)
+    const statusCounts = SAMPLE_STATUSES.reduce((acc, key) => {
+      acc[key] = 0
+      return acc
+    }, {})
+    statusCountRows.forEach(row => {
+      if (row?.status && SAMPLE_STATUSES.includes(row.status)) {
+        statusCounts[row.status] = Number(row._count?._all ?? 0)
+      }
+    })
 
     res.json({
       samples: enrichedSamples,
       page,
       pages: Math.max(1, Math.ceil(total / limit)),
       total,
+      statusCounts,
       metrics: {
         total,
         awaitingAssignment: enrichedSamples.filter(sample => sample.status === 'new').length,
@@ -1465,9 +1589,18 @@ export async function listAdminVendors(req, res, next) {
 
 export async function getAdminVendorWorkspace(req, res, next) {
   try {
+    const tab = normalizeText(req.query.tab || 'pending').toLowerCase()
+    const search = normalizeText(req.query.search)
+    const category = normalizeText(req.query.category).toLowerCase()
+    const location = normalizeText(req.query.location).toLowerCase()
+    const availability = normalizeText(req.query.availability).toLowerCase()
+    const page = toPositiveInt(req.query.page, 1)
+    const limit = Math.min(toPositiveInt(req.query.limit, 10), 50)
     const result = await fetchVendorDirectory({
+      search,
+      availability,
       page: 1,
-      limit: 100,
+      limit: 1000,
     })
 
     const pendingRequests = result.vendors
@@ -1488,6 +1621,38 @@ export async function getAdminVendorWorkspace(req, res, next) {
           vendor.vendorStatus === 'approved' && Number(vendor.activeAssignmentsCount ?? 0) === 0
       )
       .sort((left, right) => Number(right.isAvailable) - Number(left.isAvailable))
+    const applyExtraFilters = vendors =>
+      vendors.filter(vendor => {
+        if (
+          category &&
+          !(vendor.serviceCategories ?? []).some(service =>
+            String(service?.name ?? '')
+              .toLowerCase()
+              .includes(category)
+          )
+        ) {
+          return false
+        }
+        if (
+          location &&
+          !String(vendor.locationCity ?? '')
+            .toLowerCase()
+            .includes(location)
+        ) {
+          return false
+        }
+        return true
+      })
+    const filteredGroups = {
+      pending: applyExtraFilters(pendingRequests),
+      assigned: applyExtraFilters(assignedVendors),
+      unassigned: applyExtraFilters(unassignedVendors),
+    }
+    const activeList = filteredGroups[tab] ?? filteredGroups.pending
+    const total = activeList.length
+    const pages = Math.max(1, Math.ceil(total / limit))
+    const start = (page - 1) * limit
+    const paginatedList = activeList.slice(start, start + limit)
 
     res.json({
       workspace: {
@@ -1498,9 +1663,11 @@ export async function getAdminVendorWorkspace(req, res, next) {
           unassignedVendors: unassignedVendors.length,
           availableNow: result.vendors.filter(vendor => vendor.isAvailable).length,
         },
-        pendingRequests,
-        assignedVendors,
-        unassignedVendors,
+        activeList: paginatedList,
+        page,
+        pages,
+        total,
+        tab,
       },
     })
   } catch (err) {
@@ -1917,12 +2084,18 @@ export async function getAdminPaymentSummary(req, res, next) {
 
 export async function getAdminPaymentWorkspace(req, res, next) {
   try {
+    const limit = Math.min(toPositiveInt(req.query.limit, 10), 50)
+    const customerTab = normalizeText(req.query.customerTab || 'active').toLowerCase()
+    const customerPage = toPositiveInt(req.query.customerPage, 1)
+    const vendorTab = normalizeText(req.query.vendorTab || 'pending').toLowerCase()
+    const vendorPage = toPositiveInt(req.query.vendorPage, 1)
     const [
       payments,
       refunds,
       payouts,
       activeBookings,
       postEventBookings,
+      cancelledBookings,
       settingsResponse,
       couponsResponse,
     ] = await Promise.all([
@@ -1976,6 +2149,26 @@ export async function getAdminPaymentWorkspace(req, res, next) {
         orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
         take: 20,
       }),
+      prisma.booking.findMany({
+        where: {
+          status: 'cancelled',
+        },
+        include: {
+          items: true,
+          notes: true,
+          cancellation: true,
+          statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+          payments: {
+            include: {
+              refunds: true,
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+          vendorAssignments: true,
+        },
+        orderBy: [{ createdAt: 'desc' }],
+        take: 20,
+      }),
       safeStrapiServerGet('/api/global-setting?publicationState=preview', { data: null }),
       safeStrapiServerGet(
         '/api/coupons?publicationState=preview&pagination[page]=1&pagination[pageSize]=10&sort[0]=createdAt:desc',
@@ -1983,17 +2176,20 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       ),
     ])
 
-    const [enrichedActiveBookings, enrichedPostEventBookings, vendors] = await Promise.all([
-      enrichBookingsWithCustomer(activeBookings),
-      enrichBookingsWithCustomer(postEventBookings),
-      fetchVendorsByIds(payouts.map(payout => payout.vendorId)),
-    ])
+    const [enrichedActiveBookings, enrichedPostEventBookings, enrichedCancelledBookings, vendors] =
+      await Promise.all([
+        enrichBookingsWithCustomer(activeBookings),
+        enrichBookingsWithCustomer(postEventBookings),
+        enrichBookingsWithCustomer(cancelledBookings),
+        fetchVendorsByIds(payouts.map(payout => payout.vendorId)),
+      ])
 
     const allBookingIds = uniqueStrings([
       ...payments.map(payment => payment.bookingId),
       ...payouts.map(payout => payout.bookingId),
       ...enrichedActiveBookings.map(booking => booking.id),
       ...enrichedPostEventBookings.map(booking => booking.id),
+      ...enrichedCancelledBookings.map(booking => booking.id),
     ])
 
     const payoutBookings = allBookingIds.length
@@ -2033,6 +2229,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
     const postEventPending = enrichedPostEventBookings
       .map(buildBookingPaymentSnapshot)
       .filter(booking => booking.outstandingAmount > 0)
+    const cancelledRefunds = enrichedCancelledBookings.map(buildCancelledBookingRefundSnapshot)
     const failedPayments = payments
       .filter(payment => payment.status === 'failed')
       .map(payment => ({
@@ -2059,6 +2256,35 @@ export async function getAdminPaymentWorkspace(req, res, next) {
         vendor: vendors.get(String(payout.vendorId)) ?? null,
         bookingSummary: bookingMap.get(String(payout.bookingId)) ?? null,
       }))
+    const paginateList = (items, page) => {
+      const total = items.length
+      const pages = Math.max(1, Math.ceil(total / limit))
+      const safePage = Math.min(page, pages)
+      const start = (safePage - 1) * limit
+
+      return {
+        items: items.slice(start, start + limit),
+        page: safePage,
+        pages,
+        total,
+      }
+    }
+    const customerLists = {
+      active: activeBookingPayments,
+      post_event: postEventPending,
+      cancelled: cancelledRefunds,
+      failed: failedPayments,
+      completed: completedPayments,
+    }
+    const vendorLists = {
+      pending: pendingVendorPayments,
+      paid: paidVendorPayments,
+    }
+    const currentCustomer = paginateList(
+      customerLists[customerTab] ?? customerLists.active,
+      customerPage
+    )
+    const currentVendor = paginateList(vendorLists[vendorTab] ?? vendorLists.pending, vendorPage)
 
     res.json({
       workspace: {
@@ -2072,14 +2298,23 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           ),
         },
         customerPayments: {
-          activeBookings: activeBookingPayments,
-          postEventPending,
-          failedPayments,
-          completedPayments,
+          activeBookings: customerTab === 'active' ? currentCustomer.items : [],
+          postEventPending: customerTab === 'post_event' ? currentCustomer.items : [],
+          cancelledBookings: customerTab === 'cancelled' ? currentCustomer.items : [],
+          failedPayments: customerTab === 'failed' ? currentCustomer.items : [],
+          completedPayments: customerTab === 'completed' ? currentCustomer.items : [],
+          tab: customerTab,
+          page: currentCustomer.page,
+          pages: currentCustomer.pages,
+          total: currentCustomer.total,
         },
         vendorPayments: {
-          pending: pendingVendorPayments,
-          paid: paidVendorPayments,
+          pending: vendorTab === 'pending' ? currentVendor.items : [],
+          paid: vendorTab === 'paid' ? currentVendor.items : [],
+          tab: vendorTab,
+          page: currentVendor.page,
+          pages: currentVendor.pages,
+          total: currentVendor.total,
         },
         coupons: (couponsResponse?.data ?? []).map(coupon => ({
           id: String(coupon.id),
@@ -2126,7 +2361,11 @@ export async function listAdminPayments(req, res, next) {
       : []
 
     const where = {
-      ...(status ? { status } : {}),
+      ...(status === 'completed'
+        ? { status: { in: ['success', 'refunded'] } }
+        : status
+          ? { status }
+          : {}),
       ...(paymentType ? { paymentType } : {}),
       ...(search && bookingIds.length ? { bookingId: { in: bookingIds } } : {}),
     }
@@ -2221,12 +2460,20 @@ export async function listAdminRefunds(req, res, next) {
 export async function listAdminVendorPayouts(req, res, next) {
   try {
     const status = normalizeText(req.query.status).toLowerCase()
+    const page = toPositiveInt(req.query.page, 1)
+    const limit = Math.min(toPositiveInt(req.query.limit, 10), 50)
+    const skip = (page - 1) * limit
     const where = status ? { status } : {}
 
-    const payouts = await prisma.vendorPayout.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    })
+    const [payouts, total] = await Promise.all([
+      prisma.vendorPayout.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.vendorPayout.count({ where }),
+    ])
 
     const [vendors, bookings] = await Promise.all([
       fetchVendorsByIds(payouts.map(payout => payout.vendorId)),
@@ -2255,6 +2502,9 @@ export async function listAdminVendorPayouts(req, res, next) {
         vendor: vendors.get(String(payout.vendorId)) ?? null,
         bookingSummary: bookingMap.get(String(payout.bookingId)) ?? null,
       })),
+      page,
+      pages: Math.max(1, Math.ceil(total / limit)),
+      total,
     })
   } catch (err) {
     next(err)
@@ -2594,14 +2844,15 @@ export async function listAdminAlerts(req, res, next) {
   try {
     const status = normalizeText(req.query.status).toLowerCase()
     const severity = normalizeText(req.query.severity).toLowerCase()
+    const alertType = normalizeText(req.query.alertType)
     const search = normalizeText(req.query.search)
+    const sortBy = normalizeText(req.query.sortBy || 'latest').toLowerCase()
     const page = toPositiveInt(req.query.page, 1)
     const limit = Math.min(toPositiveInt(req.query.limit, 20), 50)
     const skip = (page - 1) * limit
 
-    const where = {
-      ...(status && ALERT_STATUSES.includes(status) ? { status } : {}),
-      ...(severity && ALERT_SEVERITIES.includes(severity) ? { severity } : {}),
+    const baseWhere = {
+      ...(alertType ? { alertType } : {}),
       ...(search
         ? {
             OR: [
@@ -2611,11 +2862,26 @@ export async function listAdminAlerts(req, res, next) {
           }
         : {}),
     }
+    const where = {
+      ...baseWhere,
+      ...(status && ALERT_STATUSES.includes(status) ? { status } : {}),
+      ...(severity && ALERT_SEVERITIES.includes(severity) ? { severity } : {}),
+    }
+    const orderBy = sortBy === 'oldest' ? [{ createdAt: 'asc' }] : [{ createdAt: 'desc' }]
 
-    const [alerts, total, resolvedUsers, criticalCount, unresolvedCount] = await Promise.all([
+    const [
+      alerts,
+      total,
+      resolvedUsers,
+      criticalCount,
+      unresolvedCount,
+      highPriorityCount,
+      pendingAttentionCount,
+      informationalCount,
+    ] = await Promise.all([
       prisma.alert.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy,
         skip,
         take: limit,
       }),
@@ -2634,13 +2900,34 @@ export async function listAdminAlerts(req, res, next) {
       ),
       prisma.alert.count({
         where: {
-          ...(status && ALERT_STATUSES.includes(status) ? { status } : {}),
+          ...baseWhere,
           severity: 'critical',
         },
       }),
       prisma.alert.count({
         where: {
+          ...baseWhere,
           status: { not: 'resolved' },
+        },
+      }),
+      prisma.alert.count({
+        where: {
+          ...baseWhere,
+          status: { not: 'resolved' },
+          severity: { in: ['high', 'critical'] },
+        },
+      }),
+      prisma.alert.count({
+        where: {
+          ...baseWhere,
+          status: { not: 'resolved' },
+          severity: 'medium',
+        },
+      }),
+      prisma.alert.count({
+        where: {
+          ...baseWhere,
+          OR: [{ severity: 'low' }, { status: 'resolved' }],
         },
       }),
     ])
@@ -2656,6 +2943,9 @@ export async function listAdminAlerts(req, res, next) {
         total,
         critical: criticalCount,
         unresolved: unresolvedCount,
+        highPriority: highPriorityCount,
+        pendingAttention: pendingAttentionCount,
+        informational: informationalCount,
       },
       page,
       pages: Math.max(1, Math.ceil(total / limit)),

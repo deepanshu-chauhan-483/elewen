@@ -1,4 +1,5 @@
 import { strapiGet } from './strapi.js'
+import { calculateBookingRefundPreview, getCancellationPolicyData } from './cancellationPolicy.js'
 
 const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'
 
@@ -359,13 +360,23 @@ function getBookingMetaFromNotes(notes = []) {
       text.match(/(?:Event|Tasting) address:\s*(.+)/i) ?? text.match(/Address:\s*(.+)/i)
     const timeMatch = text.match(/Event time:\s*(.+)/i) ?? text.match(/Tasting time:\s*(.+)/i)
     const pinMatch = text.match(/PIN code:\s*(.+)/i)
+    const specialRequestMatch = text.match(/Special request:\s*(.+)/i)
     const selectedItemsMatch = text.match(/Selected items:\s*(.+)/i)
+    const checkoutModeMatch = text.match(/Checkout mode:\s*(.+)/i)
+    const tastingMarkerMatch =
+      /(?:^|\n)\s*Tasting (?:date|time|address)\s*:/i.test(text) ||
+      /(?:^|\n)\s*Checkout mode:\s*Sample tasting\s*$/im.test(text)
+    const checkoutMode =
+      checkoutModeMatch?.[1]?.trim().toLowerCase().replace(/\s+/g, '-') ??
+      (tastingMarkerMatch ? 'sample-tasting' : '')
 
     return {
       eventAddress: addressMatch?.[1]?.trim() ?? '',
       eventTime: timeMatch?.[1]?.trim() ?? '',
       pinCode: pinMatch?.[1]?.trim() ?? '',
+      specialRequest: specialRequestMatch?.[1]?.trim() ?? '',
       selectedItemsText: selectedItemsMatch?.[1]?.trim() ?? '',
+      checkoutMode,
     }
   }
 
@@ -373,7 +384,9 @@ function getBookingMetaFromNotes(notes = []) {
     eventAddress: '',
     eventTime: '',
     pinCode: '',
+    specialRequest: '',
     selectedItemsText: '',
+    checkoutMode: '',
   }
 }
 
@@ -438,11 +451,12 @@ export async function enrichBookings(bookings = []) {
       : []
   )
 
-  const [packageMap, eventMap, addressMap, vendorMap] = await Promise.all([
+  const [packageMap, eventMap, addressMap, vendorMap, cancellationPolicy] = await Promise.all([
     fetchPackagesByIds(packageIds),
     fetchEventsByIds(eventIds),
     fetchAddressesByIds(addressIds),
     fetchVendorsByIds(vendorIds),
+    getCancellationPolicyData(),
   ])
 
   return bookings.map(booking => {
@@ -460,6 +474,9 @@ export async function enrichBookings(bookings = []) {
       .filter(Boolean)
       .join(' · ')
     const detailSubtitle = fallbackSubtitle || selectedItemsSummary
+    const checkoutMode = noteMeta.checkoutMode || ''
+    const isSampleTastingBooking = checkoutMode === 'sample-tasting'
+    const refundPreview = calculateBookingRefundPreview(booking, cancellationPolicy)
 
     return {
       ...booking,
@@ -474,8 +491,13 @@ export async function enrichBookings(bookings = []) {
       package: packagePreview,
       event: eventPreview,
       address: addressPreview,
-      eventTime: noteMeta.eventTime,
+      eventTime: booking?.eventTime || noteMeta.eventTime,
+      bookedAt: booking?.createdAt ?? null,
       pinCode: noteMeta.pinCode,
+      specialRequest: noteMeta.specialRequest,
+      checkoutMode,
+      isSampleTastingBooking,
+      refundPreview,
       paymentSummary,
       vendorAssignments: Array.isArray(booking.vendorAssignments)
         ? booking.vendorAssignments.map(assignment => ({

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import {
+  DashboardEmptyState,
   DashboardErrorState,
   DashboardLoadingState,
   MessageBubble,
@@ -15,7 +17,10 @@ import {
   useDashboardSupportTicket,
   useDashboardSupportTickets,
 } from '../../hooks/useDashboardData'
-import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
+import {
+  formatDashboardDate,
+  matchesDashboardSearch,
+} from '../../components/dashboard/dashboardUtils'
 
 // ---------------------------------------------------------------------------
 // Shared primitives
@@ -63,7 +68,7 @@ function FormInput({ label, value, onChange, placeholder, type = 'text' }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm text-[#2E2E2E] placeholder:text-[#B0AAA4] outline-none focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B] transition"
+        className="w-full rounded-full border border-[#D7CEC4] bg-white px-4 py-3 text-sm text-[#2E2E2E] placeholder:text-[#B0AAA4] outline-none focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B] transition"
       />
     </div>
   )
@@ -166,18 +171,31 @@ export default function SupportHelp() {
 
   const [newTicket, setNewTicket] = useState({ bookingId: '', subject: '', message: '' })
   const [reply, setReply] = useState('')
+  const { searchTerm } = useDashboardSearch()
   const setField = (field, val) => setNewTicket(f => ({ ...f, [field]: val }))
   const requestedTicketId = searchParams.get('ticketId') || ''
-  const selectedTicketId = tickets.some(ticket => ticket.id === requestedTicketId)
+  const filteredTickets = useMemo(
+    () =>
+      tickets.filter(ticket =>
+        matchesDashboardSearch(searchTerm, [
+          ticket?.subject,
+          ticket?.status,
+          ticket?.bookingId,
+          ...(ticket?.messages?.map(message => message?.messageText) ?? []),
+        ])
+      ),
+    [searchTerm, tickets]
+  )
+  const selectedTicketId = filteredTickets.some(ticket => ticket.id === requestedTicketId)
     ? requestedTicketId
-    : tickets[0]?.id || ''
+    : filteredTickets[0]?.id || ''
   useEffect(() => {
-    if (!tickets.length) return
-    if (selectedTicketId && tickets.some(t => t.id === selectedTicketId)) return
+    if (!filteredTickets.length) return
+    if (selectedTicketId && filteredTickets.some(t => t.id === selectedTicketId)) return
     const next = new URLSearchParams(searchParams)
-    next.set('ticketId', tickets[0].id)
+    next.set('ticketId', filteredTickets[0].id)
     setSearchParams(next, { replace: true })
-  }, [tickets, searchParams, selectedTicketId, setSearchParams])
+  }, [filteredTickets, searchParams, selectedTicketId, setSearchParams])
 
   // const selectedTicket =
   //   visibleTickets.find(item => item.id === selectedTicketId) ?? visibleTickets[0] ?? null
@@ -190,11 +208,11 @@ export default function SupportHelp() {
   const replyMutation = useDashboardReplyToTicket()
 
   const selectedTicket = useMemo(
-    () => tickets.find(t => t.id === selectedTicketId) ?? null,
-    [tickets, selectedTicketId]
+    () => filteredTickets.find(t => t.id === selectedTicketId) ?? null,
+    [filteredTickets, selectedTicketId]
   )
 
-  if (helpLoading || ticketsLoading) return <DashboardLoadingState title="Loading support…" />
+  // if (helpLoading || ticketsLoading) return <DashboardLoadingState title="Loading support…" />
   if (helpError || ticketsError || ticketError)
     return <DashboardErrorState title="Support details could not be loaded right now." />
 
@@ -331,20 +349,27 @@ export default function SupportHelp() {
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xl text-[#1C1C1C]">My Tickets</h2>
-            <span className="text-sm text-[#8F8F8F]">{tickets.length} total</span>
+            <span className="text-sm text-[#8F8F8F]">{filteredTickets.length} total</span>
           </div>
-          {tickets.map(t => (
-            <TicketItem
-              key={t.id}
-              ticket={t}
-              isActive={t.id === selectedTicketId}
-              onClick={() => {
-                const next = new URLSearchParams(searchParams)
-                next.set('ticketId', t.id)
-                setSearchParams(next, { replace: true })
-              }}
+          {filteredTickets.length ? (
+            filteredTickets.map(t => (
+              <TicketItem
+                key={t.id}
+                ticket={t}
+                isActive={t.id === selectedTicketId}
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams)
+                  next.set('ticketId', t.id)
+                  setSearchParams(next, { replace: true })
+                }}
+              />
+            ))
+          ) : (
+            <DashboardEmptyState
+              title="No support tickets match your search"
+              body="Try searching by ticket subject, booking reference, or message text."
             />
-          ))}
+          )}
         </div>
 
         {/* Ticket conversation */}

@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useToast } from '../components/common/useToast'
 import { useCart } from '../hooks/useCart'
+import {
+  useCartToastMessage,
+  useCheckoutToastMessage,
+  useCouponToastMessage,
+} from '../hooks/useMessagingContent'
 import { usePackages } from '../hooks/usePackages'
 import { useServiceAreas } from '../hooks/useServiceAreas'
+import { readStoredCartPinCode, writeStoredCartPinCode } from '../lib/cartPinCode'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
@@ -922,11 +929,11 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
               const selectedElements =
                 item?.itemType === 'addon'
                   ? [
-                      {
-                        label: 'Add-on item',
-                        value: item.displayTitle || item.addonTitle || 'Add-on',
-                      },
-                    ]
+                    {
+                      label: 'Add-on item',
+                      value: item.displayTitle || item.addonTitle || 'Add-on',
+                    },
+                  ]
                   : getSelectedElements(item)
               const tags = selectedElements
                 .map(element => element.value)
@@ -1032,7 +1039,7 @@ function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
         <p className="text-sm text-gray-500">Enhance your event with these popular extras</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {packages.map(pkg => {
           const isAdding = addingAddonId === pkg.id
 
@@ -1123,50 +1130,50 @@ function PriceSummaryCard({
           <div className="space-y-2">
             {singleItem
               ? itemSummaries.map(({ item, summary }) => (
-                  <div key={item.id} className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-[#767676] gap-x-2">
-                        {item?.itemType === 'addon'
-                          ? `Add-on — ${item.displayTitle || item.addonTitle || 'Selected item'}`
-                          : singleItem
-                            ? `Base Package — ${item.displayTitle || item.packageData?.title || 'Selected item'}`
-                            : `${item.displayTitle || item.packageData?.title || 'Selected item'}`}
-                        {getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''}
-                      </span>
-                      <span className="font-medium text-[#1C1C1C]">
-                        {formatCurrency(summary.total)}
-                      </span>
-                    </div>
-                    <hr className="my-4 border-[#0000001A]" />
-                    {item?.itemType === 'addon'
-                      ? summary.rows.map(row => (
-                          <div
-                            key={`${item.id}-${row.label}`}
-                            className="flex justify-between text-gray-500"
-                          >
-                            <span>{row.label}</span>
-                            <span>{formatCurrency(row.total)}</span>
-                          </div>
-                        ))
-                      : getSummaryIncludedItems(item).map(selectedItem => (
-                          <div
-                            key={`${item.id}-${selectedItem}`}
-                            className="flex justify-between text-[#767676]"
-                          >
-                            <span>{selectedItem}</span>
-                            <span className="text-[#1C1C1C]">Included</span>
-                          </div>
-                        ))}
-                  </div>
-                ))
-              : categorySummaries.map(group => (
-                  <div key={group.category} className="flex justify-between text-sm">
-                    <span className="text-[#767676]">{group.category}</span>
+                <div key={item.id} className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#767676] gap-x-2">
+                      {item?.itemType === 'addon'
+                        ? `Add-on — ${item.displayTitle || item.addonTitle || 'Selected item'}`
+                        : singleItem
+                          ? `Base Package — ${item.displayTitle || item.packageData?.title || 'Selected item'}`
+                          : `${item.displayTitle || item.packageData?.title || 'Selected item'}`}
+                      {getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''}
+                    </span>
                     <span className="font-medium text-[#1C1C1C]">
-                      {formatCurrency(group.total)}
+                      {formatCurrency(summary.total)}
                     </span>
                   </div>
-                ))}
+                  <hr className="my-4 border-[#0000001A]" />
+                  {item?.itemType === 'addon'
+                    ? summary.rows.map(row => (
+                      <div
+                        key={`${item.id}-${row.label}`}
+                        className="flex justify-between text-gray-500"
+                      >
+                        <span>{row.label}</span>
+                        <span>{formatCurrency(row.total)}</span>
+                      </div>
+                    ))
+                    : getSummaryIncludedItems(item).map(selectedItem => (
+                      <div
+                        key={`${item.id}-${selectedItem}`}
+                        className="flex justify-between text-[#767676]"
+                      >
+                        <span>{selectedItem}</span>
+                        <span className="text-[#1C1C1C]">Included</span>
+                      </div>
+                    ))}
+                </div>
+              ))
+              : categorySummaries.map(group => (
+                <div key={group.category} className="flex justify-between text-sm">
+                  <span className="text-[#767676]">{group.category}</span>
+                  <span className="font-medium text-[#1C1C1C]">
+                    {formatCurrency(group.total)}
+                  </span>
+                </div>
+              ))}
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
@@ -1332,8 +1339,13 @@ const TrustBadges = () => {
 
 export default function CartPage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: packages = [] } = usePackages()
   const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = useServiceAreas()
+  const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
+  const { data: couponToastMessage = 'Coupon applied successfully.' } = useCouponToastMessage()
+  const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
+    useCheckoutToastMessage()
   const {
     cart,
     loading,
@@ -1349,7 +1361,7 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState('')
   const [couponMessage, setCouponMessage] = useState('')
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
-  const [pincode, setPincode] = useState('')
+  const [pincode, setPincode] = useState(() => readStoredCartPinCode())
   const [pincodeMessage, setPincodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [isPincodeValid, setIsPincodeValid] = useState(false)
@@ -1491,6 +1503,7 @@ export default function CartPage() {
       await applyCoupon(couponCode.trim())
       setCouponCode('')
       setCouponMessage('')
+      showToast({ message: couponToastMessage })
     } catch (err) {
       setCouponMessage(parseApiError(err))
     } finally {
@@ -1523,6 +1536,7 @@ export default function CartPage() {
     const normalizedPincode = normalizePincode(value)
 
     setPincode(normalizedPincode)
+    writeStoredCartPinCode(normalizedPincode)
     setIsPincodeValid(false)
 
     if (!normalizedPincode) {
@@ -1567,6 +1581,7 @@ export default function CartPage() {
         quantity: 1,
         addon: pkg.addon,
       })
+      showToast({ message: cartToastMessage })
     } catch (err) {
       console.error('[cart] addon add failed', err)
     } finally {
@@ -1588,8 +1603,9 @@ export default function CartPage() {
       ) : !hasItems ? (
         <EmptyCart />
       ) : (
-        <div className="flex flex-col items-start gap-[clamp(24px,5vw,100px)] lg:flex-row">
+        <div className="flex flex-col items-stretch gap-[clamp(24px,5vw,100px)] md:flex-row">
           <div className="flex-1 space-y-6">
+            {/* Coupon only for multiple packages */}
             {!hasSingleItem ? (
               <CouponCard
                 couponCode={couponCode}
@@ -1601,6 +1617,17 @@ export default function CartPage() {
                 onRemoveCoupon={handleRemoveCoupon}
               />
             ) : null}
+
+            {/* Mobile Pincode Card for both single + multi package */}
+            <div className="md:hidden">
+              <PincodeCard
+                pincode={pincode}
+                message={pincodeMessage}
+                isChecking={isCheckingPincode}
+                onChange={handlePincodeChange}
+                onSubmit={handlePincodeSubmit}
+              />
+            </div>
 
             {hasSingleItem ? (
               <SinglePackageCard
@@ -1632,27 +1659,41 @@ export default function CartPage() {
             />
 
             {error ? (
-              <p className="text-sm text-[#8F2D1F]">{parseApiError({ message: error })}</p>
+              <p className="text-sm text-[#8F2D1F]">
+                {parseApiError({ message: error })}
+              </p>
             ) : null}
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <PriceSummaryCard
               cartItems={cartItems}
               cart={cart}
               singleItem={hasSingleItem}
-              onCheckout={() => (isLoggedIn ? navigate('/checkout') : navigate('/login'))}
+              onCheckout={() =>
+                isLoggedIn
+                  ? navigate('/checkout', {
+                    state: {
+                      showCheckoutToast: true,
+                      checkoutToastMessage,
+                    },
+                  })
+                  : navigate('/login')
+              }
               onSampleTasteBooking={handleSampleTasteBooking}
               showSampleTasteBooking={showSampleTasteBooking}
               isCheckoutDisabled={isCheckoutDisabled}
               pincodeCard={
-                <PincodeCard
-                  pincode={pincode}
-                  message={pincodeMessage}
-                  isChecking={isCheckingPincode}
-                  onChange={handlePincodeChange}
-                  onSubmit={handlePincodeSubmit}
-                />
+                /* Desktop only */
+                <div className="hidden md:block">
+                  <PincodeCard
+                    pincode={pincode}
+                    message={pincodeMessage}
+                    isChecking={isCheckingPincode}
+                    onChange={handlePincodeChange}
+                    onSubmit={handlePincodeSubmit}
+                  />
+                </div>
               }
             />
             <TrustBadges />

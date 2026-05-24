@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import { getStoredJwt, paymentCreateOrder, paymentVerify } from '../../lib/api'
-import { formatDashboardDate } from '../../components/dashboard/dashboardUtils'
-import { useDashboardBookingTimeline, useDashboardBookings } from '../../hooks/useDashboardData'
+import {
+  formatDashboardDate,
+  matchesDashboardSearch,
+} from '../../components/dashboard/dashboardUtils'
+import {
+  useDashboardBooking,
+  useDashboardBookingTimeline,
+  useDashboardBookings,
+} from '../../hooks/useDashboardData'
+import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 const TIMELINE_DISPLAY_ORDER = [
   'Inquiry / Booking Placed',
@@ -89,6 +98,30 @@ function loadRazorpayScript() {
   })
 }
 
+function getPaymentErrorMessage(error) {
+  const gatewayError = error?.error ?? error?.response?.error ?? null
+
+  const message =
+    gatewayError?.description ||
+    error?.description ||
+    gatewayError?.message ||
+    error?.message ||
+    null
+
+  if (message) {
+    return message
+  }
+
+  if (
+    gatewayError?.reason === 'international_transaction_not_allowed' ||
+    error?.reason === 'international_transaction_not_allowed'
+  ) {
+    return 'International cards are not supported. Please contact our support team for help.'
+  }
+
+  return 'Payment failed. Please try again.'
+}
+
 function normalizeTimelineItem(item) {
   const rawStatus = String(item?.status ?? '')
     .trim()
@@ -142,14 +175,13 @@ function TimelineDot({ status, isLast }) {
       <div
         className={`
           z-10 flex h-9 w-9 items-center justify-center rounded-full border-2
-          ${
-            status === 'completed'
-              ? 'border-[#C6A15B] bg-[#C6A15B]'
-              : status === 'in_progress'
-                ? 'border-[#C07318] bg-[#FEF1DE]'
-                : status === 'blocked'
-                  ? 'border-[#B42318] bg-[#FFF0F0]'
-                  : 'border-[#D3D1C7] bg-[#F1EFE8]'
+          ${status === 'completed'
+            ? 'border-[#C6A15B] bg-[#C6A15B]'
+            : status === 'in_progress'
+              ? 'border-[#C07318] bg-[#FEF1DE]'
+              : status === 'blocked'
+                ? 'border-[#B42318] bg-[#FFF0F0]'
+                : 'border-[#D3D1C7] bg-[#F1EFE8]'
           }
         `}
       >
@@ -174,9 +206,8 @@ function TimelineDot({ status, isLast }) {
 
       {!isLast ? (
         <div
-          className={`mt-0.5 min-h-[32px] w-0.5 flex-1 ${
-            status === 'completed' ? 'bg-[#C6A15B]/20' : 'bg-[#E5DED6]'
-          }`}
+          className={`mt-0.5 min-h-[32px] w-0.5 flex-1 ${status === 'completed' ? 'bg-[#C6A15B]/20' : 'bg-[#E5DED6]'
+            }`}
         />
       ) : null}
     </div>
@@ -188,22 +219,53 @@ export default function BookingTimeline() {
   const { data: bookings = [], isLoading, error } = useDashboardBookings('all')
   const [selectedId, setSelectedId] = useState('')
   const [payingBookingId, setPayingBookingId] = useState('')
+  const { searchTerm } = useDashboardSearch()
 
   const orderBookings = useMemo(
-    () => bookings.filter(booking => booking?.isSampleTasteBooking !== true),
+    () =>
+      bookings.filter(booking => {
+        const checkoutMode = String(
+          booking?.checkoutMode ?? booking?.latestStatusLog?.checkoutMode ?? ''
+        )
+          .trim()
+          .toLowerCase()
+        return (
+          booking?.isSampleTasteBooking !== true &&
+          booking?.isSampleTastingBooking !== true &&
+          checkoutMode !== 'sample-tasting'
+        )
+      }),
     [bookings]
+  )
+  const filteredOrderBookings = useMemo(
+    () =>
+      orderBookings.filter(booking =>
+        matchesDashboardSearch(searchTerm, [
+          booking?.package?.title,
+          booking?.event?.name,
+          booking?.statusLabel,
+          booking?.locationSummary,
+          booking?.detailSubtitle,
+        ])
+      ),
+    [orderBookings, searchTerm]
   )
 
   useEffect(() => {
-    if (!orderBookings.length) return
-    if (selectedId && orderBookings.some(booking => booking.id === selectedId)) return
-    setSelectedId(orderBookings[0].id)
-  }, [orderBookings, selectedId])
+    if (!filteredOrderBookings.length) return
+    if (selectedId && filteredOrderBookings.some(booking => booking.id === selectedId)) return
+    setSelectedId(filteredOrderBookings[0].id)
+  }, [filteredOrderBookings, selectedId])
 
   const selectedBooking = useMemo(
-    () => orderBookings.find(booking => booking.id === selectedId) ?? orderBookings[0] ?? null,
-    [orderBookings, selectedId]
+    () =>
+      filteredOrderBookings.find(booking => booking.id === selectedId) ??
+      filteredOrderBookings[0] ??
+      null,
+    [filteredOrderBookings, selectedId]
   )
+  const { data: selectedBookingDetails } = useDashboardBooking(selectedBooking?.id)
+  const activeBooking = selectedBookingDetails ?? selectedBooking
 
   const {
     data: timelineData = [],
@@ -245,6 +307,9 @@ export default function BookingTimeline() {
 
         await queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
         await queryClient.invalidateQueries({
+          queryKey: ['dashboard', 'booking', booking.id],
+        })
+        await queryClient.invalidateQueries({
           queryKey: ['dashboard', 'booking-timeline', booking.id],
         })
         return
@@ -278,6 +343,9 @@ export default function BookingTimeline() {
 
               await queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
               await queryClient.invalidateQueries({
+                queryKey: ['dashboard', 'booking', booking.id],
+              })
+              await queryClient.invalidateQueries({
                 queryKey: ['dashboard', 'booking-timeline', booking.id],
               })
               resolve()
@@ -291,21 +359,25 @@ export default function BookingTimeline() {
         })
 
         razorpay.on('payment.failed', response => {
-          reject(new Error(response?.error?.description || 'Payment failed. Please try again.'))
+          reject(new Error(getPaymentErrorMessage(response)))
         })
 
-        razorpay.open()
+        try {
+          razorpay.open()
+        } catch (gatewayErr) {
+          reject(new Error(getPaymentErrorMessage(gatewayErr)))
+        }
       })
     } catch (err) {
-      window.alert(err?.message || 'Could not start remaining payment.')
+      window.alert(getPaymentErrorMessage(err))
     } finally {
       setPayingBookingId('')
     }
   }
 
-  if (isLoading) {
-    return <DashboardLoadingState title="Loading booking timeline..." />
-  }
+  // if (isLoading) {
+  //   return <DashboardLoadingState title="Loading booking timeline..." />
+  // }
 
   if (error || timelineError) {
     return <DashboardErrorState title="We could not load your booking timeline." />
@@ -313,9 +385,20 @@ export default function BookingTimeline() {
 
   if (!orderBookings.length) {
     return (
+      <EmptyBooking
+        title="No booking timeline available yet"
+        body="Your booking milestones and progress updates will appear here once a booking is created."
+        actionLabel="Explore Packages"
+        actionTo="/package-listing"
+      />
+    )
+  }
+
+  if (!filteredOrderBookings.length) {
+    return (
       <DashboardErrorState
-        title="No order bookings available yet."
-        body="Only full order bookings appear here. Sample taste bookings stay in the Sample Taste section."
+        title="No booking timelines match your search."
+        body="Try searching by package, event, status, or location."
       />
     )
   }
@@ -327,32 +410,31 @@ export default function BookingTimeline() {
           <h1 className="text-2xl text-[#2E2E2E]">Booking Timeline</h1>
         </div>
         <p className="text-sm text-[#8C7B6B]">
-          Follow the milestones and key updates for each booking - {orderBookings.length} bookings
+          Follow the milestones and key updates for each booking - {filteredOrderBookings.length}{' '}
+          bookings
         </p>
       </div>
 
       <div className="mb-8 flex flex-wrap gap-3">
-        {orderBookings.map(booking => (
+        {filteredOrderBookings.map(booking => (
           <button
             key={booking.id}
             type="button"
             onClick={() => setSelectedId(booking.id)}
             className={`
               min-w-[180px] cursor-pointer rounded-xl border-[1.5px] px-4 py-2.5 text-left transition-all duration-150
-              ${
-                selectedBooking?.id === booking.id
-                  ? 'border-[#591902] bg-[#591902] text-[#F5E6CC]'
-                  : 'border-[#E5DED6] bg-white text-[#3D2B1A] hover:border-[#C6A15B] hover:shadow-sm'
+              ${selectedBooking?.id === booking.id
+                ? 'border-[#591902] bg-[#591902] text-[#F5E6CC]'
+                : 'border-[#E5DED6] bg-white text-[#3D2B1A] hover:border-[#C6A15B] hover:shadow-sm'
               }
             `}
           >
             <p className="mb-0.5 text-sm font-semibold">{booking.package?.title || 'Booking'}</p>
             <p
-              className={`text-xs ${
-                selectedBooking?.id === booking.id ? 'text-[#F5E6CC]/75' : 'text-[#8C7B6B]'
-              }`}
+              className={`text-xs ${selectedBooking?.id === booking.id ? 'text-[#F5E6CC]/75' : 'text-[#8C7B6B]'
+                }`}
             >
-              {booking.statusLabel} - {formatDashboardDate(booking.eventDate)}
+              {booking.event?.name} - {formatDashboardDate(booking.eventDate)}
             </p>
           </button>
         ))}
@@ -365,14 +447,14 @@ export default function BookingTimeline() {
               className="mb-1 text-lg font-semibold tracking-tight text-[#F5E6CC]"
               style={{ fontFamily: 'poppins' }}
             >
-              {selectedBooking?.package?.title || 'Booking'}
+              {activeBooking?.package?.title || 'Booking'}
             </h2>
             <p className="text-sm text-[#D4A96A]">
-              {selectedBooking?.displaySubtitle || selectedBooking?.event?.name || 'Event'} -{' '}
-              {formatDashboardDate(selectedBooking?.eventDate)}
+              {activeBooking?.displaySubtitle || activeBooking?.event?.name || 'Event'} -{' '}
+              {formatDashboardDate(activeBooking?.eventDate)}
             </p>
           </div>
-          <StatusPill status={selectedBooking?.status} label={selectedBooking?.statusLabel} />
+          <StatusPill status={activeBooking?.status} label={activeBooking?.statusLabel} />
         </div>
 
         <div className="border-b border-[#F0EBE4] bg-[#FDFAF7] px-7 py-4">
@@ -391,79 +473,76 @@ export default function BookingTimeline() {
         </div>
 
         <div className="px-7 py-7">
-          {timelineLoading ? (
-            <DashboardLoadingState title="Loading selected booking timeline..." />
-          ) : (
-            timeline.map((item, idx) => (
-              <div key={item.id} className="flex gap-4">
-                <TimelineDot status={item.status} isLast={idx === timeline.length - 1} />
+          {timeline.map((item, idx) => (
+            <div key={item.id} className="flex gap-4">
+              <TimelineDot status={item.status} isLast={idx === timeline.length - 1} />
 
-                <div className={`flex-1 pt-1 ${idx < timeline.length - 1 ? 'pb-6' : 'pb-0'}`}>
-                  <div
-                    className={`
+              <div className={`flex-1 pt-1 ${idx < timeline.length - 1 ? 'pb-6' : 'pb-0'}`}>
+                <div
+                  className={`
                       flex flex-wrap items-start justify-between gap-2.5 rounded-2xl border px-4 py-3.5
                       ${CARD_BG[item.status] || CARD_BG.pending}
                     `}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-semibold text-[#C6A15B]">
-                          Step {String(idx + 1).padStart(2, '0')}
-                        </span>
-                        <h3
-                          className="text-sm font-semibold text-[#2E2E2E]"
-                          style={{ fontFamily: 'poppins' }}
-                        >
-                          {item.title}
-                        </h3>
-                      </div>
-                      <p className="text-xs leading-relaxed text-[#8C7B6B]">{item.description}</p>
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-semibold text-[#C6A15B]">
+                        Step {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <h3
+                        className="text-sm font-semibold text-[#2E2E2E]"
+                        style={{ fontFamily: 'poppins' }}
+                      >
+                        {item.title}
+                      </h3>
+                    </div>
+                    <p className="text-xs leading-relaxed text-[#8C7B6B]">{item.description}</p>
 
-                      {selectedBooking?.status === 'pre_event' &&
+                    {activeBooking?.status === 'pre_event' &&
                       item.title === 'Pre-event Final Checks' &&
                       item.status === 'blocked' ? (
-                        <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-4 py-3">
-                          <div className="flex flex-wrap gap-6">
-                            <div>
-                              <p className="text-[11px] text-[#A16255]">AMOUNT PAID</p>
-                              <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
-                                {formatPaymentAmount(selectedBooking?.paymentSummary?.amountPaid)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-[11px] text-[#A16255]">REMAINING PAYMENT</p>
-                              <p className="mt-1 text-sm font-medium text-[#B42318]">
-                                {formatPaymentAmount(selectedBooking?.paymentSummary?.amountDue)}
-                              </p>
-                            </div>
+                      <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-4 py-3">
+                        <div className="flex flex-wrap gap-6">
+                          <div>
+                            <p className="text-[11px] text-[#A16255]">AMOUNT PAID</p>
+                            <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
+                              {formatPaymentAmount(activeBooking?.paymentSummary?.amountPaid)}
+                            </p>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handlePayRemaining(selectedBooking)}
-                            disabled={
-                              payingBookingId === selectedBooking?.id ||
-                              Number(selectedBooking?.paymentSummary?.amountDue ?? 0) <= 0
-                            }
-                            className="rounded-full bg-[#CDB17E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#c3a66f] disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {payingBookingId === selectedBooking?.id
-                              ? 'Opening payment...'
-                              : 'Pay Remaining Payment'}
-                          </button>
+                          <div>
+                            <p className="text-[11px] text-[#A16255]">REMAINING PAYMENT</p>
+                            <p className="mt-1 text-sm font-medium text-[#B42318]">
+                              {formatPaymentAmount(activeBooking?.paymentSummary?.amountDue)}
+                            </p>
+                          </div>
                         </div>
-                      ) : null}
-                    </div>
 
-                    <div className="flex-shrink-0 text-right">
-                      <StatusPill status={item.status} />
-                      <p className="mt-1 text-xs text-[#A89080]">{item.date}</p>
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePayRemaining(activeBooking)}
+                          disabled={
+                            payingBookingId === activeBooking?.id ||
+                            Number(activeBooking?.paymentSummary?.amountDue ?? 0) <= 0
+                          }
+                          className="rounded-full bg-[#CDB17E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#c3a66f] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {payingBookingId === activeBooking?.id
+                            ? 'Opening payment...'
+                            : 'Pay Remaining Payment'}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="flex-shrink-0 text-right">
+                    <StatusPill status={item.status} />
+                    <p className="mt-1 text-xs text-[#A89080]">{item.date}</p>
                   </div>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))
+          }
         </div>
       </div>
     </div>

@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import {
   useAdminBookings,
   useAdminCoupons,
@@ -7,6 +13,7 @@ import {
   useAdminCreateVendorPayout,
   useAdminPaymentWorkspace,
   useAdminProcessRefund,
+  useAdminRefunds,
   useAdminSettings,
   useAdminUpdateCoupon,
   useAdminUpdateSettings,
@@ -50,7 +57,7 @@ function Input({ type = 'text', value, onChange, placeholder, className = '' }) 
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className={`h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition ${className}`}
+      className="w-full border-b border-[#2D2D2D] bg-transparent text-[16px] outline-none"
     />
   )
 }
@@ -62,7 +69,7 @@ function Textarea({ value, onChange, placeholder, rows = 3 }) {
       onChange={onChange}
       placeholder={placeholder}
       rows={rows}
-      className="w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition resize-none"
+      className="w-full rounded-2xl border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition resize-none"
     />
   )
 }
@@ -73,7 +80,7 @@ function PrimaryBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -86,7 +93,7 @@ function GhostBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center px-5 text-sm rounded-full border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E] disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -99,10 +106,59 @@ function DangerBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#FECACA] bg-[#FFF3F3] px-5 text-sm font-semibold text-[#8A1C1C] transition hover:bg-[#FFE4E4] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full px-5 text-sm  bg-[#591902] text-[#FAFAFA] hover:bg-[#651D03] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {children}
     </button>
+  )
+}
+
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg className={`h-6 w-6 ${rotationClass}`} viewBox="0 0 36 36" fill="none">
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function PaginationControls({ currentPage, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null
+  const latestRefund = null
+
+  return (
+    <div className="mt-4 flex justify-end gap-2">
+      <button
+        type="button"
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ArrowIcon direction="left" />
+      </button>
+      <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+        {currentPage} / {totalPages}
+        {latestRefund ? (
+          <p className="mt-2 text-xs text-[#8F8F8F]">
+            Refund: {formatCurrency(latestRefund.amount)} Â· {latestRefund.status}
+          </p>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ArrowIcon direction="right" />
+      </button>
+    </div>
   )
 }
 
@@ -142,9 +198,9 @@ function BookingPaymentRow({ booking }) {
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[#1C1C1C]">
-          {booking.customer?.name || 'Customer'}
+          {booking?.customer?.name || 'Customer'}
           <span className="ml-2 font-normal text-[#6B7280]">
-            / {booking.package?.title || booking.id}
+            / {booking?.package?.title || booking.id}
           </span>
         </p>
         <p className="mt-1 text-xs text-[#8F8F8F]">
@@ -181,7 +237,11 @@ function PaymentRecordRow({
   onRefundAction,
   isRefundBusy = false,
 }) {
-  const pendingRefund = payment.refunds?.find(r => r.status === 'requested')
+  const refunds = Array.isArray(payment.refunds) ? payment.refunds : []
+  const pendingRefund = refunds.find(r => r.status === 'requested')
+  const latestRefund =
+    [...refunds].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0] ??
+    null
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
       <div className="flex-1 min-w-0">
@@ -199,21 +259,16 @@ function PaymentRecordRow({
       <div className="flex flex-wrap items-center gap-2">
         <Badge status={payment.status} />
         <Badge status={payment.paymentMethod} label={payment.paymentMethod || 'Method pending'} />
+        {latestRefund ? (
+          <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />
+        ) : null}
         {showRefundActions && pendingRefund && (
-          <>
-            <PrimaryBtn
-              disabled={isRefundBusy}
-              onClick={() => onRefundAction?.(pendingRefund.id, 'approve')}
-            >
-              Approve Refund
-            </PrimaryBtn>
-            <DangerBtn
-              disabled={isRefundBusy}
-              onClick={() => onRefundAction?.(pendingRefund.id, 'reject')}
-            >
-              Reject
-            </DangerBtn>
-          </>
+          <PrimaryBtn
+            disabled={isRefundBusy}
+            onClick={() => onRefundAction?.(pendingRefund.id, 'approve')}
+          >
+            Pay Refund
+          </PrimaryBtn>
         )}
       </div>
     </div>
@@ -261,15 +316,77 @@ const customerTabs = [
   { key: 'completed', label: 'Completed' },
 ]
 
-function CustomerPayments({ customerPayments, processRefundMutation }) {
-  const [tab, setTab] = useState('active')
+function RefundRow({ refund, processRefundMutation }) {
+  const booking = refund.bookingSummary ?? null
 
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-[#1C1C1C]">
+          {booking?.customer?.name || 'Customer'}
+          <span className="ml-2 font-normal text-[#6B7280]">
+            / {booking?.package?.title || refund.bookingId}
+          </span>
+        </p>
+        <p className="mt-1 text-xs text-[#8F8F8F]">
+          Cancelled booking · {formatDate(booking.eventDate)}
+          {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-4 text-sm">
+          <span>
+            <span className="text-[#8F8F8F]">Refund Amount </span>
+            <span className="font-medium text-[#2D2D2D]">{formatCurrency(refund.amount)}</span>
+          </span>
+          <span>
+            <span className="text-[#8F8F8F]">Requested </span>
+            <span className="font-medium text-[#2D2D2D]">{formatDateTime(refund.createdAt)}</span>
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge status={booking?.status} label={booking?.statusLabel || 'Cancelled'} />
+        <Badge status={refund.status} label={`Refund ${refund.status}`} />
+        {refund.status === 'requested' ? (
+          <PrimaryBtn
+            disabled={processRefundMutation.isPending}
+            onClick={() =>
+              processRefundMutation.mutate({
+                refundId: refund.id,
+                body: { action: 'approve' },
+              })
+            }
+          >
+            Pay Refund
+          </PrimaryBtn>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function CustomerPayments({ processRefundMutation }) {
+  const [tab, setTab] = useState('active')
+  const [currentPage, setCurrentPage] = useState(1)
+  const workspaceQuery = useAdminPaymentWorkspace({
+    customerTab: tab,
+    customerPage: currentPage,
+    limit: 10,
+  })
+  const customerPayments = workspaceQuery.data?.customerPayments ?? {}
   const lists = {
     active: customerPayments.activeBookings ?? [],
     post_event: customerPayments.postEventPending ?? [],
     failed: customerPayments.failedPayments ?? [],
     completed: customerPayments.completedPayments ?? [],
   }
+  const currentList = lists[tab] ?? []
+  const totalPages = Math.max(1, Number(customerPayments.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
+  const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
+
+  if (workspaceQuery.isLoading) return <LoadingState label="Loading customer payments…" />
+  if (workspaceQuery.error)
+    return <ErrorState label="Customer payments are unavailable right now." />
 
   return (
     <div className="space-y-5">
@@ -280,7 +397,10 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
         <div className="ml-auto w-full max-w-[260px] md:w-[260px]">
           <SelectField
             value={tab}
-            onChange={setTab}
+            onChange={value => {
+              setTab(value)
+              setCurrentPage(1)
+            }}
             placeholder="Select Tab"
             className="h-[42px] rounded-full border border-[#E4DED8] bg-white px-4 text-sm font-medium text-[#1C1C1C]"
           >
@@ -293,105 +413,143 @@ function CustomerPayments({ customerPayments, processRefundMutation }) {
         </div>
       </div>
 
-      {/* Active bookings */}
-      {tab === 'active' &&
-        (lists.active.length ? (
-          <div className="space-y-2.5">
-            {lists.active.map(b => (
-              <BookingPaymentRow key={b.id} booking={b} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No active booking balances"
-            body="Active bookings with payment context will appear here."
-          />
-        ))}
-
-      {/* Post-event */}
-      {tab === 'post_event' &&
-        (lists.post_event.length ? (
-          <div className="space-y-2.5">
-            {lists.post_event.map(b => (
-              <div
-                key={b.id}
-                className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[#1C1C1C]">
-                    {b.customer?.name || 'Customer'}
-                    <span className="ml-2 font-normal text-[#6B7280]">
-                      / {b.package?.title || b.id}
-                    </span>
-                  </p>
-
-                  <p className="mt-1 text-xs text-[#8F8F8F]">
-                    Balance due:{' '}
-                    <span className="font-medium text-[#2D2D2D]">
-                      {formatCurrency(b.outstandingAmount)}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <Badge status={b.status} label={b.statusLabel} />
-
-                  <Badge
-                    status={b.outstandingAmount > 0 ? 'pending' : 'resolved'}
-                    label={b.outstandingAmount > 0 ? 'Reminder needed' : 'Settled'}
-                  />
-                </div>
+      {isSectionLoading ? (
+        <SectionLoadingState label="Loading customer paymentsâ€¦" />
+      ) : (
+        <>
+          {/* Active bookings */}
+          {tab === 'active' &&
+            (lists.active.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(b => (
+                  <BookingPaymentRow key={b.id} booking={b} />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
               </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No post-event pending payments"
-            body="Outstanding post-event balances will appear here."
-          />
-        ))}
-
-      {/* Failed */}
-      {tab === 'failed' &&
-        (lists.failed.length ? (
-          <div className="space-y-2.5">
-            {lists.failed.map(p => (
-              <PaymentRecordRow
-                key={p.id}
-                payment={p}
-                showRefundActions
-                isRefundBusy={processRefundMutation.isPending}
-                onRefundAction={(refundId, action) =>
-                  refundId &&
-                  processRefundMutation.mutate({
-                    refundId,
-                    body: { action },
-                  })
-                }
+            ) : (
+              <EmptyState
+                title="No active booking balances"
+                body="Active bookings with payment context will appear here."
               />
             ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No failed payments"
-            body="Failed transactions needing follow-up will appear here."
-          />
-        ))}
 
-      {/* Completed */}
-      {tab === 'completed' &&
-        (lists.completed.length ? (
-          <div className="space-y-2.5">
-            {lists.completed.map(p => (
-              <PaymentRecordRow key={p.id} payment={p} />
+          {/* Post-event */}
+          {tab === 'post_event' &&
+            (lists.post_event.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(b => (
+                  <div
+                    key={b.id}
+                    className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-[#1C1C1C]">
+                        {b.customer?.name || 'Customer'}
+                        <span className="ml-2 font-normal text-[#6B7280]">
+                          / {b.package?.title || b.id}
+                        </span>
+                      </p>
+
+                      <p className="mt-1 text-xs text-[#8F8F8F]">
+                        Balance due:{' '}
+                        <span className="font-medium text-[#2D2D2D]">
+                          {formatCurrency(b.outstandingAmount)}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Badge status={b.status} label={b.statusLabel} />
+
+                      <Badge
+                        status={b.outstandingAmount > 0 ? 'pending' : 'resolved'}
+                        label={b.outstandingAmount > 0 ? 'Reminder needed' : 'Settled'}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No post-event pending payments"
+                body="Outstanding post-event balances will appear here."
+              />
             ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No completed payments"
-            body="Successful and refunded records will appear here."
-          />
-        ))}
+
+          {/* Failed */}
+          {tab === 'failed' &&
+            (lists.failed.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PaymentRecordRow
+                    key={p.id}
+                    payment={p}
+                    showRefundActions
+                    isRefundBusy={processRefundMutation.isPending}
+                    onRefundAction={(refundId, action) =>
+                      refundId &&
+                      processRefundMutation.mutate({
+                        refundId,
+                        body: { action },
+                      })
+                    }
+                  />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No failed payments"
+                body="Failed transactions needing follow-up will appear here."
+              />
+            ))}
+
+          {/* Completed */}
+          {tab === 'completed' &&
+            (lists.completed.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PaymentRecordRow
+                    key={p.id}
+                    payment={p}
+                    showRefundActions
+                    isRefundBusy={processRefundMutation.isPending}
+                    onRefundAction={(refundId, action) =>
+                      refundId &&
+                      processRefundMutation.mutate({
+                        refundId,
+                        body: { action },
+                      })
+                    }
+                  />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No completed payments"
+                body="Successful and refunded records will appear here."
+              />
+            ))}
+        </>
+      )}
     </div>
   )
 }
@@ -404,23 +562,36 @@ const vendorTabs = [
 ]
 
 function VendorPayments({
-  vendorPayments,
   vendorsQuery,
   bookingsQuery,
   createVendorPayoutMutation,
   updateVendorPayoutMutation,
 }) {
   const [tab, setTab] = useState('pending')
+  const [currentPage, setCurrentPage] = useState(1)
   const [vendorId, setVendorId] = useState('')
   const [bookingId, setBookingId] = useState('')
   const [payoutAmount, setPayoutAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('offline')
+  const workspaceQuery = useAdminPaymentWorkspace({
+    vendorTab: tab,
+    vendorPage: currentPage,
+    limit: 10,
+  })
+  const vendorPayments = workspaceQuery.data?.vendorPayments ?? {}
+  const currentList = vendorPayments[tab] ?? []
+  const totalPages = Math.max(1, Number(vendorPayments.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
+  const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
+
+  if (workspaceQuery.isLoading) return <LoadingState label="Loading vendor payouts…" />
+  if (workspaceQuery.error) return <ErrorState label="Vendor payouts are unavailable right now." />
 
   return (
     <div className="space-y-5">
       {/* Create payout form */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
-        <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Create Vendor Payout</h3>
+        <h3 className="mb-4 text-lg text-[#1C1C1C]">Create Vendor Payout</h3>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <SelectField
             value={vendorId}
@@ -448,12 +619,12 @@ function VendorPayments({
               </option>
             ))}
           </SelectField>
-          <Input
+          <input
             type="number"
             value={payoutAmount}
             onChange={e => setPayoutAmount(e.target.value)}
             placeholder="Amount (₹)"
-            className="rounded-full"
+            className="w-full rounded-full border border-[#D9D2CB] px-4 py-2 text-[15px] font-medium bg-[#FFFFFF] text-[#5B534B] placeholder:text-[#767676] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
           />
           <SelectField
             value={paymentMethod}
@@ -484,42 +655,66 @@ function VendorPayments({
         </div>
       </div>
 
-      <Tabs items={vendorTabs} value={tab} onChange={setTab} size="sm" />
+      <Tabs
+        items={vendorTabs}
+        value={tab}
+        onChange={value => {
+          setTab(value)
+          setCurrentPage(1)
+        }}
+        size="sm"
+      />
 
-      {tab === 'pending' &&
-        ((vendorPayments.pending ?? []).length ? (
-          <div className="space-y-2.5">
-            {vendorPayments.pending.map(p => (
-              <PayoutRow
-                key={p.id}
-                payout={p}
-                isBusy={updateVendorPayoutMutation.isPending}
-                onMark={(id, status) =>
-                  updateVendorPayoutMutation.mutate({ payoutId: id, body: { status } })
-                }
+      {isSectionLoading ? (
+        <SectionLoadingState label="Loading vendor payoutsâ€¦" />
+      ) : (
+        <>
+          {tab === 'pending' &&
+            ((vendorPayments.pending ?? []).length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PayoutRow
+                    key={p.id}
+                    payout={p}
+                    isBusy={updateVendorPayoutMutation.isPending}
+                    onMark={(id, status) =>
+                      updateVendorPayoutMutation.mutate({ payoutId: id, body: { status } })
+                    }
+                  />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No pending vendor payouts"
+                body="Pending payout approvals will appear here."
               />
             ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No pending vendor payouts"
-            body="Pending payout approvals will appear here."
-          />
-        ))}
 
-      {tab === 'paid' &&
-        ((vendorPayments.paid ?? []).length ? (
-          <div className="space-y-2.5">
-            {vendorPayments.paid.map(p => (
-              <PayoutRow key={p.id} payout={p} />
+          {tab === 'paid' &&
+            ((vendorPayments.paid ?? []).length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PayoutRow key={p.id} payout={p} />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No paid vendors yet"
+                body="Paid settlements will appear here once processed."
+              />
             ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No paid vendors yet"
-            body="Paid settlements will appear here once processed."
-          />
-        ))}
+        </>
+      )}
     </div>
   )
 }
@@ -592,7 +787,10 @@ function CouponRow({ coupon, updateCouponMutation }) {
             status={coupon.is_active ? 'active' : 'inactive'}
             label={coupon.is_active ? 'Active' : 'Inactive'}
           />
-          <GhostBtn
+          <PrimaryBtn onClick={editing ? () => setEditing(false) : openEdit}>
+            {editing ? 'Cancel' : 'Edit'}
+          </PrimaryBtn>
+          <DangerBtn
             disabled={updateCouponMutation.isPending}
             onClick={() =>
               updateCouponMutation.mutate({
@@ -602,10 +800,7 @@ function CouponRow({ coupon, updateCouponMutation }) {
             }
           >
             {coupon.is_active ? 'Disable' : 'Enable'}
-          </GhostBtn>
-          <GhostBtn onClick={editing ? () => setEditing(false) : openEdit}>
-            {editing ? 'Cancel' : 'Edit'}
-          </GhostBtn>
+          </DangerBtn>
         </div>
       </div>
 
@@ -667,9 +862,18 @@ function CouponRow({ coupon, updateCouponMutation }) {
   )
 }
 
-function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) {
+function CouponSection({ createCouponMutation, updateCouponMutation }) {
   const [form, setForm] = useState(BLANK_COUPON_FORM)
+  const [currentPage, setCurrentPage] = useState(1)
+  const couponsQuery = useAdminCoupons({ page: currentPage, limit: 10 })
+  const coupons = couponsQuery.data?.coupons ?? []
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+  const totalPages = Math.max(1, Number(couponsQuery.data?.pages ?? 1))
+  const visiblePage = Math.min(currentPage, totalPages)
+  const isSectionLoading = couponsQuery.isFetching && !couponsQuery.isLoading
+
+  if (couponsQuery.isLoading) return <LoadingState label="Loading coupons…" />
+  if (couponsQuery.error) return <ErrorState label="Coupons are unavailable right now." />
 
   function handleCreate() {
     createCouponMutation.mutate(
@@ -687,22 +891,13 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
     <div className="space-y-5">
       {/* Create form */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
-        <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Generate Discount Coupon</h3>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <h3 className="mb-4 text-lg text-[#1C1C1C]">Generate Discount Coupon</h3>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 gap-y-5">
           <Input
             value={form.code}
             onChange={e => set('code', e.target.value.toUpperCase())}
             placeholder="Coupon code (e.g. SAVE20)"
           />
-          <SelectField
-            value={form.discount_type}
-            onChange={v => set('discount_type', v)}
-            placeholder="Discount type"
-            className="min-h-10 rounded-lg bg-[#F3F3F3]"
-          >
-            <option value="percentage">Percentage (%)</option>
-            <option value="flat">Flat amount (₹)</option>
-          </SelectField>
           <Input
             type="number"
             value={form.discount_value}
@@ -711,6 +906,14 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
               form.discount_type === 'percentage' ? 'Discount % (e.g. 20)' : 'Discount ₹ (e.g. 500)'
             }
           />
+          <select
+            value={form.discount_type}
+            onChange={e => set('discount_type', e.target.value)}
+            className="w-full border-b border-[#2D2D2D] bg-transparent py-[2px] text-[16px] text-[#1C1C1C] outline-none"
+          >
+            <option value="percentage">Percentage (%)</option>
+            <option value="flat">Flat amount (₹)</option>
+          </select>
           <Input
             type="number"
             value={form.max_uses}
@@ -745,7 +948,9 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
       </div>
 
       {/* Coupon list */}
-      {coupons.length ? (
+      {isSectionLoading ? (
+        <SectionLoadingState label="Loading couponsâ€¦" />
+      ) : coupons.length ? (
         <div className="space-y-2.5">
           {coupons.map(coupon => (
             <CouponRow
@@ -754,6 +959,11 @@ function CouponSection({ coupons, createCouponMutation, updateCouponMutation }) 
               updateCouponMutation={updateCouponMutation}
             />
           ))}
+          <PaginationControls
+            currentPage={visiblePage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       ) : (
         <EmptyState
@@ -798,8 +1008,8 @@ function SettingsSection({ updateSettingsMutation }) {
 
       {/* Edit form */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
-        <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Edit Settings</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <h3 className="mb-4 text-lg text-[#1C1C1C]">Edit Settings</h3>
+        <div className="grid gap-3 sm:grid-cols-2 gap-y-5">
           <div>
             <p className="mb-1 text-xs text-[#8F8F8F]">Advance payment %</p>
             <Input
@@ -870,6 +1080,24 @@ function SettingsSection({ updateSettingsMutation }) {
   )
 }
 
+function RefundsSection({ processRefundMutation }) {
+  const refundsQuery = useAdminRefunds()
+  const refunds = refundsQuery.data?.refunds ?? []
+
+  if (refundsQuery.isLoading) return <LoadingState label="Loading refunds..." />
+  if (refundsQuery.error) return <ErrorState label="Refunds are unavailable right now." />
+
+  return refunds.length ? (
+    <div className="space-y-2.5">
+      {refunds.map(refund => (
+        <RefundRow key={refund.id} refund={refund} processRefundMutation={processRefundMutation} />
+      ))}
+    </div>
+  ) : (
+    <EmptyState title="No refunds yet" body="Cancelled booking refunds will appear here." />
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Main sections config
 // ---------------------------------------------------------------------------
@@ -878,6 +1106,7 @@ const mainSections = [
   { key: 'vendor', label: 'Vendor Payouts' },
   { key: 'coupon', label: 'Discount Coupons' },
   { key: 'settings', label: 'Settings' },
+  { key: 'refunds', label: 'Refunds' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -887,7 +1116,6 @@ export default function PaymentManagementPage() {
   const [section, setSection] = useState('customer')
 
   const workspaceQuery = useAdminPaymentWorkspace()
-  const couponsQuery = useAdminCoupons({ limit: 50 })
   const settingsQuery = useAdminSettings()
   const vendorsQuery = useAdminVendors({ limit: 100, status: 'approved' })
   const bookingsQuery = useAdminBookings({ bucket: 'active', limit: 100 })
@@ -907,9 +1135,6 @@ export default function PaymentManagementPage() {
 
   const workspace = workspaceQuery.data ?? {}
   const summary = workspace.summary ?? {}
-  const customerPayments = workspace.customerPayments ?? {}
-  const vendorPayments = workspace.vendorPayments ?? {}
-  const coupons = couponsQuery.data?.coupons ?? workspace.coupons ?? []
   const settings = settingsQuery.data ?? workspace.settings ?? null
 
   return (
@@ -952,7 +1177,7 @@ export default function PaymentManagementPage() {
       </div>
 
       {/* ── Section tabs ── */}
-      <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+      <div className="rounded-2xl border border-[#E4DED8] bg-[#FAFAFA] p-4">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#767676]">
           Section
         </p>
@@ -962,15 +1187,11 @@ export default function PaymentManagementPage() {
       {/* ── Content area ── */}
       <div>
         {section === 'customer' && (
-          <CustomerPayments
-            customerPayments={customerPayments}
-            processRefundMutation={processRefundMutation}
-          />
+          <CustomerPayments processRefundMutation={processRefundMutation} />
         )}
 
         {section === 'vendor' && (
           <VendorPayments
-            vendorPayments={vendorPayments}
             vendorsQuery={vendorsQuery}
             bookingsQuery={bookingsQuery}
             createVendorPayoutMutation={createVendorPayoutMutation}
@@ -980,7 +1201,6 @@ export default function PaymentManagementPage() {
 
         {section === 'coupon' && (
           <CouponSection
-            coupons={coupons}
             createCouponMutation={createCouponMutation}
             updateCouponMutation={updateCouponMutation}
           />
@@ -993,6 +1213,8 @@ export default function PaymentManagementPage() {
             updateSettingsMutation={updateSettingsMutation}
           />
         )}
+
+        {section === 'refunds' && <RefundsSection processRefundMutation={processRefundMutation} />}
       </div>
     </div>
   )

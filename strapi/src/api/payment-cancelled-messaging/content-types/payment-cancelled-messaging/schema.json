@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "payment_cancelled_messaging",
+  "info": {
+    "singularName": "payment-cancelled-messaging",
+    "pluralName": "payment-cancelled-messagings",
+    "displayName": "Payment Cancelled Messaging"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sections": {
+      "type": "component",
+      "component": "cms.content-section",
+      "repeatable": true
+    }
+  }
+}

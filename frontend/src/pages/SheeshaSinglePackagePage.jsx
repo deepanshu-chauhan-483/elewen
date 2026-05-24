@@ -1,8 +1,10 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
+import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import useCustomization from '../hooks/useCustomization'
@@ -293,6 +295,8 @@ export default function SheeshaSinglePackagePage() {
   const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
   const { data: cancellationPolicy } = useCancellationPolicy()
   const { addPackage, updateCartItemDetails } = useCart()
+  const { showToast } = useToast()
+  const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
   const cartItemId = searchParams.get('cartItemId') ?? ''
   const {
     customizations,
@@ -427,7 +431,7 @@ export default function SheeshaSinglePackagePage() {
           quantity,
           selectedOptions,
         })
-        setAddToCartMessage('Package updated.')
+        showToast({ message: cartToastMessage })
       } else {
         const updatedCart = await addPackage({
           packageId: Number(pkg.id),
@@ -436,7 +440,7 @@ export default function SheeshaSinglePackagePage() {
         })
         handleAddToCart()
         void updatedCart
-        setAddToCartMessage('Added to cart.')
+        showToast({ message: cartToastMessage })
       }
     } catch (err) {
       console.error('[cart-click] sheesha add failed', err)
