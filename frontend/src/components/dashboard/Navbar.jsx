@@ -136,7 +136,7 @@ const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
           onClick={handleLogout}
           ariaLabel="Logout"
           disabled={logoutMutation.isPending}
-          className="bg-[#D4BA8E] text-[#FAFAFA] hover:bg-[#c7aa76] disabled:cursor-not-allowed disabled:opacity-70 md:min-w-[72px] lg:min-w-[78px]"
+          className="bg-[#CDB17E] text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-70 md:min-w-[72px] lg:min-w-[78px]"
         >
           <span className="whitespace-nowrap">
             {logoutMutation.isPending ? 'Logging out' : 'Logout'}

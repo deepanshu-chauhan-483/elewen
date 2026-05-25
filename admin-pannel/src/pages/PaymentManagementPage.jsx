@@ -52,14 +52,14 @@ function MetricCard({ label, value, helper }) {
   )
 }
 
-function Input({ type = 'text', value, onChange, placeholder, className = '' }) {
+function Input({ type = 'text', value, onChange, placeholder }) {
   return (
     <input
       type={type}
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className={`h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition ${className}`}
+      className="w-full border-b border-[#2D2D2D] bg-transparent text-[16px] outline-none"
     />
   )
 }
@@ -71,7 +71,7 @@ function Textarea({ value, onChange, placeholder, rows = 3 }) {
       onChange={onChange}
       placeholder={placeholder}
       rows={rows}
-      className="w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition resize-none"
+      className="w-full rounded-2xl border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition resize-none"
     />
   )
 }
@@ -82,7 +82,7 @@ function PrimaryBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -95,7 +95,7 @@ function GhostBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center px-5 text-sm rounded-full border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E] disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -108,7 +108,7 @@ function DangerBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#FECACA] bg-[#FFF3F3] px-5 text-sm font-semibold text-[#8A1C1C] transition hover:bg-[#FFE4E4] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full px-5 text-sm  bg-[#591902] text-[#FAFAFA] hover:bg-[#651D03] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {children}
     </button>
@@ -597,7 +597,7 @@ function VendorPayments({
     <div className="space-y-5">
       {/* Create payout form */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
-        <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Create Vendor Payout</h3>
+        <h3 className="mb-4 text-lg text-[#1C1C1C]">Create Vendor Payout</h3>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <SelectField
             value={vendorId}
@@ -625,12 +625,12 @@ function VendorPayments({
               </option>
             ))}
           </SelectField>
-          <Input
+          <input
             type="number"
             value={payoutAmount}
             onChange={e => setPayoutAmount(e.target.value)}
             placeholder="Amount (₹)"
-            className="rounded-full"
+            className="w-full rounded-full border border-[#D9D2CB] px-4 py-2 text-[15px] font-medium bg-[#FFFFFF] text-[#5B534B] placeholder:text-[#767676] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
           />
           <SelectField
             value={paymentMethod}
@@ -1122,6 +1122,11 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
   const [editForm, setEditForm] = useState(couponFormFromSource(coupon))
   const setField = (key, value) => setEditForm(current => ({ ...current, [key]: value }))
 
+  function openEdit() {
+    setEditForm(couponFormFromSource(coupon))
+    setEditing(true)
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setEditForm(couponFormFromSource(coupon))
@@ -1169,7 +1174,10 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
             status={coupon.is_active ? 'active' : 'inactive'}
             label={coupon.is_active ? 'Active' : 'Inactive'}
           />
-          <GhostBtn
+          <PrimaryBtn onClick={editing ? () => setEditing(false) : openEdit}>
+            {editing ? 'Cancel' : 'Edit'}
+          </PrimaryBtn>
+          <DangerBtn
             disabled={updateCouponMutation.isPending}
             onClick={() =>
               updateCouponMutation.mutate({
@@ -1179,7 +1187,7 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
             }
           >
             {coupon.is_active ? 'Disable' : 'Enable'}
-          </GhostBtn>
+          </DangerBtn>
           <GhostBtn onClick={() => setEditing(current => !current)}>
             {editing ? 'Cancel' : 'Edit'}
           </GhostBtn>
@@ -1475,7 +1483,7 @@ export default function PaymentManagementPage() {
       </div>
 
       {/* ── Section tabs ── */}
-      <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+      <div className="rounded-2xl border border-[#E4DED8] bg-[#FAFAFA] p-4">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#767676]">
           Section
         </p>

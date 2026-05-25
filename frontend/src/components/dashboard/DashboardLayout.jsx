@@ -114,7 +114,7 @@ const DashboardLayout = () => {
               marginTop: DASHBOARD.NAVBAR_HEIGHT,
             }}
           >
-            <div className="flex flex-1 flex-col px-6 py-6 md:px-6 md:py-6">
+            <div className="flex min-h-0 flex-1 flex-col px-6 py-6 md:px-6 md:py-6">
               <Outlet />
             </div>
           </main>

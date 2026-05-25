@@ -50,25 +50,13 @@ function Badge({ status, label }) {
   )
 }
 
-function Select({ value, onChange, children }) {
-  return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
-    >
-      {children}
-    </select>
-  )
-}
-
 function PrimaryBtn({ children, onClick, disabled }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -81,7 +69,7 @@ function GhostBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full px-5 text-sm border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E] disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -151,7 +139,7 @@ function StageProgress({ status }) {
         const last = i === stages.length - 1
         return (
           <div key={stage.key} className="flex flex-1 items-center">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex min-w-[72px] flex-col items-center">
               <div
                 className={[
                   'flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition',
@@ -243,11 +231,11 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
           <div className="flex shrink-0 items-start gap-6">
             {!open && (
               <div className="hidden gap-6 text-sm md:flex">
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col items-start">
                   <p className="text-[11px] text-[#767676]">GUESTS</p>
                   <p className="font-medium text-[#2D2D2D]">{sample.guestCount || '—'}</p>
                 </div>
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col items-start">
                   <p className="text-[11px] text-[#767676]">VENDOR</p>
                   <p className="font-medium text-[#2D2D2D]">
                     {sample.vendors?.length
@@ -287,7 +275,7 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
           onClick={e => e.stopPropagation()}
         >
           {/* Details grid */}
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-5 md:grid-cols-4 pb-6">
             {[
               { label: 'CUSTOMER', value: sample.customer?.name },
               { label: 'EMAIL', value: sample.customer?.email },
@@ -307,13 +295,13 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
           </div>
 
           {/* Stage progress */}
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Request Progress</SectionLabel>
             <StageProgress status={sample.status} />
           </div>
 
           {/* ── Assigned vendors ── */}
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Assigned Vendor</SectionLabel>
             {sample.vendors?.length ? (
               <div className="space-y-2">
@@ -340,20 +328,20 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
           </div>
 
           {/* ── Step 1 — Assign Vendor ── */}
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Step 1 — Assign Vendor</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex-1 min-w-[200px]">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Select vendor</p>
-                  <Select value={vendorId} onChange={setVendorId}>
+                  <SelectField value={vendorId} onChange={setVendorId}>
                     <option value="">Choose a vendor…</option>
                     {(vendorsQuery.data?.vendors ?? []).map(v => (
                       <option key={v.id} value={v.id}>
                         {v.companyName}
                       </option>
                     ))}
-                  </Select>
+                  </SelectField>
                 </div>
                 <PrimaryBtn
                   disabled={isBusy || st !== 'new' || !vendorId}
@@ -384,7 +372,7 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
                     type="date"
                     value={deliveryDate}
                     onChange={e => setDeliveryDate(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+                    className="h-10 w-full rounded-full border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
                   />
                 </div>
                 <GhostBtn
@@ -438,14 +426,6 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
 // ---------------------------------------------------------------------------
 // Stage filter tabs
 // ---------------------------------------------------------------------------
-const stageTabs = [
-  { key: '', label: 'All' },
-  { key: 'new', label: 'New' },
-  { key: 'assigned', label: 'Assigned' },
-  { key: 'delivered', label: 'Delivered' },
-  { key: 'completed', label: 'Completed' },
-]
-
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -469,7 +449,6 @@ export default function SampleTastePage() {
   const visiblePage = Math.min(currentPage, totalPages)
 
   useScrollToTop(currentPage)
-  const statusCounts = samplesQuery.data?.statusCounts ?? {}
   const isResultsLoading = samplesQuery.isFetching && !samplesQuery.isLoading
 
   if (samplesQuery.isLoading) return <LoadingState label="Loading sample taste bookings…" />
@@ -529,7 +508,7 @@ export default function SampleTastePage() {
       </div>
 
       {/* ── Stage pill tabs ── */}
-      <div className="flex flex-wrap gap-2">
+      {/* <div className="flex flex-wrap gap-2">
         {stageTabs.map(t => (
           <button
             key={t.key}
@@ -560,7 +539,7 @@ export default function SampleTastePage() {
             </span>
           </button>
         ))}
-      </div>
+      </div> */}
 
       {/* ── Results count ── */}
       <div className="flex items-baseline gap-2">

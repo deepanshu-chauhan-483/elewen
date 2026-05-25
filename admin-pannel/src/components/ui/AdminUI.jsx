@@ -112,6 +112,7 @@ export function SelectField({
   placeholder = 'Select',
   disabled = false,
   className = '',
+  menuClassName = '',
 }) {
   const normalizedOptions = options ?? createOptionsFromChildren(children)
 
@@ -125,7 +126,7 @@ export function SelectField({
       onChange={event => onChange(event.target.value)}
       buttonClassName={`min-h-11 w-full rounded-3xl border border-[#94949433] bg-white px-4 pr-10 text-left text-sm text-[#2E2E2E] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
       arrowClassName="pointer-events-none absolute right-4 top-1/2 h-3 w-3 -translate-y-1/2 text-[#8F8F8F]"
-      menuClassName="fixed overflow-hidden rounded-2xl border border-[#94949433] bg-white p-1 shadow-[0_14px_32px_rgba(17,24,39,0.12)]"
+      menuClassName={`fixed overflow-hidden rounded-2xl border border-[#94949433] bg-white p-1 shadow-[0_14px_32px_rgba(17,24,39,0.12)] ${menuClassName}`}
       listClassName="hide-scrollbar max-h-[240px] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       optionClassName="flex w-full min-w-0 whitespace-nowrap bg-[#FFFFFF] px-6 py-3 text-left text-[14px] leading-[18px] text-[#2E2E2E] transition-colors hover:bg-black hover:text-white"
       // selectedOptionClassName="bg-black text-white"
@@ -165,19 +166,17 @@ export function ActionButton({
 }) {
   const toneClass =
     tone === 'ghost'
-      ? 'bg-[#F3F3F3] text-[#262626] hover:bg-[#E8E8E8]'
+      ? 'border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]'
       : tone === 'gold'
         ? 'bg-[#D4BA8E] text-[#FAFAFA] hover:bg-[#c7aa76]'
-        : tone === 'danger'
-          ? 'bg-[#9C3E34] text-white hover:bg-[#892F26]'
-          : 'bg-[#591902] text-white hover:opacity-90'
+        : 'text-[#FAFAFA] bg-[#CDB17E] hover:bg-[#C6AB7F]'
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex min-h-8 items-center justify-center gap-1 rounded-[8px] px-2 text-[10px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${toneClass} ${className}`}
+      className={`inline-flex min-h-8 items-center justify-center gap-1 rounded-lg px-2 text-[10px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${toneClass} ${className}`}
     >
       {children}
     </button>

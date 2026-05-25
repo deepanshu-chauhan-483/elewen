@@ -124,11 +124,11 @@ function BookingCard({ booking }) {
         </div>
 
         <div className="hidden shrink-0 gap-6 text-sm md:flex">
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-start">
             <p className="text-[11px] text-[#767676]">ADVANCE PAID</p>
             <p className="font-medium text-[#2D2D2D]">{formatCurrency(booking.advanceAmount)}</p>
           </div>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-start">
             <p className="text-[11px] text-[#767676]">REMAINING</p>
             <p className="font-medium text-[#2D2D2D]">{formatCurrency(booking.remainingAmount)}</p>
           </div>
@@ -167,30 +167,25 @@ export default function BookingStatusTrackerPage() {
 
   useScrollToTop(currentPage)
   const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
-  const statusCounts = useMemo(
-    () => bookingsQuery.data?.statusCounts ?? {},
-    [bookingsQuery.data?.statusCounts]
-  )
-
-  const counts = useMemo(() => {
-    const map = {
-      all:
-        Number(statusCounts.new ?? 0) +
-        Number(statusCounts.confirmed ?? 0) +
-        Number(statusCounts.info_collection ?? 0) +
-        Number(statusCounts.planning ?? 0) +
-        Number(statusCounts.pre_event ?? 0) +
-        Number(statusCounts.execution ?? 0) +
-        Number(statusCounts.post_event ?? 0) +
-        Number(statusCounts.completed ?? 0),
-    }
-    stages.forEach(stage => {
-      if (stage.key !== 'all') {
-        map[stage.key] = Number(statusCounts[stage.key] ?? 0)
-      }
-    })
-    return map
-  }, [statusCounts])
+  // const counts = useMemo(() => {
+  //   const map = {
+  //     all:
+  //       Number(statusCounts.new ?? 0) +
+  //       Number(statusCounts.confirmed ?? 0) +
+  //       Number(statusCounts.info_collection ?? 0) +
+  //       Number(statusCounts.planning ?? 0) +
+  //       Number(statusCounts.pre_event ?? 0) +
+  //       Number(statusCounts.execution ?? 0) +
+  //       Number(statusCounts.post_event ?? 0) +
+  //       Number(statusCounts.completed ?? 0),
+  //   }
+  //   stages.forEach(stage => {
+  //     if (stage.key !== 'all') {
+  //       map[stage.key] = Number(statusCounts[stage.key] ?? 0)
+  //     }
+  //   })
+  //   return map
+  // }, [statusCounts])
 
   const activeLabel = stages.find(stage => stage.key === activeStage)?.label ?? 'All Bookings'
 
@@ -221,7 +216,7 @@ export default function BookingStatusTrackerPage() {
         >
           {stages.map(stage => (
             <option key={stage.key} value={stage.key}>
-              {stage.label} ({counts[stage.key] ?? 0})
+              {stage.label}
             </option>
           ))}
         </SelectField>

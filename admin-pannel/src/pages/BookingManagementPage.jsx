@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   ErrorState,
@@ -246,7 +246,7 @@ function Textarea({ value, onChange, placeholder }) {
       onChange={onChange}
       placeholder={placeholder}
       rows={3}
-      className="w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition resize-none"
+      className="w-full rounded-2xl border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition resize-none"
     />
   )
 }
@@ -257,7 +257,7 @@ function PrimaryBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -358,6 +358,36 @@ function getLatestStatusNote(statusLogs = []) {
     .reverse()
     .find(log => String(log?.note ?? '').trim())
 }
+
+function buildPaymentDetailRows(booking) {
+  const paymentSummary = booking?.paymentSummary ?? {}
+  const advanceAmount = paymentSummary?.advanceAmount ?? booking?.advanceAmount ?? 0
+  const remainingAmount = paymentSummary?.scheduledRemainingAmount ?? booking?.remainingAmount ?? 0
+  const totalAmount = paymentSummary?.totalPrice ?? booking?.totalPrice ?? 0
+  const bookedAt = booking?.bookedAt ?? booking?.createdAt ?? ''
+
+  return [
+    {
+      id: `${booking?.id ?? 'booking'}-payment-advance`,
+      label: 'Advance',
+      amount: advanceAmount,
+      bookedAt,
+    },
+    {
+      id: `${booking?.id ?? 'booking'}-payment-remaining`,
+      label: 'Remaining',
+      amount: remainingAmount,
+      bookedAt,
+    },
+    {
+      id: `${booking?.id ?? 'booking'}-payment-total`,
+      label: 'Total',
+      amount: totalAmount,
+      bookedAt,
+      isTotal: true,
+    },
+  ]
+}
 // ---------------------------------------------------------------------------
 // Admin Booking Accordion Card
 // ---------------------------------------------------------------------------
@@ -382,6 +412,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
   const borderColor = borderColorMap[booking.status?.toLowerCase()] ?? 'border-[#CDB17E]'
   const subtitle = getSubtitle(booking)
   const bookingDetails = bookingQuery.data ?? booking
+  const paymentDetailRows = useMemo(() => buildPaymentDetailRows(bookingDetails), [bookingDetails])
   const latestStatusNote = getLatestStatusNote(bookingDetails?.statusLogs)
   const internalNotes = (Array.isArray(bookingDetails?.notes) ? bookingDetails.notes : []).filter(
     entry => entry?.isInternal === true
@@ -512,12 +543,9 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
 
       {/* ── Expanded content ── */}
       {open && (
-        <div
-          className="border-t border-[#00000019] px-5 pb-6 pt-5"
-          onClick={e => e.stopPropagation()}
-        >
+        <div className="border-t border-[#00000033] px-5 py-6" onClick={e => e.stopPropagation()}>
           {/* Booking details grid */}
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-5 md:grid-cols-4 pb-6">
             {[
               { label: 'CUSTOMER', value: bookingDetails.customer?.name },
               { label: 'EMAIL', value: bookingDetails.customer?.email },
@@ -539,7 +567,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
           </div>
 
           {/* ── Update Status ── */}
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Update Stage</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -584,7 +612,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
                     value={statusNote}
                     onChange={e => setStatusNote(e.target.value)}
                     placeholder="Reason for change…"
-                    className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+                    className="h-10 w-full rounded-full border border-[#E4DED8] bg-[#FFFFFF] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
                   />
                 </div>
                 <PrimaryBtn
@@ -614,7 +642,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
           </div>
 
           {/* ── Internal Note ── */}
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Internal Note</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -650,7 +678,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
           </div>
 
           {/* ── Vendor Assignment ── */}
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Vendor Assignment</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -706,24 +734,41 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
           </div>
 
           {/* ── Payment History ── */}
-          <div className="mt-6">
+          <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Payment History</SectionLabel>
-            {bookingDetails.payments?.length ? (
-              <div className="space-y-2">
-                {bookingDetails.payments.map(p => (
+            {paymentDetailRows.length ? (
+              <div className="rounded-xl bg-[#F3F3F3] p-3">
+                {paymentDetailRows.map((payment, index) => (
                   <div
-                    key={p.id}
-                    className="flex items-center justify-between rounded-xl bg-[#F3F3F3] px-4 py-3"
+                    key={payment.id}
+                    className={index !== paymentDetailRows.length - 1 ? 'mb-3' : ''}
                   >
-                    <div>
-                      <p className="text-sm text-[#2E2E2E]">{p.paymentType}</p>
-                      <p className="mt-0.5 text-xs text-[#767676]">{formatDateTime(p.createdAt)}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-[#2D2D2D]">
-                        {formatCurrency(p.amount)}
-                      </span>
-                      <StatusBadge status={p.status} />
+                    <div
+                      className={`flex items-center justify-between ${
+                        payment.isTotal ? 'border-t border-[#00000033] pt-3' : ''
+                      }`}
+                    >
+                      <div>
+                        <p
+                          className={`text-sm ${
+                            payment.isTotal ? 'font-medium text-[#1C1C1C]' : 'text-[#2E2E2E]'
+                          }`}
+                        >
+                          {payment.label}
+                        </p>
+                        <p className="mt-0.5 text-xs text-[#767676]">
+                          {formatDateTime(payment.bookedAt)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`text-sm font-medium ${
+                            payment.isTotal ? 'text-[#1C1C1C]' : 'text-[#2D2D2D]'
+                          }`}
+                        >
+                          {formatCurrency(payment.amount)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}

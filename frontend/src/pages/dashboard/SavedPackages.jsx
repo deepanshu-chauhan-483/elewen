@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
-import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useWishlist } from '../../hooks/useWishlist'
 import {
@@ -150,7 +149,7 @@ function PackageCard({ item, isPending, onRemove }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               to={href}
-              className="inline-flex items-center gap-2 bg-[#CDB17E] hover:opacity-90 text-[#F5E6CC] text-sm px-4 py-2 rounded-full transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-[#CDB17E] hover:bg-[#C6AB7F] text-[#F5E6CC] text-sm px-4 py-2 rounded-full transition-colors duration-200"
             >
               Resume Booking
               <ArrowIcon />
@@ -221,14 +220,14 @@ export default function SavedPackages() {
     )
   }
 
-  if (!isLoading && !filteredWishlist.length) {
-    return (
-      <DashboardEmptyState
-        title="No saved packages match your search"
-        body="Try searching by package name, event, or service category."
-      />
-    )
-  }
+  // if (!isLoading && !filteredWishlist.length) {
+  //   return (
+  //     <DashboardEmptyState
+  //       title="No saved packages match your search"
+  //       body="Try searching by package name, event, or service category."
+  //     />
+  //   )
+  // }
 
   return (
     <div className="min-h-screen ">

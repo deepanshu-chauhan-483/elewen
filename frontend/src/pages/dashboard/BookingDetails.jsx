@@ -26,6 +26,7 @@ import {
   parseBookingItemTitle,
 } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
+import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 function getCartItemMeta(title = '') {
   return parseBookingItemTitle(title)
@@ -157,25 +158,36 @@ function buildAddonDetailRows(booking) {
 
 function buildPaymentDetailRows(booking) {
   const paymentSummary = booking?.paymentSummary ?? {}
+
   const advanceAmount = paymentSummary?.advanceAmount ?? booking?.advanceAmount ?? 0
+
   const remainingAmount = paymentSummary?.scheduledRemainingAmount ?? booking?.remainingAmount ?? 0
+
   const totalAmount = paymentSummary?.totalPrice ?? booking?.totalPrice ?? 0
+
+  const advancePaidAt = paymentSummary?.advancePaidAt || booking?.bookedAt || null
+
+  const remainingPaidAt = paymentSummary?.remainingPaidAt || booking?.remainingPaidAt || null
 
   return [
     {
       id: `${booking?.id ?? 'booking'}-payment-advance`,
       label: 'Advance',
       amount: advanceAmount,
+      bookedAt: advancePaidAt,
     },
     {
       id: `${booking?.id ?? 'booking'}-payment-remaining`,
       label: 'Remaining',
       amount: remainingAmount,
+      bookedAt: remainingPaidAt,
     },
     {
       id: `${booking?.id ?? 'booking'}-payment-total`,
       label: 'Total',
       amount: totalAmount,
+      bookedAt: remainingPaidAt,
+      isTotal: true,
     },
   ]
 }
@@ -254,6 +266,20 @@ const ArrowIcon = () => (
   </svg>
 )
 
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      className={`h-5 w-5 text-[#8F8F8F] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  )
+}
+
 function CancellationPolicyModal({
   open,
   policyBody,
@@ -285,7 +311,7 @@ function CancellationPolicyModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-[20px] text-[#2E2E2E]">Cancel Booking</h3>
+            <h3 className="text-[20px] text-[#1C1C1C]">Cancel Booking</h3>
             <p className="mt-1 text-sm leading-5 text-[#6B7280]">
               Refund is calculated from your booking timestamp, not the event date.
             </p>
@@ -294,10 +320,24 @@ function CancellationPolicyModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[#957960] transition hover:bg-[#F3EEE8]"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[#957960] transition hover:bg-[#F3EEE8] p-2"
             aria-label="Close cancellation popup"
           >
-            x
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 5L5 15M5 5L15 15"
+                stroke="#1C1C1C"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
         </div>
 
@@ -403,19 +443,6 @@ function CancellationPolicyModal({
     </div>
   )
 }
-function ChevronIcon({ open }) {
-  return (
-    <svg
-      className={`h-5 w-5 text-[#8F8F8F] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-    </svg>
-  )
-}
 
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -438,6 +465,7 @@ const StatusBadge = ({ status }) => {
 }
 
 function BookingAccordionCard({ booking, session, packages }) {
+  const { showToast } = useToast()
   const [open, setOpen] = useState(false)
   const [showCancel, setShowCancel] = useState(false)
   const [reason, setReason] = useState('')
@@ -459,7 +487,7 @@ function BookingAccordionCard({ booking, session, packages }) {
     data: bookingCancellationToastMessage = 'Your booking has been cancelled successfully.',
   } = useBookingCancellationToastMessage()
   const { data: timelineData = [] } = useDashboardBookingTimeline(open ? booking?.id : null)
-  const { showToast } = useToast()
+  // const { showToast } = useToast()
   const receiptData = buildReceiptData({
     booking,
     customer: {
@@ -546,17 +574,7 @@ function BookingAccordionCard({ booking, session, packages }) {
         <div className="mt-4 flex items-start gap-2 text-sm text-[#1C1C1C]">
           <CalendarIcon />
           <div className="space-y-1">
-            <p>
-              <span className="text-[#767676]">Event Date:</span>{' '}
-              {formatDashboardDate(booking.eventDate)}
-              {booking.eventTime ? (
-                <span className="text-[#767676]"> · {booking.eventTime}</span>
-              ) : null}
-            </p>
-            <p>
-              <span className="text-[#767676]">Booked At:</span>{' '}
-              {formatDashboardDateTime(booking.bookedAt)}
-            </p>
+            <p>{formatDashboardDate(booking.eventDate)}</p>
           </div>
         </div>
 
@@ -592,10 +610,7 @@ function BookingAccordionCard({ booking, session, packages }) {
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">EVENT DATE</p>
-              <p>
-                {formatDashboardDate(booking.eventDate)}
-                {booking.eventTime ? ` · ${booking.eventTime}` : ''}
-              </p>
+              <p>{formatDashboardDate(booking.eventDate)}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">EVENT TIME</p>
@@ -613,7 +628,7 @@ function BookingAccordionCard({ booking, session, packages }) {
               <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
               <p>{formatDashboardCurrency(remainingBalanceDisplay)}</p>
             </div>
-            <div className="md:col-span-3">
+            <div>
               <p className="text-[11px] text-[#767676]">SPECIAL REQUEST</p>
               <p>{booking.specialRequest || 'Not provided'}</p>
             </div>
@@ -712,21 +727,35 @@ function BookingAccordionCard({ booking, session, packages }) {
                 >
                   <div
                     className={`flex justify-between ${
-                      index === 2 ? 'border-t border-[#00000033] pt-3' : ''
+                      payment.isTotal ? 'border-t border-[#00000033] pt-3' : ''
                     }`}
                   >
-                    <span className="text-sm text-[#2E2E2E]">{payment.label}</span>
+                    <div>
+                      <p
+                        className={`text-sm ${payment.isTotal ? 'font-medium text-[#1C1C1C]' : 'text-[#2E2E2E]'}`}
+                      >
+                        {payment.label}
+                      </p>
+                      <p className="mt-0.5 text-xs text-[#767676]">
+                        {payment.bookedAt ? formatDashboardDateTime(payment.bookedAt) : 'Pending'}
+                      </p>
+                    </div>
 
-                    <span className="text-sm font-medium">
-                      {formatDashboardCurrency(payment.amount)}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-sm font-medium ${payment.isTotal ? 'text-[#1C1C1C]' : 'text-[#2D2D2D]'}`}
+                      >
+                        {formatDashboardCurrency(payment.amount)}
+                      </span>
+                      {/* <StatusBadge status={p.status} /> */}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="pt-6 flex flex-wrap gap-3 border-t border-[#00000033] justify-end">
+          <div className="pt-6 flex flex-wrap gap-3 justify-end">
             <button
               type="button"
               onClick={() => downloadReceipt(receiptData)}
@@ -735,7 +764,7 @@ function BookingAccordionCard({ booking, session, packages }) {
               Download Receipt
             </button>
 
-            <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:opacity-90 px-4 py-2 text-white">
+            <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-white">
               Message Admin <ArrowIcon />
             </button>
 
@@ -782,11 +811,13 @@ function BookingAccordionCard({ booking, session, packages }) {
 }
 
 export default function BookingDetailsAccordion() {
+  // const { data: bookings = [] } = useDashboardBookings('all')
+  const { data: session } = useDashboardSession()
   const { data: packages = [] } = usePackages()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
   const { data: bookings = [] } = useDashboardBookings('all', { search: debouncedSearchTerm })
-  const { data: session } = useDashboardSession()
+  // const { data: session } = useDashboardSession()
   const visibleBookings = useMemo(
     () =>
       bookings.filter(booking => {
@@ -814,6 +845,17 @@ export default function BookingDetailsAccordion() {
       ),
     [debouncedSearchTerm, visibleBookings]
   )
+
+  if (visibleBookings.length === 0) {
+    return (
+      <EmptyBooking
+        title="No bookings available yet"
+        body="Your booking details and event information will appear here once a booking is created."
+        actionLabel="Explore Packages"
+        actionTo="/package-listing"
+      />
+    )
+  }
 
   if (visibleBookings.length > 0 && filteredBookings.length === 0) {
     return (

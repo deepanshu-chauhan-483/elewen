@@ -6,13 +6,10 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
+  formatDashboardDateTime,
   matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
-import {
-  DashboardEmptyState,
-  DashboardErrorState,
-  DashboardLoadingState,
-} from '../../components/dashboard/DashboardUI'
+import { DashboardEmptyState, DashboardErrorState } from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { getBookingPackageNamesText } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
@@ -63,6 +60,11 @@ function normalizeStatus(status) {
   return String(status ?? '')
     .trim()
     .toLowerCase()
+}
+
+function isActiveBooking(booking) {
+  const status = normalizeStatus(booking?.status)
+  return !['completed', 'cancelled', 'canceled'].includes(status)
 }
 
 function getStatusLabel(status, statusLabel) {
@@ -162,7 +164,7 @@ function BookingCard({ booking, session }) {
 
               <Link
                 to={`/user-dashboard/details?bookingId=${booking.id}`}
-                className="flex items-center rounded-full bg-[#CDB17E] hover:opacity-90 px-4 py-2 text-sm text-white"
+                className="flex items-center rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-sm text-white"
                 aria-label="View booking details"
                 onClick={event => event.stopPropagation()}
               >
@@ -224,7 +226,7 @@ function BookingCard({ booking, session }) {
 
       {open ? (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-[#00000033] pt-4 text-sm">
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8 border-t border-[#00000033] pt-4 text-sm">
             <div>
               <p className="text-[11px] text-[#767676]">PACKAGE</p>
               <p>{getBookingPackageNamesText(booking, booking?.event?.name || 'Event pending')}</p>
@@ -239,7 +241,18 @@ function BookingCard({ booking, session }) {
               <p className="text-[11px] text-[#767676]">LOCATION</p>
               <p>{location || 'Location pending'}</p>
             </div>
-
+            <div>
+              <p className="text-[11px] text-[#767676]">EVENT DATE</p>
+              <p>{formatDashboardDate(booking.eventDate)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">EVENT TIME</p>
+              <p>{booking.eventTime || 'Pending'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">BOOKED ON</p>
+              <p>{formatDashboardDateTime(booking.bookedAt)}</p>
+            </div>
             <div>
               <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
               <p>{amountPaid}</p>
@@ -248,6 +261,10 @@ function BookingCard({ booking, session }) {
             <div>
               <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
               <p>{amountDue}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">SPECIAL REQUEST</p>
+              <p>{booking.specialRequest || 'Not provided'}</p>
             </div>
           </div>
 
@@ -298,15 +315,12 @@ function BookingCard({ booking, session }) {
 export default function ActiveBookings() {
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
-  const {
-    data: bookings = [],
-    isLoading,
-    error,
-  } = useDashboardBookings('active', {
+  const { data: bookings = [], error } = useDashboardBookings('all', {
     search: debouncedSearchTerm,
   })
   const { data: session } = useDashboardSession()
-  const filteredBookings = bookings.filter(booking =>
+  const activeBookings = bookings.filter(isActiveBooking)
+  const filteredBookings = activeBookings.filter(booking =>
     matchesDashboardSearch(debouncedSearchTerm, [
       getBookingPackageNamesText(booking, booking?.event?.name || 'Booking'),
       booking?.event?.name,
@@ -318,15 +332,15 @@ export default function ActiveBookings() {
     ])
   )
 
-  if (isLoading) {
-    return <DashboardLoadingState title="Loading active bookings..." />
-  }
+  // if (isLoading) {
+  //   return <DashboardLoadingState title="Loading active bookings..." />
+  // }
 
   if (error) {
     return <DashboardErrorState title="We could not load active bookings." />
   }
 
-  if (bookings.length === 0) {
+  if (activeBookings.length === 0) {
     return (
       <EmptyBooking
         title="No active bookings yet"

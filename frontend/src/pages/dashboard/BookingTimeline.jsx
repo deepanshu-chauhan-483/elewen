@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
-import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
+import { DashboardErrorState } from '../../components/dashboard/DashboardUI'
 import { getStoredJwt, paymentCreateOrder, paymentVerify } from '../../lib/api'
 import {
   formatDashboardDate,
@@ -13,6 +13,7 @@ import {
   useDashboardBookings,
 } from '../../hooks/useDashboardData'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 const TIMELINE_DISPLAY_ORDER = [
   'Inquiry / Booking Placed',
@@ -220,11 +221,7 @@ export default function BookingTimeline() {
   const queryClient = useQueryClient()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
-  const {
-    data: bookings = [],
-    isLoading,
-    error,
-  } = useDashboardBookings('all', {
+  const { data: bookings = [], error } = useDashboardBookings('all', {
     search: debouncedSearchTerm,
   })
   const [selectedId, setSelectedId] = useState('')
@@ -276,11 +273,9 @@ export default function BookingTimeline() {
   const { data: selectedBookingDetails } = useDashboardBooking(selectedBooking?.id)
   const activeBooking = selectedBookingDetails ?? selectedBooking
 
-  const {
-    data: timelineData = [],
-    isLoading: timelineLoading,
-    error: timelineError,
-  } = useDashboardBookingTimeline(selectedBooking?.id)
+  const { data: timelineData = [], error: timelineError } = useDashboardBookingTimeline(
+    selectedBooking?.id
+  )
 
   const timeline = useMemo(
     () =>
@@ -384,9 +379,9 @@ export default function BookingTimeline() {
     }
   }
 
-  if (isLoading) {
-    return <DashboardLoadingState title="Loading booking timeline..." />
-  }
+  // if (isLoading) {
+  //   return <DashboardLoadingState title="Loading booking timeline..." />
+  // }
 
   if (error || timelineError) {
     return <DashboardErrorState title="We could not load your booking timeline." />
@@ -394,9 +389,11 @@ export default function BookingTimeline() {
 
   if (!orderBookings.length) {
     return (
-      <DashboardErrorState
-        title="No order bookings available yet."
-        body="Only full order bookings appear here. Sample taste bookings stay in the Sample Taste section."
+      <EmptyBooking
+        title="No booking timeline available yet"
+        body="Your booking milestones and progress updates will appear here once a booking is created."
+        actionLabel="Explore Packages"
+        actionTo="/package-listing"
       />
     )
   }
@@ -443,7 +440,7 @@ export default function BookingTimeline() {
                 selectedBooking?.id === booking.id ? 'text-[#F5E6CC]/75' : 'text-[#8C7B6B]'
               }`}
             >
-              {booking.statusLabel} - {formatDashboardDate(booking.eventDate)}
+              {booking.event?.name} - {formatDashboardDate(booking.eventDate)}
             </p>
           </button>
         ))}
@@ -482,79 +479,75 @@ export default function BookingTimeline() {
         </div>
 
         <div className="px-7 py-7">
-          {timelineLoading ? (
-            <DashboardLoadingState title="Loading selected booking timeline..." />
-          ) : (
-            timeline.map((item, idx) => (
-              <div key={item.id} className="flex gap-4">
-                <TimelineDot status={item.status} isLast={idx === timeline.length - 1} />
+          {timeline.map((item, idx) => (
+            <div key={item.id} className="flex gap-4">
+              <TimelineDot status={item.status} isLast={idx === timeline.length - 1} />
 
-                <div className={`flex-1 pt-1 ${idx < timeline.length - 1 ? 'pb-6' : 'pb-0'}`}>
-                  <div
-                    className={`
+              <div className={`flex-1 pt-1 ${idx < timeline.length - 1 ? 'pb-6' : 'pb-0'}`}>
+                <div
+                  className={`
                       flex flex-wrap items-start justify-between gap-2.5 rounded-2xl border px-4 py-3.5
                       ${CARD_BG[item.status] || CARD_BG.pending}
                     `}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-semibold text-[#C6A15B]">
-                          Step {String(idx + 1).padStart(2, '0')}
-                        </span>
-                        <h3
-                          className="text-sm font-semibold text-[#2E2E2E]"
-                          style={{ fontFamily: 'poppins' }}
-                        >
-                          {item.title}
-                        </h3>
-                      </div>
-                      <p className="text-xs leading-relaxed text-[#8C7B6B]">{item.description}</p>
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-semibold text-[#C6A15B]">
+                        Step {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <h3
+                        className="text-sm font-semibold text-[#2E2E2E]"
+                        style={{ fontFamily: 'poppins' }}
+                      >
+                        {item.title}
+                      </h3>
+                    </div>
+                    <p className="text-xs leading-relaxed text-[#8C7B6B]">{item.description}</p>
 
-                      {activeBooking?.status === 'pre_event' &&
-                      item.title === 'Pre-event Final Checks' &&
-                      item.status === 'blocked' ? (
-                        <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-4 py-3">
-                          <div className="flex flex-wrap gap-6">
-                            <div>
-                              <p className="text-[11px] text-[#A16255]">AMOUNT PAID</p>
-                              <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
-                                {formatPaymentAmount(activeBooking?.paymentSummary?.amountPaid)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-[11px] text-[#A16255]">REMAINING PAYMENT</p>
-                              <p className="mt-1 text-sm font-medium text-[#B42318]">
-                                {formatPaymentAmount(activeBooking?.paymentSummary?.amountDue)}
-                              </p>
-                            </div>
+                    {activeBooking?.status === 'pre_event' &&
+                    item.title === 'Pre-event Final Checks' &&
+                    item.status === 'blocked' ? (
+                      <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-4 py-3">
+                        <div className="flex flex-wrap gap-6">
+                          <div>
+                            <p className="text-[11px] text-[#A16255]">AMOUNT PAID</p>
+                            <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
+                              {formatPaymentAmount(activeBooking?.paymentSummary?.amountPaid)}
+                            </p>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handlePayRemaining(activeBooking)}
-                            disabled={
-                              payingBookingId === activeBooking?.id ||
-                              Number(activeBooking?.paymentSummary?.amountDue ?? 0) <= 0
-                            }
-                            className="rounded-full bg-[#CDB17E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#c3a66f] disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {payingBookingId === activeBooking?.id
-                              ? 'Opening payment...'
-                              : 'Pay Remaining Payment'}
-                          </button>
+                          <div>
+                            <p className="text-[11px] text-[#A16255]">REMAINING PAYMENT</p>
+                            <p className="mt-1 text-sm font-medium text-[#B42318]">
+                              {formatPaymentAmount(activeBooking?.paymentSummary?.amountDue)}
+                            </p>
+                          </div>
                         </div>
-                      ) : null}
-                    </div>
 
-                    <div className="flex-shrink-0 text-right">
-                      <StatusPill status={item.status} />
-                      <p className="mt-1 text-xs text-[#A89080]">{item.date}</p>
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePayRemaining(activeBooking)}
+                          disabled={
+                            payingBookingId === activeBooking?.id ||
+                            Number(activeBooking?.paymentSummary?.amountDue ?? 0) <= 0
+                          }
+                          className="rounded-full bg-[#CDB17E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#c3a66f] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {payingBookingId === activeBooking?.id
+                            ? 'Opening payment...'
+                            : 'Pay Remaining Payment'}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="flex-shrink-0 text-right">
+                    <StatusPill status={item.status} />
+                    <p className="mt-1 text-xs text-[#A89080]">{item.date}</p>
                   </div>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -1041,7 +1041,7 @@ function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
         <p className="text-sm text-gray-500">Enhance your event with these popular extras</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {packages.map(pkg => {
           const isAdding = addingAddonId === pkg.id
 
@@ -1616,8 +1616,9 @@ export default function CartPage() {
       ) : !hasItems ? (
         <EmptyCart />
       ) : (
-        <div className="flex flex-col items-start gap-[clamp(24px,5vw,100px)] lg:flex-row">
+        <div className="flex flex-col items-stretch gap-[clamp(24px,5vw,100px)] md:flex-row">
           <div className="flex-1 space-y-6">
+            {/* Coupon only for multiple packages */}
             {!hasSingleItem ? (
               <CouponCard
                 couponCode={couponCode}
@@ -1629,6 +1630,17 @@ export default function CartPage() {
                 onRemoveCoupon={handleRemoveCoupon}
               />
             ) : null}
+
+            {/* Mobile Pincode Card for both single + multi package */}
+            <div className="md:hidden">
+              <PincodeCard
+                pincode={pincode}
+                message={pincodeMessage}
+                isChecking={isCheckingPincode}
+                onChange={handlePincodeChange}
+                onSubmit={handlePincodeSubmit}
+              />
+            </div>
 
             {hasSingleItem ? (
               <SinglePackageCard
@@ -1664,7 +1676,7 @@ export default function CartPage() {
             ) : null}
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <PriceSummaryCard
               cartItems={cartItems}
               cart={cart}
@@ -1683,13 +1695,16 @@ export default function CartPage() {
               showSampleTasteBooking={showSampleTasteBooking}
               isCheckoutDisabled={isCheckoutDisabled}
               pincodeCard={
-                <PincodeCard
-                  pincode={pincode}
-                  message={pincodeMessage}
-                  isChecking={isCheckingPincode}
-                  onChange={handlePincodeChange}
-                  onSubmit={handlePincodeSubmit}
-                />
+                /* Desktop only */
+                <div className="hidden md:block">
+                  <PincodeCard
+                    pincode={pincode}
+                    message={pincodeMessage}
+                    isChecking={isCheckingPincode}
+                    onChange={handlePincodeChange}
+                    onSubmit={handlePincodeSubmit}
+                  />
+                </div>
               }
             />
             <TrustBadges />

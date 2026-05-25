@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ActionButton,
   ErrorState,
   LoadingState,
   ResultsEmptyState,
-  SearchField,
   SectionLoadingState,
   SelectField,
   StatusBadge,
@@ -34,6 +32,71 @@ const alertTypeOptions = [
   { value: 'overdue_action', label: 'Overdue action' },
   { value: 'system_health', label: 'System health' },
 ]
+
+function SearchIcon() {
+  return (
+    <svg
+      className="h-3 w-3"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.5"
+        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+      />
+    </svg>
+  )
+}
+
+function ArrowIcon({ direction = 'right' }) {
+  const rotationClass = direction === 'left' ? '' : 'rotate-180'
+
+  return (
+    <svg
+      className={`h-6 w-6 ${rotationClass}`}
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M28.5 18H7.5M7.5 18L18 28.5M7.5 18L18 7.5"
+        stroke="#1C1C1C"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function PrimaryBtn({ children, onClick, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {children}
+    </button>
+  )
+}
+
+function GhostBtn({ children, onClick, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center justify-center px-5 text-sm rounded-full border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E] disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {children}
+    </button>
+  )
+}
 
 function sentenceCase(value) {
   return String(value ?? '')
@@ -77,38 +140,97 @@ function getActionRoute(alert) {
   return null
 }
 
-function SummaryCard({ label, value, helper, tone = 'neutral' }) {
-  const toneClass =
-    tone === 'danger'
-      ? 'border-[#F1B7B7] bg-[#FFF3F3]'
-      : tone === 'warning'
-        ? 'border-[#F3D5B3] bg-[#FFF8ED]'
-        : 'border-[#E4DED8] bg-white'
+// function SummaryCard({ label, value, helper, tone = 'neutral' }) {
+//   const toneClass =
+//     tone === 'danger'
+//       ? 'border-[#F1B7B7] bg-[#FFF3F3]'
+//       : tone === 'warning'
+//         ? 'border-[#F3D5B3] bg-[#FFF8ED]'
+//         : 'border-[#E4DED8] bg-white'
 
+//   return (
+//     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+//       <path
+//         strokeLinecap="round"
+//         strokeLinejoin="round"
+//         strokeWidth="2.5"
+//         d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+//       />
+//     </svg>
+//   )
+// }
+
+// function SummaryCard({ label, value, helper, tone = 'neutral' }) {
+//   const toneClass =
+//     tone === 'danger'
+//       ? 'border-[#F1B7B7] bg-[#FFF3F3]'
+//       : tone === 'warning'
+//         ? 'border-[#F3D5B3] bg-[#FFF8ED]'
+//         : 'border-[#E4DED8] bg-white'
+
+//   return (
+//     <div className={`rounded-[8px] border px-5 py-4 ${toneClass}`}>
+//       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
+//         {label}
+//       </p>
+//       <p className="mt-2 text-[30px] leading-none text-[#1C1C1C]">{value}</p>
+//       <p className="mt-2 text-xs text-[#6B7280]">{helper}</p>
+//     </div>
+//   )
+// }
+
+function SummaryCard({ label, value, helper }) {
   return (
-    <div className={`rounded-[8px] border px-5 py-4 ${toneClass}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
-        {label}
-      </p>
-      <p className="mt-2 text-[30px] leading-none text-[#1C1C1C]">{value}</p>
-      <p className="mt-2 text-xs text-[#6B7280]">{helper}</p>
+    <div className="flex flex-col gap-1 rounded-2xl border-t-[3px] border-t-[#D4BA8E] bg-white px-5 py-5">
+      <span className="text-[11px] uppercase tracking-widest text-[#8F8F8F]">{label}</span>
+      <span className="text-[26px] font-semibold leading-none text-[#1C1C1C]">{value}</span>
+      <span className="text-xs text-[#6B7280]">{helper}</span>
     </div>
   )
 }
 
 function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
-  if (!alert) return null
+  const [renderedAlert, setRenderedAlert] = useState(alert)
+  const [isPanelVisible, setIsPanelVisible] = useState(false)
 
-  const route = getActionRoute(alert)
+  useEffect(() => {
+    if (alert) {
+      const frameId = requestAnimationFrame(() => {
+        setRenderedAlert(alert)
+        setIsPanelVisible(true)
+      })
+      return () => cancelAnimationFrame(frameId)
+    }
+
+    const frameId = requestAnimationFrame(() => setIsPanelVisible(false))
+    const timeoutId = setTimeout(() => setRenderedAlert(null), 300)
+    return () => {
+      cancelAnimationFrame(frameId)
+      clearTimeout(timeoutId)
+    }
+  }, [alert])
+
+  if (!renderedAlert) return null
+
+  const route = getActionRoute(renderedAlert)
   const metadataEntries =
-    alert.metadata && typeof alert.metadata === 'object'
-      ? Object.entries(alert.metadata).filter(([, value]) => value !== null && value !== undefined)
+    renderedAlert.metadata && typeof renderedAlert.metadata === 'object'
+      ? Object.entries(renderedAlert.metadata).filter(
+          ([, value]) => value !== null && value !== undefined
+        )
       : []
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/25" onClick={onClose}>
+    <div
+      className={`fixed inset-0 z-50 flex justify-end bg-black/25 transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        isPanelVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
+      onClick={onClose}
+    >
       <aside
-        className="h-full w-full max-w-[520px] overflow-y-auto bg-[#FAFAFA] p-6 shadow-[-16px_0_40px_rgba(17,24,39,0.18)]"
+        className={`h-full w-full max-w-[520px] overflow-y-auto bg-[#FAFAFA] p-6 shadow-[-16px_0_40px_rgba(17,24,39,0.18)] hide-scrollbar transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isPanelVisible ? 'translate-x-0' : 'translate-x-full'
+        }`}
         onClick={event => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
@@ -116,24 +238,37 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8F8F8F]">
               Alert Detail
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-[#1C1C1C]">
-              {sentenceCase(alert.alertType)}
-            </h2>
+            <h2 className="mt-2 text-xl text-[#1C1C1C]">{sentenceCase(renderedAlert.alertType)}</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[8px] border border-[#E4DED8] bg-white px-3 py-2 text-sm text-[#1C1C1C]"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[#957960] transition hover:bg-[#F3EEE8] p-2"
+            aria-label="Close alerts popup"
           >
-            Close
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 5L5 15M5 5L15 15"
+                stroke="#1C1C1C"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
         </div>
 
         <div className="mt-6 rounded-[8px] border border-[#E4DED8] bg-white p-4">
-          <p className="text-sm font-semibold text-[#1C1C1C]">{alert.message}</p>
+          <p className="text-sm font-semibold text-[#1C1C1C]">{renderedAlert.message}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <StatusBadge status={alert.severity} />
-            <StatusBadge status={alert.status} />
+            <StatusBadge status={renderedAlert.severity} />
+            <StatusBadge status={renderedAlert.status} />
           </div>
         </div>
 
@@ -145,15 +280,15 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
             <dl className="mt-3 grid gap-3 text-sm">
               <div>
                 <dt className="text-[#8F8F8F]">Related item</dt>
-                <dd className="mt-1 text-[#1C1C1C]">{getEntityLabel(alert)}</dd>
+                <dd className="mt-1 text-[#1C1C1C]">{getEntityLabel(renderedAlert)}</dd>
               </div>
               <div>
                 <dt className="text-[#8F8F8F]">Reason alert was triggered</dt>
-                <dd className="mt-1 text-[#1C1C1C]">{getTriggerReason(alert)}</dd>
+                <dd className="mt-1 text-[#1C1C1C]">{getTriggerReason(renderedAlert)}</dd>
               </div>
               <div>
                 <dt className="text-[#8F8F8F]">Created</dt>
-                <dd className="mt-1 text-[#1C1C1C]">{formatDateTime(alert.createdAt)}</dd>
+                <dd className="mt-1 text-[#1C1C1C]">{formatDateTime(renderedAlert.createdAt)}</dd>
               </div>
             </dl>
           </div>
@@ -183,36 +318,35 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {route ? (
-              <ActionButton tone="ghost" onClick={() => onNavigate(route)}>
-                Go to {sentenceCase(alert.relatedEntityType)}
-              </ActionButton>
+              <GhostBtn onClick={() => onNavigate(route)}>
+                Go to {sentenceCase(renderedAlert.relatedEntityType)}
+              </GhostBtn>
             ) : null}
-            {alert.status !== 'acknowledged' ? (
-              <ActionButton
-                tone="ghost"
+            {renderedAlert.status !== 'acknowledged' ? (
+              <GhostBtn
                 disabled={isBusy}
-                onClick={() => onUpdate(alert.id, 'acknowledged')}
+                onClick={() => onUpdate(renderedAlert.id, 'acknowledged')}
               >
                 Mark acknowledged
-              </ActionButton>
+              </GhostBtn>
             ) : null}
-            {alert.status !== 'snoozed' ? (
-              <ActionButton
+            {renderedAlert.status !== 'snoozed' ? (
+              <GhostBtn
                 tone="ghost"
                 disabled={isBusy}
-                onClick={() => onUpdate(alert.id, 'snoozed')}
+                onClick={() => onUpdate(renderedAlert.id, 'snoozed')}
               >
                 Snooze
-              </ActionButton>
+              </GhostBtn>
             ) : null}
-            {alert.status !== 'resolved' ? (
-              <ActionButton
+            {renderedAlert.status !== 'resolved' ? (
+              <PrimaryBtn
                 tone="primary"
                 disabled={isBusy}
-                onClick={() => onUpdate(alert.id, 'resolved')}
+                onClick={() => onUpdate(renderedAlert.id, 'resolved')}
               >
                 Resolve alert
-              </ActionButton>
+              </PrimaryBtn>
             ) : null}
           </div>
         </div>
@@ -259,7 +393,6 @@ export default function SystemAlertsPage() {
   const summary = alertsQuery.data?.summary ?? {}
   const totalAlerts = Number(alertsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(alertsQuery.data?.pages ?? 1))
-  const visiblePage = Math.min(currentPage, totalPages)
 
   useScrollToTop(currentPage)
   const isResultsLoading = alertsQuery.isFetching && !alertsQuery.isLoading
@@ -284,7 +417,6 @@ export default function SystemAlertsPage() {
     )
     setCheckedIds([])
   }
-
   const toggleAllVisible = () => {
     setCheckedIds(current =>
       allVisibleChecked
@@ -329,9 +461,28 @@ export default function SystemAlertsPage() {
         />
       </div>
 
-      <section className="rounded-[8px] border border-[#E4DED8] bg-[#F8F5F1] p-4">
+      <section className="rounded-2xl border border-[#E4DED8] bg-[#FAFAFA] p-4">
+        <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
+          Filter Alerts
+        </p>
         <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
-          <SearchField value={search} onChange={resetPage(setSearch)} placeholder="Search alerts" />
+          <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F5F5F5] px-2.5 py-1.5 text-[#A19B94] border border-[#D9D2CB]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
+              <span className="h-3.5 w-3.5">
+                <SearchIcon />
+              </span>
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={e => {
+                setSearch(e.target.value)
+                setCurrentPage(1)
+              }}
+              placeholder="Search"
+              className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#A19B94] focus:outline-none"
+            />
+          </label>
           <SelectField
             value={alertType}
             onChange={resetPage(setAlertType)}
@@ -365,20 +516,18 @@ export default function SystemAlertsPage() {
           {totalAlerts === 1 ? '' : 's'}
         </div>
         <div className="flex flex-wrap gap-2">
-          <ActionButton
-            tone="ghost"
+          <GhostBtn
             disabled={!checkedIds.length || updateAlertMutation.isPending}
             onClick={() => handleBulkUpdate('acknowledged')}
           >
             Mark acknowledged
-          </ActionButton>
-          <ActionButton
-            tone="primary"
+          </GhostBtn>
+          <PrimaryBtn
             disabled={!checkedIds.length || updateAlertMutation.isPending}
             onClick={() => handleBulkUpdate('resolved')}
           >
             Resolve selected
-          </ActionButton>
+          </PrimaryBtn>
         </div>
       </div>
 
@@ -440,9 +589,7 @@ export default function SystemAlertsPage() {
                       <StatusBadge status={alert.status} />
                     </td>
                     <td className="px-4 py-4">
-                      <ActionButton tone="ghost" onClick={() => setSelectedAlertId(alert.id)}>
-                        Review
-                      </ActionButton>
+                      <PrimaryBtn onClick={() => setSelectedAlertId(alert.id)}>Review</PrimaryBtn>
                     </td>
                   </tr>
                 ))}
@@ -450,23 +597,25 @@ export default function SystemAlertsPage() {
             </table>
           </div>
           <div className="flex items-center justify-end gap-2 border-t border-[#F0EBE3] px-4 py-3">
-            <ActionButton
-              tone="ghost"
-              disabled={visiblePage === 1}
-              onClick={() => setCurrentPage(previous => Math.max(1, previous - 1))}
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Previous
-            </ActionButton>
-            <span className="px-2 text-xs font-semibold text-[#6B7280]">
-              {visiblePage} / {totalPages}
-            </span>
-            <ActionButton
-              tone="ghost"
-              disabled={visiblePage === totalPages}
-              onClick={() => setCurrentPage(previous => Math.min(totalPages, previous + 1))}
+              <ArrowIcon direction="left" />
+            </button>
+            <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+              {Math.min(currentPage, totalPages)} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Next
-            </ActionButton>
+              <ArrowIcon direction="right" />
+            </button>
           </div>
         </div>
       ) : (

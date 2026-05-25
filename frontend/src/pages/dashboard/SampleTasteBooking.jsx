@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
-import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
+import { DashboardErrorState } from '../../components/dashboard/DashboardUI'
 import {
   useDashboardSampleTasteDecision,
   useDashboardSampleTastes,
@@ -479,21 +479,20 @@ function SampleAccordionCard({ sample, decisionMutation, toggleSavedPackage, pen
 // Page
 // ---------------------------------------------------------------------------
 export default function SampleTasteBooking() {
+  // const { data: samples = [], error } = useDashboardSampleTastes()
+  const decisionMutation = useDashboardSampleTasteDecision()
+  const { toggleSavedPackage, pendingPackageId } = useWishlist()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const debouncedLocalSearch = useDebouncedValue(search)
-  const {
-    data: samples = [],
-    isLoading,
-    error,
-  } = useDashboardSampleTastes({
+  const { data: samples = [], error } = useDashboardSampleTastes({
     search: debouncedLocalSearch || debouncedSearchTerm,
     status,
   })
-  const decisionMutation = useDashboardSampleTasteDecision()
-  const { toggleSavedPackage, pendingPackageId } = useWishlist()
+  // const decisionMutation = useDashboardSampleTasteDecision()
+  // const { toggleSavedPackage, pendingPackageId } = useWishlist()
 
   const filtered = useMemo(() => {
     const term = debouncedLocalSearch.trim().toLowerCase()
@@ -514,9 +513,9 @@ export default function SampleTasteBooking() {
     })
   }, [debouncedLocalSearch, debouncedSearchTerm, samples, status])
 
-  if (isLoading) {
-    return <DashboardLoadingState title="Loading sample taste requests..." />
-  }
+  // if (isLoading) {
+  //   return <DashboardLoadingState title="Loading sample taste requests..." />
+  // }
 
   if (error) {
     return <DashboardErrorState title="We could not load sample taste bookings." />

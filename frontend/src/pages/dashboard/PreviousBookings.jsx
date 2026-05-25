@@ -4,7 +4,6 @@ import { useDashboardSearch } from '../../components/dashboard/useDashboardSearc
 import {
   DashboardEmptyState,
   DashboardErrorState,
-  DashboardLoadingState,
   DashboardPageIntro,
   StatusPill,
 } from '../../components/dashboard/DashboardUI'
@@ -19,6 +18,14 @@ import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+
+function isTerminalPreviousBooking(booking) {
+  const normalizedStatus = String(booking?.status ?? '')
+    .trim()
+    .toLowerCase()
+
+  return ['completed', 'cancelled', 'canceled'].includes(normalizedStatus)
+}
 
 function getBookAgainHref(booking) {
   const serviceSlug = String(booking?.package?.serviceCategories?.[0]?.slug ?? '')
@@ -239,7 +246,7 @@ function PreviousBookingCard({ booking, session }) {
             <Link
               to={getBookAgainHref(booking)}
               onClick={event => event.stopPropagation()}
-              className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-4 py-2 text-white hover:opacity-90"
+              className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-4 py-2 text-white hover:bg-[#C6AB7F]"
             >
               Book Again <ArrowIcon />
             </Link>
@@ -364,17 +371,15 @@ function PreviousBookingCard({ booking, session }) {
 }
 
 export default function PreviousBookings() {
+  // const { data: bookings = [], error } = useDashboardBookings('previous')
+  const { data: session } = useDashboardSession()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
-  const {
-    data: bookings = [],
-    isLoading,
-    error,
-  } = useDashboardBookings('previous', {
+  const { data: bookings = [], error } = useDashboardBookings('previous', {
     search: debouncedSearchTerm,
   })
-  const { data: session } = useDashboardSession()
-  const filteredBookings = bookings.filter(booking =>
+  const previousBookings = bookings.filter(isTerminalPreviousBooking)
+  const filteredBookings = previousBookings.filter(booking =>
     matchesDashboardSearch(debouncedSearchTerm, [
       booking?.package?.title,
       booking?.event?.name,
@@ -386,15 +391,15 @@ export default function PreviousBookings() {
     ])
   )
 
-  if (isLoading) {
-    return <DashboardLoadingState title="Loading previous bookings..." />
-  }
+  // if (isLoading) {
+  //   return <DashboardLoadingState title="Loading previous bookings..." />
+  // }
 
   if (error) {
     return <DashboardErrorState title="We could not load previous bookings." />
   }
 
-  if (bookings.length === 0) {
+  if (previousBookings.length === 0) {
     return (
       <EmptyBooking
         title="No previous bookings yet"

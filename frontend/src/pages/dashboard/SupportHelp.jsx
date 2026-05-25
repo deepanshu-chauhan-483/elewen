@@ -69,7 +69,7 @@ function FormInput({ label, value, onChange, placeholder, type = 'text' }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-[#D7CEC4] bg-white px-4 py-3 text-sm text-[#2E2E2E] placeholder:text-[#B0AAA4] outline-none focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B] transition"
+        className="w-full rounded-full border border-[#D7CEC4] bg-white px-4 py-3 text-sm text-[#2E2E2E] placeholder:text-[#B0AAA4] outline-none focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B] transition"
       />
     </div>
   )
@@ -160,14 +160,12 @@ const ArrowIcon = () => (
 export default function SupportHelp() {
   const { data: session } = useDashboardSession()
   const { data: bookings = [] } = useDashboardBookings('all')
-  const { data: help, isLoading: helpLoading, error: helpError } = useDashboardHelp()
+  const { data: help, error: helpError } = useDashboardHelp()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
-  const {
-    data: tickets = [],
-    isLoading: ticketsLoading,
-    error: ticketsError,
-  } = useDashboardSupportTickets({ search: debouncedSearchTerm })
+  const { data: tickets = [], error: ticketsError } = useDashboardSupportTickets({
+    search: debouncedSearchTerm,
+  })
 
   const [searchParams, setSearchParams] = useSearchParams()
   // const selectedTicketId = searchParams.get('ticketId') || ''
@@ -214,7 +212,7 @@ export default function SupportHelp() {
     [filteredTickets, selectedTicketId]
   )
 
-  if (helpLoading || ticketsLoading) return <DashboardLoadingState title="Loading support…" />
+  // if (helpLoading || ticketsLoading) return <DashboardLoadingState title="Loading support…" />
   if (helpError || ticketsError || ticketError)
     return <DashboardErrorState title="Support details could not be loaded right now." />
 
