@@ -1,35 +1,27 @@
-import { useMemo, useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SectionLoadingState } from '../components/ui/AdminUI'
+import { useState } from 'react'
+import {
+  ErrorState,
+  LoadingState,
+  ResultsEmptyState,
+  SectionLoadingState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import {
   useAdminBookings,
   useAdminCreateVendorAssignment,
+  useAdminReassignVendorAssignment,
   useAdminUpdateVendor,
   useAdminUpdateVendorAssignment,
   useAdminVendorAssignments,
   useAdminVendorWorkspace,
 } from '../hooks/useAdminData'
-import { formatCurrency } from '../lib/formatters'
+import { useScrollToTop } from '../hooks/useScrollToTop'
+import { getAdminBadgeClass } from '../lib/adminBadges'
+import { formatCurrency, formatDate, formatDateTime, sentenceCase } from '../lib/formatters'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 
-// ---------------------------------------------------------------------------
-// Shared primitives — matches BookingManagementPage exactly
-// ---------------------------------------------------------------------------
+const ACTIVE_ASSIGNMENT_STATUSES = ['assigned', 'confirmed']
 
-const badgeMap = {
-  pending: 'bg-[#FCE7CF] text-[#C57A1E]',
-  approved: 'bg-[#DDF7E5] text-[#16A34A]',
-  rejected: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  inactive: 'bg-[#E5E7EB] text-[#4B5563]',
-  available: 'bg-[#DDF7E5] text-[#16A34A]',
-  unavailable: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  assigned: 'bg-[#DDF7E5] text-[#16A34A]',
-  confirmed: 'bg-[#DDF7E5] text-[#16A34A]',
-  completed: 'bg-[#E5E7EB] text-[#4B5563]',
-  cancelled: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  success: 'bg-[#DDF7E5] text-[#16A34A]',
-  failed: 'bg-[#FFF3F3] text-[#8A1C1C]',
-}
-
-// Left border accent per vendor status
 const borderColorMap = {
   pending: 'border-[#C57A1E]',
   approved: 'border-[#16A34A]',
@@ -39,8 +31,9 @@ const borderColorMap = {
 
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
-  const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
-  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
+  const cls = getAdminBadgeClass(status, { preset: ['vivid', 'soft'] })
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '-'
+
   return (
     <span
       className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}
@@ -64,17 +57,17 @@ function MetricCard({ label, value, helper, accent }) {
   )
 }
 
-function Select({ value, onChange, children, className = '' }) {
-  return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className={`h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition ${className}`}
-    >
-      {children}
-    </select>
-  )
-}
+// function Select({ value, onChange, children, className = '' }) {
+//   return (
+//     <select
+//       value={value}
+//       onChange={e => onChange(e.target.value)}
+//       className={`h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition ${className}`}
+//     >
+//       {children}
+//     </select>
+//   )
+// }
 
 function Input({ type = 'text', value, onChange, placeholder }) {
   return (
@@ -94,7 +87,7 @@ function PrimaryBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B] hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
     >
       {children}
     </button>
@@ -107,7 +100,7 @@ function GhostBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
     >
       {children}
     </button>
@@ -120,16 +113,32 @@ function DangerBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#FECACA] bg-[#FFF3F3] px-5 text-sm font-semibold text-[#8A1C1C] transition hover:bg-[#FFE4E4] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#FECACA] bg-[#FFF3F3] px-5 text-sm font-semibold text-[#8A1C1C] transition hover:bg-[#FFE4E4] hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
     >
       {children}
     </button>
   )
 }
 
+function ExternalAction({ href, children }) {
+  if (!href) return null
+
+  const external = /^https?:\/\//i.test(href)
+
+  return (
+    <a
+      href={href}
+      {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E4DED8] bg-white px-5 text-sm font-semibold text-[#591902] transition hover:bg-[#F4EFE5] hover:-translate-y-px"
+    >
+      {children}
+    </a>
+  )
+}
+
 function SectionLabel({ children }) {
   return (
-    <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">
+    <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
       {children}
     </p>
   )
@@ -177,11 +186,47 @@ function ArrowIcon({ direction = 'right' }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Vendor Accordion Card — mirrors BookingAccordionCard pattern
-// ---------------------------------------------------------------------------
-function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
-  const [open, setOpen] = useState(false)
+function toArray(value) {
+  if (Array.isArray(value)) return value.filter(Boolean)
+  if (value == null || value === '') return []
+  return [value]
+}
+
+function normalizeUrl(value) {
+  const trimmed = String(value ?? '').trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
+function buildMailtoHref(to, subject, bodyLines = []) {
+  const recipient = String(to ?? '').trim()
+  if (!recipient) return ''
+
+  const params = new URLSearchParams()
+  if (subject) params.set('subject', subject)
+
+  const body = bodyLines.filter(Boolean).join('\n')
+  if (body) params.set('body', body)
+
+  const query = params.toString()
+  return `mailto:${recipient}${query ? `?${query}` : ''}`
+}
+
+function FieldGrid({ items }) {
+  return (
+    <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+      {items.map(item => (
+        <div key={item.label}>
+          <p className="text-[11px] tracking-[0.16em] text-[#767676]">{item.label}</p>
+          <p className="mt-0.5 text-sm text-[#2D2D2D]">{item.value || '-'}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggle }) {
   const [vendorStatus, setVendorStatus] = useState(vendor.vendorStatus ?? 'pending')
   const [isAvailable, setIsAvailable] = useState(Boolean(vendor.isAvailable))
   const [minimumPrice, setMinimumPrice] = useState(
@@ -191,19 +236,106 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
     vendor.leadTimeDays ? String(vendor.leadTimeDays) : ''
   )
   const [bookingId, setBookingId] = useState('')
+  const [expandedAssignmentId, setExpandedAssignmentId] = useState('')
+  const [reassignTargets, setReassignTargets] = useState({})
 
   const updateVendorMutation = useAdminUpdateVendor()
   const assignVendorMutation = useAdminCreateVendorAssignment()
+  const reassignAssignmentMutation = useAdminReassignVendorAssignment()
   const updateAssignmentMutation = useAdminUpdateVendorAssignment()
   const assignmentsQuery = useAdminVendorAssignments({ vendorId: vendor.id, enabled: open })
 
+  const assignments = assignmentsQuery.data?.assignments ?? []
+  const activeAssignments = assignments.filter(assignment =>
+    ACTIVE_ASSIGNMENT_STATUSES.includes(String(assignment.status ?? '').toLowerCase())
+  )
+  const historicalAssignments = assignments.filter(
+    assignment =>
+      !ACTIVE_ASSIGNMENT_STATUSES.includes(String(assignment.status ?? '').toLowerCase())
+  )
+
+  const activeBookingIds = new Set(
+    activeAssignments.map(assignment => String(assignment.bookingId))
+  )
+  const assignableBookings = (bookingsQuery.data?.bookings ?? []).filter(
+    booking => !activeBookingIds.has(String(booking.id))
+  )
+
   const borderColor = borderColorMap[vendor.vendorStatus?.toLowerCase()] ?? 'border-[#CDB17E]'
   const isBusy = updateVendorMutation.isPending
-
   const serviceNames = (vendor.serviceCategories ?? [])
-    .map(s => s.name)
+    .map(service => service.name)
     .filter(Boolean)
     .join(', ')
+
+  const registration = vendor.registrationData ?? {}
+  const eventTypes = toArray(registration.event_types).join(', ') || '-'
+  const websiteHref = normalizeUrl(registration.website_social_portfolio)
+  const portfolioHref = normalizeUrl(registration.portfolio_link)
+  const vendorMailto = buildMailtoHref(
+    vendor.email,
+    `Elewen vendor update for ${vendor.companyName}`,
+    [
+      `Hi ${vendor.contactPerson || vendor.companyName},`,
+      '',
+      'Sharing an update from the Elewen admin team.',
+    ]
+  )
+
+  const registrationFields = [
+    { label: 'SUBMITTED', value: formatDate(registration.submitted_at || vendor.createdAt) },
+    {
+      label: 'OPERATING AREA',
+      value: registration.operating_location || vendor.serviceArea || '-',
+    },
+    { label: 'EVENT TYPES', value: eventTypes },
+    {
+      label: 'EXPERIENCE',
+      value: vendor.experienceYears ? `${vendor.experienceYears} years` : '-',
+    },
+    { label: 'TEAM SIZE', value: vendor.teamSize ? String(vendor.teamSize) : '-' },
+    { label: 'DOCS ON FILE', value: String(vendor.documentsCount ?? 0) },
+    { label: 'PORTFOLIO ITEMS', value: String(vendor.portfolioCount ?? 0) },
+    {
+      label: 'COMPLETED BOOKINGS',
+      value: String(vendor.completedAssignmentsCount ?? 0),
+    },
+  ]
+
+  const handleSaveVendor = () =>
+    updateVendorMutation.mutate({
+      vendorId: vendor.id,
+      body: {
+        vendor_status: vendorStatus,
+        is_available: isAvailable,
+        minimum_price: minimumPrice ? Number(minimumPrice) : undefined,
+        lead_time_days: leadTimeDays ? Number(leadTimeDays) : undefined,
+      },
+    })
+
+  const handleApprove = () =>
+    updateVendorMutation.mutate({
+      vendorId: vendor.id,
+      body: { vendor_status: 'approved', is_available: true },
+    })
+
+  const handleReject = () =>
+    updateVendorMutation.mutate({
+      vendorId: vendor.id,
+      body: { vendor_status: 'rejected', is_available: false },
+    })
+
+  const handleReassign = async assignmentId => {
+    const nextBookingId = reassignTargets[assignmentId]
+    if (!nextBookingId) return
+
+    await reassignAssignmentMutation.mutateAsync({
+      assignmentId,
+      body: { bookingId: nextBookingId },
+    })
+
+    setReassignTargets(current => ({ ...current, [assignmentId]: '' }))
+  }
 
   return (
     <div
@@ -212,10 +344,9 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
         open ? `border-t-4 ${borderColor}` : `border-l-4 ${borderColor}`,
       ].join(' ')}
     >
-      {/* ── Header — always visible ── */}
-      <div className="cursor-pointer p-5" onClick={() => setOpen(p => !p)}>
+      <div className="cursor-pointer p-5" onClick={onToggle}>
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-start gap-3">
               <h3 className="text-[17px] font-medium leading-tight text-[#2E2E2E]">
                 {vendor.companyName}
@@ -252,7 +383,6 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
           </div>
         </div>
 
-        {/* Mobile summary when collapsed */}
         {!open && (
           <div className="mt-3 flex gap-8 text-sm md:hidden">
             <div>
@@ -267,67 +397,143 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
         )}
       </div>
 
-      {/* ── Expanded content ── */}
       {open && (
         <div
           className="border-t border-[#00000019] px-5 pb-6 pt-5"
-          onClick={e => e.stopPropagation()}
+          onClick={event => event.stopPropagation()}
         >
-          {/* Vendor details grid */}
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-            {[
+          <FieldGrid
+            items={[
               { label: 'COMPANY', value: vendor.companyName },
               { label: 'CONTACT', value: vendor.contactPerson },
               { label: 'EMAIL', value: vendor.email },
               { label: 'PHONE', value: vendor.phone },
               { label: 'CITY', value: vendor.locationCity },
-              { label: 'SERVICES', value: serviceNames || '—' },
+              { label: 'SERVICES', value: serviceNames || '-' },
               { label: 'MIN PRICE', value: formatCurrency(vendor.minimumPrice) },
               { label: 'PENDING PAYOUTS', value: formatCurrency(vendor.pendingPayoutAmount) },
               {
                 label: 'LEAD TIME',
-                value: vendor.leadTimeDays ? `${vendor.leadTimeDays} days` : '—',
+                value: vendor.leadTimeDays ? `${vendor.leadTimeDays} days` : '-',
               },
               { label: 'ACTIVE BOOKINGS', value: String(vendor.activeAssignmentsCount ?? 0) },
-            ].map(f => (
-              <div key={f.label}>
-                <p className="text-[11px] tracking-[0.16em] text-[#767676]">{f.label}</p>
-                <p className="mt-0.5 text-sm text-[#2D2D2D]">{f.value || '—'}</p>
+              { label: 'BANK PREF', value: vendor.bankInfo?.paymentPreference || '-' },
+              { label: 'LAST UPDATED', value: formatDate(vendor.updatedAt) },
+            ]}
+          />
+
+          <div className="mt-6">
+            <SectionLabel>Registration Review</SectionLabel>
+            <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+              <FieldGrid items={registrationFields} />
+
+              {registration.description ? (
+                <div className="mt-4 rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">DESCRIPTION</p>
+                  <p className="mt-2 text-sm leading-6 text-[#2D2D2D]">
+                    {registration.description}
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">DOCUMENTS</p>
+                  {(vendor.vendorDocuments ?? []).length ? (
+                    <div className="mt-3 space-y-2">
+                      {vendor.vendorDocuments.map(document => (
+                        <div
+                          key={document.id}
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#F7F4EF] px-3 py-3"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-[#2D2D2D]">
+                              {sentenceCase(document.documentType)}
+                            </p>
+                            <p className="mt-0.5 text-xs text-[#767676]">
+                              {document.fileName || 'Uploaded file'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              status={document.verified ? 'success' : 'pending'}
+                              label={document.verified ? 'Verified' : 'Pending'}
+                            />
+                            <ExternalAction href={document.fileUrl}>Open File</ExternalAction>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[#8F8F8F]">
+                      {registration.verification_document_name ||
+                        'No uploaded documents are linked yet.'}
+                    </p>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">WORK SAMPLES</p>
+                  {(vendor.vendorPortfolios ?? []).length ? (
+                    <div className="mt-3 space-y-2">
+                      {vendor.vendorPortfolios.map(portfolio => (
+                        <div
+                          key={portfolio.id}
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#F7F4EF] px-3 py-3"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-[#2D2D2D]">
+                              {portfolio.title || 'Portfolio item'}
+                            </p>
+                            <p className="mt-0.5 text-xs text-[#767676]">
+                              {portfolio.description || portfolio.imageName || 'Uploaded sample'}
+                            </p>
+                          </div>
+                          <ExternalAction href={portfolio.imageUrl}>Open Sample</ExternalAction>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[#8F8F8F]">
+                      {registration.work_sample_name || 'No work sample assets are linked yet.'}
+                    </p>
+                  )}
+                </div>
               </div>
-            ))}
+            </div>
           </div>
 
-          {/* ── Vendor Controls ── */}
           <div className="mt-6">
             <SectionLabel>Vendor Controls</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Status</p>
-                  <Select value={vendorStatus} onChange={setVendorStatus}>
+                  <SelectField value={vendorStatus} onChange={setVendorStatus}>
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="inactive">Inactive</option>
-                  </Select>
+                  </SelectField>
                 </div>
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Availability</p>
-                  <Select
+                  <SelectField
                     value={isAvailable ? 'true' : 'false'}
-                    onChange={v => setIsAvailable(v === 'true')}
+                    onChange={value => setIsAvailable(value === 'true')}
                   >
                     <option value="true">Available</option>
                     <option value="false">Unavailable</option>
-                  </Select>
+                  </SelectField>
                 </div>
                 <div>
-                  <p className="mb-1.5 text-xs text-[#8F8F8F]">Minimum price (₹)</p>
+                  <p className="mb-1.5 text-xs text-[#8F8F8F]">Minimum price (INR)</p>
                   <Input
                     type="number"
                     value={minimumPrice}
-                    onChange={e => setMinimumPrice(e.target.value)}
+                    onChange={event => setMinimumPrice(event.target.value)}
                     placeholder="e.g. 5000"
+                    className="rounded-2xl"
                   />
                 </div>
                 <div>
@@ -335,54 +541,31 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
                   <Input
                     type="number"
                     value={leadTimeDays}
-                    onChange={e => setLeadTimeDays(e.target.value)}
+                    onChange={event => setLeadTimeDays(event.target.value)}
                     placeholder="e.g. 3"
+                    className="rounded-2xl"
                   />
                 </div>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <PrimaryBtn
-                  disabled={isBusy}
-                  onClick={() =>
-                    updateVendorMutation.mutate({
-                      vendorId: vendor.id,
-                      body: {
-                        vendor_status: vendorStatus,
-                        is_available: isAvailable,
-                        minimum_price: minimumPrice ? Number(minimumPrice) : undefined,
-                        lead_time_days: leadTimeDays ? Number(leadTimeDays) : undefined,
-                      },
-                    })
-                  }
-                >
-                  {isBusy ? 'Saving…' : 'Save Changes'}
+                <PrimaryBtn disabled={isBusy} onClick={handleSaveVendor}>
+                  {isBusy ? 'Saving...' : 'Save Changes'}
                 </PrimaryBtn>
-
-                {/* Quick approve / reject — only for pending tab */}
+                <ExternalAction href={vendorMailto}>Email Vendor</ExternalAction>
+                <ExternalAction href={vendor.phone ? `tel:${vendor.phone}` : ''}>
+                  Call Vendor
+                </ExternalAction>
+                <ExternalAction href={websiteHref || portfolioHref}>
+                  Open Portfolio Link
+                </ExternalAction>
                 {tab === 'pending' && (
                   <>
-                    <GhostBtn
-                      disabled={isBusy}
-                      onClick={() =>
-                        updateVendorMutation.mutate({
-                          vendorId: vendor.id,
-                          body: { vendor_status: 'approved', is_available: true },
-                        })
-                      }
-                    >
+                    <GhostBtn disabled={isBusy} onClick={handleApprove}>
                       Approve
                     </GhostBtn>
-                    <DangerBtn
-                      disabled={isBusy}
-                      onClick={() =>
-                        updateVendorMutation.mutate({
-                          vendorId: vendor.id,
-                          body: { vendor_status: 'rejected' },
-                        })
-                      }
-                    >
-                      Reject
+                    <DangerBtn disabled={isBusy} onClick={handleReject}>
+                      Reject and Close
                     </DangerBtn>
                   </>
                 )}
@@ -390,85 +573,270 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
             </div>
           </div>
 
-          {/* ── Assign to Booking ── */}
           <div className="mt-6">
             <SectionLabel>Assign to Active Booking</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="flex-1 min-w-[200px]">
-                  <p className="mb-1.5 text-xs text-[#8F8F8F]">Select booking</p>
-                  <Select value={bookingId} onChange={setBookingId}>
-                    <option value="">Choose a booking…</option>
-                    {(bookingsQuery.data?.bookings ?? []).map(b => (
-                      <option key={b.id} value={b.id}>
-                        {b.package?.title || b.event?.name || b.id}
-                      </option>
-                    ))}
-                  </Select>
+              {vendorStatus !== 'approved' ? (
+                <p className="text-sm text-[#8F8F8F]">
+                  Approve this vendor first to enable booking assignment.
+                </p>
+              ) : (
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="min-w-[220px] flex-1">
+                    <p className="mb-1.5 text-xs text-[#8F8F8F]">Select booking</p>
+                    <SelectField value={bookingId} onChange={setBookingId}>
+                      <option value="">Choose a booking...</option>
+                      {assignableBookings.map(booking => (
+                        <option key={booking.id} value={booking.id}>
+                          {booking.package?.title || booking.event?.name || booking.id}
+                        </option>
+                      ))}
+                    </SelectField>
+                  </div>
+                  <PrimaryBtn
+                    disabled={assignVendorMutation.isPending || !bookingId}
+                    onClick={() =>
+                      assignVendorMutation.mutate(
+                        { bookingId, vendorId: vendor.id },
+                        { onSuccess: () => setBookingId('') }
+                      )
+                    }
+                  >
+                    {assignVendorMutation.isPending ? 'Assigning...' : 'Assign Vendor'}
+                  </PrimaryBtn>
                 </div>
-                <PrimaryBtn
-                  disabled={assignVendorMutation.isPending || !bookingId}
-                  onClick={() => assignVendorMutation.mutate({ bookingId, vendorId: vendor.id })}
-                >
-                  Assign Vendor
-                </PrimaryBtn>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* ── Linked Booking Assignments ── */}
           <div className="mt-6">
-            <SectionLabel>Linked Booking Assignments</SectionLabel>
-            {(assignmentsQuery.data?.assignments ?? []).length ? (
+            <SectionLabel>Active Booking Assignments</SectionLabel>
+            {assignmentsQuery.isLoading ? (
+              <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+                <p className="text-sm text-[#8F8F8F]">Loading assignment history...</p>
+              </div>
+            ) : activeAssignments.length ? (
+              <div className="space-y-3">
+                {activeAssignments.map(assignment => {
+                  const isExpanded = expandedAssignmentId === assignment.id
+                  const customerMailto = buildMailtoHref(
+                    assignment.booking?.customer?.email,
+                    `Elewen booking update ${assignment.booking?.id || ''}`.trim(),
+                    [
+                      `Hi ${assignment.booking?.customer?.name || 'there'},`,
+                      '',
+                      'Sharing a quick update on your booking.',
+                    ]
+                  )
+
+                  const reassignOptions = (bookingsQuery.data?.bookings ?? []).filter(
+                    booking =>
+                      String(booking.id) !== String(assignment.bookingId) &&
+                      !activeBookingIds.has(String(booking.id))
+                  )
+
+                  return (
+                    <div key={assignment.id} className="rounded-xl bg-[#F3F3F3] px-4 py-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-[#2D2D2D]">
+                            {assignment.booking?.package?.title ||
+                              assignment.booking?.id ||
+                              assignment.bookingId}
+                          </p>
+                          <p className="mt-0.5 text-xs text-[#767676]">
+                            {assignment.booking?.customer?.name || 'Customer'}
+                            {assignment.booking?.locationSummary
+                              ? ` · ${assignment.booking.locationSummary}`
+                              : ''}
+                          </p>
+                          <p className="mt-1 text-xs text-[#8F8F8F]">
+                            Assigned {formatDateTime(assignment.assignedAt)}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge status={assignment.status} />
+                          <GhostBtn
+                            onClick={() =>
+                              setExpandedAssignmentId(current =>
+                                current === assignment.id ? '' : assignment.id
+                              )
+                            }
+                          >
+                            {isExpanded ? 'Hide Details' : 'View Details'}
+                          </GhostBtn>
+                          {assignment.status === 'assigned' && (
+                            <GhostBtn
+                              disabled={updateAssignmentMutation.isPending}
+                              onClick={() =>
+                                updateAssignmentMutation.mutate({
+                                  assignmentId: assignment.id,
+                                  body: { status: 'confirmed' },
+                                })
+                              }
+                            >
+                              Confirm
+                            </GhostBtn>
+                          )}
+                          {assignment.status === 'confirmed' && (
+                            <GhostBtn
+                              disabled={updateAssignmentMutation.isPending}
+                              onClick={() =>
+                                updateAssignmentMutation.mutate({
+                                  assignmentId: assignment.id,
+                                  body: { status: 'completed' },
+                                })
+                              }
+                            >
+                              Complete
+                            </GhostBtn>
+                          )}
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="mt-4 space-y-4 border-t border-[#E4DED8] pt-4">
+                          <FieldGrid
+                            items={[
+                              {
+                                label: 'BOOKING ID',
+                                value: assignment.booking?.id || assignment.bookingId,
+                              },
+                              {
+                                label: 'STATUS',
+                                value:
+                                  assignment.booking?.statusLabel ||
+                                  sentenceCase(assignment.booking?.status || 'active'),
+                              },
+                              {
+                                label: 'EVENT DATE',
+                                value: formatDate(assignment.booking?.eventDate),
+                              },
+                              {
+                                label: 'GUESTS',
+                                value: assignment.booking?.guestCount
+                                  ? String(assignment.booking.guestCount)
+                                  : 'Pending',
+                              },
+                              {
+                                label: 'CUSTOMER',
+                                value: assignment.booking?.customer?.name || '-',
+                              },
+                              { label: 'EMAIL', value: assignment.booking?.customer?.email || '-' },
+                              { label: 'PHONE', value: assignment.booking?.customer?.phone || '-' },
+                              {
+                                label: 'LOCATION',
+                                value: assignment.booking?.locationSummary || '-',
+                              },
+                              {
+                                label: 'ADVANCE',
+                                value: formatCurrency(assignment.booking?.advanceAmount),
+                              },
+                              {
+                                label: 'REMAINING',
+                                value: formatCurrency(assignment.booking?.remainingAmount),
+                              },
+                            ]}
+                          />
+
+                          <div className="flex flex-wrap gap-2">
+                            <ExternalAction href={customerMailto}>Email Customer</ExternalAction>
+                            <ExternalAction href="/bookings">
+                              Open Bookings Workspace
+                            </ExternalAction>
+                          </div>
+
+                          <div className="rounded-xl bg-white px-4 py-4">
+                            <p className="text-[11px] tracking-[0.16em] text-[#767676]">
+                              REASSIGN VENDOR
+                            </p>
+                            <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end">
+                              <div className="flex-1">
+                                <p className="mb-1.5 text-xs text-[#8F8F8F]">
+                                  Move to another active booking
+                                </p>
+                                <SelectField
+                                  value={reassignTargets[assignment.id] ?? ''}
+                                  onChange={value =>
+                                    setReassignTargets(current => ({
+                                      ...current,
+                                      [assignment.id]: value,
+                                    }))
+                                  }
+                                >
+                                  <option value="">Choose a new booking...</option>
+                                  {reassignOptions.map(booking => (
+                                    <option key={booking.id} value={booking.id}>
+                                      {booking.package?.title || booking.event?.name || booking.id}
+                                    </option>
+                                  ))}
+                                </SelectField>
+                              </div>
+                              <PrimaryBtn
+                                disabled={
+                                  reassignAssignmentMutation.isPending ||
+                                  !reassignTargets[assignment.id] ||
+                                  vendorStatus !== 'approved'
+                                }
+                                onClick={() => handleReassign(assignment.id)}
+                              >
+                                {reassignAssignmentMutation.isPending
+                                  ? 'Reassigning...'
+                                  : 'Reassign Vendor'}
+                              </PrimaryBtn>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+                <p className="text-sm text-[#8F8F8F]">
+                  No active booking assignments for this vendor.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <SectionLabel>Assignment History</SectionLabel>
+            {historicalAssignments.length ? (
               <div className="space-y-2">
-                {assignmentsQuery.data.assignments.map(a => (
+                {historicalAssignments.map(assignment => (
                   <div
-                    key={a.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#F3F3F3] px-4 py-3"
+                    key={assignment.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#F8F7F4] px-4 py-3"
                   >
                     <div>
                       <p className="text-sm font-medium text-[#2D2D2D]">
-                        {a.booking?.package?.title || a.booking?.id || a.bookingId}
+                        {assignment.booking?.package?.title ||
+                          assignment.booking?.id ||
+                          assignment.bookingId}
                       </p>
                       <p className="mt-0.5 text-xs text-[#767676]">
-                        {a.booking?.customer?.name || 'Customer'}
-                        {a.booking?.locationSummary ? ` · ${a.booking.locationSummary}` : ''}
+                        {sentenceCase(assignment.status)} · {formatDateTime(assignment.assignedAt)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge status={a.status} />
-                      {a.status === 'assigned' && (
-                        <GhostBtn
-                          onClick={() =>
-                            updateAssignmentMutation.mutate({
-                              assignmentId: a.id,
-                              body: { status: 'confirmed' },
-                            })
-                          }
-                        >
-                          Confirm
-                        </GhostBtn>
-                      )}
-                      {a.status === 'confirmed' && (
-                        <GhostBtn
-                          onClick={() =>
-                            updateAssignmentMutation.mutate({
-                              assignmentId: a.id,
-                              body: { status: 'completed' },
-                            })
-                          }
-                        >
-                          Complete
-                        </GhostBtn>
-                      )}
+                      <Badge status={assignment.status} />
+                      <ExternalAction
+                        href={buildMailtoHref(vendor.email, 'Elewen vendor follow-up')}
+                      >
+                        Email Vendor
+                      </ExternalAction>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#8F8F8F]">
-                No booking assignments linked to this vendor yet.
-              </p>
+              <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+                <p className="text-sm text-[#8F8F8F]">
+                  No prior completed or reassigned bookings for this vendor yet.
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -477,19 +845,14 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Tab pills
-// ---------------------------------------------------------------------------
 const vendorTabs = [
   { key: 'pending', label: 'Pending Requests' },
-  { key: 'assigned', label: 'Assigned' },
-  { key: 'unassigned', label: 'Unassigned' },
+  { key: 'assigned', label: 'Assigned Vendors' },
+  { key: 'unassigned', label: 'Unassigned Vendors' },
 ]
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 export default function VendorManagementPage() {
+  const [openVendorId, setOpenVendorId] = useState('')
   const [tab, setTab] = useState('pending')
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
@@ -497,12 +860,16 @@ export default function VendorManagementPage() {
   const [availability, setAvailability] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
+  const [bookingCount, setBookingCount] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
+  const debouncedCategory = useDebouncedValue(category)
+  const debouncedLocation = useDebouncedValue(location)
 
   const workspaceQuery = useAdminVendorWorkspace({
     tab,
-    search,
-    category,
-    location,
+    search: debouncedSearch,
+    category: debouncedCategory,
+    location: debouncedLocation,
     availability,
     page: currentPage,
     limit: PAGE_SIZE,
@@ -511,33 +878,31 @@ export default function VendorManagementPage() {
 
   const workspace = workspaceQuery.data ?? {}
   const summary = workspace.summary ?? {}
-  const vendorGroups = useMemo(
-    () => ({
-      pending: Array.from({ length: Number(summary.pendingRequests ?? 0) }),
-      assigned: Array.from({ length: Number(summary.assignedVendors ?? 0) }),
-      unassigned: Array.from({ length: Number(summary.unassignedVendors ?? 0) }),
-    }),
-    [summary.assignedVendors, summary.pendingRequests, summary.unassignedVendors]
-  )
+  const tabCounts = {
+    pending: Number(summary.pendingRequests ?? 0),
+    assigned: Number(summary.assignedVendors ?? 0),
+    unassigned: Number(summary.unassignedVendors ?? 0),
+  }
   const activeList = workspace.activeList ?? []
   const totalPages = Math.max(1, Number(workspace.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+
+  useScrollToTop(currentPage)
   const isResultsLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
 
-  if (workspaceQuery.isLoading) return <LoadingState label="Loading vendors…" />
+  if (workspaceQuery.isLoading) return <LoadingState label="Loading vendors..." />
   if (workspaceQuery.error) return <ErrorState label="Vendor data could not be loaded right now." />
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl  text-[#1C1C1C]">Vendor Management</h1>
+        <h1 className="text-2xl text-[#1C1C1C]">Vendor Management</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
-          Review pending registrations, manage approved vendors, and link them to active bookings.
+          Review registrations, manage approved vendors, reassign active vendors, and track booking
+          history from one workspace.
         </p>
       </div>
 
-      {/* ── Metrics ── */}
       <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Pending Requests"
@@ -565,48 +930,45 @@ export default function VendorManagementPage() {
         />
       </div>
 
-      {/* ── Tab bar ── */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#8F8F8F]">
           Vendor Pool
         </p>
         <div className="flex flex-wrap gap-2">
-          {vendorTabs.map(t => (
+          {vendorTabs.map(item => (
             <button
-              key={t.key}
+              key={item.key}
               type="button"
               onClick={() => {
-                setTab(t.key)
+                setTab(item.key)
                 setCurrentPage(1)
               }}
               className={[
                 'flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition',
-                tab === t.key
+                tab === item.key
                   ? 'border-[#D4BA8E] bg-[#D4BA8E] text-[#FAFAFA]'
                   : 'border-[#E4DED8] bg-white text-[#6B7280] hover:border-[#D4BA8E] hover:text-[#7A5C2E]',
               ].join(' ')}
             >
-              {t.label}
+              {item.label}
               <span
                 className={[
                   'rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
-                  tab === t.key ? 'bg-white/30 text-white' : 'bg-[#F0EBE3] text-[#8C7D70]',
+                  tab === item.key ? 'bg-white/30 text-white' : 'bg-[#F0EBE3] text-[#8C7D70]',
                 ].join(' ')}
               >
-                {(vendorGroups[t.key] ?? []).length}
+                {tabCounts[item.key] ?? 0}
               </span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Filters ── */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FAFAFA] p-4">
-        <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">
+        <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
           Filter Vendors
         </p>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {/* Search */}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] px-2.5 py-1.5 text-[#A19B94]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
               <span className="h-3.5 w-3.5">
@@ -624,6 +986,7 @@ export default function VendorManagementPage() {
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
+
           <Input
             value={category}
             onChange={e => {
@@ -632,6 +995,7 @@ export default function VendorManagementPage() {
             }}
             placeholder="Service category"
           />
+
           <Input
             value={location}
             onChange={e => {
@@ -640,7 +1004,7 @@ export default function VendorManagementPage() {
             }}
             placeholder="City / location"
           />
-          <Select
+          <SelectField
             value={availability}
             onChange={value => {
               setAvailability(value)
@@ -650,11 +1014,17 @@ export default function VendorManagementPage() {
             <option value="">Any Availability</option>
             <option value="available">Available</option>
             <option value="unavailable">Unavailable</option>
-          </Select>
+          </SelectField>
+
+          <SelectField value={bookingCount} onChange={setBookingCount}>
+            <option value="">Booking Count</option>
+            <option value="none">0 Active Bookings</option>
+            <option value="one_plus">1+ Active Bookings</option>
+            <option value="three_plus">3+ Active Bookings</option>
+          </SelectField>
         </div>
       </div>
 
-      {/* ── Results count ── */}
       <div className="flex items-baseline gap-2">
         <span className="text-base font-semibold text-[#1C1C1C]">
           {Number(workspace.total ?? 0)}
@@ -671,10 +1041,12 @@ export default function VendorManagementPage() {
         <div className="space-y-3">
           {activeList.map(vendor => (
             <VendorAccordionCard
-              key={`${vendor.id}:${vendor.vendorStatus ?? ''}:${vendor.isAvailable ? '1' : '0'}:${vendor.minimumPrice ?? ''}:${vendor.leadTimeDays ?? ''}`}
+              key={`${vendor.id}:${vendor.vendorStatus ?? ''}:${vendor.isAvailable ? '1' : '0'}:${vendor.activeAssignmentsCount ?? 0}:${vendor.documentsCount ?? 0}`}
               vendor={vendor}
               tab={tab}
               bookingsQuery={bookingsQuery}
+              open={openVendorId === vendor.id}
+              onToggle={() => setOpenVendorId(current => (current === vendor.id ? '' : vendor.id))}
             />
           ))}
           <div className="mt-4 flex justify-end gap-2">
@@ -700,25 +1072,11 @@ export default function VendorManagementPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">
-          <EmptyState title="No vendors found" body="Try a different search term or switch tabs." />
-        </div>
+        <ResultsEmptyState
+          title="No vendors found"
+          body="Try a different search term, filter, or tab."
+        />
       )}
     </div>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Standalone Input (used in filter bar)
-// ---------------------------------------------------------------------------
-// function Input({ value, onChange, placeholder }) {
-//   return (
-//     <input
-//       type="text"
-//       value={value}
-//       onChange={onChange}
-//       placeholder={placeholder}
-//       className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
-//     />
-//   )
-// }

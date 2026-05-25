@@ -1,30 +1,33 @@
 import { useState } from 'react'
-import { EmptyState, ErrorState, LoadingState, SelectField } from '../components/ui/AdminUI'
+import { useNavigate } from 'react-router-dom'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  ResultsEmptyState,
+  SelectField,
+} from '../components/ui/AdminUI'
 import { useAdminOverview } from '../hooks/useAdminData'
+import { useScrollToTop } from '../hooks/useScrollToTop'
+import { getAdminBadgeMeta } from '../lib/adminBadges'
 import { formatCount, formatCurrency, formatDate } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
 // StatusBadge
 // ---------------------------------------------------------------------------
-const badgeClasses = {
-  urgent: 'bg-red-100 text-red-800',
-  overdue: 'bg-amber-100 text-amber-800',
-  pending: 'bg-blue-50 text-blue-700',
-  confirmed: 'bg-green-100 text-green-800',
-  new: 'bg-[#F5EDD9] text-[#7A5C2E]',
-  high: 'bg-red-100 text-red-800',
-  medium: 'bg-amber-100 text-amber-800',
-  low: 'bg-green-100 text-green-800',
-  open: 'bg-gray-100 text-gray-700',
-  healthy: 'bg-green-100 text-green-800',
-  warning: 'bg-amber-100 text-amber-800',
-  error: 'bg-red-100 text-red-800',
+const getStatusBadgeClasses = status => {
+  const { key, className } = getAdminBadgeMeta(status, { preset: 'soft' })
+  return {
+    key,
+    cls: className,
+  }
 }
 
+const getTextColorHex = cls => cls.match(/text-\[(#[0-9A-Fa-f]{3,8})\]/)?.[1] ?? null
+
 function StatusBadge({ status, label }) {
-  const key = status?.toLowerCase() ?? ''
-  const cls = badgeClasses[key] ?? 'bg-gray-100 text-gray-700'
-  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
+  const { key, cls } = getStatusBadgeClasses(status)
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '-'
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] tracking-wide whitespace-nowrap ${cls}`}
@@ -53,12 +56,42 @@ function ArrowIcon({ direction = 'right' }) {
     </svg>
   )
 }
+
+function ClickableContainer({ children, onClick, className = '', style }) {
+  if (!onClick) {
+    return (
+      <div className={className} style={style}>
+        {children}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick()
+        }
+      }}
+      className={`${className} cursor-pointer text-left transition hover:border-[#D4BA8E]`}
+      style={style}
+    >
+      {children}
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // MetricCard
 // ---------------------------------------------------------------------------
-function MetricCard({ label, value, helper, accent = false }) {
+function MetricCard({ label, value, helper, accent = false, onClick }) {
   return (
-    <div
+    <ClickableContainer
+      onClick={onClick}
       className={[
         'flex flex-col gap-1 rounded-2xl border border-[#F0EBE3] bg-white px-5 py-5',
         accent ? 'border-t-[3px] border-t-[#D4BA8E]' : '',
@@ -69,16 +102,19 @@ function MetricCard({ label, value, helper, accent = false }) {
       </span>
       <span className="text-[28px] font-semibold leading-none text-[#1C1C1C]">{value}</span>
       <span className="text-xs text-gray-500">{helper}</span>
-    </div>
+    </ClickableContainer>
   )
 }
 
 // ---------------------------------------------------------------------------
 // Panel
 // ---------------------------------------------------------------------------
-function Panel({ title, subtitle, children, action }) {
+function Panel({ title, subtitle, children, action, onClick }) {
   return (
-    <div className="rounded-[20px] border border-[#F0EBE3] bg-[#FAFAF8] p-6">
+    <ClickableContainer
+      onClick={onClick}
+      className="rounded-[20px] border border-[#F0EBE3] bg-[#FAFAF8] p-6"
+    >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base text-[#1C1C1C]">{title}</h2>
@@ -87,31 +123,37 @@ function Panel({ title, subtitle, children, action }) {
         {action && <div className="shrink-0">{action}</div>}
       </div>
       {children}
-    </div>
+    </ClickableContainer>
   )
 }
 
 // ---------------------------------------------------------------------------
 // ActionItem
 // ---------------------------------------------------------------------------
-function ActionItem({ item }) {
+function ActionItem({ item, onClick }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-xl border border-[#F0EBE3] bg-white px-4 py-3.5">
+    <ClickableContainer
+      onClick={onClick}
+      className="flex items-start justify-between gap-3 rounded-xl border border-[#F0EBE3] bg-white px-4 py-3.5"
+    >
       <div className="flex-1">
         <p className="text-sm text-[#1C1C1C]">{item.title}</p>
         <p className="mt-1 text-[13px] text-gray-500">{item.detail}</p>
       </div>
       <StatusBadge status={item.status} />
-    </div>
+    </ClickableContainer>
   )
 }
 
 // ---------------------------------------------------------------------------
 // AlertItem
 // ---------------------------------------------------------------------------
-function AlertItem({ alert }) {
+function AlertItem({ alert, onClick }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-xl border border-[#F0EBE3] bg-white px-4 py-3.5">
+    <ClickableContainer
+      onClick={onClick}
+      className="flex items-start justify-between gap-3 rounded-xl border border-[#F0EBE3] bg-white px-4 py-3.5"
+    >
       <div className="flex-1">
         <p className="text-sm text-[#1C1C1C]">{alert.message}</p>
         <p className="mt-1 text-[11px] uppercase tracking-widest text-gray-400">
@@ -122,7 +164,7 @@ function AlertItem({ alert }) {
         <StatusBadge status={alert.severity} />
         <StatusBadge status={alert.status} />
       </div>
-    </div>
+    </ClickableContainer>
   )
 }
 
@@ -130,24 +172,27 @@ function AlertItem({ alert }) {
 // RevenueCard
 // ---------------------------------------------------------------------------
 const revenueVariants = {
-  good: 'border-green-200 bg-green-50',
-  warn: 'border-red-200 bg-red-50',
-  default: 'border-[#F0EBE3] bg-white',
+  good: 'border-l-[#238E64]',
+  warn: 'border-l-[#591902]',
+  default: 'border-l-[#3061C6]',
 }
 const revenueLabelVariants = {
-  good: 'text-green-700',
-  warn: 'text-red-700',
-  default: 'text-gray-400',
+  good: 'text-[#238E64]',
+  warn: 'text-[#591902]',
+  default: 'text-[#6B7280]',
 }
 const revenueValueVariants = {
-  good: 'text-green-800',
-  warn: 'text-red-800',
-  default: 'text-gray-900',
+  good: 'text-[#238E64]',
+  warn: 'text-[#591902]',
+  default: 'text-[#1F2937]',
 }
 
-function RevenueCard({ label, value, variant = 'default' }) {
+function RevenueCard({ label, value, variant = 'default', onClick }) {
   return (
-    <div className={`rounded-xl border p-4 ${revenueVariants[variant]}`}>
+    <ClickableContainer
+      onClick={onClick}
+      className={`rounded-xl border-l-[3px] p-4 ${revenueVariants[variant]}`}
+    >
       <p
         className={`text-[11px] font-normal uppercase tracking-widest ${revenueLabelVariants[variant]}`}
       >
@@ -156,23 +201,22 @@ function RevenueCard({ label, value, variant = 'default' }) {
       <p className={`mt-2 text-[22px] font-semibold leading-none ${revenueValueVariants[variant]}`}>
         {value}
       </p>
-    </div>
+    </ClickableContainer>
   )
 }
 
 // ---------------------------------------------------------------------------
 // HealthCard
 // ---------------------------------------------------------------------------
-const healthBorderVariants = {
-  healthy: 'border-l-green-500',
-  warning: 'border-l-amber-400',
-  error: 'border-l-red-500',
-}
-
-function HealthCard({ item }) {
-  const borderCls = healthBorderVariants[item.status] ?? 'border-l-gray-300'
+function HealthCard({ item, onClick }) {
+  const { cls } = getStatusBadgeClasses(item.status)
+  const borderColor = getTextColorHex(cls) ?? '#D1D5DB'
   return (
-    <div className={`rounded-xl border border-[#F0EBE3] border-l-[3px] bg-white p-4 ${borderCls}`}>
+    <ClickableContainer
+      onClick={onClick}
+      className="rounded-xl border border-[#F0EBE3] border-l-[3px] bg-white p-4"
+      style={{ borderLeftColor: borderColor }}
+    >
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
           {item.label}
@@ -181,7 +225,7 @@ function HealthCard({ item }) {
       </div>
       <p className="text-[15px] font-bold text-gray-900">{item.value}</p>
       <p className="mt-1 text-xs text-gray-500">{item.detail}</p>
-    </div>
+    </ClickableContainer>
   )
 }
 
@@ -223,7 +267,55 @@ const TABLE_COLS = [
 ]
 const TABLE_PAGE_SIZE = 10
 
+const getPendingActionRoute = itemId => {
+  switch (itemId) {
+    case 'bookings-needing-attention':
+      return '/bookings?status=new'
+    case 'vendor-pending':
+      return '/vendors'
+    case 'sample-taste':
+      return '/sample-taste'
+    case 'support-queue':
+      return '/support'
+    default:
+      return ''
+  }
+}
+
+const getBookingOverviewRoute = metricKey => {
+  switch (metricKey) {
+    case 'total':
+      return '/bookings'
+    case 'new':
+      return '/bookings?status=new'
+    case 'ongoing':
+      return '/bookings?bucket=active'
+    case 'completed':
+      return '/bookings?bucket=completed&status=completed'
+    case 'upcoming':
+      return '/bookings?bucket=upcoming'
+    default:
+      return '/bookings'
+  }
+}
+
+const getHealthRoute = label => {
+  switch (label) {
+    case 'Platform status':
+      return '/alerts'
+    case 'Payment gateway':
+      return '/payments'
+    case 'Notification service':
+      return '/support'
+    case 'Bookings per day':
+      return '/bookings'
+    default:
+      return ''
+  }
+}
+
 export default function OverviewPage() {
+  const navigate = useNavigate()
   const [tab, setTab] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const overviewQuery = useAdminOverview()
@@ -245,6 +337,8 @@ export default function OverviewPage() {
     visiblePage * TABLE_PAGE_SIZE
   )
 
+  useScrollToTop(currentPage)
+
   if (overviewQuery.isLoading) {
     return <LoadingState label="Loading operational overview..." />
   }
@@ -255,7 +349,6 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl tracking-tight text-[#1C1C1C]">Overview</h1>
@@ -269,77 +362,83 @@ export default function OverviewPage() {
             })}
           </p>
         </div>
-        {/* <Link
-          to="/alerts"
-          className="inline-flex min-h-11 items-center rounded-[8px] bg-[#D4BA8E] px-4 text-sm font-medium text-[#FAFAFA] transition hover:bg-[#c7aa76]"
-        >
-          Review Alerts
-        </Link> */}
       </div>
 
-      {/* ── Booking metrics ── */}
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Total Bookings"
           value={formatCount(metrics.totalBookings)}
           helper="All records"
           accent
+          onClick={() => navigate(getBookingOverviewRoute('total'))}
         />
         <MetricCard
           label="New"
           value={formatCount(metrics.newBookingsCount)}
           helper="Need confirmation"
           accent
+          onClick={() => navigate(getBookingOverviewRoute('new'))}
         />
         <MetricCard
           label="Ongoing"
           value={formatCount(metrics.activeBookingsCount)}
           helper="Confirmed / active"
           accent
+          onClick={() => navigate(getBookingOverviewRoute('ongoing'))}
         />
         <MetricCard
           label="Completed"
           value={formatCount(metrics.completedBookingsCount)}
           helper="Closed events"
           accent
+          onClick={() => navigate(getBookingOverviewRoute('completed'))}
         />
       </div>
 
-      {/* ── Financial / misc metrics ── */}
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Upcoming Events"
           value={formatCount(metrics.upcomingEventsCount)}
           helper="Next 15 days"
           accent
+          onClick={() => navigate(getBookingOverviewRoute('upcoming'))}
         />
         <MetricCard
           label="Revenue Collected"
           value={formatCurrency(metrics.collectedAmount)}
           helper="Successful payments"
           accent
+          onClick={() => navigate('/payments')}
         />
         <MetricCard
           label="Pending Balance"
           value={formatCurrency(metrics.pendingPaymentAmount)}
           helper="Awaiting payment"
           accent
+          onClick={() => navigate('/payments')}
         />
         <MetricCard
           label="Vendor Approvals"
           value={formatCount(metrics.pendingVendorApprovalsCount)}
           helper="Awaiting review"
           accent
+          onClick={() => navigate('/vendors')}
         />
       </div>
 
-      {/* ── Pending Actions + Overdue Alerts ── */}
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Pending Actions" subtitle="Approvals, messages & missing data">
           {pendingActions.length ? (
             <div className="space-y-2.5">
               {pendingActions.map(item => (
-                <ActionItem key={item.id} item={item} />
+                <ActionItem
+                  key={item.id}
+                  item={item}
+                  onClick={() => {
+                    const route = getPendingActionRoute(item.id)
+                    if (route) navigate(route)
+                  }}
+                />
               ))}
             </div>
           ) : (
@@ -347,11 +446,15 @@ export default function OverviewPage() {
           )}
         </Panel>
 
-        <Panel title="Overdue Alerts" subtitle="Items needing immediate attention">
+        <Panel
+          title="Overdue Alerts"
+          subtitle="Items needing immediate attention"
+          onClick={() => navigate('/alerts')}
+        >
           {overdueAlerts.length ? (
             <div className="space-y-2.5">
               {overdueAlerts.map(alert => (
-                <AlertItem key={alert.id} alert={alert} />
+                <AlertItem key={alert.id} alert={alert} onClick={() => navigate('/alerts')} />
               ))}
             </div>
           ) : (
@@ -363,7 +466,6 @@ export default function OverviewPage() {
         </Panel>
       </div>
 
-      {/* ── Upcoming Events Table ── */}
       <Panel
         title="Upcoming Events"
         subtitle="Next 15 days"
@@ -449,33 +551,40 @@ export default function OverviewPage() {
             </div>
           </div>
         ) : (
-          <EmptyState title="No events" body="No bookings match this filter." />
+          <ResultsEmptyState title="No events" body="No bookings match this filter." />
         )}
       </Panel>
 
-      {/* ── Revenue Snapshot + System Health ── */}
-      <div className="grid gap-5 xl:grid-cols-2">
-        <Panel title="Revenue Snapshot" subtitle="Payment collection summary">
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Panel
+          title="Revenue Snapshot"
+          subtitle="Payment collection summary"
+          onClick={() => navigate('/payments')}
+        >
           <div className="grid grid-cols-2 gap-3">
             <RevenueCard
               label="Collected"
               value={formatCurrency(metrics.collectedAmount)}
               variant="good"
+              onClick={() => navigate('/payments')}
             />
             <RevenueCard
               label="Pending Balance"
               value={formatCurrency(metrics.pendingPaymentAmount)}
               variant="default"
+              onClick={() => navigate('/payments')}
             />
             <RevenueCard
               label="Failed Payments"
               value={formatCount(metrics.failedPaymentsCount)}
               variant="warn"
+              onClick={() => navigate('/payments')}
             />
             <RevenueCard
               label="Vendor Payouts Due"
               value={formatCurrency(metrics.pendingVendorPayoutAmount)}
               variant="default"
+              onClick={() => navigate('/payments')}
             />
           </div>
         </Panel>
@@ -484,7 +593,14 @@ export default function OverviewPage() {
           {healthIndicators.length ? (
             <div className="grid grid-cols-2 gap-3">
               {healthIndicators.map(item => (
-                <HealthCard key={item.label} item={item} />
+                <HealthCard
+                  key={item.label}
+                  item={item}
+                  onClick={() => {
+                    const route = getHealthRoute(item.label)
+                    if (route) navigate(route)
+                  }}
+                />
               ))}
             </div>
           ) : (

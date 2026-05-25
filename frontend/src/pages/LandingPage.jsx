@@ -99,6 +99,375 @@ const getMobileCarouselTranslateX = ({ totalItems, page, cardWidth, cardGap }) =
   return `translateX(calc(50% - ${cardWidth / 2}px - ${page * (cardWidth + cardGap)}px))`
 }
 
+const getVisiblePaginationDots = (totalItems, activeIndex, maxVisible = 5) => {
+  if (totalItems <= 0) return []
+  if (totalItems <= maxVisible) {
+    return Array.from({ length: totalItems }, (_, index) => index)
+  }
+
+  const halfWindow = Math.floor(maxVisible / 2)
+  const maxStart = totalItems - maxVisible
+  const start = Math.max(0, Math.min(activeIndex - halfWindow, maxStart))
+
+  return Array.from({ length: maxVisible }, (_, index) => start + index)
+}
+
+const LandingPackageCarouselCard = ({
+  pkg,
+  index,
+  isActive,
+  isMobile,
+  usePackageCylinder,
+  onActivate,
+  style,
+}) => {
+  const [showAllIncludes, setShowAllIncludes] = useState(false)
+  const [visibleTagCount, setVisibleTagCount] = useState(0)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.innerWidth >= 768
+  })
+  const visibleTagsViewportRef = useRef(null)
+  const hiddenTagsMeasureRef = useRef(null)
+  const imageCount = pkg.images?.length ?? 0
+  const useInnerSwiper = imageCount > 1
+  const tags = useMemo(() => {
+    if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
+    if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
+    return []
+  }, [pkg.includes, pkg.tags])
+  const hasMoreIncludes = tags.length > visibleTagCount
+  const visibleTags = showAllIncludes ? tags : tags.slice(0, visibleTagCount)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const handleViewportChange = event => {
+      setIsDesktopViewport(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange)
+      return () => mediaQuery.removeEventListener('change', handleViewportChange)
+    }
+
+    mediaQuery.addListener(handleViewportChange)
+    return () => mediaQuery.removeListener(handleViewportChange)
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowAllIncludes(false)
+      setVisibleTagCount(0)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [pkg.id, pkg.documentId, tags.length, isDesktopViewport])
+
+  useEffect(() => {
+    const calculateVisibleTags = () => {
+      const viewport = visibleTagsViewportRef.current
+      const measureContainer = hiddenTagsMeasureRef.current
+
+      if (!viewport || !measureContainer) return
+
+      const availableHeight = viewport.clientHeight
+      const availableWidth = viewport.clientWidth
+
+      if (!availableHeight || !availableWidth) {
+        setVisibleTagCount(tags.length)
+        return
+      }
+
+      measureContainer.style.width = `${availableWidth}px`
+
+      const tagNodes = Array.from(measureContainer.querySelectorAll('[data-tag-index]'))
+      const moreNode = measureContainer.querySelector('[data-more-tag]')
+
+      tagNodes.forEach(node => {
+        node.style.display = 'none'
+      })
+
+      if (moreNode) {
+        moreNode.style.display = 'none'
+      }
+
+      let fittedCount = tagNodes.length
+
+      for (let tagIndex = 0; tagIndex < tagNodes.length; tagIndex += 1) {
+        tagNodes[tagIndex].style.display = 'inline-flex'
+
+        const hasRemainingTags = tagIndex < tagNodes.length - 1
+        if (moreNode) {
+          moreNode.style.display = hasRemainingTags ? 'inline-flex' : 'none'
+        }
+
+        if (measureContainer.scrollHeight > availableHeight) {
+          tagNodes[tagIndex].style.display = 'none'
+          fittedCount = Math.max(tagIndex, 1)
+          break
+        }
+      }
+
+      if (fittedCount === tagNodes.length && moreNode) {
+        moreNode.style.display = 'none'
+      }
+
+      setVisibleTagCount(fittedCount)
+    }
+
+    if (showAllIncludes) {
+      const timer = setTimeout(() => {
+        setVisibleTagCount(tags.length)
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+
+    calculateVisibleTags()
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', calculateVisibleTags)
+      return () => window.removeEventListener('resize', calculateVisibleTags)
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      calculateVisibleTags()
+    })
+
+    if (visibleTagsViewportRef.current) {
+      resizeObserver.observe(visibleTagsViewportRef.current)
+    }
+
+    return () => resizeObserver.disconnect()
+  }, [showAllIncludes, tags.length, isDesktopViewport])
+
+  return (
+    <div
+      onClick={() => usePackageCylinder && !isActive && onActivate(index)}
+      className={`relative flex flex-col bg-white overflow-hidden pointer-events-auto 
+                    ${isActive ? 'cursor-default' : 'cursor-pointer'} 
+                    w-[289px] md:w-[640px] h-[474px] md:h-[770px]
+                    rounded-[8px] md:rounded-none
+                  `}
+      style={{
+        gridArea: '1/1',
+        backfaceVisibility: 'hidden',
+        WebkitFontSmoothing: 'antialiased',
+        MozOsxFontSmoothing: 'grayscale',
+        ...style,
+      }}
+    >
+      <div className="p-[12px] md:px-5 md:pt-5 shrink-0">
+        <div
+          className={`relative w-full h-[240px] md:h-[450px] bg-[#EAEAEA] overflow-hidden rounded-[8px] md:rounded-none ${isActive ? 'card-swiper-active' : ''}`}
+        >
+          {isActive ? (
+            useInnerSwiper ? (
+              <Swiper
+                key={`inner-${pkg.id ?? index}-${imageCount}`}
+                modules={[Navigation, Pagination]}
+                navigation={{
+                  prevEl: `.custom-prev-btn-${index}`,
+                  nextEl: `.custom-next-btn-${index}`,
+                }}
+                pagination={{ clickable: true }}
+                loop
+                className="inner-card-swiper w-full h-full"
+              >
+                {pkg.images.map((imgSrc, imageIndex) => (
+                  <SwiperSlide key={imageIndex}>
+                    <img
+                      src={imgSrc}
+                      alt={`${pkg.title} - view ${imageIndex + 1}`}
+                      className="w-full h-full object-cover object-center"
+                      loading="eager"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <img
+                src={pkg.images?.[0] ?? ''}
+                alt={pkg.title}
+                className="w-full h-full object-cover object-center"
+                loading="eager"
+              />
+            )
+          ) : (
+            <img
+              src={pkg.images?.[0] ?? ''}
+              alt={pkg.title}
+              className="w-full h-full object-cover object-center"
+              loading="lazy"
+            />
+          )}
+
+          <div
+            className={`flex absolute inset-0 pointer-events-none z-[100] items-center justify-between ${useInnerSwiper && isActive ? '' : 'opacity-0 pointer-events-none'}`}
+          >
+            <button
+              type="button"
+              className={`custom-prev-btn-${index} pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 w-[30px] md:w-[36px] h-[60px] md:h-[56px] bg-white/20 md:bg-[#2D2D2D] backdrop-blur-[42px] md:backdrop-blur-none hover:bg-white/30 md:hover:bg-black rounded-r-full flex items-center justify-center transition-all duration-300 pr-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
+            >
+              <svg
+                width={isMobile ? '20' : '18'}
+                height={isMobile ? '20' : '18'}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth={isMobile ? '1.86' : '3'}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 12H5" />
+                <path d="m12 19-7-7 7-7" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className={`custom-next-btn-${index} pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 w-[30px] md:w-[36px] h-[60px] md:h-[56px] bg-white/20 md:bg-[#2D2D2D] backdrop-blur-[42px] md:backdrop-blur-none hover:bg-white/30 md:hover:bg-black rounded-l-full flex items-center justify-center transition-all duration-300 pl-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
+            >
+              <svg
+                width={isMobile ? '20' : '18'}
+                height={isMobile ? '20' : '18'}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth={isMobile ? '1.86' : '3'}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {isActive && (
+            <div
+              className="absolute right-[12px] md:right-4 top-[12px] md:top-4 flex items-center justify-center gap-1 bg-white rounded-[22px] md:rounded-[36px] z-10 pointer-events-none"
+              style={{ padding: isMobile ? '2.5px 7.4px' : '4px 12px' }}
+            >
+              <span className="text-[#364022] text-[12px] md:text-[18px] font-medium leading-[150%] font-['Poppins'] md:font-sans">
+                Starting from {pkg.price}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        className="flex flex-col items-start flex-1 min-h-0 px-[12px] pb-[14px] md:px-8 md:pb-6 gap-[12px] md:gap-[20px]"
+        style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
+      >
+        <div className="flex flex-col items-start w-full gap-[12px] md:gap-[24px] min-h-0 flex-1">
+          <div className="flex flex-col items-start w-full gap-[7.4px] md:gap-[12px]">
+            <div className="flex flex-row justify-between items-center w-full gap-[20px]">
+              <h4 className="text-[#2D2D2D] truncate font-medium text-[16px] md:text-[28px] leading-[150%] font-['Poppins'] md:font-sans">
+                {pkg.title}
+              </h4>
+              <div
+                className="flex justify-center items-center rounded-[29px] md:rounded-[48px] shrink-0"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.05)',
+                  padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                }}
+              >
+                <span className="text-[#2D2D2D] font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
+                  {pkg.category}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[#767676] line-clamp-2 w-full font-normal text-[12px] md:text-[18px] h-[36px] md:h-auto leading-[150%] font-['Poppins'] md:font-sans">
+              {pkg.desc}
+            </p>
+          </div>
+
+          <div className="flex flex-col items-start w-full gap-[12px] md:gap-[8px] min-h-0 flex-1">
+            <p className="text-[#2D2D2D] w-full font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
+              Includes :
+            </p>
+            <div
+              ref={visibleTagsViewportRef}
+              className={`w-full min-h-0 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
+            >
+              <div className="flex flex-wrap gap-[2.5px] md:gap-1">
+                {visibleTags.map((tag, tagIndex) => (
+                  <div
+                    key={`${tag}-${tagIndex}`}
+                    className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.05)',
+                      padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                    }}
+                  >
+                    <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
+                      {tag}
+                    </span>
+                  </div>
+                ))}
+                {hasMoreIncludes && !showAllIncludes ? (
+                  <button
+                    type="button"
+                    onClick={event => {
+                      event.stopPropagation()
+                      setShowAllIncludes(true)
+                    }}
+                    className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.05)',
+                      padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                    }}
+                  >
+                    More
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0">
+        <div
+          ref={hiddenTagsMeasureRef}
+          className="flex flex-wrap gap-[2.5px] md:gap-1"
+          style={{ position: 'absolute', visibility: 'hidden' }}
+        >
+          {tags.map((tag, tagIndex) => (
+            <div
+              key={`${tag}-${tagIndex}`}
+              data-tag-index={tagIndex}
+              className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
+              style={{
+                background: 'rgba(0, 0, 0, 0.05)',
+                padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+              }}
+            >
+              <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
+                {tag}
+              </span>
+            </div>
+          ))}
+          <button
+            type="button"
+            data-more-tag
+            className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
+            style={{
+              background: 'rgba(0, 0, 0, 0.05)',
+              padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+            }}
+          >
+            More
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const PlanEventSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.plan_event_intro ?? {}
@@ -2634,7 +3003,6 @@ const PackagesSection = () => {
   const [disableTransition, setDisableTransition] = useState(false)
   const lastDirectionRef = useRef('next')
   const [isMobile, setIsMobile] = useState(false)
-  const [expandedIncludeCards, setExpandedIncludeCards] = useState({})
 
   // Touch handlers for mobile swiping of the main packages
   const touchStartX = useRef(0)
@@ -2710,6 +3078,7 @@ const PackagesSection = () => {
 
   const effectiveVirtualIndex = count === 1 ? 0 : virtualIndex
   const displayIndex = count > 0 ? effectiveVirtualIndex % count : 0
+  const visiblePackageDots = getVisiblePaginationDots(count, displayIndex, 5)
 
   const sortedCards = useMemo(() => {
     if (count === 0) return []
@@ -2891,215 +3260,26 @@ const PackagesSection = () => {
               const gap = isMobile ? 12 : 8
               const radius = (cardWidth / 2 + gap / 2) / Math.tan(halfAngleRad)
               const isActive = index === effectiveVirtualIndex
-              const imageCount = pkg.images?.length ?? 0
-              const useInnerSwiper = imageCount > 1
-              const includeCardKey = String(pkg.documentId ?? pkg.id ?? index)
-              const tags = Array.isArray(pkg.tags) ? pkg.tags : []
-              const showAllIncludes = !!expandedIncludeCards[includeCardKey]
-              const visibleTags = showAllIncludes ? tags : tags.slice(0, 4)
-              const hasMoreIncludes = tags.length > 4
 
               return (
-                <div
+                <LandingPackageCarouselCard
                   key={`pkg-${pkg.id ?? pkg.documentId ?? 'fallback'}-${index}`}
-                  onClick={() => usePackageCylinder && !isActive && setVirtualIndex(index)}
-                  className={`relative flex flex-col bg-white overflow-hidden pointer-events-auto 
-                    ${isActive ? 'cursor-default' : 'cursor-pointer'} 
-                    w-[289px] md:w-[640px] h-[474px] md:h-[770px]
-                    rounded-[8px] md:rounded-none
-                  `}
+                  pkg={pkg}
+                  index={index}
+                  isActive={isActive}
+                  isMobile={isMobile}
+                  usePackageCylinder={usePackageCylinder}
+                  onActivate={setVirtualIndex}
                   style={{
-                    gridArea: '1/1',
-                    backfaceVisibility: 'hidden',
-                    WebkitFontSmoothing: 'antialiased',
-                    MozOsxFontSmoothing: 'grayscale',
                     transform: `rotateY(${index * 36}deg) translateZ(${-radius}px)`,
                     boxShadow: isActive
                       ? '0 12px 32px rgba(0,0,0,0.15)'
                       : '0 6px 20px rgba(0,0,0,0.1)',
-                    // Mobile: Hide inactive completely. Desktop: 90% opacity for side cards
                     opacity: isActive ? 1 : isMobile ? 0 : 0.9,
                     pointerEvents: isActive ? 'auto' : isMobile ? 'none' : 'auto',
                     zIndex: isActive ? 50 : 0,
                   }}
-                >
-                  {/* Image area */}
-                  <div className="p-[12px] md:px-5 md:pt-5 shrink-0">
-                    <div
-                      className={`relative w-full h-[240px] md:h-[450px] bg-[#EAEAEA] overflow-hidden rounded-[8px] md:rounded-none ${isActive ? 'card-swiper-active' : ''}`}
-                    >
-                      {isActive ? (
-                        useInnerSwiper ? (
-                          <Swiper
-                            key={`inner-${pkg.id ?? index}-${imageCount}`}
-                            modules={[Navigation, Pagination]}
-                            navigation={{
-                              prevEl: `.custom-prev-btn-${index}`,
-                              nextEl: `.custom-next-btn-${index}`,
-                            }}
-                            pagination={{ clickable: true }}
-                            loop
-                            className="inner-card-swiper w-full h-full"
-                          >
-                            {pkg.images.map((imgSrc, i) => (
-                              <SwiperSlide key={i}>
-                                <img
-                                  src={imgSrc}
-                                  alt={`${pkg.title} - view ${i + 1}`}
-                                  className="w-full h-full object-cover object-center"
-                                  loading="eager"
-                                />
-                              </SwiperSlide>
-                            ))}
-                          </Swiper>
-                        ) : (
-                          <img
-                            src={pkg.images?.[0] ?? ''}
-                            alt={pkg.title}
-                            className="w-full h-full object-cover object-center"
-                            loading="eager"
-                          />
-                        )
-                      ) : (
-                        <img
-                          src={pkg.images?.[0] ?? ''}
-                          alt={pkg.title}
-                          className="w-full h-full object-cover object-center"
-                          loading="lazy"
-                        />
-                      )}
-
-                      {/* Inner Arrow overlay (Now visible on Mobile & Desktop) */}
-                      <div
-                        className={`flex absolute inset-0 pointer-events-none z-[100] items-center justify-between ${useInnerSwiper && isActive ? '' : 'opacity-0 pointer-events-none'}`}
-                      >
-                        {/* CUSTOM LEFT ARROW */}
-                        <button
-                          type="button"
-                          className={`custom-prev-btn-${index} pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 w-[30px] md:w-[36px] h-[60px] md:h-[56px] bg-white/20 md:bg-[#2D2D2D] backdrop-blur-[42px] md:backdrop-blur-none hover:bg-white/30 md:hover:bg-black rounded-r-full flex items-center justify-center transition-all duration-300 pr-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
-                        >
-                          <svg
-                            width={isMobile ? '20' : '18'}
-                            height={isMobile ? '20' : '18'}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth={isMobile ? '1.86' : '3'}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M19 12H5" />
-                            <path d="m12 19-7-7 7-7" />
-                          </svg>
-                        </button>
-
-                        {/* CUSTOM RIGHT ARROW */}
-                        <button
-                          type="button"
-                          className={`custom-next-btn-${index} pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 w-[30px] md:w-[36px] h-[60px] md:h-[56px] bg-white/20 md:bg-[#2D2D2D] backdrop-blur-[42px] md:backdrop-blur-none hover:bg-white/30 md:hover:bg-black rounded-l-full flex items-center justify-center transition-all duration-300 pl-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
-                        >
-                          <svg
-                            width={isMobile ? '20' : '18'}
-                            height={isMobile ? '20' : '18'}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth={isMobile ? '1.86' : '3'}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M5 12h14" />
-                            <path d="m12 5 7 7-7 7" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      {/* Price tag */}
-                      {isActive && (
-                        <div
-                          className="absolute right-[12px] md:right-4 top-[12px] md:top-4 flex items-center justify-center gap-1 bg-white rounded-[22px] md:rounded-[36px] z-10 pointer-events-none"
-                          style={{ padding: isMobile ? '2.5px 7.4px' : '4px 12px' }}
-                        >
-                          <span className="text-[#364022] text-[12px] md:text-[18px] font-medium leading-[150%] font-['Poppins'] md:font-sans">
-                            Starting from {pkg.price}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Content area */}
-                  <div
-                    className="flex flex-col items-start flex-1 min-h-0 px-[12px] pb-[14px] md:px-8 md:pb-6 gap-[12px] md:gap-[20px]"
-                    style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
-                  >
-                    <div className="flex flex-col items-start w-full gap-[12px] md:gap-[24px]">
-                      <div className="flex flex-col items-start w-full gap-[7.4px] md:gap-[12px]">
-                        <div className="flex flex-row justify-between items-center w-full gap-[20px]">
-                          <h4 className="text-[#2D2D2D] truncate font-medium text-[16px] md:text-[28px] leading-[150%] font-['Poppins'] md:font-sans">
-                            {pkg.title}
-                          </h4>
-                          <div
-                            className="flex justify-center items-center rounded-[29px] md:rounded-[48px] shrink-0"
-                            style={{
-                              background: 'rgba(0, 0, 0, 0.05)',
-                              padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                            }}
-                          >
-                            <span className="text-[#2D2D2D] font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-                              {pkg.category}
-                            </span>
-                          </div>
-                        </div>
-
-                        <p className="text-[#767676] line-clamp-2 w-full font-normal text-[12px] md:text-[18px] h-[36px] md:h-auto leading-[150%] font-['Poppins'] md:font-sans">
-                          {pkg.desc}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col items-start w-full gap-[12px] md:gap-[8px]">
-                        <p className="text-[#2D2D2D] w-full font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-                          Includes :
-                        </p>
-                        <div className="flex flex-wrap gap-[2.5px] md:gap-1">
-                          {visibleTags.map((tag, i) => (
-                            <div
-                              key={i}
-                              className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
-                              style={{
-                                background: 'rgba(0, 0, 0, 0.05)',
-                                padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                              }}
-                            >
-                              <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-                                {tag}
-                              </span>
-                            </div>
-                          ))}
-                          {hasMoreIncludes && !showAllIncludes ? (
-                            <button
-                              type="button"
-                              onClick={event => {
-                                event.stopPropagation()
-                                setExpandedIncludeCards(prev => ({
-                                  ...prev,
-                                  [includeCardKey]: true,
-                                }))
-                              }}
-                              className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
-                              style={{
-                                background: 'rgba(0, 0, 0, 0.05)',
-                                padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                              }}
-                            >
-                              More
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                />
               )
             })}
           </div>
@@ -3143,7 +3323,7 @@ const PackagesSection = () => {
         </button>
 
         <div className="flex items-center gap-[4px] w-[100px] h-[8px] justify-center">
-          {packagesData.map((_, idx) => (
+          {visiblePackageDots.map(idx => (
             <div
               key={idx}
               className={`h-[8px] rounded-[8px] transition-all duration-500 ${displayIndex === idx ? 'w-[52px] bg-[#591902]' : 'w-[8px] bg-[#ADADAD]'}`}
@@ -3177,7 +3357,7 @@ const PackagesSection = () => {
       <div
         className={`${showNavButtons ? 'flex md:hidden' : 'hidden'} items-center justify-center gap-[6px] mt-[16px] z-20 relative`}
       >
-        {packagesData.map((_, idx) => (
+        {visiblePackageDots.map(idx => (
           <div
             key={idx}
             className={`h-[4px] rounded-[12px] transition-all duration-500 ${displayIndex === idx ? 'w-[20px] bg-[#1C1C1C]' : 'w-[8px] bg-[#BFBFBF]'}`}

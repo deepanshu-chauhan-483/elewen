@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useBlogCategories, useBlogs } from '../hooks/useBlogs'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import heroLeft from '../assets/images/IMG_3001.jpg'
 import heroRight from '../assets/images/IMG_7025.jpg'
 import blogImg1 from '../assets/images/IMG_0658.jpg'
@@ -104,6 +105,8 @@ const BlogPage = () => {
     const startIndex = (safeCurrentPage - 1) * blogsPerPage
     return visiblePosts.slice(startIndex, startIndex + blogsPerPage)
   }, [blogsPerPage, safeCurrentPage, visiblePosts])
+
+  useScrollToTop(safeCurrentPage)
 
   useEffect(() => {
     if (!blogListTopRef.current) return

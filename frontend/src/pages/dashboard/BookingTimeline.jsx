@@ -12,6 +12,7 @@ import {
   useDashboardBookingTimeline,
   useDashboardBookings,
 } from '../../hooks/useDashboardData'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 
 const TIMELINE_DISPLAY_ORDER = [
   'Inquiry / Booking Placed',
@@ -25,20 +26,20 @@ const TIMELINE_DISPLAY_ORDER = [
 ]
 
 const STATUS_PILL = {
-  completed: 'bg-[#E1F5EE] text-[#0F6E56] border border-[#5DCAA5]',
-  in_progress: 'bg-[#FEF1DE] text-[#C07318] border border-[#EF9F27]',
-  blocked: 'bg-[#FFF0F0] text-[#B42318] border border-[#F5B0AA]',
-  pending: 'bg-[#F1EFE8] text-[#5F5E5A] border border-[#D3D1C7]',
-  confirmed: 'bg-[#E1F5EE] text-[#0F6E56] border border-[#5DCAA5]',
-  upcoming: 'bg-[#E6F1FB] text-[#185FA5] border border-[#85B7EB]',
-  active: 'bg-[#FEF1DE] text-[#C07318] border border-[#EF9F27]',
-  new: 'bg-[#FEF1DE] text-[#C07318] border border-[#EF9F27]',
-  info_collection: 'bg-[#E6F1FB] text-[#185FA5] border border-[#85B7EB]',
-  planning: 'bg-[#FEF1DE] text-[#C07318] border border-[#EF9F27]',
-  pre_event: 'bg-[#FFF0F0] text-[#B42318] border border-[#F5B0AA]',
-  execution: 'bg-[#E6F1FB] text-[#185FA5] border border-[#85B7EB]',
-  post_event: 'bg-[#E6F1FB] text-[#185FA5] border border-[#85B7EB]',
-  cancelled: 'bg-[#F1EFE8] text-[#5F5E5A] border border-[#D3D1C7]',
+  completed: 'bg-[#E1F5EE] text-[#0F6E56]',
+  in_progress: 'bg-[#FEF1DE] text-[#C07318]',
+  blocked: 'bg-[#FFF0F0] text-[#B42318]',
+  pending: 'bg-[#F1EFE8] text-[#5F5E5A]',
+  confirmed: 'bg-[#E1F5EE] text-[#0F6E56]',
+  upcoming: 'bg-[#E6F1FB] text-[#185FA5]',
+  active: 'bg-[#FEF1DE] text-[#C07318]',
+  new: 'bg-[#FEF1DE] text-[#C07318]',
+  info_collection: 'bg-[#E6F1FB] text-[#185FA5]',
+  planning: 'bg-[#FEF1DE] text-[#C07318]',
+  pre_event: 'bg-[#FFF0F0] text-[#B42318]',
+  execution: 'bg-[#E6F1FB] text-[#185FA5]',
+  post_event: 'bg-[#E6F1FB] text-[#185FA5]',
+  cancelled: 'bg-[#F1EFE8] text-[#5F5E5A]',
 }
 
 const STATUS_PILL_LABEL = {
@@ -161,7 +162,7 @@ function StatusPill({ status, label }) {
   const cls = STATUS_PILL[status] || STATUS_PILL.pending
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-0.5 whitespace-nowrap text-xs font-semibold tracking-wide ${cls}`}
+      className={`inline-flex items-center rounded-full px-3 py-0.5 whitespace-nowrap text-xs font-normal tracking-wide ${cls}`}
     >
       {label || STATUS_PILL_LABEL[status] || 'Pending'}
     </span>
@@ -217,10 +218,17 @@ function TimelineDot({ status, isLast }) {
 
 export default function BookingTimeline() {
   const queryClient = useQueryClient()
-  const { data: bookings = [], isLoading, error } = useDashboardBookings('all')
+  const { searchTerm } = useDashboardSearch()
+  const debouncedSearchTerm = useDebouncedValue(searchTerm)
+  const {
+    data: bookings = [],
+    isLoading,
+    error,
+  } = useDashboardBookings('all', {
+    search: debouncedSearchTerm,
+  })
   const [selectedId, setSelectedId] = useState('')
   const [payingBookingId, setPayingBookingId] = useState('')
-  const { searchTerm } = useDashboardSearch()
 
   const orderBookings = useMemo(
     () =>
@@ -241,7 +249,7 @@ export default function BookingTimeline() {
   const filteredOrderBookings = useMemo(
     () =>
       orderBookings.filter(booking =>
-        matchesDashboardSearch(searchTerm, [
+        matchesDashboardSearch(debouncedSearchTerm, [
           booking?.package?.title,
           booking?.event?.name,
           booking?.statusLabel,
@@ -249,7 +257,7 @@ export default function BookingTimeline() {
           booking?.detailSubtitle,
         ])
       ),
-    [orderBookings, searchTerm]
+    [debouncedSearchTerm, orderBookings]
   )
 
   useEffect(() => {

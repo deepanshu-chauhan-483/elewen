@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import {
-  EmptyState,
   ErrorState,
   LoadingState,
+  ResultsEmptyState,
   SectionLoadingState,
   SelectField,
 } from '../components/ui/AdminUI'
 import { useAdminBookings } from '../hooks/useAdminData'
+import { useScrollToTop } from '../hooks/useScrollToTop'
+import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatCurrency, formatDate } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
@@ -24,18 +26,6 @@ const stages = [
   { key: 'completed', label: 'Completed' },
 ]
 
-const badgeMap = {
-  new: 'bg-[#FCE7CF] text-[#C57A1E]',
-  confirmed: 'bg-[#DDF7E5] text-[#16A34A]',
-  info_collection: 'bg-[#DBEAFE] text-[#0383E4]',
-  planning: 'bg-[#EDE9FE] text-[#6D28D9]',
-  pre_event: 'bg-[#FCE7CF] text-[#C57A1E]',
-  execution: 'bg-[#DDF7E5] text-[#16A34A]',
-  post_event: 'bg-[#DBEAFE] text-[#0383E4]',
-  completed: 'bg-[#E5E7EB] text-[#4B5563]',
-  cancelled: 'bg-[#FFF3F3] text-[#8A1C1C]',
-}
-
 const borderColorMap = {
   new: 'border-[#C57A1E]',
   confirmed: 'border-[#16A34A]',
@@ -50,7 +40,7 @@ const borderColorMap = {
 
 function StatusBadge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
-  const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const cls = getAdminBadgeClass(status, { preset: 'vivid' })
   const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '-'
 
   return (
@@ -174,6 +164,8 @@ export default function BookingStatusTrackerPage() {
   const totalBookings = Number(bookingsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+
+  useScrollToTop(currentPage)
   const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
   const statusCounts = useMemo(
     () => bookingsQuery.data?.statusCounts ?? {},
@@ -274,12 +266,10 @@ export default function BookingStatusTrackerPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">
-          <EmptyState
-            title={`No bookings in "${activeLabel}"`}
-            body="Select a different stage or check back when bookings move into this step."
-          />
-        </div>
+        <ResultsEmptyState
+          title={`No bookings in "${activeLabel}"`}
+          body="Select a different stage or check back when bookings move into this step."
+        />
       )}
     </div>
   )

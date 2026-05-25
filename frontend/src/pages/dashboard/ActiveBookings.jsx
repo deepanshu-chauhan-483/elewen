@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { useDashboardBookings, useDashboardSession } from '../../hooks/useDashboardData'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
@@ -154,14 +155,14 @@ function BookingCard({ booking, session }) {
                   event.stopPropagation()
                   downloadReceipt(receiptData)
                 }}
-                className="rounded-full border border-[#CDB17E] px-4 py-2 text-sm text-[#957960]"
+                className="rounded-full border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E] px-4 py-2 text-sm"
               >
                 Download Receipt
               </button>
 
               <Link
                 to={`/user-dashboard/details?bookingId=${booking.id}`}
-                className="flex items-center rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white"
+                className="flex items-center rounded-full bg-[#CDB17E] hover:opacity-90 px-4 py-2 text-sm text-white"
                 aria-label="View booking details"
                 onClick={event => event.stopPropagation()}
               >
@@ -295,11 +296,18 @@ function BookingCard({ booking, session }) {
 }
 
 export default function ActiveBookings() {
-  const { data: bookings = [], isLoading, error } = useDashboardBookings('active')
-  const { data: session } = useDashboardSession()
   const { searchTerm } = useDashboardSearch()
+  const debouncedSearchTerm = useDebouncedValue(searchTerm)
+  const {
+    data: bookings = [],
+    isLoading,
+    error,
+  } = useDashboardBookings('active', {
+    search: debouncedSearchTerm,
+  })
+  const { data: session } = useDashboardSession()
   const filteredBookings = bookings.filter(booking =>
-    matchesDashboardSearch(searchTerm, [
+    matchesDashboardSearch(debouncedSearchTerm, [
       getBookingPackageNamesText(booking, booking?.event?.name || 'Booking'),
       booking?.event?.name,
       booking?.package?.title,

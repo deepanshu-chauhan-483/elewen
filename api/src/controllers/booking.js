@@ -84,6 +84,34 @@ const toCurrencyNumber = value => {
 
 const roundCurrency = value => Number(toCurrencyNumber(value).toFixed(2))
 
+const normalizeSearchText = value =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+
+function bookingMatchesSearch(booking, search) {
+  const normalizedSearch = normalizeSearchText(search)
+  if (!normalizedSearch) return true
+
+  const haystack = [
+    booking?.id,
+    booking?.event?.name,
+    booking?.package?.title,
+    booking?.detailSubtitle,
+    booking?.locationSummary,
+    booking?.status,
+    booking?.statusLabel,
+    booking?.specialRequest,
+    booking?.latestStatusLog?.note,
+    ...(booking?.items ?? []).map(item => item?.title),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return haystack.includes(normalizedSearch)
+}
+
 const normalizeTimelineStatus = status => {
   if (status === 'completed') return 'completed'
   if (status === 'blocked') return 'blocked'
@@ -507,58 +535,54 @@ export const listBookings = async (req, res, next) => {
     const type = String(req.query?.type ?? 'all')
       .trim()
       .toLowerCase()
+    const search = normalizeSearchText(req.query?.search)
     const page = Math.max(1, Number(req.query?.page ?? 1))
     const limit = Math.min(50, Math.max(1, Number(req.query?.limit ?? 20)))
-    const skip = (page - 1) * limit
+    const baseWhere = {
+      userId,
+      payments: {
+        some: { status: 'success' },
+      },
+    }
 
-    const [bookings, total] = await Promise.all([
-      prisma.booking.findMany({
-        where: {
-          userId,
-          payments: {
-            some: { status: 'success' },
-          },
+    const bookings = await prisma.booking.findMany({
+      where: baseWhere,
+      include: {
+        items: {
+          select: { id: true, title: true, quantity: true, unitPrice: true, totalPrice: true },
         },
-        include: {
-          items: {
-            select: { id: true, title: true, quantity: true, unitPrice: true, totalPrice: true },
-          },
-          notes: {
-            where: { isInternal: false },
-            orderBy: { createdAt: 'desc' },
-            take: 5,
-          },
-          statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
-          payments: {
-            where: { status: 'success' },
-            orderBy: { createdAt: 'desc' },
-            select: { id: true, amount: true, paymentType: true, status: true, createdAt: true },
-          },
+        notes: {
+          where: { isInternal: false },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
         },
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-        skip,
-      }),
-      prisma.booking.count({
-        where: {
-          userId,
-          payments: {
-            some: { status: 'success' },
-          },
+        statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+        payments: {
+          where: { status: 'success' },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, amount: true, paymentType: true, status: true, createdAt: true },
         },
-      }),
-    ])
+      },
+      orderBy: { createdAt: 'desc' },
+    })
 
     const enrichedBookings = await enrichBookings(bookings)
-    const filteredBookings = filterBookingsByType(enrichedBookings, type)
+    const filteredBookings = filterBookingsByType(enrichedBookings, type).filter(booking =>
+      bookingMatchesSearch(booking, search)
+    )
+    const total = filteredBookings.length
+    const totalPages = Math.max(1, Math.ceil(total / limit))
+    const safePage = Math.min(page, totalPages)
+    const skip = (safePage - 1) * limit
+    const paginatedBookings = filteredBookings.slice(skip, skip + limit)
 
     res.json({
-      bookings: filteredBookings,
+      bookings: paginatedBookings,
       pagination: {
-        page,
+        page: safePage,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
         hasNext: skip + limit < total,
       },
     })

@@ -9,6 +9,7 @@ import {
   StatusPill,
 } from '../../components/dashboard/DashboardUI'
 import { useDashboardBookings, useDashboardSession } from '../../hooks/useDashboardData'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import {
   formatDashboardCurrency,
   formatDashboardDate,
@@ -180,9 +181,7 @@ function PreviousBookingCard({ booking, session }) {
     ? String(booking?.latestStatusLog?.note ?? '').trim() || 'No reason provided.'
     : ''
   const title = booking?.package?.title || booking?.event?.name || 'Booking'
-  const subtitle = [booking?.detailSubtitle, booking?.event?.name, booking?.locationSummary]
-    .filter(Boolean)
-    .join(' · ')
+  const subtitle = [booking?.detailSubtitle].filter(Boolean).join(' · ')
   const receiptData = buildReceiptData({
     booking,
     customer: {
@@ -237,24 +236,26 @@ function PreviousBookingCard({ booking, session }) {
           </div>
 
           <div className="flex flex-wrap gap-3 lg:justify-end">
-            <button
-              type="button"
-              onClick={event => {
-                event.stopPropagation()
-                downloadReceipt(receiptData)
-              }}
-              className="inline-flex rounded-full border border-[#D2C9BF] px-5 py-3 text-sm text-[#591902] transition hover:border-[#591902]"
-            >
-              Download Receipt
-            </button>
-
             <Link
               to={getBookAgainHref(booking)}
               onClick={event => event.stopPropagation()}
-              className="flex items-center gap-2 rounded-full bg-[#C6A15B] px-5 py-2 text-white hover:opacity-90"
+              className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-4 py-2 text-white hover:opacity-90"
             >
               Book Again <ArrowIcon />
             </Link>
+
+            {open ? (
+              <button
+                type="button"
+                onClick={event => {
+                  event.stopPropagation()
+                  downloadReceipt(receiptData)
+                }}
+                className="inline-flex px-4 py-2 text-sm rounded-full border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]"
+              >
+                Download Receipt
+              </button>
+            ) : null}
 
             <button
               type="button"
@@ -262,10 +263,10 @@ function PreviousBookingCard({ booking, session }) {
                 event.stopPropagation()
                 setShowRefer(prev => !prev)
               }}
-              className={`inline-flex rounded-full border px-5 py-3 text-sm transition ${
+              className={`inline-flex rounded-full border px-4 py-2 text-sm transition ${
                 showRefer
-                  ? 'border-[#C6A15B] bg-[#FBF7F3] text-[#C6A15B]'
-                  : 'border-[#EDE5DA] bg-white text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC]'
+                  ? 'border-[#C6A15B] bg-[#FBF7F3] text-[#CDB17E]'
+                  : 'border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]'
               }`}
             >
               Refer a Friend
@@ -282,8 +283,8 @@ function PreviousBookingCard({ booking, session }) {
         <>
           <div className="mt-6 grid grid-cols-2 gap-6 border-t border-[#00000033] pt-6 text-sm md:grid-cols-3">
             <div>
-              <p className="text-[11px] text-[#767676]">EVENT</p>
-              <p>{booking.detailSubtitle || booking.event?.name || 'Not shared yet'}</p>
+              <p className="text-[11px] text-[#767676]">PACKAGE</p>
+              <p>{title}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">DATE</p>
@@ -363,11 +364,18 @@ function PreviousBookingCard({ booking, session }) {
 }
 
 export default function PreviousBookings() {
-  const { data: bookings = [], isLoading, error } = useDashboardBookings('previous')
-  const { data: session } = useDashboardSession()
   const { searchTerm } = useDashboardSearch()
+  const debouncedSearchTerm = useDebouncedValue(searchTerm)
+  const {
+    data: bookings = [],
+    isLoading,
+    error,
+  } = useDashboardBookings('previous', {
+    search: debouncedSearchTerm,
+  })
+  const { data: session } = useDashboardSession()
   const filteredBookings = bookings.filter(booking =>
-    matchesDashboardSearch(searchTerm, [
+    matchesDashboardSearch(debouncedSearchTerm, [
       booking?.package?.title,
       booking?.event?.name,
       booking?.detailSubtitle,

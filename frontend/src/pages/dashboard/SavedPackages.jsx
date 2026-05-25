@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useWishlist } from '../../hooks/useWishlist'
 import {
   formatDashboardCurrency,
@@ -34,7 +35,7 @@ function getPackageHref(item) {
 
 function ArrowIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M3.33325 8.00065H12.6666M12.6666 8.00065L7.99992 3.33398M12.6666 8.00065L7.99992 12.6673"
         stroke="currentColor"
@@ -149,7 +150,7 @@ function PackageCard({ item, isPending, onRemove }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               to={href}
-              className="inline-flex items-center gap-2 bg-[#CDB17E] hover:bg-[#C6AB7F] text-[#F5E6CC] text-sm px-5 py-2.5 rounded-full transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-[#CDB17E] hover:opacity-90 text-[#F5E6CC] text-sm px-4 py-2 rounded-full transition-colors duration-200"
             >
               Resume Booking
               <ArrowIcon />
@@ -159,7 +160,7 @@ function PackageCard({ item, isPending, onRemove }) {
               type="button"
               disabled={isPending}
               onClick={onRemove}
-              className="inline-flex items-center gap-1.5 border border-[#EDE5DA] bg-[#FFFFFF] text-[#9C8878] hover:bg-[#FAF6F1] hover:border-[#E7D3BC] text-sm px-5 py-2.5 rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E] text-sm px-4 py-2 rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPending ? (
                 <>
@@ -200,8 +201,9 @@ function PackageCard({ item, isPending, onRemove }) {
 export default function SavedPackages() {
   const { wishlist = [], isLoading, toggleSavedPackage, pendingPackageId } = useWishlist()
   const { searchTerm } = useDashboardSearch()
+  const debouncedSearchTerm = useDebouncedValue(searchTerm)
   const filteredWishlist = wishlist.filter(item =>
-    matchesDashboardSearch(searchTerm, [
+    matchesDashboardSearch(debouncedSearchTerm, [
       item?.title,
       item?.events?.[0]?.name,
       ...(item?.serviceCategories ?? []).map(category => category?.name),
@@ -235,8 +237,8 @@ export default function SavedPackages() {
         <div className="flex items-center gap-2.5 mb-1.5">
           <h1 className="text-2xl text-[#2E2E2E]">Saved Packages</h1>
         </div>
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-[#8C7B6B]">
+        <div className="flex items-center justify-between gap-3">
+          <p className="min-w-0 flex-1 text-sm text-[#8C7B6B]">
             Pick up where you left off on packages you bookmarked for later.
           </p>
           {!isLoading && wishlist.length > 0 && (

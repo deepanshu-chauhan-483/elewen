@@ -2,6 +2,30 @@ import prisma from '../lib/prisma.js'
 import { strapiServerGet } from '../lib/strapi.js'
 import { enrichSampleTastes } from '../lib/dashboardData.js'
 
+const normalizeSearchText = value =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+
+function sampleMatchesSearch(sample, search) {
+  const normalizedSearch = normalizeSearchText(search)
+  if (!normalizedSearch) return true
+
+  const haystack = [
+    sample?.id,
+    sample?.package?.title,
+    sample?.event?.name,
+    sample?.status,
+    sample?.statusLabel,
+    ...(sample?.vendors ?? []).map(vendor => vendor?.vendor?.companyName),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return haystack.includes(normalizedSearch)
+}
+
 const ALLOWED_TRANSITIONS = {
   new: ['assigned', 'cancelled'],
   assigned: ['delivered', 'cancelled'],
@@ -47,6 +71,8 @@ export const createSampleTaste = async (req, res, next) => {
 export const listSampleTastes = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
+    const search = normalizeSearchText(req.query?.search)
+    const status = normalizeSearchText(req.query?.status)
 
     const samples = await prisma.sampleTasteBooking.findMany({
       where: { userId },
@@ -54,7 +80,13 @@ export const listSampleTastes = async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     })
 
-    res.json({ samples: await enrichSampleTastes(samples) })
+    const enrichedSamples = await enrichSampleTastes(samples)
+    const filteredSamples = enrichedSamples.filter(sample => {
+      const matchesStatus = status ? String(sample?.status ?? '').toLowerCase() === status : true
+      return matchesStatus && sampleMatchesSearch(sample, search)
+    })
+
+    res.json({ samples: filteredSamples })
   } catch (err) {
     next(err)
   }

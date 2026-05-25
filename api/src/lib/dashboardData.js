@@ -227,67 +227,85 @@ async function fetchPackagesByIds(ids = []) {
   const uniqueIds = uniqueStrings(ids)
   if (uniqueIds.length === 0) return new Map()
 
-  const query = [
-    buildInFilterQuery(uniqueIds),
-    'populate[0]=images',
-    'populate[1]=service_categories',
-    'populate[2]=events',
-    'populate[3]=packages.elements.service',
-    'populate[4]=packages.inclusions',
-    'populate[5]=packages.inclustions',
-    'populate[6]=packages.addons',
-    'populate[7]=reusable_addons',
-    `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
-    'publicationState=preview',
-  ].join('&')
+  try {
+    const query = [
+      buildInFilterQuery(uniqueIds),
+      'populate[0]=images',
+      'populate[1]=service_categories',
+      'populate[2]=events',
+      'populate[3]=packages.elements.service',
+      'populate[4]=packages.inclusions',
+      'populate[5]=packages.inclustions',
+      'populate[6]=packages.addons',
+      'populate[7]=reusable_addons',
+      `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
+      'publicationState=preview',
+    ].join('&')
 
-  const result = await strapiGet(`/packages?${query}`)
-  return new Map((result?.data ?? []).map(pkg => [String(pkg.id), mapPackagePreview(pkg)]))
+    const result = await strapiGet(`/packages?${query}`)
+    return new Map((result?.data ?? []).map(pkg => [String(pkg.id), mapPackagePreview(pkg)]))
+  } catch {
+    return new Map()
+  }
 }
 
 async function fetchEventsByIds(ids = []) {
   const uniqueIds = uniqueStrings(ids)
   if (uniqueIds.length === 0) return new Map()
 
-  const query = [
-    buildInFilterQuery(uniqueIds),
-    'populate[0]=icon',
-    `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
-    'publicationState=preview',
-  ].join('&')
+  try {
+    const query = [
+      buildInFilterQuery(uniqueIds),
+      'populate[0]=icon',
+      `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
+      'publicationState=preview',
+    ].join('&')
 
-  const result = await strapiGet(`/events?${query}`)
-  return new Map((result?.data ?? []).map(event => [String(event.id), mapEventPreview(event)]))
+    const result = await strapiGet(`/events?${query}`)
+    return new Map((result?.data ?? []).map(event => [String(event.id), mapEventPreview(event)]))
+  } catch {
+    return new Map()
+  }
 }
 
 async function fetchAddressesByIds(ids = []) {
   const uniqueIds = uniqueStrings(ids)
   if (uniqueIds.length === 0) return new Map()
 
-  const query = [
-    buildInFilterQuery(uniqueIds),
-    `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
-    'publicationState=preview',
-  ].join('&')
+  try {
+    const query = [
+      buildInFilterQuery(uniqueIds),
+      `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
+      'publicationState=preview',
+    ].join('&')
 
-  const result = await strapiGet(`/addresses?${query}`)
-  return new Map(
-    (result?.data ?? []).map(address => [String(address.id), mapAddressPreview(address)])
-  )
+    const result = await strapiGet(`/addresses?${query}`)
+    return new Map(
+      (result?.data ?? []).map(address => [String(address.id), mapAddressPreview(address)])
+    )
+  } catch {
+    return new Map()
+  }
 }
 
 async function fetchVendorsByIds(ids = []) {
   const uniqueIds = uniqueStrings(ids)
   if (uniqueIds.length === 0) return new Map()
 
-  const query = [
-    buildInFilterQuery(uniqueIds),
-    `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
-    'publicationState=preview',
-  ].join('&')
+  try {
+    const query = [
+      buildInFilterQuery(uniqueIds),
+      `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
+      'publicationState=preview',
+    ].join('&')
 
-  const result = await strapiGet(`/vendors?${query}`)
-  return new Map((result?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)]))
+    const result = await strapiGet(`/vendors?${query}`)
+    return new Map(
+      (result?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)])
+    )
+  } catch {
+    return new Map()
+  }
 }
 
 function getLatestStatusLog(statusLogs = []) {

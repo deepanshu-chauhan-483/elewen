@@ -147,11 +147,15 @@ export function useDashboardNotifications(params = {}) {
   })
 }
 
-export function useDashboardBookings(type = 'all') {
+export function useDashboardBookings(typeOrParams = 'all', params = {}) {
+  const resolvedType =
+    typeof typeOrParams === 'string' ? typeOrParams : String(typeOrParams?.type ?? 'all')
+  const resolvedParams = typeof typeOrParams === 'string' ? params : (typeOrParams ?? {})
+
   return useAuthedDashboardQuery({
-    queryKey: ['dashboard', 'bookings', type],
+    queryKey: ['dashboard', 'bookings', resolvedType, JSON.stringify(resolvedParams)],
     queryFn: async token => {
-      const response = await bookingList(token, { type })
+      const response = await bookingList(token, { type: resolvedType, ...resolvedParams })
       return response?.bookings ?? []
     },
   })
@@ -179,11 +183,11 @@ export function useDashboardBookingTimeline(bookingId) {
   })
 }
 
-export function useDashboardSampleTastes() {
+export function useDashboardSampleTastes(params = {}) {
   return useAuthedDashboardQuery({
-    queryKey: ['dashboard', 'sample-tastes'],
+    queryKey: ['dashboard', 'sample-tastes', JSON.stringify(params)],
     queryFn: async token => {
-      const response = await sampleTasteList(token)
+      const response = await sampleTasteList(token, params)
       return response?.samples ?? []
     },
   })
@@ -200,11 +204,11 @@ export function useDashboardHelp() {
   })
 }
 
-export function useDashboardSupportTickets() {
+export function useDashboardSupportTickets(params = {}) {
   return useAuthedDashboardQuery({
-    queryKey: ['dashboard', 'support-tickets'],
+    queryKey: ['dashboard', 'support-tickets', JSON.stringify(params)],
     queryFn: async token => {
-      const response = await supportList(token)
+      const response = await supportList(token, params)
       return response?.tickets ?? []
     },
   })

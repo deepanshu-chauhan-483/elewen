@@ -413,6 +413,11 @@ export default function SheeshaSinglePackagePage() {
       return
     }
 
+    if (!cartItemId && activeCustomization?.isAddedToCart) {
+      handleIncrease()
+      return
+    }
+
     setIsAddingToCart(true)
 
     try {

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import {
-  EmptyState,
   ErrorState,
   LoadingState,
+  ResultsEmptyState,
   SectionLoadingState,
   SelectField,
 } from '../components/ui/AdminUI'
@@ -11,18 +11,14 @@ import {
   useAdminUpdateSampleTasteStatus,
   useAdminVendors,
 } from '../hooks/useAdminData'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useScrollToTop } from '../hooks/useScrollToTop'
+import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatDate } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
 // Shared primitives — identical to BookingManagementPage / VendorManagementPage
 // ---------------------------------------------------------------------------
-
-const badgeMap = {
-  new: 'bg-[#DBEAFE] text-[#0383E4]',
-  assigned: 'bg-[#FCE7CF] text-[#C57A1E]',
-  delivered: 'bg-[#EDE9FE] text-[#6D28D9]',
-  completed: 'bg-[#DDF7E5] text-[#16A34A]',
-}
 
 // Left border (collapsed) / top border (expanded) per status
 const borderColorMap = {
@@ -43,7 +39,7 @@ const stageIndex = { new: 0, assigned: 1, delivered: 2, completed: 3 }
 
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
-  const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const cls = getAdminBadgeClass(status, { preset: 'vivid' })
   const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
   return (
     <span
@@ -201,8 +197,7 @@ function StageProgress({ status }) {
 // ---------------------------------------------------------------------------
 // Sample Accordion Card — mirrors BookingAccordionCard / VendorAccordionCard
 // ---------------------------------------------------------------------------
-function SampleAccordionCard({ sample }) {
-  const [open, setOpen] = useState(false)
+function SampleAccordionCard({ sample, open = false, onToggle }) {
   const [vendorId, setVendorId] = useState(sample.vendors?.[0]?.vendorId ?? '')
   const [deliveryDate, setDeliveryDate] = useState(
     sample.deliveryDate ? sample.deliveryDate.slice(0, 10) : ''
@@ -227,7 +222,7 @@ function SampleAccordionCard({ sample }) {
       ].join(' ')}
     >
       {/* ── Header — always visible ── */}
-      <div className="cursor-pointer p-5" onClick={() => setOpen(p => !p)}>
+      <div className="cursor-pointer p-5" onClick={onToggle}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-start gap-3">
@@ -455,16 +450,25 @@ const stageTabs = [
 // Page
 // ---------------------------------------------------------------------------
 export default function SampleTastePage() {
+  const [openSampleId, setOpenSampleId] = useState('')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
+  const debouncedSearch = useDebouncedValue(search)
 
-  const samplesQuery = useAdminSampleTastes({ search, status, page: currentPage, limit: PAGE_SIZE })
+  const samplesQuery = useAdminSampleTastes({
+    search: debouncedSearch,
+    status,
+    page: currentPage,
+    limit: PAGE_SIZE,
+  })
   const samples = samplesQuery.data?.samples ?? []
   const totalSamples = Number(samplesQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(samplesQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+
+  useScrollToTop(currentPage)
   const statusCounts = samplesQuery.data?.statusCounts ?? {}
   const isResultsLoading = samplesQuery.isFetching && !samplesQuery.isLoading
 
@@ -503,7 +507,7 @@ export default function SampleTastePage() {
                 setSearch(e.target.value)
                 setCurrentPage(1)
               }}
-              placeholder="Search by customer or package…"
+              placeholder="Search by customer name..."
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
@@ -573,6 +577,8 @@ export default function SampleTastePage() {
             <SampleAccordionCard
               key={`${sample.id}:${sample.deliveryDate ?? ''}:${sample.vendors?.[0]?.vendorId ?? ''}`}
               sample={sample}
+              open={openSampleId === sample.id}
+              onToggle={() => setOpenSampleId(current => (current === sample.id ? '' : sample.id))}
             />
           ))}
           <div className="mt-4 flex justify-end gap-2">
@@ -598,12 +604,10 @@ export default function SampleTastePage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">
-          <EmptyState
-            title="No sample requests"
-            body="New tasting bookings will appear here as customers submit them."
-          />
-        </div>
+        <ResultsEmptyState
+          title="No sample requests found"
+          body="Try a different search term or filter."
+        />
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   EmptyState,
   ErrorState,
@@ -11,6 +11,7 @@ import {
   useAdminCoupons,
   useAdminCreateCoupon,
   useAdminCreateVendorPayout,
+  useAdminDeleteCoupon,
   useAdminPaymentWorkspace,
   useAdminProcessRefund,
   useAdminRefunds,
@@ -20,33 +21,17 @@ import {
   useAdminUpdateVendorPayout,
   useAdminVendors,
 } from '../hooks/useAdminData'
+import { useScrollToTop } from '../hooks/useScrollToTop'
+import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
 // Shared primitives — consistent with BookingManagementPage style
 // ---------------------------------------------------------------------------
 
-const badgeMap = {
-  confirmed: 'bg-[#DDF7E5] text-[#16A34A]',
-  active: 'bg-[#DDF7E5] text-[#16A34A]',
-  success: 'bg-[#DDF7E5] text-[#16A34A]',
-  paid: 'bg-[#DDF7E5] text-[#16A34A]',
-  resolved: 'bg-[#DDF7E5] text-[#16A34A]',
-  pending: 'bg-[#FCE7CF] text-[#C57A1E]',
-  requested: 'bg-[#FCE7CF] text-[#C57A1E]',
-  failed: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  cancelled: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  refunded: 'bg-[#E5E7EB] text-[#4B5563]',
-  inactive: 'bg-[#E5E7EB] text-[#4B5563]',
-  offline: 'bg-[#E5E7EB] text-[#4B5563]',
-  portal: 'bg-[#DBEAFE] text-[#0383E4]',
-  assigned: 'bg-[#DDF7E5] text-[#16A34A]',
-  unassigned: 'bg-[#FCE7CF] text-[#C57A1E]',
-}
-
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
-  const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const cls = getAdminBadgeClass(status, { preset: 'vivid' })
   const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
   return (
     <span
@@ -401,6 +386,8 @@ function CustomerPayments({ processRefundMutation }) {
   const visiblePage = Math.min(currentPage, totalPages)
   const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
 
+  useScrollToTop(currentPage)
+
   if (workspaceQuery.isLoading) return <LoadingState label="Loading customer payments…" />
   if (workspaceQuery.error)
     return <ErrorState label="Customer payments are unavailable right now." />
@@ -599,6 +586,8 @@ function VendorPayments({
   const currentList = vendorPayments[tab] ?? []
   const totalPages = Math.max(1, Number(vendorPayments.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+
+  useScrollToTop(currentPage)
   const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
 
   if (workspaceQuery.isLoading) return <LoadingState label="Loading vendor payouts…" />
@@ -750,32 +739,409 @@ const BLANK_COUPON_FORM = {
   is_active: true,
 }
 
-function CouponRow({ coupon, updateCouponMutation }) {
-  const [editing, setEditing] = useState(false)
-  const [editForm, setEditForm] = useState({})
-  const setE = (key, val) => setEditForm(f => ({ ...f, [key]: val }))
+const COUPON_FIELDS = [
+  { key: 'code', label: 'Coupon code', type: 'text', placeholder: 'Coupon code (e.g. SAVE20)' },
+  {
+    key: 'discount_type',
+    label: 'Discount type',
+    type: 'select',
+    options: [
+      { value: 'percentage', label: 'Percentage (%)' },
+      { value: 'flat', label: 'Flat amount (Rs)' },
+    ],
+  },
+  { key: 'discount_value', label: 'Discount value', type: 'number' },
+  { key: 'max_uses', label: 'Max uses', type: 'number', placeholder: 'Blank = unlimited' },
+  { key: 'used_count', label: 'Used count', type: 'number', placeholder: 'Default 0' },
+  { key: 'valid_from', label: 'Valid from', type: 'date' },
+  { key: 'valid_to', label: 'Valid to', type: 'date' },
+  {
+    key: 'is_active',
+    label: 'Status',
+    type: 'select',
+    options: [
+      { value: 'true', label: 'Active' },
+      { value: 'false', label: 'Inactive' },
+    ],
+  },
+]
 
-  function openEdit() {
-    setEditForm({
-      discount_type: coupon.discount_type ?? 'percentage',
-      discount_value: String(coupon.discount_value ?? ''),
-      max_uses: coupon.max_uses != null ? String(coupon.max_uses) : '',
-      valid_from: coupon.valid_from ?? '',
-      valid_to: coupon.valid_to ?? '',
-    })
-    setEditing(true)
+const SETTINGS_FIELDS = [
+  {
+    key: 'advance_payment_percentage',
+    label: 'Advance payment %',
+    type: 'number',
+    placeholder: 'e.g. 30',
+  },
+  { key: 'primary_phone', label: 'Primary phone', type: 'text', placeholder: '+91 ...' },
+  {
+    key: 'support_email',
+    label: 'Support email',
+    type: 'email',
+    placeholder: 'support@example.com',
+  },
+  { key: 'whatsapp_number', label: 'WhatsApp number', type: 'text', placeholder: '+91 ...' },
+  {
+    key: 'support_availability_text',
+    label: 'Support availability note',
+    type: 'textarea',
+    placeholder: 'e.g. Mon-Sat, 10am-7pm',
+    rows: 2,
+  },
+  {
+    key: 'response_expectation_text',
+    label: 'Response expectation note',
+    type: 'textarea',
+    placeholder: 'e.g. Replies within 4 hours',
+    rows: 2,
+  },
+]
+
+function toDateInputValue(value) {
+  const text = String(value ?? '').trim()
+  return text ? text.slice(0, 10) : ''
+}
+
+function couponFormFromSource(source = {}) {
+  return {
+    code: String(source.code ?? '').toUpperCase(),
+    discount_type: source.discount_type ?? 'percentage',
+    discount_value:
+      source.discount_value !== undefined && source.discount_value !== null
+        ? String(source.discount_value)
+        : '',
+    max_uses:
+      source.max_uses !== undefined && source.max_uses !== null ? String(source.max_uses) : '',
+    used_count:
+      source.used_count !== undefined && source.used_count !== null
+        ? String(source.used_count)
+        : '0',
+    valid_from: toDateInputValue(source.valid_from),
+    valid_to: toDateInputValue(source.valid_to),
+    is_active: source.is_active !== false,
   }
+}
+
+function settingsFormFromSource(source = {}) {
+  const s = source ?? {}
+  return {
+    advance_payment_percentage:
+      s.advance_payment_percentage !== undefined && s.advance_payment_percentage !== null
+        ? String(s.advance_payment_percentage)
+        : '',
+    primary_phone: String(s.primary_phone ?? ''),
+    support_email: String(s.support_email ?? ''),
+    whatsapp_number: String(s.whatsapp_number ?? ''),
+    support_availability_text: String(s.support_availability_text ?? ''),
+    response_expectation_text: String(s.response_expectation_text ?? ''),
+  }
+}
+
+function renderFormField({ field, value, onChange, selectClassName = '' }) {
+  if (field.type === 'select') {
+    return (
+      <div key={field.key}>
+        <p className="mb-1 text-xs text-[#8F8F8F]">{field.label}</p>
+        <SelectField
+          value={field.key === 'is_active' ? String(value) : value}
+          onChange={nextValue =>
+            onChange(field.key, field.key === 'is_active' ? nextValue === 'true' : nextValue)
+          }
+          className={`min-h-10 rounded-lg bg-[#F3F3F3] ${selectClassName}`.trim()}
+        >
+          {field.options.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </SelectField>
+      </div>
+    )
+  }
+
+  if (field.type === 'textarea') {
+    return (
+      <div key={field.key}>
+        <p className="mb-1 text-xs text-[#8F8F8F]">{field.label}</p>
+        <Textarea
+          value={value}
+          onChange={event => onChange(field.key, event.target.value)}
+          placeholder={field.placeholder}
+          rows={field.rows ?? 3}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div key={field.key}>
+      <p className="mb-1 text-xs text-[#8F8F8F]">{field.label}</p>
+      <Input
+        type={field.type}
+        value={value}
+        onChange={event => onChange(field.key, event.target.value)}
+        placeholder={field.placeholder}
+      />
+    </div>
+  )
+}
+
+// function CouponRow({ coupon, updateCouponMutation }) {
+//   const [editing, setEditing] = useState(false)
+//   const [editForm, setEditForm] = useState({})
+//   const setE = (key, val) => setEditForm(f => ({ ...f, [key]: val }))
+
+//   function openEdit() {
+//     setEditForm(couponFormFromSource(coupon))
+//     setEditing(true)
+//   }
+
+//   function saveEdit() {
+//     updateCouponMutation.mutate(
+//       {
+//         couponId: coupon.id,
+//         body: {
+//           code: editForm.code,
+//           discount_type: editForm.discount_type,
+//           discount_value: Number(editForm.discount_value),
+//           max_uses: editForm.max_uses ? Number(editForm.max_uses) : null,
+//           used_count: Number(editForm.used_count || 0),
+//           valid_from: editForm.valid_from || null,
+//           valid_to: editForm.valid_to || null,
+//           is_active: Boolean(editForm.is_active),
+//         },
+//       },
+//       { onSuccess: () => setEditing(false) }
+//     )
+//   }
+
+//   return (
+//     <div className="rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 space-y-3">
+//       {/* Row header */}
+//       <div className="flex flex-wrap items-start justify-between gap-3">
+//         <div>
+//           <p className="text-sm font-semibold text-[#1C1C1C]">{coupon.code}</p>
+//           <p className="mt-1 text-xs text-[#8F8F8F]">
+//             {coupon.discount_type === 'percentage'
+//               ? `${coupon.discount_value}% off`
+//               : `₹${coupon.discount_value} off`}
+//             {coupon.valid_from || coupon.valid_to
+//               ? ` · Valid ${formatDate(coupon.valid_from)} → ${formatDate(coupon.valid_to)}`
+//               : ''}
+//             {coupon.max_uses ? ` · Max ${coupon.max_uses} uses` : ' · Unlimited uses'}
+//             {` · Used ${coupon.used_count ?? 0} times`}
+//           </p>
+//         </div>
+//         <div className="flex items-center gap-2">
+//           <Badge
+//             status={coupon.is_active ? 'active' : 'inactive'}
+//             label={coupon.is_active ? 'Active' : 'Inactive'}
+//           />
+//           <GhostBtn
+//             disabled={updateCouponMutation.isPending}
+//             onClick={() =>
+//               updateCouponMutation.mutate({
+//                 couponId: coupon.id,
+//                 body: { is_active: !coupon.is_active },
+//               })
+//             }
+//           >
+//             {coupon.is_active ? 'Disable' : 'Enable'}
+//           </GhostBtn>
+//           <GhostBtn onClick={editing ? () => setEditing(false) : openEdit}>
+//             {editing ? 'Cancel' : 'Edit'}
+//           </GhostBtn>
+//         </div>
+//       </div>
+
+//       {/* Inline edit form */}
+//       {editing && (
+//         <div className="border-t border-[#E4DED8] pt-3">
+//           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+//             <SelectField
+//               value={editForm.discount_type}
+//               onChange={v => setE('discount_type', v)}
+//               className="min-h-10 bg-[#F3F3F3]"
+//             >
+//               <option value="percentage">Percentage (%)</option>
+//               <option value="flat">Flat amount (₹)</option>
+//             </SelectField>
+//             <Input
+//               type="number"
+//               value={editForm.discount_value}
+//               onChange={e => setE('discount_value', e.target.value)}
+//               placeholder="Discount value"
+//             />
+//             <Input
+//               type="number"
+//               value={editForm.max_uses}
+//               onChange={e => setE('max_uses', e.target.value)}
+//               placeholder="Max uses (blank = unlimited)"
+//             />
+//             <div className="grid grid-cols-2 gap-2">
+//               <div>
+//                 <p className="mb-1 text-xs text-[#8F8F8F]">Valid from</p>
+//                 <Input
+//                   type="date"
+//                   value={editForm.valid_from}
+//                   onChange={e => setE('valid_from', e.target.value)}
+//                 />
+//               </div>
+//               <div>
+//                 <p className="mb-1 text-xs text-[#8F8F8F]">Valid to</p>
+//                 <Input
+//                   type="date"
+//                   value={editForm.valid_to}
+//                   onChange={e => setE('valid_to', e.target.value)}
+//                 />
+//               </div>
+//             </div>
+//           </div>
+//           <div className="mt-3 flex gap-2">
+//             <PrimaryBtn
+//               disabled={updateCouponMutation.isPending || !editForm.discount_value}
+//               onClick={saveEdit}
+//             >
+//               {updateCouponMutation.isPending ? 'Saving…' : 'Save Changes'}
+//             </PrimaryBtn>
+//             <GhostBtn onClick={() => setEditing(false)}>Cancel</GhostBtn>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   )
+// }
+
+// ---------------------------------------------------------------------------
+// Section: Coupons Dynamic
+// ---------------------------------------------------------------------------
+// function SettingsSection({ updateSettingsMutation }) {
+//   const [form, setForm] = useState({
+//     advance_payment_percentage: '',
+//     primary_phone: '',
+//     support_email: '',
+//     whatsapp_number: '',
+//     support_availability_text: '',
+//     response_expectation_text: '',
+//   })
+//   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+//   return (
+//     <div className="space-y-5">
+//       {/* Current values */}
+//       <div className="grid grid-cols-2 gap-4 rounded-2xl border border-[#E4DED8] bg-white p-5 md:grid-cols-4">
+//         {[
+//           { label: 'Advance %', value: `${form.advance_payment_percentage || 0}%` },
+//           { label: 'Phone', value: form.primary_phone || '—' },
+//           { label: 'Email', value: form.support_email || '—' },
+//           { label: 'WhatsApp', value: form.whatsapp_number || '—' },
+//         ].map(f => (
+//           <div key={f.label}>
+//             <p className="text-[11px] uppercase tracking-widest text-[#8F8F8F]">{f.label}</p>
+//             <p className="mt-0.5 text-sm font-medium text-[#2D2D2D]">{f.value}</p>
+//           </div>
+//         ))}
+//       </div>
+
+//       {/* Edit form */}
+//       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
+//         <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Edit Settings</h3>
+//         <div className="grid gap-3 sm:grid-cols-2">
+//           <div>
+//             <p className="mb-1 text-xs text-[#8F8F8F]">Advance payment %</p>
+//             <Input
+//               type="number"
+//               value={form.advance_payment_percentage}
+//               onChange={e => set('advance_payment_percentage', e.target.value)}
+//               placeholder="e.g. 30"
+//             />
+//           </div>
+//           <div>
+//             <p className="mb-1 text-xs text-[#8F8F8F]">Primary phone</p>
+//             <Input
+//               value={form.primary_phone}
+//               onChange={e => set('primary_phone', e.target.value)}
+//               placeholder="+91 …"
+//             />
+//           </div>
+//           <div>
+//             <p className="mb-1 text-xs text-[#8F8F8F]">Support email</p>
+//             <Input
+//               value={form.support_email}
+//               onChange={e => set('support_email', e.target.value)}
+//               placeholder="support@…"
+//             />
+//           </div>
+//           <div>
+//             <p className="mb-1 text-xs text-[#8F8F8F]">WhatsApp number</p>
+//             <Input
+//               value={form.whatsapp_number}
+//               onChange={e => set('whatsapp_number', e.target.value)}
+//               placeholder="+91 …"
+//             />
+//           </div>
+//           <div>
+//             <p className="mb-1 text-xs text-[#8F8F8F]">Support availability note</p>
+//             <Textarea
+//               value={form.support_availability_text}
+//               onChange={e => set('support_availability_text', e.target.value)}
+//               placeholder="e.g. Mon–Sat, 10am–7pm"
+//               rows={2}
+//             />
+//           </div>
+//           <div>
+//             <p className="mb-1 text-xs text-[#8F8F8F]">Response expectation note</p>
+//             <Textarea
+//               value={form.response_expectation_text}
+//               onChange={e => set('response_expectation_text', e.target.value)}
+//               placeholder="e.g. Replies within 4 hours"
+//               rows={2}
+//             />
+//           </div>
+//         </div>
+//         <div className="mt-4">
+//           <PrimaryBtn
+//             disabled={updateSettingsMutation.isPending}
+//             onClick={() =>
+//               updateSettingsMutation.mutate({
+//                 ...form,
+//                 advance_payment_percentage: Number(form.advance_payment_percentage || 0),
+//               })
+//             }
+//           >
+//             {updateSettingsMutation.isPending ? 'Saving…' : 'Save Settings'}
+//           </PrimaryBtn>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }) {
+  const [editing, setEditing] = useState(false)
+  const [editForm, setEditForm] = useState(couponFormFromSource(coupon))
+  const setField = (key, value) => setEditForm(current => ({ ...current, [key]: value }))
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setEditForm(couponFormFromSource(coupon))
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [coupon])
 
   function saveEdit() {
     updateCouponMutation.mutate(
       {
         couponId: coupon.id,
         body: {
+          code: editForm.code,
           discount_type: editForm.discount_type,
           discount_value: Number(editForm.discount_value),
           max_uses: editForm.max_uses ? Number(editForm.max_uses) : null,
+          used_count: Number(editForm.used_count || 0),
           valid_from: editForm.valid_from || null,
           valid_to: editForm.valid_to || null,
+          is_active: Boolean(editForm.is_active),
         },
       },
       { onSuccess: () => setEditing(false) }
@@ -784,14 +1150,13 @@ function CouponRow({ coupon, updateCouponMutation }) {
 
   return (
     <div className="rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 space-y-3">
-      {/* Row header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-[#1C1C1C]">{coupon.code}</p>
           <p className="mt-1 text-xs text-[#8F8F8F]">
             {coupon.discount_type === 'percentage'
               ? `${coupon.discount_value}% off`
-              : `₹${coupon.discount_value} off`}
+              : `Rs ${coupon.discount_value} off`}
             {coupon.valid_from || coupon.valid_to
               ? ` · Valid ${formatDate(coupon.valid_from)} → ${formatDate(coupon.valid_to)}`
               : ''}
@@ -815,61 +1180,43 @@ function CouponRow({ coupon, updateCouponMutation }) {
           >
             {coupon.is_active ? 'Disable' : 'Enable'}
           </GhostBtn>
-          <GhostBtn onClick={editing ? () => setEditing(false) : openEdit}>
+          <GhostBtn onClick={() => setEditing(current => !current)}>
             {editing ? 'Cancel' : 'Edit'}
           </GhostBtn>
+          <DangerBtn
+            disabled={deleteCouponMutation.isPending}
+            onClick={() => {
+              if (window.confirm(`Delete coupon "${coupon.code}"? This cannot be undone.`)) {
+                deleteCouponMutation.mutate(coupon.id)
+              }
+            }}
+          >
+            {deleteCouponMutation.isPending ? 'Deleting…' : 'Delete'}
+          </DangerBtn>
         </div>
       </div>
 
-      {/* Inline edit form */}
       {editing && (
         <div className="border-t border-[#E4DED8] pt-3">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SelectField
-              value={editForm.discount_type}
-              onChange={v => setE('discount_type', v)}
-              className="min-h-10 bg-[#F3F3F3]"
-            >
-              <option value="percentage">Percentage (%)</option>
-              <option value="flat">Flat amount (₹)</option>
-            </SelectField>
-            <Input
-              type="number"
-              value={editForm.discount_value}
-              onChange={e => setE('discount_value', e.target.value)}
-              placeholder="Discount value"
-            />
-            <Input
-              type="number"
-              value={editForm.max_uses}
-              onChange={e => setE('max_uses', e.target.value)}
-              placeholder="Max uses (blank = unlimited)"
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="mb-1 text-xs text-[#8F8F8F]">Valid from</p>
-                <Input
-                  type="date"
-                  value={editForm.valid_from}
-                  onChange={e => setE('valid_from', e.target.value)}
-                />
-              </div>
-              <div>
-                <p className="mb-1 text-xs text-[#8F8F8F]">Valid to</p>
-                <Input
-                  type="date"
-                  value={editForm.valid_to}
-                  onChange={e => setE('valid_to', e.target.value)}
-                />
-              </div>
-            </div>
+            {COUPON_FIELDS.map(field =>
+              renderFormField({
+                field,
+                value: editForm[field.key] ?? '',
+                onChange: (key, value) =>
+                  setField(key, key === 'code' ? String(value).toUpperCase() : value),
+                selectClassName: 'bg-[#F3F3F3]',
+              })
+            )}
           </div>
           <div className="mt-3 flex gap-2">
             <PrimaryBtn
-              disabled={updateCouponMutation.isPending || !editForm.discount_value}
+              disabled={
+                updateCouponMutation.isPending || !editForm.code || !editForm.discount_value
+              }
               onClick={saveEdit}
             >
-              {updateCouponMutation.isPending ? 'Saving…' : 'Save Changes'}
+              {updateCouponMutation.isPending ? 'Saving...' : 'Save Changes'}
             </PrimaryBtn>
             <GhostBtn onClick={() => setEditing(false)}>Cancel</GhostBtn>
           </div>
@@ -879,26 +1226,35 @@ function CouponRow({ coupon, updateCouponMutation }) {
   )
 }
 
-function CouponSection({ createCouponMutation, updateCouponMutation }) {
+function CouponSectionDynamic({
+  createCouponMutation,
+  updateCouponMutation,
+  deleteCouponMutation,
+}) {
   const [form, setForm] = useState(BLANK_COUPON_FORM)
   const [currentPage, setCurrentPage] = useState(1)
   const couponsQuery = useAdminCoupons({ page: currentPage, limit: 10 })
   const coupons = couponsQuery.data?.coupons ?? []
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
   const totalPages = Math.max(1, Number(couponsQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
   const isSectionLoading = couponsQuery.isFetching && !couponsQuery.isLoading
+  useScrollToTop(currentPage)
+  const setField = (key, value) => setForm(current => ({ ...current, [key]: value }))
 
-  if (couponsQuery.isLoading) return <LoadingState label="Loading coupons…" />
+  if (couponsQuery.isLoading) return <LoadingState label="Loading coupons..." />
   if (couponsQuery.error) return <ErrorState label="Coupons are unavailable right now." />
 
   function handleCreate() {
     createCouponMutation.mutate(
       {
-        ...form,
+        code: form.code,
+        discount_type: form.discount_type,
         discount_value: Number(form.discount_value),
         max_uses: form.max_uses ? Number(form.max_uses) : null,
         used_count: Number(form.used_count || 0),
+        valid_from: form.valid_from || null,
+        valid_to: form.valid_to || null,
+        is_active: Boolean(form.is_active),
       },
       { onSuccess: () => setForm(BLANK_COUPON_FORM) }
     )
@@ -906,75 +1262,47 @@ function CouponSection({ createCouponMutation, updateCouponMutation }) {
 
   return (
     <div className="space-y-5">
-      {/* Create form */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
         <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Generate Discount Coupon</h3>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <Input
-            value={form.code}
-            onChange={e => set('code', e.target.value.toUpperCase())}
-            placeholder="Coupon code (e.g. SAVE20)"
-          />
-          <SelectField
-            value={form.discount_type}
-            onChange={v => set('discount_type', v)}
-            placeholder="Discount type"
-            className="min-h-10 rounded-lg bg-[#F3F3F3]"
-          >
-            <option value="percentage">Percentage (%)</option>
-            <option value="flat">Flat amount (₹)</option>
-          </SelectField>
-          <Input
-            type="number"
-            value={form.discount_value}
-            onChange={e => set('discount_value', e.target.value)}
-            placeholder={
-              form.discount_type === 'percentage' ? 'Discount % (e.g. 20)' : 'Discount ₹ (e.g. 500)'
-            }
-          />
-          <Input
-            type="number"
-            value={form.max_uses}
-            onChange={e => set('max_uses', e.target.value)}
-            placeholder="Max uses (blank = unlimited)"
-          />
-          <div>
-            <p className="mb-1 text-xs text-[#8F8F8F]">Valid from</p>
-            <Input
-              type="date"
-              value={form.valid_from}
-              onChange={e => set('valid_from', e.target.value)}
-            />
-          </div>
-          <div>
-            <p className="mb-1 text-xs text-[#8F8F8F]">Valid to</p>
-            <Input
-              type="date"
-              value={form.valid_to}
-              onChange={e => set('valid_to', e.target.value)}
-            />
-          </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {COUPON_FIELDS.map(field =>
+            renderFormField({
+              field: {
+                ...field,
+                placeholder:
+                  field.key === 'discount_value'
+                    ? form.discount_type === 'percentage'
+                      ? 'Discount % (e.g. 20)'
+                      : 'Discount Rs (e.g. 500)'
+                    : field.placeholder,
+              },
+              value: form[field.key] ?? '',
+              onChange: (key, value) =>
+                setField(key, key === 'code' ? String(value).toUpperCase() : value),
+              selectClassName: 'bg-[#F3F3F3]',
+            })
+          )}
         </div>
         <div className="mt-4">
           <PrimaryBtn
             disabled={createCouponMutation.isPending || !form.code || !form.discount_value}
             onClick={handleCreate}
           >
-            {createCouponMutation.isPending ? 'Creating…' : 'Create Coupon'}
+            {createCouponMutation.isPending ? 'Creating...' : 'Create Coupon'}
           </PrimaryBtn>
         </div>
       </div>
 
-      {/* Coupon list */}
       {isSectionLoading ? (
-        <SectionLoadingState label="Loading couponsâ€¦" />
+        <SectionLoadingState label="Loading coupons..." />
       ) : coupons.length ? (
         <div className="space-y-2.5">
           {coupons.map(coupon => (
-            <CouponRow
+            <CouponRowDynamic
               key={coupon.id}
               coupon={coupon}
               updateCouponMutation={updateCouponMutation}
+              deleteCouponMutation={deleteCouponMutation}
             />
           ))}
           <PaginationControls
@@ -993,92 +1321,43 @@ function CouponSection({ createCouponMutation, updateCouponMutation }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Section: Settings
-// ---------------------------------------------------------------------------
-function SettingsSection({ updateSettingsMutation }) {
-  const [form, setForm] = useState({
-    advance_payment_percentage: '',
-    primary_phone: '',
-    support_email: '',
-    whatsapp_number: '',
-    support_availability_text: '',
-    response_expectation_text: '',
-  })
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+function SettingsSectionDynamic({ workspaceSettings, updateSettingsMutation }) {
+  const [form, setForm] = useState(settingsFormFromSource(workspaceSettings))
+  const setField = (key, value) => setForm(current => ({ ...current, [key]: value }))
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForm(settingsFormFromSource(workspaceSettings))
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [workspaceSettings])
 
   return (
     <div className="space-y-5">
-      {/* Current values */}
       <div className="grid grid-cols-2 gap-4 rounded-2xl border border-[#E4DED8] bg-white p-5 md:grid-cols-4">
         {[
           { label: 'Advance %', value: `${form.advance_payment_percentage || 0}%` },
-          { label: 'Phone', value: form.primary_phone || '—' },
-          { label: 'Email', value: form.support_email || '—' },
-          { label: 'WhatsApp', value: form.whatsapp_number || '—' },
-        ].map(f => (
-          <div key={f.label}>
-            <p className="text-[11px] uppercase tracking-widest text-[#8F8F8F]">{f.label}</p>
-            <p className="mt-0.5 text-sm font-medium text-[#2D2D2D]">{f.value}</p>
+          { label: 'Phone', value: form.primary_phone || '-' },
+          { label: 'Email', value: form.support_email || '-' },
+          { label: 'WhatsApp', value: form.whatsapp_number || '-' },
+        ].map(item => (
+          <div key={item.label}>
+            <p className="text-[11px] uppercase tracking-widest text-[#8F8F8F]">{item.label}</p>
+            <p className="mt-0.5 text-sm font-medium text-[#2D2D2D]">{item.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Edit form */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
         <h3 className="mb-4 text-base font-semibold text-[#1C1C1C]">Edit Settings</h3>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <p className="mb-1 text-xs text-[#8F8F8F]">Advance payment %</p>
-            <Input
-              type="number"
-              value={form.advance_payment_percentage}
-              onChange={e => set('advance_payment_percentage', e.target.value)}
-              placeholder="e.g. 30"
-            />
-          </div>
-          <div>
-            <p className="mb-1 text-xs text-[#8F8F8F]">Primary phone</p>
-            <Input
-              value={form.primary_phone}
-              onChange={e => set('primary_phone', e.target.value)}
-              placeholder="+91 …"
-            />
-          </div>
-          <div>
-            <p className="mb-1 text-xs text-[#8F8F8F]">Support email</p>
-            <Input
-              value={form.support_email}
-              onChange={e => set('support_email', e.target.value)}
-              placeholder="support@…"
-            />
-          </div>
-          <div>
-            <p className="mb-1 text-xs text-[#8F8F8F]">WhatsApp number</p>
-            <Input
-              value={form.whatsapp_number}
-              onChange={e => set('whatsapp_number', e.target.value)}
-              placeholder="+91 …"
-            />
-          </div>
-          <div>
-            <p className="mb-1 text-xs text-[#8F8F8F]">Support availability note</p>
-            <Textarea
-              value={form.support_availability_text}
-              onChange={e => set('support_availability_text', e.target.value)}
-              placeholder="e.g. Mon–Sat, 10am–7pm"
-              rows={2}
-            />
-          </div>
-          <div>
-            <p className="mb-1 text-xs text-[#8F8F8F]">Response expectation note</p>
-            <Textarea
-              value={form.response_expectation_text}
-              onChange={e => set('response_expectation_text', e.target.value)}
-              placeholder="e.g. Replies within 4 hours"
-              rows={2}
-            />
-          </div>
+          {SETTINGS_FIELDS.map(field =>
+            renderFormField({
+              field,
+              value: form[field.key] ?? '',
+              onChange: setField,
+            })
+          )}
         </div>
         <div className="mt-4">
           <PrimaryBtn
@@ -1090,7 +1369,7 @@ function SettingsSection({ updateSettingsMutation }) {
               })
             }
           >
-            {updateSettingsMutation.isPending ? 'Saving…' : 'Save Settings'}
+            {updateSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
           </PrimaryBtn>
         </div>
       </div>
@@ -1142,6 +1421,7 @@ export default function PaymentManagementPage() {
   const updateVendorPayoutMutation = useAdminUpdateVendorPayout()
   const createCouponMutation = useAdminCreateCoupon()
   const updateCouponMutation = useAdminUpdateCoupon()
+  const deleteCouponMutation = useAdminDeleteCoupon()
   const updateSettingsMutation = useAdminUpdateSettings()
 
   if (workspaceQuery.isLoading) {
@@ -1218,14 +1498,15 @@ export default function PaymentManagementPage() {
         )}
 
         {section === 'coupon' && (
-          <CouponSection
+          <CouponSectionDynamic
             createCouponMutation={createCouponMutation}
             updateCouponMutation={updateCouponMutation}
+            deleteCouponMutation={deleteCouponMutation}
           />
         )}
 
         {section === 'settings' && (
-          <SettingsSection
+          <SettingsSectionDynamic
             key={settings?.documentId ?? settings?.updatedAt ?? 'settings'}
             workspaceSettings={settings}
             updateSettingsMutation={updateSettingsMutation}

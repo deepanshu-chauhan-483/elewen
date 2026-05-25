@@ -2,15 +2,17 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ActionButton,
-  EmptyState,
   ErrorState,
   LoadingState,
+  ResultsEmptyState,
   SearchField,
   SectionLoadingState,
   SelectField,
   StatusBadge,
 } from '../components/ui/AdminUI'
 import { useAdminAlerts, useAdminUpdateAlert } from '../hooks/useAdminData'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import { formatDateTime } from '../lib/formatters'
 
 const PAGE_SIZE = 10
@@ -229,9 +231,10 @@ export default function SystemAlertsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedAlertId, setSelectedAlertId] = useState(null)
   const [checkedIds, setCheckedIds] = useState([])
+  const debouncedSearch = useDebouncedValue(search)
 
   const alertsQuery = useAdminAlerts({
-    search,
+    search: debouncedSearch,
     status,
     severity,
     alertType,
@@ -257,6 +260,8 @@ export default function SystemAlertsPage() {
   const totalAlerts = Number(alertsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(alertsQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
+
+  useScrollToTop(currentPage)
   const isResultsLoading = alertsQuery.isFetching && !alertsQuery.isLoading
   const allVisibleChecked =
     alerts.length > 0 && alerts.every(alert => checkedIds.includes(alert.id))
@@ -465,7 +470,7 @@ export default function SystemAlertsPage() {
           </div>
         </div>
       ) : (
-        <EmptyState
+        <ResultsEmptyState
           title="No alerts found"
           body="The alert feed is clear for the current filters."
         />

@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
-  EmptyState,
   ErrorState,
   LoadingState,
+  ResultsEmptyState,
   SectionLoadingState,
   SelectField,
 } from '../components/ui/AdminUI'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import {
   useAdminAddBookingNote,
   useAdminBooking,
@@ -14,6 +17,7 @@ import {
   useAdminUpdateBookingStatus,
   useAdminVendors,
 } from '../hooks/useAdminData'
+import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
@@ -30,10 +34,100 @@ const STAGE_PROGRESSION = [
   'completed',
 ]
 
+const VALID_BOOKING_BUCKETS = new Set(['all', 'active', 'today', 'upcoming', 'completed'])
+const VALID_BOOKING_STATUSES = new Set([
+  '',
+  'new',
+  'confirmed',
+  'info_collection',
+  'planning',
+  'pre_event',
+  'execution',
+  'post_event',
+  'completed',
+  'cancelled',
+])
+
+function normalizeBookingBucket(value) {
+  const normalizedValue = String(value ?? '')
+    .trim()
+    .toLowerCase()
+  return VALID_BOOKING_BUCKETS.has(normalizedValue) ? normalizedValue : 'all'
+}
+
+function normalizeBookingStatus(value) {
+  const normalizedValue = String(value ?? '')
+    .trim()
+    .toLowerCase()
+  return VALID_BOOKING_STATUSES.has(normalizedValue) ? normalizedValue : ''
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+
+function startOfDay(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+function getDaysSinceEvent(eventDate) {
+  const eventDay = startOfDay(eventDate)
+  const today = startOfDay(new Date())
+  if (!eventDay || !today) return null
+  return Math.floor((today.getTime() - eventDay.getTime()) / MS_PER_DAY)
+}
+
+function parseBookingItemTitle(title = '') {
+  const rawTitle = String(title ?? '')
+  const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+
+  if (!metaPart) {
+    return {
+      displayTitle: String(displayTitle || rawTitle).trim(),
+      itemType: 'package',
+    }
+  }
+
+  try {
+    const parsed = JSON.parse(metaPart)
+    return {
+      displayTitle: String(displayTitle || rawTitle).trim(),
+      itemType: parsed?.itemType ?? 'package',
+    }
+  } catch {
+    return {
+      displayTitle: String(displayTitle || rawTitle).trim(),
+      itemType: 'package',
+    }
+  }
+}
+
+function getBookingPackageNames(booking = null) {
+  const packageNames = (Array.isArray(booking?.items) ? booking.items : [])
+    .map(item => parseBookingItemTitle(item?.title))
+    .filter(item => item.itemType !== 'addon')
+    .map(item => item.displayTitle)
+    .filter(Boolean)
+
+  const uniquePackageNames = [...new Set(packageNames)]
+
+  if (uniquePackageNames.length) return uniquePackageNames
+
+  const fallbackTitle = String(booking?.package?.title ?? '').trim()
+  return fallbackTitle ? [fallbackTitle] : []
+}
+
+function getBookingPackageNamesText(booking = null, fallback = 'Selected package') {
+  const packageNames = getBookingPackageNames(booking)
+  return packageNames.length ? packageNames.join(', ') : fallback
+}
+
 // Special case: cancelled can happen anytime
 // const SPECIAL_STATUSES = ['cancelled']
 
-function canProgressToStage(currentStatus, newStatus, remainingAmount = 0) {
+function canProgressToStage(currentStatus, newStatus, remainingAmount = 0, eventDate = null) {
   // Special case: can always go to cancelled
   if (newStatus === 'cancelled') return { allowed: true }
 
@@ -53,11 +147,40 @@ function canProgressToStage(currentStatus, newStatus, remainingAmount = 0) {
     return { allowed: false, message: 'Cannot move back to a previous stage.' }
   }
 
-  // Pre Event stage requires full payment
-  if (newStatus === 'pre_event' && remainingAmount > 0) {
+  // Execution stage requires full payment
+  if (newStatus === 'execution' && remainingAmount > 0) {
     return {
       allowed: false,
-      message: `Cannot move to "Pre Event" stage. Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
+      message: `Cannot move to "Execution" stage. Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
+    }
+  }
+
+  const daysSinceEvent = getDaysSinceEvent(eventDate)
+  if (['execution', 'post_event', 'completed'].includes(newStatus) && daysSinceEvent == null) {
+    return {
+      allowed: false,
+      message: 'Event date is required before using execution, post-event, or completed stages.',
+    }
+  }
+
+  if (newStatus === 'execution' && daysSinceEvent !== 0) {
+    return {
+      allowed: false,
+      message: 'Execution stage is only available on the booking event date.',
+    }
+  }
+
+  if (newStatus === 'post_event' && !(daysSinceEvent >= 1)) {
+    return {
+      allowed: false,
+      message: 'Post Event stage becomes available after the event date has passed.',
+    }
+  }
+
+  if (newStatus === 'completed' && !(daysSinceEvent >= 2)) {
+    return {
+      allowed: false,
+      message: 'Completed stage becomes available two days after the event date.',
     }
   }
 
@@ -67,23 +190,6 @@ function canProgressToStage(currentStatus, newStatus, remainingAmount = 0) {
 // ---------------------------------------------------------------------------
 // Status badge — normal text, no uppercase
 // ---------------------------------------------------------------------------
-const badgeMap = {
-  new: 'bg-[#FCE7CF] text-[#C57A1E]',
-  confirmed: 'bg-[#DDF7E5] text-[#16A34A]',
-  info_collection: 'bg-[#DBEAFE] text-[#0383E4]',
-  planning: 'bg-[#EDE9FE] text-[#6D28D9]',
-  pre_event: 'bg-[#FCE7CF] text-[#C57A1E]',
-  execution: 'bg-[#DDF7E5] text-[#16A34A]',
-  post_event: 'bg-[#DBEAFE] text-[#0383E4]',
-  completed: 'bg-[#E5E7EB] text-[#4B5563]',
-  cancelled: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  pending: 'bg-[#FCE7CF] text-[#C57A1E]',
-  assigned: 'bg-[#DDF7E5] text-[#16A34A]',
-  failed: 'bg-[#FFF3F3] text-[#8A1C1C]',
-  paid: 'bg-[#DDF7E5] text-[#16A34A]',
-  refunded: 'bg-[#E5E7EB] text-[#4B5563]',
-}
-
 // border accent per status (left when collapsed, top when expanded)
 const borderColorMap = {
   new: 'border-[#C57A1E]',
@@ -99,7 +205,7 @@ const borderColorMap = {
 
 function StatusBadge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
-  const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const cls = getAdminBadgeClass(status, { preset: 'vivid' })
   const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
   return (
     <span
@@ -255,13 +361,13 @@ function getLatestStatusNote(statusLogs = []) {
 // ---------------------------------------------------------------------------
 // Admin Booking Accordion Card
 // ---------------------------------------------------------------------------
-function BookingAccordionCard({ booking }) {
-  const [open, setOpen] = useState(false)
+function BookingAccordionCard({ booking, open = false, onToggle }) {
   const [statusInput, setStatusInput] = useState(booking.status ?? '')
   const [statusNote, setStatusNote] = useState('')
   const [internalNote, setInternalNote] = useState('')
   const [vendorId, setVendorId] = useState('')
   const [statusError, setStatusError] = useState('')
+  const bookingTitle = getBookingPackageNamesText(booking, booking.event?.name || booking.id)
 
   const bookingQuery = useAdminBooking(open ? booking.id : null)
   const vendorsQuery = useAdminVendors({
@@ -283,7 +389,12 @@ function BookingAccordionCard({ booking }) {
 
   const handleUpdateStatus = async () => {
     const remainingAmount = bookingDetails?.remainingAmount ?? 0
-    const validation = canProgressToStage(booking.status, statusInput, remainingAmount)
+    const validation = canProgressToStage(
+      booking.status,
+      statusInput,
+      remainingAmount,
+      bookingDetails?.eventDate ?? booking?.eventDate
+    )
 
     if (!validation.allowed) {
       setStatusError(validation.message || 'Invalid stage transition.')
@@ -301,7 +412,12 @@ function BookingAccordionCard({ booking }) {
   const handleStatusInputChange = newStatus => {
     setStatusInput(newStatus)
     const remainingAmount = bookingDetails?.remainingAmount ?? 0
-    const validation = canProgressToStage(booking.status, newStatus, remainingAmount)
+    const validation = canProgressToStage(
+      booking.status,
+      newStatus,
+      remainingAmount,
+      bookingDetails?.eventDate ?? booking?.eventDate
+    )
     if (!validation.allowed) {
       setStatusError(validation.message || 'Invalid stage transition.')
     } else {
@@ -320,7 +436,12 @@ function BookingAccordionCard({ booking }) {
   // Check which status options are allowed
   const isStatusAllowed = optionStatus => {
     const remainingAmount = bookingDetails?.remainingAmount ?? 0
-    const validation = canProgressToStage(booking.status, optionStatus, remainingAmount)
+    const validation = canProgressToStage(
+      booking.status,
+      optionStatus,
+      remainingAmount,
+      bookingDetails?.eventDate ?? booking?.eventDate
+    )
     return validation.allowed
   }
 
@@ -332,13 +453,13 @@ function BookingAccordionCard({ booking }) {
       ].join(' ')}
     >
       {/* ── Collapsed / header row — always visible ── */}
-      <div className="cursor-pointer p-5" onClick={() => setOpen(prev => !prev)}>
+      <div className="cursor-pointer p-5" onClick={onToggle}>
         <div className="flex items-start justify-between gap-4">
           {/* Left — title + meta */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-start gap-3">
               <h3 className="text-[17px] font-medium leading-tight text-[#2E2E2E]">
-                {booking.package?.title || booking.event?.name || booking.id}
+                {bookingTitle}
               </h3>
               <div className="shrink-0">
                 <StatusBadge status={booking.status} label={booking.statusLabel} />
@@ -356,13 +477,13 @@ function BookingAccordionCard({ booking }) {
           <div className="flex shrink-0 items-start gap-6">
             {!open && (
               <div className="hidden gap-6 text-sm md:flex">
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col">
                   <p className="text-[11px] text-[#767676]">ADVANCE PAID</p>
                   <p className="font-medium text-[#2D2D2D]">
                     {formatCurrency(booking.advanceAmount)}
                   </p>
                 </div>
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col">
                   <p className="text-[11px] text-[#767676]">REMAINING</p>
                   <p className="font-medium text-[#2D2D2D]">
                     {formatCurrency(booking.remainingAmount)}
@@ -621,15 +742,34 @@ function BookingAccordionCard({ booking }) {
 // Page
 // ---------------------------------------------------------------------------
 export default function BookingManagementPage() {
+  const [openBookingId, setOpenBookingId] = useState('')
+  const [searchParams] = useSearchParams()
+  const initialBucket = normalizeBookingBucket(searchParams.get('bucket'))
+  const initialStatusFilter = normalizeBookingStatus(searchParams.get('status'))
   const [search, setSearch] = useState('')
-  const [bucket, setBucket] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [bucket, setBucket] = useState(initialBucket)
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter)
   const [sortBy, setSortBy] = useState('latest')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
+  const debouncedSearch = useDebouncedValue(search)
+
+  useEffect(() => {
+    const nextBucket = normalizeBookingBucket(searchParams.get('bucket'))
+    const nextStatusFilter = normalizeBookingStatus(searchParams.get('status'))
+
+    const timer = setTimeout(() => {
+      setBucket(nextBucket)
+      setStatusFilter(nextStatusFilter)
+      setCurrentPage(1)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [searchParams])
+
+  useScrollToTop(currentPage)
 
   const bookingsQuery = useAdminBookings({
-    search,
+    search: debouncedSearch,
     bucket,
     status: statusFilter,
     sortBy,
@@ -641,9 +781,17 @@ export default function BookingManagementPage() {
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
   const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
 
-  if (bookingsQuery.isLoading) return <LoadingState label="Loading bookings…" />
-  if (bookingsQuery.error) return <ErrorState label="Bookings could not be loaded right now." />
+  // if (bookingsQuery.isLoading) return <LoadingState label="Loading bookings…" />
+  // if (bookingsQuery.error) return <ErrorState label="Bookings could not be loaded right now." />
+  if (bookingsQuery.isLoading && !bookingsQuery.data) {
+    return <LoadingState label="Loading bookings..." />
+  }
 
+  const hasBookings = (bookingsQuery.data?.bookings?.length ?? 0) > 0
+
+  if (bookingsQuery.error && !hasBookings) {
+    return <ErrorState label="Bookings could not be loaded right now." />
+  }
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -673,7 +821,7 @@ export default function BookingManagementPage() {
                 setSearch(e.target.value)
                 setCurrentPage(1)
               }}
-              placeholder="Search"
+              placeholder="Search by package name..."
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
@@ -733,6 +881,7 @@ export default function BookingManagementPage() {
         <span className="text-base font-semibold text-[#1C1C1C]">
           {totalBookings} booking{totalBookings !== 1 ? 's' : ''}
         </span>
+
         {statusFilter && (
           <span className="text-sm text-[#8F8F8F]">
             in &quot;{formatStageLabel(statusFilter)}&quot; stage
@@ -740,9 +889,17 @@ export default function BookingManagementPage() {
         )}
       </div>
 
+      {bookingsQuery.error && hasBookings && (
+        <div className="rounded-xl border border-[#F5C2C7] bg-[#FFF3F4] px-4 py-3">
+          <p className="text-sm text-[#B42318]">
+            Some results may be outdated because the latest search request failed.
+          </p>
+        </div>
+      )}
+
       {/* ── Accordion list ── */}
       {isResultsLoading ? (
-        <SectionLoadingState label="Loading bookingsâ€¦" />
+        <SectionLoadingState label="Loading bookings..." />
       ) : bookings.length ? (
         <div>
           <div className="space-y-3">
@@ -750,6 +907,10 @@ export default function BookingManagementPage() {
               <BookingAccordionCard
                 key={`${booking.id}:${booking.status ?? ''}`}
                 booking={booking}
+                open={openBookingId === booking.id}
+                onToggle={() =>
+                  setOpenBookingId(current => (current === booking.id ? '' : booking.id))
+                }
               />
             ))}
           </div>
@@ -777,9 +938,10 @@ export default function BookingManagementPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#E4DED8] bg-white p-8">
-          <EmptyState title="No bookings found" body="Try a different search term or filter." />
-        </div>
+        <ResultsEmptyState
+          title="No bookings found"
+          body="Try a different search term or filter."
+        />
       )}
     </div>
   )

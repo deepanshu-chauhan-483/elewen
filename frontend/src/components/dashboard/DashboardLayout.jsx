@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './navbar'
 import { DashboardSearchProvider } from './DashboardSearchContext'
 import { DASHBOARD } from '../../constants/dashboard'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getStoredJwt, getValidStoredJwt } from '../../lib/api'
+import { scrollPageToTop } from '../../hooks/useScrollToTop'
 
 const DashboardLayout = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
@@ -20,6 +21,7 @@ const DashboardLayout = () => {
   const location = useLocation()
   const [token, setToken] = useState(() => getStoredJwt())
   const [authResolved, setAuthResolved] = useState(() => Boolean(getStoredJwt()))
+  const mainRef = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -76,6 +78,13 @@ const DashboardLayout = () => {
     })
   }, [authResolved, location.pathname, location.search, navigate, token])
 
+  useEffect(() => {
+    scrollPageToTop()
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0
+    }
+  }, [location.pathname, location.search])
+
   if (!authResolved || !token) {
     return (
       <div className="flex min-h-[var(--door-viewport-height)] items-center justify-center bg-[#FAFAFA] px-6 text-center text-sm text-[#6B7280] md:min-h-screen">
@@ -98,6 +107,7 @@ const DashboardLayout = () => {
           <Navbar onMobileMenuOpen={() => setIsMobileSidebarOpen(true)} />
 
           <main
+            ref={mainRef}
             className="dashboard-main flex flex-1 flex-col overflow-y-auto pb-28 md:min-h-0 md:p-6 md:pb-6"
             style={{
               backgroundColor: '#F2F2F2',

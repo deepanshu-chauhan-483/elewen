@@ -1,7 +1,9 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import { useDecorThemeOptions } from '../hooks/useEventTypes'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
 
 import themeImg1 from '../assets/images/IMG_3903.jpg'
@@ -90,6 +92,7 @@ function ThemeCard({
 export default function DecorThemePage() {
   const [searchParams] = useSearchParams()
   const [searchValue, setSearchValue] = useState('')
+  const debouncedSearchValue = useDebouncedValue(searchValue)
   const [touchStartX, setTouchStartX] = useState(null)
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (typeof window === 'undefined') return true
@@ -104,7 +107,7 @@ export default function DecorThemePage() {
   const flow = searchParams.get('flow') ?? ''
 
   const { data: themes = [] } = useDecorThemeOptions(serviceId)
-  const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${searchValue.trim().toLowerCase()}`
+  const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
     key: paginationKey,
     pageIndex: 0,
@@ -128,10 +131,10 @@ export default function DecorThemePage() {
   }, [])
 
   const filteredThemes = useMemo(() => {
-    const query = searchValue.trim().toLowerCase()
+    const query = debouncedSearchValue.trim().toLowerCase()
     if (!query) return themes
     return themes.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
-  }, [searchValue, themes])
+  }, [debouncedSearchValue, themes])
   const cardsPerPage = isDesktopViewport ? DESKTOP_CARDS_PER_PAGE : MOBILE_CARDS_PER_PAGE
   const totalPages = Math.max(1, Math.ceil(filteredThemes.length / cardsPerPage))
   const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
@@ -140,6 +143,8 @@ export default function DecorThemePage() {
     safePageIndex * cardsPerPage,
     safePageIndex * cardsPerPage + cardsPerPage
   )
+
+  useScrollToTop(`${paginationKey}:${safePageIndex}`)
 
   const backTo = useMemo(() => {
     return buildServiceSelectionBackTo({

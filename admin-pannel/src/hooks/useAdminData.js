@@ -16,6 +16,7 @@ import {
   adminPaymentWorkspace,
   adminPaymentSummary,
   adminPayments,
+  adminReassignVendorAssignment,
   adminProcessRefund,
   adminRefunds,
   adminSampleTastes,
@@ -26,6 +27,7 @@ import {
   adminSupportTickets,
   adminUpdateAlert,
   adminUpdateBookingStatus,
+  adminDeleteCoupon,
   adminUpdateCoupon,
   adminUpdateSampleTasteStatus,
   adminUpdateSettings,
@@ -269,6 +271,22 @@ export function useAdminCreateVendorAssignment() {
   })
 }
 
+export function useAdminReassignVendorAssignment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ assignmentId, body }) =>
+      withAdminToken(token => adminReassignVendorAssignment(token, assignmentId, body)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vendor-assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'booking'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vendors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vendors', 'workspace'] })
+    },
+  })
+}
+
 export function useAdminUpdateVendorAssignment() {
   const queryClient = useQueryClient()
 
@@ -420,6 +438,18 @@ export function useAdminUpdateCoupon() {
   return useMutation({
     mutationFn: ({ couponId, body }) =>
       withAdminToken(token => adminUpdateCoupon(token, couponId, body)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'coupons'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payments', 'workspace'] })
+    },
+  })
+}
+
+export function useAdminDeleteCoupon() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: couponId => withAdminToken(token => adminDeleteCoupon(token, couponId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'coupons'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'payments', 'workspace'] })

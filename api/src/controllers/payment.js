@@ -474,6 +474,14 @@ export const handleWebhook = async (req, res) => {
             }
           }
 
+          if (payment.paymentType === 'full') {
+            await ensureConfirmedBooking(
+              payment,
+              booking?.userId ?? null,
+              'Auto-confirmed via payment.captured webhook'
+            )
+          }
+
           await clearUserCart(booking?.userId).catch(() => {})
           await invalidateDashboardCache(booking?.userId).catch(() => {})
         }

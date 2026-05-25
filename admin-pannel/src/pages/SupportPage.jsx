@@ -3,6 +3,7 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
+  ResultsEmptyState,
   SectionLoadingState,
   SelectField,
 } from '../components/ui/AdminUI'
@@ -12,31 +13,23 @@ import {
   useAdminSupportTickets,
   useAdminUpdateSupportTicket,
 } from '../hooks/useAdminData'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatDateTime } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
 // Shared primitives — consistent with BookingManagementPage & PaymentManagementPage
 // ---------------------------------------------------------------------------
 
-const badgeMap = {
-  open: 'bg-[#DBEAFE] text-[#0383E4]',
-  in_progress: 'bg-[#FCE7CF] text-[#C57A1E]',
-  resolved: 'bg-[#DDF7E5] text-[#16A34A]',
-  closed: 'bg-[#E5E7EB] text-[#4B5563]',
-  low: 'bg-[#E5E7EB] text-[#4B5563]',
-  medium: 'bg-[#FCE7CF] text-[#C57A1E]',
-  high: 'bg-[#FFF3F3] text-[#8A1C1C]',
-}
-
 const priorityDot = {
   low: 'bg-gray-400',
-  medium: 'bg-amber-400',
-  high: 'bg-red-500',
+  medium: 'bg-[#C07318]',
+  high: 'bg-[#591902]',
 }
 
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
-  const cls = badgeMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
+  const cls = getAdminBadgeClass(status, { preset: 'soft' })
   const text = label ?? key.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) ?? '—'
   return (
     <span
@@ -47,17 +40,17 @@ function Badge({ status, label }) {
   )
 }
 
-function Select({ value, onChange, children, className = '' }) {
-  return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className={`h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition ${className}`}
-    >
-      {children}
-    </select>
-  )
-}
+// function Select({ value, onChange, children, className = '' }) {
+//   return (
+//     <select
+//       value={value}
+//       onChange={e => onChange(e.target.value)}
+//       className={`h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition ${className}`}
+//     >
+//       {children}
+//     </select>
+//   )
+// }
 
 function Textarea({ value, onChange, placeholder, rows = 4 }) {
   return (
@@ -191,8 +184,14 @@ export default function SupportPage() {
   const [priorityInput, setPriorityInput] = useState('medium')
   const [message, setMessage] = useState('')
   const [isInternalNote, setIsInternalNote] = useState(false)
+  const debouncedSearch = useDebouncedValue(search)
 
-  const ticketsQuery = useAdminSupportTickets({ search, status, priority, limit: 24 })
+  const ticketsQuery = useAdminSupportTickets({
+    search: debouncedSearch,
+    status,
+    priority,
+    limit: 24,
+  })
   const ticketList = useMemo(() => ticketsQuery.data?.tickets ?? [], [ticketsQuery.data?.tickets])
   const selectedListTicket = useMemo(
     () => ticketList.find(t => t.id === selectedId) ?? ticketList[0] ?? null,
@@ -292,9 +291,7 @@ export default function SupportPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#E4DED8] bg-white p-6">
-              <EmptyState title="No tickets found" body="Try a different search or filter." />
-            </div>
+            <ResultsEmptyState title="No tickets found" body="Try a different search or filter." />
           )}
         </div>
 
@@ -326,20 +323,20 @@ export default function SupportPage() {
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex-1 min-w-[140px]">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Status</p>
-                  <Select value={statusValue} onChange={setStatusInput}>
+                  <SelectField value={statusInput} onChange={setStatusInput}>
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
-                  </Select>
+                  </SelectField>
                 </div>
                 <div className="flex-1 min-w-[140px]">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Priority</p>
-                  <Select value={priorityValue} onChange={setPriorityInput}>
+                  <SelectField value={priorityInput} onChange={setPriorityInput}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
-                  </Select>
+                  </SelectField>
                 </div>
                 <PrimaryBtn
                   disabled={updateTicketMutation.isPending}

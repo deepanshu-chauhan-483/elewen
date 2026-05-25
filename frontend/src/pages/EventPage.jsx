@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventTypes'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Category' },
@@ -55,6 +57,7 @@ function EventCard({ categorySlug, event }) {
 export default function EventPage() {
   const [searchParams] = useSearchParams()
   const [searchValue, setSearchValue] = useState('')
+  const debouncedSearchValue = useDebouncedValue(searchValue)
   const [touchStartX, setTouchStartX] = useState(null)
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
 
@@ -66,21 +69,21 @@ export default function EventPage() {
     [categories, categorySlug]
   )
 
-  const paginationKey = `${categorySlug}:${searchValue.trim().toLowerCase()}`
+  const paginationKey = `${categorySlug}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
     key: paginationKey,
     pageIndex: 0,
   })
 
   const filteredEvents = useMemo(() => {
-    const query = searchValue.trim().toLowerCase()
+    const query = debouncedSearchValue.trim().toLowerCase()
     if (!query) return events
 
     return events.filter(
       event =>
         event.title.toLowerCase().includes(query) || event.description.toLowerCase().includes(query)
     )
-  }, [events, searchValue])
+  }, [debouncedSearchValue, events])
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / DESKTOP_CARDS_PER_PAGE))
   const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
@@ -89,6 +92,8 @@ export default function EventPage() {
     safePageIndex * DESKTOP_CARDS_PER_PAGE,
     safePageIndex * DESKTOP_CARDS_PER_PAGE + DESKTOP_CARDS_PER_PAGE
   )
+
+  useScrollToTop(`${paginationKey}:${safePageIndex}`)
 
   const goPrev = () =>
     setPaginationState(current => {

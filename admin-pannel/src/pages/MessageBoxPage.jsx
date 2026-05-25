@@ -3,6 +3,7 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
+  ResultsEmptyState,
   SectionLoadingState,
   StatusBadge,
 } from '../components/ui/AdminUI'
@@ -11,6 +12,7 @@ import {
   useAdminMessageThreads,
   useAdminSendMessage,
 } from '../hooks/useAdminData'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { formatDate, formatDateTime } from '../lib/formatters'
 
 function isArchivedThread(thread) {
@@ -141,8 +143,9 @@ export default function MessageBoxPage() {
   const [messageText, setMessageText] = useState('')
   const [messageType, setMessageType] = useState('text')
   const messagesEndRef = useRef(null)
+  const debouncedSearch = useDebouncedValue(search)
 
-  const threadsQuery = useAdminMessageThreads({ search })
+  const threadsQuery = useAdminMessageThreads({ search: debouncedSearch })
   const allThreads = useMemo(() => threadsQuery.data?.threads ?? [], [threadsQuery.data?.threads])
   const activeThreads = useMemo(() => allThreads.filter(t => !isArchivedThread(t)), [allThreads])
   const archivedThreads = useMemo(() => allThreads.filter(t => isArchivedThread(t)), [allThreads])
@@ -277,9 +280,10 @@ export default function MessageBoxPage() {
                 />
               ))
             ) : (
-              <EmptyState
+              <ResultsEmptyState
                 title="No threads"
                 body="Booking conversations will appear here once customers start messaging."
+                className="p-0"
               />
             )}
           </div>

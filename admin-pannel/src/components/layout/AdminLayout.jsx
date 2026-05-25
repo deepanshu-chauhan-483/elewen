@@ -4,12 +4,15 @@ import { getStoredAdminJwt } from '../../lib/api'
 import { getInitials } from '../../lib/formatters'
 import { ActionButton } from '../ui/AdminUI'
 import { useAdminLogout, useAdminSession } from '../../hooks/useAdminData'
+import { scrollWindowToTop } from '../../hooks/useScrollToTop'
 
-const LogoutIcon = ({ className = 'h-4 w-4', stroke = '#FAFAFA' }) => (
+const LogoutIcon = ({
+  className = 'h-5 w-5 font-semibold text-black md:h-4 md:w-4 md:text-white',
+}) => (
   <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       d="M6.66667 8H14M14 8L11.3333 10.6667M14 8L11.3333 5.33333M14 4.22933V3.33333C14 2.97971 13.8595 2.64057 13.6095 2.39052C13.3594 2.14048 13.0203 2 12.6667 2H3.33333C2.97971 2 2.64057 2.14048 2.39052 2.39052C2.14048 2.64057 2 2.97971 2 3.33333V12.6667C2 13.0203 2.14048 13.3594 2.39052 13.6095C2.64057 13.8595 2.97971 14 3.33333 14H12.6667C13.0203 14 13.3594 13.8595 13.6095 13.6095C13.8595 13.3594 14 13.0203 14 12.6667V11.7707"
-      stroke={stroke}
+      stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
@@ -203,6 +206,10 @@ export default function AdminLayout() {
     }
   }, [mobileOpen])
 
+  useEffect(() => {
+    scrollWindowToTop()
+  }, [location.pathname, location.search])
+
   if (!token) return null
 
   if (sessionQuery.error && !String(sessionQuery.error?.message ?? '').includes('403')) {
@@ -334,7 +341,7 @@ export default function AdminLayout() {
         </nav>
       </aside>
 
-      <div className="flex  min-h-screen w-full flex-col bg-[#F2F2F2] md:ml-[260px] md:flex-1">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col bg-[#F2F2F2] md:ml-[260px]">
         <header className="fixed left-0 right-0 top-0 z-20 h-[68px] border-b border-[#E4DED8] bg-[#FAFAFA] px-4 py-3 sm:px-6 md:left-[260px]">
           <div className="flex h-full w-full items-center justify-between">
             <div className="flex items-center gap-3">
@@ -366,15 +373,28 @@ export default function AdminLayout() {
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#D9D9D9] text-[10px] font-medium text-white">
                 {getInitials(displayName)}
               </div>
-
+              <button
+                onClick={async () => {
+                  await logoutMutation.mutateAsync()
+                  navigate('/login', { replace: true })
+                }}
+                // ariaLabel="Logout"
+                disabled={logoutMutation.isPending}
+                className="text-[#1C1C1C] text-semibold disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {/* <span className="whitespace-nowrap">
+                  {logoutMutation.isPending ? 'Logging out' : 'Logout'}
+                </span> */}
+                <LogoutIcon />
+              </button>
               <button
                 type="button"
                 aria-label="Open sidebar"
                 onClick={() => setMobileOpen(true)}
                 className="group flex flex-col gap-1 p-0.5"
               >
-                <span className="h-0.5 w-7 bg-[#262626]" />
-                <span className="h-0.5 w-5 bg-[#262626]" />
+                <span className="h-0.5 w-7 bg-[#1C1C1C]" />
+                <span className="h-0.5 w-5 bg-[#1C1C1C]" />
               </button>
             </div>
 
@@ -415,10 +435,10 @@ export default function AdminLayout() {
         </header>
 
         <main
-          className="flex flex-1 flex-col overflow-y-auto pb-20 md:min-h-0"
+          className="flex min-w-0 flex-1 flex-col overflow-y-auto pb-20 md:min-h-0"
           style={{ marginTop: '68px', backgroundColor: '#F2F2F2' }}
         >
-          <div className="flex flex-1 flex-col px-6 py-6 md:px-8 md:py-8">
+          <div className="flex min-w-0 flex-1 flex-col px-6 py-6 md:px-8 md:py-8">
             <Outlet />
           </div>
         </main>

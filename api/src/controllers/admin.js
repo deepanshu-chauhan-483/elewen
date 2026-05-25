@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client'
+import { randomUUID } from 'crypto'
 import prisma from '../lib/prisma.js'
 import { notify } from '../lib/notify.js'
 import {
@@ -8,7 +9,14 @@ import {
   mapVendorPreview,
   toNumber,
 } from '../lib/dashboardData.js'
-import { strapiServerGet, strapiServerPost, strapiServerPut } from '../lib/strapi.js'
+import {
+  strapiGet,
+  strapiServerDelete,
+  strapiServerGet,
+  strapiServerPost,
+  strapiServerPut,
+} from '../lib/strapi.js'
+import { cacheDelPattern } from '../lib/cache.js'
 
 const BOOKING_STATUSES = [
   'new',
@@ -60,11 +68,11 @@ function validateStageProgression(currentStatus, newStatus, remainingAmount = 0)
     }
   }
 
-  // Pre Event stage requires full payment
-  if (newStatus === 'pre_event' && remainingAmount > 0) {
+  // Execution stage requires full payment
+  if (newStatus === 'execution' && remainingAmount > 0) {
     return {
       valid: false,
-      message: `Cannot move to "Pre Event" stage. Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
+      message: `Cannot move to "Execution" stage. Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
     }
   }
 
@@ -76,6 +84,8 @@ const ALERT_STATUSES = ['new', 'acknowledged', 'resolved', 'snoozed']
 const ALERT_SEVERITIES = ['low', 'medium', 'high', 'critical']
 const SUPPORT_STATUSES = ['open', 'in_progress', 'resolved', 'closed']
 const SUPPORT_PRIORITIES = ['low', 'medium', 'high']
+const COUPON_DISCOUNT_TYPES = ['percentage', 'flat']
+const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'
 
 function toPositiveInt(value, fallback) {
   const parsed = Number.parseInt(String(value ?? ''), 10)
@@ -84,6 +94,51 @@ function toPositiveInt(value, fallback) {
 
 function normalizeText(value) {
   return String(value ?? '').trim()
+}
+
+function normalizeNullableText(value) {
+  const normalized = normalizeText(value)
+  return normalized || null
+}
+
+function normalizeNullableNumber(value) {
+  if (value === '' || value === null || value === undefined) return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(value ?? '').trim()
+  )
+}
+
+function buildEntitySearchOr(search, extraFilters = []) {
+  if (!search) return []
+
+  return [...(isUuid(search) ? [{ id: { equals: search } }] : []), ...extraFilters]
+}
+
+function normalizeSearchValue(value) {
+  return normalizeText(value).toLowerCase()
+}
+
+function textMatchesSearch(value, searchValue) {
+  return normalizeSearchValue(value).includes(searchValue)
+}
+
+function bookingMatchesSearch(booking, search) {
+  const searchValue = normalizeSearchValue(search)
+  if (!searchValue) return true
+
+  return textMatchesSearch(booking?.package?.title, searchValue)
+}
+
+function sampleMatchesSearch(sample, search) {
+  const searchValue = normalizeSearchValue(search)
+  if (!searchValue) return true
+
+  return textMatchesSearch(sample?.customer?.name, searchValue)
 }
 
 function uniqueStrings(values = []) {
@@ -104,6 +159,61 @@ function isStrapiCredentialError(err) {
 
 function roundCurrency(value) {
   return Number(toNumber(value).toFixed(2))
+}
+
+function toAbsoluteAssetUrl(value) {
+  if (!value) return null
+  if (/^https?:\/\//i.test(String(value))) return String(value)
+  return `${STRAPI_BASE}${value}`
+}
+
+function getFirstMediaEntry(value) {
+  if (!value) return null
+  if (Array.isArray(value)) return value[0] ?? null
+  if (Array.isArray(value?.data)) return value.data[0] ?? null
+  if (value?.data) return value.data
+  return value
+}
+
+function getMediaUrl(value) {
+  const media = getFirstMediaEntry(value)
+  return toAbsoluteAssetUrl(
+    media?.formats?.large?.url ??
+      media?.formats?.medium?.url ??
+      media?.formats?.small?.url ??
+      media?.formats?.thumbnail?.url ??
+      media?.url ??
+      null
+  )
+}
+
+function getMediaName(value) {
+  const media = getFirstMediaEntry(value)
+  return media?.name ?? null
+}
+
+function mapVendorDocumentPreview(document) {
+  if (!document) return null
+
+  return {
+    id: String(document.id),
+    documentType: document.document_type ?? 'document',
+    verified: Boolean(document.verified),
+    fileName: getMediaName(document.file),
+    fileUrl: getMediaUrl(document.file),
+  }
+}
+
+function mapVendorPortfolioPreview(portfolio) {
+  if (!portfolio) return null
+
+  return {
+    id: String(portfolio.id),
+    title: portfolio.title ?? '',
+    description: portfolio.description ?? '',
+    imageName: getMediaName(portfolio.image),
+    imageUrl: getMediaUrl(portfolio.image),
+  }
 }
 
 function buildInFilterQuery(ids = []) {
@@ -200,17 +310,24 @@ async function searchPackageIds(searchTerm) {
   const term = normalizeText(searchTerm)
   if (!term) return []
 
+  const query = [
+    `filters[$or][0][title][$containsi]=${encodeURIComponent(term)}`,
+    `filters[$or][1][slug][$containsi]=${encodeURIComponent(term)}`,
+    'publicationState=preview',
+    'pagination[page]=1',
+    'pagination[pageSize]=100',
+  ].join('&')
+
   try {
-    const query = [
-      `filters[title][$containsi]=${encodeURIComponent(term)}`,
-      'publicationState=preview',
-      'pagination[page]=1',
-      'pagination[pageSize]=50',
-    ].join('&')
-    const response = await strapiServerGet(`/api/packages?${query}`)
+    const response = await strapiGet(`/packages?${query}`)
     return (response?.data ?? []).map(pkg => String(pkg.id))
   } catch {
-    return []
+    try {
+      const response = await strapiServerGet(`/api/packages?${query}`)
+      return (response?.data ?? []).map(pkg => String(pkg.id))
+    } catch {
+      return []
+    }
   }
 }
 
@@ -315,21 +432,25 @@ async function fetchCouponsFromDatabase({ search = '', page = 1, limit = 12 } = 
   `
 
   return {
-    coupons: coupons.map(coupon => ({
-      id: String(coupon.id),
-      documentId: coupon.document_id ?? null,
-      code: coupon.code ?? '',
-      discount_type: coupon.discount_type ?? 'percentage',
-      discount_value: Number(coupon.discount_value ?? 0),
-      max_uses: coupon.max_uses ?? null,
-      used_count: coupon.used_count ?? 0,
-      valid_from: coupon.valid_from ?? null,
-      valid_to: coupon.valid_to ?? null,
-      is_active: Boolean(coupon.is_active),
-    })),
+    coupons: coupons.map(mapCouponRecord),
     total: Number(countRow?.total ?? 0),
     page,
     pages: Math.max(1, Math.ceil(Number(countRow?.total ?? 0) / limit)),
+  }
+}
+
+function mapCouponRecord(coupon) {
+  return {
+    id: String(coupon.id),
+    documentId: coupon.document_id ?? coupon.documentId ?? null,
+    code: coupon.code ?? '',
+    discount_type: coupon.discount_type ?? 'percentage',
+    discount_value: Number(coupon.discount_value ?? 0),
+    max_uses: coupon.max_uses ?? null,
+    used_count: coupon.used_count ?? 0,
+    valid_from: coupon.valid_from ?? null,
+    valid_to: coupon.valid_to ?? null,
+    is_active: Boolean(coupon.is_active),
   }
 }
 
@@ -354,9 +475,13 @@ async function fetchAdminSettingsFromDatabase() {
 
   if (!settings) return null
 
+  return mapSettingsRecord(settings)
+}
+
+function mapSettingsRecord(settings) {
   return {
     id: String(settings.id),
-    documentId: settings.document_id ?? null,
+    documentId: settings.document_id ?? settings.documentId ?? null,
     primary_phone: settings.primary_phone ?? '',
     support_email: settings.support_email ?? '',
     support_availability_text: settings.support_availability_text ?? '',
@@ -367,6 +492,182 @@ async function fetchAdminSettingsFromDatabase() {
     updatedAt: settings.updated_at ?? null,
     publishedAt: settings.published_at ?? null,
   }
+}
+
+async function fetchCouponByIdFromDatabase(id) {
+  const numericId = Number.parseInt(String(id ?? ''), 10)
+  if (!Number.isFinite(numericId)) return null
+
+  const [coupon] = await prisma.$queryRaw`
+    SELECT
+      c.id,
+      c.document_id,
+      c.code,
+      c.discount_type,
+      c.discount_value,
+      c.max_uses,
+      c.used_count,
+      c.valid_from,
+      c.valid_to,
+      c.is_active,
+      c.created_at
+    FROM public.coupons c
+    WHERE c.id = ${numericId}
+    LIMIT 1
+  `
+
+  return coupon ? mapCouponRecord(coupon) : null
+}
+
+async function createCouponInDatabase(data) {
+  const documentId = randomUUID()
+  const [created] = await prisma.$queryRaw`
+    INSERT INTO public.coupons (
+      document_id,
+      code,
+      discount_type,
+      discount_value,
+      max_uses,
+      used_count,
+      valid_from,
+      valid_to,
+      is_active,
+      created_at,
+      updated_at,
+      published_at
+    )
+    VALUES (
+      ${documentId},
+      ${data.code},
+      ${data.discount_type},
+      ${data.discount_value},
+      ${data.max_uses},
+      ${data.used_count ?? 0},
+      ${data.valid_from}::date,
+      ${data.valid_to}::date,
+      ${data.is_active},
+      NOW(),
+      NOW(),
+      NOW()
+    )
+    RETURNING
+      id,
+      document_id,
+      code,
+      discount_type,
+      discount_value,
+      max_uses,
+      used_count,
+      valid_from,
+      valid_to,
+      is_active,
+      created_at
+  `
+
+  return mapCouponRecord(created)
+}
+
+async function updateCouponInDatabase(id, payload) {
+  const current = await fetchCouponByIdFromDatabase(id)
+  if (!current) return null
+  const documentId = current.documentId ?? randomUUID()
+
+  const [updated] = await prisma.$queryRaw`
+    UPDATE public.coupons
+    SET
+      document_id = COALESCE(document_id, ${documentId}),
+      code = ${payload.code ?? current.code},
+      discount_type = ${payload.discount_type ?? current.discount_type},
+      discount_value = ${payload.discount_value ?? current.discount_value},
+      max_uses = ${payload.max_uses ?? current.max_uses},
+      used_count = ${payload.used_count ?? current.used_count},
+      valid_from = ${payload.valid_from ?? current.valid_from}::date,
+      valid_to = ${payload.valid_to ?? current.valid_to}::date,
+      is_active = ${payload.is_active ?? current.is_active},
+      updated_at = NOW(),
+      published_at = COALESCE(published_at, NOW())
+    WHERE id = ${Number.parseInt(String(id), 10)}
+    RETURNING
+      id,
+      document_id,
+      code,
+      discount_type,
+      discount_value,
+      max_uses,
+      used_count,
+      valid_from,
+      valid_to,
+      is_active,
+      created_at
+  `
+
+  return updated ? mapCouponRecord(updated) : null
+}
+
+async function upsertAdminSettingsInDatabase(payload) {
+  const current = await fetchAdminSettingsFromDatabase()
+
+  if (!current) {
+    const documentId = randomUUID()
+    const [created] = await prisma.$queryRaw`
+      INSERT INTO public.global_settings (
+        document_id,
+        primary_phone,
+        support_email,
+        support_availability_text,
+        advance_payment_percentage,
+        whatsapp_number,
+        response_expectation_text,
+        created_at,
+        updated_at,
+        published_at
+      )
+      VALUES (
+        ${documentId},
+        ${payload.primary_phone ?? ''},
+        ${payload.support_email ?? ''},
+        ${payload.support_availability_text ?? ''},
+        ${payload.advance_payment_percentage},
+        ${payload.whatsapp_number ?? ''},
+        ${payload.response_expectation_text ?? ''},
+        NOW(),
+        NOW(),
+        NOW()
+      )
+      RETURNING
+        id,
+        document_id,
+        primary_phone,
+        support_email,
+        support_availability_text,
+        advance_payment_percentage,
+        whatsapp_number,
+        response_expectation_text,
+        created_at,
+        updated_at,
+        published_at
+    `
+
+    return mapSettingsRecord(created)
+  }
+
+  const documentId = current.documentId ?? randomUUID()
+  await prisma.$queryRaw`
+    UPDATE public.global_settings
+    SET
+      document_id = COALESCE(document_id, ${documentId}),
+      primary_phone = ${payload.primary_phone ?? current.primary_phone},
+      support_email = ${payload.support_email ?? current.support_email},
+      support_availability_text = ${payload.support_availability_text ?? current.support_availability_text},
+      advance_payment_percentage = ${payload.advance_payment_percentage ?? current.advance_payment_percentage},
+      whatsapp_number = ${payload.whatsapp_number ?? current.whatsapp_number},
+      response_expectation_text = ${payload.response_expectation_text ?? current.response_expectation_text},
+      updated_at = NOW(),
+      published_at = COALESCE(published_at, NOW())
+    WHERE TRUE
+  `
+
+  return fetchAdminSettingsFromDatabase()
 }
 
 function mapVendorDirectoryRow(vendor) {
@@ -394,9 +695,13 @@ function mapVendorDirectoryRow(vendor) {
     isAvailable: Boolean(vendor.is_available),
     teamSize: vendor.team_size ?? null,
     leadTimeDays: vendor.lead_time_days ?? null,
+    createdAt: vendor.created_at ?? null,
+    updatedAt: vendor.updated_at ?? null,
     registrationData: vendor.registration_data ?? null,
     documentsCount: 0,
     portfolioCount: 0,
+    vendorDocuments: [],
+    vendorPortfolios: [],
   }
 }
 
@@ -697,10 +1002,14 @@ function buildCancelledBookingRefundSnapshot(booking) {
 }
 
 async function fetchCouponById(id) {
-  const response = await strapiServerGet(
-    `/api/coupons?filters[id][$eq]=${encodeURIComponent(String(id))}&publicationState=preview&pagination[pageSize]=1`
-  )
-  return response?.data?.[0] ?? null
+  try {
+    const response = await strapiServerGet(
+      `/api/coupons?filters[id][$eq]=${encodeURIComponent(String(id))}&publicationState=preview&pagination[pageSize]=1`
+    )
+    return response?.data?.[0] ?? null
+  } catch {
+    return fetchCouponByIdFromDatabase(id)
+  }
 }
 
 async function fetchVendorDirectory({
@@ -805,11 +1114,19 @@ async function fetchVendorDirectory({
         isAvailable: Boolean(vendor.is_available),
         teamSize: vendor.team_size ?? null,
         leadTimeDays: vendor.lead_time_days ?? null,
+        createdAt: vendor.createdAt ?? null,
+        updatedAt: vendor.updatedAt ?? null,
         registrationData: vendor.registration_data ?? null,
         documentsCount: Array.isArray(vendor.vendor_documents) ? vendor.vendor_documents.length : 0,
         portfolioCount: Array.isArray(vendor.vendor_portfolios)
           ? vendor.vendor_portfolios.length
           : 0,
+        vendorDocuments: (Array.isArray(vendor.vendor_documents) ? vendor.vendor_documents : [])
+          .map(mapVendorDocumentPreview)
+          .filter(Boolean),
+        vendorPortfolios: (Array.isArray(vendor.vendor_portfolios) ? vendor.vendor_portfolios : [])
+          .map(mapVendorPortfolioPreview)
+          .filter(Boolean),
         activeAssignmentsCount: vendorAssignments.filter(assignment =>
           ['assigned', 'confirmed'].includes(assignment.status)
         ).length,
@@ -1121,66 +1438,91 @@ export async function listAdminBookings(req, res, next) {
     const limit = Math.min(toPositiveInt(req.query.limit, 12), 50)
     const skip = (page - 1) * limit
 
-    const userIds = await searchUserIds(search)
-    const packageIds = await searchPackageIds(search)
     const bookingBucketFilter = buildBookingBucketFilter(bucket)
+    const hasStatusFilter = status && BOOKING_STATUSES.includes(status)
     const baseWhere = {
       ...bookingBucketFilter,
-    }
-
-    if (search) {
-      baseWhere.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        ...(userIds.length ? [{ userId: { in: userIds } }] : []),
-        ...(packageIds.length ? [{ packageId: { in: packageIds } }] : []),
-      ]
-    }
-    const where = {
-      ...baseWhere,
-      ...(status && BOOKING_STATUSES.includes(status) ? { status } : {}),
+      ...(hasStatusFilter ? { status } : {}),
     }
 
     const orderByClause =
       sortBy === 'latest' ? [{ createdAt: 'desc' }] : [{ eventDate: 'asc' }, { createdAt: 'desc' }]
 
-    const [bookings, total, statusCountRows] = await Promise.all([
-      prisma.booking.findMany({
-        where,
-        include: {
-          items: true,
-          notes: true,
-          statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
-          payments: { orderBy: { createdAt: 'desc' } },
-          vendorAssignments: true,
-          cancellation: true,
-        },
-        orderBy: orderByClause,
-        skip,
-        take: limit,
-      }),
-      prisma.booking.count({ where }),
-      prisma.booking.groupBy({
-        by: ['status'],
-        where: baseWhere,
-        _count: { _all: true },
-      }),
-    ])
+    const bookingInclude = {
+      items: true,
+      notes: true,
+      statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+      payments: { orderBy: { createdAt: 'desc' } },
+      vendorAssignments: true,
+      cancellation: true,
+    }
 
-    const enrichedBookings = await enrichBookingsWithCustomer(bookings)
-    const statusCounts = BOOKING_STATUSES.reduce((acc, key) => {
+    let enrichedBookings = []
+    let total = 0
+    let statusCounts = BOOKING_STATUSES.reduce((acc, key) => {
       acc[key] = 0
       return acc
     }, {})
-    statusCountRows.forEach(row => {
-      if (row?.status && BOOKING_STATUSES.includes(row.status)) {
-        statusCounts[row.status] = Number(row._count?._all ?? 0)
+    let metrics = { total: 0, active: 0, previous: 0 }
+
+    if (search) {
+      const bookings = await prisma.booking.findMany({
+        where: bookingBucketFilter,
+        include: bookingInclude,
+        orderBy: orderByClause,
+      })
+      const enrichedCandidates = await enrichBookingsWithCustomer(bookings)
+      const matchingBookings = enrichedCandidates.filter(booking =>
+        bookingMatchesSearch(booking, search)
+      )
+      const visibleBookings = hasStatusFilter
+        ? matchingBookings.filter(booking => booking.status === status)
+        : matchingBookings
+
+      total = visibleBookings.length
+      enrichedBookings = visibleBookings.slice(skip, skip + limit)
+      statusCounts = matchingBookings.reduce((acc, booking) => {
+        if (booking?.status && BOOKING_STATUSES.includes(booking.status)) {
+          acc[booking.status] += 1
+        }
+        return acc
+      }, statusCounts)
+      metrics = {
+        total,
+        active: visibleBookings.filter(booking => getBookingCategory(booking) === 'active').length,
+        previous: visibleBookings.filter(booking => getBookingCategory(booking) === 'previous')
+          .length,
       }
-    })
-    const metrics = {
-      total,
-      active: enrichedBookings.filter(booking => getBookingCategory(booking) === 'active').length,
-      previous: enrichedBookings.filter(booking => getBookingCategory(booking) === 'previous')
-        .length,
+    } else {
+      const [bookings, count, statusCountRows] = await Promise.all([
+        prisma.booking.findMany({
+          where: baseWhere,
+          include: bookingInclude,
+          orderBy: orderByClause,
+          skip,
+          take: limit,
+        }),
+        prisma.booking.count({ where: baseWhere }),
+        prisma.booking.groupBy({
+          by: ['status'],
+          where: bookingBucketFilter,
+          _count: { _all: true },
+        }),
+      ])
+
+      enrichedBookings = await enrichBookingsWithCustomer(bookings)
+      total = count
+      statusCountRows.forEach(row => {
+        if (row?.status && BOOKING_STATUSES.includes(row.status)) {
+          statusCounts[row.status] = Number(row._count?._all ?? 0)
+        }
+      })
+      metrics = {
+        total,
+        active: enrichedBookings.filter(booking => getBookingCategory(booking) === 'active').length,
+        previous: enrichedBookings.filter(booking => getBookingCategory(booking) === 'previous')
+          .length,
+      }
     }
 
     res.json({
@@ -1367,55 +1709,66 @@ export async function listAdminSampleTastes(req, res, next) {
     const limit = Math.min(toPositiveInt(req.query.limit, 12), 50)
     const skip = (page - 1) * limit
 
-    const userIds = await searchUserIds(search)
-    const packageIds = await searchPackageIds(search)
-    const baseWhere = {}
-
-    if (status && SAMPLE_STATUSES.includes(status)) {
-      baseWhere.status = status
+    const hasStatusFilter = status && SAMPLE_STATUSES.includes(status)
+    const baseWhere = hasStatusFilter ? { status } : {}
+    const sampleInclude = {
+      vendors: true,
     }
 
-    if (search) {
-      baseWhere.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        ...(userIds.length ? [{ userId: { in: userIds } }] : []),
-        ...(packageIds.length ? [{ packageId: { in: packageIds } }] : []),
-      ]
-    }
-    const where = { ...baseWhere }
-    if (!status) delete where.status
-
-    const filteredWhere =
-      status && SAMPLE_STATUSES.includes(status) ? { ...baseWhere, status } : { ...baseWhere }
-
-    const [samples, total, statusCountRows] = await Promise.all([
-      prisma.sampleTasteBooking.findMany({
-        where: filteredWhere,
-        include: {
-          vendors: true,
-        },
-        orderBy: [{ bookingDate: 'asc' }, { createdAt: 'desc' }],
-        skip,
-        take: limit,
-      }),
-      prisma.sampleTasteBooking.count({ where: filteredWhere }),
-      prisma.sampleTasteBooking.groupBy({
-        by: ['status'],
-        where,
-        _count: { _all: true },
-      }),
-    ])
-
-    const enrichedSamples = await enrichSamplesWithCustomer(samples)
-    const statusCounts = SAMPLE_STATUSES.reduce((acc, key) => {
+    let enrichedSamples = []
+    let total = 0
+    let statusCounts = SAMPLE_STATUSES.reduce((acc, key) => {
       acc[key] = 0
       return acc
     }, {})
-    statusCountRows.forEach(row => {
-      if (row?.status && SAMPLE_STATUSES.includes(row.status)) {
-        statusCounts[row.status] = Number(row._count?._all ?? 0)
-      }
-    })
+
+    if (search) {
+      const samples = await prisma.sampleTasteBooking.findMany({
+        where: {},
+        include: sampleInclude,
+        orderBy: [{ bookingDate: 'asc' }, { createdAt: 'desc' }],
+      })
+      const enrichedCandidates = await enrichSamplesWithCustomer(samples)
+      const matchingSamples = enrichedCandidates.filter(sample =>
+        sampleMatchesSearch(sample, search)
+      )
+      const visibleSamples = hasStatusFilter
+        ? matchingSamples.filter(sample => sample.status === status)
+        : matchingSamples
+
+      total = visibleSamples.length
+      enrichedSamples = visibleSamples.slice(skip, skip + limit)
+      statusCounts = matchingSamples.reduce((acc, sample) => {
+        if (sample?.status && SAMPLE_STATUSES.includes(sample.status)) {
+          acc[sample.status] += 1
+        }
+        return acc
+      }, statusCounts)
+    } else {
+      const [samples, count, statusCountRows] = await Promise.all([
+        prisma.sampleTasteBooking.findMany({
+          where: baseWhere,
+          include: sampleInclude,
+          orderBy: [{ bookingDate: 'asc' }, { createdAt: 'desc' }],
+          skip,
+          take: limit,
+        }),
+        prisma.sampleTasteBooking.count({ where: baseWhere }),
+        prisma.sampleTasteBooking.groupBy({
+          by: ['status'],
+          where: {},
+          _count: { _all: true },
+        }),
+      ])
+
+      enrichedSamples = await enrichSamplesWithCustomer(samples)
+      total = count
+      statusCountRows.forEach(row => {
+        if (row?.status && SAMPLE_STATUSES.includes(row.status)) {
+          statusCounts[row.status] = Number(row._count?._all ?? 0)
+        }
+      })
+    }
 
     res.json({
       samples: enrichedSamples,
@@ -2278,19 +2631,20 @@ export async function listAdminPayments(req, res, next) {
     const skip = (page - 1) * limit
 
     const userIds = await searchUserIds(search)
-    const bookingIds = search
-      ? (
-          await prisma.booking.findMany({
-            where: {
-              OR: [
-                { id: { contains: search, mode: 'insensitive' } },
-                ...(userIds.length ? [{ userId: { in: userIds } }] : []),
-              ],
-            },
-            select: { id: true },
-          })
-        ).map(booking => booking.id)
-      : []
+    const bookingSearchFilters = buildEntitySearchOr(search, [
+      ...(userIds.length ? [{ userId: { in: userIds } }] : []),
+    ])
+    const bookingIds =
+      search && bookingSearchFilters.length
+        ? (
+            await prisma.booking.findMany({
+              where: {
+                OR: bookingSearchFilters,
+              },
+              select: { id: true },
+            })
+          ).map(booking => booking.id)
+        : []
 
     const where = {
       ...(status === 'completed'
@@ -2462,26 +2816,40 @@ export async function listAdminCoupons(req, res, next) {
 
     try {
       const response = await strapiServerGet(`/api/coupons?${query.join('&')}`)
-
+      const seenCodes = new Set()
       return res.json({
-        coupons: (response?.data ?? []).map(coupon => ({
-          id: String(coupon.id),
-          documentId: coupon.documentId ?? null,
-          code: coupon.code ?? '',
-          discount_type: coupon.discount_type ?? 'percentage',
-          discount_value: Number(coupon.discount_value ?? 0),
-          max_uses: coupon.max_uses ?? null,
-          used_count: coupon.used_count ?? 0,
-          valid_from: coupon.valid_from ?? null,
-          valid_to: coupon.valid_to ?? null,
-          is_active: Boolean(coupon.is_active),
-        })),
+        coupons: (response?.data ?? [])
+          .map(coupon => ({
+            id: String(coupon.id),
+            documentId: coupon.documentId ?? null,
+            code: coupon.code ?? '',
+            discount_type: coupon.discount_type ?? 'percentage',
+            discount_value: Number(coupon.discount_value ?? 0),
+            max_uses: coupon.max_uses ?? null,
+            used_count: coupon.used_count ?? 0,
+            valid_from: coupon.valid_from ?? null,
+            valid_to: coupon.valid_to ?? null,
+            is_active: Boolean(coupon.is_active),
+          }))
+          .filter(c => {
+            const key = String(c.code).toUpperCase()
+            if (!key || seenCodes.has(key)) return false
+            seenCodes.add(key)
+            return true
+          }),
         total: response?.meta?.pagination?.total ?? 0,
         page: response?.meta?.pagination?.page ?? page,
         pages: response?.meta?.pagination?.pageCount ?? 1,
       })
     } catch {
       const result = await fetchCouponsFromDatabase({ search, page, limit })
+      const seenCodes = new Set()
+      result.coupons = result.coupons.filter(c => {
+        const key = String(c.code ?? '').toUpperCase()
+        if (!key || seenCodes.has(key)) return false
+        seenCodes.add(key)
+        return true
+      })
       return res.json(result)
     }
   } catch (err) {
@@ -2494,24 +2862,39 @@ export async function createAdminCoupon(req, res, next) {
     const code = normalizeText(req.body.code).toUpperCase()
     const discountType = normalizeText(req.body.discount_type || 'percentage').toLowerCase()
     const discountValue = Number(req.body.discount_value)
+    const maxUses = normalizeNullableNumber(req.body.max_uses)
+    const usedCount = normalizeNullableNumber(req.body.used_count)
 
     if (!code || !Number.isFinite(discountValue)) {
       return res.status(400).json({ error: 'code and discount_value are required' })
     }
+    if (!COUPON_DISCOUNT_TYPES.includes(discountType)) {
+      return res
+        .status(400)
+        .json({ error: `discount_type must be one of: ${COUPON_DISCOUNT_TYPES.join(', ')}` })
+    }
 
-    const created = await strapiServerPost('/api/coupons', {
-      data: {
-        code,
-        discount_type: discountType,
-        discount_value: discountValue,
-        max_uses: req.body.max_uses ?? null,
-        valid_from: req.body.valid_from ?? null,
-        valid_to: req.body.valid_to ?? null,
-        is_active: req.body.is_active !== false,
-      },
-    })
+    const createPayload = {
+      code,
+      discount_type: discountType,
+      discount_value: discountValue,
+      max_uses: maxUses,
+      used_count: usedCount ?? 0,
+      valid_from: normalizeNullableText(req.body.valid_from),
+      valid_to: normalizeNullableText(req.body.valid_to),
+      is_active: req.body.is_active !== false,
+    }
 
-    res.status(201).json({ coupon: created?.data ?? null })
+    try {
+      const created = await strapiServerPost('/api/coupons', {
+        data: createPayload,
+      })
+      await cacheDelPattern('strapi:GET:/api/coupons*')
+      return res.status(201).json({ coupon: created?.data ?? null })
+    } catch {
+      const created = await createCouponInDatabase(createPayload)
+      return res.status(201).json({ coupon: created })
+    }
   } catch (err) {
     next(err)
   }
@@ -2520,7 +2903,7 @@ export async function createAdminCoupon(req, res, next) {
 export async function updateAdminCoupon(req, res, next) {
   try {
     const coupon = await fetchCouponById(req.params.id)
-    if (!coupon?.documentId) {
+    if (!coupon) {
       return res.status(404).json({ error: 'Coupon not found' })
     }
 
@@ -2531,16 +2914,72 @@ export async function updateAdminCoupon(req, res, next) {
       payload.discount_type = normalizeText(req.body.discount_type).toLowerCase()
     if (req.body.discount_value !== undefined)
       payload.discount_value = Number(req.body.discount_value)
-    if (req.body.max_uses !== undefined) payload.max_uses = req.body.max_uses
-    if (req.body.valid_from !== undefined) payload.valid_from = req.body.valid_from
-    if (req.body.valid_to !== undefined) payload.valid_to = req.body.valid_to
+    if (req.body.max_uses !== undefined)
+      payload.max_uses = normalizeNullableNumber(req.body.max_uses)
+    if (req.body.used_count !== undefined)
+      payload.used_count = normalizeNullableNumber(req.body.used_count) ?? 0
+    if (req.body.valid_from !== undefined)
+      payload.valid_from = normalizeNullableText(req.body.valid_from)
+    if (req.body.valid_to !== undefined) payload.valid_to = normalizeNullableText(req.body.valid_to)
     if (req.body.is_active !== undefined) payload.is_active = Boolean(req.body.is_active)
 
-    const updated = await strapiServerPut(`/api/coupons/${coupon.documentId}`, {
-      data: payload,
-    })
+    if (
+      payload.discount_type !== undefined &&
+      !COUPON_DISCOUNT_TYPES.includes(payload.discount_type)
+    ) {
+      return res
+        .status(400)
+        .json({ error: `discount_type must be one of: ${COUPON_DISCOUNT_TYPES.join(', ')}` })
+    }
 
-    res.json({ coupon: updated?.data ?? null })
+    if (coupon.documentId) {
+      try {
+        const updated = await strapiServerPut(`/api/coupons/${coupon.documentId}`, {
+          data: payload,
+        })
+        await cacheDelPattern('strapi:GET:/api/coupons*')
+        return res.json({ coupon: updated?.data ?? null })
+      } catch {
+        const updated = await updateCouponInDatabase(req.params.id, payload)
+        if (!updated) {
+          return res.status(404).json({ error: 'Coupon not found' })
+        }
+        return res.json({ coupon: updated })
+      }
+    }
+
+    const updated = await updateCouponInDatabase(req.params.id, payload)
+    if (!updated) {
+      return res.status(404).json({ error: 'Coupon not found' })
+    }
+    return res.json({ coupon: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function deleteAdminCoupon(req, res, next) {
+  try {
+    const coupon = await fetchCouponById(req.params.id)
+    if (!coupon) {
+      return res.status(404).json({ error: 'Coupon not found' })
+    }
+
+    if (coupon.documentId) {
+      try {
+        await strapiServerDelete(`/api/coupons/${coupon.documentId}`)
+        await cacheDelPattern('strapi:GET:/api/coupons*')
+        return res.json({ success: true })
+      } catch {
+        await prisma.$queryRaw`DELETE FROM public.coupons WHERE id = ${Number.parseInt(String(req.params.id), 10)}`
+        await cacheDelPattern('strapi:GET:/api/coupons*')
+        return res.json({ success: true })
+      }
+    }
+
+    await prisma.$queryRaw`DELETE FROM public.coupons WHERE id = ${Number.parseInt(String(req.params.id), 10)}`
+    await cacheDelPattern('strapi:GET:/api/coupons*')
+    return res.json({ success: true })
   } catch (err) {
     next(err)
   }
@@ -2564,21 +3003,31 @@ export async function updateAdminSettings(req, res, next) {
   try {
     const payload = {}
 
-    if (req.body.primary_phone !== undefined) payload.primary_phone = req.body.primary_phone
-    if (req.body.support_email !== undefined) payload.support_email = req.body.support_email
+    if (req.body.primary_phone !== undefined)
+      payload.primary_phone = normalizeText(req.body.primary_phone)
+    if (req.body.support_email !== undefined)
+      payload.support_email = normalizeText(req.body.support_email)
     if (req.body.support_availability_text !== undefined)
-      payload.support_availability_text = req.body.support_availability_text
+      payload.support_availability_text = normalizeText(req.body.support_availability_text)
     if (req.body.advance_payment_percentage !== undefined)
-      payload.advance_payment_percentage = req.body.advance_payment_percentage
-    if (req.body.whatsapp_number !== undefined) payload.whatsapp_number = req.body.whatsapp_number
+      payload.advance_payment_percentage = normalizeNullableNumber(
+        req.body.advance_payment_percentage
+      )
+    if (req.body.whatsapp_number !== undefined)
+      payload.whatsapp_number = normalizeText(req.body.whatsapp_number)
     if (req.body.response_expectation_text !== undefined)
-      payload.response_expectation_text = req.body.response_expectation_text
+      payload.response_expectation_text = normalizeText(req.body.response_expectation_text)
 
-    const updated = await strapiServerPut('/api/global-setting', {
-      data: payload,
-    })
-
-    res.json({ settings: updated?.data ?? updated ?? null })
+    try {
+      const updated = await strapiServerPut('/api/global-setting', {
+        data: payload,
+      })
+      await cacheDelPattern('strapi:GET:/api/global-setting*')
+      return res.json({ settings: updated?.data ?? updated ?? null })
+    } catch {
+      const updated = await upsertAdminSettingsInDatabase(payload)
+      return res.json({ settings: updated })
+    }
   } catch (err) {
     next(err)
   }

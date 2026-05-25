@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import {
   DashboardEmptyState,
@@ -13,6 +13,7 @@ import {
   useDashboardSession,
   useDashboardThread,
 } from '../../hooks/useDashboardData'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -62,19 +63,29 @@ function getInitials(name = '') {
 // Status badge (mirrors admin StatusBadge)
 // ---------------------------------------------------------------------------
 const statusMap = {
-  active: 'bg-[#DDF7E5] text-[#16A34A]',
-  confirmed: 'bg-[#DBEAFE] text-[#0383E4]',
-  pending: 'bg-[#FCE7CF] text-[#C57A1E]',
-  delivered: 'bg-[#EDE9FE] text-[#6D28D9]',
-  completed: 'bg-[#E5E7EB] text-[#4B5563]',
-  cancelled: 'bg-[#FEE2E2] text-[#B91C1C]',
-  resolved: 'bg-[#E5E7EB] text-[#4B5563]',
+  active: 'bg-[#EAF8F1] text-[#238E64]',
+  confirmed: 'bg-[#EEF4FF] text-[#3061C6]',
+  pending: 'bg-[#FFF4E5] text-[#C07318]',
+
+  delivered: 'bg-[#EEF4FF] text-[#3061C6]',
+  completed: 'bg-[#F3F4F6] text-[#6B7280]',
+  cancelled: 'bg-[#FFF1F0] text-[#591902]',
+  resolved: 'bg-[#EAF8F1] text-[#238E64]',
+  in_progress: 'bg-[#FFF4E5] text-[#C07318]',
+}
+
+const getStatusKey = status => status?.toLowerCase()?.replace(/[\s-]+/g, '_') ?? ''
+const getStatusBadgeClasses = status => {
+  const key = getStatusKey(status)
+  return {
+    key,
+    cls: statusMap[key] ?? 'bg-[#FFF4E5] text-[#C07318]',
+  }
 }
 
 function StatusBadge({ status, label }) {
-  const key = String(status ?? '').toLowerCase()
-  const cls = statusMap[key] ?? 'bg-[#E5E7EB] text-[#4B5563]'
-  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
+  const { key, cls } = getStatusBadgeClasses(status)
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '-'
   return (
     <span
       className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${cls}`}
@@ -190,34 +201,21 @@ function MessageBubble({ message, isOwnMessage }) {
 }
 
 // ---------------------------------------------------------------------------
-// Context row
-// ---------------------------------------------------------------------------
-function ContextRow({ label, value, children }) {
-  return (
-    <div className="rounded-xl border border-[#E4DED8] bg-white p-4">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-[#8F8F8F]">{label}</p>
-      <div className="mt-2">
-        {children ?? <p className="text-sm text-[#2D2D2D]">{value || '—'}</p>}
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 export default function MessagesUpdates() {
-  const navigate = useNavigate()
   const { data: session } = useDashboardSession()
+  const { searchTerm } = useDashboardSearch()
+  const debouncedSearchTerm = useDebouncedValue(searchTerm)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [draft, setDraft] = useState('')
+  const [search, setSearch] = useState('')
+  const debouncedLocalSearch = useDebouncedValue(search)
   const {
     data: bookings = [],
     isLoading: bookingsLoading,
     error: bookingsError,
-  } = useDashboardBookings('all')
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [draft, setDraft] = useState('')
-  const [search, setSearch] = useState('')
-  const { searchTerm } = useDashboardSearch()
+  } = useDashboardBookings('all', { search: debouncedLocalSearch || debouncedSearchTerm })
   const messagesEndRef = useRef(null)
 
   const sendMessageMutation = useDashboardSendMessage()
@@ -240,15 +238,19 @@ export default function MessagesUpdates() {
   const visibleBookings = useMemo(() => {
     return baseBookings.filter(
       b =>
-        matchesDashboardSearch(search, [b?.package?.title, b?.event?.name, b?.statusLabel]) &&
-        matchesDashboardSearch(searchTerm, [
+        matchesDashboardSearch(debouncedLocalSearch, [
+          b?.package?.title,
+          b?.event?.name,
+          b?.statusLabel,
+        ]) &&
+        matchesDashboardSearch(debouncedSearchTerm, [
           b?.package?.title,
           b?.event?.name,
           b?.statusLabel,
           b?.locationSummary,
         ])
     )
-  }, [baseBookings, search, searchTerm])
+  }, [baseBookings, debouncedLocalSearch, debouncedSearchTerm])
 
   const requestedBookingId = searchParams.get('bookingId') || ''
   const selectedBookingId = visibleBookings.some(b => b.id === requestedBookingId)
@@ -314,8 +316,7 @@ export default function MessagesUpdates() {
   }
 
   return (
-    <div className="flex min-h-0 flex-col gap-6 overflow-hidden xl:h-[calc(100dvh-140px)] ">
-      {/* ── Header ── */}
+    <div className="flex min-h-0 flex-col gap-6 overflow-hidden xl:h-[calc(100dvh-140px)]">
       <div>
         <h1 className="text-2xl text-[#1C1C1C]">Messages & Updates</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
@@ -324,14 +325,11 @@ export default function MessagesUpdates() {
         </p>
       </div>
 
-      {/* ── Three-column layout ── */}
-      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_280px]">
-        {/* ── Column 1: Thread list ── */}
+      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)]">
         <div
-          className="flex min-h-0 flex-col gap-4 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:overflow-hidden "
+          className="flex min-h-0 flex-col gap-4 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:overflow-hidden"
           data-lenis-prevent
         >
-          {/* Search */}
           <div className="relative">
             <svg
               className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8F8F8F]"
@@ -350,13 +348,12 @@ export default function MessagesUpdates() {
               type="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by package or event…"
+              placeholder="Search by package or event..."
               className="w-full rounded-full border border-[#E4DED8] bg-[#F7F5F2] py-2.5 pl-9 pr-4 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] focus:bg-white"
             />
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 rounded-full bg-[#F3F3F3] p-1 ">
+          <div className="flex gap-1 rounded-full bg-[#F3F3F3] p-1">
             {[
               { key: 'active', label: 'Active', count: activeBookings.length },
               { key: 'previous', label: 'Previous', count: previousBookings.length },
@@ -383,7 +380,6 @@ export default function MessagesUpdates() {
             ))}
           </div>
 
-          {/* Thread cards */}
           <div
             className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 xl:max-h-[720px] hide-scrollbar"
             data-lenis-prevent
@@ -413,11 +409,9 @@ export default function MessagesUpdates() {
           </div>
         </div>
 
-        {/* ── Column 2: Conversation ── */}
         <div className="flex min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#E4DED8] bg-white xl:h-full">
           {selectedBooking ? (
             <>
-              {/* Conversation header */}
               <div className="flex items-center justify-between gap-4 border-b border-[#E4DED8] px-5 py-4">
                 <div className="flex items-center gap-3">
                   <Avatar name="Elewen team" size="md" />
@@ -432,7 +426,6 @@ export default function MessagesUpdates() {
                 />
               </div>
 
-              {/* Package banner */}
               <div className="border-b border-[#E4DED8] bg-[#F7F5F2] px-5 py-3">
                 <p className="text-xs text-[#6B7280]">
                   <span className="font-medium text-[#2D2D2D]">
@@ -446,7 +439,6 @@ export default function MessagesUpdates() {
                 </p>
               </div>
 
-              {/* Messages */}
               <div
                 className="flex min-h-[360px] flex-1 flex-col gap-5 overflow-y-auto hide-scrollbar px-5 py-5 xl:min-h-0"
                 data-lenis-prevent
@@ -481,7 +473,6 @@ export default function MessagesUpdates() {
                 )}
               </div>
 
-              {/* Compose */}
               <div className="border-t border-[#E4DED8] bg-[#FAFAFA] px-5 py-4">
                 {isReadOnlyThread ? (
                   <div className="mb-3 flex items-center gap-2 rounded-xl border border-dashed border-[#D6CDC3] bg-white px-4 py-3 text-xs text-[#6B7280]">
@@ -498,7 +489,7 @@ export default function MessagesUpdates() {
                         d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    This booking is in your previous tab — the conversation is read-only.
+                    This booking is in your previous tab - the conversation is read-only.
                   </div>
                 ) : null}
 
@@ -516,7 +507,7 @@ export default function MessagesUpdates() {
                     placeholder={
                       isReadOnlyThread
                         ? 'Read-only thread.'
-                        : 'Type your message to the Elewen team…'
+                        : 'Type your message to the Elewen team...'
                     }
                     rows={3}
                     className="flex-1 resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
@@ -578,70 +569,6 @@ export default function MessagesUpdates() {
               <DashboardEmptyState
                 title="No conversation selected"
                 body="Pick a thread from the list to read the conversation and reply."
-              />
-            </div>
-          )}
-        </div>
-
-        {/* ── Column 3: Booking Details ── */}
-        <div
-          className="flex min-h-0 flex-col gap-3 rounded-[20px] border border-[#E4DED8] bg-white p-4 xl:overflow-y-auto hide-scrollbar"
-          data-lenis-prevent
-        >
-          <div className="border-b border-[#E4DED8] pb-3">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#8F8F8F]">
-              Booking Details
-            </p>
-            <p className="mt-1 text-xs text-[#6B7280]">Quick reference for this conversation</p>
-          </div>
-
-          {selectedBooking ? (
-            <div className="flex flex-col gap-3">
-              <ContextRow label="Booking ID">
-                <p className="truncate text-sm text-[#2D2D2D]">{selectedBooking.id || '—'}</p>
-              </ContextRow>
-              <ContextRow label="Package">
-                <p className="text-sm text-[#2D2D2D]">{selectedBooking.package?.title || '—'}</p>
-              </ContextRow>
-              <ContextRow label="Event Type">
-                <p className="text-sm text-[#2D2D2D]">
-                  {selectedBooking.event?.name || selectedBooking.displaySubtitle || '—'}
-                </p>
-              </ContextRow>
-              <ContextRow label="Event Date">
-                <p className="text-sm text-[#2D2D2D]">
-                  {formatBookingDate(selectedBooking.eventDate) || '—'}
-                </p>
-              </ContextRow>
-              <ContextRow label="Location">
-                <p className="text-sm text-[#2D2D2D]">{selectedBooking.locationSummary || '—'}</p>
-              </ContextRow>
-              <ContextRow label="Booking Stage">
-                <StatusBadge status={selectedBooking.status} label={selectedBooking.statusLabel} />
-              </ContextRow>
-              <ContextRow label="Vendor Assignments">
-                <p className="text-sm text-[#2D2D2D]">
-                  {selectedBooking.vendorAssignments?.length
-                    ? `${selectedBooking.vendorAssignments.length} vendor${
-                        selectedBooking.vendorAssignments.length > 1 ? 's' : ''
-                      } linked`
-                    : 'None assigned yet'}
-                </p>
-              </ContextRow>
-
-              <button
-                type="button"
-                onClick={() => navigate(`/user-dashboard/details?bookingId=${selectedBooking.id}`)}
-                className="mt-2 inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] transition hover:bg-[#C6A15B]"
-              >
-                View Full Booking
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-1 items-center justify-center py-10">
-              <DashboardEmptyState
-                title="No context"
-                body="Select a conversation to load booking details."
               />
             </div>
           )}

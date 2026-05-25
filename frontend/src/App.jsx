@@ -96,7 +96,7 @@ function GoogleAuthRedirectBridge() {
 }
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const lenisRef = useLenis()
 
   useEffect(() => {
@@ -111,7 +111,7 @@ function ScrollToTop() {
     scrollTop()
     const t = setTimeout(scrollTop, 150)
     return () => clearTimeout(t)
-  }, [pathname, lenisRef])
+  }, [pathname, search, lenisRef])
 
   return null
 }

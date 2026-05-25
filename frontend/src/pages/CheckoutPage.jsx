@@ -7,6 +7,7 @@ import {
   usePaymentCancelledToastMessage,
   usePaymentFailedToastMessage,
 } from '../hooks/useMessagingContent'
+import { useGlobalSettings } from '../hooks/useCmsPages'
 import { usePackages } from '../hooks/usePackages'
 import { getPackageLineLabel } from '../lib/bookingDisplay'
 import {
@@ -16,9 +17,9 @@ import {
   paymentCreateOrder,
   paymentVerify,
 } from '../lib/api'
-import { readStoredCartPinCode } from '../lib/cartPinCode'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+const CART_PIN_CODE_KEY = 'elewen_cart_pin_code'
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -348,6 +349,7 @@ function PaymentOptionPopup({
   setSelected,
   advanceAmount,
   fullAmount,
+  advancePercentage,
 }) {
   if (!open) return null
 
@@ -401,7 +403,7 @@ function PaymentOptionPopup({
 
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <p className="text-[12px] font-medium">Pay Advance (30%)</p>
+                <p className="text-[12px] font-medium">Pay Advance ({advancePercentage}%)</p>
                 <p className="text-[14px] font-medium">
                   ₹{Number(advanceAmount).toLocaleString('en-IN')}
                 </p>
@@ -501,6 +503,7 @@ export default function CheckoutPage() {
   const { showToast } = useToast()
   const savedUser = getSavedUser()
   const { data: packages = [] } = usePackages()
+  const { data: globalSettings = null } = useGlobalSettings()
   const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
@@ -533,7 +536,7 @@ export default function CheckoutPage() {
   )
   const [eventTime, setEventTime] = useState('')
   const [eventAddress, setEventAddress] = useState(cart?.eventCity ?? '')
-  const [pinCode, setPinCode] = useState(() => readStoredCartPinCode())
+  const [pinCode, setPinCode] = useState('')
   const [guestCount, setGuestCount] = useState(
     cart?.guestCount != null ? String(cart.guestCount) : ''
   )
@@ -607,7 +610,8 @@ export default function CheckoutPage() {
   )
   const discountAmount = Number(cart?.discountAmount ?? 0)
   const computedTotal = Math.max(0, computedSubtotal - discountAmount)
-  const advancePayable = computedTotal * 0.3
+  const advancePercentage = Number(globalSettings?.advance_payment_percentage ?? 30)
+  const advancePayable = computedTotal * (advancePercentage / 100)
   const balanceDue = Math.max(0, computedTotal - advancePayable)
   const pageContent = isSampleTastingCheckout
     ? {
@@ -652,6 +656,14 @@ export default function CheckoutPage() {
     navigate,
     showToast,
   ])
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem(CART_PIN_CODE_KEY)
+    } catch {
+      // Ignore storage failures and keep the page usable.
+    }
+  }, [])
 
   const handleCheckout = async paymentType => {
     const token = getStoredJwt()
@@ -1039,7 +1051,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="flex justify-between rounded-lg bg-[#F1F1F1] px-4 py-3 text-base font-medium">
-                <span>Advance Payable (30%)</span>
+                <span>Advance Payable ({advancePercentage}%)</span>
                 <span>{formatCurrency(advancePayable)}</span>
               </div>
 
@@ -1053,7 +1065,7 @@ export default function CheckoutPage() {
         <div className="flex-1 space-y-4">
           <div className="rounded-[20px] border border-[#95796066] bg-white p-6 md:p-8">
             <h2
-              className="text-[24px] font-semibold text-[#2C2C2C]"
+              className="text-[20px] font-semibold text-[#2C2C2C]"
               style={{ fontFamily: "'Poppins'" }}
             >
               {pageContent.detailsTitle}
@@ -1184,6 +1196,7 @@ export default function CheckoutPage() {
         setSelected={setPaymentOption}
         advanceAmount={advancePayable}
         fullAmount={computedTotal}
+        advancePercentage={advancePercentage}
         onConfirm={type => {
           setShowPaymentPopup(false)
           handleCheckout(type)

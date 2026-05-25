@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useToast } from '../components/common/useToast'
+import { useGlobalSettings } from '../hooks/useCmsPages'
 import { useCart } from '../hooks/useCart'
 import {
   useCartToastMessage,
@@ -9,10 +10,10 @@ import {
 } from '../hooks/useMessagingContent'
 import { usePackages } from '../hooks/usePackages'
 import { useServiceAreas } from '../hooks/useServiceAreas'
-import { readStoredCartPinCode, writeStoredCartPinCode } from '../lib/cartPinCode'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+const CART_PIN_CODE_KEY = 'elewen_cart_pin_code'
 const TEMP_BYPASS_PINCODE_VALIDATION = false
 
 function formatCurrency(value) {
@@ -232,14 +233,14 @@ function getSummaryIncludedItems(item) {
 
 function getPriceSummaryCategoryLabel(item) {
   if (item?.itemType === 'addon') {
-    return 'Add-ons'
+    return 'Addons'
   }
 
   return getPackageSubtitle(item?.packageData)
 }
 
 function getCartGroupLabel(item) {
-  if (item?.itemType === 'addon') return 'Add-ons'
+  if (item?.itemType === 'addon') return 'Addons'
   return getPackageSubtitle(item?.packageData)
 }
 
@@ -874,6 +875,7 @@ const CATEGORY_ICONS = {
   Sheesha: '💨',
   Bartending: '🍸',
   Furniture: '🪑',
+  Addons: '➕',
 }
 
 function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
@@ -1082,6 +1084,7 @@ function PriceSummaryCard({
   pincodeCard = null,
   isCheckoutDisabled = false,
 }) {
+  const { data: globalSettings = null } = useGlobalSettings()
   const itemSummaries = cartItems.map(item => ({
     item,
     summary: getCartItemSummary(item),
@@ -1111,7 +1114,8 @@ function PriceSummaryCard({
   )
   const discountAmount = Number(cart?.discountAmount ?? 0)
   const computedTotal = Math.max(0, computedSubtotal - discountAmount)
-  const advancePayable = computedTotal * 0.3
+  const advancePercentage = Number(globalSettings?.advance_payment_percentage ?? 30)
+  const advancePayable = computedTotal * (advancePercentage / 100)
   const balanceDue = Math.max(0, computedTotal - advancePayable)
 
   return (
@@ -1202,7 +1206,9 @@ function PriceSummaryCard({
           </div>
 
           <div className="flex items-center justify-between rounded-[12px] bg-[#EFEFEF] px-4 py-3">
-            <span className="font-medium text-[#1C1C1C]">Advance Payable (30%)</span>
+            <span className="font-medium text-[#1C1C1C]">
+              Advance Payable ({advancePercentage}%)
+            </span>
             <span className="text-lg font-medium text-[#1C1C1C]">
               {formatCurrency(advancePayable)}
             </span>
@@ -1361,7 +1367,7 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState('')
   const [couponMessage, setCouponMessage] = useState('')
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
-  const [pincode, setPincode] = useState(() => readStoredCartPinCode())
+  const [pincode, setPincode] = useState('')
   const [pincodeMessage, setPincodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [isPincodeValid, setIsPincodeValid] = useState(false)
@@ -1420,6 +1426,14 @@ export default function CartPage() {
       guestCount: cart?.guestCount != null ? String(cart.guestCount) : '',
     })
   }, [cart?.eventDate, cart?.eventCity, cart?.guestCount])
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem(CART_PIN_CODE_KEY)
+    } catch {
+      // Ignore storage failures and keep the page usable.
+    }
+  }, [])
 
   useEffect(() => {
     const nextState = getPincodeValidationState(pincode, serviceAreas, isLoadingServiceAreas)
@@ -1536,7 +1550,6 @@ export default function CartPage() {
     const normalizedPincode = normalizePincode(value)
 
     setPincode(normalizedPincode)
-    writeStoredCartPinCode(normalizedPincode)
     setIsPincodeValid(false)
 
     if (!normalizedPincode) {

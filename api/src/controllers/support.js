@@ -1,5 +1,29 @@
 import prisma from '../lib/prisma.js'
 
+const normalizeSearchText = value =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+
+function ticketMatchesSearch(ticket, search) {
+  const normalizedSearch = normalizeSearchText(search)
+  if (!normalizedSearch) return true
+
+  const haystack = [
+    ticket?.id,
+    ticket?.subject,
+    ticket?.status,
+    ticket?.priority,
+    ticket?.bookingId,
+    ...(ticket?.messages ?? []).map(message => message?.message),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return haystack.includes(normalizedSearch)
+}
+
 export const createTicket = async (req, res, next) => {
   try {
     const { bookingId, subject, message, priority = 'medium' } = req.body
@@ -52,6 +76,7 @@ export const getTickets = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
     const { all, status, priority, page = '1', limit = '20' } = req.query
+    const search = normalizeSearchText(req.query?.search)
 
     const where = {}
     if (all !== 'true') where.userId = userId
@@ -59,26 +84,31 @@ export const getTickets = async (req, res, next) => {
     if (priority) where.priority = priority
 
     const take = Math.min(Number(limit), 50)
-    const skip = (Number(page) - 1) * take
 
-    const [tickets, total] = await Promise.all([
-      prisma.supportTicket.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take,
-        skip,
-        include: {
-          messages: {
-            where: all === 'true' ? undefined : { isInternalNote: false },
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-          },
+    const tickets = await prisma.supportTicket.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        messages: {
+          where: all === 'true' ? undefined : { isInternalNote: false },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
         },
-      }),
-      prisma.supportTicket.count({ where }),
-    ])
+      },
+    })
 
-    res.json({ tickets, total, page: Number(page), pages: Math.ceil(total / take) })
+    const filteredTickets = tickets.filter(ticket => ticketMatchesSearch(ticket, search))
+    const total = filteredTickets.length
+    const totalPages = Math.max(1, Math.ceil(total / take))
+    const safePage = Math.min(Math.max(1, Number(page)), totalPages)
+    const skip = (safePage - 1) * take
+
+    res.json({
+      tickets: filteredTickets.slice(skip, skip + take),
+      total,
+      page: safePage,
+      pages: totalPages,
+    })
   } catch (err) {
     next(err)
   }

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventTypes'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import {
   buildServiceDestination,
@@ -112,7 +114,7 @@ function EventCard({
   return (
     <Link
       to={destination}
-      className="group flex h-[400px] w-full max-w-[250px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px] md:max-w-[298px]"
+      className="group flex h-[400px] w-full max-w-[250px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-auto md:max-h-[384px] md:max-w-[298px]"
     >
       <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
         {event.image ? (
@@ -141,6 +143,7 @@ function EventCard({
 export default function CategoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchValue, setSearchValue] = useState('')
+  const debouncedSearchValue = useDebouncedValue(searchValue)
   const [touchStartX, setTouchStartX] = useState(null)
   const [viewportWidth, setViewportWidth] = useState(() => {
     if (typeof window === 'undefined') return 1024
@@ -164,7 +167,7 @@ export default function CategoryPage() {
   }, [categories, requestedCategorySlug])
 
   const { data: events = [] } = useEventsByCategory(selectedCategoryId)
-  const paginationKey = `${selectedCategoryId}:${searchValue.trim().toLowerCase()}`
+  const paginationKey = `${selectedCategoryId}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
     key: paginationKey,
     pageIndex: 0,
@@ -209,14 +212,14 @@ export default function CategoryPage() {
   ])
 
   const filteredEvents = useMemo(() => {
-    const query = searchValue.trim().toLowerCase()
+    const query = debouncedSearchValue.trim().toLowerCase()
     if (!query) return events
 
     return events.filter(
       event =>
         event.title.toLowerCase().includes(query) || event.description.toLowerCase().includes(query)
     )
-  }, [events, searchValue])
+  }, [debouncedSearchValue, events])
 
   const cardsPerPage =
     viewportWidth >= 768
@@ -232,8 +235,13 @@ export default function CategoryPage() {
     safePageIndex * cardsPerPage + cardsPerPage
   )
 
+  useScrollToTop(`${paginationKey}:${safePageIndex}`)
+
   const selectCategory = categorySlug => {
-    setPaginationState({ key: `${categorySlug}:${searchValue.trim().toLowerCase()}`, pageIndex: 0 })
+    setPaginationState({
+      key: `${categorySlug}:${debouncedSearchValue.trim().toLowerCase()}`,
+      pageIndex: 0,
+    })
     setSearchParams(prevParams => {
       const nextParams = new URLSearchParams(prevParams)
       nextParams.set('category', categorySlug)
@@ -328,7 +336,7 @@ export default function CategoryPage() {
                 key={category.id ?? category.slug}
                 type="button"
                 onClick={() => selectCategory(category.slug)}
-                className={`group flex max-w-[325px] items-center justify-between rounded-[24px] border px-5 py-4 text-left transition-all hover:-translate-y-0.5 sm:px-6 ${
+                className={`group flex items-center justify-between rounded-[24px] border px-5 py-4 text-left transition-all hover:-translate-y-0.5 sm:max-w-[325px] sm:px-6 ${
                   isActive
                     ? 'border-[#7A2B08] bg-[#591902] text-white shadow-[0_16px_38px_rgba(111,76,43,0.14)]'
                     : 'border-[#E0D0BE] bg-white text-[#2D2D2D] hover:border-[#D3B38A] hover:shadow-[0_16px_38px_rgba(111,76,43,0.08)]'

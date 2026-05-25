@@ -218,6 +218,11 @@ export const adminCreateVendorAssignment = (token, body) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminReassignVendorAssignment = (token, assignmentId, body) =>
+  request('POST', `/admin/vendor-assignments/${assignmentId}/reassign`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminUpdateVendorAssignment = (token, assignmentId, body) =>
   request('PATCH', `/admin/vendor-assignments/${assignmentId}`, body, {
     headers: { Authorization: `Bearer ${token}` },
@@ -290,6 +295,11 @@ export const adminCreateCoupon = (token, body) =>
 
 export const adminUpdateCoupon = (token, couponId, body) =>
   request('PATCH', `/admin/coupons/${couponId}`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const adminDeleteCoupon = (token, couponId) =>
+  request('DELETE', `/admin/coupons/${couponId}`, null, {
     headers: { Authorization: `Bearer ${token}` },
   })
 

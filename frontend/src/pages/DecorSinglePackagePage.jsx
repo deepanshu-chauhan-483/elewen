@@ -1014,6 +1014,11 @@ export default function DecorSinglePackagePage() {
       return
     }
 
+    if (!cartItemId && activeCustomization?.isAddedToCart) {
+      handleIncrease()
+      return
+    }
+
     setIsAddingToCart(true)
 
     const selectedOpts = buildDecorSelectedOptions(activeCustomization, {

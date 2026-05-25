@@ -320,8 +320,8 @@ export const paymentGetByBooking = (token, bookingId) =>
 
 /* -- Sample Taste ----------------------------------------------------------- */
 
-export const sampleTasteList = token =>
-  apiGet('/sample-taste', { headers: { Authorization: `Bearer ${token}` } })
+export const sampleTasteList = (token, params = {}) =>
+  apiGet(withQuery('/sample-taste', params), { headers: { Authorization: `Bearer ${token}` } })
 
 export const sampleTasteGet = (token, sampleId) =>
   apiGet(`/sample-taste/${sampleId}`, { headers: { Authorization: `Bearer ${token}` } })

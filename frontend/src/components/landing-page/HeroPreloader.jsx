@@ -9,7 +9,7 @@
 import { useRef, forwardRef, useImperativeHandle } from 'react'
 import navLogo from '../../assets/images/navbar.png'
 
-const HeroPreloader = forwardRef(function HeroPreloader(_, ref) {
+const HeroPreloader = forwardRef(function HeroPreloader({ initiallyHidden = false }, ref) {
   const containerRef = useRef(null)
   const imgRef = useRef(null)
 
@@ -30,6 +30,8 @@ const HeroPreloader = forwardRef(function HeroPreloader(_, ref) {
         justifyContent: 'center',
         pointerEvents: 'none',
         backgroundColor: '#bfac9b',
+        opacity: initiallyHidden ? 0 : 1,
+        visibility: initiallyHidden ? 'hidden' : 'visible',
       }}
     >
       <img

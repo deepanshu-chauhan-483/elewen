@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import PackageCard from '../components/package-listing/PackageCard'
 import PackageListLayout from '../components/package-listing/PackageListLayout'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import { usePackages } from '../hooks/usePackages'
 import { useBudgetLevelOptions } from '../hooks/useEventTypes'
 import { filterPackages } from '../lib/packageFilters'
@@ -184,6 +185,8 @@ export default function DecorLevelsPage() {
       [levelKey]: Math.max(0, Math.min(newPage, totalPages - 1)),
     }))
   }
+
+  useScrollToTop(JSON.stringify(pagination))
 
   const buildViewAllLink = level => {
     const params = new URLSearchParams()

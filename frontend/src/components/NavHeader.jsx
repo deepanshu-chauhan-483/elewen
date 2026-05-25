@@ -78,6 +78,8 @@ const GLASS_BLUR_DESKTOP = 'blur(1px)'
 const BLACK_NAV_ACCENT_PATHS = ['/book-consultation', '/consultation-confirmation']
 const WHITE_NAV_BG_PATHS = ['/faqs', '/legalpages']
 const DASHBOARD_HOME_PATH = '/user-dashboard/active-booking'
+const hasSeenHeroPreloader = () =>
+  typeof window !== 'undefined' && window.__elewenHeroPreloaderSeen === true
 
 const parseRgb = color => {
   const match = color?.match(/rgba?\(([^)]+)\)/i)
@@ -179,7 +181,7 @@ function DashboardIcon() {
 function CartIcon({ color = '#FAFAFA' }) {
   return (
     <svg
-      className="h-[24px] w-[24px] md:w-[32px] md:h-[32px]"
+      className="w-[32px] h-[32px]"
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -225,7 +227,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const headerRef = useRef(null)
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!getStoredJwt())
-  const [entered, setEntered] = useState(!isHome)
+  const [entered, setEntered] = useState(() => !isHome || hasSeenHeroPreloader())
   const [hidden, setHidden] = useState(false)
   const [navThemeName, setNavThemeName] = useState(isHome ? 'glass' : 'light')
   const [navSurface, setNavSurface] = useState(DEFAULT_NAV_SURFACE)

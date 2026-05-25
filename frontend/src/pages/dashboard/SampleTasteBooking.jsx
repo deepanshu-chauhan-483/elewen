@@ -6,6 +6,7 @@ import {
   useDashboardSampleTasteDecision,
   useDashboardSampleTastes,
 } from '../../hooks/useDashboardData'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useWishlist } from '../../hooks/useWishlist'
 import {
   formatDashboardDate,
@@ -478,16 +479,24 @@ function SampleAccordionCard({ sample, decisionMutation, toggleSavedPackage, pen
 // Page
 // ---------------------------------------------------------------------------
 export default function SampleTasteBooking() {
-  const { data: samples = [], isLoading, error } = useDashboardSampleTastes()
-  const decisionMutation = useDashboardSampleTasteDecision()
-  const { toggleSavedPackage, pendingPackageId } = useWishlist()
   const { searchTerm } = useDashboardSearch()
-
+  const debouncedSearchTerm = useDebouncedValue(searchTerm)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
+  const debouncedLocalSearch = useDebouncedValue(search)
+  const {
+    data: samples = [],
+    isLoading,
+    error,
+  } = useDashboardSampleTastes({
+    search: debouncedLocalSearch || debouncedSearchTerm,
+    status,
+  })
+  const decisionMutation = useDashboardSampleTasteDecision()
+  const { toggleSavedPackage, pendingPackageId } = useWishlist()
 
   const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase()
+    const term = debouncedLocalSearch.trim().toLowerCase()
     return samples.filter(s => {
       const matchesStatus = status ? s.status?.toLowerCase() === status : true
       const matchesLocalSearch = matchesDashboardSearch(term, [
@@ -495,7 +504,7 @@ export default function SampleTasteBooking() {
         s.event?.name,
         s.statusLabel,
       ])
-      const matchesNavbarSearch = matchesDashboardSearch(searchTerm, [
+      const matchesNavbarSearch = matchesDashboardSearch(debouncedSearchTerm, [
         s.package?.title,
         s.event?.name,
         s.statusLabel,
@@ -503,7 +512,7 @@ export default function SampleTasteBooking() {
       ])
       return matchesStatus && matchesLocalSearch && matchesNavbarSearch
     })
-  }, [samples, search, searchTerm, status])
+  }, [debouncedLocalSearch, debouncedSearchTerm, samples, status])
 
   if (isLoading) {
     return <DashboardLoadingState title="Loading sample taste requests..." />
