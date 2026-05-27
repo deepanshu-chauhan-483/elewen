@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../components/common/useToast'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
@@ -465,6 +466,7 @@ const StatusBadge = ({ status }) => {
 }
 
 function BookingAccordionCard({ booking, session, packages }) {
+  const navigate = useNavigate()
   const { showToast } = useToast()
   const [open, setOpen] = useState(false)
   const [showCancel, setShowCancel] = useState(false)
@@ -764,7 +766,14 @@ function BookingAccordionCard({ booking, session, packages }) {
               Download Receipt
             </button>
 
-            <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-white">
+            <button
+              type="button"
+              onClick={event => {
+                event.stopPropagation()
+                navigate(`/user-dashboard/messages`)
+              }}
+              className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-white transition"
+            >
               Message Admin <ArrowIcon />
             </button>
 

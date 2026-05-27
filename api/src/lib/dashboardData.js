@@ -1,4 +1,5 @@
 import { strapiGet } from './strapi.js'
+import { cacheGet, cacheSet, TTL } from './cache.js'
 import { calculateBookingRefundPreview, getCancellationPolicyData } from './cancellationPolicy.js'
 
 const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'
@@ -227,6 +228,10 @@ async function fetchPackagesByIds(ids = []) {
   const uniqueIds = uniqueStrings(ids)
   if (uniqueIds.length === 0) return new Map()
 
+  const cacheKey = `strapi:pkg:${[...uniqueIds].sort().join(',')}`
+  const cached = await cacheGet(cacheKey)
+  if (cached !== null) return new Map(Object.entries(cached))
+
   try {
     const query = [
       buildInFilterQuery(uniqueIds),
@@ -243,7 +248,9 @@ async function fetchPackagesByIds(ids = []) {
     ].join('&')
 
     const result = await strapiGet(`/packages?${query}`)
-    return new Map((result?.data ?? []).map(pkg => [String(pkg.id), mapPackagePreview(pkg)]))
+    const map = new Map((result?.data ?? []).map(pkg => [String(pkg.id), mapPackagePreview(pkg)]))
+    await cacheSet(cacheKey, Object.fromEntries(map), TTL.STRAPI)
+    return map
   } catch {
     return new Map()
   }
@@ -252,6 +259,10 @@ async function fetchPackagesByIds(ids = []) {
 async function fetchEventsByIds(ids = []) {
   const uniqueIds = uniqueStrings(ids)
   if (uniqueIds.length === 0) return new Map()
+
+  const cacheKey = `strapi:evt:${[...uniqueIds].sort().join(',')}`
+  const cached = await cacheGet(cacheKey)
+  if (cached !== null) return new Map(Object.entries(cached))
 
   try {
     const query = [
@@ -262,7 +273,9 @@ async function fetchEventsByIds(ids = []) {
     ].join('&')
 
     const result = await strapiGet(`/events?${query}`)
-    return new Map((result?.data ?? []).map(event => [String(event.id), mapEventPreview(event)]))
+    const map = new Map((result?.data ?? []).map(event => [String(event.id), mapEventPreview(event)]))
+    await cacheSet(cacheKey, Object.fromEntries(map), TTL.STRAPI)
+    return map
   } catch {
     return new Map()
   }
@@ -272,6 +285,10 @@ async function fetchAddressesByIds(ids = []) {
   const uniqueIds = uniqueStrings(ids)
   if (uniqueIds.length === 0) return new Map()
 
+  const cacheKey = `strapi:addr:${[...uniqueIds].sort().join(',')}`
+  const cached = await cacheGet(cacheKey)
+  if (cached !== null) return new Map(Object.entries(cached))
+
   try {
     const query = [
       buildInFilterQuery(uniqueIds),
@@ -280,9 +297,11 @@ async function fetchAddressesByIds(ids = []) {
     ].join('&')
 
     const result = await strapiGet(`/addresses?${query}`)
-    return new Map(
+    const map = new Map(
       (result?.data ?? []).map(address => [String(address.id), mapAddressPreview(address)])
     )
+    await cacheSet(cacheKey, Object.fromEntries(map), TTL.STRAPI)
+    return map
   } catch {
     return new Map()
   }
@@ -292,6 +311,10 @@ async function fetchVendorsByIds(ids = []) {
   const uniqueIds = uniqueStrings(ids)
   if (uniqueIds.length === 0) return new Map()
 
+  const cacheKey = `strapi:vnd:${[...uniqueIds].sort().join(',')}`
+  const cached = await cacheGet(cacheKey)
+  if (cached !== null) return new Map(Object.entries(cached))
+
   try {
     const query = [
       buildInFilterQuery(uniqueIds),
@@ -300,9 +323,11 @@ async function fetchVendorsByIds(ids = []) {
     ].join('&')
 
     const result = await strapiGet(`/vendors?${query}`)
-    return new Map(
+    const map = new Map(
       (result?.data ?? []).map(vendor => [String(vendor.id), mapVendorPreview(vendor)])
     )
+    await cacheSet(cacheKey, Object.fromEntries(map), TTL.STRAPI)
+    return map
   } catch {
     return new Map()
   }

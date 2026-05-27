@@ -25,6 +25,7 @@ import {
   listAdminVendorAssignments,
   listAdminVendorPayouts,
   listAdminVendors,
+  recordAdminSampleTasteDecision,
   sendAdminMessage,
   updateAdminAlert,
   updateAdminBookingStatus,
@@ -56,6 +57,7 @@ router.post('/bookings/:id/notes', addAdminBookingNote)
 
 router.get('/sample-taste', listAdminSampleTastes)
 router.patch('/sample-taste/:id/status', updateAdminSampleTasteStatus)
+router.post('/sample-taste/:id/decision', recordAdminSampleTasteDecision)
 
 router.get('/vendors', listAdminVendors)
 router.get('/vendors/workspace', getAdminVendorWorkspace)

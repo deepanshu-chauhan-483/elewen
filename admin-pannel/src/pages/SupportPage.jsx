@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import gsap from 'gsap'
 import {
   EmptyState,
@@ -31,6 +32,11 @@ function getInitials(name = '') {
 
 function isClosedTicket(ticket) {
   return ['resolved', 'closed'].includes(String(ticket?.status ?? '').toLowerCase())
+}
+
+function buildBookingWorkspaceHref(bookingId = '') {
+  const id = String(bookingId ?? '').trim()
+  return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
 }
 
 // ---------------------------------------------------------------------------
@@ -342,6 +348,16 @@ function TicketDetailPanel({
           <p className="text-xs text-[#6B7280]">
             <span className="font-medium text-[#2D2D2D]">{renderedTicket.subject}</span>
           </p>
+          {renderedTicket.bookingId ? (
+            <div className="mt-3">
+              <a
+                href={buildBookingWorkspaceHref(renderedTicket.bookingId)}
+                className="inline-flex h-9 items-center justify-center rounded-full border border-[#CDB17E] bg-white px-4 text-xs font-semibold text-[#CDB17E] transition hover:bg-[#FAF6F1]"
+              >
+                View Booking Details
+              </a>
+            </div>
+          ) : null}
         </div>
 
         {/* ── Update controls strip ── */}
@@ -518,6 +534,7 @@ function TicketDetailPanel({
 const PAGE_SIZE = 10
 
 export default function SupportPage() {
+  const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
@@ -531,6 +548,7 @@ export default function SupportPage() {
   const [message, setMessage] = useState('')
   const [isInternalNote, setIsInternalNote] = useState(false)
   const debouncedSearch = useDebouncedValue(search)
+  const bookingIdParam = String(searchParams.get('bookingId') ?? '').trim()
 
   const ticketsQuery = useAdminSupportTickets({
     search: debouncedSearch,
@@ -593,6 +611,14 @@ export default function SupportPage() {
     () => filteredTickets.find(t => t.id === selectedId) ?? null,
     [filteredTickets, selectedId]
   )
+
+  useEffect(() => {
+    if (!bookingIdParam || selectedId) return undefined
+    const matchedTicket = ticketList.find(ticket => String(ticket.bookingId ?? '') === bookingIdParam)
+    if (!matchedTicket) return undefined
+    const frameId = requestAnimationFrame(() => setSelectedId(matchedTicket.id))
+    return () => cancelAnimationFrame(frameId)
+  }, [bookingIdParam, selectedId, ticketList])
 
   const ticketQuery = useAdminSupportTicket(selectedTicket?.id)
   const updateMutation = useAdminUpdateSupportTicket()

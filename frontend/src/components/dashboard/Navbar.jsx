@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { DASHBOARD } from '../../constants/dashboard'
 import { useDashboardSearch } from './useDashboardSearch'
 import {
+  useDashboardClearAllNotifications,
   useDashboardLogout,
   useDashboardNotificationCount,
   useDashboardNotifications,
@@ -215,6 +216,7 @@ const Navbar = ({ onMobileMenuOpen }) => {
   })
   const markReadMutation = useDashboardMarkNotificationRead()
   const markAllReadMutation = useDashboardMarkAllNotificationsRead()
+  const clearAllNotificationsMutation = useDashboardClearAllNotifications()
 
   const displayName = [session?.profile?.first_name, session?.profile?.last_name]
     .filter(Boolean)
@@ -329,6 +331,7 @@ const Navbar = ({ onMobileMenuOpen }) => {
         isLoading={notificationsLoading}
         markReadMutation={markReadMutation}
         markAllReadMutation={markAllReadMutation}
+        clearAllNotificationsMutation={clearAllNotificationsMutation}
         navigate={navigate}
       />
     </>
@@ -376,6 +379,7 @@ function NotificationModal({
   isLoading,
   markReadMutation,
   markAllReadMutation,
+  clearAllNotificationsMutation,
   navigate,
 }) {
   if (!open) return null
@@ -384,7 +388,11 @@ function NotificationModal({
     <div className="fixed inset-0 z-40 flex items-start justify-end px-6 pt-20 hide-scrollbar">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative z-10 w-full max-w-md rounded-[28px] border border-[#E4DED8] bg-white shadow-[0_18px_60px_rgba(17,24,39,0.16)] hide-scrollbar">
+      <div
+        className="relative z-10 w-full max-w-md rounded-[28px] border border-[#E4DED8] bg-white shadow-[0_18px_60px_rgba(17,24,39,0.16)] hide-scrollbar"
+        data-lenis-prevent
+        data-denis-prevent
+      >
         <div className="flex items-center hide-scrollbar justify-between border-b border-[#EFE7E1] px-5 py-4">
           <div>
             <h2 className="text-base font-medium text-[#2E2E2E]">Notifications</h2>
@@ -394,6 +402,14 @@ function NotificationModal({
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => clearAllNotificationsMutation.mutate()}
+              disabled={!notifications.length || clearAllNotificationsMutation.isPending}
+              className="text-xs font-medium text-[#591902] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {clearAllNotificationsMutation.isPending ? 'Clearing...' : 'Clear all'}
+            </button>
             <button
               type="button"
               onClick={() => markAllReadMutation.mutate()}
@@ -413,7 +429,11 @@ function NotificationModal({
           </div>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto px-3 py-3">
+        <div
+          className="hide-scrollbar max-h-[52vh] overflow-y-auto px-3 py-3"
+          data-lenis-prevent
+          data-denis-prevent
+        >
           {isLoading ? (
             <div className="rounded-2xl bg-[#F7F5F2] px-4 py-6 text-sm text-[#6B7280]">
               Loading notifications...

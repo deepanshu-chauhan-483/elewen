@@ -114,6 +114,12 @@ function getNestedPackagePriceBreakdowns(pkg) {
   )
 }
 
+function getNestedPackagePricingRules(pkg) {
+  return getNestedPackageSections(pkg).flatMap(section =>
+    Array.isArray(section?.pricing_rules) ? section.pricing_rules : []
+  )
+}
+
 function getNestedPackageFlavors(pkg) {
   return getNestedPackageSections(pkg).flatMap(section =>
     Array.isArray(section?.flavor)
@@ -253,6 +259,38 @@ function buildAddonList(items = []) {
     })
 }
 
+function buildPricingRuleList(items = []) {
+  const seen = new Set()
+
+  return (Array.isArray(items) ? items : [])
+    .filter(Boolean)
+    .map((item, index) => {
+      const label = String(
+        item?.value ?? item?.title ?? item?.name ?? item?.label ?? item?.hours_range ?? ''
+      ).trim()
+      const modifierType = String(item?.modifier_type ?? '').trim().toLowerCase()
+      const modifierValue = Number(item?.modifier_value ?? 0)
+      const ruleType = String(item?.rule_type ?? '').trim().toLowerCase()
+
+      return {
+        id: item?.id != null ? String(item.id) : `${label || 'pricing-rule'}-${index}`,
+        label,
+        value: label,
+        title: label,
+        rule_type: ruleType,
+        modifier_type: modifierType,
+        modifier_value: Number.isFinite(modifierValue) ? modifierValue : 0,
+      }
+    })
+    .filter(item => {
+      if (!item.label) return false
+      const key = `${item.id}::${item.label.toLowerCase()}::${item.modifier_value}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
 function getSectionInclusionImages(section) {
   const inclusions = Array.isArray(section?.inclusions)
     ? section.inclusions
@@ -346,6 +384,7 @@ function normalizePackage(pkg, index = 0) {
     detail_addons: buildAddonList(getNestedPackageAddons(pkg)),
     detail_exclusions: buildTextList(getNestedPackageExclusions(pkg)),
     detail_price_breakdown: getNestedPackagePriceBreakdowns(pkg),
+    detail_pricing_rules: buildPricingRuleList(getNestedPackagePricingRules(pkg)),
     detail_accordion_sections: buildAccordionSections(pkg),
     flavor_options: buildFlavorOptions(pkg),
     _index: index,
@@ -373,13 +412,13 @@ function getPackagePopulateParams() {
     'populate[packages][on][package.sheeshapackage][populate][policy]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][price_covers]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][flavor]': 'true',
-    'populate[packages][on][package.bartendingpackage][populate][addons]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][inclusions]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][exclusions]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][policy]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][price_covers]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][price_breakdown]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][budget_level]': 'true',
+    'populate[packages][on][package.bartendingpackage][populate][pricing_rules]': 'true',
   }
 }
 
@@ -388,28 +427,38 @@ function isNumericId(value) {
 }
 
 async function fetchPackages(params = {}) {
-  const { data } = await strapiGet('/packages', {
+  const baseParams = {
     ...getPackagePopulateParams(),
     'filters[is_active][$eq]': 'true',
     'filters[visibility][$eq]': 'true',
+    'pagination[page]': '1',
+    'pagination[pageSize]': '100',
     sort: 'createdAt:asc',
     ...params,
-  })
+  }
 
-  return data.map((pkg, index) => normalizePackage(pkg, index))
+  const firstResponse = await strapiGet('/packages', baseParams)
+  const firstPageData = Array.isArray(firstResponse?.data) ? firstResponse.data : []
+  const pageCount = Number(firstResponse?.meta?.pagination?.pageCount ?? 1)
+  const pages = [firstPageData]
+
+  for (let page = 2; page <= pageCount; page += 1) {
+    const response = await strapiGet('/packages', {
+      ...baseParams,
+      'pagination[page]': String(page),
+    })
+    pages.push(Array.isArray(response?.data) ? response.data : [])
+  }
+
+  return pages.flat().map((pkg, index) => normalizePackage(pkg, index))
 }
 
 export function usePackages() {
   return useQuery({
-    queryKey: ['packages'],
+    queryKey: ['packages', 'live-v3'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
-
-      try {
-        return await fetchPackages()
-      } catch {
-        return PACKAGES_FALLBACK
-      }
+      return await fetchPackages()
     },
     placeholderData: PACKAGES_FALLBACK,
     staleTime: 5 * 60 * 1000,
@@ -420,7 +469,7 @@ export function usePackages() {
 
 export function usePackageById(packageId) {
   return useQuery({
-    queryKey: ['package', packageId],
+    queryKey: ['package', packageId, 'live-v3'],
     enabled: Boolean(packageId),
     queryFn: async () => {
       if (USE_FALLBACK) {

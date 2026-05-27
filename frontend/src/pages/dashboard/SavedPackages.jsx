@@ -19,6 +19,7 @@ function getPackageHref(item) {
 
   if (serviceSlug === 'decor') return `/packages/decor-single/${packageId}`
   if (serviceSlug === 'sheesha') return `/packages/sheesha-single/${packageId}`
+  if (serviceSlug === 'bartending') return `/packages/bartending-single/${packageId}`
   if (serviceSlug) return `/packages/${serviceSlug}/${packageId}`
 
   return '/package-listing'
@@ -102,7 +103,7 @@ function PackageCard({ item, isPending, onRemove }) {
           {/* Top: title, category, price */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              {/* Category tags */}
+              {/* Category tags + booking status */}
               <div className="flex flex-wrap gap-1.5 mb-2.5">
                 {(item.serviceCategories || []).map(cat => (
                   <span
@@ -113,6 +114,10 @@ function PackageCard({ item, isPending, onRemove }) {
                     {cat.name}
                   </span>
                 ))}
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] text-[10px] uppercase tracking-widest text-[#0369A1]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0369A1]" />
+                  Not booked yet
+                </span>
               </div>
 
               {/* Title */}

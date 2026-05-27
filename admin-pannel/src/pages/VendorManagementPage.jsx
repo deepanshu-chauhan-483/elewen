@@ -218,6 +218,11 @@ function buildMailtoHref(to, subject, bodyLines = []) {
   return `mailto:${recipient}${query ? `?${query}` : ''}`
 }
 
+function buildBookingWorkspaceHref(bookingId = '') {
+  const id = String(bookingId ?? '').trim()
+  return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
+}
+
 function filterVendors(vendors, { search, category, location, availability, bookingCount }) {
   const s = search?.trim().toLowerCase() ?? ''
   const c = category?.trim().toLowerCase() ?? ''
@@ -312,6 +317,11 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
   const eventTypes = toArray(registration.event_types).join(', ') || '-'
   const websiteHref = normalizeUrl(registration.website_social_portfolio)
   const portfolioHref = normalizeUrl(registration.portfolio_link)
+  const vendorMailto = buildMailtoHref(
+    vendor.email,
+    `Elewen vendor follow-up ${vendor.companyName || ''}`.trim(),
+    ['Hi team,', '', 'Sharing a quick Elewen update for your vendor workspace.']
+  )
   const registrationFields = [
     { label: 'SUBMITTED', value: formatDate(registration.submitted_at || vendor.createdAt) },
     {
@@ -590,10 +600,10 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
                     </DangerBtn>
                   </>
                 )}
-                {/* <ExternalAction href={vendorMailto}>Email Vendor</ExternalAction>
+                <ExternalAction href={vendorMailto}>Email Vendor</ExternalAction>
                 <ExternalAction href={vendor.phone ? `tel:${vendor.phone}` : ''}>
                   Call Vendor
-                </ExternalAction> */}
+                </ExternalAction>
                 <ExternalAction href={websiteHref || portfolioHref}>
                   Open Portfolio Link
                 </ExternalAction>
@@ -790,8 +800,8 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
 
                           <div className="flex flex-wrap gap-2">
                             <ExternalAction href={customerMailto}>Email Customer</ExternalAction>
-                            <ExternalAction href="/bookings">
-                              Open Bookings Workspace
+                            <ExternalAction href={buildBookingWorkspaceHref(assignment.bookingId)}>
+                              View Booking Details
                             </ExternalAction>
                           </div>
 
@@ -871,11 +881,9 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge status={assignment.status} />
-                      {/* <ExternalAction
-                        href={buildMailtoHref(vendor.email, 'Elewen vendor follow-up')}
-                      >
+                      <ExternalAction href={vendorMailto}>
                         Email Vendor
-                      </ExternalAction> */}
+                      </ExternalAction>
                     </div>
                   </div>
                 ))}

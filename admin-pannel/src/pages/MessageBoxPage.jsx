@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   EmptyState,
   ErrorState,
   LoadingState,
   SectionLoadingState,
+  SelectField,
   StatusBadge,
 } from '../components/ui/AdminUI'
 import {
@@ -44,8 +46,13 @@ function getInitials(name = '') {
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
-    .map(w => w[0].toUpperCase())
+    .map(word => word[0].toUpperCase())
     .join('')
+}
+
+function buildBookingWorkspaceHref(bookingId = '') {
+  const id = String(bookingId ?? '').trim()
+  return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
 }
 
 function Avatar({ name = '', size = 'md' }) {
@@ -98,11 +105,11 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
           </div>
 
           <p className="mt-0.5 truncate text-xs text-[#6B7280]">{packageTitle}</p>
-          {time && (
+          {time ? (
             <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-[#8F8F8F]">
               {formatDateTime(time)}
             </p>
-          )}
+          ) : null}
         </div>
       </div>
     </button>
@@ -131,7 +138,26 @@ function MessageBubble({ message, isAdmin }) {
               : 'rounded-tl-sm bg-white text-[#1C1C1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
           }`}
         >
-          <p className="text-sm leading-6">{message.messageText}</p>
+          {message.messageText ? <p className="text-sm leading-6">{message.messageText}</p> : null}
+          {message.attachments?.length ? (
+            <div className={`${message.messageText ? 'mt-3' : ''} space-y-2`}>
+              {message.attachments.map(attachment => (
+                <a
+                  key={attachment.id}
+                  href={attachment.fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`block rounded-xl border px-3 py-2 text-xs ${
+                    isAdmin
+                      ? 'border-white/20 bg-white/10 text-white'
+                      : 'border-[#E4DED8] bg-[#F7F5F2] text-[#6B7280]'
+                  }`}
+                >
+                  {attachment.fileType || 'Attachment'}
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
         <p className="text-[10px] text-[#8F8F8F]">{formatDateTime(message.createdAt)}</p>
       </div>
@@ -142,10 +168,16 @@ function MessageBubble({ message, isAdmin }) {
 function MessageThreadPanel({
   thread,
   messageText,
+  messageType,
+  attachmentUrl,
+  attachmentType,
   messagesEndRef,
   sendMessageMutation,
   onClose,
   onMessageTextChange,
+  onMessageTypeChange,
+  onAttachmentUrlChange,
+  onAttachmentTypeChange,
   onSend,
 }) {
   const [renderedThread, setRenderedThread] = useState(thread)
@@ -212,13 +244,7 @@ function MessageThreadPanel({
               className="flex h-9 w-9 items-center justify-center rounded-full p-2 text-[#957960] transition hover:bg-[#F3EEE8]"
               aria-label="Close message thread"
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path
                   d="M15 5L5 15M5 5L15 15"
                   stroke="#1C1C1C"
@@ -240,6 +266,18 @@ function MessageThreadPanel({
               <span className="ml-2 text-[#8F8F8F]">· {formatDate(booking.eventDate)}</span>
             ) : null}
           </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#6B7280]">
+            <span className="rounded-full bg-white px-3 py-1">Booking ID: {renderedThread.bookingId}</span>
+            <span className="rounded-full bg-white px-3 py-1">
+              Vendors: {booking?.vendorAssignments?.length ?? 0}
+            </span>
+            <a
+              href={buildBookingWorkspaceHref(renderedThread.bookingId)}
+              className="inline-flex items-center rounded-full border border-[#CDB17E] bg-white px-3 py-1 font-semibold text-[#CDB17E] hover:bg-[#FAF6F1]"
+            >
+              View Booking Details
+            </a>
+          </div>
         </div>
 
         <div
@@ -283,33 +321,50 @@ function MessageThreadPanel({
           ) : null}
 
           <div className="flex flex-col gap-3">
-            {/* <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <label className="text-[11px] uppercase tracking-[0.14em] text-[#8F8F8F]">Type:</label>
-              <SelectField
-                value={messageType}
-                onChange={onMessageTypeChange}
-                menuClassName="z-[70]"
-              >
+              <SelectField value={messageType} onChange={onMessageTypeChange} menuClassName="z-[70]">
                 <option value="text">Text reply</option>
                 <option value="status_update">Status update</option>
                 <option value="system">System note</option>
               </SelectField>
-            </div> */}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <input
+                type="url"
+                value={attachmentUrl}
+                onChange={event => onAttachmentUrlChange(event.target.value)}
+                disabled={isReadOnly}
+                placeholder="Attachment URL (optional)"
+                className="w-full rounded-full border border-[#E4DED8] bg-white px-4 py-2.5 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
+              />
+              <input
+                type="text"
+                value={attachmentType}
+                onChange={event => onAttachmentTypeChange(event.target.value)}
+                disabled={isReadOnly}
+                placeholder="Attachment type (optional)"
+                className="w-full rounded-full border border-[#E4DED8] bg-white px-4 py-2.5 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
 
             <div className="flex items-end gap-3">
               <textarea
                 value={messageText}
-                onChange={e => onMessageTextChange(e.target.value)}
+                onChange={event => onMessageTextChange(event.target.value)}
                 disabled={isReadOnly}
-                placeholder={
-                  isReadOnly ? 'Read-only thread.' : 'Write your message to the customer…'
-                }
+                placeholder={isReadOnly ? 'Read-only thread.' : 'Write your message to the customer...'}
                 rows={3}
                 className="flex-1 resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
               />
               <button
                 type="button"
-                disabled={sendMessageMutation.isPending || !messageText.trim() || isReadOnly}
+                disabled={
+                  sendMessageMutation.isPending ||
+                  (!messageText.trim() && !attachmentUrl.trim()) ||
+                  isReadOnly
+                }
                 onClick={onSend}
                 className="flex h-12 shrink-0 items-center justify-center gap-2 self-end rounded-full bg-[#591902] px-4 text-white shadow-[0_4px_12px_rgba(89,25,2,0.25)] transition hover:bg-[#7A2B08] disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -360,20 +415,25 @@ function MessageThreadPanel({
 }
 
 export default function MessageBoxPage() {
+  const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search)
   const [threadTab, setThreadTab] = useState('active')
-  const [selectedBookingId, setSelectedBookingId] = useState('')
+  const [selectedBookingId, setSelectedBookingId] = useState(
+    String(searchParams.get('bookingId') ?? '').trim()
+  )
   const [messageText, setMessageText] = useState('')
   const [messageType, setMessageType] = useState('text')
+  const [attachmentUrl, setAttachmentUrl] = useState('')
+  const [attachmentType, setAttachmentType] = useState('')
   const messagesEndRef = useRef(null)
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
 
   const threadsQuery = useAdminMessageThreads({ search: debouncedSearch })
   const allThreads = useMemo(() => threadsQuery.data?.threads ?? [], [threadsQuery.data?.threads])
-  const activeThreads = useMemo(() => allThreads.filter(t => !isArchivedThread(t)), [allThreads])
-  const archivedThreads = useMemo(() => allThreads.filter(t => isArchivedThread(t)), [allThreads])
+  const activeThreads = useMemo(() => allThreads.filter(thread => !isArchivedThread(thread)), [allThreads])
+  const archivedThreads = useMemo(() => allThreads.filter(thread => isArchivedThread(thread)), [allThreads])
   const effectiveThreadTab = useMemo(() => {
     if (threadTab === 'active' && activeThreads.length === 0 && archivedThreads.length > 0) {
       return 'archived'
@@ -415,8 +475,15 @@ export default function MessageBoxPage() {
     return undefined
   }, [filteredThreads, selectedBookingId])
 
+  useEffect(() => {
+    const bookingIdParam = String(searchParams.get('bookingId') ?? '').trim()
+    if (!bookingIdParam) return undefined
+    const frameId = requestAnimationFrame(() => setSelectedBookingId(bookingIdParam))
+    return () => cancelAnimationFrame(frameId)
+  }, [searchParams])
+
   const selectedThreadListItem = useMemo(
-    () => filteredThreads.find(t => t.bookingId === selectedBookingId) ?? null,
+    () => filteredThreads.find(thread => thread.bookingId === selectedBookingId) ?? null,
     [filteredThreads, selectedBookingId]
   )
 
@@ -435,7 +502,7 @@ export default function MessageBoxPage() {
   const thread = threadQuery.data?.bookingId === selectedBookingId ? threadQuery.data : null
 
   return (
-    <div className="flex min-h-0 h-fit flex-col gap-6">
+    <div className="flex h-fit min-h-0 flex-col gap-6">
       <div>
         <h1 className="text-2xl text-[#1C1C1C]">Message Box</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
@@ -444,7 +511,7 @@ export default function MessageBoxPage() {
       </div>
 
       <div className="min-h-0 flex-1">
-        <div className="mb-4 py-5 px-3 bg-[#FFFFFF] rounded-2xl">
+        <div className="mb-4 rounded-2xl bg-[#FFFFFF] px-3 py-5">
           <div className="relative">
             <svg
               className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8F8F8F]"
@@ -462,13 +529,13 @@ export default function MessageBoxPage() {
             <input
               type="search"
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search customer or booking…"
+              onChange={event => setSearch(event.target.value)}
+              placeholder="Search customer or booking..."
               className="w-full rounded-full border border-[#E4DED8] bg-[#F7F5F2] py-2.5 pl-9 pr-4 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] focus:bg-white"
             />
           </div>
 
-          <div className="flex gap-1 rounded-full bg-[#F3F3F3] p-1 mt-4">
+          <div className="mt-4 flex gap-1 rounded-full bg-[#F3F3F3] p-1">
             {[
               { key: 'active', label: 'Active', count: activeThreads.length },
               { key: 'archived', label: 'Closed', count: archivedThreads.length },
@@ -497,6 +564,7 @@ export default function MessageBoxPage() {
             ))}
           </div>
         </div>
+
         <div
           className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 hide-scrollbar"
           data-lenis-prevent
@@ -528,11 +596,15 @@ export default function MessageBoxPage() {
         thread={thread}
         messageText={messageText}
         messageType={messageType}
+        attachmentUrl={attachmentUrl}
+        attachmentType={attachmentType}
         messagesEndRef={messagesEndRef}
         sendMessageMutation={sendMessageMutation}
         onClose={() => setSelectedBookingId('')}
         onMessageTextChange={setMessageText}
         onMessageTypeChange={setMessageType}
+        onAttachmentUrlChange={setAttachmentUrl}
+        onAttachmentTypeChange={setAttachmentType}
         onSend={async () => {
           if (!thread) return
 
@@ -541,8 +613,13 @@ export default function MessageBoxPage() {
             bookingId: thread.bookingId,
             messageType,
             messageText,
+            attachments: attachmentUrl
+              ? [{ fileUrl: attachmentUrl, fileType: attachmentType || null }]
+              : [],
           })
           setMessageText('')
+          setAttachmentUrl('')
+          setAttachmentType('')
         }}
       />
 

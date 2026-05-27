@@ -130,6 +130,23 @@ function ArrowIcon({ direction = 'right' }) {
   )
 }
 
+function buildMailtoHref(to, subject, bodyLines = []) {
+  const recipient = String(to ?? '').trim()
+  if (!recipient) return ''
+
+  const params = new URLSearchParams()
+  if (subject) params.set('subject', subject)
+  const body = bodyLines.filter(Boolean).join('\n')
+  if (body) params.set('body', body)
+  const query = params.toString()
+  return `mailto:${recipient}${query ? `?${query}` : ''}`
+}
+
+function buildBookingWorkspaceHref(bookingId = '') {
+  const id = String(bookingId ?? '').trim()
+  return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
+}
+
 function PaginationControls({ currentPage, totalPages, onPageChange }) {
   if (totalPages <= 1) return null
   const latestRefund = null
@@ -473,6 +490,31 @@ function CustomerPayments({ processRefundMutation }) {
                         status={b.outstandingAmount > 0 ? 'pending' : 'resolved'}
                         label={b.outstandingAmount > 0 ? 'Reminder needed' : 'Settled'}
                       />
+                      <GhostBtn
+                        onClick={() =>
+                          window.open(
+                            buildMailtoHref(
+                              b.customer?.email,
+                              `Elewen payment reminder ${b.id}`,
+                              [
+                                `Hi ${b.customer?.name || 'there'},`,
+                                '',
+                                `This is a reminder for the pending booking balance of ${formatCurrency(b.outstandingAmount)}.`,
+                                'Please connect with the Elewen team if you need payment assistance.',
+                              ]
+                            ),
+                            '_self'
+                          )
+                        }
+                        disabled={!b.customer?.email || b.outstandingAmount <= 0}
+                      >
+                        Send Reminder
+                      </GhostBtn>
+                      <GhostBtn
+                        onClick={() => window.open(buildBookingWorkspaceHref(b.id), '_self')}
+                      >
+                        Manual Follow-up
+                      </GhostBtn>
                     </div>
                   </div>
                 ))}
@@ -1153,6 +1195,20 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
     )
   }
 
+  const shareMailto = buildMailtoHref(
+    '',
+    `Elewen offer: ${coupon.code}`,
+    [
+      'Hello,',
+      '',
+      `Use coupon code ${coupon.code} for ${
+        coupon.discount_type === 'percentage'
+          ? `${coupon.discount_value}% off`
+          : `${formatCurrency(coupon.discount_value)} off`
+      }.`,
+    ]
+  )
+
   return (
     <div className="rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1191,6 +1247,16 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
           <GhostBtn onClick={() => setEditing(current => !current)}>
             {editing ? 'Cancel' : 'Edit'}
           </GhostBtn>
+          <GhostBtn
+            onClick={async () => {
+              if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(coupon.code)
+              }
+            }}
+          >
+            Copy Code
+          </GhostBtn>
+          <GhostBtn onClick={() => window.open(shareMailto, '_self')}>Share Coupon</GhostBtn>
           <DangerBtn
             disabled={deleteCouponMutation.isPending}
             onClick={() => {

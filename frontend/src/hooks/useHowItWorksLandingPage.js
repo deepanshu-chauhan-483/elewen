@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { strapiGet } from '../lib/strapi'
+import { HOW_IT_WORK_PAGE_FALLBACK } from '../data/cmsPages'
+import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
@@ -16,40 +17,59 @@ const normalizeSection = (section, index) => ({
   raw: section,
 })
 
+const HOW_IT_WORKS_LANDING_FALLBACK = {
+  id: null,
+  documentId: null,
+  title: HOW_IT_WORK_PAGE_FALLBACK?.hero?.heading ?? 'How It Works',
+  sections: Array.isArray(HOW_IT_WORK_PAGE_FALLBACK?.idea_to_celebration?.steps)
+    ? HOW_IT_WORK_PAGE_FALLBACK.idea_to_celebration.steps.map((step, index) => ({
+        id: step?.number ?? index + 1,
+        title: step?.title ?? '',
+        desc: step?.description ?? '',
+        image: null,
+        raw: step,
+      }))
+    : [],
+  cta: {
+    heading: '',
+    body: '',
+  },
+}
+
 export function useHowItWorksLandingPage() {
   return useQuery({
     queryKey: ['how-it-works-landing-page'],
     queryFn: async () => {
-      const { data } = await strapiGet('/how-it-works-step-landing-pages', {
-        'populate[Sections][populate]': '*',
-      })
+      if (USE_FALLBACK) return HOW_IT_WORKS_LANDING_FALLBACK
 
-      const item = Array.isArray(data) ? data[0] : data
-      const rawSections = item?.Sections ?? item?.sections ?? []
+      try {
+        const { data } = await strapiGet('/how-it-works-step-landing-pages', {
+          'populate[Sections][populate]': '*',
+        })
 
-      return {
-        id: item?.id ?? null,
-        documentId: item?.documentId ?? null,
-        title: item?.Title ?? item?.title ?? '',
-        sections: Array.isArray(rawSections) ? rawSections.map(normalizeSection) : [],
+        const item = Array.isArray(data) ? data[0] : data
+        const rawSections = item?.Sections ?? item?.sections ?? []
+        const sections = Array.isArray(rawSections) ? rawSections.map(normalizeSection) : []
 
-        // ✅ CTA Section fields from same collection
-        cta: {
-          heading: item?.bottom_heading ?? '',
-          body: item?.Bottom_Content ?? '',
-        },
+        if (!item || sections.length === 0) {
+          return HOW_IT_WORKS_LANDING_FALLBACK
+        }
+
+        return {
+          id: item?.id ?? null,
+          documentId: item?.documentId ?? null,
+          title: item?.Title ?? item?.title ?? HOW_IT_WORKS_LANDING_FALLBACK.title,
+          sections,
+          cta: {
+            heading: item?.bottom_heading ?? '',
+            body: item?.Bottom_Content ?? '',
+          },
+        }
+      } catch {
+        return HOW_IT_WORKS_LANDING_FALLBACK
       }
     },
-    placeholderData: {
-      id: null,
-      documentId: null,
-      title: '',
-      sections: [],
-      cta: {
-        heading: '',
-        body: '',
-      },
-    },
+    placeholderData: HOW_IT_WORKS_LANDING_FALLBACK,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   })

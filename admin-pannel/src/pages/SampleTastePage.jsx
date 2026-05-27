@@ -7,6 +7,7 @@ import {
   SelectField,
 } from '../components/ui/AdminUI'
 import {
+  useAdminRecordSampleTasteDecision,
   useAdminSampleTastes,
   useAdminUpdateSampleTasteStatus,
   useAdminVendors,
@@ -16,11 +17,6 @@ import { useScrollToTop } from '../hooks/useScrollToTop'
 import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatDate } from '../lib/formatters'
 
-// ---------------------------------------------------------------------------
-// Shared primitives — identical to BookingManagementPage / VendorManagementPage
-// ---------------------------------------------------------------------------
-
-// Left border (collapsed) / top border (expanded) per status
 const borderColorMap = {
   new: 'border-[#0383E4]',
   assigned: 'border-[#C57A1E]',
@@ -28,19 +24,31 @@ const borderColorMap = {
   completed: 'border-[#16A34A]',
 }
 
-// Stage progress config
 const stages = [
   { key: 'new', label: 'New' },
   { key: 'assigned', label: 'Assigned' },
   { key: 'delivered', label: 'Delivered' },
   { key: 'completed', label: 'Completed' },
 ]
+
 const stageIndex = { new: 0, assigned: 1, delivered: 2, completed: 3 }
+
+const decisionOptions = [
+  { value: 'convert_full', label: 'Convert to Full Booking' },
+  { value: 'save', label: 'Save for Later' },
+  { value: 'cancel', label: 'Declined' },
+  { value: 'expired', label: 'Expired' },
+]
+
+function buildBookingWorkspaceHref(bookingId = '') {
+  const id = String(bookingId ?? '').trim()
+  return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
+}
 
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
   const cls = getAdminBadgeClass(status, { preset: 'vivid' })
-  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '-'
   return (
     <span
       className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}
@@ -56,7 +64,7 @@ function PrimaryBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-50"
     >
       {children}
     </button>
@@ -69,7 +77,7 @@ function GhostBtn({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center justify-center rounded-full px-5 text-sm border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E] disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#CDB17E] bg-[#FFFFFF] px-5 text-sm text-[#CDB17E] hover:bg-[#FAF6F1] disabled:cursor-not-allowed disabled:opacity-50"
     >
       {children}
     </button>
@@ -78,7 +86,7 @@ function GhostBtn({ children, onClick, disabled }) {
 
 function SectionLabel({ children }) {
   return (
-    <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">
+    <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
       {children}
     </p>
   )
@@ -126,9 +134,6 @@ function ArrowIcon({ direction = 'right' }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Stage progress bar
-// ---------------------------------------------------------------------------
 function StageProgress({ status }) {
   const current = stageIndex[status?.toLowerCase()] ?? 0
   return (
@@ -182,13 +187,18 @@ function StageProgress({ status }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Sample Accordion Card — mirrors BookingAccordionCard / VendorAccordionCard
-// ---------------------------------------------------------------------------
 function SampleAccordionCard({ sample, open = false, onToggle }) {
   const [vendorId, setVendorId] = useState(sample.vendors?.[0]?.vendorId ?? '')
   const [deliveryDate, setDeliveryDate] = useState(
     sample.deliveryDate ? sample.deliveryDate.slice(0, 10) : ''
+  )
+  const [decision, setDecision] = useState(sample.decision ?? 'convert_full')
+  const [decisionNotes, setDecisionNotes] = useState(sample.decisionNotes ?? '')
+  const [feedbackText, setFeedbackText] = useState(sample.vendors?.[0]?.feedbackText ?? '')
+  const [vendorRatings, setVendorRatings] = useState(() =>
+    Object.fromEntries(
+      (sample.vendors ?? []).map(vendor => [vendor.vendorId, String(vendor.rating ?? '')])
+    )
   )
 
   const vendorsQuery = useAdminVendors({
@@ -197,10 +207,40 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
     availability: 'available',
   })
   const updateSampleMutation = useAdminUpdateSampleTasteStatus()
+  const recordDecisionMutation = useAdminRecordSampleTasteDecision()
 
   const borderColor = borderColorMap[sample.status?.toLowerCase()] ?? 'border-[#CDB17E]'
   const st = sample.status?.toLowerCase() ?? ''
-  const isBusy = updateSampleMutation.isPending
+  const isBusy = updateSampleMutation.isPending || recordDecisionMutation.isPending
+  const feedbackSnapshot =
+    (sample.vendors ?? []).find(vendor => vendor.feedbackText)?.feedbackText ||
+    sample.decisionNotes ||
+    ''
+  const decisionLabel =
+    decisionOptions.find(option => option.value === sample.decision)?.label ?? 'Pending'
+
+  const handleVendorRatingChange = (targetVendorId, value) => {
+    setVendorRatings(current => ({ ...current, [targetVendorId]: value }))
+  }
+
+  const handleRecordDecision = async () => {
+    const normalizedVendorRatings = (sample.vendors ?? [])
+      .map(vendor => ({
+        vendorId: vendor.vendorId,
+        rating: Number(vendorRatings[vendor.vendorId]),
+      }))
+      .filter(entry => Number.isInteger(entry.rating) && entry.rating >= 1 && entry.rating <= 5)
+
+    await recordDecisionMutation.mutateAsync({
+      sampleId: sample.id,
+      body: {
+        decision,
+        decisionNotes,
+        feedbackText,
+        vendorRatings: normalizedVendorRatings,
+      },
+    })
+  }
 
   return (
     <div
@@ -209,10 +249,9 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
         open ? `border-t-4 ${borderColor}` : `border-l-4 ${borderColor}`,
       ].join(' ')}
     >
-      {/* ── Header — always visible ── */}
       <div className="cursor-pointer p-5" onClick={onToggle}>
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-start gap-3">
               <h3 className="text-[17px] font-medium leading-tight text-[#2E2E2E]">
                 {sample.customer?.name || 'Customer'}
@@ -233,7 +272,7 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
               <div className="hidden gap-6 text-sm md:flex">
                 <div className="flex flex-col items-start">
                   <p className="text-[11px] text-[#767676]">GUESTS</p>
-                  <p className="font-medium text-[#2D2D2D]">{sample.guestCount || '—'}</p>
+                  <p className="font-medium text-[#2D2D2D]">{sample.guestCount || '-'}</p>
                 </div>
                 <div className="flex flex-col items-start">
                   <p className="text-[11px] text-[#767676]">VENDOR</p>
@@ -249,12 +288,11 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
           </div>
         </div>
 
-        {/* Mobile summary when collapsed */}
         {!open && (
           <div className="mt-3 flex gap-8 text-sm md:hidden">
             <div>
               <p className="text-[11px] text-[#767676]">GUESTS</p>
-              <p className="font-medium">{sample.guestCount || '—'}</p>
+              <p className="font-medium">{sample.guestCount || '-'}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">VENDOR</p>
@@ -268,14 +306,12 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
         )}
       </div>
 
-      {/* ── Expanded content ── */}
       {open && (
         <div
           className="border-t border-[#00000019] px-5 pb-6 pt-5"
-          onClick={e => e.stopPropagation()}
+          onClick={event => event.stopPropagation()}
         >
-          {/* Details grid */}
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4 pb-6">
+          <div className="grid grid-cols-2 gap-5 pb-6 md:grid-cols-4">
             {[
               { label: 'CUSTOMER', value: sample.customer?.name },
               { label: 'EMAIL', value: sample.customer?.email },
@@ -286,37 +322,43 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
               },
               { label: 'BOOKED ON', value: formatDate(sample.bookingDate) },
               { label: 'DELIVERY DATE', value: formatDate(sample.deliveryDate) },
-            ].map(f => (
-              <div key={f.label}>
-                <p className="text-[11px] tracking-[0.16em] text-[#767676]">{f.label}</p>
-                <p className="mt-0.5 text-sm text-[#2D2D2D]">{f.value || '—'}</p>
+              { label: 'DECISION', value: decisionLabel },
+              {
+                label: 'BOOKING LINK',
+                value: sample.bookingId ? 'Converted booking linked' : 'No linked booking yet',
+              },
+            ].map(field => (
+              <div key={field.label}>
+                <p className="text-[11px] tracking-[0.16em] text-[#767676]">{field.label}</p>
+                <p className="mt-0.5 text-sm text-[#2D2D2D]">{field.value || '-'}</p>
               </div>
             ))}
           </div>
 
-          {/* Stage progress */}
-          <div className="py-6 border-t border-[#00000033]">
+          <div className="border-t border-[#00000033] py-6">
             <SectionLabel>Request Progress</SectionLabel>
             <StageProgress status={sample.status} />
           </div>
 
-          {/* ── Assigned vendors ── */}
-          <div className="py-6 border-t border-[#00000033]">
+          <div className="border-t border-[#00000033] py-6">
             <SectionLabel>Assigned Vendor</SectionLabel>
             {sample.vendors?.length ? (
               <div className="space-y-2">
-                {sample.vendors.map(v => (
+                {sample.vendors.map(vendor => (
                   <div
-                    key={v.id}
+                    key={vendor.id}
                     className="flex items-center justify-between rounded-xl bg-[#F3F3F3] px-4 py-3"
                   >
                     <div>
                       <p className="text-sm font-medium text-[#2D2D2D]">
-                        {v.vendor?.companyName || v.vendorId}
+                        {vendor.vendor?.companyName || vendor.vendorId}
                       </p>
                       <p className="mt-0.5 text-xs text-[#767676]">
-                        {v.vendor?.locationCity || 'Location pending'}
+                        {vendor.vendor?.locationCity || 'Location pending'}
                       </p>
+                      {vendor.rating ? (
+                        <p className="mt-1 text-xs text-[#8F8F8F]">Rating: {vendor.rating}/5</p>
+                      ) : null}
                     </div>
                     <span className="text-xs font-semibold text-[#CDB17E]">Assigned</span>
                   </div>
@@ -327,18 +369,17 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
             )}
           </div>
 
-          {/* ── Step 1 — Assign Vendor ── */}
-          <div className="py-6 border-t border-[#00000033]">
-            <SectionLabel>Step 1 — Assign Vendor</SectionLabel>
+          <div className="border-t border-[#00000033] py-6">
+            <SectionLabel>Step 1 - Assign Vendor</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="flex flex-wrap items-end gap-3">
-                <div className="flex-1 min-w-[200px]">
+                <div className="min-w-[200px] flex-1">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Select vendor</p>
                   <SelectField value={vendorId} onChange={setVendorId}>
-                    <option value="">Choose a vendor…</option>
-                    {(vendorsQuery.data?.vendors ?? []).map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.companyName}
+                    <option value="">Choose a vendor...</option>
+                    {(vendorsQuery.data?.vendors ?? []).map(vendor => (
+                      <option key={vendor.id} value={vendor.id}>
+                        {vendor.companyName}
                       </option>
                     ))}
                   </SelectField>
@@ -352,27 +393,26 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
                     })
                   }
                 >
-                  {isBusy ? 'Saving…' : 'Assign Vendor'}
+                  {updateSampleMutation.isPending ? 'Saving...' : 'Assign Vendor'}
                 </PrimaryBtn>
               </div>
-              {st !== 'new' && (
+              {st !== 'new' ? (
                 <p className="mt-2 text-[11px] text-[#8F8F8F]">Only available at the New stage.</p>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* ── Step 2 — Mark Delivered ── */}
           <div className="mt-4">
-            <SectionLabel>Step 2 — Mark Delivered</SectionLabel>
+            <SectionLabel>Step 2 - Mark Delivered</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="flex flex-wrap items-end gap-3">
-                <div className="flex-1 min-w-[180px]">
+                <div className="min-w-[180px] flex-1">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Delivery date</p>
                   <input
                     type="date"
                     value={deliveryDate}
-                    onChange={e => setDeliveryDate(e.target.value)}
-                    className="h-10 w-full rounded-full border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+                    onChange={event => setDeliveryDate(event.target.value)}
+                    className="h-10 w-full rounded-full border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
                   />
                 </div>
                 <GhostBtn
@@ -387,17 +427,16 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
                   Mark Delivered
                 </GhostBtn>
               </div>
-              {st !== 'assigned' && (
+              {st !== 'assigned' ? (
                 <p className="mt-2 text-[11px] text-[#8F8F8F]">
                   Available once a vendor is assigned.
                 </p>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* ── Step 3 — Complete ── */}
           <div className="mt-4">
-            <SectionLabel>Step 3 — Complete Request</SectionLabel>
+            <SectionLabel>Step 3 - Complete Request</SectionLabel>
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <GhostBtn
                 disabled={isBusy || st !== 'delivered'}
@@ -410,11 +449,141 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
               >
                 Complete Request
               </GhostBtn>
-              {st !== 'delivered' && (
+              {st !== 'delivered' ? (
                 <p className="mt-2 text-[11px] text-[#8F8F8F]">
                   Available once the sample has been delivered.
                 </p>
-              )}
+              ) : null}
+            </div>
+          </div>
+
+          <div className="mt-4 border-t border-[#00000033] pt-6">
+            <SectionLabel>Customer Decision Tracker</SectionLabel>
+            <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <p className="mb-1.5 text-xs text-[#8F8F8F]">Decision</p>
+                  <SelectField
+                    value={decision}
+                    onChange={setDecision}
+                    disabled={st === 'new' || st === 'assigned'}
+                  >
+                    {decisionOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </SelectField>
+                </div>
+                <div>
+                  <p className="mb-1.5 text-xs text-[#8F8F8F]">Feedback status</p>
+                  <div className="flex h-10 items-center rounded-full border border-[#E4DED8] bg-white px-4 text-sm text-[#2D2D2D]">
+                    {sample.feedbackSubmitted ? 'Submitted' : 'Awaiting submission'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs text-[#8F8F8F]">Decision notes</p>
+                <textarea
+                  value={decisionNotes}
+                  onChange={event => setDecisionNotes(event.target.value)}
+                  disabled={st === 'new' || st === 'assigned'}
+                  rows={3}
+                  className="w-full resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
+                  placeholder="Capture customer decision details or follow-up context..."
+                />
+              </div>
+
+              {(sample.vendors ?? []).length ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {sample.vendors.map(vendor => (
+                    <div
+                      key={vendor.id}
+                      className="rounded-xl border border-[#E4DED8] bg-white px-4 py-4"
+                    >
+                      <p className="text-sm font-medium text-[#2D2D2D]">
+                        {vendor.vendor?.companyName || vendor.vendorId}
+                      </p>
+                      <p className="mt-2 text-xs text-[#8F8F8F]">Vendor rating</p>
+                      <SelectField
+                        value={vendorRatings[vendor.vendorId] ?? ''}
+                        onChange={value => handleVendorRatingChange(vendor.vendorId, value)}
+                        disabled={st === 'new' || st === 'assigned'}
+                      >
+                        <option value="">Select rating...</option>
+                        <option value="1">1 / 5</option>
+                        <option value="2">2 / 5</option>
+                        <option value="3">3 / 5</option>
+                        <option value="4">4 / 5</option>
+                        <option value="5">5 / 5</option>
+                      </SelectField>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs text-[#8F8F8F]">Feedback summary</p>
+                <textarea
+                  value={feedbackText}
+                  onChange={event => setFeedbackText(event.target.value)}
+                  disabled={st === 'new' || st === 'assigned'}
+                  rows={3}
+                  className="w-full resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
+                  placeholder="Capture tasting feedback, customer preference, or revisions..."
+                />
+              </div>
+
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                {sample.bookingId ? (
+                  <a
+                    href={buildBookingWorkspaceHref(sample.bookingId)}
+                    className="inline-flex h-10 items-center justify-center rounded-full border border-[#CDB17E] bg-white px-5 text-sm text-[#CDB17E] hover:bg-[#FAF6F1]"
+                  >
+                    View Booking Details
+                  </a>
+                ) : null}
+                <PrimaryBtn
+                  disabled={isBusy || (st !== 'delivered' && st !== 'completed')}
+                  onClick={handleRecordDecision}
+                >
+                  {recordDecisionMutation.isPending ? 'Saving...' : 'Save Decision'}
+                </PrimaryBtn>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 border-t border-[#00000033] pt-6">
+            <SectionLabel>Feedback Overview</SectionLabel>
+            <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">FEEDBACK STATUS</p>
+                  <p className="mt-2 text-sm text-[#2D2D2D]">
+                    {sample.feedbackSubmitted ? 'Submitted' : 'Awaiting submission'}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">DECISION</p>
+                  <p className="mt-2 text-sm text-[#2D2D2D]">
+                    {sample.decision ? decisionLabel : 'Pending'}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">BOOKING LINK</p>
+                  <p className="mt-2 text-sm text-[#2D2D2D]">
+                    {sample.bookingId ? 'Converted booking linked' : 'No linked booking yet'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl bg-white px-4 py-4">
+                <p className="text-[11px] tracking-[0.16em] text-[#767676]">LATEST FEEDBACK</p>
+                <p className="mt-2 text-sm leading-6 text-[#2D2D2D]">
+                  {feedbackSnapshot || 'No feedback has been captured yet.'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -423,12 +592,6 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Stage filter tabs
-// ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 export default function SampleTastePage() {
   const [openSampleId, setOpenSampleId] = useState('')
   const [search, setSearch] = useState('')
@@ -451,28 +614,25 @@ export default function SampleTastePage() {
   useScrollToTop(currentPage)
   const isResultsLoading = samplesQuery.isFetching && !samplesQuery.isLoading
 
-  if (samplesQuery.isLoading) return <LoadingState label="Loading sample taste bookings…" />
+  if (samplesQuery.isLoading) return <LoadingState label="Loading sample taste bookings..." />
   if (samplesQuery.error)
     return <ErrorState label="Sample tasting data is unavailable right now." />
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
       <div>
         <h1 className="text-2xl text-[#1C1C1C]">Sample Taste Booking</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
-          Track tasting requests from submission through vendor assignment, delivery, and
-          completion.
+          Track tasting requests from submission through vendor assignment, delivery, completion,
+          and final customer decision.
         </p>
       </div>
 
-      {/* ── Filter bar ── */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FAFAFA] p-4">
-        <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">
+        <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
           Filter Requests
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          {/* Search */}
           <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] px-2.5 py-1.5 text-[#A19B94]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
               <span className="h-3.5 w-3.5">
@@ -482,15 +642,14 @@ export default function SampleTastePage() {
             <input
               type="text"
               value={search}
-              onChange={e => {
-                setSearch(e.target.value)
+              onChange={event => {
+                setSearch(event.target.value)
                 setCurrentPage(1)
               }}
               placeholder="Search by customer name..."
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
-          {/* Stage select */}
           <SelectField
             value={status}
             onChange={value => {
@@ -507,54 +666,18 @@ export default function SampleTastePage() {
         </div>
       </div>
 
-      {/* ── Stage pill tabs ── */}
-      {/* <div className="flex flex-wrap gap-2">
-        {stageTabs.map(t => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => {
-              setStatus(t.key)
-              setCurrentPage(1)
-            }}
-            className={[
-              'flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition',
-              status === t.key
-                ? 'border-[#D4BA8E] bg-[#D4BA8E] text-[#FAFAFA]'
-                : 'border-[#E4DED8] bg-white text-[#6B7280] hover:border-[#D4BA8E] hover:text-[#7A5C2E]',
-            ].join(' ')}
-          >
-            {t.label}
-            <span
-              className={[
-                'rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
-                status === t.key ? 'bg-white/30 text-white' : 'bg-[#F0EBE3] text-[#8C7D70]',
-              ].join(' ')}
-            >
-              {t.key === ''
-                ? Object.values(statusCounts).reduce((sum, value) => sum + Number(value ?? 0), 0)
-                : status === t.key
-                  ? totalSamples
-                  : Number(statusCounts[t.key] ?? 0)}
-            </span>
-          </button>
-        ))}
-      </div> */}
-
-      {/* ── Results count ── */}
       <div className="flex items-baseline gap-2">
         <span className="text-base font-semibold text-[#1C1C1C]">{totalSamples}</span>
         <span className="text-sm text-[#8F8F8F]">request{totalSamples !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* ── Accordion list ── */}
       {isResultsLoading ? (
-        <SectionLoadingState label="Loading sample taste bookingsâ€¦" />
+        <SectionLoadingState label="Loading sample taste bookings..." />
       ) : samples.length ? (
         <div className="space-y-3">
           {samples.map(sample => (
             <SampleAccordionCard
-              key={`${sample.id}:${sample.deliveryDate ?? ''}:${sample.vendors?.[0]?.vendorId ?? ''}`}
+              key={`${sample.id}:${sample.status ?? ''}:${sample.decision ?? ''}:${sample.updatedAt ?? ''}`}
               sample={sample}
               open={openSampleId === sample.id}
               onToggle={() => setOpenSampleId(current => (current === sample.id ? '' : sample.id))}

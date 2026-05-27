@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardErrorState } from '../../components/dashboard/DashboardUI'
@@ -9,6 +9,7 @@ import {
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useWishlist } from '../../hooks/useWishlist'
 import {
+  formatDashboardCurrency,
   formatDashboardDate,
   matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
@@ -41,6 +42,9 @@ const stages = [
   { key: 'completed', label: 'Completed' },
 ]
 const stageIndex = { new: 0, assigned: 1, delivered: 2, completed: 3 }
+
+const ONGOING_STATUSES = ['new', 'assigned', 'delivered']
+const COMPLETED_STATUSES = ['completed', 'cancelled']
 
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
@@ -279,6 +283,7 @@ function SampleAccordionCard({ sample, decisionMutation, toggleSavedPackage, pen
               </h3>
               <Badge status={sample.status} label={sample.statusLabel} />
             </div>
+            <p className="mt-0.5 text-xs text-[#A89080]">ID #{sample.id}</p>
             <p className="mt-1 text-sm text-[#6B7280]">
               {sample.event?.name || 'Saved for tasting review'}
             </p>
@@ -296,11 +301,17 @@ function SampleAccordionCard({ sample, decisionMutation, toggleSavedPackage, pen
                   <p className="font-medium text-[#2D2D2D]">{sample.guestCount || '—'}</p>
                 </div>
                 <div className="flex flex-col items-end">
-                  <p className="text-[11px] text-[#767676]">VENDOR</p>
+                  <p className="text-[11px] text-[#767676]">VENDORS</p>
                   <p className="font-medium text-[#2D2D2D]">
                     {sample.vendors?.length
-                      ? sample.vendors[0].vendor?.companyName || 'Assigned'
+                      ? `${sample.vendors.length} selected`
                       : 'Unassigned'}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end">
+                  <p className="text-[11px] text-[#767676]">DELIVERY</p>
+                  <p className="font-medium text-[#2D2D2D]">
+                    {formatDashboardDate(sample.deliveryDate) || '—'}
                   </p>
                 </div>
               </div>
@@ -317,12 +328,14 @@ function SampleAccordionCard({ sample, decisionMutation, toggleSavedPackage, pen
               <p className="font-medium">{sample.guestCount || '—'}</p>
             </div>
             <div>
-              <p className="text-[11px] text-[#767676]">VENDOR</p>
+              <p className="text-[11px] text-[#767676]">VENDORS</p>
               <p className="font-medium">
-                {sample.vendors?.length
-                  ? sample.vendors[0].vendor?.companyName || 'Assigned'
-                  : 'Unassigned'}
+                {sample.vendors?.length ? `${sample.vendors.length} selected` : 'Unassigned'}
               </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">DELIVERY</p>
+              <p className="font-medium">{formatDashboardDate(sample.deliveryDate) || '—'}</p>
             </div>
           </div>
         )}
@@ -334,14 +347,29 @@ function SampleAccordionCard({ sample, decisionMutation, toggleSavedPackage, pen
           className="border-t border-[#00000019] px-5 pb-6 pt-5"
           onClick={e => e.stopPropagation()}
         >
-          {/* Details grid */}
+          {/* Details grid — Section A */}
           <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
             {[
+              { label: 'BOOKING ID', value: `#${sample.id}` },
               { label: 'PACKAGE', value: sample.package?.title || sample.event?.name },
               { label: 'EVENT', value: sample.event?.name },
               { label: 'GUESTS', value: sample.guestCount ? String(sample.guestCount) : 'TBD' },
               { label: 'BOOKED ON', value: formatDashboardDate(sample.bookingDate) },
               { label: 'DELIVERY DATE', value: formatDashboardDate(sample.deliveryDate) },
+              {
+                label: 'DELIVERY ADDRESS',
+                value:
+                  sample.deliveryAddress ||
+                  sample.address ||
+                  sample.locationSummary ||
+                  'Not provided',
+              },
+              {
+                label: 'AMOUNT PAID',
+                value: formatDashboardCurrency(
+                  sample.paymentSummary?.amountPaid ?? sample.amountPaid ?? 0
+                ),
+              },
               {
                 label: 'EXPIRY WINDOW',
                 value:
@@ -479,25 +507,65 @@ function SampleAccordionCard({ sample, decisionMutation, toggleSavedPackage, pen
 // Page
 // ---------------------------------------------------------------------------
 export default function SampleTasteBooking() {
-  // const { data: samples = [], error } = useDashboardSampleTastes()
   const decisionMutation = useDashboardSampleTasteDecision()
   const { toggleSavedPackage, pendingPackageId } = useWishlist()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
+  const [activeTab, setActiveTab] = useState('ongoing')
+  const [deliveryDateFrom, setDeliveryDateFrom] = useState('')
+  const [deliveryDateTo, setDeliveryDateTo] = useState('')
+  const [expiryStatus, setExpiryStatus] = useState('')
+  const [vendorCount, setVendorCount] = useState('')
   const debouncedLocalSearch = useDebouncedValue(search)
   const { data: samples = [], error } = useDashboardSampleTastes({
     search: debouncedLocalSearch || debouncedSearchTerm,
     status,
   })
-  // const decisionMutation = useDashboardSampleTasteDecision()
-  // const { toggleSavedPackage, pendingPackageId } = useWishlist()
+
+  // Reset status filter when switching tabs
+  useEffect(() => {
+    setStatus('')
+  }, [activeTab])
+
+  const ongoingCount = useMemo(
+    () => samples.filter(s => ONGOING_STATUSES.includes(s.status?.toLowerCase())).length,
+    [samples]
+  )
+  const completedCount = useMemo(
+    () => samples.filter(s => COMPLETED_STATUSES.includes(s.status?.toLowerCase())).length,
+    [samples]
+  )
 
   const filtered = useMemo(() => {
     const term = debouncedLocalSearch.trim().toLowerCase()
     return samples.filter(s => {
-      const matchesStatus = status ? s.status?.toLowerCase() === status : true
+      const sStatus = s.status?.toLowerCase() ?? ''
+
+      // Tab filter
+      if (activeTab === 'ongoing' && !ONGOING_STATUSES.includes(sStatus)) return false
+      if (activeTab === 'completed' && !COMPLETED_STATUSES.includes(sStatus)) return false
+
+      // Status filter within tab
+      if (status && sStatus !== status) return false
+
+      // Delivery date range
+      if (deliveryDateFrom && s.deliveryDate) {
+        if (new Date(s.deliveryDate) < new Date(deliveryDateFrom)) return false
+      }
+      if (deliveryDateTo && s.deliveryDate) {
+        if (new Date(s.deliveryDate) > new Date(deliveryDateTo)) return false
+      }
+
+      // Expiry status
+      if (expiryStatus === 'active' && typeof s.daysUntilExpiry === 'number' && s.daysUntilExpiry <= 0) return false
+      if (expiryStatus === 'expired' && typeof s.daysUntilExpiry === 'number' && s.daysUntilExpiry > 0) return false
+
+      // Vendor count
+      if (vendorCount === '1' && (s.vendors?.length ?? 0) !== 1) return false
+      if (vendorCount === '2' && (s.vendors?.length ?? 0) < 2) return false
+
       const matchesLocalSearch = matchesDashboardSearch(term, [
         s.package?.title,
         s.event?.name,
@@ -509,9 +577,19 @@ export default function SampleTasteBooking() {
         s.statusLabel,
         ...(s.vendors?.map(vendor => vendor?.vendor?.companyName) ?? []),
       ])
-      return matchesStatus && matchesLocalSearch && matchesNavbarSearch
+      return matchesLocalSearch && matchesNavbarSearch
     })
-  }, [debouncedLocalSearch, debouncedSearchTerm, samples, status])
+  }, [
+    debouncedLocalSearch,
+    debouncedSearchTerm,
+    samples,
+    status,
+    activeTab,
+    deliveryDateFrom,
+    deliveryDateTo,
+    expiryStatus,
+    vendorCount,
+  ])
 
   // if (isLoading) {
   //   return <DashboardLoadingState title="Loading sample taste requests..." />
@@ -543,14 +621,44 @@ export default function SampleTasteBooking() {
         </p>
       </div>
 
+      {/* ── Tabs: Ongoing / Completed ── */}
+      <div className="flex rounded-full bg-[#F3F3F3] p-1">
+        {[
+          { key: 'ongoing', label: 'Ongoing', count: ongoingCount },
+          { key: 'completed', label: 'Completed', count: completedCount },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-medium transition-all duration-200 ${
+              activeTab === tab.key
+                ? 'bg-[#591902] text-white shadow-sm'
+                : 'text-[#6B7280] hover:text-[#2D2D2D]'
+            }`}
+          >
+            {tab.label}
+            <span
+              className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                activeTab === tab.key
+                  ? 'bg-white/20 text-white'
+                  : 'bg-[#E8E2DA] text-[#6B7280]'
+              }`}
+            >
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
       {/* ── Filter bar ── */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FAFAFA] p-4">
         <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">
           Filter Requests
         </p>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {/* Search */}
-          <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] px-2.5 py-1.5 text-[#A19B94]">
+          <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] px-2.5 py-1.5 text-[#A19B94] sm:col-span-2 lg:col-span-1">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
               <span className="h-3.5 w-3.5">
                 <SearchIcon />
@@ -564,19 +672,70 @@ export default function SampleTasteBooking() {
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
-          {/* Stage select */}
+          {/* Status filter */}
           <select
             value={status}
             onChange={e => setStatus(e.target.value)}
             className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
           >
-            <option value="">All Stages</option>
-            <option value="new">New</option>
-            <option value="assigned">Assigned</option>
-            <option value="delivered">Delivered</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="">All Statuses</option>
+            {activeTab === 'ongoing' ? (
+              <>
+                <option value="new">New</option>
+                <option value="assigned">Assigned</option>
+                <option value="delivered">Delivered</option>
+              </>
+            ) : (
+              <>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </>
+            )}
           </select>
+          {/* Expiry Status */}
+          <select
+            value={expiryStatus}
+            onChange={e => setExpiryStatus(e.target.value)}
+            className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+          >
+            <option value="">All Expiry</option>
+            <option value="active">Active (not expired)</option>
+            <option value="expired">Expired</option>
+          </select>
+          {/* Vendor Count */}
+          <select
+            value={vendorCount}
+            onChange={e => setVendorCount(e.target.value)}
+            className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+          >
+            <option value="">All Vendor Counts</option>
+            <option value="1">1 Vendor</option>
+            <option value="2">2+ Vendors</option>
+          </select>
+          {/* Delivery Date From */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-medium tracking-[0.14em] text-[#767676] uppercase">
+              Delivery From
+            </label>
+            <input
+              type="date"
+              value={deliveryDateFrom}
+              onChange={e => setDeliveryDateFrom(e.target.value)}
+              className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+            />
+          </div>
+          {/* Delivery Date To */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-medium tracking-[0.14em] text-[#767676] uppercase">
+              Delivery To
+            </label>
+            <input
+              type="date"
+              value={deliveryDateTo}
+              onChange={e => setDeliveryDateTo(e.target.value)}
+              className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+            />
+          </div>
         </div>
       </div>
 

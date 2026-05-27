@@ -9,7 +9,7 @@ import {
 } from '../hooks/useMessagingContent'
 import { useGlobalSettings } from '../hooks/useCmsPages'
 import { usePackages } from '../hooks/usePackages'
-import { getPackageLineLabel } from '../lib/bookingDisplay'
+import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import {
   bookingAddNote,
   bookingCreate,
@@ -267,11 +267,45 @@ function getCartItemSummary(item) {
     ...row,
     total: row.amount * quantity,
   }))
+  const cartTotal = Number(item?.totalPrice ?? 0)
+  const breakdownTotal = rows.reduce((sum, row) => sum + row.total, 0)
 
   return {
     rows,
-    total: rows.reduce((sum, row) => sum + row.total, 0),
+    total: cartTotal > 0 ? cartTotal : breakdownTotal,
   }
+}
+
+function isBartendingPackageItem(item) {
+  return (
+    item?.itemType !== 'addon' &&
+    Array.isArray(item?.packageData?.service_slugs) &&
+    item.packageData.service_slugs.includes('bartending')
+  )
+}
+
+function isAddonOptionLabel(label = '') {
+  const normalizedLabel = String(label ?? '')
+    .replace(/_\d+$/, '')
+    .trim()
+    .toLowerCase()
+
+  return (
+    normalizedLabel === 'add-ons' ||
+    normalizedLabel === 'add on services' ||
+    normalizedLabel === 'addon services'
+  )
+}
+
+function getDisplaySelectedOptions(item) {
+  const selectedOptions =
+    item?.selectedOptions && typeof item.selectedOptions === 'object' ? item.selectedOptions : {}
+
+  if (!isBartendingPackageItem(item)) return selectedOptions
+
+  return Object.fromEntries(
+    Object.entries(selectedOptions).filter(([label]) => !isAddonOptionLabel(label))
+  )
 }
 
 function getCartItemQuantity(item) {
@@ -982,51 +1016,37 @@ export default function CheckoutPage() {
 
             <div className="space-y-4 p-5 text-sm">
               {itemSummaries.length ? (
-                <div className="space-y-4">
-                  {(() => {
-                    const firstPackageEntry = itemSummaries.find(
-                      ({ item }) => item?.itemType !== 'addon'
-                    )
+                <div className="space-y-3">
+                  {itemSummaries.map(({ item, summary }) => {
+                    if (item?.itemType === 'addon') {
+                      return (
+                        <SummaryRow
+                          key={item.id}
+                          label={`Add-on - ${getCartItemDisplayName(item)} (${getCartItemQuantity(item)})`}
+                          value={formatCurrency(summary.total)}
+                        />
+                      )
+                    }
 
-                    if (!firstPackageEntry) return null
-
-                    const packageName = getCartItemDisplayName(firstPackageEntry.item)
-                    const packageLineLabel = getPackageLineLabel(
-                      firstPackageEntry.item?.title,
-                      packageName
-                    )
+                    const packageName = getCartItemDisplayName(item)
+                    const packageLineLabel = getPackageLineLabel(item?.title, packageName)
+                    const optionsText = getSelectedOptionsText(getDisplaySelectedOptions(item))
+                    const labelWithOptions = optionsText
+                      ? `${packageLineLabel} (${optionsText})`
+                      : packageLineLabel
                     const quantityLabel =
-                      getCartItemQuantity(firstPackageEntry.item) > 1
-                        ? ` (${getCartItemQuantity(firstPackageEntry.item)})`
+                      getCartItemQuantity(item) > 1
+                        ? ` x${getCartItemQuantity(item)}`
                         : ''
 
                     return (
-                      <div className="flex justify-between text-base font-medium text-[#2C2C2C]">
-                        <span>{`${packageLineLabel}${quantityLabel}`}</span>
-                        <span>{formatCurrency(firstPackageEntry.summary.total)}</span>
-                      </div>
+                      <SummaryRow
+                        key={item.id}
+                        label={`${labelWithOptions}${quantityLabel}`}
+                        value={formatCurrency(summary.total)}
+                      />
                     )
-                  })()}
-
-                  {packageSummaryGroups.length || addonSummaryItems.length ? (
-                    <hr className="border-[#0000001A]" />
-                  ) : null}
-
-                  {packageSummaryGroups.map(group => (
-                    <SummaryRow
-                      key={group.category}
-                      label={`${group.category} (${group.count} ${group.count === 1 ? 'package' : 'packages'})`}
-                      value={formatCurrency(group.total)}
-                    />
-                  ))}
-
-                  {addonSummaryItems.map(({ item, summary }) => (
-                    <SummaryRow
-                      key={item.id}
-                      label={`Add-on - ${getCartItemDisplayName(item)} (${getCartItemQuantity(item)})`}
-                      value={formatCurrency(summary.total)}
-                    />
-                  ))}
+                  })}
                 </div>
               ) : null}
 

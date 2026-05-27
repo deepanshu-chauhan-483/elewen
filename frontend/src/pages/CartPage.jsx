@@ -9,6 +9,7 @@ import {
   useCouponToastMessage,
 } from '../hooks/useMessagingContent'
 import { usePackages } from '../hooks/usePackages'
+import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 
@@ -212,10 +213,12 @@ function getCartItemSummary(item) {
     ...row,
     total: row.amount * quantity,
   }))
+  const cartTotal = Number(item?.totalPrice ?? 0)
+  const breakdownTotal = rows.reduce((sum, row) => sum + row.total, 0)
 
   return {
     rows,
-    total: rows.reduce((sum, row) => sum + row.total, 0),
+    total: cartTotal > 0 ? cartTotal : breakdownTotal,
   }
 }
 
@@ -229,14 +232,6 @@ function getSummaryIncludedItems(item) {
   return getSelectedElements(item)
     .map(element => String(element?.value ?? '').trim())
     .filter(Boolean)
-}
-
-function getPriceSummaryCategoryLabel(item) {
-  if (item?.itemType === 'addon') {
-    return 'Addons'
-  }
-
-  return getPackageSubtitle(item?.packageData)
 }
 
 function getCartGroupLabel(item) {
@@ -323,7 +318,7 @@ function parseCartItemTitle(value = '') {
 }
 
 function getSelectedElements(item) {
-  const selectedOptions = item?.selectedOptions ?? {}
+  const selectedOptions = getDisplaySelectedOptions(item)
   if (Object.keys(selectedOptions).length > 0) {
     const selected = Object.entries(selectedOptions)
       .map(([label, value]) => ({
@@ -369,6 +364,38 @@ function getSelectedElements(item) {
     label: 'Included with this package',
     value: highlight,
   }))
+}
+
+function isBartendingPackageItem(item) {
+  return (
+    item?.itemType !== 'addon' &&
+    Array.isArray(item?.packageData?.service_slugs) &&
+    item.packageData.service_slugs.includes('bartending')
+  )
+}
+
+function isAddonOptionLabel(label = '') {
+  const normalizedLabel = String(label ?? '')
+    .replace(/_\d+$/, '')
+    .trim()
+    .toLowerCase()
+
+  return (
+    normalizedLabel === 'add-ons' ||
+    normalizedLabel === 'add on services' ||
+    normalizedLabel === 'addon services'
+  )
+}
+
+function getDisplaySelectedOptions(item) {
+  const selectedOptions =
+    item?.selectedOptions && typeof item.selectedOptions === 'object' ? item.selectedOptions : {}
+
+  if (!isBartendingPackageItem(item)) return selectedOptions
+
+  return Object.fromEntries(
+    Object.entries(selectedOptions).filter(([label]) => !isAddonOptionLabel(label))
+  )
 }
 
 function buildAddonDedupeKey(addon = {}) {
@@ -445,7 +472,6 @@ function getSuggestedAddonsWithPricing(cartItems) {
       seen.add(addon.dedupeKey)
       return true
     })
-    .slice(0, 4)
 }
 
 function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
@@ -873,8 +899,12 @@ const CATEGORY_ICONS = {
   Decor: '🌸',
   Catering: '🍽️',
   Sheesha: '💨',
+  'Bar Tending': '🍸',
   Bartending: '🍸',
+
+  'Add-ons': '➕',
   Furniture: '🪑',
+  'Rental Furniture': '🪑',
   Addons: '➕',
 }
 
@@ -1041,34 +1071,39 @@ function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
         <p className="text-sm text-gray-500">Enhance your event with these popular extras</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {packages.map(pkg => {
-          const isAdding = addingAddonId === pkg.id
+      <div
+        className="hide-scrollbar max-h-[432px] overflow-y-auto lg:max-h-[235px]"
+        data-lenis-prevent
+      >
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {packages.map(pkg => {
+            const isAdding = addingAddonId === pkg.id
 
-          return (
-            <div
-              key={pkg.id}
-              className="flex items-center justify-between gap-3 rounded-[16px] bg-[#F5F5F5] px-3 py-4"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[16px] font-medium text-[#2C2C2C]">{pkg.title}</p>
-                <p className="truncate text-sm text-gray-500">
-                  {pkg.subtitle || 'Perfect add-on for your package'}
-                </p>
-                <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onAdd(pkg)}
-                disabled={isAdding || !pkg.packageId}
-                className="shrink-0 whitespace-nowrap rounded-full bg-[#957960] px-5 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+            return (
+              <div
+                key={pkg.id}
+                className="flex items-center justify-between gap-3 rounded-[16px] bg-[#F5F5F5] px-3 py-4"
               >
-                {isAdding ? 'Adding...' : '+ Add'}
-              </button>
-            </div>
-          )
-        })}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[16px] font-medium text-[#2C2C2C]">{pkg.title}</p>
+                  <p className="truncate text-sm text-gray-500">
+                    {pkg.subtitle || 'Perfect add-on for your package'}
+                  </p>
+                  <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onAdd(pkg)}
+                  disabled={isAdding || !pkg.packageId}
+                  className="shrink-0 whitespace-nowrap rounded-full bg-[#957960] px-5 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isAdding ? 'Adding...' : '+ Add'}
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -1089,24 +1124,6 @@ function PriceSummaryCard({
     item,
     summary: getCartItemSummary(item),
   }))
-  const categorySummaries = itemSummaries.reduce((groups, entry) => {
-    const category = getPriceSummaryCategoryLabel(entry.item)
-    const existingGroup = groups.find(group => group.category === category)
-
-    if (existingGroup) {
-      existingGroup.total += Number(entry.summary.total ?? 0)
-      existingGroup.count += getCartItemQuantity(entry.item)
-      return groups
-    }
-
-    groups.push({
-      category,
-      total: Number(entry.summary.total ?? 0),
-      count: getCartItemQuantity(entry.item),
-    })
-
-    return groups
-  }, [])
   const totalPackageCount = cartItems.reduce((sum, item) => sum + getCartItemQuantity(item), 0)
   const computedSubtotal = itemSummaries.reduce(
     (sum, entry) => sum + Number(entry.summary.total ?? 0),
@@ -1170,14 +1187,30 @@ function PriceSummaryCard({
                         ))}
                   </div>
                 ))
-              : categorySummaries.map(group => (
-                  <div key={group.category} className="flex justify-between text-sm">
-                    <span className="text-[#767676]">{group.category}</span>
-                    <span className="font-medium text-[#1C1C1C]">
-                      {formatCurrency(group.total)}
-                    </span>
-                  </div>
-                ))}
+              : itemSummaries.map(({ item, summary }) => {
+                  const packageName =
+                    item?.itemType === 'addon'
+                      ? item?.displayTitle || item?.addonTitle || 'Selected item'
+                      : item?.displayTitle || item?.packageData?.title || 'Selected item'
+                  const quantityLabel =
+                    getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''
+                  const optionsText = getSelectedOptionsText(getDisplaySelectedOptions(item))
+                  const label =
+                    item?.itemType === 'addon'
+                      ? `Add-on - ${packageName}${quantityLabel}`
+                      : `${getPackageLineLabel(item?.title, packageName)}${
+                          optionsText ? ` (${optionsText})` : ''
+                        }${quantityLabel}`
+
+                  return (
+                    <div key={item.id} className="flex items-start justify-between gap-4 text-sm">
+                      <span className="min-w-0 flex-1 text-[#767676]">{label}</span>
+                      <span className="shrink-0 font-medium text-[#1C1C1C]">
+                        {formatCurrency(summary.total)}
+                      </span>
+                    </div>
+                  )
+                })}
           </div>
 
           <hr className="my-4 border-[#0000001A]" />

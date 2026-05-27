@@ -193,6 +193,11 @@ export const adminUpdateSampleTasteStatus = (token, sampleId, body) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminRecordSampleTasteDecision = (token, sampleId, body) =>
+  request('POST', `/admin/sample-taste/${sampleId}/decision`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminVendors = (token, params = {}) =>
   request('GET', withQuery('/admin/vendors', params), null, {
     headers: { Authorization: `Bearer ${token}` },

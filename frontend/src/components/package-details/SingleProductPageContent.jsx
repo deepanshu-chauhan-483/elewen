@@ -175,6 +175,9 @@ export default function SingleProductPageContent({
   title,
   price,
   intro,
+  customDetailsContent = null,
+  beforePriceContent = null,
+  customPriceContent = null,
   customContent = null,
   accordionSections = [],
   mainImage,
@@ -192,6 +195,7 @@ export default function SingleProductPageContent({
   onAddToCart,
   ctaButtonText = 'Book a Consultation',
   testimonials = [],
+  hideHeaderPrice = false,
 }) {
   const desktopSectionTop = '58px'
   const addToCartDisabled = disableAddToCart || isAddingToCart
@@ -202,6 +206,9 @@ export default function SingleProductPageContent({
       title={title}
       price={price}
       intro={intro}
+      customDetailsContent={customDetailsContent}
+      beforePriceContent={beforePriceContent}
+      customPriceContent={customPriceContent}
       customContent={customContent}
       accordionSections={accordionSections}
       mainImage={mainImage}
@@ -219,6 +226,7 @@ export default function SingleProductPageContent({
       ctaButtonText={ctaButtonText}
       testimonials={testimonials}
       desktopSectionTop={desktopSectionTop}
+      hideHeaderPrice={hideHeaderPrice}
     />
   )
 }
@@ -227,6 +235,9 @@ function ProductImageLayout({
   title,
   price,
   intro,
+  customDetailsContent,
+  beforePriceContent,
+  customPriceContent,
   customContent,
   accordionSections,
   mainImage,
@@ -244,6 +255,7 @@ function ProductImageLayout({
   ctaButtonText,
   testimonials,
   desktopSectionTop,
+  hideHeaderPrice,
 }) {
   const initialDisplayImage = mainImage ?? sideImages[0]
   const [selectedImage, setSelectedImage] = useState({
@@ -294,8 +306,49 @@ function ProductImageLayout({
                       height: mainImageHeight,
                     }}
                   />
+
+                  {/* Company Logo */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute bottom-0.5 right-1 z-10 rounded-full bg-white/10 p-1.5 backdrop-blur-xs"
+                  >
+                    <div
+                      aria-hidden="true"
+                      className="absolute bottom-0.5 right-1 z-10 rounded-full bg-white/10 p-1.5 backdrop-blur-xs"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="15"
+                        height="15"
+                        viewBox="0 0 343 398"
+                        fill="none"
+                      >
+                        <path
+                          d="M94.5506 0L0 46.2991L4.29775 55.2139C16.9045 49.2707 26.7416 46.2991 33.809 46.2991C38.7753 46.2991 42.9775 47.737 46.4157 50.6127C50.0449 53.4884 52.5281 57.9937 53.8652 64.1286C55.7753 72.1806 56.7303 90.3935 56.7303 118.767V329.27C56.7303 352.659 55.6798 366.75 53.5787 371.543C51.4775 376.145 47.7528 379.883 42.4045 382.759C37.0562 385.443 25.2135 386.976 6.8764 387.36V398H104.006V329.27V0H94.5506Z"
+                          fill="black"
+                        />
+                        <path
+                          d="M255.343 0L124 69.6041L128.298 78.5188C140.905 72.5756 187.533 46.2991 194.601 46.2991C199.567 46.2991 203.769 47.737 207.207 50.6127C210.836 53.4884 213.32 57.9937 214.657 64.1286C216.567 72.1806 217.522 90.3935 217.522 118.767V132H264.798V0H255.343Z"
+                          fill="black"
+                        />
+                        <path
+                          d="M167.668 387.36V398H264.798V329.27V328H217.522V329.27C217.522 352.659 216.471 366.75 214.37 371.543C212.269 376.145 208.544 379.883 203.196 382.759C197.848 385.443 186.005 386.976 167.668 387.36Z"
+                          fill="black"
+                        />
+                        <path
+                          d="M132 356.32C132.524 363.657 133.324 368.551 134.402 371C136.499 375.571 140.164 379.643 145.5 382.5C150.208 384.853 160.349 386.537 175.235 387.163L207 387.375V398H124V0H132V356.32Z"
+                          fill="black"
+                        />
+                        <path
+                          d="M293 356.32C293.524 363.657 294.324 368.551 295.402 371C297.499 375.571 301.164 379.643 306.5 382.5C311.836 385.167 324.152 386.976 342.448 387.357L342.436 387.488L343 387.494V398H285V0H293V356.32Z"
+                          fill="black"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+
                   {activeImageMeta?.heading || activeImageMeta?.text ? (
-                    <div className="absolute bottom-3 right-3 max-w-[75%] rounded-[10px] bg-[#591902]/88 px-3 py-2 text-right text-white">
+                    <div className="absolute top-2 left-2 max-w-[75%] rounded-[10px] bg-[#591902]/88 px-3 py-2 text-right text-white">
                       {activeImageMeta?.heading ? (
                         <p className="text-[11px] font-semibold leading-[1.3]">
                           {activeImageMeta.heading}
@@ -351,76 +404,94 @@ function ProductImageLayout({
               paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
             }}
           >
-            <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
-              <h1
-                className=" text-[28px] leading-[0.95] text-[#591902] sm:text-[36px] md:text-[36px]"
-                style={{ fontFamily: "'Malgin', serif" }}
-              >
-                {title}
-              </h1>
-              <p className="pt-1 text-[22px] font-medium text-[#591902]">{price}</p>
-            </div>
+            {customDetailsContent ? (
+              <div className="mt-5 md:pr-3">{customDetailsContent}</div>
+            ) : (
+              <>
+                <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
+                  <h1
+                    className=" text-[28px] leading-[0.95] text-[#591902] sm:text-[36px] md:text-[36px]"
+                    style={{ fontFamily: "'Malgin', serif" }}
+                  >
+                    {title}
+                  </h1>
+                  {!hideHeaderPrice ? (
+                    <p className="pt-1 text-[22px] font-medium text-[#591902]">{price}</p>
+                  ) : null}
+                </div>
 
-            <p className="mt-4 max-w-[540px] text-[14px] leading-[1.55] text-[#2D2D2D]">{intro}</p>
+                {intro ? (
+                  <p className="mt-4 max-w-[540px] text-[14px] leading-[1.55] text-[#2D2D2D]">
+                    {intro}
+                  </p>
+                ) : null}
 
-            <QuantityControl
-              quantity={quantity}
-              onDecrement={onDecrement}
-              onIncrement={onIncrement}
-            />
+                {beforePriceContent ? (
+                  <div className={intro ? 'mt-6' : 'mt-4'}>{beforePriceContent}</div>
+                ) : null}
 
-            {promptContent && <div className="mt-5">{promptContent}</div>}
+                {customPriceContent ? customPriceContent : null}
 
-            <button
-              type="button"
-              disabled={addToCartDisabled}
-              onClick={onAddToCart}
-              className={`group ${promptContent ? 'mt-4' : 'mt-5'} flex w-full items-center justify-between rounded-full pl-6 pr-1.5 py-1.5 text-[13px] font-medium transition-colors ${
-                addToCartDisabled
-                  ? 'cursor-not-allowed bg-[#CDB17E] text-[#8A847E]'
-                  : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
-              }`}
-            >
-              <span className="mr-5">{addToCartButtonLabel}</span>
-              <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ${
-                  addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
-                }`}
-              >
-                <svg
-                  className={`h-[24px] w-[24px] transition-transform duration-300 ease-out ${
-                    addToCartDisabled ? '' : 'group-hover:rotate-none'
-                  }`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v10M7 12h10" />
-                </svg>
-              </span>
-            </button>
-
-            {addToCartMessage ? (
-              <p className="mt-3 text-[12px] leading-[1.5] text-[#591902] opacity-70">
-                {addToCartMessage}
-              </p>
-            ) : null}
-
-            {customContent ? (
-              <div className="mt-8 border-t border-[#36402280] pt-5">{customContent}</div>
-            ) : null}
-
-            <div className="mt-8">
-              {accordionSections.map((section, index) => (
-                <AccordionSection
-                  key={section.title}
-                  title={section.title}
-                  body={section.body}
-                  defaultOpen={index === 0}
+                <QuantityControl
+                  quantity={quantity}
+                  onDecrement={onDecrement}
+                  onIncrement={onIncrement}
                 />
-              ))}
-            </div>
+
+                {promptContent && <div className="mt-5">{promptContent}</div>}
+
+                <button
+                  type="button"
+                  disabled={addToCartDisabled}
+                  onClick={onAddToCart}
+                  className={`group ${promptContent ? 'mt-4' : 'mt-5'} flex w-full items-center justify-between rounded-full pl-6 pr-1.5 py-1.5 text-[13px] font-medium transition-colors ${
+                    addToCartDisabled
+                      ? 'cursor-not-allowed bg-[#CDB17E] text-[#8A847E]'
+                      : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
+                  }`}
+                >
+                  <span className="mr-5">{addToCartButtonLabel}</span>
+                  <span
+                    className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ${
+                      addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
+                    }`}
+                  >
+                    <svg
+                      className={`h-[24px] w-[24px] transition-transform duration-300 ease-out ${
+                        addToCartDisabled ? '' : 'group-hover:rotate-none'
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v10M7 12h10" />
+                    </svg>
+                  </span>
+                </button>
+
+                {addToCartMessage ? (
+                  <p className="mt-3 text-[12px] leading-[1.5] text-[#591902] opacity-70">
+                    {addToCartMessage}
+                  </p>
+                ) : null}
+
+                {customContent ? (
+                  <div className="mt-8 border-t border-[#36402280] pt-5">{customContent}</div>
+                ) : null}
+
+                <div className="mt-8">
+                  {accordionSections.map((section, index) => (
+                    <AccordionSection
+                      key={section.title}
+                      title={section.title}
+                      body={section.body}
+                      defaultOpen={index === 0}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

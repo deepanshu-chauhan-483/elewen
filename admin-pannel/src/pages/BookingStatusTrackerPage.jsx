@@ -6,7 +6,7 @@ import {
   SectionLoadingState,
   SelectField,
 } from '../components/ui/AdminUI'
-import { useAdminBookings } from '../hooks/useAdminData'
+import { useAdminBookings, useAdminUpdateBookingStatus } from '../hooks/useAdminData'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatCurrency, formatDate } from '../lib/formatters'
@@ -36,6 +36,44 @@ const borderColorMap = {
   post_event: 'border-[#0383E4]',
   completed: 'border-[#9CA3AF]',
   cancelled: 'border-[#8A1C1C]',
+}
+
+const nextStageMap = {
+  new: 'confirmed',
+  confirmed: 'info_collection',
+  info_collection: 'planning',
+  planning: 'pre_event',
+  pre_event: 'execution',
+  execution: 'post_event',
+  post_event: 'completed',
+}
+
+function buildBookingWorkspaceHref(bookingId = '') {
+  const id = String(bookingId ?? '').trim()
+  return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
+}
+
+function stageGuidance(status = '') {
+  switch (String(status).toLowerCase()) {
+    case 'new':
+      return 'Review the booking, confirm it, and capture any immediate requirements.'
+    case 'confirmed':
+      return 'Collect missing customer information and move the booking into planning.'
+    case 'info_collection':
+      return 'Verify requirements, save internal notes, and prepare the planning handoff.'
+    case 'planning':
+      return 'Treat this stage as operational planning. Use booking details for assignments and prep.'
+    case 'pre_event':
+      return 'Run final checks for execution readiness, vendor assignment, and payment status.'
+    case 'execution':
+      return 'This booking is on event day. Monitor active execution and capture any updates.'
+    case 'post_event':
+      return 'Review post-event follow-ups, feedback, and completion readiness.'
+    case 'completed':
+      return 'Booking is complete. Use the booking workspace for final history and summaries.'
+    default:
+      return 'Open the booking workspace to continue the operational flow.'
+  }
 }
 
 function StatusBadge({ status, label }) {
@@ -96,6 +134,8 @@ function getSubtitle(booking) {
 function BookingCard({ booking }) {
   const borderColor = borderColorMap[booking.status?.toLowerCase()] ?? 'border-[#CDB17E]'
   const subtitle = getSubtitle(booking)
+  const updateStatusMutation = useAdminUpdateBookingStatus()
+  const nextStage = nextStageMap[String(booking.status ?? '').toLowerCase()]
 
   return (
     <div
@@ -143,6 +183,34 @@ function BookingCard({ booking }) {
         <div className="text-right">
           <p className="text-[11px] text-[#767676]">REMAINING</p>
           <p className="font-medium text-[#2D2D2D]">{formatCurrency(booking.remainingAmount)}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-[#E4DED8] bg-[#FBF7F3] px-4 py-4">
+        <p className="text-[11px] tracking-[0.16em] text-[#767676]">STAGE ACTION</p>
+        <p className="mt-2 text-sm leading-6 text-[#2D2D2D]">{stageGuidance(booking.status)}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a
+            href={buildBookingWorkspaceHref(booking.id)}
+            className="inline-flex h-10 items-center justify-center rounded-full border border-[#CDB17E] bg-white px-5 text-sm text-[#CDB17E] hover:bg-[#FAF6F1]"
+          >
+            Open Booking Details
+          </a>
+          {nextStage ? (
+            <button
+              type="button"
+              disabled={updateStatusMutation.isPending}
+              onClick={() =>
+                updateStatusMutation.mutate({
+                  bookingId: booking.id,
+                  body: { status: nextStage, note: `Advanced from tracker to ${nextStage}` },
+                })
+              }
+              className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {updateStatusMutation.isPending ? 'Updating...' : `Move to ${stages.find(stage => stage.key === nextStage)?.label || nextStage}`}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import {
   DashboardEmptyState,
@@ -158,6 +158,7 @@ const ArrowIcon = () => (
 // Page
 // ---------------------------------------------------------------------------
 export default function SupportHelp() {
+  const navigate = useNavigate()
   const { data: session } = useDashboardSession()
   const { data: bookings = [] } = useDashboardBookings('all')
   const { data: help, error: helpError } = useDashboardHelp()
@@ -253,6 +254,14 @@ export default function SupportHelp() {
         </p>
       </div>
 
+      {/* ── Help message from admin ── */}
+      {help?.helpMessage && (
+        <div className="rounded-2xl border border-[#EDE8E1] bg-white p-5">
+          <h2 className="mb-2 text-base font-semibold text-[#1C1C1C]">Help &amp; Guidance</h2>
+          <p className="text-sm leading-6 text-[#6B7280]">{help.helpMessage}</p>
+        </div>
+      )}
+
       {/* ── Direct support contact ── */}
       <div className="rounded-2xl border border-[#EDE8E1] bg-[#FBF7F3] p-5">
         <h2 className="mb-1 text-xl text-[#1C1C1C]">Direct Support</h2>
@@ -273,6 +282,20 @@ export default function SupportHelp() {
           </p>
         )}
 
+        {/* Note: booking-specific messaging is handled via Messages module */}
+        <div className="mt-3 flex items-start gap-2 rounded-xl border border-dashed border-[#D6CDC3] bg-white px-4 py-3 text-xs text-[#6B7280]">
+          <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#8F8F8F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>
+            For booking-specific queries and real-time updates, use the{' '}
+            <Link to="/user-dashboard/messages" className="font-medium text-[#591902] underline underline-offset-2 hover:text-[#7A2408]">
+              Messages module
+            </Link>
+            . Platform messaging is handled there, not here.
+          </span>
+        </div>
+
         <div className="mt-4 flex flex-wrap gap-3">
           {help?.whatsappNumber && (
             <GoldBtn href={`https://wa.me/${String(help.whatsappNumber).replace(/[^\d]/g, '')}`}>
@@ -282,7 +305,11 @@ export default function SupportHelp() {
           {help?.supportEmail && (
             <OutlineBtn href={`mailto:${help.supportEmail}`}>Email Us</OutlineBtn>
           )}
-          <button className="flex items-center gap-2 rounded-full bg-[#CDB17E] px-5 py-2 text-white">
+          <button
+            type="button"
+            onClick={() => navigate('/user-dashboard/messages')}
+            className="flex items-center gap-2 rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-5 py-2 text-white transition"
+          >
             Message Admin <ArrowIcon />
           </button>
         </div>

@@ -1845,6 +1845,105 @@ export async function updateAdminSampleTasteStatus(req, res, next) {
   }
 }
 
+export async function recordAdminSampleTasteDecision(req, res, next) {
+  try {
+    const sampleId = req.params.id
+    const decision = normalizeText(req.body.decision).toLowerCase()
+    const decisionNotes = normalizeText(req.body.decisionNotes)
+    const feedbackText = normalizeText(req.body.feedbackText)
+    const vendorId = normalizeText(req.body.vendorId)
+    const rating =
+      req.body.rating === null || req.body.rating === undefined
+        ? null
+        : Number(req.body.rating)
+    const vendorRatings = Array.isArray(req.body.vendorRatings) ? req.body.vendorRatings : []
+
+    if (!['convert_full', 'save', 'cancel', 'expired'].includes(decision)) {
+      return res.status(400).json({
+        error: 'decision must be one of: convert_full, save, cancel, expired',
+      })
+    }
+
+    const sample = await prisma.sampleTasteBooking.findUnique({
+      where: { id: sampleId },
+      include: { vendors: true },
+    })
+
+    if (!sample) {
+      return res.status(404).json({ error: 'Sample taste booking not found' })
+    }
+
+    if (!['delivered', 'completed'].includes(String(sample.status ?? '').toLowerCase())) {
+      return res.status(400).json({
+        error: 'Decision can only be recorded for delivered or completed sample taste bookings',
+      })
+    }
+
+    const normalizedVendorRatings = vendorRatings
+      .map(entry => ({
+        vendorId: String(entry?.vendorId ?? '').trim(),
+        rating:
+          entry?.rating === null || entry?.rating === undefined ? null : Number(entry.rating),
+      }))
+      .filter(
+        entry =>
+          entry.vendorId &&
+          Number.isInteger(entry.rating) &&
+          entry.rating >= 1 &&
+          entry.rating <= 5
+      )
+
+    const updated = await prisma.$transaction(async tx => {
+      if (normalizedVendorRatings.length) {
+        await Promise.all(
+          normalizedVendorRatings.map(async entry => {
+            const matchedVendor = sample.vendors.find(v => String(v.vendorId) === entry.vendorId)
+            if (!matchedVendor) return
+
+            await tx.sampleTasteVendor.update({
+              where: { id: matchedVendor.id },
+              data: { rating: entry.rating },
+            })
+          })
+        )
+      }
+
+      if (vendorId && (rating || feedbackText)) {
+        const matchedVendor = sample.vendors.find(v => String(v.vendorId) === String(vendorId))
+        if (matchedVendor) {
+          await tx.sampleTasteVendor.update({
+            where: { id: matchedVendor.id },
+            data: {
+              rating: Number.isInteger(rating) ? rating : undefined,
+              feedbackText: feedbackText || undefined,
+            },
+          })
+        }
+      } else if (feedbackText && sample.vendors.length === 1) {
+        await tx.sampleTasteVendor.update({
+          where: { id: sample.vendors[0].id },
+          data: { feedbackText },
+        })
+      }
+
+      return tx.sampleTasteBooking.update({
+        where: { id: sample.id },
+        data: {
+          decision,
+          decisionNotes: decisionNotes || null,
+          status: 'completed',
+          feedbackSubmitted: Boolean(normalizedVendorRatings.length || rating || feedbackText),
+        },
+        include: { vendors: true },
+      })
+    })
+
+    res.json({ sample: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function listAdminVendors(req, res, next) {
   try {
     const page = toPositiveInt(req.query.page, 1)

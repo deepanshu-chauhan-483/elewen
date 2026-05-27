@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DashboardErrorState,
   DashboardLoadingState,
@@ -73,6 +73,12 @@ export default function ProfilePage() {
   const photoUrl = session?.profile?.photoUrl || null
   const displayForm = isEditing ? form : initialForm
 
+  useEffect(() => {
+    if (!isEditing) {
+      setForm(initialForm)
+    }
+  }, [initialForm, isEditing])
+
   if (sessionLoading) {
     return <DashboardLoadingState title="Loading your profile..." />
   }
@@ -90,6 +96,12 @@ export default function ProfilePage() {
     setForm(initialForm)
     setIsEditing(false)
     setSaveMessage('')
+  }
+
+  const handleStartEditing = () => {
+    setSaveMessage('')
+    setForm(buildInitialForm(session))
+    setIsEditing(true)
   }
 
   const handleSubmit = async event => {
@@ -133,7 +145,7 @@ export default function ProfilePage() {
       <SectionCard>
         <form id="profile-form" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 flex-1 items-center gap-4">
               {photoUrl ? (
                 <img
                   src={photoUrl}
@@ -153,7 +165,7 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="relative z-10 flex shrink-0 items-center gap-3 pointer-events-auto">
               {saveMessage ? (
                 <span className="text-xs font-medium text-[#12803D]">{saveMessage}</span>
               ) : null}
@@ -178,11 +190,7 @@ export default function ProfilePage() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
-                    setSaveMessage('')
-                    setForm(buildInitialForm(session))
-                    setIsEditing(true)
-                  }}
+                  onClick={handleStartEditing}
                   className="rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-sm text-white transition"
                 >
                   Edit basic info

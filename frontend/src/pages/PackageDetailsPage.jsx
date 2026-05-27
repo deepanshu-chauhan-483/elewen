@@ -317,6 +317,15 @@ export default function PackageDetailsPage() {
     )
   }
 
+  if (normalizedService === 'bartending' || normalizedService === 'bartending-single') {
+    return (
+      <Navigate
+        to={`/packages/bartending-single/${packageId}${search ? `?${search}` : ''}`}
+        replace
+      />
+    )
+  }
+
   if (isPackageLoading) {
     return null
   }

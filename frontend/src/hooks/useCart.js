@@ -387,7 +387,7 @@ function useCartController() {
     }
   }, [])
 
-  const addPackage = async ({ packageId, quantity = 1, selectedOptions, addon = null }) => {
+  const addPackage = async ({ packageId, quantity = 1, selectedOptions, addon = null, unitPrice: overrideUnitPrice = null }) => {
     const token = await getServerToken()
     const addonId = addon?.id != null ? String(addon.id) : null
     const addonTitle = String(addon?.name ?? '').trim()
@@ -404,7 +404,12 @@ function useCartController() {
           String(item.packageElementId ?? '') === String(selectionKey ?? '') &&
           String(item.addonId ?? '') === String(addonId ?? '')
       )
-      const unitPrice = isAddon ? addonUnitPrice : snapshot.basePrice
+      const resolvedOverride = Number(overrideUnitPrice ?? 0)
+      const unitPrice = isAddon
+        ? addonUnitPrice
+        : Number.isFinite(resolvedOverride) && resolvedOverride > 0
+          ? resolvedOverride
+          : snapshot.basePrice
       const itemTitle = isAddon
         ? buildCartItemTitle(addonTitle, selectedOptions, {
             itemType: 'addon',
@@ -448,7 +453,14 @@ function useCartController() {
     }
 
     try {
-      const data = await cartAddItem(token, { packageId, quantity, selectedOptions, addon })
+      const resolvedOverride = Number(overrideUnitPrice ?? 0)
+      const data = await cartAddItem(token, { 
+        packageId, 
+        quantity, 
+        selectedOptions, 
+        addon,
+        ...(Number.isFinite(resolvedOverride) && resolvedOverride > 0 && { unitPrice: resolvedOverride })
+      })
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))

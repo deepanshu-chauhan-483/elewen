@@ -124,6 +124,16 @@ function getBookingPackageNamesText(booking = null, fallback = 'Selected package
   return packageNames.length ? packageNames.join(', ') : fallback
 }
 
+function buildAdminMessageHref(bookingId = '') {
+  const id = String(bookingId ?? '').trim()
+  return id ? `/messages?bookingId=${encodeURIComponent(id)}` : '/messages'
+}
+
+function buildAdminSupportHref(bookingId = '') {
+  const id = String(bookingId ?? '').trim()
+  return id ? `/support?bookingId=${encodeURIComponent(id)}` : '/support'
+}
+
 // Special case: cancelled can happen anytime
 // const SPECIAL_STATUSES = ['cancelled']
 
@@ -274,6 +284,18 @@ function GhostBtn({ children, onClick, disabled }) {
     >
       {children}
     </button>
+  )
+}
+
+function LinkBtn({ href, children }) {
+  if (!href) return null
+  return (
+    <a
+      href={href}
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#CDB17E] bg-white px-5 text-sm text-[#CDB17E] transition hover:bg-[#FAF6F1]"
+    >
+      {children}
+    </a>
   )
 }
 
@@ -733,6 +755,38 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
             </div>
           </div>
 
+          <div className="py-6 border-t border-[#00000033]">
+            <SectionLabel>Communication Snapshot</SectionLabel>
+            <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">MESSAGE THREAD</p>
+                  <p className="mt-2 text-sm text-[#2D2D2D]">
+                    {bookingDetails.messageThread ? 'Live thread available' : 'No thread yet'}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">SUPPORT TICKETS</p>
+                  <p className="mt-2 text-sm text-[#2D2D2D]">
+                    {bookingDetails.supportTickets?.length ?? 0} linked ticket
+                    {bookingDetails.supportTickets?.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white px-4 py-4">
+                  <p className="text-[11px] tracking-[0.16em] text-[#767676]">FEEDBACK STATUS</p>
+                  <p className="mt-2 text-sm text-[#2D2D2D]">
+                    {bookingDetails.feedbackSubmitted ? 'Submitted' : 'Pending'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <LinkBtn href={buildAdminMessageHref(booking.id)}>Open Message Thread</LinkBtn>
+                <LinkBtn href={buildAdminSupportHref(booking.id)}>Open Support Tickets</LinkBtn>
+              </div>
+            </div>
+          </div>
+
           {/* ── Payment History ── */}
           <div className="py-6 border-t border-[#00000033]">
             <SectionLabel>Payment History</SectionLabel>
@@ -783,6 +837,13 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
   )
 }
 
+const bookingBucketTabs = [
+  { key: 'today', label: "Today's Bookings" },
+  { key: 'all', label: 'New Bookings' },
+  { key: 'upcoming', label: 'Upcoming Bookings' },
+  { key: 'completed', label: 'Completed Bookings' },
+]
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -791,6 +852,7 @@ export default function BookingManagementPage() {
   const [searchParams] = useSearchParams()
   const initialBucket = normalizeBookingBucket(searchParams.get('bucket'))
   const initialStatusFilter = normalizeBookingStatus(searchParams.get('status'))
+  const initialOpenBookingId = String(searchParams.get('open') ?? '').trim()
   const [search, setSearch] = useState('')
   const [bucket, setBucket] = useState(initialBucket)
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter)
@@ -802,14 +864,22 @@ export default function BookingManagementPage() {
   useEffect(() => {
     const nextBucket = normalizeBookingBucket(searchParams.get('bucket'))
     const nextStatusFilter = normalizeBookingStatus(searchParams.get('status'))
+    const nextOpenBookingId = String(searchParams.get('open') ?? '').trim()
 
     const timer = setTimeout(() => {
       setBucket(nextBucket)
       setStatusFilter(nextStatusFilter)
+      setOpenBookingId(nextOpenBookingId)
       setCurrentPage(1)
     }, 0)
     return () => clearTimeout(timer)
   }, [searchParams])
+
+  useEffect(() => {
+    if (!initialOpenBookingId) return undefined
+    const timer = setTimeout(() => setOpenBookingId(initialOpenBookingId), 0)
+    return () => clearTimeout(timer)
+  }, [initialOpenBookingId])
 
   useScrollToTop(currentPage)
 
@@ -852,6 +922,26 @@ export default function BookingManagementPage() {
         <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-[#767676] uppercase">
           Filter Bookings
         </p>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {bookingBucketTabs.map(tab => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                setBucket(tab.key)
+                setCurrentPage(1)
+              }}
+              className={[
+                'rounded-full border px-4 py-2 text-sm font-semibold transition',
+                bucket === tab.key
+                  ? 'border-[#D4BA8E] bg-[#D4BA8E] text-[#FAFAFA]'
+                  : 'border-[#E4DED8] bg-white text-[#6B7280] hover:border-[#D4BA8E] hover:text-[#7A5C2E]',
+              ].join(' ')}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         <div className="grid gap-3 sm:grid-cols-4">
           <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] focus:border-[#C6A15B] px-2.5 py-1.5 text-[#A19B94]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">

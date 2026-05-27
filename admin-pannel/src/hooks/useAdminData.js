@@ -18,6 +18,7 @@ import {
   adminPayments,
   adminReassignVendorAssignment,
   adminProcessRefund,
+  adminRecordSampleTasteDecision,
   adminRefunds,
   adminSampleTastes,
   adminSendMessage,
@@ -211,6 +212,19 @@ export function useAdminUpdateSampleTasteStatus() {
   return useMutation({
     mutationFn: ({ sampleId, body }) =>
       withAdminToken(token => adminUpdateSampleTasteStatus(token, sampleId, body)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'sample-taste'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })
+    },
+  })
+}
+
+export function useAdminRecordSampleTasteDecision() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ sampleId, body }) =>
+      withAdminToken(token => adminRecordSampleTasteDecision(token, sampleId, body)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'sample-taste'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })

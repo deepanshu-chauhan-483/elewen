@@ -48,7 +48,10 @@ export function filterPackages(packages, filters = {}) {
     ) {
       return false
     }
-    if (!includesNormalized(pkg.service_ids, serviceId)) return false
+    const packageServiceIds = Array.isArray(pkg.service_ids) ? pkg.service_ids.filter(Boolean) : []
+    if (serviceId && packageServiceIds.length && !includesNormalized(packageServiceIds, serviceId)) {
+      return false
+    }
     if (!includesNormalized(pkg.theme_slugs, themeSlug)) return false
     if (levelSlug && normalizeValue(pkg.level_slug) !== normalizeValue(levelSlug)) return false
     if (levelId && normalizeValue(pkg.level_id) !== normalizeValue(levelId)) return false

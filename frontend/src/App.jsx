@@ -34,6 +34,8 @@ const BartendingLevelsPage = lazy(() => import('./pages/BartendingLevelsPage'))
 const PackageDetailsPage = lazy(() => import('./pages/PackageDetailsPage'))
 const DecorSinglePackagePage = lazy(() => import('./pages/DecorSinglePackagePage'))
 const SheeshaSinglePackagePage = lazy(() => import('./pages/SheeshaSinglePackagePage'))
+const BartendingSinglePackagePage = lazy(() => import('./pages/BartendingSinglePackagePage'))
+const BartendingAddonDetailPage = lazy(() => import('./pages/BartendingAddonDetailPage'))
 const SinglePackageCheckout = lazy(() => import('./pages/SinglePackageCheckout'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'))
@@ -176,6 +178,14 @@ function AppLayout() {
           <Route path="/packages/bartending" element={<BartendingPackagesPage />} />
           <Route path="/packages/sheesha" element={<SheeshaPackagesPage />} />
           <Route path="/packages/decor-single/:packageId" element={<DecorSinglePackagePage />} />
+          <Route
+            path="/packages/bartending-single/:packageId"
+            element={<BartendingSinglePackagePage />}
+          />
+          <Route
+            path="/packages/bartending-addon/:packageId/:addonId"
+            element={<BartendingAddonDetailPage />}
+          />
           <Route
             path="/packages/sheesha-single/:packageId"
             element={<SheeshaSinglePackagePage />}

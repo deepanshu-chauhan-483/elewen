@@ -5,7 +5,6 @@ export const TTL = {
   STRAPI: 300, // 5 min — Strapi content (packages, events, services)
   ADMIN: 300, // 5 min — admin access resolution per user
   DASHBOARD: 60, // 1 min — dashboard summary counts
-  PROFILE: 120, // 2 min — user profile data
 }
 
 let client = null

@@ -9,6 +9,7 @@
       "type": "enumeration",
       "enum": [
         "guest_count",
+        "hours",
         "area_size",
         "seasonal"
       ]

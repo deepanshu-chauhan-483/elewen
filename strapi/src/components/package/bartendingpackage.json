@@ -35,11 +35,6 @@
     "setup_needs": {
       "type": "text"
     },
-    "addons": {
-      "type": "component",
-      "component": "package.package-addon",
-      "repeatable": true
-    },
     "policy": {
       "type": "relation",
       "relation": "oneToOne",
@@ -54,6 +49,11 @@
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::budget-level.budget-level"
+    },
+    "pricing_rules": {
+      "type": "component",
+      "component": "package.package-pricing-rule",
+      "repeatable": true
     }
   },
   "config": {}

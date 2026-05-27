@@ -79,13 +79,13 @@ const nestedPackagePopulate = {
       },
       'package.bartendingpackage': {
         populate: {
-          addons: true,
           inclusions: true,
           exclusions: true,
           policy: true,
           price_covers: true,
           price_breakdown: true,
           budget_level: true,
+          pricing_rules: true,
         },
       },
     },
