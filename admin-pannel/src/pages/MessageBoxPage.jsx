@@ -267,7 +267,9 @@ function MessageThreadPanel({
             ) : null}
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#6B7280]">
-            <span className="rounded-full bg-white px-3 py-1">Booking ID: {renderedThread.bookingId}</span>
+            <span className="rounded-full bg-white px-3 py-1">
+              Booking ID: {renderedThread.bookingId}
+            </span>
             <span className="rounded-full bg-white px-3 py-1">
               Vendors: {booking?.vendorAssignments?.length ?? 0}
             </span>
@@ -322,8 +324,14 @@ function MessageThreadPanel({
 
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <label className="text-[11px] uppercase tracking-[0.14em] text-[#8F8F8F]">Type:</label>
-              <SelectField value={messageType} onChange={onMessageTypeChange} menuClassName="z-[70]">
+              <label className="text-[11px] uppercase tracking-[0.14em] text-[#8F8F8F]">
+                Type:
+              </label>
+              <SelectField
+                value={messageType}
+                onChange={onMessageTypeChange}
+                menuClassName="z-[70]"
+              >
                 <option value="text">Text reply</option>
                 <option value="status_update">Status update</option>
                 <option value="system">System note</option>
@@ -354,7 +362,9 @@ function MessageThreadPanel({
                 value={messageText}
                 onChange={event => onMessageTextChange(event.target.value)}
                 disabled={isReadOnly}
-                placeholder={isReadOnly ? 'Read-only thread.' : 'Write your message to the customer...'}
+                placeholder={
+                  isReadOnly ? 'Read-only thread.' : 'Write your message to the customer...'
+                }
                 rows={3}
                 className="flex-1 resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
               />
@@ -432,8 +442,14 @@ export default function MessageBoxPage() {
 
   const threadsQuery = useAdminMessageThreads({ search: debouncedSearch })
   const allThreads = useMemo(() => threadsQuery.data?.threads ?? [], [threadsQuery.data?.threads])
-  const activeThreads = useMemo(() => allThreads.filter(thread => !isArchivedThread(thread)), [allThreads])
-  const archivedThreads = useMemo(() => allThreads.filter(thread => isArchivedThread(thread)), [allThreads])
+  const activeThreads = useMemo(
+    () => allThreads.filter(thread => !isArchivedThread(thread)),
+    [allThreads]
+  )
+  const archivedThreads = useMemo(
+    () => allThreads.filter(thread => isArchivedThread(thread)),
+    [allThreads]
+  )
   const effectiveThreadTab = useMemo(() => {
     if (threadTab === 'active' && activeThreads.length === 0 && archivedThreads.length > 0) {
       return 'archived'

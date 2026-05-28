@@ -12,6 +12,8 @@ import { INHOUSE_PLANNER_PAGE_FALLBACK } from '../data/cmsPages'
 
 import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
 import CustomSelect from '../components/common/CustomSelect'
+import DateTimePicker from '../components/common/DateTimePicker'
+import { getDateInputMin } from '../lib/dateInput'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -348,13 +350,6 @@ function normalizeCelebrationCategories(section = {}) {
     .filter(item => item.name)
 
   return result
-}
-
-function getMinEventDateForPlanner() {
-  const today = new Date()
-  const minDate = new Date(today)
-  minDate.setDate(minDate.getDate() + 6)
-  return minDate.toISOString().split('T')[0]
 }
 
 // Defined at module level so React never treats it as a new component type on re-render
@@ -2207,12 +2202,12 @@ const CelebrationFormSection = () => {
                 <div
                   className={`border-b pb-2 ${errors.event_date ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
-                  <input
+                  <DateTimePicker
                     type="date"
                     value={form.event_date}
                     onChange={e => set('event_date', e.target.value)}
                     onBlur={() => handleBlur('event_date')}
-                    min={getMinEventDateForPlanner()}
+                    min={getDateInputMin()}
                     className="w-full bg-transparent text-[#2D2D2D] text-[16px] outline-none cursor-pointer"
                   />
                 </div>

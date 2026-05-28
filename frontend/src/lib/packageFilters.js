@@ -49,7 +49,11 @@ export function filterPackages(packages, filters = {}) {
       return false
     }
     const packageServiceIds = Array.isArray(pkg.service_ids) ? pkg.service_ids.filter(Boolean) : []
-    if (serviceId && packageServiceIds.length && !includesNormalized(packageServiceIds, serviceId)) {
+    if (
+      serviceId &&
+      packageServiceIds.length &&
+      !includesNormalized(packageServiceIds, serviceId)
+    ) {
       return false
     }
     if (!includesNormalized(pkg.theme_slugs, themeSlug)) return false

@@ -284,12 +284,25 @@ export default function SupportHelp() {
 
         {/* Note: booking-specific messaging is handled via Messages module */}
         <div className="mt-3 flex items-start gap-2 rounded-xl border border-dashed border-[#D6CDC3] bg-white px-4 py-3 text-xs text-[#6B7280]">
-          <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#8F8F8F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="mt-0.5 h-4 w-4 shrink-0 text-[#8F8F8F]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span>
             For booking-specific queries and real-time updates, use the{' '}
-            <Link to="/user-dashboard/messages" className="font-medium text-[#591902] underline underline-offset-2 hover:text-[#7A2408]">
+            <Link
+              to="/user-dashboard/messages"
+              className="font-medium text-[#591902] underline underline-offset-2 hover:text-[#7A2408]"
+            >
               Messages module
             </Link>
             . Platform messaging is handled there, not here.

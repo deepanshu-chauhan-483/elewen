@@ -639,17 +639,28 @@ p {
 }
 
 .door-section__pin {
-  min-height: auto;
+  height: var(--door-viewport-height);
   min-height: var(--door-viewport-height);
-  height: auto;
   display: flex;
   align-items: stretch;
   overflow: clip;
 }
 
+.door-section__inside-bg {
+  inset: calc(-0.24 * var(--door-viewport-height)) 0;
+  min-height: var(--door-viewport-height);
+}
+
 .door-section__overlay {
   margin-top: -100vh;
   margin-top: calc(-1 * var(--door-viewport-height));
+  min-height: var(--door-viewport-height);
+  overflow: hidden;
+  will-change: transform;
+}
+
+.door-section__overlay > section {
+  min-height: var(--door-viewport-height);
 }
 
 @supports not (overflow: clip) {
@@ -673,45 +684,45 @@ p {
 }
 
 @media (max-width: 767px) {
+  .door-section {
+    background: #ffffff;
+  }
+
+  .door-section__pin {
+    background: #f6d69d;
+    overflow: visible;
+    overflow-x: clip;
+  }
+
+  .door-section__inside-bg {
+    inset: calc(-0.32 * var(--door-viewport-height)) 0;
+  }
+
   .door-section__gate {
-    width: 100vw;
-    height: calc(100vw * 833 / 1440);
+    width: min(104vw, 100%);
+    height: auto;
+    aspect-ratio: 1440 / 833;
     max-height: 833px;
     max-width: none;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
   }
 
   .door-section__gate-inner {
     width: 100%;
-    transform: translateY(0) scale(1.98);
-    transform-origin: center center;
-  }
-}
-
-@media (min-width: 360px) and (max-width: 767px) {
-  .door-section__gate {
-    width: 100vw;
-  }
-
-  .door-section__gate-inner {
-    transform: translateY(0) scale(2.18);
-  }
-}
-
-@media (min-width: 390px) and (max-width: 767px) {
-  .door-section__gate {
-    width: 104vw;
-  }
-
-  .door-section__gate-inner {
-    transform: translateY(0) scale(2.42);
+    min-height: 100%;
+    transform: translateY(clamp(-44px, -9vw, -20px)) scale(clamp(1.98, 1.58 + 0.22vw, 2.42));
+    transform-origin: center top;
   }
 }
 
 @media (min-width: 768px) {
+  .door-section__inside-bg {
+    inset: 0;
+  }
+
   .door-section__gate {
     width: 100%;
     max-width: 1200px;

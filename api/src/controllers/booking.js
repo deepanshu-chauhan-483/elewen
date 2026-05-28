@@ -68,6 +68,32 @@ const TIMELINE_STEP_INDEX_BY_TITLE = new Map(
   BOOKING_TIMELINE_STEPS.map((step, index) => [step.title, index])
 )
 
+function getTimelineIndexForStatus(status) {
+  if (status === 'completed') return 6
+  return STATUS_TO_TIMELINE_INDEX[status]
+}
+
+function buildTimelineStageNotes(statusLogs = []) {
+  const notesByIndex = new Map()
+
+  for (const log of Array.isArray(statusLogs) ? statusLogs : []) {
+    const note = String(log?.note ?? '').trim()
+    if (!note) continue
+    if (!log?.previousStatus) continue
+    if (note.toLowerCase().startsWith('advanced from tracker to ')) continue
+
+    const stepIndex = getTimelineIndexForStatus(String(log?.newStatus ?? '').trim())
+    if (!Number.isInteger(stepIndex)) continue
+
+    notesByIndex.set(stepIndex, {
+      note,
+      createdAt: log.createdAt,
+    })
+  }
+
+  return notesByIndex
+}
+
 const createBadRequestError = message => {
   const error = new Error(message)
   error.status = 400
@@ -944,7 +970,7 @@ export const getTimeline = async (req, res, next) => {
     const booking = await prisma.booking.findUnique({
       where: { id },
       include: {
-        statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+        statusLogs: { orderBy: { createdAt: 'asc' } },
       },
     })
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
@@ -957,11 +983,27 @@ export const getTimeline = async (req, res, next) => {
         orderBy: [{ createdAt: 'asc' }],
       })
 
-      return entries.sort((left, right) => {
-        const leftIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(left.title) ?? Number.MAX_SAFE_INTEGER
-        const rightIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(right.title) ?? Number.MAX_SAFE_INTEGER
-        return leftIndex - rightIndex
-      })
+      const stageNotes = buildTimelineStageNotes(booking.statusLogs)
+
+      return entries
+        .sort((left, right) => {
+          const leftIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(left.title) ?? Number.MAX_SAFE_INTEGER
+          const rightIndex =
+            TIMELINE_STEP_INDEX_BY_TITLE.get(right.title) ?? Number.MAX_SAFE_INTEGER
+          return leftIndex - rightIndex
+        })
+        .map(entry => {
+          const stepIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(entry.title)
+          const stageNote = stageNotes.get(stepIndex)
+
+          if (!stageNote) return entry
+
+          return {
+            ...entry,
+            stageNote: stageNote.note,
+            stageNoteCreatedAt: stageNote.createdAt,
+          }
+        })
     })
 
     res.json({ timeline })

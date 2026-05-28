@@ -273,7 +273,9 @@ async function fetchEventsByIds(ids = []) {
     ].join('&')
 
     const result = await strapiGet(`/events?${query}`)
-    const map = new Map((result?.data ?? []).map(event => [String(event.id), mapEventPreview(event)]))
+    const map = new Map(
+      (result?.data ?? []).map(event => [String(event.id), mapEventPreview(event)])
+    )
     await cacheSet(cacheKey, Object.fromEntries(map), TTL.STRAPI)
     return map
   } catch {

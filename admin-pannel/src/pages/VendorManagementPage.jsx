@@ -881,9 +881,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge status={assignment.status} />
-                      <ExternalAction href={vendorMailto}>
-                        Email Vendor
-                      </ExternalAction>
+                      <ExternalAction href={vendorMailto}>Email Vendor</ExternalAction>
                     </div>
                   </div>
                 ))}

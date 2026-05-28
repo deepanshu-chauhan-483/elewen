@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import DateTimePicker from '../components/common/DateTimePicker'
 import { useToast } from '../components/common/useToast'
 import { useCart } from '../hooks/useCart'
 import {
@@ -8,7 +9,9 @@ import {
   usePaymentFailedToastMessage,
 } from '../hooks/useMessagingContent'
 import { useGlobalSettings } from '../hooks/useCmsPages'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { usePackages } from '../hooks/usePackages'
+import { useServiceAreas } from '../hooks/useServiceAreas'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import {
   bookingAddNote,
@@ -20,6 +23,8 @@ import {
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 const CART_PIN_CODE_KEY = 'elewen_cart_pin_code'
+const CART_ADDITIONAL_INFO_KEY = '__additional_info__'
+const TEMP_BYPASS_PINCODE_VALIDATION = false
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -39,6 +44,88 @@ function getMinEventDate() {
   const day = String(minDate.getDate()).padStart(2, '0')
 
   return `${year}-${month}-${day}`
+}
+
+function normalizePincode(value = '') {
+  return String(value ?? '')
+    .replace(/\D/g, '')
+    .slice(0, 6)
+}
+
+function getServiceAreaByPincode(value = '', serviceAreas = []) {
+  const pincode = normalizePincode(value)
+
+  if (pincode.length !== 6) return ''
+
+  const numericPincode = Number(pincode)
+  const matchingArea = (Array.isArray(serviceAreas) ? serviceAreas : []).find(area => {
+    const start = Number(area?.pincodeStart)
+    const end = Number(area?.pincodeEnd)
+    const extraPincodes = Array.isArray(area?.extraPincodes) ? area.extraPincodes : []
+    const inRange =
+      Number.isFinite(start) &&
+      Number.isFinite(end) &&
+      numericPincode >= start &&
+      numericPincode <= end
+
+    return inRange || extraPincodes.includes(pincode)
+  })
+
+  return matchingArea?.name ?? ''
+}
+
+function getPincodeValidationState(value = '', serviceAreas = [], isLoadingServiceAreas = false) {
+  if (TEMP_BYPASS_PINCODE_VALIDATION) {
+    return {
+      isChecking: false,
+      isValid: true,
+      message: '',
+    }
+  }
+
+  const normalizedPincode = normalizePincode(value)
+
+  if (!normalizedPincode) {
+    return {
+      isChecking: false,
+      isValid: false,
+      message: '',
+    }
+  }
+
+  if (normalizedPincode.length !== 6) {
+    return {
+      isChecking: false,
+      isValid: false,
+      message: 'Please enter a valid 6-digit pincode.',
+    }
+  }
+
+  if (isLoadingServiceAreas) {
+    return {
+      isChecking: true,
+      isValid: false,
+      message: 'Checking availability...',
+    }
+  }
+
+  const area = getServiceAreaByPincode(normalizedPincode, serviceAreas)
+
+  if (area) {
+    return {
+      isChecking: false,
+      isValid: true,
+      message: `Service available in ${area}.`,
+    }
+  }
+
+  return {
+    isChecking: false,
+    isValid: false,
+    message: serviceAreas.length
+      ? 'Service not available in your area.'
+      : 'We could not verify service availability right now.',
+  }
 }
 
 function getSavedUser() {
@@ -197,20 +284,26 @@ function parseCartItemTitle(value = '') {
       itemType: 'package',
       addonTitle: '',
       parentPackageId: '',
+      additionalInfo: '',
     }
   }
 
   try {
     const parsed = JSON.parse(metaPart)
+    const parsedSelectedOptions =
+      parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
+        ? parsed.selectedOptions
+        : {}
+
     return {
       displayTitle: displayTitle || rawTitle,
-      selectedOptions:
-        parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
-          ? parsed.selectedOptions
-          : {},
+      selectedOptions: parsedSelectedOptions,
       itemType: parsed?.itemType ?? 'package',
       addonTitle: parsed?.addonTitle ?? '',
       parentPackageId: parsed?.parentPackageId ?? '',
+      additionalInfo: String(
+        parsed?.additionalInfo ?? parsedSelectedOptions?.[CART_ADDITIONAL_INFO_KEY] ?? ''
+      ).trim(),
     }
   } catch {
     return {
@@ -219,8 +312,17 @@ function parseCartItemTitle(value = '') {
       itemType: 'package',
       addonTitle: '',
       parentPackageId: '',
+      additionalInfo: '',
     }
   }
+}
+
+function isAdditionalInfoOptionLabel(label = '') {
+  return (
+    String(label ?? '')
+      .trim()
+      .toLowerCase() === CART_ADDITIONAL_INFO_KEY
+  )
 }
 
 function getCartItemDisplayName(item) {
@@ -234,15 +336,21 @@ function getCartItemDisplayName(item) {
 function getCartItemNoteLabel(item) {
   const itemName = getCartItemDisplayName(item)
   const quantity = Math.max(1, Number(item?.quantity ?? 1))
-  const selectedOptions = item?.selectedOptions ?? {}
+  const selectedOptions = Object.fromEntries(
+    Object.entries(item?.selectedOptions ?? {}).filter(
+      ([label]) => !isAdditionalInfoOptionLabel(label)
+    )
+  )
   const optionValues = Object.values(selectedOptions).filter(Boolean)
   const optionSuffix = optionValues.length ? ` [${optionValues.join(', ')}]` : ''
+  const additionalInfo = String(item?.additionalInfo ?? '').trim()
+  const additionalInfoSuffix = additionalInfo ? ` | Additional info: ${additionalInfo}` : ''
 
   if (item?.itemType === 'addon') {
-    return `Add-on: ${itemName} x${quantity}${optionSuffix}`
+    return `Add-on: ${itemName} x${quantity}${optionSuffix}${additionalInfoSuffix}`
   }
 
-  return `Package: ${itemName} x${quantity}${optionSuffix}`
+  return `Package: ${itemName} x${quantity}${optionSuffix}${additionalInfoSuffix}`
 }
 
 function getCartItemSummary(item) {
@@ -301,26 +409,19 @@ function getDisplaySelectedOptions(item) {
   const selectedOptions =
     item?.selectedOptions && typeof item.selectedOptions === 'object' ? item.selectedOptions : {}
 
-  if (!isBartendingPackageItem(item)) return selectedOptions
+  const filteredSelectedOptions = Object.fromEntries(
+    Object.entries(selectedOptions).filter(([label]) => !isAdditionalInfoOptionLabel(label))
+  )
+
+  if (!isBartendingPackageItem(item)) return filteredSelectedOptions
 
   return Object.fromEntries(
-    Object.entries(selectedOptions).filter(([label]) => !isAddonOptionLabel(label))
+    Object.entries(filteredSelectedOptions).filter(([label]) => !isAddonOptionLabel(label))
   )
 }
 
 function getCartItemQuantity(item) {
   return Math.max(1, Number(item?.quantity ?? 1))
-}
-
-function getBookingSummaryCategoryLabel(item) {
-  if (item?.itemType === 'addon') return 'Add-ons'
-
-  const service = item?.packageData?.service_slugs?.[0]
-  if (!service) return 'Packages'
-
-  return String(service)
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, char => char.toUpperCase())
 }
 
 function PaymentMethod({ selected, onChange }) {
@@ -538,6 +639,7 @@ export default function CheckoutPage() {
   const savedUser = getSavedUser()
   const { data: packages = [] } = usePackages()
   const { data: globalSettings = null } = useGlobalSettings()
+  const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = useServiceAreas()
   const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
@@ -571,6 +673,9 @@ export default function CheckoutPage() {
   const [eventTime, setEventTime] = useState('')
   const [eventAddress, setEventAddress] = useState(cart?.eventCity ?? '')
   const [pinCode, setPinCode] = useState('')
+  const [pinCodeMessage, setPinCodeMessage] = useState('')
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false)
+  const [isPincodeValid, setIsPincodeValid] = useState(false)
   const [guestCount, setGuestCount] = useState(
     cart?.guestCount != null ? String(cart.guestCount) : ''
   )
@@ -610,34 +715,6 @@ export default function CheckoutPage() {
       })),
     [cartItems]
   )
-  const packageSummaryGroups = useMemo(
-    () =>
-      itemSummaries
-        .filter(({ item }) => item?.itemType !== 'addon')
-        .reduce((groups, entry) => {
-          const category = getBookingSummaryCategoryLabel(entry.item)
-          const existingGroup = groups.find(group => group.category === category)
-
-          if (existingGroup) {
-            existingGroup.total += Number(entry.summary.total ?? 0)
-            existingGroup.count += getCartItemQuantity(entry.item)
-            return groups
-          }
-
-          groups.push({
-            category,
-            total: Number(entry.summary.total ?? 0),
-            count: getCartItemQuantity(entry.item),
-          })
-
-          return groups
-        }, []),
-    [itemSummaries]
-  )
-  const addonSummaryItems = useMemo(
-    () => itemSummaries.filter(({ item }) => item?.itemType === 'addon'),
-    [itemSummaries]
-  )
   const computedSubtotal = useMemo(
     () => itemSummaries.reduce((sum, entry) => sum + Number(entry.summary.total ?? 0), 0),
     [itemSummaries]
@@ -667,6 +744,7 @@ export default function CheckoutPage() {
 
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
   const [paymentOption, setPaymentOption] = useState('advance')
+  const debouncedPinCode = useDebouncedValue(pinCode, 500)
 
   useEffect(() => {
     if (!location.state?.showCheckoutToast || hasShownCheckoutToastRef.current) return
@@ -699,6 +777,24 @@ export default function CheckoutPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (pinCode !== debouncedPinCode) {
+      setIsCheckingPincode(false)
+      setIsPincodeValid(false)
+      setPinCodeMessage('')
+      return
+    }
+
+    const nextState = getPincodeValidationState(
+      debouncedPinCode,
+      serviceAreas,
+      isLoadingServiceAreas
+    )
+    setIsCheckingPincode(nextState.isChecking)
+    setIsPincodeValid(nextState.isValid)
+    setPinCodeMessage(nextState.message)
+  }, [debouncedPinCode, pinCode, isLoadingServiceAreas, serviceAreas])
+
   const handleCheckout = async paymentType => {
     const token = getStoredJwt()
     if (!token) {
@@ -717,6 +813,18 @@ export default function CheckoutPage() {
     ) {
       setFormError('Please complete the event information form before payment.')
       return
+    }
+
+    if (!isSampleTastingCheckout) {
+      const nextPincodeState = getPincodeValidationState(
+        pinCode,
+        serviceAreas,
+        isLoadingServiceAreas
+      )
+      if (!nextPincodeState.isValid) {
+        setFormError(nextPincodeState.message || 'Please enter a valid serviceable pincode.')
+        return
+      }
     }
 
     setFormError('')
@@ -830,6 +938,7 @@ export default function CheckoutPage() {
                 id: item?.id,
                 title: item?.title,
                 amount: Number(item?.totalPrice ?? 0),
+                additionalInfo: String(item?.additionalInfo ?? '').trim(),
               })),
               showBookingConfirmationToast: true,
             },
@@ -894,6 +1003,7 @@ export default function CheckoutPage() {
                     id: item?.id,
                     title: item?.title,
                     amount: Number(item?.totalPrice ?? 0),
+                    additionalInfo: String(item?.additionalInfo ?? '').trim(),
                   })),
                   showBookingConfirmationToast: true,
                 },
@@ -1020,11 +1130,17 @@ export default function CheckoutPage() {
                   {itemSummaries.map(({ item, summary }) => {
                     if (item?.itemType === 'addon') {
                       return (
-                        <SummaryRow
-                          key={item.id}
-                          label={`Add-on - ${getCartItemDisplayName(item)} (${getCartItemQuantity(item)})`}
-                          value={formatCurrency(summary.total)}
-                        />
+                        <div key={item.id}>
+                          <SummaryRow
+                            label={`Add-on - ${getCartItemDisplayName(item)} (${getCartItemQuantity(item)})`}
+                            value={formatCurrency(summary.total)}
+                          />
+                          {item?.additionalInfo ? (
+                            <p className="mt-1 text-xs text-[#767676]">
+                              Additional Info: {item.additionalInfo}
+                            </p>
+                          ) : null}
+                        </div>
                       )
                     }
 
@@ -1035,16 +1151,20 @@ export default function CheckoutPage() {
                       ? `${packageLineLabel} (${optionsText})`
                       : packageLineLabel
                     const quantityLabel =
-                      getCartItemQuantity(item) > 1
-                        ? ` x${getCartItemQuantity(item)}`
-                        : ''
+                      getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''
 
                     return (
-                      <SummaryRow
-                        key={item.id}
-                        label={`${labelWithOptions}${quantityLabel}`}
-                        value={formatCurrency(summary.total)}
-                      />
+                      <div key={item.id}>
+                        <SummaryRow
+                          label={`${labelWithOptions}${quantityLabel}`}
+                          value={formatCurrency(summary.total)}
+                        />
+                        {item?.additionalInfo ? (
+                          <p className="mt-1 text-xs text-[#767676]">
+                            Additional Info: {item.additionalInfo}
+                          </p>
+                        ) : null}
+                      </div>
                     )
                   })}
                 </div>
@@ -1130,14 +1250,14 @@ export default function CheckoutPage() {
                 </h3>
 
                 <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <input
+                  <DateTimePicker
                     type="date"
                     min={getMinEventDate()}
                     value={eventDate}
                     onChange={event => setEventDate(event.target.value)}
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
                   />
-                  <input
+                  <DateTimePicker
                     type="time"
                     value={eventTime}
                     onChange={event => setEventTime(event.target.value)}
@@ -1153,10 +1273,22 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     value={pinCode}
-                    onChange={event => setPinCode(event.target.value)}
+                    onChange={event => {
+                      setFormError('')
+                      setPinCode(normalizePincode(event.target.value))
+                    }}
                     placeholder="PIN Code"
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                   />
+                  {pinCodeMessage ? (
+                    <p
+                      className={`text-[12px] md:col-span-2 ${
+                        isPincodeValid ? 'text-[#2E7D32]' : 'text-[#B42318]'
+                      }`}
+                    >
+                      {isCheckingPincode ? 'Checking availability...' : pinCodeMessage}
+                    </p>
+                  ) : null}
                   <input
                     type="number"
                     min="1"

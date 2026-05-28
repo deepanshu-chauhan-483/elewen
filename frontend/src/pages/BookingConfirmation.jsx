@@ -9,7 +9,7 @@ import {
   formatReceiptDate,
   getReceiptPaymentSummary,
 } from '../lib/receipt'
-import { getBookingPackageNamesText } from '../lib/bookingDisplay'
+import { getBookingPackageNamesText, parseBookingItemTitle } from '../lib/bookingDisplay'
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -30,6 +30,26 @@ function Detail({ label, value }) {
       <p className="text-right text-[#2C2C2C]">{value}</p>
     </div>
   )
+}
+
+function getBookingConfirmationAdditionalInfo(checkoutInfo = {}, booking = null) {
+  const checkoutSelectedItems = Array.isArray(checkoutInfo?.selectedItems)
+    ? checkoutInfo.selectedItems
+    : []
+  const checkoutNotes = checkoutSelectedItems
+    .map(item => String(item?.additionalInfo ?? '').trim())
+    .filter(Boolean)
+
+  if (checkoutNotes.length) {
+    return checkoutNotes.join(' | ')
+  }
+
+  const bookingItems = Array.isArray(booking?.items) ? booking.items : []
+  const bookingNotes = bookingItems
+    .map(item => parseBookingItemTitle(item?.title).additionalInfo)
+    .filter(Boolean)
+
+  return bookingNotes.join(' | ')
 }
 
 function LocationPinIcon() {
@@ -121,6 +141,7 @@ export default function BookingConfirmation() {
     checkoutInfo,
     isSampleTastingBooking,
   })
+  const additionalInfo = getBookingConfirmationAdditionalInfo(checkoutInfo, booking)
   const sessionDetails = {
     dateLabel: checkoutInfo?.eventDate ?? booking?.eventDate ?? '',
     timeLabel: checkoutInfo?.eventTime ?? '',
@@ -290,6 +311,7 @@ export default function BookingConfirmation() {
               label="Special Request"
               value={checkoutInfo?.specialRequest || booking?.specialRequest || 'Not provided'}
             />
+            <Detail label="Additional Info" value={additionalInfo || 'Not provided'} />
             <Detail label="Package" value={packageLabel} />
             <Detail label="Contact" value={customer.fullName || 'Not provided'} />
           </div>

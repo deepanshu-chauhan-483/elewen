@@ -1853,9 +1853,7 @@ export async function recordAdminSampleTasteDecision(req, res, next) {
     const feedbackText = normalizeText(req.body.feedbackText)
     const vendorId = normalizeText(req.body.vendorId)
     const rating =
-      req.body.rating === null || req.body.rating === undefined
-        ? null
-        : Number(req.body.rating)
+      req.body.rating === null || req.body.rating === undefined ? null : Number(req.body.rating)
     const vendorRatings = Array.isArray(req.body.vendorRatings) ? req.body.vendorRatings : []
 
     if (!['convert_full', 'save', 'cancel', 'expired'].includes(decision)) {
@@ -1882,15 +1880,11 @@ export async function recordAdminSampleTasteDecision(req, res, next) {
     const normalizedVendorRatings = vendorRatings
       .map(entry => ({
         vendorId: String(entry?.vendorId ?? '').trim(),
-        rating:
-          entry?.rating === null || entry?.rating === undefined ? null : Number(entry.rating),
+        rating: entry?.rating === null || entry?.rating === undefined ? null : Number(entry.rating),
       }))
       .filter(
         entry =>
-          entry.vendorId &&
-          Number.isInteger(entry.rating) &&
-          entry.rating >= 1 &&
-          entry.rating <= 5
+          entry.vendorId && Number.isInteger(entry.rating) && entry.rating >= 1 && entry.rating <= 5
       )
 
     const updated = await prisma.$transaction(async tx => {

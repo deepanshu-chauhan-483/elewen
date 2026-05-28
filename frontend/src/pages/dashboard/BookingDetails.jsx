@@ -47,6 +47,7 @@ function buildSelectedItemRows(booking) {
       id: item?.id ?? `${booking?.id ?? 'row'}-${rows.length}`,
       title: getPackageLineLabel(item?.title, booking?.package?.title),
       includes: getPackageLineSubtitle(item?.title),
+      additionalInfo: meta?.additionalInfo ?? '',
       amount: item?.totalPrice ?? 0,
     })
   }
@@ -56,6 +57,7 @@ function buildSelectedItemRows(booking) {
       id: `package-${booking?.id ?? 'row'}`,
       title: booking.package.title,
       includes: '',
+      additionalInfo: '',
       amount: booking?.totalPrice ?? booking?.package?.basePrice ?? 0,
     })
   }
@@ -643,6 +645,11 @@ function BookingAccordionCard({ booking, session, packages }) {
                 <div key={item.id} className="flex justify-between rounded-xl bg-[#F3F3F3] p-3">
                   <div className="min-w-0 pr-4">
                     <span className="block text-sm">{item.title}</span>
+                    {item.additionalInfo ? (
+                      <span className="mt-1 block text-xs text-[#767676]">
+                        Additional Info: {item.additionalInfo}
+                      </span>
+                    ) : null}
                     {item.includes ? (
                       <span className="mt-1 block text-xs text-[#767676]">{item.includes}</span>
                     ) : null}

@@ -71,6 +71,11 @@ const DashboardLayout = () => {
   useEffect(() => {
     if (!authResolved) return
     if (token) return
+    if (sessionStorage.getItem('elewen_logout_redirect_home') === 'true') {
+      sessionStorage.removeItem('elewen_logout_redirect_home')
+      navigate('/', { replace: true })
+      return
+    }
     const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
     navigate(`/login?redirect=${redirect}`, {
       replace: true,

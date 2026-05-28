@@ -197,7 +197,14 @@ export const getCart = async (req, res, next) => {
 export const addItem = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { packageId, quantity = 1, selectedOptions, addonTitle = '', addon = null, unitPrice: customUnitPrice = null } = req.body
+    const {
+      packageId,
+      quantity = 1,
+      selectedOptions,
+      addonTitle = '',
+      addon = null,
+      unitPrice: customUnitPrice = null,
+    } = req.body
 
     // Fetch package from Strapi — use filter by id (Strapi v5 single entry needs documentId, filter by id works)
     const { data: pkgs } = await strapiGet('/packages', {
@@ -225,18 +232,19 @@ export const addItem = async (req, res, next) => {
       matchedAddon?.name ?? matchedAddon?.title ?? requestedAddonTitle
     ).trim()
     const isAddon = Boolean(addonId && trimmedAddonTitle)
-    
+
     // Use custom unit price if provided and valid, otherwise use addon price or base price
     let unitPrice
     if (isAddon) {
       unitPrice = Number(matchedAddon?.price ?? 0)
     } else {
       const resolvedCustomPrice = Number(customUnitPrice ?? 0)
-      unitPrice = Number.isFinite(resolvedCustomPrice) && resolvedCustomPrice > 0 
-        ? resolvedCustomPrice 
-        : Number(pkg.base_price)
+      unitPrice =
+        Number.isFinite(resolvedCustomPrice) && resolvedCustomPrice > 0
+          ? resolvedCustomPrice
+          : Number(pkg.base_price)
     }
-    
+
     const title = pkg.title
     const selectionKey = isAddon ? null : buildSelectionKey(selectedOptions)
     const storedTitle = buildStoredCartItemTitle(title, selectedOptions, trimmedAddonTitle)

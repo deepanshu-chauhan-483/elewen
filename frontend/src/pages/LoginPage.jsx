@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { useToast } from '../components/common/useToast'
 import { getFieldErrors } from '../lib/formErrors'
 import { authLogin, setStoredJwt } from '../lib/api'
 
@@ -9,6 +10,7 @@ const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { showToast } = useToast()
   const [searchParams] = useSearchParams()
   const confirmed = searchParams.get('confirmed') === 'true'
   const redirectTarget =
@@ -37,6 +39,7 @@ export default function LoginPage() {
       const data = await authLogin({ email, password })
       setStoredJwt(data.jwt)
       localStorage.setItem('elewen_user', JSON.stringify(data.user))
+      showToast({ message: 'Login successful.' })
       navigate(redirectTarget, { replace: true })
     } catch (err) {
       const nextFieldErrors = getFieldErrors(err)

@@ -1,4 +1,5 @@
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+const CART_ADDITIONAL_INFO_KEY = '__additional_info__'
 
 export function parseBookingItemTitle(title = '') {
   const rawTitle = String(title ?? '')
@@ -11,20 +12,26 @@ export function parseBookingItemTitle(title = '') {
       itemType: 'package',
       addonTitle: '',
       selectedOptions: {},
+      additionalInfo: '',
     }
   }
 
   try {
     const parsed = JSON.parse(metaPart)
+    const parsedSelectedOptions =
+      parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
+        ? parsed.selectedOptions
+        : {}
+
     return {
       rawTitle,
       displayTitle: displayTitle || rawTitle,
       itemType: parsed?.itemType ?? 'package',
       addonTitle: String(parsed?.addonTitle ?? '').trim(),
-      selectedOptions:
-        parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
-          ? parsed.selectedOptions
-          : {},
+      selectedOptions: parsedSelectedOptions,
+      additionalInfo: String(
+        parsed?.additionalInfo ?? parsedSelectedOptions?.[CART_ADDITIONAL_INFO_KEY] ?? ''
+      ).trim(),
     }
   } catch {
     return {
@@ -33,6 +40,7 @@ export function parseBookingItemTitle(title = '') {
       itemType: 'package',
       addonTitle: '',
       selectedOptions: {},
+      additionalInfo: '',
     }
   }
 }
@@ -40,7 +48,14 @@ export function parseBookingItemTitle(title = '') {
 export function getSelectedOptionsText(selectedOptions = {}) {
   if (!selectedOptions || typeof selectedOptions !== 'object') return ''
 
-  return Object.values(selectedOptions)
+  return Object.entries(selectedOptions)
+    .filter(
+      ([key]) =>
+        String(key ?? '')
+          .trim()
+          .toLowerCase() !== CART_ADDITIONAL_INFO_KEY
+    )
+    .map(([, value]) => value)
     .map(value => String(value ?? '').trim())
     .filter(Boolean)
     .join(', ')

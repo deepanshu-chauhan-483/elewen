@@ -1,5 +1,6 @@
 import { strapiServerDelete, strapiServerGet, strapiServerPost } from '../lib/strapi.js'
 import { enrichSavedPackages } from '../lib/dashboardData.js'
+import { cacheDel, cacheDelContaining } from '../lib/cache.js'
 
 const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'
 
@@ -106,6 +107,13 @@ async function findSavedPackage(userId, packageId) {
   return result?.data?.[0] ?? null
 }
 
+async function invalidateWishlistCache(userId) {
+  await Promise.all([
+    cacheDel(`dashboard:summary:${userId}`),
+    cacheDelContaining('strapi:GET:*saved-packages*', `filters[user][id][$eq]=${userId}`),
+  ])
+}
+
 export const getWishlist = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -162,6 +170,8 @@ export const addWishlistItem = async (req, res, next) => {
       },
     })
 
+    await invalidateWishlistCache(userId)
+
     const createdDocumentId =
       created?.data?.documentId ?? created?.data?.id ?? created?.documentId ?? created?.id
 
@@ -197,6 +207,7 @@ export const removeWishlistItem = async (req, res, next) => {
 
     const targetId = existing.documentId ?? existing.id
     await strapiServerDelete(`/api/saved-packages/${targetId}?publicationState=preview`)
+    await invalidateWishlistCache(userId)
 
     res.json({ removed: true, packageId })
   } catch (err) {

@@ -18,6 +18,7 @@ import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+const CART_ADDITIONAL_INFO_KEY = '__additional_info__'
 
 function isTerminalPreviousBooking(booking) {
   const normalizedStatus = String(booking?.status ?? '')
@@ -76,7 +77,15 @@ function getSelectedItemDisplay(title = '') {
     if (itemType === 'addon') {
       const optionValues =
         selectedOptions && typeof selectedOptions === 'object'
-          ? Object.values(selectedOptions).filter(Boolean)
+          ? Object.entries(selectedOptions)
+              .filter(
+                ([key]) =>
+                  String(key ?? '')
+                    .trim()
+                    .toLowerCase() !== CART_ADDITIONAL_INFO_KEY
+              )
+              .map(([, value]) => value)
+              .filter(Boolean)
           : []
 
       return optionValues.length
@@ -85,7 +94,15 @@ function getSelectedItemDisplay(title = '') {
     }
 
     if (selectedOptions && typeof selectedOptions === 'object') {
-      const values = Object.values(selectedOptions).filter(Boolean)
+      const values = Object.entries(selectedOptions)
+        .filter(
+          ([key]) =>
+            String(key ?? '')
+              .trim()
+              .toLowerCase() !== CART_ADDITIONAL_INFO_KEY
+        )
+        .map(([, value]) => value)
+        .filter(Boolean)
       if (values.length) return values.join(', ')
     }
   } catch {
@@ -93,6 +110,25 @@ function getSelectedItemDisplay(title = '') {
   }
 
   return displayTitle || rawTitle
+}
+
+function getSelectedItemAdditionalInfo(title = '') {
+  const rawTitle = String(title ?? '')
+  const [, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+  if (!metaPart) return ''
+
+  try {
+    const parsed = JSON.parse(metaPart)
+    const selectedOptions =
+      parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
+        ? parsed.selectedOptions
+        : {}
+    return String(
+      parsed?.additionalInfo ?? selectedOptions?.[CART_ADDITIONAL_INFO_KEY] ?? ''
+    ).trim()
+  } catch {
+    return ''
+  }
 }
 
 function ReferFriendPanel({ booking, session, onClose }) {
@@ -190,6 +226,10 @@ function PreviousBookingCard({ booking, session }) {
     : ''
   const title = booking?.package?.title || booking?.event?.name || 'Booking'
   const subtitle = [booking?.detailSubtitle].filter(Boolean).join(' · ')
+  const additionalInfo = (Array.isArray(booking?.items) ? booking.items : [])
+    .map(item => getSelectedItemAdditionalInfo(item?.title))
+    .filter(Boolean)
+    .join(' | ')
   const receiptData = buildReceiptData({
     booking,
     customer: {
@@ -314,6 +354,10 @@ function PreviousBookingCard({ booking, session }) {
               <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
               <p>{formatDashboardCurrency(booking?.paymentSummary?.amountDue)}</p>
             </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">ADDITIONAL INFO</p>
+              <p>{additionalInfo || 'Not provided'}</p>
+            </div>
           </div>
 
           {isCancelled ? (
@@ -331,7 +375,14 @@ function PreviousBookingCard({ booking, session }) {
               <div className="space-y-2">
                 {booking.items.map(item => (
                   <div key={item.id} className="flex justify-between rounded-xl bg-[#F3F3F3] p-3">
-                    <span className="text-sm">{getSelectedItemDisplay(item.title)}</span>
+                    <div className="min-w-0 pr-4">
+                      <span className="block text-sm">{getSelectedItemDisplay(item.title)}</span>
+                      {getSelectedItemAdditionalInfo(item.title) ? (
+                        <span className="mt-1 block text-xs text-[#767676]">
+                          Additional Info: {getSelectedItemAdditionalInfo(item.title)}
+                        </span>
+                      ) : null}
+                    </div>
                     <span className="text-sm font-medium">
                       {formatDashboardCurrency(item.totalPrice)}
                     </span>

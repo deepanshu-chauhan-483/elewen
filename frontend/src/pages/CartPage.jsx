@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import DateTimePicker from '../components/common/DateTimePicker'
 import { useToast } from '../components/common/useToast'
 import { useGlobalSettings } from '../hooks/useCmsPages'
 import { useCart } from '../hooks/useCart'
@@ -271,6 +272,7 @@ function formatDisplayDate(value) {
 }
 
 const SAMPLE_TASTE_SERVICE_SLUGS = new Set(['catering', 'bartending'])
+const CART_ADDITIONAL_INFO_KEY = '__additional_info__'
 
 function getPackageSubtitle(pkg) {
   const service = pkg?.service_slugs?.[0]
@@ -291,20 +293,26 @@ function parseCartItemTitle(value = '') {
       itemType: 'package',
       addonTitle: '',
       parentPackageId: '',
+      additionalInfo: '',
     }
   }
 
   try {
     const parsed = JSON.parse(metaPart)
+    const parsedSelectedOptions =
+      parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
+        ? parsed.selectedOptions
+        : {}
+
     return {
       displayTitle: displayTitle || rawTitle,
-      selectedOptions:
-        parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
-          ? parsed.selectedOptions
-          : {},
+      selectedOptions: parsedSelectedOptions,
       itemType: parsed?.itemType ?? 'package',
       addonTitle: parsed?.addonTitle ?? '',
       parentPackageId: parsed?.parentPackageId ?? '',
+      additionalInfo: String(
+        parsed?.additionalInfo ?? parsedSelectedOptions?.[CART_ADDITIONAL_INFO_KEY] ?? ''
+      ).trim(),
     }
   } catch {
     return {
@@ -313,8 +321,17 @@ function parseCartItemTitle(value = '') {
       itemType: 'package',
       addonTitle: '',
       parentPackageId: '',
+      additionalInfo: '',
     }
   }
+}
+
+function isAdditionalInfoOptionLabel(label = '') {
+  return (
+    String(label ?? '')
+      .trim()
+      .toLowerCase() === CART_ADDITIONAL_INFO_KEY
+  )
 }
 
 function getSelectedElements(item) {
@@ -391,10 +408,14 @@ function getDisplaySelectedOptions(item) {
   const selectedOptions =
     item?.selectedOptions && typeof item.selectedOptions === 'object' ? item.selectedOptions : {}
 
-  if (!isBartendingPackageItem(item)) return selectedOptions
+  const filteredSelectedOptions = Object.fromEntries(
+    Object.entries(selectedOptions).filter(([label]) => !isAdditionalInfoOptionLabel(label))
+  )
+
+  if (!isBartendingPackageItem(item)) return filteredSelectedOptions
 
   return Object.fromEntries(
-    Object.entries(selectedOptions).filter(([label]) => !isAddonOptionLabel(label))
+    Object.entries(filteredSelectedOptions).filter(([label]) => !isAddonOptionLabel(label))
   )
 }
 
@@ -660,6 +681,7 @@ function SinglePackageCard({
   const packageSubtitle = getPackageSubtitle(item.packageData)
   const eventLocation = detailsForm.eventCity?.trim() || 'Add city / area'
   const eventDate = detailsForm.eventDate ? formatDisplayDate(detailsForm.eventDate) : 'Select date'
+  const additionalInfo = String(item?.additionalInfo ?? '').trim()
 
   return (
     <div className="space-y-6">
@@ -760,6 +782,21 @@ function SinglePackageCard({
         </div>
       </div>
 
+      {additionalInfo ? (
+        <div className="overflow-hidden rounded-xl border border-[#95796066]">
+          <div className="bg-[#F8F4ED] px-4 py-3">
+            <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+              Additional Info
+            </h3>
+          </div>
+          <div className="p-4">
+            <p className="text-sm leading-[1.6] text-[#2C2C2C] whitespace-pre-wrap">
+              {additionalInfo}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="overflow-hidden rounded-xl border border-[#95796066]">
         <div className="bg-[#F8F4ED] px-4 py-3">
           <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
@@ -817,7 +854,7 @@ function SinglePackageCard({
               <div className="w-full space-y-3">
                 <div>
                   <p className="text-sm text-gray-500">Event Date</p>
-                  <input
+                  <DateTimePicker
                     type="date"
                     min={getMinEventDate()}
                     value={detailsForm.eventDate}
@@ -1435,6 +1472,7 @@ export default function CartPage() {
           selectedOptions: parsedTitle.selectedOptions,
           itemType: parsedTitle.itemType,
           addonTitle: parsedTitle.addonTitle,
+          additionalInfo: parsedTitle.additionalInfo,
           packageData: packageLookup.get(String(item.packageId)) ?? null,
         }
       }),

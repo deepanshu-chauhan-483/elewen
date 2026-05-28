@@ -11,7 +11,7 @@ import {
 } from '../../components/dashboard/dashboardUtils'
 import { DashboardEmptyState, DashboardErrorState } from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
-import { getBookingPackageNamesText } from '../../lib/bookingDisplay'
+import { getBookingPackageNamesText, parseBookingItemTitle } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
 
 const CloseToggleIcon = () => (
@@ -94,6 +94,17 @@ function getNextStepText(booking) {
   return booking?.latestStatusLog?.note || `Latest status: ${booking?.statusLabel || 'In Progress'}`
 }
 
+function getBookingItemAdditionalInfo(title = '') {
+  return String(parseBookingItemTitle(title)?.additionalInfo ?? '').trim()
+}
+
+function getBookingAdditionalInfoText(booking) {
+  return (Array.isArray(booking?.items) ? booking.items : [])
+    .map(item => getBookingItemAdditionalInfo(item?.title))
+    .filter(Boolean)
+    .join(' | ')
+}
+
 const StatusBadge = ({ status, label }) => (
   <span className={`inline-block rounded-full px-3 py-1 text-xs ${getStatusTone(status)}`}>
     {getStatusLabel(status, label)}
@@ -108,6 +119,7 @@ function BookingCard({ booking, session }) {
   const location = booking?.locationSummary || 'Location pending'
   const amountPaid = formatDashboardCurrency(booking?.paymentSummary?.amountPaid)
   const amountDue = formatDashboardCurrency(booking?.paymentSummary?.amountDue)
+  const additionalInfo = getBookingAdditionalInfoText(booking)
   const receiptData = buildReceiptData({
     booking,
     customer: {
@@ -265,6 +277,10 @@ function BookingCard({ booking, session }) {
             <div>
               <p className="text-[11px] text-[#767676]">SPECIAL REQUEST</p>
               <p>{booking.specialRequest || 'Not provided'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#767676]">ADDITIONAL INFO</p>
+              <p>{additionalInfo || 'Not provided'}</p>
             </div>
           </div>
 

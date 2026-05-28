@@ -387,7 +387,13 @@ function useCartController() {
     }
   }, [])
 
-  const addPackage = async ({ packageId, quantity = 1, selectedOptions, addon = null, unitPrice: overrideUnitPrice = null }) => {
+  const addPackage = async ({
+    packageId,
+    quantity = 1,
+    selectedOptions,
+    addon = null,
+    unitPrice: overrideUnitPrice = null,
+  }) => {
     const token = await getServerToken()
     const addonId = addon?.id != null ? String(addon.id) : null
     const addonTitle = String(addon?.name ?? '').trim()
@@ -454,12 +460,13 @@ function useCartController() {
 
     try {
       const resolvedOverride = Number(overrideUnitPrice ?? 0)
-      const data = await cartAddItem(token, { 
-        packageId, 
-        quantity, 
-        selectedOptions, 
+      const data = await cartAddItem(token, {
+        packageId,
+        quantity,
+        selectedOptions,
         addon,
-        ...(Number.isFinite(resolvedOverride) && resolvedOverride > 0 && { unitPrice: resolvedOverride })
+        ...(Number.isFinite(resolvedOverride) &&
+          resolvedOverride > 0 && { unitPrice: resolvedOverride }),
       })
       const nextCart = data.cart ?? null
       setCart(nextCart)

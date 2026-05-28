@@ -614,7 +614,9 @@ export default function SupportPage() {
 
   useEffect(() => {
     if (!bookingIdParam || selectedId) return undefined
-    const matchedTicket = ticketList.find(ticket => String(ticket.bookingId ?? '') === bookingIdParam)
+    const matchedTicket = ticketList.find(
+      ticket => String(ticket.bookingId ?? '') === bookingIdParam
+    )
     if (!matchedTicket) return undefined
     const frameId = requestAnimationFrame(() => setSelectedId(matchedTicket.id))
     return () => cancelAnimationFrame(frameId)

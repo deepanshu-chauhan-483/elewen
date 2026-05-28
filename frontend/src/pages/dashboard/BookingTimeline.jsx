@@ -142,6 +142,8 @@ function normalizeTimelineItem(item) {
     id: item?.id ?? `${item?.title}-${item?.timelineDate ?? ''}`,
     title: item?.title ?? 'Timeline Step',
     description: item?.description ?? '',
+    stageNote: String(item?.stageNote ?? '').trim(),
+    stageNoteDate: item?.stageNoteCreatedAt ? formatDashboardDate(item.stageNoteCreatedAt) : '',
     date: item?.timelineDate ? formatDashboardDate(item.timelineDate) : '-',
     status,
   }
@@ -503,6 +505,19 @@ export default function BookingTimeline() {
                       </h3>
                     </div>
                     <p className="text-xs leading-relaxed text-[#8C7B6B]">{item.description}</p>
+                    {item.stageNote ? (
+                      <div className="mt-3 rounded-xl border border-[#EDE5DA] bg-white/80 px-3 py-2.5">
+                        <p className="text-[11px] font-medium tracking-[0.14em] text-[#A89080] uppercase">
+                          Stage note
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-[#3D2B1A]">
+                          {item.stageNote}
+                        </p>
+                        {item.stageNoteDate ? (
+                          <p className="mt-1 text-[11px] text-[#A89080]">{item.stageNoteDate}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
 
                     {activeBooking?.status === 'pre_event' &&
                     item.title === 'Pre-event Final Checks' &&

@@ -311,9 +311,7 @@ function BartendingAddonCard({ addon, isSelected = false, onToggle, onViewDetail
       </div>
 
       <div className="flex h-[90px] w-[72px] flex-col gap-2 mx-auto">
-        <p
-          className={`text-[12px] font-semibold ${isSelected ? 'text-white' : 'text-[#7B330B]'}`}
-        >
+        <p className={`text-[12px] font-semibold ${isSelected ? 'text-white' : 'text-[#7B330B]'}`}>
           {formatCurrency(addon.price)}
         </p>
         <p
@@ -726,7 +724,7 @@ export default function BartendingSinglePackagePage() {
 
   return (
     <SingleProductPageContent
-    title={pkg.title || 'Bartending Package'}
+      title={pkg.title || 'Bartending Package'}
       price={displayPrice}
       intro=""
       hideHeaderPrice

@@ -24,7 +24,12 @@ function AddonIllustration({ name = '' }) {
     return (
       <svg width="64" height="64" viewBox="0 0 42 42" fill="none" aria-hidden="true">
         <path d="M11 10h20l-10 10-10-10Z" stroke="currentColor" strokeWidth="1.3" />
-        <path d="M21 20v10M16 33h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <path
+          d="M21 20v10M16 33h10"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
         <path d="m27 8 4-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
       </svg>
     )
@@ -77,7 +82,13 @@ function AddonIllustration({ name = '' }) {
 function BackArrow() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M12.5 15L7.5 10L12.5 5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -129,7 +140,9 @@ export default function BartendingAddonDetailPage() {
           <BackArrow />
         </button>
         <div className="min-w-0">
-          <p className="truncate text-[12px] text-[#9D7B58]">{pkg?.title ?? 'Bartending Package'}</p>
+          <p className="truncate text-[12px] text-[#9D7B58]">
+            {pkg?.title ?? 'Bartending Package'}
+          </p>
           <h1 className="truncate text-[16px] font-medium text-[#2D2D2D]">{addon.name}</h1>
         </div>
       </div>

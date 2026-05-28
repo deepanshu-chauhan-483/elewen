@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import DateTimePicker from '../components/common/DateTimePicker'
 import { getFieldErrors } from '../lib/formErrors'
 import { useConsultation } from '../hooks/useConsultation'
+import { getDateInputMin } from '../lib/dateInput'
 
 const consultationFeatures = [
   {
@@ -29,14 +31,6 @@ const RevealLine = ({ children, delay, className = '' }) => (
     </span>
   </span>
 )
-
-function getMinEventDateForConsultation() {
-  const today = new Date()
-  const minDate = new Date(today)
-  minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
-
-  return minDate.toISOString().split('T')[0]
-}
 
 const BookConsultationPage = () => {
   const pageRef = useRef(null)
@@ -319,12 +313,12 @@ const BookConsultationPage = () => {
                   {fieldErrors.event_type}
                 </p>
               ) : null}
-              <input
+              <DateTimePicker
                 type="date"
                 name="event_date"
                 value={form.event_date}
                 onChange={handleChange}
-                min={getMinEventDateForConsultation()}
+                min={getDateInputMin()}
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />

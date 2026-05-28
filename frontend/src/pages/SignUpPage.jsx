@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import { useToast } from '../components/common/useToast'
 import { getFieldErrors } from '../lib/formErrors'
 import { authRegister, setStoredJwt } from '../lib/api'
 
@@ -21,6 +22,7 @@ const CheckEmailIcon = () => (
 
 export default function SignUpPage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [searchParams] = useSearchParams()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -56,11 +58,13 @@ export default function SignUpPage() {
         password,
       })
       if (data.pending) {
+        showToast({ message: 'Sign up successful. Please check your email.' })
         setEmailPending(true)
         return
       }
       setStoredJwt(data.jwt)
       localStorage.setItem('elewen_user', JSON.stringify(data.user))
+      showToast({ message: 'Sign up successful.' })
       navigate('/', { replace: true })
     } catch (err) {
       const nextFieldErrors = getFieldErrors(err, {

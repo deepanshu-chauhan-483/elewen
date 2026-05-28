@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import DateTimePicker from '../../components/common/DateTimePicker'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardErrorState } from '../../components/dashboard/DashboardUI'
 import {
@@ -14,6 +15,7 @@ import {
   matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
+import { getDateInputMin } from '../../lib/dateInput'
 
 // ---------------------------------------------------------------------------
 // Shared primitives — mirrored from admin SampleTastePage
@@ -303,9 +305,7 @@ function SampleAccordionCard({ sample, decisionMutation, toggleSavedPackage, pen
                 <div className="flex flex-col items-end">
                   <p className="text-[11px] text-[#767676]">VENDORS</p>
                   <p className="font-medium text-[#2D2D2D]">
-                    {sample.vendors?.length
-                      ? `${sample.vendors.length} selected`
-                      : 'Unassigned'}
+                    {sample.vendors?.length ? `${sample.vendors.length} selected` : 'Unassigned'}
                   </p>
                 </div>
                 <div className="flex flex-col items-end">
@@ -524,10 +524,11 @@ export default function SampleTasteBooking() {
     status,
   })
 
-  // Reset status filter when switching tabs
-  useEffect(() => {
+  const handleTabChange = nextTab => {
+    if (nextTab === activeTab) return
+    setActiveTab(nextTab)
     setStatus('')
-  }, [activeTab])
+  }
 
   const ongoingCount = useMemo(
     () => samples.filter(s => ONGOING_STATUSES.includes(s.status?.toLowerCase())).length,
@@ -559,8 +560,18 @@ export default function SampleTasteBooking() {
       }
 
       // Expiry status
-      if (expiryStatus === 'active' && typeof s.daysUntilExpiry === 'number' && s.daysUntilExpiry <= 0) return false
-      if (expiryStatus === 'expired' && typeof s.daysUntilExpiry === 'number' && s.daysUntilExpiry > 0) return false
+      if (
+        expiryStatus === 'active' &&
+        typeof s.daysUntilExpiry === 'number' &&
+        s.daysUntilExpiry <= 0
+      )
+        return false
+      if (
+        expiryStatus === 'expired' &&
+        typeof s.daysUntilExpiry === 'number' &&
+        s.daysUntilExpiry > 0
+      )
+        return false
 
       // Vendor count
       if (vendorCount === '1' && (s.vendors?.length ?? 0) !== 1) return false
@@ -630,7 +641,7 @@ export default function SampleTasteBooking() {
           <button
             key={tab.key}
             type="button"
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === tab.key
                 ? 'bg-[#591902] text-white shadow-sm'
@@ -640,9 +651,7 @@ export default function SampleTasteBooking() {
             {tab.label}
             <span
               className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                activeTab === tab.key
-                  ? 'bg-white/20 text-white'
-                  : 'bg-[#E8E2DA] text-[#6B7280]'
+                activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-[#E8E2DA] text-[#6B7280]'
               }`}
             >
               {tab.count}
@@ -717,8 +726,9 @@ export default function SampleTasteBooking() {
             <label className="text-[11px] font-medium tracking-[0.14em] text-[#767676] uppercase">
               Delivery From
             </label>
-            <input
+            <DateTimePicker
               type="date"
+              min={getDateInputMin()}
               value={deliveryDateFrom}
               onChange={e => setDeliveryDateFrom(e.target.value)}
               className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
@@ -729,8 +739,9 @@ export default function SampleTasteBooking() {
             <label className="text-[11px] font-medium tracking-[0.14em] text-[#767676] uppercase">
               Delivery To
             </label>
-            <input
+            <DateTimePicker
               type="date"
+              min={getDateInputMin()}
               value={deliveryDateTo}
               onChange={e => setDeliveryDateTo(e.target.value)}
               className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"

@@ -66,6 +66,8 @@ const DECOR_CONTENT = {
   ],
 }
 
+const DECOR_ADDITIONAL_INFO_KEY = '__additional_info__'
+
 function uniqueValues(values) {
   return [...new Set((Array.isArray(values) ? values : []).filter(Boolean))]
 }
@@ -577,6 +579,14 @@ function normalizeSelectedOptions(selectedOptions = {}) {
   )
 }
 
+function getDecorAdditionalInfo(selectedOptions = {}) {
+  const value =
+    selectedOptions?.[DECOR_ADDITIONAL_INFO_KEY] ??
+    selectedOptions?.[DECOR_ADDITIONAL_INFO_KEY.toUpperCase()]
+
+  return String(value ?? '').trim()
+}
+
 function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = false } = {}) {
   const selectedSections = (customization?.data?.sections ?? []).filter(
     section => section?.type === 'choice-row'
@@ -724,6 +734,7 @@ function DecorMessageField({ value, onChange }) {
           value={value}
           onChange={event => onChange(event.target.value)}
           rows={2}
+          maxLength={250}
           placeholder="Write Message"
           className="w-full resize-none border-0 bg-transparent p-0 text-[12px] leading-[1.5] text-[#591902] outline-none placeholder:text-[#9F8F7E]"
         />
@@ -884,19 +895,26 @@ export default function DecorSinglePackagePage() {
     if (!pkg) return
 
     const selectedOptionsFromSearch = getSelectedOptionsFromSearchParams(searchParams)
+    const additionalInfoFromSearch = getDecorAdditionalInfo(selectedOptionsFromSearch)
 
     setCustomizations(prev => {
       let hasChanges = false
 
       const nextCustomizations = prev.map(customization => {
         const currentSections = customization?.data?.sections ?? []
+        const currentMessage = String(customization?.data?.message ?? '')
         const mergedSections = mergeTemplateSections(sectionTemplate, currentSections)
         const nextSections =
           currentSections.length === 0
             ? applySelectedOptionsToSections(mergedSections, selectedOptionsFromSearch)
             : mergedSections
 
-        if (serializeSections(nextSections) === serializeSections(currentSections)) {
+        const isMessageUnchanged = currentMessage === additionalInfoFromSearch
+
+        if (
+          serializeSections(nextSections) === serializeSections(currentSections) &&
+          isMessageUnchanged
+        ) {
           return customization
         }
 
@@ -907,6 +925,7 @@ export default function DecorSinglePackagePage() {
           data: {
             ...customization.data,
             sections: nextSections,
+            message: additionalInfoFromSearch,
           },
         }
       })
@@ -984,6 +1003,8 @@ export default function DecorSinglePackagePage() {
   }
 
   const handleMessageChange = value => {
+    const nextValue = String(value ?? '').slice(0, 250)
+
     setCustomizations(prev =>
       prev.map((customization, customizationIndex) =>
         customizationIndex === activeIndex
@@ -991,7 +1012,7 @@ export default function DecorSinglePackagePage() {
               ...customization,
               data: {
                 ...customization.data,
-                message: value,
+                message: nextValue,
               },
             }
           : customization
@@ -1021,9 +1042,18 @@ export default function DecorSinglePackagePage() {
 
     setIsAddingToCart(true)
 
-    const selectedOpts = buildDecorSelectedOptions(activeCustomization, {
+    const baseSelectedOpts = buildDecorSelectedOptions(activeCustomization, {
       useFirstChoiceFallback: true,
     })
+    const trimmedMessage = String(message ?? '')
+      .trim()
+      .slice(0, 250)
+    const selectedOpts = trimmedMessage
+      ? {
+          ...baseSelectedOpts,
+          [DECOR_ADDITIONAL_INFO_KEY]: trimmedMessage,
+        }
+      : baseSelectedOpts
 
     try {
       if (cartItemId) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   DashboardErrorState,
   DashboardLoadingState,
@@ -7,6 +7,7 @@ import {
 } from '../../components/dashboard/DashboardUI'
 import { useDashboardSession, useDashboardUpdateProfile } from '../../hooks/useDashboardData'
 import { getInitials } from '../../components/dashboard/dashboardUtils'
+import DateTimePicker from '../../components/common/DateTimePicker'
 
 function buildFullName(session) {
   return (
@@ -45,8 +46,10 @@ function ProfileField({ label, children }) {
 }
 
 function ProfileInput({ value, onChange, type = 'text', disabled = false, placeholder = '' }) {
+  const InputComponent = type === 'date' || type === 'time' ? DateTimePicker : 'input'
+
   return (
-    <input
+    <InputComponent
       type={type}
       value={value}
       onChange={onChange}
@@ -72,12 +75,6 @@ export default function ProfilePage() {
   const fullName = useMemo(() => buildFullName(session), [session])
   const photoUrl = session?.profile?.photoUrl || null
   const displayForm = isEditing ? form : initialForm
-
-  useEffect(() => {
-    if (!isEditing) {
-      setForm(initialForm)
-    }
-  }, [initialForm, isEditing])
 
   if (sessionLoading) {
     return <DashboardLoadingState title="Loading your profile..." />

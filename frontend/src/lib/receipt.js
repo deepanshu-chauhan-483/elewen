@@ -128,6 +128,11 @@ export function getReceiptItemTitle(title = '') {
   return displayTitle || rawTitle
 }
 
+function getReceiptAdditionalInfo(title = '', fallbackAdditionalInfo = '') {
+  const parsed = parseBookingItemTitle(String(title ?? ''))
+  return String(parsed?.additionalInfo ?? fallbackAdditionalInfo ?? '').trim()
+}
+
 export function getReceiptPaymentSummary({
   booking = null,
   payment = null,
@@ -217,6 +222,7 @@ export function buildReceiptData({
           id: item?.id ?? `${item?.title ?? 'item'}-${item?.totalPrice ?? 0}`,
           title: getPackageLineLabel(item?.title, getReceiptItemTitle(item?.title)),
           subtitle: getPackageLineSubtitle(item?.title),
+          additionalInfo: getReceiptAdditionalInfo(item?.title),
           amount: pickNumber(item?.totalPrice),
         }))
       : Array.isArray(checkoutInfo?.selectedItems)
@@ -224,6 +230,7 @@ export function buildReceiptData({
             id: item?.id ?? `${item?.title ?? 'item'}-${item?.amount ?? 0}`,
             title: getPackageLineLabel(item?.title, getReceiptItemTitle(item?.title)),
             subtitle: getPackageLineSubtitle(item?.title),
+            additionalInfo: getReceiptAdditionalInfo(item?.title, item?.additionalInfo),
             amount: pickNumber(item?.amount),
           }))
         : []
@@ -248,6 +255,10 @@ export function buildReceiptData({
     pinCode: checkoutInfo?.pinCode || booking?.pinCode || 'Not provided',
     guestCount: checkoutInfo?.guestCount ?? booking?.guestCount ?? 'Not provided',
     specialRequest: checkoutInfo?.specialRequest || booking?.specialRequest || 'Not provided',
+    additionalInfo: lineItems
+      .map(item => String(item?.additionalInfo ?? '').trim())
+      .filter(Boolean)
+      .join(' | '),
     packageTitle,
     lineItems,
     payments,
@@ -515,6 +526,7 @@ function createReceiptPdf(receiptData) {
     { label: 'Address', value: receiptData.eventAddress },
     { label: 'PIN Code', value: receiptData.pinCode || 'Not provided' },
     { label: 'Special Request', value: receiptData.specialRequest || 'Not provided' },
+    { label: 'Additional Info', value: receiptData.additionalInfo || 'Not provided' },
   ])
 
   y += 12
@@ -523,7 +535,13 @@ function createReceiptPdf(receiptData) {
     ['Item', 'Amount'],
     receiptData.lineItems.length
       ? receiptData.lineItems.map(item => [
-          item.subtitle ? `${item.title}\n${item.subtitle}` : item.title,
+          item.additionalInfo
+            ? [item.title, item.subtitle, `Additional Info: ${item.additionalInfo}`]
+                .filter(Boolean)
+                .join('\n')
+            : item.subtitle
+              ? `${item.title}\n${item.subtitle}`
+              : item.title,
           formatReceiptCurrency(item.amount),
         ])
       : [

@@ -208,7 +208,9 @@ function BookingCard({ booking }) {
               }
               className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {updateStatusMutation.isPending ? 'Updating...' : `Move to ${stages.find(stage => stage.key === nextStage)?.label || nextStage}`}
+              {updateStatusMutation.isPending
+                ? 'Updating...'
+                : `Move to ${stages.find(stage => stage.key === nextStage)?.label || nextStage}`}
             </button>
           ) : null}
         </div>

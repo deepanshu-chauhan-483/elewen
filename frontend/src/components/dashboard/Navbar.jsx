@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { DASHBOARD } from '../../constants/dashboard'
 import { useDashboardSearch } from './useDashboardSearch'
+import { useToast } from '../common/useToast'
 import {
   useDashboardClearAllNotifications,
   useDashboardLogout,
@@ -113,11 +114,14 @@ const ActionButton = ({ children, to, onClick, className = '', ariaLabel, disabl
 
 const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const logoutMutation = useDashboardLogout()
 
   const handleLogout = async () => {
     if (logoutMutation.isPending) return
+    sessionStorage.setItem('elewen_logout_redirect_home', 'true')
     await logoutMutation.mutateAsync()
+    showToast({ message: 'Logout successful.' })
     navigate('/', { replace: true })
   }
 
@@ -170,11 +174,14 @@ const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
 
 const MobileBottomActions = () => {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const logoutMutation = useDashboardLogout()
 
   const handleLogout = async () => {
     if (logoutMutation.isPending) return
+    sessionStorage.setItem('elewen_logout_redirect_home', 'true')
     await logoutMutation.mutateAsync()
+    showToast({ message: 'Logout successful.' })
     navigate('/', { replace: true })
   }
 

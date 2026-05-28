@@ -175,7 +175,7 @@ const LandingPackageCarouselCard = ({
       const availableWidth = viewport.clientWidth
 
       if (!availableHeight || !availableWidth) {
-        setVisibleTagCount(tags.length)
+        setVisibleTagCount(isDesktopViewport ? tags.length : Math.min(tags.length, 1))
         return
       }
 
@@ -213,7 +213,13 @@ const LandingPackageCarouselCard = ({
         moreNode.style.display = 'none'
       }
 
-      setVisibleTagCount(fittedCount)
+      const nextVisibleCount = isDesktopViewport
+        ? fittedCount
+        : tags.length > 0
+          ? Math.max(fittedCount, 1)
+          : 0
+
+      setVisibleTagCount(nextVisibleCount)
     }
 
     if (showAllIncludes) {
@@ -1410,7 +1416,6 @@ const WhatToPlanSection = () => {
                 />
               ))}
             </div>
-
             {/* Mobile View All Button */}
             <div className="flex md:hidden justify-center pb-12 reveal-on-scroll">
               <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
@@ -1883,7 +1888,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       ref={containerRef}
       data-nav-theme="dark"
       className="relative w-full bg-[#591902] py-40 overflow-hidden font-sans text-white"
-      style={{ scrollMarginTop: '100px' }}
+      // style={{ scrollMarginTop: '100px' }}
     >
       <h2 className="text-[24px] md:text-[61px] text-center mb-32 tracking-wide font-serif font-display reveal-heading">
         <span className="reveal-wrapper">
@@ -2507,14 +2512,15 @@ const ChecklistSection = () => {
       ? (window.innerWidth / (2 * gate.offsetWidth * frameHalfWidthRatio)) * 1.28
       : 6.4
 
-    const scaleEnd = isMobile ? 4.85 : Math.max(5.9, requiredScaleToClearViewport)
-    const gateLiftY = isMobile ? -420 : -320
-    const scrollEnd = isMobile ? 1560 : 1830
+    const scaleEnd = isMobile ? 5.75 : Math.max(5.9, requiredScaleToClearViewport)
+    const gateLiftY = isMobile ? -760 : -320
+    const scrollEnd = isMobile ? 2280 : 1830
     const scrubVal = 1.15
     const doorOpenEnd = 1.32
-    const insideBgRevealStart = doorOpenEnd - 0.08
-    const gateFadeStart = doorOpenEnd + 0.04
-    const howItWorksStart = doorOpenEnd + 0.1
+    // Mobile needs a clean full-screen beige handoff before the How It Works panel arrives.
+    const insideBgRevealStart = isMobile ? doorOpenEnd - 0.58 : doorOpenEnd - 0.08
+    const gateFadeStart = isMobile ? doorOpenEnd - 0.06 : doorOpenEnd + 0.04
+    const howItWorksStart = isMobile ? doorOpenEnd + 0.16 : doorOpenEnd + 0.1
 
     const getMobileStartTrigger = () => {
       if (!gate) return 'bottom bottom'
@@ -2529,8 +2535,13 @@ const ChecklistSection = () => {
       requestAnimationFrame(() => ScrollTrigger.refresh())
     }
 
+    gsap.set(gate, {
+      transformOrigin: isMobile ? '50% 0%' : '50% 50%',
+      opacity: 1,
+    })
+    gsap.set(gateArea, { backgroundColor: isMobile ? '#F6D69D' : 'transparent' })
     gsap.set(insideBg, { opacity: 0 })
-    gsap.set(howItWorks, { yPercent: 112, opacity: 1 })
+    gsap.set(howItWorks, { yPercent: isMobile ? 102 : 104, opacity: 1 })
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -2573,11 +2584,10 @@ const ChecklistSection = () => {
       howItWorks,
       {
         yPercent: 0,
-        duration: 1.12,
+        duration: isMobile ? 0.96 : 1.12,
         ease: 'power2.out',
         onComplete: () => {
           activateHowItWorks()
-          ScrollTrigger.refresh()
         },
       },
       howItWorksStart
@@ -2950,31 +2960,31 @@ const ChecklistSection = () => {
       </div>
 
       {/* Door section unchanged */}
-      <div className="door-section relative w-full z-10  overflow-hidden">
+      <div className="door-section relative z-10 w-full overflow-x-hidden overflow-y-visible md:overflow-hidden">
         <div
           ref={gateAreaRef}
-          className="door-section__pin relative w-full z-20 h-[100svh] md:h-[100dvh] "
+          className="door-section__pin relative z-20 w-full"
           style={{ position: 'relative' }}
         >
           <div
             ref={insideBgRef}
-            className="absolute inset-0 bg-[#F6D69D] opacity-0 pointer-events-none"
+            className="door-section__inside-bg pointer-events-none absolute bg-[#F6D69D] opacity-0"
           />
 
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-start justify-center md:items-center">
             <div
               ref={gateRef}
               className="door-section__gate w-full h-full"
               style={{ transformOrigin: 'center center', willChange: 'transform' }}
             >
-              <div className="door-section__gate-inner h-full w-full origin-center lg:my-5 flex items-start justify-center leading-none">
+              <div className="door-section__gate-inner  md:mt-4  h-full w-full origin-center flex items-start justify-center leading-none">
                 <CelebrationDoor className="block w-full h-full" />
               </div>
             </div>
           </div>
         </div>
 
-        <div ref={howItWorksRef} className="door-section__overlay relative z-20 -mt-[100dvh]">
+        <div ref={howItWorksRef} className="door-section__overlay relative z-20 bg-[#591902]">
           <HowItWorksSection isVisible={howItWorksVisible} />
         </div>
       </div>
@@ -2985,7 +2995,6 @@ const ChecklistSection = () => {
   )
 }
 
-// Local fallback images â€” used until Strapi media is uploaded
 // Order matches PACKAGES_FALLBACK in src/data/packages.js
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg2, pkgImg3],

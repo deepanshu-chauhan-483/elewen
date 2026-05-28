@@ -5,6 +5,7 @@ import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import ScallopBulbCurtain from './common/ScallopBulbCurtain'
 import { authLogout, clearStoredJwt, getStoredJwt } from '../lib/api'
 import { useCart } from '../hooks/useCart'
+import { useToast } from './common/useToast'
 
 const BASE_LINKS = [
   { label: 'Events', to: '/event-flow/category' },
@@ -220,6 +221,7 @@ function CartButton({ count, className, iconColor }) {
 const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) => {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { pathname } = useLocation()
   const isHome = pathname === '/'
   // const isAbout = pathname === '/about'
@@ -350,9 +352,11 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     } catch {
       // Ignore logout API failures and continue clearing local session state.
     }
+    sessionStorage.setItem('elewen_logout_redirect_home', 'true')
     clearStoredJwt()
     setIsLoggedIn(false)
     setOpen(false)
+    showToast({ message: 'Logout successful.' })
     navigate('/')
   }
 

@@ -493,16 +493,12 @@ function CustomerPayments({ processRefundMutation }) {
                       <GhostBtn
                         onClick={() =>
                           window.open(
-                            buildMailtoHref(
-                              b.customer?.email,
-                              `Elewen payment reminder ${b.id}`,
-                              [
-                                `Hi ${b.customer?.name || 'there'},`,
-                                '',
-                                `This is a reminder for the pending booking balance of ${formatCurrency(b.outstandingAmount)}.`,
-                                'Please connect with the Elewen team if you need payment assistance.',
-                              ]
-                            ),
+                            buildMailtoHref(b.customer?.email, `Elewen payment reminder ${b.id}`, [
+                              `Hi ${b.customer?.name || 'there'},`,
+                              '',
+                              `This is a reminder for the pending booking balance of ${formatCurrency(b.outstandingAmount)}.`,
+                              'Please connect with the Elewen team if you need payment assistance.',
+                            ]),
                             '_self'
                           )
                         }
@@ -1195,19 +1191,15 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
     )
   }
 
-  const shareMailto = buildMailtoHref(
+  const shareMailto = buildMailtoHref('', `Elewen offer: ${coupon.code}`, [
+    'Hello,',
     '',
-    `Elewen offer: ${coupon.code}`,
-    [
-      'Hello,',
-      '',
-      `Use coupon code ${coupon.code} for ${
-        coupon.discount_type === 'percentage'
-          ? `${coupon.discount_value}% off`
-          : `${formatCurrency(coupon.discount_value)} off`
-      }.`,
-    ]
-  )
+    `Use coupon code ${coupon.code} for ${
+      coupon.discount_type === 'percentage'
+        ? `${coupon.discount_value}% off`
+        : `${formatCurrency(coupon.discount_value)} off`
+    }.`,
+  ])
 
   return (
     <div className="rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 space-y-3">

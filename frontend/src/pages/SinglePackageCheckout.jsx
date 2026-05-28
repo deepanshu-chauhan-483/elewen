@@ -4,6 +4,7 @@ import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
+const CART_ADDITIONAL_INFO_KEY = '__additional_info__'
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -46,20 +47,26 @@ function parseCartItemTitle(value = '') {
       itemType: 'package',
       addonTitle: '',
       parentPackageId: '',
+      additionalInfo: '',
     }
   }
 
   try {
     const parsed = JSON.parse(metaPart)
+    const parsedSelectedOptions =
+      parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
+        ? parsed.selectedOptions
+        : {}
+
     return {
       displayTitle: displayTitle || rawTitle,
-      selectedOptions:
-        parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
-          ? parsed.selectedOptions
-          : {},
+      selectedOptions: parsedSelectedOptions,
       itemType: parsed?.itemType ?? 'package',
       addonTitle: parsed?.addonTitle ?? '',
       parentPackageId: parsed?.parentPackageId ?? '',
+      additionalInfo: String(
+        parsed?.additionalInfo ?? parsedSelectedOptions?.[CART_ADDITIONAL_INFO_KEY] ?? ''
+      ).trim(),
     }
   } catch {
     return {
@@ -68,12 +75,25 @@ function parseCartItemTitle(value = '') {
       itemType: 'package',
       addonTitle: '',
       parentPackageId: '',
+      additionalInfo: '',
     }
   }
 }
 
+function isAdditionalInfoOptionLabel(label = '') {
+  return (
+    String(label ?? '')
+      .trim()
+      .toLowerCase() === CART_ADDITIONAL_INFO_KEY
+  )
+}
+
 function getSelectedElements(item) {
-  const selectedOptions = item?.selectedOptions ?? {}
+  const selectedOptions = Object.fromEntries(
+    Object.entries(item?.selectedOptions ?? {}).filter(
+      ([label, value]) => !isAdditionalInfoOptionLabel(label) && Boolean(value)
+    )
+  )
   const selectedElements = Object.entries(selectedOptions)
     .map(([label, value]) => ({
       title: value,
@@ -306,6 +326,7 @@ export default function SinglePackageCheckout() {
       itemType: parsedTitle.itemType,
       addonTitle: parsedTitle.addonTitle,
       parentPackageId: parsedTitle.parentPackageId,
+      additionalInfo: parsedTitle.additionalInfo,
       packageData: packageLookup.get(String(cartItem.packageId)) ?? null,
     }
   }, [cart?.items, itemId, packageLookup])
@@ -323,6 +344,7 @@ export default function SinglePackageCheckout() {
           itemType: parsedTitle.itemType,
           addonTitle: parsedTitle.addonTitle,
           parentPackageId: parsedTitle.parentPackageId,
+          additionalInfo: parsedTitle.additionalInfo,
         }
       })
       .filter(entry => {
@@ -347,6 +369,7 @@ export default function SinglePackageCheckout() {
   const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
   const suggestedPackages = getSuggestedAddonsWithPricing(item)
   const packageQuantity = getCartItemQuantity(item)
+  const additionalInfo = String(item?.additionalInfo ?? '').trim()
   const addonTotal = relatedAddonItems.reduce(
     (sum, addonItem) => sum + Number(addonItem.totalPrice ?? 0),
     0
@@ -471,6 +494,21 @@ export default function SinglePackageCheckout() {
               </div>
             </div>
           </div>
+
+          {additionalInfo ? (
+            <div className="overflow-hidden rounded-xl border border-[#95796066]">
+              <div className="bg-[#F8F4ED] px-4 py-3">
+                <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+                  Additional Info
+                </h3>
+              </div>
+              <div className="p-4">
+                <p className="text-sm leading-[1.6] text-[#2C2C2C] whitespace-pre-wrap">
+                  {additionalInfo}
+                </p>
+              </div>
+            </div>
+          ) : null}
           <SuggestedPackages
             packages={suggestedPackages}
             onAdd={handleAddSuggestedAddon}

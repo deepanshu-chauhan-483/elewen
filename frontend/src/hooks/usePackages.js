@@ -268,9 +268,13 @@ function buildPricingRuleList(items = []) {
       const label = String(
         item?.value ?? item?.title ?? item?.name ?? item?.label ?? item?.hours_range ?? ''
       ).trim()
-      const modifierType = String(item?.modifier_type ?? '').trim().toLowerCase()
+      const modifierType = String(item?.modifier_type ?? '')
+        .trim()
+        .toLowerCase()
       const modifierValue = Number(item?.modifier_value ?? 0)
-      const ruleType = String(item?.rule_type ?? '').trim().toLowerCase()
+      const ruleType = String(item?.rule_type ?? '')
+        .trim()
+        .toLowerCase()
 
       return {
         id: item?.id != null ? String(item.id) : `${label || 'pricing-rule'}-${index}`,
