@@ -350,7 +350,8 @@ const EventDashboardSection = ({ section }) => {
   const features = Array.isArray(section?.features) ? section.features : DASHBOARD_FEATURES
 
   return (
-    <section className="relative flex w-full justify-center overflow-hidden bg-[#FAFAFA] px-6 py-16 pt-0 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
+    <section className="relative flex w-full justify-center overflow-hidden bg-[#FAFAFA] px-6 py-16 pt-0 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px] -mt-px md:mt-0">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[2px] bg-[#E9E2DA] md:hidden" />
       <ScallopBulbCurtain
         count={10}
         mobileCount={6}
@@ -358,7 +359,7 @@ const EventDashboardSection = ({ section }) => {
         innerColor="#E9E2DA"
         wireColorClass="bg-[#6C2205]/40"
         fitToWidth
-        className="absolute inset-x-0 top-0 flex w-full pointer-events-none z-10"
+        className="absolute inset-x-0 md:top-0 -top-px flex w-full pointer-events-none z-10"
       />
 
       <div className="relative flex w-full max-w-[1180px] flex-col gap-3 pt-[132px] lg:flex-row lg:items-center lg:gap-6 lg:pt-[170px]">

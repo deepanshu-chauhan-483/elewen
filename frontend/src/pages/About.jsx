@@ -342,7 +342,7 @@ const About = () => {
         </div>
 
         {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
-        <section className="relative -mt-px md:mt-0 w-full bg-[#A5A687] overflow-hidden font-sans">
+        <section className="relative  w-full bg-[#A5A687] overflow-hidden font-sans">
           <div ref={sectionRef} className="relative w-full max-h-[4550px] min-[661px]:max-h-none">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
@@ -354,7 +354,7 @@ const About = () => {
               style={{ right: '5%', top: '30%', transform: 'rotate(-37.82deg)' }}
             />
 
-            <div className="absolute -top-px min-[661px]:top-0 left-0 flex w-full pointer-events-none z-10">
+            <div className="absolute -top-[2px] min-[661px]:top-0 left-0 flex w-full pointer-events-none z-10">
               {visibleScallops.map((_, i, arr) => (
                 <div key={i} className="relative h-[45px] flex-1 min-[661px]:h-[90px]">
                   <div
@@ -375,17 +375,17 @@ const About = () => {
                       }}
                     >
                       <div
-                        className={`w-[1px] ${i % 2 === 0 ? 'h-[10px] min-[661px]:h-[14px]' : 'h-[4px] min-[661px]:h-[5px]'} bg-[#591902]/40`}
+                        className={`w-[1px] ${i % 2 === 0 ? 'h-0 min-[661px]:h-[14px]' : 'h-0 min-[661px]:h-[5px]'} bg-[#591902]/40`}
                       />
                       <div className="relative flex flex-col items-center -mt-3 min-[661px]:-mt-4">
                         <img
                           src={i % 2 === 0 ? bulb1 : bulb2}
                           alt="Light"
-                          className="w-[20px] min-[661px]:w-[32px] h-auto relative z-10"
+                          className="w-[20px] min-[661px]:w-[32px] h-auto relative z-10 min-[661px]:[clip-path:inset(10px_0_0_0)] min-[661px]:-mt-[5px] min-[661px]:mb-1"
                         />
 
                         <div
-                          className={`absolute left-1/2 top-full -translate-y-1 min-[661px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
+                          className={`absolute left-1/2 top-full  -translate-y-1 min-[661px]:-translate-y-2 w-[44px] h-[44px] opacity-40 pointer-events-none animate-beam ${
                             i % 2 === 0
                               ? 'min-[661px]:w-[76px] min-[661px]:h-[78px] blur-[6px] min-[661px]:blur-[8px]'
                               : 'min-[661px]:w-[76px] min-[661px]:h-[59px] blur-[4px]'
@@ -784,16 +784,16 @@ const About = () => {
               </div>
 
               {/* --- SUB-TASK 5: WHY CHOOSE ELEWEN --- */}
-              <div className=" -mx-6 px-6 py-16 bg-[#E8DDC6] min-[661px]:mt-40 min-[661px]:bg-transparent min-[661px]:mx-0 min-[661px]:px-0 min-[661px]:py-20 min-[661px]:flex min-[661px]:flex-col min-[661px]:items-start">
+              <div className=" -mx-6 px-6 pt-9 pb-14 bg-[#E8DDC6] min-[661px]:mt-40 min-[661px]:bg-transparent min-[661px]:mx-0 min-[661px]:px-0 min-[661px]:py-20 min-[661px]:flex min-[661px]:flex-col min-[661px]:items-start">
                 <h2
-                  className="text-[#591902] min-[661px]:text-white text-[24px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center min-[661px]:text-left"
+                  className="text-[#1C1C1C] min-[661px]:text-white text-[24px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center min-[661px]:text-left"
                   style={{ fontFamily: "'Malgin', serif" }}
                 >
                   <span className="reveal-wrapper block">
                     <span className="reveal-text">{wc.heading ?? 'Why Choose Elewen'}</span>
                   </span>
                 </h2>
-                <p className="mt-4 min-[661px]:mt-6 w-full max-w-[520px] mx-auto min-[661px]:mx-0 text-[#591902] min-[661px]:text-white text-[14px] min-[661px]:text-[16px] leading-[1.5] opacity-80 text-center min-[661px]:text-left">
+                <p className="mt-6 min-[661px]:mt-6 w-full max-w-[340px] min-[661px]:max-w-[520px] mx-auto min-[661px]:mx-0 text-[#4F4F4F] min-[661px]:text-white text-[14px] min-[661px]:text-[16px] leading-[1.45] min-[661px]:leading-[1.5] opacity-100 min-[661px]:opacity-80 text-center min-[661px]:text-left">
                   <span className="reveal-wrapper block">
                     <span className="reveal-text" style={{ '--delay': '0.1s' }}>
                       {wc.subheading ??
@@ -802,7 +802,7 @@ const About = () => {
                   </span>
                 </p>
 
-                <div className="mt-12 grid grid-cols-2 min-[661px]:grid-cols-4 justify-items-center gap-x-8 min-[661px]:gap-x-6 lg:gap-x-8 gap-y-12 min-[661px]:gap-y-12 min-[661px]:w-fit">
+                <div className="mt-12 grid grid-cols-2 min-[661px]:grid-cols-4 justify-items-center gap-x-8 min-[661px]:gap-x-6 lg:gap-x-8 gap-y-16 min-[661px]:gap-y-12 min-[661px]:w-fit">
                   {[
                     {
                       key: 'e47',
@@ -818,7 +818,7 @@ const About = () => {
                     },
                     {
                       key: 'e49',
-                      mobileOrderClass: 'order-3',
+                      mobileOrderClass: 'order-2',
                       left: 217,
                       iconW: 160,
                       iconH: 134,
@@ -830,12 +830,12 @@ const About = () => {
                     },
                     {
                       key: 'e48',
-                      mobileOrderClass: 'order-2',
+                      mobileOrderClass: 'order-3',
                       left: 434,
-                      iconW: 149,
-                      iconH: 152,
-                      iconLeft: 14,
-                      iconTop: 9,
+                      iconW: 170,
+                      iconH: 174,
+                      iconLeft: 26,
+                      iconTop: -4,
                       labelW: 174,
                       labelH: 75,
                       label: wc.features?.[2]?.label ?? "A few clicks and you're done planning",
@@ -860,7 +860,15 @@ const About = () => {
                         className={`anim-element slide-from-bottom ${item.mobileOrderClass} min-[661px]:order-none w-full flex flex-col items-center`}
                         style={{ '--delay': `${index * 0.06}s` }}
                       >
-                        <div className="relative overflow-visible min-[661px]:overflow-hidden rounded-full w-[140px] h-[140px] min-[661px]:w-[110px] min-[661px]:h-[110px] min-[900px]:w-[177px] min-[900px]:h-[177px]">
+                        <div
+                          className={`relative ${
+                            index === 1 || index === 3 ? 'overflow-hidden' : 'overflow-visible'
+                          } ${
+                            index === 0 || index === 2
+                              ? 'min-[661px]:overflow-visible'
+                              : 'min-[661px]:overflow-hidden'
+                          } rounded-full w-[140px] h-[140px] min-[661px]:w-[110px] min-[661px]:h-[110px] min-[900px]:w-[177px] min-[900px]:h-[177px]`}
+                        >
                           <div className="absolute inset-0 rounded-full bg-[#F8F4ED]" />
                           <div className="absolute left-0 top-0 w-[177px] h-[177px] origin-top-left scale-[0.79] min-[661px]:scale-[0.621] min-[900px]:scale-100">
                             {src && (
@@ -884,7 +892,7 @@ const About = () => {
                         </div>
 
                         <p
-                          className="mt-5 min-[661px]:mt-4 text-[#591902] min-[661px]:text-white font-normal font-serif text-[16px] min-[661px]:text-[13px] min-[900px]:text-[21px] leading-[1.1] min-[900px]:leading-[120%] text-center w-full max-w-[158px] min-[661px]:max-w-[190px]"
+                          className="mt-5 min-[661px]:mt-4 text-[#1C1C1C] min-[661px]:text-white font-normal font-serif text-[16px] min-[661px]:text-[13px] min-[900px]:text-[21px] leading-[1.1] min-[900px]:leading-[120%] text-center w-full max-w-[158px] min-[661px]:max-w-[190px]"
                           style={{ fontFamily: "'Malgin', serif" }}
                         >
                           {item.label}
