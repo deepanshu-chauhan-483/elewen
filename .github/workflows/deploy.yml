@@ -116,8 +116,8 @@ jobs:
           TARGET_ENV: ${{ steps.vars.outputs.target_env }}
           DEPLOY_PATH: ${{ steps.vars.outputs.deploy_path }}
           IMAGE_PREFIX: ${{ steps.vars.outputs.image_prefix }}
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME || github.actor }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STAGING_ENV_FILE: ${{ secrets.STAGING_ENV_FILE }}
           PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
         with:
@@ -130,6 +130,14 @@ jobs:
             set -euo pipefail
 
             cd "$DEPLOY_PATH"
+
+            # Remove stale files from previous deployments, preserve .env and uploaded tarball
+            find . -maxdepth 1 \
+              -not -name '.' \
+              -not -name '.env' \
+              -not -name 'elewen.tar.gz' \
+              | xargs rm -rf 2>/dev/null || true
+
             tar -xzf elewen.tar.gz
             rm -f elewen.tar.gz
 
