@@ -3,7 +3,6 @@ name: Deploy
 on:
   push:
     branches: [main]
-
   workflow_dispatch:
     inputs:
       environment:
@@ -17,40 +16,157 @@ on:
 
 permissions:
   contents: read
-  packages: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
 
 jobs:
-  deploy-staging:
-    name: Deploy to Staging
+  build-images:
+    name: Build & Push Images
     runs-on: ubuntu-latest
-    environment: staging
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event.inputs.environment == 'staging')
+    strategy:
+      matrix:
+        service:
+          - api
+          - strapi
+          - frontend
+          - admin-pannel
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Deploy to staging
-        run: |
-          echo "TODO: Add SSH/SCP or kubectl deploy commands for staging"
-          echo "Images: ghcr.io/${GITHUB_REPOSITORY,,}/api:main"
-          echo "        ghcr.io/${GITHUB_REPOSITORY,,}/strapi:main"
-          echo "        ghcr.io/${GITHUB_REPOSITORY,,}/frontend:main"
-          echo "        ghcr.io/${GITHUB_REPOSITORY,,}/admin-pannel:main"
+      - name: Set image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.service }}" >> "$GITHUB_OUTPUT"
 
-  deploy-production:
-    name: Deploy to Production
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}:main
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }}
     runs-on: ubuntu-latest
-    environment: production
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
-    needs: deploy-staging
+    needs: build-images
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Deploy to production
+      - name: Set deployment variables
+        id: vars
         run: |
-          echo "TODO: Add SSH/SCP or kubectl deploy commands for production"
-          echo "Images: ghcr.io/${GITHUB_REPOSITORY,,}/api:main"
-          echo "        ghcr.io/${GITHUB_REPOSITORY,,}/strapi:main"
-          echo "        ghcr.io/${GITHUB_REPOSITORY,,}/frontend:main"
-          echo "        ghcr.io/${GITHUB_REPOSITORY,,}/admin-pannel:main"
+          TARGET_ENV="${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }}"
+          echo "target_env=$TARGET_ENV" >> "$GITHUB_OUTPUT"
+          echo "deploy_path=/opt/elewen-$TARGET_ENV" >> "$GITHUB_OUTPUT"
+          echo "image_prefix=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy-package
+          tar \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='*/node_modules' \
+            --exclude='dist' \
+            --exclude='*/dist' \
+            --exclude='.env' \
+            --exclude='*/.env' \
+            -czf deploy-package/elewen.tar.gz .
+
+      - name: Create remote directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          port: ${{ secrets.DO_PORT || 22 }}
+          script: |
+            mkdir -p "${{ steps.vars.outputs.deploy_path }}"
+
+      - name: Upload deployment package
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          port: ${{ secrets.DO_PORT || 22 }}
+          source: deploy-package/elewen.tar.gz
+          target: ${{ steps.vars.outputs.deploy_path }}
+          strip_components: 1
+
+      - name: Deploy on DigitalOcean
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          TARGET_ENV: ${{ steps.vars.outputs.target_env }}
+          DEPLOY_PATH: ${{ steps.vars.outputs.deploy_path }}
+          IMAGE_PREFIX: ${{ steps.vars.outputs.image_prefix }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME || github.actor }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          STAGING_ENV_FILE: ${{ secrets.STAGING_ENV_FILE }}
+          PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          port: ${{ secrets.DO_PORT || 22 }}
+          envs: TARGET_ENV,DEPLOY_PATH,IMAGE_PREFIX,GHCR_USERNAME,GHCR_TOKEN,STAGING_ENV_FILE,PRODUCTION_ENV_FILE
+          script: |
+            set -euo pipefail
+
+            cd "$DEPLOY_PATH"
+            tar -xzf elewen.tar.gz
+            rm -f elewen.tar.gz
+
+            if [ "$TARGET_ENV" = "production" ]; then
+              printf "%s" "$PRODUCTION_ENV_FILE" > .env
+            else
+              printf "%s" "$STAGING_ENV_FILE" > .env
+            fi
+
+            cat > docker-compose.override.yml <<EOF
+            services:
+              api:
+                image: ${IMAGE_PREFIX}/api:main
+                build: null
+                volumes: []
+              migrate:
+                image: ${IMAGE_PREFIX}/api:main
+                build: null
+                volumes: []
+              strapi:
+                image: ${IMAGE_PREFIX}/strapi:main
+                build: null
+                volumes: []
+              frontend:
+                image: ${IMAGE_PREFIX}/frontend:main
+                build: null
+                volumes: []
+              admin-panel:
+                image: ${IMAGE_PREFIX}/admin-pannel:main
+                build: null
+                volumes: []
+            EOF
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+            docker compose pull api migrate strapi frontend admin-panel
+            docker compose up -d postgres redis
+            docker compose run --rm migrate
+            docker compose up -d api strapi frontend admin-panel nginx
+            docker image prune -f
+            docker compose ps
