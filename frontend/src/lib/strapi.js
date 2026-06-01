@@ -22,12 +22,13 @@ export const USE_FALLBACK = import.meta.env.VITE_USE_FALLBACK === 'true'
  * Throws on non-2xx.
  */
 export async function strapiGet(path, params = {}) {
-  const url = new URL(`/api${path}`, BASE)
+  const search = new URLSearchParams()
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) url.searchParams.set(k, String(v))
+    if (v !== undefined && v !== null) search.set(k, String(v))
   })
+  const query = search.toString() ? `?${search.toString()}` : ''
 
-  const res = await fetch(url.toString(), {
+  const res = await fetch(`${BASE}/api${path}${query}`, {
     headers: { 'Content-Type': 'application/json' },
   })
 
