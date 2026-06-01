@@ -1,5 +1,13 @@
 'use strict';
 
+const r2PublicUrl = process.env.R2_PUBLIC_URL;
+const r2MediaSources = [
+  'market-assets.strapi.io',
+  'https://*.r2.dev',
+  'https://*.r2.cloudflarestorage.com',
+  ...(r2PublicUrl ? [r2PublicUrl] : []),
+];
+
 module.exports = [
   'strapi::logger',
   'strapi::errors',
@@ -10,8 +18,8 @@ module.exports = [
         useDefaults: true,
         directives: {
           'connect-src': ["'self'", 'https:'],
-          'img-src': ["'self'", 'data:', 'blob:', 'market-assets.strapi.io', 'res.cloudinary.com'],
-          'media-src': ["'self'", 'data:', 'blob:', 'market-assets.strapi.io', 'res.cloudinary.com'],
+          'img-src': ["'self'", 'data:', 'blob:', ...r2MediaSources],
+          'media-src': ["'self'", 'data:', 'blob:', ...r2MediaSources],
           upgradeInsecureRequests: null,
         },
       },

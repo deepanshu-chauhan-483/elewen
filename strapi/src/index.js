@@ -99,6 +99,8 @@ module.exports = {
       process.env.GOOGLE_CLIENT_ID &&
       process.env.GOOGLE_CLIENT_SECRET
     ) {
+      const googleCallbackUrl =
+        process.env.GOOGLE_REDIRECT_URI || `${publicUrl}/api/auth/google/callback`;
       const nextGrant = {
         ...currentGrant,
         google: {
@@ -106,7 +108,7 @@ module.exports = {
           enabled: true,
           key: process.env.GOOGLE_CLIENT_ID,
           secret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackUrl: `${publicUrl}/api/auth/google/callback`,
+          callbackUrl: googleCallbackUrl,
           scope: Array.isArray(currentGrant.google.scope) && currentGrant.google.scope.length
             ? currentGrant.google.scope
             : ['email', 'profile'],

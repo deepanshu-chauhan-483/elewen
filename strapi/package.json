@@ -12,7 +12,7 @@
   "dependencies": {
     "@strapi/plugin-users-permissions": "^5.0.0",
     "@strapi/provider-email-nodemailer": "^5.40.0",
-    "@strapi/provider-upload-cloudinary": "^5.0.0",
+    "@strapi/provider-upload-aws-s3": "^5.0.0",
     "@strapi/strapi": "^5.0.0",
     "better-sqlite3": "^9.4.3",
     "esbuild": "^0.24.0",

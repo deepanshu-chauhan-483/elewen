@@ -9,7 +9,7 @@
  *   const { data } = await strapiGet('/packages', { populate: '*' })
  */
 
-const BASE = import.meta.env.VITE_STRAPI_URL ?? '/cms'
+const BASE = import.meta.env.VITE_STRAPI_URL || '/cms'
 
 /**
  * When VITE_USE_FALLBACK=true, all hooks skip the Strapi fetch and return
