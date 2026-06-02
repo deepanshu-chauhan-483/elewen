@@ -16,6 +16,7 @@ strapi/public/uploads/
 # ─── Frontend build ──────────────────────────────────────────────────
 frontend/dist/
 frontend/.vite/
+admin-pannel/dist/
 
 # ─── Prisma ──────────────────────────────────────────────────────────
 # Keep migrations — they are the source of truth for the DB schema

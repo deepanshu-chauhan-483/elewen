@@ -30,15 +30,8 @@ import { bootstrapDefaultAdmin, getDefaultAdminCredentials } from './lib/bootstr
 import { connectRedis, disconnectRedis } from './lib/cache.js'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
-const dotenvPaths = [
-  resolve(__dirname, '../.env'),
-  resolve(__dirname, '../../.env'),
-  resolve(process.cwd(), '.env'),
-]
-
-for (const path of [...new Set(dotenvPaths)]) {
-  dotenv.config({ path, override: false })
-}
+// Load only api/.env so local dev does not pick up root docker-compose .env
+dotenv.config({ path: resolve(__dirname, '../.env'), override: true })
 
 const app = express()
 const PORT = Number(process.env.PORT || 3000)
