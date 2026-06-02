@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  COMPOSE_FILE: docker-compose.yml
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event.inputs.environment == 'staging')
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            git pull origin main
+            docker compose -f ${{ env.COMPOSE_FILE }} pull || true
+            docker compose -f ${{ env.COMPOSE_FILE }} build --no-cache frontend admin-panel
+            docker compose -f ${{ env.COMPOSE_FILE }} up --build -d
+            docker compose -f ${{ env.COMPOSE_FILE }} ps
+            # First deploy only: bash scripts/ssl/init-letsencrypt.sh (after DNS points here)
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            git pull origin main
+            docker compose -f ${{ env.COMPOSE_FILE }} pull || true
+            docker compose -f ${{ env.COMPOSE_FILE }} build --no-cache frontend admin-panel strapi
+            docker compose -f ${{ env.COMPOSE_FILE }} up -d
+            docker compose -f ${{ env.COMPOSE_FILE }} ps
+            docker image prune -f

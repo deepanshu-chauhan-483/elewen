@@ -1,28 +1,39 @@
-FROM node:20-alpine
+# syntax=docker/dockerfile:1
+
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Install system deps (for sharp/vips)
 RUN apk add --no-cache vips-dev build-base python3
 
-# Set npm configs (IMPORTANT 🔥)
-RUN npm config set registry https://registry.npmjs.org/ \
- && npm config set fetch-retries 5 \
- && npm config set fetch-retry-factor 10 \
- && npm config set fetch-retry-mintimeout 20000 \
- && npm config set fetch-retry-maxtimeout 120000 \
- && npm config set fetch-timeout 600000 \
- && npm config set strict-ssl false
-
-# Copy only package files first (cache optimization)
 COPY package*.json ./
+RUN npm ci --legacy-peer-deps
 
-# Clean + install
-RUN npm cache clean --force \
- && npm install --legacy-peer-deps
+COPY . .
 
-# Copy rest of code
+ENV NODE_ENV=production
+RUN npm run build
+
+FROM node:20-alpine AS production
+WORKDIR /app
+
+RUN apk add --no-cache vips-dev
+
+ENV NODE_ENV=production
+
+COPY --from=build /app ./
+
+EXPOSE 1337
+CMD ["npm", "run", "start"]
+
+FROM node:20-alpine AS development
+WORKDIR /app
+
+RUN apk add --no-cache vips-dev build-base python3
+
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps
+
 COPY . .
 
 EXPOSE 1337
-
 CMD ["npm", "run", "develop"]

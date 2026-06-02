@@ -7,7 +7,7 @@ COPY prisma ./prisma
 RUN npx prisma generate
 RUN npm prune --omit=dev
 
-FROM node:20-slim
+FROM node:20-slim AS production
 WORKDIR /app
 ENV NODE_ENV=production
 RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
