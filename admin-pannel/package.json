@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --configLoader native",
-    "check:modules": "node ../scripts/check-module-collisions.mjs src",
+    "check:modules": "node scripts/check-module-collisions.mjs src",
     "prebuild": "npm run check:modules",
     "build": "vite build --configLoader native",
     "preview": "vite preview --configLoader native",
