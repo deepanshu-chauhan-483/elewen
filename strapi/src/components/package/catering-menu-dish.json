@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_package_catering_menu_dishes",
+  "info": {
+    "displayName": "Catering Menu Dish",
+    "description": "One selectable dish in a catering menu category"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "dietary": {
+      "type": "enumeration",
+      "enum": ["veg", "non_veg", "both"],
+      "default": "veg"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  },
+  "config": {}
+}

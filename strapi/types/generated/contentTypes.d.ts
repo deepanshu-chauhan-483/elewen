@@ -716,6 +716,31 @@ export interface ApiCartMessagingCartMessaging extends Struct.SingleTypeSchema {
   }
 }
 
+export interface ApiCateringMenuCateringMenu extends Struct.SingleTypeSchema {
+  collectionName: 'catering_menus'
+  info: {
+    description: 'Global catering menu dishes by category (shared across packages)'
+    displayName: 'Catering Menu Library'
+    pluralName: 'catering-menus'
+    singularName: 'catering-menu'
+  }
+  options: {
+    draftAndPublish: true
+  }
+  attributes: {
+    categories: Schema.Attribute.Component<'package.catering-menu-category', true>
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::catering-menu.catering-menu'> &
+      Schema.Attribute.Private
+    publishedAt: Schema.Attribute.DateTime
+    title: Schema.Attribute.String & Schema.Attribute.DefaultTo<'Catering menu library'>
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
+  }
+}
+
 export interface ApiCateringSettingCateringSetting extends Struct.SingleTypeSchema {
   collectionName: 'catering_settings'
   info: {
@@ -2247,6 +2272,7 @@ declare module '@strapi/strapi' {
       'api::budget-level.budget-level': ApiBudgetLevelBudgetLevel
       'api::cancellation-policy.cancellation-policy': ApiCancellationPolicyCancellationPolicy
       'api::cart-messaging.cart-messaging': ApiCartMessagingCartMessaging
+      'api::catering-menu.catering-menu': ApiCateringMenuCateringMenu
       'api::catering-setting.catering-setting': ApiCateringSettingCateringSetting
       'api::celebration-every-day.celebration-every-day': ApiCelebrationEveryDayCelebrationEveryDay
       'api::checkout-messaging.checkout-messaging': ApiCheckoutMessagingCheckoutMessaging

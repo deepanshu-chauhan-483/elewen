@@ -1,0 +1,45 @@
+{
+  "collectionName": "components_package_catering_menu_categories",
+  "info": {
+    "displayName": "Catering Menu Category",
+    "description": "Menu section (Starters, Dessert, etc.) with selectable dishes"
+  },
+  "options": {},
+  "attributes": {
+    "category_key": {
+      "type": "enumeration",
+      "enum": [
+        "pre_plated",
+        "starters",
+        "starters_non_veg",
+        "soup",
+        "main_course_veg",
+        "main_course_non_veg",
+        "rotis_and_rice",
+        "rice",
+        "raita",
+        "salad",
+        "live_stations",
+        "dessert"
+      ],
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    },
+    "dishes": {
+      "type": "component",
+      "repeatable": true,
+      "component": "package.catering-menu-dish"
+    }
+  },
+  "config": {}
+}

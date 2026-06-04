@@ -21,6 +21,56 @@
     "choose_hint": {
       "type": "string"
     },
+    "category_key": {
+      "type": "enumeration",
+      "enum": [
+        "pre_plated",
+        "starters",
+        "starters_non_veg",
+        "soup",
+        "main_course_veg",
+        "main_course_non_veg",
+        "rotis_and_rice",
+        "rice",
+        "raita",
+        "salad",
+        "live_stations",
+        "dessert"
+      ]
+    },
+    "category_key_extra": {
+      "type": "enumeration",
+      "enum": [
+        "pre_plated",
+        "starters",
+        "starters_non_veg",
+        "soup",
+        "main_course_veg",
+        "main_course_non_veg",
+        "rotis_and_rice",
+        "rice",
+        "raita",
+        "salad",
+        "live_stations",
+        "dessert"
+      ]
+    },
+    "min_pick": {
+      "type": "integer",
+      "default": 0
+    },
+    "max_pick": {
+      "type": "integer",
+      "default": 1
+    },
+    "veg_pick": {
+      "type": "integer",
+      "default": 0
+    },
+    "nonveg_pick": {
+      "type": "integer",
+      "default": 0
+    },
     "sort_order": {
       "type": "integer",
       "default": 0

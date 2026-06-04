@@ -36,7 +36,7 @@ if [ "${CERTBOT_DRY_RUN:-0}" = "1" ]; then
 fi
 
 echo "Creating dummy certificate so Nginx can start with SSL paths..."
-docker compose run --rm --entrypoint sh certbot -c "
+docker compose --profile manual run --rm --entrypoint sh certbot -c "
   set -e
   mkdir -p /etc/letsencrypt/live/${CERT_NAME}
   openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
@@ -55,7 +55,7 @@ done
 
 echo "Requesting certificate from Let's Encrypt..."
 # shellcheck disable=SC2086
-docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
+docker compose --profile manual run --rm certbot certonly --webroot -w /var/www/certbot \
   --email "$CERTBOT_EMAIL" \
   --cert-name "$CERT_NAME" \
   --agree-tos \

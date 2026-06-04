@@ -3,10 +3,13 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import { useToast } from '../components/common/useToast'
 import CateringPackageDetails from '../components/package-details/CateringPackageDetails'
+import CateringMenuChooseModal from '../components/package-details/CateringMenuChooseModal'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { getServiceProductDetails } from '../data/serviceProductDetails'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
+import { useCateringMenu } from '../hooks/useCateringMenu'
+import { mapCateringMenuRow } from '../lib/cateringMenuSelection'
 import { useCart } from '../hooks/useCart'
 import useCustomization from '../hooks/useCustomization'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
@@ -45,34 +48,40 @@ const DEFAULT_VEG_OPTIONS = ['Veg', 'Non-Veg']
 const FALLBACK_MENU_ROWS = [
   {
     title: 'Starters (Choose 4)',
-    subtitle: 'Papdi Chat, Dahi Bhalla, Hara Bhara Kebab, Paneer Tikka',
-    variant: 'edit',
-    actionLabel: 'Edit',
-    selectionKey: 'starters',
+    chooseHint: 'Choose 2+2 or 4 veg',
+    categoryKey: 'starters',
+    categoryKeyExtra: 'starters_non_veg',
+    variant: 'choose',
+    actionLabel: 'Choose',
+    selectionKey: 'menu-fallback-starters',
+    rules: { maxPick: 4, vegPick: 2, nonvegPick: 2, minPick: 4, allVegPick: 4, allowsAllVeg: true },
   },
   {
     title: 'Main Course (Choose 4)',
+    chooseHint: 'Choose 2+2 or 4 veg',
+    categoryKey: 'main_course_veg',
+    categoryKeyExtra: 'main_course_non_veg',
     variant: 'choose',
     actionLabel: 'Choose',
-    selectionKey: 'main-course',
+    selectionKey: 'menu-fallback-main',
+    rules: { maxPick: 4, vegPick: 2, nonvegPick: 2, minPick: 4, allVegPick: 4, allowsAllVeg: true },
   },
   {
     title: 'Accompaniments (Rice + Breads)',
+    categoryKey: 'rotis_and_rice',
     variant: 'included',
     actionLabel: 'Included',
-    selectionKey: 'accompaniments',
-  },
-  {
-    title: '1 Yoghurt',
-    variant: 'included',
-    actionLabel: 'Included',
-    selectionKey: 'yoghurt',
+    selectionKey: 'menu-fallback-accompaniments',
+    rules: { maxPick: 0, vegPick: 0, nonvegPick: 0, minPick: 0, allVegPick: 0, allowsAllVeg: false },
   },
   {
     title: 'Dessert (Choose 1)',
+    chooseHint: 'Choose 1',
+    categoryKey: 'dessert',
     variant: 'choose',
     actionLabel: 'Choose',
-    selectionKey: 'dessert',
+    selectionKey: 'menu-fallback-dessert',
+    rules: { maxPick: 1, vegPick: 0, nonvegPick: 0, minPick: 1, allVegPick: 1, allowsAllVeg: false },
   },
 ]
 
@@ -131,38 +140,6 @@ function isCateringPackage(pkg) {
     Array.isArray(pkg?.service_slugs) &&
     pkg.service_slugs.some(slug => String(slug).toLowerCase().includes('catering'))
   )
-}
-
-function mapCateringMenuRow(item, index) {
-  const rowType = String(item?.row_type ?? 'choose').toLowerCase()
-
-  if (rowType === 'included') {
-    return {
-      title: item.title,
-      subtitle: item.details || undefined,
-      variant: 'included',
-      actionLabel: 'Included',
-      selectionKey: `menu-${index}-${item.title}`,
-    }
-  }
-
-  if (rowType === 'info') {
-    return {
-      title: item.title,
-      subtitle: item.details || item.choose_hint || undefined,
-      variant: 'included',
-      actionLabel: 'Included',
-      selectionKey: `menu-info-${index}-${item.title}`,
-    }
-  }
-
-  return {
-    title: item.title,
-    subtitle: item.details || item.choose_hint || undefined,
-    variant: 'choose',
-    actionLabel: 'Choose',
-    selectionKey: `menu-${index}-${item.title}`,
-  }
 }
 
 function normalizeSelectedOptions(selectedOptions = {}) {
@@ -335,6 +312,7 @@ export default function CateringSinglePackagePage() {
   const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
   const { data: cancellationPolicy } = useCancellationPolicy()
   const { data: cateringDiscountSettingsFromApi } = useCateringGuestDiscounts()
+  const { data: menuByCategory = {} } = useCateringMenu()
   const { addPackage, updateCartItemDetails } = useCart()
   const { showToast } = useToast()
   const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
@@ -361,6 +339,8 @@ export default function CateringSinglePackagePage() {
   })
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [addToCartMessage, setAddToCartMessage] = useState('')
+  const [activeMenuRow, setActiveMenuRow] = useState(null)
+  const [menuModalOpen, setMenuModalOpen] = useState(false)
 
   const packagesData = useMemo(
     () =>
@@ -567,19 +547,23 @@ export default function CateringSinglePackagePage() {
     if (row.variant === 'included') return
 
     setAddToCartMessage('')
-    updateActiveCustomization(data => {
-      const currentSelections = { ...(data?.menuSelections ?? {}) }
-      const key = row.selectionKey ?? row.title
-      const existingValue = currentSelections[key]
+    setActiveMenuRow(row)
+    setMenuModalOpen(true)
+  }
 
-      return {
-        ...data,
-        menuSelections: {
-          ...currentSelections,
-          [key]: existingValue || row.subtitle || 'Selected',
-        },
-      }
-    })
+  const handleMenuSelectionConfirm = value => {
+    if (!activeMenuRow) return
+
+    const key = activeMenuRow.selectionKey ?? activeMenuRow.title
+    updateActiveCustomization(data => ({
+      ...data,
+      menuSelections: {
+        ...(data?.menuSelections ?? {}),
+        [key]: value,
+      },
+    }))
+    setMenuModalOpen(false)
+    setActiveMenuRow(null)
   }
 
   const handleToggleAddon = addon => {
@@ -695,8 +679,23 @@ export default function CateringSinglePackagePage() {
     }
   })
 
+  const activeMenuSelectionKey = activeMenuRow?.selectionKey ?? activeMenuRow?.title ?? ''
+  const activeMenuInitialValue = menuSelections[activeMenuSelectionKey] ?? ''
+
   return (
-    <SingleProductPageContent
+    <>
+      <CateringMenuChooseModal
+        open={menuModalOpen}
+        row={activeMenuRow}
+        menuByCategory={menuByCategory}
+        initialSelection={activeMenuInitialValue}
+        onClose={() => {
+          setMenuModalOpen(false)
+          setActiveMenuRow(null)
+        }}
+        onConfirm={handleMenuSelectionConfirm}
+      />
+      <SingleProductPageContent
       title={pkg.title || cateringDetails.heroBadge}
       price={displayPrice}
       intro=""
@@ -742,5 +741,6 @@ export default function CateringSinglePackagePage() {
       relatedProducts={relatedProducts}
       testimonials={packageReviews}
     />
+    </>
   )
 }

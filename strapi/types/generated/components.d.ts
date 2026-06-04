@@ -106,6 +106,52 @@ export interface PackageCateringGuestDiscountTier extends Struct.ComponentSchema
   }
 }
 
+export interface PackageCateringMenuCategory extends Struct.ComponentSchema {
+  collectionName: 'components_package_catering_menu_categories'
+  info: {
+    description: 'Menu section (Starters, Dessert, etc.) with selectable dishes'
+    displayName: 'Catering Menu Category'
+  }
+  attributes: {
+    category_key: Schema.Attribute.Enumeration<
+      [
+        'pre_plated',
+        'starters',
+        'starters_non_veg',
+        'soup',
+        'main_course_veg',
+        'main_course_non_veg',
+        'rotis_and_rice',
+        'rice',
+        'raita',
+        'salad',
+        'live_stations',
+        'dessert',
+      ]
+    > &
+      Schema.Attribute.Required
+    description: Schema.Attribute.Text
+    dishes: Schema.Attribute.Component<'package.catering-menu-dish', true>
+    sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    title: Schema.Attribute.String & Schema.Attribute.Required
+  }
+}
+
+export interface PackageCateringMenuDish extends Struct.ComponentSchema {
+  collectionName: 'components_package_catering_menu_dishes'
+  info: {
+    description: 'One selectable dish in a catering menu category'
+    displayName: 'Catering Menu Dish'
+  }
+  attributes: {
+    description: Schema.Attribute.Text
+    dietary: Schema.Attribute.Enumeration<['veg', 'non_veg', 'both']> &
+      Schema.Attribute.DefaultTo<'veg'>
+    name: Schema.Attribute.String & Schema.Attribute.Required
+    sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+  }
+}
+
 export interface PackageCateringMenuItem extends Struct.ComponentSchema {
   collectionName: 'components_package_catering_menu_items'
   info: {
@@ -113,12 +159,48 @@ export interface PackageCateringMenuItem extends Struct.ComponentSchema {
     displayName: 'Catering Menu Item'
   }
   attributes: {
+    category_key: Schema.Attribute.Enumeration<
+      [
+        'pre_plated',
+        'starters',
+        'starters_non_veg',
+        'soup',
+        'main_course_veg',
+        'main_course_non_veg',
+        'rotis_and_rice',
+        'rice',
+        'raita',
+        'salad',
+        'live_stations',
+        'dessert',
+      ]
+    >
+    category_key_extra: Schema.Attribute.Enumeration<
+      [
+        'pre_plated',
+        'starters',
+        'starters_non_veg',
+        'soup',
+        'main_course_veg',
+        'main_course_non_veg',
+        'rotis_and_rice',
+        'rice',
+        'raita',
+        'salad',
+        'live_stations',
+        'dessert',
+      ]
+    >
     choose_hint: Schema.Attribute.String
     details: Schema.Attribute.Text
+    max_pick: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>
+    min_pick: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    nonveg_pick: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
     row_type: Schema.Attribute.Enumeration<['choose', 'included', 'info']> &
       Schema.Attribute.DefaultTo<'choose'>
     sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
     title: Schema.Attribute.String & Schema.Attribute.Required
+    veg_pick: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
   }
 }
 
@@ -380,6 +462,8 @@ declare module '@strapi/strapi' {
       'package.categories': PackageCategories
       'package.category-item': PackageCategoryItem
       'package.catering-guest-discount-tier': PackageCateringGuestDiscountTier
+      'package.catering-menu-category': PackageCateringMenuCategory
+      'package.catering-menu-dish': PackageCateringMenuDish
       'package.catering-menu-item': PackageCateringMenuItem
       'package.cateringpackage': PackageCateringpackage
       'package.decorpackages': PackageDecorpackages

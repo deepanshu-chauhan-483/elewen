@@ -67,7 +67,16 @@ docker compose down --remove-orphans
 docker compose up --build -d
 ```
 
-The one-shot `migrate` service runs Prisma migrations before the API starts. Wait until API and Strapi pass healthchecks (see `docker compose ps`). Nginx will not serve real HTTPS until certificates exist (see next step).
+The one-shot `migrate` service runs Prisma migrations before the API starts. Wait until API and Strapi pass healthchecks (see `docker compose ps`).
+
+**If `elewen_nginx` is `Restarting`:** SSL files are missing. Run this once before anything else:
+
+```bash
+chmod +x scripts/ssl/*.sh
+bash scripts/ssl/bootstrap-dummy-cert.sh
+```
+
+Then issue real certificates (next section). Nginx cannot start HTTPS blocks without at least a dummy cert in the `certbot_conf` volume.
 
 ---
 
@@ -198,12 +207,18 @@ docker compose down -v   # wipes DB volumes
 
 Certificates are missing. Run `bash scripts/ssl/init-letsencrypt.sh` (section 4).
 
-### Nginx unhealthy / certbot-renew dependency failed
+### Nginx `Restarting (1)` or unhealthy
 
-Check logs: `docker compose logs nginx --tail 80`
+Almost always **missing TLS files** under `/etc/letsencrypt/live/elewen.co.in/` in the cert volume.
 
-- **Missing SSL files** → run `bash scripts/ssl/init-letsencrypt.sh` (section 4).
-- **Healthcheck failed** after a compose update → `git pull` and `docker compose up -d nginx certbot-renew`.
+```bash
+docker compose logs nginx --tail 20   # expect "cannot load certificate"
+chmod +x scripts/ssl/*.sh
+bash scripts/ssl/bootstrap-dummy-cert.sh
+docker compose ps nginx              # should be Up (healthy)
+bash scripts/ssl/init-letsencrypt.sh # real Let's Encrypt certs (DNS must point here)
+docker compose up -d certbot-renew
+```
 
 ### certbot-renew: `lstat /proc/.../ns/pid: no such file or directory`
 
@@ -233,6 +248,18 @@ docker compose restart strapi api
 
 Ensure `PUBLIC_API_URL` and `PUBLIC_STRAPI_URL` use `https://` and rebuild frontend.
 
+### Catering menu modal empty (403 on `/api/catering-menu`)
+
+In Strapi admin → **Settings** → Users & Permissions → **Public** → enable `find` on **Catering-menu**.
+
+Then restart Strapi (seeds menu on boot) or run:
+
+```bash
+cd strapi && node scripts/seed-catering-menu.cjs
+```
+
+Re-publish catering packages so `menu_items` include `category_key` (restart Strapi with seeds enabled, or update in admin).
+
 ### Strapi 403 on public content (e.g. catering settings, terms)
 
 In Strapi admin → Settings → Users & Permissions → **Public** role, enable `find` / `findOne` on the relevant content-types. Restart is not required for permission changes.
@@ -258,6 +285,7 @@ Secrets (per GitHub environment): `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`
 |------|---------|
 | `docker-compose.yml` | All services + certbot-renew |
 | `nginx/nginx.conf` | HTTPS vhosts + HTTP→HTTPS redirect |
+| `scripts/ssl/bootstrap-dummy-cert.sh` | Dummy cert so Nginx stops crash-looping |
 | `scripts/ssl/init-letsencrypt.sh` | First-time certificate (supports dry-run) |
 | `scripts/ssl/renew-once.sh` | Manual renewal |
 | `scripts/ssl/renew-entrypoint.sh` | Auto-renew loop in `certbot-renew` |

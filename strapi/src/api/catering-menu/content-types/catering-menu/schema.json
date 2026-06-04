@@ -1,0 +1,25 @@
+{
+  "kind": "singleType",
+  "collectionName": "catering_menus",
+  "info": {
+    "singularName": "catering-menu",
+    "pluralName": "catering-menus",
+    "displayName": "Catering Menu Library",
+    "description": "Global catering menu dishes by category (shared across packages)"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Catering menu library"
+    },
+    "categories": {
+      "type": "component",
+      "repeatable": true,
+      "component": "package.catering-menu-category"
+    }
+  }
+}

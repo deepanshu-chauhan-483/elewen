@@ -209,6 +209,14 @@ module.exports = {
         strapi.log.info(
           `[seed/catering-discounts] documentId=${discountResult.documentId}, created=${Boolean(discountResult.created)}, updated=${Boolean(discountResult.updated)}`
         );
+
+        if (process.env.SEED_CATERING_MENU !== 'false') {
+          const { seedCateringMenuLibrary } = require('./seed/catering-menu-library');
+          const menuResult = await seedCateringMenuLibrary(strapi);
+          strapi.log.info(
+            `[seed/catering-menu] documentId=${menuResult.documentId}, created=${Boolean(menuResult.created)}, updated=${Boolean(menuResult.updated)}`
+          );
+        }
       } catch (error) {
         strapi.log.error('[seed/catering] Catering seed failed:', error);
       }
