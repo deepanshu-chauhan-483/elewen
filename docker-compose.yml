@@ -207,6 +207,12 @@ services:
       - admin-panel
       - api
       - strapi
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
 
   certbot:
     image: certbot/certbot:latest
@@ -225,15 +231,17 @@ services:
     environment:
       CERTBOT_DRY_RUN: ${CERTBOT_DRY_RUN:-0}
       CERTBOT_RENEW_INTERVAL: ${CERTBOT_RENEW_INTERVAL:-43200}
-    pid: service:nginx
+      NGINX_CONTAINER_NAME: elewen_nginx
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
       - ./scripts/ssl/renew-entrypoint.sh:/renew-entrypoint.sh:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     entrypoint: /bin/sh
     command: /renew-entrypoint.sh
     depends_on:
-      - nginx
+      nginx:
+        condition: service_healthy
 
 volumes:
   postgres_data:

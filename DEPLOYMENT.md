@@ -106,7 +106,9 @@ The script will:
 The `certbot-renew` service runs in the background and:
 
 - Every **12 hours** runs `certbot renew`
-- Reloads Nginx after a successful renewal (`kill -HUP` via shared PID with Nginx)
+- Reloads Nginx after a successful renewal (Docker API `HUP` to `elewen_nginx`; requires read-only mount of `/var/run/docker.sock`)
+
+If `certbot-renew` fails to start with a PID namespace error, run `git pull` (fix removes `pid: service:nginx`) then `docker compose up -d certbot-renew`.
 
 To test renewal without changing certs:
 
@@ -195,6 +197,16 @@ docker compose down -v   # wipes DB volumes
 ### Nginx exits: cannot load certificate
 
 Certificates are missing. Run `bash scripts/ssl/init-letsencrypt.sh` (section 4).
+
+### certbot-renew: `lstat /proc/.../ns/pid: no such file or directory`
+
+Caused by starting `certbot-renew` while Nginx was still restarting (old `pid: service:nginx` setup). Update the repo and recreate:
+
+```bash
+docker compose up -d certbot-renew
+```
+
+Your site can still run without `certbot-renew`; use `bash scripts/ssl/renew-once.sh` from cron if needed.
 
 ### Certbot rate limit / failed validation
 
