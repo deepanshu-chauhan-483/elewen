@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
-import { DashboardSearchProvider } from './DashboardSearchContext'
+import { DashboardSearchProvider } from './DashboardSearchProvider'
 import { DASHBOARD } from '../../constants/dashboard'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getStoredJwt, getValidStoredJwt } from '../../lib/api'

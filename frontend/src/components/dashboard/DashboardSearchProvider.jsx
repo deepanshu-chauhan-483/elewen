@@ -1,6 +1,5 @@
-import { createContext, useMemo, useState } from 'react'
-
-export const DashboardSearchContext = createContext(null)
+import { useMemo, useState } from 'react'
+import { DashboardSearchContext } from './dashboardSearchContext.js'
 
 export function DashboardSearchProvider({ children }) {
   const [searchTerm, setSearchTerm] = useState('')

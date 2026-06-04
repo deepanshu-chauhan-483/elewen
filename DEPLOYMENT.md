@@ -33,7 +33,7 @@ HTTP (`:80`) only serves ACME challenges and **redirects to HTTPS**.
 ---
 
 ## 2. Configure environment
-
+  
 ```bash
 cp .env.docker.example .env
 nano .env
@@ -167,7 +167,18 @@ For local Docker **without** HTTPS, use direct ports (`5173`, `3000`, etc.) and 
 
 ---
 
-## 9. Common commands
+## 9. Before deploy (catch Linux-only build errors locally)
+
+```bash
+cd frontend && npm run build
+cd ../admin-pannel && npm run build
+```
+
+`npm run build` runs `check:modules` first (fails if the same folder has both `Name.js` and `Name.jsx`).
+
+---
+
+## 10. Common commands
 
 ```bash
 docker compose ps
@@ -179,7 +190,7 @@ docker compose down -v   # wipes DB volumes
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### Nginx exits: cannot load certificate
 
@@ -209,11 +220,11 @@ In Strapi admin → Settings → Users & Permissions → **Public** role, enable
 
 ---
 
-## 11. GitHub Actions
+## 12. GitHub Actions
 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
-| **CI** (`ci.yml`) | Push/PR to `main` or `dev` | Validates compose (with `.env.docker.example`), API tests, frontend lint, admin build; on `main` push also builds and pushes images to **GHCR** (backup / future use). |
+| **CI** (`ci.yml`) | Push/PR to `main` or `dev` | Validates compose, API tests, frontend lint + **production build** (Linux), admin build, module-collision check; on `main` push also builds and pushes images to **GHCR**. |
 | **Deploy** (`deploy.yml`) | Push to `main` → staging; manual → production | SSH to server, `git pull`, `docker compose up --build -d` (images are built on the VPS from the repo, not pulled from GHCR). |
 
 Run SSL init once on the server after the first deploy (`scripts/ssl/init-letsencrypt.sh`).
@@ -222,7 +233,7 @@ Secrets (per GitHub environment): `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`
 
 ---
 
-## 12. File reference
+## 13. File reference
 
 | File | Purpose |
 |------|---------|

@@ -6,6 +6,8 @@
   "scripts": {
     "predev": "node ../scripts/claim-frontend-port.mjs",
     "dev": "vite",
+    "check:modules": "node ../scripts/check-module-collisions.mjs src",
+    "prebuild": "npm run check:modules",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",

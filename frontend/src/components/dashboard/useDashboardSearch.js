@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { DashboardSearchContext } from './DashboardSearchContext'
+import { DashboardSearchContext } from './dashboardSearchContext.js'
 
 export function useDashboardSearch() {
   const context = useContext(DashboardSearchContext)

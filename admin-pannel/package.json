@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --configLoader native",
+    "check:modules": "node ../scripts/check-module-collisions.mjs src",
+    "prebuild": "npm run check:modules",
     "build": "vite build --configLoader native",
     "preview": "vite preview --configLoader native",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
