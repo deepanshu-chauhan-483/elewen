@@ -198,6 +198,13 @@ docker compose down -v   # wipes DB volumes
 
 Certificates are missing. Run `bash scripts/ssl/init-letsencrypt.sh` (section 4).
 
+### Nginx unhealthy / certbot-renew dependency failed
+
+Check logs: `docker compose logs nginx --tail 80`
+
+- **Missing SSL files** → run `bash scripts/ssl/init-letsencrypt.sh` (section 4).
+- **Healthcheck failed** after a compose update → `git pull` and `docker compose up -d nginx certbot-renew`.
+
 ### certbot-renew: `lstat /proc/.../ns/pid: no such file or directory`
 
 Caused by starting `certbot-renew` while Nginx was still restarting (old `pid: service:nginx` setup). Update the repo and recreate:

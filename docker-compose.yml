@@ -208,11 +208,12 @@ services:
       - api
       - strapi
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      # nginx:alpine has no wget/curl; verify master process is running
+      test: ["CMD-SHELL", "nginx -t >/dev/null 2>&1 && test -s /var/run/nginx.pid && kill -0 $(cat /var/run/nginx.pid)"]
       interval: 10s
       timeout: 5s
       retries: 6
-      start_period: 15s
+      start_period: 20s
 
   certbot:
     image: certbot/certbot:latest
