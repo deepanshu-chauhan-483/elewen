@@ -20,11 +20,34 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-animation': ['framer-motion', 'gsap'],
-            'vendor-ui': ['swiper'],
-            'vendor-query': ['@tanstack/react-query'],
+          // Vite 8 / Rolldown requires a function (object form is Rollup 3 only)
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined
+
+            if (
+              id.includes('/react/') ||
+              id.includes('\\react\\') ||
+              id.includes('/react-dom/') ||
+              id.includes('\\react-dom\\') ||
+              id.includes('/react-router-dom/') ||
+              id.includes('\\react-router-dom\\')
+            ) {
+              return 'vendor-react'
+            }
+
+            if (id.includes('framer-motion') || id.includes('gsap')) {
+              return 'vendor-animation'
+            }
+
+            if (id.includes('/swiper/') || id.includes('\\swiper\\')) {
+              return 'vendor-ui'
+            }
+
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query'
+            }
+
+            return undefined
           },
         },
       },
