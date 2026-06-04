@@ -1,5 +1,7 @@
 'use strict';
 
+const { buildSmtpTransportOptions } = require('./email-smtp.cjs');
+
 module.exports = ({ env }) => ({
   // Cloudflare R2 image uploads.
   upload: {
@@ -33,15 +35,11 @@ module.exports = ({ env }) => ({
   email: {
     config: {
       provider: 'nodemailer',
-      providerOptions: {
-        host: env('SMTP_HOST', 'smtp.gmail.com'),
-        port: env.int('SMTP_PORT', 587),
-        secure: false,             // true for port 465, false for 587
-        auth: {
-          user: env('SMTP_USER'),
-          pass: env('SMTP_PASS'), // Gmail: use an App Password, not your account password
-        },
-      },
+      providerOptions: (() => {
+        const smtp = buildSmtpTransportOptions((key, fallback) => env(key, fallback));
+        const { host, port, secure, requireTLS, auth } = smtp;
+        return { host, port, secure, requireTLS, auth };
+      })(),
       settings: {
         defaultFrom: env('SMTP_FROM', 'noreply@elewen.com'),
         defaultReplyTo: env('SMTP_FROM', 'noreply@elewen.com'),

@@ -2,6 +2,21 @@ import { useMemo, useState } from 'react'
 import { useTermsAndConditions } from '../hooks/useTermsAndConditions'
 import CustomSelect from '../components/common/CustomSelect'
 
+const INDEX_LABEL_CLASS = 'block line-clamp-2 leading-5 break-words'
+
+function truncateForIndex(text, maxLength = 72) {
+  const normalized = String(text ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!normalized) return ''
+  if (normalized.length <= maxLength) return normalized
+
+  const cut = normalized.slice(0, maxLength).trimEnd()
+  const lastSpace = cut.lastIndexOf(' ')
+  const snippet = lastSpace > 32 ? cut.slice(0, lastSpace) : cut
+  return `${snippet}…`
+}
+
 const fallbackTermsData = [
   {
     id: 'terms',
@@ -65,22 +80,35 @@ export default function Terms() {
   const pageSubtitle =
     cmsTerms?.pageSubtitle ?? 'These terms govern your use of Elewen and our services.'
 
-  const getChildIndexLabel = child => {
-    if (child.hasTitle) return child.title
+  const getSectionIndexLabel = section => truncateForIndex(section.title, 80)
 
-    const preview = String(child.previewText ?? '').trim()
+  const getChildIndexLabel = child => {
+    if (child.hasTitle) return truncateForIndex(child.title, 80)
+
+    const preview = truncateForIndex(child.previewText, 48)
 
     if (child.clauseNumber && preview) {
       return `${child.clauseNumber} ${preview}`
     }
 
-    return child.clauseNumber || child.title
+    return child.clauseNumber || truncateForIndex(child.title, 80)
   }
 
   const scrollToSection = id => {
     setActiveId(id)
 
-    document.getElementById(id)?.scrollIntoView({
+    const isDesktop = window.matchMedia('(min-width: 1024px)').matches
+    const layout = isDesktop ? 'desktop' : 'mobile'
+    const escapedId =
+      typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(id)
+        : String(id).replace(/"/g, '\\"')
+
+    const target = document.querySelector(
+      `[data-legal-layout="${layout}"] [data-legal-section="${escapedId}"]`
+    )
+
+    target?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
     })
@@ -126,9 +154,9 @@ export default function Terms() {
         </div>
 
         {/* MOBILE CONTENT */}
-        <div className="space-y-10 pt-8">
+        <div className="space-y-10 pt-8" data-legal-layout="mobile">
           {termsData.map(section => (
-            <div key={section.id} id={section.id} className="scroll-mt-[90px]">
+            <div key={section.id} data-legal-section={section.id} className="scroll-mt-[90px]">
               {/* MAIN TITLE */}
               <h2
                 className="text-[28px] leading-[1.3] font-semibold mb-4 text-[#3a3a3a]"
@@ -148,7 +176,7 @@ export default function Terms() {
               {section.children?.map(child => (
                 <div
                   key={child.id}
-                  id={child.id}
+                  data-legal-section={child.id}
                   className="scroll-mt-[90px] mt-8 rounded-2xl bg-[#FAFAFA] p-5"
                 >
                   {child.hasTitle ? (
@@ -183,9 +211,9 @@ export default function Terms() {
       {/* ========================= */}
       <section className="hidden lg:flex max-w-[1440px] mx-auto py-[70px] px-[clamp(80px,10vw,200px)] gap-[clamp(40px,6vw,70px)]">
         {/* LEFT CONTENT */}
-        <div className="flex-1 text-[#3a3a3a] space-y-8">
+        <div className="flex-1 text-[#3a3a3a] space-y-8" data-legal-layout="desktop">
           {termsData.map(section => (
-            <div key={section.id} id={section.id}>
+            <div key={section.id} data-legal-section={section.id} className="scroll-mt-28">
               {/* MAIN TITLE */}
               <h2 className="text-[24px] font-semibold mb-3" style={{ fontFamily: "'Poppins'" }}>
                 {section.title}
@@ -200,7 +228,7 @@ export default function Terms() {
 
               {/* CHILD SECTIONS */}
               {section.children?.map(child => (
-                <div key={child.id} id={child.id} className="mt-4">
+                <div key={child.id} data-legal-section={child.id} className="mt-4 scroll-mt-28">
                   {child.hasTitle ? (
                     <>
                       <h4 className="text-[18px] font-medium mb-2">{child.title}</h4>
@@ -239,26 +267,33 @@ export default function Terms() {
                     <div
                       className="font-medium cursor-pointer"
                       onClick={() => scrollToSection(section.id)}
+                      title={section.title}
                     >
-                      <span className="block break-words leading-5">{section.title}</span>
+                      <span className={INDEX_LABEL_CLASS}>{getSectionIndexLabel(section)}</span>
                     </div>
 
                     {/* CHILD */}
-                    {section.children?.map(child => (
-                      <div
-                        key={child.id}
-                        onClick={() => scrollToSection(child.id)}
-                        className={`cursor-pointer pl-3 mt-2 ${
-                          resolvedActiveId === child.id
-                            ? 'text-[#6a8f4e] font-medium'
-                            : 'text-gray-600'
-                        }`}
-                      >
-                        <span className="block break-words leading-5">
-                          {getChildIndexLabel(child)}
-                        </span>
-                      </div>
-                    ))}
+                    {section.children?.map(child => {
+                      const indexLabel = getChildIndexLabel(child)
+                      const indexTitle = child.hasTitle
+                        ? child.title
+                        : [child.clauseNumber, child.previewText].filter(Boolean).join(' ')
+
+                      return (
+                        <div
+                          key={child.id}
+                          onClick={() => scrollToSection(child.id)}
+                          title={indexTitle}
+                          className={`cursor-pointer pl-3 mt-2 ${
+                            resolvedActiveId === child.id
+                              ? 'text-[#6a8f4e] font-medium'
+                              : 'text-gray-600'
+                          }`}
+                        >
+                          <span className={INDEX_LABEL_CLASS}>{indexLabel}</span>
+                        </div>
+                      )
+                    })}
                   </li>
                 ))}
               </ul>

@@ -3,7 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#FAFAF8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1C1C1C" media="(prefers-color-scheme: dark)" />
     <title>Elewen</title>
+    <!-- Favicon: dark logo on light browser UI, white logo on dark browser UI -->
+    <link
+      rel="icon"
+      href="/favicon-light.png"
+      type="image/png"
+      sizes="32x32"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      href="/favicon-dark.png"
+      type="image/png"
+      sizes="32x32"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="icon" href="/favicon-light.png" type="image/png" />
+    <script>
+      ;(function () {
+        var mq = window.matchMedia('(prefers-color-scheme: dark)')
+        var link = document.getElementById('elewen-favicon')
+        function apply() {
+          if (!link) return
+          link.href = mq.matches ? '/favicon-dark.png' : '/favicon-light.png'
+        }
+        if (!link) {
+          link = document.createElement('link')
+          link.id = 'elewen-favicon'
+          link.rel = 'icon'
+          link.type = 'image/png'
+          document.head.appendChild(link)
+        }
+        apply()
+        if (mq.addEventListener) mq.addEventListener('change', apply)
+        else if (mq.addListener) mq.addListener(apply)
+      })()
+    </script>
     <script>
       if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
       window.addEventListener('pageshow', function (e) {

@@ -31,33 +31,59 @@ module.exports = {
       const nextTemplates = { ...currentTemplates };
       let emailTemplatesChanged = false;
 
+      const confirmationEmailBody =
+        '<p>Thank you for registering!</p>' +
+        '<p>You have to confirm your email address. Please click on the link below.</p>' +
+        '<p><a href="<%= URL %>?confirmation=<%= CODE %>">Confirm my email</a></p>' +
+        '<p>Or copy this link: <%= URL %>?confirmation=<%= CODE %></p>' +
+        '<p>Thanks.</p>';
+
+      const resetPasswordEmailBody =
+        '<p>We heard that you lost your password. Sorry about that!</p>' +
+        '<p>But don’t worry! You can use the following link to reset your password:</p>' +
+        '<p><a href="<%= URL %>?code=<%= TOKEN %>">Reset your password</a></p>' +
+        '<p><%= URL %>?code=<%= TOKEN %></p>' +
+        '<p>Thanks.</p>';
+
       ['email_confirmation', 'reset_password'].forEach(templateKey => {
         const template = nextTemplates[templateKey];
         if (!template || !template.options) return;
 
         const currentFrom = template.options.from || {};
         const currentReplyTo = template.options.response_email || '';
+        const currentMessage = template.options.message || '';
+        const currentObject = template.options.object || '';
 
-        if (
-          currentFrom.email === senderEmail &&
-          currentFrom.name === senderName &&
-          currentReplyTo === replyTo
-        ) {
-          return;
+        const nextOptions = {
+          ...template.options,
+          from: {
+            ...currentFrom,
+            name: senderName,
+            email: senderEmail,
+          },
+          response_email: replyTo,
+        };
+
+        if (templateKey === 'email_confirmation') {
+          nextOptions.object = 'Confirm your Elewen account';
+          nextOptions.message = confirmationEmailBody;
         }
 
-        nextTemplates[templateKey] = {
-          ...template,
-          options: {
-            ...template.options,
-            from: {
-              ...currentFrom,
-              name: senderName,
-              email: senderEmail,
-            },
-            response_email: replyTo,
-          },
-        };
+        if (templateKey === 'reset_password') {
+          nextOptions.object = 'Reset your Elewen password';
+          nextOptions.message = resetPasswordEmailBody;
+        }
+
+        const unchanged =
+          currentFrom.email === senderEmail &&
+          currentFrom.name === senderName &&
+          currentReplyTo === replyTo &&
+          currentMessage === nextOptions.message &&
+          currentObject === nextOptions.object;
+
+        if (unchanged) return;
+
+        nextTemplates[templateKey] = { ...template, options: nextOptions };
         emailTemplatesChanged = true;
       });
 
@@ -74,58 +100,117 @@ module.exports = {
     }
 
     if (currentAdvancedSettings && typeof currentAdvancedSettings === 'object') {
+      const oauthRedirect = `${frontendUrl.replace(/\/$/, '')}/auth/callback`;
+      // Default ON — set STRAPI_EMAIL_CONFIRMATION=false only to skip verification emails (local debug).
+      const emailConfirmation = process.env.STRAPI_EMAIL_CONFIRMATION !== 'false';
+      const confirmRedirectBase = `${frontendUrl.replace(/\/$/, '')}/login`;
       const nextAdvancedSettings = {
         ...currentAdvancedSettings,
+        allow_register: true,
+        unique_email: true,
+        email_confirmation: emailConfirmation,
         email_reset_password: `${frontendUrl}/reset-password`,
-        email_confirmation_redirection: `${frontendUrl}/login?confirmed=true`,
+        email_confirmation_redirection: `${confirmRedirectBase}?confirmed=true`,
+        default_redirect_url: oauthRedirect,
       };
 
-      if (
-        nextAdvancedSettings.email_reset_password !== currentAdvancedSettings.email_reset_password ||
-        nextAdvancedSettings.email_confirmation_redirection !==
-          currentAdvancedSettings.email_confirmation_redirection
-      ) {
-        await pluginStore.set({ key: 'advanced', value: nextAdvancedSettings });
-        strapi.log.info(
-          `[users-permissions] Auth redirect URLs synced to frontend: ${frontendUrl}`
-        );
-      }
+      await pluginStore.set({ key: 'advanced', value: nextAdvancedSettings });
+      strapi.log.info(
+        `[users-permissions] email_confirmation=${emailConfirmation}, reset-password URL: ${nextAdvancedSettings.email_reset_password}, post-login redirect: ${oauthRedirect}`
+      );
     }
 
-    if (
-      currentGrant &&
-      typeof currentGrant === 'object' &&
-      currentGrant.google &&
-      process.env.GOOGLE_CLIENT_ID &&
-      process.env.GOOGLE_CLIENT_SECRET
-    ) {
+    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+      // Must match Google Cloud Console + Strapi users-permissions grant URL:
+      // {PUBLIC_URL}/api/connect/google/callback
       const googleCallbackUrl =
-        process.env.GOOGLE_REDIRECT_URI || `${publicUrl}/api/auth/google/callback`;
+        process.env.GOOGLE_REDIRECT_URI || `${publicUrl}/api/connect/google/callback`;
+      const baseGrant =
+        currentGrant && typeof currentGrant === 'object' ? { ...currentGrant } : {};
+      const previousGoogle = baseGrant.google && typeof baseGrant.google === 'object' ? baseGrant.google : {};
+
       const nextGrant = {
-        ...currentGrant,
+        ...baseGrant,
         google: {
-          ...currentGrant.google,
           enabled: true,
+          icon: 'google',
+          ...previousGoogle,
           key: process.env.GOOGLE_CLIENT_ID,
           secret: process.env.GOOGLE_CLIENT_SECRET,
           callbackUrl: googleCallbackUrl,
-          scope: Array.isArray(currentGrant.google.scope) && currentGrant.google.scope.length
-            ? currentGrant.google.scope
-            : ['email', 'profile'],
+          callback: googleCallbackUrl,
+          scope:
+            Array.isArray(previousGoogle.scope) && previousGoogle.scope.length
+              ? previousGoogle.scope
+              : ['email', 'profile'],
         },
       };
 
-      const googleConfigChanged =
-        currentGrant.google.enabled !== nextGrant.google.enabled ||
-        currentGrant.google.key !== nextGrant.google.key ||
-        currentGrant.google.secret !== nextGrant.google.secret ||
-        currentGrant.google.callbackUrl !== nextGrant.google.callbackUrl;
+      await pluginStore.set({ key: 'grant', value: nextGrant });
+      strapi.log.info(
+        `[users-permissions] Google OAuth enabled. Start: ${publicUrl}/api/connect/google → callback: ${nextGrant.google.callbackUrl} → frontend: ${frontendUrl.replace(/\/$/, '')}/auth/callback`
+      );
+    } else {
+      strapi.log.warn(
+        '[users-permissions] GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET missing — Continue with Google will not work.'
+      );
+    }
 
-      if (googleConfigChanged) {
-        await pluginStore.set({ key: 'grant', value: nextGrant });
+    if (process.env.SEED_CATERING_ESSENTIALS !== 'false') {
+      try {
+        const { seedCateringEssentials } = require('./seed/catering-essentials');
+        const essentialsResult = await seedCateringEssentials(strapi);
+        const essentialsCreated = essentialsResult.packages.filter(
+          item => !item.skipped && !item.repaired
+        ).length;
+        const essentialsRepaired = essentialsResult.packages.filter(item => item.repaired).length;
+        const essentialsSkipped = essentialsResult.packages.filter(item => item.skipped).length;
+
         strapi.log.info(
-          `[users-permissions] Google provider synced for callback URL: ${nextGrant.google.callbackUrl}`
+          `[seed/catering] Essentials created=${essentialsCreated}, repaired=${essentialsRepaired}, skipped=${essentialsSkipped}`
         );
+
+        const { seedCateringAssisted } = require('./seed/catering-assisted');
+        const assistedResult = await seedCateringAssisted(strapi);
+        const assistedCreated = assistedResult.packages.filter(
+          item => !item.skipped && !item.repaired
+        ).length;
+        const assistedRepaired = assistedResult.packages.filter(item => item.repaired).length;
+        const assistedSkipped = assistedResult.packages.filter(item => item.skipped).length;
+
+        strapi.log.info(
+          `[seed/catering] Assisted created=${assistedCreated}, repaired=${assistedRepaired}, skipped=${assistedSkipped}, policy=${assistedResult.policyDocumentId}`
+        );
+
+        const { seedCateringEndToEnd } = require('./seed/catering-end-to-end');
+        const endToEndResult = await seedCateringEndToEnd(strapi);
+        const endToEndCreated = endToEndResult.packages.filter(
+          item => !item.skipped && !item.repaired
+        ).length;
+        const endToEndRepaired = endToEndResult.packages.filter(item => item.repaired).length;
+        const endToEndSkipped = endToEndResult.packages.filter(item => item.skipped).length;
+
+        strapi.log.info(
+          `[seed/catering] End-to-end created=${endToEndCreated}, repaired=${endToEndRepaired}, skipped=${endToEndSkipped}`
+        );
+
+        const { seedCateringAddons } = require('./seed/catering-addons');
+        const addonsResult = await seedCateringAddons(strapi);
+        const addonsCreated = addonsResult.addons.filter(item => !item.skipped).length;
+        const addonsSkipped = addonsResult.addons.filter(item => item.skipped).length;
+        const addonsUpdated = addonsResult.addons.filter(item => item.updated).length;
+
+        strapi.log.info(
+          `[seed/catering-addons] created=${addonsCreated}, updated=${addonsUpdated}, skipped=${addonsSkipped}`
+        );
+
+        const { seedCateringDiscountSettings } = require('./seed/catering-discount-settings');
+        const discountResult = await seedCateringDiscountSettings(strapi);
+        strapi.log.info(
+          `[seed/catering-discounts] documentId=${discountResult.documentId}, created=${Boolean(discountResult.created)}, updated=${Boolean(discountResult.updated)}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/catering] Catering seed failed:', error);
       }
     }
   },

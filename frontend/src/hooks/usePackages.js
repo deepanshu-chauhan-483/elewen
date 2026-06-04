@@ -157,6 +157,7 @@ function inferServiceSlugsFromSections(pkg) {
     if (componentType === 'package.sheeshapackage') return ['sheesha']
     if (componentType === 'package.decorpackages') return ['decor']
     if (componentType === 'package.bartendingpackage') return ['bartending']
+    if (componentType === 'package.cateringpackage') return ['catering']
     return []
   })
 }
@@ -192,6 +193,10 @@ function buildAccordionSections(pkg) {
         ? { title: 'The price you see covers it all', body: buildPriceCoverText(section) }
         : null,
       section?.setup_needs ? { title: 'Setup needs', body: section.setup_needs } : null,
+      section?.client_requirements
+        ? { title: 'What we need from you', body: section.client_requirements }
+        : null,
+      section?.ideal_for ? { title: 'Ideal for', body: section.ideal_for } : null,
       section?.best_placed_at ? { title: 'Best placed at', body: section.best_placed_at } : null,
       section?.why_we_love_it ? { title: 'Why we love it', body: section.why_we_love_it } : null,
       buildPolicyText(section?.policy)
@@ -246,6 +251,7 @@ function buildAddonList(items = []) {
       name: String(item?.name ?? item?.title ?? item?.text ?? '').trim(),
       description: String(item?.description ?? '').trim(),
       price: Number(item?.price ?? 0),
+      max_price: Number(item?.max_price ?? item?.price_max ?? 0) || undefined,
       unit: String(item?.unit ?? '').trim(),
       max_quantity: Number(item?.max_quantity ?? 1),
       visibility: item?.visibility !== false,
@@ -391,6 +397,7 @@ function normalizePackage(pkg, index = 0) {
     detail_pricing_rules: buildPricingRuleList(getNestedPackagePricingRules(pkg)),
     detail_accordion_sections: buildAccordionSections(pkg),
     flavor_options: buildFlavorOptions(pkg),
+    catering_guest_discounts: pkg.catering_guest_discounts ?? null,
     _index: index,
   }
 }
@@ -423,6 +430,15 @@ function getPackagePopulateParams() {
     'populate[packages][on][package.bartendingpackage][populate][price_breakdown]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][budget_level]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][pricing_rules]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][menu_items]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][inclusions]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][exclusions]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][addons]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][policy]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][price_covers]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][price_breakdown]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][budget_level]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][pricing_rules]': 'true',
   }
 }
 

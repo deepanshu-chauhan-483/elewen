@@ -126,10 +126,7 @@ function useSingleTypeMessage(queryKey, path, fallbackMessage) {
 
       try {
         return await fetchSingleTypeMessage(path, fallbackMessage)
-      } catch (error) {
-        if (!String(error?.message ?? '').includes('404')) {
-          console.warn(`Failed to fetch Strapi message for ${path}`, error)
-        }
+      } catch {
         return fallbackMessage
       }
     },

@@ -22,6 +22,25 @@ const NewPasswordIcon = () => (
   </svg>
 )
 
+const EyeIcon = ({ hidden }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {hidden ? (
+      <>
+        <path
+          d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z"
+          fill="currentColor"
+        />
+        <path d="M2 2L22 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </>
+    ) : (
+      <path
+        d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z"
+        fill="currentColor"
+      />
+    )}
+  </svg>
+)
+
 const PasswordResetSuccessIcon = () => (
   <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="28" cy="28" r="27" stroke="#727355" strokeWidth="1.5" />
@@ -41,6 +60,8 @@ export default function ResetPasswordPage() {
 
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [status, setStatus] = useState('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
@@ -123,19 +144,29 @@ export default function ResetPasswordPage() {
             <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
               New password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => {
-                setPassword(e.target.value)
-                setFieldErrors(prev => ({ ...prev, password: '' }))
-                setErrorMsg('')
-              }}
-              placeholder="Minimum 8 characters"
-              autoComplete="new-password"
-              required
-              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
-            />
+            <div className="relative w-full min-w-0">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => {
+                  setPassword(e.target.value)
+                  setFieldErrors(prev => ({ ...prev, password: '' }))
+                  setErrorMsg('')
+                }}
+                placeholder="Minimum 8 characters"
+                autoComplete="new-password"
+                required
+                className="w-full min-w-0 h-[40px] px-[16px] py-[8px] pr-10 bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BFAC9B] hover:text-[#364022] transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <EyeIcon hidden={!showPassword} />
+              </button>
+            </div>
             {fieldErrors.password ? (
               <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.password}</p>
             ) : null}
@@ -145,19 +176,29 @@ export default function ResetPasswordPage() {
             <label className="text-[#364022] text-[13px] min-[540px]:text-[16px] font-medium leading-[150%]">
               Confirm password
             </label>
-            <input
-              type="password"
-              value={confirm}
-              onChange={e => {
-                setConfirm(e.target.value)
-                setFieldErrors(prev => ({ ...prev, confirm: '' }))
-                setErrorMsg('')
-              }}
-              placeholder="Repeat your password"
-              autoComplete="new-password"
-              required
-              className="w-full min-w-0 h-[40px] px-[16px] py-[8px] bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
-            />
+            <div className="relative w-full min-w-0">
+              <input
+                type={showConfirm ? 'text' : 'password'}
+                value={confirm}
+                onChange={e => {
+                  setConfirm(e.target.value)
+                  setFieldErrors(prev => ({ ...prev, confirm: '' }))
+                  setErrorMsg('')
+                }}
+                placeholder="Repeat your password"
+                autoComplete="new-password"
+                required
+                className="w-full min-w-0 h-[40px] px-[16px] py-[8px] pr-10 bg-[#F8F4ED] border border-[rgba(45,45,45,0.25)] rounded-[6px] text-[14px] min-[540px]:text-[16px] text-[#364022] placeholder:text-[#BFAC9B] focus:outline-none focus:border-[#CDB17E] transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BFAC9B] hover:text-[#364022] transition-colors"
+                aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+              >
+                <EyeIcon hidden={!showConfirm} />
+              </button>
+            </div>
             {fieldErrors.confirm ? (
               <p className="text-[#C62828] text-[12px] leading-[150%]">{fieldErrors.confirm}</p>
             ) : null}

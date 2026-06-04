@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_package_catering_guest_discount_tiers",
+  "info": {
+    "displayName": "Catering Guest Discount Tier",
+    "description": "Per-person discount for a guest (pax) range on catering packages"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "min_pax": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "max_pax": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "discount_per_person": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    }
+  },
+  "config": {}
+}

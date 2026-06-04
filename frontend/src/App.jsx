@@ -35,6 +35,7 @@ const PackageDetailsPage = lazy(() => import('./pages/PackageDetailsPage'))
 const DecorSinglePackagePage = lazy(() => import('./pages/DecorSinglePackagePage'))
 const SheeshaSinglePackagePage = lazy(() => import('./pages/SheeshaSinglePackagePage'))
 const BartendingSinglePackagePage = lazy(() => import('./pages/BartendingSinglePackagePage'))
+const CateringSinglePackagePage = lazy(() => import('./pages/CateringSinglePackagePage'))
 const BartendingAddonDetailPage = lazy(() => import('./pages/BartendingAddonDetailPage'))
 const SinglePackageCheckout = lazy(() => import('./pages/SinglePackageCheckout'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
@@ -189,6 +190,10 @@ function AppLayout() {
           <Route
             path="/packages/sheesha-single/:packageId"
             element={<SheeshaSinglePackagePage />}
+          />
+          <Route
+            path="/packages/catering-single/:packageId"
+            element={<CateringSinglePackagePage />}
           />
           <Route path="/packages/:service/:packageId" element={<PackageDetailsPage />} />
           <Route path="/faqs" element={<FAQ />} />

@@ -592,8 +592,6 @@ function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = fal
     section => section?.type === 'choice-row'
   )
 
-  console.log('[buildDecorSelectedOptions] selectedSections:', selectedSections)
-
   const result = normalizeSelectedOptions(
     Object.fromEntries(
       selectedSections
@@ -606,11 +604,6 @@ function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = fal
             : null
           const resolvedItem = selectedItem ?? fallbackItem
 
-          console.log(
-            `[buildDecorSelectedOptions] section[${idx}] title="${section.title}", resolvedItem:`,
-            resolvedItem
-          )
-
           // Use index as unique key to prevent overwriting when multiple sections have same title
           const key = `${section.title}_${idx}`
           return [key, resolvedItem?.title ?? '']
@@ -619,7 +612,6 @@ function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = fal
     )
   )
 
-  console.log('[buildDecorSelectedOptions] final result:', result)
   return result
 }
 

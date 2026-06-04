@@ -2,10 +2,9 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useToast } from '../components/common/useToast'
-import { getFieldErrors } from '../lib/formErrors'
+import { getFieldErrors, getGlobalErrorMessage } from '../lib/formErrors'
 import { authRegister, setStoredJwt } from '../lib/api'
-
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+import { startGoogleSignIn } from '../lib/googleAuth'
 
 const CheckEmailIcon = () => (
   <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -58,7 +57,7 @@ export default function SignUpPage() {
         password,
       })
       if (data.pending) {
-        showToast({ message: 'Sign up successful. Please check your email.' })
+        showToast({ message: 'Check your email to confirm your account before logging in.' })
         setEmailPending(true)
         return
       }
@@ -76,8 +75,12 @@ export default function SignUpPage() {
         setFieldErrors(nextFieldErrors)
       } else if (err.status === 409) {
         setError('An account with this email already exists.')
+      } else if (err.response?.code === 'EMAIL_SEND_FAILED') {
+        setError(
+          'Your account may have been created, but the confirmation email could not be sent. Ask your admin to fix SMTP (run: cd strapi && npm run test:smtp), then try signing up again or use resend from login.'
+        )
       } else {
-        setError('Registration failed. Please try again.')
+        setError(getGlobalErrorMessage(err, 'Registration failed. Please try again.'))
       }
     } finally {
       setLoading(false)
@@ -291,9 +294,9 @@ export default function SignUpPage() {
           <span className="text-[#364022] text-[12px] leading-[150%] uppercase tracking-widest">
             OR
           </span>
-          <a
-            href={`${STRAPI_URL}/api/connect/google`}
-            onClick={() => sessionStorage.setItem('elewen_auth_origin', '/signup')}
+          <button
+            type="button"
+            onClick={() => startGoogleSignIn('/signup')}
             className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[14px] min-[540px]:text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
           >
             <svg
@@ -321,7 +324,7 @@ export default function SignUpPage() {
               />
             </svg>
             Sign up with Google
-          </a>
+          </button>
         </div>
       </form>
     </AuthLayout>

@@ -86,19 +86,85 @@ function buildCartItemTitle(title, selectedOptions) {
   return `${title}${CART_META_SEPARATOR}${JSON.stringify({ selectedOptions: normalized })}`
 }
 
-function buildStoredCartItemTitle(title, selectedOptions, addonTitle = '') {
+function parseGuestCountValue(value) {
+  const count = parseInt(String(value ?? '').replace(/\D/g, ''), 10)
+  return Number.isFinite(count) && count > 0 ? count : 0
+}
+
+function isCateringPackage(pkg) {
+  const categories = normalizeSectionItems(pkg?.service_categories)
+  if (
+    categories.some(entry =>
+      String(entry?.slug ?? '')
+        .toLowerCase()
+        .includes('catering')
+    )
+  ) {
+    return true
+  }
+
+  const sections = normalizeSectionItems(pkg?.packages)
+  return sections.some(section => section?.__component === 'package.cateringpackage')
+}
+
+function isCateringPerPersonAddon(addon) {
+  if (!addon) return false
+  const scope = String(addon?.addon_scope ?? '').toLowerCase()
+  if (scope === 'catering') return true
+  const unit = String(addon?.unit ?? '').toLowerCase()
+  return unit.includes('pax') || unit.includes('person')
+}
+
+function buildStoredCartItemTitle(title, selectedOptions, meta = {}) {
   const normalized = normalizeSelectedOptions(selectedOptions)
-  const trimmedAddonTitle = String(addonTitle ?? '').trim()
+  const trimmedAddonTitle = String(meta.addonTitle ?? '').trim()
 
   if (trimmedAddonTitle) {
     return `${trimmedAddonTitle}${CART_META_SEPARATOR}${JSON.stringify({
       selectedOptions: normalized,
       itemType: 'addon',
       addonTitle: trimmedAddonTitle,
+      parentPackageId: String(meta.parentPackageId ?? ''),
     })}`
   }
 
   return buildCartItemTitle(title, normalized)
+}
+
+async function syncCateringAddonTotalsForPackage(cartId, packageId, guestCount) {
+  const guests = parseGuestCountValue(guestCount)
+  if (!guests) return
+
+  const addonItems = await prisma.cartItem.findMany({
+    where: {
+      cartId,
+      packageId: String(packageId),
+      addonId: { not: null },
+    },
+  })
+
+  for (const addonItem of addonItems) {
+    const perPerson = Number(addonItem.unitPrice ?? 0)
+    if (!perPerson) continue
+
+    const quantity = Math.max(1, Number(addonItem.quantity ?? 1))
+    const lineTotal = perPerson * guests * quantity
+    const displayTitle = String(addonItem.title ?? '').split(CART_META_SEPARATOR)[0]
+    const normalized = normalizeSelectedOptions({
+      'Guest count': String(guests),
+    })
+
+    await prisma.cartItem.update({
+      where: { id: addonItem.id },
+      data: {
+        title: buildStoredCartItemTitle(displayTitle, normalized, {
+          addonTitle: displayTitle,
+          parentPackageId: packageId,
+        }),
+        totalPrice: lineTotal.toFixed(2),
+      },
+    })
+  }
 }
 
 function normalizeSectionItems(value) {
@@ -117,6 +183,31 @@ function getPackageAddons(pkg) {
     ),
     ...normalizeSectionItems(pkg?.reusable_addons),
   ]
+}
+
+const PACKAGE_POPULATE = {
+  'populate[reusable_addons]': 'true',
+  'populate[service_categories]': 'true',
+  'populate[packages][on][package.decorpackages][populate][addons]': 'true',
+  'populate[packages][on][package.sheeshapackage][populate][addons]': 'true',
+  'populate[packages][on][package.cateringpackage]': 'true',
+}
+
+async function resolvePackageById(packageId) {
+  const raw = String(packageId ?? '').trim()
+  if (!raw) return null
+
+  const { data: byId } = await strapiGet('/packages', {
+    'filters[id][$eq]': raw,
+    ...PACKAGE_POPULATE,
+  })
+  if (byId?.[0]) return byId[0]
+
+  const { data: byDocumentId } = await strapiGet('/packages', {
+    'filters[documentId][$eq]': raw,
+    ...PACKAGE_POPULATE,
+  })
+  return byDocumentId?.[0] ?? null
 }
 
 // ─── Helper: recalculate cart totals ─────────────────────────────────────────
@@ -204,17 +295,13 @@ export const addItem = async (req, res, next) => {
       addonTitle = '',
       addon = null,
       unitPrice: customUnitPrice = null,
+      totalPrice: customTotalPrice = null,
     } = req.body
 
-    // Fetch package from Strapi — use filter by id (Strapi v5 single entry needs documentId, filter by id works)
-    const { data: pkgs } = await strapiGet('/packages', {
-      'filters[id][$eq]': packageId,
-      'populate[reusable_addons]': 'true',
-      'populate[packages][on][package.decorpackages][populate][addons]': 'true',
-      'populate[packages][on][package.sheeshapackage][populate][addons]': 'true',
-    })
-    const pkg = pkgs?.[0]
+    const pkg = await resolvePackageById(packageId)
     if (!pkg) return res.status(404).json({ error: 'Package not found' })
+
+    const resolvedPackageId = String(pkg.id ?? packageId)
 
     const requestedAddonId = addon?.id != null ? String(addon.id) : ''
     const requestedAddonTitle = String(addon?.name ?? addonTitle ?? '').trim()
@@ -233,10 +320,17 @@ export const addItem = async (req, res, next) => {
     ).trim()
     const isAddon = Boolean(addonId && trimmedAddonTitle)
 
+    const cateringPackage = isCateringPackage(pkg)
+    const cateringAddon = isAddon && (isCateringPerPersonAddon(matchedAddon) || cateringPackage)
+
     // Use custom unit price if provided and valid, otherwise use addon price or base price
     let unitPrice
     if (isAddon) {
-      unitPrice = Number(matchedAddon?.price ?? 0)
+      const resolvedCustomPrice = Number(customUnitPrice ?? 0)
+      unitPrice =
+        Number.isFinite(resolvedCustomPrice) && resolvedCustomPrice > 0
+          ? resolvedCustomPrice
+          : Number(matchedAddon?.price ?? 0)
     } else {
       const resolvedCustomPrice = Number(customUnitPrice ?? 0)
       unitPrice =
@@ -246,8 +340,14 @@ export const addItem = async (req, res, next) => {
     }
 
     const title = pkg.title
-    const selectionKey = isAddon ? null : buildSelectionKey(selectedOptions)
-    const storedTitle = buildStoredCartItemTitle(title, selectedOptions, trimmedAddonTitle)
+    const normalizedOptions = normalizeSelectedOptions(selectedOptions)
+    const selectionKey = isAddon ? null : buildSelectionKey(normalizedOptions)
+    const storedTitle = isAddon
+      ? buildStoredCartItemTitle(trimmedAddonTitle, normalizedOptions, {
+          addonTitle: trimmedAddonTitle,
+          parentPackageId: resolvedPackageId,
+        })
+      : buildStoredCartItemTitle(title, normalizedOptions)
 
     // Get or create cart
     let cart = await prisma.cart.findFirst({ where: { userId } })
@@ -259,29 +359,55 @@ export const addItem = async (req, res, next) => {
     const existing = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
-        packageId: String(packageId),
+        packageId: resolvedPackageId,
         packageElementId: selectionKey,
         addonId: addonId || null,
       },
     })
 
+    const resolvedCustomTotal = Number(customTotalPrice ?? 0)
+    const guestCountForAddon = cateringAddon
+      ? parseGuestCountValue(normalizedOptions['Guest count'] ?? normalizedOptions['Guest Count'])
+      : 0
+
+    const defaultLineTotal =
+      cateringAddon && guestCountForAddon
+        ? unitPrice * guestCountForAddon * quantity
+        : unitPrice * quantity
+
+    const itemTotal =
+      Number.isFinite(resolvedCustomTotal) && resolvedCustomTotal > 0
+        ? resolvedCustomTotal
+        : defaultLineTotal
+
     if (existing) {
       const newQty = existing.quantity + quantity
+      const mergedTotal =
+        Number.isFinite(resolvedCustomTotal) && resolvedCustomTotal > 0
+          ? resolvedCustomTotal
+          : cateringAddon && guestCountForAddon
+            ? unitPrice * guestCountForAddon * newQty
+            : unitPrice * newQty
+
       await prisma.cartItem.update({
         where: { id: existing.id },
-        data: { quantity: newQty, totalPrice: (unitPrice * newQty).toFixed(2) },
+        data: {
+          quantity: newQty,
+          unitPrice: unitPrice.toFixed(2),
+          totalPrice: mergedTotal.toFixed(2),
+        },
       })
     } else {
       await prisma.cartItem.create({
         data: {
           cartId: cart.id,
-          packageId: String(packageId),
+          packageId: resolvedPackageId,
           packageElementId: selectionKey,
           addonId: addonId || null,
           title: storedTitle,
           quantity,
           unitPrice: unitPrice.toFixed(2),
-          totalPrice: (unitPrice * quantity).toFixed(2),
+          totalPrice: itemTotal.toFixed(2),
         },
       })
     }
@@ -359,7 +485,15 @@ export const removeItem = async (req, res, next) => {
 export const updateCart = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const { eventDate, eventCity, guestCount, itemId, quantity, selectedOptions } = req.body
+    const {
+      eventDate,
+      eventCity,
+      guestCount,
+      itemId,
+      quantity,
+      selectedOptions,
+      unitPrice: customUnitPrice = null,
+    } = req.body
 
     const cart = await prisma.cart.findFirst({ where: { userId } })
     if (!cart) return res.status(404).json({ error: 'Cart not found' })
@@ -384,6 +518,16 @@ export const updateCart = async (req, res, next) => {
         String(item.title ?? '').split(CART_META_SEPARATOR)[0] || item.title,
         normalizedSelectedOptions
       )
+      const resolvedCustomPrice = Number(customUnitPrice ?? 0)
+      const resolvedCustomTotal = Number(req.body?.totalPrice ?? 0)
+      const nextUnitPrice =
+        Number.isFinite(resolvedCustomPrice) && resolvedCustomPrice > 0
+          ? resolvedCustomPrice
+          : Number(item.unitPrice)
+      const nextLineTotal =
+        Number.isFinite(resolvedCustomTotal) && resolvedCustomTotal > 0
+          ? resolvedCustomTotal
+          : nextUnitPrice * nextQuantity
 
       const duplicateItem = await prisma.cartItem.findFirst({
         where: {
@@ -402,7 +546,8 @@ export const updateCart = async (req, res, next) => {
           where: { id: duplicateItem.id },
           data: {
             quantity: mergedQuantity,
-            totalPrice: (Number(duplicateItem.unitPrice) * mergedQuantity).toFixed(2),
+            unitPrice: nextUnitPrice.toFixed(2),
+            totalPrice: nextLineTotal.toFixed(2),
           },
         })
 
@@ -414,9 +559,17 @@ export const updateCart = async (req, res, next) => {
             title: nextTitle,
             packageElementId: nextSelectionKey,
             quantity: nextQuantity,
-            totalPrice: (Number(item.unitPrice) * nextQuantity).toFixed(2),
+            unitPrice: nextUnitPrice.toFixed(2),
+            totalPrice: nextLineTotal.toFixed(2),
           },
         })
+      }
+
+      const guestsForSync = parseGuestCountValue(
+        normalizedSelectedOptions['Guest count'] ?? normalizedSelectedOptions['Guest Count']
+      )
+      if (!item.addonId && guestsForSync > 0) {
+        await syncCateringAddonTotalsForPackage(item.cart.id, item.packageId, guestsForSync)
       }
 
       await recalcCart(item.cart.id)

@@ -96,7 +96,8 @@
       "components": [
         "package.decorpackages",
         "package.sheeshapackage",
-        "package.bartendingpackage"
+        "package.bartendingpackage",
+        "package.cateringpackage"
       ]
     }
   }

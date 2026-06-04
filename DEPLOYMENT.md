@@ -48,7 +48,7 @@ PUBLIC_STRAPI_URL=https://strapi.elewen.co.in
 PUBLIC_ADMIN_URL=https://admin.elewen.co.in
 PUBLIC_URL=https://strapi.elewen.co.in
 FRONTEND_URL=https://elewen.co.in
-GOOGLE_REDIRECT_URI=https://api.elewen.co.in/auth/google/callback
+GOOGLE_REDIRECT_URI=https://strapi.elewen.co.in/api/connect/google/callback
 
 CERTBOT_EMAIL=admin@elewen.co.in
 CERTBOT_CERT_NAME=elewen.co.in
@@ -67,7 +67,7 @@ docker compose down --remove-orphans
 docker compose up --build -d
 ```
 
-Wait until API, Strapi, frontend, and admin are healthy. Nginx will not serve real HTTPS until certificates exist (see next step).
+The one-shot `migrate` service runs Prisma migrations before the API starts. Wait until API and Strapi pass healthchecks (see `docker compose ps`). Nginx will not serve real HTTPS until certificates exist (see next step).
 
 ---
 
@@ -161,9 +161,7 @@ Direct ports (debug only, no SSL): `localhost:5173`, `:3000`, `:5174`, `:1337`.
 
 ## 8. Local development (Windows, no SSL)
 
-Use `RUNNING.md` for Postgres/Redis + `npm run dev` on each app.
-
-Do **not** run local Vite on `5173` while Strapi `develop` is running (port conflict → `426 Upgrade Required`).
+Use [RUNNING.md](./RUNNING.md) for Postgres/Redis + `npm run dev` on each app. Port assignments and Strapi startup are in [DEV_PORTS.md](./DEV_PORTS.md) — use `npm run develop` in `strapi/`, not `npx strapi develop` (avoids stealing port 5173 from the frontend).
 
 For local Docker **without** HTTPS, use direct ports (`5173`, `3000`, etc.) and skip Nginx, or point hosts to your VPS.
 
@@ -205,14 +203,22 @@ docker compose restart strapi api
 
 Ensure `PUBLIC_API_URL` and `PUBLIC_STRAPI_URL` use `https://` and rebuild frontend.
 
+### Strapi 403 on public content (e.g. catering settings, terms)
+
+In Strapi admin → Settings → Users & Permissions → **Public** role, enable `find` / `findOne` on the relevant content-types. Restart is not required for permission changes.
+
 ---
 
 ## 11. GitHub Actions
 
-- **CI**: tests + Docker image builds with production Vite URLs.
-- **Deploy**: SSH + `docker compose up`; run SSL init once on the server after first deploy.
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| **CI** (`ci.yml`) | Push/PR to `main` or `dev` | Validates compose (with `.env.docker.example`), API tests, frontend lint, admin build; on `main` push also builds and pushes images to **GHCR** (backup / future use). |
+| **Deploy** (`deploy.yml`) | Push to `main` → staging; manual → production | SSH to server, `git pull`, `docker compose up --build -d` (images are built on the VPS from the repo, not pulled from GHCR). |
 
-Secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`.
+Run SSL init once on the server after the first deploy (`scripts/ssl/init-letsencrypt.sh`).
+
+Secrets (per GitHub environment): `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`.
 
 ---
 
@@ -226,3 +232,6 @@ Secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`.
 | `scripts/ssl/renew-once.sh` | Manual renewal |
 | `scripts/ssl/renew-entrypoint.sh` | Auto-renew loop in `certbot-renew` |
 | `.env.docker.example` | Production `.env` template |
+| `.github/workflows/ci.yml` | Tests, compose validation, GHCR image builds |
+| `.github/workflows/deploy.yml` | SSH deploy (staging on `main`, production manual) |
+| `DEV_PORTS.md` | Local port map and Strapi `npm run develop` |

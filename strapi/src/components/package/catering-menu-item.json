@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_package_catering_menu_items",
+  "info": {
+    "displayName": "Catering Menu Item",
+    "description": "One row in the Menu selection block (e.g. Starters Choose 4, Accompaniments included)"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "details": {
+      "type": "text"
+    },
+    "row_type": {
+      "type": "enumeration",
+      "enum": ["choose", "included", "info"],
+      "default": "choose"
+    },
+    "choose_hint": {
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  },
+  "config": {}
+}

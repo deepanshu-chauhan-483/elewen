@@ -59,10 +59,7 @@ function normalizeTermsData(data) {
             const previewText = content[0] ?? ''
 
             return {
-              id: slugify(
-                `${sectionId}-${clauseNumber || clauseTitleText || clauseIndex + 1}`,
-                `${sectionId}-clause-${clauseIndex + 1}`
-              ),
+              id: `${sectionId}-clause-${clauseIndex + 1}`,
               title: childTitle || `Clause ${clauseIndex + 1}`,
               content,
               clauseNumber,
@@ -86,20 +83,16 @@ function normalizeTermsData(data) {
 }
 
 async function fetchTermsAndConditions() {
-  const candidatePaths = ['/terms-and-condition', '/terms-and-conditions']
-
-  for (const path of candidatePaths) {
-    try {
-      const response = await strapiGet(path, {
-        'populate[sections][populate][clauses]': 'true',
-        'populate[tldr][populate][bullets]': 'true',
-      })
-      const data = response?.data?.attributes ?? response?.data ?? null
-      const normalized = normalizeTermsData(data)
-      if (normalized) return normalized
-    } catch {
-      // try next possible route shape
-    }
+  try {
+    const response = await strapiGet('/terms-and-conditions', {
+      'populate[sections][populate][clauses]': 'true',
+      'populate[tldr][populate][bullets]': 'true',
+    })
+    const data = response?.data?.attributes ?? response?.data ?? null
+    const normalized = normalizeTermsData(data)
+    if (normalized) return normalized
+  } catch {
+    // CMS entry missing or not public — fall through to null
   }
 
   throw new Error('Failed to fetch Terms & Conditions from Strapi')
@@ -113,8 +106,7 @@ export function useTermsAndConditions() {
 
       try {
         return await fetchTermsAndConditions()
-      } catch (error) {
-        console.warn('Failed to fetch Strapi terms and conditions', error)
+      } catch {
         return null
       }
     },

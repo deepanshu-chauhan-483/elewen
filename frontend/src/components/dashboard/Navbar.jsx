@@ -59,6 +59,50 @@ const BellIcon = () => (
   </svg>
 )
 
+const NotificationBadge = ({ count }) => {
+  const unread = Number(count ?? 0)
+  if (unread <= 0) return null
+
+  const label = unread > 99 ? '99+' : String(unread)
+
+  return (
+    <span
+      className="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#591902] px-1 text-[10px] font-semibold leading-none text-white"
+      aria-hidden="true"
+    >
+      {label}
+    </span>
+  )
+}
+
+const DashboardModalCloseIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path
+      d="M15 5L5 15M5 5L15 15"
+      stroke="#1C1C1C"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+function NotificationBellButton({ unreadCount, onClick, className = '' }) {
+  const unread = Number(unreadCount ?? 0)
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+      className={`relative flex h-10 w-10 items-center justify-center rounded-full text-[#262626] transition-colors hover:bg-[#F3F3F3] ${className}`}
+    >
+      <BellIcon />
+      <NotificationBadge count={unread} />
+    </button>
+  )
+}
+
 const MenuIcon = () => (
   <>
     <div className="h-0.5 w-7 bg-[#262626]" />
@@ -151,14 +195,7 @@ const UserMenu = ({ unreadCount, onOpenNotifications, avatarNode }) => {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 lg:gap-3">
-        <button
-          type="button"
-          onClick={onOpenNotifications}
-          aria-label="Notifications"
-          className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#262626] transition-colors hover:bg-[#F3F3F3]"
-        >
-          <BellIcon count={unreadCount} />
-        </button>
+        <NotificationBellButton unreadCount={unreadCount} onClick={onOpenNotifications} />
 
         <Link
           to="/user-dashboard/profile"
@@ -296,19 +333,11 @@ const Navbar = ({ onMobileMenuOpen }) => {
             </svg>
           </button>
 
-          <button
-            type="button"
-            aria-label="Notifications"
+          <NotificationBellButton
+            unreadCount={unreadCount}
             onClick={() => setIsNotificationModalOpen(true)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#262626]"
-          >
-            <BellIcon />
-            {unreadCount > 0 ? (
-              <span className="absolute right-0 top-0 min-w-4 rounded-full bg-[#591902] px-1 text-center text-[10px] leading-4 text-white">
-                {unreadCount}
-              </span>
-            ) : null}
-          </button>
+            className="hover:bg-transparent"
+          />
 
           <Link
             to="/user-dashboard/profile"
@@ -428,10 +457,10 @@ function NotificationModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-lg leading-none text-[#6B7280]"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-2 text-[#957960] transition hover:bg-[#F3EEE8]"
               aria-label="Close notifications"
             >
-              x
+              <DashboardModalCloseIcon />
             </button>
           </div>
         </div>

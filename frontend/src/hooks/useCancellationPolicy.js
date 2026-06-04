@@ -35,8 +35,7 @@ export function useCancellationPolicy() {
 
       try {
         return await fetchCancellationPolicy()
-      } catch (error) {
-        console.warn('Failed to fetch Strapi cancellation policy', error)
+      } catch {
         return null
       }
     },

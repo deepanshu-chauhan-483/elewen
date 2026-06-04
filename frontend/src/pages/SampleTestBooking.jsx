@@ -1,13 +1,48 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
+import { getCateringDetailSection, getCateringPricePerPerson } from '../lib/cateringPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const SAMPLE_TASTE_SERVICE_SLUGS = new Set(['catering', 'bartending'])
+const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 const EXPRESS_DELIVERY_FEE = 300
-// const PLATFORM_FEE = 80
 const GST_RATE = 0.18
+const DELIVERY_FEE = 80
+
+function parseCartItemTitle(value = '') {
+  const rawTitle = String(value ?? '')
+  const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
+
+  if (!metaPart) {
+    return { displayTitle: displayTitle || rawTitle, selectedOptions: {} }
+  }
+
+  try {
+    const parsed = JSON.parse(metaPart)
+    return {
+      displayTitle: displayTitle || rawTitle,
+      selectedOptions:
+        parsed?.selectedOptions && typeof parsed.selectedOptions === 'object'
+          ? parsed.selectedOptions
+          : {},
+    }
+  } catch {
+    return { displayTitle: displayTitle || rawTitle, selectedOptions: {} }
+  }
+}
+
+const blocksToText = blocks => {
+  if (!blocks) return ''
+  if (typeof blocks === 'string') return blocks
+  if (!Array.isArray(blocks)) return ''
+
+  return blocks
+    .map(block => (block.children ?? []).map(child => child.text ?? '').join(''))
+    .filter(Boolean)
+    .join(' ')
+}
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -36,11 +71,185 @@ function getServiceLabel(pkg) {
   return slug.replace(/\b\w/g, char => char.toUpperCase())
 }
 
-function getPackageItems(pkg, quantity) {
-  const breakdownItems = (
-    Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : []
+function getBartendingDetailSection(pkg) {
+  return (pkg?.detail_sections ?? []).find(
+    section => section?.__component === 'package.bartendingpackage'
   )
-    .map(entry => {
+}
+
+function getPackageUnitPrice(pkg, selectedOptions = {}) {
+  const vegPreference = selectedOptions?.Veg ?? selectedOptions?.veg ?? ''
+  const cateringSection = getCateringDetailSection(pkg)
+  if (cateringSection) {
+    return getCateringPricePerPerson(cateringSection, vegPreference, pkg?.base_price ?? 0)
+  }
+
+  return Number(pkg?.base_price ?? 0)
+}
+
+function getPackageDescription(pkg) {
+  const cateringSection = getCateringDetailSection(pkg)
+  const fromCatering =
+    cateringSection?.level_description ||
+    cateringSection?.service_style_notes ||
+    cateringSection?.package_subtitle
+
+  if (fromCatering) return String(fromCatering)
+
+  const fromPackage = blocksToText(pkg?.description) || String(pkg?.description ?? '').trim()
+  return fromPackage || 'Selected from your cart for tasting.'
+}
+
+function getMenuItemDescription(menuItem) {
+  const details = String(menuItem?.details ?? '').trim()
+  const chooseHint = String(menuItem?.choose_hint ?? '').trim()
+  const rowType = String(menuItem?.row_type ?? 'choose').toLowerCase()
+
+  if (details) return details
+  if (chooseHint) return chooseHint
+  if (rowType === 'included') return 'Included with your package menu'
+  return 'Tasting portion from this menu selection'
+}
+
+function getTastingPortionPrice(unitPrice, portionCount) {
+  const count = Math.max(1, portionCount)
+  return Math.max(80, Math.round(Number(unitPrice ?? 0) / (count * 4)))
+}
+
+function findMenuSelectionValue(selectedOptions = {}, menuItem, index) {
+  const title = String(menuItem?.title ?? '').trim()
+  const candidateKeys = new Set([`menu-${index}-${title}`, title, `menu-info-${index}-${title}`])
+
+  for (const [key, value] of Object.entries(selectedOptions)) {
+    const normalizedKey = String(key ?? '').trim()
+    if (!normalizedKey || candidateKeys.has(normalizedKey)) {
+      return String(value ?? '').trim()
+    }
+    if (title && (normalizedKey.includes(title) || normalizedKey.startsWith('menu-'))) {
+      return String(value ?? '').trim()
+    }
+  }
+
+  return ''
+}
+
+function splitMenuSelectionDishes(value = '') {
+  return String(value)
+    .split(/,\s*/)
+    .map(part => part.trim())
+    .filter(part => part && part.toLowerCase() !== 'selected')
+}
+
+function getCateringMenuItemsForTasting(pkg, selectedOptions = {}) {
+  const cateringSection = getCateringDetailSection(pkg)
+  const menuItems = Array.isArray(cateringSection?.menu_items) ? cateringSection.menu_items : []
+  if (!menuItems.length) return []
+
+  const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
+  const sortedMenuItems = [...menuItems].sort(
+    (left, right) => Number(left?.sort_order ?? 0) - Number(right?.sort_order ?? 0)
+  )
+  const selectableRows = sortedMenuItems.filter(
+    item => String(item?.row_type ?? 'choose').toLowerCase() !== 'info'
+  )
+
+  const tastingRows = []
+
+  selectableRows.forEach((menuItem, index) => {
+    const title = String(menuItem?.title ?? '').trim()
+    if (!title) return
+
+    const cartSelection = findMenuSelectionValue(selectedOptions, menuItem, index)
+    const dishes = splitMenuSelectionDishes(cartSelection)
+
+    if (dishes.length > 0) {
+      dishes.forEach((dish, dishIndex) => {
+        tastingRows.push({
+          id: `${pkg?.id ?? 'pkg'}-menu-${menuItem?.id ?? index}-dish-${dishIndex}`,
+          name: dish,
+          desc: `From ${title}`,
+          price: getTastingPortionPrice(unitPrice, selectableRows.length * dishes.length),
+          menuGroup: title,
+        })
+      })
+      return
+    }
+
+    tastingRows.push({
+      id: `${pkg?.id ?? 'pkg'}-menu-${menuItem?.id ?? index}`,
+      name: title,
+      desc: getMenuItemDescription(menuItem),
+      price: getTastingPortionPrice(unitPrice, selectableRows.length),
+      rowType: menuItem?.row_type,
+      menuGroup: title,
+    })
+  })
+
+  return tastingRows
+}
+
+function getBartendingFlavorItems(pkg, selectedOptions = {}) {
+  const flavors = Array.isArray(pkg?.flavor_options) ? pkg.flavor_options : []
+  const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
+
+  if (!flavors.length) return []
+
+  return flavors
+    .map((flavor, index) => {
+      const name = String(flavor?.title ?? flavor?.name ?? '').trim()
+      if (!name) return null
+
+      return {
+        id: `${pkg?.id ?? 'pkg'}-flavor-${index}`,
+        name,
+        desc: String(flavor?.description ?? '').trim() || 'Tasting portion',
+        price: getTastingPortionPrice(unitPrice, flavors.length),
+      }
+    })
+    .filter(Boolean)
+}
+
+function getInclusionsFromSection(section, pkg, selectedOptions) {
+  const inclusions = Array.isArray(section?.inclusions) ? section.inclusions : []
+  const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
+
+  return inclusions
+    .map((inc, index) => {
+      const name = String(inc?.text ?? inc?.title ?? inc?.name ?? '').trim()
+      if (!name) return null
+
+      return {
+        id: `${pkg?.id ?? 'pkg'}-inc-${inc?.id ?? index}`,
+        name,
+        desc: 'Included in your selected package',
+        price: getTastingPortionPrice(unitPrice, inclusions.length),
+      }
+    })
+    .filter(Boolean)
+}
+
+function getPackageItems(pkg, selectedOptions = {}) {
+  const cateringSection = getCateringDetailSection(pkg)
+  if (cateringSection) {
+    const menuTastingItems = getCateringMenuItemsForTasting(pkg, selectedOptions)
+    if (menuTastingItems.length > 0) return menuTastingItems
+  }
+
+  const bartendingFlavors = getBartendingFlavorItems(pkg, selectedOptions)
+  if (bartendingFlavors.length > 0) return bartendingFlavors
+
+  const bartendingSection = getBartendingDetailSection(pkg)
+  if (bartendingSection) {
+    const bartendingItems = getInclusionsFromSection(bartendingSection, pkg, selectedOptions)
+    if (bartendingItems.length > 0) return bartendingItems
+  }
+
+  const breakdownSource = Array.isArray(pkg?.detail_price_breakdown)
+    ? pkg.detail_price_breakdown
+    : []
+
+  const breakdownItems = breakdownSource
+    .map((entry, index) => {
       const label =
         entry?.label ??
         entry?.title ??
@@ -60,13 +269,17 @@ function getPackageItems(pkg, quantity) {
         entry?.base_price
 
       const amount = Number(String(amountValue ?? '').replace(/[^0-9.-]+/g, ''))
+      const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
 
-      return label && Number.isFinite(amount) && amount > 0
+      return label
         ? {
-            id: `${label}-${amount}`,
+            id: `${pkg?.id ?? 'pkg'}-breakdown-${index}`,
             name: label,
-            desc: 'Included in your selected package',
-            price: amount,
+            desc: 'Menu selection',
+            price:
+              Number.isFinite(amount) && amount > 0
+                ? amount
+                : getTastingPortionPrice(unitPrice, breakdownSource.length || 1),
           }
         : null
     })
@@ -74,22 +287,119 @@ function getPackageItems(pkg, quantity) {
 
   if (breakdownItems.length > 0) return breakdownItems
 
-  const inclusionItems = (Array.isArray(pkg?.detail_inclusions) ? pkg.detail_inclusions : [])
-    .filter(Boolean)
-    .slice(0, 6)
-    .map((text, index) => ({
-      id: `${pkg?.id ?? 'pkg'}-inc-${index}`,
-      name: text,
-      desc: 'Included in your selected package',
-      price: Number(pkg?.base_price ?? 0) / Math.max(1, Math.min(quantity || 1, 4)),
-    }))
+  const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
 
-  return inclusionItems
+  const inclusionTexts = (
+    Array.isArray(pkg?.detail_inclusions) ? pkg.detail_inclusions : []
+  ).filter(Boolean)
+
+  return inclusionTexts.map((text, index) => ({
+    id: `${pkg?.id ?? 'pkg'}-detail-inc-${index}`,
+    name: String(text),
+    desc: 'Menu selection',
+    price: getTastingPortionPrice(unitPrice, inclusionTexts.length),
+  }))
 }
 
-function buildSelectedCountText(itemCount, quantity) {
-  if (!itemCount) return '0 items selected'
-  return `${Math.min(itemCount, Math.max(1, quantity || 1))} of ${itemCount} items selected`
+function getDefaultSelectedIds(items) {
+  if (!items.length) return []
+  if (items.length <= 4) return items.map(item => item.id)
+  return items.slice(0, 4).map(item => item.id)
+}
+
+function mergeSelectionsForPackages(prev, tastingPackages) {
+  const next = { ...prev }
+
+  tastingPackages.forEach(pkg => {
+    const validIds = new Set(pkg.items.map(item => item.id))
+    const existing = next[pkg.id]
+
+    if (!existing) {
+      next[pkg.id] = {
+        selectedIds: getDefaultSelectedIds(pkg.items),
+        quantity: pkg.quantity,
+      }
+      return
+    }
+
+    next[pkg.id] = {
+      selectedIds: existing.selectedIds.filter(id => validIds.has(id)),
+      quantity: Math.max(1, Number(existing.quantity ?? pkg.quantity)),
+    }
+
+    if (!next[pkg.id].selectedIds.length && pkg.items.length) {
+      next[pkg.id].selectedIds = getDefaultSelectedIds(pkg.items)
+    }
+  })
+
+  Object.keys(next).forEach(key => {
+    if (!tastingPackages.some(pkg => pkg.id === key)) {
+      delete next[key]
+    }
+  })
+
+  return next
+}
+
+function buildSelectedCountText(selectedCount, totalCount) {
+  if (!totalCount) return '0 items selected'
+  return `${selectedCount} of ${totalCount} items selected`
+}
+
+function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
+  const packageId = pkg?.documentId ?? pkg?.id
+  const serviceSlug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
+  const params = new URLSearchParams()
+
+  if (selectedOptions && Object.keys(selectedOptions).length) {
+    params.set(
+      'selectedOptions',
+      JSON.stringify(
+        Object.fromEntries(Object.entries(selectedOptions).filter(([, value]) => Boolean(value)))
+      )
+    )
+  }
+
+  if (cartItemId) {
+    params.set('cartItemId', String(cartItemId))
+  }
+
+  const queryString = params.toString()
+
+  if (!packageId || !serviceSlug) return '/cart'
+
+  const slugPaths = {
+    decor: `/packages/decor-single/${packageId}`,
+    sheesha: `/packages/sheesha-single/${packageId}`,
+    bartending: `/packages/bartending-single/${packageId}`,
+    catering: `/packages/catering-single/${packageId}`,
+  }
+
+  const basePath = slugPaths[serviceSlug] ?? `/packages/${serviceSlug}/${packageId}`
+  return queryString ? `${basePath}?${queryString}` : basePath
+}
+
+function buildTastingPackage({ item, pkg }) {
+  const selectedOptions = item?.selectedOptions ?? {}
+  const items = getPackageItems(pkg, selectedOptions)
+  const quantity = Number(item?.quantity ?? 1)
+
+  return {
+    id: item.id,
+    cartItemId: item.id,
+    packageId: item.packageId ?? pkg?.id ?? '',
+    documentId: pkg?.documentId ?? '',
+    title: pkg?.title ?? item?.displayTitle ?? item?.title ?? 'Selected package',
+    tag: getServiceLabel(pkg),
+    desc: getPackageDescription(pkg),
+    items,
+    quantity,
+    totalPrice: Number(item?.totalPrice ?? 0),
+    unitPrice: getPackageUnitPrice(pkg, selectedOptions),
+    selectedOptions,
+    serviceSlug: normalizeServiceSlug(pkg?.service_slugs?.[0] ?? ''),
+    packageData: pkg,
+  }
 }
 
 function EditIcon() {
@@ -121,9 +431,10 @@ function DeleteIcon() {
 
 export default function SampleTasteBooking() {
   const [selectedDelivery, setSelectedDelivery] = useState(true)
+  const [selections, setSelections] = useState({})
   const navigate = useNavigate()
   const location = useLocation()
-  const { cart, loading } = useCart()
+  const { cart, loading, removeItem } = useCart()
   const { data: packages = [] } = usePackages()
 
   const packageLookup = useMemo(
@@ -144,26 +455,18 @@ export default function SampleTasteBooking() {
       .map(item => {
         const pkg = packageLookup.get(String(item.packageId)) ?? null
         const serviceSlug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
+        const parsedTitle = parseCartItemTitle(item.title)
 
         if (!SAMPLE_TASTE_SERVICE_SLUGS.has(serviceSlug)) return null
 
-        const packageItems = getPackageItems(pkg, Number(item?.quantity ?? 1))
-        const selectedCountText = buildSelectedCountText(
-          packageItems.length,
-          Number(item?.quantity ?? 1)
-        )
-
-        return {
-          id: item.id,
-          packageId: item.packageId ?? pkg?.id ?? '',
-          title: pkg?.title ?? item?.title ?? 'Selected package',
-          tag: getServiceLabel(pkg),
-          desc: pkg?.description ?? 'Selected from your cart for tasting.',
-          items: packageItems,
-          quantity: Number(item?.quantity ?? 1),
-          totalPrice: Number(item?.totalPrice ?? 0),
-          selectedCountText,
-        }
+        return buildTastingPackage({
+          item: {
+            ...item,
+            displayTitle: parsedTitle.displayTitle,
+            selectedOptions: parsedTitle.selectedOptions,
+          },
+          pkg,
+        })
       })
       .filter(Boolean)
   }, [cart, packageLookup])
@@ -172,46 +475,121 @@ export default function SampleTasteBooking() {
     if (incomingItems.length > 0) {
       return incomingItems
         .map(item => {
-          const pkg = item?.packageData ?? null
+          const pkg = item?.packageData ?? packageLookup.get(String(item.packageId)) ?? null
           const serviceSlug = normalizeServiceSlug(pkg?.service_slugs?.[0] ?? '')
 
           if (!SAMPLE_TASTE_SERVICE_SLUGS.has(serviceSlug)) return null
 
-          const packageItems = getPackageItems(pkg, Number(item?.quantity ?? 1))
-          const selectedCountText = buildSelectedCountText(
-            packageItems.length,
-            Number(item?.quantity ?? 1)
-          )
-
-          return {
-            id: item.id,
-            packageId: item.packageId ?? pkg?.id ?? '',
-            title: pkg?.title ?? item?.displayTitle ?? item?.title ?? 'Selected package',
-            tag: getServiceLabel(pkg),
-            desc: pkg?.description ?? 'Selected from your cart for tasting.',
-            items: packageItems,
-            quantity: Number(item?.quantity ?? 1),
-            totalPrice: Number(item?.totalPrice ?? 0),
-            selectedCountText,
-          }
+          return buildTastingPackage({ item, pkg })
         })
         .filter(Boolean)
     }
 
     return fallbackCartItems
-  }, [fallbackCartItems, incomingItems])
+  }, [fallbackCartItems, incomingItems, packageLookup])
 
-  const summaryPackages = tastingPackages.map(pkg => ({
-    ...pkg,
-    selectedItems: pkg.items.slice(0, Math.max(1, Math.min(2, pkg.items.length))),
-  }))
+  const tastingPackagesKey = useMemo(
+    () => tastingPackages.map(pkg => pkg.id).join('\u0000'),
+    [tastingPackages]
+  )
+  const [syncedTastingPackagesKey, setSyncedTastingPackagesKey] = useState(null)
 
-  const summaryItemCount = summaryPackages.reduce((sum, pkg) => sum + pkg.selectedItems.length, 0)
-  const subtotal = tastingPackages.reduce((sum, pkg) => sum + pkg.totalPrice, 0)
+  if (tastingPackagesKey !== syncedTastingPackagesKey) {
+    setSyncedTastingPackagesKey(tastingPackagesKey)
+    setSelections(prev => mergeSelectionsForPackages(prev, tastingPackages))
+  }
+
+  const toggleItemSelection = useCallback((packageId, itemId) => {
+    setSelections(prev => {
+      const current = prev[packageId] ?? { selectedIds: [], quantity: 1 }
+      const selectedSet = new Set(current.selectedIds)
+      if (selectedSet.has(itemId)) {
+        selectedSet.delete(itemId)
+      } else {
+        selectedSet.add(itemId)
+      }
+
+      return {
+        ...prev,
+        [packageId]: {
+          ...current,
+          selectedIds: Array.from(selectedSet),
+        },
+      }
+    })
+  }, [])
+
+  const updatePackageQuantity = useCallback((packageId, delta) => {
+    setSelections(prev => {
+      const current = prev[packageId] ?? { selectedIds: [], quantity: 1 }
+      const nextQuantity = Math.max(1, Number(current.quantity ?? 1) + delta)
+
+      return {
+        ...prev,
+        [packageId]: {
+          ...current,
+          quantity: nextQuantity,
+        },
+      }
+    })
+  }, [])
+
+  const handleEditPackage = useCallback(
+    pkg => {
+      const href = getCartPackageHref(pkg.packageData ?? pkg, pkg.selectedOptions, pkg.cartItemId)
+      navigate(href)
+    },
+    [navigate]
+  )
+
+  const handleRemovePackage = useCallback(
+    async pkg => {
+      if (!pkg?.cartItemId) return
+      try {
+        await removeItem(pkg.cartItemId)
+      } catch (error) {
+        console.error('[sample-taste] remove failed', error)
+      }
+    },
+    [removeItem]
+  )
+
+  const summaryPackages = useMemo(
+    () =>
+      tastingPackages
+        .map(pkg => {
+          const selection = selections[pkg.id] ?? { selectedIds: [], quantity: pkg.quantity }
+          const selectedIdSet = new Set(selection.selectedIds)
+          const selectedItems = pkg.items.filter(item => selectedIdSet.has(item.id))
+
+          return {
+            ...pkg,
+            selectionQuantity: Math.max(1, Number(selection.quantity ?? pkg.quantity)),
+            selectedItems,
+            selectedCount: selectedItems.length,
+          }
+        })
+        .filter(pkg => pkg.selectedItems.length > 0),
+    [selections, tastingPackages]
+  )
+
+  const summaryItemCount = summaryPackages.reduce((sum, pkg) => sum + pkg.selectedCount, 0)
+
+  const subtotal = useMemo(
+    () =>
+      summaryPackages.reduce((sum, pkg) => {
+        if (!pkg.selectedCount) return sum
+        return sum + Number(pkg.totalPrice ?? 0)
+      }, 0),
+    [summaryPackages]
+  )
+
   const gstAmount = Math.round(subtotal * GST_RATE)
-  const deliveryFee = tastingPackages.length > 0 ? 80 : 0
+  const deliveryFee = summaryPackages.length > 0 ? DELIVERY_FEE : 0
   const expressFee = selectedDelivery ? EXPRESS_DELIVERY_FEE : 0
   const totalAmount = subtotal + gstAmount + deliveryFee + expressFee
+
+  const deliveryAddress = cart?.eventCity?.trim() || ''
 
   if (loading && incomingItems.length === 0) {
     return (
@@ -294,77 +672,128 @@ export default function SampleTasteBooking() {
           </div>
 
           <div className="space-y-5">
-            {tastingPackages.map(pkg => (
-              <div
-                key={pkg.id}
-                className="border border-[#95796066] rounded-xl overflow-hidden bg-white"
-              >
-                <div className="px-5 py-4 flex justify-between items-start border-b border-[#95796033]">
-                  <div>
-                    <h2
-                      className="text-[18px] font-medium text-[#2C2C2C]"
-                      style={{ fontFamily: "'Poppins'" }}
-                    >
-                      {pkg.title}
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">{pkg.desc}</p>
-                  </div>
+            {tastingPackages.map(pkg => {
+              const selection = selections[pkg.id] ?? {
+                selectedIds: getDefaultSelectedIds(pkg.items),
+                quantity: pkg.quantity,
+              }
+              const selectedIdSet = new Set(selection.selectedIds)
+              const rowQuantity = Math.max(1, Number(selection.quantity ?? pkg.quantity))
 
-                  <span className="bg-[#E7E0DA] text-[#591902] text-[12px] font-medium px-3 py-1 rounded-full">
-                    {pkg.tag}
-                  </span>
-                </div>
-
+              return (
                 <div
-                  className="p-4 space-y-3 max-h-[240px] overflow-y-auto pr-1 hide-scrollbar mr-2"
-                  data-lenis-prevent
+                  key={pkg.id}
+                  className="border border-[#95796066] rounded-xl overflow-hidden bg-white"
                 >
-                  {pkg.items.map(item => (
-                    <div
-                      key={item.id}
-                      className="max-h-[44px] rounded-xl px-4 py-3 flex items-center justify-between gap-4 transition bg-[#E7E7DF]"
-                    >
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <input
-                          type="checkbox"
-                          checked
-                          readOnly
-                          className="mt-1 accent-[#2C2C2C] shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-[#2C2C2C] font-medium text-[12px] leading-5">
-                            {item.name}
-                          </p>
-                          <p className="text-gray-500 text-[11px] leading-4 mt-1">{item.desc}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 shrink-0">
-                        <div className="flex items-center gap-3 bg-white rounded-full px-3 py-1">
-                          <button className="text-lg leading-none">-</button>
-                          <span className="text-sm">{pkg.quantity}</span>
-                          <button className="text-lg leading-none">+</button>
-                        </div>
-                        <p className="text-[#2C2C2C] font-medium">{formatCurrency(item.price)}</p>
-                      </div>
+                  <div className="px-5 py-4 flex justify-between items-start border-b border-[#95796033]">
+                    <div>
+                      <h2
+                        className="text-[18px] font-medium text-[#2C2C2C]"
+                        style={{ fontFamily: "'Poppins'" }}
+                      >
+                        {pkg.title}
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">{pkg.desc}</p>
                     </div>
-                  ))}
-                </div>
 
-                <div className="px-5 pb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <button className="w-8 h-8 rounded-full bg-[#E7E7E2] flex items-center justify-center text-sm text-black">
-                      <EditIcon />
-                    </button>
-                    <button className="w-8 h-8 rounded-full bg-[#6B1D0C] text-white flex items-center justify-center text-sm">
-                      <DeleteIcon />
-                    </button>
+                    <span className="bg-[#E7E0DA] text-[#591902] text-[12px] font-medium px-3 py-1 rounded-full shrink-0">
+                      {pkg.tag}
+                    </span>
                   </div>
 
-                  <p className="text-sm text-gray-500">{pkg.selectedCountText}</p>
+                  <div
+                    className="p-4 space-y-3 max-h-[240px] overflow-y-auto pr-1 hide-scrollbar mr-2"
+                    data-lenis-prevent
+                  >
+                    {pkg.items.length > 0 ? (
+                      pkg.items.map(item => {
+                        const isSelected = selectedIdSet.has(item.id)
+
+                        return (
+                          <div
+                            key={item.id}
+                            className={`min-h-[44px] rounded-xl px-4 py-3 flex items-center justify-between gap-4 transition ${
+                              isSelected ? 'bg-[#E7E7DF]' : 'bg-[#F5F5F0]'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleItemSelection(pkg.id, item.id)}
+                                className="mt-1 accent-[#2C2C2C] shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <p className="text-[#2C2C2C] font-medium text-[12px] leading-5">
+                                  {item.name}
+                                </p>
+                                <p className="text-gray-500 text-[11px] leading-4 mt-1">
+                                  {item.desc}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 shrink-0">
+                              <div className="flex items-center gap-3 bg-white rounded-full px-3 py-1">
+                                <button
+                                  type="button"
+                                  className="text-lg leading-none disabled:opacity-40"
+                                  disabled={rowQuantity <= 1}
+                                  onClick={() => updatePackageQuantity(pkg.id, -1)}
+                                >
+                                  -
+                                </button>
+                                <span className="text-sm">{rowQuantity}</span>
+                                <button
+                                  type="button"
+                                  className="text-lg leading-none"
+                                  onClick={() => updatePackageQuantity(pkg.id, 1)}
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <p className="text-[#2C2C2C] font-medium">
+                                {formatCurrency(item.price)}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500 px-2 py-3">
+                        No menu items listed for this package. Edit the package to configure your
+                        menu and cart selection.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="px-5 pb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEditPackage(pkg)}
+                        className="w-8 h-8 rounded-full bg-[#E7E7E2] flex items-center justify-center text-sm text-black"
+                        aria-label={`Edit ${pkg.title}`}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePackage(pkg)}
+                        className="w-8 h-8 rounded-full bg-[#6B1D0C] text-white flex items-center justify-center text-sm"
+                        aria-label={`Remove ${pkg.title}`}
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </div>
+
+                    <p className="text-sm text-gray-500">
+                      {buildSelectedCountText(selectedIdSet.size, pkg.items.length)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
@@ -405,8 +834,10 @@ export default function SampleTasteBooking() {
               </span>
               <input
                 type="text"
-                placeholder={cart?.eventCity || 'Enter delivery address'}
-                className="w-full outline-none bg-transparent"
+                readOnly
+                value={deliveryAddress}
+                placeholder="Enter delivery address in cart"
+                className="w-full outline-none bg-transparent text-[#2C2C2C]"
               />
             </div>
 
@@ -437,6 +868,7 @@ export default function SampleTasteBooking() {
               </div>
 
               <button
+                type="button"
                 onClick={() => setSelectedDelivery(!selectedDelivery)}
                 className={`w-12 h-7 rounded-full flex items-center px-1 transition ${
                   selectedDelivery ? 'bg-[#E48E03] justify-end' : 'bg-gray-300 justify-start'
@@ -461,31 +893,37 @@ export default function SampleTasteBooking() {
             </div>
 
             <div className="p-5 space-y-5">
-              {summaryPackages.map((pkg, index) => (
-                <div key={pkg.id}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-[#2C2C2C]">{pkg.title}</p>
-                      <span className="bg-[#E7E0DA] text-[#591902] text-[12px] px-2 py-1 rounded-full">
-                        {pkg.tag}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-sm">
-                    {pkg.selectedItems.map(item => (
-                      <div key={item.id} className="flex justify-between">
-                        <span className="text-gray-600">{item.name}</span>
-                        <span>{formatCurrency(item.price)}</span>
+              {summaryPackages.length > 0 ? (
+                summaryPackages.map((pkg, index) => (
+                  <div key={pkg.id}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-[#2C2C2C]">{pkg.title}</p>
+                        <span className="bg-[#E7E0DA] text-[#591902] text-[12px] px-2 py-1 rounded-full">
+                          {pkg.tag}
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                    </div>
 
-                  {index < summaryPackages.length - 1 ? (
-                    <hr className="my-4 border-[#0000001A]" />
-                  ) : null}
-                </div>
-              ))}
+                    <div className="space-y-2 text-sm">
+                      {pkg.selectedItems.map(item => (
+                        <div key={item.id} className="flex justify-between gap-4">
+                          <span className="text-gray-600">{item.name}</span>
+                          <span>{formatCurrency(item.price)}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {index < summaryPackages.length - 1 ? (
+                      <hr className="my-4 border-[#0000001A]" />
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Select at least one menu item from your packages to see the tasting summary.
+                </p>
+              )}
 
               <hr className="my-4 border-[#0000001A]" />
 
@@ -506,10 +944,6 @@ export default function SampleTasteBooking() {
                   <span className="text-gray-500">Express Delivery</span>
                   <span className="text-[#E48E03]">+{formatCurrency(expressFee)}</span>
                 </div>
-                {/* <div className="flex justify-between">
-                  <span className="text-gray-500">Platform Fee</span>
-                  <span>{formatCurrency(PLATFORM_FEE)}</span>
-                </div> */}
               </div>
 
               <div className="bg-[#F8F4ED] rounded-lg px-4 py-3 flex justify-between items-center font-medium">
@@ -525,6 +959,7 @@ export default function SampleTasteBooking() {
             </div>
             <button
               type="button"
+              disabled={summaryItemCount === 0}
               onClick={() =>
                 navigate('/checkout?mode=sample-tasting', {
                   state: {
@@ -532,11 +967,19 @@ export default function SampleTasteBooking() {
                     sampleSessionDetails: {
                       dateLabel: formatSessionDate(cart?.eventDate),
                       timeLabel: 'Time pending',
-                      address: cart?.eventCity || 'Address pending',
+                      address: deliveryAddress || 'Address pending',
                     },
-                    sampleTastePackageIds: tastingPackages
+                    sampleTastePackageIds: summaryPackages
                       .map(pkg => String(pkg.packageId ?? '').trim())
                       .filter(Boolean),
+                    sampleTasteSelections: summaryPackages.map(pkg => ({
+                      cartItemId: pkg.cartItemId,
+                      packageId: pkg.packageId,
+                      quantity: pkg.selectionQuantity,
+                      selectedItemIds: pkg.selectedItems.map(item => item.id),
+                      selectedItemNames: pkg.selectedItems.map(item => item.name),
+                      expressDelivery: selectedDelivery,
+                    })),
                   },
                 })
               }

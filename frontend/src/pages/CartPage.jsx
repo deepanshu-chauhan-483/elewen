@@ -12,7 +12,10 @@ import {
 import { usePackages } from '../hooks/usePackages'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import { useServiceAreas } from '../hooks/useServiceAreas'
+import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
+import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
+import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 const CART_PIN_CODE_KEY = 'elewen_cart_pin_code'
@@ -132,95 +135,6 @@ function parseApiError(error) {
   const message = error?.message ?? 'Something went wrong'
   const match = message.match(/\{"error":"([^"]+)"\}/)
   return match?.[1] ?? message
-}
-
-function parseBreakdownAmount(value) {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
-  if (typeof value !== 'string') return 0
-
-  const normalized = value.replace(/[^0-9.-]+/g, '')
-  const amount = Number(normalized)
-  return Number.isFinite(amount) ? amount : 0
-}
-
-function getBreakdownLabel(entry) {
-  if (!entry || typeof entry !== 'object') return ''
-
-  return (
-    entry.label ?? entry.title ?? entry.name ?? entry.text ?? entry.description ?? entry.item ?? ''
-  )
-}
-
-function getBreakdownAmount(entry) {
-  if (!entry || typeof entry !== 'object') return 0
-
-  const directAmount =
-    entry.amount ??
-    entry.price ??
-    entry.value ??
-    entry.cost ??
-    entry.total ??
-    entry.rate ??
-    entry.base_price
-
-  if (directAmount != null) {
-    return parseBreakdownAmount(directAmount)
-  }
-
-  for (const [key, value] of Object.entries(entry)) {
-    if (
-      ['id', 'documentId', 'createdAt', 'updatedAt', 'publishedAt'].includes(key) ||
-      typeof value === 'object'
-    ) {
-      continue
-    }
-
-    const amount = parseBreakdownAmount(value)
-    if (amount > 0) return amount
-  }
-
-  return 0
-}
-
-function getPackageBreakdownRows(pkg) {
-  return (Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : [])
-    .map(entry => {
-      const label = String(getBreakdownLabel(entry) ?? '').trim()
-      const amount = getBreakdownAmount(entry)
-      return label && amount > 0 ? { label, amount } : null
-    })
-    .filter(Boolean)
-}
-
-function getCartItemSummary(item) {
-  if (item?.itemType === 'addon') {
-    return {
-      rows: [],
-      total: Number(item?.totalPrice ?? 0),
-    }
-  }
-
-  const quantity = Math.max(1, Number(item?.quantity ?? 1))
-  const breakdownRows = getPackageBreakdownRows(item?.packageData)
-
-  if (!breakdownRows.length) {
-    return {
-      rows: [],
-      total: Number(item?.totalPrice ?? 0),
-    }
-  }
-
-  const rows = breakdownRows.map(row => ({
-    ...row,
-    total: row.amount * quantity,
-  }))
-  const cartTotal = Number(item?.totalPrice ?? 0)
-  const breakdownTotal = rows.reduce((sum, row) => sum + row.total, 0)
-
-  return {
-    rows,
-    total: cartTotal > 0 ? cartTotal : breakdownTotal,
-  }
 }
 
 function getCartItemQuantity(item) {
@@ -1155,13 +1069,18 @@ function PriceSummaryCard({
   showSampleTasteBooking = false,
   pincodeCard = null,
   isCheckoutDisabled = false,
+  cateringDiscountSettings = null,
 }) {
   const { data: globalSettings = null } = useGlobalSettings()
   const itemSummaries = cartItems.map(item => ({
     item,
-    summary: getCartItemSummary(item),
+    summary: getCartItemSummary(item, { cateringDiscountSettings, cartItems }),
   }))
   const totalPackageCount = cartItems.reduce((sum, item) => sum + getCartItemQuantity(item), 0)
+  const guestDiscountSummary = useMemo(
+    () => aggregateAppliedGuestDiscounts(itemSummaries),
+    [itemSummaries]
+  )
   const computedSubtotal = itemSummaries.reduce(
     (sum, entry) => sum + Number(entry.summary.total ?? 0),
     0
@@ -1232,9 +1151,14 @@ function PriceSummaryCard({
                   const quantityLabel =
                     getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''
                   const optionsText = getSelectedOptionsText(getDisplaySelectedOptions(item))
+                  const addonPricing = summary?.cateringAddonPricing
+                  const addonGuestLabel =
+                    addonPricing?.guestCount > 0
+                      ? ` · ${addonPricing.guestCount} guests × ₹${Number(addonPricing.perPerson).toLocaleString('en-IN')}/person`
+                      : ''
                   const label =
                     item?.itemType === 'addon'
-                      ? `Add-on - ${packageName}${quantityLabel}`
+                      ? `Add-on - ${packageName}${addonGuestLabel}${quantityLabel}`
                       : `${getPackageLineLabel(item?.title, packageName)}${
                           optionsText ? ` (${optionsText})` : ''
                         }${quantityLabel}`
@@ -1253,17 +1177,25 @@ function PriceSummaryCard({
           <hr className="my-4 border-[#0000001A]" />
 
           <div className="space-y-2 text-sm">
+            {guestDiscountSummary?.totalGuestDiscount > 0 ? (
+              <div className="flex justify-between">
+                <span className="text-[#787575]">Subtotal before guest discounts</span>
+                <span className="text-[#1C1C1C]">
+                  {formatCurrency(guestDiscountSummary.grossSubtotalBeforeGuestDiscounts)}
+                </span>
+              </div>
+            ) : null}
+
+            <PriceSummaryDiscountRows
+              guestDiscountSummary={guestDiscountSummary}
+              couponDiscount={discountAmount}
+              formatCurrency={formatCurrency}
+            />
+
             <div className="flex justify-between">
               <span className="text-[#787575]">Subtotal (before GST)</span>
               <span className="text-[#1C1C1C]">{formatCurrency(computedSubtotal)}</span>
             </div>
-
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-[#6B1D0C]">
-                <span className="text-[#787575]">Discount coupon applied</span>
-                <span className="text-[#787575]">-{formatCurrency(discountAmount)}</span>
-              </div>
-            )}
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
@@ -1387,6 +1319,14 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
     const basePath = `/packages/sheesha-single/${packageId}`
     return queryString ? `${basePath}?${queryString}` : basePath
   }
+  if (serviceSlug === 'bartending') {
+    const basePath = `/packages/bartending-single/${packageId}`
+    return queryString ? `${basePath}?${queryString}` : basePath
+  }
+  if (serviceSlug === 'catering') {
+    const basePath = `/packages/catering-single/${packageId}`
+    return queryString ? `${basePath}?${queryString}` : basePath
+  }
 
   const basePath = `/packages/${serviceSlug}/${packageId}`
   return queryString ? `${basePath}?${queryString}` : basePath
@@ -1422,6 +1362,7 @@ export default function CartPage() {
   const { data: couponToastMessage = 'Coupon applied successfully.' } = useCouponToastMessage()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
+  const { data: cateringDiscountSettings = null } = useCateringGuestDiscounts()
   const {
     cart,
     loading,
@@ -1765,6 +1706,7 @@ export default function CartPage() {
               onSampleTasteBooking={handleSampleTasteBooking}
               showSampleTasteBooking={showSampleTasteBooking}
               isCheckoutDisabled={isCheckoutDisabled}
+              cateringDiscountSettings={cateringDiscountSettings}
               pincodeCard={
                 /* Desktop only */
                 <div className="hidden md:block">

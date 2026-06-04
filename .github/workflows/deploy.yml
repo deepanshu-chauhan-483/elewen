@@ -17,7 +17,6 @@ on:
 
 permissions:
   contents: read
-  packages: read
 
 env:
   COMPOSE_FILE: docker-compose.yml
@@ -40,8 +39,7 @@ jobs:
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
             git pull origin main
-            docker compose -f ${{ env.COMPOSE_FILE }} pull || true
-            docker compose -f ${{ env.COMPOSE_FILE }} build --no-cache frontend admin-panel
+            # Stack uses build: contexts (not pre-pulled GHCR images). Rebuild and recreate all services.
             docker compose -f ${{ env.COMPOSE_FILE }} up --build -d
             docker compose -f ${{ env.COMPOSE_FILE }} ps
             # First deploy only: bash scripts/ssl/init-letsencrypt.sh (after DNS points here)
@@ -63,8 +61,6 @@ jobs:
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
             git pull origin main
-            docker compose -f ${{ env.COMPOSE_FILE }} pull || true
-            docker compose -f ${{ env.COMPOSE_FILE }} build --no-cache frontend admin-panel strapi
-            docker compose -f ${{ env.COMPOSE_FILE }} up -d
+            docker compose -f ${{ env.COMPOSE_FILE }} up --build -d
             docker compose -f ${{ env.COMPOSE_FILE }} ps
             docker image prune -f

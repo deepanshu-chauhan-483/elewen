@@ -40,6 +40,7 @@ function getBookAgainHref(booking) {
   if (serviceSlug === 'decor') return `/packages/decor-single/${packageId}`
   if (serviceSlug === 'sheesha') return `/packages/sheesha-single/${packageId}`
   if (serviceSlug === 'bartending') return `/packages/bartending-single/${packageId}`
+  if (serviceSlug === 'catering') return `/packages/catering-single/${packageId}`
   if (serviceSlug) return `/packages/${serviceSlug}/${packageId}`
   return '/package-listing'
 }

@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useToast } from '../components/common/useToast'
 import { getFieldErrors } from '../lib/formErrors'
 import { authLogin, setStoredJwt } from '../lib/api'
-
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+import { startGoogleSignIn } from '../lib/googleAuth'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -22,6 +21,12 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (confirmed) {
+      showToast({ message: 'Email verified! You can now sign in.' })
+    }
+  }, [confirmed, showToast])
 
   const authErrorMessage =
     authError === 'local_account_use_password'
@@ -189,9 +194,9 @@ export default function LoginPage() {
             OR
           </span>
 
-          <a
-            href={`${STRAPI_URL}/api/connect/google`}
-            onClick={() => sessionStorage.setItem('elewen_auth_origin', '/login')}
+          <button
+            type="button"
+            onClick={() => startGoogleSignIn('/login')}
             className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[14px] min-[540px]:text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
           >
             <svg
@@ -219,7 +224,7 @@ export default function LoginPage() {
               />
             </svg>
             Sign in with Google
-          </a>
+          </button>
         </div>
       </form>
     </AuthLayout>

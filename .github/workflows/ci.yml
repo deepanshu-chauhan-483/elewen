@@ -18,7 +18,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check compose file
-        run: docker compose -f docker-compose.yml config
+        run: |
+          cp .env.docker.example .env
+          docker compose -f docker-compose.yml config
 
   test-api:
     name: API - Test

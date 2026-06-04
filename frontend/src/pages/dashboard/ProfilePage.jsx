@@ -7,8 +7,7 @@ import {
 } from '../../components/dashboard/DashboardUI'
 import { useDashboardSession, useDashboardUpdateProfile } from '../../hooks/useDashboardData'
 import { getInitials } from '../../components/dashboard/dashboardUtils'
-import DateTimePicker from '../../components/common/DateTimePicker'
-
+import { isValidIndianPhone, normalizeIndianPhone } from '../../lib/phone'
 function buildFullName(session) {
   return (
     [session?.profile?.first_name, session?.profile?.last_name].filter(Boolean).join(' ') ||
@@ -18,21 +17,12 @@ function buildFullName(session) {
   )
 }
 
-function normalizeDateOnly(value) {
-  if (!value) return ''
-  const stringValue = String(value).trim()
-  if (!stringValue) return ''
-  const [datePart = ''] = stringValue.split('T')
-  return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : stringValue
-}
-
 function buildInitialForm(session) {
   return {
     first_name: session?.profile?.first_name || session?.user?.first_name || '',
     last_name: session?.profile?.last_name || session?.user?.last_name || '',
     email: session?.user?.email || '',
-    phone: session?.user?.phone || '',
-    date_of_birth: normalizeDateOnly(session?.profile?.date_of_birth),
+    phone: normalizeIndianPhone(session?.user?.phone || ''),
   }
 }
 
@@ -46,10 +36,8 @@ function ProfileField({ label, children }) {
 }
 
 function ProfileInput({ value, onChange, type = 'text', disabled = false, placeholder = '' }) {
-  const InputComponent = type === 'date' || type === 'time' ? DateTimePicker : 'input'
-
   return (
-    <InputComponent
+    <input
       type={type}
       value={value}
       onChange={onChange}
@@ -69,8 +57,9 @@ export default function ProfilePage() {
   const updateProfileMutation = useDashboardUpdateProfile()
   const [isEditing, setIsEditing] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const initialForm = useMemo(() => buildInitialForm(session), [session])
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState(() => buildInitialForm(session))
 
   const fullName = useMemo(() => buildFullName(session), [session])
   const photoUrl = session?.profile?.photoUrl || null
@@ -93,10 +82,12 @@ export default function ProfilePage() {
     setForm(initialForm)
     setIsEditing(false)
     setSaveMessage('')
+    setFieldErrors({})
   }
 
   const handleStartEditing = () => {
     setSaveMessage('')
+    setFieldErrors({})
     setForm(buildInitialForm(session))
     setIsEditing(true)
   }
@@ -104,20 +95,40 @@ export default function ProfilePage() {
   const handleSubmit = async event => {
     event.preventDefault()
     setSaveMessage('')
+    setFieldErrors({})
 
     const payload = {}
+    const nextErrors = {}
+    const trimmedFirst = form.first_name.trim()
+    const trimmedLast = form.last_name.trim()
+    const normalizedPhone = normalizeIndianPhone(form.phone)
+    const initialPhone = normalizeIndianPhone(initialForm.phone)
 
-    if (form.first_name.trim() !== initialForm.first_name) {
-      payload.first_name = form.first_name.trim()
+    if (trimmedFirst !== initialForm.first_name.trim()) {
+      if (trimmedFirst.length < 2) {
+        nextErrors.first_name = 'First name must be at least 2 characters'
+      } else {
+        payload.first_name = trimmedFirst
+      }
     }
-    if (form.last_name.trim() !== initialForm.last_name) {
-      payload.last_name = form.last_name.trim()
+    if (trimmedLast !== initialForm.last_name.trim()) {
+      if (trimmedLast.length < 2) {
+        nextErrors.last_name = 'Last name must be at least 2 characters'
+      } else {
+        payload.last_name = trimmedLast
+      }
     }
-    if (form.phone.trim() !== initialForm.phone) {
-      payload.phone = form.phone.trim()
+    if (normalizedPhone !== initialPhone) {
+      if (normalizedPhone && !isValidIndianPhone(normalizedPhone)) {
+        nextErrors.phone = 'Enter a valid 10-digit Indian phone number'
+      } else {
+        payload.phone = normalizedPhone
+      }
     }
-    if ((form.date_of_birth || '') !== (initialForm.date_of_birth || '')) {
-      payload.date_of_birth = form.date_of_birth || null
+
+    if (Object.keys(nextErrors).length) {
+      setFieldErrors(nextErrors)
+      return
     }
 
     if (!Object.keys(payload).length) {
@@ -125,11 +136,15 @@ export default function ProfilePage() {
       return
     }
 
-    await updateProfileMutation.mutateAsync(payload)
-
-    setForm(initialForm)
-    setIsEditing(false)
-    setSaveMessage('Profile updated successfully.')
+    try {
+      await updateProfileMutation.mutateAsync(payload)
+      setIsEditing(false)
+      setSaveMessage('Profile updated successfully.')
+    } catch (error) {
+      if (error?.fieldErrors && typeof error.fieldErrors === 'object') {
+        setFieldErrors(error.fieldErrors)
+      }
+    }
   }
 
   return (
@@ -196,7 +211,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {updateProfileMutation.error ? (
+          {updateProfileMutation.error && !Object.keys(fieldErrors).length ? (
             <p className="mt-4 text-sm text-[#8A1C1C]">
               We could not update your profile right now. Please try once again.
             </p>
@@ -212,6 +227,9 @@ export default function ProfilePage() {
               ) : (
                 <ProfileValue value={displayForm.first_name} />
               )}
+              {fieldErrors.first_name ? (
+                <p className="mt-2 text-xs text-[#8A1C1C]">{fieldErrors.first_name}</p>
+              ) : null}
             </ProfileField>
 
             <ProfileField label="Last Name">
@@ -223,6 +241,9 @@ export default function ProfilePage() {
               ) : (
                 <ProfileValue value={displayForm.last_name} />
               )}
+              {fieldErrors.last_name ? (
+                <p className="mt-2 text-xs text-[#8A1C1C]">{fieldErrors.last_name}</p>
+              ) : null}
             </ProfileField>
 
             <ProfileField label="Email">
@@ -233,20 +254,13 @@ export default function ProfilePage() {
               {isEditing ? (
                 <ProfileInput value={displayForm.phone} onChange={handleFieldChange('phone')} />
               ) : (
-                <ProfileValue value={displayForm.phone} />
-              )}
-            </ProfileField>
-
-            <ProfileField label="Date Of Birth">
-              {isEditing ? (
-                <ProfileInput
-                  type="date"
-                  value={displayForm.date_of_birth}
-                  onChange={handleFieldChange('date_of_birth')}
+                <ProfileValue
+                  value={displayForm.phone || normalizeIndianPhone(session?.user?.phone)}
                 />
-              ) : (
-                <ProfileValue value={normalizeDateOnly(displayForm.date_of_birth)} />
               )}
+              {fieldErrors.phone ? (
+                <p className="mt-2 text-xs text-[#8A1C1C]">{fieldErrors.phone}</p>
+              ) : null}
             </ProfileField>
           </div>
         </form>

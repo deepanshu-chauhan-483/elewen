@@ -326,6 +326,15 @@ export default function PackageDetailsPage() {
     )
   }
 
+  if (normalizedService === 'catering' || normalizedService === 'catering-single') {
+    return (
+      <Navigate
+        to={`/packages/catering-single/${packageId}${search ? `?${search}` : ''}`}
+        replace
+      />
+    )
+  }
+
   if (isPackageLoading) {
     return null
   }

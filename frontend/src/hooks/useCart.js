@@ -209,16 +209,42 @@ function computeDiscount(coupon, subtotal) {
   return Math.min(coupon.discount_value, subtotal)
 }
 
-async function fetchPackageSnapshot(packageId) {
+function getStrapiPackagesUrl() {
   const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
-  const url = new URL('/api/packages', base)
-  url.searchParams.set('filters[id][$eq]', String(packageId))
+  return new URL('/api/packages', base)
+}
 
-  const res = await fetch(url.toString())
-  if (!res.ok) throw new Error('Package not found')
+async function fetchStrapiPackageRow(packageId) {
+  const id = String(packageId ?? '').trim()
+  if (!id) return null
 
-  const payload = await res.json()
-  const pkg = payload?.data?.[0]
+  const tryFilter = async filterKey => {
+    const url = getStrapiPackagesUrl()
+    url.searchParams.set(filterKey, id)
+    const res = await fetch(url.toString())
+    if (!res.ok) return null
+    const payload = await res.json()
+    return payload?.data?.[0] ?? null
+  }
+
+  if (/^\d+$/.test(id)) {
+    const byNumericId = await tryFilter('filters[id][$eq]')
+    if (byNumericId) return byNumericId
+  }
+
+  return tryFilter('filters[documentId][$eq]')
+}
+
+/** Resolves Strapi numeric package id for cart API (id or documentId in storage). */
+async function resolveCartPackageId(packageId) {
+  const pkg = await fetchStrapiPackageRow(packageId)
+  if (!pkg) return null
+  const numericId = Number(pkg.id)
+  return Number.isFinite(numericId) && numericId > 0 ? numericId : null
+}
+
+async function fetchPackageSnapshot(packageId) {
+  const pkg = await fetchStrapiPackageRow(packageId)
   if (!pkg) throw new Error('Package not found')
 
   const attrs = pkg.attributes ?? pkg
@@ -245,27 +271,48 @@ async function migrateGuestCartToServer(token) {
       }
     }
 
-    await cartAddItem(token, {
-      packageId: Number(item.packageId),
-      quantity: Number(item.quantity ?? 1),
-      selectedOptions: parsedMeta?.selectedOptions ?? undefined,
-      addon:
-        parsedMeta?.itemType === 'addon'
-          ? {
-              id: parsedMeta?.addonId,
-              name: parsedMeta?.addonTitle,
-              price: Number(item?.unitPrice ?? 0),
-            }
-          : undefined,
-    })
+    const resolvedPackageId = await resolveCartPackageId(item.packageId)
+    if (!resolvedPackageId) {
+      if (import.meta.env.DEV) {
+        console.warn('[cart] skipping guest item — package not in Strapi', item.packageId)
+      }
+      continue
+    }
+
+    try {
+      await cartAddItem(token, {
+        packageId: resolvedPackageId,
+        quantity: Number(item.quantity ?? 1),
+        selectedOptions: parsedMeta?.selectedOptions ?? undefined,
+        addon:
+          parsedMeta?.itemType === 'addon'
+            ? {
+                id: parsedMeta?.addonId,
+                name: parsedMeta?.addonTitle,
+                price: Number(item?.unitPrice ?? 0),
+              }
+            : undefined,
+      })
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn('[cart] skipping guest item — server rejected', item.packageId, err)
+      }
+    }
   }
 
   const nextDetails = {}
   if (guestCart.eventDate) nextDetails.eventDate = guestCart.eventDate
   if (guestCart.eventCity) nextDetails.eventCity = guestCart.eventCity
   if (guestCart.guestCount != null) nextDetails.guestCount = Number(guestCart.guestCount)
-  if (Object.keys(nextDetails).length) await cartUpdate(token, nextDetails)
+  if (Object.keys(nextDetails).length) {
+    try {
+      await cartUpdate(token, nextDetails)
+    } catch {
+      // Cart metadata is optional during migration.
+    }
+  }
 
+  // Always clear guest storage so stale items are not re-pushed on every refresh.
   clearGuestCartStorage()
   return guestCart
 }
@@ -338,7 +385,14 @@ function useCartController() {
         const nextCart =
           cartSyncPromise ??
           (cartSyncPromise = (async () => {
-            await migrateGuestCartToServer(token)
+            try {
+              await migrateGuestCartToServer(token)
+            } catch (migrateErr) {
+              clearGuestCartStorage()
+              if (import.meta.env.DEV) {
+                console.warn('[cart] guest migration incomplete', migrateErr)
+              }
+            }
             const data = await cartGet(token)
             return data.cart ?? null
           })().finally(() => {
@@ -351,7 +405,9 @@ function useCartController() {
           syncGuestCart()
           return
         }
-        console.error('[cart] sync failed', err)
+        if (import.meta.env.DEV) {
+          console.error('[cart] sync failed', err)
+        }
         setError(err.message ?? 'Failed to load cart')
       } finally {
         if (!cancelled) setLoading(false)
@@ -393,6 +449,7 @@ function useCartController() {
     selectedOptions,
     addon = null,
     unitPrice: overrideUnitPrice = null,
+    lineTotal: overrideLineTotal = null,
   }) => {
     const token = await getServerToken()
     const addonId = addon?.id != null ? String(addon.id) : null
@@ -411,11 +468,16 @@ function useCartController() {
           String(item.addonId ?? '') === String(addonId ?? '')
       )
       const resolvedOverride = Number(overrideUnitPrice ?? 0)
+      const resolvedLineTotal = Number(overrideLineTotal ?? 0)
       const unitPrice = isAddon
         ? addonUnitPrice
         : Number.isFinite(resolvedOverride) && resolvedOverride > 0
           ? resolvedOverride
           : snapshot.basePrice
+      const itemTotal =
+        Number.isFinite(resolvedLineTotal) && resolvedLineTotal > 0
+          ? resolvedLineTotal
+          : unitPrice * quantity
       const itemTitle = isAddon
         ? buildCartItemTitle(addonTitle, selectedOptions, {
             itemType: 'addon',
@@ -430,10 +492,16 @@ function useCartController() {
         nextItems = guestCart.items.map(item => {
           if (item.id !== existing.id) return item
           const nextQuantity = Number(item.quantity ?? 0) + quantity
+          const mergedTotal =
+            Number.isFinite(resolvedLineTotal) && resolvedLineTotal > 0
+              ? resolvedLineTotal
+              : unitPrice * nextQuantity
+
           return {
             ...item,
             quantity: nextQuantity,
-            totalPrice: (unitPrice * nextQuantity).toFixed(2),
+            unitPrice: unitPrice.toFixed(2),
+            totalPrice: mergedTotal.toFixed(2),
           }
         })
       } else {
@@ -445,7 +513,7 @@ function useCartController() {
           title: itemTitle,
           quantity,
           unitPrice: unitPrice.toFixed(2),
-          totalPrice: (unitPrice * quantity).toFixed(2),
+          totalPrice: itemTotal.toFixed(2),
           createdAt: new Date().toISOString(),
         })
       }
@@ -460,14 +528,23 @@ function useCartController() {
 
     try {
       const resolvedOverride = Number(overrideUnitPrice ?? 0)
+      const resolvedLineTotal = Number(overrideLineTotal ?? 0)
+      const resolvedPackageId = await resolveCartPackageId(packageId)
+      if (!resolvedPackageId) {
+        throw new Error('Package not found')
+      }
+
       const data = await cartAddItem(token, {
-        packageId,
+        packageId: resolvedPackageId,
         quantity,
         selectedOptions,
         addon,
         ...(Number.isFinite(resolvedOverride) &&
           resolvedOverride > 0 && { unitPrice: resolvedOverride }),
+        ...(Number.isFinite(resolvedLineTotal) &&
+          resolvedLineTotal > 0 && { totalPrice: resolvedLineTotal }),
       })
+      clearGuestCartStorage()
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))
@@ -600,7 +677,13 @@ function useCartController() {
     }
   }
 
-  const updateCartItemDetails = async ({ itemId, quantity, selectedOptions }) => {
+  const updateCartItemDetails = async ({
+    itemId,
+    quantity,
+    selectedOptions,
+    unitPrice: overrideUnitPrice = null,
+    lineTotal: overrideLineTotal = null,
+  }) => {
     const token = await getServerToken()
 
     if (!token) {
@@ -670,6 +753,17 @@ function useCartController() {
         return nextCart
       }
 
+      const resolvedOverride = Number(overrideUnitPrice ?? 0)
+      const resolvedLineTotal = Number(overrideLineTotal ?? 0)
+      const nextUnitPrice =
+        Number.isFinite(resolvedOverride) && resolvedOverride > 0
+          ? resolvedOverride
+          : Number(item.unitPrice ?? 0)
+      const nextLineTotal =
+        Number.isFinite(resolvedLineTotal) && resolvedLineTotal > 0
+          ? resolvedLineTotal
+          : nextUnitPrice * Math.max(1, Number(quantity ?? item.quantity ?? 1))
+
       const nextSelectionKey = buildSelectionKey(normalizedSelectedOptions)
       const baseTitle = String(item.title ?? '').split(CART_META_SEPARATOR)[0] || item.title
       const nextTitle = buildCartItemTitle(baseTitle, normalizedSelectedOptions)
@@ -687,10 +781,12 @@ function useCartController() {
             if (entry.id !== duplicateItem.id) return entry
             const mergedQuantity =
               Number(entry.quantity ?? 0) + Number(quantity ?? item.quantity ?? 1)
+            const duplicateUnitPrice = Number(entry.unitPrice ?? nextUnitPrice)
             return {
               ...entry,
               quantity: mergedQuantity,
-              totalPrice: (Number(entry.unitPrice ?? 0) * mergedQuantity).toFixed(2),
+              unitPrice: duplicateUnitPrice.toFixed(2),
+              totalPrice: nextLineTotal.toFixed(2),
             }
           })
           .filter(entry => entry.id !== item.id)
@@ -707,7 +803,8 @@ function useCartController() {
                 title: nextTitle,
                 packageElementId: nextSelectionKey,
                 quantity: nextQuantity,
-                totalPrice: (Number(entry.unitPrice ?? 0) * nextQuantity).toFixed(2),
+                unitPrice: nextUnitPrice.toFixed(2),
+                totalPrice: nextLineTotal.toFixed(2),
               }
             : entry
         )
@@ -729,12 +826,19 @@ function useCartController() {
       const isChangingSelection =
         currentItem && !haveSameSelectedOptions(currentSelectedOptions, normalizedSelectedOptions)
 
+      const resolvedOverride = Number(overrideUnitPrice ?? 0)
+      const resolvedLineTotal = Number(overrideLineTotal ?? 0)
+
       if (currentItem && isChangingSelection && currentQuantity > 1) {
         await cartUpdateItem(token, itemId, { quantity: currentQuantity - 1 })
         const data = await cartAddItem(token, {
           packageId: Number(currentItem.packageId),
           quantity: 1,
           selectedOptions: normalizedSelectedOptions,
+          ...(Number.isFinite(resolvedOverride) &&
+            resolvedOverride > 0 && { unitPrice: resolvedOverride }),
+          ...(Number.isFinite(resolvedLineTotal) &&
+            resolvedLineTotal > 0 && { totalPrice: resolvedLineTotal }),
         })
         const nextCart = data.cart ?? null
         setCart(nextCart)
@@ -750,7 +854,15 @@ function useCartController() {
           ? currentQuantity
           : requestedQuantity
 
-      const data = await cartUpdate(token, { itemId, quantity: nextQuantity, selectedOptions })
+      const data = await cartUpdate(token, {
+        itemId,
+        quantity: nextQuantity,
+        selectedOptions,
+        ...(Number.isFinite(resolvedOverride) &&
+          resolvedOverride > 0 && { unitPrice: resolvedOverride }),
+        ...(Number.isFinite(resolvedLineTotal) &&
+          resolvedLineTotal > 0 && { totalPrice: resolvedLineTotal }),
+      })
       const nextCart = data.cart ?? null
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))

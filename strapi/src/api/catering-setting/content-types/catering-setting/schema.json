@@ -1,0 +1,33 @@
+{
+  "kind": "singleType",
+  "collectionName": "catering_settings",
+  "info": {
+    "singularName": "catering-setting",
+    "pluralName": "catering-settings",
+    "displayName": "Catering Settings",
+    "description": "Global catering configuration (guest-count discounts, etc.)"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "discount_title": {
+      "type": "string",
+      "default": "Guest count discounts"
+    },
+    "discount_note": {
+      "type": "text",
+      "default": "Per-person discount applied to catering package price based on selected guest count."
+    },
+    "guest_discount_tiers": {
+      "type": "component",
+      "repeatable": true,
+      "component": "package.catering-guest-discount-tier"
+    }
+  }
+}

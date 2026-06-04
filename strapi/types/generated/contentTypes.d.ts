@@ -427,12 +427,17 @@ export interface ApiAddonAddon extends Struct.CollectionTypeSchema {
     draftAndPublish: false
   }
   attributes: {
+    addon_scope: Schema.Attribute.Enumeration<
+      ['universal', 'catering', 'decor', 'bartending', 'sheesha']
+    > &
+      Schema.Attribute.DefaultTo<'universal'>
     createdAt: Schema.Attribute.DateTime
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
     description: Schema.Attribute.Text
     locale: Schema.Attribute.String & Schema.Attribute.Private
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::addon.addon'> &
       Schema.Attribute.Private
+    max_price: Schema.Attribute.Decimal
     max_quantity: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>
     name: Schema.Attribute.String & Schema.Attribute.Required
     packages: Schema.Attribute.Relation<'manyToMany', 'api::package.package'>
@@ -706,6 +711,37 @@ export interface ApiCartMessagingCartMessaging extends Struct.SingleTypeSchema {
       Schema.Attribute.Private
     publishedAt: Schema.Attribute.DateTime
     sections: Schema.Attribute.Component<'cms.content-section', true>
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
+  }
+}
+
+export interface ApiCateringSettingCateringSetting extends Struct.SingleTypeSchema {
+  collectionName: 'catering_settings'
+  info: {
+    description: 'Global catering configuration (guest-count discounts, etc.)'
+    displayName: 'Catering Settings'
+    pluralName: 'catering-settings'
+    singularName: 'catering-setting'
+  }
+  options: {
+    draftAndPublish: true
+  }
+  attributes: {
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
+    discount_note: Schema.Attribute.Text &
+      Schema.Attribute.DefaultTo<'Per-person discount applied to catering package price based on selected guest count.'>
+    discount_title: Schema.Attribute.String & Schema.Attribute.DefaultTo<'Guest count discounts'>
+    guest_discount_tiers: Schema.Attribute.Component<'package.catering-guest-discount-tier', true>
+    is_active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::catering-setting.catering-setting'
+    > &
+      Schema.Attribute.Private
+    publishedAt: Schema.Attribute.DateTime
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
   }
@@ -1208,7 +1244,12 @@ export interface ApiPackagePackage extends Struct.CollectionTypeSchema {
     meta_title: Schema.Attribute.String
     most_booked_tag: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>
     packages: Schema.Attribute.DynamicZone<
-      ['package.decorpackages', 'package.sheeshapackage', 'package.bartendingpackage']
+      [
+        'package.decorpackages',
+        'package.sheeshapackage',
+        'package.bartendingpackage',
+        'package.cateringpackage',
+      ]
     >
     publishedAt: Schema.Attribute.DateTime
     reusable_addons: Schema.Attribute.Relation<'manyToMany', 'api::addon.addon'>
@@ -1376,7 +1417,7 @@ export interface ApiPolicyPolicy extends Struct.CollectionTypeSchema {
     summary_text: Schema.Attribute.Text
     title: Schema.Attribute.String & Schema.Attribute.Required
     type: Schema.Attribute.Enumeration<
-      ['cancellation', 'refund', 'pricing_disclaimer', 'terms_conditions', 'material']
+      ['cancellation', 'refund', 'pricing_disclaimer', 'terms_conditions', 'material', 'catering']
     >
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
@@ -2206,6 +2247,7 @@ declare module '@strapi/strapi' {
       'api::budget-level.budget-level': ApiBudgetLevelBudgetLevel
       'api::cancellation-policy.cancellation-policy': ApiCancellationPolicyCancellationPolicy
       'api::cart-messaging.cart-messaging': ApiCartMessagingCartMessaging
+      'api::catering-setting.catering-setting': ApiCateringSettingCateringSetting
       'api::celebration-every-day.celebration-every-day': ApiCelebrationEveryDayCelebrationEveryDay
       'api::checkout-messaging.checkout-messaging': ApiCheckoutMessagingCheckoutMessaging
       'api::consultation-page.consultation-page': ApiConsultationPageConsultationPage

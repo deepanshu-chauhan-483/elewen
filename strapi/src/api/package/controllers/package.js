@@ -12,6 +12,8 @@ const addonFields = [
   'name',
   'description',
   'price',
+  'max_price',
+  'addon_scope',
   'unit',
   'max_quantity',
   'visibility',
@@ -23,10 +25,45 @@ const normalizeAddon = addon => ({
   name: addon?.name ?? '',
   description: addon?.description ?? '',
   price: addon?.price ?? 0,
+  max_price: addon?.max_price ?? null,
+  addon_scope: addon?.addon_scope ?? 'universal',
   unit: addon?.unit ?? '',
   max_quantity: addon?.max_quantity ?? 1,
   visibility: addon?.visibility !== false,
 });
+
+const isCateringPackageEntry = entry => {
+  const serviceSlugs = (Array.isArray(entry?.service_categories) ? entry.service_categories : [])
+    .flatMap(category => [
+      String(category?.slug ?? '').toLowerCase(),
+      String(category?.name ?? '').toLowerCase(),
+    ])
+    .filter(Boolean);
+
+  if (serviceSlugs.some(slug => slug.includes('catering'))) {
+    return true;
+  }
+
+  const sections = Array.isArray(entry?.packages) ? entry.packages : [];
+  return sections.some(section => section?.__component === 'package.cateringpackage');
+};
+
+const mergeAddonsById = (...addonGroups) => {
+  const seen = new Set();
+  const merged = [];
+
+  for (const group of addonGroups) {
+    for (const addon of Array.isArray(group) ? group : []) {
+      if (!addon || addon.visibility === false) continue;
+      const key = String(addon.documentId ?? addon.id ?? addon.name ?? '').trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      merged.push(normalizeAddon(addon));
+    }
+  }
+
+  return merged;
+};
 
 const nestedPackagePopulate = {
   images: true,
@@ -88,6 +125,19 @@ const nestedPackagePopulate = {
           pricing_rules: true,
         },
       },
+      'package.cateringpackage': {
+        populate: {
+          menu_items: true,
+          inclusions: true,
+          exclusions: true,
+          addons: true,
+          policy: true,
+          price_covers: true,
+          price_breakdown: true,
+          budget_level: true,
+          pricing_rules: true,
+        },
+      },
     },
   },
 };
@@ -123,10 +173,64 @@ const enrichEntriesWithNestedPackages = async (entries, strapi) => {
   );
 };
 
+const normalizeCateringDiscountSettings = entry => {
+  if (!entry || entry.is_active === false) return null;
+
+  const tiers = (Array.isArray(entry.guest_discount_tiers) ? entry.guest_discount_tiers : [])
+    .map(tier => ({
+      label: tier?.label ?? '',
+      min_pax: Number(tier?.min_pax ?? 0),
+      max_pax: Number(tier?.max_pax ?? 0),
+      discount_per_person: Number(tier?.discount_per_person ?? 0),
+    }))
+    .filter(tier => tier.min_pax > 0 && tier.max_pax >= tier.min_pax && tier.discount_per_person > 0)
+    .sort((left, right) => left.min_pax - right.min_pax);
+
+  if (!tiers.length) return null;
+
+  return {
+    is_active: true,
+    discount_title: entry.discount_title ?? 'Guest count discounts',
+    discount_note: entry.discount_note ?? '',
+    tiers,
+  };
+};
+
+const loadCateringDiscountSettings = async strapi => {
+  const rows = await strapi.documents('api::catering-setting.catering-setting').findMany({
+    status: 'published',
+    limit: 1,
+    populate: { guest_discount_tiers: true },
+  });
+
+  const entry = Array.isArray(rows) ? rows[0] ?? null : null;
+  return normalizeCateringDiscountSettings(entry);
+};
+
+const attachCateringGuestDiscounts = async (entry, strapi, shared = {}) => {
+  if (!isCateringPackageEntry(entry)) return entry;
+
+  if (!Object.prototype.hasOwnProperty.call(shared, 'cateringGuestDiscounts')) {
+    shared.cateringGuestDiscounts = await loadCateringDiscountSettings(strapi);
+  }
+
+  if (!shared.cateringGuestDiscounts) return entry;
+
+  return {
+    ...entry,
+    catering_guest_discounts: shared.cateringGuestDiscounts,
+  };
+};
+
+const enrichPackageEntry = async (entry, strapi, shared = {}) => {
+  const withAddons = await attachReusableAddons(entry, strapi);
+  return attachCateringGuestDiscounts(withAddons, strapi, shared);
+};
+
 const attachReusableAddons = async (entry, strapi) => {
   if (!entry?.id) return entry;
 
-  const addons = await strapi.db.query('api::addon.addon').findMany({
+  const linkedAddons = await strapi.db.query('api::addon.addon').findMany({
     where: {
       packages: {
         id: entry.id,
@@ -135,9 +239,19 @@ const attachReusableAddons = async (entry, strapi) => {
     select: addonFields,
   });
 
+  let scopedAddons = [];
+  if (isCateringPackageEntry(entry)) {
+    scopedAddons = await strapi.db.query('api::addon.addon').findMany({
+      where: {
+        addon_scope: 'catering',
+      },
+      select: addonFields,
+    });
+  }
+
   return {
     ...entry,
-    reusable_addons: Array.isArray(addons) ? addons.map(normalizeAddon) : [],
+    reusable_addons: mergeAddonsById(linkedAddons, scopedAddons),
   };
 };
 
@@ -155,9 +269,11 @@ module.exports = createCoreController('api::package.package', ({ strapi }) => ({
 
     const enrichedEntries = await enrichEntriesWithNestedPackages(response.data, strapi);
 
+    const shared = {};
+
     return {
       ...response,
-      data: await Promise.all(enrichedEntries.map(entry => attachReusableAddons(entry, strapi))),
+      data: await Promise.all(enrichedEntries.map(entry => enrichPackageEntry(entry, strapi, shared))),
     };
   },
 
@@ -176,7 +292,7 @@ module.exports = createCoreController('api::package.package', ({ strapi }) => ({
 
     return {
       ...response,
-      data: await attachReusableAddons(enrichedEntry ?? response.data, strapi),
+      data: await enrichPackageEntry(enrichedEntry ?? response.data, strapi, {}),
     };
   },
 }));

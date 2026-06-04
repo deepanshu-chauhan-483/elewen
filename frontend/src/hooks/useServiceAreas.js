@@ -50,8 +50,7 @@ export function useServiceAreas() {
 
       try {
         return await fetchServiceAreas()
-      } catch (error) {
-        console.warn('Failed to fetch Strapi service areas', error)
+      } catch {
         return []
       }
     },

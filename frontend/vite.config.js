@@ -14,6 +14,9 @@ export default defineConfig(({ mode }) => {
         webp: { quality: 80 },
       }),
     ],
+    esbuild: {
+      drop: mode === 'production' ? ['console', 'debugger'] : [],
+    },
     build: {
       rollupOptions: {
         output: {
@@ -28,7 +31,8 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '0.0.0.0',
-      port: 5173,
+      port: Number(env.VITE_DEV_PORT || 5173),
+      strictPort: true,
       proxy: {
         '/api': {
           target: env.VITE_API_URL || 'http://localhost:3000',

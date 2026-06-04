@@ -566,6 +566,17 @@ export const register = async (req, res, next) => {
         console.error('[auth.register] Failed to sync Strapi user profile fields:', profileSyncErr)
       }
 
+      try {
+        await syncUserFieldsInDatabase({
+          userId: result.user.id,
+          first_name,
+          last_name,
+          phone,
+        })
+      } catch (dbSyncErr) {
+        console.error('[auth.register] Failed to sync user fields in database:', dbSyncErr)
+      }
+
       // Create customer profile — no photo for email users (frontend shows placeholder)
       await createCustomerProfile({
         userId: result.user.id,
@@ -575,11 +586,13 @@ export const register = async (req, res, next) => {
       })
     }
 
-    // Email confirmation pending — no JWT yet
-    if (!result.jwt) {
+    const awaitingEmailConfirmation = !result.jwt || result.user?.confirmed === false
+
+    // Email confirmation pending — no JWT, no session
+    if (awaitingEmailConfirmation) {
       return res.status(200).json({
         pending: true,
-        message: 'Check your email to verify your account.',
+        message: 'Check your email to verify your account before logging in.',
       })
     }
 
@@ -589,6 +602,14 @@ export const register = async (req, res, next) => {
   } catch (err) {
     if (err.strapiError?.details?.errors?.some(e => e.path?.includes('email'))) {
       return res.status(409).json({ error: 'An account with this email already exists' })
+    }
+    const msg = String(err.message || '')
+    if (msg.toLowerCase().includes('confirmation email')) {
+      return res.status(503).json({
+        error:
+          'We could not send the confirmation email. Check Strapi SMTP settings (Gmail App Password in strapi/.env), then try again.',
+        code: 'EMAIL_SEND_FAILED',
+      })
     }
     next(err)
   }
@@ -681,11 +702,27 @@ export const logout = async (req, res, next) => {
 }
 
 // ─── GET /auth/me ──────────────────────────────────────────────────────────────
+const mergeUserWithDatabaseRow = async user => {
+  if (!user?.id) return user
+
+  const dbUser = await findUserByIdFromDatabase(user.id)
+  if (!dbUser) return user
+
+  return {
+    ...user,
+    first_name: user.first_name ?? dbUser.first_name,
+    last_name: user.last_name ?? dbUser.last_name,
+    phone: user.phone || dbUser.phone || null,
+    confirmed: user.confirmed ?? dbUser.confirmed,
+    blocked: user.blocked ?? dbUser.blocked,
+  }
+}
+
 export const me = async (req, res, next) => {
   try {
     let user = null
     try {
-      user = await strapiGetMe(req.token)
+      user = await mergeUserWithDatabaseRow(await strapiGetMe(req.token))
     } catch {
       user = await findUserByIdFromDatabase(req.user?.id)
     }

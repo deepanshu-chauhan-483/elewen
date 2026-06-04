@@ -296,14 +296,10 @@ function parseSections(sections = []) {
           : s.content_json
 
       acc[normalizedKey] = content
-      console.log(`[parseSections] Parsed section: ${s.section_key} -> ${normalizedKey}`, content)
-    } else {
-      console.warn('[parseSections] Invalid section:', s)
     }
     return acc
   }, {})
 
-  console.log('[parseSections] Final parsed sections:', Object.keys(result))
   return result
 }
 
@@ -362,27 +358,18 @@ async function fetchCelebrationEveryDay() {
 
 export async function fetchInHousePlannerPageData() {
   if (USE_FALLBACK) {
-    console.log('[useInHousePlannerPage] Using fallback data (USE_FALLBACK=true)')
     return INHOUSE_PLANNER_PAGE_FALLBACK
   }
 
   try {
-    console.log('[useInHousePlannerPage] Fetching from Strapi...')
     const [{ data }, grandCelebrationsIntro, celebrationEveryDay] = await Promise.all([
       strapiGet('/inhouse-planner-page', {
         'populate[sections][populate]': '*',
       }),
-      fetchGrandCelebrationsIntro().catch(err => {
-        console.warn('[useInHousePlannerPage] grand celebrations intro fetch failed:', err)
-        return null
-      }),
-      fetchCelebrationEveryDay().catch(err => {
-        console.warn('[useInHousePlannerPage] celebration every day fetch failed:', err)
-        return null
-      }),
+      fetchGrandCelebrationsIntro().catch(() => null),
+      fetchCelebrationEveryDay().catch(() => null),
     ])
 
-    console.log('[useInHousePlannerPage] Raw Strapi response sections:', data?.sections)
     const parsedSections = parseSections(data?.sections ?? [])
     if (grandCelebrationsIntro) {
       parsedSections.grand_celebrations_intro = grandCelebrationsIntro
@@ -390,15 +377,8 @@ export async function fetchInHousePlannerPageData() {
     if (celebrationEveryDay) {
       parsedSections.celebrations_every_day = celebrationEveryDay
     }
-    console.log('[useInHousePlannerPage] Parsed sections:', parsedSections)
-    const merged = mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parsedSections)
-    console.log(
-      '[useInHousePlannerPage] Merged result - celebrations_every_day:',
-      merged.celebrations_every_day
-    )
-    return merged
-  } catch (err) {
-    console.error('[useInHousePlannerPage] Fetch error:', err)
+    return mergePageSections(INHOUSE_PLANNER_PAGE_FALLBACK, parsedSections)
+  } catch {
     return INHOUSE_PLANNER_PAGE_FALLBACK
   }
 }

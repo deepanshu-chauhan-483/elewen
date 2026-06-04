@@ -207,6 +207,11 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
     return queryString ? `${basePath}?${queryString}` : basePath
   }
 
+  if (serviceSlug === 'catering') {
+    const basePath = `/packages/catering-single/${packageId}`
+    return queryString ? `${basePath}?${queryString}` : basePath
+  }
+
   const basePath = `/packages/${serviceSlug}/${packageId}`
   return queryString ? `${basePath}?${queryString}` : basePath
 }

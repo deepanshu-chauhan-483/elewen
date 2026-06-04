@@ -1,0 +1,91 @@
+{
+  "collectionName": "components_package_cateringpackages",
+  "info": {
+    "displayName": "cateringpackage",
+    "description": "Catering package details (Essentials, Assisted, End to End)"
+  },
+  "options": {},
+  "attributes": {
+    "catering_level": {
+      "type": "enumeration",
+      "enum": ["essentials", "assisted", "end_to_end"],
+      "required": true
+    },
+    "level_description": {
+      "type": "text"
+    },
+    "package_subtitle": {
+      "type": "string"
+    },
+    "internal_package_code": {
+      "type": "string"
+    },
+    "service_style_notes": {
+      "type": "text"
+    },
+    "price_per_person_veg": {
+      "type": "decimal"
+    },
+    "price_per_person_non_veg": {
+      "type": "decimal"
+    },
+    "menu_items": {
+      "type": "component",
+      "component": "package.catering-menu-item",
+      "repeatable": true
+    },
+    "inclusions": {
+      "type": "component",
+      "component": "package.inclusions",
+      "repeatable": true
+    },
+    "exclusions": {
+      "type": "component",
+      "component": "shared.exclusion-item",
+      "repeatable": true
+    },
+    "client_requirements": {
+      "type": "text"
+    },
+    "setup_needs": {
+      "type": "text"
+    },
+    "nitty_gritty": {
+      "type": "text"
+    },
+    "ideal_for": {
+      "type": "text"
+    },
+    "addons": {
+      "type": "component",
+      "component": "package.package-addon",
+      "repeatable": true
+    },
+    "pricing_rules": {
+      "type": "component",
+      "component": "package.package-pricing-rule",
+      "repeatable": true
+    },
+    "policy": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::policy.policy"
+    },
+    "price_covers": {
+      "type": "component",
+      "component": "shared.price-covers-item",
+      "repeatable": true
+    },
+    "price_breakdown": {
+      "type": "component",
+      "component": "shared.price-breakdown-item",
+      "repeatable": true
+    },
+    "budget_level": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::budget-level.budget-level"
+    }
+  },
+  "config": {}
+}

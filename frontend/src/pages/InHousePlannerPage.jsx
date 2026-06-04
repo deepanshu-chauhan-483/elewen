@@ -1387,13 +1387,6 @@ const CelebrationEveryDaySection = () => {
   }, [])
 
   if (!RESOLVED_CATEGORY_DATA.length) {
-    console.warn(
-      '[CelebrationEveryDaySection] Warning: No categories found in CMS data or fallback',
-      {
-        cmsCategories: ced.categories?.length,
-        fallbackCategories: fallbackCed.categories?.length,
-      }
-    )
     return null
   }
 

@@ -71,6 +71,88 @@ export interface PackageCategoryItem extends Struct.ComponentSchema {
   }
 }
 
+export interface PackageCateringGuestDiscountTier extends Struct.ComponentSchema {
+  collectionName: 'components_package_catering_guest_discount_tiers'
+  info: {
+    description: 'Per-person discount for a guest (pax) range on catering packages'
+    displayName: 'Catering Guest Discount Tier'
+  }
+  attributes: {
+    discount_per_person: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0
+        },
+        number
+      >
+    label: Schema.Attribute.String
+    max_pax: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1
+        },
+        number
+      >
+    min_pax: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1
+        },
+        number
+      >
+  }
+}
+
+export interface PackageCateringMenuItem extends Struct.ComponentSchema {
+  collectionName: 'components_package_catering_menu_items'
+  info: {
+    description: 'One row in the Menu selection block (e.g. Starters Choose 4, Accompaniments included)'
+    displayName: 'Catering Menu Item'
+  }
+  attributes: {
+    choose_hint: Schema.Attribute.String
+    details: Schema.Attribute.Text
+    row_type: Schema.Attribute.Enumeration<['choose', 'included', 'info']> &
+      Schema.Attribute.DefaultTo<'choose'>
+    sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    title: Schema.Attribute.String & Schema.Attribute.Required
+  }
+}
+
+export interface PackageCateringpackage extends Struct.ComponentSchema {
+  collectionName: 'components_package_cateringpackages'
+  info: {
+    description: 'Catering package details (Essentials, Assisted, End to End)'
+    displayName: 'cateringpackage'
+  }
+  attributes: {
+    addons: Schema.Attribute.Component<'package.package-addon', true>
+    budget_level: Schema.Attribute.Relation<'oneToOne', 'api::budget-level.budget-level'>
+    catering_level: Schema.Attribute.Enumeration<['essentials', 'assisted', 'end_to_end']> &
+      Schema.Attribute.Required
+    client_requirements: Schema.Attribute.Text
+    exclusions: Schema.Attribute.Component<'shared.exclusion-item', true>
+    ideal_for: Schema.Attribute.Text
+    inclusions: Schema.Attribute.Component<'package.inclusions', true>
+    internal_package_code: Schema.Attribute.String
+    level_description: Schema.Attribute.Text
+    menu_items: Schema.Attribute.Component<'package.catering-menu-item', true>
+    nitty_gritty: Schema.Attribute.Text
+    package_subtitle: Schema.Attribute.String
+    policy: Schema.Attribute.Relation<'oneToOne', 'api::policy.policy'>
+    price_breakdown: Schema.Attribute.Component<'shared.price-breakdown-item', true>
+    price_covers: Schema.Attribute.Component<'shared.price-covers-item', true>
+    price_per_person_non_veg: Schema.Attribute.Decimal
+    price_per_person_veg: Schema.Attribute.Decimal
+    pricing_rules: Schema.Attribute.Component<'package.package-pricing-rule', true>
+    service_style_notes: Schema.Attribute.Text
+    setup_needs: Schema.Attribute.Text
+  }
+}
+
 export interface PackageDecorpackages extends Struct.ComponentSchema {
   collectionName: 'components_package_decorpackages'
   info: {
@@ -297,6 +379,9 @@ declare module '@strapi/strapi' {
       'package.bartendingpackage': PackageBartendingpackage
       'package.categories': PackageCategories
       'package.category-item': PackageCategoryItem
+      'package.catering-guest-discount-tier': PackageCateringGuestDiscountTier
+      'package.catering-menu-item': PackageCateringMenuItem
+      'package.cateringpackage': PackageCateringpackage
       'package.decorpackages': PackageDecorpackages
       'package.flavors': PackageFlavors
       'package.inclusions': PackageInclusions

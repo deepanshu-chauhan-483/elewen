@@ -1887,10 +1887,10 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     <section
       ref={containerRef}
       data-nav-theme="dark"
-      className="relative w-full bg-[#591902] py-40 overflow-hidden font-sans text-white"
+      className="relative w-full bg-[#591902] py-16 md:py-40 overflow-hidden font-sans text-white"
       // style={{ scrollMarginTop: '100px' }}
     >
-      <h2 className="text-[24px] md:text-[61px] text-center mb-32 tracking-wide font-serif font-display reveal-heading">
+      <h2 className="text-[24px] md:text-[61px] text-center mb-16 md:mb-32 tracking-wide font-serif font-display reveal-heading">
         <span className="reveal-wrapper">
           <span className="reveal-text">{howItWorks.title || 'HOW IT WORKS'}</span>
         </span>
@@ -2447,6 +2447,7 @@ const ChecklistSection = () => {
     'No chasing vendors',
     'No waiting anxiously!',
   ]
+  const doorTagline = s.tagline ?? 'It takes the chaos out so you can stay in the moment'
   const desktopScallopCount = 10
   const mobileScallopCount = 6
   const desktopBulbCount = desktopScallopCount - 1
@@ -2512,21 +2513,15 @@ const ChecklistSection = () => {
       ? (window.innerWidth / (2 * gate.offsetWidth * frameHalfWidthRatio)) * 1.28
       : 6.4
 
-    const scaleEnd = isMobile ? 5.75 : Math.max(5.9, requiredScaleToClearViewport)
-    const gateLiftY = isMobile ? -760 : -320
-    const scrollEnd = isMobile ? 2280 : 1830
+    const scaleEnd = Math.max(isMobile ? 5.4 : 5.9, requiredScaleToClearViewport)
+    const gateLiftY = -320
+    const scrollEnd = 1830
     const scrubVal = 1.15
     const doorOpenEnd = 1.32
-    // Mobile needs a clean full-screen beige handoff before the How It Works panel arrives.
-    const insideBgRevealStart = isMobile ? doorOpenEnd - 0.58 : doorOpenEnd - 0.08
-    const gateFadeStart = isMobile ? doorOpenEnd - 0.06 : doorOpenEnd + 0.04
-    const howItWorksStart = isMobile ? doorOpenEnd + 0.16 : doorOpenEnd + 0.1
-
-    const getMobileStartTrigger = () => {
-      if (!gate) return 'bottom bottom'
-      const extraHeight = gate.offsetHeight * 0.9
-      return `bottom+=${extraHeight}px bottom`
-    }
+    const insideBgRevealStart = doorOpenEnd - 0.08
+    const gateFadeStart = doorOpenEnd + 0.04
+    const howItWorksStart = doorOpenEnd + 0.1
+    const doorZoomOrigin = '50% 50%'
     let howItWorksActivated = false
     const activateHowItWorks = () => {
       if (howItWorksActivated) return
@@ -2536,17 +2531,20 @@ const ChecklistSection = () => {
     }
 
     gsap.set(gate, {
-      transformOrigin: isMobile ? '50% 0%' : '50% 50%',
+      transformOrigin: doorZoomOrigin,
       opacity: 1,
+      scale: 1,
+      y: 0,
+      x: 0,
     })
-    gsap.set(gateArea, { backgroundColor: isMobile ? '#F6D69D' : 'transparent' })
+    gsap.set(gateArea, { backgroundColor: 'transparent' })
     gsap.set(insideBg, { opacity: 0 })
-    gsap.set(howItWorks, { yPercent: isMobile ? 102 : 104, opacity: 1 })
+    gsap.set(howItWorks, { yPercent: 104, opacity: 1 })
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: gate,
-        start: () => (isMobile ? getMobileStartTrigger() : 'bottom bottom'),
+        start: 'bottom bottom',
         end: `+=${scrollEnd}`,
         scrub: scrubVal,
         pin: gateArea,
@@ -2584,7 +2582,7 @@ const ChecklistSection = () => {
       howItWorks,
       {
         yPercent: 0,
-        duration: isMobile ? 0.96 : 1.12,
+        duration: 1.12,
         ease: 'power2.out',
         onComplete: () => {
           activateHowItWorks()
@@ -2926,7 +2924,7 @@ const ChecklistSection = () => {
       </div>
 
       {/* Relief text */}
-      <div className="flex flex-col items-center gap-6 md:gap-8 mb-8 md:mb-32 z-10 text-center mt-8 md:mt-[40px] px-6">
+      <div className="relative z-20 flex flex-col items-center gap-6 md:gap-8 mb-0 md:mb-32 text-center mt-8 md:mt-[40px] px-6">
         <h3
           className="text-[20px] md:text-[36px] text-[#591902] leading-[1] font-serif reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
@@ -2948,37 +2946,27 @@ const ChecklistSection = () => {
           ))}
         </div>
         <h4
-          className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 px-2 reveal-heading"
+          className="text-[20px] md:text-[27px] text-[#591902] leading-[1.2] font-serif mt-8 md:mt-12 mb-10 md:mb-0 px-2 reveal-heading"
           style={{ fontFamily: "'Malgin', serif" }}
         >
           <span className="reveal-wrapper">
-            <span className="reveal-text">
-              {s.tagline ?? '11 takes the chaos out so you can stay in the moment'}
-            </span>
+            <span className="reveal-text">{doorTagline}</span>
           </span>
         </h4>
       </div>
 
       {/* Door section unchanged */}
-      <div className="door-section relative z-10 w-full overflow-x-hidden overflow-y-visible md:overflow-hidden">
-        <div
-          ref={gateAreaRef}
-          className="door-section__pin relative z-20 w-full"
-          style={{ position: 'relative' }}
-        >
+      <div className="door-section relative z-10 w-full overflow-hidden">
+        <div ref={gateAreaRef} className="door-section__pin relative z-20 w-full">
           <div
             ref={insideBgRef}
             className="door-section__inside-bg pointer-events-none absolute bg-[#F6D69D] opacity-0"
           />
 
-          <div className="absolute inset-0 flex items-start justify-center md:items-center">
-            <div
-              ref={gateRef}
-              className="door-section__gate w-full h-full"
-              style={{ transformOrigin: 'center center', willChange: 'transform' }}
-            >
-              <div className="door-section__gate-inner  md:mt-4  h-full w-full origin-center flex items-start justify-center leading-none">
-                <CelebrationDoor className="block w-full h-full" />
+          <div className="door-section__stage">
+            <div ref={gateRef} className="door-section__gate" style={{ willChange: 'transform' }}>
+              <div className="door-section__gate-inner mt-4 w-full origin-center flex items-center justify-center leading-none h-full">
+                <CelebrationDoor className="block h-full w-full" />
               </div>
             </div>
           </div>

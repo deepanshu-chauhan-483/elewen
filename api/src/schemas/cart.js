@@ -11,6 +11,8 @@ export const addItemSchema = Joi.object({
   selectedOptions: Joi.object().allow(null).optional(),
   addonTitle: Joi.string().allow('', null).optional(),
   addon: Joi.object().allow(null).optional(),
+  unitPrice: Joi.number().positive().optional(),
+  totalPrice: Joi.number().positive().optional(),
 })
 
 export const updateItemSchema = Joi.object({

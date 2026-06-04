@@ -22,6 +22,14 @@
       "type": "decimal",
       "required": true
     },
+    "max_price": {
+      "type": "decimal"
+    },
+    "addon_scope": {
+      "type": "enumeration",
+      "enum": ["universal", "catering", "decor", "bartending", "sheesha"],
+      "default": "universal"
+    },
     "unit": {
       "type": "string"
     },

@@ -12,7 +12,11 @@ import { useGlobalSettings } from '../hooks/useCmsPages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { usePackages } from '../hooks/usePackages'
 import { useServiceAreas } from '../hooks/useServiceAreas'
+import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
+import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
+import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
+import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 import {
   bookingAddNote,
   bookingCreate,
@@ -215,64 +219,6 @@ function LocationPinIcon() {
   )
 }
 
-function parseBreakdownAmount(value) {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
-  if (typeof value !== 'string') return 0
-
-  const normalized = value.replace(/[^0-9.-]+/g, '')
-  const amount = Number(normalized)
-  return Number.isFinite(amount) ? amount : 0
-}
-
-function getBreakdownLabel(entry) {
-  if (!entry || typeof entry !== 'object') return ''
-
-  return (
-    entry.label ?? entry.title ?? entry.name ?? entry.text ?? entry.description ?? entry.item ?? ''
-  )
-}
-
-function getBreakdownAmount(entry) {
-  if (!entry || typeof entry !== 'object') return 0
-
-  const directAmount =
-    entry.amount ??
-    entry.price ??
-    entry.value ??
-    entry.cost ??
-    entry.total ??
-    entry.rate ??
-    entry.base_price
-
-  if (directAmount != null) {
-    return parseBreakdownAmount(directAmount)
-  }
-
-  for (const [key, value] of Object.entries(entry)) {
-    if (
-      ['id', 'documentId', 'createdAt', 'updatedAt', 'publishedAt'].includes(key) ||
-      typeof value === 'object'
-    ) {
-      continue
-    }
-
-    const amount = parseBreakdownAmount(value)
-    if (amount > 0) return amount
-  }
-
-  return 0
-}
-
-function getPackageBreakdownRows(pkg) {
-  return (Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : [])
-    .map(entry => {
-      const label = String(getBreakdownLabel(entry) ?? '').trim()
-      const amount = getBreakdownAmount(entry)
-      return label && amount > 0 ? { label, amount } : null
-    })
-    .filter(Boolean)
-}
-
 function parseCartItemTitle(value = '') {
   const rawTitle = String(value ?? '')
   const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
@@ -351,37 +297,6 @@ function getCartItemNoteLabel(item) {
   }
 
   return `Package: ${itemName} x${quantity}${optionSuffix}${additionalInfoSuffix}`
-}
-
-function getCartItemSummary(item) {
-  if (item?.itemType === 'addon') {
-    return {
-      rows: [],
-      total: Number(item?.totalPrice ?? 0),
-    }
-  }
-
-  const quantity = Math.max(1, Number(item?.quantity ?? 1))
-  const breakdownRows = getPackageBreakdownRows(item?.packageData)
-
-  if (!breakdownRows.length) {
-    return {
-      rows: [],
-      total: Number(item?.totalPrice ?? 0),
-    }
-  }
-
-  const rows = breakdownRows.map(row => ({
-    ...row,
-    total: row.amount * quantity,
-  }))
-  const cartTotal = Number(item?.totalPrice ?? 0)
-  const breakdownTotal = rows.reduce((sum, row) => sum + row.total, 0)
-
-  return {
-    rows,
-    total: cartTotal > 0 ? cartTotal : breakdownTotal,
-  }
 }
 
 function isBartendingPackageItem(item) {
@@ -639,6 +554,7 @@ export default function CheckoutPage() {
   const savedUser = getSavedUser()
   const { data: packages = [] } = usePackages()
   const { data: globalSettings = null } = useGlobalSettings()
+  const { data: cateringDiscountSettings = null } = useCateringGuestDiscounts()
   const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = useServiceAreas()
   const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
@@ -711,12 +627,17 @@ export default function CheckoutPage() {
     () =>
       cartItems.map(item => ({
         item,
-        summary: getCartItemSummary(item),
+        summary: getCartItemSummary(item, { cateringDiscountSettings, cartItems }),
       })),
-    [cartItems]
+    [cartItems, cateringDiscountSettings]
   )
+  const hasAutoFilledGuestCountRef = useRef(false)
   const computedSubtotal = useMemo(
     () => itemSummaries.reduce((sum, entry) => sum + Number(entry.summary.total ?? 0), 0),
+    [itemSummaries]
+  )
+  const guestDiscountSummary = useMemo(
+    () => aggregateAppliedGuestDiscounts(itemSummaries),
     [itemSummaries]
   )
   const discountAmount = Number(cart?.discountAmount ?? 0)
@@ -776,6 +697,19 @@ export default function CheckoutPage() {
       // Ignore storage failures and keep the page usable.
     }
   }, [])
+
+  useEffect(() => {
+    if (hasAutoFilledGuestCountRef.current) return
+
+    const fromCart = Number(cart?.guestCount ?? 0)
+    const fromCateringPackages = getGuestCountFromCartItems(cartItems)
+    const value = fromCart > 0 ? fromCart : fromCateringPackages
+
+    if (value > 0) {
+      setGuestCount(String(value))
+      hasAutoFilledGuestCountRef.current = true
+    }
+  }, [cart?.guestCount, cartItems])
 
   useEffect(() => {
     if (pinCode !== debouncedPinCode) {
@@ -1129,10 +1063,18 @@ export default function CheckoutPage() {
                 <div className="space-y-3">
                   {itemSummaries.map(({ item, summary }) => {
                     if (item?.itemType === 'addon') {
+                      const addonPricing = summary?.cateringAddonPricing
+                      const addonGuestLabel =
+                        addonPricing?.guestCount > 0
+                          ? ` · ${addonPricing.guestCount} guests × ₹${Number(addonPricing.perPerson).toLocaleString('en-IN')}/person`
+                          : ''
+                      const quantityLabel =
+                        getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''
+
                       return (
                         <div key={item.id}>
                           <SummaryRow
-                            label={`Add-on - ${getCartItemDisplayName(item)} (${getCartItemQuantity(item)})`}
+                            label={`Add-on - ${getCartItemDisplayName(item)}${addonGuestLabel}${quantityLabel}`}
                             value={formatCurrency(summary.total)}
                           />
                           {item?.additionalInfo ? (
@@ -1173,13 +1115,22 @@ export default function CheckoutPage() {
               <hr className="my-4 border-[#0000001A]" />
 
               <div className="space-y-2 text-gray-600">
+                {guestDiscountSummary?.totalGuestDiscount > 0 ? (
+                  <SummaryRow
+                    label="Subtotal before guest discounts"
+                    value={formatCurrency(guestDiscountSummary.grossSubtotalBeforeGuestDiscounts)}
+                  />
+                ) : null}
+
+                <PriceSummaryDiscountRows
+                  guestDiscountSummary={guestDiscountSummary}
+                  couponDiscount={discountAmount}
+                  formatCurrency={formatCurrency}
+                />
+
                 <SummaryRow
                   label="Subtotal (before GST)"
                   value={formatCurrency(computedSubtotal)}
-                />
-                <SummaryRow
-                  label="Discount coupon applied"
-                  value={`-${formatCurrency(discountAmount)}`}
                 />
               </div>
 
