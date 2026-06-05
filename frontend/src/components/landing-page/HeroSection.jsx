@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -155,6 +155,9 @@ const HeroSection = () => {
         hero._sectionImages?.[0]
     ) || HERO_VIDEO_SRC
   const hasSeenPreloader = hasSeenHeroPreloader()
+  const [isMobileView, setIsMobileView] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768
+  )
   const wrapperRef = useRef(null)
   const preloaderRef = useRef(null)
   const darkOverlayRef = useRef(null)
@@ -522,6 +525,13 @@ const HeroSection = () => {
   }
 
   useEffect(() => {
+    const onResize = () => setIsMobileView(window.innerWidth < 768)
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
     const scrollToTop = () => {
       window.scrollTo(0, 0)
       document.documentElement.scrollTop = 0
@@ -603,9 +613,11 @@ const HeroSection = () => {
       ref={wrapperRef}
       data-nav-theme="glass"
       data-nav-surface="transparent"
-      style={{ height: '420vh' }}
+      className="hero-scroll-wrapper"
+      style={{ height: isMobileView ? '300vh' : '420vh' }}
     >
       <div
+        className="hero-sticky-viewport"
         style={{
           position: 'sticky',
           top: 0,
@@ -614,8 +626,11 @@ const HeroSection = () => {
           overflow: 'hidden',
         }}
       >
-        {/* ── z-10: diagonal infinite-scrolling banner text ─────────────────── */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 10, overflow: 'hidden' }}>
+        {/* ── z-10: diagonal infinite-scrolling banner text (desktop only) ─── */}
+        <div
+          className="hidden md:block"
+          style={{ position: 'absolute', inset: 0, zIndex: 10, overflow: 'hidden' }}
+        >
           <div style={bandWrap('10%')}>
             <div className="band-scroll dir-left " style={bandFont}>
               {renderBandCopy(heroBand1Tokens)}
@@ -700,28 +715,28 @@ const HeroSection = () => {
             color: '#FAFAFA',
           }}
         >
-          <main className="absolute inset-0 flex flex-col justify-center items-center md:items-center z-10 pt-14 md:pt-24 px-0 translate-y-[82px] md:translate-y-0">
-            {/* Desktop original classes fully preserved via md:, mobile mapped to Figma spec */}
-            <div className="w-fit max-w-[calc(100vw-40px)] mx-auto md:mx-0 md:w-full md:max-w-249.25 text-right md:text-right sm:mx-2 flex flex-col items-end pr-0 md:pr-8 lg:pr-0 pointer-events-auto">
+          <main className="absolute inset-0 flex flex-col justify-center items-center z-10 px-5 pt-[4.5rem] pb-[7.5rem] md:px-0 md:pt-24 md:pb-0 md:translate-y-0">
+            {/* Desktop original classes fully preserved via md:, mobile centered to fit viewport */}
+            <div className="w-full max-w-[calc(100vw-2.5rem)] mx-auto md:mx-0 md:w-full md:max-w-249.25 flex flex-col items-center md:items-end pr-0 md:pr-8 lg:pr-0 pointer-events-auto">
               <span
                 ref={eyebrowRef}
-                className="text-[20px] md:text-[38px] lg:text-[48px] leading-[100%] md:leading-none tracking-[0] text-right text-[#FAFAFA]"
+                className="self-end text-[clamp(1.125rem,5vw,1.25rem)] md:text-[38px] lg:text-[48px] leading-[100%] md:leading-none tracking-[0] text-right text-[#FAFAFA]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 {hero.eyebrow ?? "IT'S TIME TO"}
               </span>
               <span
                 ref={headingRef}
-                className="text-[36px] whitespace-nowrap md:whitespace-normal md:text-[54px] lg:text-[96px] leading-[100%] md:leading-[1.05] mt-1 md:mt-2 text-right text-[#FAFAFA] uppercase tracking-[0]"
+                className="w-full text-[clamp(1.75rem,9vw,2.25rem)] whitespace-normal md:whitespace-normal md:text-[54px] lg:text-[96px] leading-[1.02] md:leading-[1.05] mt-1 md:mt-2 text-center md:text-right text-[#FAFAFA] uppercase tracking-[0] max-w-full"
                 style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
               >
                 {hero.heading ?? 'PLAN DIFFERENTLY'}
               </span>
             </div>
 
-            {/* Desktop CTA fully preserved via md:, mobile mapped to Figma spec */}
-            <div className="w-full max-w-[353px] px-8 md:px-0 md:w-full md:max-w-249.25 flex flex-row md:flex-row justify-start md:justify-end items-center mt-[34px] md:mt-8 lg:mt-12 pr-0 md:pr-12 gap-[20px] md:gap-8 lg:gap-0 pointer-events-auto">
-              <div className="flex flex-row md:flex-row items-center gap-[20px] md:gap-0">
+            {/* Desktop CTA fully preserved via md:, mobile centered */}
+            <div className="w-full max-w-[353px] px-0 md:px-0 md:w-full md:max-w-249.25 flex flex-row justify-center md:justify-end items-center mt-6 md:mt-8 lg:mt-12 pr-0 md:pr-12 gap-[20px] md:gap-8 lg:gap-0 pointer-events-auto">
+              <div className="flex flex-row items-center gap-[20px] md:gap-0">
                 <button
                   ref={ctaArrowRef}
                   onClick={() => navigate('/event-flow/category')}
@@ -761,16 +776,20 @@ const HeroSection = () => {
 
           <footer className="absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20 pointer-events-auto">
             {/* Mobile EXACT Bottom-Left 'W' Block extracted from center */}
-            <div className="flex md:hidden items-start px-8 pb-10 w-full z-20">
+            <div className="flex md:hidden items-stretch justify-start gap-3 pl-5 pr-4 pb-5 w-full z-20">
               <span
                 ref={el => (leftWRefs.current[1] = el)}
-                className="text-[92px] leading-[80%] font-serif mr-3 text-[#FFFFFF]"
-                style={{ fontFamily: "'Malgin', serif" }}
+                className="flex h-[71px] w-[80px] shrink-0 items-center justify-center font-serif text-[#FFFFFF]"
+                style={{
+                  fontFamily: "'Malgin', serif",
+                  fontSize: '71px',
+                  lineHeight: 1,
+                }}
               >
                 W
               </span>
               <div
-                className="flex flex-col justify-center text-[14px] font-medium tracking-wide space-y-[6px] mt-2 overflow-hidden leading-[150%] text-[#FFFFFF]"
+                className="flex h-[71px] w-[131px] flex-col justify-start gap-1 text-[14px] font-medium leading-[1.35] tracking-normal text-[#FFFFFF]"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
                 <p ref={el => (leftLine1Refs.current[1] = el)} className="m-0">

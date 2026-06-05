@@ -426,6 +426,8 @@ const GrandCelebrationsSection = () => {
   const [isAnimating, setIsAnimating] = useState(false)
 
   const perPageRef = useRef(perPage)
+  const gcTouchStartX = useRef(0)
+  const gcTouchStartY = useRef(0)
 
   const totalPages = Math.max(1, Math.ceil(resolvedCelebrationData.length / perPage))
   const isMobile = perPage === 1
@@ -448,6 +450,24 @@ const GrandCelebrationsSection = () => {
     activeImgWrapRefs.current = []
     incomingCardRefs.current = []
     incomingImgWrapRefs.current = []
+  }
+
+  const handleGcTouchStart = event => {
+    gcTouchStartX.current = event.touches[0].clientX
+    gcTouchStartY.current = event.touches[0].clientY
+  }
+
+  const handleGcTouchEnd = event => {
+    if (!isMobile || totalPages <= 1) return
+
+    const endX = event.changedTouches[0].clientX
+    const endY = event.changedTouches[0].clientY
+    const diffX = gcTouchStartX.current - endX
+    const diffY = Math.abs(gcTouchStartY.current - endY)
+
+    if (Math.abs(diffX) > 35 && Math.abs(diffX) > diffY) {
+      go(diffX > 0 ? 1 : -1)
+    }
   }
 
   const go = dir => {
@@ -654,7 +674,11 @@ const GrandCelebrationsSection = () => {
           {/* Stacked cards (mobile) */}
 
           <div className="mt-10 w-full flex flex-col items-center">
-            <div className="w-full flex items-center justify-center">
+            <div
+              className="mobile-swipe-surface w-full flex items-center justify-center"
+              onTouchStart={handleGcTouchStart}
+              onTouchEnd={handleGcTouchEnd}
+            >
               <div className="relative mb-6 h-[258px] w-[168px] min-[375px]:h-[276px] min-[375px]:w-[180px]">
                 {mobileStackItems.map((item, idx) => {
                   const t =
@@ -689,15 +713,12 @@ const GrandCelebrationsSection = () => {
 
             {/* Dots + description (mobile) */}
             <div className="w-full flex flex-col items-center my-7 ">
-              <div className="flex items-center justify-center gap-[5px]">
+              <div className="flex items-center justify-center gap-[5px]" aria-hidden="true">
                 {Array.from({ length: totalPages }, (_, i) => {
                   const active = i === normalizedPage
                   return (
-                    <button
+                    <span
                       key={`gc-dot-${i}`}
-                      type="button"
-                      onClick={() => setPage(i)}
-                      aria-label={`Go to celebrations ${i + 1}`}
                       className={`rounded-full transition-all ${
                         active ? 'h-[4px] w-[20px] bg-[#7A2D06]' : 'h-[4px] w-[8px] bg-[#CFCFCF]'
                       }`}

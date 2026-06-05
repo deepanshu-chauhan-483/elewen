@@ -117,6 +117,41 @@ p {
   animation: band-right 60s linear infinite;
 }
 
+/* ── Mobile hero viewport helpers (desktop unchanged) ─────────────────── */
+@media (max-width: 767px) {
+  .hero-sticky-viewport {
+    height: 100dvh;
+    height: var(--door-viewport-height);
+    max-height: 100dvh;
+    max-height: var(--door-viewport-height);
+  }
+
+  .mobile-hero-fit {
+    min-height: 100dvh;
+    min-height: var(--door-viewport-height);
+    max-height: 100dvh;
+    max-height: var(--door-viewport-height);
+    overflow: hidden;
+  }
+
+  .mobile-hero-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    padding-inline: clamp(1rem, 4vw, 1.5rem);
+    overflow: hidden;
+  }
+
+  .mobile-swipe-surface {
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 /* NOTE: I removed the "body *" !important override. 
    If you keep that rule, your <p> tags will be forced to use Malgin 
    instead of Poppins. Use the .font-display class on specific 

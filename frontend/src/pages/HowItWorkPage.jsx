@@ -640,11 +640,11 @@ const HowItWorkHeroSection = ({ section }) => {
   return (
     <section
       data-nav-surface="transparent"
-      className="relative flex min-h-screen min-h-[90svh] w-full flex-col overflow-hidden bg-[#591902] pt-[90px] min-[540px]:pt-[105px] lg:pt-[120px]"
+      className="relative flex min-h-[100dvh] min-h-[var(--door-viewport-height)] w-full flex-col overflow-hidden bg-[#591902] pt-[5.5rem] min-[540px]:min-h-screen min-[540px]:pt-[105px] lg:pt-[120px]"
     >
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-between">
-        <div className="w-full px-6 pb-2 min-[540px]:px-10 min-[540px]:pb-4 md:px-20 lg:pb-6 xl:px-[100px]">
-          <div className="flex flex-col pt-4 min-[540px]:pt-6 lg:pt-10">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col min-[540px]:justify-between">
+        <div className="flex flex-1 flex-col justify-center w-full px-5 pb-2 min-[540px]:flex-none min-[540px]:justify-start min-[540px]:px-10 min-[540px]:pb-4 md:px-20 lg:pb-6 xl:px-[100px]">
+          <div className="flex w-full flex-col items-start pt-0 min-[540px]:pt-6 lg:pt-10 min-[540px]:block min-[540px]:p-0">
             <div className="flex items-center">
               <div className="flex w-full max-w-[760px] gap-4 min-[540px]:gap-6">
                 <div className="anim-element slide-from-bottom mt-1 hidden w-px shrink-0 self-stretch bg-[#CDB17E]/70 min-[540px]:block" />
@@ -661,7 +661,7 @@ const HowItWorkHeroSection = ({ section }) => {
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
-                      <span className="reveal-text text-[48px] leading-[1] min-[540px]:text-[64px] lg:text-[80px]">
+                      <span className="reveal-text text-[clamp(2rem,10vw,3rem)] leading-[1] min-[540px]:text-[64px] lg:text-[80px]">
                         {section?.heading ?? 'How It Works'}
                       </span>
                     </span>
@@ -712,9 +712,9 @@ const HowItWorkHeroSection = ({ section }) => {
               </div>
             </div>
 
-            <div className="mt-6 flex w-full justify-start md:mt-15 md:justify-end">
+            <div className="mt-4 flex w-full justify-start min-[540px]:mt-6 md:mt-15 md:justify-end">
               <p
-                className="w-full max-w-[469px] text-left text-[16px] leading-[1] whitespace-nowrap text-[#C08E72] min-[540px]:text-[22px] md:text-right md:text-[27px]"
+                className="w-full max-w-[469px] text-left text-[clamp(0.875rem,4vw,1rem)] leading-[1.2] whitespace-normal text-[#C08E72] min-[540px]:text-[22px] min-[540px]:whitespace-nowrap md:text-right md:text-[27px]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 <span className="reveal-wrapper block md:text-right">
@@ -730,14 +730,14 @@ const HowItWorkHeroSection = ({ section }) => {
           </div>
         </div>
 
-        <div className="anim-element slide-from-bottom is-visible relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-6 py-3 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-3 md:px-20 xl:px-[100px]">
-          <div className="flex flex-wrap items-center justify-start text-[#CDB17E] w-full gap-2 min-[540px]:gap-2 md:gap-2 lg:gap-8 xl:gap-12">
+        <div className="anim-element slide-from-bottom is-visible relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-5 py-2.5 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-3 md:px-20 xl:px-[100px]">
+          <div className="flex flex-wrap items-center justify-center min-[540px]:justify-start text-[#CDB17E] w-full gap-x-2 gap-y-1 min-[540px]:gap-2 md:gap-2 lg:gap-8 xl:gap-12">
             {heroTags.map((tag, index) => (
               <div
                 key={tag}
-                className="flex items-center h-8 whitespace-nowrap gap-1 md:gap-2 lg:gap-6"
+                className="flex items-center min-h-7 whitespace-normal min-[540px]:h-8 min-[540px]:whitespace-nowrap gap-1 md:gap-2 lg:gap-6"
               >
-                <span className="text-[13px] uppercase leading-none tracking-[0.02em] min-[540px]:text-[16px]">
+                <span className="text-[11px] uppercase leading-none tracking-[0.02em] min-[540px]:text-[16px]">
                   {tag}
                 </span>
                 {index < HERO_TAGS.length - 1 && (

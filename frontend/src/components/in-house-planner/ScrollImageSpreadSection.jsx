@@ -80,6 +80,8 @@ const ScrollImageSpreadSection = ({
     typeof window === 'undefined' ? false : window.innerWidth < 540
   )
   const [mobilePage, setMobilePage] = useState(0)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
 
   const resolvedImageData = IMAGE_DATA.map((item, index) => ({
     ...item,
@@ -89,6 +91,30 @@ const ScrollImageSpreadSection = ({
   const mobileSlides = MOBILE_SLIDE_INDEXES.map(indexes =>
     indexes.map(imageIndex => resolvedImageData[imageIndex])
   )
+
+  const goToMobileSlide = direction => {
+    setMobilePage(prev => {
+      const total = MOBILE_SLIDE_INDEXES.length
+      if (total <= 1) return prev
+      return (prev + direction + total) % total
+    })
+  }
+
+  const handleTouchStart = event => {
+    touchStartX.current = event.touches[0].clientX
+    touchStartY.current = event.touches[0].clientY
+  }
+
+  const handleTouchEnd = event => {
+    const endX = event.changedTouches[0].clientX
+    const endY = event.changedTouches[0].clientY
+    const diffX = touchStartX.current - endX
+    const diffY = Math.abs(touchStartY.current - endY)
+
+    if (Math.abs(diffX) > 35 && Math.abs(diffX) > diffY) {
+      goToMobileSlide(diffX > 0 ? 1 : -1)
+    }
+  }
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 540)
@@ -198,7 +224,11 @@ const ScrollImageSpreadSection = ({
     return (
       <section className="w-full bg-[#FFFFFF] font-sans pt-24 pb-14">
         <div className="mx-auto w-full max-w-[430px] px-2">
-          <div className="flex flex-col justify-center mx-auto w-full grid h-[min(74vw,278px)]  grid-cols-[1.72fr_0.94fr] gap-1">
+          <div
+            className="mobile-swipe-surface flex flex-col justify-center mx-auto w-full grid h-[min(74vw,278px)] grid-cols-[1.72fr_0.94fr] gap-1"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="grid min-h-0 grid-rows-[1.52fr_0.86fr] gap-1">
               <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
                 <img
@@ -236,15 +266,12 @@ const ScrollImageSpreadSection = ({
             </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-2">
+          <div className="mt-6 flex items-center justify-center gap-2" aria-hidden="true">
             {mobileSlides.map((_, idx) => {
               const isActive = idx === mobilePage
               return (
-                <button
+                <span
                   key={`planner-mobile-dot-${idx}`}
-                  type="button"
-                  onClick={() => setMobilePage(idx)}
-                  aria-label={`Go to planner hero slide ${idx + 1}`}
                   className={`h-2 rounded-full transition-all ${
                     isActive ? 'w-6 bg-[#7A2D06]' : 'w-3 bg-[#D0D0D0]'
                   }`}

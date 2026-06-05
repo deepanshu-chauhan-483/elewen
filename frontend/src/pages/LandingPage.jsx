@@ -99,6 +99,68 @@ const getMobileCarouselTranslateX = ({ totalItems, page, cardWidth, cardGap }) =
   return `translateX(calc(50% - ${cardWidth / 2}px - ${page * (cardWidth + cardGap)}px))`
 }
 
+const useMobileCarouselSwipe = (onPrev, onNext, enabled) => {
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+
+  return enabled
+    ? {
+        onTouchStart: event => {
+          touchStartX.current = event.touches[0].clientX
+          touchStartY.current = event.touches[0].clientY
+        },
+        onTouchEnd: event => {
+          const endX = event.changedTouches[0].clientX
+          const endY = event.changedTouches[0].clientY
+          const diffX = touchStartX.current - endX
+          const diffY = Math.abs(touchStartY.current - endY)
+
+          if (Math.abs(diffX) > 35 && Math.abs(diffX) > diffY) {
+            if (diffX > 0) onNext()
+            else onPrev()
+          }
+        },
+      }
+    : {}
+}
+
+const MOBILE_CAROUSEL_STAGE_CLASS =
+  'relative min-h-[400px] md:min-h-0 w-screen max-w-[100vw] left-1/2 -translate-x-1/2 overflow-visible md:static md:w-auto md:max-w-none md:left-auto md:translate-x-0'
+
+const MOBILE_CAROUSEL_VIEWPORT_CLASS =
+  'mobile-swipe-surface w-[min(322px,calc(100%-5.5rem))] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0'
+
+const MOBILE_CAROUSEL_ARROW_BTN_LEFT =
+  'pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]'
+
+const MOBILE_CAROUSEL_ARROW_BTN_RIGHT =
+  'pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]'
+
+const MobileCarouselPrevIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path
+      d="M19 12H5M5 12L12 19M5 12L12 5"
+      stroke="#CDB17E"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+const MobileCarouselNextIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path
+      d="M5 12H19M19 12L12 19M19 12L12 5"
+      stroke="#CDB17E"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+const getResolvedMobileCardWidth = (viewportWidth, fallbackWidth) =>
+  viewportWidth > 0 ? Math.min(fallbackWidth, Math.floor(viewportWidth)) : fallbackWidth
+
 const getVisiblePaginationDots = (totalItems, activeIndex, maxVisible = 5) => {
   if (totalItems <= 0) return []
   if (totalItems <= maxVisible) {
@@ -548,6 +610,11 @@ const PlanEventSection = () => {
 
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
+  const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
+  const resolvedMobileCardWidth = getResolvedMobileCardWidth(
+    carouselViewportWidth,
+    mobileCardWidth
+  )
 
   useEffect(() => {
     const viewport = carouselViewportRef.current
@@ -772,117 +839,94 @@ const PlanEventSection = () => {
         <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8 min-w-0">
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden min-w-0">
-            <div className="relative min-h-[400px] md:min-h-0">
-              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
+            <div className={MOBILE_CAROUSEL_STAGE_CLASS}>
+              <div className="pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
+                  type="button"
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
+                  className={MOBILE_CAROUSEL_ARROW_BTN_LEFT}
+                  aria-label="Previous card"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M19 12H5M5 12L12 19M5 12L12 5"
-                      stroke="#CDB17E"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <MobileCarouselPrevIcon />
                 </button>
               </div>
-              {/* Mobile Left Navigation Arrow â€” full-bleed row, vertically centered on card */}
 
               <div
                 ref={carouselViewportRef}
-                className="w-[322px] max-w-full mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
-                style={{
-                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                  WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
-                  transition:
-                    'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
-                }}
-              >
-                <div
-                  className="flex gap-4 md:gap-4 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+                className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
+                  {...carouselTouch}
                   style={{
-                    transform: isMobile
-                      ? getMobileCarouselTranslateX({
-                          totalItems: filteredCards.length,
-                          page: safePage,
-                          cardWidth: mobileCardWidth,
-                          cardGap: mobileCardGap,
-                        })
-                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                    maskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                    WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
+                    transition:
+                      'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  {filteredCards.map((card, i) => (
-                    <Link
-                      key={card.id ?? card.title}
-                      to={buildEventListingHref(
-                        card.categorySlug || activeCategorySlug,
-                        card.slug,
-                        card.id
-                      )}
-                      style={{
-                        '--delay': `${0.08 + i * 0.06}s`,
-                        width: isMobile
-                          ? `${mobileCardWidth}px`
-                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
-                      }}
-                      className="bg-white p-[10px] md:p-2.5 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
-                    >
-                      <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
-                        <img
-                          src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                          alt={card.title}
-                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
-                          loading="lazy"
-                        />
-                      </div>
+                  <div
+                    className="flex gap-4 md:gap-4 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+                    style={{
+                      transform: isMobile
+                        ? getMobileCarouselTranslateX({
+                            totalItems: filteredCards.length,
+                            page: safePage,
+                            cardWidth: resolvedMobileCardWidth,
+                            cardGap: mobileCardGap,
+                          })
+                        : `translateX(-${safePage * carouselViewportWidth}px)`,
+                    }}
+                  >
+                    {filteredCards.map((card, i) => (
+                      <Link
+                        key={card.id ?? card.title}
+                        to={buildEventListingHref(
+                          card.categorySlug || activeCategorySlug,
+                          card.slug,
+                          card.id
+                        )}
+                        style={{
+                          '--delay': `${0.08 + i * 0.06}s`,
+                          width: isMobile
+                            ? `${resolvedMobileCardWidth}px`
+                            : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                        }}
+                        className="bg-white p-[10px] md:p-2.5 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      >
+                        <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
+                          <img
+                            src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                            alt={card.title}
+                            className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                            loading="lazy"
+                          />
+                        </div>
 
-                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        {' '}
-                        <h3
-                          className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase "
-                          style={{ fontFamily: "'Poppins'" }}
-                        >
-                          {card.title}
-                        </h3>
-                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins']">
-                          {card.tagline}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
+                        <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                          {' '}
+                          <h3
+                            className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase "
+                            style={{ fontFamily: "'Poppins'" }}
+                          >
+                            {card.title}
+                          </h3>
+                          <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins']">
+                            {card.tagline}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
+              <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
+                  type="button"
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
+                  className={MOBILE_CAROUSEL_ARROW_BTN_RIGHT}
+                  aria-label="Next card"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M5 12H19M19 12L12 19M19 12L12 5"
-                      stroke="#CDB17E"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <MobileCarouselNextIcon />
                 </button>
               </div>
             </div>
@@ -1057,6 +1101,11 @@ const WhatToPlanSection = () => {
 
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
+  const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
+  const resolvedMobileCardWidth = getResolvedMobileCardWidth(
+    carouselViewportWidth,
+    mobileCardWidth
+  )
 
   useEffect(() => {
     const viewport = carouselViewportRef.current
@@ -1239,106 +1288,83 @@ const WhatToPlanSection = () => {
 
         <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
-            <div className="relative min-h-[400px] lg:min-h-0">
-              {/* Mobile Left Navigation Arrow */}
-              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
+            <div className={MOBILE_CAROUSEL_STAGE_CLASS}>
+              <div className="pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
+                  type="button"
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
+                  className={MOBILE_CAROUSEL_ARROW_BTN_LEFT}
+                  aria-label="Previous card"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M19 12H5M5 12L12 19M5 12L12 5"
-                      stroke="#CDB17E"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <MobileCarouselPrevIcon />
                 </button>
               </div>
 
               <div
                 ref={carouselViewportRef}
-                className="w-[322px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
+                className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
+                {...carouselTouch}
               >
-                <div
-                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
-                  style={{
-                    transform: isMobile
-                      ? getMobileCarouselTranslateX({
-                          totalItems: filteredCards.length,
-                          page: safePage,
-                          cardWidth: mobileCardWidth,
-                          cardGap: mobileCardGap,
-                        })
-                      : `translateX(-${safePage * carouselViewportWidth}px)`,
-                  }}
-                >
-                  {filteredCards.map((card, i) => (
-                    <Link
-                      key={card.id ?? card.title}
-                      to={buildServiceListingHref(card.slug ?? card.title)}
-                      className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
-                      style={{
-                        '--delay': `${0.08 + i * 0.06}s`,
-                        width: isMobile
-                          ? `${mobileCardWidth}px`
-                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
-                      }}
-                    >
-                      <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
-                        <img
-                          src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                          alt={card.title}
-                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
-                        />
-                      </div>
+                  <div
+                    className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+                    style={{
+                      transform: isMobile
+                        ? getMobileCarouselTranslateX({
+                            totalItems: filteredCards.length,
+                            page: safePage,
+                            cardWidth: resolvedMobileCardWidth,
+                            cardGap: mobileCardGap,
+                          })
+                        : `translateX(-${safePage * carouselViewportWidth}px)`,
+                    }}
+                  >
+                    {filteredCards.map((card, i) => (
+                      <Link
+                        key={card.id ?? card.title}
+                        to={buildServiceListingHref(card.slug ?? card.title)}
+                        className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                        style={{
+                          '--delay': `${0.08 + i * 0.06}s`,
+                          width: isMobile
+                            ? `${resolvedMobileCardWidth}px`
+                            : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                        }}
+                      >
+                        <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
+                          <img
+                            src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                            alt={card.title}
+                            className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                          />
+                        </div>
 
-                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] px-3 py-3 md:px-3 md:py-3 lg:p-3 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        {' '}
-                        <h3
-                          className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']"
-                          style={{ fontFamily: "'Poppins'" }}
-                        >
-                          {card.title}
-                        </h3>
-                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
-                          {card.description}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
+                        <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] px-3 py-3 md:px-3 md:py-3 lg:p-3 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                          {' '}
+                          <h3
+                            className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']"
+                            style={{ fontFamily: "'Poppins'" }}
+                          >
+                            {card.title}
+                          </h3>
+                          <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
+                            {card.description}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
+              <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
+                  type="button"
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
+                  className={MOBILE_CAROUSEL_ARROW_BTN_RIGHT}
+                  aria-label="Next card"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M5 12H19M19 12L12 19M19 12L12 5"
-                      stroke="#CDB17E"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <MobileCarouselNextIcon />
                 </button>
               </div>
             </div>
@@ -2160,7 +2186,7 @@ const BetterWaySection = () => {
       data-nav-theme="glass"
       className="relative -mt-px md:mt-0 w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans"
     >
-      <div className="relative w-full max-w-[1440px] mx-auto min-h-[820px] md:max-lg:min-h-[980px] lg:h-[1040px] xl:h-[1171px] shrink-0">
+      <div className="relative w-full max-w-[1440px] mx-auto min-h-0 pb-6 md:min-h-[820px] md:max-lg:min-h-[980px] lg:h-[1040px] xl:h-[1171px] shrink-0 overflow-x-hidden">
         {/* --- SCALLOP / BULB SECTION --- */}
         <div className="hidden lg:flex">
           {renderScallopStrip({
@@ -2197,7 +2223,7 @@ const BetterWaySection = () => {
         </div>
 
         {/* --- HEADINGS --- */}
-        <div className="absolute w-[353px] mx-auto lg:w-[760px] xl:w-[809px] max-w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-[179px] lg:top-[180px] xl:top-[253px] flex flex-col items-center gap-[20px] lg:gap-[10px] lg:static lg:block lg:w-full lg:max-w-none lg:translate-x-0">
+        <div className="relative mx-auto w-full max-w-[353px] px-4 pt-8 pb-4 flex flex-col items-center gap-5 lg:absolute lg:w-[760px] xl:w-[809px] lg:max-w-[calc(100%-2rem)] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px] lg:gap-[10px] lg:static lg:block lg:w-full lg:max-w-none lg:translate-x-0 lg:px-0 lg:pt-0 lg:pb-0">
           <h2
             className="w-full text-[#2D2D2D] text-[24px] lg:text-[54px] xl:text-[61px] leading-[1] text-center font-serif reveal-heading lg:absolute lg:w-[620px] xl:w-[679px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px]"
             style={{ fontFamily: "'Malgin', serif" }}
@@ -2297,9 +2323,9 @@ const BetterWaySection = () => {
         </motion.div>
 
         {/* Mobile Version */}
-        <div className="relative z-20 mx-auto mt-[330px] flex w-full max-w-[420px] flex-col items-center px-4 pb-14 lg:hidden">
+        <div className="relative z-20 mx-auto mt-8 flex w-full max-w-[420px] flex-col items-center px-4 pb-10 lg:hidden">
           <motion.div
-            className="relative w-full max-w-[353px] aspect-[353/207]"
+            className="relative mx-auto w-full max-w-[min(100%,320px)] aspect-[353/207] overflow-hidden"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.45 }}
@@ -2308,7 +2334,7 @@ const BetterWaySection = () => {
               viewBox="0 0 353 207"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="h-full w-full overflow-visible"
+              className="h-full w-full overflow-hidden"
             >
               <defs>
                 <clipPath id="intersectClipMobile">
@@ -2351,20 +2377,20 @@ const BetterWaySection = () => {
             </svg>
 
             <h5
-              className="absolute left-[28%] top-1/2 w-[34%] -translate-x-1/2 -translate-y-1/2 text-center text-[#591902] text-[24px] leading-[0.95] font-serif"
+              className="absolute left-[26%] top-1/2 w-[30%] max-w-[92px] -translate-x-1/2 -translate-y-1/2 px-1 text-center text-[#591902] text-[clamp(13px,3.6vw,18px)] leading-[1.05] font-serif break-words hyphens-auto"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               {s.left_label ?? 'Event Planner'}
             </h5>
 
             <h5
-              className="absolute left-[72%] top-1/2 w-[22%] -translate-x-1/2 -translate-y-1/2 text-center text-[#CDB17E] text-[24px] leading-[0.95] font-serif"
+              className="absolute left-[74%] top-1/2 w-[24%] max-w-[72px] -translate-x-1/2 -translate-y-1/2 px-1 text-center text-[#CDB17E] text-[clamp(13px,3.6vw,18px)] leading-[1.05] font-serif break-words hyphens-auto"
               style={{ fontFamily: "'Malgin', serif" }}
             >
               {s.right_label ?? 'DIY'}
             </h5>
 
-            <div className="absolute left-1/2 top-1/2 flex h-[72px] w-[64px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+            <div className="absolute left-1/2 top-1/2 flex h-[clamp(48px,14vw,64px)] w-[clamp(44px,12vw,56px)] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
               <img
                 src={centerLogo}
                 alt="11 Logo"
@@ -3604,6 +3630,11 @@ const PlanningGuidesSection = () => {
 
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
+  const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
+  const resolvedMobileCardWidth = getResolvedMobileCardWidth(
+    carouselViewportWidth,
+    mobileCardWidth
+  )
 
   useEffect(() => {
     const viewport = carouselViewportRef.current
@@ -3764,112 +3795,90 @@ const PlanningGuidesSection = () => {
 
         <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           {/* Cards Carousel Area */}
-          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
-            <div className="relative min-h-[400px] md:min-h-0">
-              <div className="absolute top-[214px] -translate-y-1/2  left-[-50px] z-20 md:hidden pointer-events-none">
+          <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-x-hidden md:overflow-visible md:overflow-hidden">
+            <div className={MOBILE_CAROUSEL_STAGE_CLASS}>
+              <div className="pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
+                  type="button"
                   onClick={goToPrevPage}
                   disabled={safePage === 0}
-                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
+                  className={MOBILE_CAROUSEL_ARROW_BTN_LEFT}
+                  aria-label="Previous card"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M19 12H5M5 12L12 19M5 12L12 5"
-                      stroke="#CDB17E"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <MobileCarouselPrevIcon />
                 </button>
               </div>
 
               <div
                 ref={carouselViewportRef}
-                className="w-[300px] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0"
-                style={{
-                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                  WebkitMaskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                  transition:
-                    'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
-                }}
-              >
-                <div
-                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+                className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
+                  {...carouselTouch}
                   style={{
-                    transform: isMobile
-                      ? getMobileCarouselTranslateX({
-                          totalItems: filteredBlogs.length,
-                          page: safePage,
-                          cardWidth: mobileCardWidth,
-                          cardGap: mobileCardGap,
-                        })
-                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                    maskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                    WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
+                    transition:
+                      'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  {filteredBlogs.map((blog, i) => (
-                    <Link
-                      key={blog.id ?? blog.title}
-                      to={`/blogs/${blog.slug}`}
-                      className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
-                      style={{
-                        '--delay': `${0.08 + i * 0.06}s`,
-                        width: isMobile
-                          ? `${mobileCardWidth}px`
-                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
-                      }}
-                    >
-                      <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
-                        <img
-                          src={
-                            blog.cover_image ??
-                            CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]
-                          }
-                          alt={blog.title}
-                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
-                        />
-                      </div>
+                  <div
+                    className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+                    style={{
+                      transform: isMobile
+                        ? getMobileCarouselTranslateX({
+                            totalItems: filteredBlogs.length,
+                            page: safePage,
+                            cardWidth: resolvedMobileCardWidth,
+                            cardGap: mobileCardGap,
+                          })
+                        : `translateX(-${safePage * carouselViewportWidth}px)`,
+                    }}
+                  >
+                    {filteredBlogs.map((blog, i) => (
+                      <Link
+                        key={blog.id ?? blog.title}
+                        to={`/blogs/${blog.slug}`}
+                        className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                        style={{
+                          '--delay': `${0.08 + i * 0.06}s`,
+                          width: isMobile
+                            ? `${resolvedMobileCardWidth}px`
+                            : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                        }}
+                      >
+                        <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
+                          <img
+                            src={
+                              blog.cover_image ??
+                              CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]
+                            }
+                            alt={blog.title}
+                            className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                          />
+                        </div>
 
-                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:px-6 md:py-5 lg:p-7 h-[120px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        {' '}
-                        <h3
-                          className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none"
-                          style={{ fontFamily: 'Poppins' }}
-                        >
-                          {blog.title}
-                        </h3>
-                      </div>
-                    </Link>
-                  ))}
+                        <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:px-6 md:py-5 lg:p-7 h-[120px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                          {' '}
+                          <h3
+                            className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none"
+                            style={{ fontFamily: 'Poppins' }}
+                          >
+                            {blog.title}
+                          </h3>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Mobile Right Navigation Arrow */}
-              <div className="absolute top-[214px] -translate-y-1/2 right-[-50px] z-20 md:hidden pointer-events-none">
+              <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
+                  type="button"
                   onClick={goToNextPage}
                   disabled={safePage >= totalPages - 1}
-                  className="pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-start px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]"
+                  className={MOBILE_CAROUSEL_ARROW_BTN_RIGHT}
+                  aria-label="Next card"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M5 12H19M19 12L12 19M19 12L12 5"
-                      stroke="#CDB17E"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <MobileCarouselNextIcon />
                 </button>
               </div>
             </div>
