@@ -5,7 +5,7 @@ import {
   LoadingState,
   ResultsEmptyState,
   SectionLoadingState,
-  SelectField,
+  CustomSelect,
 } from '../components/ui/AdminUI'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { useScrollToTop } from '../hooks/useScrollToTop'
@@ -595,7 +595,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="flex-1">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">New stage</p>
-                  <SelectField
+                  <CustomSelect
                     value={statusInput}
                     onChange={handleStatusInputChange}
                     className="min-h-10 rounded-full bg-[#F3F3F3]"
@@ -625,7 +625,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
                       Completed
                     </option>
                     <option value="cancelled">Cancelled</option>
-                  </SelectField>
+                  </CustomSelect>
                 </div>
                 <div className="flex-1">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Note (optional)</p>
@@ -705,7 +705,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
             <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex-1">
-                  <SelectField
+                  <CustomSelect
                     value={vendorId}
                     onChange={setVendorId}
                     placeholder="Select a vendor..."
@@ -717,7 +717,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
                         {v.companyName}
                       </option>
                     ))}
-                  </SelectField>
+                  </CustomSelect>
                 </div>
                 <PrimaryBtn
                   disabled={createAssignmentMutation.isPending || !vendorId}
@@ -960,7 +960,7 @@ export default function BookingManagementPage() {
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
-          <SelectField
+          <CustomSelect
             value={bucket}
             onChange={value => {
               setBucket(value)
@@ -973,8 +973,8 @@ export default function BookingManagementPage() {
             <option value="today">Today</option>
             <option value="upcoming">Upcoming</option>
             <option value="completed">Completed</option>
-          </SelectField>
-          <SelectField
+          </CustomSelect>
+          <CustomSelect
             value={statusFilter}
             onChange={value => {
               setStatusFilter(value)
@@ -992,8 +992,8 @@ export default function BookingManagementPage() {
             <option value="post_event">Post Event</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
-          </SelectField>
-          <SelectField
+          </CustomSelect>
+          <CustomSelect
             value={sortBy}
             onChange={value => {
               setSortBy(value)
@@ -1003,7 +1003,7 @@ export default function BookingManagementPage() {
           >
             <option value="latest">Latest First</option>
             <option value="event_date">By Event Date</option>
-          </SelectField>
+          </CustomSelect>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
           Bucket filters by booking group: Active, Today, Upcoming, or Completed. Stage filters by

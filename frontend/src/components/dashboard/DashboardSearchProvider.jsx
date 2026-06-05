@@ -13,7 +13,5 @@ export function DashboardSearchProvider({ children }) {
     [searchTerm]
   )
 
-  return (
-    <DashboardSearchContext.Provider value={value}>{children}</DashboardSearchContext.Provider>
-  )
+  return <DashboardSearchContext.Provider value={value}>{children}</DashboardSearchContext.Provider>
 }

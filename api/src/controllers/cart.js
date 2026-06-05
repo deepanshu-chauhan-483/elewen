@@ -1,5 +1,11 @@
 import prisma from '../lib/prisma.js'
 import { strapiGet } from '../lib/strapi.js'
+import {
+  attachSelectedOptionsToCartItems,
+  buildStoredCartItemTitle,
+  getDisplayTitle,
+  normalizeSelectedOptions,
+} from '../lib/cartItemMeta.js'
 
 const cartInclude = {
   items: { orderBy: { createdAt: 'asc' } },
@@ -51,21 +57,6 @@ const attachCouponDetails = async cart => {
   }
 }
 
-const CART_META_SEPARATOR = '||__ELEWEN_META__||'
-
-function normalizeSelectedOptions(selectedOptions) {
-  if (!selectedOptions || typeof selectedOptions !== 'object' || Array.isArray(selectedOptions)) {
-    return {}
-  }
-
-  return Object.fromEntries(
-    Object.entries(selectedOptions)
-      .map(([key, value]) => [String(key ?? '').trim(), String(value ?? '').trim()])
-      .filter(([key, value]) => key && value)
-      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
-  )
-}
-
 function buildSelectionKey(selectedOptions) {
   const normalized = normalizeSelectedOptions(selectedOptions)
   const serialized = JSON.stringify(normalized)
@@ -80,10 +71,7 @@ function buildSelectionKey(selectedOptions) {
 }
 
 function buildCartItemTitle(title, selectedOptions) {
-  const normalized = normalizeSelectedOptions(selectedOptions)
-  if (!Object.keys(normalized).length) return title
-
-  return `${title}${CART_META_SEPARATOR}${JSON.stringify({ selectedOptions: normalized })}`
+  return buildStoredCartItemTitle(title, selectedOptions)
 }
 
 function parseGuestCountValue(value) {
@@ -115,22 +103,6 @@ function isCateringPerPersonAddon(addon) {
   return unit.includes('pax') || unit.includes('person')
 }
 
-function buildStoredCartItemTitle(title, selectedOptions, meta = {}) {
-  const normalized = normalizeSelectedOptions(selectedOptions)
-  const trimmedAddonTitle = String(meta.addonTitle ?? '').trim()
-
-  if (trimmedAddonTitle) {
-    return `${trimmedAddonTitle}${CART_META_SEPARATOR}${JSON.stringify({
-      selectedOptions: normalized,
-      itemType: 'addon',
-      addonTitle: trimmedAddonTitle,
-      parentPackageId: String(meta.parentPackageId ?? ''),
-    })}`
-  }
-
-  return buildCartItemTitle(title, normalized)
-}
-
 async function syncCateringAddonTotalsForPackage(cartId, packageId, guestCount) {
   const guests = parseGuestCountValue(guestCount)
   if (!guests) return
@@ -149,7 +121,7 @@ async function syncCateringAddonTotalsForPackage(cartId, packageId, guestCount) 
 
     const quantity = Math.max(1, Number(addonItem.quantity ?? 1))
     const lineTotal = perPerson * guests * quantity
-    const displayTitle = String(addonItem.title ?? '').split(CART_META_SEPARATOR)[0]
+    const displayTitle = getDisplayTitle(addonItem.title)
     const normalized = normalizeSelectedOptions({
       'Guest count': String(guests),
     })
@@ -161,6 +133,7 @@ async function syncCateringAddonTotalsForPackage(cartId, packageId, guestCount) 
           addonTitle: displayTitle,
           parentPackageId: packageId,
         }),
+        selectedOptions: normalized,
         totalPrice: lineTotal.toFixed(2),
       },
     })
@@ -278,7 +251,9 @@ export const getCart = async (req, res, next) => {
     await recalcCart(cart.id)
     cart = await getCartWithItems(cart.id)
 
-    res.json({ cart: await attachCouponDetails(cart) })
+    res.json({
+      cart: attachSelectedOptionsToCartItems(await attachCouponDetails(cart)),
+    })
   } catch (err) {
     next(err)
   }
@@ -395,6 +370,8 @@ export const addItem = async (req, res, next) => {
           quantity: newQty,
           unitPrice: unitPrice.toFixed(2),
           totalPrice: mergedTotal.toFixed(2),
+          title: storedTitle,
+          selectedOptions: normalizedOptions,
         },
       })
     } else {
@@ -405,6 +382,7 @@ export const addItem = async (req, res, next) => {
           packageElementId: selectionKey,
           addonId: addonId || null,
           title: storedTitle,
+          selectedOptions: normalizedOptions,
           quantity,
           unitPrice: unitPrice.toFixed(2),
           totalPrice: itemTotal.toFixed(2),
@@ -416,7 +394,9 @@ export const addItem = async (req, res, next) => {
 
     const updated = await getCartWithItems(cart.id)
 
-    res.status(201).json({ cart: await attachCouponDetails(updated) })
+    res.status(201).json({
+      cart: attachSelectedOptionsToCartItems(await attachCouponDetails(updated)),
+    })
   } catch (err) {
     next(err)
   }
@@ -449,7 +429,9 @@ export const updateItem = async (req, res, next) => {
 
     const cart = await getCartWithItems(item.cart.id)
 
-    res.json({ cart: await attachCouponDetails(cart) })
+    res.json({
+      cart: attachSelectedOptionsToCartItems(await attachCouponDetails(cart)),
+    })
   } catch (err) {
     next(err)
   }
@@ -475,7 +457,9 @@ export const removeItem = async (req, res, next) => {
 
     const cart = await getCartWithItems(cartId)
 
-    res.json({ cart: await attachCouponDetails(cart) })
+    res.json({
+      cart: attachSelectedOptionsToCartItems(await attachCouponDetails(cart)),
+    })
   } catch (err) {
     next(err)
   }
@@ -515,7 +499,7 @@ export const updateCart = async (req, res, next) => {
       const normalizedSelectedOptions = normalizeSelectedOptions(selectedOptions)
       const nextSelectionKey = buildSelectionKey(normalizedSelectedOptions)
       const nextTitle = buildCartItemTitle(
-        String(item.title ?? '').split(CART_META_SEPARATOR)[0] || item.title,
+        getDisplayTitle(item.title) || item.title,
         normalizedSelectedOptions
       )
       const resolvedCustomPrice = Number(customUnitPrice ?? 0)
@@ -548,6 +532,8 @@ export const updateCart = async (req, res, next) => {
             quantity: mergedQuantity,
             unitPrice: nextUnitPrice.toFixed(2),
             totalPrice: nextLineTotal.toFixed(2),
+            title: nextTitle,
+            selectedOptions: normalizedSelectedOptions,
           },
         })
 
@@ -558,6 +544,7 @@ export const updateCart = async (req, res, next) => {
           data: {
             title: nextTitle,
             packageElementId: nextSelectionKey,
+            selectedOptions: normalizedSelectedOptions,
             quantity: nextQuantity,
             unitPrice: nextUnitPrice.toFixed(2),
             totalPrice: nextLineTotal.toFixed(2),
@@ -576,7 +563,9 @@ export const updateCart = async (req, res, next) => {
 
       const updatedCart = await getCartWithItems(item.cart.id)
 
-      return res.json({ cart: await attachCouponDetails(updatedCart) })
+      return res.json({
+        cart: attachSelectedOptionsToCartItems(await attachCouponDetails(updatedCart)),
+      })
     }
 
     const updated = await prisma.cart.update({
@@ -591,7 +580,9 @@ export const updateCart = async (req, res, next) => {
       include: cartInclude,
     })
 
-    res.json({ cart: await attachCouponDetails(updated) })
+    res.json({
+      cart: attachSelectedOptionsToCartItems(await attachCouponDetails(updated)),
+    })
   } catch (err) {
     next(err)
   }
@@ -647,7 +638,7 @@ export const applyCoupon = async (req, res, next) => {
     const updated = await getCartWithItems(cart.id)
 
     res.json({
-      cart: await attachCouponDetails(updated),
+      cart: attachSelectedOptionsToCartItems(await attachCouponDetails(updated)),
       coupon: {
         code: coupon.code,
         discount_type: coupon.discount_type,
@@ -672,7 +663,9 @@ export const removeCoupon = async (req, res, next) => {
 
     const updated = await getCartWithItems(cart.id)
 
-    res.json({ cart: await attachCouponDetails(updated) })
+    res.json({
+      cart: attachSelectedOptionsToCartItems(await attachCouponDetails(updated)),
+    })
   } catch (err) {
     next(err)
   }

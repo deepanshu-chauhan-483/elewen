@@ -125,8 +125,8 @@ export default function ServicePackagesPageContent({
     <PackageListLayout
       totalCount={sortedPackages.length}
       sortValue={sortValue}
-      onSortChange={e => {
-        setSortValue(e.target.value)
+      onSortChange={value => {
+        setSortValue(value)
         setPage(1)
       }}
       heroContent={showHero ? <PackageResultsHero /> : null}

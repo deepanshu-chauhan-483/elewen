@@ -4,7 +4,7 @@ import {
   LoadingState,
   ResultsEmptyState,
   SectionLoadingState,
-  SelectField,
+  CustomSelect,
 } from '../components/ui/AdminUI'
 import {
   useAdminRecordSampleTasteDecision,
@@ -375,14 +375,14 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
               <div className="flex flex-wrap items-end gap-3">
                 <div className="min-w-[200px] flex-1">
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Select vendor</p>
-                  <SelectField value={vendorId} onChange={setVendorId}>
+                  <CustomSelect value={vendorId} onChange={setVendorId}>
                     <option value="">Choose a vendor...</option>
                     {(vendorsQuery.data?.vendors ?? []).map(vendor => (
                       <option key={vendor.id} value={vendor.id}>
                         {vendor.companyName}
                       </option>
                     ))}
-                  </SelectField>
+                  </CustomSelect>
                 </div>
                 <PrimaryBtn
                   disabled={isBusy || st !== 'new' || !vendorId}
@@ -463,7 +463,7 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
               <div className="grid gap-3 md:grid-cols-2">
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Decision</p>
-                  <SelectField
+                  <CustomSelect
                     value={decision}
                     onChange={setDecision}
                     disabled={st === 'new' || st === 'assigned'}
@@ -473,7 +473,7 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
                         {option.label}
                       </option>
                     ))}
-                  </SelectField>
+                  </CustomSelect>
                 </div>
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Feedback status</p>
@@ -506,7 +506,7 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
                         {vendor.vendor?.companyName || vendor.vendorId}
                       </p>
                       <p className="mt-2 text-xs text-[#8F8F8F]">Vendor rating</p>
-                      <SelectField
+                      <CustomSelect
                         value={vendorRatings[vendor.vendorId] ?? ''}
                         onChange={value => handleVendorRatingChange(vendor.vendorId, value)}
                         disabled={st === 'new' || st === 'assigned'}
@@ -517,7 +517,7 @@ function SampleAccordionCard({ sample, open = false, onToggle }) {
                         <option value="3">3 / 5</option>
                         <option value="4">4 / 5</option>
                         <option value="5">5 / 5</option>
-                      </SelectField>
+                      </CustomSelect>
                     </div>
                   ))}
                 </div>
@@ -650,7 +650,7 @@ export default function SampleTastePage() {
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
-          <SelectField
+          <CustomSelect
             value={status}
             onChange={value => {
               setStatus(value)
@@ -662,7 +662,7 @@ export default function SampleTastePage() {
             <option value="assigned">Assigned</option>
             <option value="delivered">Delivered</option>
             <option value="completed">Completed</option>
-          </SelectField>
+          </CustomSelect>
         </div>
       </div>
 

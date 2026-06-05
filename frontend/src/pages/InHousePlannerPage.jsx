@@ -2164,8 +2164,10 @@ const CelebrationFormSection = () => {
                   className={`border-b pb-2 ${errors.event_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
                   <CustomSelect
+                    variant="planner"
+                    className="w-full"
                     value={form.event_type}
-                    onChange={e => set('event_type', e.target.value)}
+                    onChange={value => set('event_type', value)}
                     onBlur={() => handleBlur('event_type')}
                     placeholder="Type of Event"
                     options={[
@@ -2177,11 +2179,6 @@ const CelebrationFormSection = () => {
                       'Wedding',
                       'Other',
                     ]}
-                    buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
-                    arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
-                    menuClassName="fixed overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
-                    optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
-                    selectedOptionClassName=""
                     ariaLabel="Type of Event"
                   />
                 </div>
@@ -2215,16 +2212,13 @@ const CelebrationFormSection = () => {
                   className={`border-b pb-2 ${errors.guest_count ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
                   <CustomSelect
+                    variant="planner"
+                    className="w-full"
                     value={form.guest_count}
-                    onChange={e => set('guest_count', e.target.value)}
+                    onChange={value => set('guest_count', value)}
                     onBlur={() => handleBlur('guest_count')}
                     placeholder="Estimated Guest Count"
-                    options={['1â15', '15â30', '30â50', '50â100', '100+']}
-                    buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
-                    arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
-                    menuClassName="fixed overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
-                    optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
-                    selectedOptionClassName=""
+                    options={['1–15', '15–30', '30–50', '50–100', '100+']}
                     ariaLabel="Estimated Guest Count"
                   />
                 </div>
@@ -2239,8 +2233,10 @@ const CelebrationFormSection = () => {
                   className={`border-b pb-2 ${errors.venue_type ? 'border-[#C62828]' : 'border-[#2D2D2D]/50'}`}
                 >
                   <CustomSelect
+                    variant="planner"
+                    className="w-full"
                     value={form.venue_type}
-                    onChange={e => set('venue_type', e.target.value)}
+                    onChange={value => set('venue_type', value)}
                     onBlur={() => handleBlur('venue_type')}
                     placeholder="Venue Type"
                     options={[
@@ -2251,11 +2247,6 @@ const CelebrationFormSection = () => {
                       'Office',
                       'Other',
                     ]}
-                    buttonClassName="flex w-full items-center bg-transparent pr-8 text-left text-[16px] text-[#2D2D2D] outline-none"
-                    arrowClassName="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]"
-                    menuClassName="fixed overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
-                    optionClassName="flex w-full whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors hover:bg-black hover:text-white"
-                    selectedOptionClassName=""
                     ariaLabel="Venue Type"
                   />
                 </div>

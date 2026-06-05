@@ -5,7 +5,7 @@ import {
   ErrorState,
   LoadingState,
   ResultsEmptyState,
-  SelectField,
+  CustomSelect,
 } from '../components/ui/AdminUI'
 import { useAdminOverview } from '../hooks/useAdminData'
 import { useScrollToTop } from '../hooks/useScrollToTop'
@@ -237,7 +237,7 @@ const TABLE_TABS = ['all', 'confirmed', 'pending', 'new']
 function TableFilter({ active, onChange }) {
   return (
     <div className="w-[160px]">
-      <SelectField
+      <CustomSelect
         value={active}
         onChange={onChange}
         placeholder="Filter status"
@@ -248,7 +248,7 @@ function TableFilter({ active, onChange }) {
             {tab === 'all' ? 'All' : tab}
           </option>
         ))}
-      </SelectField>
+      </CustomSelect>
     </div>
   )
 }

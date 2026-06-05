@@ -1,7 +1,12 @@
 /** Offline fallback when Strapi catering-menu is unavailable (mirrors seed). */
 export const CATERING_MENU_FALLBACK = {
   starters: [
-    { name: 'Papdi Chaat', description: 'Crisp wafers with chutneys.', dietary: 'veg', sort_order: 1 },
+    {
+      name: 'Papdi Chaat',
+      description: 'Crisp wafers with chutneys.',
+      dietary: 'veg',
+      sort_order: 1,
+    },
     { name: 'Dahi Bhalla', dietary: 'veg', sort_order: 2 },
     { name: 'Hara Bhara Kebab', dietary: 'veg', sort_order: 3 },
     { name: 'Paneer Tikka', dietary: 'veg', sort_order: 4 },

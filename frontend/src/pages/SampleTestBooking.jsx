@@ -11,6 +11,10 @@ const EXPRESS_DELIVERY_FEE = 300
 const GST_RATE = 0.18
 const DELIVERY_FEE = 80
 
+/** Tasting uses its own menu, curated after the customer books — not cart menu picks. */
+const TASTING_MENU_NOTICE =
+  'Your tasting menu is separate from your event package menu. After you book, our team will confirm tasting dishes with you manually.'
+
 function parseCartItemTitle(value = '') {
   const rawTitle = String(value ?? '')
   const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
@@ -71,12 +75,6 @@ function getServiceLabel(pkg) {
   return slug.replace(/\b\w/g, char => char.toUpperCase())
 }
 
-function getBartendingDetailSection(pkg) {
-  return (pkg?.detail_sections ?? []).find(
-    section => section?.__component === 'package.bartendingpackage'
-  )
-}
-
 function getPackageUnitPrice(pkg, selectedOptions = {}) {
   const vegPreference = selectedOptions?.Veg ?? selectedOptions?.veg ?? ''
   const cateringSection = getCateringDetailSection(pkg)
@@ -97,238 +95,37 @@ function getPackageDescription(pkg) {
   if (fromCatering) return String(fromCatering)
 
   const fromPackage = blocksToText(pkg?.description) || String(pkg?.description ?? '').trim()
-  return fromPackage || 'Selected from your cart for tasting.'
+  return fromPackage || 'Package from your cart — tasting menu confirmed after booking.'
 }
 
-function getMenuItemDescription(menuItem) {
-  const details = String(menuItem?.details ?? '').trim()
-  const chooseHint = String(menuItem?.choose_hint ?? '').trim()
-  const rowType = String(menuItem?.row_type ?? 'choose').toLowerCase()
-
-  if (details) return details
-  if (chooseHint) return chooseHint
-  if (rowType === 'included') return 'Included with your package menu'
-  return 'Tasting portion from this menu selection'
+function getGuestCountLabel(selectedOptions = {}) {
+  const raw = String(selectedOptions['Guest count'] ?? selectedOptions['Guest Count'] ?? '').trim()
+  return raw || null
 }
 
-function getTastingPortionPrice(unitPrice, portionCount) {
-  const count = Math.max(1, portionCount)
-  return Math.max(80, Math.round(Number(unitPrice ?? 0) / (count * 4)))
+function getVegPreferenceLabel(selectedOptions = {}) {
+  const veg = String(selectedOptions.Veg ?? selectedOptions.veg ?? '').trim()
+  return veg || null
 }
 
-function findMenuSelectionValue(selectedOptions = {}, menuItem, index) {
-  const title = String(menuItem?.title ?? '').trim()
-  const candidateKeys = new Set([`menu-${index}-${title}`, title, `menu-info-${index}-${title}`])
+function buildTastingPackageSummaryLines(selectedOptions = {}) {
+  const lines = []
+  const guestCount = getGuestCountLabel(selectedOptions)
+  const veg = getVegPreferenceLabel(selectedOptions)
 
-  for (const [key, value] of Object.entries(selectedOptions)) {
-    const normalizedKey = String(key ?? '').trim()
-    if (!normalizedKey || candidateKeys.has(normalizedKey)) {
-      return String(value ?? '').trim()
-    }
-    if (title && (normalizedKey.includes(title) || normalizedKey.startsWith('menu-'))) {
-      return String(value ?? '').trim()
-    }
-  }
+  if (guestCount) lines.push(`Event guest count (package): ${guestCount}`)
+  if (veg) lines.push(`Menu preference (package): ${veg}`)
+  lines.push('Tasting dishes: confirmed by our team after you book')
 
-  return ''
-}
-
-function splitMenuSelectionDishes(value = '') {
-  return String(value)
-    .split(/,\s*/)
-    .map(part => part.trim())
-    .filter(part => part && part.toLowerCase() !== 'selected')
-}
-
-function getCateringMenuItemsForTasting(pkg, selectedOptions = {}) {
-  const cateringSection = getCateringDetailSection(pkg)
-  const menuItems = Array.isArray(cateringSection?.menu_items) ? cateringSection.menu_items : []
-  if (!menuItems.length) return []
-
-  const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
-  const sortedMenuItems = [...menuItems].sort(
-    (left, right) => Number(left?.sort_order ?? 0) - Number(right?.sort_order ?? 0)
-  )
-  const selectableRows = sortedMenuItems.filter(
-    item => String(item?.row_type ?? 'choose').toLowerCase() !== 'info'
-  )
-
-  const tastingRows = []
-
-  selectableRows.forEach((menuItem, index) => {
-    const title = String(menuItem?.title ?? '').trim()
-    if (!title) return
-
-    const cartSelection = findMenuSelectionValue(selectedOptions, menuItem, index)
-    const dishes = splitMenuSelectionDishes(cartSelection)
-
-    if (dishes.length > 0) {
-      dishes.forEach((dish, dishIndex) => {
-        tastingRows.push({
-          id: `${pkg?.id ?? 'pkg'}-menu-${menuItem?.id ?? index}-dish-${dishIndex}`,
-          name: dish,
-          desc: `From ${title}`,
-          price: getTastingPortionPrice(unitPrice, selectableRows.length * dishes.length),
-          menuGroup: title,
-        })
-      })
-      return
-    }
-
-    tastingRows.push({
-      id: `${pkg?.id ?? 'pkg'}-menu-${menuItem?.id ?? index}`,
-      name: title,
-      desc: getMenuItemDescription(menuItem),
-      price: getTastingPortionPrice(unitPrice, selectableRows.length),
-      rowType: menuItem?.row_type,
-      menuGroup: title,
-    })
-  })
-
-  return tastingRows
-}
-
-function getBartendingFlavorItems(pkg, selectedOptions = {}) {
-  const flavors = Array.isArray(pkg?.flavor_options) ? pkg.flavor_options : []
-  const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
-
-  if (!flavors.length) return []
-
-  return flavors
-    .map((flavor, index) => {
-      const name = String(flavor?.title ?? flavor?.name ?? '').trim()
-      if (!name) return null
-
-      return {
-        id: `${pkg?.id ?? 'pkg'}-flavor-${index}`,
-        name,
-        desc: String(flavor?.description ?? '').trim() || 'Tasting portion',
-        price: getTastingPortionPrice(unitPrice, flavors.length),
-      }
-    })
-    .filter(Boolean)
-}
-
-function getInclusionsFromSection(section, pkg, selectedOptions) {
-  const inclusions = Array.isArray(section?.inclusions) ? section.inclusions : []
-  const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
-
-  return inclusions
-    .map((inc, index) => {
-      const name = String(inc?.text ?? inc?.title ?? inc?.name ?? '').trim()
-      if (!name) return null
-
-      return {
-        id: `${pkg?.id ?? 'pkg'}-inc-${inc?.id ?? index}`,
-        name,
-        desc: 'Included in your selected package',
-        price: getTastingPortionPrice(unitPrice, inclusions.length),
-      }
-    })
-    .filter(Boolean)
-}
-
-function getPackageItems(pkg, selectedOptions = {}) {
-  const cateringSection = getCateringDetailSection(pkg)
-  if (cateringSection) {
-    const menuTastingItems = getCateringMenuItemsForTasting(pkg, selectedOptions)
-    if (menuTastingItems.length > 0) return menuTastingItems
-  }
-
-  const bartendingFlavors = getBartendingFlavorItems(pkg, selectedOptions)
-  if (bartendingFlavors.length > 0) return bartendingFlavors
-
-  const bartendingSection = getBartendingDetailSection(pkg)
-  if (bartendingSection) {
-    const bartendingItems = getInclusionsFromSection(bartendingSection, pkg, selectedOptions)
-    if (bartendingItems.length > 0) return bartendingItems
-  }
-
-  const breakdownSource = Array.isArray(pkg?.detail_price_breakdown)
-    ? pkg.detail_price_breakdown
-    : []
-
-  const breakdownItems = breakdownSource
-    .map((entry, index) => {
-      const label =
-        entry?.label ??
-        entry?.title ??
-        entry?.name ??
-        entry?.text ??
-        entry?.description ??
-        entry?.item ??
-        ''
-
-      const amountValue =
-        entry?.amount ??
-        entry?.price ??
-        entry?.value ??
-        entry?.cost ??
-        entry?.total ??
-        entry?.rate ??
-        entry?.base_price
-
-      const amount = Number(String(amountValue ?? '').replace(/[^0-9.-]+/g, ''))
-      const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
-
-      return label
-        ? {
-            id: `${pkg?.id ?? 'pkg'}-breakdown-${index}`,
-            name: label,
-            desc: 'Menu selection',
-            price:
-              Number.isFinite(amount) && amount > 0
-                ? amount
-                : getTastingPortionPrice(unitPrice, breakdownSource.length || 1),
-          }
-        : null
-    })
-    .filter(Boolean)
-
-  if (breakdownItems.length > 0) return breakdownItems
-
-  const unitPrice = getPackageUnitPrice(pkg, selectedOptions)
-
-  const inclusionTexts = (
-    Array.isArray(pkg?.detail_inclusions) ? pkg.detail_inclusions : []
-  ).filter(Boolean)
-
-  return inclusionTexts.map((text, index) => ({
-    id: `${pkg?.id ?? 'pkg'}-detail-inc-${index}`,
-    name: String(text),
-    desc: 'Menu selection',
-    price: getTastingPortionPrice(unitPrice, inclusionTexts.length),
-  }))
-}
-
-function getDefaultSelectedIds(items) {
-  if (!items.length) return []
-  if (items.length <= 4) return items.map(item => item.id)
-  return items.slice(0, 4).map(item => item.id)
+  return lines
 }
 
 function mergeSelectionsForPackages(prev, tastingPackages) {
   const next = { ...prev }
 
   tastingPackages.forEach(pkg => {
-    const validIds = new Set(pkg.items.map(item => item.id))
-    const existing = next[pkg.id]
-
-    if (!existing) {
-      next[pkg.id] = {
-        selectedIds: getDefaultSelectedIds(pkg.items),
-        quantity: pkg.quantity,
-      }
-      return
-    }
-
     next[pkg.id] = {
-      selectedIds: existing.selectedIds.filter(id => validIds.has(id)),
-      quantity: Math.max(1, Number(existing.quantity ?? pkg.quantity)),
-    }
-
-    if (!next[pkg.id].selectedIds.length && pkg.items.length) {
-      next[pkg.id].selectedIds = getDefaultSelectedIds(pkg.items)
+      quantity: Math.max(1, Number(prev[pkg.id]?.quantity ?? pkg.quantity ?? 1)),
     }
   })
 
@@ -339,11 +136,6 @@ function mergeSelectionsForPackages(prev, tastingPackages) {
   })
 
   return next
-}
-
-function buildSelectedCountText(selectedCount, totalCount) {
-  if (!totalCount) return '0 items selected'
-  return `${selectedCount} of ${totalCount} items selected`
 }
 
 function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
@@ -381,7 +173,6 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
 
 function buildTastingPackage({ item, pkg }) {
   const selectedOptions = item?.selectedOptions ?? {}
-  const items = getPackageItems(pkg, selectedOptions)
   const quantity = Number(item?.quantity ?? 1)
 
   return {
@@ -392,7 +183,7 @@ function buildTastingPackage({ item, pkg }) {
     title: pkg?.title ?? item?.displayTitle ?? item?.title ?? 'Selected package',
     tag: getServiceLabel(pkg),
     desc: getPackageDescription(pkg),
-    items,
+    summaryLines: buildTastingPackageSummaryLines(selectedOptions),
     quantity,
     totalPrice: Number(item?.totalPrice ?? 0),
     unitPrice: getPackageUnitPrice(pkg, selectedOptions),
@@ -459,11 +250,16 @@ export default function SampleTasteBooking() {
 
         if (!SAMPLE_TASTE_SERVICE_SLUGS.has(serviceSlug)) return null
 
+        const selectedOptions =
+          item?.selectedOptions && Object.keys(item.selectedOptions).length
+            ? item.selectedOptions
+            : parsedTitle.selectedOptions
+
         return buildTastingPackage({
           item: {
             ...item,
             displayTitle: parsedTitle.displayTitle,
-            selectedOptions: parsedTitle.selectedOptions,
+            selectedOptions,
           },
           pkg,
         })
@@ -499,29 +295,9 @@ export default function SampleTasteBooking() {
     setSelections(prev => mergeSelectionsForPackages(prev, tastingPackages))
   }
 
-  const toggleItemSelection = useCallback((packageId, itemId) => {
-    setSelections(prev => {
-      const current = prev[packageId] ?? { selectedIds: [], quantity: 1 }
-      const selectedSet = new Set(current.selectedIds)
-      if (selectedSet.has(itemId)) {
-        selectedSet.delete(itemId)
-      } else {
-        selectedSet.add(itemId)
-      }
-
-      return {
-        ...prev,
-        [packageId]: {
-          ...current,
-          selectedIds: Array.from(selectedSet),
-        },
-      }
-    })
-  }, [])
-
   const updatePackageQuantity = useCallback((packageId, delta) => {
     setSelections(prev => {
-      const current = prev[packageId] ?? { selectedIds: [], quantity: 1 }
+      const current = prev[packageId] ?? { quantity: 1 }
       const nextQuantity = Math.max(1, Number(current.quantity ?? 1) + delta)
 
       return {
@@ -556,31 +332,21 @@ export default function SampleTasteBooking() {
 
   const summaryPackages = useMemo(
     () =>
-      tastingPackages
-        .map(pkg => {
-          const selection = selections[pkg.id] ?? { selectedIds: [], quantity: pkg.quantity }
-          const selectedIdSet = new Set(selection.selectedIds)
-          const selectedItems = pkg.items.filter(item => selectedIdSet.has(item.id))
+      tastingPackages.map(pkg => {
+        const selection = selections[pkg.id] ?? { quantity: pkg.quantity }
 
-          return {
-            ...pkg,
-            selectionQuantity: Math.max(1, Number(selection.quantity ?? pkg.quantity)),
-            selectedItems,
-            selectedCount: selectedItems.length,
-          }
-        })
-        .filter(pkg => pkg.selectedItems.length > 0),
+        return {
+          ...pkg,
+          selectionQuantity: Math.max(1, Number(selection.quantity ?? pkg.quantity)),
+        }
+      }),
     [selections, tastingPackages]
   )
 
-  const summaryItemCount = summaryPackages.reduce((sum, pkg) => sum + pkg.selectedCount, 0)
+  const summaryPackageCount = summaryPackages.length
 
   const subtotal = useMemo(
-    () =>
-      summaryPackages.reduce((sum, pkg) => {
-        if (!pkg.selectedCount) return sum
-        return sum + Number(pkg.totalPrice ?? 0)
-      }, 0),
+    () => summaryPackages.reduce((sum, pkg) => sum + Number(pkg.totalPrice ?? 0), 0),
     [summaryPackages]
   )
 
@@ -627,7 +393,8 @@ export default function SampleTasteBooking() {
           Book Your Tasting Session
         </h1>
         <p className="text-gray-500 mt-2 text-[clamp(14px,1.2vw,18px)]">
-          Try before you commit. Select what you had like to taste and we will deliver it to you.
+          Try before you commit. Book a tasting session for your cart packages — we will confirm
+          your tasting menu with you after booking.
         </p>
       </div>
 
@@ -652,11 +419,9 @@ export default function SampleTasteBooking() {
             </div>
             <div className="flex flex-col ml-2">
               <p className="text-[#0383E4] text-[12px] font-medium">
-                Items are tasting portions only - not full servings.
+                Tasting portions only — not full event servings.
               </p>
-              <p className="text-[#00477C] text-[11px] mt-1">
-                Your feedback helps confirm your final event order.
-              </p>
+              <p className="text-[#00477C] text-[11px] mt-1">{TASTING_MENU_NOTICE}</p>
             </div>
           </div>
 
@@ -673,11 +438,7 @@ export default function SampleTasteBooking() {
 
           <div className="space-y-5">
             {tastingPackages.map(pkg => {
-              const selection = selections[pkg.id] ?? {
-                selectedIds: getDefaultSelectedIds(pkg.items),
-                quantity: pkg.quantity,
-              }
-              const selectedIdSet = new Set(selection.selectedIds)
+              const selection = selections[pkg.id] ?? { quantity: pkg.quantity }
               const rowQuantity = Math.max(1, Number(selection.quantity ?? pkg.quantity))
 
               return (
@@ -701,70 +462,31 @@ export default function SampleTasteBooking() {
                     </span>
                   </div>
 
-                  <div
-                    className="p-4 space-y-3 max-h-[240px] overflow-y-auto pr-1 hide-scrollbar mr-2"
-                    data-lenis-prevent
-                  >
-                    {pkg.items.length > 0 ? (
-                      pkg.items.map(item => {
-                        const isSelected = selectedIdSet.has(item.id)
+                  <div className="p-4 space-y-3">
+                    <div className="rounded-xl bg-[#F5F5F0] px-4 py-3">
+                      <p className="text-[12px] font-medium text-[#2C2C2C]">Tasting session</p>
+                      <ul className="mt-2 space-y-1.5 text-[11px] leading-relaxed text-gray-600">
+                        {pkg.summaryLines.map(line => (
+                          <li key={line} className="flex items-start gap-2">
+                            <span className="mt-[5px] h-[4px] w-[4px] shrink-0 rounded-full bg-[#591902]" />
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-3 text-[11px] text-[#591902]/80">{TASTING_MENU_NOTICE}</p>
+                    </div>
 
-                        return (
-                          <div
-                            key={item.id}
-                            className={`min-h-[44px] rounded-xl px-4 py-3 flex items-center justify-between gap-4 transition ${
-                              isSelected ? 'bg-[#E7E7DF]' : 'bg-[#F5F5F0]'
-                            }`}
-                          >
-                            <div className="flex items-start gap-3 flex-1 min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleItemSelection(pkg.id, item.id)}
-                                className="mt-1 accent-[#2C2C2C] shrink-0"
-                              />
-                              <div className="min-w-0">
-                                <p className="text-[#2C2C2C] font-medium text-[12px] leading-5">
-                                  {item.name}
-                                </p>
-                                <p className="text-gray-500 text-[11px] leading-4 mt-1">
-                                  {item.desc}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-4 shrink-0">
-                              <div className="flex items-center gap-3 bg-white rounded-full px-3 py-1">
-                                <button
-                                  type="button"
-                                  className="text-lg leading-none disabled:opacity-40"
-                                  disabled={rowQuantity <= 1}
-                                  onClick={() => updatePackageQuantity(pkg.id, -1)}
-                                >
-                                  -
-                                </button>
-                                <span className="text-sm">{rowQuantity}</span>
-                                <button
-                                  type="button"
-                                  className="text-lg leading-none"
-                                  onClick={() => updatePackageQuantity(pkg.id, 1)}
-                                >
-                                  +
-                                </button>
-                              </div>
-                              <p className="text-[#2C2C2C] font-medium">
-                                {formatCurrency(item.price)}
-                              </p>
-                            </div>
-                          </div>
-                        )
-                      })
-                    ) : (
-                      <p className="text-sm text-gray-500 px-2 py-3">
-                        No menu items listed for this package. Edit the package to configure your
-                        menu and cart selection.
+                    <div className="flex items-center justify-between gap-4 rounded-xl border border-[#95796033] px-4 py-3">
+                      <div>
+                        <p className="text-[12px] font-medium text-[#2C2C2C]">Cart line total</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          Based on your package in cart (not per dish)
+                        </p>
+                      </div>
+                      <p className="text-[#2C2C2C] font-medium shrink-0">
+                        {formatCurrency(pkg.totalPrice)}
                       </p>
-                    )}
+                    </div>
                   </div>
 
                   <div className="px-5 pb-4 flex items-center justify-between">
@@ -773,7 +495,8 @@ export default function SampleTasteBooking() {
                         type="button"
                         onClick={() => handleEditPackage(pkg)}
                         className="w-8 h-8 rounded-full bg-[#E7E7E2] flex items-center justify-center text-sm text-black"
-                        aria-label={`Edit ${pkg.title}`}
+                        aria-label={`Edit package options for ${pkg.title}`}
+                        title="Update guest count or package options (event menu — not tasting dishes)"
                       >
                         <EditIcon />
                       </button>
@@ -787,9 +510,25 @@ export default function SampleTasteBooking() {
                       </button>
                     </div>
 
-                    <p className="text-sm text-gray-500">
-                      {buildSelectedCountText(selectedIdSet.size, pkg.items.length)}
-                    </p>
+                    <div className="flex items-center gap-3 bg-[#F5F5F0] rounded-full px-3 py-1">
+                      <span className="text-[11px] text-gray-500">Qty</span>
+                      <button
+                        type="button"
+                        className="text-lg leading-none disabled:opacity-40"
+                        disabled={rowQuantity <= 1}
+                        onClick={() => updatePackageQuantity(pkg.id, -1)}
+                      >
+                        −
+                      </button>
+                      <span className="text-sm min-w-[1ch] text-center">{rowQuantity}</span>
+                      <button
+                        type="button"
+                        className="text-lg leading-none"
+                        onClick={() => updatePackageQuantity(pkg.id, 1)}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
@@ -889,7 +628,9 @@ export default function SampleTasteBooking() {
               <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
                 Tasting Summary
               </h3>
-              <span className="text-sm">{summaryItemCount} items selected</span>
+              <span className="text-sm">
+                {summaryPackageCount} package{summaryPackageCount === 1 ? '' : 's'}
+              </span>
             </div>
 
             <div className="p-5 space-y-5">
@@ -905,14 +646,14 @@ export default function SampleTasteBooking() {
                       </div>
                     </div>
 
-                    <div className="space-y-2 text-sm">
-                      {pkg.selectedItems.map(item => (
-                        <div key={item.id} className="flex justify-between gap-4">
-                          <span className="text-gray-600">{item.name}</span>
-                          <span>{formatCurrency(item.price)}</span>
-                        </div>
+                    <ul className="space-y-1.5 text-sm text-gray-600">
+                      {pkg.summaryLines.map(line => (
+                        <li key={line}>{line}</li>
                       ))}
-                    </div>
+                    </ul>
+                    <p className="mt-2 text-[12px] text-[#591902]/75">
+                      Tasting dishes will be finalised with you after booking.
+                    </p>
 
                     {index < summaryPackages.length - 1 ? (
                       <hr className="my-4 border-[#0000001A]" />
@@ -921,7 +662,7 @@ export default function SampleTasteBooking() {
                 ))
               ) : (
                 <p className="text-sm text-gray-500">
-                  Select at least one menu item from your packages to see the tasting summary.
+                  Add a catering or bartending package to your cart to book a tasting session.
                 </p>
               )}
 
@@ -929,7 +670,10 @@ export default function SampleTasteBooking() {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Subtotal ({summaryItemCount} items)</span>
+                  <span className="text-gray-500">
+                    Subtotal ({summaryPackageCount} package
+                    {summaryPackageCount === 1 ? '' : 's'})
+                  </span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -959,7 +703,7 @@ export default function SampleTasteBooking() {
             </div>
             <button
               type="button"
-              disabled={summaryItemCount === 0}
+              disabled={summaryPackageCount === 0}
               onClick={() =>
                 navigate('/checkout?mode=sample-tasting', {
                   state: {
@@ -975,9 +719,11 @@ export default function SampleTasteBooking() {
                     sampleTasteSelections: summaryPackages.map(pkg => ({
                       cartItemId: pkg.cartItemId,
                       packageId: pkg.packageId,
+                      packageTitle: pkg.title,
                       quantity: pkg.selectionQuantity,
-                      selectedItemIds: pkg.selectedItems.map(item => item.id),
-                      selectedItemNames: pkg.selectedItems.map(item => item.name),
+                      menuConfirmedAfterBooking: true,
+                      guestCount: getGuestCountLabel(pkg.selectedOptions),
+                      vegPreference: getVegPreferenceLabel(pkg.selectedOptions),
                       expressDelivery: selectedDelivery,
                     })),
                   },

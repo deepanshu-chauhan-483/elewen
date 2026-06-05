@@ -5,7 +5,7 @@ import {
   LoadingState,
   ResultsEmptyState,
   SectionLoadingState,
-  SelectField,
+  CustomSelect,
   StatusBadge,
 } from '../components/ui/AdminUI'
 import { useAdminAlerts, useAdminUpdateAlert } from '../hooks/useAdminData'
@@ -483,30 +483,30 @@ export default function SystemAlertsPage() {
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#A19B94] focus:outline-none"
             />
           </label>
-          <SelectField
+          <CustomSelect
             value={alertType}
             onChange={resetPage(setAlertType)}
             options={alertTypeOptions}
           />
-          <SelectField value={severity} onChange={resetPage(setSeverity)}>
+          <CustomSelect value={severity} onChange={resetPage(setSeverity)}>
             <option value="">All severities</option>
             <option value="critical">Critical</option>
             <option value="high">High</option>
             <option value="medium">Medium</option>
             <option value="low">Low</option>
-          </SelectField>
-          <SelectField value={status} onChange={resetPage(setStatus)}>
+          </CustomSelect>
+          <CustomSelect value={status} onChange={resetPage(setStatus)}>
             <option value="">All statuses</option>
             <option value="new">New</option>
             <option value="acknowledged">Acknowledged</option>
             <option value="snoozed">Snoozed</option>
             <option value="resolved">Resolved</option>
-          </SelectField>
-          <SelectField value={sortBy} onChange={resetPage(setSortBy)}>
+          </CustomSelect>
+          <CustomSelect value={sortBy} onChange={resetPage(setSortBy)}>
             <option value="priority">Priority first</option>
             <option value="latest">Latest first</option>
             <option value="oldest">Oldest first</option>
-          </SelectField>
+          </CustomSelect>
         </div>
       </section>
 

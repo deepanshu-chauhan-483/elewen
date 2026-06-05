@@ -1,6 +1,5 @@
-import { Children, memo } from 'react'
+import { memo } from 'react'
 import { Link } from 'react-router-dom'
-import CustomSelect from '../common/CustomSelect'
 import { formatDashboardDate } from './dashboardUtils'
 
 function getStatusMeta(status) {
@@ -112,41 +111,7 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
   )
 })
 
-function createOptionsFromChildren(children) {
-  return Children.toArray(children)
-    .filter(child => child?.type === 'option')
-    .map(child => ({
-      value: child.props.value ?? '',
-      label: child.props.children,
-    }))
-}
-
-export const SelectField = memo(function SelectField({
-  value,
-  onChange,
-  children,
-  options,
-  placeholder = 'Select',
-  disabled = false,
-  className = '',
-}) {
-  const normalizedOptions = options ?? createOptionsFromChildren(children)
-
-  return (
-    <CustomSelect
-      value={value}
-      options={normalizedOptions}
-      disabled={disabled}
-      placeholder={placeholder}
-      ariaLabel={placeholder}
-      onChange={event => onChange(event.target.value)}
-      buttonClassName={`min-h-11 w-full rounded-3xl border border-[#94949433] bg-white px-4 pr-10 text-left text-sm text-[#2E2E2E] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
-      arrowClassName="pointer-events-none absolute right-4 top-1/2 h-3 w-3 -translate-y-1/2 text-[#8F8F8F]"
-      menuClassName="fixed overflow-hidden rounded-2xl border border-[#94949433] bg-white p-1 shadow-[0_14px_32px_rgba(17,24,39,0.12)]"
-      optionClassName="flex w-full min-w-0 whitespace-nowrap bg-[#FFFFFF] px-6 py-3 text-left text-[14px] leading-[18px] text-[#2E2E2E] transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-black hover:text-white"
-    />
-  )
-})
+export { default as CustomSelect } from '../common/CustomSelect'
 
 export const DashboardSelectorList = memo(function DashboardSelectorList({
   items,

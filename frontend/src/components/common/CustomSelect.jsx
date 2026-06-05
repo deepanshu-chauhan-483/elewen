@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Children, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import {
+  CUSTOM_SELECT_LIST_CLASS,
+  CUSTOM_SELECT_LIST_PROPS,
+  CUSTOM_SELECT_OPTION_HOVER,
+  selectPresets,
+} from './customSelectPresets'
 
 function normalizeOptions(options = []) {
   return options.map(option =>
@@ -7,27 +13,60 @@ function normalizeOptions(options = []) {
   )
 }
 
-export default function CustomSelect({
+function createOptionsFromChildren(children) {
+  return Children.toArray(children)
+    .filter(child => child?.type === 'option')
+    .map(child => ({
+      value: child.props.value ?? '',
+      label: child.props.children,
+    }))
+}
+
+function CustomSelect({
+  variant = 'dashboard',
   value = '',
   options = [],
+  children,
   onChange,
   onBlur,
   disabled = false,
   placeholder = 'Select',
-  buttonClassName = '',
-  menuClassName = '',
-  listClassName = '',
-  listProps = {},
-  optionClassName = '',
-  selectedOptionClassName = '',
-  arrowClassName = '',
+  className = '',
+  buttonClassName: buttonClassNameOverride = '',
+  menuClassName: menuClassNameOverride = '',
+  listClassName: listClassNameOverride = '',
+  listProps = CUSTOM_SELECT_LIST_PROPS,
+  optionClassName: optionClassNameOverride = '',
+  selectedOptionClassName: selectedOptionClassNameOverride = '',
+  arrowClassName: arrowClassNameOverride = '',
   renderArrow,
   menuOffset = 2,
   ariaLabel,
 }) {
-  const normalizedOptions = useMemo(() => normalizeOptions(options), [options])
+  const hasVariant = variant != null && variant !== ''
+  const preset = hasVariant ? (selectPresets[variant] ?? selectPresets.dashboard) : null
+
+  const normalizedOptions = useMemo(() => {
+    const raw = options?.length ? options : createOptionsFromChildren(children)
+    return normalizeOptions(raw)
+  }, [options, children])
+
   const selectedOption = normalizedOptions.find(option => option.value === value) ?? null
   const displayLabel = selectedOption?.label ?? placeholder
+  const isPlaceholder = !selectedOption
+
+  const buttonClassName = preset
+    ? `${preset.buttonClassName} ${className}`.trim()
+    : `${buttonClassNameOverride} ${className}`.trim()
+  const arrowClassName = preset ? preset.arrowClassName : arrowClassNameOverride
+  const menuClassName = preset
+    ? `${preset.menuClassName} ${menuClassNameOverride}`.trim()
+    : menuClassNameOverride
+  const listClassName = listClassNameOverride || preset?.listClassName || CUSTOM_SELECT_LIST_CLASS
+  const optionClassName = preset ? preset.optionClassName : optionClassNameOverride
+  const selectedOptionClassName = preset
+    ? preset.selectedOptionClassName
+    : selectedOptionClassNameOverride
 
   const [isOpen, setIsOpen] = useState(false)
   const [menuStyle, setMenuStyle] = useState(null)
@@ -99,7 +138,7 @@ export default function CustomSelect({
 
   const handleSelect = nextValue => {
     blurHandledRef.current = true
-    onChange?.({ target: { value: nextValue } })
+    onChange?.(nextValue)
     onBlur?.()
     setIsOpen(false)
   }
@@ -116,7 +155,9 @@ export default function CustomSelect({
         onClick={() => setIsOpen(open => !open)}
         className={buttonClassName}
       >
-        <span className="truncate">{displayLabel}</span>
+        <span className={`truncate ${isPlaceholder ? 'text-[#2D2D2D]/50' : ''}`}>
+          {displayLabel}
+        </span>
       </button>
 
       {renderArrow ? (
@@ -152,7 +193,7 @@ export default function CustomSelect({
                         role="option"
                         aria-selected={isSelected}
                         onClick={() => handleSelect(option.value)}
-                        className={`${optionClassName} ${isSelected ? selectedOptionClassName : ''}`.trim()}
+                        className={`${optionClassName} ${CUSTOM_SELECT_OPTION_HOVER} ${isSelected ? selectedOptionClassName : ''}`.trim()}
                       >
                         {option.label}
                       </button>
@@ -167,3 +208,5 @@ export default function CustomSelect({
     </div>
   )
 }
+
+export default memo(CustomSelect)

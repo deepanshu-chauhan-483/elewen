@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import CustomSelect from '../common/CustomSelect'
 import {
   formatCateringAddonPerPersonPrice,
   isCateringPerPersonAddon,
@@ -12,30 +13,14 @@ function PillSelect({ label, value, options, onChange }) {
           {label}
         </label>
       ) : null}
-      <div className="relative">
-        <select
-          value={value}
-          onChange={event => onChange(event.target.value)}
-          className="w-full appearance-none rounded-full border border-[#591902] bg-[#F8F4ED] px-4 py-2.5 pr-9 text-[12px] text-[#591902] outline-none"
-        >
-          {options.map(option => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#591902]">
-          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
-            <path
-              d="M1 1.5L6 6.5L11 1.5"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-      </div>
+      <CustomSelect
+        variant="catering"
+        value={value}
+        options={options}
+        onChange={onChange}
+        placeholder={label}
+        ariaLabel={label}
+      />
     </div>
   )
 }

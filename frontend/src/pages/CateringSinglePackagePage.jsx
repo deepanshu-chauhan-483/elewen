@@ -72,7 +72,14 @@ const FALLBACK_MENU_ROWS = [
     variant: 'included',
     actionLabel: 'Included',
     selectionKey: 'menu-fallback-accompaniments',
-    rules: { maxPick: 0, vegPick: 0, nonvegPick: 0, minPick: 0, allVegPick: 0, allowsAllVeg: false },
+    rules: {
+      maxPick: 0,
+      vegPick: 0,
+      nonvegPick: 0,
+      minPick: 0,
+      allVegPick: 0,
+      allowsAllVeg: false,
+    },
   },
   {
     title: 'Dessert (Choose 1)',
@@ -81,7 +88,14 @@ const FALLBACK_MENU_ROWS = [
     variant: 'choose',
     actionLabel: 'Choose',
     selectionKey: 'menu-fallback-dessert',
-    rules: { maxPick: 1, vegPick: 0, nonvegPick: 0, minPick: 1, allVegPick: 1, allowsAllVeg: false },
+    rules: {
+      maxPick: 1,
+      vegPick: 0,
+      nonvegPick: 0,
+      minPick: 1,
+      allVegPick: 1,
+      allowsAllVeg: false,
+    },
   },
 ]
 
@@ -236,12 +250,14 @@ function buildMenuRows(pkg) {
 
       const chooseMatch = title.match(/\(choose\s*(\d+)\)/i)
       if (chooseMatch) {
-        return {
-          title,
-          variant: 'choose',
-          actionLabel: 'Choose',
-          selectionKey: `inclusion-${index}`,
-        }
+        return mapCateringMenuRow(
+          {
+            title,
+            row_type: 'choose',
+            choose_hint: title,
+          },
+          index
+        )
       }
 
       if (/included/i.test(title)) {
@@ -696,51 +712,51 @@ export default function CateringSinglePackagePage() {
         onConfirm={handleMenuSelectionConfirm}
       />
       <SingleProductPageContent
-      title={pkg.title || cateringDetails.heroBadge}
-      price={displayPrice}
-      intro=""
-      customDetailsContent={
-        <CateringPackageDetails
-          title={pkg.title || cateringDetails.heroBadge}
-          price={displayPrice}
-          intro={pkg.description || cateringDetails.intro}
-          guestOptions={guestOptions}
-          vegOptions={DEFAULT_VEG_OPTIONS}
-          selectedGuestCount={guestCount}
-          selectedVeg={vegPreference}
-          onGuestCountChange={handleGuestCountChange}
-          onVegChange={handleVegChange}
-          inclusions={inclusions}
-          exclusions={exclusions}
-          menuRows={resolvedMenuRows}
-          onMenuRowAction={handleMenuRowAction}
-          addons={addons}
-          selectedAddonIds={selectedAddonIds}
-          onToggleAddon={handleToggleAddon}
-          quantity={quantity}
-          onDecrement={handleDecrease}
-          onIncrement={() => {
-            setAddToCartMessage('')
-            handleIncrease()
-          }}
-          promptContent={
-            showRepeatPrompt ? (
-              <RepeatCustomizationPrompt onRepeat={handleRepeat} onCreateNew={handleNew} />
-            ) : null
-          }
-          addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
-          addToCartMessage={addToCartMessage}
-          disableAddToCart={isAddingToCart}
-          onAddToCart={handleAddToCart}
-          accordionSections={accordionSections}
-        />
-      }
-      accordionSections={[]}
-      mainImage={sourceImages[0] ?? sideImages[0]}
-      sideImages={sideImages}
-      relatedProducts={relatedProducts}
-      testimonials={packageReviews}
-    />
+        title={pkg.title || cateringDetails.heroBadge}
+        price={displayPrice}
+        intro=""
+        customDetailsContent={
+          <CateringPackageDetails
+            title={pkg.title || cateringDetails.heroBadge}
+            price={displayPrice}
+            intro={pkg.description || cateringDetails.intro}
+            guestOptions={guestOptions}
+            vegOptions={DEFAULT_VEG_OPTIONS}
+            selectedGuestCount={guestCount}
+            selectedVeg={vegPreference}
+            onGuestCountChange={handleGuestCountChange}
+            onVegChange={handleVegChange}
+            inclusions={inclusions}
+            exclusions={exclusions}
+            menuRows={resolvedMenuRows}
+            onMenuRowAction={handleMenuRowAction}
+            addons={addons}
+            selectedAddonIds={selectedAddonIds}
+            onToggleAddon={handleToggleAddon}
+            quantity={quantity}
+            onDecrement={handleDecrease}
+            onIncrement={() => {
+              setAddToCartMessage('')
+              handleIncrease()
+            }}
+            promptContent={
+              showRepeatPrompt ? (
+                <RepeatCustomizationPrompt onRepeat={handleRepeat} onCreateNew={handleNew} />
+              ) : null
+            }
+            addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
+            addToCartMessage={addToCartMessage}
+            disableAddToCart={isAddingToCart}
+            onAddToCart={handleAddToCart}
+            accordionSections={accordionSections}
+          />
+        }
+        accordionSections={[]}
+        mainImage={sourceImages[0] ?? sideImages[0]}
+        sideImages={sideImages}
+        relatedProducts={relatedProducts}
+        testimonials={packageReviews}
+      />
     </>
   )
 }

@@ -4,7 +4,7 @@ import {
   LoadingState,
   ResultsEmptyState,
   SectionLoadingState,
-  SelectField,
+  CustomSelect,
 } from '../components/ui/AdminUI'
 import { useAdminBookings, useAdminUpdateBookingStatus } from '../hooks/useAdminData'
 import { useScrollToTop } from '../hooks/useScrollToTop'
@@ -276,7 +276,7 @@ export default function BookingStatusTrackerPage() {
         <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
           Filter by Stage
         </p>
-        <SelectField
+        <CustomSelect
           value={activeStage}
           onChange={value => {
             setActiveStage(value)
@@ -289,7 +289,7 @@ export default function BookingStatusTrackerPage() {
               {stage.label}
             </option>
           ))}
-        </SelectField>
+        </CustomSelect>
       </div>
 
       <div className="flex items-baseline gap-2">

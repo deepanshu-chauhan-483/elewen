@@ -6,7 +6,7 @@ import {
   DashboardErrorState,
   DashboardLoadingState,
   MessageBubble,
-  SelectField,
+  CustomSelect,
 } from '../../components/dashboard/DashboardUI'
 import {
   useDashboardBookings,
@@ -338,7 +338,7 @@ export default function SupportHelp() {
         <form onSubmit={handleCreateTicket} className="grid gap-4 lg:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-[#2E2E2E]">Related booking</span>
-            <SelectField
+            <CustomSelect
               value={newTicket.bookingId}
               onChange={value => setField('bookingId', value)}
               placeholder="Related booking"
@@ -349,7 +349,7 @@ export default function SupportHelp() {
                   {b.package?.title || b.event?.name || b.id}
                 </option>
               ))}
-            </SelectField>
+            </CustomSelect>
           </div>
 
           <FormInput

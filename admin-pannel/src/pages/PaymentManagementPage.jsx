@@ -4,7 +4,7 @@ import {
   ErrorState,
   LoadingState,
   SectionLoadingState,
-  SelectField,
+  CustomSelect,
 } from '../components/ui/AdminUI'
 import {
   useAdminBookings,
@@ -416,7 +416,7 @@ function CustomerPayments({ processRefundMutation }) {
         <h2 className="text-lg text-[#1C1C1C]">Customer Payments</h2>
 
         <div className="ml-auto w-full max-w-[260px] md:w-[260px]">
-          <SelectField
+          <CustomSelect
             value={tab}
             onChange={value => {
               setTab(value)
@@ -430,7 +430,7 @@ function CustomerPayments({ processRefundMutation }) {
                 {item.label}
               </option>
             ))}
-          </SelectField>
+          </CustomSelect>
         </div>
       </div>
 
@@ -637,7 +637,7 @@ function VendorPayments({
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
         <h3 className="mb-4 text-lg text-[#1C1C1C]">Create Vendor Payout</h3>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SelectField
+          <CustomSelect
             value={vendorId}
             onChange={setVendorId}
             placeholder="Select vendor"
@@ -649,8 +649,8 @@ function VendorPayments({
                 {v.companyName}
               </option>
             ))}
-          </SelectField>
-          <SelectField
+          </CustomSelect>
+          <CustomSelect
             value={bookingId}
             onChange={setBookingId}
             placeholder="Select booking"
@@ -662,7 +662,7 @@ function VendorPayments({
                 {b.package?.title || b.event?.name || b.id}
               </option>
             ))}
-          </SelectField>
+          </CustomSelect>
           <input
             type="number"
             value={payoutAmount}
@@ -670,7 +670,7 @@ function VendorPayments({
             placeholder="Amount (₹)"
             className="w-full rounded-full border border-[#D9D2CB] px-4 py-2 text-[15px] font-medium bg-[#FFFFFF] text-[#5B534B] placeholder:text-[#767676] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
           />
-          <SelectField
+          <CustomSelect
             value={paymentMethod}
             onChange={setPaymentMethod}
             placeholder="Select payment method"
@@ -678,7 +678,7 @@ function VendorPayments({
           >
             <option value="offline">Offline</option>
             <option value="portal">Portal</option>
-          </SelectField>
+          </CustomSelect>
         </div>
         <div className="mt-4">
           <PrimaryBtn
@@ -880,7 +880,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
     return (
       <div key={field.key}>
         <p className="mb-1 text-xs text-[#8F8F8F]">{field.label}</p>
-        <SelectField
+        <CustomSelect
           value={field.key === 'is_active' ? String(value) : value}
           onChange={nextValue =>
             onChange(field.key, field.key === 'is_active' ? nextValue === 'true' : nextValue)
@@ -892,7 +892,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
               {option.label}
             </option>
           ))}
-        </SelectField>
+        </CustomSelect>
       </div>
     )
   }
@@ -996,14 +996,14 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //       {editing && (
 //         <div className="border-t border-[#E4DED8] pt-3">
 //           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-//             <SelectField
+//             <CustomSelect
 //               value={editForm.discount_type}
 //               onChange={v => setE('discount_type', v)}
 //               className="min-h-10 bg-[#F3F3F3]"
 //             >
 //               <option value="percentage">Percentage (%)</option>
 //               <option value="flat">Flat amount (₹)</option>
-//             </SelectField>
+//             </CustomSelect>
 //             <Input
 //               type="number"
 //               value={editForm.discount_value}

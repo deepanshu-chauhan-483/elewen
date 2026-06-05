@@ -6,7 +6,7 @@ import {
   ErrorState,
   LoadingState,
   SectionLoadingState,
-  SelectField,
+  CustomSelect,
 } from '../components/ui/AdminUI'
 import {
   useAdminAddSupportMessage,
@@ -365,16 +365,16 @@ function TicketDetailPanel({
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[120px]">
               <p className="mb-1 text-[10px] uppercase tracking-widest text-[#8F8F8F]">Status</p>
-              <SelectField value={statusInput} onChange={onStatusChange} menuClassName="z-[9999]">
+              <CustomSelect value={statusInput} onChange={onStatusChange} menuClassName="z-[9999]">
                 <option value="open">Open</option>
                 <option value="in_progress">In Progress</option>
                 <option value="resolved">Resolved</option>
                 <option value="closed">Closed</option>
-              </SelectField>
+              </CustomSelect>
             </div>
             <div className="flex-1 min-w-[120px]">
               <p className="mb-1 text-[10px] uppercase tracking-widest text-[#8F8F8F]">Priority</p>
-              <SelectField
+              <CustomSelect
                 value={priorityInput}
                 onChange={onPriorityChange}
                 menuClassName="z-[9999]"
@@ -382,7 +382,7 @@ function TicketDetailPanel({
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
-              </SelectField>
+              </CustomSelect>
             </div>
             <button
               type="button"
@@ -693,19 +693,19 @@ export default function SupportPage() {
 
           {/* Priority + Status filters */}
           <div className="mb-4 grid grid-cols-2 gap-2">
-            <SelectField value={statusFilter} onChange={setStatusFilter}>
+            <CustomSelect value={statusFilter} onChange={setStatusFilter}>
               <option value="">All Statuses</option>
               <option value="open">Open</option>
               <option value="in_progress">In Progress</option>
               <option value="resolved">Resolved</option>
               <option value="closed">Closed</option>
-            </SelectField>
-            <SelectField value={priorityFilter} onChange={setPriorityFilter}>
+            </CustomSelect>
+            <CustomSelect value={priorityFilter} onChange={setPriorityFilter}>
               <option value="">All Priorities</option>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
-            </SelectField>
+            </CustomSelect>
           </div>
 
           {/* Open / Closed tab pills — identical to Active/Archived in MessageBox */}

@@ -4,7 +4,7 @@ import {
   ErrorState,
   LoadingState,
   SectionLoadingState,
-  SelectField,
+  CustomSelect,
 } from '../components/ui/AdminUI'
 import {
   useAdminBookings,
@@ -549,22 +549,22 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Status</p>
-                  <SelectField value={vendorStatus} onChange={setVendorStatus}>
+                  <CustomSelect value={vendorStatus} onChange={setVendorStatus}>
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="inactive">Inactive</option>
-                  </SelectField>
+                  </CustomSelect>
                 </div>
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Availability</p>
-                  <SelectField
+                  <CustomSelect
                     value={isAvailable ? 'true' : 'false'}
                     onChange={value => setIsAvailable(value === 'true')}
                   >
                     <option value="true">Available</option>
                     <option value="false">Unavailable</option>
-                  </SelectField>
+                  </CustomSelect>
                 </div>
                 <div>
                   <p className="mb-1.5 text-xs text-[#8F8F8F]">Minimum price (INR)</p>
@@ -622,14 +622,14 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
                 <div className="flex flex-wrap items-end gap-3">
                   <div className="min-w-[220px] flex-1">
                     <p className="mb-1.5 text-xs text-[#8F8F8F]">Select booking</p>
-                    <SelectField value={bookingId} onChange={setBookingId}>
+                    <CustomSelect value={bookingId} onChange={setBookingId}>
                       <option value="">Choose a booking...</option>
                       {assignableBookings.map(booking => (
                         <option key={booking.id} value={booking.id}>
                           {booking.package?.title || booking.event?.name || booking.id}
                         </option>
                       ))}
-                    </SelectField>
+                    </CustomSelect>
                   </div>
                   <PrimaryBtn
                     disabled={assignVendorMutation.isPending || !bookingId}
@@ -814,7 +814,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
                                 <p className="mb-1.5 text-xs text-[#8F8F8F]">
                                   Move to another active booking
                                 </p>
-                                <SelectField
+                                <CustomSelect
                                   value={reassignTargets[assignment.id] ?? ''}
                                   onChange={value =>
                                     setReassignTargets(current => ({
@@ -829,7 +829,7 @@ function VendorAccordionCard({ vendor, tab, bookingsQuery, open = false, onToggl
                                       {booking.package?.title || booking.event?.name || booking.id}
                                     </option>
                                   ))}
-                                </SelectField>
+                                </CustomSelect>
                               </div>
                               <PrimaryBtn
                                 disabled={
@@ -1108,18 +1108,18 @@ export default function VendorManagementPage() {
 
           <Input value={location} onChange={handleLocationChange} placeholder="City / location" />
 
-          <SelectField value={availability} onChange={handleAvailabilityChange}>
+          <CustomSelect value={availability} onChange={handleAvailabilityChange}>
             <option value="">Any Availability</option>
             <option value="available">Available</option>
             <option value="unavailable">Unavailable</option>
-          </SelectField>
+          </CustomSelect>
 
-          <SelectField value={bookingCount} onChange={handleBookingCountChange}>
+          <CustomSelect value={bookingCount} onChange={handleBookingCountChange}>
             <option value="">Booking Count</option>
             <option value="none">0 Active Bookings</option>
             <option value="one_plus">1+ Active Bookings</option>
             <option value="three_plus">3+ Active Bookings</option>
-          </SelectField>
+          </CustomSelect>
         </div>
       </div>
 

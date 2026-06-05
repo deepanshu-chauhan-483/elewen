@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import DateTimePicker from '../../components/common/DateTimePicker'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
-import { DashboardErrorState } from '../../components/dashboard/DashboardUI'
+import { DashboardErrorState, CustomSelect } from '../../components/dashboard/DashboardUI'
 import {
   useDashboardSampleTasteDecision,
   useDashboardSampleTastes,
@@ -681,46 +681,45 @@ export default function SampleTasteBooking() {
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
-          {/* Status filter */}
-          <select
+          <CustomSelect
             value={status}
-            onChange={e => setStatus(e.target.value)}
-            className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
-          >
-            <option value="">All Statuses</option>
-            {activeTab === 'ongoing' ? (
-              <>
-                <option value="new">New</option>
-                <option value="assigned">Assigned</option>
-                <option value="delivered">Delivered</option>
-              </>
-            ) : (
-              <>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </>
-            )}
-          </select>
-          {/* Expiry Status */}
-          <select
+            onChange={setStatus}
+            placeholder="All Statuses"
+            options={
+              activeTab === 'ongoing'
+                ? [
+                    { value: '', label: 'All Statuses' },
+                    { value: 'new', label: 'New' },
+                    { value: 'assigned', label: 'Assigned' },
+                    { value: 'delivered', label: 'Delivered' },
+                  ]
+                : [
+                    { value: '', label: 'All Statuses' },
+                    { value: 'completed', label: 'Completed' },
+                    { value: 'cancelled', label: 'Cancelled' },
+                  ]
+            }
+          />
+          <CustomSelect
             value={expiryStatus}
-            onChange={e => setExpiryStatus(e.target.value)}
-            className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
-          >
-            <option value="">All Expiry</option>
-            <option value="active">Active (not expired)</option>
-            <option value="expired">Expired</option>
-          </select>
-          {/* Vendor Count */}
-          <select
+            onChange={setExpiryStatus}
+            placeholder="All Expiry"
+            options={[
+              { value: '', label: 'All Expiry' },
+              { value: 'active', label: 'Active (not expired)' },
+              { value: 'expired', label: 'Expired' },
+            ]}
+          />
+          <CustomSelect
             value={vendorCount}
-            onChange={e => setVendorCount(e.target.value)}
-            className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
-          >
-            <option value="">All Vendor Counts</option>
-            <option value="1">1 Vendor</option>
-            <option value="2">2+ Vendors</option>
-          </select>
+            onChange={setVendorCount}
+            placeholder="All Vendor Counts"
+            options={[
+              { value: '', label: 'All Vendor Counts' },
+              { value: '1', label: '1 Vendor' },
+              { value: '2', label: '2+ Vendors' },
+            ]}
+          />
           {/* Delivery Date From */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] font-medium tracking-[0.14em] text-[#767676] uppercase">

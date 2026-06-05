@@ -1233,7 +1233,7 @@ function PriceSummaryCard({
             onClick={onSampleTasteBooking}
             className="mx-auto mb-4 flex w-full items-center justify-between rounded-full bg-[#F3F0EA] py-1.5 pl-6 pr-1.5 text-[#6B5B4D] transition-colors hover:bg-[#EBE4D9]"
           >
-            <span className="mr-5 text-[15px] font-medium">Book Sample Test Booking</span>
+            <span className="mr-5 text-[15px] font-medium">Book Tasting Session</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
               <svg
                 className="h-[18px] w-[18px] text-[#957960]"
@@ -1404,13 +1404,17 @@ export default function CartPage() {
       items.map(item => {
         const parsedTitle = parseCartItemTitle(item.title)
         const isAddonItem = parsedTitle.itemType === 'addon'
+        const selectedOptions =
+          item?.selectedOptions && Object.keys(item.selectedOptions).length
+            ? item.selectedOptions
+            : parsedTitle.selectedOptions
 
         return {
           ...item,
           displayTitle: isAddonItem
             ? parsedTitle.addonTitle || parsedTitle.displayTitle
             : parsedTitle.displayTitle,
-          selectedOptions: parsedTitle.selectedOptions,
+          selectedOptions,
           itemType: parsedTitle.itemType,
           addonTitle: parsedTitle.addonTitle,
           additionalInfo: parsedTitle.additionalInfo,

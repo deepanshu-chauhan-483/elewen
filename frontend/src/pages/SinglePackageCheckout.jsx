@@ -324,10 +324,15 @@ export default function SinglePackageCheckout() {
     if (!cartItem) return null
 
     const parsedTitle = parseCartItemTitle(cartItem.title)
+    const selectedOptions =
+      cartItem?.selectedOptions && Object.keys(cartItem.selectedOptions).length
+        ? cartItem.selectedOptions
+        : parsedTitle.selectedOptions
+
     return {
       ...cartItem,
       displayTitle: parsedTitle.displayTitle,
-      selectedOptions: parsedTitle.selectedOptions,
+      selectedOptions,
       itemType: parsedTitle.itemType,
       addonTitle: parsedTitle.addonTitle,
       parentPackageId: parsedTitle.parentPackageId,
@@ -342,10 +347,15 @@ export default function SinglePackageCheckout() {
     return (cart?.items ?? [])
       .map(entry => {
         const parsedTitle = parseCartItemTitle(entry.title)
+        const selectedOptions =
+          entry?.selectedOptions && Object.keys(entry.selectedOptions).length
+            ? entry.selectedOptions
+            : parsedTitle.selectedOptions
+
         return {
           ...entry,
           displayTitle: parsedTitle.addonTitle || parsedTitle.displayTitle,
-          selectedOptions: parsedTitle.selectedOptions,
+          selectedOptions,
           itemType: parsedTitle.itemType,
           addonTitle: parsedTitle.addonTitle,
           parentPackageId: parsedTitle.parentPackageId,

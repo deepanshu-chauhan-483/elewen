@@ -22,18 +22,12 @@ function FilterPill({
   return (
     <div className={`relative min-w-0 ${widthClass}`}>
       <CustomSelect
+        variant="filter"
         value={value}
         options={options}
-        onChange={onChange}
+        onChange={nextValue => onChange?.({ target: { value: nextValue } })}
         disabled={disabled}
         placeholder={label}
-        buttonClassName="flex h-[38px] min-w-0 w-full items-center rounded-full bg-[#F7F0E6] pl-4 pr-9 text-left text-[14px] leading-[18px] text-[#7A2B08] outline-none disabled:cursor-default disabled:opacity-100"
-        arrowClassName="pointer-events-none absolute right-3 top-1/2 h-3 w-3 shrink-0 -translate-y-1/2 text-[#7A2B08]"
-        menuClassName="fixed overflow-hidden rounded-[16px] border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
-        listClassName="hide-scrollbar max-h-[210px] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        listProps={{ 'data-lenis-prevent': true }}
-        optionClassName="flex w-full min-w-0 whitespace-nowrap items-center bg-[#F7F0E6] px-6 py-3 text-left text-[14px] leading-[18px] text-[#7A2B08] transition-colors hover:bg-black hover:text-white"
-        selectedOptionClassName=""
       />
     </div>
   )

@@ -609,9 +609,15 @@ export default function CheckoutPage() {
     () =>
       (cart?.items ?? []).map(item => {
         const parsedTitle = parseCartItemTitle(item?.title)
+        const selectedOptions =
+          item?.selectedOptions && Object.keys(item.selectedOptions).length
+            ? item.selectedOptions
+            : parsedTitle.selectedOptions
+
         return {
           ...item,
           ...parsedTitle,
+          selectedOptions,
           packageData: packageLookup.get(String(item.packageId)) ?? null,
         }
       }),
@@ -804,9 +810,23 @@ export default function CheckoutPage() {
         throw new Error('Booking could not be created.')
       }
 
+      const tastingPackagesNote =
+        Array.isArray(location.state?.sampleTasteSelections) &&
+        location.state.sampleTasteSelections.length
+          ? location.state.sampleTasteSelections
+              .map(
+                entry =>
+                  `${entry.packageTitle || entry.packageId}: tasting menu to be confirmed after booking${
+                    entry.guestCount ? ` (package guests: ${entry.guestCount})` : ''
+                  }`
+              )
+              .join(' | ')
+          : cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'
+
       const extraDetails = isSampleTastingCheckout
         ? [
             'Checkout mode: Sample tasting',
+            'Tasting menu: Separate from event menu — dishes confirmed manually after booking',
             `Contact name: ${fullName.trim()}`,
             `Phone: ${phone.trim()}`,
             `Email: ${email.trim()}`,
@@ -814,7 +834,7 @@ export default function CheckoutPage() {
             `Tasting time: ${sessionDetails.timeLabel || 'Not provided'}`,
             `Tasting address: ${sessionDetails.address || 'Not provided'}`,
             `Special request: ${specialRequest.trim() || 'Not provided'}`,
-            `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
+            `Packages booked for tasting: ${tastingPackagesNote}`,
           ].join('\n')
         : [
             `Contact name: ${fullName.trim()}`,

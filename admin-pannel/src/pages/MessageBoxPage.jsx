@@ -5,7 +5,7 @@ import {
   ErrorState,
   LoadingState,
   SectionLoadingState,
-  SelectField,
+  CustomSelect,
   StatusBadge,
 } from '../components/ui/AdminUI'
 import {
@@ -327,7 +327,7 @@ function MessageThreadPanel({
               <label className="text-[11px] uppercase tracking-[0.14em] text-[#8F8F8F]">
                 Type:
               </label>
-              <SelectField
+              <CustomSelect
                 value={messageType}
                 onChange={onMessageTypeChange}
                 menuClassName="z-[70]"
@@ -335,7 +335,7 @@ function MessageThreadPanel({
                 <option value="text">Text reply</option>
                 <option value="status_update">Status update</option>
                 <option value="system">System note</option>
-              </SelectField>
+              </CustomSelect>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">

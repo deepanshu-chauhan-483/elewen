@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   buildRulesLabel,
+  canSelectMenuDish,
+  ensureMenuRow,
   getDishesForMenuRow,
+  isAllVegSelectionMode,
   serializeSelection,
   validateMenuSelection,
 } from '../../lib/cateringMenuSelection'
@@ -34,81 +37,58 @@ function DishCheckbox({ dish, checked, disabled, onToggle }) {
   )
 }
 
-export default function CateringMenuChooseModal({
-  open,
+function parseInitialSelection(initialSelection) {
+  return String(initialSelection ?? '')
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean)
+}
+
+function CateringMenuChooseModalContent({
   row,
   menuByCategory = {},
   initialSelection = '',
   onClose,
   onConfirm,
 }) {
-  const [selected, setSelected] = useState([])
+  const [selected, setSelected] = useState(() => parseInitialSelection(initialSelection))
   const [error, setError] = useState('')
 
+  const resolvedRow = useMemo(() => ensureMenuRow(row), [row])
+
   const dishes = useMemo(
-    () => (row ? getDishesForMenuRow(row, menuByCategory) : []),
-    [menuByCategory, row]
+    () => (resolvedRow ? getDishesForMenuRow(resolvedRow, menuByCategory) : []),
+    [menuByCategory, resolvedRow]
   )
 
-  const rules = row?.rules ?? {}
+  const rules = resolvedRow?.rules ?? { maxPick: 1 }
   const rulesLabel = buildRulesLabel(rules)
 
   const vegDishes = useMemo(
     () => dishes.filter(dish => dish.dietary === 'veg' || dish.dietary === 'both'),
     [dishes]
   )
-  const nonvegDishes = useMemo(
-    () => dishes.filter(dish => dish.dietary === 'non_veg'),
-    [dishes]
-  )
+  const nonvegDishes = useMemo(() => dishes.filter(dish => dish.dietary === 'non_veg'), [dishes])
 
   const showSplit = Boolean(rules.vegPick && rules.nonvegPick)
+  const allVegMode = isAllVegSelectionMode(selected, dishes, rules)
 
-  useEffect(() => {
-    if (!open) return
-    setError('')
-    setSelected(
-      String(initialSelection ?? '')
-        .split(',')
-        .map(part => part.trim())
-        .filter(Boolean)
-    )
-  }, [initialSelection, open])
-
-  if (!open || !row) return null
-
-  const dishByName = useMemo(() => new Map(dishes.map(dish => [dish.name, dish])), [dishes])
+  if (!resolvedRow) return null
 
   const toggleDish = name => {
     setError('')
-    const dish = dishByName.get(name)
-    if (!dish) return
 
     setSelected(prev => {
       if (prev.includes(name)) {
         return prev.filter(item => item !== name)
       }
 
-      if (prev.length >= rules.maxPick) return prev
-
-      if (showSplit) {
-        const isVeg = dish.dietary === 'veg' || dish.dietary === 'both'
-        const vegSelected = prev.filter(item => {
-          const d = dishByName.get(item)
-          return d && (d.dietary === 'veg' || d.dietary === 'both')
-        }).length
-        const nonvegSelected = prev.filter(item => dishByName.get(item)?.dietary === 'non_veg').length
-
-        if (isVeg && vegSelected >= rules.vegPick) {
-          const canUseAllVegSlot = prev.length >= rules.vegPick + rules.nonvegPick - 1
-          if (!canUseAllVegSlot) return prev
-        }
-        if (!isVeg && nonvegSelected >= rules.nonvegPick) return prev
-      }
-
+      if (!canSelectMenuDish(name, prev, dishes, rules)) return prev
       return [...prev, name]
     })
   }
+
+  const isDishDisabled = name => !canSelectMenuDish(name, selected, dishes, rules)
 
   const handleConfirm = () => {
     const validation = validateMenuSelection(selected, dishes, rules)
@@ -137,11 +117,16 @@ export default function CateringMenuChooseModal({
                 className="text-[18px] font-semibold text-[#591902]"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
-                {row.title}
+                {resolvedRow.title}
               </h2>
               <p className="mt-1 text-[12px] text-[#591902]/70">{rulesLabel}</p>
-              {row.chooseHint ? (
-                <p className="mt-1 text-[11px] text-[#591902]/50">{row.chooseHint}</p>
+              {resolvedRow.chooseHint ? (
+                <p className="mt-1 text-[11px] text-[#591902]/50">{resolvedRow.chooseHint}</p>
+              ) : null}
+              {allVegMode ? (
+                <p className="mt-1 text-[11px] font-medium text-[#591902]/70">
+                  All-vegetarian selection ({rules.maxPick} items)
+                </p>
               ) : null}
             </div>
             <button
@@ -155,7 +140,7 @@ export default function CateringMenuChooseModal({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 hide-scrollbar" data-lenis-prevent>
           {!dishes.length ? (
             <p className="text-[13px] text-[#591902]/60">
               Menu items for this section are not loaded yet. Check Strapi catering-menu and Public
@@ -173,7 +158,7 @@ export default function CateringMenuChooseModal({
                       key={`veg-${dish.name}`}
                       dish={dish}
                       checked={selected.includes(dish.name)}
-                      disabled={selected.length >= rules.maxPick}
+                      disabled={isDishDisabled(dish.name)}
                       onToggle={toggleDish}
                     />
                   ))}
@@ -189,7 +174,7 @@ export default function CateringMenuChooseModal({
                       key={`nv-${dish.name}`}
                       dish={dish}
                       checked={selected.includes(dish.name)}
-                      disabled={selected.length >= rules.maxPick}
+                      disabled={isDishDisabled(dish.name)}
                       onToggle={toggleDish}
                     />
                   ))}
@@ -203,7 +188,7 @@ export default function CateringMenuChooseModal({
                   key={dish.name}
                   dish={dish}
                   checked={selected.includes(dish.name)}
-                  disabled={selected.length >= rules.maxPick}
+                  disabled={isDishDisabled(dish.name)}
                   onToggle={toggleDish}
                 />
               ))}
@@ -226,10 +211,34 @@ export default function CateringMenuChooseModal({
             onClick={handleConfirm}
             className="flex-1 rounded-full bg-[#591902] px-4 py-2.5 text-[13px] font-medium text-white hover:bg-[#4B1501]"
           >
-            Confirm ({selected.length}/{rules.maxPick})
+            Confirm ({selected.length}/{Number(rules.maxPick) > 0 ? rules.maxPick : 1})
           </button>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CateringMenuChooseModal({
+  open,
+  row,
+  menuByCategory = {},
+  initialSelection = '',
+  onClose,
+  onConfirm,
+}) {
+  const resolvedRow = useMemo(() => ensureMenuRow(row), [row])
+
+  if (!open || !resolvedRow) return null
+
+  return (
+    <CateringMenuChooseModalContent
+      key={`${resolvedRow.title}-${initialSelection}`}
+      row={row}
+      menuByCategory={menuByCategory}
+      initialSelection={initialSelection}
+      onClose={onClose}
+      onConfirm={onConfirm}
+    />
   )
 }
