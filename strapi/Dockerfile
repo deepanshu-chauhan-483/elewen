@@ -6,6 +6,8 @@ WORKDIR /app
 RUN apk add --no-cache vips-dev build-base python3
 
 COPY package*.json ./
+# postinstall runs patch-strapi-hmr-port.mjs; copy it before npm ci
+COPY scripts/patch-strapi-hmr-port.mjs scripts/patch-strapi-hmr-port.mjs
 RUN npm ci --legacy-peer-deps
 
 COPY . .
@@ -31,6 +33,7 @@ WORKDIR /app
 RUN apk add --no-cache vips-dev build-base python3
 
 COPY package*.json ./
+COPY scripts/patch-strapi-hmr-port.mjs scripts/patch-strapi-hmr-port.mjs
 RUN npm ci --legacy-peer-deps
 
 COPY . .
