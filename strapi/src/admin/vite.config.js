@@ -1,9 +1,9 @@
-import { mergeConfig } from 'vite';
+const { mergeConfig } = require('vite');
 
 /** Website uses 5173, admin-pannel uses 5174 — Strapi admin Vite must use 5175. */
 const ADMIN_DEV_PORT = 5175;
 
-export default (config) =>
+module.exports = (config) =>
   mergeConfig(config, {
     server: {
       ...config.server,

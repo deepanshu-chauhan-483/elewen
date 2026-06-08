@@ -14,9 +14,20 @@ const require = createRequire(import.meta.url)
 const { buildSmtpTransportOptions } = require('../config/email-smtp.cjs')
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-dotenv.config({ path: path.join(__dirname, '../.env') })
+const envPath = path.join(__dirname, '../.env')
+// Docker: use compose env vars. Local: load strapi/.env (dotenv does not override existing env).
+dotenv.config({ path: envPath })
 
 const get = key => process.env[key] ?? ''
+
+if (!process.env.SMTP_PASS && !process.env.RESEND_API_KEY) {
+  console.error(
+    'SMTP_PASS / RESEND_API_KEY not set in environment.\n' +
+      'Production: add SMTP_* to ~/elewen/.env (root), then: docker compose up -d strapi --force-recreate\n' +
+      'Local: set values in strapi/.env'
+  )
+  process.exit(1)
+}
 const smtp = buildSmtpTransportOptions(get)
 const { provider, host, port, secure, requireTLS, auth } = smtp
 
