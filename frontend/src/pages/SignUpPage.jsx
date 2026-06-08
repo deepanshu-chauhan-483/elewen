@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useToast } from '../components/common/useToast'
@@ -34,19 +34,24 @@ export default function SignUpPage() {
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [emailPending, setEmailPending] = useState(false)
+  const [confirmationResent, setConfirmationResent] = useState(false)
+  const submittingRef = useRef(false)
   const authError = searchParams.get('authError') || ''
   const authErrorMessage =
     authError === 'local_account_use_password'
       ? 'This email is already registered with password login. Please sign in with your password.'
-      : authError === 'google_failed'
-        ? 'Google sign-in could not be completed. Please try again.'
-        : ''
+      : authError === 'rate_limited'
+        ? 'Too many sign-in attempts. Please wait a minute and try Google again.'
+        : authError === 'google_failed'
+          ? 'Google sign-in could not be completed. Please try again.'
+          : ''
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!agreed) return
+    if (!agreed || submittingRef.current) return
     setError('')
     setFieldErrors({})
+    submittingRef.current = true
     setLoading(true)
     try {
       const data = await authRegister({
@@ -57,7 +62,12 @@ export default function SignUpPage() {
         password,
       })
       if (data.pending) {
-        showToast({ message: 'Check your email to confirm your account before logging in.' })
+        setConfirmationResent(Boolean(data.resent))
+        showToast({
+          message: data.resent
+            ? 'Confirmation email sent again. Check your inbox.'
+            : 'Check your email to confirm your account before logging in.',
+        })
         setEmailPending(true)
         return
       }
@@ -83,6 +93,7 @@ export default function SignUpPage() {
         setError(getGlobalErrorMessage(err, 'Registration failed. Please try again.'))
       }
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
@@ -93,7 +104,11 @@ export default function SignUpPage() {
         activeTab="signup"
         headerPrefix={<CheckEmailIcon />}
         title="Check your email"
-        subtitle={`We sent a confirmation link to ${email}. Click it to activate your account, then log in.`}
+        subtitle={
+          confirmationResent
+            ? `We sent another confirmation link to ${email}. Click it to activate your account, then log in.`
+            : `We sent a confirmation link to ${email}. Click it to activate your account, then log in.`
+        }
         footer={null}
       >
         <div

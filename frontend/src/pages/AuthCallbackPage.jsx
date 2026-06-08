@@ -3,6 +3,17 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { authGoogleSession, setStoredJwt } from '../lib/api'
 
 function parseAuthErrorDetails(error) {
+  if (error?.response?.code) {
+    return {
+      code: String(error.response.code),
+      error: String(error.response.error ?? error.message ?? ''),
+    }
+  }
+
+  if (error?.status === 429) {
+    return { code: 'RATE_LIMITED', error: error.message }
+  }
+
   const message = String(error?.message ?? '')
   const jsonMatch = message.match(/\{.*\}$/)
 
@@ -12,9 +23,10 @@ function parseAuthErrorDetails(error) {
 
   try {
     const parsed = JSON.parse(jsonMatch[0])
+    const nested = parsed?.error
     return {
-      code: String(parsed?.code ?? ''),
-      error: String(parsed?.error ?? ''),
+      code: String(parsed?.code ?? (nested?.name === 'RateLimitError' ? 'RATE_LIMITED' : '')),
+      error: String(parsed?.error ?? nested?.message ?? ''),
     }
   } catch {
     return { code: '', error: '' }
@@ -63,6 +75,11 @@ export default function AuthCallbackPage() {
 
         if (code === 'LOCAL_ACCOUNT_USE_PASSWORD') {
           navigate(`${origin}?authError=local_account_use_password`, { replace: true })
+          return
+        }
+
+        if (code === 'RATE_LIMITED' || error?.status === 429) {
+          navigate(`${origin}?authError=rate_limited`, { replace: true })
           return
         }
 

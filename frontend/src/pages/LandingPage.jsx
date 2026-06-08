@@ -2178,9 +2178,9 @@ const BetterWaySection = () => {
   return (
     <section
       data-nav-theme="glass"
-      className="relative -mt-px md:mt-0 w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans"
+      className="relative -mt-px  md:mt-0 w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans"
     >
-      <div className="relative w-full max-w-[1440px] mx-auto min-h-0 pb-6 md:min-h-[820px] md:max-lg:min-h-[980px] lg:h-[1040px] xl:h-[1171px] shrink-0 overflow-x-hidden">
+      <div className="relative w-full  min-h-0 pb-6 md:min-h-[820px] md:max-lg:min-h-[980px] lg:h-[1040px] xl:h-[1171px] shrink-0 overflow-x-hidden">
         {/* --- SCALLOP / BULB SECTION --- */}
         <div className="hidden lg:flex">
           {renderScallopStrip({
@@ -2217,7 +2217,7 @@ const BetterWaySection = () => {
         </div>
 
         {/* --- HEADINGS --- */}
-        <div className="relative mx-auto w-full max-w-[353px] px-4 pt-8 pb-4 flex flex-col items-center gap-5 lg:absolute lg:w-[760px] xl:w-[809px] lg:max-w-[calc(100%-2rem)] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px] lg:gap-[10px] lg:static lg:block lg:w-full lg:max-w-none lg:translate-x-0 lg:px-0 lg:pt-0 lg:pb-0">
+        <div className="relative mx-auto w-full max-w-[353px] px-4 pt-30 pb-4 flex flex-col items-center gap-5 lg:absolute lg:w-[760px] xl:w-[809px] lg:max-w-[calc(100%-2rem)] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px] lg:gap-[10px] lg:static lg:block lg:w-full lg:max-w-none lg:translate-x-0 lg:px-0 lg:pt-0 lg:pb-0">
           <h2
             className="w-full text-[#2D2D2D] text-[24px] lg:text-[54px] xl:text-[61px] leading-[1] text-center font-serif reveal-heading lg:absolute lg:w-[620px] xl:w-[679px] lg:left-1/2 lg:-translate-x-1/2 lg:top-[180px] xl:top-[253px]"
             style={{ fontFamily: "'Malgin', serif" }}

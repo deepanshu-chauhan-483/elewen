@@ -59,6 +59,8 @@ export const forgotPasswordSchema = Joi.object({
   }),
 })
 
+export const resendConfirmationSchema = forgotPasswordSchema
+
 export const resetPasswordSchema = Joi.object({
   code: Joi.string().required().messages({
     'any.required': 'Reset code is required',

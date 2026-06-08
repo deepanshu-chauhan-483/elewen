@@ -307,3 +307,32 @@ export async function strapiCreateUser(body) {
     prefixApi: false,
   })
 }
+
+/**
+ * Exchange a Google OAuth access_token for a Strapi user + JWT.
+ * Uses the public users-permissions route (no admin API token required).
+ */
+export async function exchangeGoogleAccessTokenViaStrapi(accessToken) {
+  let lastError = null
+  const query = new URLSearchParams({ access_token: accessToken })
+
+  for (const base of getBaseCandidates()) {
+    try {
+      const res = await fetch(`${base}/api/auth/google/callback?${query.toString()}`)
+
+      if (!res.ok) {
+        throw await makeStrapiError(res, 'Google Strapi OAuth callback failed')
+      }
+
+      return res.json()
+    } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
+      lastError = error
+    }
+  }
+
+  throw lastError ?? new Error('Google Strapi OAuth callback failed')
+}

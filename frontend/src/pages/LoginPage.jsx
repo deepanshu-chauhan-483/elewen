@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useToast } from '../components/common/useToast'
 import { getFieldErrors } from '../lib/formErrors'
-import { authLogin, setStoredJwt } from '../lib/api'
+import { authLogin, authResendConfirmation, setStoredJwt } from '../lib/api'
 import { startGoogleSignIn } from '../lib/googleAuth'
 
 export default function LoginPage() {
@@ -21,24 +21,30 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const [resendingConfirmation, setResendingConfirmation] = useState(false)
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false)
+  const hasShownVerifiedToastRef = useRef(false)
 
   useEffect(() => {
-    if (confirmed) {
-      showToast({ message: 'Email verified! You can now sign in.' })
-    }
+    if (!confirmed || hasShownVerifiedToastRef.current) return
+    hasShownVerifiedToastRef.current = true
+    showToast({ message: 'Email verified! You can now sign in.' })
   }, [confirmed, showToast])
 
   const authErrorMessage =
     authError === 'local_account_use_password'
       ? 'This email is already registered with password login. Please sign in with your password.'
-      : authError === 'google_failed'
-        ? 'Google sign-in could not be completed. Please try again.'
-        : ''
+      : authError === 'rate_limited'
+        ? 'Too many sign-in attempts. Please wait a minute and try Google again.'
+        : authError === 'google_failed'
+          ? 'Google sign-in could not be completed. Please try again.'
+          : ''
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setFieldErrors({})
+    setNeedsEmailConfirmation(false)
     setLoading(true)
     try {
       const data = await authLogin({ email, password })
@@ -54,12 +60,26 @@ export default function LoginPage() {
       } else if (err.message?.includes('GOOGLE_ACCOUNT_USE_GOOGLE')) {
         setError('This account was created with Google. Please continue with Google to sign in.')
       } else if (err.status === 403) {
+        setNeedsEmailConfirmation(true)
         setError('Please confirm your email before logging in. Check your inbox.')
       } else {
         setError('Invalid email or password.')
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleResendConfirmation() {
+    if (!email || resendingConfirmation) return
+    setResendingConfirmation(true)
+    try {
+      await authResendConfirmation(email)
+      showToast({ message: 'Confirmation email sent. Check your inbox.' })
+    } catch {
+      showToast({ message: 'Confirmation email sent. Check your inbox.' })
+    } finally {
+      setResendingConfirmation(false)
     }
   }
 
@@ -180,6 +200,17 @@ export default function LoginPage() {
         </div>
 
         {error && <p className="text-[#C62828] text-[12px] leading-[150%]">{error}</p>}
+
+        {needsEmailConfirmation ? (
+          <button
+            type="button"
+            onClick={handleResendConfirmation}
+            disabled={resendingConfirmation || !email}
+            className="w-full text-[#364022] text-[12px] leading-[150%] underline hover:text-[#727355] disabled:opacity-50"
+          >
+            {resendingConfirmation ? 'Sending confirmation email…' : 'Resend confirmation email'}
+          </button>
+        ) : null}
 
         <div className="flex flex-col items-center w-full gap-[16px]">
           <button

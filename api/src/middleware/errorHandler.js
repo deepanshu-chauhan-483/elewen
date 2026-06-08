@@ -7,6 +7,14 @@ export const errorHandler = (err, req, res, next) => {
   if (err.strapiError) {
     const status = err.status || 400
     const details = err.strapiError.details?.errors
+    const strapiErrorName = err.strapiError?.name || ''
+
+    if (status === 429 || strapiErrorName === 'RateLimitError') {
+      return res.status(429).json({
+        error: 'Too many sign-in attempts. Please wait a minute and try again.',
+        code: 'RATE_LIMITED',
+      })
+    }
 
     // Field-level validation errors from Strapi
     if (details?.length) {

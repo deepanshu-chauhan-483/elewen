@@ -6,6 +6,7 @@ import {
   logout,
   me,
   forgotPassword,
+  resendConfirmation,
   resetPassword,
   googleSession,
   getProfile,
@@ -17,6 +18,7 @@ import {
   registerSchema,
   loginSchema,
   forgotPasswordSchema,
+  resendConfirmationSchema,
   resetPasswordSchema,
   updateProfileSchema,
 } from '../schemas/auth.js'
@@ -146,6 +148,27 @@ router.get('/me', requireAuth, me)
  *         description: Reset link sent (always succeeds — no email enumeration)
  */
 router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword)
+
+/**
+ * @openapi
+ * /auth/resend-confirmation:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Resend account confirmation email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, format: email }
+ *     responses:
+ *       200:
+ *         description: Confirmation email sent if account exists and is unverified
+ */
+router.post('/resend-confirmation', validate(resendConfirmationSchema), resendConfirmation)
 
 /**
  * @openapi

@@ -31,6 +31,20 @@ module.exports = ({ env }) => ({
     },
   },
 
+  // Auth rate limit (default Strapi: 5 req / 5 min — too low for OAuth + retries).
+  'users-permissions': {
+    config: {
+      ratelimit: {
+        enabled: env.bool(
+          'STRAPI_AUTH_RATELIMIT_ENABLED',
+          env('NODE_ENV') === 'production'
+        ),
+        interval: { min: 1 },
+        max: env.int('STRAPI_AUTH_RATELIMIT_MAX', 200),
+      },
+    },
+  },
+
   // ─── Transactional email (forgot-password, email confirmation) ────────────
   email: {
     config: {

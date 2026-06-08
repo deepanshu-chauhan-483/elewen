@@ -125,6 +125,7 @@ module.exports = {
       // {PUBLIC_URL}/api/connect/google/callback
       const googleCallbackUrl =
         process.env.GOOGLE_REDIRECT_URI || `${publicUrl}/api/connect/google/callback`;
+      const frontendAuthCallback = `${frontendUrl.replace(/\/$/, '')}/auth/callback`;
       const baseGrant =
         currentGrant && typeof currentGrant === 'object' ? { ...currentGrant } : {};
       const previousGoogle = baseGrant.google && typeof baseGrant.google === 'object' ? baseGrant.google : {};
@@ -138,7 +139,8 @@ module.exports = {
           key: process.env.GOOGLE_CLIENT_ID,
           secret: process.env.GOOGLE_CLIENT_SECRET,
           callbackUrl: googleCallbackUrl,
-          callback: googleCallbackUrl,
+          // Grant post-OAuth redirect — must be the frontend, NOT /api/connect/.../callback
+          callback: frontendAuthCallback,
           scope:
             Array.isArray(previousGoogle.scope) && previousGoogle.scope.length
               ? previousGoogle.scope
@@ -148,7 +150,7 @@ module.exports = {
 
       await pluginStore.set({ key: 'grant', value: nextGrant });
       strapi.log.info(
-        `[users-permissions] Google OAuth enabled. Start: ${publicUrl}/api/connect/google → callback: ${nextGrant.google.callbackUrl} → frontend: ${frontendUrl.replace(/\/$/, '')}/auth/callback`
+        `[users-permissions] Google OAuth enabled. Start: ${publicUrl}/api/connect/google → Google redirect: ${nextGrant.google.callbackUrl} → frontend: ${frontendAuthCallback}`
       );
     } else {
       strapi.log.warn(

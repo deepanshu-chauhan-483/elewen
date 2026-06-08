@@ -257,6 +257,7 @@ export const authMe = token => apiGet('/auth/me', { headers: { Authorization: `B
 export const authUpdateProfile = (token, body) =>
   request('PATCH', '/auth/profile', body, { headers: { Authorization: `Bearer ${token}` } })
 export const authForgotPassword = email => apiPost('/auth/forgot-password', { email })
+export const authResendConfirmation = email => apiPost('/auth/resend-confirmation', { email })
 export const authResetPassword = body => apiPost('/auth/reset-password', body)
 export const authGoogleSession = access_token => apiPost('/auth/google/session', { access_token })
 

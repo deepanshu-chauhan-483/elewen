@@ -56,12 +56,12 @@ function ToastItem({ toast, onExited, onRegisterExit }) {
   return (
     <div
       ref={ref}
-      className="pointer-events-auto rounded-2xl border border-[#D4BA8E] bg-[#1C1C1C] px-4 py-3 text-white shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
+      className="pointer-events-auto w-full min-w-0 max-w-full rounded-2xl border border-[#D4BA8E] bg-[#1C1C1C] px-4 py-3 text-white shadow-[0_18px_40px_rgba(0,0,0,0.18)] sm:max-w-md"
       role="status"
       aria-live="polite"
       style={{ willChange: 'transform, opacity' }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4BA8E] text-[#1C1C1C]">
           <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
             <path
@@ -73,11 +73,11 @@ function ToastItem({ toast, onExited, onRegisterExit }) {
             />
           </svg>
         </div>
-        <p className="flex-1 whitespace-nowrap text-sm leading-6">{toast.message}</p>
+        <p className="min-w-0 flex-1 break-words text-sm leading-5">{toast.message}</p>
         <button
           type="button"
           onClick={triggerExit}
-          className="flex items-center justify-center text-sm text-white/70 transition hover:text-white"
+          className="mt-0.5 flex shrink-0 items-center justify-center text-sm text-white/70 transition hover:text-white"
           aria-label="Dismiss notification"
         >
           <svg
@@ -108,7 +108,7 @@ function ToastViewport({ toasts, onExited, onRegisterExit }) {
   if (typeof document === 'undefined') return null
 
   return createPortal(
-    <div className="pointer-events-none fixed right-2 top-16 z-[9999] flex w-fit max-w-[92vw] flex-col gap-3">
+    <div className="pointer-events-none fixed left-3 right-3 top-16 z-[9999] flex w-auto max-w-full flex-col items-stretch gap-3 sm:left-auto sm:right-4 sm:w-[min(100%,24rem)] sm:items-end">
       {toasts.map(toast => (
         <ToastItem
           key={toast.id}

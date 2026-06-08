@@ -40,6 +40,8 @@ const advanced = advRows[0]?.value
   : null
 
 const g = grant?.google
+const frontend = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')
+const expectedRedirect = `${frontend}/auth/callback`
 let ok = true
 
 console.log('Expected Google redirect URI (Google Cloud Console):', CALLBACK)
@@ -65,14 +67,29 @@ if (!g) {
   } else {
     console.log('OK: grant.google.enabled = true')
   }
-  const cb = g.callbackUrl || g.callback
-  if (cb !== CALLBACK) {
-    console.error('FAIL: DB callback mismatch')
-    console.error('  DB:     ', cb || '(empty)')
+  const oauthCb = g.callbackUrl
+  if (oauthCb !== CALLBACK) {
+    console.error('FAIL: grant.google.callbackUrl mismatch (Google Console redirect URI)')
+    console.error('  DB:     ', oauthCb || '(empty)')
     console.error('  .env:   ', CALLBACK)
     ok = false
   } else {
-    console.log('OK: callback URL matches .env')
+    console.log('OK: OAuth callback URL matches .env')
+  }
+
+  const grantFrontendCb = g.callback
+  if (grantFrontendCb === oauthCb || grantFrontendCb === CALLBACK) {
+    console.error('FAIL: grant.google.callback must be the frontend URL, not the Strapi OAuth callback')
+    console.error('  DB callback:     ', grantFrontendCb || '(empty)')
+    console.error('  expected:        ', expectedRedirect)
+    console.error('  Run: npm run sync:google')
+    ok = false
+  } else if (grantFrontendCb !== expectedRedirect) {
+    console.warn('WARN: grant.google.callback:', grantFrontendCb || '(missing)')
+    console.warn('      expected:            ', expectedRedirect)
+    console.warn('      Run: npm run sync:google')
+  } else {
+    console.log('OK: grant.google.callback →', grantFrontendCb)
   }
   if (!g.key || !g.secret) {
     console.error('FAIL: grant.google key/secret empty in DB')
@@ -83,8 +100,6 @@ if (!g) {
 }
 
 const redirect = advanced?.default_redirect_url
-const frontend = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')
-const expectedRedirect = `${frontend}/auth/callback`
 if (redirect !== expectedRedirect) {
   console.warn('WARN: default_redirect_url:', redirect || '(missing)')
   console.warn('      expected:            ', expectedRedirect)

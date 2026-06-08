@@ -8,8 +8,9 @@ import {
   strapiServerPost,
   strapiServerPut,
   strapiGetMe,
+  strapiGetUserById,
   strapiFindUserByEmail,
-  strapiCreateUser,
+  exchangeGoogleAccessTokenViaStrapi,
 } from '../lib/strapi.js'
 
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
@@ -273,6 +274,20 @@ const sanitizeAddress = address => {
 
 const isJwtLike = token => typeof token === 'string' && token.split('.').length === 3
 
+/** True only for JWTs signed by our Strapi — not Google id_tokens (also JWT-shaped). */
+const isStrapiAppJwt = token => {
+  if (!isJwtLike(token) || !process.env.STRAPI_JWT_SECRET) {
+    return false
+  }
+
+  try {
+    const payload = jwt.verify(token, process.env.STRAPI_JWT_SECRET)
+    return Number.isInteger(Number(payload?.id))
+  } catch {
+    return false
+  }
+}
+
 const isVerifiedGoogleEmail = value => value === true || value === 'true'
 
 const isGoogleProvider = provider =>
@@ -306,6 +321,25 @@ const mapUserRow = row => {
     phone: row.phone ?? null,
   }
 }
+
+const mapStrapiOAuthUser = strapiUser => {
+  if (!strapiUser) return null
+
+  return {
+    id: Number(strapiUser.id),
+    email: strapiUser.email,
+    provider: strapiUser.provider ?? 'google',
+    confirmed: Boolean(strapiUser.confirmed ?? true),
+    blocked: Boolean(strapiUser.blocked),
+    first_name: strapiUser.first_name ?? null,
+    last_name: strapiUser.last_name ?? null,
+    phone: strapiUser.phone ?? null,
+  }
+}
+
+const isGoogleAccountConflictError = err =>
+  /email is already taken/i.test(String(err?.message ?? '')) ||
+  /email or username are already taken/i.test(String(err?.message ?? ''))
 
 const findUserByEmailFromDatabase = async email => {
   const [row] = await prisma.$queryRaw`
@@ -416,6 +450,97 @@ const findUserByEmailForAuth = async email => {
   }
 }
 
+const PENDING_REGISTRATION_MESSAGE = 'Check your email to verify your account before logging in.'
+
+const isDuplicateCredentialError = err =>
+  err?.status === 400 && /email or username are already taken/i.test(String(err?.message ?? ''))
+
+const sendConfirmationEmail = async email => {
+  await strapiPost('/api/auth/send-email-confirmation', { email })
+}
+
+const syncRegistrationProfile = async ({ userId, first_name, last_name, phone, password }) => {
+  if (!userId) return
+
+  const profilePayload = { first_name, last_name, phone }
+  if (password) {
+    profilePayload.password = password
+  }
+
+  try {
+    await strapiAdminPut(`/api/users/${userId}`, profilePayload)
+  } catch (profileSyncErr) {
+    console.error('[auth.register] Failed to sync Strapi user profile fields:', profileSyncErr)
+  }
+
+  try {
+    await syncUserFieldsInDatabase({
+      userId,
+      first_name,
+      last_name,
+      phone,
+    })
+  } catch (dbSyncErr) {
+    console.error('[auth.register] Failed to sync user fields in database:', dbSyncErr)
+  }
+
+  await createCustomerProfile({
+    userId,
+    firstName: first_name,
+    lastName: last_name,
+    profilePhotoUrl: null,
+  })
+}
+
+const respondPendingRegistration = (res, { resent = false } = {}) =>
+  res.status(200).json({
+    pending: true,
+    resent,
+    message: PENDING_REGISTRATION_MESSAGE,
+  })
+
+const completeUnconfirmedRegistration = async (
+  res,
+  { email, first_name, last_name, phone, password, resent = false }
+) => {
+  const existingUser = await findUserByEmailFromDatabase(email)
+
+  if (!existingUser?.id) {
+    return false
+  }
+
+  if (existingUser.confirmed) {
+    res.status(409).json({ error: 'An account with this email already exists.' })
+    return true
+  }
+
+  try {
+    await sendConfirmationEmail(email)
+  } catch (sendErr) {
+    console.error('[auth.register] Failed to resend confirmation email:', sendErr.message)
+    const msg = String(sendErr.message || '').toLowerCase()
+    if (msg.includes('confirmation email')) {
+      res.status(503).json({
+        error:
+          'We could not send the confirmation email. Please try again in a few minutes or contact support.',
+        code: 'EMAIL_SEND_FAILED',
+      })
+      return true
+    }
+  }
+
+  await syncRegistrationProfile({
+    userId: existingUser.id,
+    first_name,
+    last_name,
+    phone,
+    password,
+  })
+
+  respondPendingRegistration(res, { resent })
+  return true
+}
+
 const extractGoogleProfile = payload => {
   const fullName = typeof payload?.name === 'string' ? payload.name.trim() : ''
   const nameParts = fullName ? fullName.split(/\s+/) : []
@@ -430,57 +555,29 @@ const extractGoogleProfile = payload => {
   }
 }
 
-const exchangeGoogleAccessTokenForStrapiSession = async accessToken => {
-  const url = new URL(
-    '/api/auth/google/callback',
-    process.env.STRAPI_URL || 'http://localhost:1337'
-  )
-  url.searchParams.set('access_token', accessToken)
+const resolveUserFromStrapiJwt = async accessToken => {
+  if (!isStrapiAppJwt(accessToken)) {
+    return null
+  }
 
   try {
-    const res = await fetch(url.toString(), { redirect: 'manual' })
-    console.log(
-      '[exchangeGoogleAccessTokenForStrapiSession] Status:',
-      res.status,
-      'URL:',
-      url.toString()
-    )
+    const payload = jwt.verify(accessToken, process.env.STRAPI_JWT_SECRET)
+    const userId = payload?.id
 
-    const redirectLocation = res.headers.get('location')
-    if (redirectLocation) {
-      const redirectUrl = new URL(redirectLocation, url.toString())
-      const redirectedToken = redirectUrl.searchParams.get('access_token')
-
-      if (isJwtLike(redirectedToken)) {
-        const user = await strapiGetMe(redirectedToken)
-        console.log(
-          '[exchangeGoogleAccessTokenForStrapiSession] Success via redirect token, got user:',
-          user?.email
-        )
-        return { jwt: redirectedToken, user }
-      }
-    }
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '')
-      console.error('[exchangeGoogleAccessTokenForStrapiSession] Failed:', res.status, errText)
+    if (!userId) {
       return null
     }
 
-    const payload = await res.json().catch(() => null)
-    console.log(
-      '[exchangeGoogleAccessTokenForStrapiSession] Success, got user:',
-      payload?.user?.email
-    )
+    const user =
+      (await findUserByIdFromDatabase(userId)) ??
+      (await strapiGetUserById(userId).catch(() => null))
 
-    if (!payload?.jwt || !payload?.user) {
-      console.error('[exchangeGoogleAccessTokenForStrapiSession] Missing jwt or user in response')
+    if (!user) {
       return null
     }
 
-    return payload
-  } catch (err) {
-    console.error('[exchangeGoogleAccessTokenForStrapiSession] Error:', err.message)
+    return { user, strapiJwt: accessToken }
+  } catch {
     return null
   }
 }
@@ -545,72 +642,104 @@ export const register = async (req, res, next) => {
   try {
     const { email, password, first_name, last_name, phone } = req.body
 
+    const existingUser = await findUserByEmailFromDatabase(email)
+    if (existingUser) {
+      if (existingUser.confirmed) {
+        return res.status(409).json({ error: 'An account with this email already exists.' })
+      }
+
+      const handled = await completeUnconfirmedRegistration(res, {
+        email,
+        first_name,
+        last_name,
+        phone,
+        password,
+        resent: true,
+      })
+      if (handled) return
+    }
+
     // Auto-generate username — never shown to user
     const username = `${email.split('@')[0]}_${crypto.randomBytes(3).toString('hex')}`
 
-    // Step 1: Register with Strapi — only accepts username/email/password
-    // When email confirmation is enabled, Strapi sends the confirmation email and
-    // returns { user } with no jwt. When disabled, it returns { jwt, user }.
-    const result = await strapiPost('/api/auth/local/register', {
-      username,
-      email,
-      password,
-    })
-
-    // Step 2: Best-effort profile sync — account creation should still succeed
-    // even if the server token cannot update extended user fields.
-    if (result.user?.id) {
-      try {
-        await strapiAdminPut(`/api/users/${result.user.id}`, { first_name, last_name, phone })
-      } catch (profileSyncErr) {
-        console.error('[auth.register] Failed to sync Strapi user profile fields:', profileSyncErr)
-      }
-
-      try {
-        await syncUserFieldsInDatabase({
-          userId: result.user.id,
+    // Register with Strapi — sends confirmation email when email_confirmation is enabled.
+    let result
+    try {
+      result = await strapiPost('/api/auth/local/register', {
+        username,
+        email,
+        password,
+      })
+    } catch (registerErr) {
+      if (isDuplicateCredentialError(registerErr)) {
+        const handled = await completeUnconfirmedRegistration(res, {
+          email,
           first_name,
           last_name,
           phone,
+          password,
+          resent: true,
         })
-      } catch (dbSyncErr) {
-        console.error('[auth.register] Failed to sync user fields in database:', dbSyncErr)
+        if (handled) return
+        return res.status(409).json({ error: 'An account with this email already exists.' })
       }
+      throw registerErr
+    }
 
-      // Create customer profile — no photo for email users (frontend shows placeholder)
-      await createCustomerProfile({
+    if (result.user?.id) {
+      await syncRegistrationProfile({
         userId: result.user.id,
-        firstName: first_name,
-        lastName: last_name,
-        profilePhotoUrl: null,
+        first_name,
+        last_name,
+        phone,
       })
     }
 
     const awaitingEmailConfirmation = !result.jwt || result.user?.confirmed === false
 
-    // Email confirmation pending — no JWT, no session
     if (awaitingEmailConfirmation) {
-      return res.status(200).json({
-        pending: true,
-        message: 'Check your email to verify your account before logging in.',
-      })
+      return respondPendingRegistration(res)
     }
 
-    // Email confirmation disabled — session created immediately
     await createSession(res, result.user.id, req.ip, req.headers['user-agent'])
     res.status(201).json({ jwt: result.jwt, user: sanitizeUser(result.user) })
   } catch (err) {
-    if (err.strapiError?.details?.errors?.some(e => e.path?.includes('email'))) {
-      return res.status(409).json({ error: 'An account with this email already exists' })
+    if (isDuplicateCredentialError(err)) {
+      const handled = await completeUnconfirmedRegistration(res, {
+        email: req.body.email,
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        phone: req.body.phone,
+        password: req.body.password,
+        resent: true,
+      })
+      if (handled) return
+      return res.status(409).json({ error: 'An account with this email already exists.' })
     }
+
+    if (err.strapiError?.details?.errors?.some(e => e.path?.includes('email'))) {
+      return res.status(409).json({ error: 'An account with this email already exists.' })
+    }
+
     const msg = String(err.message || '')
     if (msg.toLowerCase().includes('confirmation email')) {
+      const handled = await completeUnconfirmedRegistration(res, {
+        email: req.body.email,
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        phone: req.body.phone,
+        password: req.body.password,
+        resent: true,
+      })
+      if (handled) return
+
       return res.status(503).json({
         error:
-          'We could not send the confirmation email. Check Strapi SMTP settings (Gmail App Password in strapi/.env), then try again.',
+          'We could not send the confirmation email. Please try again in a few minutes or contact support.',
         code: 'EMAIL_SEND_FAILED',
       })
     }
+
     next(err)
   }
 }
@@ -849,6 +978,26 @@ export const updateProfile = async (req, res, next) => {
   }
 }
 
+// ─── POST /auth/resend-confirmation ────────────────────────────────────────────
+export const resendConfirmation = async (req, res) => {
+  const { email } = req.body
+
+  try {
+    const user = await findUserByEmailFromDatabase(email)
+
+    if (user && !user.confirmed) {
+      await sendConfirmationEmail(email)
+    }
+  } catch (err) {
+    console.error('[auth.resendConfirmation] Failed:', err.message)
+  }
+
+  res.json({
+    ok: true,
+    message: 'If that email is registered and not yet verified, a confirmation link has been sent.',
+  })
+}
+
 // ─── POST /auth/forgot-password ───────────────────────────────────────────────
 export const forgotPassword = async (req, res) => {
   try {
@@ -918,40 +1067,31 @@ export const googleSession = async (req, res, next) => {
     let strapiJwt
     let googleName = {} // { firstName, lastName, picture } — populated for raw token path
 
-    if (isJwtLike(access_token)) {
-      try {
-        // First try the simplest case: Strapi already redirected back with its own JWT.
-        user = await strapiGetMe(access_token)
-        strapiJwt = access_token
-      } catch (err) {
-        // Not a Strapi JWT — fall through and verify it as a Google token instead.
-        if (err.status && err.status !== 401 && err.status !== 403) {
-          throw err
+    if (isStrapiAppJwt(access_token)) {
+      const resolvedSession = await resolveUserFromStrapiJwt(access_token)
+      if (resolvedSession) {
+        user = resolvedSession.user
+        strapiJwt = resolvedSession.strapiJwt
+      } else {
+        try {
+          user = await strapiGetMe(access_token)
+          strapiJwt = access_token
+        } catch (err) {
+          if (err.status === 429) {
+            return res.status(429).json({
+              error: 'Too many sign-in attempts. Please wait a minute and try again.',
+              code: 'RATE_LIMITED',
+            })
+          }
+          if (err.status && err.status !== 401 && err.status !== 403) {
+            throw err
+          }
         }
       }
     }
 
     if (!user || !strapiJwt) {
-      // Raw Google token (or Google JWT/id_token).
-      // First let Strapi complete the provider callback exchange, which returns
-      // the app JWT + user without requiring admin-only /api/users access.
-      console.log('[googleSession] Attempting Strapi OAuth callback exchange...')
-      const strapiOAuthSession = await exchangeGoogleAccessTokenForStrapiSession(access_token)
-      if (strapiOAuthSession?.jwt && strapiOAuthSession?.user) {
-        strapiJwt = strapiOAuthSession.jwt
-        user = strapiOAuthSession.user
-        console.log('[googleSession] ✓ Got user from Strapi OAuth:', user.email)
-      } else {
-        console.error(
-          '[googleSession] ✗ Strapi OAuth callback failed. Token may be invalid or Strapi Google OAuth not configured.'
-        )
-      }
-    }
-
-    if (!user || !strapiJwt) {
-      // Fallback for environments where Strapi returns a raw Google token and
-      // the provider callback exchange is unavailable.
-      console.log('[googleSession] Fallback: Verifying token directly with Google API...')
+      console.log('[googleSession] Verifying Google token with Google API...')
       const tokenInfo = await verifyGoogleToken(access_token)
 
       if (!tokenInfo) {
@@ -975,21 +1115,40 @@ export const googleSession = async (req, res, next) => {
       }
 
       if (!user) {
-        // First-time Google login — create Strapi user
-        const username = `${tokenInfo.email.split('@')[0]}_${crypto.randomBytes(3).toString('hex')}`
-        user = await strapiCreateUser({
-          username,
-          email: tokenInfo.email,
-          provider: 'google',
-          confirmed: true,
-          password: crypto.randomBytes(20).toString('hex'),
-          first_name: googleName.firstName,
-          last_name: googleName.lastName,
-        })
-      }
+        // First-time Google login — use Strapi's public OAuth callback (no admin API token).
+        try {
+          const strapiAuth = await exchangeGoogleAccessTokenViaStrapi(access_token)
+          user = mapStrapiOAuthUser(strapiAuth?.user)
+          strapiJwt = strapiAuth?.jwt ?? null
 
-      // Sign a Strapi-compatible JWT
-      strapiJwt = jwt.sign({ id: user.id }, process.env.STRAPI_JWT_SECRET, { expiresIn: '7d' })
+          if (!user?.id || !strapiJwt) {
+            throw new Error('Strapi Google OAuth callback returned an incomplete session')
+          }
+
+          console.log('[googleSession] ✓ Strapi user created/found via OAuth callback:', user.email)
+        } catch (err) {
+          if (err.status === 429 || err.strapiError?.name === 'RateLimitError') {
+            return res.status(429).json({
+              error: 'Too many sign-in attempts. Please wait a minute and try again.',
+              code: 'RATE_LIMITED',
+            })
+          }
+
+          if (isGoogleAccountConflictError(err)) {
+            return res.status(409).json({
+              error:
+                'This email is already registered with password login. Please sign in with your password.',
+              code: 'LOCAL_ACCOUNT_USE_PASSWORD',
+            })
+          }
+
+          console.error('[googleSession] Strapi OAuth callback failed:', err.message)
+          throw err
+        }
+      } else {
+        // Existing Google user — sign a Strapi-compatible JWT locally
+        strapiJwt = jwt.sign({ id: user.id }, process.env.STRAPI_JWT_SECRET, { expiresIn: '7d' })
+      }
     }
 
     if (user && !isGoogleProvider(user.provider)) {
@@ -1037,6 +1196,7 @@ export const googleSession = async (req, res, next) => {
 
     res.json({ jwt: strapiJwt, user: sanitizeUser(user) })
   } catch (err) {
+    console.error('[googleSession] failed:', err.message, err.status ?? '')
     next(err)
   }
 }
