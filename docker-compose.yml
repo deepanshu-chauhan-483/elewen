@@ -23,8 +23,10 @@ services:
     image: redis:7-alpine
     container_name: elewen_redis
     restart: unless-stopped
+    # Bind to loopback only — API uses redis://redis:6379 on the Docker network.
+    # Avoids exposing Redis on the droplet's public IP (DO security notice).
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save ""
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
