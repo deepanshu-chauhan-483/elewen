@@ -611,10 +611,7 @@ const PlanEventSection = () => {
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
   const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
-  const resolvedMobileCardWidth = getResolvedMobileCardWidth(
-    carouselViewportWidth,
-    mobileCardWidth
-  )
+  const resolvedMobileCardWidth = getResolvedMobileCardWidth(carouselViewportWidth, mobileCardWidth)
 
   useEffect(() => {
     const viewport = carouselViewportRef.current
@@ -855,68 +852,68 @@ const PlanEventSection = () => {
               <div
                 ref={carouselViewportRef}
                 className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
-                  {...carouselTouch}
+                {...carouselTouch}
+                style={{
+                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                  WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
+                  transition:
+                    'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+              >
+                <div
+                  className="flex gap-4 md:gap-4 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
-                    maskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                    WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
-                    transition:
-                      'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+                    transform: isMobile
+                      ? getMobileCarouselTranslateX({
+                          totalItems: filteredCards.length,
+                          page: safePage,
+                          cardWidth: resolvedMobileCardWidth,
+                          cardGap: mobileCardGap,
+                        })
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
                   }}
                 >
-                  <div
-                    className="flex gap-4 md:gap-4 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
-                    style={{
-                      transform: isMobile
-                        ? getMobileCarouselTranslateX({
-                            totalItems: filteredCards.length,
-                            page: safePage,
-                            cardWidth: resolvedMobileCardWidth,
-                            cardGap: mobileCardGap,
-                          })
-                        : `translateX(-${safePage * carouselViewportWidth}px)`,
-                    }}
-                  >
-                    {filteredCards.map((card, i) => (
-                      <Link
-                        key={card.id ?? card.title}
-                        to={buildEventListingHref(
-                          card.categorySlug || activeCategorySlug,
-                          card.slug,
-                          card.id
-                        )}
-                        style={{
-                          '--delay': `${0.08 + i * 0.06}s`,
-                          width: isMobile
-                            ? `${resolvedMobileCardWidth}px`
-                            : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
-                        }}
-                        className="bg-white p-[10px] md:p-2.5 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
-                      >
-                        <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
-                          <img
-                            src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                            alt={card.title}
-                            className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
-                            loading="lazy"
-                          />
-                        </div>
+                  {filteredCards.map((card, i) => (
+                    <Link
+                      key={card.id ?? card.title}
+                      to={buildEventListingHref(
+                        card.categorySlug || activeCategorySlug,
+                        card.slug,
+                        card.id
+                      )}
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${resolvedMobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
+                      className="bg-white p-[10px] md:p-2.5 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                    >
+                      <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
+                        <img
+                          src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                          alt={card.title}
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                          loading="lazy"
+                        />
+                      </div>
 
-                        <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                          {' '}
-                          <h3
-                            className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase "
-                            style={{ fontFamily: "'Poppins'" }}
-                          >
-                            {card.title}
-                          </h3>
-                          <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins']">
-                            {card.tagline}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
+                        <h3
+                          className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase "
+                          style={{ fontFamily: "'Poppins'" }}
+                        >
+                          {card.title}
+                        </h3>
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins']">
+                          {card.tagline}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
+              </div>
 
               <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
@@ -1102,10 +1099,7 @@ const WhatToPlanSection = () => {
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
   const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
-  const resolvedMobileCardWidth = getResolvedMobileCardWidth(
-    carouselViewportWidth,
-    mobileCardWidth
-  )
+  const resolvedMobileCardWidth = getResolvedMobileCardWidth(carouselViewportWidth, mobileCardWidth)
 
   useEffect(() => {
     const viewport = carouselViewportRef.current
@@ -1306,55 +1300,55 @@ const WhatToPlanSection = () => {
                 className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
                 {...carouselTouch}
               >
-                  <div
-                    className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
-                    style={{
-                      transform: isMobile
-                        ? getMobileCarouselTranslateX({
-                            totalItems: filteredCards.length,
-                            page: safePage,
-                            cardWidth: resolvedMobileCardWidth,
-                            cardGap: mobileCardGap,
-                          })
-                        : `translateX(-${safePage * carouselViewportWidth}px)`,
-                    }}
-                  >
-                    {filteredCards.map((card, i) => (
-                      <Link
-                        key={card.id ?? card.title}
-                        to={buildServiceListingHref(card.slug ?? card.title)}
-                        className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
-                        style={{
-                          '--delay': `${0.08 + i * 0.06}s`,
-                          width: isMobile
-                            ? `${resolvedMobileCardWidth}px`
-                            : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
-                        }}
-                      >
-                        <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
-                          <img
-                            src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                            alt={card.title}
-                            className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
-                          />
-                        </div>
+                <div
+                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+                  style={{
+                    transform: isMobile
+                      ? getMobileCarouselTranslateX({
+                          totalItems: filteredCards.length,
+                          page: safePage,
+                          cardWidth: resolvedMobileCardWidth,
+                          cardGap: mobileCardGap,
+                        })
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
+                  }}
+                >
+                  {filteredCards.map((card, i) => (
+                    <Link
+                      key={card.id ?? card.title}
+                      to={buildServiceListingHref(card.slug ?? card.title)}
+                      className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${resolvedMobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
+                    >
+                      <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
+                        <img
+                          src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                          alt={card.title}
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                        />
+                      </div>
 
-                        <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] px-3 py-3 md:px-3 md:py-3 lg:p-3 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                          {' '}
-                          <h3
-                            className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']"
-                            style={{ fontFamily: "'Poppins'" }}
-                          >
-                            {card.title}
-                          </h3>
-                          <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
-                            {card.description}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] px-3 py-3 md:px-3 md:py-3 lg:p-3 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
+                        <h3
+                          className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']"
+                          style={{ fontFamily: "'Poppins'" }}
+                        >
+                          {card.title}
+                        </h3>
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
+                          {card.description}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
+              </div>
 
               <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
@@ -3631,10 +3625,7 @@ const PlanningGuidesSection = () => {
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
   const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
-  const resolvedMobileCardWidth = getResolvedMobileCardWidth(
-    carouselViewportWidth,
-    mobileCardWidth
-  )
+  const resolvedMobileCardWidth = getResolvedMobileCardWidth(carouselViewportWidth, mobileCardWidth)
 
   useEffect(() => {
     const viewport = carouselViewportRef.current
@@ -3812,63 +3803,63 @@ const PlanningGuidesSection = () => {
               <div
                 ref={carouselViewportRef}
                 className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
-                  {...carouselTouch}
+                {...carouselTouch}
+                style={{
+                  maskImage: isCarouselSliding ? edgeFadeMask : 'none',
+                  WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
+                  transition:
+                    'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+              >
+                <div
+                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
-                    maskImage: isCarouselSliding ? edgeFadeMask : 'none',
-                    WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
-                    transition:
-                      'mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1), -webkit-mask-image 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+                    transform: isMobile
+                      ? getMobileCarouselTranslateX({
+                          totalItems: filteredBlogs.length,
+                          page: safePage,
+                          cardWidth: resolvedMobileCardWidth,
+                          cardGap: mobileCardGap,
+                        })
+                      : `translateX(-${safePage * carouselViewportWidth}px)`,
                   }}
                 >
-                  <div
-                    className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
-                    style={{
-                      transform: isMobile
-                        ? getMobileCarouselTranslateX({
-                            totalItems: filteredBlogs.length,
-                            page: safePage,
-                            cardWidth: resolvedMobileCardWidth,
-                            cardGap: mobileCardGap,
-                          })
-                        : `translateX(-${safePage * carouselViewportWidth}px)`,
-                    }}
-                  >
-                    {filteredBlogs.map((blog, i) => (
-                      <Link
-                        key={blog.id ?? blog.title}
-                        to={`/blogs/${blog.slug}`}
-                        className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
-                        style={{
-                          '--delay': `${0.08 + i * 0.06}s`,
-                          width: isMobile
-                            ? `${resolvedMobileCardWidth}px`
-                            : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
-                        }}
-                      >
-                        <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
-                          <img
-                            src={
-                              blog.cover_image ??
-                              CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]
-                            }
-                            alt={blog.title}
-                            className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
-                          />
-                        </div>
+                  {filteredBlogs.map((blog, i) => (
+                    <Link
+                      key={blog.id ?? blog.title}
+                      to={`/blogs/${blog.slug}`}
+                      className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      style={{
+                        '--delay': `${0.08 + i * 0.06}s`,
+                        width: isMobile
+                          ? `${resolvedMobileCardWidth}px`
+                          : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
+                      }}
+                    >
+                      <div className="flex-1 rounded-[8px] md:rounded-t-[16px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
+                        <img
+                          src={
+                            blog.cover_image ??
+                            CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]
+                          }
+                          alt={blog.title}
+                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                        />
+                      </div>
 
-                        <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:px-6 md:py-5 lg:p-7 h-[120px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                          {' '}
-                          <h3
-                            className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none"
-                            style={{ fontFamily: 'Poppins' }}
-                          >
-                            {blog.title}
-                          </h3>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#727355] md:bg-[#787A5E] rounded-[8px] md:rounded-[16px] px-[16px] py-[16px] md:px-6 md:py-5 lg:p-7 h-[120px] md:h-[158px] lg:h-[170px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        {' '}
+                        <h3
+                          className="text-white font-medium md:font-semibold text-[15px] md:text-[17px] mb-1.5 md:mb-2.5 tracking-wide font-['Poppins'] line-clamp-2 md:line-clamp-none"
+                          style={{ fontFamily: 'Poppins' }}
+                        >
+                          {blog.title}
+                        </h3>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
+              </div>
 
               <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
                 <button
