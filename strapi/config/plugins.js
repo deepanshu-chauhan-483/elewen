@@ -1,6 +1,6 @@
 'use strict';
 
-const { buildSmtpTransportOptions } = require('./email-smtp.cjs');
+const { buildSmtpTransportOptions } = require('./email-smtp.js');
 
 module.exports = ({ env }) => ({
   // Cloudflare R2 image uploads.
