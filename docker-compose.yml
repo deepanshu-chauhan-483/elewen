@@ -198,61 +198,6 @@ services:
       api:
         condition: service_healthy
 
-  nginx:
-    image: nginx:alpine
-    container_name: elewen_nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - certbot_www:/var/www/certbot:ro
-      - certbot_conf:/etc/letsencrypt:ro
-    depends_on:
-      - frontend
-      - admin-panel
-      - api
-      - strapi
-    healthcheck:
-      # nginx:alpine has no wget/curl; verify master process is running
-      test: ["CMD-SHELL", "nginx -t >/dev/null 2>&1 && test -s /var/run/nginx.pid && kill -0 $(cat /var/run/nginx.pid)"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 20s
-
-  certbot:
-    image: certbot/certbot:latest
-    container_name: elewen_certbot
-    profiles:
-      - manual
-    volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-
-  certbot-renew:
-    image: certbot/certbot:latest
-    container_name: elewen_certbot_renew
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      CERTBOT_DRY_RUN: ${CERTBOT_DRY_RUN:-0}
-      CERTBOT_RENEW_INTERVAL: ${CERTBOT_RENEW_INTERVAL:-43200}
-      NGINX_CONTAINER_NAME: elewen_nginx
-    volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-      - ./scripts/ssl/renew-entrypoint.sh:/renew-entrypoint.sh:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    entrypoint: /bin/sh
-    command: /renew-entrypoint.sh
-    depends_on:
-      nginx:
-        condition: service_healthy
-
 volumes:
   postgres_data:
   strapi_uploads:
-  certbot_conf:
-  certbot_www:
