@@ -1,14 +1,26 @@
 import nodemailer from 'nodemailer'
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: false, // STARTTLS
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-})
+const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails'
+
+const buildSmtpTransporter = () => {
+  const port = Number(process.env.SMTP_PORT || 587)
+
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure: port === 465,
+    requireTLS: port === 587,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  })
+}
+
+const formatAddress = value => {
+  if (!value) return undefined
+  return process.env.SMTP_FROM_NAME ? `${process.env.SMTP_FROM_NAME} <${value}>` : value
+}
 
 const FROM = process.env.SMTP_FROM || 'deepanshuchauhan483@gmail.com'
 
@@ -209,14 +221,49 @@ export const templates = {
 }
 
 // ─── Send email ───────────────────────────────────────────────────────────────
-export const sendEmail = async (to, subject, html) => {
+const sendEmailWithSmtp = async (to, subject, html) => {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.warn('[email] SMTP not configured — skipping email to', to)
     return
   }
   try {
+    const transporter = buildSmtpTransporter()
     await transporter.sendMail({ from: FROM, to, subject, html })
   } catch (err) {
     console.error('[email] Failed to send to', to, err?.message)
+  }
+}
+
+export const sendEmail = async (to, subject, html) => {
+  if (!process.env.RESEND_API_KEY) {
+    return sendEmailWithSmtp(to, subject, html)
+  }
+
+  try {
+    const response = await fetch(RESEND_EMAIL_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: formatAddress(FROM),
+        to,
+        subject,
+        html,
+        reply_to: process.env.SMTP_REPLY_TO || undefined,
+      }),
+    })
+
+    const payload = await response.json().catch(() => null)
+    if (!response.ok) {
+      throw new Error(
+        payload?.message || payload?.error || `Resend failed with HTTP ${response.status}`
+      )
+    }
+
+    return payload
+  } catch (err) {
+    console.error('[email] Resend failed to send to', to, err?.message)
   }
 }

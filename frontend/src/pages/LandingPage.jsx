@@ -1632,7 +1632,13 @@ const iconByIndex = index => {
 const normalizeText = value => (value == null ? '' : String(value))
 
 const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
-  const { data: howItWorks = { title: '', sections: [] } } = useHowItWorksLandingPage()
+  const {
+    data: howItWorks = { title: '', sections: [] },
+    isPlaceholderData,
+  } = useHowItWorksLandingPage()
+  // Wait for the real CMS content before revealing — avoids the fallback text
+  // flashing in and then getting swapped for the real titles/descriptions.
+  const dataReady = !isPlaceholderData
   const [activeStepIndex, setActiveStepIndex] = useState(0)
 
   const steps = useMemo(() => {
@@ -1688,7 +1694,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   ScrollTrigger.config({ limitCallbacks: true, ignoreMobileResize: true })
 
   useLayoutEffect(() => {
-    if (disableScrollAnimations || !isVisible) return
+    if (disableScrollAnimations || !isVisible || !dataReady) return
     const container = containerRef.current
     const stepsWrap = stepsWrapRef.current
     if (!container || !stepsWrap) return
@@ -1901,7 +1907,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       ctx.revert()
       observer.disconnect()
     }
-  }, [disableScrollAnimations, isVisible, steps.length])
+  }, [disableScrollAnimations, isVisible, dataReady, steps.length])
 
   return (
     <section

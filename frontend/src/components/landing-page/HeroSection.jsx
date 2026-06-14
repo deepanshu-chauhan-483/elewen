@@ -162,6 +162,8 @@ const HeroSection = () => {
   const preloaderRef = useRef(null)
   const darkOverlayRef = useRef(null)
   const videoWrapperRef = useRef(null)
+  const videoRef = useRef(null)
+  const videoNaturalRef = useRef({ w: 0, h: 0 })
   const contentRef = useRef(null)
   const lenisRef = useLenis()
 
@@ -483,6 +485,24 @@ const HeroSection = () => {
       vw.style.borderRadius = `${topR}px ${topR}px ${s.vidR}px ${s.vidR}px`
       vw.style.transform = s.vidScale !== 1 ? `scale(${s.vidScale})` : 'none'
 
+      // Manually compute "cover" sizing for the video element. Some source videos
+      // (e.g. portrait-oriented clips) aren't fitted correctly by object-fit: cover
+      // when the wrapper's aspect ratio swings widely during the shrink animation,
+      // leaving letterbox gaps. Sizing explicitly avoids that.
+      // Reads videoWidth/videoHeight live (not just the cached onLoadedMetadata
+      // value) and falls back to a 16:9 guess before metadata is available, so
+      // large/TV displays — where object-fit support or metadata timing can be
+      // unreliable — never show a letterboxed video.
+      const video = videoRef.current
+      if (video) {
+        const nat = videoNaturalRef.current
+        const natW = video.videoWidth || nat.w || 16
+        const natH = video.videoHeight || nat.h || 9
+        const coverScale = Math.max(s.vidW / natW, s.vidH / natH)
+        video.style.width = `${natW * coverScale}px`
+        video.style.height = `${natH * coverScale}px`
+      }
+
       cr.style.transform = `translateY(${s.contentY}px)`
       cr.style.opacity = s.contentOpacity
       const anyVisible = Object.values(s.scrollOut).some(so => so.opacity > 0.05)
@@ -674,6 +694,7 @@ const HeroSection = () => {
           }}
         >
           <video
+            ref={videoRef}
             key={heroVideoSrc}
             autoPlay
             muted
@@ -681,15 +702,21 @@ const HeroSection = () => {
             playsInline
             preload="auto"
             src={heroVideoSrc}
+            onLoadedMetadata={e => {
+              const v = e.currentTarget
+              videoNaturalRef.current = { w: v.videoWidth || 0, h: v.videoHeight || 0 }
+            }}
             onError={() => {
               // Helps diagnose "video not showing" vs "video offscreen" during hero animations.
               console.error('Hero video failed to load:', heroVideoSrc)
             }}
             style={{
               position: 'absolute',
-              inset: 0,
+              top: '50%',
+              left: '50%',
               width: '100%',
               height: '100%',
+              transform: 'translate(-50%, -50%)',
               objectFit: 'cover',
             }}
           />

@@ -10,10 +10,14 @@ export const CATERING_MENU_FALLBACK = {
     { name: 'Dahi Bhalla', dietary: 'veg', sort_order: 2 },
     { name: 'Hara Bhara Kebab', dietary: 'veg', sort_order: 3 },
     { name: 'Paneer Tikka', dietary: 'veg', sort_order: 4 },
+    { name: 'Veg Manchurian', dietary: 'veg', sort_order: 5 },
   ],
   starters_non_veg: [
     { name: 'Chicken Tikka', dietary: 'non_veg', sort_order: 1 },
     { name: 'Mutton Seekh Kebab', dietary: 'non_veg', sort_order: 2 },
+    { name: 'Chicken Seekh Kebab', dietary: 'non_veg', sort_order: 3 },
+    { name: 'Chennai Chicken 65', dietary: 'non_veg', sort_order: 4 },
+    { name: 'Crispy Honey Chicken', dietary: 'non_veg', sort_order: 5 },
   ],
   main_course_veg: [
     { name: 'Paneer Butter Masala', dietary: 'veg', sort_order: 1 },

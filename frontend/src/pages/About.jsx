@@ -179,8 +179,12 @@ const About = () => {
         const vh = window.innerHeight
         const totalLength = path.getTotalLength()
 
+        // Use the section's real rendered height (not a fixed reference value) so
+        // progress tracking stays accurate across screen sizes/aspect ratios.
+        const sectionHeight = section.offsetHeight || SECTION_HEIGHT
+
         // Map section scroll through viewport to 0â1 progress
-        const progress = Math.max(0, Math.min(1, -rect.top / (SECTION_HEIGHT - vh)))
+        const progress = Math.max(0, Math.min(1, -rect.top / (sectionHeight - vh)))
 
         const dist = progress * totalLength
         const pt = path.getPointAtLength(dist)
@@ -189,16 +193,19 @@ const About = () => {
         const scaleY = svgRect.height / 3986
         const viewX = svgRect.left + pt.x * scaleX
         const viewY = svgRect.top + pt.y * scaleY
+        // Scale the traced object with the SVG's rendered size so it shrinks/grows
+        // in proportion to the path on every screen size instead of staying fixed.
+        const objSize = OBJ_SIZE * ((scaleX + scaleY) / 2)
 
-        const inView = rect.top < vh && rect.top + SECTION_HEIGHT > 0
+        const inView = rect.top < vh && rect.top + sectionHeight > 0
         setObjStyle({
           display: inView ? 'block' : 'none',
           position: 'fixed',
           left: `${viewX}px`,
           top: `${viewY}px`,
           transform: `translate(-50%, -50%)`,
-          width: `${OBJ_SIZE}px`,
-          height: `${OBJ_SIZE}px`,
+          width: `${objSize}px`,
+          height: `${objSize}px`,
           pointerEvents: 'none',
           zIndex: 9999,
         })

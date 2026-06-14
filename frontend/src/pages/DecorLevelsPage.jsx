@@ -39,15 +39,13 @@ function RowArrow({ direction = 'left' }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="36"
-      height="36"
       viewBox="0 0 36 36"
       fill="none"
-      className={rotationClass}
+      className={`h-6 w-6 md:h-9 md:w-9 ${rotationClass}`}
     >
       <path
         d="M7.5 18H28.5M28.5 18L18 28.5M28.5 18L18 7.5"
-        stroke="#2D2D2D"
+        stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2.5"
@@ -253,11 +251,11 @@ export default function DecorLevelsPage() {
 
               <div className="relative overflow-visible">
                 {visiblePackages.length > 0 ? (
-                  <div className="grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2 sm:justify-items-stretch lg:grid-cols-3">
+                  <div className="mx-auto grid w-[min(322px,calc(100vw-5.5rem))] grid-cols-1 justify-items-center gap-4 md:w-full sm:grid-cols-2 sm:justify-items-stretch lg:grid-cols-3">
                     {visiblePackages.map((pkg, index) => (
                       <div
                         key={`${level.id}-${pkg.id ?? pkg.title}-${index}`}
-                        className="w-full max-w-[250px] md:max-w-none"
+                        className="w-full max-w-[322px] md:max-w-none"
                       >
                         <PackageCard
                           pkg={pkg}
@@ -268,7 +266,7 @@ export default function DecorLevelsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-[18px] border border-[#DDD7CE] px-6 py-8 text-[#1C1C1C]">
+                  <div className="mx-auto w-[min(322px,calc(100vw-5.5rem))] rounded-[18px] border border-[#DDD7CE] px-6 py-8 text-[#1C1C1C] md:w-full">
                     <p
                       className="text-[16px] leading-[1.5]"
                       style={{ fontFamily: "'Poppins', sans-serif" }}
@@ -284,7 +282,7 @@ export default function DecorLevelsPage() {
                     type="button"
                     onClick={handlePrev}
                     disabled={isPrevDisabled || visiblePackages.length === 0}
-                    className={`pointer-events-auto absolute left-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E7E0DA] pl-2 text-black transition-all ${
+                    className={`pointer-events-auto absolute left-0 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-end rounded-full bg-[#ECE7DC] px-2 text-[#CDB17E] transition-all md:h-[104px] md:w-[52px] md:translate-x-0 md:justify-center md:rounded-r-full md:bg-[#E7E0DA] md:pl-2 md:pr-0 md:text-black ${
                       isPrevDisabled || visiblePackages.length === 0
                         ? 'cursor-not-allowed opacity-40'
                         : 'hover:bg-[#D9D0C4]'
@@ -298,7 +296,7 @@ export default function DecorLevelsPage() {
                     type="button"
                     onClick={handleNext}
                     disabled={isNextDisabled || visiblePackages.length === 0}
-                    className={`pointer-events-auto absolute right-0 top-1/2 z-20 flex h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E7E0DA] pr-2 text-black transition-all ${
+                    className={`pointer-events-auto absolute right-0 top-1/2 z-20 flex h-16 w-16 translate-x-1/2 -translate-y-1/2 items-center justify-start rounded-full bg-[#ECE7DC] px-2 text-[#CDB17E] transition-all md:h-[104px] md:w-[52px] md:translate-x-0 md:justify-center md:rounded-l-full md:bg-[#E7E0DA] md:pl-0 md:pr-2 md:text-black ${
                       isNextDisabled || visiblePackages.length === 0
                         ? 'cursor-not-allowed opacity-40'
                         : 'hover:bg-[#D9D0C4]'

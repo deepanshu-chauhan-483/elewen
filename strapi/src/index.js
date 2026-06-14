@@ -1,10 +1,74 @@
 'use strict';
 
+const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
+
+function normalizeAddress(value) {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map(normalizeAddress).filter(Boolean);
+  if (value.email) {
+    return value.name ? `${value.name} <${value.email}>` : value.email;
+  }
+  return undefined;
+}
+
 module.exports = {
   register({ strapi }) {
     // Register custom services, controllers, routes here
   },
   async bootstrap({ strapi }) {
+    if (process.env.RESEND_API_KEY) {
+      const emailService = strapi.plugin('email')?.service('email');
+      const originalSend = emailService?.send?.bind(emailService);
+
+      if (emailService && originalSend) {
+        emailService.send = async options => {
+          const from =
+            normalizeAddress(options.from) ||
+            process.env.SMTP_FROM ||
+            'onboarding@resend.dev';
+          const to = normalizeAddress(options.to);
+
+          if (!to) {
+            throw new Error('Resend email requires a recipient.');
+          }
+
+          const response = await fetch(RESEND_EMAIL_API_URL, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from,
+              to,
+              cc: normalizeAddress(options.cc),
+              bcc: normalizeAddress(options.bcc),
+              reply_to: normalizeAddress(
+                options.replyTo || options.reply_to || process.env.SMTP_REPLY_TO
+              ),
+              subject: options.subject,
+              html: options.html,
+              text: options.text,
+            }),
+          });
+
+          const payload = await response.json().catch(() => null);
+          if (!response.ok) {
+            throw new Error(
+              payload?.message ||
+                payload?.error ||
+                `Resend email failed with HTTP ${response.status}`
+            );
+          }
+
+          return payload;
+        };
+
+        strapi.log.info('[email] Using Resend HTTPS API for transactional emails.');
+      }
+    }
+
     const publicUrl = process.env.PUBLIC_URL || strapi.config.get('server.url') || 'http://localhost:1337';
     const frontendUrl =
       process.env.FRONTEND_URL ||

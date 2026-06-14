@@ -1,8 +1,8 @@
 /**
- * Test SMTP from strapi/.env — run: npm run test:smtp
+ * Test email from strapi/.env — run: npm run test:smtp
  *
  * Gmail: SMTP_PROVIDER=gmail + SMTP_USER + SMTP_PASS (App Password)
- * Resend: SMTP_PROVIDER=resend + RESEND_API_KEY (get key at resend.com/api-keys)
+ * Resend: SMTP_PROVIDER=resend + RESEND_API_KEY (uses HTTPS API to avoid SMTP port blocks)
  */
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { buildSmtpTransportOptions } = require('../config/email-smtp.cjs')
+const { buildSmtpTransportOptions } = require('../config/email-smtp.js')
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const envPath = path.join(__dirname, '../.env')
@@ -19,6 +19,48 @@ const envPath = path.join(__dirname, '../.env')
 dotenv.config({ path: envPath })
 
 const get = key => process.env[key] ?? ''
+const providerName = String(process.env.SMTP_PROVIDER || '').toLowerCase()
+
+if (process.env.RESEND_API_KEY && providerName !== 'gmail') {
+  const from = process.env.SMTP_FROM || 'onboarding@resend.dev'
+  const to = process.env.SMTP_TEST_TO || from
+
+  try {
+    console.log('Email provider: resend')
+    console.log('Transport: HTTPS API')
+    console.log('RESEND_API_KEY set:', true, 'length:', process.env.RESEND_API_KEY.length)
+    console.log('Sending test email to', to, 'from', from)
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to,
+        subject: 'Elewen Resend test',
+        text: 'If you receive this, sign-up confirmation emails can use Resend HTTPS.',
+        reply_to: process.env.SMTP_REPLY_TO || undefined,
+      }),
+    })
+
+    const payload = await response.json().catch(() => null)
+    if (!response.ok) {
+      throw new Error(
+        payload?.message || payload?.error || `Resend failed with HTTP ${response.status}`
+      )
+    }
+
+    console.log('Sent:', payload?.id || '(no id returned)')
+    console.log('Resend is configured correctly.')
+    process.exit(0)
+  } catch (e) {
+    console.error('\nResend failed:', e.message)
+    process.exit(1)
+  }
+}
 
 if (!process.env.SMTP_PASS && !process.env.RESEND_API_KEY) {
   console.error(

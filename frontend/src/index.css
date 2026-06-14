@@ -1,6 +1,6 @@
 @import 'tailwindcss';
-/* Import Poppins from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
+/* Poppins is preloaded via <link> tags in index.html (avoids a render-blocking
+   @import nested inside this bundled CSS file). */
 
 @font-face {
   font-family: 'Malgin';

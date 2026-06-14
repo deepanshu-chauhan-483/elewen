@@ -13,6 +13,8 @@ services:
       - "15432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/sync-password.sh:/usr/local/bin/sync-password.sh:ro
+    entrypoint: ["sh", "/usr/local/bin/sync-password.sh"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
@@ -82,7 +84,7 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
-      SMTP_PROVIDER: ${SMTP_PROVIDER:-gmail}
+      SMTP_PROVIDER: ${SMTP_PROVIDER:-resend}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Elewen}
       SMTP_REPLY_TO: ${SMTP_REPLY_TO:-}
@@ -141,6 +143,10 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
+      SMTP_PROVIDER: ${SMTP_PROVIDER:-resend}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Elewen}
+      SMTP_REPLY_TO: ${SMTP_REPLY_TO:-}
     ports:
       - "3000:3000"
     healthcheck:

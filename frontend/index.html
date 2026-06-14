@@ -6,6 +6,14 @@
     <meta name="theme-color" content="#FAFAF8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1C1C1C" media="(prefers-color-scheme: dark)" />
     <title>Elewen</title>
+    <!-- Discover + fetch the body font in parallel with the app bundle instead of
+         nesting it inside the bundled CSS (which would block on CSS parsing first) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap"
+    />
     <!-- Favicon: dark logo on light browser UI, white logo on dark browser UI -->
     <link
       rel="icon"

@@ -20,7 +20,7 @@ function EventCarouselArrow({ direction = 'left' }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className={`h-9 w-9 ${rotationClass}`}
+      className={`h-6 w-6 md:h-9 md:w-9 ${rotationClass}`}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
@@ -154,7 +154,7 @@ export default function EventPage() {
             type="button"
             onClick={goPrev}
             disabled={safePageIndex === 0}
-            className="absolute left-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-r-full bg-[#E6DDD3] pl-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:flex"
+            className="absolute left-0 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-end rounded-full bg-[#ECE7DC] px-2 text-[#CDB17E] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:h-[104px] md:w-[52px] md:translate-x-0 md:justify-center md:rounded-r-full md:bg-[#E6DDD3] md:pl-2 md:pr-0 md:text-[#7C7065]"
             aria-label="Previous cards"
           >
             <EventCarouselArrow direction="left" />
@@ -178,7 +178,7 @@ export default function EventPage() {
             type="button"
             onClick={goNext}
             disabled={safePageIndex >= totalPages - 1}
-            className="absolute right-0 top-1/2 z-20 hidden h-[104px] w-[52px] -translate-y-1/2 items-center justify-center rounded-l-full bg-[#E6DDD3] pr-2 text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:flex"
+            className="absolute right-0 top-1/2 z-20 flex h-16 w-16 translate-x-1/2 -translate-y-1/2 items-center justify-start rounded-full bg-[#ECE7DC] px-2 text-[#CDB17E] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:h-[104px] md:w-[52px] md:translate-x-0 md:justify-center md:rounded-l-full md:bg-[#E6DDD3] md:pl-0 md:pr-2 md:text-[#7C7065]"
             aria-label="Next cards"
           >
             <EventCarouselArrow direction="right" />

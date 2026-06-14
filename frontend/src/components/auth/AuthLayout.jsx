@@ -26,7 +26,7 @@ export default function AuthLayout({ activeTab = 'login', title, subtitle, child
   }, [])
 
   return (
-    <div className="flex h-screen w-full overflow-hidden font-sans ">
+    <div className="flex h-[100svh] w-full overflow-hidden font-sans lg:h-screen">
       {/* LEFT IMAGE SECTION */}
       <div className="hidden p-5 lg:flex lg:flex-[1.08]">
         <div
@@ -82,7 +82,11 @@ export default function AuthLayout({ activeTab = 'login', title, subtitle, child
             </div>
 
             {/* 🔥 FOOTER STICKS TO BOTTOM */}
-            {footer && <div className="mt-auto pt-10 text-center">{footer}</div>}
+            {footer && (
+              <div className="mt-8 shrink-0 pb-[max(16px,env(safe-area-inset-bottom))] text-center min-[540px]:mt-auto min-[540px]:pt-10 min-[540px]:pb-0">
+                {footer}
+              </div>
+            )}
           </div>
         </div>
       </div>
