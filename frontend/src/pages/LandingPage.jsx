@@ -1632,10 +1632,8 @@ const iconByIndex = index => {
 const normalizeText = value => (value == null ? '' : String(value))
 
 const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
-  const {
-    data: howItWorks = { title: '', sections: [] },
-    isPlaceholderData,
-  } = useHowItWorksLandingPage()
+  const { data: howItWorks = { title: '', sections: [] }, isPlaceholderData } =
+    useHowItWorksLandingPage()
   // Wait for the real CMS content before revealing — avoids the fallback text
   // flashing in and then getting swapped for the real titles/descriptions.
   const dataReady = !isPlaceholderData

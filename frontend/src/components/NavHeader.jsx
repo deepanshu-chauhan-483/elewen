@@ -524,7 +524,11 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               </svg>
             </button>
             {shouldShowNavbarCart ? (
-              <CartButton count={itemCount} className="text-inherit" iconColor={isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor} />
+              <CartButton
+                count={itemCount}
+                className="text-inherit"
+                iconColor={isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor}
+              />
             ) : null}
             <button
               onClick={() => setOpen(true)}
