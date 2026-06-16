@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, Children } from 'react'
 import { useAboutPage } from '../hooks/useCmsPages'
 import tangledIllustration from '../assets/images/tangled-lights.png'
 import objectImg from '../assets/Object.png'
@@ -61,7 +61,7 @@ const Img = ({ src, alt = '', className = '', style, ...rest }) => (
 
 function MobileStorySlide({ heading, body, imageSrc, imageAlt, revealDelay = '0.1s' }) {
   return (
-    <div className="flex w-full shrink-0 snap-start px-2 justify-center">
+    <div className="flex w-full shrink-0 basis-full justify-center px-2">
       <div className="flex w-full max-w-[420px] flex-col gap-4 text-center">
         <div className="flex flex-col">
           <h2
@@ -89,6 +89,90 @@ function MobileStorySlide({ heading, body, imageSrc, imageAlt, revealDelay = '0.
         ) : (
           <div className="w-full aspect-[4/3] rounded-[20px] bg-white/10" aria-hidden="true" />
         )}
+      </div>
+    </div>
+  )
+}
+
+const MOBILE_STORY_SWIPE_THRESHOLD = 48
+
+function MobileStoryCarousel({ activeIndex, onActiveIndexChange, children }) {
+  const carouselRef = useRef(null)
+  const touchRef = useRef({ startX: 0, startY: 0, lock: null })
+  const [dragOffset, setDragOffset] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const slideCount = Children.count(children)
+
+  useEffect(() => {
+    const el = carouselRef.current
+    if (!el) return
+
+    const onTouchStart = e => {
+      const touch = e.touches[0]
+      touchRef.current = { startX: touch.clientX, startY: touch.clientY, lock: null }
+      setIsDragging(false)
+      setDragOffset(0)
+    }
+
+    const onTouchMove = e => {
+      const touch = e.touches[0]
+      const dx = touch.clientX - touchRef.current.startX
+      const dy = touch.clientY - touchRef.current.startY
+
+      if (touchRef.current.lock === null) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+        touchRef.current.lock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+        if (touchRef.current.lock === 'y') return
+        setIsDragging(true)
+      }
+
+      if (touchRef.current.lock !== 'x') return
+
+      let offset = dx
+      if (activeIndex === 0 && offset > 0) offset *= 0.35
+      if (activeIndex === slideCount - 1 && offset < 0) offset *= 0.35
+      setDragOffset(offset)
+      e.preventDefault()
+    }
+
+    const onTouchEnd = e => {
+      if (touchRef.current.lock === 'x') {
+        const dx = e.changedTouches[0].clientX - touchRef.current.startX
+        if (dx < -MOBILE_STORY_SWIPE_THRESHOLD && activeIndex < slideCount - 1) {
+          onActiveIndexChange(activeIndex + 1)
+        } else if (dx > MOBILE_STORY_SWIPE_THRESHOLD && activeIndex > 0) {
+          onActiveIndexChange(activeIndex - 1)
+        }
+      }
+
+      touchRef.current.lock = null
+      setIsDragging(false)
+      setDragOffset(0)
+    }
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    el.addEventListener('touchend', onTouchEnd, { passive: true })
+    el.addEventListener('touchcancel', onTouchEnd, { passive: true })
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+      el.removeEventListener('touchcancel', onTouchEnd)
+    }
+  }, [activeIndex, onActiveIndexChange, slideCount])
+
+  return (
+    <div ref={carouselRef} className="w-full overflow-hidden touch-pan-y">
+      <div
+        className="flex w-full"
+        style={{
+          transform: `translateX(calc(-${activeIndex * 100}% + ${dragOffset}px))`,
+          transition: isDragging ? 'none' : 'transform 300ms ease-out',
+        }}
+      >
+        {children}
       </div>
     </div>
   )
@@ -142,7 +226,6 @@ const About = () => {
   const sectionRef = useRef(null)
   const subTask2Ref = useRef(null)
   const subTask6Ref = useRef(null)
-  const mobileStoryCarouselRef = useRef(null)
   const svgRef = useRef(null)
   const pathRef = useRef(null)
   const animRef = useRef(null)
@@ -173,21 +256,6 @@ const About = () => {
       .querySelectorAll('.reveal-wrapper, .anim-element, .card-reveal')
       .forEach(el => observer.observe(el))
     return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    const el = mobileStoryCarouselRef.current
-    if (!el) return
-
-    const onScroll = () => {
-      const width = el.clientWidth || 1
-      const next = Math.round(el.scrollLeft / width)
-      setMobileStorySlide(next)
-    }
-
-    el.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
   useEffect(() => {
@@ -479,9 +547,9 @@ const About = () => {
             <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[661px]:pt-24 lg:pt-28 min-[661px]:pb-32 lg:pb-36">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
               <div className="flex w-full flex-col items-center mt-15 min-[661px]:hidden">
-                <div
-                  ref={mobileStoryCarouselRef}
-                  className="flex w-full items-start overflow-x-auto overflow-y-hidden overscroll-y-none touch-pan-x snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                <MobileStoryCarousel
+                  activeIndex={mobileStorySlide}
+                  onActiveIndexChange={setMobileStorySlide}
                 >
                   <MobileStorySlide
                     heading={sq.heading ?? 'We Asked a Simple Question'}
@@ -502,28 +570,21 @@ const About = () => {
                     imageAlt="Details"
                     revealDelay="0.18s"
                   />
-                </div>
+                </MobileStoryCarousel>
 
                 <div className="flex justify-center gap-2 mt-6 w-full">
                   <button
                     type="button"
-                    onClick={() => {
-                      mobileStoryCarouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' })
-                      setMobileStorySlide(0)
-                    }}
+                    aria-label="Show first story slide"
+                    onClick={() => setMobileStorySlide(0)}
                     className={`h-[5px] rounded-full transition-all duration-300 ${
                       mobileStorySlide === 0 ? 'w-[26px] bg-white' : 'w-[14px] bg-white/40'
                     }`}
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      setMobileStorySlide(1)
-                      mobileStoryCarouselRef.current?.scrollTo({
-                        left: mobileStoryCarouselRef.current?.clientWidth || 0,
-                        behavior: 'smooth',
-                      })
-                    }}
+                    aria-label="Show second story slide"
+                    onClick={() => setMobileStorySlide(1)}
                     className={`h-[5px] rounded-full transition-all duration-300 ${
                       mobileStorySlide === 1 ? 'w-[26px] bg-white' : 'w-[14px] bg-white/40'
                     }`}
