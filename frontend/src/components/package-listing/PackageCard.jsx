@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
 import BrandedImage from '../common/BrandedImage'
+import { preloadImages } from '../../utils/preloadAssets'
 
 function ImageDots({ count, currentIndex = 0 }) {
   if (count <= 1) return null
@@ -68,6 +69,12 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
   const currentImage = images[currentIndex]
   const saved = isSaved(wishlistPackageId)
   const isWishlistPending = String(pendingPackageId) === String(wishlistPackageId)
+
+  useEffect(() => {
+    if (!images.length) return
+    preloadImages(images)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pkg.id, pkg.documentId, images.length])
   const tags = useMemo(() => {
     if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
     if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
@@ -100,13 +107,11 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowAllIncludes(false)
   }, [pkg.id, pkg.documentId, tags.length, isDesktopViewport, compactMode])
 
   useEffect(() => {
     if (showAllIncludes) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisibleTagCount(tags.length)
       return undefined
     }

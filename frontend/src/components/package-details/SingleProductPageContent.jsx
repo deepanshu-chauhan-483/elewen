@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
 import PackageCard from '../package-listing/PackageCard'
+import AppImage from '../common/AppImage'
+import { preloadImages } from '../../utils/preloadAssets'
 
 function QuantityControl({ quantity, onDecrement, onIncrement }) {
   return (
@@ -271,6 +273,11 @@ function ProductImageLayout({
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
   const sideImagesMaxHeight = 'calc((clamp(5.125rem, 6.5vw, 6.4375rem) * 5) + 2rem)'
 
+  useEffect(() => {
+    const urls = [mainImage, ...sideImages].filter(Boolean)
+    preloadImages(urls)
+  }, [mainImage, sideImages])
+
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
       <NavHeader />
@@ -297,9 +304,10 @@ function ProductImageLayout({
                 }}
               >
                 <div className="relative">
-                  <img
+                  <AppImage
                     src={activeImage}
                     alt={title}
+                    eager
                     className="h-auto w-full max-h-[min(70vh,32rem)] border-l-2 border-r-2 border-b-2 border-[#727355] md:max-h-none md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:object-cover"
                   />
 
@@ -378,7 +386,7 @@ function ProductImageLayout({
                     }`}
                     aria-label={`Show ${title} preview ${index + 1}`}
                   >
-                    <img
+                    <AppImage
                       src={image}
                       alt={`${title} preview ${index + 1}`}
                       className="h-full w-full rounded-[14px] object-cover"

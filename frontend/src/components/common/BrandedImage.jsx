@@ -1,5 +1,5 @@
 import { useState } from 'react'
-// import navLogo from '../../assets/images/navbar.png'
+import AppImage from './AppImage'
 
 const POSITION_MAP = {
   'bottom-left': 'bottom-2 left-2',
@@ -34,13 +34,13 @@ export default function BrandedImage({
   imgClassName = '',
   logoClassName = '',
 }) {
-  const [activeSrc, setActiveSrc] = useState(src)
-  const [usedFallback, setUsedFallback] = useState(false)
+  const [failedSources, setFailedSources] = useState({})
+  const hasFailed = Boolean(src) && Boolean(failedSources[src])
+  const activeSrc = hasFailed && fallbackSrc ? fallbackSrc : src
 
   const handleError = () => {
-    if (fallbackSrc && !usedFallback) {
-      setUsedFallback(true)
-      setActiveSrc(fallbackSrc)
+    if (src && fallbackSrc && !hasFailed) {
+      setFailedSources(prev => ({ ...prev, [src]: true }))
     }
   }
 
@@ -49,10 +49,10 @@ export default function BrandedImage({
   return (
     <div className={`relative overflow-hidden ${className}`}>
       {/* Main image — src comes directly from Strapi, nothing modified */}
-      <img
+      <AppImage
         src={activeSrc}
         alt={alt}
-        loading={eager ? 'eager' : 'lazy'}
+        eager={eager}
         onError={handleError}
         className={`w-full h-full object-cover ${imgClassName}`}
       />

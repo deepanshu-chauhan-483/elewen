@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { PACKAGES_FALLBACK } from '../data/packages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
+import { preloadImages } from '../utils/preloadAssets'
 
 const blocksToText = blocks => {
   if (!blocks) return ''
@@ -470,7 +471,15 @@ async function fetchPackages(params = {}) {
     pages.push(Array.isArray(response?.data) ? response.data : [])
   }
 
-  return pages.flat().map((pkg, index) => normalizePackage(pkg, index))
+  const packages = pages.flat().map((pkg, index) => normalizePackage(pkg, index))
+
+  preloadImages(
+    packages
+      .flatMap(pkg => (Array.isArray(pkg.images) ? pkg.images : []).slice(0, 3))
+      .filter(Boolean)
+  )
+
+  return packages
 }
 
 export function usePackages() {
@@ -504,7 +513,9 @@ export function usePackageById(packageId) {
         : { 'filters[documentId][$eq]': String(packageId) }
 
       const items = await fetchPackages(filters)
-      return items[0] ?? null
+      const pkg = items[0] ?? null
+      if (pkg?.images?.length) preloadImages(pkg.images)
+      return pkg
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,

@@ -3,6 +3,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import PlannerImage from './PlannerImage'
+import { preloadImages } from '../../utils/preloadAssets'
 
 import img1 from '../../assets/images/IMG_9814.jpg'
 import img2 from '../../assets/images/IMG_3148.jpg'
@@ -14,15 +15,6 @@ import img7 from '../../assets/images/IMG_0749.jpg'
 import img8 from '../../assets/images/IMG_3903.jpg'
 
 gsap.registerPlugin(ScrollTrigger)
-
-const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
-
-function toAbsoluteMediaUrl(url) {
-  const value = String(url ?? '').trim()
-  if (!value) return ''
-  if (value.startsWith('http://') || value.startsWith('https://')) return value
-  return `${STRAPI_BASE}${value.startsWith('/') ? value : `/${value}`}`
-}
 
 // ── Figma collage data ──────────────────────────────────────────────────────
 const CANVAS_W = 1438
@@ -63,39 +55,6 @@ const FLY_POS = [
 // Random-feeling arrival delays for the 8 Figma images (not evenly spaced)
 const FIGMA_DELAYS = [0.04, 0.11, 0.01, 0.08, 0.14, 0.06, 0.1, 0.02]
 
-function getMediaDimensions(media) {
-  if (!media || typeof media === 'string') return null
-
-  const width = Number(media.width ?? media.data?.attributes?.width ?? media.attributes?.width)
-  const height = Number(media.height ?? media.data?.attributes?.height ?? media.attributes?.height)
-
-  if (!width || !height) return null
-  return { width, height }
-}
-
-function resolveHeroSrc(media, fallback) {
-  if (!media) return fallback
-  if (typeof media === 'string') return toAbsoluteMediaUrl(media) || media
-
-  const raw = media.url ?? media.src ?? media.data?.attributes?.url ?? media.attributes?.url ?? ''
-
-  return toAbsoluteMediaUrl(raw) || fallback
-}
-
-function resolveCollageFrame(baseW, baseH, media) {
-  const dims = getMediaDimensions(media)
-  if (!dims) return { w: baseW, h: baseH }
-
-  const slotLandscape = baseW >= baseH
-  const mediaLandscape = dims.width >= dims.height
-
-  if (slotLandscape !== mediaLandscape) {
-    return { w: baseH, h: baseW }
-  }
-
-  return { w: baseW, h: baseH }
-}
-
 // Compute where each Figma image centre sits relative to viewport centre
 const getFinalPositions = () => {
   const s = Math.min(window.innerWidth / CANVAS_W, window.innerHeight / CANVAS_H)
@@ -107,13 +66,7 @@ const getFinalPositions = () => {
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-const ScrollImageSpreadSection = ({
-  mobileHeading,
-  mobileBody,
-  heroLabel,
-  heroSubtext,
-  heroImages = [],
-}) => {
+const ScrollImageSpreadSection = ({ mobileHeading, mobileBody, heroLabel, heroSubtext }) => {
   const flowRef = useRef(null)
   const flyRefs = useRef([])
   const figmaRefs = useRef([])
@@ -127,21 +80,15 @@ const ScrollImageSpreadSection = ({
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
 
-  const resolvedImageData = IMAGE_DATA.map((item, index) => {
-    const media = heroImages[index]
-    const frame = resolveCollageFrame(item.w, item.h, media)
-
-    return {
-      ...item,
-      src: resolveHeroSrc(media, item.src),
-      w: frame.w,
-      h: frame.h,
-    }
-  })
-  const resolvedBaseImages = BASE_IMAGES.map((src, index) => resolveHeroSrc(heroImages[index], src))
+  const resolvedImageData = IMAGE_DATA
+  const resolvedBaseImages = BASE_IMAGES
   const mobileSlides = MOBILE_SLIDE_INDEXES.map(indexes =>
     indexes.map(imageIndex => resolvedImageData[imageIndex])
   )
+
+  useEffect(() => {
+    preloadImages(BASE_IMAGES)
+  }, [])
 
   const goToMobileSlide = direction => {
     setMobilePage(prev => {

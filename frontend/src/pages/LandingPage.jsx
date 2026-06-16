@@ -2500,7 +2500,10 @@ const ChecklistSection = () => {
   const mobileScallopCount = 6
   const desktopBulbCount = desktopScallopCount - 1
   const mobileBulbCount = mobileScallopCount - 1
-  const sectionRef = useRef(null)
+  const sectionRef = usePreloadOnApproach(
+    [imgScrolling, imgCalls, imgVendors, imgDecisions],
+    '250% 0px'
+  )
   const [howItWorksVisible, setHowItWorksVisible] = useState(false)
   const [isLayoutVisible, setIsLayoutVisible] = useState(false)
   const gateAreaRef = useRef(null)

@@ -20,11 +20,7 @@ import { getDateInputMin } from '../lib/dateInput'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
-
 const MOKSHA_FALLBACK_IMAGE = new URL('../assets/images/moksha_portrait.jpg', import.meta.url).href
-
-const PLACEHOLDER_MEDIA_PATH = '/images/placeholder.jpg'
 
 function normalizeKey(value = '') {
   return String(value ?? '')
@@ -150,88 +146,7 @@ const CELEBRATION_CATEGORY_FALLBACKS = normalizeFallbackBuckets({
   },
 })
 
-function toAbsoluteMediaUrl(url = '') {
-  const value = String(url ?? '').trim()
-  if (!value) return ''
-  const normalizedValue = value.toLowerCase()
-  if (
-    normalizedValue === PLACEHOLDER_MEDIA_PATH ||
-    normalizedValue === PLACEHOLDER_MEDIA_PATH.slice(1) ||
-    normalizedValue.endsWith(PLACEHOLDER_MEDIA_PATH)
-  ) {
-    return ''
-  }
-  if (value.startsWith('http://') || value.startsWith('https://')) return value
-  return `${STRAPI_BASE}${value.startsWith('/') ? value : `/${value}`}`
-}
-
-function getMediaUrl(media) {
-  if (!media) return ''
-  if (typeof media === 'string') return toAbsoluteMediaUrl(media)
-  if (Array.isArray(media)) return getMediaUrl(media[0])
-
-  return toAbsoluteMediaUrl(
-    media.url ??
-      media.src ??
-      media.image?.url ??
-      media.data?.url ??
-      media.data?.attributes?.url ??
-      media.formats?.large?.url ??
-      media.formats?.medium?.url ??
-      media.formats?.small?.url ??
-      media.formats?.thumbnail?.url ??
-      ''
-  )
-}
-
-function resolveMediaUrl(...candidates) {
-  for (const candidate of candidates) {
-    const resolved = getMediaUrl(candidate)
-    if (resolved) return resolved
-  }
-
-  return ''
-}
-
-function getSectionImages(section = {}) {
-  const sectionImages = section._sectionImages ?? section.images ?? []
-
-  if (Array.isArray(sectionImages)) return sectionImages
-  if (Array.isArray(sectionImages?.data)) return sectionImages.data
-  if (sectionImages?.data) return [sectionImages.data]
-
-  return []
-}
-
-function getFilenameStem(media) {
-  const filename = String(media?.name ?? media?.url ?? media?.src ?? '')
-  return filename.replace(/\.[^.]+$/, '')
-}
-
-function getGrandCelebrationImageRank(media) {
-  const stem = getFilenameStem(media)
-  const filename = String(media?.name ?? '')
-  const exactOrderMatch =
-    filename.match(/(?:^|[^0-9])0*(\d+)(?=\.[^.]+$)/i) ?? stem.match(/(\d+)(?!.*\d)/)
-  const order = exactOrderMatch ? Number(exactOrderMatch[1]) : Number.POSITIVE_INFINITY
-
-  return Number.isFinite(order) ? order : Number.POSITIVE_INFINITY
-}
-
-function buildImagesByBucket(images = []) {
-  return (Array.isArray(images) ? images : []).reduce((acc, img) => {
-    const filename = String(img?.name ?? img?.url ?? '')
-    const match = filename.match(/^([a-z]+)/i)
-    if (!match) return acc
-
-    const key = toBucketKey(match[1])
-    if (!key) return acc
-
-    if (!acc[key]) acc[key] = []
-    acc[key].push(img)
-    return acc
-  }, {})
-}
+const GRAND_CELEBRATION_FALLBACK_LIST = Object.values(GRAND_CELEBRATION_FALLBACKS)
 
 function normalizeGrandCelebrationItems(section = {}) {
   const items =
@@ -242,31 +157,22 @@ function normalizeGrandCelebrationItems(section = {}) {
     section.category_item ??
     section.categories ??
     []
-  const sectionImages = getSectionImages(section)
-  const imagesByCategory = Object.fromEntries(
-    Object.entries(buildImagesByBucket(sectionImages)).map(([key, value]) => [
-      key,
-      [...value].sort((a, b) => getGrandCelebrationImageRank(a) - getGrandCelebrationImageRank(b)),
-    ])
-  )
 
   return (Array.isArray(items) ? items : [])
     .map((item, index) => {
       const title = item.title ?? item.heading ?? item.name ?? item.label ?? ''
       const categoryName = toBucketKey(title)
-      const categoryImages = imagesByCategory[categoryName] || []
-      const fallbackImage = GRAND_CELEBRATION_FALLBACKS[categoryName] ?? ''
+      const fallbackImage =
+        GRAND_CELEBRATION_FALLBACKS[categoryName] ??
+        GRAND_CELEBRATION_FALLBACK_LIST[index % GRAND_CELEBRATION_FALLBACK_LIST.length] ??
+        ''
       const explicitTall = item.tall ?? item.is_tall ?? item.portrait ?? item.variant === 'tall'
 
       return {
         id: String(index + 1).padStart(2, '0'),
         title,
         desc: item.desc ?? item.description ?? item.body ?? '',
-        image: resolveMediaUrl(
-          item.image ?? item.media ?? item.photo ?? item.thumbnail ?? categoryImages[0],
-          sectionImages[index],
-          fallbackImage
-        ),
+        image: fallbackImage,
         fallbackImage,
         tall: explicitTall ?? index % 2 === 0,
       }
@@ -276,14 +182,8 @@ function normalizeGrandCelebrationItems(section = {}) {
 
 function normalizeCelebrationCategories(section = {}) {
   const categories = section.categories ?? section.items ?? []
-  const sectionImages = Array.isArray(section._sectionImages)
-    ? section._sectionImages
-    : Array.isArray(section.images)
-      ? section.images
-      : []
-  const imagesByCategory = buildImagesByBucket(sectionImages)
 
-  const result = (Array.isArray(categories) ? categories : [])
+  return (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
       const name =
         item.tab_label ??
@@ -293,54 +193,16 @@ function normalizeCelebrationCategories(section = {}) {
         item.heading ??
         `Category ${index + 1}`
       const bucketKey = toBucketKey(name)
-      const categoryImages = imagesByCategory[bucketKey] ?? []
-      const directImages = Array.isArray(item.images)
-        ? item.images
-        : item.images
-          ? [item.images]
-          : []
       const fallbackImages = CELEBRATION_CATEGORY_FALLBACKS[bucketKey] ?? {}
       return {
         name,
         heading: item.heading ?? String(name).toUpperCase(),
         desc: item.description ?? item.desc ?? item.body ?? '',
         images: {
-          topLeft: resolveMediaUrl(
-            item.top_left_image ??
-              item.topLeftImage ??
-              item.images?.topLeft ??
-              directImages[0] ??
-              item.image_1 ??
-              categoryImages[0],
-            fallbackImages.topLeft
-          ),
-          topRight: resolveMediaUrl(
-            item.top_right_image ??
-              item.topRightImage ??
-              item.images?.topRight ??
-              directImages[1] ??
-              item.image_2 ??
-              categoryImages[1],
-            fallbackImages.topRight
-          ),
-          bottomLeft: resolveMediaUrl(
-            item.bottom_left_image ??
-              item.bottomLeftImage ??
-              item.images?.bottomLeft ??
-              directImages[2] ??
-              item.image_3 ??
-              categoryImages[2],
-            fallbackImages.bottomLeft
-          ),
-          bottomRight: resolveMediaUrl(
-            item.bottom_right_image ??
-              item.bottomRightImage ??
-              item.images?.bottomRight ??
-              directImages[3] ??
-              item.image_4 ??
-              categoryImages[3],
-            fallbackImages.bottomRight
-          ),
+          topLeft: fallbackImages.topLeft ?? '',
+          topRight: fallbackImages.topRight ?? '',
+          bottomLeft: fallbackImages.bottomLeft ?? '',
+          bottomRight: fallbackImages.bottomRight ?? '',
         },
         fallbackImages: {
           topLeft: fallbackImages.topLeft ?? '',
@@ -351,8 +213,6 @@ function normalizeCelebrationCategories(section = {}) {
       }
     })
     .filter(item => item.name)
-
-  return result
 }
 
 // Defined at module level so React never treats it as a new component type on re-render
@@ -2585,12 +2445,7 @@ const InHousePlannerSection = () => {
   const hero = cms.hero ?? {}
   const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
-  const heroImages = getSectionImages(hero)
-  const plannerImage = resolveMediaUrl(
-    bio.image ?? bio.photo ?? bio.portrait_image ?? bio.portrait ?? bio._sectionImages?.[0],
-    MOKSHA_FALLBACK_IMAGE,
-    cms.hero?.image ?? cms.hero?.photo
-  )
+  const plannerImage = MOKSHA_FALLBACK_IMAGE
   const plannerImageAlt =
     bio.image_alt ??
     bio.photo_alt ??
@@ -2666,7 +2521,6 @@ const InHousePlannerSection = () => {
         mobileBody={mobileHeroBody}
         heroLabel={hero.label ?? 'In House Event Planner'}
         heroSubtext={hero.subtext ?? 'scroll to discover'}
-        heroImages={heroImages}
       />
 
       <div data-in-house-planner-page>

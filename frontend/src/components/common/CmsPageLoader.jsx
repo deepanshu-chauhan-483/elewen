@@ -1,7 +1,7 @@
 import navLogo from '../../assets/images/navbar.png'
 
 /**
- * Full-page loader for Strapi-backed pages — matches Elewen brand (warm ivory + copper).
+ * Full-page loader for Strapi-backed pages — soft transparent blue overlay.
  */
 export default function CmsPageLoader({
   label = 'Loading',
@@ -16,7 +16,8 @@ export default function CmsPageLoader({
     : blend
       ? 'min-h-[40vh] py-12'
       : 'min-h-[50vh]'
-  const embeddedBgClass = blend ? 'bg-transparent' : 'bg-[#FAFAF8]'
+  const loaderBgClass = 'bg-[#EAF3F8]/50'
+  const embeddedBgClass = blend ? 'bg-transparent' : loaderBgClass
   const viewportCenterClass =
     'fixed inset-x-0 bottom-0 top-[63px] z-20 flex items-center justify-center bg-transparent md:left-[260px]'
 
@@ -24,7 +25,7 @@ export default function CmsPageLoader({
     <div
       className={
         fullScreen
-          ? `fixed inset-0 z-[70] flex h-[100dvh] w-full flex-col items-center justify-center bg-[#FAFAF8] ${className}`
+          ? `fixed inset-0 z-[70] flex h-[100dvh] w-full flex-col items-center justify-center ${loaderBgClass} ${className}`
           : centered
             ? `${viewportCenterClass} ${className}`
             : `flex w-full flex-col items-center justify-center ${embeddedBgClass} ${embeddedSizeClass} ${className}`

@@ -1,26 +1,54 @@
 import { useEffect, useRef } from 'react'
 
+const preloadedUrls = new Set()
+const inflightPreloads = new Map()
+
 /**
- * Immediately fire off browser fetches for an array of image URLs.
- * Results are cached so the actual <img> elements render from cache.
+ * Preload a single image URL. Resolves when cached or decoded.
+ * Safe to call repeatedly — deduped per URL.
  */
-export function preloadImages(urls) {
-  urls.forEach(url => {
+export function preloadImage(url) {
+  if (!url || typeof url !== 'string') return Promise.resolve()
+
+  if (preloadedUrls.has(url)) return Promise.resolve()
+
+  const pending = inflightPreloads.get(url)
+  if (pending) return pending
+
+  const promise = new Promise(resolve => {
     const img = new Image()
+    img.decoding = 'async'
+
+    const finish = () => {
+      preloadedUrls.add(url)
+      inflightPreloads.delete(url)
+      resolve()
+    }
+
+    img.onload = finish
+    img.onerror = finish
     img.src = url
+
+    if (img.complete && img.naturalWidth > 0) {
+      finish()
+    }
   })
+
+  inflightPreloads.set(url, promise)
+  return promise
+}
+
+/**
+ * Preload multiple image URLs in parallel.
+ */
+export function preloadImages(urls = []) {
+  const unique = [...new Set((urls ?? []).filter(Boolean))]
+  return Promise.all(unique.map(preloadImage))
 }
 
 /**
  * Hook: starts preloading `urls` once the returned ref element is within
  * `rootMargin` of the viewport. Fires only once per mount.
- *
- * Usage:
- *   const ref = usePreloadOnApproach([img1, img2], '200% 0px')
- *   <section ref={ref}>...</section>
- *
- * @param {string[]} urls        image URLs to preload
- * @param {string}   rootMargin  how far ahead to trigger (default 200vh)
  */
 export function usePreloadOnApproach(urls, rootMargin = '200% 0px') {
   const ref = useRef(null)
@@ -42,7 +70,6 @@ export function usePreloadOnApproach(urls, rootMargin = '200% 0px') {
     )
     observer.observe(el)
     return () => observer.disconnect()
-    // urls / rootMargin are intentionally stable constants passed from module scope
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
