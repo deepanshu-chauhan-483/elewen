@@ -15,6 +15,8 @@ import useCustomization from '../hooks/useCustomization'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
 import { usePackageById, usePackages } from '../hooks/usePackages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import {
   formatCateringPrice,
   getCateringDetailSection,
@@ -324,11 +326,25 @@ function buildSelectedAddonItems(addons, selectedAddonIds = []) {
 export default function CateringSinglePackagePage() {
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
-  const { data: packages = [] } = usePackages()
-  const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
-  const { data: cancellationPolicy } = useCancellationPolicy()
-  const { data: cateringDiscountSettingsFromApi } = useCateringGuestDiscounts()
-  const { data: menuByCategory = {} } = useCateringMenu()
+  const packagesQuery = usePackages()
+  const packageQuery = usePackageById(packageId)
+  const cancellationQuery = useCancellationPolicy()
+  const cateringDiscountsQuery = useCateringGuestDiscounts()
+  const cateringMenuQuery = useCateringMenu()
+
+  const isStrapiLoading = useStrapiPageLoading(
+    packagesQuery,
+    packageQuery,
+    cancellationQuery,
+    cateringDiscountsQuery,
+    cateringMenuQuery
+  )
+
+  const { data: packages = [] } = packagesQuery
+  const { data: packageDetails } = packageQuery
+  const { data: cancellationPolicy } = cancellationQuery
+  const { data: cateringDiscountSettingsFromApi } = cateringDiscountsQuery
+  const { data: menuByCategory = {} } = cateringMenuQuery
   const { addPackage, updateCartItemDetails } = useCart()
   const { showToast } = useToast()
   const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
@@ -486,8 +502,8 @@ export default function CateringSinglePackagePage() {
     setAddToCartMessage('')
   }, [addons, guestOptions, packageId, searchParams, setCustomizations])
 
-  if (isPackageLoading) {
-    return null
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   if (!pkg) {

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ScallopBulbCurtain from '../components/common/ScallopBulbCurtain'
 import { useHowItWorkPage } from '../hooks/useCmsPages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 
 const HERO_TAGS = [
   'BIRTHDAYS',
@@ -765,7 +767,9 @@ const HowItWorkHeroSection = ({ section }) => {
 
 const HowItWorkPage = () => {
   const pageRef = useRef(null)
-  const { data: cms = {} } = useHowItWorkPage()
+  const cmsQuery = useHowItWorkPage()
+  const { data: cms = {} } = cmsQuery
+  const isStrapiLoading = useStrapiPageLoading(cmsQuery)
 
   useEffect(() => {
     const page = pageRef.current
@@ -830,6 +834,10 @@ const HowItWorkPage = () => {
       observer?.disconnect()
     }
   }, [])
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
 
   return (
     <main ref={pageRef} className="how-it-work-page w-full bg-[#591902]">

@@ -2,6 +2,8 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useFilteredServiceOptions } from '../hooks/useEventTypes'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import {
   buildServiceDestination,
   buildServiceFlowParams,
@@ -75,7 +77,9 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
 
 export default function ServicePage() {
   const [searchParams] = useSearchParams()
-  const { data: services = [] } = useFilteredServiceOptions(SERVICE_PAGE_ALLOWED_SLUGS)
+  const servicesQuery = useFilteredServiceOptions(SERVICE_PAGE_ALLOWED_SLUGS)
+  const { data: services = [] } = servicesQuery
+  const isStrapiLoading = useStrapiPageLoading(servicesQuery)
 
   const flow = searchParams.get('flow') ?? ''
   const isServicesFlow = flow === SERVICES_FLOW_KEY
@@ -91,6 +95,10 @@ export default function ServicePage() {
 
   if (!isServicesFlow && (!categorySlug || !eventSlug)) {
     return <Navigate to="/event-flow/category" replace />
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   return (

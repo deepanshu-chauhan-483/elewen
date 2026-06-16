@@ -5,7 +5,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import HeroPreloader from './HeroPreloader'
 import { useLandingPage } from '../../hooks/useCmsPages'
 import { useLenis } from '../../useLenis'
-import HeroVideo from '../../assets/HeroVideo.mp4'
+import { getViewportMode } from '../../utils/viewportMode'
+import HeroVideo from '../../assets/newvideo.mp4'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -155,8 +156,8 @@ const HeroSection = () => {
         hero._sectionImages?.[0]
     ) || HERO_VIDEO_SRC
   const hasSeenPreloader = hasSeenHeroPreloader()
-  const [isMobileView, setIsMobileView] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 768
+  const [useMobileHeroLayout, setUseMobileHeroLayout] = useState(
+    () => getViewportMode().useMobileHeroLayout
   )
   const wrapperRef = useRef(null)
   const preloaderRef = useRef(null)
@@ -192,14 +193,12 @@ const HeroSection = () => {
 
     const getEnd = () => {
       const W = window.innerWidth
-      const H = window.innerHeight
-      const isMobile = W < 768
+      const H = window.visualViewport?.height ?? window.innerHeight
+      const useMobileLayout = getViewportMode().useMobileHeroLayout
 
-      // Mobile gets 85% width to avoid skinny rectangles. Desktop keeps 40%.
-      const eW = isMobile ? W * 0.85 : W * 0.4
-      // Keep height proportional to the new width on mobile
-      const eH = isMobile ? eW * 1.2 : H * 0.6
-      const eT = H - eH - (isMobile ? 60 : 40)
+      const eW = useMobileLayout ? W * 0.85 : W * 0.4
+      const eH = useMobileLayout ? eW * 1.2 : H * 0.6
+      const eT = Math.max(H - eH - (useMobileLayout ? 60 : 40), 16)
 
       return { eW, eH, eL: (W - eW) / 2, eT }
     }
@@ -545,10 +544,22 @@ const HeroSection = () => {
   }
 
   useEffect(() => {
-    const onResize = () => setIsMobileView(window.innerWidth < 768)
+    let resizeTimer
+    const onResize = () => {
+      setUseMobileHeroLayout(getViewportMode().useMobileHeroLayout)
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        ScrollTrigger.refresh()
+      }, 150)
+    }
     onResize()
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    window.visualViewport?.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.visualViewport?.removeEventListener('resize', onResize)
+      clearTimeout(resizeTimer)
+    }
   }, [])
 
   useEffect(() => {
@@ -623,7 +634,7 @@ const HeroSection = () => {
   const bandFont = {
     fontFamily: "'Poppins', sans-serif",
     fontWeight: 600,
-    fontSize: '120px',
+    fontSize: 'clamp(64px, 8vw, 120px)',
     lineHeight: '120%',
   }
 
@@ -634,21 +645,20 @@ const HeroSection = () => {
       data-nav-theme="glass"
       data-nav-surface="transparent"
       className="hero-scroll-wrapper"
-      style={{ height: isMobileView ? '300vh' : '420vh' }}
+      style={{ height: useMobileHeroLayout ? '300vh' : '420vh' }}
     >
       <div
-        className="hero-sticky-viewport"
+        className="hero-sticky-viewport h-[100dvh] md:h-screen"
         style={{
           position: 'sticky',
           top: 0,
-          height: '100vh',
           backgroundColor: '#bfac9b',
           overflow: 'hidden',
         }}
       >
         {/* ── z-10: diagonal infinite-scrolling banner text (desktop only) ─── */}
         <div
-          className="hidden md:block"
+          className="hero-scroll-bands hidden md:block"
           style={{ position: 'absolute', inset: 0, zIndex: 10, overflow: 'hidden' }}
         >
           <div style={bandWrap('10%')}>
@@ -684,8 +694,8 @@ const HeroSection = () => {
             position: 'absolute',
             top: hasSeenPreloader ? 0 : '100vh',
             left: 0,
-            width: '100vw',
-            height: '100vh',
+            width: '100%',
+            height: '100dvh',
             zIndex: 20,
             overflow: 'hidden',
             borderRadius: 0,
@@ -742,82 +752,84 @@ const HeroSection = () => {
             color: '#FAFAFA',
           }}
         >
-          <main className="absolute inset-0 flex flex-col justify-center items-center z-10 px-5 pt-[4.5rem] pb-[7.5rem] md:px-0 md:pt-24 md:pb-0 md:translate-y-0">
-            {/* Desktop original classes fully preserved via md:, mobile centered to fit viewport */}
-            <div className="w-full max-w-[calc(100vw-2.5rem)] mx-auto md:mx-0 md:w-full md:max-w-249.25 flex flex-col items-center md:items-end pr-0 md:pr-8 lg:pr-0 pointer-events-auto">
-              <span
-                ref={eyebrowRef}
-                className="self-end text-[clamp(1.125rem,5vw,1.25rem)] md:text-[38px] lg:text-[48px] leading-[100%] md:leading-none tracking-[0] text-right text-[#FAFAFA]"
-                style={{ fontFamily: "'Malgin', serif" }}
-              >
-                {hero.eyebrow ?? "IT'S TIME TO"}
-              </span>
-              <span
-                ref={headingRef}
-                className="w-full text-[clamp(1.75rem,9vw,2.25rem)] whitespace-normal md:whitespace-normal md:text-[54px] lg:text-[96px] leading-[1.02] md:leading-[1.05] mt-1 md:mt-2 text-center md:text-right text-[#FAFAFA] uppercase tracking-[0] max-w-full"
-                style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
-              >
-                {hero.heading ?? 'PLAN DIFFERENTLY'}
-              </span>
-            </div>
+          <main className="hero-compact-main absolute inset-0 z-10 flex flex-col items-center justify-center px-[clamp(1rem,4vw,1.25rem)] pb-[clamp(5rem,14vw,7.5rem)] pt-[clamp(4rem,12vw,4.5rem)] md:translate-y-0 md:px-0 md:pb-0 md:pt-24">
+            <div className="hero-compact-headline-stack mx-auto flex w-full max-w-[min(997px,calc(100vw-2rem))] flex-col items-center md:mx-0 md:max-w-[997px] md:items-end md:pr-8 lg:pr-0">
+              <div className="hero-compact-copy pointer-events-auto flex w-full flex-col items-center pr-0 md:w-full md:items-end md:pr-0">
+                <span
+                  ref={eyebrowRef}
+                  className="hero-compact-eyebrow self-end text-right text-[clamp(1.125rem,4.8vw,1.5rem)] leading-none tracking-[0] text-[#FAFAFA] md:text-[38px] lg:text-[48px] md:leading-none"
+                  style={{ fontFamily: "'Malgin', serif" }}
+                >
+                  {hero.eyebrow ?? "IT'S TIME TO"}
+                </span>
+                <span
+                  ref={headingRef}
+                  className="hero-compact-heading mt-1 w-full max-w-full text-center text-[clamp(1.625rem,8.2vw,2.75rem)] uppercase leading-[1.02] tracking-[0] text-[#FAFAFA] md:mt-2 md:text-right md:text-[54px] md:leading-[1.05] lg:text-[96px]"
+                  style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
+                >
+                  {hero.heading ?? 'PLAN DIFFERENTLY'}
+                </span>
+              </div>
 
-            {/* Desktop CTA fully preserved via md:, mobile centered */}
-            <div className="w-full max-w-[353px] px-0 md:px-0 md:w-full md:max-w-249.25 flex flex-row justify-center md:justify-end items-center mt-6 md:mt-8 lg:mt-12 pr-0 md:pr-12 gap-[20px] md:gap-8 lg:gap-0 pointer-events-auto">
-              <div className="flex flex-row items-center gap-[20px] md:gap-0">
-                <button
-                  ref={ctaArrowRef}
-                  onClick={() => navigate('/event-flow/category')}
-                  className="group relative flex h-[68px] w-[68px] min-w-[68px] items-center justify-center overflow-hidden rounded-[80px] border-[2px] border-white backdrop-blur-sm shrink-0 pointer-events-auto md:min-w-0 md:h-16 md:w-16 md:rounded-full md:border-2 md:mr-4 lg:h-18 lg:w-18 lg:mr-6"
-                >
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="h-0 w-0 rounded-full bg-white transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:h-[180%] group-hover:w-[180%]" />
-                  </span>
-                  <svg
-                    className="relative z-10 h-[32px] w-[32px] text-[#FAFAFA] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:text-[#591902] md:h-9 md:w-9"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+              <div className="hero-compact-cta-row pointer-events-auto mt-[clamp(1.25rem,4vw,1.5rem)] flex w-full flex-row items-center justify-center gap-3 min-[360px]:gap-5 md:mt-8 md:w-full md:justify-end md:gap-8 md:pr-0 lg:mt-12 lg:gap-0">
+                <div className="flex min-w-0 max-w-full flex-row items-center gap-3 min-[360px]:gap-5 md:gap-0">
+                  <button
+                    ref={ctaArrowRef}
+                    onClick={() => navigate('/event-flow/category')}
+                    className="hero-compact-cta-btn group pointer-events-auto relative flex h-14 w-14 min-w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white backdrop-blur-sm min-[360px]:h-[68px] min-[360px]:w-[68px] min-[360px]:min-w-[68px] min-[360px]:rounded-[80px] md:mr-4 md:h-16 md:w-16 lg:mr-6 lg:h-18 lg:w-18"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.5"
-                      d="M5 12h14M12 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-                <div
-                  className="w-[220px] md:w-[300px] md:max-w-65 text-xs md:text-xs lg:text-sm font-normal md:font-light leading-[1.5] md:leading-relaxed opacity-90 text-left overflow-hidden text-[#FAFAFA]"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                >
-                  <p ref={ctaLine1Ref} className="m-0">
-                    {hero.search_line_1 ?? 'Explore the collection. Your seamless'}
-                  </p>
-                  <p ref={ctaLine2Ref} className="m-0">
-                    {hero.search_line_2 ?? 'event is just a few clicks away!'}
-                  </p>
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="h-0 w-0 rounded-full bg-white transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:h-[180%] group-hover:w-[180%]" />
+                    </span>
+                    <svg
+                      className="relative z-10 h-7 w-7 text-[#FAFAFA] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:text-[#591902] min-[360px]:h-8 min-[360px]:w-8 md:h-9 md:w-9"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.5"
+                        d="M5 12h14M12 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                  <div
+                    className="hero-compact-cta-text min-w-0 flex-1 text-left text-[clamp(0.6875rem,3.1vw,0.75rem)] font-normal leading-[1.5] text-[#FAFAFA] opacity-90 md:w-[300px] md:max-w-65 md:flex-none md:text-xs md:font-light md:leading-relaxed lg:text-sm"
+                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                  >
+                    <p ref={ctaLine1Ref} className="m-0">
+                      {hero.search_line_1 ?? 'Explore the collection. Your seamless'}
+                    </p>
+                    <p ref={ctaLine2Ref} className="m-0">
+                      {hero.search_line_2 ?? 'event is just a few clicks away!'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </main>
 
-          <footer className="absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20 pointer-events-auto">
+          <footer className="hero-compact-footer absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20 pointer-events-auto">
             {/* Mobile EXACT Bottom-Left 'W' Block extracted from center */}
-            <div className="flex md:hidden items-stretch justify-start gap-3 pl-5 pr-4 pb-5 w-full z-20">
+            <div className="hero-mobile-footer z-20 flex w-full items-stretch justify-start gap-2 pl-[clamp(1rem,4vw,1.25rem)] pr-3 pb-[clamp(1rem,4vw,1.25rem)] min-[360px]:gap-3 min-[360px]:pl-5 min-[360px]:pr-4 md:hidden">
               <span
                 ref={el => (leftWRefs.current[1] = el)}
-                className="flex h-[71px] w-[80px] shrink-0 items-center justify-center font-serif text-[#FFFFFF]"
+                className="hero-compact-w flex shrink-0 items-center justify-center font-serif text-[#FFFFFF]"
                 style={{
                   fontFamily: "'Malgin', serif",
-                  fontSize: '71px',
+                  fontSize: 'clamp(3rem, 18vw, 4.4375rem)',
                   lineHeight: 1,
+                  width: 'clamp(4rem, 22vw, 5rem)',
+                  height: 'clamp(3.5rem, 18vw, 4.4375rem)',
                 }}
               >
                 W
               </span>
               <div
-                className="flex h-[71px] w-[131px] flex-col justify-start gap-1 text-[14px] font-medium leading-[1.35] tracking-normal text-[#FFFFFF]"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
+                className="hero-compact-w-lines flex min-w-0 flex-1 flex-col justify-start gap-1 text-[clamp(0.75rem,3.2vw,0.875rem)] font-medium leading-[1.35] tracking-normal text-[#FFFFFF]"
+                style={{ fontFamily: "'Poppins', sans-serif", maxWidth: 'min(131px, 42vw)' }}
               >
                 <p ref={el => (leftLine1Refs.current[1] = el)} className="m-0">
                   {getTrailingWWord(leftTaglines[0], 'Work made easy')}
@@ -832,7 +844,7 @@ const HeroSection = () => {
             </div>
 
             {/* Desktop W Left Block */}
-            <div className="hidden shrink-0 md:flex md:items-center md:px-6 md:pb-8 lg:px-10 lg:pb-12">
+            <div className="hero-desktop-w-footer hero-desktop-footer hidden shrink-0 md:flex md:items-center md:px-6 md:pb-8 lg:px-10 lg:pb-12">
               <span
                 ref={el => (leftWRefs.current[0] = el)}
                 className="font-serif leading-[0.7] text-[#FFFFFF] md:mr-2 md:text-[74px] lg:mr-1 lg:text-[90px]"
@@ -854,7 +866,7 @@ const HeroSection = () => {
             </div>
 
             {/* Cards section - strictly hidden on Mobile using hidden md:flex */}
-            <div className="hidden md:flex w-full md:w-auto border-t md:border-t-0 border-white/20 bg-black/20 md:bg-transparent backdrop-blur-md md:backdrop-blur-none">
+            <div className="hero-desktop-cards hero-desktop-footer hidden w-full shrink-0 border-t border-white/20 bg-black/20 backdrop-blur-md md:flex md:w-auto md:border-t-0 md:bg-transparent md:backdrop-blur-none">
               {rightCards.map((card, i) => {
                 const extras = [
                   'md:rounded-tl-[20px]',

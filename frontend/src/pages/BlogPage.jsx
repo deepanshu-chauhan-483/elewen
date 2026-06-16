@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useBlogCategories, useBlogs } from '../hooks/useBlogs'
 import { useScrollToTop } from '../hooks/useScrollToTop'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import heroLeft from '../assets/images/IMG_3001.jpg'
 import heroRight from '../assets/images/IMG_7025.jpg'
 import blogImg1 from '../assets/images/IMG_0658.jpg'
@@ -76,8 +78,12 @@ const BlogPage = () => {
   const blogListTopRef = useRef(null)
   const [activeCategory, setActiveCategory] = useState('All')
   const [currentPage, setCurrentPage] = useState(1)
-  const { data: blogCategories = [] } = useBlogCategories()
-  const { data: blogPosts = [] } = useBlogs({ limit: 50 })
+  const blogCategoriesQuery = useBlogCategories()
+  const blogsQuery = useBlogs({ limit: 50 })
+  const { data: blogCategories = [] } = blogCategoriesQuery
+  const { data: blogPosts = [] } = blogsQuery
+  const isStrapiLoading = useStrapiPageLoading(blogCategoriesQuery, blogsQuery)
+
   const blogsPerPage = 3
 
   const categories = useMemo(() => {
@@ -168,6 +174,10 @@ const BlogPage = () => {
 
     return () => observer.disconnect()
   }, [activeCategory])
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
 
   return (
     <main ref={pageRef} className="blog-page min-h-screen text-[#202716]">

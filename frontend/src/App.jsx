@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { useLenis } from './useLenis'
 import NavHeader from './components/NavHeader'
 import Footer from './components/Footer'
+import CmsPageLoader from './components/common/CmsPageLoader'
+import { CompactViewportSync } from './hooks/useCompactViewport'
 import LandingPage from './pages/LandingPage'
 
 const InHousePlannerPage = lazy(() => import('./pages/InHousePlannerPage'))
@@ -59,11 +61,7 @@ const SupportHelp = lazy(() => import('./pages/dashboard/SupportHelp'))
 const ProfilePage = lazy(() => import('./pages/dashboard/ProfilePage'))
 
 function PageLoader() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#FAFAF8]">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#C6A15B] border-t-transparent" />
-    </div>
-  )
+  return <CmsPageLoader label="Loading" />
 }
 
 function GoogleAuthRedirectBridge() {
@@ -143,6 +141,7 @@ function AppLayout() {
     <>
       <GoogleAuthRedirectBridge />
       <ScrollToTop />
+      <CompactViewportSync />
       {!hideGlobalChrome && <NavHeader />}
       <Suspense fallback={<PageLoader />}>
         <Routes>

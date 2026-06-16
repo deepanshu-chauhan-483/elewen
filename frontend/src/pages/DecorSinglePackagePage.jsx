@@ -3,6 +3,8 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
@@ -812,9 +814,14 @@ export default function DecorSinglePackagePage() {
   // const navigate = useNavigate()
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
-  const { data: packages = [] } = usePackages()
-  const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
-  const { data: cancellationPolicy } = useCancellationPolicy()
+  const packagesQuery = usePackages()
+  const packageQuery = usePackageById(packageId)
+  const cancellationQuery = useCancellationPolicy()
+  const isStrapiLoading = useStrapiPageLoading(packagesQuery, packageQuery, cancellationQuery)
+
+  const { data: packages = [] } = packagesQuery
+  const { data: packageDetails } = packageQuery
+  const { data: cancellationPolicy } = cancellationQuery
   const { addPackage, updateCartItemDetails } = useCart()
   const { showToast } = useToast()
   const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
@@ -933,8 +940,8 @@ export default function DecorSinglePackagePage() {
     setCustomizations,
   ])
 
-  if (isPackageLoading) {
-    return null
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   if (!pkg) {

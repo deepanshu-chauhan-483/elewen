@@ -8,6 +8,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { usePlannerLead } from '../hooks/usePlannerLead'
 
 import { useInHousePlannerPage } from '../hooks/useCmsPages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { INHOUSE_PLANNER_PAGE_FALLBACK } from '../data/cmsPages'
 
 import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
@@ -2578,7 +2580,9 @@ const CelebrationFormSection = () => {
 }
 
 const InHousePlannerSection = () => {
-  const { data: cms = {} } = useInHousePlannerPage()
+  const cmsQuery = useInHousePlannerPage()
+  const { data: cms = {} } = cmsQuery
+  const isStrapiLoading = useStrapiPageLoading(cmsQuery)
 
   const hero = cms.hero ?? {}
   const whatWeDo = cms.what_we_do ?? {}
@@ -2654,6 +2658,10 @@ const InHousePlannerSection = () => {
     root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
     return () => observer.disconnect()
   }, [])
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
 
   return (
     <>

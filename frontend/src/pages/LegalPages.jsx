@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTermsAndConditions } from '../hooks/useTermsAndConditions'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import CustomSelect from '../components/common/CustomSelect'
 
 const INDEX_LABEL_CLASS = 'block line-clamp-2 leading-5 break-words'
@@ -51,7 +53,9 @@ const fallbackTermsData = [
 ]
 
 export default function Terms() {
-  const { data: cmsTerms } = useTermsAndConditions()
+  const termsQuery = useTermsAndConditions()
+  const { data: cmsTerms } = termsQuery
+  const isStrapiLoading = useStrapiPageLoading(termsQuery)
 
   const termsData = useMemo(() => cmsTerms?.sections ?? fallbackTermsData, [cmsTerms])
 
@@ -112,6 +116,10 @@ export default function Terms() {
       behavior: 'smooth',
       block: 'start',
     })
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   return (

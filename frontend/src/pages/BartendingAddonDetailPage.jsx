@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { usePackageById } from '../hooks/usePackages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 
 function formatCurrency(value) {
   const amount = Number(value)
@@ -96,7 +98,9 @@ function BackArrow() {
 export default function BartendingAddonDetailPage() {
   const { packageId, addonId } = useParams()
   const navigate = useNavigate()
-  const { data: pkg, isLoading } = usePackageById(packageId)
+  const packageQuery = usePackageById(packageId)
+  const { data: pkg } = packageQuery
+  const isStrapiLoading = useStrapiPageLoading(packageQuery)
 
   const addon = useMemo(() => {
     if (!pkg) return null
@@ -104,12 +108,8 @@ export default function BartendingAddonDetailPage() {
     return addons.find(a => String(a.id) === String(addonId)) ?? null
   }, [pkg, addonId])
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8F4ED]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#957960] border-t-transparent" />
-      </div>
-    )
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   if (!addon) {

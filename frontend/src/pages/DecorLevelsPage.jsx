@@ -5,6 +5,8 @@ import PackageListLayout from '../components/package-listing/PackageListLayout'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { usePackages } from '../hooks/usePackages'
 import { useBudgetLevelOptions } from '../hooks/useEventTypes'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { filterPackages } from '../lib/packageFilters'
 
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -38,21 +40,24 @@ function RowArrow({ direction = 'left' }) {
 
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 36 36"
-      fill="none"
       className={`h-6 w-6 md:h-9 md:w-9 ${rotationClass}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        d="M7.5 18H28.5M28.5 18L18 28.5M28.5 18L18 7.5"
+        d="M5 12H19M12 19L19 12L12 5"
         stroke="currentColor"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="2.5"
       />
     </svg>
   )
 }
+
+const rowNavBtnBase =
+  'pointer-events-auto absolute top-1/2 z-20 flex h-[80px] w-[40px] -translate-y-1/2 items-center justify-center bg-[#E6DDD3] text-[#7C7065] transition-colors hover:bg-[#ddd1c5] disabled:cursor-not-allowed disabled:opacity-45 md:h-[104px] md:w-[52px]'
 
 function DynamicDots({ totalPages, currentPage }) {
   return (
@@ -84,7 +89,8 @@ function ViewAllArrow() {
 }
 
 export default function DecorLevelsPage() {
-  const { data: packages = [] } = usePackages()
+  const packagesQuery = usePackages()
+  const { data: packages = [] } = packagesQuery
   const [sortValue, setSortValue] = useState('price-desc')
   const [searchParams] = useSearchParams()
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
@@ -98,7 +104,10 @@ export default function DecorLevelsPage() {
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const serviceId = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
-  const { data: levels = [] } = useBudgetLevelOptions(serviceId)
+  const levelsQuery = useBudgetLevelOptions(serviceId)
+  const { data: levels = [] } = levelsQuery
+  const isStrapiLoading = useStrapiPageLoading(packagesQuery, levelsQuery)
+
   const cardsPerRow = isDesktopViewport ? DESKTOP_CARDS_PER_ROW : MOBILE_CARDS_PER_ROW
 
   useEffect(() => {
@@ -199,6 +208,10 @@ export default function DecorLevelsPage() {
     return `/packages/decor?${params.toString()}`
   }
 
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
+
   return (
     <PackageListLayout
       totalCount={sortedPackages.length}
@@ -277,30 +290,22 @@ export default function DecorLevelsPage() {
                 )}
 
                 <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2">
-                  {/* LEFT ARROW */}
                   <button
                     type="button"
                     onClick={handlePrev}
                     disabled={isPrevDisabled || visiblePackages.length === 0}
-                    className={`pointer-events-auto absolute left-0 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-end rounded-full bg-[#ECE7DC] px-2 text-[#CDB17E] transition-all md:h-[104px] md:w-[52px] md:translate-x-0 md:justify-center md:rounded-r-full md:bg-[#E7E0DA] md:pl-2 md:pr-0 md:text-black ${
-                      isPrevDisabled || visiblePackages.length === 0
-                        ? 'cursor-not-allowed opacity-40'
-                        : 'hover:bg-[#D9D0C4]'
-                    }`}
+                    className={`${rowNavBtnBase} left-0 rounded-r-full pl-2`}
+                    aria-label="Previous packages"
                   >
                     <RowArrow direction="left" />
                   </button>
 
-                  {/* RIGHT ARROW */}
                   <button
                     type="button"
                     onClick={handleNext}
                     disabled={isNextDisabled || visiblePackages.length === 0}
-                    className={`pointer-events-auto absolute right-0 top-1/2 z-20 flex h-16 w-16 translate-x-1/2 -translate-y-1/2 items-center justify-start rounded-full bg-[#ECE7DC] px-2 text-[#CDB17E] transition-all md:h-[104px] md:w-[52px] md:translate-x-0 md:justify-center md:rounded-l-full md:bg-[#E7E0DA] md:pl-0 md:pr-2 md:text-black ${
-                      isNextDisabled || visiblePackages.length === 0
-                        ? 'cursor-not-allowed opacity-40'
-                        : 'hover:bg-[#D9D0C4]'
-                    }`}
+                    className={`${rowNavBtnBase} right-0 rounded-l-full pr-2`}
+                    aria-label="Next packages"
                   >
                     <RowArrow direction="right" />
                   </button>

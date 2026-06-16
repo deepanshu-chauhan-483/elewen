@@ -1,6 +1,7 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
@@ -42,7 +43,12 @@ import img4 from '../assets/images/img8f9e.jpg'
 import img5 from '../assets/images/img6a98.jpg'
 import bulb1 from '../assets/lightbulb_images/bulb1.png'
 import bulb2 from '../assets/lightbulb_images/bulb2.png'
-import { useHowItWorksLandingPage } from '../hooks/useHowItWorksLandingPage'
+import {
+  useHowItWorksLandingPage,
+  fetchHowItWorksLandingPage,
+} from '../hooks/useHowItWorksLandingPage'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin)
 
@@ -74,11 +80,6 @@ const slugifyValue = value =>
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-
-const buildCategoryListingHref = categorySlug =>
-  categorySlug
-    ? `/package-listing?category=${encodeURIComponent(categorySlug)}`
-    : '/package-listing'
 
 const buildEventListingHref = (categorySlug, eventSlug, eventId) => {
   const params = new URLSearchParams()
@@ -174,7 +175,9 @@ const getVisiblePaginationDots = (totalItems, activeIndex, maxVisible = 5) => {
   return Array.from({ length: maxVisible }, (_, index) => start + index)
 }
 
-const LandingPackageCarouselCard = ({
+const PACKAGE_CYLINDER_ARC = 4
+
+const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
   pkg,
   index,
   isActive,
@@ -182,7 +185,7 @@ const LandingPackageCarouselCard = ({
   usePackageCylinder,
   onActivate,
   style,
-}) => {
+}) {
   const [showAllIncludes, setShowAllIncludes] = useState(false)
   const [visibleTagCount, setVisibleTagCount] = useState(0)
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
@@ -227,6 +230,8 @@ const LandingPackageCarouselCard = ({
   }, [pkg.id, pkg.documentId, tags.length, isDesktopViewport])
 
   useEffect(() => {
+    if (!isActive) return undefined
+
     const calculateVisibleTags = () => {
       const viewport = visibleTagsViewportRef.current
       const measureContainer = hiddenTagsMeasureRef.current
@@ -307,7 +312,9 @@ const LandingPackageCarouselCard = ({
     }
 
     return () => resizeObserver.disconnect()
-  }, [showAllIncludes, tags.length, isDesktopViewport])
+  }, [showAllIncludes, tags.length, isDesktopViewport, isActive])
+
+  const previewTags = tags.slice(0, isMobile ? 2 : 3)
 
   return (
     <div
@@ -349,6 +356,7 @@ const LandingPackageCarouselCard = ({
                       alt={`${pkg.title} - view ${imageIndex + 1}`}
                       className="w-full h-full object-cover object-center"
                       loading="eager"
+                      decoding="async"
                     />
                   </SwiperSlide>
                 ))}
@@ -359,6 +367,7 @@ const LandingPackageCarouselCard = ({
                 alt={pkg.title}
                 className="w-full h-full object-cover object-center"
                 loading="eager"
+                decoding="async"
               />
             )
           ) : (
@@ -366,7 +375,8 @@ const LandingPackageCarouselCard = ({
               src={pkg.images?.[0] ?? ''}
               alt={pkg.title}
               className="w-full h-full object-cover object-center"
-              loading="lazy"
+              loading="eager"
+              decoding="async"
             />
           )}
 
@@ -454,87 +464,97 @@ const LandingPackageCarouselCard = ({
           </div>
 
           <div className="flex flex-col items-start w-full gap-[12px] md:gap-[8px] min-h-0 flex-1">
-            <p className="text-[#2D2D2D] w-full font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-              Includes :
-            </p>
-            <div
-              ref={visibleTagsViewportRef}
-              className={`w-full min-h-0 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
-            >
-              <div className="flex flex-wrap gap-[2.5px] md:gap-1">
-                {visibleTags.map((tag, tagIndex) => (
-                  <div
-                    key={`${tag}-${tagIndex}`}
-                    className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
-                    style={{
-                      background: 'rgba(0, 0, 0, 0.05)',
-                      padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                    }}
-                  >
-                    <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-                      {tag}
-                    </span>
+            {isActive ? (
+              <>
+                <p className="text-[#2D2D2D] w-full font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
+                  Includes :
+                </p>
+                <div
+                  ref={visibleTagsViewportRef}
+                  className={`w-full min-h-0 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
+                >
+                  <div className="flex flex-wrap gap-[2.5px] md:gap-1">
+                    {visibleTags.map((tag, tagIndex) => (
+                      <div
+                        key={`${tag}-${tagIndex}`}
+                        className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.05)',
+                          padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                        }}
+                      >
+                        <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
+                          {tag}
+                        </span>
+                      </div>
+                    ))}
+                    {hasMoreIncludes && !showAllIncludes ? (
+                      <button
+                        type="button"
+                        onClick={event => {
+                          event.stopPropagation()
+                          setShowAllIncludes(true)
+                        }}
+                        className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.05)',
+                          padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                        }}
+                      >
+                        More
+                      </button>
+                    ) : null}
                   </div>
-                ))}
-                {hasMoreIncludes && !showAllIncludes ? (
-                  <button
-                    type="button"
-                    onClick={event => {
-                      event.stopPropagation()
-                      setShowAllIncludes(true)
-                    }}
-                    className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
-                    style={{
-                      background: 'rgba(0, 0, 0, 0.05)',
-                      padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                    }}
-                  >
-                    More
-                  </button>
-                ) : null}
-              </div>
-            </div>
+                </div>
+              </>
+            ) : previewTags.length > 0 ? (
+              <p className="text-[#767676] line-clamp-2 w-full font-normal text-[12px] md:text-[16px] leading-[150%] font-['Poppins'] md:font-sans">
+                {previewTags.join(' · ')}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
 
-      <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0">
-        <div
-          ref={hiddenTagsMeasureRef}
-          className="flex flex-wrap gap-[2.5px] md:gap-1"
-          style={{ position: 'absolute', visibility: 'hidden' }}
-        >
-          {tags.map((tag, tagIndex) => (
-            <div
-              key={`${tag}-${tagIndex}`}
-              data-tag-index={tagIndex}
-              className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
+      {isActive ? (
+        <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0">
+          <div
+            ref={hiddenTagsMeasureRef}
+            className="flex flex-wrap gap-[2.5px] md:gap-1"
+            style={{ position: 'absolute', visibility: 'hidden' }}
+          >
+            {tags.map((tag, tagIndex) => (
+              <div
+                key={`${tag}-${tagIndex}`}
+                data-tag-index={tagIndex}
+                className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.05)',
+                  padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                }}
+              >
+                <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
+                  {tag}
+                </span>
+              </div>
+            ))}
+            <button
+              type="button"
+              data-more-tag
+              className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
               style={{
                 background: 'rgba(0, 0, 0, 0.05)',
                 padding: isMobile ? '1.2px 7.4px' : '2px 12px',
               }}
             >
-              <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-                {tag}
-              </span>
-            </div>
-          ))}
-          <button
-            type="button"
-            data-more-tag
-            className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
-            style={{
-              background: 'rgba(0, 0, 0, 0.05)',
-              padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-            }}
-          >
-            More
-          </button>
+              More
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   )
-}
+})
 
 const PlanEventSection = () => {
   const { data: cms = {} } = useLandingPage()
@@ -755,7 +775,7 @@ const PlanEventSection = () => {
           <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
               <Link
-                to={buildCategoryListingHref(activeCategorySlug)}
+                to={s.cta_url ?? '/event-flow/category'}
                 className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit"
               >
                 <span className="text-white font-medium text-[15px] mr-5">
@@ -1007,7 +1027,7 @@ const PlanEventSection = () => {
               <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
                 <span className="reveal-text">
                   <Link
-                    to={buildCategoryListingHref(activeCategorySlug)}
+                    to={s.cta_url ?? '/event-flow/category'}
                     className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group"
                   >
                     <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
@@ -1170,7 +1190,7 @@ const WhatToPlanSection = () => {
           <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
               <Link
-                to="/package-listing"
+                to={s.cta_url ?? '/event-flow/service?flow=services'}
                 className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit"
               >
                 <span className="text-white font-medium text-[15px] mr-5">
@@ -1441,7 +1461,7 @@ const WhatToPlanSection = () => {
               <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
                 <span className="reveal-text">
                   <Link
-                    to="/package-listing"
+                    to={s.cta_url ?? '/event-flow/service?flow=services'}
                     className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group"
                   >
                     <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
@@ -1632,11 +1652,7 @@ const iconByIndex = index => {
 const normalizeText = value => (value == null ? '' : String(value))
 
 const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
-  const { data: howItWorks = { title: '', sections: [] }, isPlaceholderData } =
-    useHowItWorksLandingPage()
-  // Wait for the real CMS content before revealing — avoids the fallback text
-  // flashing in and then getting swapped for the real titles/descriptions.
-  const dataReady = !isPlaceholderData
+  const { data: howItWorks = { title: '', sections: [] } } = useHowItWorksLandingPage()
   const [activeStepIndex, setActiveStepIndex] = useState(0)
 
   const steps = useMemo(() => {
@@ -1649,6 +1665,11 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       side: index % 2 === 0 ? 'right' : 'left',
     }))
   }, [howItWorks.sections])
+
+  useEffect(() => {
+    const urls = steps.map(step => step.image).filter(Boolean)
+    if (urls.length) preloadImages(urls)
+  }, [steps])
 
   const containerRef = useRef(null)
   const stepsWrapRef = useRef(null)
@@ -1692,7 +1713,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   ScrollTrigger.config({ limitCallbacks: true, ignoreMobileResize: true })
 
   useLayoutEffect(() => {
-    if (disableScrollAnimations || !isVisible || !dataReady) return
+    if (disableScrollAnimations || !isVisible) return
     const container = containerRef.current
     const stepsWrap = stepsWrapRef.current
     if (!container || !stepsWrap) return
@@ -1712,23 +1733,27 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       revealTexts(Array.from(container.querySelectorAll('h2 .reveal-text')), 0)
     }
 
-    const revealStepText = step => {
-      revealTexts(Array.from(step.querySelectorAll('.reveal-text')), 0.16)
+    const revealStepText = (step, { fast = false } = {}) => {
+      revealTexts(Array.from(step.querySelectorAll('.reveal-text')), fast ? 0 : 0.08)
     }
 
     const revealedSteps = new WeakSet()
 
-    const animateStepContent = step => {
+    const animateStepContent = (step, { fast = false } = {}) => {
       if (revealedSteps.has(step)) return
       revealedSteps.add(step)
 
       const leftContent = step.querySelector('.left-content')
       const rightContent = step.querySelector('.right-content')
 
-      revealStepText(step)
+      revealStepText(step, { fast })
 
       const stepTimeline = gsap.timeline({
-        defaults: { duration: 0.45, ease: 'power2.out', overwrite: 'auto' },
+        defaults: {
+          duration: fast ? 0.3 : 0.42,
+          ease: 'power2.out',
+          overwrite: 'auto',
+        },
       })
 
       if (leftContent)
@@ -1746,7 +1771,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     const setActiveStepLine = (
       stepItems,
       nextIndex,
-      { immediate = false, revealContent = false } = {}
+      { immediate = false, revealContent = false, fast = false } = {}
     ) => {
       if (!progressLine || !stepItems[nextIndex]) return
 
@@ -1768,23 +1793,23 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 
       if (immediate) {
         gsap.set(progressLine, { top: targetTop, height: targetHeight, opacity: 1 })
-        if (revealContent) requestAnimationFrame(() => animateStepContent(targetStep))
+        if (revealContent) requestAnimationFrame(() => animateStepContent(targetStep, { fast }))
         return
       }
 
       if (wasInactive) {
         gsap.fromTo(
           progressLine,
-          { top: targetTop + 24, height: Math.max(targetHeight * 0.72, 1), opacity: 0 },
+          { top: targetTop + 16, height: Math.max(targetHeight * 0.85, 1), opacity: 0 },
           {
             top: targetTop,
             height: targetHeight,
             opacity: 1,
-            duration: 1.2,
+            duration: fast ? 0.55 : 0.85,
             ease: 'power3.out',
             overwrite: 'auto',
             onStart: () => {
-              if (revealContent) animateStepContent(targetStep)
+              if (revealContent) animateStepContent(targetStep, { fast })
             },
           }
         )
@@ -1799,7 +1824,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         ease: 'none',
         overwrite: 'auto',
         onStart: () => {
-          if (revealContent) gsap.delayedCall(0.06, () => animateStepContent(targetStep))
+          if (revealContent) gsap.delayedCall(0.04, () => animateStepContent(targetStep))
         },
       })
     }
@@ -1865,7 +1890,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     updateStepHighlights({ reposition: true, immediate: true })
 
     const firstStep = stepElements[0]
-    if (firstStep) animateStepContent(firstStep)
+    if (firstStep) animateStepContent(firstStep, { fast: true })
 
     if (progressLine && stepElements[0]) {
       gsap.set(progressLine, {
@@ -1905,7 +1930,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       ctx.revert()
       observer.disconnect()
     }
-  }, [disableScrollAnimations, isVisible, dataReady, steps.length])
+  }, [disableScrollAnimations, isVisible, steps.length])
 
   return (
     <section
@@ -2544,7 +2569,7 @@ const ChecklistSection = () => {
     const doorOpenEnd = 1.32
     const insideBgRevealStart = doorOpenEnd - 0.08
     const gateFadeStart = doorOpenEnd + 0.04
-    const howItWorksStart = doorOpenEnd + 0.1
+    const howItWorksStart = doorOpenEnd + 0.02
     const doorZoomOrigin = '50% 50%'
     let howItWorksActivated = false
     const activateHowItWorks = () => {
@@ -2606,10 +2631,13 @@ const ChecklistSection = () => {
       howItWorks,
       {
         yPercent: 0,
-        duration: 1.12,
+        duration: 0.85,
         ease: 'power2.out',
-        onComplete: () => {
+        onStart: () => {
           activateHowItWorks()
+        },
+        onComplete: () => {
+          requestAnimationFrame(() => ScrollTrigger.refresh())
         },
       },
       howItWorksStart
@@ -3024,6 +3052,7 @@ const PackagesSection = () => {
   const [disableTransition, setDisableTransition] = useState(false)
   const lastDirectionRef = useRef('next')
   const [isMobile, setIsMobile] = useState(false)
+  const packagePreloadRef = useRef(null)
 
   // Touch handlers for mobile swiping of the main packages
   const touchStartX = useRef(0)
@@ -3057,6 +3086,33 @@ const PackagesSection = () => {
   const usePackageCylinder = count > 1
   /** Show nav buttons/dots whenever there is at least 1 package */
   const showNavButtons = count > 0
+
+  useEffect(() => {
+    const urls = packagesData
+      .flatMap(pkg => (Array.isArray(pkg.images) ? pkg.images.slice(0, 2) : []))
+      .filter(Boolean)
+    if (urls.length) preloadImages(urls)
+  }, [packagesData])
+
+  useEffect(() => {
+    const el = packagePreloadRef.current
+    if (!el || packagesData.length === 0) return
+
+    const urls = packagesData.map(pkg => pkg.images?.[0]).filter(Boolean)
+
+    let fired = false
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || fired) return
+        fired = true
+        preloadImages(urls)
+        observer.disconnect()
+      },
+      { rootMargin: '180% 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [packagesData])
 
   const handleTransitionEnd = () => {
     if (count === 0 || !usePackageCylinder) return
@@ -3117,8 +3173,20 @@ const PackagesSection = () => {
       })
   }, [packagesData, effectiveVirtualIndex, count])
 
+  const cylinderCards = useMemo(() => {
+    if (!usePackageCylinder) return sortedCards
+    return sortedCards.filter(({ index }) => {
+      const direct = Math.abs(index - effectiveVirtualIndex)
+      const wrapped = totalCards - direct
+      return Math.min(direct, wrapped) <= PACKAGE_CYLINDER_ARC
+    })
+  }, [sortedCards, effectiveVirtualIndex, totalCards, usePackageCylinder])
+
+  const renderCards = usePackageCylinder ? cylinderCards : sortedCards
+
   return (
     <section
+      ref={packagePreloadRef}
       className="relative w-full min-h-auto md:min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] pt-10 md:pt-8 pb-10 md:pb-28 md:-mt-4 overflow-hidden"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
@@ -3263,17 +3331,17 @@ const PackagesSection = () => {
             className="grid place-self-center w-full max-w-[100vw] pointer-events-none"
             style={{
               transformStyle: 'preserve-3d',
-              transform: `rotateY(${usePackageCylinder ? -effectiveVirtualIndex * 36 : 0}deg)`,
+              transform: `translateZ(0) rotateY(${usePackageCylinder ? -effectiveVirtualIndex * 36 : 0}deg)`,
               transition: disableTransition
                 ? 'none'
-                : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                : 'transform 0.48s cubic-bezier(0.22, 1, 0.36, 1)',
               willChange: disableTransition ? 'auto' : 'transform',
             }}
             onTransitionEnd={handleTransitionEnd}
             onTouchStart={isMobile && usePackageCylinder ? handleTouchStart : undefined}
             onTouchEnd={isMobile && usePackageCylinder ? handleTouchEnd : undefined}
           >
-            {sortedCards.map(({ pkg, index }) => {
+            {renderCards.map(({ pkg, index }) => {
               const baseAngle = 36
               const halfAngleDeg = baseAngle / 2
               const halfAngleRad = (halfAngleDeg * Math.PI) / 180
@@ -3296,9 +3364,11 @@ const PackagesSection = () => {
                     boxShadow: isActive
                       ? '0 12px 32px rgba(0,0,0,0.15)'
                       : '0 6px 20px rgba(0,0,0,0.1)',
-                    opacity: isActive ? 1 : isMobile ? 0 : 0.9,
+                    opacity: isActive ? 1 : isMobile ? 0 : 0.92,
                     pointerEvents: isActive ? 'auto' : isMobile ? 'none' : 'auto',
                     zIndex: isActive ? 50 : 0,
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
                   }}
                 />
               )
@@ -3394,32 +3464,60 @@ const CelebrationFeelingSection = () => {
   const s = cms.planner_cta ?? {}
 
   const containerRef = useRef(null)
-  const [isMobile, setIsMobile] = useState(false)
   const revealRef = useRef(null)
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    handleResize() // init
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    preloadImages([img1, img2, img3, img4, img5])
   }, [])
 
-  // Preload all 5 parallax images 2 viewports before this section scrolls into view
-  const preloadRef = usePreloadOnApproach([img1, img2, img3, img4, img5], '200% 0px')
+  useEffect(() => {
+    const section = containerRef.current
+    if (!section || typeof window === 'undefined') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start end', 'end start'],
-  })
+    let raf = 0
+    let listening = false
 
-  // Slightly stronger parallax on both breakpoints.
-  // Negative y moves the images upward as the section scrolls.
-  const intensity = isMobile ? 1.95 : 1.7
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -150 * intensity])
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, -80 * intensity])
-  const y3 = useTransform(scrollYProgress, [0, 1], [0, -120 * intensity])
-  const y4 = useTransform(scrollYProgress, [0, 1], [0, -60 * intensity])
-  const y5 = useTransform(scrollYProgress, [0, 1], [0, -200 * intensity])
+    const updateProgress = () => {
+      const rect = section.getBoundingClientRect()
+      const total = section.offsetHeight + window.innerHeight
+      const progress = Math.max(0, Math.min(1, (window.innerHeight - rect.top) / total))
+      section.style.setProperty('--celebration-p', progress.toFixed(4))
+    }
+
+    const onScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(updateProgress)
+    }
+
+    const proximityObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!listening) {
+            listening = true
+            updateProgress()
+            window.addEventListener('scroll', onScroll, { passive: true })
+            window.addEventListener('resize', updateProgress, { passive: true })
+          }
+        } else if (listening) {
+          listening = false
+          window.removeEventListener('scroll', onScroll)
+          window.removeEventListener('resize', updateProgress)
+          cancelAnimationFrame(raf)
+        }
+      },
+      { rootMargin: '60% 0px' }
+    )
+
+    proximityObserver.observe(section)
+    updateProgress()
+    return () => {
+      proximityObserver.disconnect()
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', updateProgress)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
 
   useEffect(() => {
     const root = revealRef.current
@@ -3438,70 +3536,54 @@ const CelebrationFeelingSection = () => {
           io.unobserve(entry.target)
         })
       },
-      { threshold: 0.18, rootMargin: '0px 0px -8% 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px -4% 0px' }
     )
 
     imgs.forEach(el => io.observe(el))
     return () => io.disconnect()
   }, [])
 
-  const imageShadow =
-    '-54px 121px 37px rgba(0, 0, 0, 0.01), -34px 77px 34px rgba(0, 0, 0, 0.04), -19px 43px 29px rgba(0, 0, 0, 0.14), -9px 19px 21px rgba(0, 0, 0, 0.24), -2px 5px 12px rgba(0, 0, 0, 0.28)'
-
   return (
     <section
-      ref={el => {
-        containerRef.current = el
-        preloadRef.current = el
-      }}
+      ref={containerRef}
       data-nav-theme="glass"
-      className="w-full bg-[#BFAC9B] overflow-hidden flex justify-center font-sans relative h-[700px] md:h-[900px]"
+      className="celebration-feeling-section w-full bg-[#BFAC9B] overflow-hidden flex justify-center font-sans relative h-[700px] md:h-[900px]"
     >
       <div ref={revealRef} className="relative w-[1440px] max-w-full h-full shrink-0">
-        {/* Img 1 (Mapped to Figma Rectangle 37 on Mobile) */}
-        <motion.img
-          style={{ y: y1, boxShadow: imageShadow, '--img-delay': '0.02s' }}
-          src={img1}
-          alt="Event Decor"
-          className="absolute w-[336px] md:w-[347px] h-[271px] md:h-[280px] -left-[103px] md:left-[0px] top-[5px] md:top-[100px] object-cover pointer-events-none z-0 celebration-img-reveal"
-          loading="lazy"
-        />
+        <div
+          style={{ '--img-delay': '0.02s' }}
+          className="celebration-img-slot celebration-parallax-slot--1 celebration-img-reveal absolute w-[336px] md:w-[347px] h-[271px] md:h-[280px] -left-[103px] md:left-[0px] top-[5px] md:top-[100px] pointer-events-none z-0"
+        >
+          <img src={img1} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+        </div>
 
-        {/* Img 2 (Mapped to Figma Rectangle 38 Bottom-Left on Mobile) */}
-        <motion.img
-          style={{ y: y2, boxShadow: imageShadow, '--img-delay': '0.10s' }}
-          src={img2}
-          alt="Event Decor"
-          className="absolute w-[246px] md:w-[249px] h-[268px] md:h-[375px] -left-[46px] md:left-[42px] top-[432px] md:top-[450px] object-cover pointer-events-none z-0 celebration-img-reveal"
-          loading="lazy"
-        />
+        <div
+          style={{ '--img-delay': '0.06s' }}
+          className="celebration-img-slot celebration-parallax-slot--2 celebration-img-reveal absolute w-[246px] md:w-[249px] h-[268px] md:h-[375px] -left-[46px] md:left-[42px] top-[432px] md:top-[450px] pointer-events-none z-0"
+        >
+          <img src={img2} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+        </div>
 
-        {/* Img 3 (Hidden on Mobile, visible on Desktop) */}
-        <motion.img
-          style={{ y: y3, boxShadow: imageShadow, '--img-delay': '0.18s' }}
-          src={img3}
-          alt="Event Decor"
-          className="absolute hidden md:block w-[290px] h-[316px] left-[497px] top-[700px] object-cover pointer-events-none z-0 celebration-img-reveal"
-          loading="lazy"
-        />
+        <div
+          style={{ '--img-delay': '0.10s' }}
+          className="celebration-img-slot celebration-parallax-slot--3 celebration-img-reveal absolute hidden md:block w-[290px] h-[316px] left-[497px] top-[700px] pointer-events-none z-0"
+        >
+          <img src={img3} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+        </div>
 
-        {/* Img 4 (Mapped to Figma Rectangle 38 Top-Right on Mobile) */}
-        <motion.img
-          style={{ y: y4, boxShadow: imageShadow, '--img-delay': '0.26s' }}
-          src={img4}
-          alt="Event Decor"
-          className="absolute w-[158px] md:w-[312px] h-[161px] md:h-[318px] left-[278px] md:left-[1034px] top-[391px] md:top-[400px] object-cover pointer-events-none z-0 celebration-img-reveal"
-          loading="lazy"
-        />
+        <div
+          style={{ '--img-delay': '0.14s' }}
+          className="celebration-img-slot celebration-parallax-slot--4 celebration-img-reveal absolute w-[158px] md:w-[312px] h-[161px] md:h-[318px] left-[278px] md:left-[1034px] top-[391px] md:top-[400px] pointer-events-none z-0"
+        >
+          <img src={img4} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+        </div>
 
-        {/* Img 5 (Mapped to Figma Rectangle 40 on Mobile) */}
-        <motion.img
-          style={{ y: y5, boxShadow: imageShadow, '--img-delay': '0.34s' }}
-          src={img5}
-          alt="Event Decor"
-          className="absolute w-[215px] md:w-[505px] h-[113px] md:h-[265px] left-[257px] md:left-[909px] top-[141px] md:top-[50px] object-cover pointer-events-none z-0 celebration-img-reveal"
-          loading="lazy"
-        />
+        <div
+          style={{ '--img-delay': '0.18s' }}
+          className="celebration-img-slot celebration-parallax-slot--5 celebration-img-reveal absolute w-[215px] md:w-[505px] h-[113px] md:h-[265px] left-[257px] md:left-[909px] top-[141px] md:top-[50px] pointer-events-none z-0"
+        >
+          <img src={img5} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+        </div>
 
         <div className="sticky top-[180px] md:top-[250px] z-10 flex flex-col items-center">
           <h2 className="w-full max-w-[353px] md:w-[1260px] md:max-w-[calc(100%-2rem)] text-[#FFFFFF] text-[24px] md:text-[48px] lg:text-[96px] leading-[1] md:leading-[1.24] text-center font-malgin drop-shadow-sm px-4 reveal-heading">
@@ -4529,7 +4611,10 @@ const SplitInfoSection = () => {
 
               <span className="mt-[32px] lg:mt-[16px] reveal-wrapper reveal-wrapper--overflow-visible !pb-1 reveal-on-scroll">
                 <span className="reveal-text">
-                  <button className="box-border flex flex-row items-center justify-between pl-[18px] lg:pl-[24px] pr-[4px] lg:pr-[4px] py-0 lg:py-[4px] gap-[12px] lg:gap-[16px] w-max lg:w-[228px] min-h-[36px] h-[36px] lg:h-[44px] bg-[#CDB17E] rounded-[42px] lg:rounded-[56px] hover:bg-[#bfa06b] transition-colors group">
+                  <Link
+                    to={vp.cta_url ?? '/vendor-registration'}
+                    className="box-border flex flex-row items-center justify-between pl-[18px] lg:pl-[24px] pr-[4px] lg:pr-[4px] py-0 lg:py-[4px] gap-[12px] lg:gap-[16px] w-max lg:w-[228px] min-h-[36px] h-[36px] lg:h-[44px] bg-[#CDB17E] rounded-[42px] lg:rounded-[56px] hover:bg-[#bfa06b] transition-colors group"
+                  >
                     <span className="text-[#FAFAFA] font-medium text-[12px] lg:text-[16px] leading-[150%] font-['Poppins'] lg:font-sans text-left">
                       {vp.cta_label ?? 'Apply as Vendor'}
                     </span>
@@ -4550,7 +4635,7 @@ const SplitInfoSection = () => {
                         <path d="M7 7h10v10" />
                       </svg>
                     </div>
-                  </button>
+                  </Link>
                 </span>
               </span>
             </div>
@@ -4563,32 +4648,44 @@ const SplitInfoSection = () => {
 
 export default function LandingPage() {
   const rootRef = useRef(null)
-  const { data: cmsData } = useLandingPage()
+  const queryClient = useQueryClient()
+  const landingQuery = useLandingPage()
+  const eventCardsQuery = useEventCards()
+  const eventCategoriesQuery = useEventCategories()
+  const isStrapiLoading = useStrapiPageLoading(landingQuery, eventCardsQuery, eventCategoriesQuery)
+
+  const { data: cmsData } = landingQuery
 
   // When Strapi CMS data loads after mount, new .reveal-text spans are created
   // inside elements that the global IO already marked .is-visible. Those new spans
   // never get the class. This pass finds them and makes them visible immediately.
   useEffect(() => {
-    if (!rootRef.current || !cmsData) return
+    if (isStrapiLoading || !cmsData) return
+    if (!rootRef.current) return
     rootRef.current.querySelectorAll('.is-visible').forEach(parent => {
       parent.querySelectorAll('.reveal-text:not(.is-visible)').forEach(span => {
         span.style.animationDelay = '0s'
         span.classList.add('is-visible')
       })
     })
-  }, [cmsData])
+  }, [cmsData, isStrapiLoading])
 
-  // â”€â”€ Tiered asset preloading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Tiered asset preloading ───────────────────────────────────────────────
   // Tier 1 (on mount, during 2s preloader): only the images that appear the
   //   instant the preloader fades â€” the scallop bulbs at the top of section 1.
   // Tier 2 (hero-preloader-done, ~3s in): checklist illustrations, first 3
   //   package images, and the centre logo â€” sections 3â€“5.
-  // Tier 3: IntersectionObserver hooks inside CelebrationFeelingSection and
-  //   SplitInfoSection handle img1-5 and inspirationImg 2 viewports ahead.
+  // Tier 3: IntersectionObserver hooks inside SplitInfoSection handle
+  //   inspirationImg 2 viewports ahead.
   // All remaining img tags carry loading="lazy" so the browser fetches them
   //   when they naturally scroll into range.
   useEffect(() => {
     preloadImages([bulb1, bulb2])
+    queryClient.prefetchQuery({
+      queryKey: ['how-it-works-landing-page'],
+      queryFn: fetchHowItWorksLandingPage,
+      staleTime: 5 * 60 * 1000,
+    })
 
     const onPreloaderDone = () =>
       preloadImages([
@@ -4599,14 +4696,21 @@ export default function LandingPage() {
         pkgImg1,
         pkgImg2,
         pkgImg3,
+        img1,
+        img2,
+        img3,
+        img4,
+        img5,
         centerLogo,
       ])
 
     window.addEventListener('hero-preloader-done', onPreloaderDone, { once: true })
     return () => window.removeEventListener('hero-preloader-done', onPreloaderDone)
-  }, [])
+  }, [queryClient])
 
   useEffect(() => {
+    if (isStrapiLoading) return
+
     const root = rootRef.current
     if (!root || typeof window === 'undefined') return
 
@@ -4620,51 +4724,46 @@ export default function LandingPage() {
     const animated = new Set()
     const pending = new Set()
 
+    const revealElement = (el, observer) => {
+      if (animated.has(el) || pending.has(el)) return
+      pending.add(el)
+
+      const tryReveal = (attempt = 0) => {
+        const opacity = window.getComputedStyle(el).opacity
+        if (opacity === '0') {
+          if (attempt < 20) {
+            setTimeout(() => tryReveal(attempt + 1), 80)
+          }
+          return
+        }
+
+        pending.delete(el)
+        animated.add(el)
+        el.classList.add('is-visible')
+
+        const revealSpans = [
+          ...(el.classList.contains('reveal-text') ? [el] : []),
+          ...Array.from(el.querySelectorAll('.reveal-text')),
+        ]
+        revealSpans.forEach((span, i) => {
+          const isTimelineReveal = !!el.closest('.step-item')
+          const baseDelay = isTimelineReveal ? 0 : 0.5
+          const stagger = isTimelineReveal ? 0 : i * 0.04
+          span.style.animationDelay = `${baseDelay + stagger}s`
+          span.classList.add('is-visible')
+        })
+
+        observer?.unobserve(el)
+      }
+
+      tryReveal()
+    }
+
     const observer = new IntersectionObserver(
       entries => {
         entries.forEach(entry => {
           if (!entry.isIntersecting) return
-
-          const el = entry.target
-          if (animated.has(el)) return
-          if (pending.has(el)) return
-
-          // Some sections (like the door/timeline) start with opacity: 0.
-          // If we reveal while hidden, it may look like the animation never happened.
-          const tryReveal = (attempt = 0) => {
-            const opacity = window.getComputedStyle(el).opacity
-            if (opacity === '0') {
-              if (attempt < 20) {
-                setTimeout(() => tryReveal(attempt + 1), 80)
-              }
-              return
-            }
-
-            pending.delete(el)
-            animated.add(el)
-
-            el.classList.add('is-visible')
-
-            // `querySelectorAll` doesn't include the element itself, so if the target IS a `.reveal-text`
-            // (e.g. button wrapper), include it manually.
-            const revealSpans = [
-              ...(el.classList.contains('reveal-text') ? [el] : []),
-              ...Array.from(el.querySelectorAll('.reveal-text')),
-            ]
-            revealSpans.forEach((span, i) => {
-              const isTimelineReveal = !!el.closest('.step-item')
-              // Base delay so the reveal feels intentional (user-requested),
-              // but keep timeline reveals snappy for smoother scroll start.
-              const baseDelay = isTimelineReveal ? 0 : 0.5
-              const stagger = isTimelineReveal ? 0 : i * 0.04
-              span.style.animationDelay = `${baseDelay + stagger}s`
-              span.classList.add('is-visible')
-            })
-
-            observer.unobserve(el)
-          }
-
-          tryReveal()
+          revealElement(entry.target, observer)
         })
       },
       {
@@ -4673,10 +4772,22 @@ export default function LandingPage() {
       }
     )
 
-    targets.forEach(el => observer.observe(el))
+    targets.forEach(el => {
+      const rect = el.getBoundingClientRect()
+      const isAlreadyInView = rect.top < window.innerHeight * 0.92 && rect.bottom > 0
+      if (isAlreadyInView) {
+        requestAnimationFrame(() => revealElement(el, observer))
+      } else {
+        observer.observe(el)
+      }
+    })
 
     return () => observer.disconnect()
-  }, [])
+  }, [isStrapiLoading])
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
 
   return (
     <div ref={rootRef} className="relative">

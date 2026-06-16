@@ -4,6 +4,8 @@ import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventTypes'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import {
   buildServiceDestination,
@@ -155,7 +157,8 @@ export default function CategoryPage() {
   const flow = searchParams.get('flow') ?? ''
   const isServicesFlow = flow === SERVICES_FLOW_KEY
 
-  const { data: categories = [] } = useEventCategoryOptions()
+  const categoriesQuery = useEventCategoryOptions()
+  const { data: categories = [] } = categoriesQuery
 
   const selectedCategoryId = useMemo(() => {
     if (!categories.length) return requestedCategorySlug
@@ -166,7 +169,10 @@ export default function CategoryPage() {
     )
   }, [categories, requestedCategorySlug])
 
-  const { data: events = [] } = useEventsByCategory(selectedCategoryId)
+  const eventsQuery = useEventsByCategory(selectedCategoryId)
+  const { data: events = [] } = eventsQuery
+  const isStrapiLoading = useStrapiPageLoading(categoriesQuery, eventsQuery)
+
   const paginationKey = `${selectedCategoryId}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
     key: paginationKey,
@@ -297,6 +303,10 @@ export default function CategoryPage() {
 
   if (isServicesFlow && !serviceSlug) {
     return <Navigate to="/event-flow/service?flow=services" replace />
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   return (

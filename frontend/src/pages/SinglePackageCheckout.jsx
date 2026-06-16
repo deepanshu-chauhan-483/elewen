@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 const CART_ADDITIONAL_INFO_KEY = '__additional_info__'
@@ -310,7 +312,10 @@ export default function SinglePackageCheckout() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { cart, loading, addPackage } = useCart()
-  const { data: packages = [] } = usePackages()
+  const packagesQuery = usePackages()
+  const { data: packages = [] } = packagesQuery
+  const isStrapiLoading = useStrapiPageLoading(packagesQuery)
+
   const [addingAddonId, setAddingAddonId] = useState('')
   const itemId = searchParams.get('itemId') ?? ''
 
@@ -369,6 +374,10 @@ export default function SinglePackageCheckout() {
         return Array.from(entryRelationIds).some(id => relatedPackageIds.has(id))
       })
   }, [cart?.items, item])
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
 
   if (!loading && !item) return <Navigate to="/cart" replace />
   if (!item) return null

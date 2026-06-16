@@ -1,6 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useBlogs } from '../hooks/useBlogs'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import blogImg1 from '../assets/images/IMG_0658.jpg'
 import blogImg2 from '../assets/images/outdoor-party-setup-with-balloons-and-decorations-2026-03-18-09-29-30-utc.jpg'
 import blogImg3 from '../assets/images/IMG_3148.jpg'
@@ -406,13 +408,11 @@ const RevealLine = ({ children, delay, className = '' }) => (
 const SingleBlogPage = () => {
   const pageRef = useRef(null)
   const { slug } = useParams()
-  const {
-    data: currentBlogData = [],
-    isLoading: isCurrentBlogLoading,
-    isFetching: isCurrentBlogFetching,
-    isFetched: isCurrentBlogFetched,
-  } = useBlogs({ limit: 1, slug })
-  const { data: allBlogs = [] } = useBlogs({ limit: 50 })
+  const currentBlogQuery = useBlogs({ limit: 1, slug })
+  const allBlogsQuery = useBlogs({ limit: 50 })
+  const { data: currentBlogData = [] } = currentBlogQuery
+  const { data: allBlogs = [] } = allBlogsQuery
+  const isStrapiLoading = useStrapiPageLoading(currentBlogQuery, allBlogsQuery)
 
   const currentPost = currentBlogData[0] ?? null
 
@@ -486,26 +486,9 @@ const SingleBlogPage = () => {
   }, [currentPost])
 
   if (!slug) return <Navigate to="/blogs" replace />
-  if (!currentPost && (isCurrentBlogLoading || isCurrentBlogFetching || !isCurrentBlogFetched)) {
-    return (
-      <main className="min-h-screen bg-[#F7F4EE] px-6 py-24 text-[#202716] md:px-10 lg:px-[96px]">
-        <div className="mx-auto max-w-[1760px]">
-          <p
-            style={{
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 400,
-              fontSize: '16px',
-              lineHeight: '150%',
-              letterSpacing: '0',
-            }}
-          >
-            Loading blog...
-          </p>
-        </div>
-      </main>
-    )
-  }
-  if (isCurrentBlogFetched && !currentPost) return <Navigate to="/blogs" replace />
+  if (isStrapiLoading) return <CmsPageLoader />
+  if (!currentPost && currentBlogQuery.isFetched) return <Navigate to="/blogs" replace />
+  if (!currentPost) return null
 
   return (
     <main ref={pageRef} className="single-blog-page min-h-screen bg-[#F7F4EE] text-[#202716]">

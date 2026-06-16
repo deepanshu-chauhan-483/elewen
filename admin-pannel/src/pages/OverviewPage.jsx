@@ -236,7 +236,7 @@ const TABLE_TABS = ['all', 'confirmed', 'pending', 'new']
 
 function TableFilter({ active, onChange }) {
   return (
-    <div className="w-[160px]">
+    <div className="w-full sm:w-[160px]">
       <CustomSelect
         value={active}
         onChange={onChange}
@@ -250,6 +250,80 @@ function TableFilter({ active, onChange }) {
         ))}
       </CustomSelect>
     </div>
+  )
+}
+
+function PaginationControls({ currentPage, totalPages, onPageChange }) {
+  const visiblePage = Math.min(currentPage, totalPages)
+
+  return (
+    <div className="flex items-center justify-end gap-2 border-t border-[#F0EBE3] px-4 py-3">
+      <button
+        type="button"
+        onClick={() => onPageChange(prev => Math.max(1, prev - 1))}
+        disabled={currentPage === 1}
+        className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ArrowIcon direction="left" />
+      </button>
+      <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+        {visiblePage} / {totalPages}
+      </div>
+      <button
+        type="button"
+        onClick={() => onPageChange(prev => Math.min(totalPages, prev + 1))}
+        disabled={currentPage === totalPages}
+        className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ArrowIcon direction="right" />
+      </button>
+    </div>
+  )
+}
+
+function UpcomingEventCard({ booking }) {
+  const eventTitle = booking.event?.name || booking.package?.title || booking.id
+  const vendorAssigned = Boolean(booking.vendorAssignments?.length)
+
+  return (
+    <article className="rounded-2xl border border-[#E4DED8] bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+            {formatDate(booking.eventDate)}
+          </p>
+          <h3 className="mt-1 text-[15px] font-semibold leading-tight text-[#1C1C1C]">
+            {eventTitle}
+          </h3>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <StatusBadge
+            status={vendorAssigned ? 'confirmed' : 'pending'}
+            label={vendorAssigned ? 'Assigned' : 'Unassigned'}
+          />
+          <StatusBadge status={booking.status} label={booking.statusLabel} />
+        </div>
+      </div>
+
+      <dl className="mt-3 grid gap-2 text-sm">
+        <div className="flex justify-between gap-3">
+          <dt className="text-gray-400">Location</dt>
+          <dd className="text-right text-[#4B5563]">
+            {booking.locationSummary || 'Venue pending'}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-gray-400">Customer</dt>
+          <dd className="text-right text-[#1C1C1C]">{booking.customer?.name || 'Customer'}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-gray-400">Service</dt>
+          <dd className="text-right text-[#4B5563]">
+            {booking.package?.serviceCategories?.[0]?.name || 'General service'}
+          </dd>
+        </div>
+      </dl>
+    </article>
   )
 }
 
@@ -480,9 +554,10 @@ export default function OverviewPage() {
         }
       >
         {filteredBookings.length ? (
-          <div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-separate border-spacing-y-2">
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block">
+              <table className="w-full border-separate border-spacing-y-2">
                 <thead>
                   <tr className="text-left">
                     {TABLE_COLS.map(col => (
@@ -526,30 +601,27 @@ export default function OverviewPage() {
                   ))}
                 </tbody>
               </table>
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
 
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ArrowIcon direction="left" />
-              </button>
-              <div className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#6B7280]">
-                {visiblePage} / {totalPages}
+            {/* Mobile cards */}
+            <div className="space-y-3 md:hidden">
+              {paginatedBookings.map(booking => (
+                <UpcomingEventCard key={booking.id} booking={booking} />
+              ))}
+              <div className="overflow-hidden rounded-[8px] border border-[#E4DED8] bg-white">
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ArrowIcon direction="right" />
-              </button>
             </div>
-          </div>
+          </>
         ) : (
           <ResultsEmptyState title="No events" body="No bookings match this filter." />
         )}

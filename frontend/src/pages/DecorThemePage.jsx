@@ -4,6 +4,8 @@ import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { useDecorThemeOptions } from '../hooks/useEventTypes'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
 
 import themeImg1 from '../assets/images/IMG_3903.jpg'
@@ -106,7 +108,10 @@ export default function DecorThemePage() {
   const serviceId = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
 
-  const { data: themes = [] } = useDecorThemeOptions(serviceId)
+  const themesQuery = useDecorThemeOptions(serviceId)
+  const { data: themes = [] } = themesQuery
+  const isStrapiLoading = useStrapiPageLoading(themesQuery)
+
   const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
     key: paginationKey,
@@ -206,6 +211,10 @@ export default function DecorThemePage() {
         replace
       />
     )
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   return (

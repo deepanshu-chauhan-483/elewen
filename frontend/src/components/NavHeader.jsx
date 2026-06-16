@@ -404,7 +404,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     <>
       <header
         ref={headerRef}
-        className={`fixed top-0 left-0 right-0 z-[60] overflow-hidden px-6 py-[8px] transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-[12px] ${visibilityClass} ${transformClass}`}
+        className={`nav-header-shell fixed top-0 left-0 right-0 z-[60] overflow-hidden px-6 py-[8px] transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-[12px] ${visibilityClass} ${transformClass}`}
       >
         <div
           className="pointer-events-none absolute inset-0 md:hidden"
@@ -452,7 +452,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
 
         <div className="relative z-10 flex w-full items-center justify-between">
           <div className="flex items-center">
-            <Link to="/" className="md:hidden">
+            <Link to="/" className="nav-mobile-logo-wrap md:hidden">
               <img
                 src={mobileLogoSrc}
                 alt="Elewen"
@@ -464,7 +464,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             <button
               onClick={() => setOpen(true)}
               type="button"
-              className="hidden w-[225px] items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md transition-all md:flex"
+              className="nav-desktop-search-btn hidden w-[225px] items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md transition-all md:flex"
               style={{
                 border: `1px solid ${searchButtonBorder}`,
                 background: searchButtonBg,
@@ -496,7 +496,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             </button>
           </div>
 
-          <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
+          <div className="nav-desktop-logo-wrap absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
             <Link to="/" className="flex h-26 w-84 items-center justify-center md:h-52 md:w-96">
               <img
                 src={navLogo}

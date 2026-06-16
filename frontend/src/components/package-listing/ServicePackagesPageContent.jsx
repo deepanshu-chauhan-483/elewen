@@ -4,6 +4,8 @@ import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'
 import { usePackages } from '../../hooks/usePackages'
 import { filterPackages, normalizeServiceSlug } from '../../lib/packageFilters'
+import CmsPageLoader from '../common/CmsPageLoader'
+import { useStrapiPageLoading } from '../../hooks/useStrapiPageLoading'
 import pkgImg1 from '../../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../../assets/images/IMG_0749.jpg'
@@ -37,7 +39,10 @@ export default function ServicePackagesPageContent({
   showHero = true,
   serviceSlug = '',
 }) {
-  const { data: packages = [] } = usePackages()
+  const packagesQuery = usePackages()
+  const { data: packages = [] } = packagesQuery
+  const isStrapiLoading = useStrapiPageLoading(packagesQuery)
+
   const [searchParams] = useSearchParams()
   const [sortValue, setSortValue] = useState('price-desc')
   const [page, setPage] = useState(1)
@@ -120,6 +125,10 @@ export default function ServicePackagesPageContent({
   const totalPages = Math.max(1, Math.ceil(sortedPackages.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
   const visiblePackages = sortedPackages.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
 
   return (
     <PackageListLayout

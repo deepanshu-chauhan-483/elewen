@@ -26,11 +26,13 @@ export const LANDING_PAGE_FALLBACK = {
     description:
       'Choose your event type and explore curated décor and catering packages designed to simplify planning.',
     cta_label: 'View All',
+    cta_url: '/event-flow/category',
   },
   what_to_plan_intro: {
     heading: 'What would you like to plan',
     description: 'Choose a service category to explore curated packages designed for your event.',
     cta_label: 'View All',
+    cta_url: '/event-flow/service?flow=services',
   },
   checklist: {
     heading_1: 'Somewhere along the way,',
@@ -99,6 +101,7 @@ export const LANDING_PAGE_FALLBACK = {
     heading: 'Partner with Elewen',
     body: "Great events are never created alone. We work with a trusted circle of florists, decorators, caterers, bartenders, and production houses who help bring celebrations to life. If you'd like to be part of our vendor network, we'd love to hear from you.",
     cta_label: 'Apply as a Vendor',
+    cta_url: '/vendor-registration',
   },
 }
 

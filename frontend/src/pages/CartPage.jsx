@@ -10,6 +10,8 @@ import {
   useCouponToastMessage,
 } from '../hooks/useMessagingContent'
 import { usePackages } from '../hooks/usePackages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
@@ -1356,13 +1358,23 @@ const TrustBadges = () => {
 export default function CartPage() {
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const { data: packages = [] } = usePackages()
-  const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = useServiceAreas()
+  const packagesQuery = usePackages()
+  const serviceAreasQuery = useServiceAreas()
+  const cateringDiscountsQuery = useCateringGuestDiscounts()
+  const { data: packages = [] } = packagesQuery
+  const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = serviceAreasQuery
+  const { data: cateringDiscountSettings = null } = cateringDiscountsQuery
+  const isStrapiLoading = useStrapiPageLoading(
+    packagesQuery,
+    serviceAreasQuery,
+    cateringDiscountsQuery
+  )
+
   const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
   const { data: couponToastMessage = 'Coupon applied successfully.' } = useCouponToastMessage()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
-  const { data: cateringDiscountSettings = null } = useCateringGuestDiscounts()
+
   const {
     cart,
     loading,
@@ -1616,6 +1628,10 @@ export default function CartPage() {
     } finally {
       setAddingAddonId('')
     }
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   return (

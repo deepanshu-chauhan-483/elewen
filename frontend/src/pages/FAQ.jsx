@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useFaqCategories, useFaqItems } from '../hooks/useFaqItems'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 
 const formatCategoryLabel = value =>
   String(value || '')
@@ -11,8 +13,12 @@ const formatCategoryLabel = value =>
 export default function FAQ() {
   const [activeCategory, setActiveCategory] = useState('')
   const [openIndex, setOpenIndex] = useState(0)
-  const { data: faqs = [] } = useFaqItems()
-  const { data: categories = [] } = useFaqCategories()
+  const faqItemsQuery = useFaqItems()
+  const faqCategoriesQuery = useFaqCategories()
+  const { data: faqs = [] } = faqItemsQuery
+  const { data: categories = [] } = faqCategoriesQuery
+  const isStrapiLoading = useStrapiPageLoading(faqItemsQuery, faqCategoriesQuery)
+
   const resolvedActiveCategory =
     activeCategory && categories.includes(activeCategory) ? activeCategory : (categories[0] ?? '')
 
@@ -20,6 +26,10 @@ export default function FAQ() {
     if (!resolvedActiveCategory) return faqs
     return faqs.filter(item => item.category === resolvedActiveCategory)
   }, [faqs, resolvedActiveCategory])
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
 
   return (
     <div className="w-full">

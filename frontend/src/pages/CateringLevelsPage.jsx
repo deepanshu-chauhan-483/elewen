@@ -2,6 +2,8 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useBudgetLevelOptions } from '../hooks/useEventTypes'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
 
 const FLOW_STEPS = [
@@ -51,7 +53,9 @@ export default function CateringLevelsPage() {
   const serviceId = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
 
-  const { data: levels = [] } = useBudgetLevelOptions(serviceId)
+  const levelsQuery = useBudgetLevelOptions(serviceId)
+  const { data: levels = [] } = levelsQuery
+  const isStrapiLoading = useStrapiPageLoading(levelsQuery)
 
   const backTo = useMemo(() => {
     return buildServiceSelectionBackTo({
@@ -73,6 +77,10 @@ export default function CateringLevelsPage() {
         replace
       />
     )
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   return (

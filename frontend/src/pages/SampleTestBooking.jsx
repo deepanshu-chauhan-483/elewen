@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getCateringDetailSection, getCateringPricePerPerson } from '../lib/cateringPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 
@@ -226,7 +228,9 @@ export default function SampleTasteBooking() {
   const navigate = useNavigate()
   const location = useLocation()
   const { cart, loading, removeItem } = useCart()
-  const { data: packages = [] } = usePackages()
+  const packagesQuery = usePackages()
+  const { data: packages = [] } = packagesQuery
+  const isStrapiLoading = useStrapiPageLoading(packagesQuery)
 
   const packageLookup = useMemo(
     () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
@@ -384,6 +388,10 @@ export default function SampleTasteBooking() {
         </div>
       </div>
     )
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   return (

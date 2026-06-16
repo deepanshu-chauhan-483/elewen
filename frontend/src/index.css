@@ -152,6 +152,163 @@ p {
   }
 }
 
+/* ── Compact landscape viewport (e.g. 844×501): short height, tablet-ish width ─ */
+@media (max-height: 560px) and (min-width: 600px) {
+  html[data-compact-viewport='true'] {
+    font-size: 93.75%;
+  }
+
+  html[data-compact-viewport='true'] .nav-header-shell {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+
+  html[data-compact-viewport='true'] .nav-desktop-search-btn {
+    display: none !important;
+  }
+
+  html[data-compact-viewport='true'] .nav-mobile-logo-wrap {
+    display: block !important;
+  }
+
+  html[data-compact-viewport='true'] .nav-desktop-logo-wrap {
+    display: none !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-scroll-bands {
+    display: none !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-sticky-viewport {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-main {
+    justify-content: center !important;
+    padding-top: 2.75rem !important;
+    padding-bottom: 5.25rem !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-headline-stack {
+    align-items: flex-start !important;
+    width: auto !important;
+    max-width: none !important;
+    padding-right: 0 !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-copy {
+    align-items: flex-start !important;
+    width: auto !important;
+    max-width: none !important;
+    padding-right: 0 !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-eyebrow {
+    align-self: flex-start !important;
+    text-align: left !important;
+    font-size: clamp(1rem, 3.2vw, 1.35rem) !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-heading {
+    text-align: left !important;
+    width: auto !important;
+    font-size: clamp(1.35rem, 4.8vw, 2rem) !important;
+    line-height: 1.05 !important;
+    margin-top: 0.15rem !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-cta-row {
+    justify-content: flex-start !important;
+    align-self: flex-start !important;
+    width: auto !important;
+    max-width: none !important;
+    margin-top: 0.65rem !important;
+    padding-right: 0 !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-cta-btn {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    min-width: 2.75rem !important;
+    margin-right: 0.5rem !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-cta-text {
+    font-size: 0.65rem !important;
+    line-height: 1.35 !important;
+    text-align: left !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-mobile-footer {
+    display: none !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-compact-footer {
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-desktop-w-footer {
+    display: flex !important;
+    padding: 0 0 0.35rem 0.85rem !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-desktop-w-footer > span {
+    font-size: 2.25rem !important;
+    margin-right: 0.35rem !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-desktop-w-footer > div {
+    font-size: 0.58rem !important;
+    line-height: 1.2 !important;
+    margin-top: 0.15rem !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-desktop-cards {
+    display: flex !important;
+    width: auto !important;
+    border-top: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-desktop-cards > div {
+    height: 4.35rem !important;
+    width: 6.75rem !important;
+    min-width: 6.75rem !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-desktop-cards > div > div {
+    top: 0.45rem !important;
+    left: 0.45rem !important;
+    right: 0.35rem !important;
+    gap: 0.2rem !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-desktop-cards h3 {
+    font-size: 0.52rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  html[data-compact-viewport='true'] .hero-desktop-cards p {
+    font-size: 0.48rem !important;
+    line-height: 1.2 !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  html[data-compact-viewport='true'] .page-section-tight {
+    padding-top: 1.75rem !important;
+    padding-bottom: 1.75rem !important;
+  }
+
+  html[data-compact-viewport='true'] .min-h-screen,
+  html[data-compact-viewport='true'] .md\:min-h-screen {
+    min-height: 100dvh;
+  }
+}
+
 /* NOTE: I removed the "body *" !important override. 
    If you keep that rule, your <p> tags will be forced to use Malgin 
    instead of Poppins. Use the .font-display class on specific 
@@ -783,18 +940,73 @@ p {
   animation: none;
 }
 
-/* Celebration collage images: fade + clarity reveal on viewport */
+/* Celebration collage images: fade reveal on viewport (opacity only for perf) */
+.celebration-feeling-section {
+  --celebration-p: 0;
+}
+
+.celebration-img-slot {
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.18);
+  transform: translate3d(0, calc(var(--celebration-p) * var(--y-end)), 0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.celebration-img-slot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.celebration-parallax-slot--1 {
+  --y-end: -255px;
+}
+.celebration-parallax-slot--2 {
+  --y-end: -136px;
+}
+.celebration-parallax-slot--3 {
+  --y-end: -204px;
+}
+.celebration-parallax-slot--4 {
+  --y-end: -102px;
+}
+.celebration-parallax-slot--5 {
+  --y-end: -340px;
+}
+
+@media (max-width: 767px) {
+  .celebration-parallax-slot--1 {
+    --y-end: -292.5px;
+  }
+  .celebration-parallax-slot--2 {
+    --y-end: -156px;
+  }
+  .celebration-parallax-slot--3 {
+    --y-end: -234px;
+  }
+  .celebration-parallax-slot--4 {
+    --y-end: -117px;
+  }
+  .celebration-parallax-slot--5 {
+    --y-end: -390px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration-img-slot {
+    transform: none;
+    will-change: auto;
+  }
+}
+
 .celebration-img-reveal {
   opacity: 0;
-  filter: saturate(0.8) blur(1px);
-  transition:
-    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--img-delay, 0s),
-    filter 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--img-delay, 0s);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1) var(--img-delay, 0s);
 }
 
 .celebration-img-reveal.is-visible {
   opacity: 1;
-  filter: saturate(1) blur(0);
 }
 
 @keyframes slideInLeft {

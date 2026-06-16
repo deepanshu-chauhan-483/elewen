@@ -8,6 +8,8 @@ import { useCart } from '../hooks/useCart'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
 import { usePackageById, usePackages } from '../hooks/usePackages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -219,9 +221,14 @@ export default function PackageDetailsPage() {
   // const navigate = useNavigate()
   const { service = '', packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
-  const { data: packages = [] } = usePackages()
-  const { data: packageDetails, isLoading: isPackageLoading } = usePackageById(packageId)
-  const { data: cancellationPolicy } = useCancellationPolicy()
+  const packagesQuery = usePackages()
+  const packageQuery = usePackageById(packageId)
+  const cancellationQuery = useCancellationPolicy()
+  const isStrapiLoading = useStrapiPageLoading(packagesQuery, packageQuery, cancellationQuery)
+
+  const { data: packages = [] } = packagesQuery
+  const { data: packageDetails } = packageQuery
+  const { data: cancellationPolicy } = cancellationQuery
   const { addPackage, updateCartItemDetails } = useCart()
   const { showToast } = useToast()
   const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
@@ -305,6 +312,10 @@ export default function PackageDetailsPage() {
     setAddToCartMessage('')
   }, [details.configurableGroups, packageId, searchParams])
 
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
+  }
+
   if (normalizedService === 'decor' || normalizedService === 'decor-single') {
     return (
       <Navigate to={`/packages/decor-single/${packageId}${search ? `?${search}` : ''}`} replace />
@@ -333,10 +344,6 @@ export default function PackageDetailsPage() {
         replace
       />
     )
-  }
-
-  if (isPackageLoading) {
-    return null
   }
 
   if (!pkg) {

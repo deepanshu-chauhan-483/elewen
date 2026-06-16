@@ -39,38 +39,40 @@ const HOW_IT_WORKS_LANDING_FALLBACK = {
 export function useHowItWorksLandingPage() {
   return useQuery({
     queryKey: ['how-it-works-landing-page'],
-    queryFn: async () => {
-      if (USE_FALLBACK) return HOW_IT_WORKS_LANDING_FALLBACK
-
-      try {
-        const { data } = await strapiGet('/how-it-works-step-landing-pages', {
-          'populate[Sections][populate]': '*',
-        })
-
-        const item = Array.isArray(data) ? data[0] : data
-        const rawSections = item?.Sections ?? item?.sections ?? []
-        const sections = Array.isArray(rawSections) ? rawSections.map(normalizeSection) : []
-
-        if (!item || sections.length === 0) {
-          return HOW_IT_WORKS_LANDING_FALLBACK
-        }
-
-        return {
-          id: item?.id ?? null,
-          documentId: item?.documentId ?? null,
-          title: item?.Title ?? item?.title ?? HOW_IT_WORKS_LANDING_FALLBACK.title,
-          sections,
-          cta: {
-            heading: item?.bottom_heading ?? '',
-            body: item?.Bottom_Content ?? '',
-          },
-        }
-      } catch {
-        return HOW_IT_WORKS_LANDING_FALLBACK
-      }
-    },
+    queryFn: fetchHowItWorksLandingPage,
     placeholderData: HOW_IT_WORKS_LANDING_FALLBACK,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   })
+}
+
+export async function fetchHowItWorksLandingPage() {
+  if (USE_FALLBACK) return HOW_IT_WORKS_LANDING_FALLBACK
+
+  try {
+    const { data } = await strapiGet('/how-it-works-step-landing-pages', {
+      'populate[Sections][populate]': '*',
+    })
+
+    const item = Array.isArray(data) ? data[0] : data
+    const rawSections = item?.Sections ?? item?.sections ?? []
+    const sections = Array.isArray(rawSections) ? rawSections.map(normalizeSection) : []
+
+    if (!item || sections.length === 0) {
+      return HOW_IT_WORKS_LANDING_FALLBACK
+    }
+
+    return {
+      id: item?.id ?? null,
+      documentId: item?.documentId ?? null,
+      title: item?.Title ?? item?.title ?? HOW_IT_WORKS_LANDING_FALLBACK.title,
+      sections,
+      cta: {
+        heading: item?.bottom_heading ?? '',
+        body: item?.Bottom_Content ?? '',
+      },
+    }
+  } catch {
+    return HOW_IT_WORKS_LANDING_FALLBACK
+  }
 }

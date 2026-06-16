@@ -11,6 +11,7 @@
     "sync:email": "node scripts/sync-email-settings.mjs",
     "sync:email-templates": "node scripts/sync-email-templates.mjs",
     "test:smtp": "node scripts/test-smtp.mjs",
+    "test:r2": "node scripts/test-r2-upload.mjs",
     "seed:catering": "node scripts/seed-catering-essentials.cjs",
     "seed:catering-assisted": "node scripts/seed-catering-assisted.cjs",
     "seed:catering-end-to-end": "node scripts/seed-catering-end-to-end.cjs",

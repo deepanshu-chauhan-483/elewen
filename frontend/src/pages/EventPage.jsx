@@ -3,6 +3,8 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventTypes'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 
 const FLOW_STEPS = [
@@ -61,8 +63,11 @@ export default function EventPage() {
   const [touchStartX, setTouchStartX] = useState(null)
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
 
-  const { data: categories = [] } = useEventCategoryOptions()
-  const { data: events = [] } = useEventsByCategory(categorySlug)
+  const categoriesQuery = useEventCategoryOptions()
+  const eventsQuery = useEventsByCategory(categorySlug)
+  const { data: categories = [] } = categoriesQuery
+  const { data: events = [] } = eventsQuery
+  const isStrapiLoading = useStrapiPageLoading(categoriesQuery, eventsQuery)
 
   const activeCategory = useMemo(
     () => categories.find(category => category.slug === categorySlug) ?? null,
@@ -126,6 +131,10 @@ export default function EventPage() {
 
   if (!categorySlug || !activeCategory) {
     return <Navigate to="/event-flow/category" replace />
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   return (

@@ -11,6 +11,8 @@ import {
 import { useGlobalSettings } from '../hooks/useCmsPages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { usePackages } from '../hooks/usePackages'
+import CmsPageLoader from '../components/common/CmsPageLoader'
+import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
 import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
@@ -552,10 +554,21 @@ export default function CheckoutPage() {
   const location = useLocation()
   const { showToast } = useToast()
   const savedUser = getSavedUser()
-  const { data: packages = [] } = usePackages()
-  const { data: globalSettings = null } = useGlobalSettings()
-  const { data: cateringDiscountSettings = null } = useCateringGuestDiscounts()
-  const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = useServiceAreas()
+  const packagesQuery = usePackages()
+  const globalSettingsQuery = useGlobalSettings()
+  const cateringDiscountsQuery = useCateringGuestDiscounts()
+  const serviceAreasQuery = useServiceAreas()
+  const { data: packages = [] } = packagesQuery
+  const { data: globalSettings = null } = globalSettingsQuery
+  const { data: cateringDiscountSettings = null } = cateringDiscountsQuery
+  const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = serviceAreasQuery
+  const isStrapiLoading = useStrapiPageLoading(
+    packagesQuery,
+    globalSettingsQuery,
+    cateringDiscountsQuery,
+    serviceAreasQuery
+  )
+
   const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
@@ -997,6 +1010,10 @@ export default function CheckoutPage() {
       setFormError(getPaymentErrorMessage(err))
       setIsSubmitting(false)
     }
+  }
+
+  if (isStrapiLoading) {
+    return <CmsPageLoader />
   }
 
   if (!isLoggedIn) {

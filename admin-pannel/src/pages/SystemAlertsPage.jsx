@@ -98,6 +98,66 @@ function GhostBtn({ children, onClick, disabled }) {
   )
 }
 
+function PaginationControls({ currentPage, totalPages, onPageChange }) {
+  return (
+    <div className="flex items-center justify-end gap-2 border-t border-[#F0EBE3] px-4 py-3">
+      <button
+        type="button"
+        onClick={() => onPageChange(prev => Math.max(1, prev - 1))}
+        disabled={currentPage === 1}
+        className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ArrowIcon direction="left" />
+      </button>
+      <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
+        {Math.min(currentPage, totalPages)} / {totalPages}
+      </div>
+      <button
+        type="button"
+        onClick={() => onPageChange(prev => Math.min(totalPages, prev + 1))}
+        disabled={currentPage === totalPages}
+        className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ArrowIcon direction="right" />
+      </button>
+    </div>
+  )
+}
+
+function AlertCard({ alert, checked, onToggleCheck, onReview }) {
+  return (
+    <article className="rounded-2xl border border-[#E4DED8] bg-white p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggleCheck}
+          className="mt-1 shrink-0"
+          aria-label={`Select ${sentenceCase(alert.alertType)} alert`}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-[15px] font-semibold leading-tight text-[#1C1C1C]">
+              {sentenceCase(alert.alertType)}
+            </h3>
+            <StatusBadge status={alert.severity} />
+            <StatusBadge status={alert.status} />
+          </div>
+          <p className="mt-1 text-xs text-[#8F8F8F]">{getEntityLabel(alert)}</p>
+          <p className="mt-2 text-sm leading-relaxed text-[#4B5563]">{alert.message}</p>
+          <div className="mt-3 text-xs text-[#8F8F8F]">
+            <p>{formatDateTime(alert.createdAt)}</p>
+            <p className="mt-0.5">{getAgeLabel(alert.createdAt)}</p>
+          </div>
+          <div className="mt-4">
+            <PrimaryBtn onClick={onReview}>Review</PrimaryBtn>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 function sentenceCase(value) {
   return String(value ?? '')
     .replaceAll('_', ' ')
@@ -534,90 +594,116 @@ export default function SystemAlertsPage() {
       {isResultsLoading ? (
         <SectionLoadingState label="Loading system alerts..." />
       ) : alerts.length ? (
-        <div className="overflow-hidden rounded-[8px] border border-[#E4DED8] bg-white">
-          <div className="overflow-x-auto">
-            <table className="min-w-[980px] w-full border-collapse text-left">
-              <thead className="bg-[#F3F3F3] text-[11px] uppercase tracking-[0.16em] text-[#8F8F8F]">
-                <tr>
-                  <th className="w-12 px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={allVisibleChecked}
-                      onChange={toggleAllVisible}
-                    />
-                  </th>
-                  <th className="px-4 py-3">Alert Type</th>
-                  <th className="px-4 py-3">Priority</th>
-                  <th className="px-4 py-3">Related To</th>
-                  <th className="px-4 py-3">Description</th>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F0EBE3] text-sm">
-                {alerts.map(alert => (
-                  <tr key={alert.id} className="align-top transition hover:bg-[#FBF7F3]">
-                    <td className="px-4 py-4">
+        <>
+          {/* Desktop table */}
+          <div className="hidden overflow-hidden rounded-[8px] border border-[#E4DED8] bg-white md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                <thead className="bg-[#F3F3F3] text-[11px] uppercase tracking-[0.16em] text-[#8F8F8F]">
+                  <tr>
+                    <th className="w-12 px-4 py-3">
                       <input
                         type="checkbox"
-                        checked={checkedIds.includes(alert.id)}
-                        onChange={() =>
-                          setCheckedIds(current =>
-                            current.includes(alert.id)
-                              ? current.filter(id => id !== alert.id)
-                              : [...current, alert.id]
-                          )
-                        }
+                        checked={allVisibleChecked}
+                        onChange={toggleAllVisible}
                       />
-                    </td>
-                    <td className="px-4 py-4 font-semibold text-[#1C1C1C]">
-                      {sentenceCase(alert.alertType)}
-                    </td>
-                    <td className="px-4 py-4">
-                      <StatusBadge status={alert.severity} />
-                    </td>
-                    <td className="px-4 py-4 text-[#4B5563]">{getEntityLabel(alert)}</td>
-                    <td className="max-w-[320px] px-4 py-4 text-[#4B5563]">{alert.message}</td>
-                    <td className="px-4 py-4 text-[#4B5563]">
-                      <div>{formatDateTime(alert.createdAt)}</div>
-                      <div className="mt-1 text-xs text-[#8F8F8F]">
-                        {getAgeLabel(alert.createdAt)}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <StatusBadge status={alert.status} />
-                    </td>
-                    <td className="px-4 py-4">
-                      <PrimaryBtn onClick={() => setSelectedAlertId(alert.id)}>Review</PrimaryBtn>
-                    </td>
+                    </th>
+                    <th className="px-4 py-3">Alert Type</th>
+                    <th className="px-4 py-3">Priority</th>
+                    <th className="px-4 py-3">Related To</th>
+                    <th className="px-4 py-3">Description</th>
+                    <th className="px-4 py-3">Created</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex items-center justify-end gap-2 border-t border-[#F0EBE3] px-4 py-3">
-            <button
-              type="button"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <ArrowIcon direction="left" />
-            </button>
-            <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
-              {Math.min(currentPage, totalPages)} / {totalPages}
+                </thead>
+                <tbody className="divide-y divide-[#F0EBE3] text-sm">
+                  {alerts.map(alert => (
+                    <tr key={alert.id} className="align-top transition hover:bg-[#FBF7F3]">
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={checkedIds.includes(alert.id)}
+                          onChange={() =>
+                            setCheckedIds(current =>
+                              current.includes(alert.id)
+                                ? current.filter(id => id !== alert.id)
+                                : [...current, alert.id]
+                            )
+                          }
+                        />
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-[#1C1C1C]">
+                        {sentenceCase(alert.alertType)}
+                      </td>
+                      <td className="px-4 py-4">
+                        <StatusBadge status={alert.severity} />
+                      </td>
+                      <td className="px-4 py-4 text-[#4B5563]">{getEntityLabel(alert)}</td>
+                      <td className="max-w-[320px] px-4 py-4 text-[#4B5563]">{alert.message}</td>
+                      <td className="px-4 py-4 text-[#4B5563]">
+                        <div>{formatDateTime(alert.createdAt)}</div>
+                        <div className="mt-1 text-xs text-[#8F8F8F]">
+                          {getAgeLabel(alert.createdAt)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <StatusBadge status={alert.status} />
+                      </td>
+                      <td className="px-4 py-4">
+                        <PrimaryBtn onClick={() => setSelectedAlertId(alert.id)}>Review</PrimaryBtn>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <ArrowIcon direction="right" />
-            </button>
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
-        </div>
+
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            <div className="flex items-center gap-2 rounded-[8px] border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3">
+              <input
+                type="checkbox"
+                checked={allVisibleChecked}
+                onChange={toggleAllVisible}
+                aria-label="Select all alerts on this page"
+              />
+              <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#8F8F8F]">
+                Select all on page
+              </span>
+            </div>
+
+            {alerts.map(alert => (
+              <AlertCard
+                key={alert.id}
+                alert={alert}
+                checked={checkedIds.includes(alert.id)}
+                onToggleCheck={() =>
+                  setCheckedIds(current =>
+                    current.includes(alert.id)
+                      ? current.filter(id => id !== alert.id)
+                      : [...current, alert.id]
+                  )
+                }
+                onReview={() => setSelectedAlertId(alert.id)}
+              />
+            ))}
+
+            <div className="overflow-hidden rounded-[8px] border border-[#E4DED8] bg-white">
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </div>
+        </>
       ) : (
         <ResultsEmptyState
           title="No alerts found"
