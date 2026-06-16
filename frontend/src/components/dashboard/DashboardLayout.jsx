@@ -4,6 +4,7 @@ import Navbar from './Navbar'
 import { DashboardSearchProvider } from './DashboardSearchProvider'
 import { DASHBOARD } from '../../constants/dashboard'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import CmsPageLoader from '../common/CmsPageLoader'
 import { getStoredJwt, getValidStoredJwt } from '../../lib/api'
 import { scrollPageToTop } from '../../hooks/useScrollToTop'
 
@@ -90,12 +91,12 @@ const DashboardLayout = () => {
     }
   }, [location.pathname, location.search])
 
-  if (!authResolved || !token) {
-    return (
-      <div className="flex min-h-[var(--door-viewport-height)] items-center justify-center bg-[#FAFAFA] px-6 text-center text-sm text-[#6B7280] md:min-h-screen">
-        Loading your customer dashboard...
-      </div>
-    )
+  if (!authResolved) {
+    return <CmsPageLoader label="Loading your customer dashboard" />
+  }
+
+  if (!token) {
+    return null
   }
 
   return (

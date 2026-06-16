@@ -47,7 +47,6 @@ import {
   useHowItWorksLandingPage,
   fetchHowItWorksLandingPage,
 } from '../hooks/useHowItWorksLandingPage'
-import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin)
@@ -4650,9 +4649,7 @@ export default function LandingPage() {
   const rootRef = useRef(null)
   const queryClient = useQueryClient()
   const landingQuery = useLandingPage()
-  const eventCardsQuery = useEventCards()
-  const eventCategoriesQuery = useEventCategories()
-  const isStrapiLoading = useStrapiPageLoading(landingQuery, eventCardsQuery, eventCategoriesQuery)
+  const isStrapiLoading = useStrapiPageLoading(landingQuery)
 
   const { data: cmsData } = landingQuery
 
@@ -4784,10 +4781,6 @@ export default function LandingPage() {
 
     return () => observer.disconnect()
   }, [isStrapiLoading])
-
-  if (isStrapiLoading) {
-    return <CmsPageLoader />
-  }
 
   return (
     <div ref={rootRef} className="relative">

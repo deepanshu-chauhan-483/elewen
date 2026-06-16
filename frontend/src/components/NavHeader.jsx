@@ -179,6 +179,27 @@ function DashboardIcon() {
   )
 }
 
+function SearchIcon({ color = '#262626' }) {
+  return (
+    <svg
+      className="h-[32px] w-[32px]"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx="14" cy="14" r="6.75" stroke={color} strokeWidth="1.5" />
+      <path
+        d="M19 19L24 24"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function CartIcon({ color = '#FAFAFA' }) {
   return (
     <svg
@@ -507,43 +528,54 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button className="p-0.5 md:hidden" aria-label="Search" type="button">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke={resolvedMobileIconColor}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                />
-              </svg>
+          <div className="flex items-center gap-3 md:gap-4">
+            <button
+              className="relative flex h-8 w-8 shrink-0 items-center justify-center md:hidden"
+              aria-label="Search"
+              type="button"
+            >
+              <SearchIcon color={resolvedMobileIconColor} />
             </button>
             {shouldShowNavbarCart ? (
               <CartButton
                 count={itemCount}
-                className="text-inherit"
+                className="relative flex h-8 w-8 shrink-0 items-center justify-center text-inherit"
                 iconColor={isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor}
               />
             ) : null}
             <button
               onClick={() => setOpen(true)}
               aria-label="Open menu"
-              className="group flex flex-col gap-1 p-0.5"
+              className="group flex h-8 w-8 shrink-0 flex-col items-end justify-center gap-[5px] md:hidden"
               type="button"
             >
               <div
-                className="h-0.5 w-6 transition-all duration-300 group-hover:opacity-60 md:w-7"
+                className="h-[2px] w-6 rounded-full transition-all duration-300 group-hover:opacity-60"
                 style={{
                   backgroundColor: isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor,
                 }}
               />
               <div
-                className="h-0.5 w-4 transition-all duration-300 group-hover:w-7 md:w-6 md:group-hover:w-8"
+                className="h-[2px] w-4 rounded-full transition-all duration-300 group-hover:w-6"
+                style={{
+                  backgroundColor: isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor,
+                }}
+              />
+            </button>
+            <button
+              onClick={() => setOpen(true)}
+              aria-label="Open menu"
+              className="group hidden flex-col gap-1 p-0.5 md:flex"
+              type="button"
+            >
+              <div
+                className="h-0.5 w-7 transition-all duration-300 group-hover:opacity-60"
+                style={{
+                  backgroundColor: isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor,
+                }}
+              />
+              <div
+                className="h-0.5 w-6 transition-all duration-300 group-hover:w-8"
                 style={{
                   backgroundColor: isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor,
                 }}

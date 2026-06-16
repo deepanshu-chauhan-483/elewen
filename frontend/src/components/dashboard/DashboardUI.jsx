@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { Link } from 'react-router-dom'
+import CmsPageLoader from '../common/CmsPageLoader'
 import { formatDashboardDate } from './dashboardUtils'
 
 function getStatusMeta(status) {
@@ -72,8 +73,18 @@ const StateCard = memo(function StateCard({ title, body, tone = 'default' }) {
 
 export const DashboardLoadingState = memo(function DashboardLoadingState({
   title = 'Loading your dashboard data...',
+  compact = false,
 }) {
-  return <StateCard title={title} body="Please wait while we pull the latest customer data." />
+  return (
+    <CmsPageLoader
+      label={title}
+      fullScreen={false}
+      compact={compact}
+      blend={!compact}
+      centered={!compact}
+      className={compact ? 'rounded-3xl border border-[#E7E0DA] bg-[#FAFAF8]' : ''}
+    />
+  )
 })
 
 export const DashboardErrorState = memo(function DashboardErrorState({

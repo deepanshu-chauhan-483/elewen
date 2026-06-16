@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
-import { DashboardErrorState } from '../../components/dashboard/DashboardUI'
+import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import { getStoredJwt, paymentCreateOrder, paymentVerify } from '../../lib/api'
 import {
   formatDashboardDate,
@@ -223,7 +223,11 @@ export default function BookingTimeline() {
   const queryClient = useQueryClient()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
-  const { data: bookings = [], error } = useDashboardBookings('all', {
+  const {
+    data: bookings = [],
+    error,
+    isLoading,
+  } = useDashboardBookings('all', {
     search: debouncedSearchTerm,
   })
   const [selectedId, setSelectedId] = useState('')
@@ -275,9 +279,11 @@ export default function BookingTimeline() {
   const { data: selectedBookingDetails } = useDashboardBooking(selectedBooking?.id)
   const activeBooking = selectedBookingDetails ?? selectedBooking
 
-  const { data: timelineData = [], error: timelineError } = useDashboardBookingTimeline(
-    selectedBooking?.id
-  )
+  const {
+    data: timelineData = [],
+    error: timelineError,
+    isLoading: timelineLoading,
+  } = useDashboardBookingTimeline(selectedBooking?.id)
 
   const timeline = useMemo(
     () =>
@@ -381,9 +387,9 @@ export default function BookingTimeline() {
     }
   }
 
-  // if (isLoading) {
-  //   return <DashboardLoadingState title="Loading booking timeline..." />
-  // }
+  if (isLoading || timelineLoading) {
+    return <DashboardLoadingState title="Loading booking timeline..." />
+  }
 
   if (error || timelineError) {
     return <DashboardErrorState title="We could not load your booking timeline." />

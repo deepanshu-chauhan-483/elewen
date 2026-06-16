@@ -382,7 +382,7 @@ function MessageThreadPanel({
         >
           {threadLoading ? (
             <div className="flex flex-1 items-center justify-center">
-              <DashboardLoadingState title="Loading conversation…" />
+              <DashboardLoadingState title="Loading conversation…" compact />
             </div>
           ) : renderedThread?.messages?.length ? (
             renderedThread.messages.map(message => {
@@ -503,7 +503,11 @@ const PAGE_SIZE = 10
 
 export default function MessagesUpdates() {
   const { data: session } = useDashboardSession()
-  const { data: bookings = [], error: bookingsError } = useDashboardBookings('all')
+  const {
+    data: bookings = [],
+    error: bookingsError,
+    isLoading: bookingsLoading,
+  } = useDashboardBookings('all')
 
   const [draft, setDraft] = useState('')
   const [search, setSearch] = useState('')
@@ -590,7 +594,10 @@ export default function MessagesUpdates() {
     createIfMissing: !isReadOnlyThread,
   })
 
-  // if (bookingsLoading) return <DashboardLoadingState title="Loading booking messages..." />
+  if (bookingsLoading) {
+    return <DashboardLoadingState title="Loading booking messages..." />
+  }
+
   if (bookingsError || threadError)
     return <DashboardErrorState title="We could not load your messages and updates." />
   if (bookings.length === 0) {

@@ -7,6 +7,7 @@ import {
   matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
+import { DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 
 function getPackageHref(item) {
   const serviceSlug = String(item?.serviceCategories?.[0]?.slug ?? '')
@@ -45,28 +46,6 @@ function ArrowIcon() {
         strokeLinejoin="round"
       />
     </svg>
-  )
-}
-
-function SkeletonCard() {
-  return (
-    <div className="rounded-2xl border border-[#EDE5DA] bg-white overflow-hidden animate-pulse">
-      <div className="flex flex-col lg:flex-row">
-        <div className="h-52 lg:h-auto lg:w-64 bg-[#EDE5DA] flex-shrink-0" />
-        <div className="flex-1 p-6 space-y-4">
-          <div className="h-4 bg-[#EDE5DA] rounded-full w-1/3" />
-          <div className="h-3 bg-[#EDE5DA] rounded-full w-1/2" />
-          <div className="flex gap-2 pt-2">
-            <div className="h-3 bg-[#EDE5DA] rounded-full w-16" />
-            <div className="h-3 bg-[#EDE5DA] rounded-full w-20" />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <div className="h-10 bg-[#EDE5DA] rounded-full w-36" />
-            <div className="h-10 bg-[#EDE5DA] rounded-full w-24" />
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -255,15 +234,9 @@ export default function SavedPackages() {
       </div>
 
       {/* ── Loading skeletons ── */}
-      {isLoading && (
-        <div className="space-y-4">
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      )}
-
-      {/* ── Package cards ── */}
-      {!isLoading && (
+      {isLoading ? (
+        <DashboardLoadingState title="Loading saved packages..." />
+      ) : (
         <div className="space-y-4">
           {filteredWishlist.map(item => {
             const isPending = String(pendingPackageId) === String(item.packageId)

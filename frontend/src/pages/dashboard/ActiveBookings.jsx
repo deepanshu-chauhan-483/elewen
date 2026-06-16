@@ -9,7 +9,11 @@ import {
   formatDashboardDateTime,
   matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
-import { DashboardEmptyState, DashboardErrorState } from '../../components/dashboard/DashboardUI'
+import {
+  DashboardEmptyState,
+  DashboardErrorState,
+  DashboardLoadingState,
+} from '../../components/dashboard/DashboardUI'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { getBookingPackageNamesText, parseBookingItemTitle } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
@@ -331,7 +335,11 @@ function BookingCard({ booking, session }) {
 export default function ActiveBookings() {
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
-  const { data: bookings = [], error } = useDashboardBookings('all', {
+  const {
+    data: bookings = [],
+    error,
+    isLoading,
+  } = useDashboardBookings('all', {
     search: debouncedSearchTerm,
   })
   const { data: session } = useDashboardSession()
@@ -348,9 +356,9 @@ export default function ActiveBookings() {
     ])
   )
 
-  // if (isLoading) {
-  //   return <DashboardLoadingState title="Loading active bookings..." />
-  // }
+  if (isLoading) {
+    return <DashboardLoadingState title="Loading active bookings..." />
+  }
 
   if (error) {
     return <DashboardErrorState title="We could not load active bookings." />

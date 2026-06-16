@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AdminLoginPage from './pages/AdminLoginPage'
+import CmsPageLoader from './components/common/CmsPageLoader'
 
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout'))
 const BookingManagementPage = lazy(() => import('./pages/BookingManagementPage'))
@@ -14,11 +15,7 @@ const SystemAlertsPage = lazy(() => import('./pages/SystemAlertsPage'))
 const VendorManagementPage = lazy(() => import('./pages/VendorManagementPage'))
 
 function AdminPageLoader() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F7F5F2]">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#591902] border-t-transparent" />
-    </div>
-  )
+  return <CmsPageLoader label="Loading admin panel" />
 }
 
 export default function App() {

@@ -103,6 +103,24 @@ function NotificationBellButton({ unreadCount, onClick, className = '' }) {
   )
 }
 
+const MobileSearchIcon = () => (
+  <svg
+    className="h-[26px] w-[26px]"
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M17.5 17.5L13.8833 13.8833M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 const MenuIcon = () => (
   <>
     <div className="h-0.5 w-7 bg-[#262626]" />
@@ -314,35 +332,25 @@ const Navbar = ({ onMobileMenuOpen }) => {
           />
         </div>
 
-        <div className="flex items-center gap-4 md:hidden">
-          <button type="button" aria-label="Search" className="p-0.5 text-[#262626]">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M17.5 17.5L13.8833 13.8833M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z"
-                stroke="#1C1C1C"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+        <div className="flex items-center gap-2 md:hidden">
+          <button
+            type="button"
+            aria-label="Search"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#262626] transition-colors hover:bg-[#F3F3F3]"
+          >
+            <MobileSearchIcon />
           </button>
 
           <NotificationBellButton
             unreadCount={unreadCount}
             onClick={() => setIsNotificationModalOpen(true)}
-            className="hover:bg-transparent"
+            className="shrink-0 hover:bg-transparent"
           />
 
           <Link
             to="/user-dashboard/profile"
             aria-label="Open profile"
-            className="flex shrink-0 items-center justify-center rounded-full"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
           >
             {avatarNode}
           </Link>
@@ -351,7 +359,7 @@ const Navbar = ({ onMobileMenuOpen }) => {
             type="button"
             aria-label="Open sidebar"
             onClick={onMobileMenuOpen}
-            className="group flex flex-col gap-1 p-0.5"
+            className="group flex h-10 w-10 shrink-0 flex-col items-end justify-center gap-1 rounded-full transition-colors hover:bg-[#F3F3F3]"
           >
             <MenuIcon />
           </button>

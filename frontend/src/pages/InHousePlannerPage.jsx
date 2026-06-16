@@ -13,6 +13,7 @@ import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { INHOUSE_PLANNER_PAGE_FALLBACK } from '../data/cmsPages'
 
 import ScrollImageSpreadSection from '../components/in-house-planner/ScrollImageSpreadSection'
+import PlannerImage from '../components/in-house-planner/PlannerImage'
 import CustomSelect from '../components/common/CustomSelect'
 import DateTimePicker from '../components/common/DateTimePicker'
 import { getDateInputMin } from '../lib/dateInput'
@@ -369,7 +370,7 @@ const GCTextReveal = ({ children, className = '' }) => (
 
 const GrandCelebrationImage = ({ src, fallbackSrc, alt, className = '', style }) => {
   return (
-    <img
+    <PlannerImage
       src={src || fallbackSrc || ''}
       alt={alt}
       className={className}
@@ -377,7 +378,7 @@ const GrandCelebrationImage = ({ src, fallbackSrc, alt, className = '', style })
       onError={event => {
         if (!fallbackSrc) return
         if (event.currentTarget.getAttribute('src') === fallbackSrc) return
-        event.currentTarget.src = fallbackSrc
+        event.currentTarget.setAttribute('src', fallbackSrc)
       }}
     />
   )
@@ -628,12 +629,9 @@ const GrandCelebrationsSection = () => {
 
   const mobileStackTransforms = [
     { rotate: 0, x: 0, y: 0, scale: 1 },
-
-    { rotate: -10, x: -24, y: 10, scale: 0.96 },
-
-    { rotate: 10, x: 24, y: 12, scale: 0.95 },
-
-    { rotate: -5, x: 10, y: 18, scale: 0.92 },
+    { rotate: 0, x: -24, y: 10, scale: 0.96 },
+    { rotate: 0, x: 24, y: 12, scale: 0.95 },
+    { rotate: 0, x: 10, y: 18, scale: 0.92 },
   ]
 
   const isDesktopCardTall = index => index % 2 === 0
@@ -2588,8 +2586,6 @@ const InHousePlannerSection = () => {
   const whatWeDo = cms.what_we_do ?? {}
   const bio = cms.moksha_bio ?? {}
   const heroImages = getSectionImages(hero)
-    .map(image => resolveMediaUrl(image))
-    .filter(Boolean)
   const plannerImage = resolveMediaUrl(
     bio.image ?? bio.photo ?? bio.portrait_image ?? bio.portrait ?? bio._sectionImages?.[0],
     MOKSHA_FALLBACK_IMAGE,

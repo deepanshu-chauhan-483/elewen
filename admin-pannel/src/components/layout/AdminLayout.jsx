@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getStoredAdminJwt } from '../../lib/api'
 import { getInitials } from '../../lib/formatters'
 import { ActionButton } from '../ui/AdminUI'
+import CmsPageLoader from '../common/CmsPageLoader'
 import { useAdminLogout, useAdminSession } from '../../hooks/useAdminData'
 import { scrollWindowToTop } from '../../hooks/useScrollToTop'
 
@@ -211,6 +212,10 @@ export default function AdminLayout() {
   }, [location.pathname, location.search])
 
   if (!token) return null
+
+  if (sessionQuery.isLoading && !sessionQuery.data) {
+    return <CmsPageLoader label="Loading admin panel" />
+  }
 
   if (sessionQuery.error && !String(sessionQuery.error?.message ?? '').includes('403')) {
     return (

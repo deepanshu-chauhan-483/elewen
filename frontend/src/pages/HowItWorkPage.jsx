@@ -772,6 +772,8 @@ const HowItWorkPage = () => {
   const isStrapiLoading = useStrapiPageLoading(cmsQuery)
 
   useEffect(() => {
+    if (isStrapiLoading) return
+
     const page = pageRef.current
     if (!page) return
 
@@ -833,7 +835,7 @@ const HowItWorkPage = () => {
       rafIds.forEach(id => window.cancelAnimationFrame(id))
       observer?.disconnect()
     }
-  }, [])
+  }, [isStrapiLoading])
 
   if (isStrapiLoading) {
     return <CmsPageLoader />

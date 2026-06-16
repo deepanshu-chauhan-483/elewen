@@ -2,6 +2,8 @@ import { useRef, useLayoutEffect, useEffect, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
+import PlannerImage from './PlannerImage'
+
 import img1 from '../../assets/images/IMG_9814.jpg'
 import img2 from '../../assets/images/IMG_3148.jpg'
 import img3 from '../../assets/images/IMG_8625.png'
@@ -12,6 +14,15 @@ import img7 from '../../assets/images/IMG_0749.jpg'
 import img8 from '../../assets/images/IMG_3903.jpg'
 
 gsap.registerPlugin(ScrollTrigger)
+
+const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
+
+function toAbsoluteMediaUrl(url) {
+  const value = String(url ?? '').trim()
+  if (!value) return ''
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  return `${STRAPI_BASE}${value.startsWith('/') ? value : `/${value}`}`
+}
 
 // ── Figma collage data ──────────────────────────────────────────────────────
 const CANVAS_W = 1438
@@ -52,6 +63,39 @@ const FLY_POS = [
 // Random-feeling arrival delays for the 8 Figma images (not evenly spaced)
 const FIGMA_DELAYS = [0.04, 0.11, 0.01, 0.08, 0.14, 0.06, 0.1, 0.02]
 
+function getMediaDimensions(media) {
+  if (!media || typeof media === 'string') return null
+
+  const width = Number(media.width ?? media.data?.attributes?.width ?? media.attributes?.width)
+  const height = Number(media.height ?? media.data?.attributes?.height ?? media.attributes?.height)
+
+  if (!width || !height) return null
+  return { width, height }
+}
+
+function resolveHeroSrc(media, fallback) {
+  if (!media) return fallback
+  if (typeof media === 'string') return toAbsoluteMediaUrl(media) || media
+
+  const raw = media.url ?? media.src ?? media.data?.attributes?.url ?? media.attributes?.url ?? ''
+
+  return toAbsoluteMediaUrl(raw) || fallback
+}
+
+function resolveCollageFrame(baseW, baseH, media) {
+  const dims = getMediaDimensions(media)
+  if (!dims) return { w: baseW, h: baseH }
+
+  const slotLandscape = baseW >= baseH
+  const mediaLandscape = dims.width >= dims.height
+
+  if (slotLandscape !== mediaLandscape) {
+    return { w: baseH, h: baseW }
+  }
+
+  return { w: baseW, h: baseH }
+}
+
 // Compute where each Figma image centre sits relative to viewport centre
 const getFinalPositions = () => {
   const s = Math.min(window.innerWidth / CANVAS_W, window.innerHeight / CANVAS_H)
@@ -83,11 +127,18 @@ const ScrollImageSpreadSection = ({
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
 
-  const resolvedImageData = IMAGE_DATA.map((item, index) => ({
-    ...item,
-    src: heroImages[index] || item.src,
-  }))
-  const resolvedBaseImages = BASE_IMAGES.map((src, index) => heroImages[index] || src)
+  const resolvedImageData = IMAGE_DATA.map((item, index) => {
+    const media = heroImages[index]
+    const frame = resolveCollageFrame(item.w, item.h, media)
+
+    return {
+      ...item,
+      src: resolveHeroSrc(media, item.src),
+      w: frame.w,
+      h: frame.h,
+    }
+  })
+  const resolvedBaseImages = BASE_IMAGES.map((src, index) => resolveHeroSrc(heroImages[index], src))
   const mobileSlides = MOBILE_SLIDE_INDEXES.map(indexes =>
     indexes.map(imageIndex => resolvedImageData[imageIndex])
   )
@@ -138,7 +189,9 @@ const ScrollImageSpreadSection = ({
       const resetAll = () => {
         finalPos = getFinalPositions()
         flyImgs.forEach(img => gsap.set(img, { x: 0, y: 0, z: -1000, scale: 0, force3D: true }))
-        figmaImgs.forEach(img => gsap.set(img, { x: 0, y: 0, z: -1000, scale: 0, force3D: true }))
+        figmaImgs.forEach(img =>
+          gsap.set(img, { x: 0, y: 0, scale: 0, rotation: 0, force3D: false })
+        )
         if (whiteRef.current) gsap.set(whiteRef.current, { opacity: 0 })
       }
 
@@ -191,9 +244,9 @@ const ScrollImageSpreadSection = ({
             gsap.set(img, {
               x: imgP * fp.x,
               y: imgP * fp.y,
-              z: gsap.utils.interpolate(-1000, 0, imgP),
               scale: gsap.utils.interpolate(0, fp.scale, imgP),
-              force3D: true,
+              rotation: 0,
+              force3D: false,
             })
           })
 
@@ -231,7 +284,7 @@ const ScrollImageSpreadSection = ({
           >
             <div className="grid min-h-0 grid-rows-[1.52fr_0.86fr] gap-1">
               <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
-                <img
+                <PlannerImage
                   src={activeSlide[0]?.src}
                   alt={activeSlide[0]?.alt ?? 'Planner showcase'}
                   className="absolute inset-0 h-full w-full object-cover"
@@ -239,7 +292,7 @@ const ScrollImageSpreadSection = ({
               </div>
 
               <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
-                <img
+                <PlannerImage
                   src={activeSlide[2]?.src}
                   alt={activeSlide[2]?.alt ?? 'Planner showcase'}
                   className="absolute inset-0 h-full w-full object-cover"
@@ -249,7 +302,7 @@ const ScrollImageSpreadSection = ({
 
             <div className="grid min-h-0 grid-rows-2 gap-1">
               <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
-                <img
+                <PlannerImage
                   src={activeSlide[1]?.src}
                   alt={activeSlide[1]?.alt ?? 'Planner showcase'}
                   className="absolute inset-0 h-full w-full object-cover"
@@ -257,7 +310,7 @@ const ScrollImageSpreadSection = ({
               </div>
 
               <div className="relative overflow-hidden rounded-[10px] bg-[#F5F5F5]">
-                <img
+                <PlannerImage
                   src={activeSlide[3]?.src}
                   alt={activeSlide[3]?.alt ?? 'Planner showcase'}
                   className="absolute inset-0 h-full w-full object-cover"
@@ -346,7 +399,7 @@ const ScrollImageSpreadSection = ({
               willChange: 'transform',
             }}
           >
-            <img
+            <PlannerImage
               src={resolvedBaseImages[i % resolvedBaseImages.length]}
               alt={`Event photo ${i + 1}`}
               className="w-full h-full object-cover"
@@ -370,7 +423,7 @@ const ScrollImageSpreadSection = ({
               willChange: 'transform',
             }}
           >
-            <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+            <PlannerImage src={img.src} alt={img.alt} className="w-full h-full object-cover" />
           </div>
         ))}
       </div>

@@ -4,6 +4,7 @@ import { useDashboardSearch } from '../../components/dashboard/useDashboardSearc
 import {
   DashboardEmptyState,
   DashboardErrorState,
+  DashboardLoadingState,
   DashboardPageIntro,
   StatusPill,
 } from '../../components/dashboard/DashboardUI'
@@ -428,7 +429,11 @@ export default function PreviousBookings() {
   const { data: session } = useDashboardSession()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
-  const { data: bookings = [], error } = useDashboardBookings('previous', {
+  const {
+    data: bookings = [],
+    error,
+    isLoading,
+  } = useDashboardBookings('previous', {
     search: debouncedSearchTerm,
   })
   const previousBookings = bookings.filter(isTerminalPreviousBooking)
@@ -444,9 +449,9 @@ export default function PreviousBookings() {
     ])
   )
 
-  // if (isLoading) {
-  //   return <DashboardLoadingState title="Loading previous bookings..." />
-  // }
+  if (isLoading) {
+    return <DashboardLoadingState title="Loading previous bookings..." />
+  }
 
   if (error) {
     return <DashboardErrorState title="We could not load previous bookings." />

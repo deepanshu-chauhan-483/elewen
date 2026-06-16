@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import DateTimePicker from '../../components/common/DateTimePicker'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
-import { DashboardErrorState, CustomSelect } from '../../components/dashboard/DashboardUI'
+import {
+  DashboardErrorState,
+  DashboardLoadingState,
+  CustomSelect,
+} from '../../components/dashboard/DashboardUI'
 import {
   useDashboardSampleTasteDecision,
   useDashboardSampleTastes,
@@ -519,7 +523,11 @@ export default function SampleTasteBooking() {
   const [expiryStatus, setExpiryStatus] = useState('')
   const [vendorCount, setVendorCount] = useState('')
   const debouncedLocalSearch = useDebouncedValue(search)
-  const { data: samples = [], error } = useDashboardSampleTastes({
+  const {
+    data: samples = [],
+    error,
+    isLoading,
+  } = useDashboardSampleTastes({
     search: debouncedLocalSearch || debouncedSearchTerm,
     status,
   })
@@ -602,9 +610,9 @@ export default function SampleTasteBooking() {
     vendorCount,
   ])
 
-  // if (isLoading) {
-  //   return <DashboardLoadingState title="Loading sample taste requests..." />
-  // }
+  if (isLoading) {
+    return <DashboardLoadingState title="Loading sample taste requests..." />
+  }
 
   if (error) {
     return <DashboardErrorState title="We could not load sample taste bookings." />

@@ -415,7 +415,7 @@ export default function SupportHelp() {
         {/* Ticket conversation */}
         <div>
           {ticketLoading ? (
-            <DashboardLoadingState title="Loading ticket…" />
+            <DashboardLoadingState title="Loading ticket…" compact />
           ) : selectedTicket && ticket ? (
             <div className="flex flex-col gap-4">
               {/* Ticket header */}

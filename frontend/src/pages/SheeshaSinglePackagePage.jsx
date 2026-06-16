@@ -188,12 +188,12 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
       <div>
         <p className="text-[16px] font-semibold text-[#2D2D2D]">Flavors</p>
 
-        <div className="mt-4 grid gap-x-6 gap-y-4 overflow-visible md:grid-cols-2 md:items-start">
+        <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 overflow-visible md:grid-cols-2 md:items-start">
           <div className="space-y-4 overflow-visible">
             {leftFlavors.map((flavor, index) => (
               <label
                 key={`${flavor.title}-${index}`}
-                className="relative flex w-fit items-start gap-3 cursor-pointer"
+                className="relative flex w-full items-start gap-3 cursor-pointer md:w-fit"
               >
                 <input
                   type="radio"
@@ -226,11 +226,11 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
             ))}
           </div>
 
-          <div className="space-y-4 overflow-visible justify-self-end">
+          <div className="space-y-4 overflow-visible max-md:justify-self-start md:justify-self-end">
             {rightFlavors.map((flavor, index) => (
               <label
                 key={`${flavor.title}-${index + midpoint}`}
-                className="relative flex w-fit items-start gap-3 cursor-pointer"
+                className="relative flex w-full items-start gap-3 cursor-pointer md:w-fit"
               >
                 <input
                   type="radio"

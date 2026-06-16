@@ -269,7 +269,6 @@ function ProductImageLayout({
       ? selectedImage.image
       : initialDisplayImage
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
-  const mainImageHeight = 'clamp(26.25rem, calc(100vh - 8.25rem), 58.375rem)'
   const sideImagesMaxHeight = 'calc((clamp(5.125rem, 6.5vw, 6.4375rem) * 5) + 2rem)'
 
   return (
@@ -301,10 +300,7 @@ function ProductImageLayout({
                   <img
                     src={activeImage}
                     alt={title}
-                    className="w-full border-l-2 border-r-2 border-b-2 border-[#727355] object-cover"
-                    style={{
-                      height: mainImageHeight,
-                    }}
+                    className="h-auto w-full max-h-[min(70vh,32rem)] border-l-2 border-r-2 border-b-2 border-[#727355] md:max-h-none md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:object-cover"
                   />
 
                   {/* Company Logo */}
@@ -361,7 +357,7 @@ function ProductImageLayout({
 
               {/* Side Images */}
               <div
-                className="order-2 flex touch-pan-x flex-row items-center justify-center gap-2 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:order-1 md:max-h-[unset] md:flex-col md:items-end md:justify-start md:space-y-2 md:gap-0 md:overflow-x-visible md:overflow-y-auto md:px-0 md:pb-0 md:pt-2"
+                className="order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-auto md:max-h-[unset] md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2"
                 style={{
                   maxHeight: sideImagesMaxHeight,
                 }}
@@ -377,14 +373,10 @@ function ProductImageLayout({
                         baseMainImage: mainImage ?? null,
                       })
                     }
-                    className={`shrink-0 overflow-hidden rounded-[12px] transition-opacity ${
+                    className={`aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-[12px] transition-opacity md:aspect-auto md:flex-none md:shrink-0 md:h-[clamp(5.125rem,6.5vw,6.4375rem)] md:w-[clamp(4rem,5vw,5rem)] ${
                       activeImage === image ? 'opacity-100' : 'opacity-40'
                     }`}
                     aria-label={`Show ${title} preview ${index + 1}`}
-                    style={{
-                      width: 'clamp(4rem, 5vw, 5rem)',
-                      height: 'clamp(5.125rem, 6.5vw, 6.4375rem)',
-                    }}
                   >
                     <img
                       src={image}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { authGoogleSession, setStoredJwt } from '../lib/api'
+import CmsPageLoader from '../components/common/CmsPageLoader'
 
 function parseAuthErrorDetails(error) {
   if (error?.response?.code) {
@@ -87,40 +88,5 @@ export default function AuthCallbackPage() {
       })
   }, [searchParams, location.hash, navigate])
 
-  return (
-    <div style={styles.page}>
-      <div style={styles.content}>
-        <div style={styles.spinner} />
-        <p style={styles.text}>Signing you in…</p>
-      </div>
-    </div>
-  )
-}
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#0a0a0a',
-  },
-  content: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  spinner: {
-    width: '36px',
-    height: '36px',
-    border: '3px solid #2a2a2a',
-    borderTop: '3px solid #c9a96e',
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  },
-  text: {
-    color: '#888',
-    fontSize: '0.95rem',
-  },
+  return <CmsPageLoader label="Signing you in" />
 }

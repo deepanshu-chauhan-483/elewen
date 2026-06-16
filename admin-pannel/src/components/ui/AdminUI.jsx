@@ -1,4 +1,5 @@
 import { formatCount, sentenceCase } from '../../lib/formatters'
+import CmsPageLoader from '../common/CmsPageLoader'
 
 const statusToneMap = {
   new: 'bg-[#FCE7CF] text-[#B0640C] border-[#F3D5B3]',
@@ -162,11 +163,7 @@ export function ResultsEmptyState({ title, body, className = '' }) {
 }
 
 export function LoadingState({ label = 'Loading admin data...' }) {
-  return (
-    <div className="rounded-3xl border border-[#E7E0DA] bg-[#F3F3F3] px-6 py-6 text-sm text-[#4B5563]">
-      {label}
-    </div>
-  )
+  return <CmsPageLoader label={label} fullScreen={false} blend centered />
 }
 
 export function SectionLoadingState({
@@ -175,11 +172,12 @@ export function SectionLoadingState({
   minHeightClass = 'min-h-[220px]',
 }) {
   return (
-    <div
-      className={`flex items-center justify-center rounded-3xl border border-[#E7E0DA] bg-white/80 px-6 py-10 text-sm text-[#4B5563] ${minHeightClass} ${className}`}
-    >
-      {label}
-    </div>
+    <CmsPageLoader
+      label={label}
+      fullScreen={false}
+      compact
+      className={`rounded-3xl border border-[#E7E0DA] bg-white/80 ${minHeightClass} ${className}`}
+    />
   )
 }
 
