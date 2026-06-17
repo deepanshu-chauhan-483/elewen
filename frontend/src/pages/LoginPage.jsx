@@ -3,8 +3,15 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import AuthLayout from '../components/auth/AuthLayout'
 import { useToast } from '../components/common/useToast'
 import { getFieldErrors } from '../lib/formErrors'
-import { authLogin, authResendConfirmation, setStoredJwt } from '../lib/api'
+import { authLogin, authResendConfirmation, getStoredJwt, setStoredJwt } from '../lib/api'
 import { startGoogleSignIn } from '../lib/googleAuth'
+
+function normalizeRedirectTarget(target) {
+  if (!target || typeof target !== 'string') return '/'
+  if (!target.startsWith('/') || target.startsWith('//')) return '/'
+  if (target.startsWith('/login')) return '/'
+  return target
+}
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -12,8 +19,9 @@ export default function LoginPage() {
   const { showToast } = useToast()
   const [searchParams] = useSearchParams()
   const confirmed = searchParams.get('confirmed') === 'true'
-  const redirectTarget =
+  const redirectTarget = normalizeRedirectTarget(
     location.state?.from || decodeURIComponent(searchParams.get('redirect') || '') || '/'
+  )
   const authError = searchParams.get('authError') || ''
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,6 +38,11 @@ export default function LoginPage() {
     hasShownVerifiedToastRef.current = true
     showToast({ message: 'Email verified! You can now sign in.' })
   }, [confirmed, showToast])
+
+  useEffect(() => {
+    if (!getStoredJwt()) return
+    navigate(redirectTarget, { replace: true })
+  }, [navigate, redirectTarget])
 
   const authErrorMessage =
     authError === 'local_account_use_password'
@@ -227,7 +240,12 @@ export default function LoginPage() {
 
           <button
             type="button"
-            onClick={() => startGoogleSignIn('/login')}
+            onClick={() =>
+              startGoogleSignIn(
+                `/login?redirect=${encodeURIComponent(redirectTarget)}`,
+                redirectTarget
+              )
+            }
             className="w-full h-[44px] flex justify-center items-center gap-[16px] bg-transparent border border-[#1C1C1C] text-[#1C1C1C] text-[14px] min-[540px]:text-[16px] font-normal leading-[150%] rounded-[56px] hover:bg-gray-50 transition-colors"
           >
             <svg

@@ -34,6 +34,18 @@ function parseAuthErrorDetails(error) {
   }
 }
 
+function appendAuthError(path, authError) {
+  const separator = path.includes('?') ? '&' : '?'
+  return `${path}${separator}authError=${authError}`
+}
+
+function normalizeRedirectTarget(target) {
+  if (!target || typeof target !== 'string') return '/'
+  if (!target.startsWith('/') || target.startsWith('//')) return '/'
+  if (target.startsWith('/login')) return '/'
+  return target
+}
+
 /**
  * Handles the Google OAuth redirect from Strapi.
  *
@@ -66,25 +78,30 @@ export default function AuthCallbackPage() {
       .then(({ jwt, user }) => {
         setStoredJwt(jwt)
         localStorage.setItem('elewen_user', JSON.stringify(user))
+        const redirect = normalizeRedirectTarget(
+          sessionStorage.getItem('elewen_auth_redirect') || '/'
+        )
         sessionStorage.removeItem('elewen_auth_origin')
-        navigate('/', { replace: true })
+        sessionStorage.removeItem('elewen_auth_redirect')
+        navigate(redirect, { replace: true })
       })
       .catch(error => {
         const origin = sessionStorage.getItem('elewen_auth_origin') || '/login'
         const { code } = parseAuthErrorDetails(error)
         sessionStorage.removeItem('elewen_auth_origin')
+        sessionStorage.removeItem('elewen_auth_redirect')
 
         if (code === 'LOCAL_ACCOUNT_USE_PASSWORD') {
-          navigate(`${origin}?authError=local_account_use_password`, { replace: true })
+          navigate(appendAuthError(origin, 'local_account_use_password'), { replace: true })
           return
         }
 
         if (code === 'RATE_LIMITED' || error?.status === 429) {
-          navigate(`${origin}?authError=rate_limited`, { replace: true })
+          navigate(appendAuthError(origin, 'rate_limited'), { replace: true })
           return
         }
 
-        navigate(`${origin}?authError=google_failed`, { replace: true })
+        navigate(appendAuthError(origin, 'google_failed'), { replace: true })
       })
   }, [searchParams, location.hash, navigate])
 

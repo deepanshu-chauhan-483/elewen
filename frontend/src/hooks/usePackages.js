@@ -487,7 +487,12 @@ export function usePackages() {
     queryKey: ['packages', 'live-v3'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
-      return await fetchPackages()
+      try {
+        const packages = await fetchPackages()
+        return packages.length > 0 ? packages : PACKAGES_FALLBACK
+      } catch {
+        return PACKAGES_FALLBACK
+      }
     },
     placeholderData: PACKAGES_FALLBACK,
     staleTime: 5 * 60 * 1000,

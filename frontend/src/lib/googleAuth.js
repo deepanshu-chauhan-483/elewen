@@ -13,7 +13,12 @@ export function getGoogleConnectUrl() {
   return `${getStrapiBaseUrl()}/api/connect/google`
 }
 
-export function startGoogleSignIn(originPath = '/login') {
+export function startGoogleSignIn(originPath = '/login', redirectPath = '') {
   sessionStorage.setItem('elewen_auth_origin', originPath)
+  if (redirectPath) {
+    sessionStorage.setItem('elewen_auth_redirect', redirectPath)
+  } else {
+    sessionStorage.removeItem('elewen_auth_redirect')
+  }
   window.location.assign(getGoogleConnectUrl())
 }

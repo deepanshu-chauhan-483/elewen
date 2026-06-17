@@ -78,12 +78,12 @@ export default function ContactUsPage() {
   }
 
   return (
-    <div className="w-full bg-white px-4 pb-12 md:px-4 lg:px-6" data-nav-theme="glass">
+    <div className="w-full bg-white  px-4 pb-12 md:px-4 lg:px-6" data-nav-theme="glass">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-6 md:flex-row">
         <div className="hidden md:block md:w-[48%] md:shrink-0">
-          <div className="sticky top-10">
+          <div className="sticky top-15">
             <div
-              className="relative flex min-h-[90vh] w-full flex-col justify-end overflow-hidden rounded-[20px] p-12"
+              className="relative flex min-h-[90vh] w-full flex-col justify-end overflow-hidden rounded-[20px] p-12 "
               style={{
                 backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%), url(${bgImage})`,
                 backgroundSize: 'cover',
@@ -127,7 +127,7 @@ export default function ContactUsPage() {
                           />
                         </svg>
                       </span>
-                      <span>xyz@gmail.com</span>
+                      <span>info@elewen.co.in</span>
                     </a>
 
                     <a

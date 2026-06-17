@@ -1,4 +1,12 @@
-import React, { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -6,7 +14,6 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
@@ -19,6 +26,7 @@ import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
 import { useLandingPage } from '../hooks/useCmsPages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
+import { PACKAGES_FALLBACK } from '../data/packages'
 
 import { preloadImages, usePreloadOnApproach } from '../utils/preloadAssets'
 import inspirationImg from '../assets/images/inspiration.png'
@@ -175,6 +183,15 @@ const getVisiblePaginationDots = (totalItems, activeIndex, maxVisible = 5) => {
 }
 
 const PACKAGE_CYLINDER_ARC = 4
+const PACKAGE_CAROUSEL_TRANSITION = 'transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+
+const getPackageCardZIndex = (index, activeIndex, total) => {
+  if (index === activeIndex) return 50
+  const direct = Math.abs(index - activeIndex)
+  const wrapped = total - direct
+  const distance = Math.min(direct, wrapped)
+  return Math.max(0, 40 - distance * 5)
+}
 
 const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
   pkg,
@@ -193,8 +210,14 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
   })
   const visibleTagsViewportRef = useRef(null)
   const hiddenTagsMeasureRef = useRef(null)
-  const imageCount = pkg.images?.length ?? 0
-  const useInnerSwiper = imageCount > 1
+  const fallbackImages = pkg.fallbackImages ?? []
+
+  const handleImageError = (event, imageIndex = 0) => {
+    const fallbackSrc = fallbackImages[imageIndex % Math.max(fallbackImages.length, 1)]
+    if (fallbackSrc && event.currentTarget.src !== fallbackSrc) {
+      event.currentTarget.src = fallbackSrc
+    }
+  }
   const tags = useMemo(() => {
     if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
     if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
@@ -333,93 +356,16 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
     >
       <div className="p-[12px] md:px-5 md:pt-5 shrink-0">
         <div
-          className={`relative w-full h-[240px] md:h-[450px] bg-[#EAEAEA] overflow-hidden rounded-[8px] md:rounded-none ${isActive ? 'card-swiper-active' : ''}`}
+          className={`relative w-full h-[240px] md:h-[450px] bg-[#EAEAEA] overflow-hidden rounded-[8px] md:rounded-none`}
         >
-          {isActive ? (
-            useInnerSwiper ? (
-              <Swiper
-                key={`inner-${pkg.id ?? index}-${imageCount}`}
-                modules={[Navigation, Pagination]}
-                navigation={{
-                  prevEl: `.custom-prev-btn-${index}`,
-                  nextEl: `.custom-next-btn-${index}`,
-                }}
-                pagination={{ clickable: true }}
-                loop
-                className="inner-card-swiper w-full h-full"
-              >
-                {pkg.images.map((imgSrc, imageIndex) => (
-                  <SwiperSlide key={imageIndex}>
-                    <img
-                      src={imgSrc}
-                      alt={`${pkg.title} - view ${imageIndex + 1}`}
-                      className="w-full h-full object-cover object-center"
-                      loading="eager"
-                      decoding="async"
-                    />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            ) : (
-              <img
-                src={pkg.images?.[0] ?? ''}
-                alt={pkg.title}
-                className="w-full h-full object-cover object-center"
-                loading="eager"
-                decoding="async"
-              />
-            )
-          ) : (
-            <img
-              src={pkg.images?.[0] ?? ''}
-              alt={pkg.title}
-              className="w-full h-full object-cover object-center"
-              loading="eager"
-              decoding="async"
-            />
-          )}
-
-          <div
-            className={`flex absolute inset-0 pointer-events-none z-[100] items-center justify-between ${useInnerSwiper && isActive ? '' : 'opacity-0 pointer-events-none'}`}
-          >
-            <button
-              type="button"
-              className={`custom-prev-btn-${index} pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 w-[30px] md:w-[36px] h-[60px] md:h-[56px] bg-white/20 md:bg-[#2D2D2D] backdrop-blur-[42px] md:backdrop-blur-none hover:bg-white/30 md:hover:bg-black rounded-r-full flex items-center justify-center transition-all duration-300 pr-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
-            >
-              <svg
-                width={isMobile ? '20' : '18'}
-                height={isMobile ? '20' : '18'}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth={isMobile ? '1.86' : '3'}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M19 12H5" />
-                <path d="m12 19-7-7 7-7" />
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              className={`custom-next-btn-${index} pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 w-[30px] md:w-[36px] h-[60px] md:h-[56px] bg-white/20 md:bg-[#2D2D2D] backdrop-blur-[42px] md:backdrop-blur-none hover:bg-white/30 md:hover:bg-black rounded-l-full flex items-center justify-center transition-all duration-300 pl-[2px] ${isActive ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'}`}
-            >
-              <svg
-                width={isMobile ? '20' : '18'}
-                height={isMobile ? '20' : '18'}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth={isMobile ? '1.86' : '3'}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+          <img
+            src={pkg.images?.[0] ?? fallbackImages[0] ?? ''}
+            alt={pkg.title}
+            className="w-full h-full object-cover object-center"
+            loading={isActive ? 'eager' : 'lazy'}
+            decoding="async"
+            onError={event => handleImageError(event, 0)}
+          />
 
           {isActive && (
             <div
@@ -575,7 +521,7 @@ const PlanEventSection = () => {
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024)
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
     handleResize() // init
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -880,7 +826,7 @@ const PlanEventSection = () => {
                 }}
               >
                 <div
-                  className="flex gap-4 md:gap-4 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+                  className="flex gap-4 md:gap-4 justify-start transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
                   style={{
                     transform: isMobile
                       ? getMobileCarouselTranslateX({
@@ -950,7 +896,7 @@ const PlanEventSection = () => {
             {/* Pagination Controls */}
 
             {/* Desktop Pagination Block */}
-            <div className="hidden lg:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
+            <div className="hidden md:flex w-[611px] max-w-[90vw] h-[48px] mt-16 mx-auto justify-between items-center gap-[25px]">
               <button
                 onClick={goToPrevPage}
                 disabled={safePage === 0}
@@ -1075,7 +1021,7 @@ const WhatToPlanSection = () => {
 
   // Track window size to toggle cards per page natively
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024)
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
     handleResize() // init
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -3046,13 +2992,27 @@ const PKG_LOCAL_IMAGES = [
   [pkgImg5, pkgImg1, pkgImg8],
 ]
 
+function resolvePackageImages(pkg, index) {
+  const remote = (Array.isArray(pkg.images) ? pkg.images : []).filter(
+    url => typeof url === 'string' && url.trim()
+  )
+  const fallback = PKG_LOCAL_IMAGES[index % PKG_LOCAL_IMAGES.length] ?? PKG_LOCAL_IMAGES[0] ?? []
+
+  return {
+    images: remote.length > 0 ? remote : fallback,
+    fallbackImages: fallback,
+  }
+}
+
 const PackagesSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.packages_intro ?? {}
 
-  const [virtualIndex, setVirtualIndex] = useState(0)
+  const [virtualIndex, setVirtualIndex] = useState(null)
   const [disableTransition, setDisableTransition] = useState(false)
   const lastDirectionRef = useRef('next')
+  const isAnimatingRef = useRef(false)
+  const virtualIndexRef = useRef(null)
   const [isMobile, setIsMobile] = useState(false)
   const packagePreloadRef = useRef(null)
 
@@ -3068,19 +3028,28 @@ const PackagesSection = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // CMS: Strapi `packages` with elements, addons, images
+  // CMS: Strapi `packages` with elements, addons, images — fallback when Strapi is off/empty
   const { data: cmsPackages = [] } = usePackages()
-  // Merge: use Strapi images when available, fall back to local assets
-  const packagesData = cmsPackages.map((pkg, i) => ({
-    ...pkg,
-    desc:
-      typeof pkg.description === 'string'
-        ? pkg.description
-        : typeof pkg.desc === 'string'
-          ? pkg.desc
-          : '',
-    images: pkg.images?.length ? pkg.images : (PKG_LOCAL_IMAGES[i] ?? []),
-  }))
+  const packagesData = useMemo(() => {
+    const sourcePackages = cmsPackages.length > 0 ? cmsPackages : PACKAGES_FALLBACK
+
+    return sourcePackages.map((pkg, i) => {
+      const { images, fallbackImages } = resolvePackageImages(pkg, i)
+
+      return {
+        ...pkg,
+        desc:
+          typeof pkg.description === 'string'
+            ? pkg.description
+            : typeof pkg.desc === 'string'
+              ? pkg.desc
+              : '',
+        includes: pkg.includes ?? pkg.tags ?? [],
+        images,
+        fallbackImages,
+      }
+    })
+  }, [cmsPackages])
 
   const count = packagesData.length
   const totalCards = count * 3
@@ -3091,7 +3060,10 @@ const PackagesSection = () => {
 
   useEffect(() => {
     const urls = packagesData
-      .flatMap(pkg => (Array.isArray(pkg.images) ? pkg.images.slice(0, 2) : []))
+      .flatMap(pkg => [
+        ...(Array.isArray(pkg.images) ? pkg.images.slice(0, 2) : []),
+        ...(Array.isArray(pkg.fallbackImages) ? pkg.fallbackImages.slice(0, 1) : []),
+      ])
       .filter(Boolean)
     if (urls.length) preloadImages(urls)
   }, [packagesData])
@@ -3116,26 +3088,70 @@ const PackagesSection = () => {
     return () => observer.disconnect()
   }, [packagesData])
 
-  const handleTransitionEnd = () => {
-    if (count === 0 || !usePackageCylinder) return
-    if (virtualIndex >= count * 2) {
+  const finishCarouselAnimation = useCallback(() => {
+    requestAnimationFrame(() => {
+      isAnimatingRef.current = false
+    })
+  }, [])
+
+  const snapCarouselIndex = useCallback(
+    nextIndex => {
       setDisableTransition(true)
-      setVirtualIndex(count)
-      requestAnimationFrame(() => setDisableTransition(false))
-    }
-  }
+      setVirtualIndex(nextIndex)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setDisableTransition(false)
+          finishCarouselAnimation()
+        })
+      })
+    },
+    [finishCarouselAnimation]
+  )
 
-  const handleNext = () => {
-    if (count === 0 || !usePackageCylinder) return
+  const handleTransitionEnd = useCallback(
+    event => {
+      if (event.propertyName !== 'transform') return
+      if (count === 0 || !usePackageCylinder) {
+        finishCarouselAnimation()
+        return
+      }
+
+      const current = virtualIndexRef.current ?? count
+
+      if (current >= count * 2) {
+        snapCarouselIndex(current - count)
+        return
+      }
+
+      if (current < count) {
+        snapCarouselIndex(current + count)
+        return
+      }
+
+      finishCarouselAnimation()
+    },
+    [count, usePackageCylinder, finishCarouselAnimation, snapCarouselIndex]
+  )
+
+  const handleNext = useCallback(() => {
+    if (count === 0 || !usePackageCylinder || isAnimatingRef.current) return
+    isAnimatingRef.current = true
     lastDirectionRef.current = 'next'
-    setVirtualIndex(prev => Math.min(prev + 1, count * 2))
-  }
+    setVirtualIndex(prev => (prev ?? count) + 1)
+  }, [count, usePackageCylinder])
 
-  const handlePrev = () => {
-    if (count === 0 || !usePackageCylinder) return
+  const handlePrev = useCallback(() => {
+    if (count === 0 || !usePackageCylinder || isAnimatingRef.current) return
+    isAnimatingRef.current = true
     lastDirectionRef.current = 'prev'
-    setVirtualIndex(prev => (prev <= 0 ? totalCards - 1 : prev - 1))
-  }
+    setVirtualIndex(prev => (prev ?? count) - 1)
+  }, [count, usePackageCylinder])
+
+  const handleActivate = useCallback(index => {
+    if (isAnimatingRef.current) return
+    isAnimatingRef.current = true
+    setVirtualIndex(index)
+  }, [])
 
   const handleTouchStart = e => {
     touchStartX.current = e.touches[0].clientX
@@ -3155,36 +3171,33 @@ const PackagesSection = () => {
     }
   }
 
-  const effectiveVirtualIndex = count === 1 ? 0 : virtualIndex
+  const effectiveVirtualIndex = count <= 1 ? 0 : (virtualIndex ?? count)
   const displayIndex = count > 0 ? effectiveVirtualIndex % count : 0
   const visiblePackageDots = getVisiblePaginationDots(count, displayIndex, 5)
 
-  const sortedCards = useMemo(() => {
-    if (count === 0) return []
-    if (count === 1) {
-      const pkg = packagesData[0]
-      return [{ pkg, index: 0 }]
-    }
-    const extended = [...packagesData, ...packagesData, ...packagesData]
-    return extended
-      .map((pkg, index) => ({ pkg, index }))
-      .sort((a, b) => {
-        if (a.index === effectiveVirtualIndex) return 1
-        if (b.index === effectiveVirtualIndex) return -1
-        return a.index - b.index
-      })
-  }, [packagesData, effectiveVirtualIndex, count])
+  useLayoutEffect(() => {
+    virtualIndexRef.current = effectiveVirtualIndex
+  }, [effectiveVirtualIndex])
 
-  const cylinderCards = useMemo(() => {
-    if (!usePackageCylinder) return sortedCards
-    return sortedCards.filter(({ index }) => {
+  const extendedCards = useMemo(() => {
+    if (count === 0) return []
+    if (count === 1) return [{ pkg: packagesData[0], index: 0 }]
+
+    return [...packagesData, ...packagesData, ...packagesData].map((pkg, index) => ({
+      pkg,
+      index,
+    }))
+  }, [packagesData, count])
+
+  const renderCards = useMemo(() => {
+    if (!usePackageCylinder) return extendedCards
+
+    return extendedCards.filter(({ index }) => {
       const direct = Math.abs(index - effectiveVirtualIndex)
       const wrapped = totalCards - direct
       return Math.min(direct, wrapped) <= PACKAGE_CYLINDER_ARC
     })
-  }, [sortedCards, effectiveVirtualIndex, totalCards, usePackageCylinder])
-
-  const renderCards = usePackageCylinder ? cylinderCards : sortedCards
+  }, [extendedCards, effectiveVirtualIndex, totalCards, usePackageCylinder])
 
   return (
     <section
@@ -3192,7 +3205,7 @@ const PackagesSection = () => {
       className="relative w-full min-h-auto md:min-h-screen bg-[#F2F2F2] md:bg-[#F4F4F2] pt-10 md:pt-8 pb-10 md:pb-28 md:-mt-4 overflow-hidden"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* Global Styles for inner Swiper + fix arrow click blocking */}
+      {/* Global Styles for testimonials Swiper below */}
       <style>{`
         .inner-card-swiper .swiper-pagination-bullet {
           background-color: #FFFFFF;
@@ -3333,11 +3346,9 @@ const PackagesSection = () => {
             className="grid place-self-center w-full max-w-[100vw] pointer-events-none"
             style={{
               transformStyle: 'preserve-3d',
-              transform: `translateZ(0) rotateY(${usePackageCylinder ? -effectiveVirtualIndex * 36 : 0}deg)`,
-              transition: disableTransition
-                ? 'none'
-                : 'transform 0.48s cubic-bezier(0.22, 1, 0.36, 1)',
-              willChange: disableTransition ? 'auto' : 'transform',
+              transform: `translate3d(0, 0, 0) rotateY(${usePackageCylinder ? -effectiveVirtualIndex * 36 : 0}deg)`,
+              transition: disableTransition ? 'none' : PACKAGE_CAROUSEL_TRANSITION,
+              willChange: 'transform',
             }}
             onTransitionEnd={handleTransitionEnd}
             onTouchStart={isMobile && usePackageCylinder ? handleTouchStart : undefined}
@@ -3360,7 +3371,7 @@ const PackagesSection = () => {
                   isActive={isActive}
                   isMobile={isMobile}
                   usePackageCylinder={usePackageCylinder}
-                  onActivate={setVirtualIndex}
+                  onActivate={handleActivate}
                   style={{
                     transform: `rotateY(${index * 36}deg) translateZ(${-radius}px)`,
                     boxShadow: isActive
@@ -3368,9 +3379,12 @@ const PackagesSection = () => {
                       : '0 6px 20px rgba(0,0,0,0.1)',
                     opacity: isActive ? 1 : isMobile ? 0 : 0.92,
                     pointerEvents: isActive ? 'auto' : isMobile ? 'none' : 'auto',
-                    zIndex: isActive ? 50 : 0,
+                    zIndex: getPackageCardZIndex(index, effectiveVirtualIndex, totalCards),
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
+                    transition: disableTransition
+                      ? 'none'
+                      : 'opacity 0.28s ease-out, box-shadow 0.28s ease-out',
                   }}
                 />
               )
@@ -4038,7 +4052,10 @@ const PlanningGuidesSection = () => {
             <div className="flex md:hidden justify-center pb-12 reveal-on-scroll">
               <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
                 <span className="reveal-text">
-                  <button className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group">
+                  <Link
+                    to="/blogs"
+                    className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group"
+                  >
                     <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
                       {s.cta_label ?? 'View All'}
                     </span>
@@ -4058,7 +4075,7 @@ const PlanningGuidesSection = () => {
                         />
                       </svg>
                     </div>
-                  </button>
+                  </Link>
                 </span>
               </span>
             </div>
@@ -4401,56 +4418,39 @@ const TestimonialsSection = () => {
   )
 }
 
+const SPLIT_INFO_TRANSITION =
+  'opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+
+const getSplitRevealStyle = (isVisible, { delay = 0, fromY = 0, fromX = 0 } = {}) => ({
+  opacity: isVisible ? 1 : 0,
+  transform: isVisible ? 'translate3d(0, 0, 0)' : `translate3d(${fromX}px, ${fromY}px, 0)`,
+  transition: SPLIT_INFO_TRANSITION,
+  transitionDelay: isVisible ? `${delay}s` : '0s',
+  willChange: isVisible ? 'auto' : 'transform, opacity',
+})
+
 const SplitInfoSection = () => {
   const { data: cms = {} } = useLandingPage()
   const ig = cms.instagram_section ?? {}
   const vp = cms.vendor_partner ?? {}
-  const splitRevealRef = useRef(null)
   const [isSplitVisible, setIsSplitVisible] = useState(false)
 
-  // inspirationImg is 15 MB â€” preload it 2 viewports ahead so it's ready on arrival
-  const sectionRef = usePreloadOnApproach([inspirationImg], '200% 0px')
-
-  useEffect(() => {
-    const root = splitRevealRef.current
-    if (!root) return
-
-    const io = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return
-          setIsSplitVisible(true)
-          io.disconnect()
-        })
-      },
-      { threshold: 0.22, rootMargin: '0px 0px -8% 0px' }
-    )
-
-    io.observe(root)
-    return () => io.disconnect()
-  }, [])
+  const sectionRef = usePreloadOnApproach([inspirationImg, img2], '200% 0px')
 
   useEffect(() => {
     const root = sectionRef.current
     if (!root) return
 
-    const cards = Array.from(root.querySelectorAll('.card-reveal')).filter(
-      el => !el.classList.contains('is-visible')
-    )
-    if (cards.length === 0) return
-
     const io = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return
-          entry.target.classList.add('is-visible')
-          io.unobserve(entry.target)
-        })
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        setIsSplitVisible(true)
+        io.disconnect()
       },
-      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+      { threshold: 0.12, rootMargin: '0px 0px -4% 0px' }
     )
 
-    cards.forEach(el => io.observe(el))
+    io.observe(root)
     return () => io.disconnect()
   }, [sectionRef])
 
@@ -4459,190 +4459,121 @@ const SplitInfoSection = () => {
       ref={sectionRef}
       className="relative w-full bg-[#FFFFFF] font-sans overflow-x-clip overflow-y-hidden"
     >
-      {/* Full-bleed split layout so the partner panel reaches the right edge on wide screens. */}
       <div className="w-full min-w-0 flex flex-col lg:flex-row overflow-x-clip">
         {/* LEFT SECTION - Inspiration */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={
-            isSplitVisible
-              ? { opacity: 1, transition: { duration: 0.4, delay: 0.05 } }
-              : { opacity: 0 }
-          }
+        <div
           className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px] overflow-x-clip"
+          style={getSplitRevealStyle(isSplitVisible, { delay: 0.02 })}
         >
-          {/* Text Content Block */}
-          <motion.div
-            initial={{ y: 72, opacity: 0 }}
-            animate={
-              isSplitVisible
-                ? {
-                    y: 0,
-                    opacity: 1,
-                    transition: { duration: 0.55, delay: 0.1, ease: [0.22, 1, 0.36, 1] },
-                  }
-                : { y: 72, opacity: 0 }
-            }
+          <div
             className="flex flex-col items-start text-left w-[55%] lg:w-[400px] shrink-0"
+            style={getSplitRevealStyle(isSplitVisible, { delay: 0.06, fromY: 28 })}
           >
             <h2
-              className="text-[#2D2D2D] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0 reveal-heading"
+              className="text-[#2D2D2D] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              <span className="reveal-wrapper">
-                <span className="reveal-text">{ig.heading ?? 'Behind the Scenes'}</span>
-              </span>
+              {ig.heading ?? 'Behind the Scenes'}
             </h2>
 
-            <p className="text-[#2D2D2D] opacity-50 text-[12px] md:text-[16px] leading-[150%] w-full lg:w-[339px] mt-[12px] lg:mt-[20px] font-sans m-0 reveal-on-scroll font-['Poppins'] lg:font-sans">
-              <span className="reveal-wrapper">
-                <span className="reveal-text">
-                  {ig.body ??
-                    'Follow along for real celebrations, styling ideas, and behind-the-scenes moments from the events we love creating.'}
-                </span>
-              </span>
+            <p className="text-[#2D2D2D] opacity-50 text-[12px] md:text-[16px] leading-[150%] w-full lg:w-[339px] mt-[12px] lg:mt-[20px] font-sans m-0 font-['Poppins'] lg:font-sans">
+              {ig.body ??
+                'Follow along for real celebrations, styling ideas, and behind-the-scenes moments from the events we love creating.'}
             </p>
 
-            <span className="mt-[20px] lg:mt-[16px] reveal-wrapper reveal-on-scroll">
-              <span className="reveal-text">
-                <button className="box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] bg-transparent text-[#591902] hover:bg-[#591902] hover:text-white transition-colors group">
-                  <span className="text-[#591902] group-hover:text-white transition-colors font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
-                    {ig.cta_label ?? 'Join Our Instagram'}
-                  </span>
+            <button className="mt-[20px] lg:mt-[16px] box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] bg-transparent text-[#591902] hover:bg-[#591902] hover:text-white transition-colors group">
+              <span className="text-[#591902] group-hover:text-white transition-colors font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
+                {ig.cta_label ?? 'Join Our Instagram'}
+              </span>
+              <svg
+                className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0 transition-colors"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </button>
+          </div>
+
+          <img
+            src={inspirationImg}
+            alt="Behind the scenes setup"
+            className="w-[40%] max-w-[156px] lg:max-w-[240px] h-[229px] lg:h-[351px] rounded-[3.57px] lg:rounded-[8px] object-cover object-[20%_center]"
+            style={getSplitRevealStyle(isSplitVisible, { delay: 0.1, fromY: 32 })}
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+
+        {/* RIGHT SECTION - Partner */}
+        <div
+          className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px] overflow-x-clip"
+          style={getSplitRevealStyle(isSplitVisible, { fromX: 56 })}
+        >
+          <div
+            className="w-full max-w-[353px] lg:max-w-[420px] h-[152px] lg:h-[210px] bg-[#FFFFFF] rounded-[8px] overflow-hidden shrink-0"
+            style={getSplitRevealStyle(isSplitVisible, { delay: 0.08, fromY: 24 })}
+          >
+            <img
+              src={img2}
+              alt="Vendor partnership"
+              className="w-full h-full object-cover object-center"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+
+          <div
+            className="flex flex-col items-start w-full max-w-[353px] lg:max-w-[420px] mt-[32px] lg:mt-[40px]"
+            style={getSplitRevealStyle(isSplitVisible, { delay: 0.14, fromY: 28 })}
+          >
+            <h2
+              className="text-[#FFFFFF] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0"
+              style={{ fontFamily: "'Malgin', serif" }}
+            >
+              {vp.heading ?? 'Partner with Elewen'}
+            </h2>
+
+            <div className="flex flex-col items-start gap-[16px] mt-[20px] w-full lg:w-[420px]">
+              <p className="text-[#FFFFFF] opacity-50 text-[16px] leading-[150%] w-full lg:w-[420px] font-sans m-0">
+                {vp.body ??
+                  "Great events are never created alone. We work with a trusted circle of florists, decorators, caterers, bartenders, and production houses who help bring celebrations to life. If you'd like to be part of our vendor network, we'd love to hear from you."}
+              </p>
+
+              <Link
+                to={vp.cta_url ?? '/vendor-registration'}
+                className="mt-[32px] lg:mt-[16px] box-border flex flex-row items-center justify-between pl-[18px] lg:pl-[24px] pr-[4px] lg:pr-[4px] py-0 lg:py-[4px] gap-[12px] lg:gap-[16px] w-max lg:w-[228px] min-h-[36px] h-[36px] lg:h-[44px] bg-[#CDB17E] rounded-[42px] lg:rounded-[56px] hover:bg-[#bfa06b] transition-colors group"
+              >
+                <span className="text-[#FAFAFA] font-medium text-[12px] lg:text-[16px] leading-[150%] font-['Poppins'] lg:font-sans text-left">
+                  {vp.cta_label ?? 'Apply as Vendor'}
+                </span>
+
+                <div className="flex items-center justify-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-[60px] p-[8px] shrink-0 transition-transform group-hover:scale-105">
                   <svg
-                    className="w-[16px] h-[16px] lg:w-[20px] lg:h-[20px] shrink-0 transition-colors"
+                    className="transition-transform duration-300 ease-out group-hover:rotate-45"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="currentColor"
+                    stroke="#CDB17E"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    <path d="M7 17L17 7" />
+                    <path d="M7 7h10v10" />
                   </svg>
-                </button>
-              </span>
-            </span>
-          </motion.div>
-
-          {/* Image Block */}
-          <motion.img
-            initial={{ y: 88, opacity: 0 }}
-            animate={
-              isSplitVisible
-                ? {
-                    y: 0,
-                    opacity: 1,
-                    transition: { duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] },
-                  }
-                : { y: 88, opacity: 0 }
-            }
-            src={inspirationImg}
-            alt="Behind the scenes setup"
-            className="w-[40%] max-w-[156px] lg:max-w-[240px] h-[229px] lg:h-[351px] rounded-[3.57px] lg:rounded-[8px] object-cover object-[20%_center] card-reveal"
-            style={{ '--delay': '0.08s' }}
-            loading="lazy"
-          />
-        </motion.div>
-
-        {/* RIGHT SECTION - Partner */}
-        <motion.div
-          ref={splitRevealRef}
-          initial={{ x: 220, opacity: 0 }}
-          animate={
-            isSplitVisible
-              ? {
-                  x: 0,
-                  opacity: 1,
-                  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
-                }
-              : { x: 220, opacity: 0 }
-          }
-          className="w-full lg:w-[38.888889%] bg-[#591902] flex flex-col items-center lg:items-start px-[20px] py-[40px] lg:p-[40px] overflow-x-clip"
-        >
-          {/* Placeholder/Top Box */}
-          <motion.div
-            initial={{ y: 70, opacity: 0 }}
-            animate={
-              isSplitVisible
-                ? {
-                    y: 0,
-                    opacity: 1,
-                    transition: { duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] },
-                  }
-                : { y: 70, opacity: 0 }
-            }
-            className="w-full max-w-[353px] lg:max-w-[420px] h-[152px] lg:h-[210px] bg-[#FFFFFF] rounded-[8px] overflow-hidden shrink-0 card-reveal"
-            style={{ '--delay': '0.14s' }}
-          />
-
-          {/* Text Content Block */}
-          <motion.div
-            initial={{ y: 86, opacity: 0 }}
-            animate={
-              isSplitVisible
-                ? {
-                    y: 0,
-                    opacity: 1,
-                    transition: { duration: 0.55, delay: 0.25, ease: [0.22, 1, 0.36, 1] },
-                  }
-                : { y: 86, opacity: 0 }
-            }
-            className="flex flex-col items-start w-full max-w-[353px] lg:max-w-[420px] mt-[32px] lg:mt-[40px]"
-          >
-            <h2
-              className="text-[#FFFFFF] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0 reveal-heading"
-              style={{ fontFamily: "'Malgin', serif" }}
-            >
-              <span className="reveal-wrapper">
-                <span className="reveal-text">{vp.heading ?? 'Partner with Elewen'}</span>
-              </span>
-            </h2>
-
-            <div className="flex flex-col items-start gap-[16px] mt-[20px] w-full lg:w-[420px]">
-              <p className="text-[#FFFFFF] opacity-50 text-[16px] leading-[150%] w-full lg:w-[420px] font-sans m-0 reveal-on-scroll">
-                <span className="reveal-wrapper">
-                  <span className="reveal-text">
-                    {vp.body ??
-                      "Great events are never created alone. We work with a trusted circle of florists, decorators, caterers, bartenders, and production houses who help bring celebrations to life. If you'd like to be part of our vendor network, we'd love to hear from you."}
-                  </span>
-                </span>
-              </p>
-
-              <span className="mt-[32px] lg:mt-[16px] reveal-wrapper reveal-wrapper--overflow-visible !pb-1 reveal-on-scroll">
-                <span className="reveal-text">
-                  <Link
-                    to={vp.cta_url ?? '/vendor-registration'}
-                    className="box-border flex flex-row items-center justify-between pl-[18px] lg:pl-[24px] pr-[4px] lg:pr-[4px] py-0 lg:py-[4px] gap-[12px] lg:gap-[16px] w-max lg:w-[228px] min-h-[36px] h-[36px] lg:h-[44px] bg-[#CDB17E] rounded-[42px] lg:rounded-[56px] hover:bg-[#bfa06b] transition-colors group"
-                  >
-                    <span className="text-[#FAFAFA] font-medium text-[12px] lg:text-[16px] leading-[150%] font-['Poppins'] lg:font-sans text-left">
-                      {vp.cta_label ?? 'Apply as Vendor'}
-                    </span>
-
-                    <div className="flex items-center justify-center w-[36px] h-[36px] bg-[#FAFAFA] rounded-[60px] p-[8px] shrink-0 transition-transform group-hover:scale-105">
-                      <svg
-                        className="transition-transform duration-300 ease-out group-hover:rotate-45"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#CDB17E"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M7 17L17 7" />
-                        <path d="M7 7h10v10" />
-                      </svg>
-                    </div>
-                  </Link>
-                </span>
-              </span>
+                </div>
+              </Link>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -4702,6 +4633,8 @@ export default function LandingPage() {
         img4,
         img5,
         centerLogo,
+        inspirationImg,
+        img2,
       ])
 
     window.addEventListener('hero-preloader-done', onPreloaderDone, { once: true })
