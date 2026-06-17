@@ -820,7 +820,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 className="w-[min(153px,48vw)] min-w-[128px] text-right text-[clamp(14px,3.8vw,19px)] leading-[1] text-white"
                 style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
               >
-                Hello@Elewen.com
+                info@elewen.co.in
               </p>
             </div>
           </nav>
@@ -848,7 +848,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             <div className="mt-6 flex flex-col items-end">
               <p className="mb-0.5 text-sm text-white/40">+91 7263587619</p>
               <p className="text-lg font-semibold tracking-tight text-white md:text-2xl">
-                Hello@Elewen.com
+                info@elewen.co.in
               </p>
             </div>
           </div>

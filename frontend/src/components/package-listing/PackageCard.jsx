@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
 import BrandedImage from '../common/BrandedImage'
 import { preloadImages } from '../../utils/preloadAssets'
+import { getPackageHref } from '../../lib/packageRoutes'
 
 function ImageDots({ count, currentIndex = 0 }) {
   if (count <= 1) return null
@@ -23,22 +24,6 @@ function ImageDots({ count, currentIndex = 0 }) {
       ))}
     </div>
   )
-}
-
-function getPackageHref(serviceSlug, packageId) {
-  const normalizedService = String(serviceSlug ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/-single$/, '')
-    .replace(/-services?$/, '')
-
-  if (normalizedService === 'decor') return `/packages/decor-single/${packageId}`
-  if (normalizedService === 'sheesha') return `/packages/sheesha-single/${packageId}`
-  if (normalizedService === 'bartending') return `/packages/bartending-single/${packageId}`
-  if (normalizedService === 'catering') return `/packages/catering-single/${packageId}`
-  if (normalizedService) return `/packages/${normalizedService}/${packageId}`
-
-  return `/packages/decor-single/${packageId}`
 }
 
 export default function PackageCard({ pkg, className = '', compactMode = false }) {

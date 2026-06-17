@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import gsap from 'gsap'
@@ -26,6 +26,7 @@ import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
 import { useLandingPage } from '../hooks/useCmsPages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
+import { getPackageHref } from '../lib/packageRoutes'
 import { PACKAGES_FALLBACK } from '../data/packages'
 
 import { preloadImages, usePreloadOnApproach } from '../utils/preloadAssets'
@@ -202,6 +203,7 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
   onActivate,
   style,
 }) {
+  const navigate = useNavigate()
   const [showAllIncludes, setShowAllIncludes] = useState(false)
   const [visibleTagCount, setVisibleTagCount] = useState(0)
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
@@ -211,6 +213,11 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
   const visibleTagsViewportRef = useRef(null)
   const hiddenTagsMeasureRef = useRef(null)
   const fallbackImages = pkg.fallbackImages ?? []
+  const packageId = pkg.documentId ?? pkg.id
+  const serviceSlug = String(pkg.serviceSlug ?? pkg.service_slugs?.[0] ?? '')
+    .trim()
+    .toLowerCase()
+  const packageHref = packageId ? getPackageHref(serviceSlug, packageId) : ''
 
   const handleImageError = (event, imageIndex = 0) => {
     const fallbackSrc = fallbackImages[imageIndex % Math.max(fallbackImages.length, 1)]
@@ -337,12 +344,22 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
   }, [showAllIncludes, tags.length, isDesktopViewport, isActive])
 
   const previewTags = tags.slice(0, isMobile ? 2 : 3)
+  const handleCardClick = () => {
+    if (usePackageCylinder && !isActive) {
+      onActivate(index)
+      return
+    }
+
+    if (packageHref) {
+      navigate(packageHref)
+    }
+  }
 
   return (
     <div
-      onClick={() => usePackageCylinder && !isActive && onActivate(index)}
+      onClick={handleCardClick}
       className={`relative flex flex-col bg-white overflow-hidden pointer-events-auto 
-                    ${isActive ? 'cursor-default' : 'cursor-pointer'} 
+                    cursor-pointer
                     w-[289px] md:w-[640px] h-[474px] md:h-[770px]
                     rounded-[8px] md:rounded-none
                   `}
