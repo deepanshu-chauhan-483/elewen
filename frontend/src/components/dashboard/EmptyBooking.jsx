@@ -13,7 +13,13 @@ export default function EmptyBooking({
     <div className="flex min-h-full w-full flex-1 items-center justify-center">
       <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
         <div className="mb-6">
-          <img src={fallbackBooking} alt="No bookings" className="w-[220px] md:w-[260px]" />
+          <img
+            src={fallbackBooking}
+            alt="No bookings"
+            className="w-[220px] md:w-[260px]"
+            loading="lazy"
+            decoding="async"
+          />
         </div>
 
         <h2

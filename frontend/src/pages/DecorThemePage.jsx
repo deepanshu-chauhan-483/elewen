@@ -77,7 +77,13 @@ function ThemeCard({
       className="group flex h-[350px] w-full max-w-[250px] md:h-auto md:max-h-[384px] md:max-w-[298px] flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[8px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1"
     >
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
-        <img src={image} alt={theme.label} className="h-full w-full object-cover" />
+        <img
+          src={image}
+          alt={theme.label}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
       <div className="mt-2 flex h-[40px] items-center rounded-[10px] bg-[#7E8061] px-3 text-white md:h-[44px] md:px-3.5">
         <h2

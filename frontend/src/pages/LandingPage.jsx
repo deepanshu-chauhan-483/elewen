@@ -3587,35 +3587,35 @@ const CelebrationFeelingSection = () => {
           style={{ '--img-delay': '0.02s' }}
           className="celebration-img-slot celebration-parallax-slot--1 celebration-img-reveal absolute w-[336px] md:w-[347px] h-[271px] md:h-[280px] -left-[103px] md:left-[0px] top-[5px] md:top-[100px] pointer-events-none z-0"
         >
-          <img src={img1} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+          <img src={img1} alt="Event Decor" loading="lazy" decoding="async" />
         </div>
 
         <div
           style={{ '--img-delay': '0.06s' }}
           className="celebration-img-slot celebration-parallax-slot--2 celebration-img-reveal absolute w-[246px] md:w-[249px] h-[268px] md:h-[375px] -left-[46px] md:left-[42px] top-[432px] md:top-[450px] pointer-events-none z-0"
         >
-          <img src={img2} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+          <img src={img2} alt="Event Decor" loading="lazy" decoding="async" />
         </div>
 
         <div
           style={{ '--img-delay': '0.10s' }}
           className="celebration-img-slot celebration-parallax-slot--3 celebration-img-reveal absolute hidden md:block w-[290px] h-[316px] left-[497px] top-[700px] pointer-events-none z-0"
         >
-          <img src={img3} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+          <img src={img3} alt="Event Decor" loading="lazy" decoding="async" />
         </div>
 
         <div
           style={{ '--img-delay': '0.14s' }}
           className="celebration-img-slot celebration-parallax-slot--4 celebration-img-reveal absolute w-[158px] md:w-[312px] h-[161px] md:h-[318px] left-[278px] md:left-[1034px] top-[391px] md:top-[400px] pointer-events-none z-0"
         >
-          <img src={img4} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+          <img src={img4} alt="Event Decor" loading="lazy" decoding="async" />
         </div>
 
         <div
           style={{ '--img-delay': '0.18s' }}
           className="celebration-img-slot celebration-parallax-slot--5 celebration-img-reveal absolute w-[215px] md:w-[505px] h-[113px] md:h-[265px] left-[257px] md:left-[909px] top-[141px] md:top-[50px] pointer-events-none z-0"
         >
-          <img src={img5} alt="Event Decor" loading="eager" decoding="async" fetchPriority="low" />
+          <img src={img5} alt="Event Decor" loading="lazy" decoding="async" />
         </div>
 
         <div className="sticky top-[180px] md:top-[250px] z-10 flex flex-col items-center">

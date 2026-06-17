@@ -204,6 +204,8 @@ const BlogPage = () => {
                   src={heroLeft}
                   alt="Celebration moment"
                   className="h-full w-full object-cover"
+                  loading="eager"
+                  decoding="async"
                 />
               </div>
               <div
@@ -214,6 +216,8 @@ const BlogPage = () => {
                   src={heroRight}
                   alt="Decorated event space"
                   className="h-full w-full object-cover"
+                  loading="eager"
+                  decoding="async"
                 />
               </div>
             </div>
@@ -298,6 +302,8 @@ const BlogPage = () => {
                       src={resolveCoverImage(post)}
                       alt={post.title}
                       className="h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                   </div>
                 )}
@@ -373,6 +379,8 @@ const BlogPage = () => {
                       src={resolveCoverImage(post)}
                       alt={post.title}
                       className="h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                   </div>
                 )}

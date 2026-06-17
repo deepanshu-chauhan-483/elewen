@@ -1,7 +1,15 @@
 /**
  * In-house planner images — respect camera EXIF so photos render upright.
  */
-export default function PlannerImage({ src, alt = '', className = '', style, onError, ...rest }) {
+export default function PlannerImage({
+  src,
+  alt = '',
+  className = '',
+  style,
+  onError,
+  loading = 'lazy',
+  ...rest
+}) {
   if (!src) return null
 
   return (
@@ -11,6 +19,7 @@ export default function PlannerImage({ src, alt = '', className = '', style, onE
       className={className}
       style={{ imageOrientation: 'from-image', ...style }}
       decoding="async"
+      loading={loading}
       draggable={false}
       onError={onError}
       {...rest}

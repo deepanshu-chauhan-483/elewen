@@ -120,7 +120,13 @@ function EventCard({
     >
       <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
         {event.image ? (
-          <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
+          <img
+            src={event.image}
+            alt={event.title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">
             {event.title}
@@ -363,7 +369,7 @@ export default function CategoryPage() {
                         isActive ? 'text-white' : 'text-[#8C4A22]'
                       }`}
                     >
-                      <img src={category.icon} alt="" />
+                      <img src={category.icon} alt="" loading="lazy" decoding="async" />
                     </span>
                   </span>
                   <div className="min-w-0 max-w-[203px]">

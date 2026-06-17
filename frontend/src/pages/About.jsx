@@ -1109,7 +1109,7 @@ const About = () => {
         </div>
       </section>
       {/* --- SCROLL-TRACED OBJECT --- */}
-      <img src={objectImg} alt="" style={objStyle} />
+      <img src={objectImg} alt="" style={objStyle} loading="lazy" decoding="async" />
     </>
   )
 }

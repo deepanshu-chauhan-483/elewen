@@ -5,8 +5,8 @@ import NavHeader from './components/NavHeader'
 import Footer from './components/Footer'
 import CmsPageLoader from './components/common/CmsPageLoader'
 import { CompactViewportSync } from './hooks/useCompactViewport'
-import LandingPage from './pages/LandingPage'
 
+const LandingPage = lazy(() => import('./pages/LandingPage'))
 const InHousePlannerPage = lazy(() => import('./pages/InHousePlannerPage'))
 const About = lazy(() => import('./pages/About'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
