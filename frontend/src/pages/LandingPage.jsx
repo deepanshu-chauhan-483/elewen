@@ -3645,7 +3645,7 @@ const CelebrationFeelingSection = () => {
           <span className="mt-[32px] md:mt-10 reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
               <Link
-                to="/book-consultation"
+                to={s.cta_url ?? '/in-house-planner'}
                 className="w-[181px] md:w-[213px] h-[33.5px] md:h-[44px] group flex items-center justify-between bg-[#FAFAFA] md:bg-[#FFFFFF] rounded-[42.7px] md:rounded-[56px] pl-[18.3px] md:pl-[24px] pr-[3px] md:pr-[4px] py-[3px] md:py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg"
               >
                 <span className="text-[#CDB17E] text-[12px] md:text-[16px] font-medium leading-[1.5] tracking-wide font-['Poppins'] md:font-sans">

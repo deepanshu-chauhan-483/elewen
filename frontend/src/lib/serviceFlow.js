@@ -66,6 +66,26 @@ export function buildServiceDestination({
   return `${baseRoute}?${params.toString()}`
 }
 
+export function buildServicesFlowDestination({ serviceSlug = '', serviceId = '' }) {
+  const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
+  const params = buildServiceFlowParams({
+    serviceSlug: normalizedServiceSlug,
+    serviceId,
+    flow: SERVICES_FLOW_KEY,
+  })
+
+  if (normalizedServiceSlug === 'decor') {
+    return `/event-flow/category?${params.toString()}`
+  }
+
+  const baseRoute = SERVICE_ROUTE_MAP[normalizedServiceSlug]
+  if (baseRoute) {
+    return `${baseRoute}?${params.toString()}`
+  }
+
+  return `/event-flow/category?${params.toString()}`
+}
+
 export function buildServiceSelectionBackTo({
   categorySlug = '',
   eventSlug = '',
@@ -83,8 +103,15 @@ export function buildServiceSelectionBackTo({
     flow,
   })
 
-  const baseRoute = flow === SERVICES_FLOW_KEY ? '/event-flow/category' : '/event-flow/service'
-  return `${baseRoute}?${params.toString()}`
+  if (flow === SERVICES_FLOW_KEY) {
+    if (!categorySlug || !eventSlug) {
+      return `/event-flow/service?${buildServiceFlowParams({ flow: SERVICES_FLOW_KEY }).toString()}`
+    }
+
+    return `/event-flow/category?${params.toString()}`
+  }
+
+  return `/event-flow/service?${params.toString()}`
 }
 
 export function buildServicesCategoryDestination({

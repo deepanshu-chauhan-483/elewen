@@ -6,10 +6,11 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import {
   buildServiceDestination,
-  buildServiceFlowParams,
+  buildServicesFlowDestination,
   SERVICE_PAGE_ALLOWED_SLUGS,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
+import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const EVENT_FLOW_STEPS = [
   { id: 1, label: 'Event' },
@@ -23,21 +24,14 @@ const SERVICES_FLOW_STEPS = [
   { id: 3, label: ' ' },
 ]
 
-function normalizeServiceSlug(slug) {
-  const value = (slug ?? '').toLowerCase()
-  if (value === 'bar-tending') return 'bartending'
-  return value
-}
-
 function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
   const resolvedServiceSlug = normalizeServiceSlug(service.slug)
   const destination =
     flow === SERVICES_FLOW_KEY
-      ? `/event-flow/category?${buildServiceFlowParams({
+      ? buildServicesFlowDestination({
           serviceSlug: resolvedServiceSlug,
           serviceId: service.id != null ? String(service.id) : '',
-          flow,
-        }).toString()}`
+        })
       : buildServiceDestination({
           categorySlug,
           eventSlug,

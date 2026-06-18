@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import CustomSelect from '../components/common/CustomSelect'
+import { useToast } from '../components/common/useToast'
 import { getFieldErrors, getGlobalErrorMessage } from '../lib/formErrors'
 import { submitVendorRegistration } from '../lib/api'
 
@@ -296,9 +297,9 @@ function Upload({ label, full, file, onChange, accept, error }) {
 }
 
 export default function VendorRegistration() {
+  const { showToast } = useToast()
   const [formData, setFormData] = useState(INITIAL_FORM)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitMessage, setSubmitMessage] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
 
@@ -347,7 +348,6 @@ export default function VendorRegistration() {
   const handleSubmit = async event => {
     event.preventDefault()
     setSubmitError('')
-    setSubmitMessage('')
     setFieldErrors({})
 
     const validationError = validateForm()
@@ -383,11 +383,10 @@ export default function VendorRegistration() {
         verification_document: verificationDocumentPayload,
       })
 
-      setSubmitMessage(
-        response.message || "We've received your application and will review it shortly."
-      )
-      setFormData(INITIAL_FORM)
-      setTimeout(() => setSubmitMessage(''), 5000)
+      showToast({
+        message: response.message || "We've received your application and will review it shortly.",
+      })
+      setFormData({ ...INITIAL_FORM, serviceCategories: [] })
     } catch (error) {
       const nextFieldErrors = getFieldErrors(error, {
         business_name: 'businessName',
@@ -573,18 +572,11 @@ export default function VendorRegistration() {
               />
             </div>
 
-            <div className="mt-8">
-              {submitError ? (
-                <div className="rounded-md bg-[#FFE6E6] px-4 py-3 text-sm text-[#8F2D1F]">
-                  {submitError}
-                </div>
-              ) : null}
-              {submitMessage ? (
-                <div className="rounded-md bg-[#E8F5E9] px-4 py-3 text-sm text-[#2E7D32]">
-                  {submitMessage}
-                </div>
-              ) : null}
-            </div>
+            {submitError ? (
+              <div className="mt-8 rounded-md bg-[#FFE6E6] px-4 py-3 text-sm text-[#8F2D1F]">
+                {submitError}
+              </div>
+            ) : null}
 
             <div className="flex justify-end mt-10">
               <button

@@ -21,8 +21,8 @@ function normalizeServiceSlug(slug) {
 
 function LevelCard({ categoryId, eventId, eventNumericId, serviceSlug, serviceId, flow, level }) {
   const params = new URLSearchParams()
-  params.set('category', categoryId)
-  params.set('event', eventId)
+  if (categoryId) params.set('category', categoryId)
+  if (eventId) params.set('event', eventId)
   if (eventNumericId) params.set('eventId', eventNumericId)
   params.set('service', serviceSlug)
   if (serviceId) params.set('serviceId', serviceId)
@@ -74,15 +74,15 @@ export default function BartendingLevelsPage() {
     })
   }, [categoryId, eventId, eventNumericId, flow, serviceId, serviceSlug])
 
-  if (!categoryId || !eventId) {
-    return (
-      <Navigate
-        to={
-          flow === SERVICES_FLOW_KEY ? '/event-flow/service?flow=services' : '/event-flow/category'
-        }
-        replace
-      />
-    )
+  const hasEventContext = Boolean(categoryId && eventId)
+  const isServicesFlow = flow === SERVICES_FLOW_KEY
+
+  if (!hasEventContext && !isServicesFlow) {
+    return <Navigate to="/event-flow/category" replace />
+  }
+
+  if (!hasEventContext && isServicesFlow && !serviceSlug) {
+    return <Navigate to="/event-flow/service?flow=services" replace />
   }
 
   if (isStrapiLoading) {
