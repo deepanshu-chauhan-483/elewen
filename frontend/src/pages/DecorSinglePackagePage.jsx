@@ -965,7 +965,7 @@ export default function DecorSinglePackagePage() {
         isDecorPackage(item) &&
         buildPackageId(item) !== buildPackageId(pkg)
     )
-    .slice(0, 3)
+    .slice(0, 12)
     .map(item => ({ ...item, serviceSlug: 'decor' }))
   const quantity = customizations.length
   const message = activeCustomization?.data?.message ?? ''

@@ -30,6 +30,7 @@ import { getPackageHref } from '../lib/packageRoutes'
 import { PACKAGES_FALLBACK } from '../data/packages'
 
 import { preloadImages, usePreloadOnApproach } from '../utils/preloadAssets'
+import { HOME_TIER1_IMAGE_URLS } from '../utils/homePagePreload'
 import inspirationImg from '../assets/images/inspiration.png'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -883,12 +884,12 @@ const PlanEventSection = () => {
                       <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         {' '}
                         <h3
-                          className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide uppercase "
+                          className="text-white font-medium md:font-semibold text-[14px] md:text-[clamp(0.75rem,1.18vw,1.0625rem)] mb-[6px] md:mb-2.5 tracking-wide uppercase leading-[1.3] md:leading-[1.35] line-clamp-2"
                           style={{ fontFamily: "'Poppins'" }}
                         >
                           {card.title}
                         </h3>
-                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins']">
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[clamp(0.6875rem,0.9vw,0.8125rem)] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins'] line-clamp-2">
                           {card.tagline}
                         </p>
                       </div>
@@ -1318,12 +1319,12 @@ const WhatToPlanSection = () => {
                       <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] px-3 py-3 md:px-3 md:py-3 lg:p-3 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
                         {' '}
                         <h3
-                          className="text-white font-medium md:font-semibold text-[14px] md:text-[17px] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins']"
+                          className="text-white font-medium md:font-semibold text-[14px] md:text-[clamp(0.75rem,1.18vw,1.0625rem)] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins'] leading-[1.3] md:leading-[1.35] line-clamp-2"
                           style={{ fontFamily: "'Poppins'" }}
                         >
                           {card.title}
                         </h3>
-                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[13px] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins']">
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[clamp(0.6875rem,0.9vw,0.8125rem)] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins'] line-clamp-2">
                           {card.description}
                         </p>
                       </div>
@@ -1901,10 +1902,8 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       className="relative w-full bg-[#591902] py-16 md:py-40 overflow-hidden font-sans text-white"
       // style={{ scrollMarginTop: '100px' }}
     >
-      <h2 className="text-[24px] md:text-[61px] text-center mb-16 md:mb-32 tracking-wide font-serif font-display reveal-heading">
-        <span className="reveal-wrapper">
-          <span className="reveal-text">{howItWorks.title || 'HOW IT WORKS'}</span>
-        </span>
+      <h2 className="text-[24px] md:text-[61px] text-center mb-16 md:mb-32 tracking-wide font-serif font-display">
+        {howItWorks.title || 'HOW 11 WORKS'}
       </h2>
 
       <div
@@ -2472,6 +2471,7 @@ const ChecklistSection = () => {
   const gateAreaRef = useRef(null)
   const gateRef = useRef(null)
   const insideBgRef = useRef(null)
+  const doorHeadingRef = useRef(null)
   const howItWorksRef = useRef(null)
   const layoutWrapRef = useRef(null)
   const [layoutScale, setLayoutScale] = useState(1)
@@ -2514,6 +2514,7 @@ const ChecklistSection = () => {
     const gateArea = gateAreaRef.current
     const gate = gateRef.current
     const insideBg = insideBgRef.current
+    const doorHeading = doorHeadingRef.current
     const howItWorks = howItWorksRef.current
     if (!gateArea || !gate || !insideBg || !howItWorks) return
 
@@ -2529,12 +2530,12 @@ const ChecklistSection = () => {
 
     const scaleEnd = Math.max(isMobile ? 5.4 : 5.9, requiredScaleToClearViewport)
     const gateLiftY = -320
-    const scrollEnd = 1830
-    const scrubVal = 1.15
-    const doorOpenEnd = 1.32
+    const scrollEnd = 1200
+    const scrubVal = 0.8
+    const doorOpenEnd = 1.2
     const insideBgRevealStart = doorOpenEnd - 0.08
-    const gateFadeStart = doorOpenEnd + 0.04
-    const howItWorksStart = doorOpenEnd + 0.02
+    const gateFadeStart = doorOpenEnd + 0.02
+    const howItWorksStart = doorOpenEnd - 0.02
     const doorZoomOrigin = '50% 50%'
     let howItWorksActivated = false
     const activateHowItWorks = () => {
@@ -2553,6 +2554,7 @@ const ChecklistSection = () => {
     })
     gsap.set(gateArea, { backgroundColor: 'transparent' })
     gsap.set(insideBg, { opacity: 0 })
+    if (doorHeading) gsap.set(doorHeading, { opacity: 0, y: 16 })
     gsap.set(howItWorks, { yPercent: 104, opacity: 1 })
 
     const tl = gsap.timeline({
@@ -2591,12 +2593,18 @@ const ChecklistSection = () => {
       )
 
     tl.to(insideBg, { opacity: 1, duration: 0.18, ease: 'power2.out' }, insideBgRevealStart)
+    if (doorHeading)
+      tl.to(
+        doorHeading,
+        { opacity: 1, y: 0, duration: 0.15, ease: 'power2.out' },
+        insideBgRevealStart + 0.05
+      )
     tl.to(gate, { opacity: 0, duration: 0.12, ease: 'power2.out' }, gateFadeStart)
     tl.to(
       howItWorks,
       {
         yPercent: 0,
-        duration: 0.85,
+        duration: 0.55,
         ease: 'power2.out',
         onStart: () => {
           activateHowItWorks()
@@ -2979,6 +2987,18 @@ const ChecklistSection = () => {
             ref={insideBgRef}
             className="door-section__inside-bg pointer-events-none absolute bg-[#F6D69D] opacity-0"
           />
+
+          <div
+            ref={doorHeadingRef}
+            className="absolute inset-0 z-[6] flex items-center justify-center pointer-events-none opacity-0"
+          >
+            <h2
+              className="text-[24px] md:text-[61px] text-[#591902] text-center tracking-wide font-display"
+              style={{ fontFamily: "'Malgin', serif" }}
+            >
+              HOW 11 WORKS
+            </h2>
+          </div>
 
           <div className="door-section__stage">
             <div ref={gateRef} className="door-section__gate" style={{ willChange: 'transform' }}>
@@ -4464,7 +4484,7 @@ const SplitInfoSection = () => {
         setIsSplitVisible(true)
         io.disconnect()
       },
-      { threshold: 0.12, rootMargin: '0px 0px -4% 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px -4% 0px' }
     )
 
     io.observe(root)
@@ -4619,16 +4639,15 @@ export default function LandingPage() {
   }, [cmsData, isStrapiLoading])
 
   // ── Tiered asset preloading ───────────────────────────────────────────────
-  // Tier 1 (on mount, during 2s preloader): only the images that appear the
-  //   instant the preloader fades â€” the scallop bulbs at the top of section 1.
-  // Tier 2 (hero-preloader-done, ~3s in): checklist illustrations, first 3
+  // Tier 1 (on mount, during preloader): scallop bulbs + logo — same set HeroSection waits for.
+  // Tier 2 (hero-preloader-done): checklist illustrations, first 3
   //   package images, and the centre logo â€” sections 3â€“5.
   // Tier 3: IntersectionObserver hooks inside SplitInfoSection handle
   //   inspirationImg 2 viewports ahead.
   // All remaining img tags carry loading="lazy" so the browser fetches them
   //   when they naturally scroll into range.
   useEffect(() => {
-    preloadImages([bulb1, bulb2])
+    preloadImages(HOME_TIER1_IMAGE_URLS)
     queryClient.prefetchQuery({
       queryKey: ['how-it-works-landing-page'],
       queryFn: fetchHowItWorksLandingPage,
@@ -4717,7 +4736,7 @@ export default function LandingPage() {
         })
       },
       {
-        threshold: 0.25,
+        threshold: 0.05,
         rootMargin: '0px 0px -60px 0px',
       }
     )

@@ -642,7 +642,7 @@ const HowItWorkHeroSection = ({ section }) => {
   return (
     <section
       data-nav-surface="transparent"
-      className="relative flex min-h-[100dvh] min-h-[var(--door-viewport-height)] w-full flex-col overflow-hidden bg-[#591902] pt-[5.5rem] min-[540px]:min-h-screen min-[540px]:pt-[105px] lg:pt-[120px]"
+      className="relative flex h-[100dvh] h-[var(--door-viewport-height)] w-full flex-col overflow-hidden bg-[#591902] pt-[5.5rem] min-[540px]:pt-[clamp(5rem,12vh,105px)] lg:pt-[clamp(5.5rem,14vh,120px)]"
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col min-[540px]:justify-between">
         <div className="flex flex-1 flex-col justify-center w-full px-5 pb-2 min-[540px]:flex-none min-[540px]:justify-start min-[540px]:px-10 min-[540px]:pb-4 md:px-20 lg:pb-6 xl:px-[100px]">
@@ -669,7 +669,7 @@ const HowItWorkHeroSection = ({ section }) => {
                     </span>
                   </h1>
 
-                  <p className="mt-5 w-full max-w-[253px] text-[16px] leading-[1.5] text-white/60 min-[540px]:mt-6">
+                  <p className="mt-[clamp(0.75rem,2.5vh,1.25rem)] w-full max-w-[253px] text-[16px] leading-[1.5] text-white/60 min-[540px]:mt-[clamp(1rem,3vh,1.5rem)]">
                     <span className="reveal-wrapper block">
                       <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
                         {section?.description_line_1 ?? 'From browsing to celebration —'}
@@ -682,7 +682,7 @@ const HowItWorkHeroSection = ({ section }) => {
                     </span>
                   </p>
 
-                  <span className="mt-8 inline-block reveal-wrapper reveal-wrapper--overflow-visible min-[540px]:mt-10">
+                  <span className="mt-[clamp(1rem,3vh,2rem)] inline-block reveal-wrapper reveal-wrapper--overflow-visible min-[540px]:mt-[clamp(1.25rem,4vh,2.5rem)]">
                     <span className="reveal-text" style={{ animationDelay: '0.2s' }}>
                       <Link
                         to={section?.cta_url ?? '/in-house-planner'}
@@ -714,7 +714,7 @@ const HowItWorkHeroSection = ({ section }) => {
               </div>
             </div>
 
-            <div className="mt-4 flex w-full justify-start min-[540px]:mt-6 md:mt-15 md:justify-end">
+            <div className="mt-[clamp(0.5rem,2vh,1rem)] flex w-full justify-start min-[540px]:mt-[clamp(0.75rem,3vh,1.5rem)] md:mt-[clamp(1rem,4vh,3.75rem)] md:justify-end">
               <p
                 className="w-full max-w-[469px] text-left text-[clamp(0.875rem,4vw,1rem)] leading-[1.2] whitespace-normal text-[#C08E72] min-[540px]:text-[22px] min-[540px]:whitespace-nowrap md:text-right md:text-[27px]"
                 style={{ fontFamily: "'Malgin', serif" }}
@@ -732,29 +732,27 @@ const HowItWorkHeroSection = ({ section }) => {
           </div>
         </div>
 
-        <div className="anim-element slide-from-bottom is-visible relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-5 py-2.5 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-3 md:px-20 xl:px-[100px]">
-          <div className="flex flex-wrap items-center justify-center min-[540px]:justify-start text-[#CDB17E] w-full gap-x-2 gap-y-1 min-[540px]:gap-2 md:gap-2 lg:gap-8 xl:gap-12">
+        <div className="anim-element slide-from-bottom is-visible relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-5 py-2 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-2.5 md:px-20 xl:px-[100px]">
+          <div className="flex flex-nowrap items-center justify-center min-[540px]:justify-start text-[#CDB17E] w-full gap-x-[clamp(0.25rem,1vw,0.75rem)] md:gap-x-[clamp(0.5rem,1.5vw,3rem)] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {heroTags.map((tag, index) => (
               <div
                 key={tag}
-                className="flex items-center min-h-7 whitespace-normal min-[540px]:h-8 min-[540px]:whitespace-nowrap gap-1 md:gap-2 lg:gap-6"
+                className="flex shrink-0 items-center h-7 min-[540px]:h-8 whitespace-nowrap gap-[clamp(0.25rem,0.8vw,1.5rem)]"
               >
-                <span className="text-[11px] uppercase leading-none tracking-[0.02em] min-[540px]:text-[16px]">
+                <span className="text-[11px] uppercase leading-none tracking-[0.02em] min-[540px]:text-[clamp(11px,1.11vw,16px)]">
                   {tag}
                 </span>
-                {index < HERO_TAGS.length - 1 && (
-                  <div className="hidden md:flex items-center justify-center px-3.5">
-                    <svg
-                      width="4"
-                      height="4"
-                      viewBox="0 0 4 4"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="flex-shrink-0"
-                    >
-                      <circle cx="2" cy="2" r="2" fill="#CDB17E" fillOpacity="0.5" />
-                    </svg>
-                  </div>
+                {index < heroTags.length - 1 && (
+                  <svg
+                    width="4"
+                    height="4"
+                    viewBox="0 0 4 4"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="shrink-0"
+                  >
+                    <circle cx="2" cy="2" r="2" fill="#CDB17E" fillOpacity="0.5" />
+                  </svg>
                 )}
               </div>
             ))}

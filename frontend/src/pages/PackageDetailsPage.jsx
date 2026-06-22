@@ -287,7 +287,7 @@ export default function PackageDetailsPage() {
             buildPackageId(item) !== buildPackageId(pkg ?? {}) &&
             packageMatchesService(item, normalizedService)
         )
-        .slice(0, 3)
+        .slice(0, 12)
         .map(item => ({ ...item, serviceSlug: normalizedService })),
     [normalizedService, packagesData, pkg]
   )

@@ -117,6 +117,17 @@ p {
   animation: band-right 60s linear infinite;
 }
 
+@keyframes doorHeadingIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ── Mobile hero viewport helpers (desktop unchanged) ─────────────────── */
 @media (max-width: 767px) {
   .hero-sticky-viewport {
@@ -309,11 +320,198 @@ p {
   }
 }
 
-/* NOTE: I removed the "body *" !important override. 
-   If you keep that rule, your <p> tags will be forced to use Malgin 
-   instead of Poppins. Use the .font-display class on specific 
-   headings instead.
-*/
+/* ── Hero desktop: text hits max by ~1366px, footer scales gracefully ── */
+@media (min-width: 768px) {
+  .hero-desktop-scale-shell .hero-compact-main {
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    padding-top: clamp(2rem, 6vh, 5.5rem) !important;
+    padding-bottom: clamp(7rem, 17vh, 10rem) !important;
+    padding-left: clamp(1rem, 2.93vw, 2.5rem) !important;
+    padding-right: clamp(1rem, 2.93vw, 2.5rem) !important;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-headline-stack {
+    width: 100%;
+    max-width: min(997px, calc(100vw - 2rem));
+    margin-left: auto !important;
+    margin-right: auto !important;
+    align-items: flex-end !important;
+    gap: clamp(0.75rem, 2.35vw, 2rem) !important;
+    transform: translateY(clamp(2.5rem, 1.5vh, 1.75rem)) !important;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-copy {
+    align-items: flex-end !important;
+    width: 100%;
+    gap: 0;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-eyebrow {
+    align-self: flex-end !important;
+    text-align: right !important;
+    font-family: 'Malgin', serif !important;
+    font-weight: 400 !important;
+    font-size: clamp(1.25rem, 3.5vw, 3rem) !important;
+    line-height: 100% !important;
+    letter-spacing: 0 !important;
+    width: 100%;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-heading {
+    text-align: right !important;
+    font-family: 'Malgin', serif !important;
+    font-weight: 400 !important;
+    font-size: clamp(2.5rem, 7vw, 6rem) !important;
+    line-height: 100% !important;
+    letter-spacing: 0 !important;
+    width: 100%;
+    margin-top: 0 !important;
+    white-space: nowrap;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-cta-row {
+    justify-content: flex-end !important;
+    width: 100%;
+    margin-top: -1rem !important;
+    gap: 0 !important;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-cta-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: clamp(0.575rem, 2.35vw, 2rem) !important;
+    max-width: min(426px, 100%);
+    min-height: clamp(2.75rem, 5vw, 4.25rem);
+  }
+
+  .hero-desktop-scale-shell .hero-compact-cta-btn {
+    width: clamp(2.75rem, 5vw, 4.25rem) !important;
+    height: clamp(2.75rem, 5vw, 4.25rem) !important;
+    min-width: clamp(2.75rem, 5vw, 4.25rem) !important;
+    margin-right: 0 !important;
+    padding: clamp(0.4rem, 0.88vw, 0.75rem) !important;
+    border-radius: 80px !important;
+    border-width: 2px !important;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-cta-btn svg {
+    width: clamp(1rem, 1.76vw, 1.5rem) !important;
+    height: clamp(1rem, 1.76vw, 1.5rem) !important;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-cta-text {
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 400 !important;
+    font-size: clamp(0.6875rem, 1.17vw, 1rem) !important;
+    line-height: 150% !important;
+    letter-spacing: 0 !important;
+    width: auto !important;
+    max-width: min(326px, calc(100% - 5rem)) !important;
+    white-space: normal !important;
+    opacity: 1 !important;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-cta-text p {
+    display: block;
+    margin: 0;
+    white-space: normal;
+  }
+
+  .hero-desktop-scale-shell .hero-compact-footer {
+    box-sizing: border-box;
+    max-width: 100%;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: clamp(0.5rem, 1.5vw, 1.25rem);
+    padding: 0 0 0 clamp(1.25rem, 2.5vw, 2.5rem);
+    margin-bottom: 0;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-w-footer {
+    transform: none !important;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    flex-shrink: 1;
+    gap: clamp(0.35rem, 0.75vw, 0.625rem);
+    padding: 0 !important;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-w-letter {
+    flex-shrink: 0;
+    font-size: clamp(2.75rem, 5.5vw, 5.625rem) !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    align-self: flex-end;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-w-lines {
+    flex-shrink: 1;
+    font-size: clamp(0.7rem, 0.69vw, 0.875rem) !important;
+    line-height: 1.25 !important;
+    margin-top: 20px !important;
+    margin-bottom: 0px !important;
+    padding-bottom: 0 !important;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    align-self: flex-start;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-w-lines p {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-cards {
+    transform: none !important;
+    flex-shrink: 1;
+    min-width: 0;
+    align-self: flex-end;
+    margin: 0 0 0 auto;
+    padding: 0;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-card:last-child {
+    border-right: none !important;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-card {
+    width: clamp(7rem, 12vw, 13.75rem) !important;
+    height: clamp(5rem, 7.5vw, 7.75rem) !important;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-card-inner {
+    top: clamp(0.5rem, 0.73vw, 1.25rem) !important;
+    left: clamp(0.5rem, 0.73vw, 1rem) !important;
+    right: clamp(0.35rem, 0.52vw, 0.75rem) !important;
+    gap: clamp(0.25rem, 0.36vw, 0.75rem) !important;
+    width: auto !important;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-card h3 {
+    font-size: clamp(0.5rem, 0.78vw, 0.875rem) !important;
+    letter-spacing: 0.08em !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hero-desktop-scale-shell .hero-desktop-card p {
+    font-size: clamp(0.4375rem, 0.625vw, 0.75rem) !important;
+    line-height: 1.25 !important;
+    -webkit-line-clamp: 3;
+  }
+}
 
 /* ── Heading reveal animation (Landing page) ───────────────────────────── */
 .reveal-wrapper {
@@ -335,7 +533,7 @@ p {
 
 .reveal-text {
   display: inline-block;
-  transform: translateY(100%); /* Hidden below */
+  transform: translateY(100%);
   opacity: 0;
   will-change: transform, opacity;
 }
@@ -853,7 +1051,7 @@ p {
 
 .door-section__gate {
   width: 100%;
-  max-width: min(1200px, 100%);
+  max-width: min(1200px, 100%, calc(var(--door-viewport-height) * 1.73));
   height: 100%;
   min-height: 100%;
   display: flex;

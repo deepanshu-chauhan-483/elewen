@@ -602,7 +602,7 @@ export default function BartendingSinglePackagePage() {
 
   const relatedProducts = packagesData
     .filter(item => isBartendingPackage(item) && buildPackageId(item) !== buildPackageId(pkg))
-    .slice(0, 3)
+    .slice(0, 12)
     .map(item => ({ ...item, serviceSlug: 'bartending' }))
   const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
   const sideImages = Array.from({ length: Math.max(5, sourceImages.length || 1) }).map(

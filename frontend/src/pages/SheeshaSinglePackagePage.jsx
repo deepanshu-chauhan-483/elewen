@@ -385,7 +385,7 @@ export default function SheeshaSinglePackagePage() {
 
   const relatedProducts = packagesData
     .filter(item => isSheeshaPackage(item) && buildPackageId(item) !== buildPackageId(pkg))
-    .slice(0, 3)
+    .slice(0, 12)
     .map(item => ({ ...item, serviceSlug: 'sheesha' }))
 
   const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null

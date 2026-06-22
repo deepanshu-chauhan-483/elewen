@@ -79,9 +79,9 @@ const hasSeenHeroPreloader = () =>
 const HERO_VIDEO_SRC = HeroVideo
 const HERO_LEFT_TAGLINES_FALLBACK = ['Work made easy', 'Worth the spend', 'Well-vetted Vendors']
 const HERO_RIGHT_CARDS_FALLBACK = [
-  { label: 'Birthday', tagline: "Let's get this party going" },
-  { label: 'Anniversary', tagline: 'Let us help you celebrate your love story' },
-  { label: 'House Party', tagline: 'Turn your home into the party spot' },
+  { label: 'Birthday', tagline: 'Curated décor & catering packages' },
+  { label: 'Anniversary', tagline: 'Intimate, elegant setups handled end-to-end' },
+  { label: 'House Party', tagline: 'Simple planning. Beautiful execution.' },
 ]
 const getTrailingWWord = (value, fallback) => String(value ?? fallback).replace(/^[Ww]/, '')
 
@@ -648,7 +648,7 @@ const HeroSection = () => {
       style={{ height: useMobileHeroLayout ? '300vh' : '420vh' }}
     >
       <div
-        className="hero-sticky-viewport h-[100dvh] md:h-screen"
+        className="hero-sticky-viewport hero-desktop-scale-shell h-[100dvh] md:h-screen"
         style={{
           position: 'sticky',
           top: 0,
@@ -752,37 +752,37 @@ const HeroSection = () => {
             color: '#FAFAFA',
           }}
         >
-          <main className="hero-compact-main absolute inset-0 z-10 flex flex-col items-center justify-center px-[clamp(1rem,4vw,1.25rem)] pb-[clamp(5rem,14vw,7.5rem)] pt-[clamp(4rem,12vw,4.5rem)] md:translate-y-0 md:px-0 md:pb-0 md:pt-24">
+          <main className="hero-compact-main absolute inset-0 z-10 flex flex-col items-center justify-center px-[clamp(1rem,4vw,1.25rem)] pb-[clamp(5rem,14vw,7.5rem)] pt-[clamp(4rem,12vw,4.5rem)] md:translate-y-0 md:px-0 md:pb-0 md:pt-[clamp(8.5rem,12vw,11rem)]">
             <div className="hero-compact-headline-stack mx-auto flex w-full max-w-[min(997px,calc(100vw-2rem))] flex-col items-center md:mx-0 md:max-w-[997px] md:items-end md:pr-8 lg:pr-0">
               <div className="hero-compact-copy pointer-events-auto flex w-full flex-col items-center pr-0 md:w-full md:items-end md:pr-0">
                 <span
                   ref={eyebrowRef}
-                  className="hero-compact-eyebrow self-end text-right text-[clamp(1.125rem,4.8vw,1.5rem)] leading-none tracking-[0] text-[#FAFAFA] md:text-[38px] lg:text-[48px] md:leading-none"
+                  className="hero-compact-eyebrow self-end text-right text-[clamp(1.125rem,4.8vw,1.5rem)] leading-none tracking-[0] text-[#FAFAFA] md:text-[clamp(1.25rem,3.33vw,3rem)] md:leading-none"
                   style={{ fontFamily: "'Malgin', serif" }}
                 >
                   {hero.eyebrow ?? "IT'S TIME TO"}
                 </span>
                 <span
                   ref={headingRef}
-                  className="hero-compact-heading mt-1 w-full max-w-full text-center text-[clamp(1.625rem,8.2vw,2.75rem)] uppercase leading-[1.02] tracking-[0] text-[#FAFAFA] md:mt-2 md:text-right md:text-[54px] md:leading-[1.05] lg:text-[96px]"
+                  className="hero-compact-heading mt-1 w-full max-w-full text-center text-[clamp(1.625rem,8.2vw,2.75rem)] uppercase leading-[1.02] tracking-[0] text-[#FAFAFA] md:mt-[clamp(0.75rem,2.22vw,2rem)] md:text-right md:text-[clamp(2.5rem,6.67vw,6rem)] md:leading-[1.05]"
                   style={{ fontFamily: "'Malgin', serif", fontWeight: 400 }}
                 >
                   {hero.heading ?? 'PLAN DIFFERENTLY'}
                 </span>
               </div>
 
-              <div className="hero-compact-cta-row pointer-events-auto mt-[clamp(1.25rem,4vw,1.5rem)] flex w-full flex-row items-center justify-center gap-3 min-[360px]:gap-5 md:mt-8 md:w-full md:justify-end md:gap-8 md:pr-0 lg:mt-12 lg:gap-0">
-                <div className="flex min-w-0 max-w-full flex-row items-center gap-3 min-[360px]:gap-5 md:gap-0">
+              <div className="hero-compact-cta-row pointer-events-auto mt-[clamp(1.25rem,4vw,1.5rem)] flex w-full flex-row items-center justify-center gap-3 min-[360px]:gap-5 md:mt-[clamp(1.5rem,3vw,3rem)] md:w-full md:justify-end md:gap-[clamp(0px,1.5vw,2rem)] md:pr-0">
+                <div className="hero-compact-cta-inner flex min-w-0 max-w-full flex-row items-center gap-3 min-[360px]:gap-5 md:gap-0">
                   <button
                     ref={ctaArrowRef}
                     onClick={() => navigate('/event-flow/category')}
-                    className="hero-compact-cta-btn group pointer-events-auto relative flex h-14 w-14 min-w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white backdrop-blur-sm min-[360px]:h-[68px] min-[360px]:w-[68px] min-[360px]:min-w-[68px] min-[360px]:rounded-[80px] md:mr-4 md:h-16 md:w-16 lg:mr-6 lg:h-18 lg:w-18"
+                    className="hero-compact-cta-btn group pointer-events-auto relative flex h-14 w-14 min-w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white backdrop-blur-sm min-[360px]:h-[68px] min-[360px]:w-[68px] min-[360px]:min-w-[68px] min-[360px]:rounded-[80px] md:mr-[clamp(0.75rem,1.2vw,1.5rem)] md:h-[clamp(3rem,5vw,4.5rem)] md:w-[clamp(3rem,5vw,4.5rem)] md:min-w-[clamp(3rem,5vw,4.5rem)]"
                   >
                     <span className="absolute inset-0 flex items-center justify-center">
                       <span className="h-0 w-0 rounded-full bg-white transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:h-[180%] group-hover:w-[180%]" />
                     </span>
                     <svg
-                      className="relative z-10 h-7 w-7 text-[#FAFAFA] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:text-[#591902] min-[360px]:h-8 min-[360px]:w-8 md:h-9 md:w-9"
+                      className="relative z-10 h-7 w-7 text-[#FAFAFA] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:text-[#591902] min-[360px]:h-8 min-[360px]:w-8 md:h-[clamp(1.5rem,2.5vw,2.25rem)] md:w-[clamp(1.5rem,2.5vw,2.25rem)]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -796,7 +796,7 @@ const HeroSection = () => {
                     </svg>
                   </button>
                   <div
-                    className="hero-compact-cta-text min-w-0 flex-1 text-left text-[clamp(0.6875rem,3.1vw,0.75rem)] font-normal leading-[1.5] text-[#FAFAFA] opacity-90 md:w-[300px] md:max-w-65 md:flex-none md:text-xs md:font-light md:leading-relaxed lg:text-sm"
+                    className="hero-compact-cta-text min-w-0 flex-1 text-left text-[clamp(0.6875rem,3.1vw,0.75rem)] font-normal leading-[1.5] text-[#FAFAFA] opacity-90 md:w-[clamp(180px,20vw,300px)] md:max-w-65 md:flex-none md:text-[clamp(0.625rem,0.9vw,0.875rem)] md:font-light md:leading-relaxed"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
                     <p ref={ctaLine1Ref} className="m-0">
@@ -844,15 +844,18 @@ const HeroSection = () => {
             </div>
 
             {/* Desktop W Left Block */}
-            <div className="hero-desktop-w-footer hero-desktop-footer hidden shrink-0 md:flex md:items-center md:px-6 md:pb-8 lg:px-10 lg:pb-12">
+            <div className="hero-desktop-w-footer hero-desktop-footer hidden shrink-0 md:flex md:items-center md:px-[clamp(0.75rem,2vw,2.5rem)] md:pb-[clamp(1rem,2.5vw,3rem)]">
               <span
                 ref={el => (leftWRefs.current[0] = el)}
-                className="font-serif leading-[0.7] text-[#FFFFFF] md:mr-2 md:text-[74px] lg:mr-1 lg:text-[90px]"
+                className="hero-desktop-w-letter font-serif leading-[0.7] text-[#FFFFFF] md:mr-[clamp(0.25rem,0.5vw,0.5rem)] md:text-[clamp(2.5rem,calc(-2.625rem+9.17vw),5.625rem)]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 W
               </span>
-              <div className="flex flex-col justify-center overflow-hidden whitespace-nowrap text-[#FFFFFF] md:mt-2 md:text-[12px] md:font-medium md:leading-[1.35] md:tracking-[0.02em] md:space-y-0.5 lg:mt-3 lg:text-sm lg:tracking-wide lg:space-y-1">
+              <div
+                className="hero-desktop-w-lines flex flex-col justify-center overflow-hidden whitespace-nowrap text-[#FFFFFF] md:text-[clamp(0.375rem,calc(-0.5rem+1.67vw),1rem)] md:font-medium md:leading-[1.5] md:tracking-normal md:space-y-[clamp(0.0625rem,calc(-0.125rem+0.35vw),0.25rem)] md:mb-[clamp(0.125rem,calc(-0.5rem+1.04vw),0.75rem)]"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
                 <p ref={el => (leftLine1Refs.current[0] = el)} className="m-0">
                   {getTrailingWWord(leftTaglines[0], 'Work made easy')}
                 </p>
@@ -884,16 +887,19 @@ const HeroSection = () => {
                   <div
                     key={resolvedLabel || i}
                     ref={el => (cardRefs.current[i] = el)}
-                    className={`col-span-1 h-22.5 md:h-31 md:w-44 lg:w-55 md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
+                    className={`hero-desktop-card col-span-1 h-22.5 md:h-[clamp(5.5rem,9.72vw,8.75rem)] md:w-[clamp(7rem,15.28vw,13.75rem)] md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
                   >
-                    <div className="absolute top-4 left-3 right-2 flex flex-col gap-1.5 md:top-5 md:left-4 md:right-3 md:gap-2.5 lg:left-5 lg:right-auto lg:w-45 lg:gap-3">
+                    <div className="hero-desktop-card-inner absolute top-4 left-3 right-2 flex flex-col gap-1.5 md:top-[clamp(0.5rem,1vw,1.25rem)] md:left-[clamp(0.5rem,0.8vw,1.25rem)] md:right-[clamp(0.35rem,0.5vw,0.75rem)] md:gap-[clamp(0.25rem,0.5vw,0.75rem)]">
                       <h3
-                        className="text-[10px] sm:text-[11px] md:text-[12px] lg:text-sm font-bold tracking-[0.14em] lg:tracking-widest uppercase truncate text-[#FAFAFA]"
+                        className="text-[10px] sm:text-[11px] md:text-[clamp(0.875rem,1.53vw,1.5rem)] font-bold md:font-normal tracking-[0.14em] md:tracking-[0.04em] uppercase truncate text-[#FAFAFA] md:leading-[2.2]"
                         style={{ fontFamily: "'Malgin', serif" }}
                       >
                         {resolvedLabel}
                       </h3>
-                      <p className="text-[9px] md:text-[11px] lg:text-xs font-light opacity-90 leading-[1.3] line-clamp-3 text-[#FAFAFA]">
+                      <p
+                        className="text-[9px] md:text-[clamp(0.5rem,1.11vw,1rem)] font-light md:font-normal opacity-90 leading-[1.3] md:leading-[1.5] md:tracking-normal line-clamp-3 md:line-clamp-2 text-[#FAFAFA]"
+                        style={{ fontFamily: "'Poppins', sans-serif" }}
+                      >
                         {resolvedDesc}
                       </p>
                     </div>

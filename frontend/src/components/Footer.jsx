@@ -87,9 +87,9 @@ const Footer = () => {
         </h1>
       </div>
 
-      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 md:px-8 md:pb-10 md:pt-16 lg:px-[100px] lg:pb-12 lg:pt-24">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-2 pb-6 pt-8 md:px-8 md:pb-10 md:pt-16 lg:px-[clamp(2.5rem,7vw,100px)] lg:pb-12 lg:pt-24">
         {/* Tablet (md): stacked full-width nav + description | Desktop (lg): two columns */}
-        <div className="flex w-full flex-1 flex-col gap-6 md:gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_min(611px,42%)] lg:items-start lg:gap-x-20">
+        <div className="flex w-full flex-1 flex-col gap-6 md:gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_min(611px,42%)] lg:items-start lg:gap-x-[clamp(2rem,5vw,5rem)]">
           <div className="mx-auto flex w-full flex-col gap-[16px] md:mx-0 md:gap-5 md:w-full lg:gap-6">
             {footerNav.map((row, i) => (
               <div

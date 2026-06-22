@@ -233,6 +233,91 @@ export default function SingleProductPageContent({
   )
 }
 
+function RelatedProductsCarousel({ products }) {
+  const CARDS_PER_VIEW = 3
+  const [page, setPage] = useState(0)
+  const totalPages = Math.max(1, Math.ceil(products.length / CARDS_PER_VIEW))
+  const visibleProducts = products.slice(
+    page * CARDS_PER_VIEW,
+    page * CARDS_PER_VIEW + CARDS_PER_VIEW
+  )
+
+  return (
+    <div className="relative mt-4 lg:mt-8 overflow-hidden">
+      <div className="px-[20px] sm:px-[50px] lg:px-[100px]">
+        <p
+          className="text-[22px] md:text-[32px] font-semibold text-[#2D2D2D]"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          You might also like:
+        </p>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {visibleProducts.map(product => (
+            <PackageCard key={product.id ?? product.title} pkg={product} />
+          ))}
+        </div>
+      </div>
+
+      {totalPages > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => setPage(p => p - 1)}
+            disabled={page === 0}
+            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 flex h-[clamp(3.5rem,6vw,5rem)] w-[clamp(1.75rem,3vw,2.5rem)] items-center justify-center rounded-r-full bg-[#E7E0DA] text-[#2D2D2D] disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Previous"
+          >
+            <svg
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5M5 12L12 19M5 12L12 5" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= totalPages - 1}
+            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 flex h-[clamp(3.5rem,6vw,5rem)] w-[clamp(1.75rem,3vw,2.5rem)] items-center justify-center rounded-l-full bg-[#E7E0DA] text-[#2D2D2D] disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Next"
+          >
+            <svg
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12H19M19 12L12 19M19 12L12 5" />
+            </svg>
+          </button>
+
+          <div className="mt-6 flex items-center justify-center gap-1.5">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setPage(i)}
+                className={`rounded-full ${i === page ? 'h-2 w-6 bg-[#CDB17E]' : 'h-2 w-2 bg-[#D4D4D4]'}`}
+                aria-label={`Page ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function ProductImageLayout({
   title,
   price,
@@ -287,8 +372,8 @@ function ProductImageLayout({
           style={{
             maxWidth: '1540px',
             gap: 'clamp(1.5rem, 2.2vw, 2rem)',
-            paddingLeft: 'clamp(20px, 8.3vw, 100px)',
-            paddingRight: 'clamp(20px, 8.3vw, 100px)',
+            paddingLeft: 'clamp(20px, 5.5vw, 100px)',
+            paddingRight: 'clamp(20px, 5.5vw, 100px)',
           }}
         >
           <div
@@ -300,7 +385,7 @@ function ProductImageLayout({
               <div
                 className="order-1 pt-8 md:pt-0 mx-auto w-full shrink-0 md:order-2"
                 style={{
-                  maxWidth: 'clamp(17.5rem, 42vw, 37.5rem)',
+                  maxWidth: 'clamp(17.5rem, 38vw, 37.5rem)',
                 }}
               >
                 <div className="relative">
@@ -365,7 +450,7 @@ function ProductImageLayout({
 
               {/* Side Images */}
               <div
-                className="order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-auto md:max-h-[unset] md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2"
+                className="order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-auto md:max-h-[unset] md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 style={{
                   maxHeight: sideImagesMaxHeight,
                 }}
@@ -400,8 +485,8 @@ function ProductImageLayout({
           <div
             className="mx-auto w-full min-w-0 flex-1 lg:mx-0"
             style={{
-              maxWidth: 'clamp(20rem, 45vw, 40.75rem)',
-              paddingLeft: 'clamp(0rem, 2vw, 2.25rem)',
+              maxWidth: 'clamp(20rem, 42vw, 40.75rem)',
+              paddingLeft: 'clamp(0rem, 1.5vw, 2.25rem)',
             }}
           >
             {customDetailsContent ? (
@@ -499,19 +584,7 @@ function ProductImageLayout({
       <section className="pb-16">
         <div className="mx-auto md:w-full max-w-[1540px]">
           {relatedProducts.length > 0 ? (
-            <div className="mt-4 lg:mt-8 px-[20px] sm:px-[50px] lg:px-[100px]">
-              <p
-                className="text-[22px] md:text-[32px] font-semibold text-[#2D2D2D]"
-                style={{ fontFamily: "'Malgin', serif" }}
-              >
-                You might also like:
-              </p>
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {relatedProducts.map(product => (
-                  <PackageCard key={product.id ?? product.title} pkg={product} />
-                ))}
-              </div>
-            </div>
+            <RelatedProductsCarousel products={relatedProducts} ctaButtonText={ctaButtonText} />
           ) : null}
 
           <div className="mt-8 bg-[#E7E0DA] py-6 px-6 sm:px-[40px] lg:px-[60px]">

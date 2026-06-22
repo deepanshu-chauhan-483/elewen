@@ -512,7 +512,7 @@ export default function CateringSinglePackagePage() {
 
   const relatedProducts = packagesData
     .filter(item => isCateringPackage(item) && buildPackageId(item) !== buildPackageId(pkg))
-    .slice(0, 3)
+    .slice(0, 12)
     .map(item => ({ ...item, serviceSlug: 'catering' }))
 
   const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]

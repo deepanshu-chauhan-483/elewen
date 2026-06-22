@@ -710,14 +710,14 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-col overflow-hidden px-6 pb-0 md:flex-1 md:flex-row md:px-10 md:pb-auto">
-          <nav className="relative flex flex-col justify-start pt-8 md:flex-1 md:pt-auto">
+        <div className="flex min-h-0 flex-col overflow-hidden md:overflow-y-auto px-6 pb-0 md:flex-1 md:flex-row md:px-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav className="relative flex flex-col justify-start pt-8 md:flex-1 md:min-h-0 md:overflow-y-auto md:pt-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {BASE_LINKS.map((link, index) => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={() => setOpen(false)}
-                className={`group flex items-end justify-between py-2.5 md:py-1.5 ${
+                className={`group flex items-end justify-between py-2.5 md:py-[clamp(0.15rem,0.7vh,0.375rem)] ${
                   pathname === link.to ? 'text-[#CDB17E]' : 'text-white/85 hover:text-white'
                 }`}
                 style={{
