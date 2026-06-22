@@ -636,7 +636,7 @@ const PlanEventSection = () => {
           io.unobserve(entry.target)
         })
       },
-      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
     )
 
     cards.forEach(el => io.observe(el))
@@ -665,7 +665,7 @@ const PlanEventSection = () => {
                 className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
                 style={{
                   animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                  animationDelay: `${(i % 5) * 0.2}s`,
+                  animationDelay: `${(i % 5) * 0.08}s`,
                 }}
               >
                 <div
@@ -686,7 +686,7 @@ const PlanEventSection = () => {
                     }`}
                     style={{
                       animationDuration: `${4 + (i % 3) * 0.75}s`,
-                      animationDelay: `${(i % 5) * 0.2}s`,
+                      animationDelay: `${(i % 5) * 0.08}s`,
                       background:
                         i % 2 === 0
                           ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
@@ -865,7 +865,7 @@ const PlanEventSection = () => {
                         card.id
                       )}
                       style={{
-                        '--delay': `${0.08 + i * 0.06}s`,
+                        '--delay': `${0.04 + i * 0.03}s`,
                         width: isMobile
                           ? `${resolvedMobileCardWidth}px`
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
@@ -1119,14 +1119,14 @@ const WhatToPlanSection = () => {
 
           // Text reveal inside the element
           Array.from(el.querySelectorAll('.reveal-text')).forEach((span, i) => {
-            span.style.animationDelay = `${0.08 + i * 0.04}s`
+            span.style.animationDelay = `${0.04 + i * 0.02}s`
             span.classList.add('is-visible')
           })
 
           io.unobserve(el)
         })
       },
-      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
     )
 
     targets.forEach(el => io.observe(el))
@@ -1302,7 +1302,7 @@ const WhatToPlanSection = () => {
                       to={buildServiceListingHref(card.slug ?? card.title)}
                       className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
-                        '--delay': `${0.08 + i * 0.06}s`,
+                        '--delay': `${0.04 + i * 0.03}s`,
                         width: isMobile
                           ? `${resolvedMobileCardWidth}px`
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
@@ -2128,7 +2128,7 @@ const BetterWaySection = () => {
                 className="absolute top-0 right-0 z-20 flex flex-col items-center animate-swing"
                 style={{
                   animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                  animationDelay: `${(i % 5) * 0.2}s`,
+                  animationDelay: `${(i % 5) * 0.08}s`,
                 }}
               >
                 <div
@@ -2148,7 +2148,7 @@ const BetterWaySection = () => {
                     }`}
                     style={{
                       animationDuration: `${4 + (i % 3) * 0.75}s`,
-                      animationDelay: `${(i % 5) * 0.2}s`,
+                      animationDelay: `${(i % 5) * 0.08}s`,
                       background:
                         i % 2 === 0
                           ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
@@ -2502,7 +2502,7 @@ const ChecklistSection = () => {
           observer.disconnect()
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.05 }
     )
     observer.observe(wrap)
     return () => {
@@ -2600,6 +2600,7 @@ const ChecklistSection = () => {
         insideBgRevealStart + 0.05
       )
     tl.to(gate, { opacity: 0, duration: 0.12, ease: 'power2.out' }, gateFadeStart)
+
     tl.to(
       howItWorks,
       {
@@ -2650,7 +2651,7 @@ const ChecklistSection = () => {
               className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
               style={{
                 animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                animationDelay: `${(i % 5) * 0.2}s`,
+                animationDelay: `${(i % 5) * 0.08}s`,
               }}
             >
               <div
@@ -2671,7 +2672,7 @@ const ChecklistSection = () => {
                   }`}
                   style={{
                     animationDuration: `${4 + (i % 3) * 0.75}s`,
-                    animationDelay: `${(i % 5) * 0.2}s`,
+                    animationDelay: `${(i % 5) * 0.08}s`,
                     background:
                       i % 2 === 0
                         ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
@@ -2791,7 +2792,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-left ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
-                style={{ '--delay': '0.25s' }}
+                style={{ '--delay': '0.12s' }}
               >
                 <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
                   Too much scrolling.
@@ -2801,7 +2802,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-left ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
-                style={{ '--delay': '0.3s' }}
+                style={{ '--delay': '0.15s' }}
               >
                 <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                   What was once simple now means endless scrolling â€” and still no confidence.
@@ -2813,7 +2814,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-right ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
-                  style={{ '--delay': '0.5s' }}
+                  style={{ '--delay': '0.2s' }}
                 ></div>
                 <img
                   src={imgCalls}
@@ -2822,7 +2823,7 @@ const ChecklistSection = () => {
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
                   style={{
-                    '--delay': '0.65s',
+                    '--delay': '0.25s',
                     filter: `
     drop-shadow(0px -10px 18px rgba(109, 57, 8, 0.18))
     drop-shadow(-6px 0px 12px rgba(109, 57, 8, 0.12))
@@ -2834,7 +2835,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-right ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
-                  style={{ '--delay': '0.8s' }}
+                  style={{ '--delay': '0.3s' }}
                 >
                   <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
                     Too many calls.
@@ -2844,7 +2845,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-right ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
-                  style={{ '--delay': '0.85s' }}
+                  style={{ '--delay': '0.35s' }}
                 >
                   <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
                     Follow-ups, confirmations, negotiations, and last-minute checks â€” your phone
@@ -2858,7 +2859,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-left ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute inset-0 bg-[#BFAC9B] z-0 shadow-sm`}
-                  style={{ '--delay': '1.0s' }}
+                  style={{ '--delay': '0.4s' }}
                 ></div>
                 <img
                   src={imgVendors}
@@ -2867,7 +2868,7 @@ const ChecklistSection = () => {
                   } absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
                   alt="Vendors"
                   style={{
-                    '--delay': '1.15s',
+                    '--delay': '0.45s',
                     filter: `
       drop-shadow(0px -10px 18px rgba(0,0,0,0.12))
       drop-shadow(-4px -6px 10px rgba(0,0,0,0.08))
@@ -2880,7 +2881,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-left ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
-                style={{ '--delay': '1.25s' }}
+                style={{ '--delay': '0.5s' }}
               >
                 <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
                   Too many vendors.
@@ -2890,7 +2891,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-left ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
-                style={{ '--delay': '1.3s' }}
+                style={{ '--delay': '0.55s' }}
               >
                 <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                   One decorator, one caterer, one supplier, different prices, different chaos.
@@ -2903,7 +2904,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-right ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0 shadow-sm`}
-                  style={{ '--delay': '1.5s' }}
+                  style={{ '--delay': '0.6s' }}
                 ></div>
                 <img
                   src={imgDecisions}
@@ -2912,7 +2913,7 @@ const ChecklistSection = () => {
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
                   style={{
-                    '--delay': '1.65s',
+                    '--delay': '0.65s',
                     filter: `
       drop-shadow(0px -12px 20px rgba(0,0,0,0.14))
       
@@ -3665,7 +3666,7 @@ const CelebrationFeelingSection = () => {
           <span className="mt-[32px] md:mt-10 reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
               <Link
-                to={s.cta_url ?? '/in-house-planner'}
+                to={s.cta_url ?? '/book-consultation'}
                 className="w-[181px] md:w-[213px] h-[33.5px] md:h-[44px] group flex items-center justify-between bg-[#FAFAFA] md:bg-[#FFFFFF] rounded-[42.7px] md:rounded-[56px] pl-[18.3px] md:pl-[24px] pr-[3px] md:pr-[4px] py-[3px] md:py-[4px] hover:bg-[#F2F2F2] transition-colors shadow-lg"
               >
                 <span className="text-[#CDB17E] text-[12px] md:text-[16px] font-medium leading-[1.5] tracking-wide font-['Poppins'] md:font-sans">
@@ -3806,7 +3807,7 @@ const PlanningGuidesSection = () => {
           io.unobserve(entry.target)
         })
       },
-      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
     )
 
     cards.forEach(el => io.observe(el))
@@ -3969,7 +3970,7 @@ const PlanningGuidesSection = () => {
                       to={`/blogs/${blog.slug}`}
                       className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
-                        '--delay': `${0.08 + i * 0.06}s`,
+                        '--delay': `${0.04 + i * 0.03}s`,
                         width: isMobile
                           ? `${resolvedMobileCardWidth}px`
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
@@ -4248,7 +4249,7 @@ const TestimonialsSection = () => {
           io.unobserve(entry.target)
         })
       },
-      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
     )
 
     cards.forEach(el => io.observe(el))

@@ -250,7 +250,7 @@ const About = () => {
           observer.unobserve(el)
         })
       },
-      { threshold: 0.1 }
+      { threshold: 0.05 }
     )
     page
       .querySelectorAll('.reveal-wrapper, .anim-element, .card-reveal')

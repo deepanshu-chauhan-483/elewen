@@ -324,7 +324,14 @@ export function useEventCategoryOptions() {
           'populate[0]': 'icon',
           sort: 'name:asc',
         })
-        return data.map(mapEventCategory)
+        const CATEGORY_ORDER = ['social', 'religious', 'corporate']
+        const mapped = data.map(mapEventCategory)
+        mapped.sort((a, b) => {
+          const ai = CATEGORY_ORDER.indexOf(a.slug)
+          const bi = CATEGORY_ORDER.indexOf(b.slug)
+          return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+        })
+        return mapped
       } catch {
         return CATEGORY_FALLBACK_OPTIONS
       }
@@ -470,7 +477,14 @@ export function useFilteredServiceOptions(allowedSlugs = []) {
           'populate[1]': 'icon',
           sort: 'name:asc',
         })
-        return filterByAllowedSlugs(data.map(mapServiceCategory))
+        const SERVICE_ORDER = ['decor', 'rental-furniture', 'catering', 'bartending', 'sheesha']
+        const mapped = data.map(mapServiceCategory)
+        mapped.sort((a, b) => {
+          const ai = SERVICE_ORDER.indexOf(a.slug)
+          const bi = SERVICE_ORDER.indexOf(b.slug)
+          return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+        })
+        return filterByAllowedSlugs(mapped)
       } catch {
         return filterByAllowedSlugs(SERVICE_OPTIONS_FALLBACK)
       }

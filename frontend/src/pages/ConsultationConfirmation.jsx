@@ -82,7 +82,7 @@ const ConsultationConfirmation = () => {
           observer.unobserve(entry.target)
         })
       },
-      { threshold: 0.14, rootMargin: '0px 0px -12% 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
     )
 
     targets.forEach(el => {

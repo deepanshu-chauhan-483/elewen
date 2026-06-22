@@ -170,6 +170,7 @@ export default function CategoryPage() {
     if (!categories.length) return requestedCategorySlug
     return (
       categories.find(category => category.slug === requestedCategorySlug)?.slug ??
+      categories.find(category => category.slug === 'social')?.slug ??
       categories[0]?.slug ??
       ''
     )

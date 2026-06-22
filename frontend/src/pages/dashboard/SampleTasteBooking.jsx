@@ -735,7 +735,7 @@ export default function SampleTasteBooking() {
             </label>
             <DateTimePicker
               type="date"
-              min={getDateInputMin()}
+              min={getDateInputMin({ offsetDays: 4 })}
               value={deliveryDateFrom}
               onChange={e => setDeliveryDateFrom(e.target.value)}
               className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
@@ -748,7 +748,7 @@ export default function SampleTasteBooking() {
             </label>
             <DateTimePicker
               type="date"
-              min={getDateInputMin()}
+              min={getDateInputMin({ offsetDays: 4 })}
               value={deliveryDateTo}
               onChange={e => setDeliveryDateTo(e.target.value)}
               className="h-10 w-full rounded-lg border border-[#E4DED8] bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"

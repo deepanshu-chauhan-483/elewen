@@ -394,32 +394,35 @@ function BartendingBeforePriceContent({ intro, pkg, selectedHours, onSelectHours
         </div>
       ) : null}
 
-      {hourOptions.length ? (
-        <div className="mt-6 border-t border-[#36402280] pt-6">
-          <p className="text-[16px] font-semibold text-[#2D2D2D]">Choose number of hours</p>
-          <div className="mt-4 rounded-[8px] border border-[#591902] bg-[#F8F4ED] p-4">
-            <div className="space-y-2">
-              {hourOptions.map(option => (
-                <label
-                  key={option.id}
-                  className="flex cursor-pointer items-center justify-between gap-3 text-[12px] text-[#591902]"
-                >
-                  <span className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="bartending-hours"
-                      checked={selectedHours === option.label}
-                      onChange={() => onSelectHours(option.label)}
-                      className="accent-[#591902]"
-                    />
-                    <span>{option.label}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
+      <div className="mt-6 border-t border-[#36402280] pt-6">
+        <p className="text-[16px] font-semibold text-[#2D2D2D]">Number of hours</p>
+        <div className="mt-4 flex items-center gap-3">
+          <input
+            type="number"
+            min="1"
+            max="24"
+            value={selectedHours || ''}
+            onChange={e => onSelectHours(e.target.value)}
+            placeholder="Enter hours"
+            className="w-[140px] rounded-[8px] border border-[#591902] bg-[#F8F4ED] px-4 py-2.5 text-[14px] text-[#591902] outline-none focus:ring-1 focus:ring-[#CDB17E]"
+          />
+          <span className="text-[13px] text-[#591902]/60">hrs</span>
         </div>
-      ) : null}
+        {hourOptions.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {hourOptions.map(option => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => onSelectHours(option.label)}
+                className={`rounded-full border px-3 py-1 text-[12px] transition-colors ${selectedHours === option.label ? 'border-[#591902] bg-[#591902] text-white' : 'border-[#591902]/30 text-[#591902] hover:bg-[#F8F4ED]'}`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </>
   )
 }

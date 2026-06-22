@@ -42,7 +42,7 @@ function formatCompactCurrency(value) {
 function getMinEventDate() {
   const today = new Date()
   const minDate = new Date(today)
-  minDate.setDate(minDate.getDate() + 6)
+  minDate.setDate(minDate.getDate() + 4)
 
   const year = minDate.getFullYear()
   const month = String(minDate.getMonth() + 1).padStart(2, '0')
@@ -818,6 +818,23 @@ function SinglePackageCard({
 
         {detailsError ? <p className="px-4 pb-4 text-sm text-[#8F2D1F]">{detailsError}</p> : null}
       </div>
+
+      <div className="mt-4 overflow-hidden rounded-xl border border-[#95796066]">
+        <div className="bg-[#F8F4ED] px-4 py-3">
+          <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+            Delivery Address
+          </h3>
+        </div>
+        <div className="p-4">
+          <textarea
+            value={detailsForm.deliveryAddress ?? ''}
+            onChange={event => onDetailsChange('deliveryAddress', event.target.value)}
+            placeholder="Enter full delivery address for setup"
+            rows={3}
+            className="w-full rounded-lg border border-[#95796066] bg-[#F5F5F5] p-3 text-[14px] text-[#2C2C2C] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
+          />
+        </div>
+      </div>
     </div>
   )
 }
@@ -1408,6 +1425,7 @@ export default function CartPage() {
     eventDate: '',
     eventCity: '',
     guestCount: '',
+    deliveryAddress: '',
   })
   const [addingAddonId, setAddingAddonId] = useState('')
 

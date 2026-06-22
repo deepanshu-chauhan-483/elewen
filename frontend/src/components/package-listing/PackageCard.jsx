@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
 import BrandedImage from '../common/BrandedImage'
 import { preloadImages } from '../../utils/preloadAssets'
@@ -35,7 +35,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
     if (typeof window === 'undefined') return true
     return window.innerWidth >= 768
   })
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   const location = useLocation()
   const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
   const packageId = pkg.documentId ?? pkg.id
@@ -210,12 +210,12 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
       role="link"
       tabIndex={0}
       onClick={() => {
-        if (packageHref) navigate(packageHref)
+        if (packageHref) window.open(packageHref, '_blank', 'noopener')
       }}
       onKeyDown={event => {
         if ((event.key === 'Enter' || event.key === ' ') && packageHref) {
           event.preventDefault()
-          navigate(packageHref)
+          window.open(packageHref, '_blank', 'noopener')
         }
       }}
       className={`relative flex h-[500px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
@@ -243,8 +243,8 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
 
         {/* Price + Wishlist */}
         <div className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
-          <div className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#4B4B4B]">
-            Starting from {pkg.price}
+          <div className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#591902]">
+            Starting from <span className="text-[#591902] font-bold">{pkg.price}</span>
           </div>
           <button
             type="button"

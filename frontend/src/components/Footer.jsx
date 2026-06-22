@@ -62,7 +62,7 @@ const Footer = () => {
           observer.unobserve(el)
         })
       },
-      { threshold: 0.1 }
+      { threshold: 0.05 }
     )
 
     footer.querySelectorAll('.reveal-wrapper, .anim-element').forEach(el => observer.observe(el))
@@ -98,7 +98,7 @@ const Footer = () => {
               >
                 <span
                   className={`anim-element slide-from-left whitespace-nowrap text-[14px] text-[#2D2D2D] lg:text-[16px] ${row.labelWidth} md:min-w-0 md:shrink-0`}
-                  style={{ '--delay': `${i * 0.06}s` }}
+                  style={{ '--delay': `${i * 0.03}s` }}
                 >
                   {row.label}
                 </span>
@@ -106,7 +106,7 @@ const Footer = () => {
                 <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-[12px] overflow-x-auto opacity-50 [-ms-overflow-style:none] [scrollbar-width:none] md:flex-wrap md:overflow-visible md:gap-x-7 md:gap-y-2 [&::-webkit-scrollbar]:hidden">
                   {row.links.map((link, linkIndex) => {
                     const animationStyle = {
-                      '--delay': `${i * 0.06 + 0.08 + linkIndex * 0.04}s`,
+                      '--delay': `${i * 0.03 + 0.04 + linkIndex * 0.02}s`,
                     }
 
                     if (link.href) {

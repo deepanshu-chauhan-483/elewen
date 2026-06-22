@@ -162,7 +162,7 @@ const BlogPage = () => {
           observer.unobserve(entry.target)
         })
       },
-      { threshold: 0.14, rootMargin: '0px 0px -12% 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
     )
 
     targets.forEach(el => {
@@ -273,16 +273,35 @@ const BlogPage = () => {
             <div ref={blogListTopRef} />
 
             {visiblePosts.length === 0 ? (
-              <div className="border-b border-[#DDD7CE] py-10">
-                <p
-                  className="max-w-[640px] text-[16px] leading-[1.5] text-[#9B9A92]"
-                  style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 400,
-                    letterSpacing: '0',
-                  }}
+              <div className="flex flex-col items-center justify-center border-b border-[#DDD7CE] py-16 text-center">
+                <svg
+                  className="mb-4 h-16 w-16 text-[#CDB17E]/40"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  No posts are available in this category yet.
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1"
+                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h10"
+                  />
+                </svg>
+                <p
+                  className="max-w-[440px] text-[18px] leading-[1.4] text-[#2D2D2D]"
+                  style={{ fontFamily: "'Malgin', serif" }}
+                >
+                  {blogPosts.length === 0
+                    ? 'Blog posts are coming soon!'
+                    : 'No posts are available in this category yet.'}
+                </p>
+                <p
+                  className="mt-2 max-w-[440px] text-[14px] leading-[1.5] text-[#9B9A92]"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                >
+                  {blogPosts.length === 0
+                    ? "We're working on insightful articles about event planning, décor inspiration, and more."
+                    : 'Try selecting a different category above.'}
                 </p>
               </div>
             ) : null}

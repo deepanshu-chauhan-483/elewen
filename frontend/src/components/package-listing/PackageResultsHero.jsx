@@ -288,6 +288,13 @@ export default function PackageResultsHero({
                 disabled={filter.disabled ?? filters.length > 0}
               />
             ))}
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+              className="flex h-[38px] items-center justify-center rounded-full bg-[#CDB17E] px-5 text-[13px] font-medium text-white transition-colors hover:bg-[#C6AB7F] shrink-0"
+            >
+              Go
+            </button>
           </div>
         </div>
       </div>

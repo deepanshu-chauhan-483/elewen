@@ -685,7 +685,7 @@ const HowItWorkHeroSection = ({ section }) => {
                   <span className="mt-[clamp(1rem,3vh,2rem)] inline-block reveal-wrapper reveal-wrapper--overflow-visible min-[540px]:mt-[clamp(1.25rem,4vh,2.5rem)]">
                     <span className="reveal-text" style={{ animationDelay: '0.2s' }}>
                       <Link
-                        to={section?.cta_url ?? '/in-house-planner'}
+                        to={section?.cta_url ?? '/book-consultation'}
                         className="group flex w-fit items-center rounded-full bg-[#FFFFFF] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#FFFFFF]"
                       >
                         <span className="mr-5 text-[15px] font-medium text-[#CDB17E]">
@@ -732,7 +732,7 @@ const HowItWorkHeroSection = ({ section }) => {
           </div>
         </div>
 
-        <div className="anim-element slide-from-bottom is-visible relative z-10 border-t border-[#CDB17E]/10 bg-[#6A1F06]/60 px-5 py-2 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-2.5 md:px-20 xl:px-[100px]">
+        <div className="anim-element slide-from-bottom is-visible relative z-10 bg-[#6A1F06]/60 px-5 py-2 backdrop-blur-sm min-[540px]:px-10 min-[540px]:py-2.5 md:px-20 xl:px-[100px]">
           <div className="flex flex-nowrap items-center justify-center min-[540px]:justify-start text-[#CDB17E] w-full gap-x-[clamp(0.25rem,1vw,0.75rem)] md:gap-x-[clamp(0.5rem,1.5vw,3rem)] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {heroTags.map((tag, index) => (
               <div
@@ -816,7 +816,7 @@ const HowItWorkPage = () => {
           revealTarget(entry.target)
         })
       },
-      { threshold: 0.14, rootMargin: '0px 0px -12% 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
     )
 
     targets.forEach(el => {

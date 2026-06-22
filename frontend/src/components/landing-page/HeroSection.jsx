@@ -6,6 +6,7 @@ import HeroPreloader from './HeroPreloader'
 import { useLandingPage } from '../../hooks/useCmsPages'
 import { useLenis } from '../../useLenis'
 import { getViewportMode } from '../../utils/viewportMode'
+import { waitForHomePageAssets } from '../../utils/homePagePreload'
 import HeroVideo from '../../assets/newvideo.mp4'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -79,9 +80,21 @@ const hasSeenHeroPreloader = () =>
 const HERO_VIDEO_SRC = HeroVideo
 const HERO_LEFT_TAGLINES_FALLBACK = ['Work made easy', 'Worth the spend', 'Well-vetted Vendors']
 const HERO_RIGHT_CARDS_FALLBACK = [
-  { label: 'Birthday', tagline: 'Curated décor & catering packages' },
-  { label: 'Anniversary', tagline: 'Intimate, elegant setups handled end-to-end' },
-  { label: 'House Party', tagline: 'Simple planning. Beautiful execution.' },
+  {
+    label: 'Birthday',
+    tagline: 'Curated décor & catering packages',
+    href: '/package-listing?category=social&event=birthday-parties&eventId=176',
+  },
+  {
+    label: 'Anniversary',
+    tagline: 'Intimate, elegant setups handled end-to-end',
+    href: '/package-listing?category=social&event=anniversaries&eventId=178',
+  },
+  {
+    label: 'House Party',
+    tagline: 'Simple planning. Beautiful execution.',
+    href: '/package-listing?category=social&event=house-parties&eventId=188',
+  },
 ]
 const getTrailingWWord = (value, fallback) => String(value ?? fallback).replace(/^[Ww]/, '')
 
@@ -281,11 +294,10 @@ const HeroSection = () => {
         const easeEnter = 'cubic-bezier(0,0,0.2,1)' // mot-easing-enter
         const easeStandard = 'cubic-bezier(0.4,0,0.2,1)' // mot-easing-standard
 
-        // Hero media starts at 3s; text/cards delayed +1s so they begin at 4s.
         const contentStart = skipPreloader ? 0 : 2.0
 
         const tl = gsap.timeline({
-          delay: skipPreloader ? 0 : 2, // Hold preloader for 2s, then 1s exit = 3s total
+          paused: !skipPreloader,
           onComplete: () => {
             s.loadComplete = true
             if (typeof window !== 'undefined') window.__elewenHeroPreloaderSeen = true
@@ -294,6 +306,15 @@ const HeroSection = () => {
         })
 
         if (!skipPreloader) {
+          waitForHomePageAssets({
+            videoSrc: heroVideoSrc,
+            getVideoEl: () => videoRef.current,
+            isCmsReady: () => !!cms.hero,
+            onProgress: v => preloaderRef.current?.setProgress(v),
+          }).then(() => {
+            setTimeout(() => tl.play(), 300)
+          })
+
           // Last 1s: zoom in → zoom out → fade
           tl.to(s, { logoScale: 1.25, duration: 0.33, ease: easeStandard }, 0)
           tl.to(s, { logoScale: 0.9, duration: 0.33, ease: easeEnter }, 0.33)
@@ -444,8 +465,8 @@ const HeroSection = () => {
             const v = scrollOutLerp(p, cfg)
             s.scrollOut[cfg.key] = v
           })
-          s.contentOpacity = lerp(1, 0, sub(p, 0.0, textCardsEnd))
-          s.contentY = lerp(0, -50, sub(p, 0.0, textCardsEnd))
+          s.contentOpacity = lerp(1, 0, sub(p, 0.04, textCardsEnd))
+          s.contentY = lerp(0, -50, sub(p, 0.04, textCardsEnd))
 
           // Phase 3: Video shrinks to bottom layout
           const shrinkP = sub(p, 0.12, 0.85)
@@ -504,8 +525,7 @@ const HeroSection = () => {
 
       cr.style.transform = `translateY(${s.contentY}px)`
       cr.style.opacity = s.contentOpacity
-      const anyVisible = Object.values(s.scrollOut).some(so => so.opacity > 0.05)
-      cr.style.pointerEvents = anyVisible ? 'auto' : 'none'
+      cr.style.pointerEvents = s.contentOpacity > 0.1 ? 'auto' : 'none'
 
       // Only apply scroll-out after load animation completes — avoids overwriting GSAP
       if (s.loadComplete) {
@@ -616,6 +636,7 @@ const HeroSection = () => {
       timeoutIds.forEach(id => clearTimeout(id))
       teardown()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lenisRef])
 
   // ── band wrapper style ────────────────────────────────────────────────────
@@ -776,7 +797,7 @@ const HeroSection = () => {
                   <button
                     ref={ctaArrowRef}
                     onClick={() => navigate('/event-flow/category')}
-                    className="hero-compact-cta-btn group pointer-events-auto relative flex h-14 w-14 min-w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white backdrop-blur-sm min-[360px]:h-[68px] min-[360px]:w-[68px] min-[360px]:min-w-[68px] min-[360px]:rounded-[80px] md:mr-[clamp(0.75rem,1.2vw,1.5rem)] md:h-[clamp(3rem,5vw,4.5rem)] md:w-[clamp(3rem,5vw,4.5rem)] md:min-w-[clamp(3rem,5vw,4.5rem)]"
+                    className="hero-compact-cta-btn group pointer-events-auto relative flex h-14 w-14 min-w-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-white backdrop-blur-sm min-[360px]:h-[68px] min-[360px]:w-[68px] min-[360px]:min-w-[68px] min-[360px]:rounded-[80px] md:mr-[clamp(0.75rem,1.2vw,1.5rem)] md:h-[clamp(3rem,5vw,4.5rem)] md:w-[clamp(3rem,5vw,4.5rem)] md:min-w-[clamp(3rem,5vw,4.5rem)]"
                   >
                     <span className="absolute inset-0 flex items-center justify-center">
                       <span className="h-0 w-0 rounded-full bg-white transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:h-[180%] group-hover:w-[180%]" />
@@ -882,22 +903,31 @@ const HeroSection = () => {
                   card.tagline || card.description || card.desc || ''
                     ? String(card.tagline || card.description || card.desc).trim()
                     : ''
+                const cardHref =
+                  card.href ||
+                  `/package-listing?event=${resolvedLabel.toLowerCase().replace(/\s+/g, '-')}`
 
                 return (
                   <div
                     key={resolvedLabel || i}
                     ref={el => (cardRefs.current[i] = el)}
-                    className={`hero-desktop-card col-span-1 h-22.5 md:h-[clamp(5.5rem,9.72vw,8.75rem)] md:w-[clamp(7rem,15.28vw,13.75rem)] md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/30 transition-colors cursor-pointer ${extra}`}
+                    onClick={() => navigate(cardHref)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') navigate(cardHref)
+                    }}
+                    className={`hero-desktop-card col-span-1 h-22.5 md:h-[clamp(5.5rem,9.72vw,8.75rem)] md:w-[clamp(7rem,15.28vw,13.75rem)] md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/40 transition-colors cursor-pointer pointer-events-auto ${extra}`}
                   >
-                    <div className="hero-desktop-card-inner absolute top-4 left-3 right-2 flex flex-col gap-1.5 md:top-[clamp(0.5rem,1vw,1.25rem)] md:left-[clamp(0.5rem,0.8vw,1.25rem)] md:right-[clamp(0.35rem,0.5vw,0.75rem)] md:gap-[clamp(0.25rem,0.5vw,0.75rem)]">
+                    <div className="hero-desktop-card-inner absolute flex flex-col top-[clamp(0.75rem,3.5vw,1rem)] left-[clamp(0.625rem,2.5vw,0.75rem)] right-[clamp(0.375rem,1.5vw,0.5rem)] md:top-[clamp(0.875rem,1.39vw,1.25rem)] md:left-[clamp(0.875rem,1.39vw,1.25rem)] md:right-[clamp(0.5rem,0.7vw,0.75rem)] gap-[clamp(0.5rem,0.83vw,0.75rem)]">
                       <h3
-                        className="text-[10px] sm:text-[11px] md:text-[clamp(0.875rem,1.53vw,1.5rem)] font-bold md:font-normal tracking-[0.14em] md:tracking-[0.04em] uppercase truncate text-[#FAFAFA] md:leading-[2.2]"
+                        className="text-[10px] sm:text-[11px] md:text-[clamp(0.625rem,1.11vw,1rem)] font-bold md:font-normal tracking-[0.14em] md:tracking-[0.04em] uppercase text-[#FAFAFA] md:leading-[1.2]"
                         style={{ fontFamily: "'Malgin', serif" }}
                       >
                         {resolvedLabel}
                       </h3>
                       <p
-                        className="text-[9px] md:text-[clamp(0.5rem,1.11vw,1rem)] font-light md:font-normal opacity-90 leading-[1.3] md:leading-[1.5] md:tracking-normal line-clamp-3 md:line-clamp-2 text-[#FAFAFA]"
+                        className="text-[9px] md:text-[clamp(0.5rem,0.833vw,0.75rem)] font-light md:font-normal opacity-90 leading-[1.3] md:leading-[1.5] md:tracking-normal line-clamp-3 md:line-clamp-2 text-[#FAFAFA]"
                         style={{ fontFamily: "'Poppins', sans-serif" }}
                       >
                         {resolvedDesc}

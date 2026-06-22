@@ -2,7 +2,7 @@ import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { gsap } from 'gsap'
 import navLogo from '../../assets/images/navbar.png'
 
-function createWavePath(phase, radius = 54, amplitude = 4, frequency = 12) {
+function createWavePath(phase, radius = 50, amplitude = 4, frequency = 12) {
   const cx = 60
   const cy = 60
   const points = 120
@@ -20,10 +20,8 @@ function createWavePath(phase, radius = 54, amplitude = 4, frequency = 12) {
 const HeroPreloader = forwardRef(function HeroPreloader({ initiallyHidden = false }, ref) {
   const containerRef = useRef(null)
   const imgRef = useRef(null)
-  const counterRef = useRef(null)
   const waveBgRef = useRef(null)
   const waveFillRef = useRef(null)
-  const barRef = useRef(null)
   const progressRef = useRef(initiallyHidden ? 100 : 0)
 
   useImperativeHandle(ref, () => ({
@@ -37,17 +35,16 @@ const HeroPreloader = forwardRef(function HeroPreloader({ initiallyHidden = fals
   useEffect(() => {
     if (initiallyHidden) return
 
-    const counter = counterRef.current
-    const bar = barRef.current
     const waveBg = waveBgRef.current
     const waveFill = waveFillRef.current
     const logo = imgRef.current
 
     let phase = 0
-    const updateWaves = progress => {
+    const updateWaves = () => {
       phase += 0.04
-      const bgPath = createWavePath(phase, 54, 4, 12)
-      const fillPath = createWavePath(phase, 54, 4, 12)
+      const progress = progressRef.current
+      const bgPath = createWavePath(phase, 50, 4, 12)
+      const fillPath = createWavePath(phase, 50, 4, 12)
       if (waveBg) waveBg.setAttribute('d', bgPath)
       if (waveFill) {
         waveFill.setAttribute('d', fillPath)
@@ -57,45 +54,19 @@ const HeroPreloader = forwardRef(function HeroPreloader({ initiallyHidden = fals
       }
     }
 
-    updateWaves(0)
-
-    const obj = { val: 0 }
-    gsap.to(obj, {
-      val: 100,
-      duration: 1.8,
-      ease: 'power2.inOut',
-      onUpdate() {
-        const v = Math.round(obj.val)
-        progressRef.current = v
-        if (counter) counter.textContent = v
-        if (bar) bar.style.width = `${v}%`
-        updateWaves(v)
-      },
-    })
-
-    const ticker = () => {
-      updateWaves(progressRef.current)
-    }
-    gsap.ticker.add(ticker)
+    updateWaves()
+    gsap.ticker.add(updateWaves)
 
     if (logo) {
       gsap.fromTo(
         logo,
-        { opacity: 0, scale: 0.9 },
-        { opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' }
-      )
-    }
-
-    if (counter) {
-      gsap.fromTo(
-        counter,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.4, delay: 0.15, ease: 'power2.out' }
+        { opacity: 0, scale: 0.92 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }
       )
     }
 
     return () => {
-      gsap.ticker.remove(ticker)
+      gsap.ticker.remove(updateWaves)
     }
   }, [initiallyHidden])
 
@@ -109,18 +80,18 @@ const HeroPreloader = forwardRef(function HeroPreloader({ initiallyHidden = fals
       <div className="absolute top-0 left-0 w-full h-1/2 bg-[#bfac9b]" />
       <div className="absolute bottom-0 left-0 w-full h-1/2 bg-[#bfac9b]" />
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative flex items-center justify-center">
           <svg
-            className="absolute h-[160px] w-[160px] md:h-[190px] md:w-[190px] -rotate-90"
+            className="absolute h-[200px] w-[200px] md:h-[240px] md:w-[240px] -rotate-90"
             viewBox="0 0 120 120"
           >
-            <path ref={waveBgRef} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+            <path ref={waveBgRef} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
             <path
               ref={waveFillRef}
               fill="none"
               stroke="rgba(255,255,255,0.8)"
-              strokeWidth="1.5"
+              strokeWidth="1.2"
               strokeLinecap="round"
             />
           </svg>
@@ -129,25 +100,7 @@ const HeroPreloader = forwardRef(function HeroPreloader({ initiallyHidden = fals
             ref={imgRef}
             src={navLogo}
             alt="Elewen"
-            className="relative z-10 w-[90px] md:w-[110px] object-contain brightness-0 invert opacity-0"
-          />
-        </div>
-
-        <span
-          ref={counterRef}
-          className="relative z-10 mt-6 text-[42px] md:text-[56px] font-light text-white/80 tabular-nums tracking-wider opacity-0"
-          style={{ fontFamily: "'Poppins', sans-serif" }}
-        >
-          0
-        </span>
-      </div>
-
-      <div className="absolute bottom-[12vh] left-1/2 -translate-x-1/2 z-10 w-[min(180px,45vw)]">
-        <div className="h-[1px] w-full bg-white/20 rounded-full overflow-hidden">
-          <div
-            ref={barRef}
-            className="h-full bg-white/70 rounded-full"
-            style={{ width: '0%', transition: 'none' }}
+            className="relative z-10 w-[130px] md:w-[170px] object-contain brightness-0 invert opacity-0"
           />
         </div>
       </div>

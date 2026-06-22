@@ -81,7 +81,7 @@ export const LANDING_PAGE_FALLBACK = {
     heading_2: 'Not another generic template',
     body: 'Want a professional to handle your event end to end? Fill the form and let our in-house planners plan it with you.',
     cta_label: 'Plan with Elewen',
-    cta_url: '/in-house-planner',
+    cta_url: '/book-consultation',
   },
   blogs_intro: {
     heading_1: 'Planning Guides &',
@@ -315,7 +315,7 @@ export const HOW_IT_WORK_PAGE_FALLBACK = {
     description_line_1: 'From browsing to celebration —',
     description_line_2: 'a few simple steps is all it takes.',
     cta_label: 'Plan with Elewen',
-    cta_url: '/in-house-planner',
+    cta_url: '/book-consultation',
     bottom_note: '- no chaos, no coordination stress',
     hero_tags: [
       'BIRTHDAYS',

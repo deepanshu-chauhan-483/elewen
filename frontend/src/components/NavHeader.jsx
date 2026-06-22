@@ -6,6 +6,8 @@ import ScallopBulbCurtain from './common/ScallopBulbCurtain'
 import { authLogout, clearStoredJwt, getStoredJwt } from '../lib/api'
 import { useCart } from '../hooks/useCart'
 import { useToast } from './common/useToast'
+import { usePackages } from '../hooks/usePackages'
+import { normalizeServiceSlug } from '../lib/packageFilters'
 
 const BASE_LINKS = [
   { label: 'Events', to: '/event-flow/category' },
@@ -239,21 +241,51 @@ function CartButton({ count, className, iconColor }) {
     </button>
   )
 }
+function fuzzyMatch(text, query) {
+  const t = text.toLowerCase()
+  const q = query.toLowerCase().trim()
+  if (!q) return false
+  if (t.includes(q)) return true
+  const words = q.split(/\s+/)
+  return words.every(w => {
+    if (t.includes(w)) return true
+    if (w.endsWith('y') && t.includes(w.slice(0, -1) + 'ies')) return true
+    if (w.endsWith('ies') && t.includes(w.slice(0, -3) + 'y')) return true
+    if (w.endsWith('s') && t.includes(w.slice(0, -1))) return true
+    if (t.includes(w + 's')) return true
+    return false
+  })
+}
+
 const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) => {
   const [open, setOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const { data: allPackages = [] } = usePackages()
+  const searchResults =
+    searchQuery.trim().length >= 2
+      ? allPackages
+          .filter(
+            pkg =>
+              fuzzyMatch(String(pkg.title ?? ''), searchQuery) ||
+              fuzzyMatch(String(pkg.category ?? ''), searchQuery)
+          )
+          .slice(0, 8)
+      : []
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { pathname } = useLocation()
   const isHome = pathname === '/'
-  // const isAbout = pathname === '/about'
+  const isTransparentHero = pathname === '/' || pathname === '/how-it-work'
   const lastScrollY = useRef(0)
   const headerRef = useRef(null)
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!getStoredJwt())
   const [entered, setEntered] = useState(() => !isHome || hasSeenHeroPreloader())
   const [hidden, setHidden] = useState(false)
-  const [navThemeName, setNavThemeName] = useState(isHome ? 'glass' : 'light')
-  const [navSurface, setNavSurface] = useState(DEFAULT_NAV_SURFACE)
+  const [navThemeName, setNavThemeName] = useState(isTransparentHero ? 'dark' : 'light')
+  const [navSurface, setNavSurface] = useState(
+    isTransparentHero ? TRANSPARENT_NAV_SURFACE : DEFAULT_NAV_SURFACE
+  )
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
   const { itemCount } = useCart()
   const useBlackNavAccent = BLACK_NAV_ACCENT_PATHS.includes(pathname)
@@ -298,6 +330,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     const t = setTimeout(() => {
       setOpen(false)
       setHidden(false)
+      setSearchQuery('')
     }, 0)
     lastScrollY.current = 0
     window.scrollTo(0, 0)
@@ -318,6 +351,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     if (effectiveForcedThemeName && NAVBAR_THEMES[effectiveForcedThemeName]) return undefined
 
     if (open) return
+
+    if (!entered && isTransparentHero) return
 
     let rafId = null
 
@@ -357,16 +392,17 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       })
     }
 
-    scheduleUpdate()
+    const delayId = isTransparentHero ? setTimeout(scheduleUpdate, 400) : (scheduleUpdate(), null)
     window.addEventListener('scroll', scheduleUpdate, { passive: true })
     window.addEventListener('resize', scheduleUpdate)
 
     return () => {
+      if (delayId) clearTimeout(delayId)
       window.removeEventListener('scroll', scheduleUpdate)
       window.removeEventListener('resize', scheduleUpdate)
       if (rafId != null) window.cancelAnimationFrame(rafId)
     }
-  }, [effectiveForcedThemeName, pathname, open])
+  }, [effectiveForcedThemeName, pathname, open, entered, isTransparentHero])
   const handleLogout = async () => {
     try {
       await authLogout()
@@ -425,7 +461,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     <>
       <header
         ref={headerRef}
-        className={`nav-header-shell fixed top-0 left-0 right-0 z-[60] overflow-hidden px-6 py-[8px] transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-[12px] ${visibilityClass} ${transformClass}`}
+        className={`nav-header-shell fixed top-0 left-0 right-0 z-[60] ${searchQuery.trim() ? 'overflow-visible' : 'overflow-hidden'} px-6 py-[8px] transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-[12px] ${visibilityClass} ${transformClass}`}
       >
         <div
           className="pointer-events-none absolute inset-0 md:hidden"
@@ -482,39 +518,82 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               />
             </Link>
 
-            <button
-              onClick={() => setOpen(true)}
-              type="button"
-              className="nav-desktop-search-btn hidden w-[225px] items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md transition-all md:flex"
-              style={{
-                border: `1px solid ${searchButtonBorder}`,
-                background: searchButtonBg,
-                boxShadow: isTransparentNav ? '0 8px 20px rgba(89,25,2,0.05)' : 'none',
-              }}
-            >
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#591902]">
-                <svg
-                  className="h-3 w-3"
-                  style={{ color: '#FAFAFA' }}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2.5"
-                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                  />
-                </svg>
-              </span>
-              <span
-                className="text-[13px] font-medium tracking-wide"
-                style={{ color: searchTextColor }}
+            <div className="nav-desktop-search-btn relative hidden w-[225px] md:block">
+              <div
+                className="flex items-center gap-2 rounded-full px-2 py-1 backdrop-blur-md"
+                style={{
+                  border: `1px solid ${searchButtonBorder}`,
+                  background: searchButtonBg,
+                  boxShadow: isTransparentNav ? '0 8px 20px rgba(89,25,2,0.05)' : 'none',
+                }}
               >
-                Search
-              </span>
-            </button>
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#591902]">
+                  <svg
+                    className="h-3 w-3"
+                    style={{ color: '#FAFAFA' }}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                    />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      navigate(`/package-listing?search=${encodeURIComponent(searchQuery.trim())}`)
+                      setSearchQuery('')
+                    }
+                  }}
+                  className="w-full bg-transparent text-[13px] font-medium tracking-wide outline-none placeholder:opacity-70"
+                  style={{ color: searchTextColor }}
+                />
+              </div>
+              {searchResults.length > 0 && (
+                <div className="absolute left-0 top-full z-50 mt-2 w-[320px] rounded-xl bg-white py-2 shadow-xl border border-[#E0D6CA]">
+                  {searchResults.map(pkg => {
+                    const serviceSlug = normalizeServiceSlug(
+                      pkg.serviceSlug ?? pkg.service ?? 'decor'
+                    )
+                    const pkgId = pkg.documentId ?? pkg.id
+                    return (
+                      <button
+                        key={pkgId}
+                        type="button"
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[#F5F0EA] transition-colors"
+                        onClick={() => {
+                          navigate(`/packages/${serviceSlug}-single/${pkgId}`)
+                          setSearchQuery('')
+                        }}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-medium text-[#2D2D2D]">
+                            {pkg.title}
+                          </p>
+                          <p className="truncate text-[11px] text-[#2D2D2D]/50">
+                            {pkg.category || serviceSlug}
+                          </p>
+                        </div>
+                        {pkg.price != null && (
+                          <span className="shrink-0 text-[13px] font-semibold text-[#591902]">
+                            ₹{Number(pkg.price).toLocaleString('en-IN')}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="nav-desktop-logo-wrap absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
@@ -596,21 +675,72 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
         }}
       >
         <div className="flex items-center justify-between px-6 py-[14px] md:px-10 md:py-[22px]">
-          <div className="hidden w-64 items-center rounded-full border border-white/15 bg-white/10 px-4 py-2.5 backdrop-blur-lg md:flex">
-            <svg
-              className="mr-3 h-4 w-4 shrink-0 text-white/60"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.5"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+          <div className="relative hidden w-64 md:block">
+            <div className="flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2.5 backdrop-blur-lg">
+              <svg
+                className="mr-3 h-4 w-4 shrink-0 text-white/60"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    navigate(`/package-listing?search=${encodeURIComponent(searchQuery.trim())}`)
+                    setSearchQuery('')
+                    setOpen(false)
+                  }
+                }}
+                className="w-full bg-transparent text-sm font-medium tracking-wide text-white/80 outline-none placeholder:text-white/60"
               />
-            </svg>
-            <span className="text-sm font-medium tracking-wide text-white/60">Search</span>
+            </div>
+            {searchResults.length > 0 && (
+              <div className="absolute left-0 top-full z-50 mt-2 w-[320px] rounded-xl bg-white py-2 shadow-xl border border-[#E0D6CA]">
+                {searchResults.map(pkg => {
+                  const serviceSlug = normalizeServiceSlug(
+                    pkg.serviceSlug ?? pkg.service ?? 'decor'
+                  )
+                  const pkgId = pkg.documentId ?? pkg.id
+                  return (
+                    <button
+                      key={pkgId}
+                      type="button"
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[#F5F0EA] transition-colors"
+                      onClick={() => {
+                        navigate(`/packages/${serviceSlug}-single/${pkgId}`)
+                        setSearchQuery('')
+                        setOpen(false)
+                      }}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-medium text-[#2D2D2D]">
+                          {pkg.title}
+                        </p>
+                        <p className="truncate text-[11px] text-[#2D2D2D]/50">
+                          {pkg.category || serviceSlug}
+                        </p>
+                      </div>
+                      {pkg.price != null && (
+                        <span className="shrink-0 text-[13px] font-semibold text-[#591902]">
+                          ₹{Number(pkg.price).toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <Link to="/" className="md:hidden" onClick={() => setOpen(false)}>
@@ -814,7 +944,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 className="mb-1 text-[15px] text-white/40"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                +91 7263587619
+                +91
               </p>
               <p
                 className="w-[min(153px,48vw)] min-w-[128px] text-right text-[clamp(14px,3.8vw,19px)] leading-[1] text-white"
@@ -846,7 +976,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               </p>
             </div>
             <div className="mt-6 flex flex-col items-end">
-              <p className="mb-0.5 text-sm text-white/40">+91 7263587619</p>
+              <p className="mb-0.5 text-sm text-white/40">+91 9810937700</p>
               <p className="text-lg font-semibold tracking-tight text-white md:text-2xl">
                 info@elewen.co.in
               </p>

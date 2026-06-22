@@ -682,12 +682,20 @@ function ProductImageLayout({
             <div className="flex min-w-0 items-center gap-2 md:gap-3">
               <h2 className="truncate text-sm font-semibold sm:text-base md:text-lg">{title}</h2>
               <span>•</span>
-              <span className="shrink-0 text-sm sm:text-base">{price}</span>
+              <span className="shrink-0 text-sm font-bold sm:text-base text-[#D4BA8E]">
+                {price}
+              </span>
             </div>
 
             {/* Right */}
             <div className="flex shrink-0 items-center gap-2 sm:gap-4 md:gap-6">
-              <button className="text-xs underline sm:text-sm md:text-base">View Options</button>
+              <button
+                type="button"
+                className="text-xs underline sm:text-sm md:text-base"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              >
+                View Options
+              </button>
 
               <button
                 className={`group flex items-center rounded-full py-1.5 pl-3 pr-1 text-[12px] font-medium transition-colors sm:pl-4 sm:pr-1.5 sm:text-[13px] md:pl-6 ${

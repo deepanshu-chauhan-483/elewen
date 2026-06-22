@@ -77,7 +77,7 @@ const BookConsultationPage = () => {
           observer.unobserve(entry.target)
         })
       },
-      { threshold: 0.14, rootMargin: '0px 0px -12% 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
     )
 
     targets.forEach(el => {
@@ -101,6 +101,14 @@ const BookConsultationPage = () => {
 
   const handleSubmit = event => {
     event.preventDefault()
+    const errors = {}
+    if (!form.full_name.trim()) errors.full_name = 'Name is required'
+    if (!form.phone.trim()) errors.phone = 'Phone number is required'
+    if (!form.event_date) errors.event_date = 'Event date is required'
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
+    }
     setFieldErrors({})
     submitConsultation(form, {
       onSuccess: () => {
@@ -278,7 +286,6 @@ const BookConsultationPage = () => {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="Email Address"
-                required
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
@@ -304,7 +311,6 @@ const BookConsultationPage = () => {
                 value={form.event_type}
                 onChange={handleChange}
                 placeholder="Event Type"
-                required
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
@@ -319,6 +325,7 @@ const BookConsultationPage = () => {
                 value={form.event_date}
                 onChange={handleChange}
                 min={getDateInputMin()}
+                required
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />
@@ -333,7 +340,6 @@ const BookConsultationPage = () => {
                 value={form.city}
                 onChange={handleChange}
                 placeholder="City/Location"
-                required
                 className="border-b border-[#1F1F1F]/20 bg-transparent px-1 pb-3 pt-1 text-[16px] leading-[1.5] text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D] placeholder:opacity-90"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400, letterSpacing: '0' }}
               />

@@ -16,7 +16,7 @@ export default function CmsPageLoader({
     : blend
       ? 'min-h-[40vh] py-12'
       : 'min-h-[50vh]'
-  const loaderBgClass = 'bg-[#EAF3F8]/50'
+  const loaderBgClass = 'bg-white'
   const embeddedBgClass = blend ? 'bg-transparent' : loaderBgClass
   const viewportCenterClass =
     'fixed inset-x-0 bottom-0 top-[63px] z-20 flex items-center justify-center bg-transparent md:left-[260px]'

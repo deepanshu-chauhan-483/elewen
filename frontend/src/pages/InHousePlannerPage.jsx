@@ -459,7 +459,7 @@ const GrandCelebrationsSection = () => {
           observer.unobserve(el)
         })
       },
-      { threshold: 0.12 }
+      { threshold: 0.06 }
     )
 
     root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
@@ -2477,7 +2477,7 @@ const InHousePlannerSection = () => {
           observer.unobserve(el)
         })
       },
-      { threshold: 0.12 }
+      { threshold: 0.06 }
     )
 
     root
@@ -2503,7 +2503,7 @@ const InHousePlannerSection = () => {
           observer.unobserve(el)
         })
       },
-      { threshold: 0.12 }
+      { threshold: 0.06 }
     )
 
     root.querySelectorAll('.reveal-wrapper').forEach(el => observer.observe(el))
@@ -2534,6 +2534,7 @@ const InHousePlannerSection = () => {
                   src={plannerImage}
                   alt={plannerImageAlt}
                   className="about-page-hover-image w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
+                  style={{ imageOrientation: 'from-image' }}
                 />
               ) : null}
             </div>

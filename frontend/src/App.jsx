@@ -61,6 +61,9 @@ const SupportHelp = lazy(() => import('./pages/dashboard/SupportHelp'))
 const ProfilePage = lazy(() => import('./pages/dashboard/ProfilePage'))
 
 function PageLoader() {
+  if (window.location.pathname === '/') {
+    return <div className="fixed inset-0 z-[99999] bg-[#bfac9b]" />
+  }
   return <CmsPageLoader label="Loading" />
 }
 
