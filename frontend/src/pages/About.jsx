@@ -520,18 +520,27 @@ const About = () => {
             {/* --- SNAKE LINE SVG --- */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 hidden min-[661px]:block z-0"
-              style={{ top: `${SVG_TOP}px` }}
+              className="pointer-events-none absolute left-1/2 hidden min-[661px]:block z-0"
+              style={{
+                top: `${SVG_TOP}px`,
+                transform: 'translateX(-50%)',
+                width: 'calc(100vw - 3rem)',
+                maxWidth: '1331px'
+              }}
             >
               <svg
                 ref={svgRef}
-                className="mx-auto overflow-visible"
+                className="overflow-visible"
                 width="1331"
                 height="3986"
                 viewBox="0 0 1331 3986"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                style={{ width: 'min(92vw, 1331px)', height: 'auto' }}
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  display: 'block'
+                }}
               >
                 <path
                   ref={pathRef}
