@@ -452,8 +452,8 @@ const About = () => {
         </div>
 
         {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
-        <section className="relative  w-full bg-[#A5A687] overflow-y-hidden font-sans">
-          <div ref={sectionRef} className="relative w-full min-[661px]:max-h-none">
+        <section className="relative  w-full bg-[#A5A687] overflow-hidden  font-sans">
+          <div ref={sectionRef} className="relative m-9 w-full min-[661px]:max-h-none">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
               className="absolute hidden min-[661px]:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
@@ -520,11 +520,11 @@ const About = () => {
             {/* --- SNAKE LINE SVG --- */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-1/2 hidden min-[661px]:block z-0 p-3"
+              className="pointer-events-none absolute left-1/2 min-[661px]:block z-0 "
               style={{
                 top: `${SVG_TOP}px`,
                 transform: 'translateX(-50%)',
-                width: '109%',
+                width: '107%',
                 maxWidth: '1331px',
                 aspectRatio: '1331 / 3986'
               }}
