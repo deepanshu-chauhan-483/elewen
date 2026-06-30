@@ -520,10 +520,10 @@ const About = () => {
             {/* --- SNAKE LINE SVG --- */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-1/2 min-[661px]:block z-0 "
+              className="pointer-events-none absolute inset-x-0 min-[661px]:block z-0 "
               style={{
                 top: `${SVG_TOP}px`,
-                transform: 'translateX(-50%)',
+                margin: '0 auto',
                 width: '107%',
                 maxWidth: '1331px',
                 aspectRatio: '1331 / 3986'
