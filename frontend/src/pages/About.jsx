@@ -525,7 +525,8 @@ const About = () => {
                 top: `${SVG_TOP}px`,
                 transform: 'translateX(-50%)',
                 width: 'calc(100vw - 3rem)',
-                maxWidth: '1331px'
+                maxWidth: '1331px',
+                aspectRatio: '1331 / 3986'
               }}
             >
               <svg
@@ -538,7 +539,7 @@ const About = () => {
                 xmlns="http://www.w3.org/2000/svg"
                 style={{
                   width: '100%',
-                  height: 'auto',
+                  height: '100%',
                   display: 'block'
                 }}
               >
