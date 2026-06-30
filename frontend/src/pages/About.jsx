@@ -524,7 +524,7 @@ const About = () => {
               style={{
                 top: `${SVG_TOP}px`,
                 transform: 'translateX(-50%)',
-                width: '92%',
+                width: '90%',
                 maxWidth: '1331px',
                 aspectRatio: '1331 / 3986'
               }}
@@ -554,7 +554,7 @@ const About = () => {
               </svg>
             </div>
 
-            <div className="relative z-10 max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] pt-20 min-[661px]:pt-24 lg:pt-28 min-[661px]:pb-32 lg:pb-36">
+            <div className="relative z-10 max-w-[1200px] mx-auto px-6 min-[661px]:px-8 lg:px-12 xl:px-16 pt-16 min-[661px]:pt-20 lg:pt-24 min-[661px]:pb-24 lg:pb-28">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
               <div className="flex w-full flex-col items-center mt-15 min-[661px]:hidden">
                 <MobileStoryCarousel
