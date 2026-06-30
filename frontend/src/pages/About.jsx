@@ -524,7 +524,7 @@ const About = () => {
               style={{
                 top: `${SVG_TOP}px`,
                 transform: 'translateX(-50%)',
-                width: 'calc(100vw - 3rem)',
+                width: '92%',
                 maxWidth: '1331px',
                 aspectRatio: '1331 / 3986'
               }}
