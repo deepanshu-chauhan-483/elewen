@@ -452,7 +452,7 @@ const About = () => {
         </div>
 
         {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
-        <section className="relative  w-full bg-[#A5A687] overflow-hidden font-sans">
+        <section className="relative  w-full bg-[#A5A687] overflow-y-hidden font-sans">
           <div ref={sectionRef} className="relative w-full min-[661px]:max-h-none">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
@@ -520,11 +520,11 @@ const About = () => {
             {/* --- SNAKE LINE SVG --- */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-1/2 hidden min-[661px]:block z-0"
+              className="pointer-events-none absolute left-1/2 hidden min-[661px]:block z-0 p-3"
               style={{
                 top: `${SVG_TOP}px`,
                 transform: 'translateX(-50%)',
-                width: '90%',
+                width: '109%',
                 maxWidth: '1331px',
                 aspectRatio: '1331 / 3986'
               }}
