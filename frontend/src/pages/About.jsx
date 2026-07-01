@@ -521,7 +521,10 @@ const About = () => {
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 hidden min-[661px]:block z-0 overflow-visible"
-              style={{ top: `${SVG_TOP}px` }}
+              style={{
+                top: `${SVG_TOP}px`,
+                aspectRatio: '1331 / 3400'
+              }}
             >
               <svg
                 ref={svgRef}
