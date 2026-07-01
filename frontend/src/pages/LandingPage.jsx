@@ -2623,6 +2623,20 @@ const ChecklistSection = () => {
                 pinSpacing: false,
               },
             })
+            // Change text color to white when heading enters maroon section
+            const headingH2 = doorHeading.querySelector('h2')
+            if (headingH2) {
+              gsap.to(headingH2, {
+                scrollTrigger: {
+                  trigger: howItWorks,
+                  start: 'top 50%',
+                  end: 'bottom 50%',
+                  markers: false,
+                },
+                color: '#FFFFFF',
+                duration: 0.3,
+              })
+            }
           }
         },
       },
