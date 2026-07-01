@@ -3033,8 +3033,12 @@ const ChecklistSection = () => {
 
           <div
             ref={doorHeadingRef}
-            className="absolute inset-0 z-[100] flex items-center justify-center pointer-events-none opacity-0"
-            style={{ willChange: 'transform, opacity' }}
+            className="absolute left-1/2 z-[100] flex items-center justify-center pointer-events-none opacity-0"
+            style={{
+              transform: 'translateX(-50%)',
+              bottom: '-60px',
+              willChange: 'transform, opacity',
+            }}
           >
             <h2
               className="text-[24px] md:text-[61px] text-[#591902] text-center tracking-wide font-display flex items-center justify-center gap-2 md:gap-4"
