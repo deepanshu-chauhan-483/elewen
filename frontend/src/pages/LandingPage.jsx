@@ -2554,7 +2554,9 @@ const ChecklistSection = () => {
     })
     gsap.set(gateArea, { backgroundColor: 'transparent' })
     gsap.set(insideBg, { opacity: 0 })
-    if (doorHeading) gsap.set(doorHeading, { opacity: 0, y: 16 })
+    if (doorHeading) {
+      gsap.set(doorHeading, { opacity: 0, y: 16 })
+    }
     gsap.set(howItWorks, { yPercent: 104, opacity: 1 })
 
     const tl = gsap.timeline({
@@ -2612,36 +2614,49 @@ const ChecklistSection = () => {
         },
         onComplete: () => {
           requestAnimationFrame(() => ScrollTrigger.refresh())
-          // Add pinning effect for the heading after door animation completes
-          if (doorHeading && howItWorks) {
-            gsap.to(doorHeading, {
-              scrollTrigger: {
-                trigger: howItWorks,
-                start: 'top center',
-                end: 'bottom center',
-                pin: doorHeading,
-                pinSpacing: false,
-              },
-            })
-            // Change text color to white when heading enters maroon section
-            const headingH2 = doorHeading.querySelector('h2')
-            if (headingH2) {
-              gsap.to(headingH2, {
-                scrollTrigger: {
-                  trigger: howItWorks,
-                  start: 'top 50%',
-                  end: 'bottom 50%',
-                  markers: false,
-                },
-                color: '#FFFFFF',
-                duration: 0.3,
-              })
-            }
-          }
         },
       },
       howItWorksStart
     )
+
+    // Create smooth scroll animation for the floating heading after door opens
+    if (doorHeading && howItWorks) {
+      const headingH2 = doorHeading.querySelector('h2')
+
+      // Smooth heading scroll animation - scrolls down as user scrolls through maroon section
+      gsap.to(doorHeading, {
+        scrollTrigger: {
+          trigger: howItWorks,
+          start: 'top 80%',
+          end: 'top 20%',
+          scrub: 1,
+          onUpdate: (self) => {
+            // Smooth color transition from brown to white
+            const colorProgress = self.progress
+            const r = Math.round(89 * (1 - colorProgress) + 255 * colorProgress)
+            const g = Math.round(25 * (1 - colorProgress) + 255 * colorProgress)
+            const b = Math.round(2 * (1 - colorProgress) + 255 * colorProgress)
+            if (headingH2) {
+              headingH2.style.color = `rgb(${r}, ${g}, ${b})`
+            }
+          },
+        },
+        y: 200,
+        duration: 0.5,
+        ease: 'power1.inOut',
+      })
+
+      // Pin heading once it reaches the maroon section
+      gsap.to(doorHeading, {
+        scrollTrigger: {
+          trigger: howItWorks,
+          start: 'top 20%',
+          end: 'bottom top',
+          pin: doorHeading,
+          pinSpacing: false,
+        },
+      })
+    }
 
     return () => {
       tl.scrollTrigger?.kill()
