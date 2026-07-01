@@ -2612,6 +2612,18 @@ const ChecklistSection = () => {
         },
         onComplete: () => {
           requestAnimationFrame(() => ScrollTrigger.refresh())
+          // Add pinning effect for the heading after door animation completes
+          if (doorHeading && howItWorks) {
+            gsap.to(doorHeading, {
+              scrollTrigger: {
+                trigger: howItWorks,
+                start: 'top center',
+                end: 'bottom center',
+                pin: doorHeading,
+                pinSpacing: false,
+              },
+            })
+          }
         },
       },
       howItWorksStart
@@ -2620,6 +2632,7 @@ const ChecklistSection = () => {
     return () => {
       tl.scrollTrigger?.kill()
       tl.kill()
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill())
     }
   }, [])
 
@@ -2994,10 +3007,16 @@ const ChecklistSection = () => {
             className="absolute inset-0 z-[6] flex items-center justify-center pointer-events-none opacity-0"
           >
             <h2
-              className="text-[24px] md:text-[61px] text-[#591902] text-center tracking-wide font-display"
+              className="text-[24px] md:text-[61px] text-[#591902] text-center tracking-wide font-display flex items-center justify-center gap-2 md:gap-4"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              HOW 11 WORKS
+              HOW
+              <img
+                src={centerLogo}
+                alt="11"
+                className="h-[24px] md:h-[61px] w-auto inline"
+              />
+              WORKS
             </h2>
           </div>
 
