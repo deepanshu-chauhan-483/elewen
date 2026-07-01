@@ -452,8 +452,8 @@ const About = () => {
         </div>
 
         {/* --- ABOUT STORY (inlined, not a separate component call) --- */}
-        <section className="relative  w-full bg-[#A5A687] overflow-y-hidden overflow-x-visible font-sans">
-          <div ref={sectionRef} className="relative m-9 w-full min-[661px]:max-h-none overflow-x-visible">
+        <section className="relative w-full bg-[#A5A687] overflow-x-clip font-sans">
+          <div ref={sectionRef} className="relative w-full min-[661px]:max-h-none">
             {/* --- SUB-TASK 1: SCALLOPED HEADER --- */}
             <div
               className="absolute hidden min-[661px]:block w-[533px] h-[1436px] bg-[#CDB17E] opacity-[0.07] pointer-events-none z-0"
@@ -520,30 +520,18 @@ const About = () => {
             {/* --- SNAKE LINE SVG --- */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute min-[661px]:block z-0 "
-              style={{
-                top: `${SVG_TOP}px`,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '107%',
-                maxWidth: '1331px',
-                aspectRatio: '1331 / 3986',
-                overflowX: 'visible'
-              }}
+              className="pointer-events-none absolute inset-x-0 hidden min-[661px]:block z-0 overflow-visible"
+              style={{ top: `${SVG_TOP}px` }}
             >
               <svg
                 ref={svgRef}
-                className="overflow-visible"
+                className="mx-auto overflow-visible"
                 width="1331"
                 height="3986"
                 viewBox="0 0 1331 3986"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'block'
-                }}
+                style={{ width: 'min(100%, 1200px)', height: 'auto' }}
               >
                 <path
                   ref={pathRef}
@@ -634,7 +622,7 @@ const About = () => {
               {/* --- SUB-TASK 2: SIMPLE QUESTION BLOCK --- */}
               <div
                 ref={subTask2Ref}
-                className="hidden min-[661px]:flex mt-8 min-[661px]:mt-48 flex-col min-[661px]:flex-row items-start gap-y-10 min-[661px]:gap-y-0 min-[661px]:gap-x-4 lg:gap-x-6"
+                className="hidden min-[661px]:flex mt-8 min-[661px]:mt-32 flex-col min-[661px]:flex-row items-start gap-y-8 min-[661px]:gap-y-0 min-[661px]:gap-x-3 lg:gap-x-4"
               >
                 {story1Src && (
                   <Img
@@ -643,9 +631,9 @@ const About = () => {
                     className="anim-element slide-from-left about-page-hover-image w-full min-[661px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-r-[120px] min-[661px]:-ml-10 lg:-ml-20 xl:-ml-[100px]"
                   />
                 )}
-                <div className="w-full min-[661px]:flex-1 max-w-[486px] flex flex-col gap-7 min-[661px]:mt-28">
+                <div className="w-full min-[661px]:flex-1 max-w-[400px] flex flex-col gap-5 min-[661px]:mt-16">
                   <h2
-                    className="text-white text-[24px] min-[661px]:text-[30px] lg:text-[50px] leading-[1] font-serif"
+                    className="text-white text-[20px] min-[661px]:text-[24px] lg:text-[36px] leading-[1] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -654,7 +642,7 @@ const About = () => {
                       </span>
                     </span>
                   </h2>
-                  <p className="text-white text-[12px] min-[661px]:text-[14px] lg:text-[16px] leading-[1.2]">
+                  <p className="text-white text-[12px] min-[661px]:text-[13px] lg:text-[14px] leading-[1.2]">
                     <span className="reveal-wrapper block">
                       <span className="reveal-text" style={{ '--delay': '0.1s' }}>
                         {sq.body ??
@@ -669,7 +657,7 @@ const About = () => {
               <div className="hidden min-[661px]:flex mt-24 min-[661px]:pb-30 flex-col min-[661px]:flex-row items-center gap-y-10 min-[661px]:gap-y-0">
                 <div className="order-2 min-[661px]:order-1 w-full min-[661px]:flex-1 min-[661px]:max-w-[560px] min-[661px]:ml-auto min-[661px]:mr-5 flex flex-col gap-7">
                   <h2
-                    className="text-white text-[24px] min-[661px]:text-[30px] lg:text-[50px] leading-[1] font-serif"
+                    className="text-white text-[20px] min-[661px]:text-[24px] lg:text-[36px] leading-[1] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -685,7 +673,7 @@ const About = () => {
                   ).map((para, i) => (
                     <p
                       key={i}
-                      className="text-white text-[12px] min-[661px]:text-[14px] lg:text-[16px] leading-[1.2]"
+                      className="text-white text-[12px] min-[661px]:text-[13px] lg:text-[14px] leading-[1.2]"
                     >
                       <span className="reveal-wrapper block">
                         <span className="reveal-text" style={{ '--delay': `${0.1 + i * 0.08}s` }}>
