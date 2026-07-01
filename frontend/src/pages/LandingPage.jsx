@@ -2622,13 +2622,23 @@ const ChecklistSection = () => {
     // Create smooth scroll animation for the floating heading after door opens
     if (doorHeading && howItWorks) {
       const headingH2 = doorHeading.querySelector('h2')
+      const howItWorksHeading = howItWorks.querySelector('h2')
 
-      // Smooth heading scroll animation - scrolls down as user scrolls through maroon section
+      // Calculate position to align with HowItWorksSection heading
+      const calculateHeadingPosition = () => {
+        if (!howItWorksHeading) return 0
+        const howItWorksRect = howItWorks.getBoundingClientRect()
+        const headingRect = howItWorksHeading.getBoundingClientRect()
+        // Position at the maroon section heading location
+        return howItWorksRect.top + (headingRect.top - howItWorksRect.top)
+      }
+
+      // Smooth heading scroll animation - scrolls down to align with HowItWorksSection heading
       gsap.to(doorHeading, {
         scrollTrigger: {
           trigger: howItWorks,
           start: 'top 80%',
-          end: 'top 20%',
+          end: 'top 0%',
           scrub: 1,
           onUpdate: (self) => {
             // Smooth color transition from brown to white
@@ -2641,16 +2651,18 @@ const ChecklistSection = () => {
             }
           },
         },
-        y: 200,
+        y: () => {
+          return calculateHeadingPosition()
+        },
         duration: 0.5,
         ease: 'power1.inOut',
       })
 
-      // Pin heading once it reaches the maroon section
+      // Pin heading at HowItWorksSection heading position
       gsap.to(doorHeading, {
         scrollTrigger: {
           trigger: howItWorks,
-          start: 'top 20%',
+          start: 'top 0%',
           end: 'bottom top',
           pin: doorHeading,
           pinSpacing: false,
@@ -3033,9 +3045,10 @@ const ChecklistSection = () => {
 
           <div
             ref={doorHeadingRef}
-            className="fixed left-1/2 top-1/2 z-[100] flex items-center justify-center pointer-events-none opacity-0"
+            className="absolute left-1/2 z-[100] flex items-center justify-center pointer-events-none opacity-0"
             style={{
-              transform: 'translate(-50%, -50%)',
+              transform: 'translateX(-50%)',
+              top: 0,
               willChange: 'transform, opacity',
             }}
           >
