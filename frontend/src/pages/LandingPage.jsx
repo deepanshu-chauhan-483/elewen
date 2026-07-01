@@ -3045,10 +3045,11 @@ const ChecklistSection = () => {
 
           <div
             ref={doorHeadingRef}
-            className="absolute left-1/2 z-[100] flex items-center justify-center pointer-events-none opacity-0"
+            className="absolute left-1/2 flex items-center justify-center pointer-events-none opacity-0"
             style={{
               transform: 'translateX(-50%)',
               top: 0,
+              zIndex: 999999,
               willChange: 'transform, opacity',
             }}
           >
