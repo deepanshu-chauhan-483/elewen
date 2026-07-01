@@ -2996,7 +2996,7 @@ const ChecklistSection = () => {
 
       {/* Door section unchanged */}
       <div className="door-section relative z-10 w-full overflow-hidden">
-        <div ref={gateAreaRef} className="door-section__pin relative z-20 w-full">
+        <div ref={gateAreaRef} className="door-section__pin relative z-20 w-full overflow-visible">
           <div
             ref={insideBgRef}
             className="door-section__inside-bg pointer-events-none absolute bg-[#F6D69D] opacity-0"
@@ -3004,7 +3004,8 @@ const ChecklistSection = () => {
 
           <div
             ref={doorHeadingRef}
-            className="absolute inset-0 z-[6] flex items-center justify-center pointer-events-none opacity-0"
+            className="absolute inset-0 z-[100] flex items-center justify-center pointer-events-none opacity-0"
+            style={{ willChange: 'transform, opacity' }}
           >
             <h2
               className="text-[24px] md:text-[61px] text-[#591902] text-center tracking-wide font-display flex items-center justify-center gap-2 md:gap-4"
