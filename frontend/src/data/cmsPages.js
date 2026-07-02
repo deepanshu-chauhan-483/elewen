@@ -311,7 +311,7 @@ export const INHOUSE_PLANNER_PAGE_FALLBACK = {
 export const HOW_IT_WORK_PAGE_FALLBACK = {
   hero: {
     eyebrow: 'PLANNING MADE SIMPLE',
-    heading: 'How It Works',
+    heading: 'How 11 Works',
     description_line_1: 'From browsing to celebration —',
     description_line_2: 'a few simple steps is all it takes.',
     cta_label: 'Plan with Elewen',

@@ -20,7 +20,7 @@ const normalizeSection = (section, index) => ({
 const HOW_IT_WORKS_LANDING_FALLBACK = {
   id: null,
   documentId: null,
-  title: HOW_IT_WORK_PAGE_FALLBACK?.hero?.heading ?? 'How It Works',
+  title: HOW_IT_WORK_PAGE_FALLBACK?.hero?.heading ?? 'How 11 Works',
   sections: Array.isArray(HOW_IT_WORK_PAGE_FALLBACK?.idea_to_celebration?.steps)
     ? HOW_IT_WORK_PAGE_FALLBACK.idea_to_celebration.steps.map((step, index) => ({
         id: step?.number ?? index + 1,

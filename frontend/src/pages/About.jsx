@@ -1,9 +1,10 @@
 import { useRef, useEffect, useState, Children } from 'react'
 import { useAboutPage } from '../hooks/useCmsPages'
 import tangledIllustration from '../assets/images/tangled-lights.png'
-import objectImg from '../assets/Object.png'
+// import objectImg from '../assets/Object.png'
 import bulb1 from '../assets/lightbulb_images/bulb1.png'
 import bulb2 from '../assets/lightbulb_images/bulb2.png'
+import white11Logo from '../assets/images/white11logo.png'
 
 // Resolve image assets from `src/assets/images/*` at build time.
 // If an image file isn't present yet, we won't render its <img>, so nothing shows broken.
@@ -179,7 +180,7 @@ function MobileStoryCarousel({ activeIndex, onActiveIndexChange, children }) {
 }
 
 // SVG layout constants â must match the inline SVG's style values below
-const SVG_TOP = 430
+const SVG_TOP = 350
 const SECTION_HEIGHT = 4628
 const OBJ_SIZE = 55
 
@@ -287,22 +288,31 @@ const About = () => {
         const sectionHeight = section.offsetHeight || SECTION_HEIGHT
 
         // Map section scroll through viewport to 0â1 progress
-        const progress = Math.max(0, Math.min(1, -rect.top / (sectionHeight - vh)))
+        // Offset ensures the animation timing aligns with the SVG path visibility
+        const svgStartPos = SVG_TOP
+        const triggerPoint = vh * 0.6
+
+        const animationStart = rect.top + svgStartPos - triggerPoint
+        const animationDistance = sectionHeight - svgStartPos - triggerPoint
+
+        const progress = Math.max(0, Math.min(1, -animationStart / animationDistance))
 
         const dist = progress * totalLength
         const pt = path.getPointAtLength(dist)
+
         const svgRect = svgEl.getBoundingClientRect()
         const scaleX = svgRect.width / 1331
         const scaleY = svgRect.height / 3986
+
         const viewX = svgRect.left + pt.x * scaleX
+
         const viewY = svgRect.top + pt.y * scaleY
-        // Scale the traced object with the SVG's rendered size so it shrinks/grows
-        // in proportion to the path on every screen size instead of staying fixed.
         const objSize = OBJ_SIZE * ((scaleX + scaleY) / 2)
 
-        const inView = rect.top < vh && rect.top + sectionHeight > 0
+        const sectionInView = rect.top < vh && rect.top + sectionHeight > 0
+
         setObjStyle({
-          display: inView ? 'block' : 'none',
+          display: sectionInView ? 'block' : 'none',
           position: 'fixed',
           left: `${viewX}px`,
           top: `${viewY}px`,
@@ -310,7 +320,7 @@ const About = () => {
           width: `${objSize}px`,
           height: `${objSize}px`,
           pointerEvents: 'none',
-          zIndex: 9999,
+          zIndex: 10,
         })
       })
     }
@@ -416,7 +426,7 @@ const About = () => {
           </div>
         </div>
         {/* --- 4. Celebrations Don't Have to Be Big to Matter --- */}
-        <div className="w-full max-w-[1440px] shrink-0 mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] pb-16 min-[661px]:pb-8">
+        <div className="w-full max-w-[1600px] shrink-0 mx-auto px-6 min-[661px]:px-10 lg:px-16 xl:px-20 pb-16 min-[661px]:pb-8">
           <div className="grid grid-cols-1 min-[661px]:grid-cols-12 items-center min-[661px]:items-start text-center min-[661px]:text-left gap-y-8 min-[661px]:gap-y-0 min-[661px]:gap-x-12 lg:gap-x-20">
             <h2
               className="min-[661px]:col-span-7 w-full max-w-[546px] text-[#591902] text-[40px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-normal font-serif m-0"
@@ -520,21 +530,19 @@ const About = () => {
             {/* --- SNAKE LINE SVG --- */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 hidden min-[661px]:block z-0 overflow-visible"
+              className="pointer-events-none absolute inset-x-0 hidden min-[661px]:block z-0 overflow-visible w-full"
               style={{
                 top: `${SVG_TOP}px`,
-                aspectRatio: '1331 / 3400'
               }}
             >
               <svg
                 ref={svgRef}
-                className="mx-auto overflow-visible"
                 width="1331"
                 height="3986"
                 viewBox="0 0 1331 3986"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                style={{ width: 'min(100%, 1200px)', height: 'auto' }}
+                className="mx-auto w-full max-w-[1270px] h-auto overflow-visible"
               >
                 <path
                   ref={pathRef}
@@ -547,7 +555,7 @@ const About = () => {
               </svg>
             </div>
 
-            <div className="relative z-10 max-w-[1200px] mx-auto px-6 min-[661px]:px-8 lg:px-12 xl:px-16 pt-16 min-[661px]:pt-20 lg:pt-24 min-[661px]:pb-24 lg:pb-28">
+            <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 min-[661px]:px-8 lg:px-12 xl:px-16 pt-16 min-[661px]:pt-20 lg:pt-24 min-[661px]:pb-24 lg:pb-28">
               {/* --- MOBILE CAROUSEL: SUB-TASK 2 -> SUB-TASK 3 --- */}
               <div className="flex w-full flex-col items-center mt-15 min-[661px]:hidden">
                 <MobileStoryCarousel
@@ -631,7 +639,10 @@ const About = () => {
                   <Img
                     src={story1Src}
                     alt="Atmosphere"
-                    className="anim-element slide-from-left about-page-hover-image w-full min-[661px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-r-[120px] min-[661px]:-ml-10 lg:-ml-20 xl:-ml-[100px]"
+                    className="anim-element slide-from-left about-page-hover-image w-full
+min-[661px]:basis-[42%]
+min-[661px]:max-w-[470px]
+shrink shrink-0 aspect-square object-cover rounded-r-[120px] min-[661px]:-ml-10 lg:-ml-20 xl:-ml-[100px]"
                   />
                 )}
                 <div className="w-full min-[661px]:flex-1 max-w-[400px] flex flex-col gap-5 min-[661px]:mt-16">
@@ -691,7 +702,10 @@ const About = () => {
                   <Img
                     src={story2Src}
                     alt="Details"
-                    className="order-1 min-[661px]:order-2 anim-element slide-from-right about-page-hover-image w-full min-[661px]:w-[45%] lg:w-[470px] max-w-[470px] shrink-0 aspect-square object-cover rounded-l-[120px] -mr-6 min-[661px]:-mr-10 lg:-mr-20 xl:-mr-[100px]"
+                    className="order-1 min-[661px]:order-2 anim-element slide-from-right about-page-hover-image w-full
+min-[661px]:basis-[42%]
+min-[661px]:max-w-[470px]
+shrink aspect-square object-cover rounded-l-[120px] -mr-6 min-[661px]:-mr-10 lg:-mr-20 xl:-mr-[100px]"
                   />
                 )}
               </div>
@@ -700,7 +714,7 @@ const About = () => {
               <div className="mt-28 -mx-6 px-6 pb-16 bg-[#222815] min-[661px]:bg-transparent min-[661px]:mx-0 min-[661px]:px-0 min-[661px]:pb-20">
                 <div className="flex justify-center min-[661px]:hidden mt-4 pt-16">
                   <h2
-                    className="text-white text-[30px] min-[661px]:text-[41px] lg:text-[61px] leading-[1] font-serif text-center"
+                    className="text-white text-[20px] min-[661px]:text-[24px] lg:text-[36px] leading-[1] font-serif text-center"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -814,7 +828,7 @@ const About = () => {
               {/* --- SUB-TASK 5: WHY CHOOSE ELEWEN --- */}
               <div className=" -mx-6 px-6 pt-9 pb-14 bg-[#E8DDC6] min-[661px]:mt-40 min-[661px]:bg-transparent min-[661px]:mx-0 min-[661px]:px-0 min-[661px]:py-20 min-[661px]:flex min-[661px]:flex-col min-[661px]:items-start">
                 <h2
-                  className="text-[#1C1C1C] min-[661px]:text-white text-[24px] min-[661px]:text-[50px] lg:text-[61px] leading-[1] font-serif text-center min-[661px]:text-left"
+                  className="text-[#1C1C1C] min-[661px]:text-white text-[20px] min-[661px]:text-[24px] lg:text-[36px] leading-[1] font-serif text-center min-[661px]:text-left"
                   style={{ fontFamily: "'Malgin', serif" }}
                 >
                   <span className="reveal-wrapper block">
@@ -934,11 +948,11 @@ const About = () => {
               {/* --- SUB-TASK 6: VENDOR QUALITY & CARDS --- */}
               <div
                 ref={subTask6Ref}
-                className="-mx-6 py-24 bg-[#F8F4ED] min-[661px]:bg-transparent px-6 min-[661px]:mt-40 min-[661px]:mx-0 min-[661px]:px-0"
+                className="-mx-6 py-16 bg-[#F8F4ED] min-[661px]:bg-transparent px-6 min-[661px]:mt-0 lg:mt-6 min-[661px]:mx-0 min-[661px]:px-0"
               >
                 <div className="flex flex-col items-center text-center min-[661px]:items-end min-[661px]:text-right">
                   <h2
-                    className="w-full max-w-[517px] text-[#1C1C1C] text-[30px] min-[661px]:text-[41px] min-[661px]:text-white lg:text-[61px] leading-[1] font-serif"
+                    className="w-full max-w-[517px] text-[#1C1C1C] text-[30px] min-[661px]:text-[41px] min-[661px]:text-white lg:text-[50px] xl:text-[61px] leading-[1] font-serif"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -948,7 +962,7 @@ const About = () => {
                     </span>
                   </h2>
                   <p
-                    className="mt-6 w-full max-w-[517px] text-[#1C1C1C] text-[16px] leading-[1.5] opacity-80 min-[661px]:text-white"
+                    className="mt-6 w-full max-w-[517px] text-[#1C1C1C] text-[14px] min-[661px]:text-[15px] lg:text-[16px] leading-[1.5] opacity-80 min-[661px]:text-white"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
                     <span className="reveal-wrapper block">
@@ -993,9 +1007,9 @@ const About = () => {
                       <div
                         key={index}
                         style={{ '--delay': `${0.08 + index * 0.06}s` }}
-                        className="card-reveal about-page-card group w-full max-w-none min-[661px]:max-w-[316px] min-h-[120px] min-[661px]:min-h-[275px] bg-[#FFFFFF] rounded-[8px] min-[661px]:rounded-[20px] px-5 py-5 min-[661px]:p-6 flex flex-col items-center justify-center gap-3 min-[661px]:gap-5"
+                        className="card-reveal about-page-card group w-full max-w-none min-[661px]:max-w-[240px] lg:max-w-[280px] min-h-[100px] min-[661px]:min-h-[200px] lg:min-h-[240px] bg-[#FFFFFF] rounded-[8px] min-[661px]:rounded-[20px] px-4 py-4 min-[661px]:p-4 lg:min-[661px]:p-5 flex flex-col items-center justify-center gap-2 min-[661px]:gap-3 lg:min-[661px]:gap-4"
                       >
-                        <div className="flex w-[52px] h-[52px] min-[661px]:w-[80px] min-[661px]:h-[80px] shrink-0 items-center justify-center about-page-card-icon">
+                        <div className="flex w-[48px] h-[48px] min-[661px]:w-[60px] min-[661px]:h-[60px] lg:min-[661px]:w-[70px] lg:min-[661px]:h-[70px] shrink-0 items-center justify-center about-page-card-icon">
                           {currentIconSrc && (
                             <div
                               className="w-full h-full origin-center bg-[#591902] about-page-hover-image"
@@ -1013,9 +1027,9 @@ const About = () => {
                           )}
                         </div>
 
-                        <div className="flex flex-col items-center gap-2 min-[661px]:gap-4 w-full px-0 min-[661px]:p-4">
+                        <div className="flex flex-col items-center gap-2 min-[661px]:gap-2 lg:min-[661px]:gap-3 w-full px-0 min-[661px]:p-2 lg:min-[661px]:p-3">
                           <h5
-                            className="about-page-card-title text-[#2D2D2D] text-[14px] min-[375px]:text-[16px] min-[661px]:text-[18px] sm:text-[21px] font-normal text-center leading-[120%] w-full max-w-[210px] min-[661px]:max-w-[240px] sm:max-w-none"
+                            className="about-page-card-title text-[#2D2D2D] text-[13px] min-[375px]:text-[14px] min-[661px]:text-[13px] lg:text-[15px] xl:text-[17px] font-normal text-center leading-[120%] w-full max-w-[190px] min-[661px]:max-w-[210px] lg:min-[661px]:max-w-[230px] xl:max-w-none"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               lineHeight: '120%',
@@ -1025,10 +1039,10 @@ const About = () => {
                             {card.title}
                           </h5>
                           <p
-                            className="about-page-card-desc text-[#767676] text-[11px] min-[375px]:text-[12px] min-[661px]:text-[13px] font-normal text-center leading-[150%] w-full max-w-[230px] min-[661px]:max-w-[276px] break-words"
+                            className="about-page-card-desc text-[#767676] text-[10px] min-[375px]:text-[11px] min-[661px]:text-[11px] lg:text-[12px] font-normal text-center leading-[140%] w-full max-w-[210px] min-[661px]:max-w-[220px] lg:min-[661px]:max-w-[250px] break-words"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
-                              lineHeight: '150%',
+                              lineHeight: '140%',
                               width: '100%',
                             }}
                           >
@@ -1047,7 +1061,7 @@ const About = () => {
         {/* --- Call To Action Section --- */}
         {/* Frame 271 */}
         <div className="w-full bg-[#591902] shrink-0">
-          <div className="max-w-[1440px] mx-auto px-6 min-[661px]:px-10 lg:px-20 xl:px-[100px] py-12 min-[661px]:py-10">
+          <div className="w-full max-w-[1600px] mx-auto px-6 min-[661px]:px-10 lg:px-16 xl:px-20 py-12 min-[661px]:py-10">
             <div className="flex flex-col items-center text-center gap-4">
               <h3
                 className="text-[#FFFFFF] text-[28px] min-[661px]:text-[40px] lg:text-[47px] font-normal leading-[1.05] m-0"
@@ -1112,7 +1126,91 @@ const About = () => {
         </div>
       </section>
       {/* --- SCROLL-TRACED OBJECT --- */}
-      <img src={objectImg} alt="" style={objStyle} loading="lazy" decoding="async" />
+      <div style={objStyle}>
+        <svg
+          width="96"
+          height="96"
+          viewBox="0 0 96 96"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ width: '100%', height: '100%' }}
+        >
+          <g filter="url(#filter0_dii_1563_915)">
+            <rect x="8" y="8" width="80" height="80" rx="40" fill="#222815" />
+            <image
+              x="34"
+              y="32"
+              width="28"
+              height="32"
+              href={white11Logo}
+              preserveAspectRatio="xMidYMid meet"
+            />{' '}
+          </g>
+          <defs>
+            <filter
+              id="filter0_dii_1563_915"
+              x="0"
+              y="0"
+              width="96"
+              height="96"
+              filterUnits="userSpaceOnUse"
+              colorInterpolationFilters="sRGB"
+            >
+              <feFlood floodOpacity="0" result="BackgroundImageFix" />
+              <feColorMatrix
+                in="SourceAlpha"
+                type="matrix"
+                values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                result="hardAlpha"
+              />
+              <feOffset />
+              <feGaussianBlur stdDeviation="4" />
+              <feComposite in2="hardAlpha" operator="out" />
+              <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.45 0" />
+              <feBlend
+                mode="normal"
+                in2="BackgroundImageFix"
+                result="effect1_dropShadow_1563_915"
+              />
+              <feBlend
+                mode="normal"
+                in="SourceGraphic"
+                in2="effect1_dropShadow_1563_915"
+                result="shape"
+              />
+              <feColorMatrix
+                in="SourceAlpha"
+                type="matrix"
+                values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                result="hardAlpha"
+              />
+              <feOffset dy="8" />
+              <feGaussianBlur stdDeviation="4" />
+              <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+              <feColorMatrix
+                type="matrix"
+                values="0 0 0 0 0.492981 0 0 0 0 0.499884 0 0 0 0 0.278962 0 0 0 0.8 0"
+              />
+              <feBlend mode="normal" in2="shape" result="effect2_innerShadow_1563_915" />
+              <feColorMatrix
+                in="SourceAlpha"
+                type="matrix"
+                values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                result="hardAlpha"
+              />
+              <feOffset dy="-6" />
+              <feGaussianBlur stdDeviation="6" />
+              <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+              <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" />
+              <feBlend
+                mode="normal"
+                in2="effect2_innerShadow_1563_915"
+                result="effect3_innerShadow_1563_915"
+              />
+            </filter>
+          </defs>
+        </svg>
+      </div>
     </>
   )
 }

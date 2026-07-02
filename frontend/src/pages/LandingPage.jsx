@@ -17,6 +17,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
+import white11logo from '../assets/images/white11logo.png'
 
 import CelebrationDoor from '../components/landing-page/CelebrationDoor'
 import HeroSection from '../components/landing-page/HeroSection'
@@ -665,7 +666,7 @@ const PlanEventSection = () => {
                 className="absolute top-0 right-0 flex flex-col items-center z-20 animate-swing"
                 style={{
                   animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                  animationDelay: `${(i % 5) * 0.08}s`,
+                  animationDelay: '0s',
                 }}
               >
                 <div
@@ -686,7 +687,7 @@ const PlanEventSection = () => {
                     }`}
                     style={{
                       animationDuration: `${4 + (i % 3) * 0.75}s`,
-                      animationDelay: `${(i % 5) * 0.08}s`,
+                      animationDelay: '0s',
                       background:
                         i % 2 === 0
                           ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
@@ -1118,8 +1119,8 @@ const WhatToPlanSection = () => {
           if (el.classList.contains('card-reveal')) el.classList.add('is-visible')
 
           // Text reveal inside the element
-          Array.from(el.querySelectorAll('.reveal-text')).forEach((span, i) => {
-            span.style.animationDelay = `${0.04 + i * 0.02}s`
+          Array.from(el.querySelectorAll('.reveal-text')).forEach(span => {
+            span.style.animationDelay = '0s'
             span.classList.add('is-visible')
           })
 
@@ -1684,10 +1685,10 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     const progressLine = container.querySelector('.progress-line-active')
     const stepElements = gsap.utils.toArray('.step-item', stepsWrap)
 
-    const revealTexts = (elements, baseDelay = 0) => {
-      elements.forEach((element, index) => {
+    const revealTexts = elements => {
+      elements.forEach(element => {
         if (element.classList.contains('is-visible')) return
-        element.style.animationDelay = `${baseDelay + index * 0.04}s`
+        element.style.animationDelay = '0s'
         element.classList.add('is-visible')
       })
     }
@@ -1696,8 +1697,8 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       revealTexts(Array.from(container.querySelectorAll('h2 .reveal-text')), 0)
     }
 
-    const revealStepText = (step, { fast = false } = {}) => {
-      revealTexts(Array.from(step.querySelectorAll('.reveal-text')), fast ? 0 : 0.08)
+    const revealStepText = (step = {}) => {
+      revealTexts(Array.from(step.querySelectorAll('.reveal-text')), 0)
     }
 
     const revealedSteps = new WeakSet()
@@ -1787,7 +1788,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         ease: 'none',
         overwrite: 'auto',
         onStart: () => {
-          if (revealContent) gsap.delayedCall(0.04, () => animateStepContent(targetStep))
+          if (revealContent) animateStepContent(targetStep)
         },
       })
     }
@@ -1902,8 +1903,22 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       className="relative w-full bg-[#591902] py-16 md:py-40 overflow-hidden font-sans text-white"
       // style={{ scrollMarginTop: '100px' }}
     >
-      <h2 className="text-[24px] md:text-[61px] text-center mb-16 md:mb-32 tracking-wide font-serif font-display">
-        {howItWorks.title || 'HOW 11 WORKS'}
+      <h2 className="text-[24px] md:text-[61px] text-center mb-16 md:mb-32 tracking-wide font-serif font-display flex items-center justify-center gap-2 md:gap-3">
+        {(() => {
+          const title = howItWorks.title || 'HOW 11 WORKS'
+          const parts = title.split('11')
+          return (
+            <>
+              {parts[0]}
+              <img
+                src={white11logo}
+                alt="11"
+                className="h-[24px] md:h-[48px] mx-1.5 w-auto inline-block"
+              />
+              {parts[1]}
+            </>
+          )
+        })()}
       </h2>
 
       <div
@@ -2128,7 +2143,7 @@ const BetterWaySection = () => {
                 className="absolute top-0 right-0 z-20 flex flex-col items-center animate-swing"
                 style={{
                   animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-                  animationDelay: `${(i % 5) * 0.08}s`,
+                  animationDelay: '0s',
                 }}
               >
                 <div
@@ -2148,7 +2163,7 @@ const BetterWaySection = () => {
                     }`}
                     style={{
                       animationDuration: `${4 + (i % 3) * 0.75}s`,
-                      animationDelay: `${(i % 5) * 0.08}s`,
+                      animationDelay: '0s',
                       background:
                         i % 2 === 0
                           ? 'linear-gradient(180deg, #FCD768 0%, rgba(247,247,245,0) 100%)'
@@ -2170,7 +2185,7 @@ const BetterWaySection = () => {
       data-nav-theme="glass"
       className="relative -mt-px  md:mt-0 w-full flex justify-center bg-[#F2F2F2] md:bg-[#F7F7F5] overflow-hidden font-sans"
     >
-      <div className="relative w-full  min-h-0 pb-6 md:min-h-[820px] md:max-lg:min-h-[980px] lg:h-[1040px] xl:h-[1171px] shrink-0 overflow-x-hidden">
+      <div className="relative w-full max-w-[1600px] mx-auto min-h-0 pb-6 md:min-h-[820px] md:max-lg:min-h-[980px] lg:h-[1040px] xl:h-[1171px] shrink-0 overflow-x-hidden">
         {/* --- SCALLOP / BULB SECTION --- */}
         <div className="hidden lg:flex">
           {renderScallopStrip({
@@ -2290,7 +2305,7 @@ const BetterWaySection = () => {
                 visible: {
                   x: 0,
                   opacity: 1,
-                  transition: { duration: 1.45, ease: [0.22, 1, 0.36, 1], delay: 0.12 },
+                  transition: { duration: 1.45, ease: [0.22, 1, 0.36, 1], delay: 0 },
                 },
               }}
             >
@@ -2345,7 +2360,7 @@ const BetterWaySection = () => {
                   visible: {
                     x: 0,
                     opacity: 1,
-                    transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1], delay: 0.12 },
+                    transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1], delay: 0 },
                   },
                 }}
               >
@@ -2554,9 +2569,7 @@ const ChecklistSection = () => {
     })
     gsap.set(gateArea, { backgroundColor: 'transparent' })
     gsap.set(insideBg, { opacity: 0 })
-    if (doorHeading) {
-      gsap.set(doorHeading, { opacity: 0, y: 16 })
-    }
+    if (doorHeading) gsap.set(doorHeading, { opacity: 0, y: 16 })
     gsap.set(howItWorks, { yPercent: 104, opacity: 1 })
 
     const tl = gsap.timeline({
@@ -2619,61 +2632,9 @@ const ChecklistSection = () => {
       howItWorksStart
     )
 
-    // Create smooth scroll animation for the floating heading after door opens
-    if (doorHeading && howItWorks) {
-      const headingH2 = doorHeading.querySelector('h2')
-      const howItWorksHeading = howItWorks.querySelector('h2')
-
-      // Calculate position to align with HowItWorksSection heading
-      const calculateHeadingPosition = () => {
-        if (!howItWorksHeading) return 0
-        const howItWorksRect = howItWorks.getBoundingClientRect()
-        const headingRect = howItWorksHeading.getBoundingClientRect()
-        // Position at the maroon section heading location
-        return howItWorksRect.top + (headingRect.top - howItWorksRect.top)
-      }
-
-      // Smooth heading scroll animation - scrolls down to align with HowItWorksSection heading
-      gsap.to(doorHeading, {
-        scrollTrigger: {
-          trigger: howItWorks,
-          start: 'top 80%',
-          end: 'top 0%',
-          scrub: 1,
-          onUpdate: (self) => {
-            // Smooth color transition from brown to white
-            const colorProgress = self.progress
-            const r = Math.round(89 * (1 - colorProgress) + 255 * colorProgress)
-            const g = Math.round(25 * (1 - colorProgress) + 255 * colorProgress)
-            const b = Math.round(2 * (1 - colorProgress) + 255 * colorProgress)
-            if (headingH2) {
-              headingH2.style.color = `rgb(${r}, ${g}, ${b})`
-            }
-          },
-        },
-        y: () => {
-          return calculateHeadingPosition()
-        },
-        duration: 0.5,
-        ease: 'power1.inOut',
-      })
-
-      // Pin heading at HowItWorksSection heading position
-      gsap.to(doorHeading, {
-        scrollTrigger: {
-          trigger: howItWorks,
-          start: 'top 0%',
-          end: 'bottom top',
-          pin: doorHeading,
-          pinSpacing: false,
-        },
-      })
-    }
-
     return () => {
       tl.scrollTrigger?.kill()
       tl.kill()
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill())
     }
   }, [])
 
@@ -2726,7 +2687,7 @@ const ChecklistSection = () => {
                   }`}
                   style={{
                     animationDuration: `${4 + (i % 3) * 0.75}s`,
-                    animationDelay: `${(i % 5) * 0.08}s`,
+                    animationDelay: '0s',
                     background:
                       i % 2 === 0
                         ? 'linear-gradient(180deg, #FCD768 0%, #F8F4ED 100%)'
@@ -2833,7 +2794,7 @@ const ChecklistSection = () => {
                   } absolute bottom-0 right-[-40px] h-[250px] w-auto max-w-none object-contain object-bottom z-10 pointer-events-none`}
                   alt="Scrolling"
                   style={{
-                    '--delay': '0.15s',
+                    '--delay': '0s',
                     filter: `
       drop-shadow(-8px -10px 18px rgba(0,0,0,0.10))
       drop-shadow(-2px -4px 8px rgba(0,0,0,0.06))
@@ -2846,7 +2807,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-left ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[196px] top-[170px] w-[113px] text-right z-20`}
-                style={{ '--delay': '0.12s' }}
+                style={{ '--delay': '0s' }}
               >
                 <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
                   Too much scrolling.
@@ -2856,7 +2817,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-left ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
-                style={{ '--delay': '0.15s' }}
+                style={{ '--delay': '0s' }}
               >
                 <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                   What was once simple now means endless scrolling â€” and still no confidence.
@@ -2868,7 +2829,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-right ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[0px] top-[18px] w-[211px] h-[211px] bg-[#BFAC9B] rounded-tr-full z-0`}
-                  style={{ '--delay': '0.2s' }}
+                  style={{ '--delay': '0s' }}
                 ></div>
                 <img
                   src={imgCalls}
@@ -2877,7 +2838,7 @@ const ChecklistSection = () => {
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[13px] top-[0px] w-[231px] h-[229px] object-cover object-top z-10 pointer-events-none`}
                   style={{
-                    '--delay': '0.25s',
+                    '--delay': '0s',
                     filter: `
     drop-shadow(0px -10px 18px rgba(109, 57, 8, 0.18))
     drop-shadow(-6px 0px 12px rgba(109, 57, 8, 0.12))
@@ -2889,7 +2850,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-right ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[157px] top-[83px] w-[113px] text-left z-20`}
-                  style={{ '--delay': '0.3s' }}
+                  style={{ '--delay': '0s' }}
                 >
                   <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2] font-sans">
                     Too many calls.
@@ -2899,7 +2860,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-right ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
-                  style={{ '--delay': '0.35s' }}
+                  style={{ '--delay': '0s' }}
                 >
                   <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
                     Follow-ups, confirmations, negotiations, and last-minute checks â€” your phone
@@ -2913,7 +2874,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-left ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute inset-0 bg-[#BFAC9B] z-0 shadow-sm`}
-                  style={{ '--delay': '0.4s' }}
+                  style={{ '--delay': '0s' }}
                 ></div>
                 <img
                   src={imgVendors}
@@ -2922,7 +2883,7 @@ const ChecklistSection = () => {
                   } absolute bottom-0 left-1/2 -translate-x-1/2 h-[280px] w-auto max-w-[400px] object-contain object-bottom z-10 pointer-events-none`}
                   alt="Vendors"
                   style={{
-                    '--delay': '0.45s',
+                    '--delay': '0s',
                     filter: `
       drop-shadow(0px -10px 18px rgba(0,0,0,0.12))
       drop-shadow(-4px -6px 10px rgba(0,0,0,0.08))
@@ -2935,7 +2896,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-left ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[400px] top-[337px] w-[113px] text-right z-20`}
-                style={{ '--delay': '0.5s' }}
+                style={{ '--delay': '0s' }}
               >
                 <h3 className="text-[21px] font-medium text-[#591902] leading-[1.2]">
                   Too many vendors.
@@ -2945,7 +2906,7 @@ const ChecklistSection = () => {
                 className={`anim-element slide-from-left ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
-                style={{ '--delay': '0.55s' }}
+                style={{ '--delay': '0s' }}
               >
                 <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
                   One decorator, one caterer, one supplier, different prices, different chaos.
@@ -2958,7 +2919,7 @@ const ChecklistSection = () => {
                   className={`anim-element slide-from-right ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute right-0 top-0 w-[211px] h-full bg-[#BFAC9B] z-0 shadow-sm`}
-                  style={{ '--delay': '0.6s' }}
+                  style={{ '--delay': '0s' }}
                 ></div>
                 <img
                   src={imgDecisions}
@@ -2967,7 +2928,7 @@ const ChecklistSection = () => {
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute bottom-[-50px] left-[-50px] h-[300px] w-auto max-w-none object-cover object-bottom z-10 pointer-events-none`}
                   style={{
-                    '--delay': '0.65s',
+                    '--delay': '0s',
                     filter: `
       drop-shadow(0px -12px 20px rgba(0,0,0,0.14))
       
@@ -3037,7 +2998,7 @@ const ChecklistSection = () => {
 
       {/* Door section unchanged */}
       <div className="door-section relative z-10 w-full overflow-hidden">
-        <div ref={gateAreaRef} className="door-section__pin relative z-20 w-full overflow-visible">
+        <div ref={gateAreaRef} className="door-section__pin relative z-20 w-full">
           <div
             ref={insideBgRef}
             className="door-section__inside-bg pointer-events-none absolute bg-[#F6D69D] opacity-0"
@@ -3045,25 +3006,13 @@ const ChecklistSection = () => {
 
           <div
             ref={doorHeadingRef}
-            className="absolute left-1/2 flex items-center justify-center pointer-events-none opacity-0"
-            style={{
-              transform: 'translateX(-50%)',
-              top: 0,
-              zIndex: 999999,
-              willChange: 'transform, opacity',
-            }}
+            className="absolute inset-0 z-[6] flex items-center justify-center pointer-events-none opacity-0"
           >
             <h2
-              className="text-[24px] md:text-[61px] text-[#591902] text-center tracking-wide font-display flex items-center justify-center gap-2 md:gap-4"
+              className="text-[24px] md:text-[61px] text-[#591902] text-center tracking-wide font-display"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              HOW
-              <img
-                src={centerLogo}
-                alt="11"
-                className="h-[24px] md:h-[61px] w-auto inline"
-              />
-              WORKS
+              HOW 11 WORKS
             </h2>
           </div>
 
@@ -4567,11 +4516,11 @@ const SplitInfoSection = () => {
         {/* LEFT SECTION - Inspiration */}
         <div
           className="w-full lg:w-[61.111111%] bg-[#FFFFFF] flex flex-row items-start justify-between gap-4 px-[20px] py-[40px] lg:pl-[100px] lg:pr-[40px] lg:py-[80px] overflow-x-clip"
-          style={getSplitRevealStyle(isSplitVisible, { delay: 0.02 })}
+          style={getSplitRevealStyle(isSplitVisible, { delay: 0 })}
         >
           <div
             className="flex flex-col items-start text-left w-[55%] lg:w-[400px] shrink-0"
-            style={getSplitRevealStyle(isSplitVisible, { delay: 0.06, fromY: 28 })}
+            style={getSplitRevealStyle(isSplitVisible, { delay: 0, fromY: 28 })}
           >
             <h2
               className="text-[#2D2D2D] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0"
@@ -4609,7 +4558,7 @@ const SplitInfoSection = () => {
             src={inspirationImg}
             alt="Behind the scenes setup"
             className="w-[40%] max-w-[156px] lg:max-w-[240px] h-[229px] lg:h-[351px] rounded-[3.57px] lg:rounded-[8px] object-cover object-[20%_center]"
-            style={getSplitRevealStyle(isSplitVisible, { delay: 0.1, fromY: 32 })}
+            style={getSplitRevealStyle(isSplitVisible, { delay: 0, fromY: 32 })}
             loading="lazy"
             decoding="async"
           />
@@ -4622,7 +4571,7 @@ const SplitInfoSection = () => {
         >
           <div
             className="w-full max-w-[353px] lg:max-w-[420px] h-[152px] lg:h-[210px] bg-[#FFFFFF] rounded-[8px] overflow-hidden shrink-0"
-            style={getSplitRevealStyle(isSplitVisible, { delay: 0.08, fromY: 24 })}
+            style={getSplitRevealStyle(isSplitVisible, { delay: 0, fromY: 24 })}
           >
             <img
               src={img2}
@@ -4635,7 +4584,7 @@ const SplitInfoSection = () => {
 
           <div
             className="flex flex-col items-start w-full max-w-[353px] lg:max-w-[420px] mt-[32px] lg:mt-[40px]"
-            style={getSplitRevealStyle(isSplitVisible, { delay: 0.14, fromY: 28 })}
+            style={getSplitRevealStyle(isSplitVisible, { delay: 0, fromY: 28 })}
           >
             <h2
               className="text-[#FFFFFF] text-[20px] md:text-[27px] leading-[100%] w-full font-serif m-0"

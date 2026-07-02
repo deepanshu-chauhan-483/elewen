@@ -259,8 +259,8 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
             <svg
               viewBox="0 0 24 24"
               className="h-[18px] w-[18px]"
-              fill={saved ? 'currentColor' : 'none'}
-              stroke="currentColor"
+              fill={saved ? '#8C3B11' : 'none'}
+              stroke={saved ? '#8C3B11' : '#8C3B11'}
               strokeWidth="1.8"
             >
               <path
