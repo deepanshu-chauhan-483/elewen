@@ -2538,6 +2538,7 @@ const ChecklistSection = () => {
     const doorCurvedText = gate.querySelector('#door-curved-text')
 
     const isMobile = window.innerWidth < 768
+    if (isMobile) return
     const frameHalfWidthRatio = 190 / 1440
     const requiredScaleToClearViewport = gate.offsetWidth
       ? (window.innerWidth / (2 * gate.offsetWidth * frameHalfWidthRatio)) * 1.28

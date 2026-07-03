@@ -5,6 +5,8 @@ const r2MediaSources = [
   'market-assets.strapi.io',
   'https://*.r2.dev',
   'https://*.r2.cloudflarestorage.com',
+  'https://res.cloudinary.com',
+  'https://*.cloudinary.com',
   ...(r2PublicUrl ? [r2PublicUrl] : []),
 ];
 
@@ -36,7 +38,14 @@ module.exports = [
   },
   'strapi::poweredBy',
   'strapi::query',
-  'strapi::body',
+  {
+    name: 'strapi::body',
+    config: {
+      formLimit: '500mb',
+      jsonLimit: '500mb',
+      textLimit: '500mb',
+    },
+  },
   'strapi::session',
   'strapi::favicon',
   'strapi::public',
