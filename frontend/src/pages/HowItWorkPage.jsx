@@ -552,9 +552,11 @@ const FinalCtaSection = ({ section }) => {
           className="mt-5 max-w-[980px] text-[30px] leading-[0.96] text-white min-[540px]:text-[41px] lg:text-[61px]"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          <RevealLine delay="0.08s">{section?.heading_line_1 ?? 'Your Celebration Is'}</RevealLine>
+          <RevealLine delay="0.08s">
+            {section?.heading_line_1 ?? 'Still confused, excited, or'}
+          </RevealLine>
           <RevealLine delay="0.14s">
-            {section?.heading_line_2 ?? 'Just a Few Steps Away.'}
+            {section?.heading_line_2 ?? 'somewhere in between?'}
           </RevealLine>
         </h2>
 

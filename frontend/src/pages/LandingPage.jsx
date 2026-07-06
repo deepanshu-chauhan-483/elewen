@@ -637,7 +637,7 @@ const PlanEventSection = () => {
           io.unobserve(entry.target)
         })
       },
-      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
+      { threshold: 0, rootMargin: '0px' }
     )
 
     cards.forEach(el => io.observe(el))
@@ -1127,7 +1127,7 @@ const WhatToPlanSection = () => {
           io.unobserve(el)
         })
       },
-      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
+      { threshold: 0, rootMargin: '0px' }
     )
 
     targets.forEach(el => io.observe(el))
@@ -1618,6 +1618,9 @@ const normalizeText = value => (value == null ? '' : String(value))
 const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   const { data: howItWorks = { title: '', sections: [] } } = useHowItWorksLandingPage()
   const [activeStepIndex, setActiveStepIndex] = useState(0)
+  const [isMobileView, setIsMobileView] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
 
   const steps = useMemo(() => {
     const list = Array.isArray(howItWorks.sections) ? howItWorks.sections : []
@@ -1672,12 +1675,125 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     )
   }
 
+  // Track mobile viewport for disabling scroll animations
+  useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Setup mobile progress line initial state
+  useEffect(() => {
+    if (!isMobileView || !containerRef.current) return
+    const container = containerRef.current
+
+    // Show heading
+    const heading = container.querySelector('h2')
+    if (heading) {
+      heading.style.opacity = '1'
+    }
+
+    // Initialize progress line
+    const progressLine = container.querySelector('.progress-line-active')
+    const firstStep = container.querySelector('.step-item')
+    if (progressLine && firstStep) {
+      gsap.set(progressLine, {
+        top: firstStep.offsetTop,
+        height: firstStep.offsetHeight,
+        opacity: 1,
+      })
+    }
+  }, [isMobileView, steps.length])
+
+  // Mobile animations - match desktop behavior with intersection observers
+  useEffect(() => {
+    if (!isMobileView || !containerRef.current) return
+    const container = containerRef.current
+    const stepsWrap = stepsWrapRef.current
+    if (!stepsWrap) return
+
+    const progressLine = container.querySelector('.progress-line-active')
+    const stepElements = Array.from(stepsWrap.querySelectorAll('.step-item'))
+
+    if (stepElements.length === 0 || !progressLine) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+
+          const stepEl = entry.target
+          const stepIndex = stepElements.indexOf(stepEl)
+
+          // Update progress line position and height
+          const targetTop = stepEl.offsetTop
+          const targetHeight = stepEl.offsetHeight
+
+          gsap.to(progressLine, {
+            top: targetTop,
+            height: targetHeight,
+            duration: 0.25,
+            ease: 'power2.out',
+            overwrite: 'auto',
+          })
+
+          // Mark step as active
+          stepElements.forEach((step, idx) => {
+            step.classList.toggle('is-step-active', idx === stepIndex)
+          })
+          setActiveStepIndex(stepIndex)
+
+          // Animate left and right content
+          const leftContent = stepEl.querySelector('.left-content')
+          const rightContent = stepEl.querySelector('.right-content')
+
+          const tl = gsap.timeline()
+
+          if (leftContent) {
+            tl.fromTo(
+              leftContent,
+              { x: -88, opacity: 0 },
+              { x: 0, opacity: 1, duration: 0.2, ease: 'power2.out' },
+              0
+            )
+          }
+
+          if (rightContent) {
+            tl.fromTo(
+              rightContent,
+              { x: 88, opacity: 0 },
+              { x: 0, opacity: 1, duration: 0.2, ease: 'power2.out' },
+              0
+            )
+          }
+
+          // Animate reveal-text elements
+          const revealTexts = Array.from(stepEl.querySelectorAll('.reveal-text'))
+          revealTexts.forEach(text => {
+            if (!text.classList.contains('is-visible')) {
+              text.classList.add('is-visible')
+            }
+          })
+
+          io.unobserve(stepEl)
+        })
+      },
+      { threshold: 0, rootMargin: '0px' }
+    )
+
+    stepElements.forEach(el => io.observe(el))
+    return () => {
+      io.disconnect()
+      gsap.killTweensOf(progressLine)
+    }
+  }, [isMobileView, steps.length])
+
   // ── GSAP scroll animations ──────────────────────────────────
   gsap.config({ autoSleep: 60, force3D: true, nullTargetWarn: false })
   ScrollTrigger.config({ limitCallbacks: true, ignoreMobileResize: true })
 
   useLayoutEffect(() => {
-    if (disableScrollAnimations || !isVisible) return
+    if (disableScrollAnimations || !isVisible || isMobileView) return
     const container = containerRef.current
     const stepsWrap = stepsWrapRef.current
     if (!container || !stepsWrap) return
@@ -1714,7 +1830,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 
       const stepTimeline = gsap.timeline({
         defaults: {
-          duration: fast ? 0.3 : 0.42,
+          duration: fast ? 0.2 : 0.25,
           ease: 'power2.out',
           overwrite: 'auto',
         },
@@ -1723,11 +1839,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       if (leftContent)
         stepTimeline.to(leftContent, { x: 0, opacity: 1, clearProps: 'transform' }, 0)
       if (rightContent)
-        stepTimeline.to(
-          rightContent,
-          { x: 0, opacity: 1, clearProps: 'transform' },
-          leftContent ? 0.12 : 0
-        )
+        stepTimeline.to(rightContent, { x: 0, opacity: 1, clearProps: 'transform' }, 0)
     }
 
     let currentActiveIndex = 0
@@ -1769,7 +1881,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
             top: targetTop,
             height: targetHeight,
             opacity: 1,
-            duration: fast ? 0.55 : 0.85,
+            duration: fast ? 0.3 : 0.5,
             ease: 'power3.out',
             overwrite: 'auto',
             onStart: () => {
@@ -1784,7 +1896,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         top: targetTop,
         height: targetHeight,
         opacity: 1,
-        duration: 0.4,
+        duration: 0.25,
         ease: 'none',
         overwrite: 'auto',
         onStart: () => {
@@ -1894,7 +2006,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
       ctx.revert()
       observer.disconnect()
     }
-  }, [disableScrollAnimations, isVisible, steps.length])
+  }, [disableScrollAnimations, isVisible, steps.length, isMobileView])
 
   return (
     <section
@@ -2524,6 +2636,35 @@ const ChecklistSection = () => {
       observer.disconnect()
     }
   }, [])
+
+  // Setup reveal animations for door section heading
+  useEffect(() => {
+    const root = sectionRef.current
+    if (!root) return
+
+    const targets = Array.from(
+      root.querySelectorAll('.reveal-heading, .reveal-on-scroll, .card-reveal')
+    ).filter(el => !el.classList.contains('is-visible'))
+
+    if (targets.length === 0) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          Array.from(entry.target.querySelectorAll('.reveal-text')).forEach(span => {
+            span.classList.add('is-visible')
+          })
+          io.unobserve(entry.target)
+        })
+      },
+      { threshold: 0, rootMargin: '0px 0px 0px 0px' }
+    )
+
+    targets.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [sectionRef])
 
   useEffect(() => {
     const gateArea = gateAreaRef.current
@@ -3823,7 +3964,7 @@ const PlanningGuidesSection = () => {
           io.unobserve(entry.target)
         })
       },
-      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
+      { threshold: 0, rootMargin: '0px' }
     )
 
     cards.forEach(el => io.observe(el))
@@ -4265,7 +4406,7 @@ const TestimonialsSection = () => {
           io.unobserve(entry.target)
         })
       },
-      { threshold: 0.05, rootMargin: '0px 0px -2% 0px' }
+      { threshold: 0, rootMargin: '0px' }
     )
 
     cards.forEach(el => io.observe(el))

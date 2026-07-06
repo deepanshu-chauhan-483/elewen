@@ -73,7 +73,7 @@ const HeroPreloader = forwardRef(function HeroPreloader({ initiallyHidden = fals
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 z-[99999] overflow-hidden ${
+      className={`absolute inset-0 z-[99999] overflow-hidden pointer-events-none ${
         initiallyHidden ? 'opacity-0 invisible' : ''
       }`}
     >

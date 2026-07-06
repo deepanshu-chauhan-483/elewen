@@ -17,6 +17,27 @@ module.exports = {
     // Register custom services, controllers, routes here
   },
   async bootstrap({ strapi }) {
+    // ─── Lifecycle Hook: Delete media from R2 when deleted in Strapi ───────
+    strapi.db.lifecycles.subscribe({
+      models: ['plugin::upload.file'],
+      async beforeDelete(event) {
+        const { data } = event;
+        if (!data?.id) return;
+
+        try {
+          // Delete the file from upload provider (R2) via Strapi's upload service
+          const uploadService = strapi.plugin('upload').service('upload');
+          if (uploadService?.remove) {
+            await uploadService.remove(data);
+            strapi.log.info(`[R2] Deleted media file ${data.id} from R2`);
+          }
+        } catch (error) {
+          strapi.log.error(`[R2] Failed to delete from R2: ${error.message}`);
+          // Log error but don't block the Strapi deletion
+        }
+      },
+    });
+
     if (process.env.RESEND_API_KEY) {
       const emailService = strapi.plugin('email')?.service('email');
       const originalSend = emailService?.send?.bind(emailService);

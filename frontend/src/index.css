@@ -549,7 +549,7 @@ p {
 }
 
 .reveal-text.is-visible:not(.reveal-text-x-left):not(.reveal-text-x-right) {
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slideUp {
@@ -596,19 +596,19 @@ p {
 
 /* Override vertical animation when horizontal variant is used */
 .reveal-text-x-left.is-visible {
-  animation: slideInFromLeft 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideInFromLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .reveal-text-x-right.is-visible {
-  animation: slideInFromRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideInFromRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .reveal-text-slow.reveal-text-x-left.is-visible {
-  animation: slideInFromLeft 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: slideInFromLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .reveal-text-slow.reveal-text-x-right.is-visible {
-  animation: slideInFromRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: slideInFromRight 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* Extra padding for circle reveal so box-shadow isn't clipped by overflow:hidden */
@@ -1122,7 +1122,7 @@ p {
 }
 
 .card-reveal.is-visible {
-  animation: cardFadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: cardFadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-delay: var(--delay, 0s);
 }
 

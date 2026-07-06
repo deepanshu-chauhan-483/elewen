@@ -769,7 +769,7 @@ const HeroSection = () => {
             position: 'absolute',
             inset: 0,
             zIndex: 30,
-            pointerEvents: 'none',
+            pointerEvents: 'auto',
             color: '#FAFAFA',
           }}
         >
@@ -890,7 +890,10 @@ const HeroSection = () => {
             </div>
 
             {/* Cards section - strictly hidden on Mobile using hidden md:flex */}
-            <div className="hero-desktop-cards hero-desktop-footer hidden w-full shrink-0 border-t border-white/20 bg-black/20 backdrop-blur-md md:flex md:w-auto md:border-t-0 md:bg-transparent md:backdrop-blur-none">
+            <div
+              className="hero-desktop-cards hero-desktop-footer hidden w-full shrink-0 border-t border-white/20 bg-black/20 backdrop-blur-md md:flex md:w-auto md:border-t-0 md:bg-transparent md:backdrop-blur-none"
+              style={{ pointerEvents: 'auto' }}
+            >
               {rightCards.map((card, i) => {
                 const extras = [
                   'md:rounded-tl-[20px]',
@@ -917,7 +920,8 @@ const HeroSection = () => {
                     onKeyDown={e => {
                       if (e.key === 'Enter') navigate(cardHref)
                     }}
-                    className={`hero-desktop-card col-span-1 h-22.5 md:h-[clamp(5.5rem,9.72vw,8.75rem)] md:w-[clamp(7rem,15.28vw,13.75rem)] md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/40 transition-colors cursor-pointer pointer-events-auto ${extra}`}
+                    style={{ pointerEvents: 'auto' }}
+                    className={`hero-desktop-card col-span-1 h-22.5 md:h-[clamp(5.5rem,9.72vw,8.75rem)] md:w-[clamp(7rem,15.28vw,13.75rem)] md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/40 transition-colors duration-300 cursor-pointer ${extra}`}
                   >
                     <div className="hero-desktop-card-inner absolute flex flex-col top-[clamp(0.75rem,3.5vw,1rem)] left-[clamp(0.625rem,2.5vw,0.75rem)] right-[clamp(0.375rem,1.5vw,0.5rem)] md:top-[clamp(0.875rem,1.39vw,1.25rem)] md:left-[clamp(0.875rem,1.39vw,1.25rem)] md:right-[clamp(0.5rem,0.7vw,0.75rem)] gap-[clamp(0.5rem,0.83vw,0.75rem)]">
                       <h3
