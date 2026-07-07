@@ -162,6 +162,27 @@ function normalizeWishlistPayload(payload) {
   }
 }
 
+function collectWishlistLookupIds(items = [], packageIds = []) {
+  const lookupIds = new Set(normalizePackageIds(packageIds))
+
+  for (const item of items) {
+    for (const candidate of [
+      item?.packageId,
+      item?.packageDocumentId,
+      item?.id,
+      item?.documentId,
+      item?.package?.id,
+      item?.package?.documentId,
+    ]) {
+      if (candidate != null && String(candidate).trim()) {
+        lookupIds.add(String(candidate))
+      }
+    }
+  }
+
+  return lookupIds
+}
+
 export function dispatchWishlistChange() {
   window.dispatchEvent(new Event(WISHLIST_EVENT))
 }
@@ -235,18 +256,43 @@ export function useWishlist() {
         throw err
       }
     },
+    onMutate: async ({ packageId, saved: wasSaved }) => {
+      const activeToken = getToken()
+      const queryKey = ['wishlist', activeToken || 'guest']
+      const normalizedPackageId = String(packageId ?? '').trim()
+
+      await queryClient.cancelQueries({ queryKey })
+
+      const previous = queryClient.getQueryData(queryKey) ?? { items: [], packageIds: [] }
+      const prevIds = normalizePackageIds(previous.packageIds)
+      const nextIds = wasSaved
+        ? prevIds.filter(id => id !== normalizedPackageId)
+        : normalizePackageIds([...prevIds, normalizedPackageId])
+
+      queryClient.setQueryData(queryKey, {
+        ...previous,
+        packageIds: nextIds,
+      })
+
+      return { previous, queryKey }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous && context?.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previous)
+      }
+    },
     onSuccess: nextWishlist => {
       const activeToken = getToken()
       queryClient.setQueryData(
         ['wishlist', activeToken || 'guest'],
         normalizeWishlistPayload(nextWishlist)
       )
-      dispatchWishlistChange()
     },
   })
 
+  const wishlistItems = wishlistQuery.data?.items ?? []
   const savedPackageIds = normalizePackageIds(wishlistQuery.data?.packageIds)
-  const savedPackageIdSet = new Set(savedPackageIds)
+  const savedPackageIdSet = collectWishlistLookupIds(wishlistItems, savedPackageIds)
 
   return {
     wishlist: wishlistQuery.data?.items ?? [],
@@ -259,7 +305,10 @@ export function useWishlist() {
       toggleMutation.isPending && toggleMutation.variables?.packageId != null
         ? String(toggleMutation.variables.packageId)
         : '',
-    isSaved: packageId => savedPackageIdSet.has(String(packageId)),
+    isSaved: packageId => {
+      const normalizedId = String(packageId ?? '').trim()
+      return normalizedId ? savedPackageIdSet.has(normalizedId) : false
+    },
     toggleSavedPackage: ({ packageId, customConfig } = {}) =>
       toggleMutation.mutateAsync({
         packageId: String(packageId ?? '').trim(),

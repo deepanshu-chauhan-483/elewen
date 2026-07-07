@@ -62,7 +62,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
         '/cms': {
-          target: env.VITE_STRAPI_URL || 'http://localhost:1337',
+          target:
+            env.VITE_STRAPI_PROXY_TARGET ||
+            env.VITE_STRAPI_URL ||
+            'http://localhost:1337',
           changeOrigin: true,
           rewrite: path => path.replace(/^\/cms/, ''),
         },

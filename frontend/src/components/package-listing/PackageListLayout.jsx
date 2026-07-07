@@ -46,7 +46,7 @@ export default function PackageListLayout({
       {heroContent ? <div className="pt-8 md:pt-10">{heroContent}</div> : null}
       <div className="px-4 pb-0 pt-20 sm:px-6 md:pt-24">
         <div className="mx-auto flex w-full flex-col lg:w-[calc(100%-200px)] lg:max-w-none">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative z-40 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p
               className="text-[27px] leading-none text-[#1C1C1C]"
               style={{ fontFamily: "'Malgin', serif" }}

@@ -3,6 +3,9 @@ export const CUSTOM_SELECT_LIST_CLASS =
 
 export const CUSTOM_SELECT_LIST_PROPS = { 'data-lenis-prevent': true }
 
+/** Portal menus must sit above cards, map overlays, and package badges (z-30). */
+export const CUSTOM_SELECT_MENU_Z = 'z-[500]'
+
 /** Same hover on every dropdown option (all variants / pages). */
 export const CUSTOM_SELECT_OPTION_HOVER = 'hover:bg-black hover:text-white'
 
@@ -26,7 +29,7 @@ export const selectPresets = {
     arrowClassName:
       'pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]',
     menuClassName:
-      'fixed z-[500] overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]',
+      `fixed ${CUSTOM_SELECT_MENU_Z} overflow-hidden border border-[#2D2D2D]/15 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]`,
     listClassName: CUSTOM_SELECT_LIST_CLASS,
     optionClassName:
       'flex w-full min-w-0 whitespace-nowrap items-center bg-white px-4 py-3 text-left text-[16px] text-[#2D2D2D] transition-colors',
@@ -50,7 +53,7 @@ export const selectPresets = {
     arrowClassName:
       'pointer-events-none absolute right-3 top-1/2 h-3 w-3 shrink-0 -translate-y-1/2 text-[#7A2B08]',
     menuClassName:
-      'fixed overflow-hidden rounded-[16px] border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]',
+      `fixed ${CUSTOM_SELECT_MENU_Z} overflow-hidden rounded-[16px] border border-[#7A2B08]/35 bg-[#F7F0E6] shadow-[0_10px_24px_rgba(0,0,0,0.16)]`,
     listClassName: CUSTOM_SELECT_LIST_CLASS,
     optionClassName:
       'flex w-full min-w-0 whitespace-nowrap items-center bg-[#F7F0E6] px-6 py-3 text-left text-[14px] leading-[18px] text-[#7A2B08] transition-colors',
@@ -74,7 +77,7 @@ export const selectPresets = {
     arrowClassName:
       'pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2D2D2D]',
     menuClassName:
-      'fixed overflow-hidden rounded-[16px] border border-black/10 bg-[#D9D9D9] shadow-[0_10px_24px_rgba(0,0,0,0.16)]',
+      `fixed ${CUSTOM_SELECT_MENU_Z} overflow-hidden rounded-[16px] border border-black/10 bg-[#D9D9D9] shadow-[0_10px_24px_rgba(0,0,0,0.16)]`,
     listClassName: CUSTOM_SELECT_LIST_CLASS,
     optionClassName:
       'flex w-full min-w-0 whitespace-nowrap items-center bg-[#D9D9D9] px-4 py-3 text-left text-[12px] text-[#2D2D2D] transition-colors',

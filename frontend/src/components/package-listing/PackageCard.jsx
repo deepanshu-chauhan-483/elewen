@@ -39,7 +39,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
   const location = useLocation()
   const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
   const packageId = pkg.documentId ?? pkg.id
-  const wishlistPackageId = pkg.id ?? pkg.documentId
+  const wishlistPackageId = String(pkg.id ?? pkg.documentId ?? '').trim()
   const serviceSlug = String(pkg.serviceSlug ?? pkg.service_slugs?.[0] ?? '')
     .trim()
     .toLowerCase()
@@ -52,8 +52,14 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
   const hiddenTagsMeasureRef = useRef(null)
 
   const currentImage = images[currentIndex]
-  const saved = isSaved(wishlistPackageId)
-  const isWishlistPending = String(pendingPackageId) === String(wishlistPackageId)
+  const saved =
+    isSaved(wishlistPackageId) ||
+    (pkg.id != null && isSaved(pkg.id)) ||
+    (pkg.documentId && isSaved(pkg.documentId))
+  const isWishlistPending =
+    [wishlistPackageId, pkg.id, pkg.documentId].some(
+      id => id != null && String(pendingPackageId) === String(id)
+    )
 
   useEffect(() => {
     if (!images.length) return
@@ -248,27 +254,46 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </div>
           <button
             type="button"
-            aria-label={saved ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-label={
+              isWishlistPending
+                ? 'Updating wishlist'
+                : saved
+                  ? 'Remove from wishlist'
+                  : 'Add to wishlist'
+            }
             aria-pressed={saved}
+            aria-busy={isWishlistPending}
             disabled={isWishlistPending}
             onClick={handleWishlistClick}
-            className={`flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[#8C3B11] shadow-sm transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70 ${
-              saved ? 'bg-[#8C3B11] text-white border-[#8C3B11]' : ''
-            }`}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-sm transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-[18px] w-[18px]"
-              fill={saved ? '#8C3B11' : 'none'}
-              stroke={saved ? '#8C3B11' : '#8C3B11'}
-              strokeWidth="1.8"
-            >
-              <path
-                d="M12 21s-6.716-4.35-9.193-8.107C.708 9.704 1.48 5.5 5.538 4.39A5.39 5.39 0 0 1 12 6.303a5.39 5.39 0 0 1 6.462-1.913c4.057 1.11 4.83 5.314 2.73 8.503C18.716 16.65 12 21 12 21Z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            {isWishlistPending ? (
+              <svg className="h-[18px] w-[18px] animate-spin text-[#8C3B11]" viewBox="0 0 24 24" fill="none">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                className="h-[18px] w-[18px] transition-colors duration-200"
+                fill={saved ? '#8C3B11' : 'none'}
+                stroke="#8C3B11"
+                strokeWidth="1.8"
+              >
+                <path
+                  d="M12 21s-6.716-4.35-9.193-8.107C.708 9.704 1.48 5.5 5.538 4.39A5.39 5.39 0 0 1 12 6.303a5.39 5.39 0 0 1 6.462-1.913c4.057 1.11 4.83 5.314 2.73 8.503C18.716 16.65 12 21 12 21Z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
           </button>
         </div>
 

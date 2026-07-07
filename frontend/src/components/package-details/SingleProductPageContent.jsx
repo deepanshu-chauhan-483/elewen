@@ -363,6 +363,13 @@ function ProductImageLayout({
     preloadImages(urls)
   }, [mainImage, sideImages])
 
+  useEffect(() => {
+    setSelectedImage({
+      image: null,
+      baseMainImage: mainImage ?? null,
+    })
+  }, [mainImage])
+
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
       <NavHeader />
@@ -388,12 +395,12 @@ function ProductImageLayout({
                   maxWidth: 'clamp(17.5rem, 38vw, 37.5rem)',
                 }}
               >
-                <div className="relative">
+                <div className="relative h-[min(70vh,32rem)] w-full md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]">
                   <AppImage
                     src={activeImage}
                     alt={title}
                     eager
-                    className="h-auto w-full max-h-[min(70vh,32rem)] border-l-2 border-r-2 border-b-2 border-[#727355] md:max-h-none md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:object-cover"
+                    className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white object-cover object-center"
                   />
 
                   {/* Company Logo */}
@@ -449,8 +456,9 @@ function ProductImageLayout({
               </div>
 
               {/* Side Images */}
+              {sideImages.length > 0 ? (
               <div
-                className="order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-auto md:max-h-[unset] md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:shrink-0 md:max-h-[unset] md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 style={{
                   maxHeight: sideImagesMaxHeight,
                 }}
@@ -479,6 +487,7 @@ function ProductImageLayout({
                   </button>
                 ))}
               </div>
+              ) : null}
             </div>
           </div>
 

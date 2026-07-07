@@ -183,6 +183,12 @@ function buildKeyDecorText(pkg) {
   return keyDecorText || DECOR_CONTENT.keyDecorElements
 }
 
+function normalizeGalleryImageUrl(image) {
+  if (!image) return ''
+  if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
+  return toAbsoluteStrapiUrl(image?.url)
+}
+
 function buildDecorMediaGallery(pkg) {
   const inclusionImages = getDecorDetailSections(pkg)
     .flatMap(section =>
@@ -191,17 +197,51 @@ function buildDecorMediaGallery(pkg) {
     .filter(Boolean)
   const backdropImages = getDecorDetailSections(pkg)
     .flatMap(section => normaliseMediaArray(section?.backdrop_images))
-    .map(image => {
-      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
-      return toAbsoluteStrapiUrl(image?.url)
-    })
+    .map(image => normalizeGalleryImageUrl(image))
+    .filter(Boolean)
+  const elementImages = getDecorDetailSections(pkg)
+    .flatMap(section => (Array.isArray(section?.elements) ? section.elements : []))
+    .flatMap(element => normaliseMediaArray(element?.images))
+    .map(image => normalizeGalleryImageUrl(image))
     .filter(Boolean)
 
   return uniqueValues([
-    ...(Array.isArray(pkg?.images) ? pkg.images : []),
+    ...(Array.isArray(pkg?.images) ? pkg.images : [])
+      .map(image => normalizeGalleryImageUrl(image))
+      .filter(Boolean),
     ...inclusionImages,
     ...backdropImages,
+    ...elementImages,
   ])
+}
+
+function collectSectionGalleryImages(sections = []) {
+  return uniqueValues(
+    (Array.isArray(sections) ? sections : []).flatMap(section => {
+      const items = Array.isArray(section?.items) ? section.items : []
+
+      return items.flatMap(item => {
+        if (typeof item === 'string') return []
+        return (Array.isArray(item?.images) ? item.images : [])
+          .map(image => normalizeGalleryImageUrl(image))
+          .filter(Boolean)
+      })
+    })
+  )
+}
+
+function buildDecorSideImages(sourceImages = [], minCount = 5) {
+  const normalized = uniqueValues(
+    (Array.isArray(sourceImages) ? sourceImages : [])
+      .map(image => normalizeGalleryImageUrl(image) || image)
+      .filter(Boolean)
+  )
+
+  if (!normalized.length) return PKG_LOCAL_IMAGES[0]
+
+  if (normalized.length >= minCount) return normalized
+
+  return Array.from({ length: minCount }, (_, index) => normalized[index % normalized.length])
 }
 
 function getInclusionImages(inclusion) {
@@ -949,15 +989,22 @@ export default function DecorSinglePackagePage() {
   }
 
   const sections = activeCustomization?.data?.sections ?? []
-  const galleryImages = buildDecorMediaGallery(pkg)
+  const galleryImages = uniqueValues([
+    ...buildDecorMediaGallery(pkg),
+    ...collectSectionGalleryImages(sectionTemplate),
+    ...collectSectionGalleryImages(sections),
+  ])
   const selectedChoiceImages = getSelectedChoiceImages(sections)
-  const sourceImages = galleryImages.length
-    ? galleryImages
-    : pkg.images?.length
-      ? pkg.images
-      : PKG_LOCAL_IMAGES[0]
-  const activeMainImage = selectedChoiceImages[0] ?? sourceImages[0]
-  const sideImages = sourceImages
+  const fallbackImages = pkg.images?.length
+    ? pkg.images
+    : (PKG_LOCAL_IMAGES[pkg._index % PKG_LOCAL_IMAGES.length] ?? PKG_LOCAL_IMAGES[0])
+  const mergedSource = galleryImages.length ? galleryImages : fallbackImages
+  const activeMainImage = selectedChoiceImages[0] ?? mergedSource[0]
+  const mainImageCandidate = selectedTextImage || activeMainImage || mergedSource[0]
+  const sourceImages = uniqueValues(
+    [...mergedSource, mainImageCandidate, ...selectedChoiceImages].filter(Boolean)
+  )
+  const sideImages = buildDecorSideImages(sourceImages)
   const relatedProducts = packagesData
     .filter(
       item =>
