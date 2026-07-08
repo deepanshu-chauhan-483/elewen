@@ -260,6 +260,69 @@ cd strapi && node scripts/seed-catering-menu.cjs
 
 Re-publish catering packages so `menu_items` include `category_key` (restart Strapi with seeds enabled, or update in admin).
 
+### Decor packages + delivery charges (production, no DB drop)
+
+Use **one-shot seed scripts** after `git pull`. This adds missing packages and keeps existing **R2 images** (seeds never clear the `images` field).
+
+1. Keep all `SEED_*=false` in `.env` (see `.env.docker.example`).
+2. Backup first (optional but recommended):
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres elewen > backups/backup_$(date +%Y%m%d).sql
+```
+
+3. Pull code and rebuild Strapi:
+
+```bash
+git pull
+docker compose build strapi
+```
+
+4. Run decor seed (stop Strapi first to avoid concurrent DB access):
+
+```bash
+docker compose stop strapi
+docker compose run --rm --no-deps strapi node scripts/run-decor-seed.cjs
+docker compose up -d strapi
+```
+
+5. Delivery charges (only if table is empty — skips if any row exists):
+
+```bash
+docker compose stop strapi
+docker compose run --rm --no-deps strapi node scripts/run-delivery-charges-seed.cjs
+docker compose up -d strapi
+```
+
+6. Verify:
+
+```bash
+docker compose exec postgres psql -U postgres -d elewen -c "SELECT COUNT(*) FROM packages;"
+docker compose logs strapi --tail 20
+```
+
+**Behaviour:**
+
+| Package state | Seed action | Images |
+|---------------|-------------|--------|
+| Slug missing | Creates package | None until you upload in admin |
+| Exists, no decor block | Adds decor content | Preserved |
+| Exists, has decor | Skipped | Preserved |
+
+To refresh text/pricing on packages that already have decor (still preserves images):
+
+```bash
+docker compose run --rm --no-deps -e SEED_DECOR_REFRESH_EXISTING=true strapi node scripts/run-decor-seed.cjs
+```
+
+**Do not** drop the database for decor sync. **Do not** leave `SEED_*=true` in `.env` on production — seeds would run on every Strapi restart.
+
+If a failed partial SQL restore left bad `delivery_charges` rows, clear that table once before running the delivery seed (only if you intend a full re-import):
+
+```bash
+docker compose exec postgres psql -U postgres -d elewen -c "TRUNCATE delivery_charges RESTART IDENTITY CASCADE;"
+```
+
 ### Strapi 403 on public content (e.g. catering settings, terms)
 
 In Strapi admin → Settings → Users & Permissions → **Public** role, enable `find` / `findOne` on the relevant content-types. Restart is not required for permission changes.

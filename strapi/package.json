@@ -18,6 +18,8 @@
     "seed:catering-addons": "node scripts/seed-catering-addons.cjs",
     "seed:catering-discounts": "node scripts/seed-catering-discounts.cjs",
     "seed:catering-repair": "node scripts/seed-catering-repair-packages.cjs",
+    "seed:decor": "node scripts/run-decor-seed.cjs",
+    "seed:delivery-charges": "node scripts/run-delivery-charges-seed.cjs",
     "develop": "strapi develop --no-watch-admin --no-open",
     "develop:admin": "strapi develop --no-open",
     "start": "strapi start",

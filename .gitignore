@@ -33,7 +33,7 @@ api/node_modules/
 .DS_Store
 Thumbs.db
 
-# ─── Local-only seed/import (production uses DB dump) ───────────────
+# ─── Local-only import data (not needed on prod — seeds use JSON in repo) ─
 strapi/scripts/seed-decor-*.cjs
 scripts/import-delivery-charges.mjs
 scripts/compare-delivery-csv.mjs

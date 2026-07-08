@@ -1,6 +1,7 @@
 'use strict';
 
 const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
+const { isSeedEnabled } = require('./seed/seed-env');
 
 function normalizeAddress(value) {
   if (!value) return undefined;
@@ -243,7 +244,7 @@ module.exports = {
       );
     }
 
-    if (process.env.SEED_CATERING_ESSENTIALS !== 'false') {
+    if (isSeedEnabled('SEED_CATERING_ESSENTIALS')) {
       try {
         const { seedCateringEssentials } = require('./seed/catering-essentials');
         const essentialsResult = await seedCateringEssentials(strapi);
@@ -297,7 +298,7 @@ module.exports = {
           `[seed/catering-discounts] documentId=${discountResult.documentId}, created=${Boolean(discountResult.created)}, updated=${Boolean(discountResult.updated)}`
         );
 
-        if (process.env.SEED_CATERING_MENU !== 'false') {
+        if (isSeedEnabled('SEED_CATERING_MENU')) {
           const { seedCateringMenuLibrary } = require('./seed/catering-menu-library');
           const menuResult = await seedCateringMenuLibrary(strapi);
           strapi.log.info(
@@ -309,7 +310,7 @@ module.exports = {
       }
     }
 
-    if (process.env.SEED_DELIVERY_CHARGES !== 'false') {
+    if (isSeedEnabled('SEED_DELIVERY_CHARGES')) {
       try {
         const { seedDeliveryCharges } = require('./seed/delivery-charges');
         const deliveryResult = await seedDeliveryCharges(strapi);
@@ -321,7 +322,7 @@ module.exports = {
       }
     }
 
-    if (process.env.SEED_DECOR_PROPOSAL_PACKAGES !== 'false') {
+    if (isSeedEnabled('SEED_DECOR_PROPOSAL_PACKAGES')) {
       try {
         const { seedDecorProposalPackages } = require('./seed/decor-proposal-packages');
         const decorResult = await seedDecorProposalPackages(strapi);
@@ -340,7 +341,7 @@ module.exports = {
       }
     }
 
-    if (process.env.SEED_DECOR_ANNIVERSARY_PACKAGES !== 'false') {
+    if (isSeedEnabled('SEED_DECOR_ANNIVERSARY_PACKAGES')) {
       try {
         const { seedDecorAnniversaryPackages } = require('./seed/decor-anniversary-packages');
         const anniversaryResult = await seedDecorAnniversaryPackages(strapi);
@@ -359,7 +360,7 @@ module.exports = {
       }
     }
 
-    if (process.env.SEED_DECOR_BABY_SHOWER_PACKAGES !== 'false') {
+    if (isSeedEnabled('SEED_DECOR_BABY_SHOWER_PACKAGES')) {
       try {
         const { seedDecorBabyShowerPackages } = require('./seed/decor-baby-shower-packages');
         const babyShowerResult = await seedDecorBabyShowerPackages(strapi);
