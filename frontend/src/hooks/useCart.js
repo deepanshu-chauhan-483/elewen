@@ -247,6 +247,87 @@ async function fetchPackageSnapshot(packageId) {
   }
 }
 
+function isApiUnreachableError(err) {
+  if (!(err instanceof TypeError)) return false
+  const message = String(err?.message ?? '').toLowerCase()
+  return message.includes('failed to fetch') || message.includes('network')
+}
+
+async function addPackageToGuestCart({
+  packageId,
+  quantity = 1,
+  selectedOptions,
+  addon = null,
+  unitPrice: overrideUnitPrice = null,
+  lineTotal: overrideLineTotal = null,
+}) {
+  const addonId = addon?.id != null ? String(addon.id) : null
+  const addonTitle = String(addon?.name ?? '').trim()
+  const addonUnitPrice = Number(addon?.price ?? 0)
+  const isAddon = Boolean(addonId && addonTitle)
+  const snapshot = await fetchPackageSnapshot(packageId)
+  const guestCart = readGuestCart()
+  const selectionKey = isAddon ? null : buildSelectionKey(selectedOptions)
+  const existing = guestCart.items.find(
+    item =>
+      String(item.packageId) === String(packageId) &&
+      String(item.packageElementId ?? '') === String(selectionKey ?? '') &&
+      String(item.addonId ?? '') === String(addonId ?? '')
+  )
+  const resolvedOverride = Number(overrideUnitPrice ?? 0)
+  const resolvedLineTotal = Number(overrideLineTotal ?? 0)
+  const unitPrice = isAddon
+    ? addonUnitPrice
+    : Number.isFinite(resolvedOverride) && resolvedOverride > 0
+      ? resolvedOverride
+      : snapshot.basePrice
+  const itemTotal =
+    Number.isFinite(resolvedLineTotal) && resolvedLineTotal > 0
+      ? resolvedLineTotal
+      : unitPrice * quantity
+  const itemTitle = isAddon
+    ? buildCartItemTitle(addonTitle, selectedOptions, {
+        itemType: 'addon',
+        addonTitle,
+        addonId,
+        parentPackageId: String(packageId),
+      })
+    : buildCartItemTitle(snapshot.title, selectedOptions)
+
+  let nextItems
+  if (existing) {
+    nextItems = guestCart.items.map(item => {
+      if (item.id !== existing.id) return item
+      const nextQuantity = Number(item.quantity ?? 0) + quantity
+      const mergedTotal =
+        Number.isFinite(resolvedLineTotal) && resolvedLineTotal > 0
+          ? resolvedLineTotal
+          : unitPrice * nextQuantity
+
+      return {
+        ...item,
+        quantity: nextQuantity,
+        unitPrice: unitPrice.toFixed(2),
+        totalPrice: mergedTotal.toFixed(2),
+      }
+    })
+  } else {
+    nextItems = guestCart.items.concat({
+      id: createGuestCartItemId(),
+      packageId: String(packageId),
+      packageElementId: selectionKey,
+      addonId,
+      title: itemTitle,
+      quantity,
+      unitPrice: unitPrice.toFixed(2),
+      totalPrice: itemTotal.toFixed(2),
+      createdAt: new Date().toISOString(),
+    })
+  }
+
+  return writeGuestCart({ ...guestCart, items: nextItems })
+}
+
 async function migrateGuestCartToServer(token) {
   const guestCart = readGuestCart()
   if (!guestCart.items.length) return null
@@ -397,6 +478,15 @@ function useCartController() {
           syncGuestCart()
           return
         }
+        if (isApiUnreachableError(err)) {
+          const guestCart = readGuestCart()
+          applyCart(guestCart)
+          if (import.meta.env.DEV) {
+            console.warn('[cart] API unreachable, using local guest cart', err)
+          }
+          if (!cancelled) setLoading(false)
+          return
+        }
         if (import.meta.env.DEV) {
           console.error('[cart] sync failed', err)
         }
@@ -444,73 +534,17 @@ function useCartController() {
     lineTotal: overrideLineTotal = null,
   }) => {
     const token = await getServerToken()
-    const addonId = addon?.id != null ? String(addon.id) : null
-    const addonTitle = String(addon?.name ?? '').trim()
-    const addonUnitPrice = Number(addon?.price ?? 0)
-    const isAddon = Boolean(addonId && addonTitle)
+    const guestCartArgs = {
+      packageId,
+      quantity,
+      selectedOptions,
+      addon,
+      unitPrice: overrideUnitPrice,
+      lineTotal: overrideLineTotal,
+    }
 
     if (!token) {
-      const snapshot = await fetchPackageSnapshot(packageId)
-      const guestCart = readGuestCart()
-      const selectionKey = isAddon ? null : buildSelectionKey(selectedOptions)
-      const existing = guestCart.items.find(
-        item =>
-          String(item.packageId) === String(packageId) &&
-          String(item.packageElementId ?? '') === String(selectionKey ?? '') &&
-          String(item.addonId ?? '') === String(addonId ?? '')
-      )
-      const resolvedOverride = Number(overrideUnitPrice ?? 0)
-      const resolvedLineTotal = Number(overrideLineTotal ?? 0)
-      const unitPrice = isAddon
-        ? addonUnitPrice
-        : Number.isFinite(resolvedOverride) && resolvedOverride > 0
-          ? resolvedOverride
-          : snapshot.basePrice
-      const itemTotal =
-        Number.isFinite(resolvedLineTotal) && resolvedLineTotal > 0
-          ? resolvedLineTotal
-          : unitPrice * quantity
-      const itemTitle = isAddon
-        ? buildCartItemTitle(addonTitle, selectedOptions, {
-            itemType: 'addon',
-            addonTitle,
-            addonId,
-            parentPackageId: String(packageId),
-          })
-        : buildCartItemTitle(snapshot.title, selectedOptions)
-
-      let nextItems
-      if (existing) {
-        nextItems = guestCart.items.map(item => {
-          if (item.id !== existing.id) return item
-          const nextQuantity = Number(item.quantity ?? 0) + quantity
-          const mergedTotal =
-            Number.isFinite(resolvedLineTotal) && resolvedLineTotal > 0
-              ? resolvedLineTotal
-              : unitPrice * nextQuantity
-
-          return {
-            ...item,
-            quantity: nextQuantity,
-            unitPrice: unitPrice.toFixed(2),
-            totalPrice: mergedTotal.toFixed(2),
-          }
-        })
-      } else {
-        nextItems = guestCart.items.concat({
-          id: createGuestCartItemId(),
-          packageId: String(packageId),
-          packageElementId: selectionKey,
-          addonId,
-          title: itemTitle,
-          quantity,
-          unitPrice: unitPrice.toFixed(2),
-          totalPrice: itemTotal.toFixed(2),
-          createdAt: new Date().toISOString(),
-        })
-      }
-
-      const nextCart = writeGuestCart({ ...guestCart, items: nextItems })
+      const nextCart = await addPackageToGuestCart(guestCartArgs)
       setCart(nextCart)
       setItemCount(getItemCount(nextCart))
       setError('')
@@ -544,6 +578,17 @@ function useCartController() {
       dispatchCartChange(nextCart)
       return nextCart
     } catch (err) {
+      if (isApiUnreachableError(err)) {
+        const nextCart = await addPackageToGuestCart(guestCartArgs)
+        setCart(nextCart)
+        setItemCount(getItemCount(nextCart))
+        setError('')
+        dispatchCartChange(nextCart)
+        if (import.meta.env.DEV) {
+          console.warn('[cart] API unreachable, saved package to local guest cart', err)
+        }
+        return nextCart
+      }
       setError(err.message ?? 'Failed to add package to cart')
       throw err
     }

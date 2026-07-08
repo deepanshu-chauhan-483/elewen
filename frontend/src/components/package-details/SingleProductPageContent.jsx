@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
 import PackageCard from '../package-listing/PackageCard'
 import AppImage from '../common/AppImage'
 import { preloadImages } from '../../utils/preloadAssets'
+import { assignDistinctCoverIndices } from '../../lib/packageFilters'
 
 function QuantityControl({ quantity, onDecrement, onIncrement }) {
   return (
@@ -237,9 +238,13 @@ function RelatedProductsCarousel({ products }) {
   const CARDS_PER_VIEW = 3
   const [page, setPage] = useState(0)
   const totalPages = Math.max(1, Math.ceil(products.length / CARDS_PER_VIEW))
-  const visibleProducts = products.slice(
-    page * CARDS_PER_VIEW,
-    page * CARDS_PER_VIEW + CARDS_PER_VIEW
+  const visibleProducts = useMemo(
+    () =>
+      assignDistinctCoverIndices(
+        products.slice(page * CARDS_PER_VIEW, page * CARDS_PER_VIEW + CARDS_PER_VIEW),
+        { columns: 3 }
+      ),
+    [page, products]
   )
 
   return (
@@ -249,7 +254,7 @@ function RelatedProductsCarousel({ products }) {
           className="text-[22px] md:text-[32px] font-semibold text-[#2D2D2D]"
           style={{ fontFamily: "'Malgin', serif" }}
         >
-          You might also like:
+          You May Also Like
         </p>
 
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -680,10 +685,12 @@ function ProductImageLayout({
         <div className="fixed bottom-0 left-0 z-50 w-full bg-[#591902] px-4 text-white sm:px-6 md:h-[70px] md:px-[50px] lg:px-[100px]">
           <div className="mx-auto flex min-h-[60px] max-w-[1400px] items-center justify-between gap-3 py-2 md:py-4">
             {/* Left */}
-            <div className="flex min-w-0 items-center gap-2 md:gap-3">
-              <h2 className="truncate text-sm font-semibold sm:text-base md:text-lg">{title}</h2>
-              <span>•</span>
-              <span className="shrink-0 text-sm font-bold sm:text-base text-[#D4BA8E]">
+            <div className="flex min-w-0 flex-1 items-start gap-2 md:items-center md:gap-3">
+              <h2 className="min-w-0 text-[11px] font-semibold leading-snug sm:text-xs md:text-sm lg:text-base">
+                {title}
+              </h2>
+              <span className="hidden shrink-0 md:inline">•</span>
+              <span className="shrink-0 text-xs font-bold sm:text-sm md:text-base text-[#D4BA8E]">
                 {price}
               </span>
             </div>

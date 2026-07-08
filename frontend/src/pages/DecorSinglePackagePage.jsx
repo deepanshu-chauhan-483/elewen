@@ -8,6 +8,8 @@ import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
+import { getRelatedPackages } from '../lib/packageFilters'
+import { resolveChooseOneDisplayPrice, shouldShowChoicePrices } from '../lib/chooseOnePricing'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -107,7 +109,7 @@ function formatPrice(value) {
   const numericValue = Number(value)
   if (Number.isNaN(numericValue)) return ''
 
-  return `Rs${numericValue.toLocaleString('en-IN')}`
+  return `₹${numericValue.toLocaleString('en-IN')}`
 }
 
 function normalisePackageId(value = '') {
@@ -116,10 +118,6 @@ function normalisePackageId(value = '') {
 
 function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
-}
-
-function isDecorPackage(pkg) {
-  return Array.isArray(pkg?.service_slugs) && pkg.service_slugs.includes('decor')
 }
 
 function getDecorDetailSections(pkg) {
@@ -132,10 +130,6 @@ function getDecorDetailSections(pkg) {
       section?.theme_name ||
       section?.setup_needs
   )
-}
-
-function hasDecorPackageData(pkg) {
-  return getDecorDetailSections(pkg).length > 0
 }
 
 function buildDecorAccordionSections(pkg) {
@@ -451,6 +445,7 @@ function createChoiceItem({ inclusion, element, fallbackTitle, whenBullets = new
   const elementTitle = cleanText(element?.title)
   const serviceName = cleanText(element?.service?.name)
   const price = formatPrice(element?.base_price)
+  const priceAmount = Number(element?.base_price)
   const groupKey = cleanText(inclusion?._choice_group_key)
   const bulletKey = groupKey && inclusionText ? `${groupKey}::${inclusionText}` : ''
   const scopedBullets = bulletKey ? (whenBullets.get(bulletKey) ?? []) : []
@@ -479,6 +474,7 @@ function createChoiceItem({ inclusion, element, fallbackTitle, whenBullets = new
     bullets,
     description: bullets.length ? bullets.join('\n') : descriptionParts.join('\n'),
     price,
+    priceAmount: Number.isFinite(priceAmount) && priceAmount > 0 ? priceAmount : null,
     images: getInclusionImages(inclusion),
     selected: false,
   }
@@ -686,6 +682,7 @@ function serializeSections(sections = []) {
               description: item.description,
               images: Array.isArray(item.images) ? item.images : [],
               price: item.price,
+              priceAmount: item.priceAmount ?? null,
               selected: Boolean(item.selected),
             }
       ),
@@ -841,7 +838,7 @@ function getSelectedOptionsFromSearchParams(searchParams) {
   }
 }
 
-function DecorOptionButton({ item, wide = false, onClick }) {
+function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
   const bullets = Array.isArray(item.bullets)
     ? item.bullets.filter(Boolean)
     : splitInclusionDetailText(item.description)
@@ -865,6 +862,15 @@ function DecorOptionButton({ item, wide = false, onClick }) {
       >
         {item.title}
       </p>
+      {showPrice && item.price ? (
+        <p
+          className={`mt-1 text-[11px] font-medium ${
+            item.selected ? 'text-[#591902]' : 'text-[#8A5A2D]'
+          }`}
+        >
+          {item.price}
+        </p>
+      ) : null}
       {bullets.length ? (
         <ul className="mt-2 space-y-1">
           {bullets.map(bullet => (
@@ -1007,6 +1013,7 @@ function DecorPackageSections({
                       key={`${sectionKey}-${item.title}-${(item.bullets ?? []).join('|')}`}
                       item={item}
                       wide={useWideCards}
+                      showPrice={shouldShowChoicePrices(section)}
                       onClick={() => onSelect(sectionKey, item.title)}
                     />
                   ))}
@@ -1092,6 +1099,12 @@ export default function DecorSinglePackagePage() {
         : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
     [packageDetails, packageId, packagesData]
   )
+
+  const relatedProducts = useMemo(
+    () => (pkg ? getRelatedPackages(packagesData, pkg, { serviceSlug: 'decor' }) : []),
+    [packagesData, pkg]
+  )
+
   const { data: packageReviews = [] } = usePackageReviews({
     id: pkg?.id,
     documentId: pkg?.documentId,
@@ -1181,15 +1194,6 @@ export default function DecorSinglePackagePage() {
     [...mergedSource, mainImageCandidate, ...selectedChoiceImages].filter(Boolean)
   )
   const sideImages = buildDecorSideImages(sourceImages)
-  const relatedProducts = packagesData
-    .filter(
-      item =>
-        hasDecorPackageData(item) &&
-        isDecorPackage(item) &&
-        buildPackageId(item) !== buildPackageId(pkg)
-    )
-    .slice(0, 12)
-    .map(item => ({ ...item, serviceSlug: 'decor' }))
   const quantity = customizations.length
   const message = activeCustomization?.data?.message ?? ''
 
@@ -1308,7 +1312,11 @@ export default function DecorSinglePackagePage() {
   const isDisabled = isAddingToCart
   const packageTitle =
     pkg.title || getDecorDetailSections(pkg)[0]?.theme_name || DECOR_CONTENT.title
-  const packagePrice = pkg.price || DECOR_CONTENT.price
+  const packagePrice = resolveChooseOneDisplayPrice(
+    filterVisibleDecorSections(sections),
+    pkg.base_price ?? 0,
+    pkg.price || DECOR_CONTENT.price
+  )
   const packageIntro = buildDecorIntro(pkg)
   const keyDecorText = buildKeyDecorText(pkg)
   const accordionSections = mergeAccordionSections(

@@ -3,7 +3,11 @@ import PackageCard from './PackageCard'
 import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'
 import { usePackages } from '../../hooks/usePackages'
-import { filterPackages, normalizeServiceSlug } from '../../lib/packageFilters'
+import {
+  assignDistinctCoverIndices,
+  filterPackages,
+  normalizeServiceSlug,
+} from '../../lib/packageFilters'
 import CmsPageLoader from '../common/CmsPageLoader'
 import { useStrapiPageLoading } from '../../hooks/useStrapiPageLoading'
 import pkgImg1 from '../../assets/images/IMG_3903.jpg'
@@ -124,7 +128,14 @@ export default function ServicePackagesPageContent({
 
   const totalPages = Math.max(1, Math.ceil(sortedPackages.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
-  const visiblePackages = sortedPackages.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const visiblePackages = useMemo(
+    () =>
+      assignDistinctCoverIndices(
+        sortedPackages.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+        { columns: 3 }
+      ),
+    [safePage, sortedPackages]
+  )
 
   if (isStrapiLoading) {
     return <CmsPageLoader />

@@ -10,6 +10,7 @@ import { usePackageReviews } from '../hooks/usePackageReviews'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
+import { getRelatedPackages } from '../lib/packageFilters'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -280,15 +281,7 @@ export default function PackageDetailsPage() {
   )
 
   const relatedProducts = useMemo(
-    () =>
-      packagesData
-        .filter(
-          item =>
-            buildPackageId(item) !== buildPackageId(pkg ?? {}) &&
-            packageMatchesService(item, normalizedService)
-        )
-        .slice(0, 12)
-        .map(item => ({ ...item, serviceSlug: normalizedService })),
+    () => getRelatedPackages(packagesData, pkg, { serviceSlug: normalizedService }),
     [normalizedService, packagesData, pkg]
   )
   const { data: packageReviews = [] } = usePackageReviews({

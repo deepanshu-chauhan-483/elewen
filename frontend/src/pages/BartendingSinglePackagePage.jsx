@@ -11,6 +11,7 @@ import { usePackageReviews } from '../hooks/usePackageReviews'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
+import { getRelatedPackages } from '../lib/packageFilters'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -35,10 +36,6 @@ function normalisePackageId(value = '') {
 
 function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
-}
-
-function isBartendingPackage(pkg) {
-  return Array.isArray(pkg?.service_slugs) && pkg.service_slugs.includes('bartending')
 }
 
 function normalizeSelectedOptions(selectedOptions = {}) {
@@ -534,6 +531,11 @@ export default function BartendingSinglePackagePage() {
     [packageDetails, packageId, packagesData]
   )
 
+  const relatedProducts = useMemo(
+    () => (pkg ? getRelatedPackages(packagesData, pkg, { serviceSlug: 'bartending' }) : []),
+    [packagesData, pkg]
+  )
+
   const { data: packageReviews = [] } = usePackageReviews({
     id: pkg?.id,
     documentId: pkg?.documentId,
@@ -603,10 +605,6 @@ export default function BartendingSinglePackagePage() {
     return <Navigate to={backHref} replace />
   }
 
-  const relatedProducts = packagesData
-    .filter(item => isBartendingPackage(item) && buildPackageId(item) !== buildPackageId(pkg))
-    .slice(0, 12)
-    .map(item => ({ ...item, serviceSlug: 'bartending' }))
   const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
   const sideImages = Array.from({ length: Math.max(5, sourceImages.length || 1) }).map(
     (_, index) => sourceImages[index % sourceImages.length]

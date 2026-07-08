@@ -327,7 +327,8 @@ function getSectionBackdropImages(section) {
     .filter(Boolean)
 }
 
-function normalizePackage(pkg, index = 0) {
+function normalizePackage(pkg, index = 0, options = {}) {
+  const listing = options.listing === true
   const detailSections = getNestedPackageSections(pkg)
   const packageImages = normaliseMediaArray(pkg.images)
     .map(image => {
@@ -335,8 +336,8 @@ function normalizePackage(pkg, index = 0) {
       return toAbsoluteStrapiUrl(image?.url)
     })
     .filter(Boolean)
-  const inclusionImages = detailSections.flatMap(getSectionInclusionImages)
-  const backdropImages = detailSections.flatMap(getSectionBackdropImages)
+  const inclusionImages = listing ? [] : detailSections.flatMap(getSectionInclusionImages)
+  const backdropImages = listing ? [] : detailSections.flatMap(getSectionBackdropImages)
   const serviceCategories = normaliseRelationArray(pkg.service_categories)
   const packageThemes = getNestedPackageThemes(pkg)
   const budgetLevels = getNestedPackageBudgetLevels(pkg)
@@ -358,7 +359,7 @@ function normalizePackage(pkg, index = 0) {
     serviceCategories.flatMap(service => [service?.id, service?.parent_category?.id]).map(String)
   )
 
-  return {
+  const sharedFields = {
     id: pkg.id,
     documentId: pkg.documentId,
     title: pkg.title,
@@ -390,6 +391,15 @@ function normalizePackage(pkg, index = 0) {
     level_slug: getBudgetLevelSlug(primaryBudgetLevel),
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
     images: uniqueValues([...packageImages, ...inclusionImages, ...backdropImages]),
+    _index: index,
+  }
+
+  if (listing) {
+    return sharedFields
+  }
+
+  return {
+    ...sharedFields,
     detail_sections: detailSections,
     detail_inclusions: buildDetailHighlights(pkg),
     detail_addons: buildAddonList(getNestedPackageAddons(pkg)),
@@ -399,7 +409,22 @@ function normalizePackage(pkg, index = 0) {
     detail_accordion_sections: buildAccordionSections(pkg),
     flavor_options: buildFlavorOptions(pkg),
     catering_guest_discounts: pkg.catering_guest_discounts ?? null,
-    _index: index,
+  }
+}
+
+function getPackageListingPopulateParams() {
+  return {
+    'populate[images]': 'true',
+    'populate[events][populate][0]': 'parent_event',
+    'populate[service_categories][populate][0]': 'parent_category',
+    'populate[packages][on][package.decorpackages][populate][inclustions]': 'true',
+    'populate[packages][on][package.decorpackages][populate][theme]': 'true',
+    'populate[packages][on][package.decorpackages][populate][budget_level]': 'true',
+    'populate[packages][on][package.sheeshapackage][populate][inclusions]': 'true',
+    'populate[packages][on][package.bartendingpackage][populate][inclusions]': 'true',
+    'populate[packages][on][package.bartendingpackage][populate][budget_level]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][inclusions]': 'true',
+    'populate[packages][on][package.cateringpackage][populate][budget_level]': 'true',
   }
 }
 
@@ -448,47 +473,53 @@ function isNumericId(value) {
 }
 
 async function fetchPackages(params = {}) {
+  const { listing = false, ...filterParams } = params
+  const populateParams = listing ? getPackageListingPopulateParams() : getPackagePopulateParams()
   const baseParams = {
-    ...getPackagePopulateParams(),
+    ...populateParams,
     'filters[is_active][$eq]': 'true',
     'filters[visibility][$eq]': 'true',
     'pagination[page]': '1',
     'pagination[pageSize]': '100',
     sort: 'createdAt:asc',
-    ...params,
+    ...filterParams,
   }
 
   const firstResponse = await strapiGet('/packages', baseParams)
   const firstPageData = Array.isArray(firstResponse?.data) ? firstResponse.data : []
   const pageCount = Number(firstResponse?.meta?.pagination?.pageCount ?? 1)
-  const pages = [firstPageData]
 
-  for (let page = 2; page <= pageCount; page += 1) {
-    const response = await strapiGet('/packages', {
-      ...baseParams,
-      'pagination[page]': String(page),
-    })
-    pages.push(Array.isArray(response?.data) ? response.data : [])
+  const extraPages =
+    pageCount > 1
+      ? await Promise.all(
+          Array.from({ length: pageCount - 1 }, (_, offset) =>
+            strapiGet('/packages', {
+              ...baseParams,
+              'pagination[page]': String(offset + 2),
+            })
+          )
+        )
+      : []
+
+  const packages = [firstPageData, ...extraPages.map(response => response?.data ?? [])]
+    .flat()
+    .map((pkg, index) => normalizePackage(pkg, index, { listing }))
+
+  if (!listing) {
+    const pkg = packages[0]
+    if (pkg?.images?.length) preloadImages(pkg.images.slice(0, 1))
   }
-
-  const packages = pages.flat().map((pkg, index) => normalizePackage(pkg, index))
-
-  preloadImages(
-    packages
-      .flatMap(pkg => (Array.isArray(pkg.images) ? pkg.images : []).slice(0, 3))
-      .filter(Boolean)
-  )
 
   return packages
 }
 
 export function usePackages() {
   return useQuery({
-    queryKey: ['packages', 'live-v3'],
+    queryKey: ['packages', 'live-v4-listing'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
       try {
-        const packages = await fetchPackages()
+        const packages = await fetchPackages({ listing: true })
         return packages.length > 0 ? packages : PACKAGES_FALLBACK
       } catch {
         return PACKAGES_FALLBACK
@@ -503,7 +534,7 @@ export function usePackages() {
 
 export function usePackageById(packageId) {
   return useQuery({
-    queryKey: ['package', packageId, 'live-v3'],
+    queryKey: ['package', packageId, 'live-v4'],
     enabled: Boolean(packageId),
     queryFn: async () => {
       if (USE_FALLBACK) {
@@ -517,9 +548,9 @@ export function usePackageById(packageId) {
         ? { 'filters[id][$eq]': String(packageId) }
         : { 'filters[documentId][$eq]': String(packageId) }
 
-      const items = await fetchPackages(filters)
+      const items = await fetchPackages({ ...filters, listing: false })
       const pkg = items[0] ?? null
-      if (pkg?.images?.length) preloadImages(pkg.images)
+      if (pkg?.images?.length) preloadImages(pkg.images.slice(0, 1))
       return pkg
     },
     staleTime: 5 * 60 * 1000,

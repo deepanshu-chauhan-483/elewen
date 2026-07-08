@@ -2,6 +2,10 @@
 
 const { toDescriptionBlocks, findPackageBySlug } = require('./catering-shared');
 const { shouldRefreshExistingDecor } = require('./seed-env');
+const {
+  stripSeedOnlyInclusionFields,
+  buildChoiceElementsFromInclusions,
+} = require('./decor-choice-elements');
 
 const DECOR_MATERIAL_POLICY_TITLE = 'Policy for decor packages (material rental)';
 
@@ -50,8 +54,8 @@ function buildDecorBlock(pkgSeed, policyDocumentId, budgetLevelDocumentId, theme
     setup_needs: pkgSeed.setup_needs,
     price_covers: pkgSeed.price_covers ?? PROPOSAL_PRICE_COVERS,
     price_breakdown: pkgSeed.price_breakdown,
-    inclustions: pkgSeed.inclustions,
-    elements: [],
+    inclustions: stripSeedOnlyInclusionFields(pkgSeed.inclustions ?? []),
+    elements: buildChoiceElementsFromInclusions(pkgSeed.inclustions ?? []),
     ...(policyDocumentId ? { policy: policyDocumentId } : {}),
     ...(budgetLevelDocumentId ? { budget_level: budgetLevelDocumentId } : {}),
     ...(themeDocumentId ? { theme: themeDocumentId } : {}),

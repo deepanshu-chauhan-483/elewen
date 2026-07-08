@@ -63,13 +63,19 @@ function choiceOption(groupKey, label, optionTitle, options = {}) {
   const resolvedKey =
     parentKey && parentValue ? `when:${parentKey}:${parentValue}>>${groupKey}` : groupKey;
 
-  return {
+  const row = {
     is_choice_group: true,
     choice_group_key: resolvedKey,
     choice_group_label: label,
     group_title: label,
     text: optionTitle,
   };
+
+  if (options.amount != null) {
+    row._choice_amount = options.amount;
+  }
+
+  return row;
 }
 
 function whenInclusion(parentKey, parentValue, text) {
@@ -131,7 +137,7 @@ const ANNIVERSARY_PACKAGES = [
       { label: 'Labour & Transport', amount: 600 },
     ],
     inclustions: [
-      choiceOption('ts2-setup', 'Choose 1', 'Floral Memory Setup'),
+      choiceOption('ts2-setup', 'Choose 1', 'Floral Memory Setup', { amount: 4730 }),
       whenInclusion('ts2-setup', 'Floral Memory Setup', '5 floral centerpieces in vases'),
       whenInclusion('ts2-setup', 'Floral Memory Setup', '5 printed photos on vases'),
       whenInclusion('ts2-setup', 'Floral Memory Setup', '10 candles in glass holders'),
@@ -140,7 +146,7 @@ const ANNIVERSARY_PACKAGES = [
         'Floral Memory Setup',
         '5 photos on mini easel stands with space for personalized notes'
       ),
-      choiceOption('ts2-setup', 'Choose 1', 'Image Placards'),
+      choiceOption('ts2-setup', 'Choose 1', 'Image Placards', { amount: 6980 }),
       whenInclusion('ts2-setup', 'Image Placards', '5 image placards'),
       whenInclusion(
         'ts2-setup',
@@ -295,14 +301,14 @@ const ANNIVERSARY_PACKAGES = [
         text: '1 easel stand with customised board, styled with balloons',
         group_title: 'Balloon Styling',
       },
-      choiceOption('fm23-backdrop', 'Choose 1', 'Balloon Ring Backdrop'),
+      choiceOption('fm23-backdrop', 'Choose 1', 'Balloon Ring Backdrop', { amount: 11050 }),
       whenInclusion('fm23-backdrop', 'Balloon Ring Backdrop', 'Balloon ring backdrop with neon sign'),
       whenInclusion(
         'fm23-backdrop',
         'Balloon Ring Backdrop',
         'Neon options: "Still Us", "I Love You", or "Happy Anniversary"'
       ),
-      choiceOption('fm23-backdrop', 'Choose 1', 'Illuminated Letters Setup'),
+      choiceOption('fm23-backdrop', 'Choose 1', 'Illuminated Letters Setup', { amount: 6400 }),
       whenInclusion(
         'fm23-backdrop',
         'Illuminated Letters Setup',

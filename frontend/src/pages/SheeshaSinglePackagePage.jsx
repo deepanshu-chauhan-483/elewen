@@ -12,6 +12,7 @@ import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationP
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
 import { useFlavors } from '../hooks/useFlavors'
+import { getRelatedPackages } from '../lib/packageFilters'
 
 // images (reuse same pattern)
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -137,10 +138,6 @@ function normalisePackageId(value = '') {
 
 function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
-}
-
-function isSheeshaPackage(pkg) {
-  return Array.isArray(pkg?.service_slugs) && pkg.service_slugs.includes('sheesha')
 }
 
 function getSheeshaFlavorDescription(flavor) {
@@ -366,6 +363,12 @@ export default function SheeshaSinglePackagePage() {
         : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
     [packageDetails, packageId, packagesData]
   )
+
+  const relatedProducts = useMemo(
+    () => (pkg ? getRelatedPackages(packagesData, pkg, { serviceSlug: 'sheesha' }) : []),
+    [packagesData, pkg]
+  )
+
   const { data: packageReviews = [] } = usePackageReviews({
     id: pkg?.id,
     documentId: pkg?.documentId,
@@ -382,11 +385,6 @@ export default function SheeshaSinglePackagePage() {
 
   const source = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
   const sideImages = Array.from({ length: 5 }).map((_, i) => source[i % source.length])
-
-  const relatedProducts = packagesData
-    .filter(item => isSheeshaPackage(item) && buildPackageId(item) !== buildPackageId(pkg))
-    .slice(0, 12)
-    .map(item => ({ ...item, serviceSlug: 'sheesha' }))
 
   const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null
   const packageTitle = pkg.title || SHEESHA_CONTENT.title

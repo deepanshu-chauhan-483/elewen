@@ -65,13 +65,19 @@ function choiceOption(groupKey, label, optionTitle, options = {}) {
   const resolvedKey =
     parentKey && parentValue ? `when:${parentKey}:${parentValue}>>${groupKey}` : groupKey;
 
-  return {
+  const row = {
     is_choice_group: true,
     choice_group_key: resolvedKey,
     choice_group_label: label,
     group_title: label,
     text: optionTitle,
   };
+
+  if (options.amount != null) {
+    row._choice_amount = options.amount;
+  }
+
+  return row;
 }
 
 function whenInclusion(parentKey, parentValue, text) {

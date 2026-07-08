@@ -7,7 +7,7 @@ import { usePackages } from '../hooks/usePackages'
 import { useBudgetLevelOptions } from '../hooks/useEventTypes'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { filterPackages } from '../lib/packageFilters'
+import { assignDistinctCoverIndices, filterPackages } from '../lib/packageFilters'
 
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -239,7 +239,10 @@ export default function DecorLevelsPage() {
           const levelKey = level.key
           const currentPage = pagination[levelKey] || 0
           const totalPages = getTotalPages(level.packages)
-          const visiblePackages = getPaginatedPackages(level.packages, currentPage)
+          const visiblePackages = assignDistinctCoverIndices(
+            getPaginatedPackages(level.packages, currentPage),
+            { columns: 3 }
+          )
 
           const handlePrev = () => updatePage(levelKey, totalPages, currentPage - 1)
           const handleNext = () => updatePage(levelKey, totalPages, currentPage + 1)

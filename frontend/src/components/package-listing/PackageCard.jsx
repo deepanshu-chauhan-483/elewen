@@ -27,15 +27,40 @@ function ImageDots({ count, currentIndex = 0 }) {
 }
 
 export default function PackageCard({ pkg, className = '', compactMode = false }) {
-  const images = pkg.images || []
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [showAllIncludes, setShowAllIncludes] = useState(false)
-  const [visibleTagCount, setVisibleTagCount] = useState(0)
+  const images = useMemo(() => pkg.images || [], [pkg.images])
+  const pkgId = pkg.documentId ?? pkg.id
+  const coverIndex = Number.isInteger(pkg.coverImageIndex) ? pkg.coverImageIndex : 0
+  const [sliderState, setSliderState] = useState({ pkgId, coverIndex, index: coverIndex })
+  const currentIndex =
+    sliderState.pkgId === pkgId && sliderState.coverIndex === coverIndex
+      ? sliderState.index
+      : coverIndex
+  const setCurrentIndex = updater => {
+    setSliderState(prev => {
+      const baseIndex =
+        prev.pkgId === pkgId && prev.coverIndex === coverIndex ? prev.index : coverIndex
+      const nextIndex = typeof updater === 'function' ? updater(baseIndex) : updater
+      return { pkgId, coverIndex, index: nextIndex }
+    })
+  }
+  const tags = useMemo(() => {
+    if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
+    if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
+    return []
+  }, [pkg.includes, pkg.tags])
+  const includesResetKey = `${pkg.id ?? ''}|${pkg.documentId ?? ''}|${tags.length}|${compactMode}`
+  const [includesState, setIncludesState] = useState({ resetKey: '', showAll: false })
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (typeof window === 'undefined') return true
     return window.innerWidth >= 768
   })
-  // const navigate = useNavigate()
+  const includesResetKeyWithViewport = `${includesResetKey}|${isDesktopViewport}`
+  const showAllIncludes =
+    includesState.resetKey === includesResetKeyWithViewport ? includesState.showAll : false
+  const setShowAllIncludes = showAll => {
+    setIncludesState({ resetKey: includesResetKeyWithViewport, showAll })
+  }
+  const [visibleTagCount, setVisibleTagCount] = useState(0)
   const location = useLocation()
   const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
   const packageId = pkg.documentId ?? pkg.id
@@ -62,22 +87,17 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
 
   useEffect(() => {
     if (!images.length) return
-    preloadImages(images)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pkg.id, pkg.documentId, images.length])
-  const tags = useMemo(() => {
-    if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
-    if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
-    return []
-  }, [pkg.includes, pkg.tags])
-  const shouldUseCompactMode = compactMode || !isDesktopViewport
-  const hasMoreIncludes = tags.length > visibleTagCount
-  const visibleTags = showAllIncludes ? tags : tags.slice(0, visibleTagCount)
-  const descriptionText = String(pkg.description ?? '')
-  const visibleDescription =
-    shouldUseCompactMode && descriptionText.length > 110
-      ? `${descriptionText.slice(0, 110).trim()}...`
-      : descriptionText
+
+    const activeIndex = Number.isInteger(currentIndex) ? currentIndex : 0
+    const nextIndex = images.length > 1 ? (activeIndex + 1) % images.length : activeIndex
+    const urls = [images[activeIndex], images[nextIndex]].filter(Boolean)
+
+    preloadImages([...new Set(urls)])
+  }, [currentIndex, images, pkg.documentId, pkg.id])
+
+  const effectiveVisibleTagCount = showAllIncludes ? tags.length : visibleTagCount
+  const hasMoreIncludes = tags.length > effectiveVisibleTagCount
+  const visibleTags = showAllIncludes ? tags : tags.slice(0, effectiveVisibleTagCount)
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -97,12 +117,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
   }, [])
 
   useEffect(() => {
-    setShowAllIncludes(false)
-  }, [pkg.id, pkg.documentId, tags.length, isDesktopViewport, compactMode])
-
-  useEffect(() => {
     if (showAllIncludes) {
-      setVisibleTagCount(tags.length)
       return undefined
     }
 
@@ -173,7 +188,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
     }
 
     return () => resizeObserver.disconnect()
-  }, [showAllIncludes, tags, visibleDescription, isDesktopViewport, compactMode])
+  }, [showAllIncludes, tags, isDesktopViewport, compactMode])
 
   // 🔥LOOP LOGIC (important)
   const goToPrevious = () => {
@@ -223,7 +238,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           window.open(packageHref, '_blank', 'noopener')
         }
       }}
-      className={`relative flex h-[500px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
+      className={`relative flex min-h-[500px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
     >
       {/* Image Container */}
       <div
@@ -248,9 +263,11 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
 
         {/* Price + Wishlist */}
         <div className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
-          <div className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#591902]">
-            Starting from <span className="text-[#591902] font-bold">{pkg.price}</span>
-          </div>
+          {pkg.price ? (
+            <div className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#591902] shadow-sm">
+              Starting from <span className="font-bold">{pkg.price}</span>
+            </div>
+          ) : null}
           <button
             type="button"
             aria-label={
@@ -351,28 +368,30 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
       </div>
 
       {/* Content */}
-      <div className="flex h-[200px] flex-col px-1 pb-1 pt-3">
-        <div className="flex items-center justify-between gap-3">
+      <div className="flex min-h-[200px] flex-1 flex-col px-1 pb-1 pt-3">
+        <div className="flex items-start justify-between gap-2">
           <h3
-            className="line-clamp-1 text-[16px] font-medium text-[#2D2D2D]"
+            className="min-w-0 flex-1 text-[12px] font-semibold leading-[1.35] text-[#2D2D2D] sm:text-[13px]"
             style={{ fontFamily: 'Poppins' }}
           >
             {pkg.title}
           </h3>
-          <span className="shrink-0 rounded-full bg-black/5 px-2 py-1 text-[12px] text-[#2D2D2D]">
+          <span className="shrink-0 rounded-full bg-black/5 px-2 py-1 text-[11px] text-[#2D2D2D]">
             {pkg.category || 'Package'}
           </span>
         </div>
 
-        <p className="mt-2 line-clamp-2 min-h-[36px] text-[12px] text-[#767676]">
-          {visibleDescription}
-        </p>
+        {pkg.price ? (
+          <p className="mt-2 text-[13px] leading-none text-[#2D2D2D]">
+            Starting from <span className="text-[15px] font-bold text-[#591902]">{pkg.price}</span>
+          </p>
+        ) : null}
 
-        <div className="mt-3 flex min-h-0 flex-1 flex-col">
+        <div className="mt-2 flex min-h-0 flex-1 flex-col">
           <p className="text-[12px] font-medium">Includes :</p>
           <div
             ref={visibleTagsViewportRef}
-            className={`mt-2 min-h-0 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
+            className={`mt-2 min-h-0 flex-1 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
           >
             <div className="flex flex-wrap gap-1.5">
               {visibleTags.map((tag, i) => (

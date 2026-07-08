@@ -28,6 +28,10 @@ function getBreakdownAmount(entry) {
   return Number.isFinite(amount) && amount > 0 ? amount : 0
 }
 
+function isDecorPackageData(pkg) {
+  return Array.isArray(pkg?.service_slugs) && pkg.service_slugs.includes('decor')
+}
+
 function getPackageBreakdownRows(pkg) {
   return (Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : [])
     .map(entry => {
@@ -125,7 +129,9 @@ export function getCartItemSummary(
   }
 
   const quantity = Math.max(1, Number(item?.quantity ?? 1))
-  const breakdownRows = getPackageBreakdownRows(item?.packageData)
+  const breakdownRows = isDecorPackageData(item?.packageData)
+    ? []
+    : getPackageBreakdownRows(item?.packageData)
 
   if (!breakdownRows.length) {
     return {

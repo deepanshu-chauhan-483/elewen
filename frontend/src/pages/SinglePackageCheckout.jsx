@@ -285,8 +285,10 @@ function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
               className="flex items-center justify-between gap-3 rounded-[16px] bg-[#F5F5F5] px-3 py-4"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[16px] font-medium text-[#2C2C2C]">{pkg.title}</p>
-                <p className="truncate text-sm text-gray-500">
+                <p className="text-[14px] font-medium leading-snug text-[#2C2C2C] sm:text-[15px]">
+                  {pkg.title}
+                </p>
+                <p className="text-sm leading-snug text-gray-500">
                   {pkg.subtitle || 'Perfect add-on for your package'}
                 </p>
                 <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
@@ -448,7 +450,7 @@ export default function SinglePackageCheckout() {
               <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
               <div className="flex min-w-0 items-center gap-2">
                 <h3
-                  className="font-medium text-[12px] md:text-[14px] text-[#1C1C1C]"
+                  className="min-w-0 font-medium text-[12px] leading-snug md:text-[14px] text-[#1C1C1C]"
                   style={{ fontFamily: "'Poppins'" }}
                 >
                   {packageTitle}

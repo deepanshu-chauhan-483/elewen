@@ -17,6 +17,7 @@ import { usePackageReviews } from '../hooks/usePackageReviews'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
+import { getRelatedPackages } from '../lib/packageFilters'
 import {
   formatCateringPrice,
   getCateringDetailSection,
@@ -149,13 +150,6 @@ function normalisePackageId(value = '') {
 
 function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
-}
-
-function isCateringPackage(pkg) {
-  return (
-    Array.isArray(pkg?.service_slugs) &&
-    pkg.service_slugs.some(slug => String(slug).toLowerCase().includes('catering'))
-  )
 }
 
 function normalizeSelectedOptions(selectedOptions = {}) {
@@ -406,6 +400,11 @@ export default function CateringSinglePackagePage() {
     [packageDetails, packageId, packagesData]
   )
 
+  const relatedProducts = useMemo(
+    () => (pkg ? getRelatedPackages(packagesData, pkg, { serviceSlug: 'catering' }) : []),
+    [packagesData, pkg]
+  )
+
   const { data: packageReviews = [] } = usePackageReviews({
     id: pkg?.id,
     documentId: pkg?.documentId,
@@ -509,11 +508,6 @@ export default function CateringSinglePackagePage() {
   if (!pkg) {
     return <Navigate to={backHref} replace />
   }
-
-  const relatedProducts = packagesData
-    .filter(item => isCateringPackage(item) && buildPackageId(item) !== buildPackageId(pkg))
-    .slice(0, 12)
-    .map(item => ({ ...item, serviceSlug: 'catering' }))
 
   const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
   const sideImages = Array.from({ length: Math.max(5, sourceImages.length || 1) }).map(
