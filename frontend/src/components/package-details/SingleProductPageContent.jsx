@@ -344,16 +344,20 @@ function ProductImageLayout({
   desktopSectionTop,
   hideHeaderPrice,
 }) {
+  const normalizedMainImage = mainImage ?? null
   const initialDisplayImage = mainImage ?? sideImages[0]
-  const [selectedImage, setSelectedImage] = useState({
-    image: null,
-    baseMainImage: mainImage ?? null,
-  })
+  const [selectedOverride, setSelectedOverride] = useState(null)
+  const [trackedMainImage, setTrackedMainImage] = useState(normalizedMainImage)
+
+  if (trackedMainImage !== normalizedMainImage) {
+    setTrackedMainImage(normalizedMainImage)
+    setSelectedOverride(null)
+  }
+
+  const galleryUrls = [mainImage, ...sideImages].filter(Boolean)
   const activeImage =
-    selectedImage.baseMainImage === (mainImage ?? null) &&
-    selectedImage.image &&
-    [mainImage, ...sideImages].includes(selectedImage.image)
-      ? selectedImage.image
+    selectedOverride && galleryUrls.includes(selectedOverride)
+      ? selectedOverride
       : initialDisplayImage
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
   const sideImagesMaxHeight = 'calc((clamp(5.125rem, 6.5vw, 6.4375rem) * 5) + 2rem)'
@@ -362,13 +366,6 @@ function ProductImageLayout({
     const urls = [mainImage, ...sideImages].filter(Boolean)
     preloadImages(urls)
   }, [mainImage, sideImages])
-
-  useEffect(() => {
-    setSelectedImage({
-      image: null,
-      baseMainImage: mainImage ?? null,
-    })
-  }, [mainImage])
 
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
@@ -457,36 +454,31 @@ function ProductImageLayout({
 
               {/* Side Images */}
               {sideImages.length > 0 ? (
-              <div
-                className="order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:shrink-0 md:max-h-[unset] md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                style={{
-                  maxHeight: sideImagesMaxHeight,
-                }}
-                data-lenis-prevent
-              >
-                {sideImages.map((image, index) => (
-                  <button
-                    type="button"
-                    key={`${image}-${index}`}
-                    onClick={() =>
-                      setSelectedImage({
-                        image,
-                        baseMainImage: mainImage ?? null,
-                      })
-                    }
-                    className={`aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-[12px] transition-opacity md:aspect-auto md:flex-none md:shrink-0 md:h-[clamp(5.125rem,6.5vw,6.4375rem)] md:w-[clamp(4rem,5vw,5rem)] ${
-                      activeImage === image ? 'opacity-100' : 'opacity-40'
-                    }`}
-                    aria-label={`Show ${title} preview ${index + 1}`}
-                  >
-                    <AppImage
-                      src={image}
-                      alt={`${title} preview ${index + 1}`}
-                      className="h-full w-full rounded-[14px] object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
+                <div
+                  className="order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:shrink-0 md:max-h-[unset] md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  style={{
+                    maxHeight: sideImagesMaxHeight,
+                  }}
+                  data-lenis-prevent
+                >
+                  {sideImages.map((image, index) => (
+                    <button
+                      type="button"
+                      key={`${image}-${index}`}
+                      onClick={() => setSelectedOverride(image)}
+                      className={`aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-[12px] transition-opacity md:aspect-auto md:flex-none md:shrink-0 md:h-[clamp(5.125rem,6.5vw,6.4375rem)] md:w-[clamp(4rem,5vw,5rem)] ${
+                        activeImage === image ? 'opacity-100' : 'opacity-40'
+                      }`}
+                      aria-label={`Show ${title} preview ${index + 1}`}
+                    >
+                      <AppImage
+                        src={image}
+                        alt={`${title} preview ${index + 1}`}
+                        className="h-full w-full rounded-[14px] object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               ) : null}
             </div>
           </div>

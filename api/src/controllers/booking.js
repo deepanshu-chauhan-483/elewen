@@ -409,9 +409,7 @@ export const createBooking = async (req, res, next) => {
       : null
     const pricedItems = pricedCart?.adjustedItems ?? cart.items
 
-    const subtotal = pricedCart
-      ? Number(pricedCart.subtotal)
-      : Number(cart.subtotal)
+    const subtotal = pricedCart ? Number(pricedCart.subtotal) : Number(cart.subtotal)
 
     // Re-validate coupon (race condition protection — someone else may have exhausted it)
     let discountAmount = 0
@@ -460,9 +458,7 @@ export const createBooking = async (req, res, next) => {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           totalPrice:
-            typeof item.totalPrice === 'number'
-              ? item.totalPrice.toFixed(2)
-              : item.totalPrice,
+            typeof item.totalPrice === 'number' ? item.totalPrice.toFixed(2) : item.totalPrice,
         })),
       })
 

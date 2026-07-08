@@ -56,10 +56,9 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
     isSaved(wishlistPackageId) ||
     (pkg.id != null && isSaved(pkg.id)) ||
     (pkg.documentId && isSaved(pkg.documentId))
-  const isWishlistPending =
-    [wishlistPackageId, pkg.id, pkg.documentId].some(
-      id => id != null && String(pendingPackageId) === String(id)
-    )
+  const isWishlistPending = [wishlistPackageId, pkg.id, pkg.documentId].some(
+    id => id != null && String(pendingPackageId) === String(id)
+  )
 
   useEffect(() => {
     if (!images.length) return
@@ -268,7 +267,11 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
             className="flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-sm transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isWishlistPending ? (
-              <svg className="h-[18px] w-[18px] animate-spin text-[#8C3B11]" viewBox="0 0 24 24" fill="none">
+              <svg
+                className="h-[18px] w-[18px] animate-spin text-[#8C3B11]"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
                 <circle
                   className="opacity-25"
                   cx="12"

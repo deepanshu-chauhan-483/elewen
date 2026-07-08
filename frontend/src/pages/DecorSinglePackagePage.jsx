@@ -637,10 +637,7 @@ function filterVisibleDecorSections(sections = []) {
     const visibleWhen = section?.visibleWhen
     if (!visibleWhen) return true
 
-    const selectedParentTitle = getSelectedChoiceTitleByGroupKey(
-      sections,
-      visibleWhen.parentKey
-    )
+    const selectedParentTitle = getSelectedChoiceTitleByGroupKey(sections, visibleWhen.parentKey)
 
     return selectedParentTitle === cleanText(visibleWhen.parentValue)
   })
@@ -786,9 +783,9 @@ function getDecorAdditionalInfo(selectedOptions = {}) {
 }
 
 function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = false } = {}) {
-  const selectedSections = filterVisibleDecorSections(
-    customization?.data?.sections ?? []
-  ).filter(section => section?.type === 'choice-row')
+  const selectedSections = filterVisibleDecorSections(customization?.data?.sections ?? []).filter(
+    section => section?.type === 'choice-row'
+  )
 
   const result = normalizeSelectedOptions(
     Object.fromEntries(

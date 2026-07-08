@@ -81,7 +81,11 @@ export function getDeliveryAddonForBase(deliveryCharge, base) {
   return 0
 }
 
-export function applyDeliveryChargesToBreakdown(breakdownRows = [], deliveryCharge = null, quantity = 1) {
+export function applyDeliveryChargesToBreakdown(
+  breakdownRows = [],
+  deliveryCharge = null,
+  quantity = 1
+) {
   const safeQuantity = Math.max(1, Number(quantity ?? 1))
   let transportAddonPerUnit = 0
 
