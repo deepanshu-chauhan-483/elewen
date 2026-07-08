@@ -137,16 +137,22 @@ function getNestedPackagePolicies(pkg) {
     .filter(Boolean)
 }
 
-function getNestedPackageThemes(pkg) {
-  return getNestedPackageSections(pkg).flatMap(section =>
-    [section?.theme, section?.theme_name].filter(Boolean)
-  )
-}
-
 function getNestedPackageBudgetLevels(pkg) {
   return getNestedPackageSections(pkg)
     .map(section => section?.budget_level)
     .filter(Boolean)
+}
+
+/** Canonical theme slugs for filtering — relation slug only, not package display names. */
+function getPackageThemeSlugs(pkg) {
+  return uniqueValues(
+    getNestedPackageSections(pkg)
+      .map(section => {
+        const slug = section?.theme?.slug
+        return slug ? slugify(slug) : ''
+      })
+      .filter(Boolean)
+  )
 }
 
 function inferServiceSlugsFromSections(pkg) {
@@ -339,7 +345,6 @@ function normalizePackage(pkg, index = 0, options = {}) {
   const inclusionImages = listing ? [] : detailSections.flatMap(getSectionInclusionImages)
   const backdropImages = listing ? [] : detailSections.flatMap(getSectionBackdropImages)
   const serviceCategories = normaliseRelationArray(pkg.service_categories)
-  const packageThemes = getNestedPackageThemes(pkg)
   const budgetLevels = getNestedPackageBudgetLevels(pkg)
   const primaryBudgetLevel = budgetLevels[0] ?? null
   const packageIncludes = buildPackageIncludes(pkg)
@@ -383,11 +388,7 @@ function normalizePackage(pkg, index = 0, options = {}) {
       .filter(Boolean),
     service_slugs: serviceSlugs,
     service_ids: serviceIds,
-    theme_slugs: uniqueValues(
-      packageThemes.flatMap(theme =>
-        typeof theme === 'string' ? [theme] : [theme?.slug, theme?.name]
-      )
-    ).filter(Boolean),
+    theme_slugs: getPackageThemeSlugs(pkg),
     level_slug: getBudgetLevelSlug(primaryBudgetLevel),
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
     images: uniqueValues([...packageImages, ...inclusionImages, ...backdropImages]),

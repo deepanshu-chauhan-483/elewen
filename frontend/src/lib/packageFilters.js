@@ -151,6 +151,78 @@ const includesNormalized = (values, target) => {
   )
 }
 
+function slugifyThemeValue(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function getThemeSlugVariants(theme) {
+  return [
+    ...new Set(
+      [
+        normalizeValue(theme?.slug),
+        slugifyThemeValue(theme?.slug),
+        slugifyThemeValue(theme?.label),
+      ].filter(Boolean)
+    ),
+  ]
+}
+
+function collectThemeSlugsFromPackages(packages) {
+  const slugs = new Set()
+
+  for (const pkg of packages) {
+    for (const slug of pkg?.theme_slugs ?? []) {
+      const canonical = slugifyThemeValue(slug)
+      if (canonical) slugs.add(canonical)
+    }
+  }
+
+  return slugs
+}
+
+function dedupeThemesBySlug(themes) {
+  const seen = new Set()
+
+  return (Array.isArray(themes) ? themes : []).filter(theme => {
+    const key = slugifyThemeValue(theme?.slug)
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function themeMatchesSlugSet(theme, usedSlugs) {
+  return getThemeSlugVariants(theme).some(variant => usedSlugs.has(variant))
+}
+
+/** Keep only CMS decor themes linked on packages for the current event/category flow. */
+export function filterThemesByEventPackages(themes, packages, filters = {}) {
+  const matchingPackages = filterPackages(packages, {
+    categorySlug: filters.categorySlug ?? '',
+    eventSlug: filters.eventSlug ?? '',
+    eventId: filters.eventId ?? '',
+    serviceSlug: filters.serviceSlug ?? 'decor',
+    serviceId: filters.serviceId ?? '',
+    themeSlug: '',
+    levelSlug: '',
+    levelId: '',
+  })
+
+  const usedThemeSlugs = collectThemeSlugsFromPackages(matchingPackages)
+  if (!usedThemeSlugs.size) return []
+
+  return dedupeThemesBySlug(
+    (Array.isArray(themes) ? themes : []).filter(theme =>
+      themeMatchesSlugSet(theme, usedThemeSlugs)
+    )
+  )
+}
+
 export function filterPackages(packages, filters = {}) {
   const {
     categorySlug = '',

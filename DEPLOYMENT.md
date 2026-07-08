@@ -248,6 +248,32 @@ docker compose restart strapi api
 
 Ensure `PUBLIC_API_URL` and `PUBLIC_STRAPI_URL` use `https://` and rebuild frontend.
 
+### Strapi admin login 500 (`strapi_sessions_pkey` duplicate key)
+
+Symptom in `docker compose logs strapi`:
+
+```text
+Failed to create admin refresh session ... duplicate key value violates unique constraint "strapi_sessions_pkey"
+http: POST /admin/login ... 500
+```
+
+Public API (`/api/packages`, etc.) can still return **200** — only **admin login** fails. Common after restoring Postgres from a dump without resetting sequences.
+
+Fix (logs out any existing admin sessions; safe on production):
+
+```bash
+docker compose exec postgres psql -U postgres -d elewen -c "TRUNCATE TABLE strapi_sessions RESTART IDENTITY CASCADE;"
+docker compose restart strapi
+```
+
+If login still fails, realign the sequence manually:
+
+```bash
+docker compose exec postgres psql -U postgres -d elewen -c "SELECT setval(pg_get_serial_sequence('strapi_sessions', 'id'), COALESCE((SELECT MAX(id) FROM strapi_sessions), 1));"
+```
+
+Replace `elewen` / `postgres` if your `.env` uses different `DB_NAME` / `DB_USER`.
+
 ### Catering menu modal empty (403 on `/api/catering-menu`)
 
 In Strapi admin → **Settings** → Users & Permissions → **Public** → enable `find` on **Catering-menu**.

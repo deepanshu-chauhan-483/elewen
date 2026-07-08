@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { useDecorThemeOptions } from '../hooks/useEventTypes'
+import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
+import { filterThemesByEventPackages } from '../lib/packageFilters'
 
 import themeImg1 from '../assets/images/IMG_3903.jpg'
 import themeImg2 from '../assets/images/IMG_7768.jpg'
@@ -115,8 +117,22 @@ export default function DecorThemePage() {
   const flow = searchParams.get('flow') ?? ''
 
   const themesQuery = useDecorThemeOptions(serviceId)
+  const packagesQuery = usePackages()
   const { data: themes = [] } = themesQuery
-  const isStrapiLoading = useStrapiPageLoading(themesQuery)
+  const { data: packages = [] } = packagesQuery
+  const isStrapiLoading = useStrapiPageLoading(themesQuery, packagesQuery)
+
+  const eventScopedThemes = useMemo(
+    () =>
+      filterThemesByEventPackages(themes, packages, {
+        categorySlug: categoryId,
+        eventSlug: eventId,
+        eventId: eventNumericId,
+        serviceSlug: serviceSlug || 'decor',
+        serviceId,
+      }),
+    [themes, packages, categoryId, eventId, eventNumericId, serviceSlug, serviceId]
+  )
 
   const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
@@ -143,9 +159,9 @@ export default function DecorThemePage() {
 
   const filteredThemes = useMemo(() => {
     const query = debouncedSearchValue.trim().toLowerCase()
-    if (!query) return themes
-    return themes.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
-  }, [debouncedSearchValue, themes])
+    if (!query) return eventScopedThemes
+    return eventScopedThemes.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
+  }, [debouncedSearchValue, eventScopedThemes])
   const cardsPerPage = isDesktopViewport ? DESKTOP_CARDS_PER_PAGE : MOBILE_CARDS_PER_PAGE
   const totalPages = Math.max(1, Math.ceil(filteredThemes.length / cardsPerPage))
   const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
@@ -263,26 +279,35 @@ export default function DecorThemePage() {
         >
           <div className="mx-auto flex w-full flex-col">
             <div className="flex w-full flex-col gap-3 md:gap-4">
-              <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
-                {visibleThemes.map((theme, index) => (
-                  <ThemeCard
-                    key={theme.id ?? theme.slug ?? `${safePageIndex}-${index}`}
-                    categoryId={categoryId}
-                    eventId={eventId}
-                    eventNumericId={eventNumericId}
-                    serviceSlug={serviceSlug}
-                    serviceId={serviceId}
-                    flow={flow}
-                    theme={theme}
-                    image={
-                      theme.preview_image ||
-                      FALLBACK_THEME_IMAGES[
-                        (safePageIndex * cardsPerPage + index) % FALLBACK_THEME_IMAGES.length
-                      ]
-                    }
-                  />
-                ))}
-              </div>
+              {filteredThemes.length === 0 ? (
+                <p
+                  className="py-10 text-center text-[14px] text-[#7C7065] md:text-[15px]"
+                  style={{ fontFamily: "'Poppins'" }}
+                >
+                  No themes are available for this event yet. You can skip ahead to browse packages.
+                </p>
+              ) : (
+                <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
+                  {visibleThemes.map((theme, index) => (
+                    <ThemeCard
+                      key={theme.id ?? theme.slug ?? `${safePageIndex}-${index}`}
+                      categoryId={categoryId}
+                      eventId={eventId}
+                      eventNumericId={eventNumericId}
+                      serviceSlug={serviceSlug}
+                      serviceId={serviceId}
+                      flow={flow}
+                      theme={theme}
+                      image={
+                        theme.preview_image ||
+                        FALLBACK_THEME_IMAGES[
+                          (safePageIndex * cardsPerPage + index) % FALLBACK_THEME_IMAGES.length
+                        ]
+                      }
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
