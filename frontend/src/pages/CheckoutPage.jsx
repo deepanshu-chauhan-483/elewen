@@ -14,6 +14,7 @@ import { usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useServiceAreas } from '../hooks/useServiceAreas'
+import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
 import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
 import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
@@ -558,15 +559,18 @@ export default function CheckoutPage() {
   const globalSettingsQuery = useGlobalSettings()
   const cateringDiscountsQuery = useCateringGuestDiscounts()
   const serviceAreasQuery = useServiceAreas()
+  const deliveryChargesQuery = useDeliveryCharges()
   const { data: packages = [] } = packagesQuery
   const { data: globalSettings = null } = globalSettingsQuery
   const { data: cateringDiscountSettings = null } = cateringDiscountsQuery
   const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = serviceAreasQuery
+  const { data: deliveryCharges = [] } = deliveryChargesQuery
   const isStrapiLoading = useStrapiPageLoading(
     packagesQuery,
     globalSettingsQuery,
     cateringDiscountsQuery,
-    serviceAreasQuery
+    serviceAreasQuery,
+    deliveryChargesQuery
   )
 
   const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
@@ -646,9 +650,15 @@ export default function CheckoutPage() {
     () =>
       cartItems.map(item => ({
         item,
-        summary: getCartItemSummary(item, { cateringDiscountSettings, cartItems }),
+        summary: getCartItemSummary(item, {
+          cateringDiscountSettings,
+          cartItems,
+          deliveryCharge: isPincodeValid
+            ? getDeliveryChargeForPincode(deliveryCharges, pinCode)
+            : null,
+        }),
       })),
-    [cartItems, cateringDiscountSettings]
+    [cartItems, cateringDiscountSettings, deliveryCharges, isPincodeValid, pinCode]
   )
   const hasAutoFilledGuestCountRef = useRef(false)
   const computedSubtotal = useMemo(
@@ -745,8 +755,17 @@ export default function CheckoutPage() {
     )
     setIsCheckingPincode(nextState.isChecking)
     setIsPincodeValid(nextState.isValid)
-    setPinCodeMessage(nextState.message)
-  }, [debouncedPinCode, pinCode, isLoadingServiceAreas, serviceAreas])
+
+    let message = nextState.message
+    if (nextState.isValid) {
+      const deliveryCharge = getDeliveryChargeForPincode(deliveryCharges, debouncedPinCode)
+      if (deliveryCharge?.location) {
+        message = `Service available in ${deliveryCharge.location}. Zone transport add-on included in totals.`
+      }
+    }
+
+    setPinCodeMessage(message)
+  }, [debouncedPinCode, pinCode, isLoadingServiceAreas, serviceAreas, deliveryCharges])
 
   const handleCheckout = async paymentType => {
     const token = getStoredJwt()
@@ -811,6 +830,7 @@ export default function CheckoutPage() {
               }
             : {
                 eventTime: eventTime || '',
+                deliveryPincode: pinCode,
               }
         )
         booking = bookingResponse?.booking
@@ -901,10 +921,10 @@ export default function CheckoutPage() {
               guestCount,
               specialRequest,
               checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
-              selectedItems: cartItems.map(item => ({
+              selectedItems: itemSummaries.map(({ item, summary }) => ({
                 id: item?.id,
                 title: item?.title,
-                amount: Number(item?.totalPrice ?? 0),
+                amount: Number(summary?.total ?? item?.totalPrice ?? 0),
                 additionalInfo: String(item?.additionalInfo ?? '').trim(),
               })),
               showBookingConfirmationToast: true,
@@ -966,10 +986,10 @@ export default function CheckoutPage() {
                   guestCount,
                   specialRequest,
                   checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
-                  selectedItems: cartItems.map(item => ({
+                  selectedItems: itemSummaries.map(({ item, summary }) => ({
                     id: item?.id,
                     title: item?.title,
-                    amount: Number(item?.totalPrice ?? 0),
+                    amount: Number(summary?.total ?? item?.totalPrice ?? 0),
                     additionalInfo: String(item?.additionalInfo ?? '').trim(),
                   })),
                   showBookingConfirmationToast: true,

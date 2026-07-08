@@ -350,26 +350,114 @@ function parseChoiceGroupTitle(title = '') {
   }
 }
 
-function resolveChoiceGroupMeta(item = {}) {
-  const explicitLabel = cleanText(item?.choice_group_label)
-  const explicitKey = cleanText(item?.choice_group_key)
+function parseConditionalChoiceKey(rawKey = '') {
+  const normalizedKey = cleanText(rawKey)
+  const match = normalizedKey.match(/^when:([^:]+):([^>]+)>>(.+)$/)
 
-  if (explicitLabel || explicitKey) {
+  if (!match) {
     return {
-      key: explicitKey || explicitLabel,
-      label: explicitLabel || explicitKey,
-      isGenericChoose: /^choose\s*\d+$/i.test(explicitLabel || explicitKey),
+      key: normalizedKey,
+      visibleWhen: null,
     }
   }
 
-  return parseChoiceGroupTitle(item?.group_title)
+  return {
+    key: cleanText(match[3]),
+    visibleWhen: {
+      parentKey: cleanText(match[1]),
+      parentValue: cleanText(match[2]),
+    },
+  }
 }
 
-function createChoiceItem({ inclusion, element, fallbackTitle }) {
-  const inclusionText = cleanText(inclusion?.text)
+function parseLegacyChoiceTitle(rawText = '') {
+  const normalizedText = cleanText(rawText)
+  const legacyMatch = normalizedText.match(/^option\s*\d+\s*:\s*(.+)$/i)
+
+  if (!legacyMatch) {
+    return {
+      title: normalizedText,
+      trailingDetails: '',
+    }
+  }
+
+  const remainder = cleanText(legacyMatch[1])
+  const splitMatch = remainder.match(/^(.+?)\s*[—–-]\s*(.+)$/)
+
+  if (!splitMatch) {
+    return {
+      title: remainder,
+      trailingDetails: '',
+    }
+  }
+
+  return {
+    title: cleanText(splitMatch[1]),
+    trailingDetails: cleanText(splitMatch[2]),
+  }
+}
+
+function splitInclusionDetailText(text = '') {
+  return cleanText(text)
+    .split(/\s*;\s*|\s*,\s+(?=\d)/)
+    .map(part => cleanText(part))
+    .filter(Boolean)
+}
+
+function indexWhenInclusions(inclusions = []) {
+  const whenBullets = new Map()
+
+  ;(Array.isArray(inclusions) ? inclusions : []).forEach(item => {
+    const groupTitle = cleanText(item?.group_title)
+    const whenMatch = groupTitle.match(/^when:([^:]+):(.+)$/)
+
+    if (!whenMatch) return
+
+    const mapKey = `${cleanText(whenMatch[1])}::${cleanText(whenMatch[2])}`
+    const bullets = whenBullets.get(mapKey) ?? []
+
+    bullets.push(cleanText(item?.text))
+    whenBullets.set(mapKey, bullets.filter(Boolean))
+  })
+
+  return whenBullets
+}
+
+function resolveChoiceGroupMeta(item = {}) {
+  const explicitLabel = cleanText(item?.choice_group_label)
+  const explicitKey = cleanText(item?.choice_group_key)
+  const conditionalMeta = parseConditionalChoiceKey(explicitKey)
+
+  if (explicitLabel || explicitKey) {
+    return {
+      key: conditionalMeta.key || explicitKey || explicitLabel,
+      label: explicitLabel || conditionalMeta.key || explicitKey,
+      isGenericChoose: /^choose\s*\d+$/i.test(explicitLabel || explicitKey),
+      visibleWhen: conditionalMeta.visibleWhen,
+    }
+  }
+
+  const parsedTitle = parseChoiceGroupTitle(item?.group_title)
+
+  return {
+    ...parsedTitle,
+    visibleWhen: null,
+  }
+}
+
+function createChoiceItem({ inclusion, element, fallbackTitle, whenBullets = new Map() }) {
+  const parsedLegacyTitle = parseLegacyChoiceTitle(inclusion?.text)
+  const inclusionText = parsedLegacyTitle.title
   const elementTitle = cleanText(element?.title)
   const serviceName = cleanText(element?.service?.name)
   const price = formatPrice(element?.base_price)
+  const groupKey = cleanText(inclusion?._choice_group_key)
+  const bulletKey = groupKey && inclusionText ? `${groupKey}::${inclusionText}` : ''
+  const scopedBullets = bulletKey ? (whenBullets.get(bulletKey) ?? []) : []
+  const legacyBullets = parsedLegacyTitle.trailingDetails
+    ? splitInclusionDetailText(parsedLegacyTitle.trailingDetails)
+    : []
+  const bullets = scopedBullets.length ? scopedBullets : legacyBullets
   const title =
     inclusionText ||
     (elementTitle && !/^option\s+\d+$/i.test(elementTitle) ? elementTitle : '') ||
@@ -388,7 +476,8 @@ function createChoiceItem({ inclusion, element, fallbackTitle }) {
 
   return {
     title,
-    description: descriptionParts.join('\n'),
+    bullets,
+    description: bullets.length ? bullets.join('\n') : descriptionParts.join('\n'),
     price,
     images: getInclusionImages(inclusion),
     selected: false,
@@ -421,6 +510,7 @@ function buildChoiceSectionsFromElements(elements = []) {
 function buildDecorCustomizationSections(pkg) {
   return getDecorDetailSections(pkg).flatMap(section => {
     const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
+    const whenBullets = indexWhenInclusions(inclusions)
     const elements = Array.isArray(section?.elements)
       ? section.elements.filter(element => element?.visibility !== false)
       : []
@@ -431,16 +521,25 @@ function buildDecorCustomizationSections(pkg) {
         return {
           ...item,
           group_title: parsedGroupTitle.key,
+          _choice_group_key: parsedGroupTitle.key,
           _display_group_title: parsedGroupTitle.label,
           _is_generic_choose_title: parsedGroupTitle.isGenericChoose,
+          _visible_when: parsedGroupTitle.visibleWhen,
         }
       })
     const rawChoiceGroups = groupItemsByTitle(choiceItems).map(group => ({
       ...group,
       displayTitle: group.items[0]?._display_group_title || group.title,
       isGenericChoose: Boolean(group.items[0]?._is_generic_choose_title),
+      visibleWhen: group.items[0]?._visible_when ?? null,
+      groupKey: group.items[0]?._choice_group_key || group.title,
     }))
-    const textGroups = groupItemsByTitle(inclusions.filter(item => !item?.is_choice_group))
+    const textGroups = groupItemsByTitle(
+      inclusions.filter(item => {
+        if (item?.is_choice_group) return false
+        return !/^when:/i.test(cleanText(item?.group_title))
+      })
+    )
     const choiceGroups = rawChoiceGroups.map(group => ({
       ...group,
       title: group.displayTitle,
@@ -462,6 +561,7 @@ function buildDecorCustomizationSections(pkg) {
             inclusion: item,
             element,
             fallbackTitle: `Option ${itemIndex + 1}`,
+            whenBullets,
           })
         })
         .filter(item => item.title)
@@ -471,6 +571,8 @@ function buildDecorCustomizationSections(pkg) {
       builtSections.push({
         type: 'choice-row',
         title: buildChoiceSectionTitle(group.title, `Choose ${groupIndex + 1}`),
+        groupKey: group.groupKey,
+        visibleWhen: group.visibleWhen,
         items,
         required: true,
       })
@@ -510,6 +612,57 @@ function buildDecorCustomizationSections(pkg) {
   })
 }
 
+function getSelectedChoiceTitleByGroupKey(sections = [], groupKey = '') {
+  const normalizedGroupKey = cleanText(groupKey)
+  if (!normalizedGroupKey) return ''
+
+  const matchingSection = (Array.isArray(sections) ? sections : []).find(
+    section =>
+      section?.type === 'choice-row' &&
+      !section?.visibleWhen &&
+      cleanText(section?.groupKey) === normalizedGroupKey
+  )
+
+  if (!matchingSection) return ''
+
+  const selectedItem = (Array.isArray(matchingSection.items) ? matchingSection.items : []).find(
+    item => typeof item !== 'string' && item.selected
+  )
+
+  return cleanText(selectedItem?.title)
+}
+
+function filterVisibleDecorSections(sections = []) {
+  return (Array.isArray(sections) ? sections : []).filter(section => {
+    const visibleWhen = section?.visibleWhen
+    if (!visibleWhen) return true
+
+    const selectedParentTitle = getSelectedChoiceTitleByGroupKey(
+      sections,
+      visibleWhen.parentKey
+    )
+
+    return selectedParentTitle === cleanText(visibleWhen.parentValue)
+  })
+}
+
+function clearDependentChoiceSelections(sections = [], changedGroupKey = '') {
+  const normalizedChangedGroupKey = cleanText(changedGroupKey)
+  if (!normalizedChangedGroupKey) return sections
+
+  return (Array.isArray(sections) ? sections : []).map(section => {
+    if (section?.type !== 'choice-row') return section
+    if (cleanText(section?.visibleWhen?.parentKey) !== normalizedChangedGroupKey) return section
+
+    return {
+      ...section,
+      items: (section.items ?? []).map(item =>
+        typeof item === 'string' ? item : { ...item, selected: false }
+      ),
+    }
+  })
+}
+
 function cloneSections(templateSections = []) {
   return templateSections.map(section => ({
     ...section,
@@ -524,12 +677,15 @@ function serializeSections(sections = []) {
     (Array.isArray(sections) ? sections : []).map(section => ({
       type: section.type,
       title: section.title,
+      groupKey: section.groupKey ?? '',
+      visibleWhen: section.visibleWhen ?? null,
       required: section.required !== false,
       items: (Array.isArray(section.items) ? section.items : []).map(item =>
         typeof item === 'string'
           ? item
           : {
               title: item.title,
+              bullets: Array.isArray(item.bullets) ? item.bullets : [],
               description: item.description,
               images: Array.isArray(item.images) ? item.images : [],
               price: item.price,
@@ -559,7 +715,7 @@ function mergeTemplateSections(templateSections = [], existingSections = []) {
   const existingSectionMap = new Map()
 
   ;(Array.isArray(existingSections) ? existingSections : []).forEach(section => {
-    const baseKey = `${section.type}:${section.title}`
+    const baseKey = `${section.type}:${section.groupKey ?? section.title}`
     const nextCount = existingSectionCounts.get(baseKey) ?? 0
     existingSectionCounts.set(baseKey, nextCount + 1)
     existingSectionMap.set(`${baseKey}:${nextCount}`, section)
@@ -570,7 +726,7 @@ function mergeTemplateSections(templateSections = [], existingSections = []) {
   return cloneSections(templateSections).map(section => {
     if (section.type !== 'choice-row') return section
 
-    const baseKey = `${section.type}:${section.title}`
+    const baseKey = `${section.type}:${section.groupKey ?? section.title}`
     const nextCount = templateSectionCounts.get(baseKey) ?? 0
     templateSectionCounts.set(baseKey, nextCount + 1)
 
@@ -630,9 +786,9 @@ function getDecorAdditionalInfo(selectedOptions = {}) {
 }
 
 function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = false } = {}) {
-  const selectedSections = (customization?.data?.sections ?? []).filter(
-    section => section?.type === 'choice-row'
-  )
+  const selectedSections = filterVisibleDecorSections(
+    customization?.data?.sections ?? []
+  ).filter(section => section?.type === 'choice-row')
 
   const result = normalizeSelectedOptions(
     Object.fromEntries(
@@ -646,7 +802,6 @@ function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = fal
             : null
           const resolvedItem = selectedItem ?? fallbackItem
 
-          // Use index as unique key to prevent overwriting when multiple sections have same title
           const key = `${section.title}_${idx}`
           return [key, resolvedItem?.title ?? '']
         })
@@ -690,12 +845,16 @@ function getSelectedOptionsFromSearchParams(searchParams) {
 }
 
 function DecorOptionButton({ item, wide = false, onClick }) {
+  const bullets = Array.isArray(item.bullets)
+    ? item.bullets.filter(Boolean)
+    : splitInclusionDetailText(item.description)
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={`rounded-[6px] border px-3 py-2 text-left transition-all ${
-        wide ? 'min-w-[160px] flex-1' : 'min-w-[92px]'
+        wide || bullets.length ? 'min-w-[220px] flex-1 basis-[220px]' : 'min-w-[92px]'
       } ${
         item.selected
           ? 'border-[#7A3516] bg-[#FBF6ED] text-[#591902]'
@@ -703,10 +862,26 @@ function DecorOptionButton({ item, wide = false, onClick }) {
       }`}
     >
       <p
-        className={`text-[12px] leading-[1.3] ${item.selected ? 'text-[#591902]' : 'text-[#937032]'}`}
+        className={`text-[12px] font-semibold leading-[1.3] ${
+          item.selected ? 'text-[#591902]' : 'text-[#937032]'
+        }`}
       >
         {item.title}
       </p>
+      {bullets.length ? (
+        <ul className="mt-2 space-y-1">
+          {bullets.map(bullet => (
+            <li
+              key={bullet}
+              className={`text-[11px] leading-[1.45] ${
+                item.selected ? 'text-[#591902]' : 'text-[#8A5A2D]'
+              }`}
+            >
+              • {bullet}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </button>
   )
 }
@@ -785,6 +960,8 @@ function DecorPackageSections({
   onSelect,
   onTextItemClick,
 }) {
+  const visibleSections = useMemo(() => filterVisibleDecorSections(sections), [sections])
+
   return (
     <div>
       {keyDecorText ? (
@@ -801,8 +978,8 @@ function DecorPackageSections({
       </p>
 
       <div className="mt-4 space-y-6">
-        {sections.length ? (
-          sections.map((section, index) => {
+        {visibleSections.length ? (
+          visibleSections.map((section, index) => {
             if (section.type === 'text-row') {
               return (
                 <DecorTextRow
@@ -813,12 +990,14 @@ function DecorPackageSections({
               )
             }
 
-            const useWideCards = section.items.some(
-              item => typeof item !== 'string' && item.description
-            )
+            const useWideCards = section.items.some(item => {
+              if (typeof item === 'string') return false
+              return Boolean(item.title) && (item.bullets?.length || item.description)
+            })
+            const sectionKey = section.groupKey ?? section.title
 
             return (
-              <div key={`${section.title}-${index}`}>
+              <div key={`${sectionKey}-${index}`}>
                 <p
                   className="text-[13px] font-semibold leading-none text-[#2D2D2D]"
                   style={{ fontWeight: 600 }}
@@ -828,10 +1007,10 @@ function DecorPackageSections({
                 <div className="mt-3 flex flex-wrap gap-2">
                   {section.items.map(item => (
                     <DecorOptionButton
-                      key={`${section.title}-${item.title}-${item.description ?? ''}`}
+                      key={`${sectionKey}-${item.title}-${(item.bullets ?? []).join('|')}`}
                       item={item}
                       wide={useWideCards}
-                      onClick={() => onSelect(index, item.title)}
+                      onClick={() => onSelect(sectionKey, item.title)}
                     />
                   ))}
                 </div>
@@ -1017,7 +1196,7 @@ export default function DecorSinglePackagePage() {
   const quantity = customizations.length
   const message = activeCustomization?.data?.message ?? ''
 
-  const handleSelect = (sectionIndex, itemTitle) => {
+  const handleSelect = (sectionKey, itemTitle) => {
     setAddToCartMessage('')
     setSelectedTextImage('')
 
@@ -1025,8 +1204,9 @@ export default function DecorSinglePackagePage() {
       prev.map((customization, customizationIndex) => {
         if (customizationIndex !== activeIndex) return customization
 
-        const nextSections = (customization?.data?.sections ?? []).map((section, index) => {
-          if (index !== sectionIndex || section.type !== 'choice-row') return section
+        let nextSections = (customization?.data?.sections ?? []).map(section => {
+          if (section.type !== 'choice-row') return section
+          if ((section.groupKey ?? section.title) !== sectionKey) return section
 
           return {
             ...section,
@@ -1035,6 +1215,8 @@ export default function DecorSinglePackagePage() {
             ),
           }
         })
+
+        nextSections = clearDependentChoiceSelections(nextSections, sectionKey)
 
         return {
           ...customization,

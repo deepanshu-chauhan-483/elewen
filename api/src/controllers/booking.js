@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js'
+import { computeCartItemsWithDeliveryCharges } from '../lib/deliveryChargePricing.js'
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
 import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
@@ -402,7 +403,15 @@ export const createBooking = async (req, res, next) => {
     // Use packageId from the first cart item (primary package)
     const packageId = cart.items[0].packageId
 
-    const subtotal = Number(cart.subtotal)
+    const deliveryPincode = String(req.body?.deliveryPincode ?? req.body?.pincode ?? '').trim()
+    const pricedCart = deliveryPincode
+      ? await computeCartItemsWithDeliveryCharges(cart.items, deliveryPincode)
+      : null
+    const pricedItems = pricedCart?.adjustedItems ?? cart.items
+
+    const subtotal = pricedCart
+      ? Number(pricedCart.subtotal)
+      : Number(cart.subtotal)
 
     // Re-validate coupon (race condition protection — someone else may have exhausted it)
     let discountAmount = 0
@@ -443,14 +452,17 @@ export const createBooking = async (req, res, next) => {
 
       // Snapshot cart items into booking_items
       await tx.bookingItem.createMany({
-        data: cart.items.map(item => ({
+        data: pricedItems.map(item => ({
           bookingId: newBooking.id,
           packageElementId: item.packageElementId,
           addonId: item.addonId,
           title: item.title,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          totalPrice: item.totalPrice,
+          totalPrice:
+            typeof item.totalPrice === 'number'
+              ? item.totalPrice.toFixed(2)
+              : item.totalPrice,
         })),
       })
 

@@ -308,5 +308,74 @@ module.exports = {
         strapi.log.error('[seed/catering] Catering seed failed:', error);
       }
     }
+
+    if (process.env.SEED_DELIVERY_CHARGES !== 'false') {
+      try {
+        const { seedDeliveryCharges } = require('./seed/delivery-charges');
+        const deliveryResult = await seedDeliveryCharges(strapi);
+        strapi.log.info(
+          `[seed/delivery-charges] skipped=${Boolean(deliveryResult.skipped)}, created=${deliveryResult.created}, total=${deliveryResult.total}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/delivery-charges] Delivery charge seed failed:', error);
+      }
+    }
+
+    if (process.env.SEED_DECOR_PROPOSAL_PACKAGES !== 'false') {
+      try {
+        const { seedDecorProposalPackages } = require('./seed/decor-proposal-packages');
+        const decorResult = await seedDecorProposalPackages(strapi);
+        const created = decorResult.packages.filter(
+          item => !item.skipped && !item.repaired && !item.updated
+        ).length;
+        const repaired = decorResult.packages.filter(item => item.repaired).length;
+        const updated = decorResult.packages.filter(item => item.updated).length;
+        const skipped = decorResult.packages.filter(item => item.skipped).length;
+
+        strapi.log.info(
+          `[seed/decor-proposal] created=${created}, updated=${updated}, repaired=${repaired}, skipped=${skipped}, event=${decorResult.eventDocumentId ?? 'n/a'}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/decor-proposal] Proposal decor seed failed:', error);
+      }
+    }
+
+    if (process.env.SEED_DECOR_ANNIVERSARY_PACKAGES !== 'false') {
+      try {
+        const { seedDecorAnniversaryPackages } = require('./seed/decor-anniversary-packages');
+        const anniversaryResult = await seedDecorAnniversaryPackages(strapi);
+        const created = anniversaryResult.packages.filter(
+          item => !item.skipped && !item.repaired && !item.updated
+        ).length;
+        const repaired = anniversaryResult.packages.filter(item => item.repaired).length;
+        const updated = anniversaryResult.packages.filter(item => item.updated).length;
+        const skipped = anniversaryResult.packages.filter(item => item.skipped).length;
+
+        strapi.log.info(
+          `[seed/decor-anniversary] created=${created}, updated=${updated}, repaired=${repaired}, skipped=${skipped}, event=${anniversaryResult.eventDocumentId ?? 'n/a'}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/decor-anniversary] Anniversary decor seed failed:', error);
+      }
+    }
+
+    if (process.env.SEED_DECOR_BABY_SHOWER_PACKAGES !== 'false') {
+      try {
+        const { seedDecorBabyShowerPackages } = require('./seed/decor-baby-shower-packages');
+        const babyShowerResult = await seedDecorBabyShowerPackages(strapi);
+        const created = babyShowerResult.packages.filter(
+          item => !item.skipped && !item.repaired && !item.updated
+        ).length;
+        const repaired = babyShowerResult.packages.filter(item => item.repaired).length;
+        const updated = babyShowerResult.packages.filter(item => item.updated).length;
+        const skipped = babyShowerResult.packages.filter(item => item.skipped).length;
+
+        strapi.log.info(
+          `[seed/decor-baby-shower] created=${created}, updated=${updated}, repaired=${repaired}, skipped=${skipped}, event=${babyShowerResult.eventDocumentId ?? 'n/a'}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/decor-baby-shower] Baby shower decor seed failed:', error);
+      }
+    }
   },
 };

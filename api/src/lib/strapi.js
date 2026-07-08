@@ -10,7 +10,9 @@
 import { withCache, cacheDel, TTL } from './cache.js'
 
 const getBaseCandidates = () => {
-  const configured = [process.env.STRAPI_URL, process.env.VITE_STRAPI_URL, 'http://localhost:1337']
+  // ponytail: never use VITE_STRAPI_URL here — root/docker .env sets it to production
+  // and Docker API would skip local Strapi when the internal strapi hostname is down.
+  const configured = [process.env.STRAPI_URL, 'http://localhost:1337']
     .map(value => String(value ?? '').trim())
     .filter(Boolean)
 

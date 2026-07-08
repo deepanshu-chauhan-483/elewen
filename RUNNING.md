@@ -11,8 +11,21 @@
 From project root (Elewen/):
 
 ```bash
+# Windows (recommended — also stops Docker Strapi/API that block local ports)
+powershell -File scripts/local-dev-infra.ps1
+
+# macOS / Linux
+bash scripts/local-dev-infra.sh
+
+# Or manually:
+docker compose stop strapi api frontend admin-panel migrate
 docker compose up -d postgres redis
 ```
+
+> **Important:** Do **not** run `docker compose up -d` (full stack) for local UI work.
+> Root `.env` uses production URLs (`https://strapi.elewen.co.in`). Docker Strapi on port 1337
+> redirects the admin to production and blocks CORS from `http://localhost:5173`.
+> DigitalOcean keeps using root `.env` + full compose — this does not change production.
 
 This starts:
 - Postgres on localhost:15432 (db: elewen, user: postgres, pass: postgres)
@@ -63,6 +76,16 @@ cd frontend
 npm install   # first time only
 npm run dev   # opens http://localhost:5173
 ```
+
+**Test with DigitalOcean Strapi media (packages/images uploaded on prod only):**
+
+```bash
+cd frontend
+copy .env.local.example .env.local
+npm run dev
+```
+
+This proxies `/cms` → `https://strapi.elewen.co.in` so package images load locally. Production is not changed. Delete `.env.local` to switch back to local Strapi.
 
 ## 7. Start admin panel
 

@@ -14,6 +14,7 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import { useServiceAreas } from '../hooks/useServiceAreas'
+import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
 import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
@@ -1095,11 +1096,16 @@ function PriceSummaryCard({
   pincodeCard = null,
   isCheckoutDisabled = false,
   cateringDiscountSettings = null,
+  deliveryCharge = null,
 }) {
   const { data: globalSettings = null } = useGlobalSettings()
   const itemSummaries = cartItems.map(item => ({
     item,
-    summary: getCartItemSummary(item, { cateringDiscountSettings, cartItems }),
+    summary: getCartItemSummary(item, {
+      cateringDiscountSettings,
+      cartItems,
+      deliveryCharge,
+    }),
   }))
   const totalPackageCount = cartItems.reduce((sum, item) => sum + getCartItemQuantity(item), 0)
   const guestDiscountSummary = useMemo(
@@ -1383,13 +1389,16 @@ export default function CartPage() {
   const { showToast } = useToast()
   const packagesQuery = usePackages()
   const serviceAreasQuery = useServiceAreas()
+  const deliveryChargesQuery = useDeliveryCharges()
   const cateringDiscountsQuery = useCateringGuestDiscounts()
   const { data: packages = [] } = packagesQuery
   const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } = serviceAreasQuery
+  const { data: deliveryCharges = [] } = deliveryChargesQuery
   const { data: cateringDiscountSettings = null } = cateringDiscountsQuery
   const isStrapiLoading = useStrapiPageLoading(
     packagesQuery,
     serviceAreasQuery,
+    deliveryChargesQuery,
     cateringDiscountsQuery
   )
 
@@ -1470,6 +1479,10 @@ export default function CartPage() {
   )
 
   const suggestedPackages = useMemo(() => getSuggestedAddonsWithPricing(cartItems), [cartItems])
+  const activeDeliveryCharge = useMemo(
+    () => (isPincodeValid ? getDeliveryChargeForPincode(deliveryCharges, pincode) : null),
+    [deliveryCharges, isPincodeValid, pincode]
+  )
 
   useEffect(() => {
     setDetailsForm({
@@ -1491,8 +1504,17 @@ export default function CartPage() {
     const nextState = getPincodeValidationState(pincode, serviceAreas, isLoadingServiceAreas)
     setIsCheckingPincode(nextState.isChecking)
     setIsPincodeValid(nextState.isValid)
-    setPincodeMessage(nextState.message)
-  }, [pincode, isLoadingServiceAreas, serviceAreas])
+
+    let message = nextState.message
+    if (nextState.isValid) {
+      const deliveryCharge = getDeliveryChargeForPincode(deliveryCharges, pincode)
+      if (deliveryCharge?.location) {
+        message = `Service available in ${deliveryCharge.location}. Zone transport add-on included in totals.`
+      }
+    }
+
+    setPincodeMessage(message)
+  }, [pincode, isLoadingServiceAreas, serviceAreas, deliveryCharges])
 
   const handleDetailChange = (field, value) => {
     setDetailsError('')
@@ -1751,6 +1773,7 @@ export default function CartPage() {
               showSampleTasteBooking={showSampleTasteBooking}
               isCheckoutDisabled={isCheckoutDisabled}
               cateringDiscountSettings={cateringDiscountSettings}
+              deliveryCharge={activeDeliveryCharge}
               pincodeCard={
                 /* Desktop only */
                 <div className="hidden md:block">

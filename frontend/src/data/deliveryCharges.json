@@ -1,0 +1,586 @@
+[
+  {
+    "pincode": "110001",
+    "location": "Central / New Delhi Connaught Place, Janpath, Parliament Street, India Gate vicinity, Pragati Maidan",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110002",
+    "location": "Central Delhi Daryaganj, ITO, IP Estate, Ajmeri Gate",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110003",
+    "location": "Central Delhi Lodhi Road, Golf Links, Pandara Road, CGO Complex",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110004",
+    "location": "Central Delhi Rashtrapati Bhavan area",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110005",
+    "location": "Central Delhi Karol Bagh, Anand Parbat, Sat Nagar",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110006",
+    "location": "North / Old Delhi Chandni Chowk, Kashmere Gate, Red Fort vicinity",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110007",
+    "location": "North Delhi Delhi University North Campus, Kamla Nagar, Model Town",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110008",
+    "location": "Central-West Delhi Patel Nagar, Rajendra Place",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110009",
+    "location": "North Delhi Gujranwala Town, Model Town extension",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110010",
+    "location": "South-West Delhi Delhi Cantonment, Dhaula Kuan",
+    "addon_600": 350,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110011",
+    "location": "Central Delhi Teen Murti, South Avenue, Government Residences",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110012",
+    "location": "Central-West Delhi National Physical Laboratory, RML Hospital vicinity",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110013",
+    "location": "Central Delhi Nizamuddin East, Nizamuddin West, Mathura Road",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110014",
+    "location": "South-Central Delhi Jungpura, Bhogal",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110015",
+    "location": "West Delhi Kirti Nagar, Moti Nagar",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110016",
+    "location": "South Delhi Hauz Khas, Green Park, IIT Delhi, Yusuf Sarai",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110017",
+    "location": "South Delhi Saket, Malviya Nagar, Press Enclave Road",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110018",
+    "location": "West Delhi Tilak Nagar, Vikaspuri (parts), Janakpuri (parts)",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110019",
+    "location": "South Delhi Kalkaji, Nehru Place, Chittaranjan Park",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110020",
+    "location": "South Delhi Okhla Industrial Area, Okhla Phase I-II",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110021",
+    "location": "South-West Delhi Chanakyapuri, Diplomatic Enclave",
+    "addon_600": 350,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110022",
+    "location": "South Delhi R.K. Puram",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110023",
+    "location": "South Delhi Sarojini Nagar, Netaji Nagar, Kidwai Nagar",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110024",
+    "location": "South Delhi Lajpat Nagar, Defence Colony vicinity",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110025",
+    "location": "South-East Delhi Jamia Nagar, Zakir Nagar, Okhla",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110026",
+    "location": "West Delhi Punjabi Bagh East",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110027",
+    "location": "West Delhi Rajouri Garden, Tagore Garden",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110028",
+    "location": "West Delhi Naraina, Inderpuri",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110029",
+    "location": "South Delhi Safdarjung Enclave, AIIMS, Ansari Nagar",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110030",
+    "location": "South Delhi Mehrauli, Qutub Minar area",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110031",
+    "location": "East Delhi Gandhi Nagar, Geeta Colony",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110032",
+    "location": "Shahdara Shahdara, Mansarovar Park",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110033",
+    "location": "North-West Delhi Azadpur, Jahangirpuri",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110034",
+    "location": "North-West Delhi Pitampura, Saraswati Vihar",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110035",
+    "location": "North-West Delhi Shakurpur, Keshav Puram",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110037",
+    "location": "South-West Delhi IGI Airport, Aerocity, Mahipalpur",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110038",
+    "location": "West Delhi Delhi Cantonment Extension Areas",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110048",
+    "location": "South Delhi Greater Kailash I, Greater Kailash II, Kailash Colony",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110049",
+    "location": "South Delhi Gulmohar Park, Andrews Ganj",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110051",
+    "location": "East Delhi Krishna Nagar",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110052",
+    "location": "North-West Delhi Ashok Vihar",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110053",
+    "location": "North-East Delhi Seelampur, Yamuna Vihar",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110054",
+    "location": "North Delhi Civil Lines",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110055",
+    "location": "Central Delhi Paharganj",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110057",
+    "location": "South-West Delhi Vasant Vihar",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110058",
+    "location": "West Delhi Janakpuri",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110059",
+    "location": "West Delhi Uttam Nagar",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110060",
+    "location": "Central Delhi Rajinder Nagar",
+    "addon_600": 0,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110061",
+    "location": "South-West Delhi Bijwasan",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110063",
+    "location": "West Delhi Paschim Vihar",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110064",
+    "location": "West Delhi Hari Nagar",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110065",
+    "location": "South Delhi East of Kailash",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110066",
+    "location": "South Delhi Munirka",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110067",
+    "location": "South Delhi JNU, Ber Sarai, Katwaria Sarai",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110068",
+    "location": "South Delhi Ignou Road, Neb Sarai",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110071",
+    "location": "South-West Delhi Chhawla",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110073",
+    "location": "South-West Delhi Kapashera",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110074",
+    "location": "South Delhi Chattarpur",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110075",
+    "location": "South-West Delhi Dwarka",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110076",
+    "location": "South-East Delhi Sarita Vihar, Jasola",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110077",
+    "location": "South-West Delhi Dwarka Sector 22-29",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110078",
+    "location": "South-West Delhi Dwarka Sector 1-16",
+    "addon_600": 350,
+    "addon_1200": 350,
+    "addon_3200": 350,
+    "is_active": true
+  },
+  {
+    "pincode": "110085",
+    "location": "North-West Delhi Rohini",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110086",
+    "location": "North-West Delhi Sultanpuri",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110087",
+    "location": "West Delhi Paschim Vihar Extension",
+    "addon_600": 300,
+    "addon_1200": 300,
+    "addon_3200": 300,
+    "is_active": true
+  },
+  {
+    "pincode": "110088",
+    "location": "North-West Delhi Shalimar Bagh",
+    "addon_600": 250,
+    "addon_1200": 250,
+    "addon_3200": 250,
+    "is_active": true
+  },
+  {
+    "pincode": "110089",
+    "location": "North Delhi Rohini Sector 1-11",
+    "addon_600": 300,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110091",
+    "location": "East Delhi Mayur Vihar Phase I",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110092",
+    "location": "East Delhi Anand Vihar, Patparganj",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110093",
+    "location": "North-East Delhi Nand Nagri",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110094",
+    "location": "North-East Delhi Karawal Nagar",
+    "addon_600": 200,
+    "addon_1200": 200,
+    "addon_3200": 200,
+    "is_active": true
+  },
+  {
+    "pincode": "110095",
+    "location": "Shahdara Dilshad Garden",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  },
+  {
+    "pincode": "110096",
+    "location": "East Delhi Mayur Vihar Phase III, Vasundhara Enclave",
+    "addon_600": 0,
+    "addon_1200": 0,
+    "addon_3200": 0,
+    "is_active": true
+  }
+]

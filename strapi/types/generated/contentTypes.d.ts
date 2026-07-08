@@ -942,6 +942,34 @@ export interface ApiCustomerProfileCustomerProfile extends Struct.CollectionType
   }
 }
 
+export interface ApiDeliveryChargeDeliveryCharge extends Struct.CollectionTypeSchema {
+  collectionName: 'delivery_charges'
+  info: {
+    displayName: 'delivery-charge'
+    pluralName: 'delivery-charges'
+    singularName: 'delivery-charge'
+  }
+  options: {
+    draftAndPublish: true
+  }
+  attributes: {
+    addon_1200: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    addon_3200: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    addon_600: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
+    is_active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::delivery-charge.delivery-charge'> &
+      Schema.Attribute.Private
+    location: Schema.Attribute.Text
+    pincode: Schema.Attribute.String & Schema.Attribute.Required & Schema.Attribute.Unique
+    publishedAt: Schema.Attribute.DateTime
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
+  }
+}
+
 export interface ApiEventEvent extends Struct.CollectionTypeSchema {
   collectionName: 'events'
   info: {
@@ -2280,6 +2308,7 @@ declare module '@strapi/strapi' {
       'api::coupon-messaging.coupon-messaging': ApiCouponMessagingCouponMessaging
       'api::coupon.coupon': ApiCouponCoupon
       'api::customer-profile.customer-profile': ApiCustomerProfileCustomerProfile
+      'api::delivery-charge.delivery-charge': ApiDeliveryChargeDeliveryCharge
       'api::event.event': ApiEventEvent
       'api::faq-item.faq-item': ApiFaqItemFaqItem
       'api::footer-content.footer-content': ApiFooterContentFooterContent

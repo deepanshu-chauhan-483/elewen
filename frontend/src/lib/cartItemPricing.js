@@ -1,5 +1,6 @@
 import { resolveCateringAddonCartItemTotal } from './cateringAddonPricing'
 import { resolveCateringCartItemTotal } from './cateringCartPricing'
+import { applyDeliveryChargesToBreakdown } from './deliveryChargePricing'
 
 function getBreakdownLabel(entry) {
   return (
@@ -94,7 +95,10 @@ export function aggregateAppliedGuestDiscounts(itemSummaries = []) {
   }
 }
 
-export function getCartItemSummary(item, { cateringDiscountSettings = null, cartItems = [] } = {}) {
+export function getCartItemSummary(
+  item,
+  { cateringDiscountSettings = null, cartItems = [], deliveryCharge = null } = {}
+) {
   if (item?.itemType === 'addon') {
     const cateringAddonPricing = resolveCateringAddonCartItemTotal(item, cartItems)
     if (cateringAddonPricing) {
@@ -130,15 +134,25 @@ export function getCartItemSummary(item, { cateringDiscountSettings = null, cart
     }
   }
 
-  const rows = breakdownRows.map(row => ({
+  const baseRows = breakdownRows.map(row => ({
     ...row,
     total: row.amount * quantity,
   }))
+
+  if (deliveryCharge) {
+    const adjusted = applyDeliveryChargesToBreakdown(breakdownRows, deliveryCharge, quantity)
+    return {
+      rows: adjusted.rows,
+      total: adjusted.total,
+      transportAddonTotal: adjusted.transportAddonTotal,
+    }
+  }
+
   const cartTotal = Number(item?.totalPrice ?? 0)
-  const breakdownTotal = rows.reduce((sum, row) => sum + row.total, 0)
+  const breakdownTotal = baseRows.reduce((sum, row) => sum + row.total, 0)
 
   return {
-    rows,
+    rows: baseRows,
     total: cartTotal > 0 ? cartTotal : breakdownTotal,
   }
 }

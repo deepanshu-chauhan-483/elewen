@@ -10,6 +10,7 @@ import {
   getValidStoredJwt,
   getStoredJwt,
 } from '../lib/api'
+import { strapiGet } from '../lib/strapi'
 import { createContext, createElement, useContext, useMemo } from 'react'
 
 const CART_EVENT = 'elewen-cart-change'
@@ -151,15 +152,11 @@ function clearGuestCartStorage() {
 //   code, is_active, discount_type, discount_value,
 //   max_uses, used_count, valid_from, valid_to
 async function fetchAndValidateCoupon(code) {
-  const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
-  const url = new URL('/api/coupons', base)
-  url.searchParams.set('filters[code][$eq]', String(code).trim().toUpperCase())
-
   let payload
   try {
-    const res = await fetch(url.toString())
-    if (!res.ok) throw new Error('Could not verify coupon. Please try again.')
-    payload = await res.json()
+    payload = await strapiGet('/coupons', {
+      'filters[code][$eq]': String(code).trim().toUpperCase(),
+    })
   } catch {
     throw new Error('Could not verify coupon. Please try again.')
   }
@@ -209,22 +206,17 @@ function computeDiscount(coupon, subtotal) {
   return Math.min(coupon.discount_value, subtotal)
 }
 
-function getStrapiPackagesUrl() {
-  const base = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
-  return new URL('/api/packages', base)
-}
-
 async function fetchStrapiPackageRow(packageId) {
   const id = String(packageId ?? '').trim()
   if (!id) return null
 
   const tryFilter = async filterKey => {
-    const url = getStrapiPackagesUrl()
-    url.searchParams.set(filterKey, id)
-    const res = await fetch(url.toString())
-    if (!res.ok) return null
-    const payload = await res.json()
-    return payload?.data?.[0] ?? null
+    try {
+      const { data } = await strapiGet('/packages', { [filterKey]: id })
+      return data?.[0] ?? null
+    } catch {
+      return null
+    }
   }
 
   if (/^\d+$/.test(id)) {

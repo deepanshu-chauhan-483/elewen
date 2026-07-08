@@ -32,3 +32,15 @@ api/node_modules/
 # ─── OS ──────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ─── Local-only seed/import (production uses DB dump) ───────────────
+strapi/scripts/seed-decor-*.cjs
+scripts/import-delivery-charges.mjs
+scripts/compare-delivery-csv.mjs
+scripts/build-delivery-charges-json.mjs
+scripts/local-dev-infra.ps1
+scripts/local-dev-infra.sh
+Combined_Delivery_Charges.csv
+*.pdf
+elewen_dump.sql
+elewen_strapi.dump
