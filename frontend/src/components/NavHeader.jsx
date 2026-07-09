@@ -79,7 +79,7 @@ const TRANSPARENT_NAV_SURFACE = 'transparent'
 const GLASS_BLUR_MOBILE = 'blur(1px)'
 const GLASS_BLUR_DESKTOP = 'blur(1px)'
 const BLACK_NAV_ACCENT_PATHS = ['/book-consultation', '/consultation-confirmation']
-const WHITE_NAV_BG_PATHS = ['/faqs', '/legalpages']
+const WHITE_NAV_BG_PATHS = ['/faqs', '/legalpages', '/privacy']
 const DASHBOARD_HOME_PATH = '/user-dashboard/active-booking'
 const hasSeenHeroPreloader = () =>
   typeof window !== 'undefined' && window.__elewenHeroPreloaderSeen === true
@@ -1024,9 +1024,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             </div>
 
             <div className="ml-4 hidden items-center gap-4 text-sm text-white md:flex">
-              <a href="/privacy" className="transition-colors">
+              <NavLink to="/privacy" className="transition-colors">
                 Privacy Policy
-              </a>
+              </NavLink>
               <span>&bull;</span>
 
               <NavLink to="/legalpages" className="transition-colors">

@@ -200,6 +200,7 @@ function AppLayout() {
           <Route path="/packages/:service/:packageId" element={<PackageDetailsPage />} />
           <Route path="/faqs" element={<FAQ />} />
           <Route path="/legalpages" element={<Terms />} />
+          <Route path="/privacy" element={<Terms documentType="privacy" />} />
           <Route path="/contact" element={<ContactUsPage />} />
           <Route path="/vendor-registration" element={<VendorRegistration />} />
           <Route path="/fallback-screen" element={<FallbackPage />} />

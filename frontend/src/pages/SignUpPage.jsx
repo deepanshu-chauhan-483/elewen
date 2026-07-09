@@ -285,11 +285,11 @@ export default function SignUpPage() {
             />
             <span className="text-[#364022] text-[12px] leading-[150%]">
               I agree with{' '}
-              <a href="#" className="font-bold hover:underline">
+              <a href="/legalpages" className="font-bold hover:underline">
                 Terms
               </a>{' '}
               &{' '}
-              <a href="#" className="font-bold hover:underline">
+              <a href="/privacy" className="font-bold hover:underline">
                 Privacy
               </a>
             </span>

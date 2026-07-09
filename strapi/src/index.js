@@ -360,6 +360,18 @@ module.exports = {
       }
     }
 
+    if (isSeedEnabled('SEED_PRIVACY_POLICY')) {
+      try {
+        const { seedPrivacyPolicy } = require('./seed/privacy-policy');
+        const privacyResult = await seedPrivacyPolicy(strapi);
+        strapi.log.info(
+          `[seed/privacy-policy] documentId=${privacyResult.documentId}, created=${Boolean(privacyResult.created)}, updated=${Boolean(privacyResult.updated)}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/privacy-policy] Privacy policy seed failed:', error);
+      }
+    }
+
     if (isSeedEnabled('SEED_DECOR_BABY_SHOWER_PACKAGES')) {
       try {
         const { seedDecorBabyShowerPackages } = require('./seed/decor-baby-shower-packages');

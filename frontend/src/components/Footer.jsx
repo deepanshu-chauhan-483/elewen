@@ -7,6 +7,7 @@ const footerNav = [
     labelWidth: 'min-w-[46px] shrink-0',
     links: [
       { label: 'Terms & Conditions', to: '/legalpages' },
+      { label: 'Privacy Policy', to: '/privacy' },
       { label: 'Cancellation Policy', to: '/legalpages' },
     ],
   },

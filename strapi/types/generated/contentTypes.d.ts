@@ -1478,6 +1478,37 @@ export interface ApiPolicyPolicy extends Struct.CollectionTypeSchema {
   }
 }
 
+export interface ApiPrivacyPolicyPrivacyPolicy extends Struct.SingleTypeSchema {
+  collectionName: 'privacy_policies'
+  info: {
+    displayName: 'PrivacyPolicy'
+    pluralName: 'privacy-policies'
+    singularName: 'privacy-policy'
+  }
+  options: {
+    draftAndPublish: true
+  }
+  attributes: {
+    contactEmail: Schema.Attribute.Email
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
+    effectiveDate: Schema.Attribute.Date
+    governingLaw: Schema.Attribute.Text
+    jurisdiction: Schema.Attribute.Text
+    lastUpdated: Schema.Attribute.Date
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::privacy-policy.privacy-policy'> &
+      Schema.Attribute.Private
+    publishedAt: Schema.Attribute.DateTime
+    sections: Schema.Attribute.Component<'terms.section', true>
+    title: Schema.Attribute.String
+    tldr: Schema.Attribute.Component<'terms.tldr-block', false>
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
+    version: Schema.Attribute.String
+  }
+}
+
 export interface ApiRemainingBalanceExplanationRemainingBalanceExplanation
   extends Struct.SingleTypeSchema {
   collectionName: 'remaining_balance_explanation'
@@ -2326,6 +2357,7 @@ declare module '@strapi/strapi' {
       'api::planner-lead.planner-lead': ApiPlannerLeadPlannerLead
       'api::planner-portfolio-item.planner-portfolio-item': ApiPlannerPortfolioItemPlannerPortfolioItem
       'api::policy.policy': ApiPolicyPolicy
+      'api::privacy-policy.privacy-policy': ApiPrivacyPolicyPrivacyPolicy
       'api::remaining-balance-explanation.remaining-balance-explanation': ApiRemainingBalanceExplanationRemainingBalanceExplanation
       'api::saved-package.saved-package': ApiSavedPackageSavedPackage
       'api::service-area.service-area': ApiServiceAreaServiceArea
