@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
 import BrandedImage from '../common/BrandedImage'
+import PackageImageDisclaimer from '../package-details/PackageImageDisclaimer'
 import { preloadImages } from '../../utils/preloadAssets'
 import { getPackageHref } from '../../lib/packageRoutes'
 
@@ -366,6 +367,8 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
         {/* Dots */}
         <ImageDots count={images.length} currentIndex={currentIndex} />
       </div>
+
+      {currentImage ? <PackageImageDisclaimer className="mt-1 px-0.5" /> : null}
 
       {/* Content */}
       <div className="flex min-h-[200px] flex-1 flex-col px-1 pb-1 pt-3">

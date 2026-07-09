@@ -4,8 +4,16 @@ import NavHeader from '../NavHeader'
 import Footer from '../Footer'
 import PackageCard from '../package-listing/PackageCard'
 import AppImage from '../common/AppImage'
+import PackageImageDisclaimer from './PackageImageDisclaimer'
 import { preloadImages } from '../../utils/preloadAssets'
 import { assignDistinctCoverIndices } from '../../lib/packageFilters'
+
+const MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS =
+  'h-[min(70vh,32rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]'
+
+// ponytail: cap side thumbnails to main image height; extra images scroll inside
+const SIDE_IMAGES_DESKTOP_HEIGHT_CLASS =
+  'md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:max-h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:min-h-0'
 
 function QuantityControl({ quantity, onDecrement, onIncrement }) {
   return (
@@ -365,7 +373,6 @@ function ProductImageLayout({
       ? selectedOverride
       : initialDisplayImage
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
-  const sideImagesMaxHeight = `calc((clamp(5.125rem, 6.5vw, 6.4375rem) * ${Math.max(sideImages.length, 1)}) + ${Math.max(sideImages.length - 1, 0) * 0.5}rem)`
 
   useEffect(() => {
     const urls = [mainImage, ...sideImages].filter(Boolean)
@@ -397,7 +404,7 @@ function ProductImageLayout({
                   maxWidth: 'clamp(17.5rem, 38vw, 37.5rem)',
                 }}
               >
-                <div className="relative h-[min(70vh,32rem)] w-full md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]">
+                <div className={`relative w-full ${MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS}`}>
                   <AppImage
                     src={activeImage}
                     alt={title}
@@ -455,15 +462,13 @@ function ProductImageLayout({
                     </div>
                   ) : null}
                 </div>
+                <PackageImageDisclaimer className="mt-1.5 text-center" />
               </div>
 
               {/* Side Images */}
               {sideImages.length > 0 ? (
                 <div
-                  className="order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:shrink-0 md:max-h-[unset] md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                  style={{
-                    maxHeight: sideImagesMaxHeight,
-                  }}
+                  className={`order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:shrink-0 md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_DESKTOP_HEIGHT_CLASS}`}
                   data-lenis-prevent
                 >
                   {sideImages.map((image, index) => (

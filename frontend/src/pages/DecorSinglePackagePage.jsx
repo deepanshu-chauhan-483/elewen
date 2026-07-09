@@ -245,6 +245,16 @@ function getInclusionImages(inclusion) {
     .filter(Boolean)
 }
 
+function displayInclusionHeading(value = '') {
+  const normalized = cleanText(value)
+  if (!normalized) return ''
+
+  const whenMatch = normalized.match(/^when:([^:]+):(.+)$/)
+  if (whenMatch) return cleanText(whenMatch[2])
+
+  return normalized
+}
+
 function buildDecorImageMetaMap(pkg) {
   const entries = getDecorDetailSections(pkg).flatMap(section => {
     const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
@@ -252,9 +262,9 @@ function buildDecorImageMetaMap(pkg) {
     return inclusions.flatMap(inclusion => {
       const images = getInclusionImages(inclusion)
       const heading =
-        cleanText(inclusion?.choice_group_label) ||
-        cleanText(inclusion?.group_title) ||
-        cleanText(inclusion?.choice_group_key)
+        displayInclusionHeading(inclusion?.choice_group_label) ||
+        displayInclusionHeading(inclusion?.group_title) ||
+        displayInclusionHeading(inclusion?.choice_group_key)
       const text = cleanText(inclusion?.text)
 
       return images.map(image => [
