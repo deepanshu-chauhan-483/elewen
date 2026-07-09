@@ -1108,9 +1108,68 @@ p {
 }
 
 @media (max-width: 767px) {
+  .checklist-chaos-layout {
+    overflow: hidden;
+  }
+
+  .door-section {
+    min-height: auto;
+    height: auto;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .door-section__pin {
+    height: auto;
+    min-height: auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* padding: 0.25rem 1rem; */
+  }
+
+  .door-section__stage {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    min-height: 280px;
+    /* padding: 0.25rem 0; */
+    margin: -27px;
+  }
+
   .door-section__gate {
     max-width: 100%;
-    padding-inline: clamp(8px, 3vw, 16px);
+    /* padding-inline: clamp(8px, 3vw, 16px); */
+    width: 100%;
+    max-width: auto;
+    height: auto;
+    min-height: 280px;
+    /* margin: 0; */
+  }
+
+  .door-section__gate-inner {
+    width: 100%;
+    height: 100%;
+  }
+
+  .door-section__overlay {
+    margin: 0;
+    padding: 0;
+    min-height: auto;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .door-section__overlay > section {
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  .door-section__overlay > section h2 {
+    padding-top: 1.5rem;
+    margin-top: 0;
   }
 }
 

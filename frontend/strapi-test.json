@@ -1,0 +1,285 @@
+{
+  "data": [
+    {
+      "id": 10,
+      "documentId": "g5jw94mfrc52z7cg6i9ysyxl",
+      "title": "Paint & Prosecco Night",
+      "slug": "paint-and-prosecco-night",
+      "description": [
+        {
+          "type": "paragraph",
+          "children": [
+            { "text": "A fun painting experience with drinks and cozy setup", "type": "text" }
+          ]
+        }
+      ],
+      "base_price": 4999,
+      "is_featured": true,
+      "is_active": true,
+      "most_booked_tag": true,
+      "internal_notes": "High demand on weekends",
+      "visibility": true,
+      "meta_title": null,
+      "meta_description": null,
+      "createdAt": "2026-04-15T11:10:38.432Z",
+      "updatedAt": "2026-04-15T11:10:38.432Z",
+      "publishedAt": "2026-04-15T11:10:38.683Z",
+      "images": null,
+      "events": [
+        {
+          "id": 183,
+          "documentId": "swkzyi6be4a6cfmaejy1kuc4",
+          "name": "Corporate Get-together",
+          "slug": "corporate-get-together",
+          "description": null,
+          "is_active": true,
+          "is_featured": true,
+          "display_order": 5,
+          "tagline": "D??cor that gets everyone talking and connecting",
+          "createdAt": "2026-03-25T08:08:08.375Z",
+          "updatedAt": "2026-04-27T06:22:02.368Z",
+          "publishedAt": "2026-04-27T06:22:02.446Z",
+          "locale": null,
+          "parent_event": {
+            "id": 203,
+            "documentId": "xfcpgl2p1sfu83x3iogq02bd",
+            "name": "Corporate",
+            "slug": "corporate",
+            "description": [
+              {
+                "type": "paragraph",
+                "children": [{ "text": "Conferences, launches & more", "type": "text" }]
+              }
+            ],
+            "is_active": true,
+            "is_featured": false,
+            "display_order": 2,
+            "tagline": null,
+            "createdAt": "2026-03-17T12:09:17.259Z",
+            "updatedAt": "2026-05-09T06:20:35.066Z",
+            "publishedAt": "2026-05-09T06:20:35.188Z",
+            "locale": null
+          }
+        }
+      ],
+      "service_categories": [
+        {
+          "id": 121,
+          "documentId": "x3dvlyv2y45o6yg6u2n85yxb",
+          "name": "Catering",
+          "slug": "catering",
+          "description": "Chef-led menus and taste that sounds like perfection. Tasting Available",
+          "is_active": true,
+          "is_featured": true,
+          "wizard_steps": [
+            {
+              "id": "budget_level",
+              "type": "single_select",
+              "label": "Choose Level",
+              "source": "budget-levels",
+              "maps_to": {
+                "type": "relation",
+                "operator": "$eq",
+                "strapi_filter": "budget_level.slug"
+              },
+              "required": true
+            }
+          ],
+          "createdAt": "2026-03-25T08:32:18.106Z",
+          "updatedAt": "2026-04-29T07:32:44.328Z",
+          "publishedAt": "2026-04-29T07:32:44.383Z",
+          "locale": null,
+          "parent_category": {
+            "id": 67,
+            "documentId": "c6wn32aus7hgk5ntyztv3tj6",
+            "name": "Food & Beverage Services",
+            "slug": "food-and-beverage-services",
+            "description": null,
+            "is_active": true,
+            "is_featured": false,
+            "wizard_steps": null,
+            "createdAt": "2026-03-23T12:30:16.607Z",
+            "updatedAt": "2026-03-25T08:21:08.373Z",
+            "publishedAt": "2026-03-25T08:21:08.400Z",
+            "locale": null
+          }
+        },
+        {
+          "id": 122,
+          "documentId": "pyucfryv6b6h8z9idk2skxjw",
+          "name": "Bartending",
+          "slug": "bar-tending",
+          "description": "Professional bar tenders, be it one bartender to a full bar team",
+          "is_active": true,
+          "is_featured": true,
+          "wizard_steps": [
+            {
+              "id": "budget_level",
+              "type": "single_select",
+              "label": "Choose Level",
+              "source": "budget-levels",
+              "maps_to": {
+                "type": "relation",
+                "operator": "$eq",
+                "strapi_filter": "budget_level.slug"
+              },
+              "required": true
+            }
+          ],
+          "createdAt": "2026-03-25T08:33:11.505Z",
+          "updatedAt": "2026-04-29T07:41:53.261Z",
+          "publishedAt": "2026-04-29T07:41:53.328Z",
+          "locale": null,
+          "parent_category": {
+            "id": 67,
+            "documentId": "c6wn32aus7hgk5ntyztv3tj6",
+            "name": "Food & Beverage Services",
+            "slug": "food-and-beverage-services",
+            "description": null,
+            "is_active": true,
+            "is_featured": false,
+            "wizard_steps": null,
+            "createdAt": "2026-03-23T12:30:16.607Z",
+            "updatedAt": "2026-03-25T08:21:08.373Z",
+            "publishedAt": "2026-03-25T08:21:08.400Z",
+            "locale": null
+          }
+        }
+      ],
+      "packages": [],
+      "reusable_addons": [
+        {
+          "id": 15,
+          "documentId": "eehzr1vvlwbsqtbz88nwjxzp",
+          "name": "Live Station",
+          "description": "LIVE PASTA & WOODFIRE PIZZA THEATRE · ASIAN DIM SUM EXPERIENCE · LUXE INDIAN CHAAT STUDIO · RAMEN / ASIAN BOWL BAR · DESSERT ATELIER (LIVE PLATING). Exact range calculated according to the dishes you choose.",
+          "price": 200,
+          "max_price": 500,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 16,
+          "documentId": "s1fu7k9f1odf84xhoeiol4e5",
+          "name": "Soup Station",
+          "description": "Price range calculated according to the soup selection.",
+          "price": 50,
+          "max_price": 150,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 17,
+          "documentId": "y2g4m03qoot8f7m7km2rcgxq",
+          "name": "Dessert",
+          "description": "Add-on dessert options for your menu.",
+          "price": 50,
+          "max_price": 200,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 18,
+          "documentId": "zatm9i9aon5euewy1x6kvew9",
+          "name": "Pre-Plated Platter",
+          "description": "Pre-plated service for your guest count.",
+          "price": 2500,
+          "max_price": 5000,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 19,
+          "documentId": "oesbcadcuxr0x85btxaeaume",
+          "name": "Serving staff/chef/housekeeping",
+          "description": "Chef ₹1,500 · Serving staff ₹2,500 · Housekeeping ₹1,500 (for 30 pax).",
+          "price": 1500,
+          "max_price": 2500,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 20,
+          "documentId": "lfwyaebx97b36htssb1r4kmt",
+          "name": "Cutlery",
+          "description": "Serving cutlery & crockery add-on for your event.",
+          "price": 8000,
+          "max_price": 15000,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 21,
+          "documentId": "t3iasvzlfd54f5gfgtidxeqp",
+          "name": "water bottles",
+          "description": "Mineral water bottles.",
+          "price": 25,
+          "max_price": null,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 22,
+          "documentId": "nqlfjtt2192fj19wfym5h4bn",
+          "name": "Grazing Table",
+          "description": "A visually stunning spread of premium cheeses, artisanal breads & global small bites designed to impress. From ₹995 onwards — exact range calculated according to your selection.",
+          "price": 995,
+          "max_price": null,
+          "addon_scope": "catering",
+          "unit": "30 pax onwards",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 23,
+          "documentId": "j7ptp76nlbye5nyrormrvxl7",
+          "name": "Afternoon Hi-tea",
+          "description": "Elegant high-tea with handcrafted beverages, savouries & indulgent desserts perfect for intimate gatherings.",
+          "price": 1495,
+          "max_price": null,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        },
+        {
+          "id": 24,
+          "documentId": "qu1ad4pettmt5ucwh0tof6go",
+          "name": "Buffet & Kitchen Tables",
+          "description": "5 buffet tables with frill + 2 kitchen tables.",
+          "price": 2500,
+          "max_price": null,
+          "addon_scope": "catering",
+          "unit": "30 pax",
+          "max_quantity": 1,
+          "visibility": true
+        }
+      ],
+      "catering_guest_discounts": {
+        "is_active": true,
+        "discount_title": "Guest count discounts",
+        "discount_note": "Per-person discount off the catering package rate based on guest count selected at booking.",
+        "tiers": [
+          { "label": "51 - 75 pax", "min_pax": 51, "max_pax": 75, "discount_per_person": 100 },
+          { "label": "76 - 100 pax", "min_pax": 76, "max_pax": 100, "discount_per_person": 200 },
+          { "label": "100 - 125 pax", "min_pax": 100, "max_pax": 125, "discount_per_person": 250 }
+        ]
+      }
+    }
+  ],
+  "meta": { "pagination": { "page": 1, "pageSize": 1, "pageCount": 82, "total": 82 } }
+}

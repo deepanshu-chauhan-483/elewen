@@ -274,6 +274,33 @@ docker compose exec postgres psql -U postgres -d elewen -c "SELECT setval(pg_get
 
 Replace `elewen` / `postgres` if your `.env` uses different `DB_NAME` / `DB_USER`.
 
+### Landing page publish 500 (`components_cms_content_sections` / transaction aborted)
+
+Symptom when publishing **Landing Page** (e.g. after adding a hero video):
+
+```text
+error: select ... from "components_cms_content_sections" ... current transaction is aborted, commands ignored until end of transaction block
+http: POST .../landing-page/.../actions/publish ... 500
+```
+
+The log line above is a **follow-on** error. The real failure is usually an earlier `INSERT` in the same transaction — often `duplicate key value violates unique constraint "components_cms_content_sections_pkey"` (Postgres ID sequence out of sync after a DB restore/import). Public `GET /api/landing-page` can still return **200** while admin publish fails.
+
+Check sequence:
+
+```bash
+docker compose exec postgres psql -U postgres -d elewen -c "SELECT (SELECT MAX(id) FROM components_cms_content_sections) AS max_id, (SELECT last_value FROM components_cms_content_sections_id_seq) AS seq_value;"
+```
+
+If `max_id >= seq_value`, backup then reset **all** sequences:
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres elewen > backup_before_seq_fix.sql
+docker compose exec postgres psql -U postgres -d elewen -c "DO \$\$ DECLARE r RECORD; BEGIN FOR r IN ( SELECT quote_ident(n.nspname) || '.' || quote_ident(c.relname) AS tbl, quote_ident(a.attname) AS col, pg_get_serial_sequence(quote_ident(n.nspname) || '.' || quote_ident(c.relname), a.attname) AS seq FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace JOIN pg_attribute a ON a.attrelid = c.oid WHERE c.relkind = 'r' AND n.nspname = 'public' AND a.attnum > 0 AND NOT a.attisdropped AND pg_get_serial_sequence(quote_ident(n.nspname) || '.' || quote_ident(c.relname), a.attname) IS NOT NULL ) LOOP EXECUTE format( 'SELECT setval(%L, COALESCE((SELECT MAX(%s) FROM %s), 1), true)', r.seq, r.col, r.tbl ); END LOOP; END \$\$;"
+docker compose restart strapi
+```
+
+Ignore `GET /i18n/ai-localization-jobs/... 404` — optional plugin not installed.
+
 ### Catering menu modal empty (403 on `/api/catering-menu`)
 
 In Strapi admin → **Settings** → Users & Permissions → **Public** → enable `find` on **Catering-menu**.

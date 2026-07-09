@@ -2607,10 +2607,11 @@ const ChecklistSection = () => {
     const wrap = layoutWrapRef.current
     if (!wrap) return
     const resize = () => {
-      const available = wrap.clientWidth
       const isMobile = window.innerWidth < 768
-      const mobileBoost = isMobile ? 1.62 : 1
-      const scale = Math.min((available / LAYOUT_W) * mobileBoost, 1)
+      const available = isMobile ? window.innerWidth : wrap.clientWidth
+      const gutter = isMobile ? 4 : 0
+      const fitScale = (available - gutter) / LAYOUT_W
+      const scale = Math.min(fitScale, 1)
       setLayoutScale(scale)
     }
     const ro = new ResizeObserver(resize)
@@ -2885,7 +2886,7 @@ const ChecklistSection = () => {
       </div>
 
       <h2
-        className="text-[24px] md:text-[61px] leading-[1.1] md:leading-[1.20] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 relative z-10 reveal-heading"
+        className="text-[22px] sm:text-[24px] md:text-[61px] leading-[1.15] md:leading-[1.20] text-center text-[#591902] font-normal tracking-normal mt-[110px] md:mt-[260px] px-4 md:px-4 max-w-[340px] sm:max-w-[420px] md:max-w-none mx-auto relative z-10 reveal-heading"
         style={{ fontFamily: "'Malgin', serif" }}
       >
         <span className="reveal-wrapper">
@@ -2900,10 +2901,10 @@ const ChecklistSection = () => {
       {/* Desktop layout â€” unchanged */}
       <div
         ref={layoutWrapRef}
-        className="block w-[58%] mx-auto md:w-full overflow-visible mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
+        className="checklist-chaos-layout block w-screen max-w-[100vw] relative left-1/2 -translate-x-1/2 px-0 md:static md:w-full md:max-w-none md:left-auto md:translate-x-0 mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
       >
         <div
-          className="relative w-full flex justify-center"
+          className="relative w-full flex justify-center overflow-hidden md:overflow-visible"
           style={{
             height: `${LAYOUT_H * layoutScale}px`,
           }}
@@ -2918,7 +2919,7 @@ const ChecklistSection = () => {
               transformOrigin: 'top center',
             }}
           >
-            <div className="relative w-full h-full max-w-full mx-auto px-10 sm:px-14 md:px-0 overflow-hidden">
+            <div className="relative w-full h-full max-w-full mx-auto px-0 overflow-hidden">
               {' '}
               {/* STEP 1: Too much scrolling (Starts immediately) */}
               <div className="absolute left-[28%] top-[3%] w-[20%] max-w-[211px] aspect-square">
@@ -2956,7 +2957,7 @@ const ChecklistSection = () => {
                 </h3>
               </div>
               <div
-                className={`anim-element slide-from-left ${
+                className={`anim-element slide-from-left hidden md:block ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[0px] top-[232px] w-[273px] text-right z-20`}
                 style={{ '--delay': '0s' }}
@@ -2999,7 +3000,7 @@ const ChecklistSection = () => {
                   </h3>
                 </div>
                 <div
-                  className={`anim-element slide-from-right ${
+                  className={`anim-element slide-from-right hidden md:block ${
                     isLayoutVisible ? 'is-visible' : ''
                   } absolute left-[251px] top-[145px] w-[273px] text-left z-20`}
                   style={{ '--delay': '0s' }}
@@ -3045,7 +3046,7 @@ const ChecklistSection = () => {
                 </h3>
               </div>
               <div
-                className={`anim-element slide-from-left ${
+                className={`anim-element slide-from-left hidden md:block ${
                   isLayoutVisible ? 'is-visible' : ''
                 } absolute left-[225px] top-[399px] w-[273px] text-right z-20`}
                 style={{ '--delay': '0s' }}
@@ -3092,7 +3093,7 @@ const ChecklistSection = () => {
             </div>
 
             <div
-              className={`anim-element slide-from-right ${
+              className={`anim-element slide-from-right hidden md:block ${
                 isLayoutVisible ? 'is-visible' : ''
               } absolute left-[721px] top-[613px] w-[273px] text-left z-20`}
               style={{ '--delay': '1.8s' }}

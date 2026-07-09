@@ -365,7 +365,7 @@ function ProductImageLayout({
       ? selectedOverride
       : initialDisplayImage
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
-  const sideImagesMaxHeight = 'calc((clamp(5.125rem, 6.5vw, 6.4375rem) * 5) + 2rem)'
+  const sideImagesMaxHeight = `calc((clamp(5.125rem, 6.5vw, 6.4375rem) * ${Math.max(sideImages.length, 1)}) + ${Math.max(sideImages.length - 1, 0) * 0.5}rem)`
 
   useEffect(() => {
     const urls = [mainImage, ...sideImages].filter(Boolean)

@@ -333,17 +333,35 @@ function getSectionBackdropImages(section) {
     .filter(Boolean)
 }
 
-function normalizePackage(pkg, index = 0, options = {}) {
-  const listing = options.listing === true
-  const detailSections = getNestedPackageSections(pkg)
+function getSectionElementImages(section) {
+  return (Array.isArray(section?.elements) ? section.elements : [])
+    .flatMap(element => normaliseMediaArray(element?.images))
+    .map(image => {
+      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
+      return toAbsoluteStrapiUrl(image?.url)
+    })
+    .filter(Boolean)
+}
+
+function buildPackageImageUrls(pkg, detailSections = []) {
   const packageImages = normaliseMediaArray(pkg.images)
     .map(image => {
       if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
       return toAbsoluteStrapiUrl(image?.url)
     })
     .filter(Boolean)
-  const inclusionImages = listing ? [] : detailSections.flatMap(getSectionInclusionImages)
-  const backdropImages = listing ? [] : detailSections.flatMap(getSectionBackdropImages)
+
+  return uniqueValues([
+    ...packageImages,
+    ...detailSections.flatMap(getSectionInclusionImages),
+    ...detailSections.flatMap(getSectionBackdropImages),
+    ...detailSections.flatMap(getSectionElementImages),
+  ])
+}
+
+function normalizePackage(pkg, index = 0, options = {}) {
+  const listing = options.listing === true
+  const detailSections = getNestedPackageSections(pkg)
   const serviceCategories = normaliseRelationArray(pkg.service_categories)
   const budgetLevels = getNestedPackageBudgetLevels(pkg)
   const primaryBudgetLevel = budgetLevels[0] ?? null
@@ -391,7 +409,7 @@ function normalizePackage(pkg, index = 0, options = {}) {
     theme_slugs: getPackageThemeSlugs(pkg),
     level_slug: getBudgetLevelSlug(primaryBudgetLevel),
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
-    images: uniqueValues([...packageImages, ...inclusionImages, ...backdropImages]),
+    images: buildPackageImageUrls(pkg, detailSections),
     _index: index,
   }
 
@@ -516,7 +534,7 @@ async function fetchPackages(params = {}) {
 
 export function usePackages() {
   return useQuery({
-    queryKey: ['packages', 'live-v4-listing'],
+    queryKey: ['packages', 'live-v5-listing'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
       try {

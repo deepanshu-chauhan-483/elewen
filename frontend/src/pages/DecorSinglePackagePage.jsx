@@ -224,7 +224,7 @@ function collectSectionGalleryImages(sections = []) {
   )
 }
 
-function buildDecorSideImages(sourceImages = [], minCount = 5) {
+function buildDecorSideImages(sourceImages = []) {
   const normalized = uniqueValues(
     (Array.isArray(sourceImages) ? sourceImages : [])
       .map(image => normalizeGalleryImageUrl(image) || image)
@@ -233,9 +233,7 @@ function buildDecorSideImages(sourceImages = [], minCount = 5) {
 
   if (!normalized.length) return PKG_LOCAL_IMAGES[0]
 
-  if (normalized.length >= minCount) return normalized
-
-  return Array.from({ length: minCount }, (_, index) => normalized[index % normalized.length])
+  return normalized
 }
 
 function getInclusionImages(inclusion) {
