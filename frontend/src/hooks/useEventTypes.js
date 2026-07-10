@@ -342,6 +342,20 @@ export function useEventCategoryOptions() {
   })
 }
 
+// Landing sidebar order: Social first (matches EVENT_CATEGORIES_FALLBACK).
+// Unknown categories keep API order after the preferred ones.
+const orderEventCategories = names => {
+  const remaining = [...(Array.isArray(names) ? names : [])]
+  const ordered = []
+
+  for (const preferred of EVENT_CATEGORIES_FALLBACK) {
+    const idx = remaining.findIndex(n => n.toLowerCase() === preferred.toLowerCase())
+    if (idx !== -1) ordered.push(remaining.splice(idx, 1)[0])
+  }
+
+  return ordered.concat(remaining)
+}
+
 export function useEventCategories() {
   return useQuery({
     queryKey: ['event-categories'],
@@ -351,9 +365,9 @@ export function useEventCategories() {
         const { data } = await strapiGet('/events', {
           'filters[parent_event][id][$null]': 'true',
           'filters[is_active][$eq]': 'true',
-          sort: 'name:asc',
+          sort: 'display_order:asc',
         })
-        return data.map(event => event.name.trim())
+        return orderEventCategories(data.map(event => event.name.trim()))
       } catch {
         return EVENT_CATEGORIES_FALLBACK
       }
