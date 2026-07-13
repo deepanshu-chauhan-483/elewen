@@ -342,6 +342,21 @@ export function useEventCategoryOptions() {
   })
 }
 
+// Landing sidebar: Social → Religious → Corporate (Cashfree / product default).
+// Unknown categories keep API order after the preferred ones.
+const orderEventCategories = names => {
+  const CATEGORY_ORDER = ['social', 'religious', 'corporate']
+  const remaining = [...(Array.isArray(names) ? names : [])].filter(Boolean)
+  const ordered = []
+
+  for (const preferred of CATEGORY_ORDER) {
+    const idx = remaining.findIndex(n => slugify(n) === preferred)
+    if (idx !== -1) ordered.push(remaining.splice(idx, 1)[0])
+  }
+
+  return ordered.concat(remaining)
+}
+
 export function useEventCategories() {
   return useQuery({
     queryKey: ['event-categories'],
@@ -351,17 +366,9 @@ export function useEventCategories() {
         const { data } = await strapiGet('/events', {
           'filters[parent_event][id][$null]': 'true',
           'filters[is_active][$eq]': 'true',
-          sort: 'name:asc',
+          sort: 'display_order:asc',
         })
-        // Keep Social first for landing (Cashfree / product default), then Religious, Corporate.
-        const CATEGORY_ORDER = ['social', 'religious', 'corporate']
-        const names = data.map(event => event.name.trim()).filter(Boolean)
-        names.sort((a, b) => {
-          const ai = CATEGORY_ORDER.indexOf(slugify(a))
-          const bi = CATEGORY_ORDER.indexOf(slugify(b))
-          return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
-        })
-        return names
+        return orderEventCategories(data.map(event => event.name.trim()))
       } catch {
         return EVENT_CATEGORIES_FALLBACK
       }
