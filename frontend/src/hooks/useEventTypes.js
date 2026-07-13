@@ -353,7 +353,15 @@ export function useEventCategories() {
           'filters[is_active][$eq]': 'true',
           sort: 'name:asc',
         })
-        return data.map(event => event.name.trim())
+        // Keep Social first for landing (Cashfree / product default), then Religious, Corporate.
+        const CATEGORY_ORDER = ['social', 'religious', 'corporate']
+        const names = data.map(event => event.name.trim()).filter(Boolean)
+        names.sort((a, b) => {
+          const ai = CATEGORY_ORDER.indexOf(slugify(a))
+          const bi = CATEGORY_ORDER.indexOf(slugify(b))
+          return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+        })
+        return names
       } catch {
         return EVENT_CATEGORIES_FALLBACK
       }

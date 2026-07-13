@@ -162,6 +162,12 @@ const Footer = () => {
           >
             © 2025 Elewen. All rights reserved.
           </p>
+          <p
+            className="anim-element slide-from-bottom w-full text-center text-[12px] text-[#2D2D2D] opacity-50 lg:max-w-[720px] lg:text-right"
+            style={{ '--delay': '0.14s' }}
+          >
+            A unit of Mevo Events and Planners LLP
+          </p>
         </div>
       </div>
     </footer>

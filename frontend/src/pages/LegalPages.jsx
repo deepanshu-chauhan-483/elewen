@@ -261,6 +261,12 @@ export default function LegalPages({ documentType = 'terms' }) {
           {pageSubtitle}
         </p>
 
+        {documentType === 'terms' ? (
+          <p className="text-white/70 mt-2 text-[14px] md:text-[15px] max-w-[700px] mx-auto">
+            A unit of Mevo Events and Planners LLP
+          </p>
+        ) : null}
+
         {config.showDates && (cmsDocument?.effectiveDate || cmsDocument?.lastUpdated) ? (
           <div className="mt-4 flex flex-col gap-1 text-[13px] text-white/60 md:flex-row md:justify-center md:gap-6">
             {cmsDocument?.effectiveDate ? (
