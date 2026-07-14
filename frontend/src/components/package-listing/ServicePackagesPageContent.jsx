@@ -8,6 +8,7 @@ import {
   filterPackages,
   normalizeServiceSlug,
 } from '../../lib/packageFilters'
+import { packageMatchesSearch } from '../../lib/packageSearch'
 import CmsPageLoader from '../common/CmsPageLoader'
 import { useStrapiPageLoading } from '../../hooks/useStrapiPageLoading'
 import pkgImg1 from '../../assets/images/IMG_3903.jpg'
@@ -76,6 +77,7 @@ export default function ServicePackagesPageContent({
   const serviceId = searchParams.get('serviceId') ?? ''
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
+  const searchQuery = searchParams.get('search')?.trim() ?? ''
   const shouldBypassEventFilters = selectedServiceSlug === 'sheesha'
   const effectiveCategorySlug = shouldBypassEventFilters ? '' : categorySlug
   const effectiveEventSlug = shouldBypassEventFilters ? '' : eventSlug
@@ -93,28 +95,30 @@ export default function ServicePackagesPageContent({
     [packages, serviceSlug]
   )
 
-  const filteredPackages = useMemo(
-    () =>
-      filterPackages(packagesData, {
-        categorySlug: effectiveCategorySlug,
-        eventSlug: effectiveEventSlug,
-        eventId: effectiveEventId,
-        serviceSlug: selectedServiceSlug,
-        serviceId,
-        themeSlug,
-        levelSlug,
-      }),
-    [
-      packagesData,
-      effectiveCategorySlug,
-      effectiveEventSlug,
-      effectiveEventId,
-      selectedServiceSlug,
+  const filteredPackages = useMemo(() => {
+    const filtered = filterPackages(packagesData, {
+      categorySlug: effectiveCategorySlug,
+      eventSlug: effectiveEventSlug,
+      eventId: effectiveEventId,
+      serviceSlug: selectedServiceSlug,
       serviceId,
       themeSlug,
       levelSlug,
-    ]
-  )
+    })
+
+    if (!searchQuery) return filtered
+    return filtered.filter(pkg => packageMatchesSearch(pkg, searchQuery))
+  }, [
+    packagesData,
+    effectiveCategorySlug,
+    effectiveEventSlug,
+    effectiveEventId,
+    selectedServiceSlug,
+    serviceId,
+    themeSlug,
+    levelSlug,
+    searchQuery,
+  ])
 
   const sortedPackages = useMemo(() => {
     const items = [...filteredPackages]

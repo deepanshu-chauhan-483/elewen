@@ -12,10 +12,10 @@ export const SERVICE_ROUTE_MAP = {
 export const SERVICE_PAGE_ALLOWED_SLUGS = [
   'decor',
   'catering',
+  'bartending',
   'bar-tending',
   'sheesha',
   'sheesha-services',
-  'furniture',
 ]
 
 export const SERVICES_FLOW_KEY = 'services'

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
 import BrandedImage from '../common/BrandedImage'
-import PackageImageDisclaimer from '../package-details/PackageImageDisclaimer'
 import { preloadImages } from '../../utils/preloadAssets'
 import { getPackageHref } from '../../lib/packageRoutes'
 
@@ -255,12 +254,24 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
             position="bottom-right"
             showLogoBg={true}
             className="h-full w-full"
+            imgClassName="object-cover object-center"
           />
         ) : (
           <div className="flex h-[280px] w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">
             {pkg.title}
           </div>
         )}
+
+        {pkg.title ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/70 via-black/35 to-transparent px-3 pb-3 pt-10">
+            <p
+              className="line-clamp-2 text-[13px] font-semibold leading-[1.3] text-white sm:text-[14px]"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
+              {pkg.title}
+            </p>
+          </div>
+        ) : null}
 
         {/* Price + Wishlist */}
         <div className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
@@ -367,8 +378,6 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
         {/* Dots */}
         <ImageDots count={images.length} currentIndex={currentIndex} />
       </div>
-
-      {currentImage ? <PackageImageDisclaimer className="mt-1 px-0.5" /> : null}
 
       {/* Content */}
       <div className="flex min-h-[200px] flex-1 flex-col px-1 pb-1 pt-3">

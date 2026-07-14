@@ -1,16 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { HOW_IT_WORK_PAGE_FALLBACK } from '../data/cmsPages'
 import { strapiGet, USE_FALLBACK } from '../lib/strapi'
+import { preventWidow, stripMojibake } from '../lib/textFormat'
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 
 const toAbsoluteStrapiUrl = url =>
   url ? (url.startsWith('http') ? url : `${STRAPI_URL}${url}`) : null
 
+const cleanCopy = value => preventWidow(stripMojibake(String(value ?? '')))
+
 const normalizeSection = (section, index) => ({
   id: section.section_id ?? index + 1,
-  title: section.Heading ?? section.heading ?? section.title ?? '',
-  desc: section.Content ?? section.content ?? section.description ?? '',
+  title: cleanCopy(section.Heading ?? section.heading ?? section.title ?? ''),
+  desc: cleanCopy(section.Content ?? section.content ?? section.description ?? ''),
   image: toAbsoluteStrapiUrl(
     section.Icon?.url ?? section.icon?.url ?? section.Image?.url ?? section.image?.url ?? null
   ),
@@ -25,8 +28,8 @@ const HOW_IT_WORKS_LANDING_FALLBACK = {
     ? HOW_IT_WORK_PAGE_FALLBACK.idea_to_celebration.steps.map((step, index) => ({
         section_id: step?.number ?? index + 1,
         id: step?.number ?? index + 1,
-        title: step?.title ?? '',
-        desc: step?.description ?? '',
+        title: cleanCopy(step?.title ?? ''),
+        desc: cleanCopy(step?.description ?? ''),
         image: null,
         raw: step,
       }))
@@ -78,11 +81,11 @@ export async function fetchHowItWorksLandingPage() {
     return {
       id: item?.id ?? null,
       documentId: item?.documentId ?? null,
-      title: item?.Title ?? item?.title ?? HOW_IT_WORKS_LANDING_FALLBACK.title,
+      title: cleanCopy(item?.Title ?? item?.title ?? HOW_IT_WORKS_LANDING_FALLBACK.title),
       sections,
       cta: {
-        heading: item?.bottom_heading ?? '',
-        body: item?.Bottom_Content ?? '',
+        heading: cleanCopy(item?.bottom_heading ?? ''),
+        body: cleanCopy(item?.Bottom_Content ?? ''),
       },
     }
   } catch (error) {

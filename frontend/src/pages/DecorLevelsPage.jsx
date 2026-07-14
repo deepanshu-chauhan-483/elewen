@@ -171,18 +171,36 @@ export default function DecorLevelsPage() {
     return items.slice(start, start + cardsPerRow)
   }
 
-  const levelSections = useMemo(
-    () =>
-      levels.map((level, index) => ({
-        ...level,
-        key: `level${index + 1}`,
-        packages: filterPackages(sortedPackages, {
-          levelSlug: level.slug,
-          levelId: isNumericId(level?.id) ? String(level.id) : '',
-        }),
-      })),
-    [levels, sortedPackages]
-  )
+  const levelSections = useMemo(() => {
+    const sections = levels.map((level, index) => ({
+      ...level,
+      key: `level${index + 1}`,
+      packages: filterPackages(sortedPackages, {
+        levelSlug: level.slug,
+        levelId: isNumericId(level?.id) ? String(level.id) : '',
+      }),
+    }))
+
+    // If packages have no budget-level link, still show them under Level 1
+    // so the levels page is never an empty wall of headings.
+    const assignedIds = new Set(
+      sections.flatMap(section =>
+        section.packages.map(pkg => String(pkg.documentId ?? pkg.id ?? ''))
+      )
+    )
+    const unassigned = sortedPackages.filter(
+      pkg => !assignedIds.has(String(pkg.documentId ?? pkg.id ?? ''))
+    )
+
+    if (unassigned.length > 0 && sections.length > 0) {
+      sections[0] = {
+        ...sections[0],
+        packages: [...sections[0].packages, ...unassigned],
+      }
+    }
+
+    return sections
+  }, [levels, sortedPackages])
 
   const getTotalPages = items => Math.max(1, Math.ceil(items.length / cardsPerRow))
 

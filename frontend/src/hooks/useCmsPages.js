@@ -62,6 +62,14 @@ function sanitizeCmsTextSafe(value) {
   result = result.replace(/d\?\?cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
   result = result.replace(/dÃ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
   result = result.replace(/dÃƒÂ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+  result = result.replace(/décor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+  result = result.replace(/decore/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+  // UTF-8 mojibake for dashes / quotes (shows as â€… in the UI).
+  result = result.replace(/â€[œ]/g, '"')
+  result = result.replace(/â€[˜™]/g, "'")
+  result = result.replace(/â€"|â€“|â€”/g, ' - ')
+  result = result.replace(/â€¦/g, '...')
+  result = result.replace(/â€/g, '')
   return result
 }
 

@@ -50,9 +50,10 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
           <img
             src={service.image}
             alt={service.name}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-center"
             loading="lazy"
             decoding="async"
+            style={{ transform: 'none' }}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">

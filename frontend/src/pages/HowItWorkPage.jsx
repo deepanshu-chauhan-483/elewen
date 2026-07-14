@@ -4,6 +4,7 @@ import ScallopBulbCurtain from '../components/common/ScallopBulbCurtain'
 import { useHowItWorkPage } from '../hooks/useCmsPages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
+import { preventWidow, stripMojibake } from '../lib/textFormat'
 
 const HERO_TAGS = [
   'BIRTHDAYS',
@@ -38,31 +39,31 @@ const IDEA_TO_CELEBRATION_STEPS = [
     number: '1',
     title: 'Choose Your Event & Services',
     description:
-      'Browse by event type — birthdays, anniversaries, house parties, and more. Select from curated decor, catering, and add-on services.',
+      'Browse by event type - birthdays, anniversaries, house parties, and more. Select from curated Decor, catering, and add-on services.',
   },
   {
     number: '2',
     title: 'Pick a Package & Customize',
     description:
-      'Choose a package that suits your scale and vision. Add, swap, or adjust elements to make it truly yours — no package is one-size-fits-all.',
+      'Choose a package that suits your scale and vision. Add, swap, or adjust elements to make it truly yours - no package is one-size-fits-all.',
   },
   {
     number: '3',
     title: 'Review & Pay Advance',
     description:
-      'Review your full order summary — pricing, timelines, inclusions. Confirm with a small advance payment to lock in your date and package.',
+      'Review your full order summary - pricing, timelines, inclusions. Confirm with a small advance payment to lock in your date and package.',
   },
   {
     number: '4',
     title: 'Elewen Reviews & Confirms',
     description:
-      'Our team reviews your booking, coordinates with vendors, and sends you a confirmation within 24 hours. You’re kept in the loop at every step.',
+      'Our team reviews your booking, coordinates with vendors, and sends confirmation within 24 hours so you stay in the loop.',
   },
   {
     number: '5',
     title: 'Event Execution',
     description:
-      'Sit back and celebrate. Our in-house planners and vetted vendors execute everything on the day — from setup to teardown.',
+      'Sit back and celebrate. Our in-house planners and vetted vendors execute everything on the day - from setup to teardown.',
   },
 ]
 
@@ -227,7 +228,13 @@ const RevealLine = ({
 )
 
 const IdeaToCelebrationSection = ({ section }) => {
-  const steps = Array.isArray(section?.steps) ? section.steps : IDEA_TO_CELEBRATION_STEPS
+  const steps = (Array.isArray(section?.steps) ? section.steps : IDEA_TO_CELEBRATION_STEPS).map(
+    step => ({
+      ...step,
+      title: preventWidow(stripMojibake(step.title)),
+      description: preventWidow(stripMojibake(step.description)),
+    })
+  )
 
   return (
     <section className="relative flex w-full justify-center overflow-hidden bg-[#E7E0DA] px-6 py-16 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
@@ -626,12 +633,12 @@ const StepCard = ({ step, align = 'left' }) => {
         {step.number}
       </div>
       <h3
-        className="mt-4 text-[26px] leading-[1.08] text-[#D05D3C] min-[540px]:text-[29px]"
+        className="mt-4 text-[26px] leading-[1.08] text-[#D05D3C] min-[540px]:text-[29px] text-pretty"
         style={{ fontFamily: "'Malgin', serif" }}
       >
         {step.title}
       </h3>
-      <p className="mt-3 max-w-full text-[14px] leading-[1.55] text-[#9A7A67] min-[540px]:text-[15px]">
+      <p className="mt-3 max-w-full text-[14px] leading-[1.55] text-[#9A7A67] min-[540px]:text-[15px] text-pretty">
         {step.description}
       </p>
     </article>

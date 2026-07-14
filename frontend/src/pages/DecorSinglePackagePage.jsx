@@ -256,25 +256,59 @@ function displayInclusionHeading(value = '') {
 }
 
 function buildDecorImageMetaMap(pkg) {
-  const entries = getDecorDetailSections(pkg).flatMap(section => {
+  const entries = []
+  const packageTitle = cleanText(pkg?.title)
+
+  getDecorDetailSections(pkg).forEach(section => {
     const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
 
-    return inclusions.flatMap(inclusion => {
+    inclusions.forEach(inclusion => {
       const images = getInclusionImages(inclusion)
       const heading =
         displayInclusionHeading(inclusion?.choice_group_label) ||
         displayInclusionHeading(inclusion?.group_title) ||
-        displayInclusionHeading(inclusion?.choice_group_key)
+        displayInclusionHeading(inclusion?.choice_group_key) ||
+        cleanText(inclusion?.text) ||
+        packageTitle
       const text = cleanText(inclusion?.text)
 
-      return images.map(image => [
-        image,
+      images.forEach(image => {
+        entries.push([image, { heading, text }])
+      })
+    })
+
+    const elements = Array.isArray(section?.elements) ? section.elements : []
+    elements.forEach(element => {
+      const elementTitle = cleanText(element?.title || element?.name)
+      normaliseMediaArray(element?.images).forEach(image => {
+        const url = normalizeGalleryImageUrl(image)
+        if (!url) return
+        entries.push([
+          url,
+          {
+            heading: elementTitle || packageTitle,
+            text: elementTitle,
+          },
+        ])
+      })
+    })
+
+    normaliseMediaArray(section?.backdrop_images).forEach(image => {
+      const url = normalizeGalleryImageUrl(image)
+      if (!url) return
+      entries.push([
+        url,
         {
-          heading,
-          text,
+          heading: cleanText(section?.theme_name) || packageTitle,
+          text: 'Backdrop',
         },
       ])
     })
+  })
+  ;(Array.isArray(pkg?.images) ? pkg.images : []).forEach(image => {
+    const url = normalizeGalleryImageUrl(image)
+    if (!url || entries.some(([existing]) => existing === url)) return
+    entries.push([url, { heading: packageTitle, text: packageTitle }])
   })
 
   return Object.fromEntries(entries)

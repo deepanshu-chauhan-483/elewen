@@ -2,13 +2,13 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useScrollToTop } from '../hooks/useScrollToTop'
-import { useDecorThemeOptions } from '../hooks/useEventTypes'
+import { useDecorThemeOptions, useFilteredServiceOptions } from '../hooks/useEventTypes'
 import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
-import { filterThemesByEventPackages } from '../lib/packageFilters'
+import { filterThemesByEventPackages, normalizeServiceSlug } from '../lib/packageFilters'
 
 import themeImg1 from '../assets/images/IMG_3903.jpg'
 import themeImg2 from '../assets/images/IMG_7768.jpg'
@@ -82,9 +82,10 @@ function ThemeCard({
         <img
           src={image}
           alt={theme.label}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-center"
           loading="lazy"
           decoding="async"
+          style={{ transform: 'none' }}
         />
       </div>
       <div className="mt-2 flex h-[40px] items-center rounded-[10px] bg-[#7E8061] px-3 text-white md:h-[44px] md:px-3.5">
@@ -113,10 +114,22 @@ export default function DecorThemePage() {
   const eventId = searchParams.get('event')?.toLowerCase() ?? ''
   const eventNumericId = searchParams.get('eventId') ?? ''
   const serviceSlug = searchParams.get('service')?.toLowerCase() ?? 'decor'
-  const serviceId = searchParams.get('serviceId') ?? ''
+  const serviceIdParam = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
 
-  const themesQuery = useDecorThemeOptions(serviceId)
+  const { data: serviceOptions = [] } = useFilteredServiceOptions(['decor'])
+  const resolvedServiceId = useMemo(() => {
+    if (serviceIdParam) return serviceIdParam
+
+    const matched = serviceOptions.find(
+      service =>
+        normalizeServiceSlug(service?.slug) === normalizeServiceSlug(serviceSlug || 'decor')
+    )
+
+    return matched?.id != null ? String(matched.id) : ''
+  }, [serviceIdParam, serviceOptions, serviceSlug])
+
+  const themesQuery = useDecorThemeOptions(resolvedServiceId)
   const packagesQuery = usePackages()
   const { data: themes = [] } = themesQuery
   const { data: packages = [] } = packagesQuery
@@ -129,9 +142,9 @@ export default function DecorThemePage() {
         eventSlug: eventId,
         eventId: eventNumericId,
         serviceSlug: serviceSlug || 'decor',
-        serviceId,
+        serviceId: resolvedServiceId,
       }),
-    [themes, packages, categoryId, eventId, eventNumericId, serviceSlug, serviceId]
+    [themes, packages, categoryId, eventId, eventNumericId, serviceSlug, resolvedServiceId]
   )
 
   const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${debouncedSearchValue.trim().toLowerCase()}`
@@ -179,10 +192,10 @@ export default function DecorThemePage() {
       eventSlug: eventId,
       eventId: eventNumericId,
       serviceSlug,
-      serviceId,
+      serviceId: resolvedServiceId,
       flow,
     })
-  }, [categoryId, eventId, eventNumericId, flow, serviceId, serviceSlug])
+  }, [categoryId, eventId, eventNumericId, flow, resolvedServiceId, serviceSlug])
 
   const skipToPackages = useMemo(() => {
     const params = new URLSearchParams()
@@ -190,10 +203,10 @@ export default function DecorThemePage() {
     if (eventId) params.set('event', eventId)
     if (eventNumericId) params.set('eventId', eventNumericId)
     params.set('service', serviceSlug)
-    if (serviceId) params.set('serviceId', serviceId)
+    if (resolvedServiceId) params.set('serviceId', resolvedServiceId)
     if (flow) params.set('flow', flow)
     return `/packages/decor-levels?${params.toString()}`
-  }, [categoryId, eventId, eventNumericId, flow, serviceId, serviceSlug])
+  }, [categoryId, eventId, eventNumericId, flow, resolvedServiceId, serviceSlug])
 
   const goPrev = () =>
     setPaginationState(current => {
@@ -295,7 +308,7 @@ export default function DecorThemePage() {
                       eventId={eventId}
                       eventNumericId={eventNumericId}
                       serviceSlug={serviceSlug}
-                      serviceId={serviceId}
+                      serviceId={resolvedServiceId}
                       flow={flow}
                       theme={theme}
                       image={

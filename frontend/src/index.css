@@ -1427,6 +1427,18 @@ p {
 .about-page-hover-image:hover {
   transform: scale(1.06);
 }
+
+/* Keep event/service card photos upright and centered (hover may still scale). */
+.plan-event-card-image {
+  object-fit: cover;
+  object-position: center;
+  transform: none;
+}
+
+.plan-event-card:hover .plan-event-card-image {
+  transform: scale(1.1);
+}
+
 /* Reusable class to hide scrollbar but keep scroll working */
 .hide-scrollbar {
   overflow: auto;

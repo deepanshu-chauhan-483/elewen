@@ -23,11 +23,13 @@ import CelebrationDoor from '../components/landing-page/CelebrationDoor'
 import HeroSection from '../components/landing-page/HeroSection'
 import { usePackages } from '../hooks/usePackages'
 import { useEventCategories, useEventCards, useServiceCards } from '../hooks/useEventTypes'
+import { SERVICE_CATEGORY_ORDER } from '../data/eventTypes'
 import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
 import { useLandingPage } from '../hooks/useCmsPages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import { getPackageHref } from '../lib/packageRoutes'
+import { preventWidow, stripMojibake } from '../lib/textFormat'
 import { PACKAGES_FALLBACK } from '../data/packages'
 
 import { preloadImages, usePreloadOnApproach } from '../utils/preloadAssets'
@@ -386,7 +388,7 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
             onError={event => handleImageError(event, 0)}
           />
 
-          {isActive && (
+          {pkg.price ? (
             <div
               className="absolute right-[12px] md:right-4 top-[12px] md:top-4 flex items-center justify-center gap-1 bg-white rounded-[22px] md:rounded-[36px] z-10 pointer-events-none"
               style={{ padding: isMobile ? '2.5px 7.4px' : '4px 12px' }}
@@ -395,7 +397,7 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
                 Starting from {pkg.price}
               </span>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -472,9 +474,35 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
                 </div>
               </>
             ) : previewTags.length > 0 ? (
-              <p className="text-[#767676] line-clamp-2 w-full font-normal text-[12px] md:text-[16px] leading-[150%] font-['Poppins'] md:font-sans">
-                {previewTags.join(' · ')}
-              </p>
+              <div className="flex flex-wrap gap-[2.5px] md:gap-1 w-full">
+                {previewTags.map((tag, tagIndex) => (
+                  <div
+                    key={`${tag}-${tagIndex}`}
+                    className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.05)',
+                      padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                    }}
+                  >
+                    <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[16px] leading-[150%] font-['Poppins'] md:font-sans">
+                      {tag}
+                    </span>
+                  </div>
+                ))}
+                {tags.length > previewTags.length ? (
+                  <div
+                    className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.05)',
+                      padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+                    }}
+                  >
+                    <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[16px] leading-[150%] font-['Poppins'] md:font-sans">
+                      More
+                    </span>
+                  </div>
+                ) : null}
+              </div>
             ) : null}
           </div>
         </div>
@@ -546,8 +574,12 @@ const PlanEventSection = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Derive active category â€” default to first category once loaded
-  const activeCategory = selectedCategory ?? safeCategories[0] ?? null
+  // Default to Social once categories load; keep explicit selection after user clicks.
+  const activeCategory =
+    selectedCategory ??
+    safeCategories.find(cat => String(cat).toLowerCase() === 'social') ??
+    safeCategories[0] ??
+    null
   const activeCategorySlug = slugifyValue(activeCategory)
 
   // Filter cards by selected category
@@ -731,7 +763,7 @@ const PlanEventSection = () => {
             <span className="reveal-wrapper">
               <span className="reveal-text">
                 {s.description ??
-                  'Choose your event type and explore curated dÃ©cor and catering packages designed to simplify planning.'}
+                  'Choose your event type and explore curated Decor and catering packages designed to simplify planning.'}
               </span>
             </span>
           </p>
@@ -865,6 +897,7 @@ const PlanEventSection = () => {
                         card.slug,
                         card.id
                       )}
+                      aria-label={card.title}
                       style={{
                         '--delay': `${0.04 + i * 0.03}s`,
                         width: isMobile
@@ -874,24 +907,26 @@ const PlanEventSection = () => {
                       className="bg-white p-[10px] md:p-2.5 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                     >
                       <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
-                        <img
-                          src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                          alt={card.title}
-                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
-                          loading="lazy"
-                        />
+                        {card.image ? (
+                          <img
+                            src={card.image}
+                            alt=""
+                            className="w-full h-full object-cover object-center plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <img
+                            src={CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
+                            alt=""
+                            className="w-full h-full object-cover object-center plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                            loading="lazy"
+                          />
+                        )}
                       </div>
 
-                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        {' '}
-                        <h3
-                          className="text-white font-medium md:font-semibold text-[14px] md:text-[clamp(0.75rem,1.18vw,1.0625rem)] mb-[6px] md:mb-2.5 tracking-wide uppercase leading-[1.3] md:leading-[1.35] line-clamp-2"
-                          style={{ fontFamily: "'Poppins'" }}
-                        >
-                          {card.title}
-                        </h3>
-                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[clamp(0.6875rem,0.9vw,0.8125rem)] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins'] line-clamp-2">
-                          {card.tagline}
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        <p className="text-white/90 md:text-white/85 text-[12px] md:text-[clamp(0.6875rem,0.9vw,0.8125rem)] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins'] line-clamp-3">
+                          {cleanCopy(card.tagline)}
                         </p>
                       </div>
                     </Link>
@@ -1046,12 +1081,31 @@ const WhatToPlanSection = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Derive categories from service cards
-  const categories = [...new Set(safeServiceCards.map(s => s?.category).filter(Boolean))]
-  const activeCategory = selectedCategory ?? categories[0] ?? null
+  // Prefer Decor first; keep sidebar lanes in product order (no F&B grouping).
+  const categories = (() => {
+    const lanes = safeServiceCards.reduce((acc, card) => {
+      const lane = card?.category
+      if (lane && !acc.includes(lane)) acc.push(lane)
+      return acc
+    }, [])
+    const remaining = [...lanes]
+    const ordered = []
+    for (const preferred of SERVICE_CATEGORY_ORDER) {
+      const idx = remaining.findIndex(
+        name => String(name).toLowerCase() === String(preferred).toLowerCase()
+      )
+      if (idx !== -1) ordered.push(remaining.splice(idx, 1)[0])
+    }
+    return ordered.concat(remaining)
+  })()
+  const preferredDecor =
+    categories.find(category => String(category).toLowerCase() === 'decor') ?? null
+  const activeCategory = selectedCategory ?? preferredDecor ?? categories[0] ?? null
 
   const filteredCards = activeCategory
-    ? safeServiceCards.filter(s => s?.category === activeCategory)
+    ? safeServiceCards.filter(
+        s => String(s?.category ?? '').toLowerCase() === String(activeCategory).toLowerCase()
+      )
     : safeServiceCards
 
   // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
@@ -1313,7 +1367,7 @@ const WhatToPlanSection = () => {
                         <img
                           src={card.image ?? CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
                           alt={card.title}
-                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                          className="w-full h-full object-cover object-center plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                         />
                       </div>
 
@@ -1326,7 +1380,7 @@ const WhatToPlanSection = () => {
                           {card.title}
                         </h3>
                         <p className="text-white/65 md:text-white/80 text-[12px] md:text-[clamp(0.6875rem,0.9vw,0.8125rem)] leading-[1.45] md:leading-relaxed font-normal md:font-light pr-2 font-['Poppins'] line-clamp-2">
-                          {card.description}
+                          {cleanCopy(card.description)}
                         </p>
                       </div>
                     </Link>
@@ -1592,7 +1646,7 @@ const CoinIcon = () => (
   {
     id: 5,
     title: "Have An Idea That's A Little Different?",
-    desc: "Leave us a note, ask a question, or pitch your wild idea â€” we'll align, curate, and make your party effortless.",
+    desc: "Leave us a note, ask a question, or pitch your wild idea - we'll align, curate, and make your party effortless.",
     side: 'right',
     icon: LightbulbIcon,
   },
@@ -1615,6 +1669,8 @@ const iconByIndex = index => {
 
 const normalizeText = value => (value == null ? '' : String(value))
 
+const cleanCopy = value => preventWidow(stripMojibake(normalizeText(value)))
+
 const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
   const { data: howItWorks = { title: '', sections: [] } } = useHowItWorksLandingPage()
   const [activeStepIndex, setActiveStepIndex] = useState(0)
@@ -1626,8 +1682,8 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
     const list = Array.isArray(howItWorks.sections) ? howItWorks.sections : []
     return list.map((section, index) => ({
       id: section.section_id ?? index + 1,
-      title: normalizeText(section.title),
-      desc: normalizeText(section.desc),
+      title: cleanCopy(section.title),
+      desc: cleanCopy(section.desc),
       image: section.image ?? null,
       side: index % 2 === 0 ? 'right' : 'left',
     }))
@@ -1650,6 +1706,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
 
     const imgStyle = {
       transition: 'filter 0.4s ease',
+      transform: 'none',
       filter: isWhite
         ? 'brightness(0) invert(1)' // pure white
         : 'brightness(0) invert(1) opacity(0.25)', // dim for future steps
@@ -1660,7 +1717,7 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
         <img
           src={step.image}
           alt={step.title}
-          className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px] object-contain"
+          className="block h-[60px] w-[60px] shrink-0 md:h-[96px] md:w-[96px] object-contain object-center"
           style={imgStyle}
         />
       )
@@ -2087,13 +2144,13 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
                     </div>
                   </div>
 
-                  <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                  <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal text-pretty">
                     <span className="reveal-wrapper">
                       <span className="reveal-text">{step.title}</span>
                     </span>
                   </h3>
 
-                  <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                  <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal text-pretty">
                     <span className="reveal-wrapper">
                       <span className="reveal-text">{step.desc}</span>
                     </span>
@@ -2121,13 +2178,13 @@ const HowItWorksSection = ({ disableScrollAnimations, isVisible = true }) => {
                     </div>
                   </div>
 
-                  <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal">
+                  <h3 className="w-full text-[16px] md:text-[27px] font-serif font-display mb-3 leading-[1.1] opacity-100 step-reveal text-pretty">
                     <span className="reveal-wrapper">
                       <span className="reveal-text">{step.title}</span>
                     </span>
                   </h3>
 
-                  <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal">
+                  <p className="w-full text-[12px] md:text-[16px] leading-[1.5] max-w-[342px] font-light opacity-100 step-reveal text-pretty">
                     <span className="reveal-wrapper">
                       <span className="reveal-text">{step.desc}</span>
                     </span>
@@ -2898,7 +2955,7 @@ const ChecklistSection = () => {
         </span>
       </h2>
 
-      {/* Desktop layout â€” unchanged */}
+      {/* Desktop layout - unchanged */}
       <div
         ref={layoutWrapRef}
         className="checklist-chaos-layout block w-screen max-w-[100vw] relative left-1/2 -translate-x-1/2 px-0 md:static md:w-full md:max-w-none md:left-auto md:translate-x-0 mt-6 md:mt-24 mb-8 md:mb-32 z-10 font-sans"
@@ -2963,7 +3020,7 @@ const ChecklistSection = () => {
                 style={{ '--delay': '0s' }}
               >
                 <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                  What was once simple now means endless scrolling â€” and still no confidence.
+                  What was once simple now means endless scrolling - and still no confidence.
                 </p>
               </div>
               {/* STEP 2: Too many calls (Starts at 1.4s) */}
@@ -3006,7 +3063,7 @@ const ChecklistSection = () => {
                   style={{ '--delay': '0s' }}
                 >
                   <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5] font-sans">
-                    Follow-ups, confirmations, negotiations, and last-minute checks â€” your phone
+                    Follow-ups, confirmations, negotiations, and last-minute checks - your phone
                     turns into a coordination hub, and excitement becomes stress.
                   </p>
                 </div>
@@ -3099,8 +3156,8 @@ const ChecklistSection = () => {
               style={{ '--delay': '1.8s' }}
             >
               <p className="text-[12px] text-[#591902] opacity-50 leading-[1.5]">
-                Color themes, backdrops, menus, endless add-ons â€” more options don&apos;t mean
-                more freedom, just more pressure.
+                Color themes, backdrops, menus, endless add-ons - more options don&apos;t mean more
+                freedom, just more pressure.
               </p>
             </div>
           </div>
@@ -3231,6 +3288,13 @@ const PackagesSection = () => {
 
     return sourcePackages.map((pkg, i) => {
       const { images, fallbackImages } = resolvePackageImages(pkg, i)
+      const includes = (pkg.includes ?? pkg.tags ?? []).filter(Boolean)
+      const price =
+        typeof pkg.price === 'string' && pkg.price.trim()
+          ? pkg.price.trim()
+          : pkg.base_price
+            ? `₹${Number(pkg.base_price).toLocaleString('en-IN')}`
+            : ''
 
       return {
         ...pkg,
@@ -3240,7 +3304,9 @@ const PackagesSection = () => {
             : typeof pkg.desc === 'string'
               ? pkg.desc
               : '',
-        includes: pkg.includes ?? pkg.tags ?? [],
+        price,
+        includes,
+        tags: includes,
         images,
         fallbackImages,
       }
@@ -4141,7 +4207,7 @@ const PlanningGuidesSection = () => {
                             CARD_LOCAL_IMAGES[blog.id % CARD_LOCAL_IMAGES.length]
                           }
                           alt={blog.title}
-                          className="w-full h-full object-cover plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
+                          className="w-full h-full object-cover object-center plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                         />
                       </div>
 
@@ -4800,7 +4866,7 @@ export default function LandingPage() {
   // ── Tiered asset preloading ───────────────────────────────────────────────
   // Tier 1 (on mount, during preloader): scallop bulbs + logo — same set HeroSection waits for.
   // Tier 2 (hero-preloader-done): checklist illustrations, first 3
-  //   package images, and the centre logo â€” sections 3â€“5.
+  //   package images, and the centre logo - sections 3-5.
   // Tier 3: IntersectionObserver hooks inside SplitInfoSection handle
   //   inspirationImg 2 viewports ahead.
   // All remaining img tags carry loading="lazy" so the browser fetches them

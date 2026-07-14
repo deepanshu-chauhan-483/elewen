@@ -452,13 +452,14 @@ function ProductImageLayout({
                     </div>
                   </div>
 
-                  {activeImageMeta?.heading || activeImageMeta?.text ? (
-                    <div className="absolute top-2 left-2 max-w-[75%] rounded-[10px] bg-[#591902]/88 px-3 py-2 text-right text-white">
-                      {activeImageMeta?.heading ? (
-                        <p className="text-[11px] font-semibold leading-[1.3]">
-                          {activeImageMeta.heading}
-                        </p>
-                      ) : null}
+                  {activeImageMeta?.heading || activeImageMeta?.text || title ? (
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/70 via-black/35 to-transparent px-3 pb-3 pr-12 pt-10">
+                      <p
+                        className="line-clamp-2 text-[13px] font-semibold leading-[1.3] text-white sm:text-[14px]"
+                        style={{ fontFamily: 'Poppins, sans-serif' }}
+                      >
+                        {activeImageMeta?.heading || activeImageMeta?.text || title}
+                      </p>
                     </div>
                   ) : null}
                 </div>

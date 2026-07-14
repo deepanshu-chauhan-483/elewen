@@ -8,7 +8,7 @@ import {
   useEventsByCategory,
   useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
-import { normalizeServiceSlug } from '../../lib/packageFilters'
+import { eventSlugsMatch, normalizeServiceSlug } from '../../lib/packageFilters'
 import { buildServiceDestination } from '../../lib/serviceFlow'
 
 function FilterPill({
@@ -48,8 +48,24 @@ const DEFAULT_WIDTHS = {
 }
 
 const CATEGORY_ORDER = ['social', 'corporate', 'religious']
-const SERVICE_ORDER = ['catering', 'decor', 'bar-tending', 'sheesha-services', 'furniture']
-const LEVEL_ORDER = ['level-1', 'level-2', 'level-3']
+const SERVICE_ORDER = ['decor', 'catering', 'bartending', 'sheesha']
+const LEVEL_ORDER = ['level-1', 'level-2', 'level-3', 'level-4']
+
+function sortLevelsForHero(levels = []) {
+  const list = Array.isArray(levels) ? [...levels] : []
+
+  list.sort((a, b) => {
+    const ai = LEVEL_ORDER.indexOf(String(a?.slug ?? '').toLowerCase())
+    const bi = LEVEL_ORDER.indexOf(String(b?.slug ?? '').toLowerCase())
+    if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+    return String(a?.label ?? '').localeCompare(String(b?.label ?? ''), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    })
+  })
+
+  return list
+}
 
 const toSelectOption = item => ({
   value: item.slug,
@@ -101,6 +117,21 @@ export default function PackageResultsHero({
     [allEvents]
   )
 
+  // Resolve CMS option value when URL uses a product alias (birthday-parties ≠ birthday-celebrations).
+  const selectedEventValue = useMemo(() => {
+    if (eventId) {
+      const byId = events.find(event => event.id === String(eventId))
+      if (byId) return byId.value
+    }
+
+    if (eventSlug) {
+      const bySlug = events.find(event => eventSlugsMatch(event.value, eventSlug))
+      if (bySlug) return bySlug.value
+    }
+
+    return eventSlug
+  }, [eventId, eventSlug, events])
+
   const selectedService = useMemo(
     () => services.find(service => normalizeServiceSlug(service.slug) === serviceSlug) ?? null,
     [services, serviceSlug]
@@ -126,14 +157,10 @@ export default function PackageResultsHero({
 
   const levels = useMemo(
     () =>
-      LEVEL_ORDER.map(slug =>
-        (Array.isArray(allLevels) ? allLevels : []).find(level => level.slug === slug)
-      )
-        .filter(Boolean)
-        .map(level => ({
-          value: level.slug,
-          label: level.label ?? titleizeSlug(level.slug),
-        })),
+      sortLevelsForHero(allLevels).map(level => ({
+        value: level.slug,
+        label: level.label ?? titleizeSlug(level.slug),
+      })),
     [allLevels]
   )
 
@@ -229,7 +256,7 @@ export default function PackageResultsHero({
       },
       {
         label: 'Event',
-        value: eventSlug,
+        value: selectedEventValue,
         widthClass: DEFAULT_WIDTHS.event,
         options: events.map(({ value, label }) => ({ value, label })),
         onChange: event => handleFilterChange('event', event.target.value),
@@ -256,7 +283,7 @@ export default function PackageResultsHero({
     categories,
     handleFilterChange,
     isDecorService,
-    eventSlug,
+    selectedEventValue,
     events,
     levelSlug,
     levels,

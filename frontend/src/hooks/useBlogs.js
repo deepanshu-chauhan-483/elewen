@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { BLOGS_FALLBACK, BLOG_CATEGORIES_FALLBACK } from '../data/blogs'
+import { offlineBlogCover } from '../data/offlineMedia'
 
 const toAbsoluteStrapiUrl = url =>
   url
@@ -47,24 +48,32 @@ export function useBlogs({ limit = 3, category, slug } = {}) {
 
         const { data } = await strapiGet('/blogs', params)
 
-        return data.map((b, i) => ({
-          id: b.id ?? i,
-          documentId: b.documentId,
-          title: b.title ?? '',
-          slug: b.slug ?? '',
-          excerpt: b.excerpt ?? '',
-          category: b.category ?? '',
-          content: b.content_blocks ?? b.content ?? '',
-          author: b.author ?? '',
-          post_published_at: b.post_published_at ?? null,
-          cover_image: toAbsoluteStrapiUrl(b.cover_image?.url),
-          blog_images: Array.isArray(b.blog_images)
-            ? b.blog_images.map(image => ({
-                url: toAbsoluteStrapiUrl(image?.url),
-                alt: image?.alternativeText || image?.name || '',
-              }))
-            : [],
-        }))
+        return data.map((b, i) => {
+          const mappedSlug = b.slug ?? ''
+          const cover =
+            toAbsoluteStrapiUrl(b.cover_image?.url) ||
+            toAbsoluteStrapiUrl(b.blog_images?.[0]?.url) ||
+            offlineBlogCover(mappedSlug)
+
+          return {
+            id: b.id ?? i,
+            documentId: b.documentId,
+            title: b.title ?? '',
+            slug: mappedSlug,
+            excerpt: b.excerpt ?? '',
+            category: b.category ?? '',
+            content: b.content_blocks ?? b.content ?? '',
+            author: b.author ?? '',
+            post_published_at: b.post_published_at ?? null,
+            cover_image: cover,
+            blog_images: Array.isArray(b.blog_images)
+              ? b.blog_images.map(image => ({
+                  url: toAbsoluteStrapiUrl(image?.url),
+                  alt: image?.alternativeText || image?.name || '',
+                }))
+              : [],
+          }
+        })
       } catch {
         return filterFallbackBlogs({ limit, category, slug })
       }

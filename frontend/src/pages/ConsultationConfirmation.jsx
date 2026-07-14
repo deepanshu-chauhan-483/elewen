@@ -30,7 +30,7 @@ const actionCards = [
     title: 'Explore our packages',
     desc: 'Browse curated event packages to get a sense of what we offer.',
     cta: 'Browse Packages',
-    to: '/packages',
+    to: '/package-listing',
   },
   {
     eyebrow: 'Done for now?',

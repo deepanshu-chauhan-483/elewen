@@ -88,7 +88,7 @@ const HERO_RIGHT_CARDS_FALLBACK = [
   {
     label: 'Anniversary',
     tagline: 'Intimate, elegant setups handled end-to-end',
-    href: '/package-listing?category=social&event=anniversaries&eventId=178',
+    href: '/event-flow/decor-theme?category=social&event=anniversaries&eventId=178&service=decor&serviceId=123',
   },
   {
     label: 'House Party',

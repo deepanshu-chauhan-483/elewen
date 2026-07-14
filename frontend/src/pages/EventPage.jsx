@@ -42,13 +42,25 @@ function EventCard({ categorySlug, event }) {
   return (
     <Link
       to={`/event-flow/service?${params.toString()}`}
+      aria-label={event.title}
       className="group flex h-full max-h-[424px] w-full max-w-[298px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px]"
     >
-      <div className="flex h-[76px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-2.5 text-white md:h-[84px] md:px-3.5 md:py-3">
-        <h2 className="text-[15px] font-semibold uppercase leading-[1.2] tracking-[0.01em] md:text-[16px]">
-          {event.title}
-        </h2>
-        <p className="mt-1 min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:text-[13px]">
+      <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
+        {event.image ? (
+          <img
+            src={event.image}
+            alt=""
+            className="h-full w-full object-cover object-center"
+            loading="lazy"
+            decoding="async"
+            style={{ transform: 'none' }}
+          />
+        ) : (
+          <div className="h-full w-full bg-[#E7DDCF]" aria-hidden="true" />
+        )}
+      </div>
+      <div className="flex h-[76px] flex-col justify-center rounded-[10px] bg-[#7E8061] px-3 py-2.5 text-white md:h-[84px] md:px-3.5 md:py-3">
+        <p className="min-h-0 max-h-full overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/90 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:text-[13px]">
           {event.description}
         </p>
       </div>

@@ -143,14 +143,22 @@ function getNestedPackageBudgetLevels(pkg) {
     .filter(Boolean)
 }
 
-/** Canonical theme slugs for filtering — relation slug only, not package display names. */
+/** Canonical theme slugs for filtering — relation slug, name, or theme_name. */
 function getPackageThemeSlugs(pkg) {
   return uniqueValues(
     getNestedPackageSections(pkg)
-      .map(section => {
-        const slug = section?.theme?.slug
-        return slug ? slugify(slug) : ''
+      .flatMap(section => {
+        const theme = section?.theme
+        return [
+          theme?.slug,
+          theme?.name,
+          theme?.label,
+          section?.theme_name,
+          section?.theme_slug,
+          typeof theme === 'string' ? theme : '',
+        ]
       })
+      .map(value => (value ? slugify(value) : ''))
       .filter(Boolean)
   )
 }
@@ -170,7 +178,30 @@ function inferServiceSlugsFromSections(pkg) {
 }
 
 function buildPackageIncludes(pkg) {
-  return buildTextList(getNestedPackageInclusions(pkg)).slice(0, 12)
+  const fromInclusions = buildTextList(getNestedPackageInclusions(pkg))
+  if (fromInclusions.length > 0) return fromInclusions.slice(0, 12)
+
+  // Listing cards: fall back to element / addon titles when inclusions are empty.
+  return buildDetailHighlights(pkg).slice(0, 12)
+}
+
+function formatPackagePrice(pkg) {
+  const raw =
+    pkg?.base_price ??
+    pkg?.starting_price ??
+    pkg?.price_from ??
+    (typeof pkg?.price === 'number' ? pkg.price : null)
+
+  const amount = Number(raw)
+  if (Number.isFinite(amount) && amount > 0) {
+    return `₹${amount.toLocaleString('en-IN')}`
+  }
+
+  if (typeof pkg?.price === 'string' && pkg.price.trim()) {
+    return pkg.price.trim()
+  }
+
+  return ''
 }
 
 function buildPriceCoverText(section) {
@@ -188,6 +219,18 @@ function buildPolicyText(policy) {
   return ''
 }
 
+function clarifyPriceMayVaryCopy(body) {
+  const text = String(body ?? '').trim()
+  if (!text) return text
+
+  if (/prices may vary/i.test(text) && /while you choose/i.test(text)) return text
+
+  return text.replace(
+    /prices may vary accordingly\.?/gi,
+    'prices may vary accordingly and are shown while you choose your options.'
+  )
+}
+
 function buildAccordionSections(pkg) {
   const sections = getNestedPackageSections(pkg)
   const policies = getNestedPackagePolicies(pkg)
@@ -195,7 +238,9 @@ function buildAccordionSections(pkg) {
 
   return sections
     .flatMap(section => [
-      section?.nitty_gritty ? { title: 'The Nitty-Gritty', body: section.nitty_gritty } : null,
+      section?.nitty_gritty
+        ? { title: 'The Nitty-Gritty', body: clarifyPriceMayVaryCopy(section.nitty_gritty) }
+        : null,
       buildPriceCoverText(section)
         ? { title: 'The price you see covers it all', body: buildPriceCoverText(section) }
         : null,
@@ -386,10 +431,14 @@ function normalizePackage(pkg, index = 0, options = {}) {
     id: pkg.id,
     documentId: pkg.documentId,
     title: pkg.title,
-    category: pkg.category ?? '',
+    category:
+      pkg.category ??
+      normaliseRelationArray(pkg.events)[0]?.name ??
+      normaliseRelationArray(pkg.events)[0]?.parent_event?.name ??
+      '',
     description: blocksToText(pkg.description),
-    price: pkg.base_price ? `₹${Number(pkg.base_price).toLocaleString('en-IN')}` : '',
-    base_price: pkg.base_price ?? 0,
+    price: formatPackagePrice(pkg),
+    base_price: Number(pkg.base_price ?? pkg.starting_price ?? pkg.price_from ?? 0) || 0,
     includes: packageIncludes,
     tags: packageIncludes,
     event_slugs: normaliseRelationArray(pkg.events)
@@ -437,9 +486,11 @@ function getPackageListingPopulateParams() {
     'populate[events][populate][0]': 'parent_event',
     'populate[service_categories][populate][0]': 'parent_category',
     'populate[packages][on][package.decorpackages][populate][inclustions]': 'true',
+    'populate[packages][on][package.decorpackages][populate][elements][populate]': 'service',
     'populate[packages][on][package.decorpackages][populate][theme]': 'true',
     'populate[packages][on][package.decorpackages][populate][budget_level]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][inclusions]': 'true',
+    'populate[packages][on][package.sheeshapackage][populate][elements][populate]': 'service',
     'populate[packages][on][package.bartendingpackage][populate][inclusions]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][budget_level]': 'true',
     'populate[packages][on][package.cateringpackage][populate][inclusions]': 'true',
@@ -534,7 +585,7 @@ async function fetchPackages(params = {}) {
 
 export function usePackages() {
   return useQuery({
-    queryKey: ['packages', 'live-v5-listing'],
+    queryKey: ['packages', 'live-v7-themes-levels-search'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
       try {

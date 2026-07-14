@@ -4,7 +4,10 @@ import {
   EVENT_CATEGORIES_FALLBACK,
   EVENT_CARDS_FALLBACK,
   SERVICE_CARDS_FALLBACK,
+  SOCIAL_EVENT_ORDER,
 } from '../data/eventTypes'
+import { offlineServiceImage } from '../data/offlineMedia'
+import { canonicalizeEventSlug } from '../lib/packageFilters'
 
 const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? '/cms'
 
@@ -43,16 +46,7 @@ const SERVICE_OPTIONS_FALLBACK = [
     slug: 'decor',
     description: 'Thoughtful visual styling designed around your event mood and format.',
     category: 'Decor',
-    image: null,
-  },
-  {
-    id: 'rental-furniture',
-    documentId: null,
-    name: 'Rental Furniture',
-    slug: 'rental-furniture',
-    description: 'Flexible seating, tables, lounges, and setup pieces for smooth hosting.',
-    category: 'Rental Furniture',
-    image: null,
+    image: '/offline-media/services/decor.png',
   },
   {
     id: 'catering',
@@ -60,8 +54,8 @@ const SERVICE_OPTIONS_FALLBACK = [
     name: 'Catering',
     slug: 'catering',
     description: 'Curated food formats and service planning for gatherings of every scale.',
-    category: 'Food & Beverage',
-    image: null,
+    category: 'Catering',
+    image: '/offline-media/services/catering.png',
   },
   {
     id: 'bartending',
@@ -69,19 +63,89 @@ const SERVICE_OPTIONS_FALLBACK = [
     name: 'Bartending',
     slug: 'bartending',
     description: 'Bar setup, staff, and beverage service designed for seamless guest flow.',
-    category: 'Food & Beverage',
-    image: null,
+    category: 'Bartending',
+    image: '/offline-media/services/bartending.png',
   },
   {
     id: 'sheesha',
     documentId: null,
-    name: 'Sheesha',
+    name: 'Sheesha / Hookah',
     slug: 'sheesha',
     description: 'Relaxed lounge experiences with managed setup and guest-ready presentation.',
-    category: 'Sheesha',
-    image: null,
+    category: 'Sheesha / Hookah',
+    image: '/offline-media/services/sheesha.png',
   },
 ]
+
+const EXCLUDED_SERVICE_SLUGS = new Set([
+  'light',
+  'lighting',
+  'sound',
+  'light-and-sound',
+  'lighting-ambience',
+  'lighting-and-ambience',
+  'sound-setup',
+  'sound-and-setup',
+  'tenting',
+  'technical-showrunning',
+  'technical',
+  'other',
+])
+
+const SERVICE_DISPLAY_ORDER = ['decor', 'catering', 'bartending', 'sheesha']
+
+const SERVICE_CARD_ORDER = [
+  'decoration',
+  'furniture',
+  'catering',
+  'bartending',
+  'bar-tending',
+  'sheesha',
+]
+
+const canonicalizeServiceSlug = value => {
+  const slug = slugify(value)
+  if (slug === 'bar-tending') return 'bartending'
+  if (slug === 'sheesha-services' || slug === 'hookah') return 'sheesha'
+  if (slug === 'decor-setups' || slug === 'decor-services') return 'decoration'
+  if (slug === 'rental-furniture') return 'furniture'
+  return slug
+}
+
+const displayServiceTitle = (slug, name) => {
+  const normalized = canonicalizeServiceSlug(slug || name)
+  if (normalized === 'sheesha') return 'Sheesha / Hookah'
+  if (normalized === 'decoration' || normalized === 'decor') {
+    if (/decor\s*setups?/i.test(name) || /decoration/i.test(name) || !name) return 'Decor Setups'
+    if (slugify(name) === 'decor') return 'Decor'
+  }
+  return name?.trim() || titleizeFromSlug(normalized)
+}
+
+const titleizeFromSlug = value =>
+  String(value ?? '')
+    .split('-')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+
+const resolveServiceCategory = (service, displayName, name) => {
+  const parentName = String(service.parent_category?.name ?? '').trim()
+  const slug = canonicalizeServiceSlug(service.slug ?? name)
+  const isFoodBeverageParent = /food\s*&\s*beverage/i.test(parentName)
+
+  // Keep each service as its own top-level lane (no F&B grouping).
+  if (isFoodBeverageParent) {
+    if (slug === 'sheesha') return 'Sheesha / Hookah'
+    return displayName || name
+  }
+
+  if (/^decor/i.test(parentName) || slug === 'decoration' || slug === 'furniture') return 'Decor'
+  if (slug === 'sheesha') return 'Sheesha / Hookah'
+  if (parentName) return sanitizeEventText(parentName)
+
+  return displayName || name
+}
 
 const DECOR_THEME_FALLBACK = [
   { id: 'retro', label: 'Retro', slug: 'retro', preview_image: null },
@@ -165,56 +229,160 @@ const getBudgetLevelSlug = level => {
 
 const badgeFromName = name => (name?.trim()?.charAt(0) ?? '').toUpperCase()
 
+// Fix CMS mojibake / Decore → Decor in event taglines and descriptions.
+const sanitizeEventText = value => {
+  if (typeof value !== 'string') return value
+
+  return value
+    .replace(/d\?\?cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+    .replace(/dÃ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+    .replace(/dÃƒÂ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+    .replace(/décor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+    .replace(/decore/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+    .replace(/â€[œ]/g, '"')
+    .replace(/â€[˜™]/g, "'")
+    .replace(/â€"|â€“|â€”/g, ' - ')
+    .replace(/â€¦/g, '...')
+    .replace(/â€/g, '')
+}
+
+const socialEventOrderIndex = title => {
+  const normalized = canonicalizeEventSlug(slugify(title))
+
+  const exact = SOCIAL_EVENT_ORDER.findIndex(name => slugify(name) === normalized)
+  if (exact !== -1) return exact
+
+  // Match CMS variants like "Birthday Celebrations" → "Birthday Parties".
+  const firstToken = normalized.split('-')[0]
+  const fuzzy = SOCIAL_EVENT_ORDER.findIndex(name => slugify(name).startsWith(firstToken))
+  return fuzzy === -1 ? 999 : fuzzy
+}
+
+const orderEventsForCategory = (events, categorySlug) => {
+  const list = Array.isArray(events) ? [...events] : []
+
+  if (slugify(categorySlug) !== 'social') return list
+
+  return list.sort((a, b) => {
+    const orderDiff = socialEventOrderIndex(a.title) - socialEventOrderIndex(b.title)
+    if (orderDiff !== 0) return orderDiff
+    return String(a.title ?? '').localeCompare(String(b.title ?? ''), undefined, {
+      sensitivity: 'base',
+    })
+  })
+}
+
 const mapEventCategory = event => ({
   id: event.id,
   documentId: event.documentId,
   name: event.name?.trim() ?? '',
   slug: event.slug?.trim() || slugify(event.name),
-  description: event.tagline?.trim() || blocksToText(event.description),
+  description: sanitizeEventText(event.tagline?.trim() || blocksToText(event.description)),
   badge: badgeFromName(event.name),
   icon: toAbsoluteStrapiUrl(event.icon?.url),
 })
 
-const mapEventCard = event => ({
-  id: event.id,
-  documentId: event.documentId,
-  slug: event.slug?.trim() || slugify(event.name),
-  title: event.name?.trim() ?? '',
-  tagline: event.tagline?.trim() ?? '',
-  description: blocksToText(event.description) || event.tagline?.trim() || '',
-  category: (event.parent_event?.name ?? '').trim(),
-  categorySlug: event.parent_event?.slug?.trim() || slugify(event.parent_event?.name),
-  image: toAbsoluteStrapiUrl(event.icon?.url),
-})
+const mapEventCard = event => {
+  const tagline = sanitizeEventText(event.tagline?.trim() ?? '')
+  const description = sanitizeEventText(
+    blocksToText(event.description) || event.tagline?.trim() || ''
+  )
 
-const mapServiceCategory = service => ({
-  id: service.id,
-  documentId: service.documentId,
-  name: service.name?.trim() ?? '',
-  slug: service.slug?.trim() || slugify(service.name),
-  description: Array.isArray(service.description)
-    ? blocksToText(service.description)
-    : (service.description ?? ''),
-  category: (service.parent_category?.name ?? service.name ?? '').trim(),
-  image: toAbsoluteStrapiUrl(service.icon?.url),
-  wizardSteps: Array.isArray(service.wizard_steps) ? service.wizard_steps : [],
-})
+  return {
+    id: event.id,
+    documentId: event.documentId,
+    slug: event.slug?.trim() || slugify(event.name),
+    title: event.name?.trim() ?? '',
+    tagline,
+    description,
+    category: (event.parent_event?.name ?? '').trim(),
+    categorySlug: event.parent_event?.slug?.trim() || slugify(event.parent_event?.name),
+    image: toAbsoluteStrapiUrl(event.icon?.url),
+  }
+}
+
+const mapServiceCategory = service => {
+  const rawName = sanitizeEventText(service.name?.trim() ?? '')
+  const slug = service.slug?.trim() || slugify(rawName)
+  const displayName = displayServiceTitle(slug, rawName)
+
+  return {
+    id: service.id,
+    documentId: service.documentId,
+    name: displayName,
+    slug,
+    description: sanitizeEventText(
+      Array.isArray(service.description)
+        ? blocksToText(service.description)
+        : (service.description ?? '')
+    ),
+    category: resolveServiceCategory(service, displayName, rawName),
+    image: toAbsoluteStrapiUrl(service.icon?.url) || offlineServiceImage(slug),
+    wizardSteps: Array.isArray(service.wizard_steps) ? service.wizard_steps : [],
+  }
+}
+
+const isExcludedService = item => {
+  const slug = canonicalizeServiceSlug(item?.slug ?? item?.title ?? item?.name)
+  const label = String(item?.title ?? item?.name ?? item?.label ?? '')
+    .trim()
+    .toLowerCase()
+
+  if (EXCLUDED_SERVICE_SLUGS.has(slug)) return true
+  if (slug.includes('light') && slug.includes('sound')) return true
+  if (label.includes('lighting') || label.includes('light and sound')) return true
+  if (label.includes('sound') && label.includes('setup')) return true
+  if (label === 'other' || label.includes('other subcategory')) return true
+  if (label.includes('technical') && label.includes('showrunning')) return true
+  return false
+}
+
+const orderServices = items => {
+  const list = (Array.isArray(items) ? items : []).filter(item => !isExcludedService(item))
+
+  return list.sort((a, b) => {
+    const aSlug = canonicalizeServiceSlug(a.slug ?? a.title ?? a.name)
+    const bSlug = canonicalizeServiceSlug(b.slug ?? b.title ?? b.name)
+    const ai = SERVICE_CARD_ORDER.indexOf(aSlug === 'decor' ? 'decoration' : aSlug)
+    const bi = SERVICE_CARD_ORDER.indexOf(bSlug === 'decor' ? 'decoration' : bSlug)
+
+    if (ai !== -1 || bi !== -1) {
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+    }
+
+    const ac = SERVICE_DISPLAY_ORDER.indexOf(aSlug === 'decoration' ? 'decor' : aSlug)
+    const bc = SERVICE_DISPLAY_ORDER.indexOf(bSlug === 'decoration' ? 'decor' : bSlug)
+    return (ac === -1 ? 999 : ac) - (bc === -1 ? 999 : bc)
+  })
+}
+
+const filterDecorThemes = themes =>
+  (Array.isArray(themes) ? themes : []).filter(theme => {
+    const label = String(theme?.label ?? theme?.name ?? '')
+      .trim()
+      .toLowerCase()
+    const slug = slugify(theme?.slug ?? label)
+    return label !== 'other' && slug !== 'other'
+  })
 
 const findStepBySource = (steps, sourceName) =>
   (Array.isArray(steps) ? steps : []).find(step => step?.source === sourceName) ?? null
 
 const getFallbackEventsByCategory = categorySlug =>
-  EVENT_CARDS_FALLBACK.filter(event => slugify(event.category) === slugify(categorySlug)).map(
-    (event, index) => ({
-      id: event.id ?? index,
-      documentId: event.documentId,
-      slug: slugify(event.title),
-      title: event.title,
-      description: event.description || event.tagline || '',
-      category: event.category,
-      categorySlug: slugify(event.category),
-      image: event.image ?? null,
-    })
+  orderEventsForCategory(
+    EVENT_CARDS_FALLBACK.filter(event => slugify(event.category) === slugify(categorySlug)).map(
+      (event, index) => ({
+        id: event.id ?? index,
+        documentId: event.documentId,
+        slug: slugify(event.title),
+        title: event.title,
+        description: sanitizeEventText(event.description || event.tagline || ''),
+        category: event.category,
+        categorySlug: slugify(event.category),
+        image: event.image ?? null,
+      })
+    ),
+    categorySlug
   )
 
 const parseQueryStringParams = value => {
@@ -243,16 +411,20 @@ const mapWizardOption = (item, index) => ({
   display_order: item?.display_order ?? null,
 })
 
-const mapLevelOption = (level, index) => ({
-  id: level.id ?? index,
-  label: level.label ?? `Level ${index + 1}`,
-  slug: getBudgetLevelSlug(level) || slugify(level.label ?? `level-${index + 1}`),
-  description: level.description ?? 'Choose the package level that matches your event scale.',
-  price: level.starting_price
-    ? `Starting ${Number(level.starting_price).toLocaleString('en-IN')}`
-    : '',
-  display_order: level.display_order ?? null,
-})
+const mapLevelOption = (level, index) => {
+  const label = level.label ?? level.name ?? `Level ${index + 1}`
+
+  return {
+    id: level.id ?? index,
+    label,
+    slug: getBudgetLevelSlug(level) || slugify(label),
+    description: level.description ?? 'Choose the package level that matches your event scale.',
+    price: level.starting_price
+      ? `Starting ${Number(level.starting_price).toLocaleString('en-IN')}`
+      : '',
+    display_order: level.display_order ?? null,
+  }
+}
 
 const sortByDisplayOrder = items =>
   [...(Array.isArray(items) ? items : [])].sort((a, b) => {
@@ -393,10 +565,16 @@ export function useEventCards() {
           'populate[1]': 'icon',
           sort: 'name:asc',
         })
-        return data.map(mapEventCard).map(event => ({
-          ...event,
-          title: event.title.toUpperCase(),
-        }))
+        return data.map(mapEventCard).sort((a, b) => {
+          if (slugify(a.category) === 'social' && slugify(b.category) === 'social') {
+            return socialEventOrderIndex(a.title) - socialEventOrderIndex(b.title)
+          }
+          if (slugify(a.category) === 'social') return -1
+          if (slugify(b.category) === 'social') return 1
+          return String(a.title ?? '').localeCompare(String(b.title ?? ''), undefined, {
+            sensitivity: 'base',
+          })
+        })
       } catch {
         return EVENT_CARDS_FALLBACK
       }
@@ -424,7 +602,7 @@ export function useEventsByCategory(categorySlug) {
           'populate[1]': 'icon',
           sort: 'name:asc',
         })
-        return data.map(mapEventCard)
+        return orderEventsForCategory(data.map(mapEventCard), categorySlug)
       } catch {
         return fallback
       }
@@ -440,7 +618,7 @@ export function useServiceCards() {
   return useQuery({
     queryKey: ['service-cards'],
     queryFn: async () => {
-      if (USE_FALLBACK) return SERVICE_CARDS_FALLBACK
+      if (USE_FALLBACK) return orderServices(SERVICE_CARDS_FALLBACK)
       try {
         const { data } = await strapiGet('/service-categories', {
           'filters[is_featured][$eq]': 'true',
@@ -449,22 +627,24 @@ export function useServiceCards() {
           'populate[1]': 'icon',
           sort: 'name:asc',
         })
-        return data.map(service => ({
-          id: service.id,
-          documentId: service.documentId,
-          title: service.name ?? '',
-          slug: service.slug?.trim() || slugify(service.name),
-          description: Array.isArray(service.description)
-            ? blocksToText(service.description)
-            : (service.description ?? ''),
-          category: (service.parent_category?.name ?? service.name ?? '').trim(),
-          image: toAbsoluteStrapiUrl(service.icon?.url),
-        }))
+        const mapped = data.map(service => {
+          const mappedService = mapServiceCategory(service)
+          return {
+            id: mappedService.id,
+            documentId: mappedService.documentId,
+            title: mappedService.name,
+            slug: mappedService.slug,
+            description: mappedService.description,
+            category: mappedService.category,
+            image: mappedService.image,
+          }
+        })
+        return orderServices(mapped)
       } catch {
-        return SERVICE_CARDS_FALLBACK
+        return orderServices(SERVICE_CARDS_FALLBACK)
       }
     },
-    placeholderData: SERVICE_CARDS_FALLBACK,
+    placeholderData: orderServices(SERVICE_CARDS_FALLBACK),
     staleTime: 10 * 60 * 1000,
     retry: 1,
   })
@@ -480,8 +660,18 @@ export function useFilteredServiceOptions(allowedSlugs = []) {
     queryFn: async () => {
       const normalizedAllowedSlugs = [...new Set((allowedSlugs ?? []).map(slugify).filter(Boolean))]
       const filterByAllowedSlugs = items => {
-        if (!normalizedAllowedSlugs.length) return items
-        return items.filter(item => normalizedAllowedSlugs.includes(slugify(item?.slug)))
+        const ordered = orderServices(items)
+        if (!normalizedAllowedSlugs.length) return ordered
+        const allowed = new Set(normalizedAllowedSlugs.map(canonicalizeServiceSlug))
+        return ordered.filter(item => {
+          const rawSlug = slugify(item?.slug)
+          const canonical = canonicalizeServiceSlug(rawSlug)
+          // Top-level service page lanes only (Decor, not Decor Setups/Furniture cards).
+          if (canonical === 'decoration' || canonical === 'furniture') {
+            return allowed.has(rawSlug) || allowed.has(canonical)
+          }
+          return allowed.has(canonical) || allowed.has(rawSlug)
+        })
       }
 
       if (USE_FALLBACK) return filterByAllowedSlugs(SERVICE_OPTIONS_FALLBACK)
@@ -492,24 +682,17 @@ export function useFilteredServiceOptions(allowedSlugs = []) {
           'populate[1]': 'icon',
           sort: 'name:asc',
         })
-        const SERVICE_ORDER = ['decor', 'rental-furniture', 'catering', 'bartending', 'sheesha']
-        const mapped = data.map(mapServiceCategory)
-        mapped.sort((a, b) => {
-          const ai = SERVICE_ORDER.indexOf(a.slug)
-          const bi = SERVICE_ORDER.indexOf(b.slug)
-          return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
-        })
-        return filterByAllowedSlugs(mapped)
+        return filterByAllowedSlugs(data.map(mapServiceCategory))
       } catch {
         return filterByAllowedSlugs(SERVICE_OPTIONS_FALLBACK)
       }
     },
     placeholderData: () => {
       const normalizedAllowedSlugs = [...new Set((allowedSlugs ?? []).map(slugify).filter(Boolean))]
-      if (!normalizedAllowedSlugs.length) return SERVICE_OPTIONS_FALLBACK
-      return SERVICE_OPTIONS_FALLBACK.filter(item =>
-        normalizedAllowedSlugs.includes(slugify(item?.slug))
-      )
+      const ordered = orderServices(SERVICE_OPTIONS_FALLBACK)
+      if (!normalizedAllowedSlugs.length) return ordered
+      const allowed = new Set(normalizedAllowedSlugs.map(canonicalizeServiceSlug))
+      return ordered.filter(item => allowed.has(canonicalizeServiceSlug(item?.slug)))
     },
     staleTime: 10 * 60 * 1000,
     retry: 1,
@@ -537,9 +720,10 @@ export function usePackageWizardSteps(serviceCategoryId) {
 export function useDecorThemeOptions(serviceCategoryId) {
   const query = usePackageWizardSteps(serviceCategoryId)
   const step = findStepBySource(query.data?.steps, 'themes')
+  const options = step?.options?.length ? step.options : DECOR_THEME_FALLBACK
   return {
     ...query,
-    data: step?.options?.length ? step.options : DECOR_THEME_FALLBACK,
+    data: filterDecorThemes(options),
   }
 }
 
