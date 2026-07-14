@@ -4,9 +4,21 @@ import { useBlogCategories, useBlogs } from '../hooks/useBlogs'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { LIVE_STOCK_IMAGES, resolveBlogCover } from '../data/liveMedia'
+import heroLeft from '../assets/images/IMG_3001.jpg'
+import heroRight from '../assets/images/IMG_7025.jpg'
+import blogImg1 from '../assets/images/IMG_0658.jpg'
+import blogImg2 from '../assets/images/outdoor-party-setup-with-balloons-and-decorations-2026-03-18-09-29-30-utc.jpg'
+import blogImg3 from '../assets/images/IMG_3148.jpg'
 
-const resolveCoverImage = post => resolveBlogCover(post) || LIVE_STOCK_IMAGES.img3001
+const fallbackImagesByCategory = {
+  'Planning Tips': blogImg3,
+  'Decor Inspiration': blogImg1,
+  'Hosting Guide': blogImg2,
+  'Food & Catering': blogImg2,
+}
+
+const resolveCoverImage = post =>
+  post?.cover_image || fallbackImagesByCategory[post?.category] || blogImg1
 
 const formatPublishedDate = value => {
   if (!value) return 'Elewen Journal'
@@ -189,7 +201,7 @@ const BlogPage = () => {
             <div className="mx-auto mt-12 grid max-w-[1280px] gap-6 md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:items-start md:justify-center lg:gap-4">
               <div className="anim-element slide-from-bottom h-[320px] overflow-hidden md:h-[420px] lg:h-[380px]">
                 <img
-                  src={LIVE_STOCK_IMAGES.img3001}
+                  src={heroLeft}
                   alt="Celebration moment"
                   className="h-full w-full object-cover"
                   loading="eager"
@@ -201,7 +213,7 @@ const BlogPage = () => {
                 style={{ '--delay': '0s' }}
               >
                 <img
-                  src={LIVE_STOCK_IMAGES.img7025}
+                  src={heroRight}
                   alt="Decorated event space"
                   className="h-full w-full object-cover"
                   loading="eager"

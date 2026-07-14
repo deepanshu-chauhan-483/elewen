@@ -62,16 +62,6 @@ function sanitizeCmsTextSafe(value) {
   result = result.replace(/d\?\?cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
   result = result.replace(/dÃ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
   result = result.replace(/dÃƒÂ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-  // Strip UTF-8 mojibake for dashes / quotes (â€", â€¦, etc.).
-  result = result
-    .replace(/â€[œ]/g, '"')
-    .replace(/â€[˜™]/g, "'")
-    .replace(/â€"/g, ' - ')
-    .replace(/â€“/g, ' - ')
-    .replace(/â€”/g, ' - ')
-    .replace(/â€¦/g, '...')
-    .replace(/â€\?/g, ' - ')
-    .replace(/â€/g, '')
   return result
 }
 
@@ -217,12 +207,6 @@ function normalizeHeroCard(card = {}) {
       normalizedCard.description ??
       normalizedCard.desc ??
       normalizedCard.body ??
-      '',
-    href:
-      normalizedCard.href ??
-      normalizedCard.url ??
-      normalizedCard.link ??
-      normalizedCard.cta_url ??
       '',
   }
 }

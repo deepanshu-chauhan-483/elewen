@@ -9,149 +9,74 @@
  *
  * Mapped shape (useServiceCards):
  *   { id, documentId, title, description, category, image }
- *
- * `image` values are live Cloudinary URLs from production CMS. When Strapi API is
- * down, cards still show the same media (CDN is independent of Strapi).
  */
 
-export const EVENT_CATEGORIES_FALLBACK = ['Social', 'Religious', 'Corporate']
-
-/** Preferred Social event order for category + landing carousels. */
-export const SOCIAL_EVENT_ORDER = [
-  'Birthday Parties',
-  'House Parties',
-  'Anniversary',
-  'Baby Shower',
-  'Mehendi',
-  'Bachelors',
-  'Proposal',
-  'Engagement',
-  'Haldi',
-  'Wedding',
-  'Sufi Night',
-  'Diwali Party',
-]
-
-export const LIVE_EVENT_IMAGES = {
-  'birthday-parties':
-    'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777269295/2_5e0fbb1dee.png',
-  'house-parties': 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777545321/3_5640cadfc5.png',
-  anniversary: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777545180/13_feeeb6d728.png',
-  'baby-shower': 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777269584/4_522deb1a3a.png',
-  bachelors: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777270155/14_1aed915513.png',
-  proposal: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777545450/12_23463a13df.png',
-  engagement: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777271380/15_7a510292ca.png',
-  haldi: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777271524/10_c3f3cd1577.png',
-  wedding: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777272106/11_bacafa7d4d.png',
-  'sufi-night': 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777272306/16_3a145acd29.png',
-  'diwali-party': 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777271224/8_c18e41d3f9.png',
-  'bridal-shower': 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777271042/7_ea8a7009fc.png',
-  'house-warming': 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777270317/9_eeab732b47.png',
-  'pooja-kirtan': 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777545368/5_24a7bb412c.png',
-  'exhibition-stalls':
-    'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777270722/17_addac15484.png',
-  'corporate-get-together':
-    'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777270911/6_4fa0903409.png',
-  'seminar-conference':
-    'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1779426017/Seminar_e03028c527.png',
-}
+export const EVENT_CATEGORIES_FALLBACK = ['Social', 'Corporate', 'Religious']
 
 export const EVENT_CARDS_FALLBACK = [
   {
     id: 0,
     documentId: null,
-    title: 'Birthday Parties',
-    tagline: 'Curated decor and catering packages designed for effortless hosting.',
-    category: 'Social',
-    image: LIVE_EVENT_IMAGES['birthday-parties'],
-  },
-  {
-    id: 1,
-    documentId: null,
-    title: 'House Parties',
-    tagline: 'Structured planning for relaxed, beautiful gatherings.',
-    category: 'Social',
-    image: LIVE_EVENT_IMAGES['house-parties'],
-  },
-  {
-    id: 9,
-    documentId: null,
-    title: 'Anniversary',
-    tagline: 'Warm, elegant setups for intimate dinners and milestone moments.',
-    category: 'Social',
-    image: LIVE_EVENT_IMAGES.anniversary,
-  },
-  {
-    id: 2,
-    documentId: null,
-    title: 'Baby Shower',
-    tagline: 'Thoughtfully styled celebrations, simplified.',
-    category: 'Social',
-    image: LIVE_EVENT_IMAGES['baby-shower'],
-  },
-  {
-    id: 26,
-    documentId: null,
-    title: 'Mehendi',
-    tagline: 'Colourful setups with seating, decor, and guest-ready flow.',
+    title: 'BIRTHDAY CELEBRATIONS',
+    tagline: 'Curated décor and catering packages designed for effortless hosting.',
     category: 'Social',
     image: null,
   },
   {
-    id: 27,
+    id: 1,
     documentId: null,
-    title: 'Bachelors',
-    tagline: 'High-energy nights planned around music, food, and hosting.',
+    title: 'HOUSE PARTIES',
+    tagline: 'Structured planning for relaxed, beautiful gatherings.',
     category: 'Social',
-    image: LIVE_EVENT_IMAGES.bachelors,
+    image: null,
   },
   {
-    id: 28,
+    id: 2,
     documentId: null,
-    title: 'Proposal',
-    tagline: 'Intimate, styled moments designed to feel personal and memorable.',
+    title: 'BABY SHOWERS',
+    tagline: 'Thoughtfully styled celebrations, simplified.',
     category: 'Social',
-    image: LIVE_EVENT_IMAGES.proposal,
+    image: null,
+  },
+  {
+    id: 9,
+    documentId: null,
+    title: 'ANNIVERSARY EVENINGS',
+    tagline: 'Warm, elegant setups for intimate dinners and milestone moments.',
+    category: 'Social',
+    image: null,
   },
   {
     id: 10,
     documentId: null,
-    title: 'Engagement',
+    title: 'ENGAGEMENT PARTIES',
     tagline: 'Polished celebrations with decor styling, food curation, and hosting support.',
     category: 'Social',
-    image: LIVE_EVENT_IMAGES.engagement,
+    image: null,
   },
   {
-    id: 29,
+    id: 11,
     documentId: null,
-    title: 'Haldi',
-    tagline: 'Bright ceremonial setups with florals, seating, and ritual support.',
+    title: 'COCKTAIL NIGHTS',
+    tagline: 'Evening-ready experiences with ambience design, service, and entertainment.',
     category: 'Social',
-    image: LIVE_EVENT_IMAGES.haldi,
+    image: null,
   },
   {
-    id: 30,
+    id: 12,
     documentId: null,
-    title: 'Wedding',
-    tagline: 'End-to-end planning for beautiful wedding celebrations.',
+    title: 'BRUNCH GATHERINGS',
+    tagline: 'Light, stylish daytime setups planned for guests, food, and flow.',
     category: 'Social',
-    image: LIVE_EVENT_IMAGES.wedding,
+    image: null,
   },
   {
-    id: 31,
+    id: 13,
     documentId: null,
-    title: 'Sufi Night',
-    tagline: 'Atmospheric evenings with music-led staging and guest comfort.',
+    title: 'FAMILY DINNERS',
+    tagline: 'Thoughtful hosting support for intimate meals and meaningful celebrations.',
     category: 'Social',
-    image: LIVE_EVENT_IMAGES['sufi-night'],
-  },
-  {
-    id: 32,
-    documentId: null,
-    title: 'Diwali Party',
-    tagline: 'Festive lighting, decor, and hosting for joyful Diwali gatherings.',
-    category: 'Social',
-    image: LIVE_EVENT_IMAGES['diwali-party'],
+    image: null,
   },
   {
     id: 3,
@@ -160,7 +85,7 @@ export const EVENT_CARDS_FALLBACK = [
     tagline:
       'Professional setups designed for seamless corporate gatherings and team celebrations.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['corporate-get-together'],
+    image: null,
   },
   {
     id: 4,
@@ -168,7 +93,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'PRODUCT LAUNCHES',
     tagline: 'Curated event experiences to make your brand moment unforgettable.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['exhibition-stalls'],
+    image: null,
   },
   {
     id: 5,
@@ -176,7 +101,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'OFFICE PARTIES',
     tagline: 'Thoughtful planning for team gatherings, farewells, and milestone celebrations.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['corporate-get-together'],
+    image: null,
   },
   {
     id: 14,
@@ -184,7 +109,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'TEAM OFFSITES',
     tagline: 'Well-organized offsites with logistics, food, and activity support.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['corporate-get-together'],
+    image: null,
   },
   {
     id: 15,
@@ -192,7 +117,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'AWARDS NIGHTS',
     tagline: 'Polished formal experiences with production, seating, and program flow.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['seminar-conference'],
+    image: null,
   },
   {
     id: 16,
@@ -200,7 +125,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'CONFERENCE MEETS',
     tagline: 'Structured event planning for speakers, schedules, and attendee comfort.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['seminar-conference'],
+    image: null,
   },
   {
     id: 17,
@@ -208,7 +133,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'BRAND SHOWCASES',
     tagline: 'Immersive branded experiences built for launches, demos, and media presence.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['exhibition-stalls'],
+    image: null,
   },
   {
     id: 18,
@@ -216,7 +141,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'ANNUAL DAYS',
     tagline: 'End-to-end event planning for teams, awards, entertainment, and staging.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['corporate-get-together'],
+    image: null,
   },
   {
     id: 19,
@@ -224,7 +149,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'CLIENT MIXERS',
     tagline: 'Relationship-building formats with elegant setup, food, and smooth hosting.',
     category: 'Corporate',
-    image: LIVE_EVENT_IMAGES['corporate-get-together'],
+    image: null,
   },
   {
     id: 6,
@@ -233,7 +158,7 @@ export const EVENT_CARDS_FALLBACK = [
     tagline:
       'Traditional setups with floral arrangements, décor, and catering for religious gatherings.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES['pooja-kirtan'],
+    image: null,
   },
   {
     id: 7,
@@ -241,7 +166,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'WEDDING CEREMONIES',
     tagline: 'Elegant planning to make your wedding day beautiful from start to finish.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES.wedding,
+    image: null,
   },
   {
     id: 8,
@@ -250,7 +175,7 @@ export const EVENT_CARDS_FALLBACK = [
     tagline:
       'Intimate and elegant setups for welcoming your little one with family and loved ones.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES['baby-shower'],
+    image: null,
   },
   {
     id: 20,
@@ -258,7 +183,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'SATYANARAYAN PUJA',
     tagline: 'Traditional arrangements with rituals, seating, and coordinated hosting.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES['pooja-kirtan'],
+    image: null,
   },
   {
     id: 21,
@@ -266,7 +191,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'GRIHA PRAVESH',
     tagline: 'Welcome-home ceremonies planned with pooja essentials and guest flow.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES['house-warming'],
+    image: null,
   },
   {
     id: 22,
@@ -274,7 +199,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'MUNDAN CEREMONIES',
     tagline: 'Family-focused celebrations with decor, ritual support, and meals.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES['pooja-kirtan'],
+    image: null,
   },
   {
     id: 23,
@@ -282,7 +207,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'JAGRAN EVENINGS',
     tagline: 'Prayer-focused gatherings coordinated with stage, seating, and guest comfort.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES['pooja-kirtan'],
+    image: null,
   },
   {
     id: 24,
@@ -290,7 +215,7 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'HAVANS',
     tagline: 'Sacred setups managed with ritual planning, materials, and venue flow.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES['house-warming'],
+    image: null,
   },
   {
     id: 25,
@@ -298,78 +223,81 @@ export const EVENT_CARDS_FALLBACK = [
     title: 'COMMUNITY BHOJ',
     tagline: 'Larger religious meals organized with service teams and guest movement.',
     category: 'Religious',
-    image: LIVE_EVENT_IMAGES['pooja-kirtan'],
+    image: null,
   },
 ]
 
-const LIVE_SERVICE_IMAGES = {
-  decor: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777545321/3_5640cadfc5.png',
-  decoration: 'https://elewen.co.in/assets/IMG_3001-BCeFQTvm.jpg',
-  furniture: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777270722/17_addac15484.png',
-  'technical-showrunning':
-    'https://pub-b2588c303cf24efabd0c47d36e96b965.r2.dev/uploads/67bbc13b_2051_4a00_9afc_fdf4c25daeac_87ba34a021.png',
-  catering: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777270155/14_1aed915513.png',
-  bartending: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777270911/6_4fa0903409.png',
-  sheesha: 'https://res.cloudinary.com/dqm4rqqdc/image/upload/v1777270911/6_4fa0903409.png',
-}
-
-export { LIVE_SERVICE_IMAGES }
-
 export const SERVICE_CARDS_FALLBACK = [
   {
-    id: 121,
+    id: 0,
     documentId: null,
-    title: 'Decoration',
-    slug: 'decoration',
-    description: 'From simple setups to curated décor that transforms spaces',
+    title: 'Event Styling',
+    description:
+      "Backdrops, themes, balloon installations, and curated visual details that define your celebration's look.",
     category: 'Decor',
-    image: LIVE_SERVICE_IMAGES.decoration,
+    image: null,
   },
   {
-    id: 122,
+    id: 1,
     documentId: null,
-    title: 'Furniture',
-    slug: 'furniture',
-    description: 'Rent stylish furniture to complete your event setup',
+    title: 'Lighting & Ambience',
+    description:
+      'Soft lighting setups that shape the mood — from fairy lights to warm spotlight accents.',
     category: 'Decor',
-    image: LIVE_SERVICE_IMAGES.furniture,
+    image: null,
   },
   {
-    id: 123,
+    id: 2,
     documentId: null,
-    title: 'Technical (Showrunning)',
-    slug: 'technical-showrunning',
-    description: 'Seamless showrunning by experienced in-house event managers',
+    title: 'Sound & Setup',
+    description:
+      'Clear audio arrangements for music, announcements, and seamless event coordination.',
     category: 'Decor',
-    image: LIVE_SERVICE_IMAGES['technical-showrunning'],
+    image: null,
   },
   {
-    id: 124,
+    id: 3,
     documentId: null,
-    title: 'Catering',
-    slug: 'catering',
+    title: 'Floral & Balloon Decor',
+    description:
+      'Custom floral arrangements and balloon styling that bring colour and elegance to any celebration.',
+    category: 'Decor',
+    image: null,
+  },
+  {
+    id: 4,
+    documentId: null,
+    title: 'Catering & Food Setup',
     description:
       'Full-service catering arrangements for parties, corporate events, and celebrations of all sizes.',
-    category: 'Catering',
-    image: LIVE_SERVICE_IMAGES.catering,
+    category: 'Food & Beverages',
+    image: null,
   },
   {
-    id: 125,
+    id: 5,
     documentId: null,
-    title: 'Bartending',
-    slug: 'bartending',
+    title: 'Bar & Beverages',
     description:
       'Curated bar setups with mocktail and cocktail options tailored to your event theme.',
-    category: 'Bartending',
-    image: LIVE_SERVICE_IMAGES.bartending,
+    category: 'Food & Beverages',
+    image: null,
   },
   {
-    id: 126,
+    id: 6,
     documentId: null,
-    title: 'Sheesha / Hookah',
-    slug: 'sheesha',
-    description: 'Relaxed lounge experiences with managed setup and guest-ready presentation.',
-    category: 'Sheesha / Hookah',
-    image: LIVE_SERVICE_IMAGES.sheesha,
+    title: 'Dessert & Cake Setup',
+    description:
+      'Custom dessert tables, cake arrangements, and sweet setups to sweeten your celebration.',
+    category: 'Food & Beverages',
+    image: null,
+  },
+  {
+    id: 7,
+    documentId: null,
+    title: 'Live Food Stations',
+    description:
+      'Interactive live cooking stations — from chaat counters to pasta bars — for a memorable guest experience.',
+    category: 'Food & Beverages',
+    image: null,
   },
 ]

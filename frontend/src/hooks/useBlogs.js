@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { BLOGS_FALLBACK, BLOG_CATEGORIES_FALLBACK } from '../data/blogs'
-import { resolveLiveImage } from '../data/liveMedia'
 
 const toAbsoluteStrapiUrl = url =>
   url
@@ -58,7 +57,7 @@ export function useBlogs({ limit = 3, category, slug } = {}) {
           content: b.content_blocks ?? b.content ?? '',
           author: b.author ?? '',
           post_published_at: b.post_published_at ?? null,
-          cover_image: resolveLiveImage(toAbsoluteStrapiUrl(b.cover_image?.url), null),
+          cover_image: toAbsoluteStrapiUrl(b.cover_image?.url),
           blog_images: Array.isArray(b.blog_images)
             ? b.blog_images.map(image => ({
                 url: toAbsoluteStrapiUrl(image?.url),

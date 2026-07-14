@@ -1,5 +1,5 @@
 /**
- * In-house planner images — upright framing (EXIF + no CSS tilt on the img).
+ * In-house planner images — respect camera EXIF so photos render upright.
  */
 export default function PlannerImage({
   src,
@@ -17,10 +17,7 @@ export default function PlannerImage({
       src={src}
       alt={alt}
       className={className}
-      style={{
-        imageOrientation: 'from-image',
-        ...style,
-      }}
+      style={{ imageOrientation: 'from-image', ...style }}
       decoding="async"
       loading={loading}
       draggable={false}

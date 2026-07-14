@@ -3,9 +3,21 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { useBlogs } from '../hooks/useBlogs'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { resolveBlogCover } from '../data/liveMedia'
+import blogImg1 from '../assets/images/IMG_0658.jpg'
+import blogImg2 from '../assets/images/outdoor-party-setup-with-balloons-and-decorations-2026-03-18-09-29-30-utc.jpg'
+import blogImg3 from '../assets/images/IMG_3148.jpg'
 
-const resolveCoverImage = post => resolveBlogCover(post)
+const fallbackImagesByCategory = {
+  'Planning Tips': blogImg3,
+  'Decor Inspiration': blogImg1,
+  'Hosting Guide': blogImg2,
+  'Food & Catering': blogImg2,
+}
+
+const resolveCoverImage = post => {
+  if (post?.cover_image) return post.cover_image
+  return fallbackImagesByCategory[post?.category] || blogImg1
+}
 
 const formatPublishedDate = value => {
   if (!value) return 'Elewen Journal'

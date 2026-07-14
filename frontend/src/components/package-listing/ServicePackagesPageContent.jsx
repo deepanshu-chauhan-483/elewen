@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import PackageCard from './PackageCard'
 import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'
@@ -11,7 +10,24 @@ import {
 } from '../../lib/packageFilters'
 import CmsPageLoader from '../common/CmsPageLoader'
 import { useStrapiPageLoading } from '../../hooks/useStrapiPageLoading'
-import { livePackagePlaceholderGrid } from '../../data/liveMedia'
+import pkgImg1 from '../../assets/images/IMG_3903.jpg'
+import pkgImg2 from '../../assets/images/IMG_7768.jpg'
+import pkgImg3 from '../../assets/images/IMG_0749.jpg'
+import pkgImg4 from '../../assets/images/IMG_0658.jpg'
+import pkgImg5 from '../../assets/images/IMG_3148.jpg'
+import pkgImg6 from '../../assets/images/IMG_7025.jpg'
+import pkgImg7 from '../../assets/images/IMG_8625.png'
+import pkgImg8 from '../../assets/images/IMG_9814.jpg'
+import pkgImg9 from '../../assets/images/6f6af066.jpg'
+import { useSearchParams } from 'react-router-dom'
+
+const PKG_LOCAL_IMAGES = [
+  [pkgImg1, pkgImg2, pkgImg3],
+  [pkgImg4, pkgImg5, pkgImg6],
+  [pkgImg7, pkgImg8, pkgImg9],
+  [pkgImg2, pkgImg4, pkgImg7],
+  [pkgImg5, pkgImg1, pkgImg8],
+]
 
 const PAGE_SIZE = 9
 
@@ -70,7 +86,9 @@ export default function ServicePackagesPageContent({
       packages.map((pkg, i) => ({
         ...pkg,
         serviceSlug: serviceSlug || pkg.service_slugs?.[0] || '',
-        images: pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(i),
+        images: pkg.images?.length
+          ? pkg.images
+          : (PKG_LOCAL_IMAGES[i % PKG_LOCAL_IMAGES.length] ?? []),
       })),
     [packages, serviceSlug]
   )

@@ -16,34 +16,20 @@ export const LANDING_PAGE_FALLBACK = {
     search_line_2: 'event is just a few clicks away!',
     left_taglines: ['Work made easy', 'Worth the spend', 'Well-vetted Vendors'],
     right_cards: [
-      {
-        label: 'Birthday',
-        tagline: "Let's get this party going",
-        href: '/event-flow/decor-theme?category=social&event=birthday-parties&service=decor',
-      },
-      {
-        label: 'Anniversary',
-        tagline: 'Let us help you celebrate your love story',
-        href: '/event-flow/decor-theme?category=social&event=anniversary&service=decor',
-      },
-      {
-        label: 'House Party',
-        tagline: 'Turn your home into the party spot',
-        href: '/event-flow/decor-theme?category=social&event=house-parties&service=decor',
-      },
+      { label: 'Birthday', tagline: "Let's get this party going" },
+      { label: 'Anniversary', tagline: 'Let us help you celebrate your love story' },
+      { label: 'House Party', tagline: 'Turn your home into the party spot' },
     ],
   },
   plan_event_intro: {
-    heading_1: 'Plan Your Event,',
-    heading_2: 'Differently.',
+    heading: 'Lets Start Planning',
     description:
       'Choose your event type and explore curated décor and catering packages designed to simplify planning.',
     cta_label: 'View All',
     cta_url: '/event-flow/category',
   },
   what_to_plan_intro: {
-    heading_1: 'What Would You',
-    heading_2: 'Like To Plan?',
+    heading: 'What would you like to plan',
     description: 'Choose a service category to explore curated packages designed for your event.',
     cta_label: 'View All',
     cta_url: '/event-flow/service?flow=services',
@@ -308,42 +294,12 @@ export const INHOUSE_PLANNER_PAGE_FALLBACK = {
     description:
       'From intimate birthdays to joyful wedding functions, our in-house planner helps bring thoughtful structure and creative detail to social celebrations that matter most.',
     categories: [
-      {
-        tab_label: 'Anniversaries',
-        heading: 'ANNIVERSARIES',
-        description:
-          'Intimate evenings and milestone years, planned with personal detail so the celebration feels as meaningful as the relationship.',
-      },
-      {
-        tab_label: 'Birthday Parties',
-        heading: 'BIRTHDAY PARTIES',
-        description:
-          'From surprise setups to full birthday experiences — styled, coordinated, and ready for the guest of honour.',
-      },
-      {
-        tab_label: 'Engagement',
-        heading: 'ENGAGEMENT',
-        description:
-          'Proposal-ready and engagement soirées with thoughtful decor, flow, and vendor coordination from start to finish.',
-      },
-      {
-        tab_label: 'Haldi',
-        heading: 'HALDI',
-        description:
-          'Colourful, joyful Haldi functions planned with clear timelines, styling direction, and on-ground support.',
-      },
-      {
-        tab_label: 'Mehendi',
-        heading: 'MEHENDI',
-        description:
-          'Warm, festive Mehendi celebrations with curated setups, entertainment cues, and seamless guest experience.',
-      },
-      {
-        tab_label: 'Weddings',
-        heading: 'WEDDINGS',
-        description:
-          'Wedding functions handled end to end — concept, vendors, showflow, and execution so you can stay present.',
-      },
+      { tab_label: 'Anniversaries', heading: 'ANNIVERSARIES' },
+      { tab_label: 'Birthday Parties', heading: 'BIRTHDAY PARTIES' },
+      { tab_label: 'Engagement', heading: 'ENGAGEMENT' },
+      { tab_label: 'Haldi', heading: 'HALDI' },
+      { tab_label: 'Mehendi', heading: 'MEHENDI' },
+      { tab_label: 'Weddings', heading: 'WEDDINGS' },
     ],
   },
   closing_cta: {
@@ -397,7 +353,7 @@ export const HOW_IT_WORK_PAGE_FALLBACK = {
         number: '4',
         title: 'Elewen Reviews & Confirms',
         description:
-          'Our team reviews your booking, coordinates with vendors, and sends confirmation within 24 hours so you stay in the loop.',
+          'Our team reviews your booking, coordinates with vendors, and sends you a confirmation within 24 hours. You’re kept in the loop at every step.',
       },
       {
         number: '5',

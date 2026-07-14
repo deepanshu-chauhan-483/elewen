@@ -1,7 +1,7 @@
 import { normalizeServiceSlug } from './packageFilters'
 
 export const SERVICE_ROUTE_MAP = {
-  decor: '/event-flow/decor-subcategory',
+  decor: '/event-flow/decor-theme',
   'rental-furniture': '/packages/rental-furniture',
   catering: '/event-flow/catering-levels',
   bartending: '/event-flow/bartending-levels',
@@ -9,17 +9,14 @@ export const SERVICE_ROUTE_MAP = {
   sheesha: '/packages/sheesha',
 }
 
-/** Top-level service picker (Screen 3). Furniture lives under Decor subcategories. */
 export const SERVICE_PAGE_ALLOWED_SLUGS = [
   'decor',
   'catering',
-  'bartending',
   'bar-tending',
   'sheesha',
   'sheesha-services',
+  'furniture',
 ]
-
-export const SERVICE_DISPLAY_ORDER = ['decor', 'catering', 'bartending', 'sheesha']
 
 export const SERVICES_FLOW_KEY = 'services'
 
@@ -131,7 +128,7 @@ export function buildServicesCategoryDestination({
 
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
   const baseRoute =
-    normalizedServiceSlug === 'decor' ? '/event-flow/decor-subcategory' : '/package-listing'
+    normalizedServiceSlug === 'decor' ? '/event-flow/decor-theme' : '/package-listing'
 
   return `${baseRoute}?${params.toString()}`
 }

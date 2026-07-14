@@ -15,7 +15,13 @@ import { useFlavors } from '../hooks/useFlavors'
 import { getRelatedPackages } from '../lib/packageFilters'
 
 // images (reuse same pattern)
-import { livePackagePlaceholderGrid } from '../data/liveMedia'
+import pkgImg1 from '../assets/images/IMG_3903.jpg'
+import pkgImg2 from '../assets/images/IMG_7768.jpg'
+
+const PKG_LOCAL_IMAGES = [
+  [pkgImg1, pkgImg1, pkgImg1, pkgImg1, pkgImg1],
+  [pkgImg2, pkgImg2, pkgImg2, pkgImg2, pkgImg2],
+]
 
 const SHEESHA_CONTENT = {
   title: 'Basic Indian Hookah',
@@ -332,7 +338,9 @@ export default function SheeshaSinglePackagePage() {
     () =>
       packages.map((pkg, index) => ({
         ...pkg,
-        images: pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(index, 'sheesha'),
+        images: pkg.images?.length
+          ? pkg.images
+          : (PKG_LOCAL_IMAGES[index % PKG_LOCAL_IMAGES.length] ?? []),
       })),
     [packages]
   )
@@ -349,7 +357,8 @@ export default function SheeshaSinglePackagePage() {
             ...packageDetails,
             images: packageDetails.images?.length
               ? packageDetails.images
-              : livePackagePlaceholderGrid(packageDetails._index ?? 0, 'sheesha'),
+              : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
+                PKG_LOCAL_IMAGES[0]),
           }
         : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
     [packageDetails, packageId, packagesData]
@@ -374,7 +383,7 @@ export default function SheeshaSinglePackagePage() {
     return <Navigate to={backHref} replace />
   }
 
-  const source = pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(0, 'sheesha')
+  const source = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
   const sideImages = Array.from({ length: 5 }).map((_, i) => source[i % source.length])
 
   const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null

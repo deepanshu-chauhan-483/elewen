@@ -27,7 +27,23 @@ import {
 import { resolveCateringAddonLineTotal } from '../lib/cateringAddonPricing'
 import { buildCateringCartLineTotal } from '../lib/cateringCartPricing'
 import { resolveCateringGuestDiscount } from '../lib/cateringGuestDiscount'
-import { livePackagePlaceholderGrid } from '../data/liveMedia'
+import pkgImg1 from '../assets/images/IMG_3903.jpg'
+import pkgImg2 from '../assets/images/IMG_7768.jpg'
+import pkgImg3 from '../assets/images/IMG_0749.jpg'
+import pkgImg4 from '../assets/images/IMG_0658.jpg'
+import pkgImg5 from '../assets/images/IMG_3148.jpg'
+import pkgImg6 from '../assets/images/IMG_7025.jpg'
+import pkgImg7 from '../assets/images/IMG_8625.png'
+import pkgImg8 from '../assets/images/IMG_9814.jpg'
+import pkgImg9 from '../assets/images/6f6af066.jpg'
+
+const PKG_LOCAL_IMAGES = [
+  [pkgImg1, pkgImg2, pkgImg3],
+  [pkgImg4, pkgImg5, pkgImg6],
+  [pkgImg7, pkgImg8, pkgImg9],
+  [pkgImg2, pkgImg4, pkgImg7],
+  [pkgImg5, pkgImg1, pkgImg8],
+]
 
 const DEFAULT_GUEST_OPTIONS = ['30', '50', '75', '100', '150']
 const DEFAULT_VEG_OPTIONS = ['Veg', 'Non-Veg']
@@ -357,7 +373,9 @@ export default function CateringSinglePackagePage() {
       packages.map((pkg, index) => ({
         ...pkg,
         serviceSlug: 'catering',
-        images: pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(index),
+        images: pkg.images?.length
+          ? pkg.images
+          : (PKG_LOCAL_IMAGES[index % PKG_LOCAL_IMAGES.length] ?? []),
       })),
     [packages]
   )
@@ -375,7 +393,8 @@ export default function CateringSinglePackagePage() {
             serviceSlug: 'catering',
             images: packageDetails.images?.length
               ? packageDetails.images
-              : livePackagePlaceholderGrid(packageDetails._index ?? 0),
+              : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
+                PKG_LOCAL_IMAGES[0]),
           }
         : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
     [packageDetails, packageId, packagesData]
@@ -490,7 +509,7 @@ export default function CateringSinglePackagePage() {
     return <Navigate to={backHref} replace />
   }
 
-  const sourceImages = pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(0)
+  const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
   const sideImages = Array.from({ length: Math.max(5, sourceImages.length || 1) }).map(
     (_, index) => sourceImages[index % sourceImages.length]
   )

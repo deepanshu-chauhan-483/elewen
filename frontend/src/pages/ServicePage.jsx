@@ -11,7 +11,6 @@ import {
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
 import { normalizeServiceSlug } from '../lib/packageFilters'
-import { preventWidow, stripMojibake } from '../lib/textFormat'
 
 const EVENT_FLOW_STEPS = [
   { id: 1, label: 'Event' },
@@ -51,26 +50,25 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
           <img
             src={service.image}
             alt={service.name}
-            className="h-full w-full object-cover object-center"
+            className="h-full w-full object-cover"
             loading="lazy"
             decoding="async"
-            style={{ transform: 'none' }}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22] text-pretty">
-            {preventWidow(stripMojibake(service.name))}
+          <div className="flex h-full w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">
+            {service.name}
           </div>
         )}
       </div>
       <div className="flex h-[72px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-3 text-white md:h-[88px] md:px-4 md:py-3.5">
         <h2
-          className="flex text-[15px] font-medium leading-[1.2] text-white text-pretty md:text-[16px]"
+          className="flex text-[15px] font-medium leading-[1.2] text-white md:text-[16px]"
           style={{ fontFamily: "'Poppins'" }}
         >
-          {preventWidow(stripMojibake(service.name))}
+          {service.name}
         </h2>
-        <p className="mt-1.5 min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 text-pretty [&::-webkit-scrollbar]:hidden md:text-[13px]">
-          {preventWidow(stripMojibake(service.description))}
+        <p className="mt-1.5 min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 [&::-webkit-scrollbar]:hidden md:text-[13px]">
+          {service.description}
         </p>
       </div>
     </Link>
@@ -115,7 +113,7 @@ export default function ServicePage() {
       <div className="flex h-full w-full justify-center">
         <div className="relative left-1/2 w-screen -translate-x-1/2">
           <div className="mx-auto w-full max-w-[1280px]">
-            <div className="grid w-full grid-cols-1 justify-items-center gap-3 sm:grid-cols-2 md:grid-cols-4 md:justify-items-stretch md:gap-4">
+            <div className="grid w-full grid-cols-1 justify-items-center gap-3 sm:grid-cols-2 md:grid-cols-5 md:justify-items-stretch md:gap-4">
               {services.map(service => (
                 <ServiceCard
                   key={service.id ?? service.slug}

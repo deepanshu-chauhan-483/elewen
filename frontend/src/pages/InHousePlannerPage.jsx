@@ -21,34 +21,6 @@ import { getDateInputMin } from '../lib/dateInput'
 gsap.registerPlugin(ScrollTrigger)
 
 const MOKSHA_FALLBACK_IMAGE = new URL('../assets/images/moksha_portrait.jpg', import.meta.url).href
-const STRAPI_MEDIA_BASE = import.meta.env.VITE_STRAPI_URL ?? ''
-
-function resolveMediaUrl(media) {
-  if (!media) return ''
-  if (typeof media === 'string') {
-    if (/^(https?:|blob:|data:)/i.test(media)) return media
-    if (media.startsWith('/')) return `${STRAPI_MEDIA_BASE}${media}`
-    return media
-  }
-
-  const url =
-    media.url ??
-    media.formats?.large?.url ??
-    media.formats?.medium?.url ??
-    media.formats?.small?.url ??
-    ''
-  if (!url) return ''
-  if (/^(https?:|blob:|data:)/i.test(url)) return url
-  return `${STRAPI_MEDIA_BASE}${url}`
-}
-
-function collectMediaUrls(value) {
-  if (!value) return []
-  if (Array.isArray(value)) return value.map(resolveMediaUrl).filter(Boolean)
-  if (Array.isArray(value?.data)) return value.data.map(resolveMediaUrl).filter(Boolean)
-  const single = resolveMediaUrl(value?.data ?? value)
-  return single ? [single] : []
-}
 
 function normalizeKey(value = '') {
   return String(value ?? '')
@@ -194,16 +166,13 @@ function normalizeGrandCelebrationItems(section = {}) {
         GRAND_CELEBRATION_FALLBACKS[categoryName] ??
         GRAND_CELEBRATION_FALLBACK_LIST[index % GRAND_CELEBRATION_FALLBACK_LIST.length] ??
         ''
-      const cmsImage =
-        collectMediaUrls(item.image ?? item.photo ?? item.cover ?? item.media ?? item.images)[0] ??
-        ''
       const explicitTall = item.tall ?? item.is_tall ?? item.portrait ?? item.variant === 'tall'
 
       return {
         id: String(index + 1).padStart(2, '0'),
         title,
         desc: item.desc ?? item.description ?? item.body ?? '',
-        image: cmsImage || fallbackImage,
+        image: fallbackImage,
         fallbackImage,
         tall: explicitTall ?? index % 2 === 0,
       }
@@ -213,13 +182,6 @@ function normalizeGrandCelebrationItems(section = {}) {
 
 function normalizeCelebrationCategories(section = {}) {
   const categories = section.categories ?? section.items ?? []
-  const fallbackCategories = INHOUSE_PLANNER_PAGE_FALLBACK.celebrations_every_day?.categories ?? []
-  const fallbackDescByKey = Object.fromEntries(
-    fallbackCategories.map(item => [
-      toBucketKey(item.tab_label ?? item.label ?? item.name ?? item.heading ?? ''),
-      item.description ?? item.desc ?? '',
-    ])
-  )
 
   return (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
@@ -232,18 +194,16 @@ function normalizeCelebrationCategories(section = {}) {
         `Category ${index + 1}`
       const bucketKey = toBucketKey(name)
       const fallbackImages = CELEBRATION_CATEGORY_FALLBACKS[bucketKey] ?? {}
-      const cmsUrls = collectMediaUrls(item.images)
-      const images = {
-        topLeft: cmsUrls[0] || fallbackImages.topLeft || '',
-        topRight: cmsUrls[1] || fallbackImages.topRight || '',
-        bottomLeft: cmsUrls[2] || fallbackImages.bottomLeft || '',
-        bottomRight: cmsUrls[3] || fallbackImages.bottomRight || '',
-      }
       return {
         name,
         heading: item.heading ?? String(name).toUpperCase(),
-        desc: item.description ?? item.desc ?? item.body ?? fallbackDescByKey[bucketKey] ?? '',
-        images,
+        desc: item.description ?? item.desc ?? item.body ?? '',
+        images: {
+          topLeft: fallbackImages.topLeft ?? '',
+          topRight: fallbackImages.topRight ?? '',
+          bottomLeft: fallbackImages.bottomLeft ?? '',
+          bottomRight: fallbackImages.bottomRight ?? '',
+        },
         fallbackImages: {
           topLeft: fallbackImages.topLeft ?? '',
           topRight: fallbackImages.topRight ?? '',
@@ -602,7 +562,7 @@ const GrandCelebrationsSection = () => {
                           src={item.image}
                           fallbackSrc={item.fallbackImage}
                           alt={item.title}
-                          className="w-full h-full object-cover object-center"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     </div>
@@ -675,7 +635,7 @@ const GrandCelebrationsSection = () => {
                         src={item.image}
                         fallbackSrc={item.fallbackImage}
                         alt={item.title}
-                        className="w-full h-full object-cover object-center planner-card-image"
+                        className="w-full h-full object-cover planner-card-image"
                       />
                     </div>
 
@@ -735,7 +695,7 @@ const GrandCelebrationsSection = () => {
                             src={item.image}
                             fallbackSrc={item.fallbackImage}
                             alt={item.title}
-                            className="w-full h-full object-cover object-center planner-card-image"
+                            className="w-full h-full object-cover planner-card-image"
                           />
                         </div>
 
@@ -875,8 +835,8 @@ const ImgBox = ({ src, fallbackSrc, alt, className, setRef }) => (
       src={src}
       fallbackSrc={fallbackSrc}
       alt={alt}
-      className="w-full h-full object-cover object-center"
-      style={{ willChange: 'auto' }}
+      className="w-full h-full object-cover"
+      style={{ willChange: 'transform' }}
     />
   </div>
 )
@@ -1415,7 +1375,7 @@ const CelebrationEveryDaySection = () => {
                 src={active.images.topLeft}
                 fallbackSrc={active.fallbackImages?.topLeft}
                 alt={`${active.name} left`}
-                className="absolute inset-0 w-full h-full object-cover object-center"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
 
@@ -1429,7 +1389,7 @@ const CelebrationEveryDaySection = () => {
                 src={active.images.topRight}
                 fallbackSrc={active.fallbackImages?.topRight}
                 alt={`${active.name} right top`}
-                className="absolute inset-0 w-full h-full object-cover object-center"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
 
@@ -1443,7 +1403,7 @@ const CelebrationEveryDaySection = () => {
                 src={active.images.bottomLeft}
                 fallbackSrc={active.fallbackImages?.bottomLeft}
                 alt={`${active.name} bottom left`}
-                className="absolute inset-0 w-full h-full object-cover object-center"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
 
@@ -1457,7 +1417,7 @@ const CelebrationEveryDaySection = () => {
                 src={active.images.bottomRight}
                 fallbackSrc={active.fallbackImages?.bottomRight}
                 alt={`${active.name} bottom right`}
-                className="absolute inset-0 w-full h-full object-cover object-center"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
           </div>
@@ -1669,7 +1629,7 @@ const CelebrationEveryDaySection = () => {
                     <div className="absolute left-[640px] top-[362px] w-[800px] flex justify-center z-20 pointer-events-none">
                       <h3
                         className="w-full max-w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
-                        style={{ fontFamily: "'Poppins', sans-serif" }}
+                        style={{ fontFamily: "'Poppins', sans-serif", opacity: 0 }}
                       >
                         <span
                           ref={incomingHeadingRef}
@@ -2564,57 +2524,6 @@ const InHousePlannerSection = () => {
       />
 
       <div data-in-house-planner-page>
-        {/* Desktop "What we do" — mobile copy lives inside the hero collage */}
-        <section
-          data-planner-what-we-do
-          className="hidden min-[540px]:flex w-full justify-center bg-[#FFFFFF] font-sans"
-        >
-          <div className="w-full max-w-[1100px] px-10 py-20 lg:px-[96px] lg:py-24">
-            <h2
-              className="max-w-[720px] text-[48px] leading-[1.05] text-[#2D2D2D] lg:text-[61px]"
-              style={{ fontFamily: "'Malgin', serif" }}
-            >
-              <span className="reveal-wrapper block">
-                <span className="reveal-text">
-                  {whatWeDo.heading ?? 'What we do as your In-House Planner'}
-                </span>
-              </span>
-            </h2>
-
-            <p className="mt-8 max-w-[640px] text-[16px] leading-[1.7] text-[#2D2D2D]/70">
-              <span className="reveal-wrapper block">
-                <span className="reveal-text" style={{ animationDelay: '0.08s' }}>
-                  {whatWeDo.intro ??
-                    'This option is for you if you want a professional handling everything end to end. From the first conversation to the final wrap-up, your planner handles it all.'}
-                </span>
-              </span>
-            </p>
-
-            <ul className="mt-10 grid max-w-[720px] gap-4 text-[15px] leading-[1.5] text-[#2D2D2D]">
-              {(
-                whatWeDo.bullet_points ??
-                INHOUSE_PLANNER_PAGE_FALLBACK.what_we_do?.bullet_points ??
-                []
-              ).map((point, index) => (
-                <li key={point} className="flex items-start gap-3">
-                  <span
-                    className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#591902]"
-                    aria-hidden="true"
-                  />
-                  <span className="reveal-wrapper block">
-                    <span
-                      className="reveal-text"
-                      style={{ animationDelay: `${0.12 + index * 0.04}s` }}
-                    >
-                      {point}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
         <section data-planner-intro className="w-full bg-[#957960] flex justify-center font-sans">
           <div className="w-full max-w-[1540px] flex flex-col min-[540px]:flex-row">
             {/* Image */}
@@ -2624,7 +2533,7 @@ const InHousePlannerSection = () => {
                 <img
                   src={plannerImage}
                   alt={plannerImageAlt}
-                  className="about-page-hover-image w-full h-full object-cover object-[center_18%] min-[540px]:object-[center_12%]"
+                  className="about-page-hover-image w-full h-full object-cover object-[center_20%] min-[540px]:object-[center_top] scale-[1.18] min-[540px]:scale-[1.00] origin-[50%_18%] min-[540px]:origin-top"
                   style={{ imageOrientation: 'from-image' }}
                 />
               ) : null}

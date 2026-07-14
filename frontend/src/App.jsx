@@ -23,7 +23,6 @@ const HowItWorkPage = lazy(() => import('./pages/HowItWorkPage'))
 const CategoryPage = lazy(() => import('./pages/CategoryPage'))
 const EventPage = lazy(() => import('./pages/EventPage'))
 const ServicePage = lazy(() => import('./pages/ServicePage'))
-const DecorSubcategoryPage = lazy(() => import('./pages/DecorSubcategoryPage'))
 const DecorThemePage = lazy(() => import('./pages/DecorThemePage'))
 const CateringLevelsPage = lazy(() => import('./pages/CateringLevelsPage'))
 const PackageListingPage = lazy(() => import('./pages/PackageListingPage'))
@@ -133,7 +132,6 @@ function AppLayout() {
     pathname === '/event-flow/category' ||
     pathname === '/event-flow/event' ||
     pathname === '/event-flow/service' ||
-    pathname === '/event-flow/decor-subcategory' ||
     pathname === '/event-flow/decor-theme' ||
     pathname === '/event-flow/catering-levels' ||
     pathname === '/event-flow/bartending-levels' ||
@@ -172,12 +170,10 @@ function AppLayout() {
           <Route path="/event-flow/category" element={<CategoryPage />} />
           <Route path="/event-flow/event" element={<EventPage />} />
           <Route path="/event-flow/service" element={<ServicePage />} />
-          <Route path="/event-flow/decor-subcategory" element={<DecorSubcategoryPage />} />
           <Route path="/event-flow/decor-theme" element={<DecorThemePage />} />
           <Route path="/event-flow/catering-levels" element={<CateringLevelsPage />} />
           <Route path="/event-flow/bartending-levels" element={<BartendingLevelsPage />} />
           <Route path="/package-listing" element={<PackageListingPage />} />
-          <Route path="/packages" element={<Navigate to="/package-listing" replace />} />
           <Route path="/packages/decor-levels" element={<DecorLevelsPage />} />
           <Route path="/packages/decor" element={<DecorPackagesPage />} />
           <Route path="/packages/rental-furniture" element={<RentalFurniturePackagesPage />} />

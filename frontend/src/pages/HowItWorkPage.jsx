@@ -4,7 +4,6 @@ import ScallopBulbCurtain from '../components/common/ScallopBulbCurtain'
 import { useHowItWorkPage } from '../hooks/useCmsPages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { preventWidow, stripMojibake } from '../lib/textFormat'
 
 const HERO_TAGS = [
   'BIRTHDAYS',
@@ -57,7 +56,7 @@ const IDEA_TO_CELEBRATION_STEPS = [
     number: '4',
     title: 'Elewen Reviews & Confirms',
     description:
-      'Our team reviews your booking, coordinates with vendors, and sends confirmation within 24 hours so you stay in the loop.',
+      'Our team reviews your booking, coordinates with vendors, and sends you a confirmation within 24 hours. You’re kept in the loop at every step.',
   },
   {
     number: '5',
@@ -228,13 +227,7 @@ const RevealLine = ({
 )
 
 const IdeaToCelebrationSection = ({ section }) => {
-  const steps = (Array.isArray(section?.steps) ? section.steps : IDEA_TO_CELEBRATION_STEPS).map(
-    step => ({
-      ...step,
-      title: preventWidow(stripMojibake(step.title)),
-      description: preventWidow(stripMojibake(step.description)),
-    })
-  )
+  const steps = Array.isArray(section?.steps) ? section.steps : IDEA_TO_CELEBRATION_STEPS
 
   return (
     <section className="relative flex w-full justify-center overflow-hidden bg-[#E7E0DA] px-6 py-16 min-[540px]:px-10 min-[540px]:py-20 lg:px-20 xl:px-[100px]">
@@ -633,12 +626,12 @@ const StepCard = ({ step, align = 'left' }) => {
         {step.number}
       </div>
       <h3
-        className="mt-4 text-[26px] leading-[1.08] text-[#D05D3C] text-pretty min-[540px]:text-[29px]"
+        className="mt-4 text-[26px] leading-[1.08] text-[#D05D3C] min-[540px]:text-[29px]"
         style={{ fontFamily: "'Malgin', serif" }}
       >
         {step.title}
       </h3>
-      <p className="mt-3 max-w-full text-[14px] leading-[1.55] text-[#9A7A67] text-pretty min-[540px]:text-[15px]">
+      <p className="mt-3 max-w-full text-[14px] leading-[1.55] text-[#9A7A67] min-[540px]:text-[15px]">
         {step.description}
       </p>
     </article>

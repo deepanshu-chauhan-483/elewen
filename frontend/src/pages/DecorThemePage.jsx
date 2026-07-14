@@ -7,9 +7,13 @@ import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { SERVICES_FLOW_KEY } from '../lib/serviceFlow'
+import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
 import { filterThemesByEventPackages } from '../lib/packageFilters'
-import { liveThemeImage, resolveLiveImage } from '../data/liveMedia'
+
+import themeImg1 from '../assets/images/IMG_3903.jpg'
+import themeImg2 from '../assets/images/IMG_7768.jpg'
+import themeImg3 from '../assets/images/IMG_0749.jpg'
+import themeImg4 from '../assets/images/IMG_0658.jpg'
 
 const EVENT_FLOW_STEPS = [
   { id: 1, label: 'Event' },
@@ -25,6 +29,7 @@ const SERVICES_FLOW_STEPS = [
   { id: 4, label: 'Package' },
 ]
 
+const FALLBACK_THEME_IMAGES = [themeImg1, themeImg2, themeImg3, themeImg4]
 const DESKTOP_CARDS_PER_PAGE = 4
 const MOBILE_CARDS_PER_PAGE = 1
 
@@ -169,15 +174,15 @@ export default function DecorThemePage() {
   useScrollToTop(`${paginationKey}:${safePageIndex}`)
 
   const backTo = useMemo(() => {
-    const params = new URLSearchParams()
-    if (categoryId) params.set('category', categoryId)
-    if (eventId) params.set('event', eventId)
-    if (eventNumericId) params.set('eventId', eventNumericId)
-    params.set('service', 'decor')
-    if (serviceId) params.set('serviceId', serviceId)
-    if (flow) params.set('flow', flow)
-    return `/event-flow/decor-subcategory?${params.toString()}`
-  }, [categoryId, eventId, eventNumericId, flow, serviceId])
+    return buildServiceSelectionBackTo({
+      categorySlug: categoryId,
+      eventSlug: eventId,
+      eventId: eventNumericId,
+      serviceSlug,
+      serviceId,
+      flow,
+    })
+  }, [categoryId, eventId, eventNumericId, flow, serviceId, serviceSlug])
 
   const skipToPackages = useMemo(() => {
     const params = new URLSearchParams()
@@ -293,7 +298,12 @@ export default function DecorThemePage() {
                       serviceId={serviceId}
                       flow={flow}
                       theme={theme}
-                      image={resolveLiveImage(theme.preview_image, liveThemeImage(theme.slug))}
+                      image={
+                        theme.preview_image ||
+                        FALLBACK_THEME_IMAGES[
+                          (safePageIndex * cardsPerPage + index) % FALLBACK_THEME_IMAGES.length
+                        ]
+                      }
                     />
                   ))}
                 </div>

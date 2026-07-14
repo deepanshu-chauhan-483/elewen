@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   EmptyState,
   ErrorState,
@@ -26,13 +26,13 @@ import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
-// Shared primitives ” consistent with BookingManagementPage style
+// Shared primitives — consistent with BookingManagementPage style
 // ---------------------------------------------------------------------------
 
 function Badge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
   const cls = getAdminBadgeClass(status, { preset: 'vivid' })
-  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '”'
+  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '—'
   return (
     <span
       className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${cls}`}
@@ -165,7 +165,7 @@ function PaginationControls({ currentPage, totalPages, onPageChange }) {
         {currentPage} / {totalPages}
         {latestRefund ? (
           <p className="mt-2 text-xs text-[#8F8F8F]">
-            Refund: {formatCurrency(latestRefund.amount)} Ã‚Â· {latestRefund.status}
+            Refund: {formatCurrency(latestRefund.amount)} Â· {latestRefund.status}
           </p>
         ) : null}
       </div>
@@ -224,7 +224,7 @@ function BookingPaymentRow({ booking }) {
         </p>
         <p className="mt-1 text-xs text-[#8F8F8F]">
           {formatDate(booking.eventDate)}
-          {booking.locationSummary ? ` Â· ${booking.locationSummary}` : ''}
+          {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
         </p>
         <div className="mt-2 flex gap-4 text-sm">
           <span>
@@ -271,7 +271,7 @@ function PaymentRecordRow({
           </span>
         </p>
         <p className="mt-1 text-xs text-[#8F8F8F]">
-          {payment.paymentType} Â· {formatCurrency(payment.amount)} Â·{' '}
+          {payment.paymentType} · {formatCurrency(payment.amount)} ·{' '}
           {formatDateTime(payment.createdAt)}
         </p>
       </div>
@@ -300,10 +300,10 @@ function PayoutRow({ payout, onMark, isBusy = false }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[#1C1C1C]">
           {payout.vendor?.companyName || payout.vendorId}
-          <span className="ml-2 font-normal text-[#6B7280]">Â· {formatCurrency(payout.amount)}</span>
+          <span className="ml-2 font-normal text-[#6B7280]">· {formatCurrency(payout.amount)}</span>
         </p>
         <p className="mt-1 text-xs text-[#8F8F8F]">
-          {payout.bookingSummary?.package?.title || payout.bookingId} Â·{' '}
+          {payout.bookingSummary?.package?.title || payout.bookingId} ·{' '}
           {formatDateTime(payout.createdAt)}
         </p>
       </div>
@@ -348,8 +348,8 @@ function RefundRow({ refund, processRefundMutation }) {
           </span>
         </p>
         <p className="mt-1 text-xs text-[#8F8F8F]">
-          Cancelled booking Â· {formatDate(booking.eventDate)}
-          {booking.locationSummary ? ` Â· ${booking.locationSummary}` : ''}
+          Cancelled booking · {formatDate(booking.eventDate)}
+          {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
         </p>
         <div className="mt-2 flex flex-wrap gap-4 text-sm">
           <span>
@@ -405,7 +405,7 @@ function CustomerPayments({ processRefundMutation }) {
 
   useScrollToTop(currentPage)
 
-  if (workspaceQuery.isLoading) return <LoadingState label="Loading customer payments..." />
+  if (workspaceQuery.isLoading) return <LoadingState label="Loading customer payments…" />
   if (workspaceQuery.error)
     return <ErrorState label="Customer payments are unavailable right now." />
 
@@ -435,7 +435,7 @@ function CustomerPayments({ processRefundMutation }) {
       </div>
 
       {isSectionLoading ? (
-        <SectionLoadingState label="Loading customer payments..." />
+        <SectionLoadingState label="Loading customer paymentsâ€¦" />
       ) : (
         <>
           {/* Active bookings */}
@@ -628,7 +628,7 @@ function VendorPayments({
   useScrollToTop(currentPage)
   const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
 
-  if (workspaceQuery.isLoading) return <LoadingState label="Loading vendor payouts..." />
+  if (workspaceQuery.isLoading) return <LoadingState label="Loading vendor payouts…" />
   if (workspaceQuery.error) return <ErrorState label="Vendor payouts are unavailable right now." />
 
   return (
@@ -643,7 +643,7 @@ function VendorPayments({
             placeholder="Select vendor"
             className="min-h-10 bg-[#F3F3F3]"
           >
-            <option value="">Select vendor...</option>
+            <option value="">Select vendor…</option>
             {(vendorsQuery.data?.vendors ?? []).map(v => (
               <option key={v.id} value={v.id}>
                 {v.companyName}
@@ -656,7 +656,7 @@ function VendorPayments({
             placeholder="Select booking"
             className="min-h-10 bg-[#F3F3F3]"
           >
-            <option value="">Select booking...</option>
+            <option value="">Select booking…</option>
             {(bookingsQuery.data?.bookings ?? []).map(b => (
               <option key={b.id} value={b.id}>
                 {b.package?.title || b.event?.name || b.id}
@@ -667,7 +667,7 @@ function VendorPayments({
             type="number"
             value={payoutAmount}
             onChange={e => setPayoutAmount(e.target.value)}
-            placeholder="Amount (â‚¹)"
+            placeholder="Amount (₹)"
             className="w-full rounded-full border border-[#D9D2CB] px-4 py-2 text-[15px] font-medium bg-[#FFFFFF] text-[#5B534B] placeholder:text-[#767676] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
           />
           <CustomSelect
@@ -694,7 +694,7 @@ function VendorPayments({
               })
             }
           >
-            {createVendorPayoutMutation.isPending ? 'Creating...' : 'Create Payout'}
+            {createVendorPayoutMutation.isPending ? 'Creating…' : 'Create Payout'}
           </PrimaryBtn>
         </div>
       </div>
@@ -710,7 +710,7 @@ function VendorPayments({
       />
 
       {isSectionLoading ? (
-        <SectionLoadingState label="Loading vendor payouts..." />
+        <SectionLoadingState label="Loading vendor payoutsâ€¦" />
       ) : (
         <>
           {tab === 'pending' &&
@@ -962,12 +962,12 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //           <p className="mt-1 text-xs text-[#8F8F8F]">
 //             {coupon.discount_type === 'percentage'
 //               ? `${coupon.discount_value}% off`
-//               : `â‚¹${coupon.discount_value} off`}
+//               : `₹${coupon.discount_value} off`}
 //             {coupon.valid_from || coupon.valid_to
-//               ? ` Â· Valid ${formatDate(coupon.valid_from)} â†’ ${formatDate(coupon.valid_to)}`
+//               ? ` · Valid ${formatDate(coupon.valid_from)} → ${formatDate(coupon.valid_to)}`
 //               : ''}
-//             {coupon.max_uses ? ` Â· Max ${coupon.max_uses} uses` : ' Â· Unlimited uses'}
-//             {` Â· Used ${coupon.used_count ?? 0} times`}
+//             {coupon.max_uses ? ` · Max ${coupon.max_uses} uses` : ' · Unlimited uses'}
+//             {` · Used ${coupon.used_count ?? 0} times`}
 //           </p>
 //         </div>
 //         <div className="flex items-center gap-2">
@@ -1002,7 +1002,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //               className="min-h-10 bg-[#F3F3F3]"
 //             >
 //               <option value="percentage">Percentage (%)</option>
-//               <option value="flat">Flat amount (â‚¹)</option>
+//               <option value="flat">Flat amount (₹)</option>
 //             </CustomSelect>
 //             <Input
 //               type="number"
@@ -1040,7 +1040,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //               disabled={updateCouponMutation.isPending || !editForm.discount_value}
 //               onClick={saveEdit}
 //             >
-//               {updateCouponMutation.isPending ? 'Saving...' : 'Save Changes'}
+//               {updateCouponMutation.isPending ? 'Saving…' : 'Save Changes'}
 //             </PrimaryBtn>
 //             <GhostBtn onClick={() => setEditing(false)}>Cancel</GhostBtn>
 //           </div>
@@ -1070,9 +1070,9 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //       <div className="grid grid-cols-2 gap-4 rounded-2xl border border-[#E4DED8] bg-white p-5 md:grid-cols-4">
 //         {[
 //           { label: 'Advance %', value: `${form.advance_payment_percentage || 0}%` },
-//           { label: 'Phone', value: form.primary_phone || '”' },
-//           { label: 'Email', value: form.support_email || '”' },
-//           { label: 'WhatsApp', value: form.whatsapp_number || '”' },
+//           { label: 'Phone', value: form.primary_phone || '—' },
+//           { label: 'Email', value: form.support_email || '—' },
+//           { label: 'WhatsApp', value: form.whatsapp_number || '—' },
 //         ].map(f => (
 //           <div key={f.label}>
 //             <p className="text-[11px] uppercase tracking-widest text-[#8F8F8F]">{f.label}</p>
@@ -1099,7 +1099,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //             <Input
 //               value={form.primary_phone}
 //               onChange={e => set('primary_phone', e.target.value)}
-//               placeholder="+91 ..."
+//               placeholder="+91 …"
 //             />
 //           </div>
 //           <div>
@@ -1107,7 +1107,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //             <Input
 //               value={form.support_email}
 //               onChange={e => set('support_email', e.target.value)}
-//               placeholder="support@..."
+//               placeholder="support@…"
 //             />
 //           </div>
 //           <div>
@@ -1115,7 +1115,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //             <Input
 //               value={form.whatsapp_number}
 //               onChange={e => set('whatsapp_number', e.target.value)}
-//               placeholder="+91 ..."
+//               placeholder="+91 …"
 //             />
 //           </div>
 //           <div>
@@ -1123,7 +1123,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //             <Textarea
 //               value={form.support_availability_text}
 //               onChange={e => set('support_availability_text', e.target.value)}
-//               placeholder="e.g. Mon“Sat, 10am“7pm"
+//               placeholder="e.g. Mon–Sat, 10am–7pm"
 //               rows={2}
 //             />
 //           </div>
@@ -1147,7 +1147,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 //               })
 //             }
 //           >
-//             {updateSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
+//             {updateSettingsMutation.isPending ? 'Saving…' : 'Save Settings'}
 //           </PrimaryBtn>
 //         </div>
 //       </div>
@@ -1211,10 +1211,10 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
               ? `${coupon.discount_value}% off`
               : `Rs ${coupon.discount_value} off`}
             {coupon.valid_from || coupon.valid_to
-              ? ` Â· Valid ${formatDate(coupon.valid_from)} â†’ ${formatDate(coupon.valid_to)}`
+              ? ` · Valid ${formatDate(coupon.valid_from)} → ${formatDate(coupon.valid_to)}`
               : ''}
-            {coupon.max_uses ? ` Â· Max ${coupon.max_uses} uses` : ' Â· Unlimited uses'}
-            {` Â· Used ${coupon.used_count ?? 0} times`}
+            {coupon.max_uses ? ` · Max ${coupon.max_uses} uses` : ' · Unlimited uses'}
+            {` · Used ${coupon.used_count ?? 0} times`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -1257,7 +1257,7 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
               }
             }}
           >
-            {deleteCouponMutation.isPending ? 'Deleting...' : 'Delete'}
+            {deleteCouponMutation.isPending ? 'Deleting…' : 'Delete'}
           </DangerBtn>
         </div>
       </div>
@@ -1491,7 +1491,7 @@ export default function PaymentManagementPage() {
   const updateSettingsMutation = useAdminUpdateSettings()
 
   if (workspaceQuery.isLoading) {
-    return <LoadingState label="Loading payment operations..." />
+    return <LoadingState label="Loading payment operations…" />
   }
   if (workspaceQuery.error) {
     return <ErrorState label="Payment operations could not be loaded right now." />
@@ -1503,7 +1503,7 @@ export default function PaymentManagementPage() {
 
   return (
     <div className="space-y-6">
-      {/* â”€â”€ Header â”€â”€ */}
+      {/* ── Header ── */}
       <div>
         <h1 className="text-2xl text-[#1C1C1C]">Payment Management</h1>
         <p className="mt-1 text-sm text-[#6B7280]">
@@ -1511,7 +1511,7 @@ export default function PaymentManagementPage() {
         </p>
       </div>
 
-      {/* â”€â”€ Metrics â”€â”€ */}
+      {/* ── Metrics ── */}
       <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-5">
         <MetricCard
           label="Collected"
@@ -1540,7 +1540,7 @@ export default function PaymentManagementPage() {
         />
       </div>
 
-      {/* â”€â”€ Section tabs â”€â”€ */}
+      {/* ── Section tabs ── */}
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FAFAFA] p-4">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#767676]">
           Section
@@ -1548,7 +1548,7 @@ export default function PaymentManagementPage() {
         <Tabs items={mainSections} value={section} onChange={setSection} />
       </div>
 
-      {/* â”€â”€ Content area â”€â”€ */}
+      {/* ── Content area ── */}
       <div>
         {section === 'customer' && (
           <CustomerPayments processRefundMutation={processRefundMutation} />

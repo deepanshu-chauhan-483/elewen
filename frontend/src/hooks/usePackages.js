@@ -437,7 +437,6 @@ function getPackageListingPopulateParams() {
     'populate[events][populate][0]': 'parent_event',
     'populate[service_categories][populate][0]': 'parent_category',
     'populate[packages][on][package.decorpackages][populate][inclustions]': 'true',
-    'populate[packages][on][package.decorpackages][populate][backdrop_images]': 'true',
     'populate[packages][on][package.decorpackages][populate][theme]': 'true',
     'populate[packages][on][package.decorpackages][populate][budget_level]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][inclusions]': 'true',
