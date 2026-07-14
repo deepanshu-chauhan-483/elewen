@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const nextSteps = [
   {
@@ -29,14 +29,14 @@ const actionCards = [
     eyebrow: 'While you wait',
     title: 'Explore our packages',
     desc: 'Browse curated event packages to get a sense of what we offer.',
-    cta: 'Browse Packages',
-    to: '/packages',
+    cta: 'Explore Packages',
+    to: '/package-listing',
   },
   {
     eyebrow: 'Done for now?',
     title: 'Back to Home',
     desc: 'Return to the Elewen homepage anytime.',
-    cta: 'Go to Home',
+    cta: 'Go back to Home',
     to: '/',
   },
 ]
@@ -51,6 +51,7 @@ const RevealLine = ({ children, delay, className = '' }) => (
 
 const ConsultationConfirmation = () => {
   const pageRef = useRef(null)
+  const navigate = useNavigate()
   const { state } = useLocation()
 
   useEffect(() => {
@@ -101,7 +102,7 @@ const ConsultationConfirmation = () => {
   return (
     <main
       ref={pageRef}
-      className="consultation-page min-h-screen bg-[#F7F4EE] font-sans text-[#202716]"
+      className="consultation-page relative z-0 min-h-screen bg-[#F7F4EE] font-sans text-[#202716]"
     >
       <section
         data-nav-theme="light"
@@ -233,12 +234,12 @@ const ConsultationConfirmation = () => {
         </div>
       </section>
 
-      <section className="bg-[#591902] px-6 py-14 md:px-10 md:py-16 lg:px-[96px] lg:py-20">
+      <section className="relative z-10 bg-[#591902] px-6 py-14 md:px-10 md:py-16 lg:px-[96px] lg:py-20">
         <div className="mx-auto grid max-w-[1440px] gap-8 lg:grid-cols-2 lg:gap-10">
           {actionCards.map((card, index) => (
             <div
               key={card.title}
-              className="card-reveal rounded-[28px] bg-[#F7F4EE] px-7 py-8 md:px-9 md:py-9 lg:px-10 lg:py-10"
+              className="card-reveal relative z-10 rounded-[28px] bg-[#F7F4EE] px-7 py-8 md:px-9 md:py-9 lg:px-10 lg:py-10"
               style={{ '--delay': `${0.12 + index * 0.08}s` }}
             >
               <p
@@ -264,7 +265,11 @@ const ConsultationConfirmation = () => {
 
               <Link
                 to={card.to}
-                className="mt-7 inline-flex rounded-full border border-[#7A3216] px-5 py-3 text-[#7A3216] transition-colors hover:bg-[#7A3216] hover:text-white"
+                onClick={event => {
+                  event.preventDefault()
+                  navigate(card.to)
+                }}
+                className="relative z-20 mt-7 inline-flex cursor-pointer rounded-full border border-[#7A3216] px-5 py-3 text-[#7A3216] transition-colors hover:bg-[#7A3216] hover:text-white"
                 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 500, letterSpacing: '0' }}
               >
                 {card.cta}

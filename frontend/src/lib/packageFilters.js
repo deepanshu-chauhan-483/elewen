@@ -142,6 +142,41 @@ export const normalizeServiceSlug = value => {
   return normalized
 }
 
+/** Canonical event slugs so Birthday / Birthday Party / Birthday Parties all match. */
+export const normalizeEventSlug = value => {
+  const normalized = normalizeValue(value)
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  if (!normalized) return ''
+
+  if (
+    normalized === 'birthday' ||
+    normalized === 'birthday-party' ||
+    normalized === 'birthday-parties' ||
+    normalized === 'birthday-celebration' ||
+    normalized === 'birthday-celebrations'
+  ) {
+    return 'birthday-parties'
+  }
+
+  if (
+    normalized === 'anniversary' ||
+    normalized === 'anniversaries' ||
+    normalized === 'anniversary-evening' ||
+    normalized === 'anniversary-evenings'
+  ) {
+    return 'anniversary'
+  }
+
+  if (normalized === 'house-party' || normalized === 'house-parties') {
+    return 'house-parties'
+  }
+
+  return normalized
+}
+
 const includesNormalized = (values, target) => {
   const normalizedTarget = normalizeValue(target)
   if (!normalizedTarget) return true
@@ -149,6 +184,27 @@ const includesNormalized = (values, target) => {
   return (Array.isArray(values) ? values : []).some(
     value => normalizeValue(value) === normalizedTarget
   )
+}
+
+const packageMatchesEvent = (pkg, eventSlug, eventId) => {
+  const wantedSlug = normalizeEventSlug(eventSlug)
+  const wantedId = normalizeValue(eventId)
+
+  if (!wantedSlug && !wantedId) return true
+
+  const slugMatched =
+    !wantedSlug ||
+    (Array.isArray(pkg?.event_slugs) ? pkg.event_slugs : []).some(
+      slug => normalizeEventSlug(slug) === wantedSlug
+    )
+
+  const idMatched =
+    !wantedId ||
+    (Array.isArray(pkg?.event_ids) ? pkg.event_ids : []).some(id => normalizeValue(id) === wantedId)
+
+  // Prefer a hit on either identifier when both are present (avoids stale eventId kills).
+  if (wantedSlug && wantedId) return slugMatched || idMatched
+  return wantedSlug ? slugMatched : idMatched
 }
 
 function slugifyThemeValue(value) {
@@ -202,6 +258,7 @@ function themeMatchesSlugSet(theme, usedSlugs) {
 
 /** Keep only CMS decor themes linked on packages for the current event/category flow. */
 export function filterThemesByEventPackages(themes, packages, filters = {}) {
+  const allThemes = dedupeThemesBySlug(Array.isArray(themes) ? themes : [])
   const matchingPackages = filterPackages(packages, {
     categorySlug: filters.categorySlug ?? '',
     eventSlug: filters.eventSlug ?? '',
@@ -214,13 +271,11 @@ export function filterThemesByEventPackages(themes, packages, filters = {}) {
   })
 
   const usedThemeSlugs = collectThemeSlugsFromPackages(matchingPackages)
-  if (!usedThemeSlugs.size) return []
+  // If packages/CMS theme links are missing (common for Anniversary), still show themes.
+  if (!usedThemeSlugs.size) return allThemes
 
-  return dedupeThemesBySlug(
-    (Array.isArray(themes) ? themes : []).filter(theme =>
-      themeMatchesSlugSet(theme, usedThemeSlugs)
-    )
-  )
+  const scoped = allThemes.filter(theme => themeMatchesSlugSet(theme, usedThemeSlugs))
+  return scoped.length ? scoped : allThemes
 }
 
 export function filterPackages(packages, filters = {}) {
@@ -239,8 +294,7 @@ export function filterPackages(packages, filters = {}) {
 
   return (Array.isArray(packages) ? packages : []).filter(pkg => {
     if (!includesNormalized(pkg.category_slugs, categorySlug)) return false
-    if (!includesNormalized(pkg.event_slugs, eventSlug)) return false
-    if (!includesNormalized(pkg.event_ids, eventId)) return false
+    if (!packageMatchesEvent(pkg, eventSlug, eventId)) return false
     if (
       normalizedServiceSlug &&
       !(Array.isArray(pkg.service_slugs) ? pkg.service_slugs : []).some(

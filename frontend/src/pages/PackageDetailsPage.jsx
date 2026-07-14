@@ -11,23 +11,7 @@ import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getRelatedPackages } from '../lib/packageFilters'
-import pkgImg1 from '../assets/images/IMG_3903.jpg'
-import pkgImg2 from '../assets/images/IMG_7768.jpg'
-import pkgImg3 from '../assets/images/IMG_0749.jpg'
-import pkgImg4 from '../assets/images/IMG_0658.jpg'
-import pkgImg5 from '../assets/images/IMG_3148.jpg'
-import pkgImg6 from '../assets/images/IMG_7025.jpg'
-import pkgImg7 from '../assets/images/IMG_8625.png'
-import pkgImg8 from '../assets/images/IMG_9814.jpg'
-import pkgImg9 from '../assets/images/6f6af066.jpg'
-
-const PKG_LOCAL_IMAGES = [
-  [pkgImg1, pkgImg2, pkgImg3],
-  [pkgImg4, pkgImg5, pkgImg6],
-  [pkgImg7, pkgImg8, pkgImg9],
-  [pkgImg2, pkgImg4, pkgImg7],
-  [pkgImg5, pkgImg1, pkgImg8],
-]
+import { livePackagePlaceholderGrid } from '../data/liveMedia'
 
 function normalizeServiceSlug(value = '') {
   return String(value)
@@ -249,9 +233,7 @@ export default function PackageDetailsPage() {
       packages.map((pkg, index) => ({
         ...pkg,
         serviceSlug: pkg.service_slugs?.[0] || normalizedService,
-        images: pkg.images?.length
-          ? pkg.images
-          : (PKG_LOCAL_IMAGES[index % PKG_LOCAL_IMAGES.length] ?? []),
+        images: pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(index),
       })),
     [normalizedService, packages]
   )
@@ -269,8 +251,7 @@ export default function PackageDetailsPage() {
             serviceSlug: packageDetails.service_slugs?.[0] || normalizedService,
             images: packageDetails.images?.length
               ? packageDetails.images
-              : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
-                PKG_LOCAL_IMAGES[0]),
+              : livePackagePlaceholderGrid(packageDetails._index ?? 0),
           }
         : (packagesData.find(
             item =>
@@ -343,7 +324,7 @@ export default function PackageDetailsPage() {
     return <Navigate to={backHref} replace />
   }
 
-  const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
+  const sourceImages = pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(0)
   const sideImages = sourceImages
   const packageTitle = pkg.title || details.heroBadge
   const packagePrice = pkg.price || ''

@@ -8,7 +8,7 @@ import {
   useEventsByCategory,
   useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
-import { normalizeServiceSlug } from '../../lib/packageFilters'
+import { normalizeEventSlug, normalizeServiceSlug } from '../../lib/packageFilters'
 import { buildServiceDestination } from '../../lib/serviceFlow'
 
 function FilterPill({
@@ -47,8 +47,8 @@ const DEFAULT_WIDTHS = {
   level: 'sm:w-fit',
 }
 
-const CATEGORY_ORDER = ['social', 'corporate', 'religious']
-const SERVICE_ORDER = ['catering', 'decor', 'bar-tending', 'sheesha-services', 'furniture']
+const CATEGORY_ORDER = ['social', 'religious', 'corporate']
+const SERVICE_ORDER = ['decor', 'catering', 'bartending', 'sheesha']
 const LEVEL_ORDER = ['level-1', 'level-2', 'level-3']
 
 const toSelectOption = item => ({
@@ -87,7 +87,9 @@ export default function PackageResultsHero({
 
   const services = useMemo(
     () =>
-      SERVICE_ORDER.map(slug => allServices.find(service => service.slug === slug)).filter(Boolean),
+      SERVICE_ORDER.map(slug =>
+        allServices.find(service => normalizeServiceSlug(service.slug) === slug)
+      ).filter(Boolean),
     [allServices]
   )
 
@@ -100,6 +102,21 @@ export default function PackageResultsHero({
       })),
     [allEvents]
   )
+
+  // Ensure Birthday Parties stays visible/selectable for Decor package browsing.
+  const eventFilterOptions = useMemo(() => {
+    const options = events.map(({ value, label }) => ({
+      value,
+      label,
+    }))
+    const hasBirthday = options.some(
+      option => normalizeEventSlug(option.value) === 'birthday-parties'
+    )
+    if (!hasBirthday && categorySlug === 'social') {
+      options.unshift({ value: 'birthday-parties', label: 'Birthday Parties' })
+    }
+    return options
+  }, [events, categorySlug])
 
   const selectedService = useMemo(
     () => services.find(service => normalizeServiceSlug(service.slug) === serviceSlug) ?? null,
@@ -229,9 +246,12 @@ export default function PackageResultsHero({
       },
       {
         label: 'Event',
-        value: eventSlug,
+        value:
+          eventFilterOptions.find(
+            option => normalizeEventSlug(option.value) === normalizeEventSlug(eventSlug)
+          )?.value ?? eventSlug,
         widthClass: DEFAULT_WIDTHS.event,
-        options: events.map(({ value, label }) => ({ value, label })),
+        options: eventFilterOptions,
         onChange: event => handleFilterChange('event', event.target.value),
       },
       {
@@ -257,7 +277,7 @@ export default function PackageResultsHero({
     handleFilterChange,
     isDecorService,
     eventSlug,
-    events,
+    eventFilterOptions,
     levelSlug,
     levels,
     themeSlug,

@@ -234,7 +234,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody, heroLabel, heroSu
                 <PlannerImage
                   src={activeSlide[0]?.src}
                   alt={activeSlide[0]?.alt ?? 'Planner showcase'}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
                 />
               </div>
 
@@ -242,7 +242,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody, heroLabel, heroSu
                 <PlannerImage
                   src={activeSlide[2]?.src}
                   alt={activeSlide[2]?.alt ?? 'Planner showcase'}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
                 />
               </div>
             </div>
@@ -252,7 +252,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody, heroLabel, heroSu
                 <PlannerImage
                   src={activeSlide[1]?.src}
                   alt={activeSlide[1]?.alt ?? 'Planner showcase'}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
                 />
               </div>
 
@@ -260,7 +260,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody, heroLabel, heroSu
                 <PlannerImage
                   src={activeSlide[3]?.src}
                   alt={activeSlide[3]?.alt ?? 'Planner showcase'}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
                 />
               </div>
             </div>
@@ -349,7 +349,7 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody, heroLabel, heroSu
             <PlannerImage
               src={resolvedBaseImages[i % resolvedBaseImages.length]}
               alt={`Event photo ${i + 1}`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
             />
           </div>
         ))}
@@ -370,7 +370,11 @@ const ScrollImageSpreadSection = ({ mobileHeading, mobileBody, heroLabel, heroSu
               willChange: 'transform',
             }}
           >
-            <PlannerImage src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+            <PlannerImage
+              src={img.src}
+              alt={img.alt}
+              className="w-full h-full object-cover object-center"
+            />
           </div>
         ))}
       </div>

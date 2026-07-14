@@ -11,25 +11,9 @@ import { usePackageReviews } from '../hooks/usePackageReviews'
 import { getRelatedPackages } from '../lib/packageFilters'
 import { resolveChooseOneDisplayPrice, shouldShowChoicePrices } from '../lib/chooseOnePricing'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
-import pkgImg1 from '../assets/images/IMG_3903.jpg'
-import pkgImg2 from '../assets/images/IMG_7768.jpg'
-import pkgImg3 from '../assets/images/IMG_0749.jpg'
-import pkgImg4 from '../assets/images/IMG_0658.jpg'
-import pkgImg5 from '../assets/images/IMG_3148.jpg'
-import pkgImg6 from '../assets/images/IMG_7025.jpg'
-import pkgImg7 from '../assets/images/IMG_8625.png'
-import pkgImg8 from '../assets/images/IMG_9814.jpg'
-import pkgImg9 from '../assets/images/6f6af066.jpg'
+import { livePackagePlaceholderGrid } from '../data/liveMedia'
 import useCustomization from '../hooks/useCustomization'
 import { useCart } from '../hooks/useCart'
-
-const PKG_LOCAL_IMAGES = [
-  [pkgImg1, pkgImg1, pkgImg1, pkgImg1, pkgImg1],
-  [pkgImg2, pkgImg2, pkgImg2, pkgImg2, pkgImg2],
-  [pkgImg7, pkgImg8, pkgImg9, pkgImg1, pkgImg2],
-  [pkgImg2, pkgImg4, pkgImg7, pkgImg5, pkgImg9],
-  [pkgImg5, pkgImg1, pkgImg8, pkgImg3, pkgImg6],
-]
 
 const DECOR_CONTENT = {
   title: 'Paint & Prosecco',
@@ -231,7 +215,7 @@ function buildDecorSideImages(sourceImages = []) {
       .filter(Boolean)
   )
 
-  if (!normalized.length) return PKG_LOCAL_IMAGES[0]
+  if (!normalized.length) return livePackagePlaceholderGrid(0, 'decor')
 
   return normalized
 }
@@ -1082,9 +1066,7 @@ export default function DecorSinglePackagePage() {
     () =>
       packages.map((pkg, index) => ({
         ...pkg,
-        images: pkg.images?.length
-          ? pkg.images
-          : (PKG_LOCAL_IMAGES[index % PKG_LOCAL_IMAGES.length] ?? []),
+        images: pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(index, 'decor'),
       })),
     [packages]
   )
@@ -1101,8 +1083,7 @@ export default function DecorSinglePackagePage() {
             ...packageDetails,
             images: packageDetails.images?.length
               ? packageDetails.images
-              : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
-                PKG_LOCAL_IMAGES[0]),
+              : livePackagePlaceholderGrid(packageDetails._index ?? 0, 'decor'),
           }
         : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
     [packageDetails, packageId, packagesData]
@@ -1194,7 +1175,7 @@ export default function DecorSinglePackagePage() {
   const selectedChoiceImages = getSelectedChoiceImages(sections)
   const fallbackImages = pkg.images?.length
     ? pkg.images
-    : (PKG_LOCAL_IMAGES[pkg._index % PKG_LOCAL_IMAGES.length] ?? PKG_LOCAL_IMAGES[0])
+    : livePackagePlaceholderGrid(pkg._index ?? 0, 'decor')
   const mergedSource = galleryImages.length ? galleryImages : fallbackImages
   const activeMainImage = selectedChoiceImages[0] ?? mergedSource[0]
   const mainImageCandidate = selectedTextImage || activeMainImage || mergedSource[0]

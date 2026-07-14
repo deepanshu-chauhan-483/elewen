@@ -9,24 +9,8 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { assignDistinctCoverIndices, filterPackages } from '../lib/packageFilters'
 
-import pkgImg1 from '../assets/images/IMG_3903.jpg'
-import pkgImg2 from '../assets/images/IMG_7768.jpg'
-import pkgImg3 from '../assets/images/IMG_0749.jpg'
-import pkgImg4 from '../assets/images/IMG_0658.jpg'
-import pkgImg5 from '../assets/images/IMG_3148.jpg'
-import pkgImg6 from '../assets/images/IMG_7025.jpg'
-import pkgImg7 from '../assets/images/IMG_8625.png'
-import pkgImg8 from '../assets/images/IMG_9814.jpg'
-import pkgImg9 from '../assets/images/6f6af066.jpg'
+import { livePackagePlaceholderGrid } from '../data/liveMedia'
 import PackageResultsHero from '../components/package-listing/PackageResultsHero'
-
-const PKG_LOCAL_IMAGES = [
-  [pkgImg1, pkgImg2, pkgImg3],
-  [pkgImg4, pkgImg5, pkgImg6],
-  [pkgImg7, pkgImg8, pkgImg9],
-  [pkgImg2, pkgImg4, pkgImg7],
-  [pkgImg5, pkgImg1, pkgImg8],
-]
 
 const DESKTOP_CARDS_PER_ROW = 3
 const MOBILE_CARDS_PER_ROW = 1
@@ -137,9 +121,7 @@ export default function DecorLevelsPage() {
     () =>
       packages.map((pkg, i) => ({
         ...pkg,
-        images: pkg.images?.length
-          ? pkg.images
-          : (PKG_LOCAL_IMAGES[i % PKG_LOCAL_IMAGES.length] ?? []),
+        images: pkg.images?.length ? pkg.images : livePackagePlaceholderGrid(i),
       })),
     [packages]
   )

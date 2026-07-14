@@ -12,7 +12,7 @@ import { normalizeServiceSlug } from '../lib/packageFilters'
 const BASE_LINKS = [
   { label: 'Events', to: '/event-flow/category' },
   { label: 'Services', to: '/event-flow/service?flow=services' },
-  { label: 'How It Work', to: '/how-it-work' },
+  { label: 'How It Works', to: '/how-it-work' },
   { label: 'In-House Event Planner', to: '/in-house-planner' },
   { label: 'Story Behind 11', to: '/about' },
   { label: "FAQ's", to: '/faqs' },
@@ -20,7 +20,12 @@ const BASE_LINKS = [
   { label: 'Contact', to: '/contact' },
 ]
 
-const SOCIALS = ['Instagram', 'Twitter', 'Youtube']
+const SOCIALS = [
+  {
+    label: 'Instagram',
+    href: 'https://www.instagram.com/elewen.events?igsh=NnVlbjMzaWc0MnBk',
+  },
+]
 
 const NAVBAR_THEMES = {
   light: {
@@ -944,7 +949,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 className="mb-1 text-[15px] text-white/40"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
-                +91
+                +91 9810937700
               </p>
               <p
                 className="w-[min(153px,48vw)] min-w-[128px] text-right text-[clamp(14px,3.8vw,19px)] leading-[1] text-white"
@@ -995,10 +1000,10 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
         >
           <div className="flex w-full items-center justify-between gap-3 border-t border-white/10 pt-4 md:gap-6 md:pt-6">
             <div className="flex w-full items-center justify-between md:w-auto md:justify-start md:gap-5">
-              {SOCIALS.map(label => (
+              {SOCIALS.map(({ label, href }) => (
                 <a
                   key={label}
-                  href={`https://${label.toLowerCase()}.com`}
+                  href={href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-1.5 text-sm font-medium text-white md:text-base"

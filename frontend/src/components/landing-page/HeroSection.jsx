@@ -82,20 +82,68 @@ const HERO_LEFT_TAGLINES_FALLBACK = ['Work made easy', 'Worth the spend', 'Well-
 const HERO_RIGHT_CARDS_FALLBACK = [
   {
     label: 'Birthday',
-    tagline: 'Curated décor & catering packages',
-    href: '/package-listing?category=social&event=birthday-parties&eventId=176',
+    tagline: 'Curated decor & catering packages',
+    href: '/event-flow/decor-theme?category=social&event=birthday-parties&service=decor',
   },
   {
     label: 'Anniversary',
     tagline: 'Intimate, elegant setups handled end-to-end',
-    href: '/package-listing?category=social&event=anniversaries&eventId=178',
+    href: '/event-flow/decor-theme?category=social&event=anniversary&service=decor',
   },
   {
     label: 'House Party',
     tagline: 'Simple planning. Beautiful execution.',
-    href: '/package-listing?category=social&event=house-parties&eventId=188',
+    href: '/event-flow/decor-theme?category=social&event=house-parties&service=decor',
   },
 ]
+
+const THEME_HREF_BY_LABEL = {
+  birthday: '/event-flow/decor-theme?category=social&event=birthday-parties&service=decor',
+  anniversary: '/event-flow/decor-theme?category=social&event=anniversary&service=decor',
+  house: '/event-flow/decor-theme?category=social&event=house-parties&service=decor',
+}
+
+const themeHrefForLabel = (label = '') => {
+  const normalized = String(label).trim().toLowerCase()
+  if (normalized.startsWith('birthday')) return THEME_HREF_BY_LABEL.birthday
+  if (normalized.startsWith('anniversary')) return THEME_HREF_BY_LABEL.anniversary
+  if (normalized.includes('house')) return THEME_HREF_BY_LABEL.house
+  return ''
+}
+
+const rewriteListingHrefToThemes = (href = '') => {
+  const raw = String(href).trim()
+  if (!raw.includes('/package-listing')) return raw
+
+  try {
+    const url = new URL(raw, 'http://localhost')
+    const event = String(url.searchParams.get('event') ?? '').toLowerCase()
+    if (event.includes('birthday')) return THEME_HREF_BY_LABEL.birthday
+    if (event.includes('anniversary')) return THEME_HREF_BY_LABEL.anniversary
+    if (event.includes('house')) return THEME_HREF_BY_LABEL.house
+    url.pathname = '/event-flow/decor-theme'
+    if (!url.searchParams.get('service')) url.searchParams.set('service', 'decor')
+    return `${url.pathname}?${url.searchParams.toString()}`
+  } catch {
+    return raw
+  }
+}
+
+const resolveHeroCardHref = (card = {}) => {
+  const labelHref = themeHrefForLabel(card.label)
+  if (labelHref) return labelHref
+
+  const explicitHref = String(card.href ?? card.url ?? card.link ?? '').trim()
+  if (explicitHref) return rewriteListingHrefToThemes(explicitHref)
+
+  const slug = String(card.label ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+  return slug
+    ? `/event-flow/decor-theme?category=social&event=${slug}&service=decor`
+    : '/event-flow/category?category=social'
+}
 const getTrailingWWord = (value, fallback) => String(value ?? fallback).replace(/^[Ww]/, '')
 
 const toAbsoluteMediaUrl = url => {
@@ -151,6 +199,8 @@ const HeroSection = () => {
       ...strapiCard,
       label: strapiCard.label || defaultCard.label || '',
       tagline: strapiCard.tagline || strapiCard.description || defaultCard.tagline || '',
+      // Keep a real Birthday/Anniversary/House Party destination even when CMS omits href.
+      href: resolveHeroCardHref({ ...defaultCard, ...strapiCard }),
     }
   })
   const bandTokens = Array.isArray(hero.band_tokens) ? hero.band_tokens.filter(Boolean) : []
@@ -906,9 +956,7 @@ const HeroSection = () => {
                   card.tagline || card.description || card.desc || ''
                     ? String(card.tagline || card.description || card.desc).trim()
                     : ''
-                const cardHref =
-                  card.href ||
-                  `/package-listing?event=${resolvedLabel.toLowerCase().replace(/\s+/g, '-')}`
+                const cardHref = resolveHeroCardHref(card)
 
                 return (
                   <div
