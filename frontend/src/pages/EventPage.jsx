@@ -49,7 +49,7 @@ function EventCard({ categorySlug, event }) {
         {event.image ? (
           <img
             src={event.image}
-            alt=""
+            alt={event.title}
             className="h-full w-full object-cover object-center"
             loading="lazy"
             decoding="async"
@@ -59,8 +59,14 @@ function EventCard({ categorySlug, event }) {
           <div className="h-full w-full bg-[#E7DDCF]" aria-hidden="true" />
         )}
       </div>
-      <div className="flex h-[76px] flex-col justify-center rounded-[10px] bg-[#7E8061] px-3 py-2.5 text-white md:h-[84px] md:px-3.5 md:py-3">
-        <p className="min-h-0 max-h-full overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/90 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:text-[13px]">
+      <div className="flex min-h-[96px] flex-col justify-start rounded-[10px] bg-[#7E8061] px-3 py-2.5 text-white md:min-h-[104px] md:px-3.5 md:py-3">
+        <h3
+          className="mb-1.5 line-clamp-2 text-[14px] font-medium leading-[1.3] tracking-wide text-white md:text-[15px] md:font-semibold"
+          style={{ fontFamily: "'Poppins'" }}
+        >
+          {event.title}
+        </h3>
+        <p className="min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 [scrollbar-width:none] line-clamp-2 md:text-[13px] [&::-webkit-scrollbar]:hidden">
           {event.description}
         </p>
       </div>

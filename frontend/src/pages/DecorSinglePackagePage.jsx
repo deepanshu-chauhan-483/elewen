@@ -545,6 +545,61 @@ function buildChoiceSectionsFromElements(elements = []) {
     .filter(section => section.items.length)
 }
 
+function collectOrderedInclusionGroups(inclusions = []) {
+  const groups = []
+  const choiceGroupMap = new Map()
+  const textGroupMap = new Map()
+
+  for (const item of inclusions) {
+    if (item?.is_choice_group) {
+      const parsedGroupTitle = resolveChoiceGroupMeta(item)
+      const normalizedItem = {
+        ...item,
+        group_title: parsedGroupTitle.key,
+        _choice_group_key: parsedGroupTitle.key,
+        _display_group_title: parsedGroupTitle.label,
+        _is_generic_choose_title: parsedGroupTitle.isGenericChoose,
+        _visible_when: parsedGroupTitle.visibleWhen,
+      }
+      const mapKey = parsedGroupTitle.key
+
+      if (!choiceGroupMap.has(mapKey)) {
+        const nextGroup = {
+          type: 'choice',
+          key: mapKey,
+          displayTitle: parsedGroupTitle.label,
+          visibleWhen: parsedGroupTitle.visibleWhen,
+          items: [],
+        }
+        choiceGroupMap.set(mapKey, nextGroup)
+        groups.push(nextGroup)
+      }
+
+      choiceGroupMap.get(mapKey).items.push(normalizedItem)
+      continue
+    }
+
+    if (/^when:/i.test(cleanText(item?.group_title))) continue
+
+    const title = cleanText(item?.group_title)
+    const mapKey = title || '__included_details__'
+
+    if (!textGroupMap.has(mapKey)) {
+      const nextGroup = {
+        type: 'text',
+        title,
+        items: [],
+      }
+      textGroupMap.set(mapKey, nextGroup)
+      groups.push(nextGroup)
+    }
+
+    textGroupMap.get(mapKey).items.push(item)
+  }
+
+  return groups
+}
+
 function buildDecorCustomizationSections(pkg) {
   return getDecorDetailSections(pkg).flatMap(section => {
     const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
@@ -552,76 +607,45 @@ function buildDecorCustomizationSections(pkg) {
     const elements = Array.isArray(section?.elements)
       ? section.elements.filter(element => element?.visibility !== false)
       : []
-    const choiceItems = inclusions
-      .filter(item => item?.is_choice_group)
-      .map(item => {
-        const parsedGroupTitle = resolveChoiceGroupMeta(item)
-        return {
-          ...item,
-          group_title: parsedGroupTitle.key,
-          _choice_group_key: parsedGroupTitle.key,
-          _display_group_title: parsedGroupTitle.label,
-          _is_generic_choose_title: parsedGroupTitle.isGenericChoose,
-          _visible_when: parsedGroupTitle.visibleWhen,
-        }
-      })
-    const rawChoiceGroups = groupItemsByTitle(choiceItems).map(group => ({
-      ...group,
-      displayTitle: group.items[0]?._display_group_title || group.title,
-      isGenericChoose: Boolean(group.items[0]?._is_generic_choose_title),
-      visibleWhen: group.items[0]?._visible_when ?? null,
-      groupKey: group.items[0]?._choice_group_key || group.title,
-    }))
-    const textGroups = groupItemsByTitle(
-      inclusions.filter(item => {
-        if (item?.is_choice_group) return false
-        return !/^when:/i.test(cleanText(item?.group_title))
-      })
-    )
-    const choiceGroups = rawChoiceGroups.map(group => ({
-      ...group,
-      title: group.displayTitle,
-    }))
+    const orderedGroups = collectOrderedInclusionGroups(inclusions)
 
     let elementCursor = 0
+    let choiceIndex = 0
     const builtSections = []
 
-    choiceGroups.forEach((group, groupIndex) => {
-      const items = group.items
-        .map((item, itemIndex) => {
-          const element = elements[elementCursor] ?? null
+    orderedGroups.forEach(group => {
+      if (group.type === 'choice') {
+        const items = group.items
+          .map((item, itemIndex) => {
+            const element = elements[elementCursor] ?? null
 
-          if (element) {
-            elementCursor += 1
-          }
+            if (element) {
+              elementCursor += 1
+            }
 
-          return createChoiceItem({
-            inclusion: item,
-            element,
-            fallbackTitle: `Option ${itemIndex + 1}`,
-            whenBullets,
+            return createChoiceItem({
+              inclusion: item,
+              element,
+              fallbackTitle: `Option ${itemIndex + 1}`,
+              whenBullets,
+            })
           })
+          .filter(item => item.title)
+
+        if (!items.length) return
+
+        builtSections.push({
+          type: 'choice-row',
+          title: buildChoiceSectionTitle(group.displayTitle, `Choose ${choiceIndex + 1}`),
+          groupKey: group.key,
+          visibleWhen: group.visibleWhen,
+          items,
+          required: true,
         })
-        .filter(item => item.title)
+        choiceIndex += 1
+        return
+      }
 
-      if (!items.length) return
-
-      builtSections.push({
-        type: 'choice-row',
-        title: buildChoiceSectionTitle(group.title, `Choose ${groupIndex + 1}`),
-        groupKey: group.groupKey,
-        visibleWhen: group.visibleWhen,
-        items,
-        required: true,
-      })
-    })
-
-    if (!choiceGroups.length && elements.length) {
-      builtSections.push(...buildChoiceSectionsFromElements(elements))
-      elementCursor = elements.length
-    }
-
-    textGroups.forEach(group => {
       const items = group.items.map(item => cleanText(item?.text)).filter(Boolean)
 
       if (!items.length) return
@@ -632,6 +656,11 @@ function buildDecorCustomizationSections(pkg) {
         items,
       })
     })
+
+    if (!orderedGroups.some(group => group.type === 'choice') && elements.length) {
+      builtSections.push(...buildChoiceSectionsFromElements(elements))
+      elementCursor = elements.length
+    }
 
     const remainingElementRows = elements
       .slice(elementCursor)
@@ -946,26 +975,14 @@ function DecorTextRow({ section, onItemClick }) {
             <button
               type="button"
               onClick={() => onItemClick?.(section.title, item)}
-              className={`text-[12px] leading-none text-[#8A5A2D] ${
+              className={`text-[12px] leading-none text-[#591902] opacity-50 ${
                 onItemClick ? 'cursor-pointer' : 'cursor-default'
               }`}
             >
               {item}
             </button>
             {index < section.items.length - 1 ? (
-              <span className="mx-2 text-[12px] leading-none text-[#C7A16B]">
-                <svg
-                  width="8"
-                  height="24"
-                  viewBox="0 0 8 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <g opacity="0.5">
-                    <line x1="4.5" x2="4.5" y2="24" stroke="#364022" strokeOpacity="0.5" />
-                  </g>
-                </svg>
-              </span>
+              <span className="mx-2 text-[12px] leading-none text-[#591902]">|</span>
             ) : null}
           </div>
         ))}
@@ -1006,6 +1023,17 @@ function DecorPackageSections({
   onTextItemClick,
 }) {
   const visibleSections = useMemo(() => filterVisibleDecorSections(sections), [sections])
+  const textSections = useMemo(
+    () => visibleSections.filter(section => section.type === 'text-row'),
+    [visibleSections]
+  )
+  const choiceSections = useMemo(
+    () => visibleSections.filter(section => section.type === 'choice-row'),
+    [visibleSections]
+  )
+  const showIncludedHeading = choiceSections.length > 0
+  const textBlockSpacing = keyDecorText ? 'pt-5' : ''
+  const includedHeadingSpacing = keyDecorText || textSections.length ? 'pt-5' : ''
 
   return (
     <div>
@@ -1018,23 +1046,29 @@ function DecorPackageSections({
         </div>
       ) : null}
 
-      <p className={`text-[16px] font-semibold text-[#2D2D2D] ${keyDecorText ? 'pt-5' : ''}`}>
-        What&apos;s included:
-      </p>
+      {textSections.length ? (
+        <div className={`space-y-6 ${textBlockSpacing}`}>
+          {textSections.map((section, index) => (
+            <DecorTextRow
+              key={`${section.title}-${index}`}
+              section={section}
+              onItemClick={onTextItemClick}
+            />
+          ))}
+        </div>
+      ) : null}
 
-      <div className="mt-4 space-y-6">
-        {visibleSections.length ? (
-          visibleSections.map((section, index) => {
-            if (section.type === 'text-row') {
-              return (
-                <DecorTextRow
-                  key={`${section.title}-${index}`}
-                  section={section}
-                  onItemClick={onTextItemClick}
-                />
-              )
-            }
+      {showIncludedHeading ? (
+        <p className={`text-[16px] font-semibold text-[#2D2D2D] ${includedHeadingSpacing}`}>
+          What&apos;s included:
+        </p>
+      ) : null}
 
+      <div
+        className={`space-y-6 ${showIncludedHeading ? 'mt-4' : includedHeadingSpacing || textBlockSpacing}`}
+      >
+        {choiceSections.length ? (
+          choiceSections.map((section, index) => {
             const useWideCards = section.items.some(item => {
               if (typeof item === 'string') return false
               return Boolean(item.title) && (item.bullets?.length || item.description)
@@ -1063,11 +1097,11 @@ function DecorPackageSections({
               </div>
             )
           })
-        ) : (
+        ) : !textSections.length ? (
           <p className="text-[12px] leading-[1.6] text-[#8A5A2D]">
             Customization options will appear here once they are added in Strapi.
           </p>
-        )}
+        ) : null}
 
         <DecorMessageField value={message} onChange={onMessageChange} />
       </div>

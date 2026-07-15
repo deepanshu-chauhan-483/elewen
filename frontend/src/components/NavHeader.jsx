@@ -10,6 +10,18 @@ import { usePackages } from '../hooks/usePackages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import { packageMatchesSearch } from '../lib/packageSearch'
 
+function getPackageSearchPriceLabel(pkg) {
+  const formattedPrice = String(pkg?.price ?? '').trim()
+  if (formattedPrice) return formattedPrice
+
+  const amount = Number(pkg?.base_price ?? 0)
+  if (Number.isFinite(amount) && amount > 0) {
+    return `₹${amount.toLocaleString('en-IN')}`
+  }
+
+  return ''
+}
+
 const BASE_LINKS = [
   { label: 'Events', to: '/event-flow/category' },
   { label: 'Services', to: '/event-flow/service?flow=services' },
@@ -550,6 +562,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                       pkg.serviceSlug ?? pkg.service ?? 'decor'
                     )
                     const pkgId = pkg.documentId ?? pkg.id
+                    const priceLabel = getPackageSearchPriceLabel(pkg)
                     return (
                       <button
                         key={pkgId}
@@ -568,11 +581,11 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                             {pkg.category || serviceSlug}
                           </p>
                         </div>
-                        {pkg.price != null && (
+                        {priceLabel ? (
                           <span className="shrink-0 text-[13px] font-semibold text-[#591902]">
-                            ₹{Number(pkg.price).toLocaleString('en-IN')}
+                            {priceLabel}
                           </span>
-                        )}
+                        ) : null}
                       </button>
                     )
                   })}
@@ -697,6 +710,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                     pkg.serviceSlug ?? pkg.service ?? 'decor'
                   )
                   const pkgId = pkg.documentId ?? pkg.id
+                  const priceLabel = getPackageSearchPriceLabel(pkg)
                   return (
                     <button
                       key={pkgId}
@@ -716,11 +730,11 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                           {pkg.category || serviceSlug}
                         </p>
                       </div>
-                      {pkg.price != null && (
+                      {priceLabel ? (
                         <span className="shrink-0 text-[13px] font-semibold text-[#591902]">
-                          ₹{Number(pkg.price).toLocaleString('en-IN')}
+                          {priceLabel}
                         </span>
-                      )}
+                      ) : null}
                     </button>
                   )
                 })}

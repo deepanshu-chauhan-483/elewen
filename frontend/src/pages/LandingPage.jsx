@@ -28,6 +28,7 @@ import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
 import { useLandingPage } from '../hooks/useCmsPages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
+import { buildServicesFlowDestination, DEFAULT_EVENT_CATEGORY_SLUG } from '../lib/serviceFlow'
 import { getPackageHref } from '../lib/packageRoutes'
 import { preventWidow, stripMojibake } from '../lib/textFormat'
 import { PACKAGES_FALLBACK } from '../data/packages'
@@ -95,16 +96,23 @@ const slugifyValue = value =>
 
 const buildEventListingHref = (categorySlug, eventSlug, eventId) => {
   const params = new URLSearchParams()
-  if (categorySlug) params.set('category', categorySlug)
+  params.set('category', categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
   if (eventSlug) params.set('event', eventSlug)
   if (eventId != null) params.set('eventId', String(eventId))
   return `/package-listing?${params.toString()}`
 }
 
-const buildServiceListingHref = serviceSlug => {
+const buildServiceListingHref = (serviceSlug, serviceId) => {
   const normalizedService = normalizeServiceSlug(serviceSlug)
-  if (normalizedService === 'sheesha-service') return '/packages/sheesha'
-  return normalizedService ? `/packages/${normalizedService}` : '/package-listing'
+  if (!normalizedService) return '/package-listing'
+
+  const resolvedServiceId =
+    normalizedService === 'decor' ? '' : serviceId != null ? String(serviceId) : ''
+
+  return buildServicesFlowDestination({
+    serviceSlug: normalizedService,
+    serviceId: resolvedServiceId,
+  })
 }
 
 const getMobileCarouselTranslateX = ({ totalItems, page, cardWidth, cardGap }) => {
@@ -771,7 +779,7 @@ const PlanEventSection = () => {
           <span className="!hidden md:!inline-flex reveal-wrapper reveal-on-scroll">
             <span className="reveal-text">
               <Link
-                to={s.cta_url ?? '/event-flow/category'}
+                to={s.cta_url ?? `/event-flow/category?category=${DEFAULT_EVENT_CATEGORY_SLUG}`}
                 className="flex items-center pl-6 pr-1.5 py-1.5 bg-[#D4BA8E] rounded-full hover:bg-[#C6AB7F] transition-colors group w-fit"
               >
                 <span className="text-white font-medium text-[15px] mr-5">
@@ -910,22 +918,28 @@ const PlanEventSection = () => {
                         {card.image ? (
                           <img
                             src={card.image}
-                            alt=""
+                            alt={card.title}
                             className="w-full h-full object-cover object-center plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                             loading="lazy"
                           />
                         ) : (
                           <img
                             src={CARD_LOCAL_IMAGES[card.id % CARD_LOCAL_IMAGES.length]}
-                            alt=""
+                            alt={card.title}
                             className="w-full h-full object-cover object-center plan-event-card-image transition-transform duration-500 ease-out group-hover:scale-110"
                             loading="lazy"
                           />
                         )}
                       </div>
 
-                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-center transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
-                        <p className="text-white/90 md:text-white/85 text-[12px] md:text-[clamp(0.6875rem,0.9vw,0.8125rem)] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins'] line-clamp-3">
+                      <div className="absolute bottom-[15px] left-[15px] right-[15px] md:my-2 md:bottom-0 md:left-0 md:right-0 md:static bg-[#7F8060] md:bg-[#787A5E] rounded-[8px] p-3 md:p-3 lg:p-4 h-[90px] md:h-[150px] flex flex-col justify-start transition-colors duration-300 plan-event-card-content group-hover:bg-[#4F533D]">
+                        <h3
+                          className="text-white font-medium md:font-semibold text-[14px] md:text-[clamp(0.75rem,1.18vw,1.0625rem)] mb-[6px] md:mb-2.5 tracking-wide font-['Poppins'] leading-[1.3] md:leading-[1.35] line-clamp-2"
+                          style={{ fontFamily: "'Poppins'" }}
+                        >
+                          {card.title}
+                        </h3>
+                        <p className="text-white/65 md:text-white/80 text-[12px] md:text-[clamp(0.6875rem,0.9vw,0.8125rem)] leading-[1.45] md:leading-relaxed font-normal md:font-light font-['Poppins'] line-clamp-2">
                           {cleanCopy(card.tagline)}
                         </p>
                       </div>
@@ -1026,7 +1040,7 @@ const PlanEventSection = () => {
               <span className="reveal-wrapper reveal-wrapper--overflow-visible !pb-1">
                 <span className="reveal-text">
                   <Link
-                    to={s.cta_url ?? '/event-flow/category'}
+                    to={s.cta_url ?? `/event-flow/category?category=${DEFAULT_EVENT_CATEGORY_SLUG}`}
                     className="flex items-center pl-[18px] pr-[3px] py-[3px] bg-[#CDB17E] rounded-[42px] hover:bg-[#C6AB7F] transition-colors group"
                   >
                     <span className="text-[#FAFAFA] font-medium text-[12px] mr-[12px] font-['Poppins']">
@@ -1354,7 +1368,7 @@ const WhatToPlanSection = () => {
                   {filteredCards.map((card, i) => (
                     <Link
                       key={card.id ?? card.title}
-                      to={buildServiceListingHref(card.slug ?? card.title)}
+                      to={buildServiceListingHref(card.slug ?? card.title, card.id)}
                       className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.04 + i * 0.03}s`,

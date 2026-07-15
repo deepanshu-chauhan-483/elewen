@@ -10,6 +10,7 @@ import { normalizeServiceSlug } from '../lib/packageFilters'
 import {
   buildServiceDestination,
   buildServiceFlowParams,
+  DEFAULT_EVENT_CATEGORY_SLUG,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
 
@@ -123,7 +124,7 @@ function EventCard({
         {event.image ? (
           <img
             src={event.image}
-            alt=""
+            alt={event.title}
             className="h-full w-full object-cover object-center"
             loading="lazy"
             decoding="async"
@@ -133,8 +134,14 @@ function EventCard({
           <div className="h-full w-full bg-[#E7DDCF]" aria-hidden="true" />
         )}
       </div>
-      <div className="flex h-[76px] flex-col justify-center rounded-[10px] bg-[#7E8061] px-3 py-2.5 text-white md:h-[84px] md:px-3.5 md:py-3">
-        <p className="min-h-0 max-h-full overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/90 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:text-[13px]">
+      <div className="flex min-h-[96px] flex-col justify-start rounded-[10px] bg-[#7E8061] px-3 py-2.5 text-white md:min-h-[104px] md:px-3.5 md:py-3">
+        <h3
+          className="mb-1.5 line-clamp-2 text-[14px] font-medium leading-[1.3] tracking-wide text-white md:text-[15px] md:font-semibold"
+          style={{ fontFamily: "'Poppins'" }}
+        >
+          {event.title}
+        </h3>
+        <p className="min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 [scrollbar-width:none] line-clamp-2 md:text-[13px] [&::-webkit-scrollbar]:hidden">
           {event.description}
         </p>
       </div>
@@ -152,6 +159,7 @@ export default function CategoryPage() {
     return window.innerWidth
   })
   const requestedCategorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+  const effectiveCategorySlug = requestedCategorySlug || DEFAULT_EVENT_CATEGORY_SLUG
   const serviceSlug = normalizeServiceSlug(searchParams.get('service') ?? '')
   const serviceId = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
@@ -161,16 +169,16 @@ export default function CategoryPage() {
   const { data: categories = [] } = categoriesQuery
 
   const selectedCategoryId = useMemo(() => {
-    if (!categories.length) return requestedCategorySlug
+    if (!categories.length) return effectiveCategorySlug
     return (
       categories.find(category => category.slug === requestedCategorySlug)?.slug ??
-      categories.find(category => category.slug === 'social')?.slug ??
+      categories.find(category => category.slug === DEFAULT_EVENT_CATEGORY_SLUG)?.slug ??
       categories[0]?.slug ??
       ''
     )
-  }, [categories, requestedCategorySlug])
+  }, [categories, effectiveCategorySlug, requestedCategorySlug])
 
-  const eventsQuery = useEventsByCategory(selectedCategoryId)
+  const eventsQuery = useEventsByCategory(selectedCategoryId || DEFAULT_EVENT_CATEGORY_SLUG)
   const { data: events = [] } = eventsQuery
   const isStrapiLoading = useStrapiPageLoading(categoriesQuery, eventsQuery)
 
@@ -190,6 +198,31 @@ export default function CategoryPage() {
     window.addEventListener('resize', handleViewportChange)
     return () => window.removeEventListener('resize', handleViewportChange)
   }, [])
+
+  useEffect(() => {
+    if (requestedCategorySlug) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.set('category', DEFAULT_EVENT_CATEGORY_SLUG)
+        if (isServicesFlow) {
+          if (serviceSlug) nextParams.set('service', serviceSlug)
+          if (serviceId) nextParams.set('serviceId', serviceId)
+          if (flow) nextParams.set('flow', flow)
+        }
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [
+    flow,
+    isServicesFlow,
+    requestedCategorySlug,
+    serviceId,
+    serviceSlug,
+    setSearchParams,
+  ])
 
   useEffect(() => {
     if (!categories.length || !selectedCategoryId || requestedCategorySlug === selectedCategoryId)

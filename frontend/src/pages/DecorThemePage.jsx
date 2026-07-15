@@ -7,10 +7,8 @@ import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
-import { filterThemesByEventPackages, normalizeServiceSlug } from '../lib/packageFilters'
+import { buildServiceSelectionBackTo, resolveServiceLaneId, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
 
-import themeImg1 from '../assets/images/IMG_3903.jpg'
 import themeImg2 from '../assets/images/IMG_7768.jpg'
 import themeImg3 from '../assets/images/IMG_0749.jpg'
 import themeImg4 from '../assets/images/IMG_0658.jpg'
@@ -29,9 +27,52 @@ const SERVICES_FLOW_STEPS = [
   { id: 4, label: 'Package' },
 ]
 
-const FALLBACK_THEME_IMAGES = [themeImg1, themeImg2, themeImg3, themeImg4]
+const OFFLINE_THEME_PREVIEW_BY_SLUG = {
+  disco: themeImg3,
+  floral: themeImg2,
+  retro: themeImg4,
+}
 const DESKTOP_CARDS_PER_PAGE = 4
 const MOBILE_CARDS_PER_PAGE = 1
+
+function themeSlugKey(theme) {
+  return String(theme?.slug ?? theme?.label ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function enrichThemesWithPackageImages(themes, packages) {
+  const previewBySlug = new Map()
+
+  for (const pkg of packages) {
+    const cover = pkg.images?.[0]
+    if (!cover) continue
+
+    for (const rawSlug of pkg.theme_slugs ?? []) {
+      const key = themeSlugKey({ slug: rawSlug })
+      if (key && !previewBySlug.has(key)) previewBySlug.set(key, cover)
+    }
+  }
+
+  return themes.map(theme => {
+    if (theme.preview_image) return theme
+
+    const slug = themeSlugKey(theme)
+    const packageImage = slug ? previewBySlug.get(slug) : null
+    return packageImage ? { ...theme, preview_image: packageImage } : theme
+  })
+}
+
+function resolveThemePreviewImage(theme) {
+  if (theme?.preview_image) return theme.preview_image
+
+  const slug = themeSlugKey(theme)
+  if (slug && OFFLINE_THEME_PREVIEW_BY_SLUG[slug]) return OFFLINE_THEME_PREVIEW_BY_SLUG[slug]
+
+  return null
+}
 
 function ThemeArrow({ direction = 'left' }) {
   const rotationClass = direction === 'right' ? '' : 'rotate-180'
@@ -71,7 +112,7 @@ function ThemeCard({
   params.set('service', serviceSlug)
   if (serviceId) params.set('serviceId', serviceId)
   if (flow) params.set('flow', flow)
-  params.set('theme', theme.slug)
+  if (theme?.slug) params.set('theme', theme.slug)
 
   return (
     <Link
@@ -79,14 +120,20 @@ function ThemeCard({
       className="group flex h-[350px] w-full max-w-[250px] md:h-auto md:max-h-[384px] md:max-w-[298px] flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[8px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1"
     >
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
-        <img
-          src={image}
-          alt={theme.label}
-          className="h-full w-full object-cover object-center"
-          loading="lazy"
-          decoding="async"
-          style={{ transform: 'none' }}
-        />
+        {image ? (
+          <img
+            src={image}
+            alt={theme.label}
+            className="h-full w-full object-cover object-center"
+            loading="lazy"
+            decoding="async"
+            style={{ transform: 'none' }}
+          />
+        ) : (
+          <div className="flex h-full min-h-[220px] w-full items-center justify-center bg-[#E8DDD1] px-4 text-center text-[13px] text-[#7C7065]">
+            {theme.label}
+          </div>
+        )}
       </div>
       <div className="mt-2 flex h-[40px] items-center rounded-[10px] bg-[#7E8061] px-3 text-white md:h-[44px] md:px-3.5">
         <h2
@@ -119,14 +166,11 @@ export default function DecorThemePage() {
 
   const { data: serviceOptions = [] } = useFilteredServiceOptions(['decor'])
   const resolvedServiceId = useMemo(() => {
-    if (serviceIdParam) return serviceIdParam
-
-    const matched = serviceOptions.find(
-      service =>
-        normalizeServiceSlug(service?.slug) === normalizeServiceSlug(serviceSlug || 'decor')
-    )
-
-    return matched?.id != null ? String(matched.id) : ''
+    return resolveServiceLaneId({
+      serviceSlug: serviceSlug || 'decor',
+      serviceId: serviceIdParam,
+      serviceOptions,
+    })
   }, [serviceIdParam, serviceOptions, serviceSlug])
 
   const themesQuery = useDecorThemeOptions(resolvedServiceId)
@@ -135,16 +179,9 @@ export default function DecorThemePage() {
   const { data: packages = [] } = packagesQuery
   const isStrapiLoading = useStrapiPageLoading(themesQuery, packagesQuery)
 
-  const eventScopedThemes = useMemo(
-    () =>
-      filterThemesByEventPackages(themes, packages, {
-        categorySlug: categoryId,
-        eventSlug: eventId,
-        eventId: eventNumericId,
-        serviceSlug: serviceSlug || 'decor',
-        serviceId: resolvedServiceId,
-      }),
-    [themes, packages, categoryId, eventId, eventNumericId, serviceSlug, resolvedServiceId]
+  const themesWithImages = useMemo(
+    () => enrichThemesWithPackageImages(themes, packages),
+    [themes, packages]
   )
 
   const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${debouncedSearchValue.trim().toLowerCase()}`
@@ -172,9 +209,9 @@ export default function DecorThemePage() {
 
   const filteredThemes = useMemo(() => {
     const query = debouncedSearchValue.trim().toLowerCase()
-    if (!query) return eventScopedThemes
-    return eventScopedThemes.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
-  }, [debouncedSearchValue, eventScopedThemes])
+    if (!query) return themesWithImages
+    return themesWithImages.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
+  }, [debouncedSearchValue, themesWithImages])
   const cardsPerPage = isDesktopViewport ? DESKTOP_CARDS_PER_PAGE : MOBILE_CARDS_PER_PAGE
   const totalPages = Math.max(1, Math.ceil(filteredThemes.length / cardsPerPage))
   const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
@@ -311,12 +348,7 @@ export default function DecorThemePage() {
                       serviceId={resolvedServiceId}
                       flow={flow}
                       theme={theme}
-                      image={
-                        theme.preview_image ||
-                        FALLBACK_THEME_IMAGES[
-                          (safePageIndex * cardsPerPage + index) % FALLBACK_THEME_IMAGES.length
-                        ]
-                      }
+                      image={resolveThemePreviewImage(theme)}
                     />
                   ))}
                 </div>

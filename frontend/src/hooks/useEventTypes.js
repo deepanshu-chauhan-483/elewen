@@ -147,11 +147,28 @@ const resolveServiceCategory = (service, displayName, name) => {
   return displayName || name
 }
 
+const DECOR_THEME_DISPLAY_ORDER = [
+  'retro',
+  'disco',
+  'floral',
+  'bollywood',
+  'still-us',
+  'a-little-honey',
+  'oh-baby',
+]
+
+const DECOR_THEME_SLUG_ALIASES = {
+  'little-honey': 'a-little-honey',
+}
+
 const DECOR_THEME_FALLBACK = [
   { id: 'retro', label: 'Retro', slug: 'retro', preview_image: null },
   { id: 'disco', label: 'Disco', slug: 'disco', preview_image: null },
   { id: 'floral', label: 'Floral', slug: 'floral', preview_image: null },
   { id: 'bollywood', label: 'Bollywood', slug: 'bollywood', preview_image: null },
+  { id: 'still-us', label: 'Still Us', slug: 'still-us', preview_image: null },
+  { id: 'a-little-honey', label: 'A little honey', slug: 'a-little-honey', preview_image: null },
+  { id: 'oh-baby', label: 'Oh Baby', slug: 'oh-baby', preview_image: null },
 ]
 
 const LEVELS_FALLBACK = [
@@ -207,6 +224,24 @@ const toAbsoluteStrapiUrl = url => {
       : `${origin}${STRAPI_BASE.startsWith('/') ? '' : '/'}${STRAPI_BASE}`
 
   return `${normalizedBase}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
+function resolveStrapiMediaUrl(media) {
+  if (!media) return null
+  if (typeof media === 'string') return toAbsoluteStrapiUrl(media)
+
+  const nested = media?.data?.attributes ?? media?.attributes ?? media
+  const directUrl =
+    nested?.url ??
+    nested?.formats?.large?.url ??
+    nested?.formats?.medium?.url ??
+    nested?.formats?.small?.url ??
+    media?.url ??
+    media?.formats?.large?.url ??
+    media?.formats?.medium?.url ??
+    media?.formats?.small?.url
+
+  return toAbsoluteStrapiUrl(directUrl)
 }
 
 const slugify = value =>
@@ -356,6 +391,35 @@ const orderServices = items => {
   })
 }
 
+const decorThemeCanonicalSlug = theme => {
+  const slug = slugify(theme?.slug ?? theme?.label ?? theme?.name)
+  return DECOR_THEME_SLUG_ALIASES[slug] ?? slug
+}
+
+const decorThemeOrderIndex = theme => {
+  const index = DECOR_THEME_DISPLAY_ORDER.indexOf(decorThemeCanonicalSlug(theme))
+  return index === -1 ? 999 : index
+}
+
+const orderDecorThemes = themes =>
+  [...(Array.isArray(themes) ? themes : [])].sort((a, b) => {
+    const orderDiff = decorThemeOrderIndex(a) - decorThemeOrderIndex(b)
+    if (orderDiff !== 0) return orderDiff
+
+    return String(a?.label ?? '').localeCompare(String(b?.label ?? ''), undefined, {
+      sensitivity: 'base',
+    })
+  })
+
+const mergeMissingDecorThemes = (themes, fallbackThemes) => {
+  const existingSlugs = new Set(themes.map(theme => decorThemeCanonicalSlug(theme)))
+  const missing = (Array.isArray(fallbackThemes) ? fallbackThemes : []).filter(
+    theme => !existingSlugs.has(decorThemeCanonicalSlug(theme))
+  )
+
+  return [...themes, ...missing]
+}
+
 const filterDecorThemes = themes =>
   (Array.isArray(themes) ? themes : []).filter(theme => {
     const label = String(theme?.label ?? theme?.name ?? '')
@@ -404,7 +468,7 @@ const mapWizardOption = (item, index) => ({
   label: item?.name ?? item?.label ?? item?.title ?? `Option ${index + 1}`,
   slug:
     item?.slug?.trim() || slugify(item?.name ?? item?.label ?? item?.title ?? item?.id ?? index),
-  preview_image: toAbsoluteStrapiUrl(item?.preview_image?.url ?? item?.preview_image),
+  preview_image: resolveStrapiMediaUrl(item?.preview_image),
   description:
     typeof item?.description === 'string' ? item.description : blocksToText(item?.description),
   starting_price: item?.starting_price ?? item?.base_price ?? null,
@@ -460,7 +524,7 @@ const resolveWizardStepsFromStrapi = async serviceCategoryId => {
         }
 
         if (step.source === 'themes') {
-          params['populate[0]'] = 'preview_image'
+          params['populate[preview_image]'] = 'true'
         }
 
         const { data: items } = await strapiGet(`/${step.source}`, params)
@@ -719,11 +783,46 @@ export function usePackageWizardSteps(serviceCategoryId) {
 
 export function useDecorThemeOptions(serviceCategoryId) {
   const query = usePackageWizardSteps(serviceCategoryId)
+  const themesPreviewQuery = useQuery({
+    queryKey: ['decor-theme-previews'],
+    queryFn: async () => {
+      if (USE_FALLBACK) return []
+      try {
+        const { data } = await strapiGet('/themes', {
+          'filters[is_active][$eq]': 'true',
+          'populate[preview_image]': 'true',
+          sort: 'display_order:asc',
+        })
+        return sortByDisplayOrder((data ?? []).map(mapWizardOption))
+      } catch {
+        return []
+      }
+    },
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+  })
+
   const step = findStepBySource(query.data?.steps, 'themes')
-  const options = step?.options?.length ? step.options : DECOR_THEME_FALLBACK
+  const wizardOptions = step?.options?.length ? step.options : DECOR_THEME_FALLBACK
+  const previewBySlug = new Map(
+    (themesPreviewQuery.data ?? [])
+      .map(theme => [slugify(theme.slug ?? theme.label), theme.preview_image])
+      .filter(([, previewImage]) => Boolean(previewImage))
+  )
+
+  const mergedOptions = wizardOptions.map(option => {
+    const slugKey = slugify(option.slug ?? option.label)
+    const backendPreview = option.preview_image || previewBySlug.get(slugKey) || null
+    return backendPreview ? { ...option, preview_image: backendPreview } : option
+  })
+
+  const themesWithFallback = mergeMissingDecorThemes(mergedOptions, DECOR_THEME_FALLBACK)
+
   return {
     ...query,
-    data: filterDecorThemes(options),
+    isLoading: query.isLoading || themesPreviewQuery.isLoading,
+    isFetching: query.isFetching || themesPreviewQuery.isFetching,
+    data: filterDecorThemes(orderDecorThemes(themesWithFallback)),
   }
 }
 

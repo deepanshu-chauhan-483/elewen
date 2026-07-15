@@ -61,7 +61,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
     setIncludesState({ resetKey: includesResetKeyWithViewport, showAll })
   }
   const [visibleTagCount, setVisibleTagCount] = useState(0)
-  const location = useLocation()
+  const location = useLocation()  
   const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
   const packageId = pkg.documentId ?? pkg.id
   const wishlistPackageId = String(pkg.id ?? pkg.documentId ?? '').trim()
@@ -262,17 +262,6 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </div>
         )}
 
-        {pkg.title ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/70 via-black/35 to-transparent px-3 pb-3 pt-10">
-            <p
-              className="line-clamp-2 text-[13px] font-semibold leading-[1.3] text-white sm:text-[14px]"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              {pkg.title}
-            </p>
-          </div>
-        ) : null}
-
         {/* Price + Wishlist */}
         <div className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
           {pkg.price ? (
@@ -363,7 +352,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           >
             <svg
               width="15"
-              height="15"
+              height="15" 
               viewBox="0 0 24 24"
               stroke="white"
               strokeWidth="2"
@@ -395,10 +384,9 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
 
         {pkg.price ? (
           <p className="mt-2 text-[13px] leading-none text-[#2D2D2D]">
-            Starting from <span className="text-[15px] font-bold text-[#591902]">{pkg.price}</span>
+            Price <span className="text-[15px] font-bold text-[#591902]">{pkg.price}</span>
           </p>
         ) : null}
-
         <div className="mt-2 flex min-h-0 flex-1 flex-col">
           <p className="text-[12px] font-medium">Includes :</p>
           <div

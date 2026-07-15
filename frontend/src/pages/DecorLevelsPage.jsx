@@ -1,12 +1,13 @@
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import PackageCard from '../components/package-listing/PackageCard'
 import PackageListLayout from '../components/package-listing/PackageListLayout'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { usePackages } from '../hooks/usePackages'
-import { useBudgetLevelOptions } from '../hooks/useEventTypes'
+import { useBudgetLevelOptions, useFilteredServiceOptions } from '../hooks/useEventTypes'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
+import { DEFAULT_EVENT_CATEGORY_SLUG, resolveServiceLaneId } from '../lib/serviceFlow'
 import { assignDistinctCoverIndices, filterPackages } from '../lib/packageFilters'
 
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -92,19 +93,58 @@ export default function DecorLevelsPage() {
   const packagesQuery = usePackages()
   const { data: packages = [] } = packagesQuery
   const [sortValue, setSortValue] = useState('price-desc')
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (typeof window === 'undefined') return true
     return window.innerWidth >= 768
   })
 
+  const themeParam = searchParams.get('theme')?.toLowerCase() ?? ''
+
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+
+  useEffect(() => {
+    if (categorySlug) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.set('category', DEFAULT_EVENT_CATEGORY_SLUG)
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [categorySlug, setSearchParams])
+
+  useEffect(() => {
+    if (!themeParam) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.delete('theme')
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [themeParam, setSearchParams])
+
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
   const eventId = searchParams.get('eventId') ?? ''
-  const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
-  const serviceId = searchParams.get('serviceId') ?? ''
+  const levelParam = searchParams.get('level')?.toLowerCase() ?? ''
+  const serviceIdParam = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
-  const levelsQuery = useBudgetLevelOptions(serviceId)
+  const { data: serviceOptions = [] } = useFilteredServiceOptions(['decor'])
+  const resolvedServiceId = useMemo(
+    () =>
+      resolveServiceLaneId({
+        serviceSlug: 'decor',
+        serviceId: serviceIdParam,
+        serviceOptions,
+      }),
+    [serviceIdParam, serviceOptions]
+  )
+  const levelsQuery = useBudgetLevelOptions(resolvedServiceId)
   const { data: levels = [] } = levelsQuery
   const isStrapiLoading = useStrapiPageLoading(packagesQuery, levelsQuery)
 
@@ -147,14 +187,11 @@ export default function DecorLevelsPage() {
   const filteredPackages = useMemo(
     () =>
       filterPackages(packagesData, {
-        categorySlug,
-        eventSlug,
-        eventId,
+        categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
         serviceSlug: 'decor',
-        serviceId,
-        themeSlug,
+        serviceId: serviceIdParam,
       }),
-    [packagesData, categorySlug, eventSlug, eventId, serviceId, themeSlug]
+    [packagesData, categorySlug, serviceIdParam]
   )
 
   const sortedPackages = useMemo(() => {
@@ -165,6 +202,12 @@ export default function DecorLevelsPage() {
       return items.sort((a, b) => (b.base_price ?? 0) - (a.base_price ?? 0))
     return items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
   }, [filteredPackages, sortValue])
+
+  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${serviceIdParam}:${sortValue}`
+
+  useEffect(() => {
+    setPagination({ level1: 0, level2: 0, level3: 0, level4: 0 })
+  }, [filterKey])
 
   const getPaginatedPackages = (items, page) => {
     const start = page * cardsPerRow
@@ -215,19 +258,24 @@ export default function DecorLevelsPage() {
 
   const buildViewAllLink = level => {
     const params = new URLSearchParams()
-    if (categorySlug) params.set('category', categorySlug)
+    params.set('category', categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
     if (eventSlug) params.set('event', eventSlug)
     if (eventId) params.set('eventId', eventId)
     params.set('service', 'decor')
-    if (serviceId) params.set('serviceId', serviceId)
+    if (resolvedServiceId) params.set('serviceId', resolvedServiceId)
     if (flow) params.set('flow', flow)
-    if (themeSlug) params.set('theme', themeSlug)
     if (level?.slug) params.set('level', level.slug)
     return `/packages/decor?${params.toString()}`
   }
 
   if (isStrapiLoading) {
     return <CmsPageLoader />
+  }
+
+  if (levelParam) {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('theme')
+    return <Navigate to={`/packages/decor?${nextParams.toString()}`} replace />
   }
 
   return (
@@ -242,10 +290,9 @@ export default function DecorLevelsPage() {
       onPageSelect={() => {}}
       ctaTitle="Not sure which decor package is right for you?"
       showPagination={false} // ← This hides the bottom number + arrow pagination
-      heroContent={<PackageResultsHero />}
+      heroContent={<PackageResultsHero showThemeFilter={false} />}
     >
       <div className="flex flex-col gap-12">
-        {/* Your existing content with per-level arrows and dynamic dots */}
         <p className="max-w-[540px] text-[12px] leading-[1.5] text-black/35">
           <span className="text-[16px] text-[#1C1C1C] font-medium">
             Each level represents the scale and detail of your setup.
@@ -255,8 +302,8 @@ export default function DecorLevelsPage() {
 
         {levelSections.map(level => {
           const levelKey = level.key
-          const currentPage = pagination[levelKey] || 0
           const totalPages = getTotalPages(level.packages)
+          const currentPage = Math.min(pagination[levelKey] || 0, totalPages - 1)
           const visiblePackages = assignDistinctCoverIndices(
             getPaginatedPackages(level.packages, currentPage),
             { columns: 3 }
@@ -293,7 +340,7 @@ export default function DecorLevelsPage() {
                       >
                         <PackageCard
                           pkg={pkg}
-                          className="h-[475px] md:h-auto"
+                          className="h-auto"
                           compactMode={!isDesktopViewport}
                         />
                       </div>

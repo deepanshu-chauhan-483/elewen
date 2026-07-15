@@ -20,6 +20,8 @@ export const SERVICE_PAGE_ALLOWED_SLUGS = [
 
 export const SERVICES_FLOW_KEY = 'services'
 
+export const DEFAULT_EVENT_CATEGORY_SLUG = 'social'
+
 export function buildServiceFlowParams({
   categorySlug = '',
   eventSlug = '',
@@ -69,6 +71,7 @@ export function buildServiceDestination({
 export function buildServicesFlowDestination({ serviceSlug = '', serviceId = '' }) {
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
   const params = buildServiceFlowParams({
+    categorySlug: DEFAULT_EVENT_CATEGORY_SLUG,
     serviceSlug: normalizedServiceSlug,
     serviceId,
     flow: SERVICES_FLOW_KEY,
@@ -131,4 +134,20 @@ export function buildServicesCategoryDestination({
     normalizedServiceSlug === 'decor' ? '/event-flow/decor-theme' : '/package-listing'
 
   return `${baseRoute}?${params.toString()}`
+}
+
+/** Prefer top-level decor lane id when URL carries a featured subcategory id (e.g. decoration → decor). */
+export function resolveServiceLaneId({
+  serviceSlug = '',
+  serviceId = '',
+  serviceOptions = [],
+}) {
+  const normalizedTarget = normalizeServiceSlug(serviceSlug || '')
+  const laneMatch = (Array.isArray(serviceOptions) ? serviceOptions : []).find(
+    service => normalizeServiceSlug(service?.slug) === normalizedTarget
+  )
+
+  if (laneMatch?.id != null) return String(laneMatch.id)
+
+  return serviceId != null ? String(serviceId) : ''
 }

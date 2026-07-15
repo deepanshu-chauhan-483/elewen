@@ -3,6 +3,37 @@ const normalizeValue = value =>
     .trim()
     .toLowerCase()
 
+const normalizeLevelSlug = value =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+const normalizeThemeSlug = value =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+function packageMatchesLevelFilter(pkg, { levelSlug = '', levelId = '' } = {}) {
+  if (!levelSlug && !levelId) return true
+
+  const normalizedFilterSlug = normalizeLevelSlug(levelSlug)
+  const normalizedPackageSlug = normalizeLevelSlug(pkg?.level_slug)
+  const slugMatch = Boolean(
+    normalizedFilterSlug && normalizedPackageSlug && normalizedFilterSlug === normalizedPackageSlug
+  )
+  const idMatch = Boolean(
+    levelId && pkg?.level_id && normalizeValue(pkg.level_id) === normalizeValue(levelId)
+  )
+
+  return slugMatch || idMatch
+}
+
 const normalizeList = values =>
   (Array.isArray(values) ? values : []).map(value => normalizeValue(value)).filter(Boolean)
 
@@ -287,25 +318,31 @@ export function filterPackages(packages, filters = {}) {
       const bySlug = eventSlug ? includesEventSlug(pkg.event_slugs, eventSlug) : false
       if (!(byId || bySlug)) return false
     }
+    const serviceSlugs = Array.isArray(pkg.service_slugs) ? pkg.service_slugs : []
     if (
       normalizedServiceSlug &&
-      !(Array.isArray(pkg.service_slugs) ? pkg.service_slugs : []).some(
-        value => normalizeServiceSlug(value) === normalizedServiceSlug
-      )
+      !serviceSlugs.some(value => normalizeServiceSlug(value) === normalizedServiceSlug)
     ) {
       return false
     }
     const packageServiceIds = Array.isArray(pkg.service_ids) ? pkg.service_ids.filter(Boolean) : []
-    if (
-      serviceId &&
-      packageServiceIds.length &&
-      !includesNormalized(packageServiceIds, serviceId)
-    ) {
-      return false
+    if (serviceId && packageServiceIds.length && !includesNormalized(packageServiceIds, serviceId)) {
+      const serviceLaneMatched =
+        Boolean(normalizedServiceSlug) &&
+        serviceSlugs.some(value => normalizeServiceSlug(value) === normalizedServiceSlug)
+      if (!serviceLaneMatched) return false
     }
-    if (!includesNormalized(pkg.theme_slugs, themeSlug)) return false
-    if (levelSlug && normalizeValue(pkg.level_slug) !== normalizeValue(levelSlug)) return false
-    if (levelId && normalizeValue(pkg.level_id) !== normalizeValue(levelId)) return false
+    const packageThemeSlugs = Array.isArray(pkg.theme_slugs) ? pkg.theme_slugs : []
+    if (themeSlug) {
+      if (!packageThemeSlugs.length) return false
+
+      const normalizedThemeFilter = normalizeThemeSlug(themeSlug)
+      const themeMatched = packageThemeSlugs.some(
+        value => normalizeThemeSlug(value) === normalizedThemeFilter
+      )
+      if (!themeMatched) return false
+    }
+    if (!packageMatchesLevelFilter(pkg, { levelSlug, levelId })) return false
     return true
   })
 }

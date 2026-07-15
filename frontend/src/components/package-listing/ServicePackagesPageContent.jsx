@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PackageCard from './PackageCard'
 import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'
@@ -21,6 +21,7 @@ import pkgImg7 from '../../assets/images/IMG_8625.png'
 import pkgImg8 from '../../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../../assets/images/6f6af066.jpg'
 import { useSearchParams } from 'react-router-dom'
+import { DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg2, pkgImg3],
@@ -48,7 +49,7 @@ export default function ServicePackagesPageContent({
   const { data: packages = [] } = packagesQuery
   const isStrapiLoading = useStrapiPageLoading(packagesQuery)
 
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [sortValue, setSortValue] = useState('price-desc')
   const [page, setPage] = useState(1)
   // const [searchParams] = useSearchParams()
@@ -74,12 +75,27 @@ export default function ServicePackagesPageContent({
   const eventId = searchParams.get('eventId') ?? ''
   const selectedServiceSlug =
     normalizeServiceSlug(searchParams.get('service')) || normalizeServiceSlug(serviceSlug)
-  const serviceId = searchParams.get('serviceId') ?? ''
+  const serviceIdParam = searchParams.get('serviceId') ?? ''
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
   const searchQuery = searchParams.get('search')?.trim() ?? ''
+  useEffect(() => {
+    if (categorySlug) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.set('category', DEFAULT_EVENT_CATEGORY_SLUG)
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [categorySlug, setSearchParams])
+
   const shouldBypassEventFilters = selectedServiceSlug === 'sheesha'
-  const effectiveCategorySlug = shouldBypassEventFilters ? '' : categorySlug
+  const effectiveCategorySlug = shouldBypassEventFilters
+    ? ''
+    : categorySlug || DEFAULT_EVENT_CATEGORY_SLUG
   const effectiveEventSlug = shouldBypassEventFilters ? '' : eventSlug
   const effectiveEventId = shouldBypassEventFilters ? '' : eventId
 
@@ -90,7 +106,7 @@ export default function ServicePackagesPageContent({
         serviceSlug: serviceSlug || pkg.service_slugs?.[0] || '',
         images: pkg.images?.length
           ? pkg.images
-          : (PKG_LOCAL_IMAGES[i % PKG_LOCAL_IMAGES.length] ?? []),
+          : (PKG_LOCAL_IMAGES[(pkg._index ?? i) % PKG_LOCAL_IMAGES.length] ?? []),
       })),
     [packages, serviceSlug]
   )
@@ -101,8 +117,8 @@ export default function ServicePackagesPageContent({
       eventSlug: effectiveEventSlug,
       eventId: effectiveEventId,
       serviceSlug: selectedServiceSlug,
-      serviceId,
-      themeSlug,
+      serviceId: serviceIdParam,
+      themeSlug: levelSlug ? '' : themeSlug,
       levelSlug,
     })
 
@@ -114,7 +130,7 @@ export default function ServicePackagesPageContent({
     effectiveEventSlug,
     effectiveEventId,
     selectedServiceSlug,
-    serviceId,
+    serviceIdParam,
     themeSlug,
     levelSlug,
     searchQuery,

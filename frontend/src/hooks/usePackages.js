@@ -69,6 +69,51 @@ function getBudgetLevelSlug(level) {
   return String(level?.slug ?? '').trim() || slugify(label)
 }
 
+function inferLevelSlugFromInternalPackageCode(value) {
+  const text = String(value ?? '').trim()
+  if (!text) return ''
+
+  const match = text.match(/(\d+)\s*$/)
+  if (!match) return ''
+
+  return `level-${match[1]}`
+}
+
+function resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel) {
+  for (const section of detailSections) {
+    if (section?.__component !== 'package.cateringpackage') continue
+
+    const fromInternalCode = inferLevelSlugFromInternalPackageCode(
+      section?.internal_package_code
+    )
+    if (fromInternalCode) return fromInternalCode
+  }
+
+  const fromBudgetLevel = getBudgetLevelSlug(primaryBudgetLevel)
+  if (fromBudgetLevel) return fromBudgetLevel
+
+  const slugMatch = String(pkg?.slug ?? '').match(/-(\d+)$/)
+  if (slugMatch) return `level-${slugMatch[1]}`
+
+  return ''
+}
+
+function mapMediaToUrls(media) {
+  return normaliseMediaArray(media)
+    .map(image => {
+      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
+      return toAbsoluteStrapiUrl(image?.url)
+    })
+    .filter(Boolean)
+}
+
+function buildListingCoverImages(pkg, detailSections = []) {
+  const packageImages = mapMediaToUrls(pkg?.images)
+  if (packageImages.length) return packageImages
+
+  return buildPackageImageUrls(pkg, detailSections)
+}
+
 function normaliseDynamicZoneItems(value) {
   if (!value) return []
   if (Array.isArray(value)) return value
@@ -389,12 +434,7 @@ function getSectionElementImages(section) {
 }
 
 function buildPackageImageUrls(pkg, detailSections = []) {
-  const packageImages = normaliseMediaArray(pkg.images)
-    .map(image => {
-      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
-      return toAbsoluteStrapiUrl(image?.url)
-    })
-    .filter(Boolean)
+  const packageImages = mapMediaToUrls(pkg?.images)
 
   return uniqueValues([
     ...packageImages,
@@ -456,9 +496,11 @@ function normalizePackage(pkg, index = 0, options = {}) {
     service_slugs: serviceSlugs,
     service_ids: serviceIds,
     theme_slugs: getPackageThemeSlugs(pkg),
-    level_slug: getBudgetLevelSlug(primaryBudgetLevel),
+    level_slug: resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel),
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
-    images: buildPackageImageUrls(pkg, detailSections),
+    images: listing
+      ? buildListingCoverImages(pkg, detailSections)
+      : buildPackageImageUrls(pkg, detailSections),
     _index: index,
   }
 
@@ -585,7 +627,7 @@ async function fetchPackages(params = {}) {
 
 export function usePackages() {
   return useQuery({
-    queryKey: ['packages', 'live-v7-themes-levels-search'],
+    queryKey: ['packages', 'live-v8-catering-level-slugs'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
       try {

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import CustomSelect from '../common/CustomSelect'
 import {
@@ -9,7 +9,7 @@ import {
   useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
 import { eventSlugsMatch, normalizeServiceSlug } from '../../lib/packageFilters'
-import { buildServiceDestination } from '../../lib/serviceFlow'
+import { buildServiceDestination, DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
 
 function FilterPill({
   label,
@@ -76,6 +76,7 @@ export default function PackageResultsHero({
   title = 'Showing results for:',
   filters = [],
   className = '',
+  showThemeFilter = true,
 }) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -89,9 +90,35 @@ export default function PackageResultsHero({
   const serviceIdParam = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
 
+  useEffect(() => {
+    if (categorySlug) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.set('category', DEFAULT_EVENT_CATEGORY_SLUG)
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [categorySlug, setSearchParams])
+
+  useEffect(() => {
+    if (!levelSlug || !themeSlug) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.delete('theme')
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [levelSlug, themeSlug, setSearchParams])
+
   const { data: allCategories = [] } = useEventCategoryOptions()
   const { data: allServices = [] } = useFilteredServiceOptions(SERVICE_ORDER)
-  const { data: allEvents = [] } = useEventsByCategory(categorySlug)
+  const { data: allEvents = [] } = useEventsByCategory(categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
 
   const categories = useMemo(
     () =>
@@ -229,6 +256,13 @@ export default function PackageResultsHero({
         return
       }
 
+      if (key === 'level') {
+        nextParams.set('level', value)
+        nextParams.delete('theme')
+        setSearchParams(nextParams)
+        return
+      }
+
       nextParams.set(key, value)
       setSearchParams(nextParams)
     },
@@ -249,7 +283,7 @@ export default function PackageResultsHero({
     return [
       {
         label: 'Category',
-        value: categorySlug,
+        value: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
         widthClass: DEFAULT_WIDTHS.category,
         options: categories.map(toSelectOption),
         onChange: event => handleFilterChange('category', event.target.value),
@@ -268,7 +302,7 @@ export default function PackageResultsHero({
         options: levels,
         onChange: event => handleFilterChange('level', event.target.value),
       },
-      isDecorService
+      isDecorService && showThemeFilter && !levelSlug
         ? {
             label: 'Theme',
             value: themeSlug,
@@ -289,6 +323,7 @@ export default function PackageResultsHero({
     levels,
     themeSlug,
     themes,
+    showThemeFilter,
   ])
 
   const displayFilters = filters.length > 0 ? filters : autoFilters
