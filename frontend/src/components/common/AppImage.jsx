@@ -43,6 +43,7 @@ export default function AppImage({
       decoding="async"
       onLoad={handleLoad}
       onError={onError}
+      style={{ imageOrientation: 'from-image' }}
       className={`transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${className}`}
       {...rest}
     />

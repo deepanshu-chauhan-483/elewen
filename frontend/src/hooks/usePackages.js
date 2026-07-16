@@ -98,13 +98,22 @@ function resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel) {
   return ''
 }
 
+function resolveStrapiImageUrl(image) {
+  if (!image) return ''
+  if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
+
+  const rawUrl =
+    image.formats?.large?.url ??
+    image.formats?.medium?.url ??
+    image.formats?.small?.url ??
+    image.url ??
+    ''
+
+  return toAbsoluteStrapiUrl(rawUrl)
+}
+
 function mapMediaToUrls(media) {
-  return normaliseMediaArray(media)
-    .map(image => {
-      if (typeof image === 'string') return toAbsoluteStrapiUrl(image)
-      return toAbsoluteStrapiUrl(image?.url)
-    })
-    .filter(Boolean)
+  return normaliseMediaArray(media).map(resolveStrapiImageUrl).filter(Boolean)
 }
 
 function buildListingCoverImages(pkg, detailSections = []) {
