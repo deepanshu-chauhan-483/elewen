@@ -22,6 +22,21 @@ export const SERVICES_FLOW_KEY = 'services'
 
 export const DEFAULT_EVENT_CATEGORY_SLUG = 'social'
 
+export const DECOR_THEME_CATEGORY_SLUG = 'social'
+
+/** Decor theme picker is social-only; other categories skip straight to package levels. */
+export function resolveDecorDestination(categorySlug = '') {
+  const normalizedCategory = String(categorySlug ?? '')
+    .trim()
+    .toLowerCase()
+
+  if (normalizedCategory === DECOR_THEME_CATEGORY_SLUG) {
+    return '/event-flow/decor-theme'
+  }
+
+  return '/packages/decor-levels'
+}
+
 export function buildServiceFlowParams({
   categorySlug = '',
   eventSlug = '',
@@ -62,8 +77,12 @@ export function buildServiceDestination({
     flow,
   })
 
-  const baseRoute =
+  let baseRoute =
     SERVICE_ROUTE_MAP[serviceSlug] ?? SERVICE_ROUTE_MAP[normalizedServiceSlug] ?? '/package-listing'
+
+  if (normalizedServiceSlug === 'decor') {
+    baseRoute = resolveDecorDestination(categorySlug)
+  }
 
   return `${baseRoute}?${params.toString()}`
 }
@@ -131,7 +150,9 @@ export function buildServicesCategoryDestination({
 
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
   const baseRoute =
-    normalizedServiceSlug === 'decor' ? '/event-flow/decor-theme' : '/package-listing'
+    normalizedServiceSlug === 'decor'
+      ? resolveDecorDestination(categorySlug)
+      : '/package-listing'
 
   return `${baseRoute}?${params.toString()}`
 }

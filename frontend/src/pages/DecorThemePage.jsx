@@ -7,7 +7,12 @@ import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { buildServiceSelectionBackTo, resolveServiceLaneId, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
+import {
+  buildServiceSelectionBackTo,
+  DECOR_THEME_CATEGORY_SLUG,
+  resolveServiceLaneId,
+  SERVICES_FLOW_KEY,
+} from '../lib/serviceFlow'
 
 import themeImg2 from '../assets/images/IMG_7768.jpg'
 import themeImg3 from '../assets/images/IMG_0749.jpg'
@@ -283,6 +288,10 @@ export default function DecorThemePage() {
         replace
       />
     )
+  }
+
+  if (categoryId !== DECOR_THEME_CATEGORY_SLUG || serviceSlug !== 'decor') {
+    return <Navigate to={skipToPackages} replace />
   }
 
   if (isStrapiLoading) {

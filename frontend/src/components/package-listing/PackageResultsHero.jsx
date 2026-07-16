@@ -9,7 +9,7 @@ import {
   useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
 import { eventSlugsMatch, normalizeServiceSlug } from '../../lib/packageFilters'
-import { buildServiceDestination, DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
+import { buildServiceDestination, DECOR_THEME_CATEGORY_SLUG, DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
 
 function FilterPill({
   label,
@@ -302,7 +302,7 @@ export default function PackageResultsHero({
         options: levels,
         onChange: event => handleFilterChange('level', event.target.value),
       },
-      isDecorService && showThemeFilter && !levelSlug
+      isDecorService && categorySlug === DECOR_THEME_CATEGORY_SLUG && showThemeFilter && !levelSlug
         ? {
             label: 'Theme',
             value: themeSlug,
