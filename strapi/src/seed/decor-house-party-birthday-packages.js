@@ -33,7 +33,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 325.0 },
     ],
     inclustions: [
-      { text: '5 bunches of flowers arranged in 5 vases Choose types of flowers: Level 1 Daisy, Roses, jipso, baby breathe 550 per vase Level 2 carnations, jarbra, rajnigandha 650 per vase Level 3 lily, orchid, eustoma 1200 per vase Daisy, Roses, jipso, baby breathe carnations, jarbra, rajnigandha lily, orchid, eustoma', group_title: 'Includes' },
+      { text: '5 bunches of flowers arranged in 5 vases Choose types of flowers: Level 1 Daisy, Roses, jipso, baby breathe 550 per vase Level 2 carnations, jarbra, rajnigandha 650 per vase Level 3 lily, orchid, eustoma 1200 per vase Daisy, Roses, jipso, baby breathe car', group_title: 'Includes' },
+      { text: 'nations, jarbra, rajnigandha lily, orchid, eustoma', group_title: 'Includes' },
     ],
   },
   {
@@ -66,7 +67,10 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 585.0 },
     ],
     inclustions: [
-      { text: '5 bunches of Fresh Flowers Placed in 5 vases. Choose types of flowers: Level 1 Daisy, Roses, jipso, baby breathe 500 per vase Level 2 carnations, jarbra, rajnigandha 650 per vase Level 3 lily, orchid, eustoma 1200 per vase Daisy, Roses, jipso, baby breathe carnations, jarbra, rajnigandha lily, orchid, eustoma\n3 Floor Vases with Fresh flower bunches (1 big + 2 small vases) Choose types of flowers: Level 1 Daisy, Roses, jipso, baby breathe 1000 per 3 vases Level 2 carnations, jarbra, rajnigandha 1350 per vase Level 3 lily, orchid, eustoma 1600 per vase\n15 Glass holder with Candles', group_title: 'Includes' },
+      { text: '5 bunches of Fresh Flowers Placed in 5 vases.', group_title: 'Includes' },
+      { text: 'Choose types of flowers: Level 1 Daisy, Roses, jipso, baby breathe 500 per vase Level 2 carnations, jarbra, rajnigandha 650 per vase Level 3 lily, orchid, eustoma 1200 per vase Daisy, Roses, jipso, baby breathe carnations, jarbra, rajnigandha lily, orchid', group_title: 'Includes' },
+      { text: ', eustoma 3 Floor Vases with Fresh flower bunches (1 big + 2 small vases) Choose types of flowers: Level 1 Daisy, Roses, jipso, baby breathe 1000 per 3 vases Level 2 carnations, jarbra, rajnigandha 1350 per vase Level 3 lily, orchid, eustoma 1600 per vase', group_title: 'Includes' },
+      { text: '15 Glass holder with Candles', group_title: 'Includes' },
     ],
   },
   {
@@ -217,7 +221,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Transport and Labour', amount: 600.0 },
     ],
     inclustions: [
-      { text: 'Choose 1 – Entrance set up or balloons + Floral or complete Balloon Decor Florals: 5 centerpieces + 4 crates/urli + 5–7 candles (entrance/corner setup) OR Balloons: Balloon arch + Balloon sign + 5 centerpieces OR Ring balloon backdrop with neon sign Choose 1 – Entry Signage Easel with sign (recommended with floral entrance styling) Printables + Props (1 fun quote / Bar menu / 1 neon sign + 15 colourful shot glasses)', group_title: 'Includes' },
+      { text: 'Choose 1 – Entrance set up or balloons + Floral or complete Balloon Decor Florals: 5 centerpieces + 4 crates/urli + 5–7 candles (entrance/corner setup) OR Balloons: Balloon arch + Balloon sign + 5 centerpieces OR Ring balloon backdrop with neon sign Choos', group_title: 'Includes' },
+      { text: 'e 1 – Entry Signage Easel with sign (recommended with floral entrance styling) Printables + Props (1 fun quote / Bar menu / 1 neon sign + 15 colourful shot glasses)', group_title: 'Includes' },
     ],
   },
   {
@@ -248,7 +253,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 1370.0 },
     ],
     inclustions: [
-      { text: 'Choose 1 – Floral or Balloon Decor Florals: 5 centerpieces + 4 crates/urli + 5–7 candles (entrance/corner setup) OR Balloons: Balloon arch + 5 centerpieces OR Ring balloon backdrop with neon sign Choose 1 – Entry Signage Easel with sign (recommended with floral entrance styling) Printables + Props (1 fun quote / Bar menu / 1 neon sign + 15 colourful shot glasses)', group_title: 'Includes' },
+      { text: 'Choose 1 – Floral or Balloon Decor Florals: 5 centerpieces + 4 crates/urli + 5–7 candles (entrance/corner setup) OR Balloons: Balloon arch + 5 centerpieces OR Ring balloon backdrop with neon sign Choose 1 – Entry Signage Easel with sign (recommended with', group_title: 'Includes' },
+      { text: 'floral entrance styling) Printables + Props (1 fun quote / Bar menu / 1 neon sign + 15 colourful shot glasses)', group_title: 'Includes' },
     ],
   },
   {
@@ -279,7 +285,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 1620.0 },
     ],
     inclustions: [
-      { text: 'Choose Your Style FLORAL (Premium Flowers) - 5 centerpieces - Entrance floral setup (crates/urli) - 5–7 candles - Fancy entry signage with flowers OR BALLOON (Premium Mix) - Balloon arch with sign - Fancy entry signage with balloons (Guests can either choose the floral or balloon pack (not individual items from both) Printables + Props 1 fun quote 1 Bar menu 1 neon sign / 10 shot glasses', group_title: 'Includes' },
+      { text: 'Choose Your Style FLORAL (Premium Flowers) - 5 centerpieces - Entrance floral setup (crates/urli) - 5–7 candles - Fancy entry signage with flowers OR BALLOON (Premium Mix) - Balloon arch with sign - Fancy entry signage with balloons (Guests can either cho', group_title: 'Includes' },
+      { text: 'ose the floral or balloon pack (not individual items from both) Printables + Props 1 fun quote 1 Bar menu 1 neon sign / 10 shot glasses', group_title: 'Includes' },
     ],
   },
   {
@@ -376,7 +383,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 960.0 },
     ],
     inclustions: [
-      { text: 'Basic Bar Setup Black pleated masking for a clean finish Bar Essentials Bar menu with easel 1 bar-themed neon sign Beer Pong Table set up Furniture 1 round tables with linens 6 basic chairs with linens 2 basic cocktail tables 2 Rectangle tales for buffet with chatpapper Optional but recommended 1 Bartender for INR 4700 for 4-5 hours', group_title: 'Includes' },
+      { text: 'Basic Bar Setup Black pleated masking for a clean finish Bar Essentials Bar menu with easel 1 bar-themed neon sign Beer Pong Table set up Furniture 1 round tables with linens 6 basic chairs with linens 2 basic cocktail tables 2 Rectangle tales for buffet', group_title: 'Includes' },
+      { text: 'with chatpapper Optional but recommended 1 Bartender for INR 4700 for 4-5 hours', group_title: 'Includes' },
     ],
   },
   {
@@ -409,7 +417,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 1420.0 },
     ],
     inclustions: [
-      { text: 'Premium Bar Setup Bar Essentials Bar menu with easel 1 bar-themed neon sign Furniture 1 round tables with linens 8 basic chairs with linens 2 basic cocktail tables 2 Rectangle tales for buffet with linen Optional but recommended 1 Bartender for INR 5700 for 4-5 hours', group_title: 'Includes' },
+      { text: 'Premium Bar Setup Bar Essentials Bar menu with easel 1 bar-themed neon sign Furniture 1 round tables with linens 8 basic chairs with linens 2 basic cocktail tables 2 Rectangle tales for buffet with linen Optional but recommended 1 Bartender for INR 5700 f', group_title: 'Includes' },
+      { text: 'or 4-5 hours', group_title: 'Includes' },
     ],
   },
   {
@@ -443,7 +452,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 500.0 },
     ],
     inclustions: [
-      { text: 'Premium Bar Cart Setup Bar Essentials Bar menu with easel 1 bar-themed neon sign Beer Pong Table set up Furniture 1 round tables with linens 8 basic chairs with linens 2 basic cocktail tables 2 Rectangle tales for buffet with linen Optional but recommended 1 Bartender for INR 5700 for 4-5 hours', group_title: 'Includes' },
+      { text: 'Premium Bar Cart Setup Bar Essentials Bar menu with easel 1 bar-themed neon sign Beer Pong Table set up Furniture 1 round tables with linens 8 basic chairs with linens 2 basic cocktail tables 2 Rectangle tales for buffet with linen Optional but recommende', group_title: 'Includes' },
+      { text: 'd 1 Bartender for INR 5700 for 4-5 hours', group_title: 'Includes' },
     ],
   },
   {
@@ -473,7 +483,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 1330.0 },
     ],
     inclustions: [
-      { text: 'Choose 1 – Florals or Balloons 2-4 centerpieces + easel stand OR Balloon arch with sign Printables - 1 fun quote, 1 Bar menu, 1 Take a Shot sign / another quote of your choice Bar Setup - Takhat with black masking Furniture 1 round table 6 chairs 2 cocktail tables', group_title: 'Includes' },
+      { text: 'Choose 1 – Florals or Balloons 2-4 centerpieces + easel stand OR Balloon arch with sign Printables - 1 fun quote, 1 Bar menu, 1 Take a Shot sign / another quote of your choice Bar Setup - Takhat with black masking Furniture 1 round table 6 chairs 2 cockta', group_title: 'Includes' },
+      { text: 'il tables', group_title: 'Includes' },
     ],
   },
   {
@@ -502,7 +513,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 2010.0 },
     ],
     inclustions: [
-      { text: 'Entrance Set up 4 flower vases (big and small) + crates or urlis + 5–7 candles in glasses Easel with welcome sign (can be customised) + florals on the easel Basic Bar Setup Premium Furniture 1 round table 6 fancy chairs 2 cocktail tables Optional Printables 1 fun quote Bar menu Take a Shot sign 1 game suggestion', group_title: 'Includes' },
+      { text: 'Entrance Set up 4 flower vases (big and small) + crates or urlis + 5–7 candles in glasses Easel with welcome sign (can be customised) + florals on the easel Basic Bar Setup Premium Furniture 1 round table 6 fancy chairs 2 cocktail tables Optional Printabl', group_title: 'Includes' },
+      { text: 'es 1 fun quote Bar menu Take a Shot sign 1 game suggestion', group_title: 'Includes' },
     ],
   },
   {
@@ -531,7 +543,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 2860.0 },
     ],
     inclustions: [
-      { text: 'Entrance Set up 4 flower vases (big and small) + crates or urlis + 5–7 candles in glasses Easel with welcome sign (can be customised) + florals on the easel - text both needed Basic Bar Setup Photo-op (Text and colour of the flowers / balloons is customisable post booking) Premium Furniture 1 round table 6 fancy chairs 2 cocktail tables Optional Printables 1 fun quote Bar menu Take a Shot sign 1 game suggestion', group_title: 'Includes' },
+      { text: 'Entrance Set up 4 flower vases (big and small) + crates or urlis + 5–7 candles in glasses Easel with welcome sign (can be customised) + florals on the easel - text both needed Basic Bar Setup Photo-op (Text and colour of the flowers / balloons is customis', group_title: 'Includes' },
+      { text: 'able post booking) Premium Furniture 1 round table 6 fancy chairs 2 cocktail tables Optional Printables 1 fun quote Bar menu Take a Shot sign 1 game suggestion', group_title: 'Includes' },
     ],
   },
   {
@@ -563,7 +576,9 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 2050.0 },
     ],
     inclustions: [
-      { text: 'Choose 1 – Floral or Balloon Styling Florals: 6 premium table centerpieces OR Balloons: Balloon arch with sign Choose 1 – Entry Setup Easel with welcome board + floral styling with crates or urli + 5–7 candles OR Printables - Small signages (Guestbook, Take a Shot, Birthday Quote) along with 2 small easels Choose 1 – Focal Element Bar setup (bar table + one flower vase + bar menu + small easel) OR Basic backdrop (shine wall / ring with florals or balloons) Choose 1 – Highlight Detail 3D Letters (2) OR Neon Sign (“Happy Birthday” / “Oh Baby”)', group_title: 'Includes' },
+      { text: 'Choose 1 – Floral or Balloon Styling Florals: 6 premium table centerpieces OR Balloons: Balloon arch with sign Choose 1 – Entry Setup Easel with welcome board + floral styling with crates or urli + 5–7 candles OR Printables - Small signages (Guestbook, Ta', group_title: 'Includes' },
+      { text: 'ke a Shot, Birthday Quote) along with 2 small easels Choose 1 – Focal Element Bar setup (bar table + one flower vase + bar menu + small easel) OR Basic backdrop (shine wall / ring with florals or balloons) Choose 1 – Highlight Detail 3D Letters (2) OR Neo', group_title: 'Includes' },
+      { text: 'n Sign (“Happy Birthday” / “Oh Baby”)', group_title: 'Includes' },
     ],
   },
   {
@@ -594,7 +609,9 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Choose 1 – Florals or Balloons Florals: 6 centerpieces + entrance setup (crates/urli) + 5–7 candles OR Balloons: Balloon arch with sign + balloon backdrop structure Choose 1 - Entry Setup or printables Easel with welcome board Floral styling Carpet 1 décor element Choose 1 – Backdrop or bar Backdrop options: Shiny wall or Ring backdrop (florals/balloons) or Single panel backdrop (with neon sign or 3D letters) OR Bar with menu and a floral vase Furniture 1 round table with linen 8 chairs with linen 2 cocktail tables 2 buffet tables with linen', group_title: 'Includes' },
+      { text: 'Choose 1 – Florals or Balloons Florals: 6 centerpieces + entrance setup (crates/urli) + 5–7 candles OR Balloons: Balloon arch with sign + balloon backdrop structure Choose 1 - Entry Setup or printables Easel with welcome board Floral styling Carpet 1 déco', group_title: 'Includes' },
+      { text: 'r element Choose 1 – Backdrop or bar Backdrop options: Shiny wall or Ring backdrop (florals/balloons) or Single panel backdrop (with neon sign or 3D letters) OR Bar with menu and a floral vase Furniture 1 round table with linen 8 chairs with linen 2 cockt', group_title: 'Includes' },
+      { text: 'ail tables 2 buffet tables with linen', group_title: 'Includes' },
     ],
   },
   {
@@ -625,7 +642,9 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Choose 1 – Florals or Balloons Florals: 5 centerpieces + entrance setup (crates/urli) + 5–7 candles OR Balloons: Balloon arch with sign + balloon backdrop structure Choose 1 - Entry Setup or printables Easel with welcome board Floral styling Carpet 1 décor element OR Printables (Guestbook / Take a Shot / Birthday quote signs) with 2 small easels Backdrop set up Backdrop options: Shiny wall or Ring backdrop (florals/balloons) or Single panel backdrop Bar set up Bar with menu and a floral vase Furniture 2 round table with linen 12 chairs with linen 2 cocktail tables 2 buffet tables with linen', group_title: 'Includes' },
+      { text: 'Choose 1 – Florals or Balloons Florals: 5 centerpieces + entrance setup (crates/urli) + 5–7 candles OR Balloons: Balloon arch with sign + balloon backdrop structure Choose 1 - Entry Setup or printables Easel with welcome board Floral styling Carpet 1 déco', group_title: 'Includes' },
+      { text: 'r element OR Printables (Guestbook / Take a Shot / Birthday quote signs) with 2 small easels Backdrop set up Backdrop options: Shiny wall or Ring backdrop (florals/balloons) or Single panel backdrop Bar set up Bar with menu and a floral vase Furniture 2 r', group_title: 'Includes' },
+      { text: 'ound table with linen 12 chairs with linen 2 cocktail tables 2 buffet tables with linen', group_title: 'Includes' },
     ],
   },
   {
@@ -656,7 +675,9 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 4730.0 },
     ],
     inclustions: [
-      { text: 'Choose 1 – Florals or Balloons Florals: 6 centerpieces + entrance setup (crates/urli) + 5–7 candles OR Balloons: Balloon arch with sign + balloon backdrop structure Choose 1 - Entry Setup or printables Easel with welcome board Floral styling Carpet 1 décor element OR Printables (Guestbook / Take a Shot / Birthday quote signs) with 2 small easels Backdrop set up Backdrop options: Shiny wall or Ring backdrop (florals/balloons) or Single panel backdrop Bar set up Bar with menu and a floral vase Premium Furniture 2 round tables 20 comfortable chairs 2 cocktail tables 4 buffet tables with linen Optional Add-On (recommended) 10 Fairy lights with electrician to set it up (adds warmth and evening ambience) at 5000', group_title: 'Includes' },
+      { text: 'Choose 1 – Florals or Balloons Florals: 6 centerpieces + entrance setup (crates/urli) + 5–7 candles OR Balloons: Balloon arch with sign + balloon backdrop structure Choose 1 - Entry Setup or printables Easel with welcome board Floral styling Carpet 1 déco', group_title: 'Includes' },
+      { text: 'r element OR Printables (Guestbook / Take a Shot / Birthday quote signs) with 2 small easels Backdrop set up Backdrop options: Shiny wall or Ring backdrop (florals/balloons) or Single panel backdrop Bar set up Bar with menu and a floral vase Premium Furni', group_title: 'Includes' },
+      { text: 'ture 2 round tables 20 comfortable chairs 2 cocktail tables 4 buffet tables with linen Optional Add-On (recommended) 10 Fairy lights with electrician to set it up (adds warmth and evening ambience) at 5000', group_title: 'Includes' },
     ],
   },
   {
@@ -689,7 +710,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 5120.0 },
     ],
     inclustions: [
-      { text: 'Entry Setup Easel with welcome board, crates, flowers and candles Large Panel Backdrop A bold, high-impact focal point designed for photographs and stage moments Bar Setup Styled bar area (options available based on theme and availability) Decor Element Wall Welcome Drink Wall or DIY Wall - we will customised to your occasion and theme - text box for occasion', group_title: 'Includes' },
+      { text: 'Entry Setup Easel with welcome board, crates, flowers and candles Large Panel Backdrop A bold, high-impact focal point designed for photographs and stage moments Bar Setup Styled bar area (options available based on theme and availability) Decor Element W', group_title: 'Includes' },
+      { text: 'all Welcome Drink Wall or DIY Wall - we will customised to your occasion and theme - text box for occasion', group_title: 'Includes' },
     ],
   },
   {
@@ -722,7 +744,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 5500.0 },
     ],
     inclustions: [
-      { text: 'Entry Setup Easel with welcome board, crates, florals and candles Backdrop / Photo-op High-impact focal point for stage moments and photographs Bar Setup 1 Premium Bar set up Decor Element Wall Welcome Drink Wall or DIY Wall - print customised to your theme SFX Additions Cold pyros / entry effects / flower shower (as per venue feasibility)', group_title: 'Includes' },
+      { text: 'Entry Setup Easel with welcome board, crates, florals and candles Backdrop / Photo-op High-impact focal point for stage moments and photographs Bar Setup 1 Premium Bar set up Decor Element Wall Welcome Drink Wall or DIY Wall - print customised to your the', group_title: 'Includes' },
+      { text: 'me SFX Additions Cold pyros / entry effects / flower shower (as per venue feasibility)', group_title: 'Includes' },
     ],
   },
   {
@@ -788,7 +811,8 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Platform fee', amount: 0.1 },
     ],
     inclustions: [
-      { text: 'Signage & Styling 2 printed quote/information boards with small easel stands 2 neon signs Lighting Choose 1: 10 strings of fairy lights with electrician for setup - 2500 or 10 strings of fairy lights without electrician - 5500 Optional Add-Ons 10 candles with glass holders 1 large easel stand with printed board', group_title: 'Includes' },
+      { text: 'Signage & Styling 2 printed quote/information boards with small easel stands 2 neon signs Lighting Choose 1: 10 strings of fairy lights with electrician for setup - 2500 or 10 strings of fairy lights without electrician - 5500 Optional Add-Ons 10 candles', group_title: 'Includes' },
+      { text: 'with glass holders 1 large easel stand with printed board', group_title: 'Includes' },
     ],
     addons: [
       { name: '1 big easel + print', price: 1200.0, description: '1 big easel + print', visibility: true },

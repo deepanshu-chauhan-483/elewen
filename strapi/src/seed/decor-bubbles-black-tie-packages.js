@@ -61,7 +61,8 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Floral Vases - 5 centerpieces with golden vases styled with roses, daisies, and pampas / feathers Entrance Setup - Easel with printed welcome board - 2 floral vases for styling Basic Bar Setup - Basic bar with black masking - 10 Candles in short glass holders for soft ambient lighting', group_title: 'Includes' },
+      { text: 'Floral Vases - 5 centerpieces with golden vases styled with roses, daisies, and pampas / feathers Entrance Setup - Easel with printed welcome board - 2 floral vases for styling Basic Bar Setup - Basic bar with black masking - 10 Candles in short glass hol', group_title: 'Includes' },
+      { text: 'ders for soft ambient lighting', group_title: 'Includes' },
     ],
   },
   {
@@ -92,7 +93,9 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Floral Styling 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc. Entrance Set up: Entrance easel with printed welcome board and floral styling Backdrop (Choose 1): Shiny wall with balloons OR Single panel with balloons Decor Elements: - Feature detailing - 2 LED 3D letters for a celebratory focal point - 10 Candles in short glass holders Bar Set up Basic bar with black masking', group_title: 'Includes' },
+      { text: 'Floral Styling 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.', group_title: 'Includes' },
+      { text: 'Entrance Set up: Entrance easel with printed welcome board and floral styling Backdrop (Choose 1): Shiny wall with balloons OR Single panel with balloons Decor Elements: - Feature detailing - 2 LED 3D letters for a celebratory focal point - 10 Candles in', group_title: 'Includes' },
+      { text: 'short glass holders Bar Set up Basic bar with black masking', group_title: 'Includes' },
     ],
   },
   {
@@ -124,7 +127,9 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc. Entrance Setup Easel styled like a golden frame with printed welcome board or floral styling Customized Backdrop Double panel backdrop for a fuller, more impactful setup Premium Bar Setup Customized premium bar Printed bar menu placed on a small easel Candles Candles in glass jars for warm ambient lighting', group_title: 'Includes' },
+      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.', group_title: 'Includes' },
+      { text: 'Entrance Setup Easel styled like a golden frame with printed welcome board or floral styling Customized Backdrop Double panel backdrop for a fuller, more impactful setup Premium Bar Setup Customized premium bar Printed bar menu placed on a small easel Can', group_title: 'Includes' },
+      { text: 'dles Candles in glass jars for warm ambient lighting', group_title: 'Includes' },
     ],
   },
   {
@@ -156,7 +161,9 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Centerpieces - 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc. - 3 smaller centerpeices for cocktail tables Entrance Setup Easel with printed welcome board and floral styling Backdrop shiny curtain with balloons or single panel with balloons 2 LED 3D letters Basic Bar Setup Bar with black masking Candles Candles in short glass holders Classic Furniture 3 round tables 20 chairs 3 cocktail tables Lighting 8–10 strings of fairy lights, fixed by an electrician', group_title: 'Includes' },
+      { text: 'Centerpieces - 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.', group_title: 'Includes' },
+      { text: '- 3 smaller centerpeices for cocktail tables Entrance Setup Easel with printed welcome board and floral styling Backdrop shiny curtain with balloons or single panel with balloons 2 LED 3D letters Basic Bar Setup Bar with black masking Candles Candles in s', group_title: 'Includes' },
+      { text: 'hort glass holders Classic Furniture 3 round tables 20 chairs 3 cocktail tables Lighting 8–10 strings of fairy lights, fixed by an electrician', group_title: 'Includes' },
     ],
   },
   {
@@ -188,7 +195,10 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc. 3 centerpiece for the cocktail tables Entrance Setup Easel with printed welcome board and floral styling Backdrop shiny curtain with balloons or single panel with balloons 2 LED 3D letters Basic Bar Setup Bar with black masking with a customized bar menu Candles Candles in short glass holders Furniture 3 round tables 20 chairs 3 cocktail tables Lighting 8 - 10 strings of fairy lights 3 - 4 halogen / LED parcans to illuminate the space Printables / games Event printables such as menu, quotes, or a fun game with material and instructions (games like ludo / sequence etc. are not included) Add-On Bartender (optional)', group_title: 'Includes' },
+      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.', group_title: 'Includes' },
+      { text: '3 centerpiece for the cocktail tables Entrance Setup Easel with printed welcome board and floral styling Backdrop shiny curtain with balloons or single panel with balloons 2 LED 3D letters Basic Bar Setup Bar with black masking with a customized bar menu', group_title: 'Includes' },
+      { text: 'Candles Candles in short glass holders Furniture 3 round tables 20 chairs 3 cocktail tables Lighting 8 - 10 strings of fairy lights 3 - 4 halogen / LED parcans to illuminate the space Printables / games Event printables such as menu, quotes, or a fun game', group_title: 'Includes' },
+      { text: 'with material and instructions (games like ludo / sequence etc. are not included) Add-On Bartender (optional)', group_title: 'Includes' },
     ],
   },
   {
@@ -221,7 +231,10 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc. 3 additional centerpieces for cocktail tables Entrance Setup Easel styled like a golden frame with printed welcome board Floral styling Customized Backdrop Double panel backdrop for a fuller celebration setup Premium Bar Setup Customized premium bar Printed bar menu placed on a small easel Candles Candles in glass jars Furniture (Premium) 3 round tables 20 chairs 3 cocktail tables Lighting 8–10 fairy light strings 8-10 paper lanterns with warm lights Props 8–10 themed props (shades / feathers / masks etc. – choose one style)', group_title: 'Includes' },
+      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.', group_title: 'Includes' },
+      { text: '3 additional centerpieces for cocktail tables Entrance Setup Easel styled like a golden frame with printed welcome board Floral styling Customized Backdrop Double panel backdrop for a fuller celebration setup Premium Bar Setup Customized premium bar Print', group_title: 'Includes' },
+      { text: 'ed bar menu placed on a small easel Candles Candles in glass jars Furniture (Premium) 3 round tables 20 chairs 3 cocktail tables Lighting 8–10 fairy light strings 8-10 paper lanterns with warm lights Props 8–10 themed props (shades / feathers / masks etc.', group_title: 'Includes' },
+      { text: '– choose one style)', group_title: 'Includes' },
     ],
   },
   {
@@ -254,7 +267,10 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200.0 },
     ],
     inclustions: [
-      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc. 3 additional centerpieces for cocktail tables Entrance Setup Easel styled like a golden frame with printed welcome board Floral styling Customized Backdrop Double panel backdrop for a fuller celebration setup Premium Bar Setup Customized premium bar Printed bar menu placed on a small easel Candles Candles in glass jars Furniture (Premium) 3 round tables 20 chairs 3 cocktail tables Lighting 8–10 fairy light strings 8-10 paper lanterns with warm lights 3-4 LED Parcans to light up the space and photo-ops Props 8–10 themed props (shades / feathers / masks etc. – choose one style) Event Printables 2 quotes / interactive engagement with 2 small easel stands Recommended Add on Professional Bartender', group_title: 'Includes' },
+      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.', group_title: 'Includes' },
+      { text: '3 additional centerpieces for cocktail tables Entrance Setup Easel styled like a golden frame with printed welcome board Floral styling Customized Backdrop Double panel backdrop for a fuller celebration setup Premium Bar Setup Customized premium bar Print', group_title: 'Includes' },
+      { text: 'ed bar menu placed on a small easel Candles Candles in glass jars Furniture (Premium) 3 round tables 20 chairs 3 cocktail tables Lighting 8–10 fairy light strings 8-10 paper lanterns with warm lights 3-4 LED Parcans to light up the space and photo-ops Pro', group_title: 'Includes' },
+      { text: 'ps 8–10 themed props (shades / feathers / masks etc. – choose one style) Event Printables 2 quotes / interactive engagement with 2 small easel stands Recommended Add on Professional Bartender', group_title: 'Includes' },
     ],
   },
 ];

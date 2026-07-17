@@ -35,7 +35,11 @@ const SUFI_NIGHT_PACKAGES = [
       { label: 'Platform fee', amount: 1000.0 },
     ],
     inclustions: [
-      { text: 'A pathway of 20-25 lanterns (combination of small and big) to guide your guests, all tied together with warm, twinkling lights. Fresh, hand-arranged flowers in 5 small and 5 big vases Traditional floral rangolis at corners 5 centerpieces - lanterns, small vases with flowers, candles with candle holders 12x8ft moon-shaped or double-panel backdrop (you can choose between the 2) 6-8ft. long basic bar with black masking, a bar menu and a vase / candles / lantern 8ft. tall mirror personalised with a quote on it, with candle abras & decor elements 3 basic cocktail tables 2 sofa sets (3 sofas to make one complete set) and 2 coffee tables Tenting behind the 2 seating lounges 5 halogen lights (to light up the bacdrops) and Fairy lighting on the ceiling (pack of 10 lights)', group_title: 'Includes' },
+      { text: 'A pathway of 20-25 lanterns (combination of small and big) to guide your guests, all tied together with warm, twinkling lights.', group_title: 'Includes' },
+      { text: 'Fresh, hand-arranged flowers in 5 small and 5 big vases Traditional floral rangolis at corners 5 centerpieces - lanterns, small vases with flowers, candles with candle holders 12x8ft moon-shaped or double-panel backdrop (you can choose between the 2) 6-8f', group_title: 'Includes' },
+      { text: 't. long basic bar with black masking, a bar menu and a vase / candles / lantern 8ft.', group_title: 'Includes' },
+      { text: 'tall mirror personalised with a quote on it, with candle abras & decor elements 3 basic cocktail tables 2 sofa sets (3 sofas to make one complete set) and 2 coffee tables Tenting behind the 2 seating lounges 5 halogen lights (to light up the bacdrops) and', group_title: 'Includes' },
+      { text: 'Fairy lighting on the ceiling (pack of 10 lights)', group_title: 'Includes' },
     ],
   },
 ];

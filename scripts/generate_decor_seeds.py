@@ -124,8 +124,49 @@ def strip_section_prefix(text: str) -> str:
     return cleaned.strip()
 
 
+INCLUSION_MAX_LEN = 255
+
+
+def clamp_str(value: str, limit: int = INCLUSION_MAX_LEN) -> str:
+    """Trim string to Strapi varchar limit."""
+    text = str(value or "").strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3].rstrip() + "..."
+
+
+def split_long_text(text: str, limit: int = INCLUSION_MAX_LEN) -> list[str]:
+    """Split long inclusion text into Strapi-safe chunks."""
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return []
+    if len(cleaned) <= limit:
+        return [cleaned]
+
+    chunks: list[str] = []
+    parts = re.split(r"(?<=[.!?])\s+|\n+", cleaned)
+    current = ""
+    for part in parts:
+        piece = part.strip()
+        if not piece:
+            continue
+        candidate = piece if not current else "%s %s" % (current, piece)
+        if len(candidate) <= limit:
+            current = candidate
+            continue
+        if current:
+            chunks.append(current)
+        while len(piece) > limit:
+            chunks.append(piece[:limit].rstrip())
+            piece = piece[limit:].strip()
+        current = piece
+    if current:
+        chunks.append(current)
+    return chunks
+
+
 def includes_to_inclusions(includes_text: str) -> list[dict[str, str]]:
-    """Split includes blob into inclusion rows."""
+    """Split includes blob into inclusion rows (max 255 chars per field)."""
     if not includes_text:
         return []
     chunks = re.split(r"\n\s*\n|\n(?=[A-Z][^a-z]{2,})", includes_text)
@@ -136,11 +177,12 @@ def includes_to_inclusions(includes_text: str) -> list[dict[str, str]]:
         if not line or len(line) < 4:
             continue
         if line.endswith(":") and len(line) < 80:
-            group = line.rstrip(":")
+            group = clamp_str(line.rstrip(":"))
             continue
-        rows.append({"text": line, "group_title": group})
-        if len(rows) >= 24:
-            break
+        for piece in split_long_text(line):
+            rows.append({"text": piece, "group_title": group})
+            if len(rows) >= 32:
+                return rows
     return rows
 
 
@@ -190,16 +232,22 @@ def package_to_seed(pkg: dict, sheet_key: str, workbook_file: str) -> dict | Non
     if sheet_key == "is 2" or sheet_key == "is 3":
         return None
 
-    description = pkg.get("description") or title
-    key_decor = description
-    why = strip_section_prefix(pkg.get("why_we_love_it") or "")
-    best = strip_section_prefix(pkg.get("best_placed") or "")
-    setup = pkg.get("setup") or "A small area for our team to work, access to water and electricity."
-    nitty = (pkg.get("nitty_gritty") or DEFAULT_NITTY).strip()
+    description = clamp_str(pkg.get("description") or title, 1000)
+    key_decor = clamp_str(description, 500)
+    why = clamp_str(strip_section_prefix(pkg.get("why_we_love_it") or ""), 500)
+    best = clamp_str(strip_section_prefix(pkg.get("best_placed") or ""), 500)
+    setup = clamp_str(
+        pkg.get("setup") or "A small area for our team to work, access to water and electricity.",
+        500,
+    )
+    nitty = clamp_str((pkg.get("nitty_gritty") or DEFAULT_NITTY).strip(), 800)
 
     inclustions = includes_to_inclusions(pkg.get("includes") or "")
     if not inclustions and pkg.get("includes"):
-        inclustions = [{"text": str(pkg.get("includes"))[:500], "group_title": "Includes"}]
+        for piece in split_long_text(str(pkg.get("includes"))[:2000]):
+            inclustions.append({"text": piece, "group_title": "Includes"})
+            if len(inclustions) >= 32:
+                break
 
     price_breakdown = build_price_breakdown(pkg)
     addons = []
@@ -227,12 +275,12 @@ def package_to_seed(pkg: dict, sheet_key: str, workbook_file: str) -> dict | Non
         "budget_level_slug": budget_level,
         "base_price": float(total_price),
         "description": description,
-        "key_decor_elements": key_decor[:500],
+        "key_decor_elements": key_decor,
         "nitty_gritty": nitty[:800],
         "price_covers": BACHELORETTE_PRICE_COVERS,
-        "setup_needs": setup[:500],
-        "best_placed_at": best[:500] if best else "Indoor or outdoor celebration spaces suited to your guest size.",
-        "why_we_love_it": why[:500] if why else "A thoughtfully styled setup that elevates the celebration without overwhelming the space.",
+        "setup_needs": setup,
+        "best_placed_at": best if best else "Indoor or outdoor celebration spaces suited to your guest size.",
+        "why_we_love_it": why if why else "A thoughtfully styled setup that elevates the celebration without overwhelming the space.",
         "price_breakdown": price_breakdown,
         "inclustions": inclustions,
     }
