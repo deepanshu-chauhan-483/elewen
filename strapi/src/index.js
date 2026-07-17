@@ -390,5 +390,24 @@ module.exports = {
         strapi.log.error('[seed/decor-baby-shower] Baby shower decor seed failed:', error);
       }
     }
+
+    if (isSeedEnabled('SEED_DECOR_BACHELORETTE_PACKAGES')) {
+      try {
+        const { seedDecorBachelorettePackages } = require('./seed/decor-bachelorette-packages');
+        const bacheloretteResult = await seedDecorBachelorettePackages(strapi);
+        const created = bacheloretteResult.packages.filter(
+          item => !item.skipped && !item.repaired && !item.updated
+        ).length;
+        const repaired = bacheloretteResult.packages.filter(item => item.repaired).length;
+        const updated = bacheloretteResult.packages.filter(item => item.updated).length;
+        const skipped = bacheloretteResult.packages.filter(item => item.skipped).length;
+
+        strapi.log.info(
+          `[seed/decor-bachelorette] created=${created}, updated=${updated}, repaired=${repaired}, skipped=${skipped}, event=${bacheloretteResult.eventDocumentId ?? 'n/a'}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/decor-bachelorette] Bachelorette decor seed failed:', error);
+      }
+    }
   },
 };

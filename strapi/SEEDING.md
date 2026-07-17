@@ -28,6 +28,7 @@ SEED_DELIVERY_CHARGES=false
 SEED_DECOR_PROPOSAL_PACKAGES=false
 SEED_DECOR_ANNIVERSARY_PACKAGES=false
 SEED_DECOR_BABY_SHOWER_PACKAGES=false
+SEED_DECOR_BACHELORETTE_PACKAGES=false
 ```
 
 Bootstrap entry point: `strapi/src/index.js` → `bootstrap()`.
@@ -37,6 +38,7 @@ Manual scripts (same idempotent logic):
 ```bash
 cd strapi
 npm run seed:decor
+npm run seed:decor-bachelorette
 npm run seed:catering-essentials
 npm run seed:catering-assisted
 npm run seed:catering-end-to-end
@@ -127,6 +129,7 @@ Seeds do **not** dedupe by title — only by slug (and type-specific checks for 
 | `decor-proposal-packages.js` | Proposal / walk-to-forever decor |
 | `decor-anniversary-packages.js` | Anniversary / still-us decor |
 | `decor-baby-shower-packages.js` | Baby shower decor |
+| `decor-bachelorette-packages.js` | Bachelors / bachelorette decor |
 | `decor-proposal-shared.js` | Shared decor seed helpers |
 | `decor-choice-elements.js` | Choice option prices → `elements` |
 | `catering-essentials.js` | Essentials catering packages |

@@ -56,6 +56,7 @@ function buildDecorBlock(pkgSeed, policyDocumentId, budgetLevelDocumentId, theme
     price_breakdown: pkgSeed.price_breakdown,
     inclustions: stripSeedOnlyInclusionFields(pkgSeed.inclustions ?? []),
     elements: buildChoiceElementsFromInclusions(pkgSeed.inclustions ?? []),
+    ...(Array.isArray(pkgSeed.addons) && pkgSeed.addons.length ? { addons: pkgSeed.addons } : {}),
     ...(policyDocumentId ? { policy: policyDocumentId } : {}),
     ...(budgetLevelDocumentId ? { budget_level: budgetLevelDocumentId } : {}),
     ...(themeDocumentId ? { theme: themeDocumentId } : {}),

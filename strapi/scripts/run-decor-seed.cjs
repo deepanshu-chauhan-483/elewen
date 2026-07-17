@@ -21,6 +21,7 @@ const Strapi = require('@strapi/strapi');
 const { seedDecorProposalPackages } = require('../src/seed/decor-proposal-packages');
 const { seedDecorAnniversaryPackages } = require('../src/seed/decor-anniversary-packages');
 const { seedDecorBabyShowerPackages } = require('../src/seed/decor-baby-shower-packages');
+const { seedDecorBachelorettePackages } = require('../src/seed/decor-bachelorette-packages');
 
 function summarize(label, result) {
   const packages = result?.packages ?? [];
@@ -42,11 +43,13 @@ async function main() {
     const proposal = await seedDecorProposalPackages(app);
     const anniversary = await seedDecorAnniversaryPackages(app);
     const babyShower = await seedDecorBabyShowerPackages(app);
+    const bachelorette = await seedDecorBachelorettePackages(app);
 
     const summary = [
       summarize('proposal', proposal),
       summarize('anniversary', anniversary),
       summarize('baby-shower', babyShower),
+      summarize('bachelorette', bachelorette),
     ];
 
     console.log('[seed/decor] done:', JSON.stringify(summary, null, 2));
