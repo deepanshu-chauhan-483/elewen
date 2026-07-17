@@ -365,7 +365,7 @@ def should_exclude_sheet(sheet_name: str, exclude_patterns: list[str]) -> bool:
     for pattern in exclude_patterns:
         if re.search(pattern, lowered, flags = re.IGNORECASE):
             return True
-    reference_names = {"cp", "copy", "pincodes", "pincode", "reference", "menu index"}
+    reference_names = {"copy", "pincodes", "pincode", "reference", "menu index"}
     if lowered in reference_names:
         return True
     if lowered.startswith("copy"):
