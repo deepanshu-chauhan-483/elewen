@@ -316,6 +316,79 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { text: 'Recommended Add on Professional Bartender', group_title: 'Includes' },
     ],
   },
+  {
+    sheet: 'CP',
+    title: 'Complete Package',
+    slug: 'complete-package-bubbles-black-tie',
+    theme_name: 'Complete Package',
+    budget_level_slug: 'level-3',
+    base_price: 162700,
+    description:
+      'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive — decor plus catering for 35 guests in one bundle.',
+    key_decor_elements:
+      'Premium centerpieces, golden-frame entrance, double-panel backdrop, customized bar, fairy lights with lanterns, printables, and full catering for 35 pax.',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    setup_needs:
+      'A small area for our team to work, access to water and electricity.',
+    best_placed_at:
+      'Perfect for milestone birthdays, anniversaries, or gatherings where you want the celebration to feel elevated and memorable.',
+    why_we_love_it:
+      'It blends statement pieces with elegant details to create a celebration space that feels truly special — with food sorted for your guest list.',
+    theme_slug_candidates: ['social-setup', 'bubbles-and-black-tie', 'complete-package'],
+    price_covers: [
+      { text: 'The Complete Look' },
+      { text: 'Professional Setup' },
+      { text: 'Final Dismantling' },
+      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+      { text: 'No hidden service fees.' },
+    ],
+    price_breakdown: [
+      { label: '5 centerpieces', amount: 10000 },
+      { label: 'Entrance Set up', amount: 5000 },
+      { label: 'Premium Bar Set up', amount: 15000 },
+      { label: 'Customized Backdrop', amount: 15000 },
+      { label: 'Candles', amount: 3000 },
+      { label: 'Furniture (classic)', amount: 12500 },
+      { label: 'Fairy Lights with lanterns', amount: 5000 },
+      { label: 'Printables', amount: 5000 },
+      { label: 'Halogen / LED parcans', amount: 3000 },
+      { label: 'Props (8-10)', amount: 5000 },
+      { label: 'Catering for 35 pax', amount: 66500 },
+      { label: 'Platform fee', amount: 14500 },
+      { label: 'Labour & Transport', amount: 3200 },
+    ],
+    inclustions: [
+      {
+        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
+        group_title: 'Centerpieces',
+      },
+      { text: '3 additional centerpieces for cocktail tables', group_title: 'Centerpieces' },
+      { text: 'Easel styled like a golden frame with printed welcome board', group_title: 'Entrance Setup' },
+      { text: 'Floral styling', group_title: 'Entrance Setup' },
+      { text: 'Double panel backdrop for a fuller celebration setup', group_title: 'Customized Backdrop' },
+      { text: 'Customized premium bar', group_title: 'Premium Bar Setup' },
+      { text: 'Printed bar menu placed on a small easel', group_title: 'Premium Bar Setup' },
+      { text: 'Candles in glass jars', group_title: 'Candles' },
+      {
+        text: 'Furniture (Choose Classic or Premium): 3 round tables, 20 chairs, 3 cocktail tables',
+        group_title: 'Furniture',
+      },
+      { text: '8–10 fairy light strings', group_title: 'Lighting' },
+      { text: '8–10 paper lanterns with warm lights', group_title: 'Lighting' },
+      { text: '3–4 LED Parcans to light up the space and photo-ops', group_title: 'Lighting' },
+      {
+        text: '8–10 themed props (shades / feathers / masks etc. – choose one style)',
+        group_title: 'Props',
+      },
+      { text: '2 quotes / interactive engagement with 2 small easel stands', group_title: 'Event Printables' },
+      { text: 'Professional Bartender (recommended add-on)', group_title: 'Recommended Add on' },
+      {
+        text: 'Catering for 35 pax — choose Veg / Non-veg and Classic / Premium menu (Veg classic ₹1,300 · Non-veg classic ₹1,890 · Veg premium ₹1,900 · Non-veg premium ₹2,300 per person)',
+        group_title: 'Catering',
+      },
+    ],
+  },
 ];
 
 async function seedDecorBubblesBlackTiePackages(strapi) {

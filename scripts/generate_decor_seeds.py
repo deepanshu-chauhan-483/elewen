@@ -16,7 +16,6 @@ PRESERVE_MODULES = {
 }
 
 SKIP_SHEETS = {
-    "CP",
     "IS 2",
     "IS 3",
     "Add on",
@@ -24,6 +23,13 @@ SKIP_SHEETS = {
 
 # (workbook filename, sheet key lower) -> meta
 SHEET_META: dict[tuple[str, str], tuple[str, str, str, str, str]] = {
+    ("Birthday _ Anniversary - Bubbles & Black Tie.xlsx", "cp"): (
+        "complete-package-bubbles-black-tie",
+        "Complete Package",
+        "Complete Package",
+        "level-3",
+        "social-setup",
+    ),
     ("Birthday _ Anniversary - Bubbles & Black Tie.xlsx", "gt 1"): ("golden-touch-1", "The Golden Touch 1", "The Golden Touch", "level-1", "golden-touch"),
     ("Birthday _ Anniversary - Bubbles & Black Tie.xlsx", "gt 2"): ("golden-touch-2", "The Golden Touch 2", "The Golden Touch", "level-2", "golden-touch"),
     ("Birthday _ Anniversary - Bubbles & Black Tie.xlsx", "gt 23"): ("golden-touch-2-3", "The Golden Touch 2/3", "The Golden Touch", "level-2", "golden-touch"),
