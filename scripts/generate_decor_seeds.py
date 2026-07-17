@@ -186,25 +186,63 @@ def includes_to_inclusions(includes_text: str) -> list[dict[str, str]]:
     return rows
 
 
-def build_price_breakdown(pkg: dict) -> list[dict[str, float]]:
+def to_money(value: object) -> int | None:
+    """Convert spreadsheet amount to Strapi integer money."""
+    parsed = parse_amount(value) if not isinstance(value, (int, float)) else float(value)
+    if parsed is None:
+        return None
+    return int(round(parsed))
+
+
+def build_price_breakdown(pkg: dict) -> list[dict[str, int]]:
     """Build price breakdown from line items and fee rows."""
-    breakdown: list[dict[str, float]] = []
-    skip_labels = {"level 1", "level 2", "level 3", "the golden touch", "details"}
+    breakdown: list[dict[str, int]] = []
+    skip_labels = {
+        "level 1",
+        "level 2",
+        "level 3",
+        "the golden touch",
+        "details",
+        "package price",
+        "transport fee",
+        "platform fee",
+        "total",
+        "average",
+        "choose 1",
+    }
     for item in pkg.get("line_items") or []:
         label = str(item.get("label") or "").strip()
-        amount = item.get("amount")
+        label_key = label.lower()
+        if not label or label_key in skip_labels:
+            continue
+        amount = to_money(item.get("amount"))
         if amount is None:
             continue
-        if amount < 100 and "choose" not in label.lower():
+        if amount < 100 and "choose" not in label_key:
             continue
-        breakdown.append({"label": label, "amount": float(amount)})
-    platform = pkg.get("platform_fee")
-    transport = pkg.get("transport_labour")
+        breakdown.append({"label": label, "amount": amount})
+    platform = to_money(pkg.get("platform_fee"))
+    transport = to_money(pkg.get("transport_labour"))
     if platform is not None:
-        breakdown.append({"label": "Platform fee", "amount": float(platform)})
+        breakdown.append({"label": "Platform fee", "amount": platform})
     if transport is not None:
-        breakdown.append({"label": "Labour & Transport", "amount": float(transport)})
+        breakdown.append({"label": "Labour & Transport", "amount": transport})
     return breakdown
+
+
+def parse_amount(value: object) -> float | None:
+    """Parse numeric amount from spreadsheet cell."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip()
+    text = text.replace(",", "").replace("₹", "").replace("Rs.", "").replace("Rs", "")
+    text = text.replace("INR", "").strip()
+    match = re.search(r"-?\d+(?:\.\d+)?", text)
+    if not match:
+        return None
+    return float(match.group(0))
 
 
 def resolve_au1_total() -> float:
@@ -273,7 +311,7 @@ def package_to_seed(pkg: dict, sheet_key: str, workbook_file: str) -> dict | Non
         if workbook_file.endswith("Bubbles & Black Tie.xlsx")
         else [theme_slug],
         "budget_level_slug": budget_level,
-        "base_price": float(total_price),
+        "base_price": to_money(total_price) or 0,
         "description": description,
         "key_decor_elements": key_decor,
         "nitty_gritty": nitty[:800],
