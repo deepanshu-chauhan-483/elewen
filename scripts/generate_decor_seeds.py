@@ -11,6 +11,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SUMMARY_PATH = ROOT / "tmp" / "excel_package_summary.json"
 OUT_DIR = ROOT / "strapi" / "src" / "seed" / "generated"
 
+PRESERVE_MODULES = {
+    "decor-sufi-night-packages.js",
+}
+
 SKIP_SHEETS = {
     "CP",
     "IS 2",
@@ -29,6 +33,8 @@ SHEET_META: dict[tuple[str, str], tuple[str, str, str, str, str]] = {
     ("Birthday _ Anniversary - Bubbles & Black Tie.xlsx", "ss 23"): ("social-setup-2-3", "The Social Setup 2/3", "The Social Setup", "level-2", "social-setup"),
     ("Birthday _ Anniversary - Bubbles & Black Tie.xlsx", "ss3"): ("social-setup-3", "The Social Setup 3", "The Social Setup", "level-3", "social-setup"),
     ("Engagement - Sufi Night Package.xlsx", "is 1"): ("ishq-sufiyana-1", "Ishq Sufiyana 1", "Ishq Sufiyana", "level-1", "ishq-sufiyana"),
+    ("Engagement - Sufi Night Package.xlsx", "is 2"): ("ishq-sufiyana-2", "Ishq Sufiyana 2", "Ishq Sufiyana", "level-2", "ishq-sufiyana"),
+    ("Engagement - Sufi Night Package.xlsx", "is 3"): ("ishq-sufiyana-3", "Ishq Sufiyana 3", "Ishq Sufiyana", "level-3", "ishq-sufiyana"),
     ("General Pack _ House Party _ Birthday Party.xlsx", "pp1"): ("phool-proof-1", "Phool-Proof 1", "Phool-Proof", "level-1", "phool-proof"),
     ("General Pack _ House Party _ Birthday Party.xlsx", "pp2"): ("phool-proof-2", "Phool-Proof 2", "Phool-Proof", "level-2", "phool-proof"),
     ("General Pack _ House Party _ Birthday Party.xlsx", "awg1"): ("air-we-go-1", "Air We Go 1", "Air We Go", "level-1", "air-we-go"),
@@ -70,6 +76,7 @@ WORKBOOK_GROUPS = {
             "anniversaries",
         ],
         "log_prefix": "seed/decor-bubbles-black-tie",
+        "refresh_existing_decor": True,
     },
     "Engagement - Sufi Night Package.xlsx": {
         "module": "decor-sufi-night-packages.js",
@@ -83,6 +90,7 @@ WORKBOOK_GROUPS = {
             "proposals",
         ],
         "log_prefix": "seed/decor-sufi-night",
+        "refresh_existing_decor": True,
     },
     "General Pack _ House Party _ Birthday Party.xlsx": {
         "module": "decor-house-party-birthday-packages.js",
@@ -165,22 +173,63 @@ def split_long_text(text: str, limit: int = INCLUSION_MAX_LEN) -> list[str]:
     return chunks
 
 
+INLINE_INCLUDE_MARKERS = [
+    " Entrance Setup",
+    " Entrance Set up",
+    " Basic Bar Setup",
+    " Premium Bar Setup",
+    " Customized Backdrop",
+    " Backdrop",
+    " Centerpieces",
+    " Candles",
+    " Furniture",
+    " Fairy Lights",
+    " Printables",
+    " Lighting",
+    " Props",
+    " Event Printables",
+    " Recommended Add on",
+]
+
+
+def expand_inline_include_sections(text: str) -> list[str]:
+    """Split flattened Excel include lines on known section headers."""
+    parts = [text.strip()]
+    for marker in INLINE_INCLUDE_MARKERS:
+        next_parts: list[str] = []
+        for part in parts:
+            if marker not in part:
+                next_parts.append(part)
+                continue
+            head, tail = part.split(marker, 1)
+            if head.strip():
+                next_parts.append(head.strip())
+            next_parts.append("%s%s" % (marker.strip(), tail))
+        parts = next_parts
+    return [part.strip() for part in parts if part.strip()]
+
+
 def includes_to_inclusions(includes_text: str) -> list[dict[str, str]]:
     """Split includes blob into inclusion rows (max 255 chars per field)."""
     if not includes_text:
         return []
-    chunks = re.split(r"\n\s*\n|\n(?=[A-Z][^a-z]{2,})", includes_text)
+    normalized = str(includes_text).replace("\r\n", "\n").strip()
+    chunks: list[str] = []
+    for block in re.split(r"\n\s*\n", normalized):
+        block = block.strip()
+        if not block:
+            continue
+        if re.search(r"\n\s*-", block):
+            for line in re.split(r"\n\s*(?=-)", block):
+                line = line.lstrip("- ").strip()
+                if line:
+                    chunks.append(line)
+            continue
+        chunks.extend(expand_inline_include_sections(block))
     rows: list[dict[str, str]] = []
-    group = "Includes"
     for chunk in chunks:
-        line = chunk.strip()
-        if not line or len(line) < 4:
-            continue
-        if line.endswith(":") and len(line) < 80:
-            group = clamp_str(line.rstrip(":"))
-            continue
-        for piece in split_long_text(line):
-            rows.append({"text": piece, "group_title": group})
+        for piece in split_long_text(chunk):
+            rows.append({"text": piece, "group_title": "Includes"})
             if len(rows) >= 32:
                 return rows
     return rows
@@ -267,11 +316,12 @@ def package_to_seed(pkg: dict, sheet_key: str, workbook_file: str) -> dict | Non
         total_price = resolve_au1_total()
     if total_price is None or float(total_price) <= 0:
         return None
-    if sheet_key == "is 2" or sheet_key == "is 3":
-        return None
+    if workbook_file.endswith("Sufi Night Package.xlsx"):
+        if (to_money(total_price) or 0) < 50000:
+            return None
 
-    description = clamp_str(pkg.get("description") or title, 1000)
-    key_decor = clamp_str(description, 500)
+    description = clamp_str(pkg.get("description") or pkg.get("tagline") or title, 1000)
+    key_decor = clamp_str(pkg.get("key_decor_elements") or description, 500)
     why = clamp_str(strip_section_prefix(pkg.get("why_we_love_it") or ""), 500)
     best = clamp_str(strip_section_prefix(pkg.get("best_placed") or ""), 500)
     setup = clamp_str(
@@ -387,6 +437,9 @@ def render_module(packages: list[dict], group: dict) -> str:
     """Render full seed module file."""
     event_array = ", ".join(js_string(s) for s in group["event_slugs"])
     body = "\n".join(render_package_js(pkg) for pkg in packages)
+    refresh_line = ""
+    if group.get("refresh_existing_decor"):
+        refresh_line = "    refreshExistingDecor: true,\n"
     template = (
         "'use strict';\n\n"
         "const { seedDecorPackages } = require('./decor-proposal-shared');\n\n"
@@ -396,6 +449,7 @@ def render_module(packages: list[dict], group: dict) -> str:
         "  return seedDecorPackages(strapi, __EXPORT__, {\n"
         "    eventSlugCandidates: EVENT_SLUG_CANDIDATES,\n"
         "    logPrefix: '__LOG__',\n"
+        "__REFRESH__"
         "  });\n"
         "}\n\n"
         "module.exports = {\n"
@@ -410,6 +464,7 @@ def render_module(packages: list[dict], group: dict) -> str:
         .replace("__EXPORT__", group["export_name"])
         .replace("__SEED_FN__", group["seed_fn"])
         .replace("__LOG__", group["log_prefix"])
+        .replace("__REFRESH__", refresh_line)
     )
 
 
@@ -426,6 +481,9 @@ def main() -> None:
         group = WORKBOOK_GROUPS.get(file_name)
         if not group:
             continue
+        if group["module"] in PRESERVE_MODULES:
+            print("preserve hand-maintained %s" % group["module"])
+            continue
 
         packages: list[dict] = []
         for pkg in workbook.get("packages") or []:
@@ -440,6 +498,10 @@ def main() -> None:
             all_slugs.add(seed["slug"])
             packages.append(seed)
 
+        if not packages:
+            print("skip %s (no packages parsed for %s)" % (group["module"], file_name))
+            continue
+
         out_path = ROOT / "strapi" / "src" / "seed" / group["module"]
         out_path.write_text(render_module(packages, group), encoding = "utf-8")
         print("%s -> %d packages" % (out_path.name, len(packages)))
@@ -448,7 +510,7 @@ def main() -> None:
         "generated_from": str(SUMMARY_PATH.relative_to(ROOT)),
         "package_count": len(all_slugs),
         "slugs": sorted(all_slugs),
-        "skipped_catering": "Final Catering Menu - use existing catering-* seeds (no duplicate packages)",
+        "skipped_catering": "Final Catering Menu - seeded via strapi/scripts/run-catering-all.cjs (existing catering-* modules, idempotent by slug)",
         "skipped_incomplete": ["IS 2", "IS 3", "CP"],
     }
     (OUT_DIR / "manifest.json").write_text(json.dumps(manifest, indent = 2), encoding = "utf-8")

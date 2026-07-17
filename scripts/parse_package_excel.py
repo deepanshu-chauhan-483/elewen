@@ -150,6 +150,7 @@ def collect_section_text(
     section_label: str,
     stop_labels: set[str],
     max_rows: int = 30,
+    join_rows: str = " ",
 ) -> str:
     """Collect multi-line section body until next known label."""
     row_idx = find_label_row(ws, section_label)
@@ -169,53 +170,134 @@ def collect_section_text(
         if first.lower().rstrip(":") in stop_labels:
             break
         chunks.append(" ".join(texts))
-    return "\n".join(chunks).strip()
+    if join_rows == "\n\n":
+        return "\n\n".join(chunks).strip()
+    return " ".join(chunks).strip()
+
+
+def detect_estimated_cost_column(ws: Worksheet) -> int:
+    """Return column index for Estimated cost header, defaulting to column C."""
+    for row_idx in range(1, 6):
+        for col_idx in range(1, 8):
+            header = normalize_text(ws.cell(row = row_idx, column = col_idx).value).lower()
+            if header in {"estimated cost", "estimated cost average"}:
+                return col_idx
+    return 3
+
+
+def read_priced_amount(ws: Worksheet, row_idx: int, cost_col: int) -> float | None:
+    """Read line-item cost from the estimated-cost column, with tier-column fallback."""
+    primary = parse_amount(ws.cell(row = row_idx, column = cost_col).value)
+    if primary is not None and primary >= 100:
+        return primary
+    for col_idx in range(3, 7):
+        if col_idx == cost_col:
+            continue
+        candidate = parse_amount(ws.cell(row = row_idx, column = col_idx).value)
+        if candidate is not None and candidate >= 100:
+            return candidate
+    return None
 
 
 def extract_line_items(ws: Worksheet, start_row: int, end_row: int) -> list[dict[str, Any]]:
     """Extract priced line items before totals block."""
     items: list[dict[str, Any]] = []
+    cost_col = detect_estimated_cost_column(ws)
     skip_labels = {
         "total",
         "platform fee",
         "transport",
+        "transport fee",
         "labour",
         "labor",
+        "labour & transport",
         "total price",
+        "package price",
         "description",
         "includes",
         "includes:",
         "add-ons",
         "add ons",
         "addons",
+        "level 1",
+        "level 2",
+        "level 3",
     }
     for row_idx in range(start_row, end_row + 1):
-        texts = row_texts(ws, row_idx, max_col = 6)
-        if not texts:
+        col_a = normalize_text(ws.cell(row = row_idx, column = 1).value)
+        col_b = normalize_text(ws.cell(row = row_idx, column = 2).value)
+        label = col_a or col_b
+        if not label:
             continue
-        label = texts[0].lower().rstrip(":")
-        if label in skip_labels:
+        label_key = label.lower().rstrip(":")
+        if label_key in skip_labels:
             continue
-        amount = None
-        details = ""
-        for text in texts[1:]:
-            parsed = parse_amount(text)
-            if parsed is not None and amount is None:
-                amount = parsed
-            elif not details:
-                details = text
-            else:
-                details = "%s %s" % (details, text)
-        if amount is None and len(texts) == 1:
+        amount = read_priced_amount(ws, row_idx, cost_col)
+        details = col_b if col_a and col_b else ""
+        if amount is None and not details:
             continue
         items.append(
             {
-                "label": texts[0],
+                "label": label,
                 "details": details,
                 "amount": amount,
             }
         )
     return items
+
+
+def extract_tagline_description(ws: Worksheet) -> str:
+    """Extract marketing tagline paragraph after the pricing block."""
+    anchor_row = find_label_row(ws, "Total Price") or find_label_row(ws, "Total price")
+    if anchor_row is None:
+        return ""
+    stop_tokens = ("key decor", "includes:", "includes", "the nitty-gritty")
+    for offset in range(2, 10):
+        row_idx = anchor_row + offset
+        if row_idx > (ws.max_row or 0):
+            break
+        text = normalize_text(ws.cell(row = row_idx, column = 1).value)
+        if not text or len(text) < 24:
+            continue
+        lowered = text.lower()
+        if any(token in lowered for token in stop_tokens):
+            break
+        if not text.endswith(":"):
+            return text
+    return ""
+
+
+def extract_key_decor_elements(ws: Worksheet) -> str:
+    """Extract Key Decor Elements body text."""
+    row_idx = find_label_row(ws, "Key Decor Elements")
+    if row_idx is None:
+        return ""
+    chunks: list[str] = []
+    for offset in range(1, 5):
+        next_row = row_idx + offset
+        if next_row > (ws.max_row or 0):
+            break
+        text = normalize_text(ws.cell(row = next_row, column = 1).value)
+        if not text:
+            break
+        lowered = text.lower().rstrip(":")
+        if lowered in {"includes", "includes:"}:
+            break
+        chunks.append(text)
+    return " ".join(chunks).strip()
+
+
+def extract_elewen_placement_blurb(ws: Worksheet) -> str:
+    """Extract Elewen placement recommendation used as why-we-love-it copy."""
+    last_row = ws.max_row or 1
+    for row_idx in range(1, last_row + 1):
+        text = normalize_text(ws.cell(row = row_idx, column = 1).value)
+        if not text:
+            continue
+        lowered = text.lower()
+        if lowered.startswith("elewen thinks") or lowered.startswith("this is the") or lowered.startswith("this is for"):
+            return text
+    return ""
 
 
 def extract_addons(ws: Worksheet) -> list[dict[str, Any]]:
@@ -310,17 +392,22 @@ def parse_package_sheet(ws: Worksheet, sheet_name: str) -> dict[str, Any]:
     total_price_row = find_label_row(ws, "Total Price", start_row = 1, end_row = 60)
     line_item_end = (total_row or total_price_row or 20) - 1
 
-    package_price = find_amount_after_label(ws, ["Total"], start_row = 1, end_row = 40)
+    package_price = find_amount_after_label(ws, ["Package Price"], start_row = 1, end_row = 50)
+    if package_price is None:
+        package_price = find_amount_after_label(ws, ["Total"], start_row = 1, end_row = 40)
     platform_fee = find_amount_after_label(ws, ["Platform fee", "Platform Fee"], start_row = 1, end_row = 50)
     transport = find_amount_after_label(
         ws,
-        ["Transport", "Labour", "Labor", "Transport / Labour"],
+        ["Transport", "Transport Fee", "Labour", "Labor", "Labour & Transport", "Transport / Labour"],
         start_row = 1,
         end_row = 50,
     )
     total_price = find_amount_after_label(ws, ["Total Price", "Total price"], start_row = 1, end_row = 60)
 
-    description_row = find_label_row(ws, "Description")
+    tagline = extract_tagline_description(ws)
+    key_decor_elements = extract_key_decor_elements(ws)
+    placement_blurb = extract_elewen_placement_blurb(ws)
+
     stop_labels = {
         "includes",
         "includes:",
@@ -335,20 +422,31 @@ def parse_package_sheet(ws: Worksheet, sheet_name: str) -> dict[str, Any]:
         "the price you see covers it all",
     }
     description = ""
-    if description_row is not None:
-        description = collect_paragraph_after(ws, description_row, stop_labels)
+    for label in ["Description", "Decription"]:
+        description_row = find_label_row(ws, label)
+        if description_row is not None:
+            description = collect_paragraph_after(ws, description_row, stop_labels)
+            if description:
+                break
+    if not description and tagline:
+        description = tagline
 
-    includes_text = collect_section_text(ws, "Includes", stop_labels)
+    includes_text = collect_section_text(ws, "Includes", stop_labels, join_rows = "\n\n")
     if not includes_text:
-        includes_text = collect_section_text(ws, "Includes:", stop_labels)
+        includes_text = collect_section_text(ws, "Includes:", stop_labels, join_rows = "\n\n")
 
     nitty_gritty = collect_section_text(ws, "The Nitty-Gritty", stop_labels)
     if not nitty_gritty:
         nitty_gritty = collect_section_text(ws, "Nitty-Gritty", stop_labels)
 
-    setup = collect_section_text(ws, "Setup", stop_labels)
-    best_placed = collect_section_text(ws, "Best placed", stop_labels)
-    why_we_love_it = collect_section_text(ws, "Why we love it", stop_labels)
+    setup = collect_section_text(ws, "Setup Needs", stop_labels)
+    if not setup:
+        setup = collect_section_text(ws, "Setup", stop_labels)
+    best_placed = collect_section_text(ws, "Best Placed at", stop_labels)
+    if not best_placed:
+        best_placed = collect_section_text(ws, "Best placed", stop_labels)
+    why_section = collect_section_text(ws, "Why we love it", stop_labels)
+    why_we_love_it = placement_blurb or why_section
 
     line_items = extract_line_items(ws, start_row = 2, end_row = max(line_item_end, 2))
     addons = extract_addons(ws)
@@ -365,7 +463,10 @@ def parse_package_sheet(ws: Worksheet, sheet_name: str) -> dict[str, Any]:
         "transport_labour": transport,
         "total_price": total_price,
         "missing_total_price": total_price is None,
-        "description": description,
+        "missing_package_price": package_price is None,
+        "description": description or tagline,
+        "tagline": tagline,
+        "key_decor_elements": key_decor_elements,
         "includes": includes_text,
         "nitty_gritty": nitty_gritty,
         "setup": setup,
@@ -503,6 +604,10 @@ def main() -> int:
     OUTPUT_PATH.parent.mkdir(parents = True, exist_ok = True)
     results: list[dict[str, Any]] = []
     for spec in WORKBOOKS:
+        file_path = ROOT / spec["file"]
+        if not file_path.exists():
+            print("skip missing workbook:", spec["file"])
+            continue
         results.append(parse_workbook(spec))
 
     payload = {
