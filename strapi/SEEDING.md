@@ -29,6 +29,7 @@ SEED_DECOR_PROPOSAL_PACKAGES=false
 SEED_DECOR_ANNIVERSARY_PACKAGES=false
 SEED_DECOR_BABY_SHOWER_PACKAGES=false
 SEED_DECOR_BACHELORETTE_PACKAGES=false
+SEED_DECOR_EXCEL_PACKAGES=false
 ```
 
 Bootstrap entry point: `strapi/src/index.js` → `bootstrap()`.
@@ -39,6 +40,7 @@ Manual scripts (same idempotent logic):
 cd strapi
 npm run seed:decor
 npm run seed:decor-bachelorette
+npm run seed:excel-decor
 npm run seed:catering-essentials
 npm run seed:catering-assisted
 npm run seed:catering-end-to-end
@@ -77,6 +79,26 @@ SEED_DECOR_REFRESH_EXISTING=true
 ```
 
 When set, decor seeds **update** packages that already have a decor block (title, description, base_price, inclusions, elements). **Does not touch images.** Still no duplicates — updates in place.
+
+### Excel-import decor (Bubbles & Black Tie, Sufi Night, House Party)
+
+Generated from repo Excel files via:
+
+```bash
+python scripts/parse_package_excel.py
+python scripts/generate_decor_seeds.py
+```
+
+One-shot production seed (34 packages, slug-deduped):
+
+```bash
+cd strapi && npm run seed:excel-decor
+```
+
+**Not seeded from Excel (avoid duplicates):**
+
+- `Final Catering Menu - 14.05.26.xlsx` — same packages as existing `catering-essentials.js`, `catering-assisted.js`, `catering-end-to-end.js`. Re-run those scripts if you need catering refresh.
+- Incomplete sheets skipped: Sufi `IS 2` / `IS 3` (missing package price), Birthday `CP` (reference complete package).
 
 ---
 
@@ -130,6 +152,9 @@ Seeds do **not** dedupe by title — only by slug (and type-specific checks for 
 | `decor-anniversary-packages.js` | Anniversary / still-us decor |
 | `decor-baby-shower-packages.js` | Baby shower decor |
 | `decor-bachelorette-packages.js` | Bachelors / bachelorette decor |
+| `decor-bubbles-black-tie-packages.js` | Birthday / anniversary — Bubbles & Black Tie (generated) |
+| `decor-sufi-night-packages.js` | Engagement — Ishq Sufiyana (generated) |
+| `decor-house-party-birthday-packages.js` | House party / birthday general packs (generated) |
 | `decor-proposal-shared.js` | Shared decor seed helpers |
 | `decor-choice-elements.js` | Choice option prices → `elements` |
 | `catering-essentials.js` | Essentials catering packages |

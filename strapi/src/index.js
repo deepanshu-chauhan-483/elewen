@@ -409,5 +409,31 @@ module.exports = {
         strapi.log.error('[seed/decor-bachelorette] Bachelorette decor seed failed:', error);
       }
     }
+
+    if (isSeedEnabled('SEED_DECOR_EXCEL_PACKAGES')) {
+      const excelSeedModules = [
+        { name: 'decor-bubbles-black-tie', fn: () => require('./seed/decor-bubbles-black-tie-packages').seedDecorBubblesBlackTiePackages(strapi) },
+        { name: 'decor-sufi-night', fn: () => require('./seed/decor-sufi-night-packages').seedDecorSufiNightPackages(strapi) },
+        { name: 'decor-house-party-birthday', fn: () => require('./seed/decor-house-party-birthday-packages').seedDecorHousePartyBirthdayPackages(strapi) },
+      ];
+
+      for (const moduleSeed of excelSeedModules) {
+        try {
+          const result = await moduleSeed.fn();
+          const created = result.packages.filter(
+            item => !item.skipped && !item.repaired && !item.updated
+          ).length;
+          const repaired = result.packages.filter(item => item.repaired).length;
+          const updated = result.packages.filter(item => item.updated).length;
+          const skipped = result.packages.filter(item => item.skipped).length;
+
+          strapi.log.info(
+            `[seed/${moduleSeed.name}] created=${created}, updated=${updated}, repaired=${repaired}, skipped=${skipped}, event=${result.eventDocumentId ?? 'n/a'}`
+          );
+        } catch (error) {
+          strapi.log.error(`[seed/${moduleSeed.name}] Excel decor seed failed:`, error);
+        }
+      }
+    }
   },
 };

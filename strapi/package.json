@@ -20,6 +20,7 @@
     "seed:catering-repair": "node scripts/seed-catering-repair-packages.cjs",
     "seed:decor": "node scripts/run-decor-seed.cjs",
     "seed:decor-bachelorette": "node scripts/run-bachelorette-seed.cjs",
+    "seed:excel-decor": "node scripts/run-excel-decor-seed.cjs",
     "seed:delivery-charges": "node scripts/run-delivery-charges-seed.cjs",
     "seed:privacy-policy": "node scripts/run-privacy-policy-seed.cjs",
     "develop": "strapi develop --no-watch-admin --no-open",
