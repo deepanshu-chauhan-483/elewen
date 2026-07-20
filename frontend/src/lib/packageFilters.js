@@ -293,7 +293,7 @@ const UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS = [
 
 /** Extra themes per event (plus universal themes above). */
 const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
-  anniversary: ['still-us'],
+  anniversary: ['still-us', 'bubbles-and-black-tie'],
   'birthday-parties': ['bubbles-and-black-tie', 'bohemian', 'pastel'],
   'baby-shower': ['a-little-honey', 'little-honey', 'oh-baby'],
   engagement: ['sufi-night', 'ishq-sufiyana'],

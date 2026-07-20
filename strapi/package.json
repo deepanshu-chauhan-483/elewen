@@ -23,6 +23,7 @@
     "seed:excel-decor": "node scripts/run-excel-decor-seed.cjs",
     "seed:pastel": "node scripts/run-pastel-seed.cjs",
     "seed:bohemian": "node scripts/run-bohemian-seed.cjs",
+    "seed:bubbles": "node scripts/run-bubbles-seed.cjs",
     "seed:catering-all": "node scripts/run-catering-all.cjs",
     "seed:production-data": "node scripts/run-production-data-seed.cjs",
     "seed:delivery-charges": "node scripts/run-delivery-charges-seed.cjs",

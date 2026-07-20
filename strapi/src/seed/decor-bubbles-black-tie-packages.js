@@ -1,8 +1,21 @@
 'use strict';
 
-const { seedDecorPackages } = require('./decor-proposal-shared');
+const {
+  ensureBudgetLevelDocumentId,
+  ensureEventDocumentId,
+  ensureThemeDocumentId,
+  seedDecorPackages,
+} = require('./decor-proposal-shared');
 
-const EVENT_SLUG_CANDIDATES = ['birthday-parties', 'birthday-celebrations', 'birthday', 'anniversary', 'anniversary-evenings', 'anniversaries'];
+const EVENT_SLUG_CANDIDATES = [
+  'birthday-parties',
+  'birthday-celebrations',
+  'birthday',
+  'birthday-party',
+  'anniversary',
+  'anniversary-evenings',
+  'anniversaries',
+];
 
 const BUBBLES_BLACK_TIE_PACKAGES = [
   {
@@ -18,7 +31,7 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: 'Perfect for home gatherings or small venue celebrations where elegant table details can instantly lift the atmosphere.',
     why_we_love_it: 'It adds just the right touch of gold, florals, and style to make a simple celebration feel thoughtfully styled.',
-    theme_slug_candidates: ['golden-touch', 'bubbles-and-black-tie'],
+    theme_slug_candidates: ['bubbles-and-black-tie', 'golden-touch'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
@@ -31,8 +44,8 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 600 },
     ],
     inclustions: [
-      { text: 'Floral Vases: 5 centerpieces with golden painted bottles styled with roses, daisies and pampas / feathers', group_title: 'Includes' },
-      { text: 'Entrance Set up: Easel stand with printed welcome board and floral styling', group_title: 'Includes' },
+      { text: '5 golden floral centrepieces', group_title: 'Includes' },
+      { text: 'Entrance easel + board', group_title: 'Includes' },
     ],
   },
   {
@@ -48,7 +61,7 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: 'Perfect for home parties or intimate venue celebrations where elegant table and bar styling set the tone.',
     why_we_love_it: 'It creates a cohesive look with styled tables, candlelight, and a chic bar corner that instantly elevates the celebration.',
-    theme_slug_candidates: ['golden-touch', 'bubbles-and-black-tie'],
+    theme_slug_candidates: ['bubbles-and-black-tie', 'golden-touch'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
@@ -63,14 +76,14 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Floral Vases - 5 centerpieces with golden vases styled with roses, daisies, and pampas / feathers', group_title: 'Includes' },
-      { text: 'Entrance Setup - Easel with printed welcome board - 2 floral vases for styling', group_title: 'Includes' },
-      { text: 'Basic Bar Setup - Basic bar with black masking - 10', group_title: 'Includes' },
-      { text: 'Candles in short glass holders for soft ambient lighting', group_title: 'Includes' },
+      { text: '5 golden floral centrepieces', group_title: 'Includes' },
+      { text: 'Entrance easel + florals', group_title: 'Includes' },
+      { text: 'Basic bar setup', group_title: 'Includes' },
+      { text: 'Candles in glass', group_title: 'Includes' },
     ],
   },
   {
-    sheet: 'GT 23 ',
+    sheet: 'GT 23',
     title: 'The Golden Touch 2/3',
     slug: 'golden-touch-2-3',
     theme_name: 'The Golden Touch',
@@ -82,7 +95,7 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: 'Ideal for birthdays, anniversaries, and intimate celebrations at home venues',
     why_we_love_it: 'It creates a celebration corner that instantly lifts the energy of the entire party',
-    theme_slug_candidates: ['golden-touch', 'bubbles-and-black-tie'],
+    theme_slug_candidates: ['bubbles-and-black-tie', 'golden-touch'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
@@ -98,10 +111,11 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Floral Styling 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.', group_title: 'Includes' },
-      { text: 'Entrance Set up: Entrance easel with printed welcome board and floral styling', group_title: 'Includes' },
-      { text: 'Backdrop (Choose 1): Shiny wall with balloons OR Single panel with balloons Decor Elements: - Feature detailing - 2 LED 3D letters for a celebratory focal point - 10', group_title: 'Includes' },
-      { text: 'Candles in short glass holders Bar Set up Basic bar with black masking', group_title: 'Includes' },
+      { text: '5 premium floral centrepieces', group_title: 'Includes' },
+      { text: 'Entrance easel + florals', group_title: 'Includes' },
+      { text: 'Basic bar setup', group_title: 'Includes' },
+      { text: 'Backdrop with balloons', group_title: 'Includes' },
+      { text: 'Candles in glass', group_title: 'Includes' },
     ],
   },
   {
@@ -116,8 +130,8 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: 'Perfect for milestone birthdays, anniversaries, or gatherings where you want the celebration to feel elevated and memorable.',
-    why_we_love_it: 'Elewen thinks this one is a dream for an intimate garden engagement or a backyard / terrace celebration.',
-    theme_slug_candidates: ['golden-touch', 'bubbles-and-black-tie'],
+    why_we_love_it: 'It blends statement pieces with elegant details to create a celebration space that feels truly special.',
+    theme_slug_candidates: ['bubbles-and-black-tie', 'golden-touch'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
@@ -133,28 +147,27 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.', group_title: 'Includes' },
-      { text: 'Entrance Setup Easel styled like a golden frame with printed welcome board or floral styling', group_title: 'Includes' },
-      { text: 'Customized', group_title: 'Includes' },
-      { text: 'Backdrop Double panel backdrop for a fuller, more impactful setup', group_title: 'Includes' },
-      { text: 'Premium Bar Setup Customized premium bar Printed bar menu placed on a small easel', group_title: 'Includes' },
-      { text: 'Candles Candles in glass jars for warm ambient lighting', group_title: 'Includes' },
+      { text: '5 premium floral centrepieces', group_title: 'Includes' },
+      { text: 'Golden frame entrance', group_title: 'Includes' },
+      { text: 'Premium bar + menu', group_title: 'Includes' },
+      { text: 'Double panel backdrop', group_title: 'Includes' },
+      { text: 'Candles in glass jars', group_title: 'Includes' },
     ],
   },
   {
-    sheet: 'SS 1 ',
+    sheet: 'SS 1',
     title: 'The Social Setup 1',
     slug: 'social-setup-1',
     theme_name: 'The Social Setup',
     budget_level_slug: 'level-1',
     base_price: 53250,
-    description: 'A celebration space designed for people to gather, mingle, and enjoy the moment',
-    key_decor_elements: 'A celebration space designed for people to gather, mingle, and enjoy the moment',
+    description: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    key_decor_elements: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: 'Great for house parties, terrace celebrations, or venues where guests can mingle and be comfortable',
     why_we_love_it: 'It creates a warm, lively party environment where everyone naturally gathers and celebrates together',
-    theme_slug_candidates: ['social-setup', 'bubbles-and-black-tie'],
+    theme_slug_candidates: ['bubbles-and-black-tie', 'social-setup'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
@@ -173,17 +186,17 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Centerpieces - 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc. - 3 smaller centerpeices for cocktail tables', group_title: 'Includes' },
-      { text: 'Entrance Setup Easel with printed welcome board and floral styling', group_title: 'Includes' },
-      { text: 'Backdrop shiny curtain with balloons or single panel with balloons 2 LED 3D letters', group_title: 'Includes' },
-      { text: 'Basic Bar Setup Bar with black masking', group_title: 'Includes' },
-      { text: 'Candles Candles in short glass holders Classic', group_title: 'Includes' },
-      { text: 'Furniture 3 round tables 20 chairs 3 cocktail tables', group_title: 'Includes' },
-      { text: 'Lighting 8–10 strings of fairy lights, fixed by an electrician', group_title: 'Includes' },
+      { text: '5 premium floral centrepieces', group_title: 'Includes' },
+      { text: '3 cocktail centrepieces', group_title: 'Includes' },
+      { text: 'Entrance easel + florals', group_title: 'Includes' },
+      { text: 'Basic bar setup', group_title: 'Includes' },
+      { text: 'Backdrop with balloons', group_title: 'Includes' },
+      { text: 'Tables + chairs set', group_title: 'Includes' },
+      { text: 'Fairy lights', group_title: 'Includes' },
     ],
   },
   {
-    sheet: 'SS2 ',
+    sheet: 'SS2',
     title: 'The Social Setup 2',
     slug: 'social-setup-2',
     theme_name: 'The Social Setup',
@@ -195,7 +208,7 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: 'Ideal for birthdays, anniversaries, and intimate celebrations at home venues',
     why_we_love_it: 'It creates a celebration corner that instantly lifts the energy of the entire party',
-    theme_slug_candidates: ['social-setup', 'bubbles-and-black-tie'],
+    theme_slug_candidates: ['bubbles-and-black-tie', 'social-setup'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
@@ -215,14 +228,14 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Centerpieces 5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc. 3 centerpiece for the cocktail tables', group_title: 'Includes' },
-      { text: 'Entrance Setup Easel with printed welcome board and floral styling', group_title: 'Includes' },
-      { text: 'Backdrop shiny curtain with balloons or single panel with balloons 2 LED 3D letters', group_title: 'Includes' },
-      { text: 'Basic Bar Setup Bar with black masking with a customized bar menu', group_title: 'Includes' },
-      { text: 'Candles Candles in short glass holders', group_title: 'Includes' },
-      { text: 'Furniture 3 round tables 20 chairs 3 cocktail tables', group_title: 'Includes' },
-      { text: 'Lighting 8 - 10 strings of fairy lights 3 - 4 halogen / LED parcans to illuminate the space', group_title: 'Includes' },
-      { text: 'Printables / games Event printables such as menu, quotes, or a fun game with material and instructions (games like ludo / sequence etc. are not included) Add-On Bartender (optional)', group_title: 'Includes' },
+      { text: '5 premium floral centrepieces', group_title: 'Includes' },
+      { text: 'Entrance easel + florals', group_title: 'Includes' },
+      { text: 'Basic bar setup', group_title: 'Includes' },
+      { text: 'Backdrop with balloons', group_title: 'Includes' },
+      { text: 'Tables + chairs set', group_title: 'Includes' },
+      { text: 'Fairy lights', group_title: 'Includes' },
+      { text: 'Printables / games', group_title: 'Includes' },
+      { text: 'LED / halogen lights', group_title: 'Includes' },
     ],
   },
   {
@@ -233,13 +246,12 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     budget_level_slug: 'level-2',
     base_price: 90650,
     description: 'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive.',
-    key_decor_elements:
-      'Premium centerpieces, golden-frame entrance, double-panel backdrop, customized bar, fairy lights with lanterns, and themed props.',
+    key_decor_elements: 'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive.',
     nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: 'Perfect for milestone birthdays, anniversaries, or gatherings where you want the celebration to feel elevated and memorable.',
     why_we_love_it: 'It blends statement pieces with elegant details to create a celebration space that feels truly special.',
-    theme_slug_candidates: ['social-setup', 'bubbles-and-black-tie'],
+    theme_slug_candidates: ['bubbles-and-black-tie', 'social-setup'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
@@ -259,23 +271,14 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Centerpieces',
-      },
-      { text: '3 additional centerpieces for cocktail tables', group_title: 'Centerpieces' },
-      { text: 'Easel styled like a golden frame with printed welcome board', group_title: 'Entrance Setup' },
-      { text: 'Floral styling', group_title: 'Entrance Setup' },
-      { text: 'Double panel backdrop for a fuller celebration setup', group_title: 'Customized Backdrop' },
-      { text: 'Customized premium bar', group_title: 'Premium Bar Setup' },
-      { text: 'Printed bar menu placed on a small easel', group_title: 'Premium Bar Setup' },
-      { text: 'Candles in glass jars', group_title: 'Candles' },
-      { text: '3 round tables, 20 chairs, 3 cocktail tables (premium furniture)', group_title: 'Furniture' },
-      { text: '8–10 fairy light strings with paper lanterns', group_title: 'Lighting' },
-      {
-        text: '8–10 themed props (shades / feathers / masks etc. – choose one style)',
-        group_title: 'Props',
-      },
+      { text: '5 premium floral centrepieces', group_title: 'Includes' },
+      { text: '3 cocktail centrepieces', group_title: 'Includes' },
+      { text: 'Golden frame entrance', group_title: 'Includes' },
+      { text: 'Premium bar + menu', group_title: 'Includes' },
+      { text: 'Double panel backdrop', group_title: 'Includes' },
+      { text: 'Premium furniture set', group_title: 'Includes' },
+      { text: 'Fairy lights + lanterns', group_title: 'Includes' },
+      { text: 'Themed props', group_title: 'Includes' },
     ],
   },
   {
@@ -286,13 +289,12 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     budget_level_slug: 'level-3',
     base_price: 97250,
     description: 'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive.',
-    key_decor_elements:
-      'Premium centerpieces, golden-frame entrance, double-panel backdrop, customized bar, fairy lights with lanterns, printables, halogen par cans, and themed props.',
+    key_decor_elements: 'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive.',
     nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: 'Perfect for milestone birthdays, anniversaries, or gatherings where you want the celebration to feel elevated and memorable.',
     why_we_love_it: 'It blends statement pieces with elegant details to create a celebration space that feels truly special.',
-    theme_slug_candidates: ['social-setup', 'bubbles-and-black-tie'],
+    theme_slug_candidates: ['bubbles-and-black-tie', 'social-setup'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
@@ -307,31 +309,20 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Furniture (premium)', amount: 20000 },
       { label: 'Fairy Lights with lanterns', amount: 5000 },
       { label: 'Printables', amount: 5000 },
-      { label: 'Halogen / LED parcans', amount: 3000 },
+      { label: 'lights', amount: 3000 },
       { label: 'Props (8-10)', amount: 5000 },
       { label: 'Platform fee', amount: 8550 },
       { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Centerpieces',
-      },
-      { text: 'Easel styled like a golden frame with printed welcome board', group_title: 'Entrance Setup' },
-      { text: 'Floral styling', group_title: 'Entrance Setup' },
-      { text: 'Double panel backdrop for a fuller celebration setup', group_title: 'Customized Backdrop' },
-      { text: 'Customized premium bar', group_title: 'Premium Bar Setup' },
-      { text: 'Printed bar menu placed on a small easel', group_title: 'Premium Bar Setup' },
-      { text: 'Candles in glass jars', group_title: 'Candles' },
-      { text: '3 round tables, 20 chairs, 3 cocktail tables (premium furniture)', group_title: 'Furniture' },
-      { text: '8–10 fairy light strings with paper lanterns', group_title: 'Lighting' },
-      { text: '3–4 Halogen / LED parcans to light up the space and photo-ops', group_title: 'Lighting' },
-      { text: '2 quotes / interactive engagement with 2 small easel stands', group_title: 'Event Printables' },
-      {
-        text: '8–10 themed props (shades / feathers / masks etc. – choose one style)',
-        group_title: 'Props',
-      },
-      { text: 'Professional Bartender (optional add-on)', group_title: 'Recommended Add on' },
+      { text: '5 premium floral centrepieces', group_title: 'Includes' },
+      { text: 'Golden frame entrance', group_title: 'Includes' },
+      { text: 'Premium bar + menu', group_title: 'Includes' },
+      { text: 'Double panel backdrop', group_title: 'Includes' },
+      { text: 'Premium furniture set', group_title: 'Includes' },
+      { text: 'Fairy lights + lanterns', group_title: 'Includes' },
+      { text: 'Printables', group_title: 'Includes' },
+      { text: 'LED lights + props', group_title: 'Includes' },
     ],
   },
   {
@@ -341,24 +332,16 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     theme_name: 'Complete Package',
     budget_level_slug: 'level-3',
     base_price: 162700,
-    description:
-      'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive — decor plus catering for 35 guests in one bundle.',
-    key_decor_elements:
-      'Premium centerpieces, golden-frame entrance, double-panel backdrop, customized bar, fairy lights with lanterns, printables, and full catering for 35 pax.',
-    nitty_gritty:
-      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs:
-      'A small area for our team to work, access to water and electricity.',
-    best_placed_at:
-      'Perfect for milestone birthdays, anniversaries, or gatherings where you want the celebration to feel elevated and memorable.',
-    why_we_love_it:
-      'It blends statement pieces with elegant details to create a celebration space that feels truly special — with food sorted for your guest list.',
-    theme_slug_candidates: ['social-setup', 'bubbles-and-black-tie', 'complete-package'],
+    description: 'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive.',
+    key_decor_elements: 'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive.',
+    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    setup_needs: 'A small area for our team to work, access to water and electricity.',
+    best_placed_at: 'Perfect for milestone birthdays, anniversaries, or gatherings where you want the celebration to feel elevated and memorable.',
+    why_we_love_it: 'It blends statement pieces with elegant details to create a celebration space that feels truly special.',
+    theme_slug_candidates: ['bubbles-and-black-tie', 'complete-package'],
     price_covers: [
       { text: 'The Complete Look' },
       { text: 'Professional Setup' },
-      { text: 'Final Dismantling' },
-      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
       { text: 'No hidden service fees.' },
     ],
     price_breakdown: [
@@ -367,49 +350,59 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Premium Bar Set up', amount: 15000 },
       { label: 'Customized Backdrop', amount: 15000 },
       { label: 'Candles', amount: 3000 },
-      { label: 'Furniture (classic)', amount: 12500 },
+      { label: 'Furniture (classic or premium) cost differs', amount: 12500 },
+      { label: '3 round tables + 20 chairs + 3 cocktail tables (premium)', amount: 20000 },
       { label: 'Fairy Lights with lanterns', amount: 5000 },
       { label: 'Printables', amount: 5000 },
-      { label: 'Halogen / LED parcans', amount: 3000 },
-      { label: 'Props (8-10)', amount: 5000 },
-      { label: 'Catering for 35 pax', amount: 66500 },
+      { label: 'lights', amount: 3000 },
+      { label: 'Veg - 1900 | Non Veg - 2300 (with premium dishes)', amount: 66500 },
+      { label: 'props (8-10)', amount: 5000 },
       { label: 'Platform fee', amount: 14500 },
       { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Centerpieces',
-      },
-      { text: '3 additional centerpieces for cocktail tables', group_title: 'Centerpieces' },
-      { text: 'Easel styled like a golden frame with printed welcome board', group_title: 'Entrance Setup' },
-      { text: 'Floral styling', group_title: 'Entrance Setup' },
-      { text: 'Double panel backdrop for a fuller celebration setup', group_title: 'Customized Backdrop' },
-      { text: 'Customized premium bar', group_title: 'Premium Bar Setup' },
-      { text: 'Printed bar menu placed on a small easel', group_title: 'Premium Bar Setup' },
-      { text: 'Candles in glass jars', group_title: 'Candles' },
-      {
-        text: 'Furniture (Choose Classic or Premium): 3 round tables, 20 chairs, 3 cocktail tables',
-        group_title: 'Furniture',
-      },
-      { text: '8–10 fairy light strings', group_title: 'Lighting' },
-      { text: '8–10 paper lanterns with warm lights', group_title: 'Lighting' },
-      { text: '3–4 LED Parcans to light up the space and photo-ops', group_title: 'Lighting' },
-      {
-        text: '8–10 themed props (shades / feathers / masks etc. – choose one style)',
-        group_title: 'Props',
-      },
-      { text: '2 quotes / interactive engagement with 2 small easel stands', group_title: 'Event Printables' },
-      { text: 'Professional Bartender (recommended add-on)', group_title: 'Recommended Add on' },
-      {
-        text: 'Catering for 35 pax — choose Veg / Non-veg and Classic / Premium menu (Veg classic ₹1,300 · Non-veg classic ₹1,890 · Veg premium ₹1,900 · Non-veg premium ₹2,300 per person)',
-        group_title: 'Catering',
-      },
+      { text: '5 premium floral centrepieces', group_title: 'Includes' },
+      { text: 'Golden frame entrance', group_title: 'Includes' },
+      { text: 'Premium bar + menu', group_title: 'Includes' },
+      { text: 'Double panel backdrop', group_title: 'Includes' },
+      { text: 'Furniture set', group_title: 'Includes' },
+      { text: 'Fairy lights + lanterns', group_title: 'Includes' },
+      { text: 'Printables + props', group_title: 'Includes' },
+      { text: 'Catering for 35 pax', group_title: 'Includes' },
     ],
   },
 ];
 
 async function seedDecorBubblesBlackTiePackages(strapi) {
+  await ensureThemeDocumentId(strapi, {
+    name: 'Bubbles & Black Tie',
+    slug: 'bubbles-and-black-tie',
+    display_order: 40,
+  });
+  await ensureEventDocumentId(strapi, {
+    name: 'Birthday Parties',
+    slugCandidates: EVENT_SLUG_CANDIDATES,
+    display_order: 10,
+  });
+  await ensureBudgetLevelDocumentId(strapi, {
+    name: 'Level 1',
+    slug: 'level-1',
+    display_order: 1,
+    description: 'Thoughtfully put together essentials for smaller guest counts.',
+  });
+  await ensureBudgetLevelDocumentId(strapi, {
+    name: 'Level 2',
+    slug: 'level-2',
+    display_order: 2,
+    description: 'A more detailed setup with a stronger visual and service experience.',
+  });
+  await ensureBudgetLevelDocumentId(strapi, {
+    name: 'Level 3',
+    slug: 'level-3',
+    display_order: 3,
+    description: 'Premium styling and service depth for larger or more layered celebrations.',
+  });
+
   return seedDecorPackages(strapi, BUBBLES_BLACK_TIE_PACKAGES, {
     eventSlugCandidates: EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/decor-bubbles-black-tie',
