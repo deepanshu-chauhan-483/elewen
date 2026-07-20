@@ -7,6 +7,7 @@ import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
+import { filterDecorThemesBySocialEvent } from '../lib/packageFilters'
 import {
   buildServiceSelectionBackTo,
   DECOR_THEME_CATEGORY_SLUG,
@@ -122,9 +123,9 @@ function ThemeCard({
   return (
     <Link
       to={`/packages/decor-levels?${params.toString()}`}
-      className="group flex h-[350px] w-full max-w-[250px] md:h-auto md:max-h-[384px] md:max-w-[298px] flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[8px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1"
+      className="group flex h-full max-h-[424px] w-full max-w-[298px] min-w-0 flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px]"
     >
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
+      <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
         {image ? (
           <img
             src={image}
@@ -135,12 +136,12 @@ function ThemeCard({
             style={{ transform: 'none' }}
           />
         ) : (
-          <div className="flex h-full min-h-[220px] w-full items-center justify-center bg-[#E8DDD1] px-4 text-center text-[13px] text-[#7C7065]">
+          <div className="flex h-full w-full items-center justify-center bg-[#E8DDD1] px-4 text-center text-[13px] text-[#7C7065] md:text-[14px]">
             {theme.label}
           </div>
         )}
       </div>
-      <div className="mt-2 flex h-[40px] items-center rounded-[10px] bg-[#7E8061] px-3 text-white md:h-[44px] md:px-3.5">
+      <div className="flex h-[44px] shrink-0 items-center rounded-[10px] bg-[#7E8061] px-3 text-white md:h-[48px] md:px-3.5">
         <h2
           className="text-[14px] font-medium leading-[1.2] md:text-[15px]"
           style={{ fontFamily: "'Poppins'" }}
@@ -189,6 +190,11 @@ export default function DecorThemePage() {
     [themes, packages]
   )
 
+  const eventScopedThemes = useMemo(
+    () => filterDecorThemesBySocialEvent(themesWithImages, eventId),
+    [eventId, themesWithImages]
+  )
+
   const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
     key: paginationKey,
@@ -214,9 +220,9 @@ export default function DecorThemePage() {
 
   const filteredThemes = useMemo(() => {
     const query = debouncedSearchValue.trim().toLowerCase()
-    if (!query) return themesWithImages
-    return themesWithImages.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
-  }, [debouncedSearchValue, themesWithImages])
+    if (!query) return eventScopedThemes
+    return eventScopedThemes.filter(theme => (theme.label ?? '').toLowerCase().includes(query))
+  }, [debouncedSearchValue, eventScopedThemes])
   const cardsPerPage = isDesktopViewport ? DESKTOP_CARDS_PER_PAGE : MOBILE_CARDS_PER_PAGE
   const totalPages = Math.max(1, Math.ceil(filteredThemes.length / cardsPerPage))
   const activePageIndex = paginationState.key === paginationKey ? paginationState.pageIndex : 0
@@ -298,6 +304,10 @@ export default function DecorThemePage() {
     return <CmsPageLoader />
   }
 
+  if (eventScopedThemes.length === 0) {
+    return <Navigate to={skipToPackages} replace />
+  }
+
   return (
     <EventFlowLayout
       title="Choose a theme"
@@ -338,30 +348,21 @@ export default function DecorThemePage() {
         >
           <div className="mx-auto flex w-full flex-col">
             <div className="flex w-full flex-col gap-3 md:gap-4">
-              {filteredThemes.length === 0 ? (
-                <p
-                  className="py-10 text-center text-[14px] text-[#7C7065] md:text-[15px]"
-                  style={{ fontFamily: "'Poppins'" }}
-                >
-                  No themes are available for this event yet. You can skip ahead to browse packages.
-                </p>
-              ) : (
-                <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
-                  {visibleThemes.map((theme, index) => (
-                    <ThemeCard
-                      key={theme.id ?? theme.slug ?? `${safePageIndex}-${index}`}
-                      categoryId={categoryId}
-                      eventId={eventId}
-                      eventNumericId={eventNumericId}
-                      serviceSlug={serviceSlug}
-                      serviceId={resolvedServiceId}
-                      flow={flow}
-                      theme={theme}
-                      image={resolveThemePreviewImage(theme)}
-                    />
-                  ))}
-                </div>
-              )}
+              <div className="grid w-full grid-cols-1 justify-items-center gap-3 py-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
+                {visibleThemes.map((theme, index) => (
+                  <ThemeCard
+                    key={theme.id ?? theme.slug ?? `${safePageIndex}-${index}`}
+                    categoryId={categoryId}
+                    eventId={eventId}
+                    eventNumericId={eventNumericId}
+                    serviceSlug={serviceSlug}
+                    serviceId={resolvedServiceId}
+                    flow={flow}
+                    theme={theme}
+                    image={resolveThemePreviewImage(theme)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 

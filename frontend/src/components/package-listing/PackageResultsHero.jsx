@@ -8,7 +8,7 @@ import {
   useEventsByCategory,
   useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
-import { eventSlugsMatch, normalizeServiceSlug } from '../../lib/packageFilters'
+import { eventSlugsMatch, filterDecorThemesBySocialEvent, normalizeServiceSlug } from '../../lib/packageFilters'
 import { buildServiceDestination, DECOR_THEME_CATEGORY_SLUG, DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
 
 function FilterPill({
@@ -176,11 +176,38 @@ export default function PackageResultsHero({
   const themes = useMemo(() => {
     if (!isDecorService) return []
 
-    return (Array.isArray(allThemes) ? allThemes : []).map(theme => ({
+    const scopedThemes = filterDecorThemesBySocialEvent(allThemes, eventSlug)
+
+    return scopedThemes.map(theme => ({
       value: theme.slug,
       label: theme.label ?? titleizeSlug(theme.slug),
     }))
-  }, [allThemes, isDecorService])
+  }, [allThemes, eventSlug, isDecorService])
+
+  useEffect(() => {
+    if (!themeSlug || !isDecorService || categorySlug !== DECOR_THEME_CATEGORY_SLUG || levelSlug) {
+      return
+    }
+
+    const themeStillAllowed = themes.some(theme => theme.value?.toLowerCase() === themeSlug)
+    if (themeStillAllowed) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.delete('theme')
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [
+    categorySlug,
+    isDecorService,
+    levelSlug,
+    setSearchParams,
+    themeSlug,
+    themes,
+  ])
 
   const levels = useMemo(
     () =>

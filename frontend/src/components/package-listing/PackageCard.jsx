@@ -48,20 +48,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
     if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
     return []
   }, [pkg.includes, pkg.tags])
-  const includesResetKey = `${pkg.id ?? ''}|${pkg.documentId ?? ''}|${tags.length}|${compactMode}`
-  const [includesState, setIncludesState] = useState({ resetKey: '', showAll: false })
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return window.innerWidth >= 768
-  })
-  const includesResetKeyWithViewport = `${includesResetKey}|${isDesktopViewport}`
-  const showAllIncludes =
-    includesState.resetKey === includesResetKeyWithViewport ? includesState.showAll : false
-  const setShowAllIncludes = showAll => {
-    setIncludesState({ resetKey: includesResetKeyWithViewport, showAll })
-  }
-  const [visibleTagCount, setVisibleTagCount] = useState(0)
-  const location = useLocation()  
+  const location = useLocation()
   const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
   const packageId = pkg.documentId ?? pkg.id
   const wishlistPackageId = String(pkg.id ?? pkg.documentId ?? '').trim()
@@ -73,8 +60,6 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
 
   const startX = useRef(0)
   const endX = useRef(0)
-  const visibleTagsViewportRef = useRef(null)
-  const hiddenTagsMeasureRef = useRef(null)
 
   const currentImage = images[currentIndex]
   const saved =
@@ -95,102 +80,6 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
     preloadImages([...new Set(urls)])
   }, [currentIndex, images, pkg.documentId, pkg.id])
 
-  const effectiveVisibleTagCount = showAllIncludes ? tags.length : visibleTagCount
-  const hasMoreIncludes = tags.length > effectiveVisibleTagCount
-  const visibleTags = showAllIncludes ? tags : tags.slice(0, effectiveVisibleTagCount)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-
-    const mediaQuery = window.matchMedia('(min-width: 768px)')
-    const handleViewportChange = event => {
-      setIsDesktopViewport(event.matches)
-    }
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleViewportChange)
-      return () => mediaQuery.removeEventListener('change', handleViewportChange)
-    }
-
-    mediaQuery.addListener(handleViewportChange)
-    return () => mediaQuery.removeListener(handleViewportChange)
-  }, [])
-
-  useEffect(() => {
-    if (showAllIncludes) {
-      return undefined
-    }
-
-    const calculateVisibleTags = () => {
-      const viewport = visibleTagsViewportRef.current
-      const measureContainer = hiddenTagsMeasureRef.current
-
-      if (!viewport || !measureContainer) return
-
-      const availableHeight = viewport.clientHeight
-      const availableWidth = viewport.clientWidth
-
-      if (!availableHeight || !availableWidth) {
-        setVisibleTagCount(tags.length)
-        return
-      }
-
-      measureContainer.style.width = `${availableWidth}px`
-
-      const tagNodes = Array.from(measureContainer.querySelectorAll('[data-tag-index]'))
-      const moreNode = measureContainer.querySelector('[data-more-tag]')
-
-      tagNodes.forEach(node => {
-        node.style.display = 'none'
-      })
-
-      if (moreNode) {
-        moreNode.style.display = 'none'
-      }
-
-      let fittedCount = tagNodes.length
-
-      for (let index = 0; index < tagNodes.length; index += 1) {
-        tagNodes[index].style.display = 'inline-flex'
-
-        const hasRemainingTags = index < tagNodes.length - 1
-        if (moreNode) {
-          moreNode.style.display = hasRemainingTags ? 'inline-flex' : 'none'
-        }
-
-        if (measureContainer.scrollHeight > availableHeight) {
-          tagNodes[index].style.display = 'none'
-          fittedCount = Math.max(index, 1)
-          break
-        }
-      }
-
-      if (fittedCount === tagNodes.length && moreNode) {
-        moreNode.style.display = 'none'
-      }
-
-      setVisibleTagCount(fittedCount)
-    }
-
-    calculateVisibleTags()
-
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', calculateVisibleTags)
-      return () => window.removeEventListener('resize', calculateVisibleTags)
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      calculateVisibleTags()
-    })
-
-    if (visibleTagsViewportRef.current) {
-      resizeObserver.observe(visibleTagsViewportRef.current)
-    }
-
-    return () => resizeObserver.disconnect()
-  }, [showAllIncludes, tags, isDesktopViewport, compactMode])
-
-  // 🔥LOOP LOGIC (important)
   const goToPrevious = () => {
     if (!images.length) return
     setCurrentIndex(prev => (prev - 1 + images.length) % images.length)
@@ -201,7 +90,6 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
     setCurrentIndex(prev => (prev + 1) % images.length)
   }
 
-  // 🔥 SWIPE HANDLERS
   const handleTouchStart = e => {
     startX.current = e.touches[0].clientX
   }
@@ -238,9 +126,8 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           window.open(packageHref, '_blank', 'noopener')
         }
       }}
-      className={`relative flex min-h-[500px] cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
+      className={`relative flex cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
     >
-      {/* Image Container */}
       <div
         className="relative h-[280px] overflow-hidden rounded-[6px] bg-[#E8E2DA]"
         onTouchStart={handleTouchStart}
@@ -262,13 +149,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </div>
         )}
 
-        {/* Price + Wishlist */}
-        <div className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
-          {pkg.price ? (
-            <div className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#591902] shadow-sm">
-              Starting from <span className="font-bold">{pkg.price}</span>
-            </div>
-          ) : null}
+        <div className="absolute right-3 top-3 z-30">
           <button
             type="button"
             aria-label={
@@ -318,14 +199,13 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </button>
         </div>
 
-        {/* 🔥 LEFT ARROW (DIV STYLE) */}
         {images.length > 1 && (
           <div
             onClick={event => {
               event.stopPropagation()
               goToPrevious()
             }}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex h-[41px] w-[20px] items-center justify-center rounded-r-full bg-white/20 backdrop-blur-md cursor-pointer"
+            className="absolute left-0 top-1/2 z-20 flex h-[41px] w-[20px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-full bg-white/20 backdrop-blur-md"
           >
             <svg
               width="15"
@@ -341,18 +221,17 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </div>
         )}
 
-        {/* 🔥 RIGHT ARROW (DIV STYLE) */}
         {images.length > 1 && (
           <div
             onClick={event => {
               event.stopPropagation()
               goToNext()
             }}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex h-[41px] w-[21px] items-center justify-center rounded-l-full bg-white/20 backdrop-blur-md cursor-pointer"
+            className="absolute right-0 top-1/2 z-20 flex h-[41px] w-[21px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-l-full bg-white/20 backdrop-blur-md"
           >
             <svg
               width="15"
-              height="15" 
+              height="15"
               viewBox="0 0 24 24"
               stroke="white"
               strokeWidth="2"
@@ -364,12 +243,10 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </div>
         )}
 
-        {/* Dots */}
         <ImageDots count={images.length} currentIndex={currentIndex} />
       </div>
 
-      {/* Content */}
-      <div className="flex min-h-[200px] flex-1 flex-col px-1 pb-1 pt-3">
+      <div className="flex flex-col px-1 pb-1 pt-3">
         <div className="flex items-start justify-between gap-2">
           <h3
             className="min-w-0 flex-1 text-[12px] font-semibold leading-[1.35] text-[#2D2D2D] sm:text-[13px]"
@@ -383,64 +260,24 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
         </div>
 
         {pkg.price ? (
-          <p className="mt-2 text-[13px] leading-none text-[#2D2D2D]">
+          <p className="mt-0 text-[13px] leading-none text-[#2D2D2D]">
             Price <span className="text-[15px] font-bold text-[#591902]">{pkg.price}</span>
           </p>
         ) : null}
-        <div className="mt-2 flex min-h-0 flex-1 flex-col">
-          <p className="text-[12px] font-medium">Includes :</p>
-          <div
-            ref={visibleTagsViewportRef}
-            className={`mt-2 min-h-0 flex-1 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
-          >
+
+        <div className="mt-4 overflow-hidden">
+          <div className="max-h-[3.25rem] overflow-hidden">
             <div className="flex flex-wrap gap-1.5">
-              {visibleTags.map((tag, i) => (
+              {tags.map((tag, i) => (
                 <span
                   key={i}
-                  className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
+                  className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium leading-none text-[#2D2D2D]"
                 >
                   {tag}
                 </span>
               ))}
-              {hasMoreIncludes && !showAllIncludes ? (
-                <button
-                  type="button"
-                  onClick={event => {
-                    event.stopPropagation()
-                    setShowAllIncludes(true)
-                  }}
-                  className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
-                >
-                  More
-                </button>
-              ) : null}
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0">
-        <div
-          ref={hiddenTagsMeasureRef}
-          className="flex flex-wrap gap-1.5"
-          style={{ position: 'absolute', visibility: 'hidden' }}
-        >
-          {tags.map((tag, index) => (
-            <span
-              key={`${tag}-${index}`}
-              data-tag-index={index}
-              className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
-            >
-              {tag}
-            </span>
-          ))}
-          <button
-            type="button"
-            data-more-tag
-            className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium text-[#2D2D2D]"
-          >
-            More
-          </button>
         </div>
       </div>
     </article>

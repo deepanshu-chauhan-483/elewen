@@ -270,7 +270,79 @@ function dedupeThemesBySlug(themes) {
 }
 
 function themeMatchesSlugSet(theme, usedSlugs) {
-  return getThemeSlugVariants(theme).some(variant => usedSlugs.has(variant))
+  return getThemeSlugVariants(theme).some(variant => usedSlugs.has(slugifyThemeValue(variant)))
+}
+
+/** General Pack / House Party / Birthday Party — shown on every social decor event. */
+const UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS = [
+  'general-pack',
+  'house-party',
+  'house-parties',
+  'birthday-party',
+  'birthday-parties',
+]
+
+/** Extra themes per event (plus universal themes above). */
+const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
+  anniversary: ['still-us'],
+  'birthday-parties': ['bubbles-and-black-tie', 'bohemian', 'pastel'],
+  'baby-shower': ['a-little-honey', 'little-honey', 'oh-baby'],
+  engagement: ['sufi-night', 'ishq-sufiyana'],
+  'sufi-night': ['sufi-night', 'ishq-sufiyana'],
+}
+
+const DECOR_THEME_ALLOWLIST_ALIASES = {
+  'bubbles-black-tie': 'bubbles-and-black-tie',
+  'little-honey': 'a-little-honey',
+  'ishq-sufiyana': 'sufi-night',
+  'oh-baby-basics': 'oh-baby',
+}
+
+function buildAllowedSocialDecorThemeSlugSet(eventSlug = '') {
+  const canonicalEventSlug = canonicalizeEventSlug(eventSlug)
+
+  const allowed = new Set(
+    UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS.map(slug => slugifyThemeValue(slug)).filter(Boolean)
+  )
+
+  for (const slug of SOCIAL_EVENT_DECOR_THEME_SLUGS[canonicalEventSlug] ?? []) {
+    const normalized = slugifyThemeValue(slug)
+    if (normalized) allowed.add(normalized)
+  }
+
+  return allowed
+}
+
+function themeSlugMatchesAllowlist(normalizedThemeSlug, allowedSlugs) {
+  if (!normalizedThemeSlug) return false
+  if (allowedSlugs.has(normalizedThemeSlug)) return true
+
+  const canonicalSlug = DECOR_THEME_ALLOWLIST_ALIASES[normalizedThemeSlug]
+  if (canonicalSlug && allowedSlugs.has(canonicalSlug)) return true
+
+  for (const allowedSlug of allowedSlugs) {
+    const canonicalAllowed = DECOR_THEME_ALLOWLIST_ALIASES[allowedSlug] ?? allowedSlug
+    if (
+      normalizedThemeSlug === canonicalAllowed ||
+      normalizedThemeSlug.startsWith(`${canonicalAllowed}-`)
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function themeMatchesAllowedSet(theme, allowedSlugs) {
+  return getThemeSlugVariants(theme).some(variant =>
+    themeSlugMatchesAllowlist(slugifyThemeValue(variant), allowedSlugs)
+  )
+}
+
+/** Restrict social decor theme pickers to event-specific + universal general-pack themes. */
+export function filterDecorThemesBySocialEvent(themes, eventSlug = '') {
+  const allowedSlugs = buildAllowedSocialDecorThemeSlugSet(eventSlug)
+  return dedupeThemesBySlug(themes).filter(theme => themeMatchesAllowedSet(theme, allowedSlugs))
 }
 
 /** Prefer themes linked on packages for this event; if none linked, show all CMS themes. */

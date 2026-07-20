@@ -148,27 +148,40 @@ const resolveServiceCategory = (service, displayName, name) => {
 }
 
 const DECOR_THEME_DISPLAY_ORDER = [
-  'retro',
-  'disco',
-  'floral',
-  'bollywood',
+  'general-pack',
+  'house-party',
+  'birthday-party',
   'still-us',
+  'bubbles-and-black-tie',
+  'bohemian',
+  'pastel',
   'a-little-honey',
   'oh-baby',
+  'sufi-night',
 ]
 
 const DECOR_THEME_SLUG_ALIASES = {
   'little-honey': 'a-little-honey',
+  'bubbles-black-tie': 'bubbles-and-black-tie',
+  'ishq-sufiyana': 'sufi-night',
 }
 
 const DECOR_THEME_FALLBACK = [
-  { id: 'retro', label: 'Retro', slug: 'retro', preview_image: null },
-  { id: 'disco', label: 'Disco', slug: 'disco', preview_image: null },
-  { id: 'floral', label: 'Floral', slug: 'floral', preview_image: null },
-  { id: 'bollywood', label: 'Bollywood', slug: 'bollywood', preview_image: null },
+  { id: 'general-pack', label: 'General Pack', slug: 'general-pack', preview_image: null },
+  { id: 'house-party', label: 'House Party', slug: 'house-party', preview_image: null },
+  { id: 'birthday-party', label: 'Birthday Party', slug: 'birthday-party', preview_image: null },
   { id: 'still-us', label: 'Still Us', slug: 'still-us', preview_image: null },
+  {
+    id: 'bubbles-and-black-tie',
+    label: 'Bubbles & Black Tie',
+    slug: 'bubbles-and-black-tie',
+    preview_image: null,
+  },
+  { id: 'bohemian', label: 'Bohemian', slug: 'bohemian', preview_image: null },
+  { id: 'pastel', label: 'Pastel', slug: 'pastel', preview_image: null },
   { id: 'a-little-honey', label: 'A little honey', slug: 'a-little-honey', preview_image: null },
   { id: 'oh-baby', label: 'Oh Baby', slug: 'oh-baby', preview_image: null },
+  { id: 'sufi-night', label: 'Sufi Night', slug: 'sufi-night', preview_image: null },
 ]
 
 const LEVELS_FALLBACK = [
