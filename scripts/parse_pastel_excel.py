@@ -68,6 +68,120 @@ PRICE_COVERS = [
     {"text": "No hidden service fees."},
 ]
 
+# Card chips must stay short (Baby Shower style). Excel "What's Included" is often too long.
+SHORT_CARD_TAGS: dict[str, list[str]] = {
+    "Del1": ["5 glass floral vases", "20 pastel pillar candles"],
+    "FF1": ["Custom engraved mirror", "4 big artificial flowers", "Base artificial flowers"],
+    "FF2": ["Custom engraved mirror", "Real flower mirror decor", "3 big artificial flowers"],
+    "FF3": ["Printed panel backdrop", "Real flower decoration", "Pillar candles in glasses"],
+    "FF23": ["Printed panel backdrop", "Real flower decoration", "Pillar candles in glasses"],
+    "Pop1": ["Easel stand", "Custom printed board", "Balloon decor on easel", "10 helium balloons"],
+    "ULC": [
+        "Canopy structure",
+        "Flower bunch on canopy",
+        "10 fairy light strings",
+        "Mattress and carpet",
+        "6 cushions",
+        "2 lantern cages",
+    ],
+    "ULC2": [
+        "Wooden canopy",
+        "5 fairy light strings",
+        "Disco balls / lanterns",
+        "2 tables",
+        "Gadda and carpet",
+        "Table fabric draping",
+        "8 cushions",
+    ],
+    "PIP1": ["Single panel backdrop", "Balloon or floral decor", "Happy Birthday neon", "Cake table"],
+    "Pip2": ["Double panel backdrop", "Custom message board", "Cake table"],
+    "SS1": ["Basic bar", "Custom bar menu + easel", "3 cocktail tables", "3 small centrepieces"],
+    "SS2": [
+        "Wooden bar",
+        "4 poster structure",
+        "Draped cloth",
+        "Fairy lights",
+        "Custom bar menu + easel",
+        "3 cocktail tables",
+    ],
+    "WWK": [
+        "Wall panel 8x4ft",
+        "Instruction board",
+        "Letters",
+        "Printed pictures",
+        "Marker stand",
+        "Markers",
+    ],
+    "SAS": ["Grass wall", "Custom crossword board", "2 Markers"],
+    "BB": [
+        "Bloom bar counter",
+        "1 stand",
+        "8 flowers + 2 greens",
+        "Instruction easel",
+        "Bouquet paper",
+        "Stationery kit",
+        "Umbrella",
+    ],
+}
+
+SECTION_STOPS = [
+    "What's Included",
+    "Whats Included",
+    "Nitty - Gritties",
+    "Nitty-Gritties",
+    "The price you see covers it all",
+    "Best placed",
+    "Why we love",
+    "Setup",
+    "Policies",
+    "Cancellation",
+    "Reference",
+]
+
+
+def clean_prose(text: str, fallback: str = "") -> str:
+    """Drop policy / cancellation / T&C tails that Excel appends into prose cells."""
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return fallback
+
+    lower = cleaned.lower()
+    cut_markers = [
+        " policies ",
+        "policies all the material",
+        "cancellation policy",
+        "read our full",
+        "[read our",
+        "reference picture",
+    ]
+    for marker in cut_markers:
+        idx = lower.find(marker)
+        if idx > 0:
+            cleaned = cleaned[:idx].strip(" .")
+            break
+
+    return cleaned[:500] if cleaned else fallback
+
+
+def shorten_inclusion_tag(text: str) -> str:
+    """Keep listing chips short enough to render as pills, not paragraphs."""
+    cleaned = re.sub(r"\s+", " ", (text or "").strip(" -"))
+    if not cleaned:
+        return ""
+
+    lower = cleaned.lower()
+    if lower.startswith("reference") or "ideal setup" in lower:
+        return ""
+    if lower.startswith("policies") or "cancellation" in lower:
+        return ""
+
+    # Prefer the head before long parentheticals / dashes.
+    cleaned = re.split(r"\(| - | — |; ", cleaned, maxsplit = 1)[0].strip(" /")
+    if len(cleaned) > 42:
+        cleaned = cleaned[:39].rstrip(" ,/-") + "..."
+    return cleaned
+
+
 
 def norm(value: object) -> str:
     if value is None:
@@ -153,76 +267,70 @@ def parse_sheet(ws, sheet_name: str, meta: tuple[str, str, str, str, str]) -> di
     desc_raw = section_after(
         ws,
         ["Description", "Description "],
-        [
-            "What's Included",
-            "Whats Included",
-            "Nitty - Gritties",
-            "Nitty-Gritties",
-            "The price you see covers it all",
-            "Best placed",
-            "Why we love",
-        ],
+        SECTION_STOPS,
     )
-    description = " ".join(
-        line for line in desc_raw.split("\n") if line and not line.startswith("-")
-    ).strip() or title
+    description = clean_prose(
+        " ".join(
+            line for line in desc_raw.split("\n") if line and not line.startswith("-")
+        ).strip(),
+        title,
+    )
 
     includes_raw = section_after(
         ws,
         ["What's Included", "Whats Included", "What's Included:"],
-        [
-            "Nitty - Gritties",
-            "Nitty-Gritties",
-            "The price you see covers it all",
-            "Best placed",
-            "Why we love",
-            "Setup",
-        ],
+        SECTION_STOPS,
     )
     inclusions: list[str] = []
-    for line in includes_raw.split("\n"):
-        text = line.lstrip("- ").strip()
-        if text:
-            inclusions.append(text[:255])
+    if sheet_name in SHORT_CARD_TAGS:
+        inclusions = list(SHORT_CARD_TAGS[sheet_name])
+    else:
+        for line in includes_raw.split("\n"):
+            text = shorten_inclusion_tag(line.lstrip("- ").strip())
+            if text:
+                inclusions.append(text)
 
     if not inclusions:
         for row in range(3, 40):
             label = norm(ws.cell(row, 1).value).lower()
             if label in ("package price", "platform fee") or "transport" in label:
                 break
-            detail = norm(ws.cell(row, 2).value)
+            detail = shorten_inclusion_tag(norm(ws.cell(row, 2).value))
             if detail and detail.lower() not in ("details", "vendor cost", "average"):
-                inclusions.append(detail[:255])
+                inclusions.append(detail)
 
     nitty = section_after(
         ws,
         ["Nitty - Gritties", "Nitty-Gritties", "Nitty Gritties"],
-        ["The price you see covers it all", "Best placed", "Why we love", "Setup"],
+        SECTION_STOPS,
     )
-    nitty = " ".join(nitty.split("\n")).strip() or DEFAULT_NITTY
+    nitty = clean_prose(" ".join(nitty.split("\n")).strip(), DEFAULT_NITTY)
 
     best = section_after(
         ws,
         ["Best placed at", "Best placed", "Best Placed At"],
-        ["Why we love", "Setup", "Nitty"],
+        SECTION_STOPS,
     )
-    best = " ".join(best.split("\n")).strip()
+    best = clean_prose(" ".join(best.split("\n")).strip(), "")
 
     why = section_after(
         ws,
         ["Why we love it", "Why we love", "Why We Love It"],
-        ["Setup", "Best placed", "Nitty"],
+        SECTION_STOPS,
     )
-    why = " ".join(why.split("\n")).strip()
+    why = clean_prose(" ".join(why.split("\n")).strip(), "")
 
     setup = section_after(
         ws,
         ["Setup needs", "Setup", "Set up needs"],
-        ["Best", "Why", "Nitty", "The price"],
+        SECTION_STOPS,
     )
-    setup = " ".join(
-        line for line in setup.split("\n") if not line.lower().startswith("the price")
-    ).strip() or DEFAULT_SETUP
+    setup = clean_prose(
+        " ".join(
+            line for line in setup.split("\n") if not line.lower().startswith("the price")
+        ).strip(),
+        DEFAULT_SETUP,
+    )
 
     breakdown: list[dict[str, int]] = []
     for row in range(3, 50):
@@ -253,6 +361,8 @@ def parse_sheet(ws, sheet_name: str, meta: tuple[str, str, str, str, str]) -> di
     else:
         base_price = int(round((package_price or 0) + (platform or 0) + (labour or 0)))
 
+    key_decor = clean_prose(description, title)[:180]
+
     return {
         "sheet": sheet_name,
         "title": title,
@@ -261,14 +371,14 @@ def parse_sheet(ws, sheet_name: str, meta: tuple[str, str, str, str, str]) -> di
         "budget_level_slug": level,
         "base_price": base_price,
         "description": description[:1000],
-        "key_decor_elements": description[:500],
+        "key_decor_elements": key_decor,
         "nitty_gritty": nitty[:800],
         "setup_needs": setup[:500],
         "best_placed_at": best[:500],
         "why_we_love_it": why[:500],
         "child_theme": child,
         "price_breakdown": breakdown,
-        "inclustions": inclusions[:32],
+        "inclustions": inclusions[:12],
     }
 
 
