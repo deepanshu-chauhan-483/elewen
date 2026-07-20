@@ -57,14 +57,8 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Transport', amount: 600 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden painted bottles styled with roses, daisies and pampas / feathers',
-        group_title: 'Floral Vases',
-      },
-      {
-        text: 'Easel stand with printed welcome board and floral styling',
-        group_title: 'Entrance Set up',
-      },
+      { text: '5 golden floral centrepieces', group_title: 'Floral Vases' },
+      { text: 'Entrance easel + florals', group_title: 'Entrance Set up' },
     ],
   },
   {
@@ -95,17 +89,11 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with roses, daisies, and pampas / feathers',
-        group_title: 'Floral Vases',
-      },
-      { text: 'Easel with printed welcome board', group_title: 'Entrance Setup' },
-      { text: '2 floral vases for styling', group_title: 'Entrance Setup' },
-      { text: 'Basic bar with black masking', group_title: 'Basic Bar Setup' },
-      {
-        text: '10 Candles in short glass holders for soft ambient lighting',
-        group_title: 'Basic Bar Setup',
-      },
+      { text: '5 golden floral centrepieces', group_title: 'Floral Vases' },
+      { text: 'Welcome easel + board', group_title: 'Entrance Setup' },
+      { text: '2 floral vases', group_title: 'Entrance Setup' },
+      { text: 'Basic bar setup', group_title: 'Basic Bar Setup' },
+      { text: '10 short-glass candles', group_title: 'Basic Bar Setup' },
     ],
   },
   {
@@ -135,14 +123,8 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Floral Styling',
-      },
-      {
-        text: 'Entrance easel with printed welcome board and floral styling',
-        group_title: 'Entrance Set up',
-      },
+      { text: '5 premium floral centrepieces', group_title: 'Floral Styling' },
+      { text: 'Entrance easel + florals', group_title: 'Entrance Set up' },
       {
         text: 'Shiny wall with balloons',
         group_title: 'Backdrop (choose 1)',
@@ -158,9 +140,9 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
         choice_group_label: 'Backdrop (choose 1)',
       },
       { text: 'Feature detailing', group_title: 'Decor Elements' },
-      { text: '2 LED 3D letters for a celebratory focal point', group_title: 'Decor Elements' },
-      { text: '10 Candles in short glass holders', group_title: 'Decor Elements' },
-      { text: 'Basic bar with black masking', group_title: 'Bar Set up' },
+      { text: '2 LED 3D letters', group_title: 'Decor Elements' },
+      { text: '10 short-glass candles', group_title: 'Decor Elements' },
+      { text: 'Basic bar setup', group_title: 'Bar Set up' },
     ],
   },
   {
@@ -192,21 +174,12 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Centerpieces',
-      },
-      {
-        text: 'Easel styled like a golden frame with printed welcome board or floral styling',
-        group_title: 'Entrance Setup',
-      },
-      {
-        text: 'Double panel backdrop for a fuller, more impactful setup',
-        group_title: 'Customized Backdrop',
-      },
-      { text: 'Customized premium bar', group_title: 'Premium Bar Setup' },
-      { text: 'Printed bar menu placed on a small easel', group_title: 'Premium Bar Setup' },
-      { text: 'Candles in glass jars for warm ambient lighting', group_title: 'Candles' },
+      { text: '5 premium floral centrepieces', group_title: 'Centerpieces' },
+      { text: 'Golden frame entrance', group_title: 'Entrance Setup' },
+      { text: 'Double panel backdrop', group_title: 'Customized Backdrop' },
+      { text: 'Premium bar + menu', group_title: 'Premium Bar Setup' },
+      { text: 'Printed bar menu', group_title: 'Premium Bar Setup' },
+      { text: 'Candles in glass jars', group_title: 'Candles' },
     ],
   },
   {
@@ -240,29 +213,17 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Centerpieces',
-      },
-      { text: '3 smaller centerpieces for cocktail tables', group_title: 'Centerpieces' },
-      {
-        text: 'Easel with printed welcome board and floral styling',
-        group_title: 'Entrance Setup',
-      },
-      {
-        text: 'Shiny curtain with balloons or single panel with balloons',
-        group_title: 'Backdrop',
-      },
+      { text: '5 premium floral centrepieces', group_title: 'Centerpieces' },
+      { text: '3 cocktail centrepieces', group_title: 'Centerpieces' },
+      { text: 'Entrance easel + florals', group_title: 'Entrance Setup' },
+      { text: 'Backdrop with balloons', group_title: 'Backdrop' },
       { text: '2 LED 3D letters', group_title: 'Backdrop' },
-      { text: 'Bar with black masking', group_title: 'Basic Bar Setup' },
-      { text: 'Candles in short glass holders', group_title: 'Candles' },
+      { text: 'Basic bar setup', group_title: 'Basic Bar Setup' },
+      { text: 'Short-glass candles', group_title: 'Candles' },
       { text: '3 round tables', group_title: 'Classic Furniture' },
       { text: '20 chairs', group_title: 'Classic Furniture' },
       { text: '3 cocktail tables', group_title: 'Classic Furniture' },
-      {
-        text: '8–10 strings of fairy lights, fixed by an electrician',
-        group_title: 'Lighting',
-      },
+      { text: '8–10 fairy light strings', group_title: 'Lighting' },
     ],
   },
   {
@@ -296,37 +257,19 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Centerpieces',
-      },
-      { text: '3 centerpieces for the cocktail tables', group_title: 'Centerpieces' },
-      {
-        text: 'Easel with printed welcome board and floral styling',
-        group_title: 'Entrance Setup',
-      },
-      {
-        text: 'Shiny curtain with balloons or single panel with balloons',
-        group_title: 'Backdrop',
-      },
+      { text: '5 premium floral centrepieces', group_title: 'Centerpieces' },
+      { text: '3 cocktail centrepieces', group_title: 'Centerpieces' },
+      { text: 'Entrance easel + florals', group_title: 'Entrance Setup' },
+      { text: 'Backdrop with balloons', group_title: 'Backdrop' },
       { text: '2 LED 3D letters', group_title: 'Backdrop' },
-      {
-        text: 'Bar with black masking with a customized bar menu',
-        group_title: 'Basic Bar Setup',
-      },
-      { text: 'Candles in short glass holders', group_title: 'Candles' },
+      { text: 'Basic bar + menu', group_title: 'Basic Bar Setup' },
+      { text: 'Short-glass candles', group_title: 'Candles' },
       { text: '3 round tables', group_title: 'Furniture' },
       { text: '20 chairs', group_title: 'Furniture' },
       { text: '3 cocktail tables', group_title: 'Furniture' },
-      { text: '8–10 strings of fairy lights', group_title: 'Lighting' },
-      {
-        text: '3–4 halogen / LED parcans to illuminate the space',
-        group_title: 'Lighting',
-      },
-      {
-        text: 'Event printables such as menu, quotes, or a fun game with material and instructions',
-        group_title: 'Printables / games',
-      },
+      { text: '8–10 fairy light strings', group_title: 'Lighting' },
+      { text: '3–4 LED / halogen lights', group_title: 'Lighting' },
+      { text: 'Event printables / games', group_title: 'Printables / games' },
     ],
   },
   {
@@ -362,32 +305,20 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Centerpieces',
-      },
-      { text: '3 additional centerpieces for cocktail tables', group_title: 'Centerpieces' },
-      {
-        text: 'Easel styled like a golden frame with printed welcome board',
-        group_title: 'Entrance Setup',
-      },
+      { text: '5 premium floral centrepieces', group_title: 'Centerpieces' },
+      { text: '3 cocktail centrepieces', group_title: 'Centerpieces' },
+      { text: 'Golden frame entrance', group_title: 'Entrance Setup' },
       { text: 'Floral styling', group_title: 'Entrance Setup' },
-      {
-        text: 'Double panel backdrop for a fuller celebration setup',
-        group_title: 'Customized Backdrop',
-      },
-      { text: 'Customized premium bar', group_title: 'Premium Bar Setup' },
-      { text: 'Printed bar menu placed on a small easel', group_title: 'Premium Bar Setup' },
+      { text: 'Double panel backdrop', group_title: 'Customized Backdrop' },
+      { text: 'Premium bar + menu', group_title: 'Premium Bar Setup' },
+      { text: 'Printed bar menu', group_title: 'Premium Bar Setup' },
       { text: 'Candles in glass jars', group_title: 'Candles' },
       { text: '3 round tables', group_title: 'Furniture (Premium)' },
       { text: '20 chairs', group_title: 'Furniture (Premium)' },
       { text: '3 cocktail tables', group_title: 'Furniture (Premium)' },
       { text: '8–10 fairy light strings', group_title: 'Lighting' },
-      { text: '8–10 paper lanterns with warm lights', group_title: 'Lighting' },
-      {
-        text: '8–10 themed props (shades / feathers / masks etc. – choose one style)',
-        group_title: 'Props',
-      },
+      { text: '8–10 paper lanterns', group_title: 'Lighting' },
+      { text: '8–10 themed props', group_title: 'Props' },
     ],
   },
   {
@@ -424,40 +355,22 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Transport', amount: 3200 },
     ],
     inclustions: [
-      {
-        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
-        group_title: 'Centerpieces',
-      },
-      { text: '3 additional centerpieces for cocktail tables', group_title: 'Centerpieces' },
-      {
-        text: 'Easel styled like a golden frame with printed welcome board',
-        group_title: 'Entrance Setup',
-      },
+      { text: '5 premium floral centrepieces', group_title: 'Centerpieces' },
+      { text: '3 cocktail centrepieces', group_title: 'Centerpieces' },
+      { text: 'Golden frame entrance', group_title: 'Entrance Setup' },
       { text: 'Floral styling', group_title: 'Entrance Setup' },
-      {
-        text: 'Double panel backdrop for a fuller celebration setup',
-        group_title: 'Customized Backdrop',
-      },
-      { text: 'Customized premium bar', group_title: 'Premium Bar Setup' },
-      { text: 'Printed bar menu placed on a small easel', group_title: 'Premium Bar Setup' },
+      { text: 'Double panel backdrop', group_title: 'Customized Backdrop' },
+      { text: 'Premium bar + menu', group_title: 'Premium Bar Setup' },
+      { text: 'Printed bar menu', group_title: 'Premium Bar Setup' },
       { text: 'Candles in glass jars', group_title: 'Candles' },
       { text: '3 round tables', group_title: 'Furniture (Premium)' },
       { text: '20 chairs', group_title: 'Furniture (Premium)' },
       { text: '3 cocktail tables', group_title: 'Furniture (Premium)' },
       { text: '8–10 fairy light strings', group_title: 'Lighting' },
-      { text: '8–10 paper lanterns with warm lights', group_title: 'Lighting' },
-      {
-        text: '3–4 LED Parcans to light up the space and photo-ops',
-        group_title: 'Lighting',
-      },
-      {
-        text: '8–10 themed props (shades / feathers / masks etc. – choose one style)',
-        group_title: 'Props',
-      },
-      {
-        text: '2 quotes / interactive engagement with 2 small easel stands',
-        group_title: 'Event Printables',
-      },
+      { text: '8–10 paper lanterns', group_title: 'Lighting' },
+      { text: '3–4 LED Parcans', group_title: 'Lighting' },
+      { text: '8–10 themed props', group_title: 'Props' },
+      { text: 'Event printables', group_title: 'Event Printables' },
     ],
   },
   {
