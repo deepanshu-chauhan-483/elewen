@@ -19,8 +19,23 @@ const getBaseCandidates = () => {
   return [...new Set(configured)]
 }
 
+// Public package/coupon reads for hybrid local: auth on local Strapi, catalog on prod CMS.
+const getContentBaseCandidates = () => {
+  const configured = [
+    process.env.STRAPI_CONTENT_URL,
+    process.env.STRAPI_URL,
+    'http://localhost:1337',
+  ]
+    .map(value => String(value ?? '').trim())
+    .filter(Boolean)
+
+  return [...new Set(configured)]
+}
+
 const getBase = () => getBaseCandidates()[0] || 'http://localhost:1337'
 const getServerToken = () => process.env.STRAPI_ADMIN_TOKEN || process.env.STRAPI_API_TOKEN || null
+
+const shouldRetryContentBase = error => !error?.status || error.status === 403 || error.status === 404
 
 const normalizePath = (path, { prefixApi = true } = {}) => {
   if (!path.startsWith('/')) return prefixApi ? `/api/${path}` : `/${path}`
@@ -124,7 +139,7 @@ const requestRaw = async (path, { method = 'GET', headers = {}, body, prefixApi 
 export async function strapiGet(path, params = {}) {
   let lastError = null
 
-  for (const base of getBaseCandidates()) {
+  for (const base of getContentBaseCandidates()) {
     try {
       const url = new URL(normalizePath(path), base)
 
@@ -142,7 +157,7 @@ export async function strapiGet(path, params = {}) {
 
       return res.json()
     } catch (error) {
-      if (!shouldRetryWithNextBase(error)) {
+      if (!shouldRetryContentBase(error)) {
         throw error
       }
 

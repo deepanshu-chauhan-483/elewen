@@ -201,6 +201,7 @@ async function request(method, path, body, opts = {}) {
         message: refreshErr?.message,
         jwtPayload: decodeJwtPayload(bearerToken),
       })
+      clearStoredJwt()
       throw createAuthRequiredError(refreshErr.message)
     }
   }
@@ -223,6 +224,7 @@ async function request(method, path, body, opts = {}) {
         retried: _retried,
         jwtPayload: decodeJwtPayload(bearerToken),
       })
+      if (hasBearerToken) clearStoredJwt()
       throw createAuthRequiredError(`API ${res.status} on ${method} ${path}: ${raw}`)
     }
 

@@ -14,11 +14,10 @@ export const verifyPaymentSchema = Joi.object({
   paymentId: Joi.string().required().messages({
     'any.required': 'paymentId is required',
   }),
-  razorpayOrderId: Joi.string().required().messages({
-    'any.required': 'razorpayOrderId is required',
+  gatewayOrderId: Joi.string().required().messages({
+    'any.required': 'gatewayOrderId is required',
   }),
-  razorpayPaymentId: Joi.string().allow('', null).optional(),
-  razorpaySignature: Joi.string().allow('', null).optional(),
+  gatewayPaymentId: Joi.string().allow('', null).optional(),
   paymentMethod: Joi.string().valid('card', 'upi', 'netbanking', 'offline').allow(null).optional(),
   testBypass: Joi.boolean().optional(),
 })

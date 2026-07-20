@@ -130,6 +130,11 @@ export const getWishlist = async (req, res, next) => {
       packageIds: items.map(item => item.packageId),
     })
   } catch (err) {
+    // Local hybrid: Strapi permissions/token often missing — don't block cart/checkout.
+    if (err?.status === 403 || err?.status === 401) {
+      console.warn('[wishlist] Strapi forbidden — returning empty wishlist')
+      return res.json({ items: [], packageIds: [] })
+    }
     next(err)
   }
 }

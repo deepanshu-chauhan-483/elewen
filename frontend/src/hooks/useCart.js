@@ -578,14 +578,19 @@ function useCartController() {
       dispatchCartChange(nextCart)
       return nextCart
     } catch (err) {
-      if (isApiUnreachableError(err)) {
+      if (err?.code === 'AUTH_REQUIRED' || isApiUnreachableError(err)) {
         const nextCart = await addPackageToGuestCart(guestCartArgs)
         setCart(nextCart)
         setItemCount(getItemCount(nextCart))
         setError('')
         dispatchCartChange(nextCart)
         if (import.meta.env.DEV) {
-          console.warn('[cart] API unreachable, saved package to local guest cart', err)
+          console.warn(
+            err?.code === 'AUTH_REQUIRED'
+              ? '[cart] session expired, saved package to local guest cart'
+              : '[cart] API unreachable, saved package to local guest cart',
+            err
+          )
         }
         return nextCart
       }

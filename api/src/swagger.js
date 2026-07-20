@@ -222,7 +222,7 @@ const options = {
             paymentType: { type: 'string', enum: ['advance', 'remaining', 'full'] },
             amount: { type: 'string', example: '19600.00' },
             status: { type: 'string', enum: ['pending', 'success', 'failed', 'refunded'] },
-            provider: { type: 'string', enum: ['razorpay', 'stripe', 'manual'], nullable: true },
+            provider: { type: 'string', enum: ['cashfree', 'razorpay', 'stripe', 'manual'], nullable: true },
             providerOrderId: { type: 'string', nullable: true, example: 'order_SYwBHt...' },
             providerPaymentId: { type: 'string', nullable: true, example: 'pay_SYwBHt...' },
             paymentMethod: {

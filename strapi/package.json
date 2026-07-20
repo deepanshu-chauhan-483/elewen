@@ -25,8 +25,8 @@
     "seed:production-data": "node scripts/run-production-data-seed.cjs",
     "seed:delivery-charges": "node scripts/run-delivery-charges-seed.cjs",
     "seed:privacy-policy": "node scripts/run-privacy-policy-seed.cjs",
-    "develop": "strapi develop --no-watch-admin --no-open",
-    "develop:admin": "strapi develop --no-open",
+    "develop": "strapi develop --no-watch-admin",
+    "develop:admin": "strapi develop",
     "start": "strapi start",
     "build": "strapi build",
     "strapi": "strapi"

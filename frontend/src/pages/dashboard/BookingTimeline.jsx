@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardErrorState, DashboardLoadingState } from '../../components/dashboard/DashboardUI'
 import { getStoredJwt, paymentCreateOrder, paymentVerify } from '../../lib/api'
+import { openCashfreeCheckout } from '../../lib/cashfreeCheckout'
 import {
   formatDashboardDate,
   matchesDashboardSearch,
@@ -73,30 +74,6 @@ function formatPaymentAmount(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
-}
-
-function loadRazorpayScript() {
-  return new Promise(resolve => {
-    if (window.Razorpay) {
-      resolve(true)
-      return
-    }
-
-    const existing = document.querySelector('script[data-razorpay="true"]')
-    if (existing) {
-      existing.addEventListener('load', () => resolve(true), { once: true })
-      existing.addEventListener('error', () => resolve(false), { once: true })
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.async = true
-    script.dataset.razorpay = 'true'
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
-    document.body.appendChild(script)
-  })
 }
 
 function getPaymentErrorMessage(error) {
@@ -310,9 +287,8 @@ export default function BookingTimeline() {
       if (orderResponse?.testMode) {
         await paymentVerify(token, {
           paymentId: orderResponse.paymentId,
-          razorpayOrderId: orderResponse.razorpayOrderId,
-          razorpayPaymentId: `test_payment_${orderResponse.paymentId}`,
-          razorpaySignature: 'test_signature_bypass',
+          gatewayOrderId: orderResponse.gatewayOrderId,
+          gatewayPaymentId: `test_payment_${orderResponse.paymentId}`,
           paymentMethod: 'offline',
           testBypass: true,
         })
@@ -327,58 +303,35 @@ export default function BookingTimeline() {
         return
       }
 
-      const scriptLoaded = await loadRazorpayScript()
-      if (!scriptLoaded || !window.Razorpay) {
-        throw new Error('Razorpay checkout could not be loaded.')
+      if (!orderResponse?.paymentSessionId) {
+        throw new Error('Cashfree payment session could not be created.')
       }
 
-      await new Promise((resolve, reject) => {
-        const razorpay = new window.Razorpay({
-          key: orderResponse.keyId,
-          amount: Math.round(Number(orderResponse.amount) * 100),
-          currency: orderResponse.currency || 'INR',
-          name: 'Elewen',
-          description: 'Remaining payment for your booking',
-          order_id: orderResponse.razorpayOrderId,
-          theme: {
-            color: '#D4BA8E',
-          },
-          handler: async response => {
-            try {
-              await paymentVerify(token, {
-                paymentId: orderResponse.paymentId,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-                paymentMethod: 'upi',
-              })
+      const checkoutResult = await openCashfreeCheckout({
+        paymentSessionId: orderResponse.paymentSessionId,
+        environment: orderResponse.environment,
+      })
 
-              await queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
-              await queryClient.invalidateQueries({
-                queryKey: ['dashboard', 'booking', booking.id],
-              })
-              await queryClient.invalidateQueries({
-                queryKey: ['dashboard', 'booking-timeline', booking.id],
-              })
-              resolve()
-            } catch (err) {
-              reject(err)
-            }
-          },
-          modal: {
-            ondismiss: () => reject(new Error('Payment cancelled.')),
-          },
-        })
+      if (checkoutResult?.error) {
+        throw new Error(getPaymentErrorMessage(checkoutResult.error))
+      }
 
-        razorpay.on('payment.failed', response => {
-          reject(new Error(getPaymentErrorMessage(response)))
-        })
+      await paymentVerify(token, {
+        paymentId: orderResponse.paymentId,
+        gatewayOrderId: orderResponse.gatewayOrderId,
+        gatewayPaymentId:
+          checkoutResult?.paymentDetails?.paymentId ||
+          checkoutResult?.paymentDetails?.cf_payment_id ||
+          null,
+        paymentMethod: 'upi',
+      })
 
-        try {
-          razorpay.open()
-        } catch (gatewayErr) {
-          reject(new Error(getPaymentErrorMessage(gatewayErr)))
-        }
+      await queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'booking', booking.id],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'booking-timeline', booking.id],
       })
     } catch (err) {
       window.alert(getPaymentErrorMessage(err))

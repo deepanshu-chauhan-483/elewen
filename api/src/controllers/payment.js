@@ -1,16 +1,27 @@
-import crypto from 'crypto'
 import prisma from '../lib/prisma.js'
-import razorpay from '../lib/razorpay.js'
+import {
+  createCashfreeOrder,
+  createCashfreeRefund,
+  fetchCashfreeOrder,
+  getCashfreeEnvironment,
+  hasCashfreeCredentials,
+  mapCashfreePaymentMethod,
+  verifyCashfreeWebhookSignature,
+} from '../lib/cashfree.js'
 import { createOperationalAlert } from '../lib/alerts.js'
 import { notify } from '../lib/notify.js'
 import { invalidateDashboardCache } from './dashboard.js'
 
-const TEST_PAYMENT_KEY_ID = process.env.RAZORPAY_TEST_KEY_ID || 'rzp_test_elewen_dashboard_bypass'
-const TEST_MODE_ENABLED =
-  process.env.ENABLE_TEST_PAYMENT_BYPASS === 'true' ||
-  !process.env.RAZORPAY_KEY_ID ||
-  String(process.env.RAZORPAY_KEY_ID).toLowerCase().includes('placeholder') ||
-  String(process.env.RAZORPAY_KEY_SECRET).toLowerCase().includes('placeholder')
+const TEST_PAYMENT_APP_ID = process.env.CASHFREE_TEST_APP_ID || 'TEST_elewen_dashboard_bypass'
+
+function isTestPaymentModeEnabled() {
+  return (
+    process.env.ENABLE_TEST_PAYMENT_BYPASS === 'true' ||
+    !process.env.CASHFREE_APP_ID ||
+    String(process.env.CASHFREE_APP_ID).toLowerCase().includes('placeholder') ||
+    String(process.env.CASHFREE_SECRET_KEY).toLowerCase().includes('placeholder')
+  )
+}
 
 const toNumberAmount = value => {
   if (value == null) return 0
@@ -106,28 +117,58 @@ async function ensureConfirmedBooking(payment, userId, note) {
   return prisma.booking.findUnique({ where: { id: payment.bookingId } })
 }
 
-// ─── Helper: verify Razorpay payment signature ─────────────────────────────────
-const verifyPaymentSignature = (orderId, paymentId, signature) => {
-  const body = `${orderId}|${paymentId}`
-  const expected = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-    .update(body)
-    .digest('hex')
-  return expected === signature
+async function getPaymentSessionId(paymentId) {
+  const log = await prisma.paymentLog.findFirst({
+    where: { paymentId, action: 'created' },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  const sessionId = log?.metadata?.paymentSessionId
+  return typeof sessionId === 'string' && sessionId ? sessionId : null
 }
 
-// ─── Helper: verify Razorpay webhook signature ────────────────────────────────
-const verifyWebhookSignature = (rawBody, signature) => {
-  const expected = crypto
-    .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
-    .update(rawBody)
-    .digest('hex')
-  return expected === signature
+function buildGatewayOrderId(paymentId) {
+  return `ew_${String(paymentId).replace(/-/g, '')}`
+}
+
+function isLegacyRazorpayPayment(payment) {
+  if (!payment) return false
+  if (payment.provider === 'razorpay') return true
+  const orderId = String(payment.providerOrderId ?? '')
+  return orderId.startsWith('order_')
+}
+
+function buildCreateOrderResponse({ payment, amount, paymentSessionId, isTestMode }) {
+  return {
+    paymentId: payment.id,
+    gatewayOrderId: payment.providerOrderId || buildGatewayOrderId(payment.id),
+    paymentSessionId: paymentSessionId || null,
+    amount,
+    currency: 'INR',
+    appId: isTestMode ? TEST_PAYMENT_APP_ID : process.env.CASHFREE_APP_ID,
+    environment: getCashfreeEnvironment(),
+    provider: isTestMode ? 'manual' : 'cashfree',
+    testMode: isTestMode,
+  }
+}
+
+async function abandonPendingPayment(paymentId, userId, reason) {
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: { status: 'failed' },
+  })
+  await prisma.paymentLog.create({
+    data: {
+      paymentId,
+      action: 'abandoned',
+      performedBy: userId,
+      metadata: { reason },
+    },
+  })
 }
 
 // ─── POST /payments/create-order ──────────────────────────────────────────────
-// Creates a Razorpay order for a booking's advance or remaining payment.
-// Returns the Razorpay order details for the frontend to open the payment modal.
+// Creates a Cashfree order for a booking's advance or remaining payment.
 export const createOrder = async (req, res, next) => {
   try {
     const { bookingId, paymentType } = req.body
@@ -152,7 +193,7 @@ export const createOrder = async (req, res, next) => {
       return res.status(400).json({ error: validationErr.message })
     }
 
-    const existingPendingPayment = await prisma.payment.findFirst({
+    let existingPendingPayment = await prisma.payment.findFirst({
       where: {
         bookingId,
         paymentType,
@@ -161,19 +202,53 @@ export const createOrder = async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     })
 
-    const isTestMode = TEST_MODE_ENABLED || !razorpay
+    const isTestMode = isTestPaymentModeEnabled() || !hasCashfreeCredentials()
 
-    if (existingPendingPayment) {
-      return res.status(200).json({
-        paymentId: existingPendingPayment.id,
-        razorpayOrderId:
-          existingPendingPayment.providerOrderId ||
-          `test_order_${existingPendingPayment.id.replace(/-/g, '')}`,
-        amount,
-        currency: 'INR',
-        keyId: isTestMode ? TEST_PAYMENT_KEY_ID : process.env.RAZORPAY_KEY_ID,
-        testMode: isTestMode,
-      })
+    if (existingPendingPayment?.id && isLegacyRazorpayPayment(existingPendingPayment)) {
+      await abandonPendingPayment(
+        existingPendingPayment.id,
+        userId,
+        'Replaced legacy Razorpay pending payment with Cashfree'
+      )
+      existingPendingPayment = null
+    }
+
+    if (existingPendingPayment?.id) {
+      let paymentSessionId = await getPaymentSessionId(existingPendingPayment.id)
+
+      if (!paymentSessionId && !isTestMode && existingPendingPayment.providerOrderId) {
+        try {
+          const existingOrder = await fetchCashfreeOrder(existingPendingPayment.providerOrderId)
+          paymentSessionId = existingOrder?.payment_session_id || null
+        } catch {
+          await abandonPendingPayment(
+            existingPendingPayment.id,
+            userId,
+            'Cashfree session could not be restored'
+          )
+          existingPendingPayment = null
+          paymentSessionId = null
+        }
+      }
+
+      if (existingPendingPayment?.id && (paymentSessionId || isTestMode)) {
+        return res.status(200).json(
+          buildCreateOrderResponse({
+            payment: existingPendingPayment,
+            amount,
+            paymentSessionId,
+            isTestMode,
+          })
+        )
+      }
+
+      if (existingPendingPayment?.id) {
+        await abandonPendingPayment(
+          existingPendingPayment.id,
+          userId,
+          'Creating a fresh Cashfree payment session'
+        )
+      }
     }
 
     const payment = await prisma.payment.create({
@@ -182,24 +257,24 @@ export const createOrder = async (req, res, next) => {
         paymentType,
         amount,
         status: 'pending',
-        provider: isTestMode ? 'manual' : 'razorpay',
+        provider: isTestMode ? 'manual' : 'cashfree',
       },
     })
 
-    let providerOrderId = `test_order_${payment.id.replace(/-/g, '')}`
+    let providerOrderId = buildGatewayOrderId(payment.id)
+    let paymentSessionId = null
 
     if (!isTestMode) {
-      const order = await razorpay.orders.create({
-        amount: Math.round(amount * 100),
-        currency: 'INR',
-        receipt: payment.id,
-        notes: {
-          paymentId: payment.id,
-          bookingId,
-          userId,
-        },
+      const cashfreeOrder = await createCashfreeOrder({
+        orderId: providerOrderId,
+        amount,
+        customerId: userId,
+        customerPhone: '9999999999',
+        note: `${paymentType} payment for booking ${bookingId}`,
       })
-      providerOrderId = order.id
+
+      providerOrderId = cashfreeOrder.order_id || providerOrderId
+      paymentSessionId = cashfreeOrder.payment_session_id || null
     }
 
     await prisma.payment.update({
@@ -212,18 +287,24 @@ export const createOrder = async (req, res, next) => {
         paymentId: payment.id,
         action: 'created',
         performedBy: userId,
-        metadata: { bookingId, paymentType, amount, testMode: isTestMode },
+        metadata: {
+          bookingId,
+          paymentType,
+          amount,
+          testMode: isTestMode,
+          paymentSessionId,
+        },
       },
     })
 
-    return res.status(201).json({
-      paymentId: payment.id,
-      razorpayOrderId: providerOrderId,
-      amount,
-      currency: 'INR',
-      keyId: isTestMode ? TEST_PAYMENT_KEY_ID : process.env.RAZORPAY_KEY_ID,
-      testMode: isTestMode,
-    })
+    return res.status(201).json(
+      buildCreateOrderResponse({
+        payment: { ...payment, providerOrderId },
+        amount,
+        paymentSessionId,
+        isTestMode,
+      })
+    )
   } catch (err) {
     console.error('createOrder error:', err)
     return res.status(500).json({ error: err.message || 'Internal server error' })
@@ -231,19 +312,23 @@ export const createOrder = async (req, res, next) => {
 }
 
 // ─── POST /payments/verify ────────────────────────────────────────────────────
-// Verifies Razorpay signature after customer completes payment in the modal.
-// On success: marks payment as success, confirms booking if advance payment.
+// Verifies Cashfree payment after checkout completes.
 export const verifyPayment = async (req, res, next) => {
   try {
     const {
       paymentId,
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
+      gatewayOrderId,
+      gatewayPaymentId,
       paymentMethod,
       testBypass = false,
     } = req.body
+    const resolvedGatewayOrderId = gatewayOrderId
+    const resolvedGatewayPaymentId = gatewayPaymentId
     const userId = String(req.user.id)
+
+    if (!resolvedGatewayOrderId) {
+      return res.status(400).json({ error: 'gatewayOrderId is required' })
+    }
 
     // Find the Payment record
     const payment = await prisma.payment.findUnique({
@@ -262,17 +347,33 @@ export const verifyPayment = async (req, res, next) => {
       )
       return res.json({ message: 'Payment already verified', payment, booking })
     }
-    if (payment.providerOrderId !== razorpayOrderId) {
+    if (payment.providerOrderId !== resolvedGatewayOrderId) {
       return res.status(400).json({ error: 'Order ID mismatch' })
     }
 
     const allowTestBypass =
-      Boolean(testBypass) &&
-      (payment.provider === 'manual' || razorpayOrderId.startsWith('test_order_'))
+      Boolean(testBypass) && payment.provider === 'manual' && isTestPaymentModeEnabled()
 
-    const isValid = allowTestBypass
-      ? true
-      : verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature)
+    let gatewayPaymentData = {}
+    let isValid = allowTestBypass
+
+    if (allowTestBypass) {
+      gatewayPaymentData = {
+        cf_payment_id:
+          resolvedGatewayPaymentId || `test_payment_${payment.id.replace(/-/g, '')}`,
+        order_id: resolvedGatewayOrderId,
+        payment_method: paymentMethod || 'offline',
+        order_status: 'PAID',
+        testMode: true,
+      }
+    } else {
+      try {
+        gatewayPaymentData = await fetchCashfreeOrder(resolvedGatewayOrderId)
+        isValid = String(gatewayPaymentData?.order_status ?? '').toUpperCase() === 'PAID'
+      } catch {
+        isValid = false
+      }
+    }
 
     if (!isValid) {
       // Mark as failed and log
@@ -282,46 +383,31 @@ export const verifyPayment = async (req, res, next) => {
           paymentId,
           action: 'failed',
           performedBy: userId,
-          metadata: { reason: 'Signature mismatch', razorpayOrderId, razorpayPaymentId },
+          metadata: {
+            reason: 'Gateway verification failed',
+            gatewayOrderId: resolvedGatewayOrderId,
+            gatewayPaymentId: resolvedGatewayPaymentId,
+          },
         },
       })
-      return res.status(400).json({ error: 'Payment verification failed: invalid signature' })
+      return res.status(400).json({ error: 'Payment verification failed' })
     }
 
-    // Fetch full payment details from Razorpay for the transaction record
-    let gatewayPaymentData = {}
-    if (allowTestBypass) {
-      gatewayPaymentData = {
-        id: razorpayPaymentId || `test_payment_${payment.id.replace(/-/g, '')}`,
-        order_id: razorpayOrderId,
-        method: paymentMethod || 'offline',
-        status: 'captured',
-        testMode: true,
-      }
-    } else {
-      try {
-        gatewayPaymentData = await razorpay.payments.fetch(razorpayPaymentId)
-      } catch {
-        gatewayPaymentData = { id: razorpayPaymentId, order_id: razorpayOrderId }
-      }
-    }
-
-    // Resolve paymentMethod from gateway response or request body
     const resolvedMethod =
       paymentMethod ||
-      (gatewayPaymentData.method === 'netbanking' ? 'netbanking' : gatewayPaymentData.method) ||
+      mapCashfreePaymentMethod(gatewayPaymentData) ||
       'card'
     const validMethods = ['card', 'upi', 'netbanking', 'offline']
     const finalMethod = validMethods.includes(resolvedMethod) ? resolvedMethod : 'card'
 
-    // Update Payment to success
     const updatedPayment = await prisma.payment.update({
       where: { id: paymentId },
       data: {
         status: 'success',
         providerPaymentId:
-          razorpayPaymentId ||
-          gatewayPaymentData.id ||
+          resolvedGatewayPaymentId ||
+          gatewayPaymentData?.payments?.[0]?.cf_payment_id ||
+          gatewayPaymentData?.cf_payment_id ||
           `test_payment_${payment.id.replace(/-/g, '')}`,
         paymentMethod: finalMethod,
       },
@@ -342,7 +428,7 @@ export const verifyPayment = async (req, res, next) => {
         paymentId,
         action: 'verified',
         performedBy: userId,
-        metadata: { razorpayPaymentId, method: finalMethod },
+        metadata: { gatewayPaymentId: updatedPayment.providerPaymentId, method: finalMethod },
       },
     })
 
@@ -379,20 +465,15 @@ export const verifyPayment = async (req, res, next) => {
 }
 
 // ─── POST /payments/webhook ───────────────────────────────────────────────────
-// Handles Razorpay server-side events. Must receive raw body (Buffer).
-// CRITICAL: This route must be registered BEFORE express.json() in server.js.
+// Handles Cashfree server-side events. Must receive raw body (Buffer).
 export const handleWebhook = async (req, res) => {
-  const signature = req.headers['x-razorpay-signature']
-  const rawBody = req.body.toString() // Buffer → string
+  const signature = req.headers['x-webhook-signature']
+  const timestamp = req.headers['x-webhook-timestamp']
+  const rawBody = req.body.toString()
 
-  if (
-    !process.env.RAZORPAY_WEBHOOK_SECRET ||
-    process.env.RAZORPAY_WEBHOOK_SECRET === 'set_this_in_razorpay_dashboard'
-  ) {
-    console.warn(
-      '[webhook] RAZORPAY_WEBHOOK_SECRET not configured — skipping signature verification'
-    )
-  } else if (!verifyWebhookSignature(rawBody, signature)) {
+  if (!hasCashfreeCredentials()) {
+    console.warn('[webhook] Cashfree credentials not configured — skipping signature verification')
+  } else if (!verifyCashfreeWebhookSignature(rawBody, timestamp, signature)) {
     return res.status(400).json({ error: 'Invalid webhook signature' })
   }
 
@@ -403,48 +484,45 @@ export const handleWebhook = async (req, res) => {
     return res.status(400).json({ error: 'Invalid JSON payload' })
   }
 
-  // Always respond 200 immediately — process async to not block Razorpay retry
   res.json({ received: true })
 
   try {
-    const eventType = event.event
+    const eventType = event.type || event.event
 
-    if (eventType === 'payment.captured') {
-      // Webhook confirmation of payment — sync DB if verify endpoint was missed
-      const razorpayOrderId = event.payload?.payment?.entity?.order_id
-      const razorpayPaymentId = event.payload?.payment?.entity?.id
-      const method = event.payload?.payment?.entity?.method
+    if (eventType === 'PAYMENT_SUCCESS_WEBHOOK') {
+      const gatewayOrderId = event.data?.order?.order_id
+      const gatewayPaymentId = event.data?.payment?.cf_payment_id
+      const method = mapCashfreePaymentMethod(event.data?.payment ?? event.data?.order ?? {})
 
-      if (razorpayOrderId) {
+      if (gatewayOrderId) {
         const payment = await prisma.payment.findFirst({
-          where: { providerOrderId: razorpayOrderId, status: 'pending' },
+          where: { providerOrderId: gatewayOrderId, status: 'pending' },
         })
         if (payment) {
           await prisma.payment.update({
             where: { id: payment.id },
             data: {
               status: 'success',
-              providerPaymentId: razorpayPaymentId,
+              providerPaymentId: gatewayPaymentId,
               paymentMethod: method || 'card',
             },
           })
           await prisma.paymentTransaction.create({
             data: {
               paymentId: payment.id,
-              gatewayResponse: event.payload?.payment?.entity ?? {},
-              status: 'captured',
+              gatewayResponse: event.data ?? {},
+              status: 'PAID',
             },
           })
           await prisma.paymentLog.create({
             data: {
               paymentId: payment.id,
               action: 'webhook_captured',
-              metadata: { razorpayPaymentId, eventType },
+              metadata: { gatewayPaymentId, eventType },
             },
           })
           const booking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
 
-          // Auto-confirm booking if advance
           if (payment.paymentType === 'advance') {
             if (booking?.status === 'new') {
               await prisma.booking.update({
@@ -456,7 +534,7 @@ export const handleWebhook = async (req, res) => {
                   bookingId: payment.bookingId,
                   previousStatus: 'new',
                   newStatus: 'confirmed',
-                  note: 'Auto-confirmed via payment.captured webhook',
+                  note: 'Auto-confirmed via Cashfree payment webhook',
                 },
               })
               notify(booking.userId, {
@@ -478,7 +556,7 @@ export const handleWebhook = async (req, res) => {
             await ensureConfirmedBooking(
               payment,
               booking?.userId ?? null,
-              'Auto-confirmed via payment.captured webhook'
+              'Auto-confirmed via Cashfree payment webhook'
             )
           }
 
@@ -488,13 +566,14 @@ export const handleWebhook = async (req, res) => {
       }
     }
 
-    if (eventType === 'payment.failed') {
-      const razorpayOrderId = event.payload?.payment?.entity?.order_id
-      const errorDescription = event.payload?.payment?.entity?.error_description
+    if (eventType === 'PAYMENT_FAILED_WEBHOOK') {
+      const gatewayOrderId = event.data?.order?.order_id
+      const errorDescription =
+        event.data?.payment?.payment_message || event.data?.payment?.payment_status
 
-      if (razorpayOrderId) {
+      if (gatewayOrderId) {
         const payment = await prisma.payment.findFirst({
-          where: { providerOrderId: razorpayOrderId, status: 'pending' },
+          where: { providerOrderId: gatewayOrderId, status: 'pending' },
         })
         if (payment) {
           await prisma.payment.update({ where: { id: payment.id }, data: { status: 'failed' } })
@@ -505,7 +584,6 @@ export const handleWebhook = async (req, res) => {
               metadata: { errorDescription, eventType },
             },
           })
-          // Notify user of failed payment
           const failedBooking = await prisma.booking.findUnique({
             where: { id: payment.bookingId },
           })
@@ -536,11 +614,11 @@ export const handleWebhook = async (req, res) => {
       }
     }
 
-    if (eventType === 'refund.processed') {
-      const gatewayRefundId = event.payload?.refund?.entity?.id
-      const gatewayStatus = event.payload?.refund?.entity?.status
+    if (eventType === 'REFUND_STATUS_WEBHOOK') {
+      const gatewayRefundId = event.data?.refund?.cf_refund_id || event.data?.refund?.refund_id
+      const gatewayStatus = String(event.data?.refund?.refund_status ?? '').toUpperCase()
 
-      if (gatewayRefundId && gatewayStatus === 'processed') {
+      if (gatewayRefundId && gatewayStatus === 'SUCCESS') {
         const refund = await prisma.refund.findFirst({ where: { gatewayRefundId } })
         if (refund) {
           await prisma.refund.update({ where: { id: refund.id }, data: { status: 'completed' } })
@@ -559,7 +637,7 @@ export const handleWebhook = async (req, res) => {
       }
     }
   } catch (err) {
-    console.error('[webhook] Error processing event:', event?.event, err)
+    console.error('[webhook] Error processing event:', event?.type || event?.event, err)
   }
 }
 
@@ -677,7 +755,7 @@ export const requestRefund = async (req, res, next) => {
 }
 
 // ─── PATCH /refunds/:id ───────────────────────────────────────────────────────
-// Admin approves (calls Razorpay refund API) or rejects a refund request.
+// Admin approves (calls Cashfree refund API) or rejects a refund request.
 export const processRefund = async (req, res, next) => {
   try {
     const { id } = req.params
@@ -712,10 +790,10 @@ export const processRefund = async (req, res, next) => {
     }
 
     // Pay refund to the same original payment credentials via the stored provider payment id.
-    if (!refund.payment.providerPaymentId) {
+    if (!refund.payment.providerOrderId) {
       return res
         .status(400)
-        .json({ error: 'No Razorpay payment ID on record — cannot initiate gateway refund' })
+        .json({ error: 'No Cashfree order ID on record — cannot initiate gateway refund' })
     }
 
     await prisma.refund.update({
@@ -725,13 +803,13 @@ export const processRefund = async (req, res, next) => {
 
     let gatewayRefundId = null
     try {
-      const razorpayRefund = await razorpay.payments.refund(refund.payment.providerPaymentId, {
-        amount: Math.round((refund.amount.toNumber?.() ?? Number(refund.amount)) * 100), // paise
-        notes: { refundId: id, bookingId: refund.bookingId },
+      const cashfreeRefund = await createCashfreeRefund(refund.payment.providerOrderId, {
+        refundId: `rf_${id.replace(/-/g, '')}`,
+        amount: refund.amount.toNumber?.() ?? Number(refund.amount),
+        note: `Refund for booking ${refund.bookingId}`,
       })
-      gatewayRefundId = razorpayRefund.id
-    } catch (razorpayErr) {
-      // Rollback processing status and surface error
+      gatewayRefundId = cashfreeRefund.cf_refund_id || cashfreeRefund.refund_id || null
+    } catch (cashfreeErr) {
       await prisma.refund.update({
         where: { id },
         data: { status: 'requested', processedBy: null },
@@ -739,17 +817,17 @@ export const processRefund = async (req, res, next) => {
       await createOperationalAlert(prisma, {
         alertType: 'refund_failed',
         severity: 'high',
-        message: `Refund failed for booking ${refund.bookingId}. Reason: ${razorpayErr.message}`,
+        message: `Refund failed for booking ${refund.bookingId}. Reason: ${cashfreeErr.message}`,
         metadata: {
           bookingId: refund.bookingId,
           paymentId: refund.paymentId,
           refundId: id,
-          reason: razorpayErr.message,
+          reason: cashfreeErr.message,
         },
         relatedEntityType: 'payment',
         relatedEntityId: refund.paymentId,
       })
-      return res.status(502).json({ error: 'Razorpay refund failed', detail: razorpayErr.message })
+      return res.status(502).json({ error: 'Cashfree refund failed', detail: cashfreeErr.message })
     }
 
     const updated = await prisma.refund.update({

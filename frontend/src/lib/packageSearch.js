@@ -1,32 +1,143 @@
 /**
  * Shared package search matching for nav + listing pages.
- * Matches title, category, description, includes/tags, and common decor keywords.
+ * Matches title, category, description, includes/tags, and curated keyword lists.
  */
 
 const KEYWORD_ALIASES = {
-  flower: ['flower', 'flowers', 'floral', 'florals'],
+  flower: ['flower', 'flowers', 'floral', 'florals', 'floral vase'],
   balloon: ['balloon', 'balloons'],
   candle: ['candle', 'candles'],
   backdrop: ['backdrop', 'backdrops', 'back drop'],
   lighting: ['light', 'lighting', 'lights', 'fairy light', 'fairy lights'],
+  entrance: [
+    'entrance set up',
+    'entrance setup',
+    'entrance décor',
+    'entrance decor',
+    'entrance decoration',
+  ],
+  centerpiece: ['centerpiece', 'centerpieces'],
+  neon: ['neon sign', 'neon'],
+  canopy: ['canopy', 'canopies'],
+  projector: ['projector', 'plasma screen', 'projector / plasma screen', 'screen'],
+  urli: ['urli'],
+  cushion: ['cushion', 'cushions'],
+  chair: ['chair', 'chairs'],
+  table: ['table', 'cake table'],
+  printable: ['printable', 'printables'],
+  game: ['games night', 'game night', 'games'],
+  movie: ['movie night', 'movies night'],
+  date: ['date night'],
+  bar: ['bar'],
   sheesha: ['sheesha', 'hookah', 'hukkah'],
   decor: ['decor', 'decoration', 'styling'],
+  bartending: ['bartender', 'bartenders', 'bartending', 'drinks'],
+  catering: ['food', 'main course', 'snacks', 'starters', 'bar nibbles', 'catering'],
+}
+
+/** Longer phrases first so "bar nibbles" wins over decor "bar". */
+const CATERING_SEARCH_KEYWORDS = [
+  'bar nibbles',
+  'main course',
+  'starters',
+  'snacks',
+  'food',
+  'catering',
+]
+
+const BARTENDING_SEARCH_KEYWORDS = ['bartenders', 'bartender', 'bartending', 'drinks']
+
+const DECOR_SEARCH_KEYWORDS = [
+  'projector / plasma screen',
+  'plasma screen',
+  'entrance set up',
+  'entrance décor',
+  'entrance decor',
+  'entrance setup',
+  'floral vase',
+  'fairy lights',
+  'games night',
+  'movie night',
+  'date night',
+  'neon sign',
+  'cake table',
+  'centerpieces',
+  'printables',
+  'cushions',
+  'backdrop',
+  'balloons',
+  'canopy',
+  'candles',
+  'flowers',
+  'florals',
+  'projector',
+  'chairs',
+  'table',
+  'urli',
+  'bar',
+]
+
+function normalizeSearchQuery(query) {
+  return String(query ?? '')
+    .toLowerCase()
+    .trim()
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+}
+
+function matchesCatalogKeyword(query, keyword) {
+  const q = normalizeSearchQuery(query)
+  const k = normalizeSearchQuery(keyword)
+
+  if (!q || !k) return false
+  if (q === k) return true
+  if (k.includes(' ')) return q.includes(k)
+
+  return false
+}
+
+function matchesAnySearchKeyword(query, keywords) {
+  const sorted = [...keywords].sort((a, b) => b.length - a.length)
+  return sorted.some(keyword => matchesCatalogKeyword(query, keyword))
+}
+
+function packageHasServiceSlug(pkg, serviceSlug) {
+  const target = normalizeSearchQuery(serviceSlug)
+  const slugs = Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : []
+
+  return slugs.some(slug => normalizeSearchQuery(slug) === target)
+}
+
+function aliasGroupMatchesToken(token, aliases) {
+  const normalizedToken = normalizeSearchQuery(token)
+
+  return aliases.some(alias => {
+    const normalizedAlias = normalizeSearchQuery(alias)
+    if (normalizedAlias === normalizedToken) return true
+    if (normalizedAlias.includes(' ')) return false
+
+    return textContainsTerm(normalizedToken, normalizedAlias) || textContainsTerm(normalizedAlias, normalizedToken)
+  })
 }
 
 function expandQueryTokens(query) {
-  const raw = String(query ?? '')
-    .toLowerCase()
-    .trim()
+  const raw = normalizeSearchQuery(query)
   if (!raw) return []
 
+  const expanded = new Set([raw])
   const tokens = raw.split(/\s+/).filter(Boolean)
-  const expanded = new Set(tokens)
 
   for (const token of tokens) {
     for (const aliases of Object.values(KEYWORD_ALIASES)) {
-      if (aliases.some(alias => alias.includes(token) || token.includes(alias))) {
+      if (aliasGroupMatchesToken(token, aliases)) {
         aliases.forEach(alias => expanded.add(alias))
       }
+    }
+  }
+
+  for (const aliases of Object.values(KEYWORD_ALIASES)) {
+    if (aliases.some(alias => normalizeSearchQuery(alias) === raw)) {
+      aliases.forEach(alias => expanded.add(alias))
     }
   }
 
@@ -35,9 +146,7 @@ function expandQueryTokens(query) {
 
 export function fuzzyMatchText(text, query) {
   const t = String(text ?? '').toLowerCase()
-  const q = String(query ?? '')
-    .toLowerCase()
-    .trim()
+  const q = normalizeSearchQuery(query)
   if (!q || !t) return false
   if (t.includes(q)) return true
 
@@ -67,19 +176,55 @@ function packageSearchBlob(pkg) {
     includes.join(' '),
     ...(Array.isArray(pkg?.theme_slugs) ? pkg.theme_slugs : []),
     pkg?.level_slug,
-    ...(Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : []),
   ]
     .filter(Boolean)
     .join(' ')
+}
+
+function textContainsTerm(text, term) {
+  const haystack = String(text ?? '').toLowerCase()
+  const needle = normalizeSearchQuery(term)
+
+  if (!haystack || !needle) return false
+  if (needle.includes(' ')) return haystack.includes(needle)
+
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(haystack)
+}
+
+function textMatchesDecorQuery(blob, query) {
+  const q = String(query ?? '').trim()
+  if (!q) return true
+  if (textContainsTerm(blob, q)) return true
+
+  return expandQueryTokens(q).some(token => textContainsTerm(blob, token))
+}
+
+function textMatchesQuery(blob, query) {
+  const q = String(query ?? '').trim()
+  if (!q) return true
+  if (fuzzyMatchText(blob, q)) return true
+
+  return expandQueryTokens(q).some(token => fuzzyMatchText(blob, token))
 }
 
 export function packageMatchesSearch(pkg, query) {
   const q = String(query ?? '').trim()
   if (!q) return true
 
-  const blob = packageSearchBlob(pkg)
-  if (fuzzyMatchText(blob, q)) return true
+  if (matchesAnySearchKeyword(q, CATERING_SEARCH_KEYWORDS)) {
+    return packageHasServiceSlug(pkg, 'catering')
+  }
 
-  // Also accept alias expansions so "flower" hits floral packages, etc.
-  return expandQueryTokens(q).some(token => fuzzyMatchText(blob, token))
+  if (matchesAnySearchKeyword(q, BARTENDING_SEARCH_KEYWORDS)) {
+    return packageHasServiceSlug(pkg, 'bartending')
+  }
+
+  if (matchesAnySearchKeyword(q, DECOR_SEARCH_KEYWORDS)) {
+    if (!packageHasServiceSlug(pkg, 'decor')) return false
+    return textMatchesDecorQuery(packageSearchBlob(pkg), q)
+  }
+
+  const blob = packageSearchBlob(pkg)
+  return textMatchesQuery(blob, q)
 }

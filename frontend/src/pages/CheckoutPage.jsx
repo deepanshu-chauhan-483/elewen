@@ -20,6 +20,7 @@ import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
 import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
+import { openCashfreeCheckout } from '../lib/cashfreeCheckout'
 import {
   bookingAddNote,
   bookingCreate,
@@ -142,30 +143,6 @@ function getSavedUser() {
   } catch {
     return null
   }
-}
-
-function loadRazorpayScript() {
-  return new Promise(resolve => {
-    if (window.Razorpay) {
-      resolve(true)
-      return
-    }
-
-    const existing = document.querySelector('script[data-razorpay="true"]')
-    if (existing) {
-      existing.addEventListener('load', () => resolve(true), { once: true })
-      existing.addEventListener('error', () => resolve(false), { once: true })
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.async = true
-    script.dataset.razorpay = 'true'
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
-    document.body.appendChild(script)
-  })
 }
 
 function getPaymentErrorMessage(error) {
@@ -892,9 +869,8 @@ export default function CheckoutPage() {
       if (orderResponse?.testMode) {
         const verifyResponse = await paymentVerify(token, {
           paymentId: orderResponse.paymentId,
-          razorpayOrderId: orderResponse.razorpayOrderId,
-          razorpayPaymentId: `test_payment_${orderResponse.paymentId}`,
-          razorpaySignature: 'test_signature_bypass',
+          gatewayOrderId: orderResponse.gatewayOrderId,
+          gatewayPaymentId: `test_payment_${orderResponse.paymentId}`,
           paymentMethod,
           testBypass: true,
         })
@@ -934,96 +910,69 @@ export default function CheckoutPage() {
         return
       }
 
-      const scriptLoaded = await loadRazorpayScript()
-      if (!scriptLoaded || !window.Razorpay) {
-        throw new Error('Razorpay checkout could not be loaded.')
+      if (!orderResponse?.paymentSessionId) {
+        throw new Error('Cashfree payment session could not be created.')
       }
 
-      const options = {
-        key: orderResponse.keyId,
-        amount: Math.round(Number(orderResponse.amount) * 100),
-        currency: orderResponse.currency || 'INR',
-        name: 'Elewen',
-        description: 'Advance payment for your booking',
-        order_id: orderResponse.razorpayOrderId,
-        prefill: {
-          name: fullName.trim(),
-          email: email.trim(),
-          contact: phone.trim(),
-        },
-        theme: {
-          color: '#D4BA8E',
-        },
-        handler: async response => {
-          try {
-            paymentFailureToastShownRef.current = false
-            const verifyResponse = await paymentVerify(token, {
-              paymentId: orderResponse.paymentId,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-              paymentMethod,
-            })
-
-            navigate(`/booking-confirmation?bookingId=${booking.id}`, {
-              state: {
-                booking: verifyResponse?.booking || booking,
-                payment: {
-                  advanceAmount: orderResponse.amount,
-                  amountPaid: orderResponse.amount,
-                  paymentType,
-                  totalAmount: computedTotal,
-                  balanceDue: Math.max(0, computedTotal - Number(orderResponse.amount ?? 0)),
-                },
-                checkoutInfo: {
-                  fullName,
-                  phone,
-                  email,
-                  eventDate: isSampleTastingCheckout ? sessionDetails.dateLabel : eventDate,
-                  eventTime: isSampleTastingCheckout ? sessionDetails.timeLabel : eventTime,
-                  eventAddress: isSampleTastingCheckout ? sessionDetails.address : eventAddress,
-                  pinCode,
-                  guestCount,
-                  specialRequest,
-                  checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
-                  selectedItems: itemSummaries.map(({ item, summary }) => ({
-                    id: item?.id,
-                    title: item?.title,
-                    amount: Number(summary?.total ?? item?.totalPrice ?? 0),
-                    additionalInfo: String(item?.additionalInfo ?? '').trim(),
-                  })),
-                  showBookingConfirmationToast: true,
-                },
-              },
-            })
-          } catch (verifyErr) {
-            setFormError(verifyErr.message || 'Payment verification failed.')
-          } finally {
-            setIsSubmitting(false)
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            if (!paymentFailureToastShownRef.current) {
-              showToast({ message: paymentCancelledToastMessage })
-            }
-            paymentFailureToastShownRef.current = false
-            setIsSubmitting(false)
-          },
-        },
-      }
-
-      const razorpay = new window.Razorpay(options)
-      razorpay.on('payment.failed', response => {
-        paymentFailureToastShownRef.current = true
-        showToast({ message: paymentFailedToastMessage })
-        setFormError(getPaymentErrorMessage(response))
-        setIsSubmitting(false)
-      })
       try {
-        razorpay.open()
-      } catch (gatewayErr) {
-        setFormError(getPaymentErrorMessage(gatewayErr))
+        paymentFailureToastShownRef.current = false
+        const checkoutResult = await openCashfreeCheckout({
+          paymentSessionId: orderResponse.paymentSessionId,
+          environment: orderResponse.environment,
+        })
+
+        if (checkoutResult?.error) {
+          throw new Error(getPaymentErrorMessage(checkoutResult.error))
+        }
+
+        const verifyResponse = await paymentVerify(token, {
+          paymentId: orderResponse.paymentId,
+          gatewayOrderId: orderResponse.gatewayOrderId,
+          gatewayPaymentId:
+            checkoutResult?.paymentDetails?.paymentId ||
+            checkoutResult?.paymentDetails?.cf_payment_id ||
+            null,
+          paymentMethod,
+        })
+
+        navigate(`/booking-confirmation?bookingId=${booking.id}`, {
+          state: {
+            booking: verifyResponse?.booking || booking,
+            payment: {
+              advanceAmount: orderResponse.amount,
+              amountPaid: orderResponse.amount,
+              paymentType,
+              totalAmount: computedTotal,
+              balanceDue: Math.max(0, computedTotal - Number(orderResponse.amount ?? 0)),
+            },
+            checkoutInfo: {
+              fullName,
+              phone,
+              email,
+              eventDate: isSampleTastingCheckout ? sessionDetails.dateLabel : eventDate,
+              eventTime: isSampleTastingCheckout ? sessionDetails.timeLabel : eventTime,
+              eventAddress: isSampleTastingCheckout ? sessionDetails.address : eventAddress,
+              pinCode,
+              guestCount,
+              specialRequest,
+              checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
+              selectedItems: itemSummaries.map(({ item, summary }) => ({
+                id: item?.id,
+                title: item?.title,
+                amount: Number(summary?.total ?? item?.totalPrice ?? 0),
+                additionalInfo: String(item?.additionalInfo ?? '').trim(),
+              })),
+              showBookingConfirmationToast: true,
+            },
+          },
+        })
+      } catch (verifyErr) {
+        if (!paymentFailureToastShownRef.current) {
+          showToast({ message: paymentFailedToastMessage })
+          paymentFailureToastShownRef.current = true
+        }
+        setFormError(getPaymentErrorMessage(verifyErr))
+      } finally {
         setIsSubmitting(false)
       }
     } catch (err) {

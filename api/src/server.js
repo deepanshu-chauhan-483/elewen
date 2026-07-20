@@ -73,8 +73,8 @@ app.use(
   })
 )
 
-// ─── Razorpay webhook (MUST be before express.json) ───────────────────────────
-// Razorpay signature verification requires the raw request body (Buffer).
+// ─── Cashfree webhook (MUST be before express.json) ───────────────────────────
+// Cashfree signature verification requires the raw request body (Buffer).
 // express.json() would parse and discard the raw body, breaking HMAC verification.
 app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook)
 
