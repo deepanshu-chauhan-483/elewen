@@ -148,7 +148,6 @@ const resolveServiceCategory = (service, displayName, name) => {
 }
 
 const DECOR_THEME_DISPLAY_ORDER = [
-  'general-pack',
   'house-party',
   'birthday-party',
   'still-us',
@@ -167,7 +166,6 @@ const DECOR_THEME_SLUG_ALIASES = {
 }
 
 const DECOR_THEME_FALLBACK = [
-  { id: 'general-pack', label: 'General Pack', slug: 'general-pack', preview_image: null },
   { id: 'house-party', label: 'House Party', slug: 'house-party', preview_image: null },
   { id: 'birthday-party', label: 'Birthday Party', slug: 'birthday-party', preview_image: null },
   { id: 'still-us', label: 'Still Us', slug: 'still-us', preview_image: null },

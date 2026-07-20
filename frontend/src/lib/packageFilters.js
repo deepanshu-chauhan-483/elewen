@@ -273,9 +273,8 @@ function themeMatchesSlugSet(theme, usedSlugs) {
   return getThemeSlugVariants(theme).some(variant => usedSlugs.has(slugifyThemeValue(variant)))
 }
 
-/** General Pack / House Party / Birthday Party — shown on every social decor event. */
+/** House Party / Birthday Party — shown on every social decor event. */
 const UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS = [
-  'general-pack',
   'house-party',
   'house-parties',
   'birthday-party',
