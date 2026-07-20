@@ -416,6 +416,7 @@ module.exports = {
         { name: 'decor-sufi-night', fn: () => require('./seed/decor-sufi-night-packages').seedDecorSufiNightPackages(strapi) },
         { name: 'decor-house-party-birthday', fn: () => require('./seed/decor-house-party-birthday-packages').seedDecorHousePartyBirthdayPackages(strapi) },
         { name: 'decor-pastel', fn: () => require('./seed/decor-pastel-packages').seedDecorPastelPackages(strapi) },
+        { name: 'decor-bohemian', fn: () => require('./seed/decor-bohemian-packages').seedDecorBohemianPackages(strapi) },
       ];
 
       for (const moduleSeed of excelSeedModules) {

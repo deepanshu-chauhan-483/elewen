@@ -17,6 +17,7 @@ const { seedDecorBubblesBlackTiePackages } = require('../src/seed/decor-bubbles-
 const { seedDecorSufiNightPackages } = require('../src/seed/decor-sufi-night-packages');
 const { seedDecorHousePartyBirthdayPackages } = require('../src/seed/decor-house-party-birthday-packages');
 const { seedDecorPastelPackages } = require('../src/seed/decor-pastel-packages');
+const { seedDecorBohemianPackages } = require('../src/seed/decor-bohemian-packages');
 
 function summarize(label, result) {
   const packages = result?.packages ?? [];
@@ -39,12 +40,14 @@ async function main() {
     const sufi = await seedDecorSufiNightPackages(app);
     const houseParty = await seedDecorHousePartyBirthdayPackages(app);
     const pastel = await seedDecorPastelPackages(app);
+    const bohemian = await seedDecorBohemianPackages(app);
 
     const summary = [
       summarize('bubbles-black-tie', bubbles),
       summarize('sufi-night', sufi),
       summarize('house-party-birthday', houseParty),
       summarize('pastel', pastel),
+      summarize('bohemian', bohemian),
     ];
 
     console.log('[seed/excel-decor] done:', JSON.stringify(summary, null, 2));
