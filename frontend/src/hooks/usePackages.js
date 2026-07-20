@@ -259,10 +259,26 @@ function formatPackagePrice(pkg) {
 }
 
 function buildPriceCoverText(section) {
-  return (Array.isArray(section?.price_covers) ? section.price_covers : [])
+  const lines = (Array.isArray(section?.price_covers) ? section.price_covers : [])
     .map(item => item?.text ?? item?.title ?? item?.label ?? '')
+    .map(text => String(text ?? '').trim())
     .filter(Boolean)
-    .join(', ')
+
+  if (!lines.length) return ''
+
+  const checklist = []
+  const notes = []
+
+  lines.forEach(line => {
+    if (/^no hidden service fees\.?$/i.test(line)) {
+      notes.push(line.endsWith('.') ? line : `${line}.`)
+      return
+    }
+
+    checklist.push(line.startsWith('✓') ? line : `✓ ${line}`)
+  })
+
+  return [...checklist, ...notes].join('\n')
 }
 
 function buildPolicyText(policy) {

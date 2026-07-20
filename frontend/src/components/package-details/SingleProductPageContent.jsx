@@ -51,18 +51,18 @@ function AccordionSection({ title, body, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="border-t border-[#36402280] py-4">
+    <div className="border-t border-[#E5E0D8] py-4">
       <button
         type="button"
         onClick={() => setIsOpen(open => !open)}
         className="flex w-full items-center justify-between gap-4 text-left outline-none focus:outline-none focus-visible:outline-none"
       >
-        <span className="text-[16px] leading-none text-[#6B7152] font-semibold">{title}</span>
+        <span className="text-[15px] leading-none text-[#6B7152] font-semibold">{title}</span>
         <span
-          className="text-[20px] leading-none text-[#C4A36B] transition-transform duration-300 ease-out"
-          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          className="text-[22px] leading-none text-[#C4A36B] transition-transform duration-300 ease-out"
+          style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}
         >
-          {isOpen ? '-' : '+'}
+          +
         </span>
       </button>
 
@@ -74,7 +74,7 @@ function AccordionSection({ title, body, defaultOpen = false }) {
         }}
       >
         <div className="overflow-hidden">
-          <p className="mt-3 whitespace-pre-line text-[13px] leading-[1.65] text-[#591902] opacity-50">
+          <p className="mt-3 whitespace-pre-line text-[13px] leading-[1.65] text-[#591902] opacity-60">
             {body}
           </p>
         </div>
@@ -412,11 +412,13 @@ function ProductImageLayout({
                     className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white object-cover object-center"
                   />
 
-                  {/* Company Logo */}
-                  <div
-                    aria-hidden="true"
-                    className="absolute bottom-0.5 right-1 z-10 rounded-full bg-white/10 p-1.5 backdrop-blur-xs"
-                  >
+                  {activeImageMeta?.heading || activeImageMeta?.text ? (
+                    <div className="absolute bottom-3 right-3 z-10 max-w-[70%] rounded-full bg-[#591902] px-3.5 py-1.5 text-white shadow-sm">
+                      <p className="truncate text-[11px] font-semibold leading-none tracking-wide">
+                        {activeImageMeta?.heading || activeImageMeta?.text}
+                      </p>
+                    </div>
+                  ) : (
                     <div
                       aria-hidden="true"
                       className="absolute bottom-0.5 right-1 z-10 rounded-full bg-white/10 p-1.5 backdrop-blur-xs"
@@ -450,17 +452,7 @@ function ProductImageLayout({
                         />
                       </svg>
                     </div>
-                  </div>
-
-                  {activeImageMeta?.heading || activeImageMeta?.text ? (
-                    <div className="absolute top-2 left-2 max-w-[75%] rounded-[10px] bg-[#591902]/88 px-3 py-2 text-right text-white">
-                      {activeImageMeta?.heading ? (
-                        <p className="text-[11px] font-semibold leading-[1.3]">
-                          {activeImageMeta.heading}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
+                  )}
                 </div>
                 <PackageImageDisclaimer className="mt-1.5 text-center" />
               </div>
@@ -506,18 +498,20 @@ function ProductImageLayout({
               <>
                 <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
                   <h1
-                    className=" text-[28px] leading-[0.95] text-[#591902] sm:text-[36px] md:text-[36px]"
+                    className="text-[28px] leading-[0.95] text-[#591902] sm:text-[34px] md:text-[36px]"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {title}
                   </h1>
                   {!hideHeaderPrice ? (
-                    <p className="pt-1 text-[22px] font-medium text-[#591902]">{price}</p>
+                    <p className="shrink-0 pt-1 text-[20px] font-medium text-[#591902] sm:text-[22px]">
+                      {price}
+                    </p>
                   ) : null}
                 </div>
 
                 {intro ? (
-                  <p className="mt-4 max-w-[540px] text-[14px] leading-[1.55] text-[#2D2D2D]">
+                  <p className="mt-4 max-w-[540px] text-[14px] leading-[1.6] text-[#2D2D2D] opacity-80">
                     {intro}
                   </p>
                 ) : null}

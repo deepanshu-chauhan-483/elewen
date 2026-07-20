@@ -23,6 +23,8 @@ const BR_NITTY_GRITTY =
 const BACHELORETTE_PRICE_COVERS = [
   { text: 'The Complete Look' },
   { text: 'Professional Setup' },
+  { text: 'Final Dismantling' },
+  { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
   { text: 'No hidden service fees.' },
 ];
 

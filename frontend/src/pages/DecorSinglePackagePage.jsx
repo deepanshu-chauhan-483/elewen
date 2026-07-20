@@ -169,12 +169,14 @@ function buildDecorIntro(pkg) {
 
 function buildKeyDecorText(pkg) {
   const blocks = getDecorDetailSections(pkg)
+  if (!blocks.length) return DECOR_CONTENT.keyDecorElements
+
   const keyDecorText = blocks
-    .flatMap(section => [section?.key_decor_elements, section?.purpose, section?.notes])
+    .flatMap(section => [section?.key_decor_elements])
     .map(cleanText)
     .find(Boolean)
 
-  return keyDecorText || DECOR_CONTENT.keyDecorElements
+  return keyDecorText || ''
 }
 
 function normalizeGalleryImageUrl(image) {
@@ -360,7 +362,10 @@ function groupItemsByTitle(items = []) {
 }
 
 function buildChoiceSectionTitle(groupTitle, fallbackTitle) {
-  return titleCaseLabel(groupTitle) || fallbackTitle
+  const label = titleCaseLabel(groupTitle) || fallbackTitle
+  if (!label) return fallbackTitle
+  if (/\(choose\s*\d+\)/i.test(label) || /^choose\s*\d+$/i.test(label)) return label
+  return `${label} (choose 1)`
 }
 
 function buildTextSectionTitle(groupTitle, fallbackTitle) {
@@ -914,42 +919,41 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
     ? item.bullets.filter(Boolean)
     : splitInclusionDetailText(item.description)
 
+  const selected = Boolean(item.selected)
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-[6px] border px-3 py-2 text-left transition-all ${
-        wide || bullets.length ? 'min-w-[220px] flex-1 basis-[220px]' : 'min-w-[92px]'
+      className={`rounded-[8px] border px-3.5 py-2.5 text-left transition-all ${
+        wide || bullets.length ? 'min-w-[220px] flex-1 basis-[220px]' : 'min-w-[120px]'
       } ${
-        item.selected
-          ? 'border-[#7A3516] bg-[#FBF6ED] text-[#591902]'
-          : 'border-[#937032] bg-[#FFFFFF] text-[#937032]'
+        selected
+          ? 'border-[#591902] bg-[#591902] text-white'
+          : 'border-[#591902] bg-white text-[#591902]'
       }`}
     >
-      <p
-        className={`text-[12px] font-semibold leading-[1.3] ${
-          item.selected ? 'text-[#591902]' : 'text-[#937032]'
-        }`}
-      >
-        {item.title}
-      </p>
+      {item.title && !bullets.length ? (
+        <p className={`text-[12px] font-semibold leading-[1.35] ${selected ? 'text-white' : 'text-[#591902]'}`}>
+          {item.title}
+        </p>
+      ) : null}
+      {item.title && bullets.length ? (
+        <p className={`text-[12px] font-semibold leading-[1.35] ${selected ? 'text-white' : 'text-[#591902]'}`}>
+          {item.title}
+        </p>
+      ) : null}
       {showPrice && item.price ? (
-        <p
-          className={`mt-1 text-[11px] font-medium ${
-            item.selected ? 'text-[#591902]' : 'text-[#8A5A2D]'
-          }`}
-        >
+        <p className={`mt-1 text-[11px] font-medium ${selected ? 'text-white/90' : 'text-[#591902]'}`}>
           {item.price}
         </p>
       ) : null}
       {bullets.length ? (
-        <ul className="mt-2 space-y-1">
+        <ul className={`${item.title ? 'mt-2' : ''} space-y-1`}>
           {bullets.map(bullet => (
             <li
               key={bullet}
-              className={`text-[11px] leading-[1.45] ${
-                item.selected ? 'text-[#591902]' : 'text-[#8A5A2D]'
-              }`}
+              className={`text-[11px] leading-[1.45] ${selected ? 'text-white' : 'text-[#591902]'}`}
             >
               • {bullet}
             </li>
@@ -963,10 +967,7 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
 function DecorTextRow({ section, onItemClick }) {
   return (
     <div>
-      <p
-        className="text-[13px] font-semibold leading-none text-[#2D2D2D]"
-        style={{ fontWeight: 600 }}
-      >
+      <p className="text-[13px] font-semibold leading-none text-[#591902]">
         {section.title}
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-y-2">
@@ -982,7 +983,7 @@ function DecorTextRow({ section, onItemClick }) {
               {item}
             </button>
             {index < section.items.length - 1 ? (
-              <span className="mx-2 text-[12px] leading-none text-[#591902]">|</span>
+              <span className="mx-2 text-[12px] leading-none text-[#591902] opacity-50">|</span>
             ) : null}
           </div>
         ))}
@@ -1023,87 +1024,78 @@ function DecorPackageSections({
   onTextItemClick,
 }) {
   const visibleSections = useMemo(() => filterVisibleDecorSections(sections), [sections])
-  const textSections = useMemo(
-    () => visibleSections.filter(section => section.type === 'text-row'),
-    [visibleSections]
-  )
-  const choiceSections = useMemo(
-    () => visibleSections.filter(section => section.type === 'choice-row'),
-    [visibleSections]
-  )
-  const showIncludedHeading = choiceSections.length > 0
-  const textBlockSpacing = keyDecorText ? 'pt-5' : ''
-  const includedHeadingSpacing = keyDecorText || textSections.length ? 'pt-5' : ''
+  const hasInclusionSections = visibleSections.length > 0
 
   return (
     <div>
       {keyDecorText ? (
-        <div className="border-b border-[#36402280] pb-4">
-          <p className="text-[12px] text-[#2D2D2D]" style={{ fontWeight: 600 }}>
-            Key decor elements
-          </p>
-          <p className="mt-3 text-[13px] leading-[1.7] text-[#8A5A2D]">{keyDecorText}</p>
+        <div className="border-b border-[#E5E0D8] pb-5">
+          <p className="text-[13px] font-semibold text-[#2D2D2D]">Key Decor Elements</p>
+          <p className="mt-3 text-[13px] leading-[1.7] text-[#591902] opacity-70">{keyDecorText}</p>
         </div>
       ) : null}
 
-      {textSections.length ? (
-        <div className={`space-y-6 ${textBlockSpacing}`}>
-          {textSections.map((section, index) => (
-            <DecorTextRow
-              key={`${section.title}-${index}`}
-              section={section}
-              onItemClick={onTextItemClick}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {showIncludedHeading ? (
-        <p className={`text-[16px] font-semibold text-[#2D2D2D] ${includedHeadingSpacing}`}>
+      {hasInclusionSections ? (
+        <p
+          className={`text-[16px] font-semibold text-[#2D2D2D] ${keyDecorText ? 'pt-5' : ''}`}
+        >
           What&apos;s included:
         </p>
       ) : null}
 
-      <div
-        className={`space-y-6 ${showIncludedHeading ? 'mt-4' : includedHeadingSpacing || textBlockSpacing}`}
-      >
-        {choiceSections.length ? (
-          choiceSections.map((section, index) => {
-            const useWideCards = section.items.some(item => {
-              if (typeof item === 'string') return false
-              return Boolean(item.title) && (item.bullets?.length || item.description)
-            })
-            const sectionKey = section.groupKey ?? section.title
-
+      <div className={`space-y-6 ${hasInclusionSections ? 'mt-5' : keyDecorText ? 'pt-5' : ''}`}>
+        {visibleSections.map((section, index) => {
+          if (section.type === 'text-row') {
             return (
-              <div key={`${sectionKey}-${index}`}>
-                <p
-                  className="text-[13px] font-semibold leading-none text-[#2D2D2D]"
-                  style={{ fontWeight: 600 }}
-                >
-                  {section.title}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {section.items.map(item => (
-                    <DecorOptionButton
-                      key={`${sectionKey}-${item.title}-${(item.bullets ?? []).join('|')}`}
-                      item={item}
-                      wide={useWideCards}
-                      showPrice={shouldShowChoicePrices(section)}
-                      onClick={() => onSelect(sectionKey, item.title)}
-                    />
-                  ))}
-                </div>
+              <div
+                key={`${section.title}-${index}`}
+                className={index > 0 ? 'border-t border-[#E5E0D8] pt-5' : ''}
+              >
+                <DecorTextRow section={section} onItemClick={onTextItemClick} />
               </div>
             )
+          }
+
+          if (section.type !== 'choice-row') return null
+
+          const useWideCards = section.items.some(item => {
+            if (typeof item === 'string') return false
+            return Boolean(item.title) && (item.bullets?.length || item.description)
           })
-        ) : !textSections.length ? (
+          const sectionKey = section.groupKey ?? section.title
+
+          return (
+            <div
+              key={`${sectionKey}-${index}`}
+              className={index > 0 ? 'border-t border-[#E5E0D8] pt-5' : ''}
+            >
+              <p className="text-[13px] font-semibold leading-none text-[#591902]">
+                {section.title}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {section.items.map(item => (
+                  <DecorOptionButton
+                    key={`${sectionKey}-${item.title}-${(item.bullets ?? []).join('|')}`}
+                    item={item}
+                    wide={useWideCards}
+                    showPrice={shouldShowChoicePrices(section)}
+                    onClick={() => onSelect(sectionKey, item.title)}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        })}
+
+        {!hasInclusionSections ? (
           <p className="text-[12px] leading-[1.6] text-[#8A5A2D]">
             Customization options will appear here once they are added in Strapi.
           </p>
         ) : null}
 
-        <DecorMessageField value={message} onChange={onMessageChange} />
+        <div className={hasInclusionSections ? 'border-t border-[#E5E0D8] pt-5' : ''}>
+          <DecorMessageField value={message} onChange={onMessageChange} />
+        </div>
       </div>
     </div>
   )
