@@ -155,6 +155,7 @@ Seeds do **not** dedupe by title — only by slug (and type-specific checks for 
 | `decor-bubbles-black-tie-packages.js` | Birthday / anniversary — Bubbles & Black Tie (generated) |
 | `decor-sufi-night-packages.js` | Engagement — Ishq Sufiyana (generated) |
 | `decor-house-party-birthday-packages.js` | House party / birthday general packs (generated) |
+| `decor-pastel-packages.js` | Birthday Pastel theme packs (from `Birthday Packages - Pastel.xlsx`) |
 | `decor-proposal-shared.js` | Shared decor seed helpers |
 | `decor-choice-elements.js` | Choice option prices → `elements` |
 | `catering-essentials.js` | Essentials catering packages |

@@ -270,7 +270,17 @@ function dedupeThemesBySlug(themes) {
 }
 
 function themeMatchesSlugSet(theme, usedSlugs) {
-  return getThemeSlugVariants(theme).some(variant => usedSlugs.has(slugifyThemeValue(variant)))
+  const variants = getThemeSlugVariants(theme).map(variant => slugifyThemeValue(variant)).filter(Boolean)
+
+  if (variants.some(variant => usedSlugs.has(variant))) return true
+
+  // Parent picker themes (still-us) match when packages only store child slugs.
+  return variants.some(variant => {
+    for (const expandedSlug of expandThemeFilterSlugs(variant)) {
+      if (usedSlugs.has(expandedSlug)) return true
+    }
+    return false
+  })
 }
 
 /** House Party / Birthday Party — shown on every social decor event. */
@@ -295,6 +305,140 @@ const DECOR_THEME_ALLOWLIST_ALIASES = {
   'little-honey': 'a-little-honey',
   'ishq-sufiyana': 'sufi-night',
   'oh-baby-basics': 'oh-baby',
+}
+
+/**
+ * Parent picker themes → child package theme slugs (seed / CMS often link the child only).
+ * Filtering by the parent must still match those packages.
+ */
+const THEME_PARENT_CHILD_SLUGS = {
+  'still-us': [
+    'table-stories',
+    'floating-moments',
+    'first-date',
+    'under-the-stars',
+    'all-that-matters',
+    'signature-essentials',
+  ],
+  'bubbles-and-black-tie': ['golden-touch', 'social-setup', 'complete-package'],
+  pastel: [
+    'delilah',
+    'floral-firsts',
+    'pastel-pop',
+    'under-the-lights-canopy',
+    'pretty-in-pastel',
+    'starlit-spirits',
+    'words-we-keep',
+    'sip-and-slove',
+    'bloom-bar',
+  ],
+  'a-little-honey': ['buzzing-welcome', 'little-stroll', 'honey-hive', 'little-honey'],
+  'little-honey': ['buzzing-welcome', 'little-stroll', 'honey-hive', 'a-little-honey'],
+  'oh-baby': ['oh-baby-basics', 'baby-in-bloom', 'up-up-and-baby', 'baby-shower'],
+  'sufi-night': ['ishq-sufiyana'],
+  'ishq-sufiyana': ['sufi-night'],
+  'house-party': [
+    'phool-proof',
+    'air-we-go',
+    'the-first-layer',
+    'raise-the-bar',
+    'just-enough-magic',
+    'party-smart',
+    'aarambh',
+    'aura-upgrade',
+    'house-parties',
+    'birthday-party',
+    'birthday-parties',
+  ],
+  'house-parties': [
+    'phool-proof',
+    'air-we-go',
+    'the-first-layer',
+    'raise-the-bar',
+    'just-enough-magic',
+    'party-smart',
+    'aarambh',
+    'aura-upgrade',
+    'house-party',
+    'birthday-party',
+    'birthday-parties',
+  ],
+  'birthday-party': [
+    'phool-proof',
+    'air-we-go',
+    'the-first-layer',
+    'raise-the-bar',
+    'just-enough-magic',
+    'party-smart',
+    'aarambh',
+    'aura-upgrade',
+    'house-party',
+    'house-parties',
+    'birthday-parties',
+  ],
+  'birthday-parties': [
+    'phool-proof',
+    'air-we-go',
+    'the-first-layer',
+    'raise-the-bar',
+    'just-enough-magic',
+    'party-smart',
+    'aarambh',
+    'aura-upgrade',
+    'house-party',
+    'house-parties',
+    'birthday-party',
+  ],
+}
+
+/** Expand a theme filter slug to every slug that should count as a match. */
+export function expandThemeFilterSlugs(themeSlug = '') {
+  const normalized = normalizeThemeSlug(themeSlug)
+  if (!normalized) return new Set()
+
+  const expanded = new Set([normalized])
+  const aliased = DECOR_THEME_ALLOWLIST_ALIASES[normalized]
+  if (aliased) expanded.add(normalizeThemeSlug(aliased))
+
+  for (const [alias, canonical] of Object.entries(DECOR_THEME_ALLOWLIST_ALIASES)) {
+    if (normalizeThemeSlug(canonical) === normalized) expanded.add(normalizeThemeSlug(alias))
+  }
+
+  for (const key of [...expanded]) {
+    for (const child of THEME_PARENT_CHILD_SLUGS[key] ?? []) {
+      const childSlug = normalizeThemeSlug(child)
+      if (childSlug) expanded.add(childSlug)
+    }
+  }
+
+  return expanded
+}
+
+/** True when package theme_slugs match the selected theme (including parent→child). */
+export function packageThemeSlugsMatchFilter(packageThemeSlugs, themeSlug = '') {
+  const filterSlugs = expandThemeFilterSlugs(themeSlug)
+  if (!filterSlugs.size) return true
+
+  const packageSlugs = (Array.isArray(packageThemeSlugs) ? packageThemeSlugs : [])
+    .map(value => normalizeThemeSlug(value))
+    .filter(Boolean)
+
+  if (!packageSlugs.length) return false
+
+  return packageSlugs.some(packageSlug => {
+    if (filterSlugs.has(packageSlug)) return true
+
+    for (const filterSlug of filterSlugs) {
+      if (
+        packageSlug.startsWith(`${filterSlug}-`) ||
+        filterSlug.startsWith(`${packageSlug}-`)
+      ) {
+        return true
+      }
+    }
+
+    return false
+  })
 }
 
 function buildAllowedSocialDecorThemeSlugSet(eventSlug = '') {
@@ -404,16 +548,38 @@ export function filterPackages(packages, filters = {}) {
       if (!serviceLaneMatched) return false
     }
     const packageThemeSlugs = Array.isArray(pkg.theme_slugs) ? pkg.theme_slugs : []
-    if (themeSlug) {
-      if (!packageThemeSlugs.length) return false
-
-      const normalizedThemeFilter = normalizeThemeSlug(themeSlug)
-      const themeMatched = packageThemeSlugs.some(
-        value => normalizeThemeSlug(value) === normalizedThemeFilter
-      )
-      if (!themeMatched) return false
+    if (themeSlug && !packageThemeSlugsMatchFilter(packageThemeSlugs, themeSlug)) {
+      return false
     }
     if (!packageMatchesLevelFilter(pkg, { levelSlug, levelId })) return false
     return true
   })
+}
+
+/** True when at least one package matches this event under the supplied lane filters. */
+export function eventHasPackages(packages, event, filters = {}) {
+  const eventSlug = String(event?.slug ?? event?.value ?? '').trim()
+  const eventId = event?.id != null ? String(event.id) : ''
+
+  if (!eventSlug && !eventId) return false
+
+  return (
+    filterPackages(packages, {
+      categorySlug: filters.categorySlug ?? '',
+      serviceSlug: filters.serviceSlug ?? '',
+      serviceId: filters.serviceId ?? '',
+      themeSlug: filters.themeSlug ?? '',
+      levelSlug: filters.levelSlug ?? '',
+      levelId: filters.levelId ?? '',
+      eventSlug,
+      eventId,
+    }).length > 0
+  )
+}
+
+/** Drop events that would produce an empty package listing for the current lane filters. */
+export function filterEventsWithPackages(events, packages, filters = {}) {
+  return (Array.isArray(events) ? events : []).filter(event =>
+    eventHasPackages(packages, event, filters)
+  )
 }

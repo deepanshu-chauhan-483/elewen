@@ -126,18 +126,68 @@ async function ensureDecorMaterialPolicy(strapi) {
 
 async function findEventDocumentId(strapi, slugCandidates = PROPOSAL_EVENT_SLUG_CANDIDATES) {
   for (const slug of slugCandidates) {
-    const rows = await strapi.documents('api::event.event').findMany({
-      filters: { slug: { $eq: slug } },
-      status: 'published',
-      limit: 1,
-    });
+    for (const status of ['published', 'draft']) {
+      const rows = await strapi.documents('api::event.event').findMany({
+        filters: { slug: { $eq: slug } },
+        status,
+        limit: 1,
+      });
 
-    if (Array.isArray(rows) && rows[0]?.documentId) {
-      return rows[0].documentId;
+      if (Array.isArray(rows) && rows[0]?.documentId) {
+        return rows[0].documentId;
+      }
+    }
+  }
+
+  // Fallback: match event name when CMS slug differs from product slug.
+  const nameHints = slugCandidates
+    .map(slug => String(slug ?? '').replace(/-/g, ' ').trim())
+    .filter(Boolean);
+
+  for (const hint of nameHints) {
+    for (const status of ['published', 'draft']) {
+      const rows = await strapi.documents('api::event.event').findMany({
+        filters: { name: { $containsi: hint } },
+        status,
+        limit: 1,
+      });
+
+      if (Array.isArray(rows) && rows[0]?.documentId) {
+        return rows[0].documentId;
+      }
     }
   }
 
   return null;
+}
+
+/**
+ * Find or create a published Event so packages can link during seed.
+ */
+async function ensureEventDocumentId(strapi, options = {}) {
+  const slugCandidates = Array.isArray(options.slugCandidates)
+    ? options.slugCandidates
+    : [options.slug].filter(Boolean);
+  const name = String(options.name ?? '').trim();
+  const primarySlug = String(slugCandidates[0] ?? '').trim();
+
+  const existing = await findEventDocumentId(strapi, slugCandidates);
+  if (existing) return existing;
+
+  if (!primarySlug || !name) return null;
+
+  const created = await strapi.documents('api::event.event').create({
+    data: {
+      name,
+      slug: primarySlug,
+      is_active: true,
+      is_featured: false,
+      display_order: options.display_order ?? 0,
+    },
+    status: 'published',
+  });
+
+  return created?.documentId ?? null;
 }
 
 async function findThemeDocumentId(strapi, slugCandidates = []) {
@@ -145,9 +195,54 @@ async function findThemeDocumentId(strapi, slugCandidates = []) {
     const normalizedSlug = String(slug ?? '').trim();
     if (!normalizedSlug) continue;
 
-    const rows = await strapi.documents('api::theme.theme').findMany({
-      filters: { slug: { $eq: normalizedSlug } },
-      status: 'published',
+    for (const status of ['published', 'draft']) {
+      const rows = await strapi.documents('api::theme.theme').findMany({
+        filters: { slug: { $eq: normalizedSlug } },
+        status,
+        limit: 1,
+      });
+
+      if (Array.isArray(rows) && rows[0]?.documentId) {
+        return rows[0].documentId;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Find or create a published Theme so package theme relations can link during seed.
+ */
+async function ensureThemeDocumentId(strapi, options = {}) {
+  const slug = String(options.slug ?? '').trim();
+  const name = String(options.name ?? '').trim() || slug;
+  if (!slug) return null;
+
+  const existing = await findThemeDocumentId(strapi, [slug]);
+  if (existing) return existing;
+
+  const created = await strapi.documents('api::theme.theme').create({
+    data: {
+      name,
+      slug,
+      is_active: true,
+      display_order: options.display_order ?? 0,
+    },
+    status: 'published',
+  });
+
+  return created?.documentId ?? null;
+}
+
+async function findBudgetLevelDocumentId(strapi, levelSlug) {
+  const slug = String(levelSlug ?? '').trim();
+  if (!slug) return null;
+
+  for (const status of ['published', 'draft']) {
+    const rows = await strapi.documents('api::budget-level.budget-level').findMany({
+      filters: { slug: { $eq: slug } },
+      status,
       limit: 1,
     });
 
@@ -159,17 +254,29 @@ async function findThemeDocumentId(strapi, slugCandidates = []) {
   return null;
 }
 
-async function findBudgetLevelDocumentId(strapi, levelSlug) {
-  const slug = String(levelSlug ?? '').trim();
+/**
+ * Find or create a published Budget Level used by decor package filters.
+ */
+async function ensureBudgetLevelDocumentId(strapi, options = {}) {
+  const slug = String(options.slug ?? '').trim();
+  const name = String(options.name ?? '').trim() || slug;
   if (!slug) return null;
 
-  const rows = await strapi.documents('api::budget-level.budget-level').findMany({
-    filters: { slug: { $eq: slug } },
+  const existing = await findBudgetLevelDocumentId(strapi, slug);
+  if (existing) return existing;
+
+  const created = await strapi.documents('api::budget-level.budget-level').create({
+    data: {
+      name,
+      slug,
+      description: options.description ?? '',
+      display_order: options.display_order ?? 0,
+      is_active: true,
+    },
     status: 'published',
-    limit: 1,
   });
 
-  return Array.isArray(rows) && rows[0]?.documentId ? rows[0].documentId : null;
+  return created?.documentId ?? null;
 }
 
 async function ensureProposalPackage(
@@ -376,7 +483,11 @@ module.exports = {
   slugifyTitle,
   buildDecorBlock,
   findEventDocumentId,
+  ensureEventDocumentId,
   findThemeDocumentId,
+  ensureThemeDocumentId,
+  findBudgetLevelDocumentId,
+  ensureBudgetLevelDocumentId,
   seedDecorPackages,
   seedProposalPackages,
 };
