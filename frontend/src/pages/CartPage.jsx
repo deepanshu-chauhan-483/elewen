@@ -874,6 +874,7 @@ function DeleteIcon() {
 
 const CATEGORY_ICONS = {
   Decor: '🌸',
+  Décor: '🌸',
   Catering: '🍽️',
   Sheesha: '💨',
   'Bar Tending': '🍸',

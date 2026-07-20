@@ -83,7 +83,7 @@ const HERO_RIGHT_CARDS_FALLBACK = [
   {
     label: 'Birthday',
     tagline: 'Curated décor & catering packages',
-    href: '/package-listing?category=social&event=birthday-parties&eventId=176',
+    href: '/event-flow/service?category=social&event=birthday-parties&eventId=176',
   },
   {
     label: 'Anniversary',
@@ -93,7 +93,7 @@ const HERO_RIGHT_CARDS_FALLBACK = [
   {
     label: 'House Party',
     tagline: 'Simple planning. Beautiful execution.',
-    href: '/package-listing?category=social&event=house-parties&eventId=188',
+    href: '/event-flow/service?category=social&event=house-parties&eventId=188',
   },
 ]
 const getTrailingWWord = (value, fallback) => String(value ?? fallback).replace(/^[Ww]/, '')
@@ -908,7 +908,7 @@ const HeroSection = () => {
                     : ''
                 const cardHref =
                   card.href ||
-                  `/package-listing?event=${resolvedLabel.toLowerCase().replace(/\s+/g, '-')}`
+                  `/event-flow/service?category=social&event=${resolvedLabel.toLowerCase().replace(/\s+/g, '-')}`
 
                 return (
                   <div

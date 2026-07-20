@@ -275,16 +275,33 @@ export const EVENT_CARDS_FALLBACK = [
   },
 ]
 
-export const SERVICE_CATEGORY_ORDER = ['Decor', 'Catering', 'Bartending', 'Sheesha / Hookah']
+export const DECOR_LANE_LABEL = 'Décor'
+
+export const DECOR_SETUPS_LABEL = 'Décor Setups'
+
+/** Accent-insensitive lane key for Décor / Decor / decor comparisons. */
+export const normalizeServiceLaneKey = value =>
+  String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+
+export const SERVICE_CATEGORY_ORDER = [
+  DECOR_LANE_LABEL,
+  'Catering',
+  'Bartending',
+  'Sheesha / Hookah',
+]
 
 export const SERVICE_CARDS_FALLBACK = [
   {
     id: 69,
     documentId: null,
-    title: 'Decor Setups',
+    title: DECOR_SETUPS_LABEL,
     slug: 'decoration',
-    description: 'From simple setups to curated Decor that transforms spaces',
-    category: 'Decor',
+    description: 'From simple setups to curated décor that transforms spaces',
+    category: DECOR_LANE_LABEL,
     image: '/offline-media/services/decoration.jpg',
   },
   {
@@ -293,7 +310,7 @@ export const SERVICE_CARDS_FALLBACK = [
     title: 'Furniture',
     slug: 'furniture',
     description: 'Rent stylish furniture to complete your event setup',
-    category: 'Decor',
+    category: DECOR_LANE_LABEL,
     image: '/offline-media/services/furniture.png',
   },
   {

@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import {
+  DECOR_LANE_LABEL,
+  DECOR_SETUPS_LABEL,
   EVENT_CATEGORIES_FALLBACK,
   EVENT_CARDS_FALLBACK,
+  normalizeServiceLaneKey,
   SERVICE_CARDS_FALLBACK,
   SOCIAL_EVENT_ORDER,
 } from '../data/eventTypes'
@@ -42,10 +45,10 @@ const SERVICE_OPTIONS_FALLBACK = [
   {
     id: 'decor',
     documentId: null,
-    name: 'Decor',
+    name: DECOR_LANE_LABEL,
     slug: 'decor',
     description: 'Thoughtful visual styling designed around your event mood and format.',
-    category: 'Decor',
+    category: DECOR_LANE_LABEL,
     image: '/offline-media/services/decor.png',
   },
   {
@@ -116,8 +119,8 @@ const displayServiceTitle = (slug, name) => {
   const normalized = canonicalizeServiceSlug(slug || name)
   if (normalized === 'sheesha') return 'Sheesha / Hookah'
   if (normalized === 'decoration' || normalized === 'decor') {
-    if (/decor\s*setups?/i.test(name) || /decoration/i.test(name) || !name) return 'Decor Setups'
-    if (slugify(name) === 'decor') return 'Decor'
+    if (/decor\s*setups?/i.test(name) || /decoration/i.test(name) || !name) return DECOR_SETUPS_LABEL
+    if (slugify(name) === 'decor' || normalizeServiceLaneKey(name) === 'decor') return DECOR_LANE_LABEL
   }
   return name?.trim() || titleizeFromSlug(normalized)
 }
@@ -140,7 +143,13 @@ const resolveServiceCategory = (service, displayName, name) => {
     return displayName || name
   }
 
-  if (/^decor/i.test(parentName) || slug === 'decoration' || slug === 'furniture') return 'Decor'
+  if (
+    normalizeServiceLaneKey(parentName) === 'decor' ||
+    slug === 'decoration' ||
+    slug === 'furniture'
+  ) {
+    return DECOR_LANE_LABEL
+  }
   if (slug === 'sheesha') return 'Sheesha / Hookah'
   if (parentName) return sanitizeEventText(parentName)
 
@@ -275,16 +284,17 @@ const getBudgetLevelSlug = level => {
 
 const badgeFromName = name => (name?.trim()?.charAt(0) ?? '').toUpperCase()
 
-// Fix CMS mojibake / Decore → Decor in event taglines and descriptions.
+// Fix CMS mojibake / plain Decor → branded Décor in event taglines and descriptions.
 const sanitizeEventText = value => {
   if (typeof value !== 'string') return value
 
   return value
-    .replace(/d\?\?cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-    .replace(/dÃ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-    .replace(/dÃƒÂ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-    .replace(/décor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-    .replace(/decore/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+    .replace(/d\?\?cor/gi, match => (match[0] === 'D' ? DECOR_LANE_LABEL : 'décor'))
+    .replace(/dÃ©cor/gi, match => (match[0] === 'D' ? DECOR_LANE_LABEL : 'décor'))
+    .replace(/dÃƒÂ©cor/gi, match => (match[0] === 'D' ? DECOR_LANE_LABEL : 'décor'))
+    .replace(/décor/gi, match => (match[0] === 'D' ? DECOR_LANE_LABEL : 'décor'))
+    .replace(/decore/gi, match => (match[0] === 'D' ? DECOR_LANE_LABEL : 'décor'))
+    .replace(/\bdecor\b/gi, match => (match[0] === 'D' ? DECOR_LANE_LABEL : 'décor'))
     .replace(/â€[œ]/g, '"')
     .replace(/â€[˜™]/g, "'")
     .replace(/â€"|â€“|â€”/g, ' - ')
@@ -382,6 +392,17 @@ const isExcludedService = item => {
   if (label.includes('technical') && label.includes('showrunning')) return true
   return false
 }
+
+const normalizeServiceCard = item => ({
+  ...item,
+  title: displayServiceTitle(item.slug, item.title ?? item.name),
+  description: sanitizeEventText(item.description ?? ''),
+  category: resolveServiceCategory(
+    { slug: item.slug, parent_category: { name: item.category } },
+    item.title ?? item.name,
+    item.title ?? item.name
+  ),
+})
 
 const orderServices = items => {
   const list = (Array.isArray(items) ? items : []).filter(item => !isExcludedService(item))
@@ -689,11 +710,13 @@ export function useEventsByCategory(categorySlug) {
   })
 }
 
+const mapFallbackServiceCards = items => orderServices(items.map(normalizeServiceCard))
+
 export function useServiceCards() {
   return useQuery({
     queryKey: ['service-cards'],
     queryFn: async () => {
-      if (USE_FALLBACK) return orderServices(SERVICE_CARDS_FALLBACK)
+      if (USE_FALLBACK) return mapFallbackServiceCards(SERVICE_CARDS_FALLBACK)
       try {
         const { data } = await strapiGet('/service-categories', {
           'filters[is_featured][$eq]': 'true',
@@ -716,10 +739,10 @@ export function useServiceCards() {
         })
         return orderServices(mapped)
       } catch {
-        return orderServices(SERVICE_CARDS_FALLBACK)
+        return mapFallbackServiceCards(SERVICE_CARDS_FALLBACK)
       }
     },
-    placeholderData: orderServices(SERVICE_CARDS_FALLBACK),
+    placeholderData: mapFallbackServiceCards(SERVICE_CARDS_FALLBACK),
     staleTime: 10 * 60 * 1000,
     retry: 1,
   })

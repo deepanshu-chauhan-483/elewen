@@ -9,6 +9,7 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { DEFAULT_EVENT_CATEGORY_SLUG, resolveServiceLaneId } from '../lib/serviceFlow'
 import { assignDistinctCoverIndices, filterPackages } from '../lib/packageFilters'
+import { filterPackagesBySearch } from '../lib/packageSearch'
 
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -116,24 +117,12 @@ export default function DecorLevelsPage() {
     )
   }, [categorySlug, setSearchParams])
 
-  useEffect(() => {
-    if (!themeParam) return
-
-    setSearchParams(
-      prevParams => {
-        const nextParams = new URLSearchParams(prevParams)
-        nextParams.delete('theme')
-        return nextParams
-      },
-      { replace: true }
-    )
-  }, [themeParam, setSearchParams])
-
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
   const eventId = searchParams.get('eventId') ?? ''
   const levelParam = searchParams.get('level')?.toLowerCase() ?? ''
   const serviceIdParam = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
+  const searchQuery = searchParams.get('search')?.trim() ?? ''
   const { data: serviceOptions = [] } = useFilteredServiceOptions(['decor'])
   const resolvedServiceId = useMemo(
     () =>
@@ -184,15 +173,27 @@ export default function DecorLevelsPage() {
     [packages]
   )
 
-  const filteredPackages = useMemo(
-    () =>
-      filterPackages(packagesData, {
-        categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
-        serviceSlug: 'decor',
-        serviceId: serviceIdParam,
-      }),
-    [packagesData, categorySlug, serviceIdParam]
-  )
+  const filteredPackages = useMemo(() => {
+    const scoped = filterPackages(packagesData, {
+      categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
+      eventSlug,
+      eventId,
+      serviceSlug: 'decor',
+      serviceId: serviceIdParam,
+      themeSlug: themeParam,
+    })
+
+    if (!searchQuery) return scoped
+    return filterPackagesBySearch(scoped, searchQuery)
+  }, [
+    packagesData,
+    categorySlug,
+    eventSlug,
+    eventId,
+    serviceIdParam,
+    themeParam,
+    searchQuery,
+  ])
 
   const sortedPackages = useMemo(() => {
     const items = [...filteredPackages]
@@ -203,7 +204,7 @@ export default function DecorLevelsPage() {
     return items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
   }, [filteredPackages, sortValue])
 
-  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${serviceIdParam}:${sortValue}`
+  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${eventSlug}:${eventId}:${serviceIdParam}:${themeParam}:${searchQuery}:${sortValue}`
 
   useEffect(() => {
     setPagination({ level1: 0, level2: 0, level3: 0, level4: 0 })
@@ -264,6 +265,7 @@ export default function DecorLevelsPage() {
     params.set('service', 'decor')
     if (resolvedServiceId) params.set('serviceId', resolvedServiceId)
     if (flow) params.set('flow', flow)
+    if (themeParam) params.set('theme', themeParam)
     if (level?.slug) params.set('level', level.slug)
     return `/packages/decor?${params.toString()}`
   }
@@ -274,7 +276,6 @@ export default function DecorLevelsPage() {
 
   if (levelParam) {
     const nextParams = new URLSearchParams(searchParams)
-    nextParams.delete('theme')
     return <Navigate to={`/packages/decor?${nextParams.toString()}`} replace />
   }
 
@@ -290,7 +291,7 @@ export default function DecorLevelsPage() {
       onPageSelect={() => {}}
       ctaTitle="Not sure which decor package is right for you?"
       showPagination={false} // ← This hides the bottom number + arrow pagination
-      heroContent={<PackageResultsHero showThemeFilter={false} />}
+      heroContent={<PackageResultsHero showThemeFilter />}
     >
       <div className="flex flex-col gap-12">
         <p className="max-w-[540px] text-[12px] leading-[1.5] text-black/35">

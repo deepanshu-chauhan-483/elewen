@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import PackageCard from './PackageCard'
 import PackageListLayout from './PackageListLayout'
 import PackageResultsHero from './PackageResultsHero'
 import { usePackages } from '../../hooks/usePackages'
 import {
   assignDistinctCoverIndices,
+  eventHasPackages,
   filterPackages,
   normalizeServiceSlug,
 } from '../../lib/packageFilters'
-import { packageMatchesSearch } from '../../lib/packageSearch'
+import { filterPackagesBySearch } from '../../lib/packageSearch'
 import CmsPageLoader from '../common/CmsPageLoader'
 import { useStrapiPageLoading } from '../../hooks/useStrapiPageLoading'
 import pkgImg1 from '../../assets/images/IMG_3903.jpg'
@@ -20,8 +22,7 @@ import pkgImg6 from '../../assets/images/IMG_7025.jpg'
 import pkgImg7 from '../../assets/images/IMG_8625.png'
 import pkgImg8 from '../../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../../assets/images/6f6af066.jpg'
-import { useSearchParams } from 'react-router-dom'
-import { DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
+import { DEFAULT_EVENT_CATEGORY_SLUG, SERVICES_FLOW_KEY, buildServiceFlowParams } from '../../lib/serviceFlow'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg2, pkgImg3],
@@ -50,6 +51,7 @@ export default function ServicePackagesPageContent({
   const isStrapiLoading = useStrapiPageLoading(packagesQuery)
 
   const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
   const [sortValue, setSortValue] = useState('price-desc')
   const [page, setPage] = useState(1)
   // const [searchParams] = useSearchParams()
@@ -79,6 +81,7 @@ export default function ServicePackagesPageContent({
   const themeSlug = searchParams.get('theme')?.toLowerCase() ?? ''
   const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
   const searchQuery = searchParams.get('search')?.trim() ?? ''
+  const flow = searchParams.get('flow') ?? ''
   useEffect(() => {
     if (categorySlug) return
 
@@ -118,12 +121,12 @@ export default function ServicePackagesPageContent({
       eventId: effectiveEventId,
       serviceSlug: selectedServiceSlug,
       serviceId: serviceIdParam,
-      themeSlug: levelSlug ? '' : themeSlug,
+      themeSlug,
       levelSlug,
     })
 
     if (!searchQuery) return filtered
-    return filtered.filter(pkg => packageMatchesSearch(pkg, searchQuery))
+    return filterPackagesBySearch(filtered, searchQuery)
   }, [
     packagesData,
     effectiveCategorySlug,
@@ -157,8 +160,55 @@ export default function ServicePackagesPageContent({
     [safePage, sortedPackages]
   )
 
+  const selectedEventHasPackages = useMemo(() => {
+    if (shouldBypassEventFilters) return true
+    if (!effectiveEventSlug && !effectiveEventId) return true
+    if (!selectedServiceSlug) return true
+
+    return eventHasPackages(
+      packagesData,
+      { slug: effectiveEventSlug, id: effectiveEventId },
+      {
+        categorySlug: effectiveCategorySlug,
+        serviceSlug: selectedServiceSlug,
+        serviceId: serviceIdParam,
+        themeSlug,
+        levelSlug,
+      }
+    )
+  }, [
+    effectiveCategorySlug,
+    effectiveEventId,
+    effectiveEventSlug,
+    levelSlug,
+    packagesData,
+    selectedServiceSlug,
+    serviceIdParam,
+    shouldBypassEventFilters,
+    themeSlug,
+  ])
+
   if (isStrapiLoading) {
     return <CmsPageLoader />
+  }
+
+  if (!selectedEventHasPackages) {
+    if (flow === SERVICES_FLOW_KEY) {
+      const params = buildServiceFlowParams({
+        categorySlug: effectiveCategorySlug,
+        serviceSlug: selectedServiceSlug,
+        serviceId: serviceIdParam,
+        flow,
+      })
+
+      return <Navigate to={`/event-flow/category?${params.toString()}`} replace />
+    }
+
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('event')
+    nextParams.delete('eventId')
+
+    return <Navigate to={`${location.pathname}?${nextParams.toString()}`} replace />
   }
 
   return (

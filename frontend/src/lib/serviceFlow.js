@@ -136,6 +136,28 @@ export function buildServiceSelectionBackTo({
   return `/event-flow/service?${params.toString()}`
 }
 
+/** Social events enter the event flow (service → theme → packages); others keep package listing. */
+export function buildEventSelectionDestination({
+  categorySlug = '',
+  eventSlug = '',
+  eventId = '',
+}) {
+  const resolvedCategory = String(categorySlug ?? DEFAULT_EVENT_CATEGORY_SLUG)
+    .trim()
+    .toLowerCase()
+  const params = buildServiceFlowParams({
+    categorySlug: resolvedCategory,
+    eventSlug,
+    eventId,
+  })
+
+  if (resolvedCategory === DECOR_THEME_CATEGORY_SLUG) {
+    return `/event-flow/service?${params.toString()}`
+  }
+
+  return `/package-listing?${params.toString()}`
+}
+
 export function buildServicesCategoryDestination({
   categorySlug = '',
   serviceSlug = '',

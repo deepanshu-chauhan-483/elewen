@@ -333,6 +333,7 @@ const THEME_PARENT_CHILD_SLUGS = {
     'bloom-bar',
   ],
   bohemian: [
+    'the-first-layer',
     'signs-and-stems',
     'pampous-play',
     'less-is-more',

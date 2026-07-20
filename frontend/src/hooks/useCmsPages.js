@@ -59,11 +59,11 @@ function sanitizeCmsTextSafe(value) {
   if (typeof value !== 'string') return value
 
   let result = sanitizeCmsText(value)
-  result = result.replace(/d\?\?cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-  result = result.replace(/dÃ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-  result = result.replace(/dÃƒÂ©cor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-  result = result.replace(/décor/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
-  result = result.replace(/decore/gi, match => (match[0] === 'D' ? 'Decor' : 'decor'))
+  result = result.replace(/d\?\?cor/gi, match => (match[0] === 'D' ? 'Décor' : 'décor'))
+  result = result.replace(/dÃ©cor/gi, match => (match[0] === 'D' ? 'Décor' : 'décor'))
+  result = result.replace(/dÃƒÂ©cor/gi, match => (match[0] === 'D' ? 'Décor' : 'décor'))
+  result = result.replace(/\bdecor\b/gi, match => (match[0] === 'D' ? 'Décor' : 'décor'))
+  result = result.replace(/decore/gi, match => (match[0] === 'D' ? 'Décor' : 'décor'))
   // UTF-8 mojibake for dashes / quotes (shows as â€… in the UI).
   result = result.replace(/â€[œ]/g, '"')
   result = result.replace(/â€[˜™]/g, "'")

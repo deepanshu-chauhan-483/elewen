@@ -1,6 +1,8 @@
+import { packageThemeSlugsMatchFilter } from './packageFilters'
+
 /**
  * Shared package search matching for nav + listing pages.
- * Matches title, category, description, includes/tags, and curated keyword lists.
+ * Theme-name queries match theme_slugs only; otherwise title/category/description/includes.
  */
 
 const KEYWORD_ALIASES = {
@@ -161,6 +163,18 @@ export function fuzzyMatchText(text, query) {
   })
 }
 
+function packageThemeSearchBlob(pkg) {
+  const themeSlugs = Array.isArray(pkg?.theme_slugs) ? pkg.theme_slugs : []
+
+  return themeSlugs
+    .flatMap(slug => {
+      const raw = String(slug ?? '').trim()
+      if (!raw) return []
+      return [raw, raw.replace(/-/g, ' ')]
+    })
+    .join(' ')
+}
+
 function packageSearchBlob(pkg) {
   const includes = Array.isArray(pkg?.includes)
     ? pkg.includes
@@ -174,11 +188,26 @@ function packageSearchBlob(pkg) {
     pkg?.description,
     pkg?.desc,
     includes.join(' '),
-    ...(Array.isArray(pkg?.theme_slugs) ? pkg.theme_slugs : []),
     pkg?.level_slug,
   ]
     .filter(Boolean)
     .join(' ')
+}
+
+/** True when the query matches this package's theme name/slug only (incl. parent themes). */
+export function packageMatchesThemeSearch(pkg, query) {
+  const q = String(query ?? '').trim()
+  if (!q) return true
+
+  if (textMatchesQuery(packageThemeSearchBlob(pkg), q)) return true
+
+  const querySlug = q
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return Boolean(querySlug) && packageThemeSlugsMatchFilter(pkg?.theme_slugs, querySlug)
 }
 
 function textContainsTerm(text, term) {
@@ -212,6 +241,9 @@ export function packageMatchesSearch(pkg, query) {
   const q = String(query ?? '').trim()
   if (!q) return true
 
+  // Theme hits win over title/includes (e.g. "Still Us" neon copy must not pollute theme search).
+  if (packageMatchesThemeSearch(pkg, q)) return true
+
   if (matchesAnySearchKeyword(q, CATERING_SEARCH_KEYWORDS)) {
     return packageHasServiceSlug(pkg, 'catering')
   }
@@ -227,4 +259,19 @@ export function packageMatchesSearch(pkg, query) {
 
   const blob = packageSearchBlob(pkg)
   return textMatchesQuery(blob, q)
+}
+
+/**
+ * Prefer theme-only results when the query matches any package theme.
+ * Falls back to full-text search only when no theme matches.
+ */
+export function filterPackagesBySearch(packages, query) {
+  const list = Array.isArray(packages) ? packages : []
+  const q = String(query ?? '').trim()
+  if (!q) return list
+
+  const themeHits = list.filter(pkg => packageMatchesThemeSearch(pkg, q))
+  if (themeHits.length > 0) return themeHits
+
+  return list.filter(pkg => packageMatchesSearch(pkg, q))
 }

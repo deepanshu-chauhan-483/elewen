@@ -23,12 +23,20 @@ import CelebrationDoor from '../components/landing-page/CelebrationDoor'
 import HeroSection from '../components/landing-page/HeroSection'
 import { usePackages } from '../hooks/usePackages'
 import { useEventCategories, useEventCards, useServiceCards } from '../hooks/useEventTypes'
-import { SERVICE_CATEGORY_ORDER } from '../data/eventTypes'
+import {
+  DECOR_LANE_LABEL,
+  normalizeServiceLaneKey,
+  SERVICE_CATEGORY_ORDER,
+} from '../data/eventTypes'
 import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
 import { useLandingPage } from '../hooks/useCmsPages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
-import { buildServicesFlowDestination, DEFAULT_EVENT_CATEGORY_SLUG } from '../lib/serviceFlow'
+import {
+  buildEventSelectionDestination,
+  buildServicesFlowDestination,
+  DEFAULT_EVENT_CATEGORY_SLUG,
+} from '../lib/serviceFlow'
 import { getPackageHref } from '../lib/packageRoutes'
 import { preventWidow, stripMojibake } from '../lib/textFormat'
 import { PACKAGES_FALLBACK } from '../data/packages'
@@ -94,13 +102,12 @@ const slugifyValue = value =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-const buildEventListingHref = (categorySlug, eventSlug, eventId) => {
-  const params = new URLSearchParams()
-  params.set('category', categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
-  if (eventSlug) params.set('event', eventSlug)
-  if (eventId != null) params.set('eventId', String(eventId))
-  return `/package-listing?${params.toString()}`
-}
+const buildEventListingHref = (categorySlug, eventSlug, eventId) =>
+  buildEventSelectionDestination({
+    categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
+    eventSlug,
+    eventId: eventId != null ? String(eventId) : '',
+  })
 
 const buildServiceListingHref = (serviceSlug, serviceId) => {
   const normalizedService = normalizeServiceSlug(serviceSlug)
@@ -1106,19 +1113,22 @@ const WhatToPlanSection = () => {
     const ordered = []
     for (const preferred of SERVICE_CATEGORY_ORDER) {
       const idx = remaining.findIndex(
-        name => String(name).toLowerCase() === String(preferred).toLowerCase()
+        name => normalizeServiceLaneKey(name) === normalizeServiceLaneKey(preferred)
       )
       if (idx !== -1) ordered.push(remaining.splice(idx, 1)[0])
     }
     return ordered.concat(remaining)
   })()
   const preferredDecor =
-    categories.find(category => String(category).toLowerCase() === 'decor') ?? null
+    categories.find(category => normalizeServiceLaneKey(category) === 'decor') ??
+    categories.find(category => category === DECOR_LANE_LABEL) ??
+    null
   const activeCategory = selectedCategory ?? preferredDecor ?? categories[0] ?? null
 
   const filteredCards = activeCategory
     ? safeServiceCards.filter(
-        s => String(s?.category ?? '').toLowerCase() === String(activeCategory).toLowerCase()
+        s =>
+          normalizeServiceLaneKey(s?.category) === normalizeServiceLaneKey(activeCategory)
       )
     : safeServiceCards
 

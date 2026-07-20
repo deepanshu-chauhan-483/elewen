@@ -6,13 +6,14 @@ import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventT
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { normalizeServiceSlug } from '../lib/packageFilters'
+import { filterEventsWithPackages, normalizeServiceSlug } from '../lib/packageFilters'
 import {
   buildServiceDestination,
   buildServiceFlowParams,
   DEFAULT_EVENT_CATEGORY_SLUG,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
+import { usePackages } from '../hooks/usePackages'
 
 const EVENT_FLOW_STEPS = [
   { id: 1, label: 'Event' },
@@ -179,8 +180,24 @@ export default function CategoryPage() {
   }, [categories, effectiveCategorySlug, requestedCategorySlug])
 
   const eventsQuery = useEventsByCategory(selectedCategoryId || DEFAULT_EVENT_CATEGORY_SLUG)
+  const packagesQuery = usePackages()
   const { data: events = [] } = eventsQuery
-  const isStrapiLoading = useStrapiPageLoading(categoriesQuery, eventsQuery)
+  const { data: packages = [] } = packagesQuery
+  const isStrapiLoading = useStrapiPageLoading(
+    categoriesQuery,
+    eventsQuery,
+    ...(isServicesFlow && serviceSlug ? [packagesQuery] : [])
+  )
+
+  const packageBackedEvents = useMemo(() => {
+    if (!isServicesFlow || !serviceSlug) return events
+
+    return filterEventsWithPackages(events, packages, {
+      categorySlug: selectedCategoryId || DEFAULT_EVENT_CATEGORY_SLUG,
+      serviceSlug,
+      serviceId,
+    })
+  }, [events, isServicesFlow, packages, selectedCategoryId, serviceId, serviceSlug])
 
   const paginationKey = `${selectedCategoryId}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
@@ -253,13 +270,13 @@ export default function CategoryPage() {
 
   const filteredEvents = useMemo(() => {
     const query = debouncedSearchValue.trim().toLowerCase()
-    if (!query) return events
+    if (!query) return packageBackedEvents
 
-    return events.filter(
+    return packageBackedEvents.filter(
       event =>
         event.title.toLowerCase().includes(query) || event.description.toLowerCase().includes(query)
     )
-  }, [debouncedSearchValue, events])
+  }, [debouncedSearchValue, packageBackedEvents])
 
   const cardsPerPage =
     viewportWidth >= 768

@@ -8,7 +8,7 @@ import { useCart } from '../hooks/useCart'
 import { useToast } from './common/useToast'
 import { usePackages } from '../hooks/usePackages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
-import { packageMatchesSearch } from '../lib/packageSearch'
+import { filterPackagesBySearch } from '../lib/packageSearch'
 
 function getPackageSearchPriceLabel(pkg) {
   const formattedPrice = String(pkg?.price ?? '').trim()
@@ -266,7 +266,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const { data: allPackages = [] } = usePackages()
   const searchResults =
     searchQuery.trim().length >= 2
-      ? allPackages.filter(pkg => packageMatchesSearch(pkg, searchQuery)).slice(0, 8)
+      ? filterPackagesBySearch(allPackages, searchQuery).slice(0, 8)
       : []
   const navigate = useNavigate()
   const { showToast } = useToast()

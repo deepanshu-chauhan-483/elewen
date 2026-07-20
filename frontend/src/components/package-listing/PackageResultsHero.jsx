@@ -8,8 +8,14 @@ import {
   useEventsByCategory,
   useFilteredServiceOptions,
 } from '../../hooks/useEventTypes'
-import { eventSlugsMatch, filterDecorThemesBySocialEvent, normalizeServiceSlug } from '../../lib/packageFilters'
+import {
+  eventSlugsMatch,
+  filterDecorThemesBySocialEvent,
+  filterEventsWithPackages,
+  normalizeServiceSlug,
+} from '../../lib/packageFilters'
 import { buildServiceDestination, DECOR_THEME_CATEGORY_SLUG, DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
+import { usePackages } from '../../hooks/usePackages'
 
 function FilterPill({
   label,
@@ -103,22 +109,21 @@ export default function PackageResultsHero({
     )
   }, [categorySlug, setSearchParams])
 
-  useEffect(() => {
-    if (!levelSlug || !themeSlug) return
-
-    setSearchParams(
-      prevParams => {
-        const nextParams = new URLSearchParams(prevParams)
-        nextParams.delete('theme')
-        return nextParams
-      },
-      { replace: true }
-    )
-  }, [levelSlug, themeSlug, setSearchParams])
-
   const { data: allCategories = [] } = useEventCategoryOptions()
   const { data: allServices = [] } = useFilteredServiceOptions(SERVICE_ORDER)
   const { data: allEvents = [] } = useEventsByCategory(categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
+  const { data: packages = [] } = usePackages()
+
+  const eventPackageFilters = useMemo(
+    () => ({
+      categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
+      serviceSlug,
+      serviceId: serviceIdParam || '',
+      themeSlug,
+      levelSlug,
+    }),
+    [categorySlug, levelSlug, serviceIdParam, serviceSlug, themeSlug]
+  )
 
   const categories = useMemo(
     () =>
@@ -134,14 +139,31 @@ export default function PackageResultsHero({
     [allServices]
   )
 
+  const selectedService = useMemo(
+    () => services.find(service => normalizeServiceSlug(service.slug) === serviceSlug) ?? null,
+    [services, serviceSlug]
+  )
+
+  const resolvedServiceId =
+    serviceIdParam || (selectedService?.id != null ? String(selectedService.id) : '')
+
+  const eventsWithPackages = useMemo(() => {
+    if (!serviceSlug || serviceSlug === 'sheesha') return allEvents
+
+    return filterEventsWithPackages(allEvents, packages, {
+      ...eventPackageFilters,
+      serviceId: resolvedServiceId,
+    })
+  }, [allEvents, eventPackageFilters, packages, resolvedServiceId, serviceSlug])
+
   const events = useMemo(
     () =>
-      (Array.isArray(allEvents) ? allEvents : []).map(event => ({
+      (Array.isArray(eventsWithPackages) ? eventsWithPackages : []).map(event => ({
         value: event.slug,
         label: event.title ?? titleizeSlug(event.slug),
         id: event.id != null ? String(event.id) : '',
       })),
-    [allEvents]
+    [eventsWithPackages]
   )
 
   // Resolve CMS option value when URL uses a product alias (birthday-parties ≠ birthday-celebrations).
@@ -158,14 +180,6 @@ export default function PackageResultsHero({
 
     return eventSlug
   }, [eventId, eventSlug, events])
-
-  const selectedService = useMemo(
-    () => services.find(service => normalizeServiceSlug(service.slug) === serviceSlug) ?? null,
-    [services, serviceSlug]
-  )
-
-  const resolvedServiceId =
-    serviceIdParam || (selectedService?.id != null ? String(selectedService.id) : '')
 
   const isDecorService = serviceSlug === 'decor'
 
@@ -185,11 +199,27 @@ export default function PackageResultsHero({
   }, [allThemes, eventSlug, isDecorService])
 
   useEffect(() => {
-    if (!themeSlug || !isDecorService || categorySlug !== DECOR_THEME_CATEGORY_SLUG || levelSlug) {
+    if (!themeSlug || !isDecorService || categorySlug !== DECOR_THEME_CATEGORY_SLUG) {
       return
     }
 
-    const themeStillAllowed = themes.some(theme => theme.value?.toLowerCase() === themeSlug)
+    const themeStillAllowed = themes.some(theme => {
+      const themeValue = String(theme.value ?? '')
+        .trim()
+        .toLowerCase()
+      if (themeValue === themeSlug) return true
+
+      const themeKey = themeValue
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+      const filterKey = themeSlug
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+
+      return themeKey && filterKey && (themeKey === filterKey || themeKey.startsWith(`${filterKey}-`) || filterKey.startsWith(`${themeKey}-`))
+    })
     if (themeStillAllowed) return
 
     setSearchParams(
@@ -203,11 +233,32 @@ export default function PackageResultsHero({
   }, [
     categorySlug,
     isDecorService,
-    levelSlug,
     setSearchParams,
     themeSlug,
     themes,
   ])
+
+  useEffect(() => {
+    if (!eventSlug && !eventId) return
+    if (!serviceSlug || serviceSlug === 'sheesha') return
+
+    const selectedStillAllowed = events.some(
+      event =>
+        (eventId && event.id === String(eventId)) ||
+        (eventSlug && eventSlugsMatch(event.value, eventSlug))
+    )
+    if (selectedStillAllowed) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.delete('event')
+        nextParams.delete('eventId')
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [eventId, eventSlug, events, serviceSlug, setSearchParams])
 
   const levels = useMemo(
     () =>
@@ -285,7 +336,6 @@ export default function PackageResultsHero({
 
       if (key === 'level') {
         nextParams.set('level', value)
-        nextParams.delete('theme')
         setSearchParams(nextParams)
         return
       }
@@ -329,7 +379,7 @@ export default function PackageResultsHero({
         options: levels,
         onChange: event => handleFilterChange('level', event.target.value),
       },
-      isDecorService && categorySlug === DECOR_THEME_CATEGORY_SLUG && showThemeFilter && !levelSlug
+      isDecorService && categorySlug === DECOR_THEME_CATEGORY_SLUG && showThemeFilter
         ? {
             label: 'Theme',
             value: themeSlug,
