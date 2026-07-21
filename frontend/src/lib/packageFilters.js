@@ -186,6 +186,7 @@ const EVENT_SLUG_ALIASES = {
   'birthday-celebrations': 'birthday-parties',
   birthday: 'birthday-parties',
   'birthday-party': 'birthday-parties',
+  'house-party': 'house-parties',
   'baby-showers': 'baby-shower',
   weddings: 'wedding',
 }
@@ -294,11 +295,31 @@ const UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS = [
 /** Extra themes per event (plus universal themes above). */
 const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
   anniversary: ['still-us', 'bubbles-and-black-tie'],
-  'birthday-parties': ['bubbles-and-black-tie', 'bohemian', 'pastel'],
+  'house-parties': ['house-party', 'house-parties'],
+  'birthday-parties': [
+    'birthday-party',
+    'birthday-parties',
+    'bubbles-and-black-tie',
+    'bohemian',
+    'pastel',
+  ],
   'baby-shower': ['a-little-honey', 'little-honey', 'oh-baby'],
   engagement: ['sufi-night', 'ishq-sufiyana'],
-  'sufi-night': ['sufi-night', 'ishq-sufiyana'],
+  proposal: [
+    'the-walk-to-forever',
+    'the-proposal-spotlight',
+    'our-story',
+    'our-private-corner',
+  ],
 }
+
+/** Social decor events that use only their own theme set — no house/birthday universal themes. */
+const EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES = new Set([
+  'proposal',
+  'house-parties',
+  'birthday-parties',
+  'bachelors',
+])
 
 const DECOR_THEME_ALLOWLIST_ALIASES = {
   'bubbles-black-tie': 'bubbles-and-black-tie',
@@ -400,6 +421,18 @@ const THEME_PARENT_CHILD_SLUGS = {
     'house-parties',
     'birthday-party',
   ],
+  'the-walk-to-forever': [
+    'the-walk-to-forever',
+    'the-walk-to-forever-2',
+    'the-walk-to-forever-3',
+  ],
+  'the-proposal-spotlight': [
+    'the-proposal-spotlight-1',
+    'the-proposal-spotlight-2',
+    'the-proposal-spotlight-3',
+  ],
+  'our-story': ['our-story'],
+  'our-private-corner': ['our-private-corner-2', 'our-private-corner-3'],
 }
 
 /** Expand a theme filter slug to every slug that should count as a match. */
@@ -455,9 +488,14 @@ export function packageThemeSlugsMatchFilter(packageThemeSlugs, themeSlug = '') 
 function buildAllowedSocialDecorThemeSlugSet(eventSlug = '') {
   const canonicalEventSlug = canonicalizeEventSlug(eventSlug)
 
-  const allowed = new Set(
-    UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS.map(slug => slugifyThemeValue(slug)).filter(Boolean)
-  )
+  const allowed = new Set()
+
+  if (!EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES.has(canonicalEventSlug)) {
+    for (const slug of UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS) {
+      const normalized = slugifyThemeValue(slug)
+      if (normalized) allowed.add(normalized)
+    }
+  }
 
   for (const slug of SOCIAL_EVENT_DECOR_THEME_SLUGS[canonicalEventSlug] ?? []) {
     const normalized = slugifyThemeValue(slug)

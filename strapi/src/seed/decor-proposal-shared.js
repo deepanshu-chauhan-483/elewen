@@ -43,6 +43,21 @@ function packageHasDecorBlock(entry) {
   return blocks.some(block => block?.__component === 'package.decorpackages');
 }
 
+function getDecorBlock(entry) {
+  const blocks = Array.isArray(entry?.packages) ? entry.packages : [];
+  return blocks.find(block => block?.__component === 'package.decorpackages') ?? null;
+}
+
+function decorBlockNeedsThemeRepair(entry, themeDocumentId) {
+  if (!themeDocumentId) return false;
+
+  const decor = getDecorBlock(entry);
+  if (!decor) return false;
+
+  const linkedThemeId = decor?.theme?.documentId ?? decor?.theme ?? null;
+  return !linkedThemeId;
+}
+
 function buildDecorBlock(pkgSeed, policyDocumentId, budgetLevelDocumentId, themeDocumentId) {
   return {
     __component: 'package.decorpackages',
@@ -293,7 +308,9 @@ async function ensureProposalPackage(
     const { entry, status } = found;
 
     if (packageHasDecorBlock(entry)) {
-      if (options.refreshExistingDecor) {
+      const needsThemeRepair = decorBlockNeedsThemeRepair(entry, decorBlock?.theme);
+
+      if (options.refreshExistingDecor || needsThemeRepair) {
         await strapi.documents('api::package.package').update({
           documentId: entry.documentId,
           data: {
@@ -321,6 +338,7 @@ async function ensureProposalPackage(
         return {
           skipped: false,
           updated: true,
+          repaired: needsThemeRepair && !options.refreshExistingDecor,
           documentId: entry.documentId,
           title: pkgSeed.title,
         };

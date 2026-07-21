@@ -12,6 +12,7 @@ import {
   eventSlugsMatch,
   filterDecorThemesBySocialEvent,
   filterEventsWithPackages,
+  filterThemesByEventPackages,
   normalizeServiceSlug,
 } from '../../lib/packageFilters'
 import { buildServiceDestination, DECOR_THEME_CATEGORY_SLUG, DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
@@ -191,12 +192,28 @@ export default function PackageResultsHero({
     if (!isDecorService) return []
 
     const scopedThemes = filterDecorThemesBySocialEvent(allThemes, eventSlug)
+    const packageBackedThemes = filterThemesByEventPackages(scopedThemes, packages, {
+      categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
+      eventSlug,
+      eventId,
+      serviceSlug,
+      serviceId: resolvedServiceId,
+    })
 
-    return scopedThemes.map(theme => ({
+    return packageBackedThemes.map(theme => ({
       value: theme.slug,
       label: theme.label ?? titleizeSlug(theme.slug),
     }))
-  }, [allThemes, eventSlug, isDecorService])
+  }, [
+    allThemes,
+    categorySlug,
+    eventId,
+    eventSlug,
+    isDecorService,
+    packages,
+    resolvedServiceId,
+    serviceSlug,
+  ])
 
   useEffect(() => {
     if (!themeSlug || !isDecorService || categorySlug !== DECOR_THEME_CATEGORY_SLUG) {
@@ -281,7 +298,7 @@ export default function PackageResultsHero({
           nextParams.delete('eventId')
         }
 
-        if (key === 'event') {
+        if (key === 'event') {  
           nextParams.delete('eventId')
         }
 

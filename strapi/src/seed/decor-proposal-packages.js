@@ -5,9 +5,24 @@ const {
   PROPOSAL_PRICE_COVERS,
   PROPOSAL_SETUP_NEEDS,
   PROPOSAL_SETUP_NEEDS_PC,
+  ensureThemeDocumentId,
   slugifyTitle,
   seedProposalPackages,
 } = require('./decor-proposal-shared');
+
+const PROPOSAL_THEME_SEEDS = [
+  { name: 'The Walk to Forever', slug: 'the-walk-to-forever', display_order: 70 },
+  { name: 'The Proposal Spotlight', slug: 'the-proposal-spotlight', display_order: 71 },
+  { name: 'Our Story', slug: 'our-story', display_order: 72 },
+  { name: 'Our Private Corner', slug: 'our-private-corner', display_order: 73 },
+];
+
+function proposalTheme(themeSlug, themeName) {
+  return {
+    theme_name: themeName,
+    theme_slug_candidates: [themeSlug],
+  };
+}
 
 const PROPOSAL_PACKAGES = [
   // WF 1 — already seeded locally; included for budget_level repair on fresh DBs
@@ -15,6 +30,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'WF 1',
     title: 'The Walk to Forever',
     slug: 'the-walk-to-forever',
+    ...proposalTheme('the-walk-to-forever', 'The Walk to Forever'),
     budget_level_slug: 'level-1',
     base_price: 14970,
     description:
@@ -50,6 +66,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'WF 2',
     title: 'The Walk to Forever 2',
     slug: 'the-walk-to-forever-2',
+    ...proposalTheme('the-walk-to-forever', 'The Walk to Forever'),
     budget_level_slug: 'level-2',
     base_price: 31470,
     description:
@@ -101,6 +118,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'WF 3',
     title: 'The Walk to Forever 3',
     slug: 'the-walk-to-forever-3',
+    ...proposalTheme('the-walk-to-forever', 'The Walk to Forever'),
     budget_level_slug: 'level-3',
     base_price: 36970,
     description:
@@ -155,6 +173,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'PS 1',
     title: 'The Proposal Spotlight 1',
     slug: 'the-proposal-spotlight-1',
+    ...proposalTheme('the-proposal-spotlight', 'The Proposal Spotlight'),
     budget_level_slug: 'level-1',
     base_price: 8850,
     description:
@@ -183,6 +202,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'PS 2',
     title: 'The Proposal Spotlight 2',
     slug: 'the-proposal-spotlight-2',
+    ...proposalTheme('the-proposal-spotlight', 'The Proposal Spotlight'),
     budget_level_slug: 'level-2',
     base_price: 17500,
     description:
@@ -213,6 +233,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'PS 3',
     title: 'The Proposal Spotlight 3',
     slug: 'the-proposal-spotlight-3',
+    ...proposalTheme('the-proposal-spotlight', 'The Proposal Spotlight'),
     budget_level_slug: 'level-3',
     base_price: 42800,
     description:
@@ -254,6 +275,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'OS',
     title: 'Our Story',
     slug: 'our-story',
+    ...proposalTheme('our-story', 'Our Story'),
     budget_level_slug: 'level-1',
     base_price: 11050,
     description:
@@ -290,6 +312,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'PC 2',
     title: 'Our Private Corner 2',
     slug: 'our-private-corner-2',
+    ...proposalTheme('our-private-corner', 'Our Private Corner'),
     budget_level_slug: 'level-2',
     base_price: 36640,
     description:
@@ -341,6 +364,7 @@ const PROPOSAL_PACKAGES = [
     sheet: 'PC 3',
     title: 'Our Private Corner 3',
     slug: 'our-private-corner-3',
+    ...proposalTheme('our-private-corner', 'Our Private Corner'),
     budget_level_slug: 'level-3',
     base_price: 30150,
     description:
@@ -391,10 +415,15 @@ const PROPOSAL_PACKAGES = [
 ];
 
 async function seedDecorProposalPackages(strapi) {
+  for (const themeSeed of PROPOSAL_THEME_SEEDS) {
+    await ensureThemeDocumentId(strapi, themeSeed);
+  }
+
   return seedProposalPackages(strapi, PROPOSAL_PACKAGES);
 }
 
 module.exports = {
+  PROPOSAL_THEME_SEEDS,
   PROPOSAL_PACKAGES,
   seedDecorProposalPackages,
   seedWalkToForever: seedDecorProposalPackages,

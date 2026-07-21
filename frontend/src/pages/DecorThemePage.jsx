@@ -7,10 +7,11 @@ import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { filterDecorThemesBySocialEvent } from '../lib/packageFilters'
+import { filterDecorThemesBySocialEvent, filterThemesByEventPackages } from '../lib/packageFilters'
 import {
   buildServiceSelectionBackTo,
   DECOR_THEME_CATEGORY_SLUG,
+  DEFAULT_EVENT_CATEGORY_SLUG,
   resolveServiceLaneId,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
@@ -190,10 +191,17 @@ export default function DecorThemePage() {
     [themes, packages]
   )
 
-  const eventScopedThemes = useMemo(
-    () => filterDecorThemesBySocialEvent(themesWithImages, eventId),
-    [eventId, themesWithImages]
-  )
+  const eventScopedThemes = useMemo(() => {
+    const byEvent = filterDecorThemesBySocialEvent(themesWithImages, eventId)
+
+    return filterThemesByEventPackages(byEvent, packages, {
+      categorySlug: categoryId || DEFAULT_EVENT_CATEGORY_SLUG,
+      eventSlug: eventId,
+      eventId: eventNumericId,
+      serviceSlug: 'decor',
+      serviceId: resolvedServiceId,
+    })
+  }, [categoryId, eventId, eventNumericId, packages, resolvedServiceId, themesWithImages])
 
   const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
