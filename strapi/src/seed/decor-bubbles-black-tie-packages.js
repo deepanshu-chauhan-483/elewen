@@ -31,6 +31,38 @@ const BUBBLES_PRICE_COVERS = [
 const BUBBLES_SETUP_NEEDS =
   'A small area for our team to work, access to water and electricity.';
 
+function choiceOption(groupKey, label, optionTitle, options = {}) {
+  const row = {
+    is_choice_group: true,
+    choice_group_key: groupKey,
+    choice_group_label: label,
+    group_title: label,
+    text: optionTitle,
+  };
+
+  if (options.amount != null) {
+    row._choice_amount = options.amount;
+  }
+
+  return row;
+}
+
+function whenInclusion(parentKey, parentValue, text) {
+  return {
+    text,
+    group_title: `when:${parentKey}:${parentValue}`,
+  };
+}
+
+function optionalPackageAddon(name, price = 0, description = '') {
+  return {
+    name,
+    price,
+    description: description || name,
+    visibility: true,
+  };
+}
+
 const BUBBLES_BLACK_TIE_PACKAGES = [
   {
     sheet: 'GT 1',
@@ -256,20 +288,41 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Platform fee', amount: 4950 },
       { label: 'Transport', amount: 3200 },
     ],
+    // Choose cards (Figma): Backdrop is a selectable choose-1 group, not plain "or" text.
+    addons: [
+      optionalPackageAddon('Bartender (optional)', 0, 'Optional bartender add-on'),
+    ],
     inclustions: [
-      { text: '5 premium floral centrepieces', group_title: 'Centerpieces' },
-      { text: '3 cocktail centrepieces', group_title: 'Centerpieces' },
-      { text: 'Entrance easel + florals', group_title: 'Entrance Setup' },
-      { text: 'Backdrop with balloons', group_title: 'Backdrop' },
-      { text: '2 LED 3D letters', group_title: 'Backdrop' },
-      { text: 'Basic bar + menu', group_title: 'Basic Bar Setup' },
-      { text: 'Short-glass candles', group_title: 'Candles' },
+      {
+        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
+        group_title: 'Centerpieces',
+      },
+      { text: '3 centerpiece for the cocktail tables', group_title: 'Centerpieces' },
+      {
+        text: 'Easel with printed welcome board and floral styling',
+        group_title: 'Entrance Setup',
+      },
+      choiceOption('ss2-backdrop', 'Backdrop (choose 1)', 'Shiny curtain with balloons'),
+      whenInclusion('ss2-backdrop', 'Shiny curtain with balloons', '2 LED 3D letters'),
+      choiceOption('ss2-backdrop', 'Backdrop (choose 1)', 'Single panel with balloons'),
+      whenInclusion('ss2-backdrop', 'Single panel with balloons', '2 LED 3D letters'),
+      {
+        text: 'Bar with black masking with a customized bar menu',
+        group_title: 'Basic Bar Setup',
+      },
+      { text: 'Candles in short glass holders', group_title: 'Candles' },
       { text: '3 round tables', group_title: 'Furniture' },
       { text: '20 chairs', group_title: 'Furniture' },
       { text: '3 cocktail tables', group_title: 'Furniture' },
-      { text: '8–10 fairy light strings', group_title: 'Lighting' },
-      { text: '3–4 LED / halogen lights', group_title: 'Lighting' },
-      { text: 'Event printables / games', group_title: 'Printables / games' },
+      { text: '8 - 10 strings of fairy lights', group_title: 'Lighting' },
+      {
+        text: '3 - 4 halogen / LED parcans to illuminate the space',
+        group_title: 'Lighting',
+      },
+      {
+        text: 'Event printables such as menu, quotes, or a fun game with material and instructions (games like ludo / sequence etc. are not included)',
+        group_title: 'Printables / games',
+      },
     ],
   },
   {
