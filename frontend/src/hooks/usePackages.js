@@ -231,12 +231,31 @@ function inferServiceSlugsFromSections(pkg) {
   })
 }
 
-function buildPackageIncludes(pkg) {
-  const fromInclusions = buildTextList(getNestedPackageInclusions(pkg))
-  if (fromInclusions.length > 0) return fromInclusions.slice(0, 12)
+function isListingChipText(text) {
+  const value = String(text ?? '').trim()
+  if (!value) return false
+  if (value.length > 72) return false
+  if (/^choose\s*\d+/i.test(value)) return false
+  if (/\bOR\b/.test(value) && value.length > 40) return false
+  return true
+}
 
-  // Listing cards: fall back to element / addon titles when inclusions are empty.
-  return buildDetailHighlights(pkg).slice(0, 12)
+function buildPackageIncludes(pkg) {
+  // Prefer short fixed inclusion lines for cards — skip choice rows and when: bullets
+  // so listing chips match Bubbles-style pills instead of raw "Choose 1 … OR …" dumps.
+  const cardChips = getNestedPackageInclusions(pkg)
+    .filter(item => item && !item.is_choice_group)
+    .filter(item => !String(item.group_title ?? '').toLowerCase().startsWith('when:'))
+    .map(item => String(item.text ?? '').trim())
+    .filter(isListingChipText)
+
+  const fromInclusions = uniqueValues(cardChips)
+  if (fromInclusions.length > 0) return fromInclusions.slice(0, 4)
+
+  const fallback = buildDetailHighlights(pkg).filter(isListingChipText)
+  if (fallback.length > 0) return fallback.slice(0, 4)
+
+  return []
 }
 
 function formatPackagePrice(pkg) {

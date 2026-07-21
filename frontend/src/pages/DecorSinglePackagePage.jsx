@@ -929,32 +929,23 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
         wide || bullets.length ? 'min-w-[220px] flex-1 basis-[220px]' : 'min-w-[120px]'
       } ${
         selected
-          ? 'border-[#591902] bg-[#591902] text-white'
-          : 'border-[#591902] bg-white text-[#591902]'
+          ? 'border-[#591902] bg-[#F4E7DE] text-[#591902] shadow-[0_0_0_1px_#591902]'
+          : 'border-[#D9D0C5] bg-white text-[#591902]'
       }`}
     >
       {item.title && !bullets.length ? (
-        <p className={`text-[12px] font-semibold leading-[1.35] ${selected ? 'text-white' : 'text-[#591902]'}`}>
-          {item.title}
-        </p>
+        <p className="text-[12px] font-semibold leading-[1.35] text-[#591902]">{item.title}</p>
       ) : null}
       {item.title && bullets.length ? (
-        <p className={`text-[12px] font-semibold leading-[1.35] ${selected ? 'text-white' : 'text-[#591902]'}`}>
-          {item.title}
-        </p>
+        <p className="text-[12px] font-semibold leading-[1.35] text-[#591902]">{item.title}</p>
       ) : null}
       {showPrice && item.price ? (
-        <p className={`mt-1 text-[11px] font-medium ${selected ? 'text-white/90' : 'text-[#591902]'}`}>
-          {item.price}
-        </p>
+        <p className="mt-1 text-[11px] font-medium text-[#591902]">{item.price}</p>
       ) : null}
       {bullets.length ? (
         <ul className={`${item.title ? 'mt-2' : ''} space-y-1`}>
           {bullets.map(bullet => (
-            <li
-              key={bullet}
-              className={`text-[11px] leading-[1.45] ${selected ? 'text-white' : 'text-[#591902]'}`}
-            >
+            <li key={bullet} className="text-[11px] leading-[1.45] text-[#591902]">
               • {bullet}
             </li>
           ))}
