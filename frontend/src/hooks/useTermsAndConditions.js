@@ -11,7 +11,8 @@ async function fetchTermsAndConditions() {
     const data = response?.data?.attributes ?? response?.data ?? null
     const normalized = normalizeLegalDocument(data, {
       defaultTitle: 'Terms & Conditions',
-      defaultSubtitle: 'These terms govern your use of Elewen and our services.',
+      defaultSubtitle:
+        'Welcome to Elewen. By using our platform and services, you agree to these Terms & Conditions.',
     })
     if (normalized) return normalized
   } catch {

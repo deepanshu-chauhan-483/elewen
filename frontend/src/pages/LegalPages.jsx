@@ -11,9 +11,10 @@ const DOCUMENT_CONFIG = {
   terms: {
     useHook: useTermsAndConditions,
     defaultTitle: 'Terms & Conditions',
-    defaultSubtitle: 'These terms govern your use of Elewen and our services.',
-    showDates: false,
-    showTldr: false,
+    defaultSubtitle:
+      'Welcome to Elewen. By using our platform and services, you agree to these Terms & Conditions.',
+    showDates: true,
+    showTldr: true,
     fallbackSections: [
       {
         id: 'terms',

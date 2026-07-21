@@ -372,6 +372,18 @@ module.exports = {
       }
     }
 
+    if (isSeedEnabled('SEED_TERMS_AND_CONDITIONS')) {
+      try {
+        const { seedTermsAndConditions } = require('./seed/terms-and-conditions');
+        const termsResult = await seedTermsAndConditions(strapi);
+        strapi.log.info(
+          `[seed/terms-and-conditions] documentId=${termsResult.documentId}, created=${Boolean(termsResult.created)}, updated=${Boolean(termsResult.updated)}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/terms-and-conditions] Terms and conditions seed failed:', error);
+      }
+    }
+
     if (isSeedEnabled('SEED_DECOR_BABY_SHOWER_PACKAGES')) {
       try {
         const { seedDecorBabyShowerPackages } = require('./seed/decor-baby-shower-packages');
