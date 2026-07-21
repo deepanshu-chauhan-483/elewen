@@ -364,7 +364,6 @@ const TERMS_AND_CONDITIONS_PAYLOAD = {
           content:
             'By accessing or using Elewen’s platform, you confirm that you have read, understood, and agreed to these Terms and Conditions.\n\nIf you do not agree with any part of these Terms, you must refrain from using the platform or engaging with Elewen’s services.',
           applicableTo: 'all',
-          isHighlighted: true,
         },
       ],
     },

@@ -84,22 +84,8 @@ export function normalizeLegalDocument(data, options = {}) {
         )
         const clauses = Array.isArray(section?.clauses) ? section.clauses : []
 
-        const directContent = clauses
-          .filter(
-            clause =>
-              !clause?.title?.trim() &&
-              !clause?.clauseNumber?.trim() &&
-              clause?.isHighlighted !== true
-          )
-          .flatMap(clause => splitParagraphs(clause?.content))
-
         const children = clauses
-          .filter(
-            clause =>
-              clause?.title?.trim() ||
-              clause?.clauseNumber?.trim() ||
-              clause?.isHighlighted === true
-          )
+          .filter(clause => clause?.title?.trim() || clause?.clauseNumber?.trim())
           .map((clause, clauseIndex) => {
             const clauseNumber =
               clause?.clauseNumber != null && clause?.clauseNumber !== ''
@@ -118,9 +104,12 @@ export function normalizeLegalDocument(data, options = {}) {
               clauseTitle: clauseTitleText,
               hasTitle: Boolean(clauseTitleText),
               previewText,
-              isHighlighted: clause?.isHighlighted === true,
             }
           })
+
+        const directContent = clauses
+          .filter(clause => !clause?.title?.trim() && !clause?.clauseNumber?.trim())
+          .flatMap(clause => splitParagraphs(clause?.content))
 
         return {
           id: sectionId,

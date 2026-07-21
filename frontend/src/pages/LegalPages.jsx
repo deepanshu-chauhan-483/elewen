@@ -102,13 +102,9 @@ function truncateForIndex(text, maxLength = 72) {
 }
 
 function ClauseContent({ child, textClassName }) {
-  const highlightClass = child.isHighlighted
-    ? 'rounded-2xl bg-[#FFF8E8] border border-[#F0E4C8] p-4 md:p-5'
-    : ''
-
   if (child.hasTitle) {
     return (
-      <div className={highlightClass}>
+      <div>
         <h4 className="text-[18px] font-semibold mb-3 text-[#3a3a3a] md:text-[18px] md:font-medium md:mb-2">
           {child.title}
         </h4>
@@ -123,7 +119,7 @@ function ClauseContent({ child, textClassName }) {
   }
 
   return (
-    <div className={highlightClass}>
+    <div>
       {child.content.map((para, i) => (
         <p key={i} className={textClassName}>
           {i === 0 && child.clauseNumber ? `${child.clauseNumber} ` : ''}
@@ -134,45 +130,29 @@ function ClauseContent({ child, textClassName }) {
   )
 }
 
-function TldrSummary({ tldr }) {
+function buildTldrSection(tldr) {
   if (!tldr) return null
 
-  return (
-    <section className="w-full px-5 pb-12 md:px-[clamp(80px,10vw,200px)] md:pb-16">
-      <div className="mx-auto max-w-[900px] rounded-2xl border border-[#E8E2D8] bg-[#FFFBF4] p-6 md:p-8">
-        {tldr.heading ? (
-          <h2
-            className="text-[22px] font-semibold text-[#3a3a3a] md:text-[24px]"
-            style={{ fontFamily: "'Poppins'" }}
-          >
-            {tldr.heading}
-          </h2>
-        ) : null}
+  const content = [
+    ...(tldr.intro ? [tldr.intro] : []),
+    ...(Array.isArray(tldr.bullets)
+      ? tldr.bullets.map(bullet => {
+          const text = bullet?.text?.trim()
+          if (!text) return null
+          return bullet.icon ? `${bullet.icon} ${text}` : `• ${text}`
+        })
+      : []),
+    ...(tldr.closingNote ? [tldr.closingNote] : []),
+  ].filter(Boolean)
 
-        {tldr.intro ? (
-          <p className="mt-3 text-[15px] leading-[1.8] text-[#555] md:text-[14px]">{tldr.intro}</p>
-        ) : null}
+  if (!tldr.heading && content.length === 0) return null
 
-        {tldr.bullets?.length > 0 ? (
-          <ul className="mt-4 space-y-2 text-[15px] leading-[1.8] text-[#555] md:text-[14px]">
-            {tldr.bullets.map((bullet, index) => (
-              <li key={`${bullet.text}-${index}`} className="flex gap-2">
-                <span className="shrink-0">•</span>
-                <span>
-                  {bullet.icon ? `${bullet.icon} ` : ''}
-                  {bullet.text}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        {tldr.closingNote ? (
-          <p className="mt-4 text-[14px] leading-[1.7] text-[#666]">{tldr.closingNote}</p>
-        ) : null}
-      </div>
-    </section>
-  )
+  return {
+    id: 'fine-print',
+    title: tldr.heading || 'THE FINE PRINT',
+    content,
+    children: [],
+  }
 }
 
 export default function LegalPages({ documentType = 'terms' }) {
@@ -181,10 +161,15 @@ export default function LegalPages({ documentType = 'terms' }) {
   const { data: cmsDocument } = documentQuery
   const isStrapiLoading = useStrapiPageLoading(documentQuery)
 
-  const sectionsData = useMemo(
-    () => cmsDocument?.sections ?? config.fallbackSections,
-    [cmsDocument, config.fallbackSections]
-  )
+  const sectionsData = useMemo(() => {
+    const base = cmsDocument?.sections ?? config.fallbackSections
+    if (!config.showTldr) return base
+
+    const tldrSection = buildTldrSection(cmsDocument?.tldr)
+    if (!tldrSection) return base
+
+    return [...base, tldrSection]
+  }, [cmsDocument, config.fallbackSections, config.showTldr])
 
   const defaultActiveId = useMemo(
     () => sectionsData[0]?.children?.[0]?.id ?? sectionsData[0]?.id ?? 'terms',
@@ -313,7 +298,7 @@ export default function LegalPages({ documentType = 'terms' }) {
                 <div
                   key={child.id}
                   data-legal-section={child.id}
-                  className={`scroll-mt-[90px] mt-8 ${child.isHighlighted ? '' : 'rounded-2xl bg-[#FAFAFA] p-5'}`}
+                  className="scroll-mt-[90px] mt-8 rounded-2xl bg-[#FAFAFA] p-5"
                 >
                   <ClauseContent
                     child={child}
@@ -397,8 +382,6 @@ export default function LegalPages({ documentType = 'terms' }) {
           </div>
         </div>
       </section>
-
-      {config.showTldr ? <TldrSummary tldr={cmsDocument?.tldr} /> : null}
     </div>
   )
 }
