@@ -457,6 +457,7 @@ const HeroSection = () => {
           const { eW, eH, eL, eT } = getEnd()
           const W = window.innerWidth
           const H = window.innerHeight
+          const useMobileLayout = getViewportMode().useMobileHeroLayout
 
           s.scrollProgress = p
 
@@ -469,14 +470,17 @@ const HeroSection = () => {
           s.contentY = lerp(0, -50, sub(p, 0.04, textCardsEnd))
 
           // Phase 3: Video shrinks to bottom layout
-          const shrinkP = sub(p, 0.12, 0.85)
+          const shrinkStart = useMobileLayout ? 0.08 : 0.12
+          const shrinkP = sub(p, shrinkStart, 0.85)
           s.vidTop = lerp(0, eT, shrinkP)
           s.vidLeft = lerp(0, eL, shrinkP)
           s.vidW = lerp(W, eW, shrinkP)
           s.vidH = lerp(H, eH, shrinkP)
           s.vidR = lerp(0, 16, shrinkP)
 
-          s.darkAlpha = lerp(1, 0, sub(p, 0.12, 0.4))
+          const overlayFadeStart = useMobileLayout ? 0.06 : 0.12
+          const overlayFadeEnd = useMobileLayout ? 0.28 : 0.4
+          s.darkAlpha = lerp(1, 0, sub(p, overlayFadeStart, overlayFadeEnd))
         },
       })
     }, wrapperRef) // Scope context to this specific component
@@ -639,26 +643,6 @@ const HeroSection = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lenisRef])
 
-  // ── band wrapper style ────────────────────────────────────────────────────
-  const bandWrap = top => ({
-    position: 'absolute',
-    top,
-    left: '-10%',
-    width: '160%',
-    overflow: 'hidden',
-    transform: 'rotate(-10deg)',
-    transformOrigin: 'center center',
-    pointerEvents: 'none',
-    userSelect: 'none',
-  })
-
-  const bandFont = {
-    fontFamily: "'Poppins', sans-serif",
-    fontWeight: 600,
-    fontSize: 'clamp(64px, 8vw, 120px)',
-    lineHeight: '120%',
-  }
-
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div
@@ -677,25 +661,22 @@ const HeroSection = () => {
           overflow: 'hidden',
         }}
       >
-        {/* ── z-10: diagonal infinite-scrolling banner text (desktop only) ─── */}
-        <div
-          className="hero-scroll-bands hidden md:block"
-          style={{ position: 'absolute', inset: 0, zIndex: 10, overflow: 'hidden' }}
-        >
-          <div style={bandWrap('10%')}>
-            <div className="band-scroll dir-left " style={bandFont}>
+        {/* ── z-10: diagonal infinite-scrolling banner text ───────────────── */}
+        <div className="hero-scroll-bands">
+          <div className="hero-band-row hero-band-row-1">
+            <div className="band-scroll dir-left hero-band-text">
               {renderBandCopy(heroBand1Tokens)}
               {renderBandCopy(heroBand1Tokens)}
             </div>
           </div>
-          <div style={bandWrap('27%')}>
-            <div className="band-scroll dir-right" style={bandFont}>
+          <div className="hero-band-row hero-band-row-2">
+            <div className="band-scroll dir-right hero-band-text">
               {renderBandCopy(heroBand2Tokens)}
               {renderBandCopy(heroBand2Tokens)}
             </div>
           </div>
-          <div style={bandWrap('44%')}>
-            <div className="band-scroll dir-left" style={bandFont}>
+          <div className="hero-band-row hero-band-row-3">
+            <div className="band-scroll dir-left hero-band-text">
               {renderBandCopy(heroBand3Tokens)}
               {renderBandCopy(heroBand3Tokens)}
             </div>

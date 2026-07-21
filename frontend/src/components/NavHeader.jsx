@@ -238,6 +238,7 @@ function CartIcon({ color = '#FAFAFA' }) {
     </svg>
   )
 }
+
 function CartButton({ count, className, iconColor }) {
   const navigate = useNavigate()
   const handleClick = () => {
@@ -260,8 +261,42 @@ function CartButton({ count, className, iconColor }) {
   )
 }
 
+function PackageSearchResults({ results, onSelect, className = '' }) {
+  if (!results.length) return null
+
+  return (
+    <div className={className}>
+      {results.map(pkg => {
+        const serviceSlug = normalizeServiceSlug(pkg.serviceSlug ?? pkg.service ?? 'decor')
+        const pkgId = pkg.documentId ?? pkg.id
+        const priceLabel = getPackageSearchPriceLabel(pkg)
+
+        return (
+          <button
+            key={pkgId}
+            type="button"
+            className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[#F5F0EA]"
+            onClick={() => onSelect(pkg)}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium text-[#2D2D2D]">{pkg.title}</p>
+              <p className="truncate text-[11px] text-[#2D2D2D]/50">
+                {pkg.category || serviceSlug}
+              </p>
+            </div>
+            {priceLabel ? (
+              <span className="shrink-0 text-[13px] font-semibold text-[#591902]">{priceLabel}</span>
+            ) : null}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) => {
   const [open, setOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const { data: allPackages = [] } = usePackages()
   const searchResults =
@@ -275,6 +310,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const isTransparentHero = pathname === '/' || pathname === '/how-it-work'
   const lastScrollY = useRef(0)
   const headerRef = useRef(null)
+  const mobileSearchInputRef = useRef(null)
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!getStoredJwt())
   const [entered, setEntered] = useState(() => !isHome || hasSeenHeroPreloader())
@@ -326,6 +362,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   useEffect(() => {
     const t = setTimeout(() => {
       setOpen(false)
+      setSearchOpen(false)
       setHidden(false)
       setSearchQuery('')
     }, 0)
@@ -335,11 +372,21 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   }, [pathname])
 
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
+    document.body.style.overflow = open || searchOpen ? 'hidden' : ''
     return () => {
       document.body.style.overflow = ''
     }
-  }, [open])
+  }, [open, searchOpen])
+
+  useEffect(() => {
+    if (!searchOpen) return undefined
+
+    const focusTimer = window.setTimeout(() => {
+      mobileSearchInputRef.current?.focus()
+    }, 50)
+
+    return () => window.clearTimeout(focusTimer)
+  }, [searchOpen])
 
   const routeForcedThemeName = useWhiteNavBackground ? 'light' : null
   const effectiveForcedThemeName = forcedThemeName ?? routeForcedThemeName
@@ -347,7 +394,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   useEffect(() => {
     if (effectiveForcedThemeName && NAVBAR_THEMES[effectiveForcedThemeName]) return undefined
 
-    if (open) return
+    if (open || searchOpen) return
 
     if (!entered && isTransparentHero) return
 
@@ -399,7 +446,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       window.removeEventListener('resize', scheduleUpdate)
       if (rafId != null) window.cancelAnimationFrame(rafId)
     }
-  }, [effectiveForcedThemeName, pathname, open, entered, isTransparentHero])
+  }, [effectiveForcedThemeName, pathname, open, searchOpen, entered, isTransparentHero])
+
   const handleLogout = async () => {
     try {
       await authLogout()
@@ -410,6 +458,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     clearStoredJwt()
     setIsLoggedIn(false)
     setOpen(false)
+    setSearchOpen(false)
     showToast({ message: 'Logout successful.' })
     navigate('/')
   }
@@ -454,6 +503,35 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     'flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-70'
   const isSinglePackagePage = /^\/packages\/[^/]+\/[^/]+$/.test(pathname)
   const shouldShowNavbarCart = isSinglePackagePage && itemCount > 0
+
+  const closeMobileSearch = () => {
+    setSearchOpen(false)
+    setSearchQuery('')
+  }
+
+  const openMobileSearch = () => {
+    setOpen(false)
+    setSearchOpen(true)
+  }
+
+  const handleSelectPackageResult = pkg => {
+    const serviceSlug = normalizeServiceSlug(pkg.serviceSlug ?? pkg.service ?? 'decor')
+    const pkgId = pkg.documentId ?? pkg.id
+    navigate(`/packages/${serviceSlug}-single/${pkgId}`)
+    setSearchQuery('')
+    setSearchOpen(false)
+    setOpen(false)
+  }
+
+  const submitSearchQuery = () => {
+    const query = searchQuery.trim()
+    if (!query) return
+    navigate(`/package-listing?search=${encodeURIComponent(query)}`)
+    setSearchQuery('')
+    setSearchOpen(false)
+    setOpen(false)
+  }
+
   return (
     <>
       <header
@@ -610,6 +688,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               className="relative flex h-8 w-8 shrink-0 items-center justify-center md:hidden"
               aria-label="Search"
               type="button"
+              onClick={openMobileSearch}
             >
               <SearchIcon color={resolvedMobileIconColor} />
             </button>
@@ -761,7 +840,12 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             </Link>
           </div>
           <div className="ml-auto flex items-center gap-3 md:hidden">
-            <button type="button" aria-label="Search" className="p-1 text-white">
+            <button
+              type="button"
+              aria-label="Search"
+              className="p-1 text-white"
+              onClick={openMobileSearch}
+            >
               <svg className="h-5 w-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -1046,6 +1130,91 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
           />
         </div>
       </div>
+
+      {searchOpen ? (
+        <div className="fixed inset-0 z-[70] md:hidden">
+          <button
+            type="button"
+            aria-label="Close search"
+            className="absolute inset-0 bg-black/45"
+            onClick={closeMobileSearch}
+          />
+          <div className="relative z-10 px-6 pt-[calc(env(safe-area-inset-top,0px)+72px)]">
+            <div className="rounded-[20px] border border-[#E0D6CA] bg-[#FAFAFA] p-3 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
+              <div className="flex items-center gap-3 rounded-full border border-[#E0D6CA] bg-white px-3 py-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#591902]">
+                  <svg
+                    className="h-4 w-4 text-[#FAFAFA]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                    />
+                  </svg>
+                </span>
+                <input
+                  ref={mobileSearchInputRef}
+                  type="search"
+                  placeholder="Search packages"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') submitSearchQuery()
+                  }}
+                  className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#2D2D2D] outline-none placeholder:text-[#2D2D2D]/45"
+                />
+                <button
+                  type="button"
+                  aria-label="Close search"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#2D2D2D]/70"
+                  onClick={closeMobileSearch}
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {searchQuery.trim().length >= 2 ? (
+                searchResults.length > 0 ? (
+                  <PackageSearchResults
+                    results={searchResults}
+                    onSelect={handleSelectPackageResult}
+                    className="mt-3 max-h-[min(52vh,420px)] overflow-y-auto rounded-2xl border border-[#E0D6CA] bg-white py-1"
+                  />
+                ) : (
+                  <p className="mt-3 px-2 text-sm text-[#2D2D2D]/60">No packages found.</p>
+                )
+              ) : (
+                <p className="mt-3 px-2 text-sm text-[#2D2D2D]/60">
+                  Type at least 2 characters to search packages.
+                </p>
+              )}
+
+              {searchQuery.trim().length >= 2 ? (
+                <button
+                  type="button"
+                  className="mt-3 w-full rounded-full bg-[#591902] px-4 py-3 text-sm font-medium text-white"
+                  onClick={submitSearchQuery}
+                >
+                  View all results
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   )
 }
