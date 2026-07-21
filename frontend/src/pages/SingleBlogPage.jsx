@@ -88,18 +88,54 @@ const paragraphsFromHtml = html => {
   return text ? [{ kind: 'paragraph', key: 'html-paragraph-0', text }] : []
 }
 
+const isExternalHttpUrl = url =>
+  typeof url === 'string' && /^https?:\/\//i.test(url.trim())
+
 const getPlainTextFromChildren = children =>
   Array.isArray(children)
     ? children
-        .map(child => child?.text ?? '')
+        .map(child => {
+          if (!child || typeof child !== 'object') return ''
+          if (typeof child.text === 'string') return child.text
+          if (child.type === 'link' || Array.isArray(child.children)) {
+            return getPlainTextFromChildren(child.children)
+          }
+          return ''
+        })
         .join('')
         .trim()
     : ''
 
+const renderInlineLink = (url, children, key) => {
+  if (!url) return children
+
+  const external = isExternalHttpUrl(url)
+  return (
+    <a
+      key={key}
+      href={url}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noopener noreferrer' : undefined}
+      className="text-[#6D2005] underline decoration-[1px] underline-offset-[3px]"
+    >
+      {children}
+    </a>
+  )
+}
+
 const renderInlineChildren = children =>
   Array.isArray(children)
     ? children.map((child, index) => {
-        const text = child?.text ?? ''
+        if (!child || typeof child !== 'object') return null
+
+        // Strapi Blocks: { type: 'link', url, children: TextNode[] }
+        if (child.type === 'link') {
+          const linkChildren = renderInlineChildren(child.children)
+          if (!linkChildren?.some(Boolean)) return null
+          return renderInlineLink(child.url, linkChildren, `link-${index}`)
+        }
+
+        const text = child.text ?? ''
         if (!text) return null
 
         let node = text
@@ -109,18 +145,9 @@ const renderInlineChildren = children =>
         if (child.strikethrough) node = <s key={`strike-${index}`}>{node}</s>
         if (child.code) node = <code key={`code-${index}`}>{node}</code>
 
+        // Fallback for flat { text, url } shapes
         if (child.url) {
-          node = (
-            <a
-              key={`link-${index}`}
-              href={child.url}
-              target={child.url.startsWith('http') ? '_blank' : undefined}
-              rel={child.url.startsWith('http') ? 'noreferrer' : undefined}
-              className="text-[#6D2005] underline decoration-[1px] underline-offset-[3px]"
-            >
-              {node}
-            </a>
-          )
+          node = renderInlineLink(child.url, node, `link-${index}`)
         }
 
         return <Fragment key={index}>{node}</Fragment>
