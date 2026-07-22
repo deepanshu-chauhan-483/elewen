@@ -4,7 +4,9 @@
 /**
  * One-shot seed for Birthday Bohemian decor packages.
  * Creates Theme `bohemian` if missing, then upserts packages by slug.
- * Also deletes orphan the-first-layer-* packages that duplicated Signs & Stems.
+ *
+ * The First Layer 1–3 are seeded with theme `the-first-layer` only
+ * (House Party / Birthday Party), not under Bohemian UI filter.
  *
  *   cd strapi && node scripts/run-bohemian-seed.cjs
  */
@@ -20,7 +22,7 @@ async function dumpSlug(strapi, slug) {
       packages: {
         on: {
           'package.decorpackages': {
-            populate: ['inclustions'],
+            populate: ['inclustions', 'theme'],
           },
         },
       },
@@ -35,18 +37,14 @@ async function dumpSlug(strapi, slug) {
   }
 
   const block = (row.packages || []).find(item => item?.__component === 'package.decorpackages');
-  const incs = (block?.inclustions || []).map(item => ({
-    group: item.choice_group_label || item.group_title,
-    text: item.text,
-    choice: Boolean(item.is_choice_group),
-  }));
+  const themeSlug = block?.theme?.slug || block?.theme_name || null;
 
   console.log(
-    'VERIFY %s: title=%s price=%s levelincs=%s',
+    'VERIFY %s: title=%s price=%s theme=%s',
     slug,
     row.title,
     row.base_price,
-    JSON.stringify(incs, null, 2)
+    themeSlug
   );
 }
 
@@ -62,17 +60,15 @@ async function main() {
       updated: packages.filter(item => item.updated).length,
       repaired: packages.filter(item => item.repaired).length,
       skipped: packages.filter(item => item.skipped).length,
-      deletedOrphans: result?.deletedOrphans?.length ?? 0,
       event: result?.eventDocumentId ?? null,
     };
     console.log('[seed/decor-bohemian] done:', JSON.stringify(summary, null, 2));
+    await dumpSlug(app, 'the-first-layer-1');
+    await dumpSlug(app, 'the-first-layer-2');
+    await dumpSlug(app, 'the-first-layer-3');
     await dumpSlug(app, 'signs-and-stems-1');
     await dumpSlug(app, 'signs-and-stems-2');
     await dumpSlug(app, 'signs-and-stems-3');
-    await dumpSlug(app, 'the-first-layer-1');
-    await dumpSlug(app, 'pampous-play-2');
-    await dumpSlug(app, 'pampous-play-3');
-    await dumpSlug(app, 'less-is-more-3');
   } finally {
     await app.destroy();
   }

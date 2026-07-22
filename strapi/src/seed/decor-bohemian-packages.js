@@ -62,7 +62,162 @@ const PAMPOUS_SIMPLE_PRICE_COVERS = [
   { text: 'No hidden service fees.' },
 ];
 
+const FIRST_LAYER_NITTY =
+  'Love the look but want a different colour or style direction? Go ahead and book, we’ll connect to customise to match your event vibe.';
+
+const FIRST_LAYER_PRICE_COVERS = SIGNS_STEMS_PRICE_COVERS;
+
+const FIRST_LAYER_SETUP =
+  'A small area for our team to work and access to water & electricity. Final print content to be shared prior to the event (timeline will be suggested by team Elewen after booking).';
+
+const FIRST_LAYER_BEST =
+  'Home celebrations, terraces, small banquet halls, cafés, or party venues.';
+
+const FIRST_LAYER_WHY =
+  'It creates visible impact with minimal elements. Simple styling, clear focal points, and just enough detail to make the space feel decorated.';
+
+const FIRST_LAYER_DESCRIPTION =
+  'A foundational décor package that sets the tone of your celebration.';
+
+function firstLayerDecorChoice(prefix, { floralLabel, balloonArchLabel }) {
+  return [
+    choiceOption(`${prefix}-decor`, 'Floral or Balloon Decor (choose 1)', floralLabel),
+    whenInclusion(
+      `${prefix}-decor`,
+      floralLabel,
+      '5 centerpieces + 4 crates/urli + 5–7 candles (entrance/corner setup)'
+    ),
+    choiceOption(`${prefix}-decor`, 'Floral or Balloon Decor (choose 1)', balloonArchLabel),
+    whenInclusion(
+      `${prefix}-decor`,
+      balloonArchLabel,
+      'Balloon arch + balloon sign + 5 centerpieces'
+    ),
+    choiceOption(
+      `${prefix}-decor`,
+      'Floral or Balloon Decor (choose 1)',
+      'Ring balloon backdrop with neon sign'
+    ),
+    whenInclusion(
+      `${prefix}-decor`,
+      'Ring balloon backdrop with neon sign',
+      'Ring balloon backdrop with neon sign'
+    ),
+  ];
+}
+
+function firstLayerSignageChoice(prefix) {
+  return [
+    choiceOption(`${prefix}-signage`, 'Entry Signage (choose 1)', 'Easel with sign'),
+    whenInclusion(
+      `${prefix}-signage`,
+      'Easel with sign',
+      'Easel with sign (recommended with floral entrance styling)'
+    ),
+    choiceOption(`${prefix}-signage`, 'Entry Signage (choose 1)', 'Printables + Props'),
+    whenInclusion(
+      `${prefix}-signage`,
+      'Printables + Props',
+      '1 fun quote / bar menu / 1 neon sign + 15 colourful shot glasses'
+    ),
+  ];
+}
+
 const BOHEMIAN_PACKAGES = [
+  // House Party / Birthday Party theme only — NOT shown under Bohemian filter.
+  {
+    sheet: 'FL 1 HP',
+    title: 'The First Layer 1',
+    slug: 'the-first-layer-1',
+    theme_name: 'The First Layer',
+    budget_level_slug: 'level-1',
+    base_price: 13250,
+    description: FIRST_LAYER_DESCRIPTION,
+    key_decor_elements:
+      'An impressive entrance along with 5 floral vases that you can set anywhere to enhance the look. Could be further paired with thoughtful detailing with quotes on small easel stands.',
+    nitty_gritty: FIRST_LAYER_NITTY,
+    setup_needs: FIRST_LAYER_SETUP,
+    best_placed_at: FIRST_LAYER_BEST,
+    why_we_love_it: FIRST_LAYER_WHY,
+    theme_slug_candidates: ['the-first-layer'],
+    price_covers: FIRST_LAYER_PRICE_COVERS,
+    price_breakdown: [
+      { label: 'Floral / Balloon decor (avg)', amount: 7433 },
+      { label: 'Entry Signage / Printables', amount: 1500 },
+      { label: 'Package Price', amount: 11500 },
+      { label: 'Platform fee', amount: 1150 },
+      { label: 'Transport and Labour', amount: 600 },
+    ],
+    inclustions: [
+      ...firstLayerDecorChoice('fl1', {
+        floralLabel: 'Floral decor',
+        balloonArchLabel: 'Balloon arch décor',
+      }),
+      ...firstLayerSignageChoice('fl1'),
+    ],
+  },
+  {
+    sheet: 'FL2 HP',
+    title: 'The First Layer 2',
+    slug: 'the-first-layer-2',
+    theme_name: 'The First Layer',
+    budget_level_slug: 'level-2',
+    base_price: 15670,
+    description: FIRST_LAYER_DESCRIPTION,
+    key_decor_elements:
+      'An impressive entrance along with 5 premium floral vases that you can set anywhere to enhance the look. Could be further paired with thoughtful detailing with quotes on small easel stands.',
+    nitty_gritty: FIRST_LAYER_NITTY,
+    setup_needs: FIRST_LAYER_SETUP,
+    best_placed_at: FIRST_LAYER_BEST,
+    why_we_love_it: FIRST_LAYER_WHY,
+    theme_slug_candidates: ['the-first-layer'],
+    price_covers: FIRST_LAYER_PRICE_COVERS,
+    price_breakdown: [
+      { label: 'Floral / Balloon decor (premium)', amount: 9700 },
+      { label: 'Entry Signage / Printables', amount: 4000 },
+      { label: 'Package Price', amount: 13700 },
+      { label: 'Platform fee', amount: 1370 },
+      { label: 'Transport and Labour', amount: 600 },
+    ],
+    inclustions: [
+      ...firstLayerDecorChoice('fl2', {
+        floralLabel: 'Floral decor (premium flowers)',
+        balloonArchLabel: 'Balloon arch décor (premium mix)',
+      }),
+      ...firstLayerSignageChoice('fl2'),
+    ],
+  },
+  {
+    sheet: 'FL 3 HP',
+    title: 'The First Layer 3',
+    slug: 'the-first-layer-3',
+    theme_name: 'The First Layer',
+    budget_level_slug: 'level-3',
+    base_price: 12200,
+    description: FIRST_LAYER_DESCRIPTION,
+    key_decor_elements:
+      'An impressive entrance with premium floral or balloon styling, plus entry signage or printables/props.',
+    nitty_gritty: FIRST_LAYER_NITTY,
+    setup_needs: FIRST_LAYER_SETUP,
+    best_placed_at: FIRST_LAYER_BEST,
+    why_we_love_it: FIRST_LAYER_WHY,
+    theme_slug_candidates: ['the-first-layer'],
+    price_covers: FIRST_LAYER_PRICE_COVERS,
+    price_breakdown: [
+      { label: 'Entry Mirror + candles', amount: 4500 },
+      { label: 'Pampous', amount: 1000 },
+      { label: 'Glass candle holders with candles', amount: 4500 },
+      { label: 'Platform fee', amount: 1000 },
+      { label: 'Labour & Transport', amount: 1200 },
+    ],
+    inclustions: [
+      ...firstLayerDecorChoice('fl3', {
+        floralLabel: 'Floral decor (premium flowers)',
+        balloonArchLabel: 'Balloon arch décor (premium mix)',
+      }),
+      ...firstLayerSignageChoice('fl3'),
+    ],
+  },
   {
     sheet: 'FL 1',
     title: 'Signs & Stems 1',
@@ -519,49 +674,6 @@ const BOHEMIAN_PACKAGES = [
   },
 ];
 
-const ORPHAN_FIRST_LAYER_SLUGS = [
-  'the-first-layer-1',
-  'the-first-layer-2',
-  'the-first-layer-3',
-];
-
-/**
- * Older seeds used the-first-layer-* slugs while Signs & Stems used signs-and-stems-*.
- * Both showed under Bohemian as duplicates — delete the orphan First Layer packages.
- */
-async function deleteOrphanFirstLayerPackages(strapi) {
-  const deleted = [];
-
-  for (const slug of ORPHAN_FIRST_LAYER_SLUGS) {
-    for (const status of ['published', 'draft']) {
-      const rows = await strapi.documents('api::package.package').findMany({
-        filters: { slug: { $eq: slug } },
-        status,
-        limit: 5,
-      });
-
-      for (const row of Array.isArray(rows) ? rows : []) {
-        if (!row?.documentId) continue;
-        try {
-          await strapi.documents('api::package.package').delete({
-            documentId: row.documentId,
-          });
-          deleted.push({ slug, documentId: row.documentId, status });
-          strapi.log.info(
-            `[seed/decor-bohemian] deleted orphan package slug=${slug} documentId=${row.documentId}`
-          );
-        } catch (error) {
-          strapi.log.warn(
-            `[seed/decor-bohemian] failed to delete orphan ${slug}: ${error.message}`
-          );
-        }
-      }
-    }
-  }
-
-  return deleted;
-}
-
 async function seedDecorBohemianPackages(strapi) {
   await ensureThemeDocumentId(strapi, { name: 'Bohemian', slug: 'bohemian', display_order: 50 });
   await ensureThemeDocumentId(strapi, {
@@ -608,23 +720,15 @@ async function seedDecorBohemianPackages(strapi) {
     description: 'Premium styling and service depth for larger or more layered celebrations.',
   });
 
-  const deletedOrphans = await deleteOrphanFirstLayerPackages(strapi);
-
-  const result = await seedDecorPackages(strapi, BOHEMIAN_PACKAGES, {
+  return seedDecorPackages(strapi, BOHEMIAN_PACKAGES, {
     eventSlugCandidates: EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/decor-bohemian',
     refreshExistingDecor: true,
   });
-
-  return {
-    ...result,
-    deletedOrphans,
-  };
 }
 
 module.exports = {
   BOHEMIAN_PACKAGES,
   EVENT_SLUG_CANDIDATES,
   seedDecorBohemianPackages,
-  deleteOrphanFirstLayerPackages,
 };
