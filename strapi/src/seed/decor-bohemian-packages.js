@@ -66,7 +66,7 @@ const BOHEMIAN_PACKAGES = [
   {
     sheet: 'FL 1',
     title: 'Signs & Stems 1',
-    slug: 'the-first-layer-1',
+    slug: 'signs-and-stems-1',
     theme_name: 'Signs & Stems',
     budget_level_slug: 'level-1',
     base_price: 6980,
@@ -76,7 +76,7 @@ const BOHEMIAN_PACKAGES = [
     setup_needs: SIGNS_STEMS_SETUP,
     best_placed_at: '',
     why_we_love_it: SIGNS_STEMS_WHY,
-    theme_slug_candidates: ['signs-and-stems', 'the-first-layer', 'bohemian'],
+    theme_slug_candidates: ['signs-and-stems', 'bohemian'],
     price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
       { label: 'Entry Sign board', amount: 900 },
@@ -99,9 +99,9 @@ const BOHEMIAN_PACKAGES = [
   {
     sheet: 'FL2',
     title: 'Signs & Stems 2',
-    slug: 'the-first-layer-2',
+    slug: 'signs-and-stems-2',
     theme_name: 'Signs & Stems',
-    budget_level_slug: 'level-1',
+    budget_level_slug: 'level-2',
     base_price: 9070,
     description: SIGNS_STEMS_DESCRIPTION,
     key_decor_elements: SIGNS_STEMS_DESCRIPTION,
@@ -109,7 +109,7 @@ const BOHEMIAN_PACKAGES = [
     setup_needs: SIGNS_STEMS_SETUP,
     best_placed_at: '',
     why_we_love_it: SIGNS_STEMS_WHY,
-    theme_slug_candidates: ['signs-and-stems', 'the-first-layer', 'bohemian'],
+    theme_slug_candidates: ['signs-and-stems', 'bohemian'],
     price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
       { label: 'Entry Sign board', amount: 900 },
@@ -133,9 +133,9 @@ const BOHEMIAN_PACKAGES = [
   {
     sheet: 'FL 3',
     title: 'Signs & Stems 3',
-    slug: 'the-first-layer-3',
+    slug: 'signs-and-stems-3',
     theme_name: 'Signs & Stems',
-    budget_level_slug: 'level-1',
+    budget_level_slug: 'level-3',
     base_price: 12200,
     description: SIGNS_STEMS_DESCRIPTION,
     key_decor_elements: SIGNS_STEMS_DESCRIPTION,
@@ -143,7 +143,7 @@ const BOHEMIAN_PACKAGES = [
     setup_needs: SIGNS_STEMS_SETUP,
     best_placed_at: '',
     why_we_love_it: SIGNS_STEMS_WHY,
-    theme_slug_candidates: ['signs-and-stems', 'the-first-layer', 'bohemian'],
+    theme_slug_candidates: ['signs-and-stems', 'bohemian'],
     price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
       { label: 'Entry Mirror + candles', amount: 4500 },
@@ -226,7 +226,7 @@ const BOHEMIAN_PACKAGES = [
     title: 'Pampous Play 3',
     slug: 'less-is-more-3',
     theme_name: 'Pampous Play',
-    budget_level_slug: 'level-1',
+    budget_level_slug: 'level-3',
     base_price: 19020,
     description:
       'This comprehensive package offers a seamless, high-end look for your celebration, taking the stress out of styling. By combining your entrance statement, aisle styling, and main focal point, we create a cohesive, luxury environment using premium, real pampas textures.',
@@ -519,6 +519,49 @@ const BOHEMIAN_PACKAGES = [
   },
 ];
 
+const ORPHAN_FIRST_LAYER_SLUGS = [
+  'the-first-layer-1',
+  'the-first-layer-2',
+  'the-first-layer-3',
+];
+
+/**
+ * Older seeds used the-first-layer-* slugs while Signs & Stems used signs-and-stems-*.
+ * Both showed under Bohemian as duplicates — delete the orphan First Layer packages.
+ */
+async function deleteOrphanFirstLayerPackages(strapi) {
+  const deleted = [];
+
+  for (const slug of ORPHAN_FIRST_LAYER_SLUGS) {
+    for (const status of ['published', 'draft']) {
+      const rows = await strapi.documents('api::package.package').findMany({
+        filters: { slug: { $eq: slug } },
+        status,
+        limit: 5,
+      });
+
+      for (const row of Array.isArray(rows) ? rows : []) {
+        if (!row?.documentId) continue;
+        try {
+          await strapi.documents('api::package.package').delete({
+            documentId: row.documentId,
+          });
+          deleted.push({ slug, documentId: row.documentId, status });
+          strapi.log.info(
+            `[seed/decor-bohemian] deleted orphan package slug=${slug} documentId=${row.documentId}`
+          );
+        } catch (error) {
+          strapi.log.warn(
+            `[seed/decor-bohemian] failed to delete orphan ${slug}: ${error.message}`
+          );
+        }
+      }
+    }
+  }
+
+  return deleted;
+}
+
 async function seedDecorBohemianPackages(strapi) {
   await ensureThemeDocumentId(strapi, { name: 'Bohemian', slug: 'bohemian', display_order: 50 });
   await ensureThemeDocumentId(strapi, {
@@ -565,15 +608,23 @@ async function seedDecorBohemianPackages(strapi) {
     description: 'Premium styling and service depth for larger or more layered celebrations.',
   });
 
-  return seedDecorPackages(strapi, BOHEMIAN_PACKAGES, {
+  const deletedOrphans = await deleteOrphanFirstLayerPackages(strapi);
+
+  const result = await seedDecorPackages(strapi, BOHEMIAN_PACKAGES, {
     eventSlugCandidates: EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/decor-bohemian',
     refreshExistingDecor: true,
   });
+
+  return {
+    ...result,
+    deletedOrphans,
+  };
 }
 
 module.exports = {
   BOHEMIAN_PACKAGES,
   EVENT_SLUG_CANDIDATES,
   seedDecorBohemianPackages,
+  deleteOrphanFirstLayerPackages,
 };

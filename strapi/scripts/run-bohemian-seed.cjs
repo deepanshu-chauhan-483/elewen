@@ -4,6 +4,7 @@
 /**
  * One-shot seed for Birthday Bohemian decor packages.
  * Creates Theme `bohemian` if missing, then upserts packages by slug.
+ * Also deletes orphan the-first-layer-* packages that duplicated Signs & Stems.
  *
  *   cd strapi && node scripts/run-bohemian-seed.cjs
  */
@@ -41,8 +42,9 @@ async function dumpSlug(strapi, slug) {
   }));
 
   console.log(
-    'VERIFY %s: price=%s incs=%s',
+    'VERIFY %s: title=%s price=%s levelincs=%s',
     slug,
+    row.title,
     row.base_price,
     JSON.stringify(incs, null, 2)
   );
@@ -60,12 +62,17 @@ async function main() {
       updated: packages.filter(item => item.updated).length,
       repaired: packages.filter(item => item.repaired).length,
       skipped: packages.filter(item => item.skipped).length,
+      deletedOrphans: result?.deletedOrphans?.length ?? 0,
       event: result?.eventDocumentId ?? null,
     };
     console.log('[seed/decor-bohemian] done:', JSON.stringify(summary, null, 2));
+    await dumpSlug(app, 'signs-and-stems-1');
+    await dumpSlug(app, 'signs-and-stems-2');
+    await dumpSlug(app, 'signs-and-stems-3');
     await dumpSlug(app, 'the-first-layer-1');
-    await dumpSlug(app, 'the-first-layer-2');
-    await dumpSlug(app, 'the-first-layer-3');
+    await dumpSlug(app, 'pampous-play-2');
+    await dumpSlug(app, 'pampous-play-3');
+    await dumpSlug(app, 'less-is-more-3');
   } finally {
     await app.destroy();
   }
