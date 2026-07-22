@@ -602,6 +602,11 @@ const PlanEventSection = () => {
     ? safeEventCards.filter(c => c?.category === activeCategory)
     : safeEventCards
 
+  // Re-run reveal when placeholder cards swap to Strapi identities (length alone is not enough).
+  const cardRevealSignature = filteredCards
+    .map(card => `${card.slug ?? ''}:${card.id ?? ''}:${card.image ?? ''}`)
+    .join('|')
+
   // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
   const currentCardsPerPage = isMobile
     ? 1
@@ -689,7 +694,7 @@ const PlanEventSection = () => {
 
     cards.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [filteredCards.length, page, activeCategory])
+  }, [cardRevealSignature, page, activeCategory])
 
   return (
     <section
@@ -906,7 +911,7 @@ const PlanEventSection = () => {
                 >
                   {filteredCards.map((card, i) => (
                     <Link
-                      key={card.id ?? card.title}
+                      key={card.slug ?? card.documentId ?? card.id ?? card.title}
                       to={buildEventListingHref(
                         card.categorySlug || activeCategorySlug,
                         card.slug,
@@ -1132,6 +1137,11 @@ const WhatToPlanSection = () => {
       )
     : safeServiceCards
 
+  // Re-run reveal when placeholder cards swap to Strapi identities (length alone is not enough).
+  const cardRevealSignature = filteredCards
+    .map(card => `${card.slug ?? ''}:${card.id ?? ''}:${card.image ?? ''}`)
+    .join('|')
+
   // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
   const currentCardsPerPage = isMobile
     ? 1
@@ -1210,7 +1220,7 @@ const WhatToPlanSection = () => {
 
     targets.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [categories.length, filteredCards.length, page, activeCategory])
+  }, [categories.length, cardRevealSignature, page, activeCategory])
 
   return (
     <section
@@ -1377,7 +1387,7 @@ const WhatToPlanSection = () => {
                 >
                   {filteredCards.map((card, i) => (
                     <Link
-                      key={card.id ?? card.title}
+                      key={card.slug ?? card.documentId ?? card.id ?? card.title}
                       to={buildServiceListingHref(card.slug ?? card.title, card.id)}
                       className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
@@ -3976,6 +3986,11 @@ const PlanningGuidesSection = () => {
     ? safeAllBlogs.filter(b => b?.category === activeCategory)
     : safeAllBlogs
 
+  // Re-run reveal when placeholder blogs swap to Strapi identities (length alone is not enough).
+  const cardRevealSignature = filteredBlogs
+    .map(blog => `${blog.slug ?? ''}:${blog.id ?? ''}:${blog.cover_image ?? ''}`)
+    .join('|')
+
   // Dynamic pagination: 1 card on mobile, CARDS_PER_PAGE (e.g. 3) on desktop
   const currentCardsPerPage = isMobile
     ? 1
@@ -4060,7 +4075,7 @@ const PlanningGuidesSection = () => {
 
     cards.forEach(el => io.observe(el))
     return () => io.disconnect()
-  }, [filteredBlogs.length, page, activeCategory])
+  }, [cardRevealSignature, page, activeCategory])
 
   return (
     <section
@@ -4214,7 +4229,7 @@ const PlanningGuidesSection = () => {
                 >
                   {filteredBlogs.map((blog, i) => (
                     <Link
-                      key={blog.id ?? blog.title}
+                      key={blog.slug ?? blog.documentId ?? blog.id ?? blog.title}
                       to={`/blogs/${blog.slug}`}
                       className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
