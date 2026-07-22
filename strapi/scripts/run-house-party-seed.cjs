@@ -15,6 +15,50 @@ const {
   seedDecorHousePartyBirthdayPackages,
 } = require('../src/seed/decor-house-party-birthday-packages');
 
+async function dumpSlug(strapi, slug) {
+  const rows = await strapi.documents('api::package.package').findMany({
+    filters: { slug: { $eq: slug } },
+    status: 'published',
+    populate: {
+      packages: {
+        on: {
+          'package.decorpackages': {
+            populate: ['inclustions', 'addons', 'elements'],
+          },
+        },
+      },
+    },
+    limit: 1,
+  });
+
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!row) {
+    console.log('VERIFY %s: NOT FOUND', slug);
+    return;
+  }
+
+  const block = (row.packages || []).find(item => item?.__component === 'package.decorpackages');
+  const incs = (block?.inclustions || []).map(item => ({
+    group: item.choice_group_label || item.group_title,
+    text: item.text,
+    choice: Boolean(item.is_choice_group),
+  }));
+  const addons = (block?.addons || []).map(item => ({ name: item.name, price: item.price }));
+  const elements = (block?.elements || []).map(item => ({
+    title: item.title,
+    base_price: item.base_price,
+  }));
+
+  console.log(
+    'VERIFY %s: price=%s addons=%s elements=%s incs=%s',
+    slug,
+    row.base_price,
+    JSON.stringify(addons),
+    JSON.stringify(elements),
+    JSON.stringify(incs, null, 2)
+  );
+}
+
 async function main() {
   const appDir = path.resolve(__dirname, '..');
   const app = await Strapi.createStrapi({ appDir }).load();
@@ -30,6 +74,8 @@ async function main() {
       event: result?.eventDocumentId ?? null,
     };
     console.log('[seed/decor-house-party-birthday] done:', JSON.stringify(summary, null, 2));
+    await dumpSlug(app, 'phool-proof-1');
+    await dumpSlug(app, 'phool-proof-2');
   } finally {
     await app.destroy();
   }

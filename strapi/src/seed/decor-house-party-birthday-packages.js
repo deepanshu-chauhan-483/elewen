@@ -353,28 +353,57 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_name: 'Phool-Proof',
     theme_slug_candidates: parentThemeCandidates('phool-proof'),
     budget_level_slug: 'level-1',
+    // L2 Default total; flower choose-1 amounts swap the displayed package price.
     base_price: 4175,
     description:
       'Thoughtfully layered floral arrangements that bring softness, balance, and quiet elegance to your celebration.',
     key_decor_elements:
       'Five floral bunches in vases — choose your flower tier to match the mood of the room.',
-    ...baseMeta(),
-    price_breakdown: [{ label: 'Platform fee', amount: 325 }],
+    ...baseMeta({
+      nitty_gritty:
+        'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+      setup_needs:
+        'A small area for our team to work, access to water and electricity. Final images prior to the event (timeline will be suggested by team Elewen after booking).',
+      best_placed_at:
+        'Table centers, console tables, coffee tables or any corner of your house.',
+      why_we_love_it: 'This setup turns decor into conversation.',
+      price_covers: [
+        { text: 'The Complete Look' },
+        { text: 'Professional Setup' },
+        { text: 'Final Dismantling' },
+        { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+        { text: 'No hidden service fees.' },
+      ],
+    }),
+    price_breakdown: [
+      { label: '5 bunches (centerpieces) — L2 default', amount: 3250 },
+      { label: 'Platform fee', amount: 325 },
+      { label: 'Transport Fee', amount: 600 },
+    ],
+    addons: [
+      optionalPackageAddon('20 Premium Stems', 0, 'Optional add-on of 20 premium stems'),
+    ],
     inclustions: [
-      { text: '5 bunches of flowers in 5 vases', group_title: 'Floral Styling' },
-      choiceOption('pp1-flowers', 'Flower type (choose 1)', 'Level 1 florals'),
+      { text: '5 bunches of flowers arranged in 5 vases', group_title: 'Floral Styling' },
+      choiceOption('pp1-flowers', 'Flower type (choose 1)', 'Level 1 florals', {
+        amount: 3350,
+      }),
       whenInclusion(
         'pp1-flowers',
         'Level 1 florals',
         'Daisy, roses, gypsophila, baby’s breath — ₹550 per vase'
       ),
-      choiceOption('pp1-flowers', 'Flower type (choose 1)', 'Level 2 florals'),
+      choiceOption('pp1-flowers', 'Flower type (choose 1)', 'Level 2 florals (default)', {
+        amount: 4175,
+      }),
       whenInclusion(
         'pp1-flowers',
-        'Level 2 florals',
+        'Level 2 florals (default)',
         'Carnations, gerbera, rajnigandha — ₹650 per vase'
       ),
-      choiceOption('pp1-flowers', 'Flower type (choose 1)', 'Level 3 florals'),
+      choiceOption('pp1-flowers', 'Flower type (choose 1)', 'Level 3 florals', {
+        amount: 6650,
+      }),
       whenInclusion(
         'pp1-flowers',
         'Level 3 florals',
@@ -389,35 +418,87 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_name: 'Phool-Proof',
     theme_slug_candidates: parentThemeCandidates('phool-proof'),
     budget_level_slug: 'level-2',
+    // L2 Default total; flower choose-1 amounts swap the displayed package price.
     base_price: 7035,
     description:
       'Thoughtfully layered floral arrangements that bring softness, balance, and quiet elegance to your celebration.',
     key_decor_elements:
       'Table florals, floor vases, and candlelight — a fuller floral layer for the space.',
-    ...baseMeta(),
+    ...baseMeta({
+      nitty_gritty:
+        'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+      setup_needs:
+        'A small area for our team to work, access to water and electricity. Final images prior to the event (timeline will be suggested by team Elewen after booking).',
+      best_placed_at:
+        'Table centers, console tables, coffee tables or any corner of your house.',
+      why_we_love_it: 'This setup turns decor into conversation.',
+      price_covers: [
+        { text: 'The Complete Look' },
+        { text: 'Professional Setup' },
+        { text: 'Final Dismantling' },
+        { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+        { text: 'No hidden service fees.' },
+      ],
+    }),
     price_breakdown: [
+      { label: '5 bunches (centerpieces) — L2 default', amount: 5850 },
       { label: '1 floral set up 1 big+2 Small Vases + candles', amount: 6000 },
       { label: 'Entrance easel flowers (Board excl) + 4 big vases', amount: 4000 },
       { label: 'Platform fee', amount: 585 },
+      { label: 'Transport Fee', amount: 600 },
+    ],
+    addons: [
+      optionalPackageAddon('20 Premium Stems', 0, 'Optional add-on of 20 premium stems'),
     ],
     inclustions: [
-      { text: '5 bunches of fresh flowers in 5 vases', group_title: 'Table Florals' },
-      { text: '3 floor vases with fresh flower bunches', group_title: 'Floor Florals' },
+      {
+        text: '5 bunches of fresh flowers placed in 5 vases',
+        group_title: 'Table Florals',
+      },
+      {
+        text: '3 floor vases with fresh flower bunches (1 big + 2 small)',
+        group_title: 'Floor Florals',
+      },
       { text: '15 glass holders with candles', group_title: 'Candles' },
-      choiceOption('pp2-flowers', 'Flower type (choose 1)', 'Level 1 florals'),
+      choiceOption('pp2-flowers', 'Flower type (choose 1)', 'Level 1 florals', {
+        amount: 5440,
+      }),
       whenInclusion(
         'pp2-flowers',
         'Level 1 florals',
-        'Daisy, roses, gypsophila, baby’s breath'
+        'Table: Daisy, roses, gypsophila, baby’s breath — ₹500 per vase'
       ),
-      choiceOption('pp2-flowers', 'Flower type (choose 1)', 'Level 2 florals'),
       whenInclusion(
         'pp2-flowers',
-        'Level 2 florals',
-        'Carnations, gerbera, rajnigandha'
+        'Level 1 florals',
+        'Floor (1 big + 2 small): Daisy, roses, gypsophila, baby’s breath — ₹1,000 per 3 vases'
       ),
-      choiceOption('pp2-flowers', 'Flower type (choose 1)', 'Level 3 florals'),
-      whenInclusion('pp2-flowers', 'Level 3 florals', 'Lily, orchid, eustoma'),
+      choiceOption('pp2-flowers', 'Flower type (choose 1)', 'Level 2 florals (default)', {
+        amount: 7035,
+      }),
+      whenInclusion(
+        'pp2-flowers',
+        'Level 2 florals (default)',
+        'Table: Carnations, gerbera, rajnigandha — ₹650 per vase'
+      ),
+      whenInclusion(
+        'pp2-flowers',
+        'Level 2 florals (default)',
+        'Floor (1 big + 2 small): Carnations, gerbera, rajnigandha — ₹1,350 per set'
+      ),
+      choiceOption('pp2-flowers', 'Flower type (choose 1)', 'Level 3 florals', {
+        amount: 9840,
+      }),
+      whenInclusion(
+        'pp2-flowers',
+        'Level 3 florals',
+        'Table: Lily, orchid, eustoma — ₹1,200 per vase'
+      ),
+      whenInclusion(
+        'pp2-flowers',
+        'Level 3 florals',
+        'Floor (1 big + 2 small): Lily, orchid, eustoma — ₹1,600 per set'
+      ),
     ],
   },
   {
@@ -942,6 +1023,11 @@ async function seedDecorHousePartyBirthdayPackages(strapi) {
     slug: 'birthday-party',
     display_order: 20,
   });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Phool-Proof',
+    slug: 'phool-proof',
+    display_order: 30,
+  });
   await ensureEventDocumentId(strapi, {
     name: 'Birthday Parties',
     slugCandidates: EVENT_SLUG_CANDIDATES,
@@ -969,6 +1055,7 @@ async function seedDecorHousePartyBirthdayPackages(strapi) {
   return seedDecorPackages(strapi, HOUSE_PARTY_BIRTHDAY_PACKAGES, {
     eventSlugCandidates: EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/decor-house-party-birthday',
+    refreshExistingDecor: true,
   });
 }
 
