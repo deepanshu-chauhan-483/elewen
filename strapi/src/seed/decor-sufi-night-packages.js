@@ -1,8 +1,56 @@
 'use strict';
 
-const { seedDecorPackages } = require('./decor-proposal-shared');
+const {
+  ensureBudgetLevelDocumentId,
+  ensureEventDocumentId,
+  ensureThemeDocumentId,
+  seedDecorPackages,
+} = require('./decor-proposal-shared');
 
-const EVENT_SLUG_CANDIDATES = ['engagement-parties', 'engagement', 'engagements', 'proposal', 'proposals'];
+const EVENT_SLUG_CANDIDATES = [
+  'engagement-parties',
+  'engagement',
+  'engagements',
+  'proposal',
+  'proposals',
+];
+
+const SUFI_NITTY_GRITTY =
+  'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.';
+
+const SUFI_PRICE_COVERS = [
+  { text: 'The Complete Look' },
+  { text: 'Professional Setup' },
+  { text: 'Final Dismantling' },
+  { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+  { text: 'No hidden service fees.' },
+];
+
+const SUFI_SETUP_NEEDS =
+  'A small area for our team to work, access to water and electricity. Final images prior to the event (timeline will be suggested by team Elewen after booking).';
+
+function choiceOption(groupKey, label, optionTitle, options = {}) {
+  const row = {
+    is_choice_group: true,
+    choice_group_key: groupKey,
+    choice_group_label: label,
+    group_title: label,
+    text: optionTitle,
+  };
+
+  if (options.amount != null) {
+    row._choice_amount = options.amount;
+  }
+
+  return row;
+}
+
+function whenInclusion(parentKey, parentValue, text) {
+  return {
+    text,
+    group_title: `when:${parentKey}:${parentValue}`,
+  };
+}
 
 const SUFI_NIGHT_PACKAGES = [
   {
@@ -15,21 +63,15 @@ const SUFI_NIGHT_PACKAGES = [
     description:
       'A soulful blend of warm lighting, classic brass accents and delicate floral layers, evoking an atmosphere of understated Sufi elegance.',
     key_decor_elements:
-      'Think glowing lantern-lit walkways, intricate Jali patterns, candle abras / candle stands, diya wall',
-    nitty_gritty:
-      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs:
-      'A small area for our team to work, access to water and electricity. Final images prior to the event (timeline will be suggested by team Elewen after booking).',
+      'Think glowing lantern-lit walkways, intricate Jali patterns, candle abras / candle stands, diya wall.',
+    nitty_gritty: SUFI_NITTY_GRITTY,
+    setup_needs: SUFI_SETUP_NEEDS,
     best_placed_at:
       'Smaller venues, farmhouses, backyards, or private spaces that comfortably host up to 50-70 guests. Ideal for engagements where you want a celebration with your close family and friends.',
     why_we_love_it:
-      'Elewen thinks this one is a dream for an intimate garden engagement or a backyard / terrace celebration.',
-    theme_slug_candidates: ['ishq-sufiyana'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+      'It keeps the focus on fun, real moments, and the people who truly matter. It\'s less about heavy décor, more about enjoying the celebration and the company around you.',
+    theme_slug_candidates: ['sufi-night', 'ishq-sufiyana', 'ishq-sufi-yana'],
+    price_covers: SUFI_PRICE_COVERS,
     price_breakdown: [
       { label: 'Entrance', amount: 10000 },
       { label: 'Flowers', amount: 15000 },
@@ -46,44 +88,104 @@ const SUFI_NIGHT_PACKAGES = [
       { label: 'Labour & Transport', amount: 1000 },
       { label: 'Platform fee', amount: 1000 },
     ],
+    // Figma detail layout: fixed inclusion groups + Backdrop choose-1 cards.
     inclustions: [
       {
-        text: 'A pathway of 20-25 lanterns (combination of small and big) to guide your guests, all tied together with warm, twinkling lights.',
-        group_title: 'Includes',
-      },
-      { text: 'Fresh, hand-arranged flowers in 5 small and 5 big vases', group_title: 'Includes' },
-      { text: 'Traditional floral rangolis at corners', group_title: 'Includes' },
-      {
-        text: '5 centerpieces - lanterns, small vases with flowers, candles with candle holders',
-        group_title: 'Includes',
+        text: '20–25 lantern pathway (small and big) with warm twinkling lights',
+        group_title: 'Entrance',
       },
       {
-        text: '12x8ft moon-shaped or double-panel backdrop (you can choose between the 2)',
-        group_title: 'Includes',
+        text: 'Fresh flowers in 5 small and 5 big vases',
+        group_title: 'Flowers',
       },
       {
-        text: '6-8ft. long basic bar with black masking, a bar menu and a vase / candles / lantern',
-        group_title: 'Includes',
+        text: 'Traditional floral rangolis at corners',
+        group_title: 'Flowers',
       },
       {
-        text: '8ft. tall mirror personalised with a quote on it, with candle abras & decor elements',
-        group_title: 'Includes',
+        text: '5 centerpieces — lanterns, small flower vases, candles with holders',
+        group_title: 'Centerpieces',
       },
-      { text: '3 basic cocktail tables', group_title: 'Includes' },
+      choiceOption('is1-backdrop', 'Backdrop (choose 1)', '12x8 ft moon-shaped backdrop'),
+      whenInclusion(
+        'is1-backdrop',
+        '12x8 ft moon-shaped backdrop',
+        'Moon-shaped backdrop for a fuller celebration photo wall'
+      ),
+      choiceOption('is1-backdrop', 'Backdrop (choose 1)', '12x8 ft double-panel backdrop'),
+      whenInclusion(
+        'is1-backdrop',
+        '12x8 ft double-panel backdrop',
+        'Double-panel backdrop for a fuller celebration photo wall'
+      ),
       {
-        text: '2 sofa sets (3 sofas to make one complete set) and 2 coffee tables',
-        group_title: 'Includes',
+        text: '6–8 ft basic bar with black masking, bar menu, and vase / candles / lantern',
+        group_title: 'Bar Setup',
       },
-      { text: 'Tenting behind the 2 seating lounges', group_title: 'Includes' },
+      { text: '3 basic cocktail tables', group_title: 'Cocktail Tables' },
       {
-        text: '5 halogen lights (to light up the backdrops) and Fairy lighting on the ceiling (pack of 10 lights)',
-        group_title: 'Includes',
+        text: '2 sofa sets (3 sofas per set: two 1-seaters + one 3-seater) and 2 coffee tables',
+        group_title: 'Lounge Seating',
+      },
+      {
+        text: 'Tenting behind the 2 seating lounges',
+        group_title: 'Tenting',
+      },
+      {
+        text: '5 halogen lights to light up the backdrop',
+        group_title: 'Lighting',
+      },
+      {
+        text: 'Fairy lighting on the ceiling (pack of 10 lights)',
+        group_title: 'Lighting',
+      },
+      {
+        text: 'Candle abras / candle stands, brass vases, jali / arch elements, and diya wall accents',
+        group_title: 'Corner Decor Elements',
+      },
+      {
+        text: '8 ft personalised mirror with quote, candle abras and decor elements',
+        group_title: 'Photo-op',
       },
     ],
   },
 ];
 
 async function seedDecorSufiNightPackages(strapi) {
+  await ensureThemeDocumentId(strapi, {
+    name: 'Sufi Night',
+    slug: 'sufi-night',
+    display_order: 50,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Ishq Sufiyana',
+    slug: 'ishq-sufiyana',
+    display_order: 51,
+  });
+  await ensureEventDocumentId(strapi, {
+    name: 'Engagement Parties',
+    slugCandidates: EVENT_SLUG_CANDIDATES,
+    display_order: 20,
+  });
+  await ensureBudgetLevelDocumentId(strapi, {
+    name: 'Level 1',
+    slug: 'level-1',
+    display_order: 1,
+    description: 'Thoughtfully put together essentials for smaller guest counts.',
+  });
+  await ensureBudgetLevelDocumentId(strapi, {
+    name: 'Level 2',
+    slug: 'level-2',
+    display_order: 2,
+    description: 'A more detailed setup with a stronger visual and service experience.',
+  });
+  await ensureBudgetLevelDocumentId(strapi, {
+    name: 'Level 3',
+    slug: 'level-3',
+    display_order: 3,
+    description: 'Premium styling and service depth for larger or more layered celebrations.',
+  });
+
   return seedDecorPackages(strapi, SUFI_NIGHT_PACKAGES, {
     eventSlugCandidates: EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/decor-sufi-night',

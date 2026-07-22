@@ -24,6 +24,7 @@
     "seed:pastel": "node scripts/run-pastel-seed.cjs",
     "seed:bohemian": "node scripts/run-bohemian-seed.cjs",
     "seed:bubbles": "node scripts/run-bubbles-seed.cjs",
+    "seed:sufi": "node scripts/run-sufi-seed.cjs",
     "seed:house-party": "node scripts/run-house-party-seed.cjs",
     "seed:catering-all": "node scripts/run-catering-all.cjs",
     "seed:production-data": "node scripts/run-production-data-seed.cjs",
