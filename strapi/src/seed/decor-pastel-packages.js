@@ -64,29 +64,29 @@ const PASTEL_PACKAGES = [
     theme_name: 'Floral Firsts',
     budget_level_slug: 'level-1',
     base_price: 9250,
-    description: 'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
-    key_decor_elements: 'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
+    key_decor_elements:
+      'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Elewen recommends placing Floral Firsts right at the entryway to create an instant picture-perfect start to your celebration.',
+    best_placed_at:
+      'Elewen recommends placing Floral Firsts right at the entryway to create an instant picture-perfect start to your celebration.',
     why_we_love_it: '',
     theme_slug_candidates: ['pastel', 'floral-firsts'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
       { label: 'Welcome/ Custom engraved mirror', amount: 2000 },
       { label: '4 big artificial flowers', amount: 2500 },
       { label: 'Smaller artificial flowers at base', amount: 1000 },
       { label: 'Platform fee', amount: 550 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Custom engraved mirror', group_title: 'Includes' },
-      { text: '4 big artificial flowers', group_title: 'Includes' },
-      { text: 'Base artificial flowers', group_title: 'Includes' },
+      { text: 'Welcome/ Custom engraved mirror' },
+      { text: '4 big artificial flowers' },
+      { text: 'Smaller artificial flowers at base' },
     ],
   },
   {
@@ -96,29 +96,34 @@ const PASTEL_PACKAGES = [
     theme_name: 'Floral Firsts',
     budget_level_slug: 'level-2',
     base_price: 13100,
-    description: 'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
-    key_decor_elements: 'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
+    key_decor_elements:
+      'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Elewen recommends placing Floral Firsts right at the entryway to create an instant picture-perfect start to your celebration.',
+    best_placed_at:
+      'Elewen recommends placing Floral Firsts right at the entryway to create an instant picture-perfect start to your celebration.',
     why_we_love_it: '',
     theme_slug_candidates: ['pastel', 'floral-firsts'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
       { label: 'Welcome/ Custom engraved mirror', amount: 2000 },
-      { label: 'Mirror Decorated using Bunches of Real Flowers (mix of common and premium)', amount: 4000 },
+      {
+        label: 'Mirror Decorated using Bunches of Real Flowers (mix of common and premium)',
+        amount: 4000,
+      },
       { label: '3 big artificial flowers', amount: 3000 },
       { label: 'Platform fee', amount: 900 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Custom engraved mirror', group_title: 'Includes' },
-      { text: 'Real flower mirror decor', group_title: 'Includes' },
-      { text: '3 big artificial flowers', group_title: 'Includes' },
+      { text: 'Welcome/ Custom engraved mirror' },
+      {
+        text: 'Bunches of Real Flowers (mix of common and premium) to complete Mirror Decoration',
+      },
+      { text: '3 big artificial flowers' },
     ],
   },
   {
@@ -128,29 +133,37 @@ const PASTEL_PACKAGES = [
     theme_name: 'Floral Firsts',
     budget_level_slug: 'level-3',
     base_price: 16400,
-    description: 'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
-    key_decor_elements: 'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
+    key_decor_elements:
+      'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Elewen recommends placing Floral Firsts right at the entryway to create an instant picture-perfect start to your celebration.',
+    best_placed_at:
+      'Elewen recommends placing Floral Firsts right at the entryway to create an instant picture-perfect start to your celebration.',
     why_we_love_it: '',
     theme_slug_candidates: ['pastel', 'floral-firsts'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Welcome/ Custom Printed On Single/ Double Panel (Backdrop dimensions - 8x4 ft.)', amount: 5000 },
-      { label: 'Decorated using Bunches of Real Flowers (mix of common and premium)', amount: 6000 },
+      {
+        label: 'Welcome/ Custom Printed On Single/ Double Panel (Backdrop dimensions - 8x4 ft.)',
+        amount: 5000,
+      },
+      {
+        label: 'Decorated using Bunches of Real Flowers (mix of common and premium)',
+        amount: 6000,
+      },
       { label: 'Pillar Candles in Glasses', amount: 1000 },
       { label: 'Platform fee', amount: 1200 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Printed panel backdrop', group_title: 'Includes' },
-      { text: 'Real flower decoration', group_title: 'Includes' },
-      { text: 'Pillar candles in glasses', group_title: 'Includes' },
+      { text: 'Welcome/ Custom Printed On Single Panel Wall' },
+      {
+        text: 'Bunches of Real Flowers (mix of common and premium) to complete Decoration on Panel',
+      },
+      { text: '7 Pillar Candles in Glasses' },
     ],
   },
   {
@@ -160,29 +173,37 @@ const PASTEL_PACKAGES = [
     theme_name: 'Floral Firsts',
     budget_level_slug: 'level-2',
     base_price: 16950,
-    description: 'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
-    key_decor_elements: 'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
+    key_decor_elements:
+      'Floral Firsts is your party’s first impression, bold, beautiful, and impossible to miss, it sets the tone the moment your guests walk in.',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Elewen recommends placing Floral Firsts right at the entryway to create an instant picture-perfect start to your celebration.',
+    best_placed_at:
+      'Elewen recommends placing Floral Firsts right at the entryway to create an instant picture-perfect start to your celebration.',
     why_we_love_it: '',
     theme_slug_candidates: ['pastel', 'floral-firsts'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Welcome/ Custom Printed On Single/ Double Panel (Backdrop dimensions - 8x4 ft.)', amount: 9000 },
-      { label: 'Decorated using Bunches of Real Flowers (mix of common and premium)', amount: 2500 },
+      {
+        label: 'Welcome/ Custom Printed On Single/ Double Panel (Backdrop dimensions - 8x4 ft.)',
+        amount: 9000,
+      },
+      {
+        label: 'Decorated using Bunches of Real Flowers (mix of common and premium)',
+        amount: 2500,
+      },
       { label: 'Pillar Candles in Glasses', amount: 1000 },
       { label: 'Platform fee', amount: 1250 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Printed panel backdrop', group_title: 'Includes' },
-      { text: 'Real flower decoration', group_title: 'Includes' },
-      { text: 'Pillar candles in glasses', group_title: 'Includes' },
+      { text: 'Welcome/ Custom Printed On Single Panel Wall' },
+      {
+        text: 'Bunches of Real Flowers (mix of common and premium) to complete Decoration on Panel',
+      },
+      { text: '15 Pillar Candles in Glasses' },
     ],
   },
   {

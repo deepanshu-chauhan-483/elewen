@@ -234,7 +234,7 @@ function inferServiceSlugsFromSections(pkg) {
 function isListingChipText(text) {
   const value = String(text ?? '').trim()
   if (!value) return false
-  if (value.length > 72) return false
+  if (value.length > 100) return false
   if (/^choose\s*\d+/i.test(value)) return false
   if (/\bOR\b/.test(value) && value.length > 40) return false
   return true

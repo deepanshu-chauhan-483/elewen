@@ -76,10 +76,26 @@ SHORT_CARD_TAGS: dict[str, list[str]] = {
         "5 Small glass vases with bunches of floral arrangements",
         "20 Pillar Pastel or neutral-toned candles with Ribbon detailing on candles",
     ],
-    "FF1": ["Custom engraved mirror", "4 big artificial flowers", "Base artificial flowers"],
-    "FF2": ["Custom engraved mirror", "Real flower mirror decor", "3 big artificial flowers"],
-    "FF3": ["Printed panel backdrop", "Real flower decoration", "Pillar candles in glasses"],
-    "FF23": ["Printed panel backdrop", "Real flower decoration", "Pillar candles in glasses"],
+    "FF1": [
+        "Welcome/ Custom engraved mirror",
+        "4 big artificial flowers",
+        "Smaller artificial flowers at base",
+    ],
+    "FF2": [
+        "Welcome/ Custom engraved mirror",
+        "Bunches of Real Flowers (mix of common and premium) to complete Mirror Decoration",
+        "3 big artificial flowers",
+    ],
+    "FF3": [
+        "Welcome/ Custom Printed On Single Panel Wall",
+        "Bunches of Real Flowers (mix of common and premium) to complete Decoration on Panel",
+        "7 Pillar Candles in Glasses",
+    ],
+    "FF23": [
+        "Welcome/ Custom Printed On Single Panel Wall",
+        "Bunches of Real Flowers (mix of common and premium) to complete Decoration on Panel",
+        "15 Pillar Candles in Glasses",
+    ],
     "Pop1": ["Easel stand", "Custom printed board", "Balloon decor on easel", "10 helium balloons"],
     "ULC": [
         "Canopy structure",
