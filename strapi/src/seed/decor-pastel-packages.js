@@ -22,6 +22,31 @@ const PASTEL_PRICE_COVERS = [
   { text: 'No hidden service fees.' },
 ];
 
+function choiceOption(groupKey, label, optionTitle, options = {}) {
+  const row = {
+    is_choice_group: true,
+    choice_group_key: groupKey,
+    choice_group_label: label,
+    group_title: label,
+    text: optionTitle,
+  };
+
+  if (options.amount != null) {
+    row._choice_amount = options.amount;
+  }
+
+  return row;
+}
+
+function optionalPackageAddon(name, price = 0, description = '') {
+  return {
+    name,
+    price,
+    description: description || name,
+    visibility: true,
+  };
+}
+
 const PASTEL_PACKAGES = [
   {
     sheet: 'Del1',
@@ -212,31 +237,37 @@ const PASTEL_PACKAGES = [
     slug: 'pastel-pop-1',
     theme_name: 'Pastel Pop',
     budget_level_slug: 'level-1',
-    base_price: 5770,
-    description: 'Centered around a personalized welcome sign, this package uses soft pastel balloons to create a warm greeting spot for your guests immediately upon arrival',
-    key_decor_elements: 'Centered around a personalized welcome sign, this package uses soft pastel balloons to create a warm greeting spot for your guests immediately upon arrival',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    // Core package (without optional helium) + transport + platform = 4770.
+    // Optional helium add-on (₹1000) brings total to sheet approx ₹5770.
+    base_price: 4770,
+    description:
+      'Centered around a personalized welcome sign, this package uses soft pastel balloons to create a warm greeting spot for your guests immediately upon arrival',
+    key_decor_elements:
+      'Centered around a personalized welcome sign, this package uses soft pastel balloons to create a warm greeting spot for your guests immediately upon arrival',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: '',
     why_we_love_it: '',
     theme_slug_candidates: ['pastel', 'pastel-pop'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
       { label: 'Welcome/ Custom Printed On Board With Easel', amount: 1200 },
       { label: 'Pastel Balloons Decoration on Easel', amount: 2500 },
-      { label: '2 Bunches of loose helium balloons tied in groups of 5', amount: 1000 },
       { label: 'Platform fee', amount: 470 },
-      { label: 'Labour & Transport', amount: 600 },
+      { label: 'Transportation and Labour Cost', amount: 600 },
     ],
     inclustions: [
-      { text: 'Easel stand', group_title: 'Includes' },
-      { text: 'Custom printed board', group_title: 'Includes' },
-      { text: 'Balloon decor on easel', group_title: 'Includes' },
-      { text: '10 helium balloons', group_title: 'Includes' },
+      { text: 'Easel Stand' },
+      { text: 'board with custom print' },
+      { text: 'Balloons decoration on easel' },
+    ],
+    addons: [
+      optionalPackageAddon(
+        '10 Helium Balloons, tied in 2 bunches of 5 each',
+        1000,
+        'Optional: 10 Helium Balloons, tied in 2 bunches of 5 each'
+      ),
     ],
   },
   {
@@ -246,33 +277,35 @@ const PASTEL_PACKAGES = [
     theme_name: 'Under The Lights Canopy',
     budget_level_slug: 'level-1',
     base_price: 11670,
-    description: 'Under The Lights turns a simple gathering into something deeply personal. Whether it’s quiet, cozy moments or mimosa-filled gossip sessions, this setup creates a space that invites connection and comfort.',
-    key_decor_elements: 'Under The Lights turns a simple gathering into something deeply personal. Whether it’s quiet, cozy moments or mimosa-filled gossip sessions, this setup creates a space that invites',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      'Under The Lights turns a simple gathering into something deeply personal. Whether it’s quiet, cozy moments or mimosa-filled gossip sessions, this setup creates a space that invites connection and comfort.',
+    key_decor_elements:
+      'Under The Lights turns a simple gathering into something deeply personal. Whether it’s quiet, cozy moments or mimosa-filled gossip sessions, this setup creates a space that invites connection and comfort.',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'ELEWEN recommends making Under The Lights the focal point for your close-circle gatherings, a corner designed to slow down, laugh longer, and spend your time with the people who matter most.',
+    best_placed_at:
+      'ELEWEN recommends making Under The Lights the focal point for your close-circle gatherings, a corner designed to slow down, laugh longer, and spend your time with the people who matter most.',
     why_we_love_it: '',
     theme_slug_candidates: ['pastel', 'under-the-lights-canopy'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
       { label: 'Canopy made with draped cloth', amount: 6000 },
       { label: 'Fairy Light Strings', amount: 3500 },
       { label: 'Gadda and Carpet to form base', amount: 2000 },
       { label: '6 Cushions', amount: 2200 },
       { label: 'Platform fee', amount: 770 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Canopy structure', group_title: 'Includes' },
-      { text: 'Flower bunch on canopy', group_title: 'Includes' },
-      { text: '10 fairy light strings', group_title: 'Includes' },
-      { text: 'Mattress and carpet', group_title: 'Includes' },
-      { text: '6 cushions', group_title: 'Includes' },
-      { text: '2 lantern cages', group_title: 'Includes' },
+      {
+        text: 'Canopy structure (Total Height - 6 Ft. Can comfortably accommodate 2 adults sitting inside)',
+      },
+      { text: 'Flower Bunch at top of canopy' },
+      { text: '10 Fairy Light Strings' },
+      { text: 'Mattress (Gadda) and Carpet to form base' },
+      choiceOption('ulc1-accent', 'Choose 1', '6 Cushions'),
+      choiceOption('ulc1-accent', 'Choose 1', '2 Lantern Cages with candles'),
     ],
   },
   {
@@ -282,18 +315,19 @@ const PASTEL_PACKAGES = [
     theme_name: 'Under The Lights Canopy',
     budget_level_slug: 'level-2',
     base_price: 25200,
-    description: 'Under The Lights turns a simple gathering into something deeply personal.',
-    key_decor_elements: 'Under The Lights turns a simple gathering into something deeply personal.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      'Under The Lights turns a simple gathering into something deeply personal. Whether it’s quiet, cozy moments or mimosa-filled gossip sessions, this setup creates a space that invites connection and comfort.',
+    key_decor_elements:
+      'Under The Lights turns a simple gathering into something deeply personal. Whether it’s quiet, cozy moments or mimosa-filled gossip sessions, this setup creates a space that invites connection and comfort.',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Elewen recommends making Under The Lights the focal point for your close-circle gatherings, a corner designed to slow down, laugh longer, and spend your time with the people who matter most.',
-    why_we_love_it: '',
+    best_placed_at:
+      'Elewen recommends making Under The Lights the focal point for your close-circle gatherings, a corner designed to slow down, laugh longer, and spend your time with the people who matter most.',
+    why_we_love_it:
+      'It shifts the mood from casual to intimate, making every person present feel seen and special. Whether it’s quiet, cozy moments or mimosa-filled gossip sessions, this setup creates a space that invites connection and comfort.',
     theme_slug_candidates: ['pastel', 'under-the-lights-canopy'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
       { label: 'Canopy Wooden Structure', amount: 8000 },
       { label: 'Fairy Light and Disco Ball Strings', amount: 3000 },
@@ -302,16 +336,16 @@ const PASTEL_PACKAGES = [
       { label: 'Fabric draping on table', amount: 1000 },
       { label: '8 Cushions', amount: 4000 },
       { label: 'Platform fee', amount: 2000 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Wooden canopy', group_title: 'Includes' },
-      { text: '5 fairy light strings', group_title: 'Includes' },
-      { text: 'Disco balls / lanterns', group_title: 'Includes' },
-      { text: '2 tables', group_title: 'Includes' },
-      { text: 'Gadda and carpet', group_title: 'Includes' },
-      { text: 'Table fabric draping', group_title: 'Includes' },
-      { text: '8 cushions', group_title: 'Includes' },
+      { text: 'Canopy Wooden Structure' },
+      { text: '5 strings of Fairy Lights' },
+      { text: 'Disco Ball/ Lanterns on Strings' },
+      { text: '2 tables (seats 8)' },
+      { text: 'Gadda and Carpet to form base' },
+      { text: 'Fabric draping on table' },
+      { text: '8 Cushions' },
     ],
   },
   {
