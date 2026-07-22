@@ -304,13 +304,88 @@ function justEnoughMagic3Inclusions() {
   ];
 }
 
+function airWeGoMeta(overrides = {}) {
+  return baseMeta({
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    setup_needs:
+      'A small area for our team to work, access to water and electricity. Final images prior to the event (timeline will be suggested by team Elewen after booking).',
+    why_we_love_it:
+      'Balloons have a unique way of lifting the spirit of a room, turning a simple gathering into a vibrant celebration that feels both lighthearted and intentionally styled.',
+    price_covers: [
+      { text: 'The Complete Look' },
+      { text: 'Professional Setup' },
+      { text: 'Final Dismantling' },
+      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+      { text: 'No hidden service fees.' },
+    ],
+    ...overrides,
+  });
+}
+
 function airWeGo1Inclusions() {
   return [
-    { text: '7 loose helium balloons', group_title: 'Balloon Styling' },
-    choiceOption('awg1-standee', 'Standee or Bouquet (choose 1)', 'Small standee'),
-    choiceOption('awg1-standee', 'Standee or Bouquet (choose 1)', 'Balloon bouquet'),
-    choiceOption('awg1-arch', 'Balloon Arch (choose 1)', 'Balloon arch'),
-    choiceOption('awg1-arch', 'Balloon Arch (choose 1)', '20 balloons stuck on ceiling with ribbons'),
+    choiceOption('awg1-entry', 'Helium or Standee (choose 1)', 'Loose Helium 7'),
+    whenInclusion('awg1-entry', 'Loose Helium 7', '7 loose helium balloons'),
+    choiceOption('awg1-entry', 'Helium or Standee (choose 1)', 'Small standee / balloon bouquet'),
+    whenInclusion(
+      'awg1-entry',
+      'Small standee / balloon bouquet',
+      '1 small standee or balloon bouquet'
+    ),
+    choiceOption('awg1-arch', 'Balloon Arch (choose 1)', 'Balloon arch with sign'),
+    whenInclusion('awg1-arch', 'Balloon arch with sign', 'Balloon arch with sign'),
+    choiceOption(
+      'awg1-arch',
+      'Balloon Arch (choose 1)',
+      '20 balloons stuck on ceiling with ribbons'
+    ),
+    whenInclusion(
+      'awg1-arch',
+      '20 balloons stuck on ceiling with ribbons',
+      '20 balloons stuck on the ceiling with ribbons'
+    ),
+  ];
+}
+
+function airWeGo23Inclusions() {
+  return [
+    {
+      text: 'Shiny wall with balloon décor (6×6 ft)',
+      group_title: 'Backdrop',
+    },
+    choiceOption('awg23-helium', 'Helium or Standee (choose 1)', 'Loose Helium 20'),
+    whenInclusion('awg23-helium', 'Loose Helium 20', '20 loose helium balloons'),
+    choiceOption('awg23-helium', 'Helium or Standee (choose 1)', '2 small standees / bouquet'),
+    whenInclusion(
+      'awg23-helium',
+      '2 small standees / bouquet',
+      '2 small standees or balloon bouquet'
+    ),
+    choiceOption('awg23-accent', 'Neon or Cake Table (choose 1)', 'Custom neon sign'),
+    whenInclusion(
+      'awg23-accent',
+      'Custom neon sign',
+      'Custom neon sign — mention your occasion / text when booking'
+    ),
+    choiceOption('awg23-accent', 'Neon or Cake Table (choose 1)', 'Cake table'),
+    whenInclusion('awg23-accent', 'Cake table', 'Styled cake table'),
+  ];
+}
+
+function airWeGo3Inclusions() {
+  // Includes section is customer-facing source of truth (helium 10 / 1 standee + both backdrop & 3D).
+  return [
+    choiceOption('awg3-helium', 'Helium or Standee (choose 1)', 'Loose Helium 10'),
+    whenInclusion('awg3-helium', 'Loose Helium 10', '10 loose helium balloons'),
+    choiceOption('awg3-helium', 'Helium or Standee (choose 1)', 'Small standee / balloon bouquet'),
+    whenInclusion(
+      'awg3-helium',
+      'Small standee / balloon bouquet',
+      '1 small standee or balloon bouquet'
+    ),
+    { text: 'Balloon backdrop', group_title: 'Backdrop' },
+    { text: '3D numbers (2)', group_title: 'Statement Element' },
   ];
 }
 
@@ -509,16 +584,17 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_slug_candidates: parentThemeCandidates('air-we-go'),
     budget_level_slug: 'level-1',
     base_price: 5605,
-    description: 'Designed to instantly amp up your space and create a refined, celebratory atmosphere.',
+    description:
+      'Designed to instantly amp up your space and create a refined, celebratory atmosphere.',
     key_decor_elements:
-      'Helium balloons with a standee or bouquet and an arch or ceiling balloon option.',
-    ...baseMeta({
-      why_we_love_it:
-        'Balloons lift the spirit of a room, turning a simple gathering into a vibrant celebration.',
-    }),
+      'Choose helium or a standee/bouquet, plus an arch or ceiling balloon ribbon setup.',
+    ...airWeGoMeta(),
     price_breakdown: [
+      { label: 'Loose Helium 7 / Small Standee (avg)', amount: 1250 },
+      { label: 'Balloon Arch / Ceiling balloons (avg)', amount: 2850 },
+      { label: 'Package Price', amount: 4550 },
       { label: 'Platform fee', amount: 455 },
-      { label: 'Labour & Transport', amount: 600 },
+      { label: 'Transport', amount: 600 },
     ],
     inclustions: airWeGo1Inclusions(),
   },
@@ -530,22 +606,26 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_slug_candidates: parentThemeCandidates('air-we-go'),
     budget_level_slug: 'level-2',
     base_price: 4010,
-    description: 'Designed to instantly amp up your space and create a refined, celebratory atmosphere.',
-    key_decor_elements: 'Balloon arch, cake table, birthday digits, and celebration bunting.',
-    ...baseMeta({
-      why_we_love_it:
-        'Balloons lift the spirit of a room, turning a simple gathering into a vibrant celebration.',
-    }),
+    description:
+      'Designed to instantly amp up your space and create a refined, celebratory atmosphere.',
+    key_decor_elements:
+      'Balloon arch, cake table, birthday digits standee, and celebration bunting.',
+    ...airWeGoMeta(),
     price_breakdown: [
       { label: 'Balloon Arch with sign and digits', amount: 2100 },
       { label: 'Cake Table', amount: 1000 },
+      { label: 'Package Price', amount: 3100 },
       { label: 'Platform fee', amount: 310 },
+      { label: 'Transport fee', amount: 600 },
     ],
     inclustions: [
       { text: 'Balloon arch with sign', group_title: 'Balloon Styling' },
       { text: 'Cake table', group_title: 'Cake Table' },
       { text: 'Birthday digits balloon standee', group_title: 'Balloon Styling' },
-      { text: 'Happy Birthday / celebration bunting', group_title: 'Signage' },
+      {
+        text: 'Happy Birthday / celebration bunting — mention your occasion when booking',
+        group_title: 'Signage',
+      },
     ],
   },
   {
@@ -556,23 +636,20 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_slug_candidates: parentThemeCandidates('air-we-go'),
     budget_level_slug: 'level-2',
     base_price: 11499,
-    description: 'Designed to instantly amp up your space and create a refined, celebratory atmosphere.',
-    key_decor_elements: 'Shiny wall with balloons, helium or standees, neon, and cake table.',
-    ...baseMeta({
-      why_we_love_it:
-        'Balloons lift the spirit of a room, turning a simple gathering into a vibrant celebration.',
-    }),
+    description:
+      'Designed to instantly amp up your space and create a refined, celebratory atmosphere.',
+    key_decor_elements:
+      '6×6 shiny balloon wall, helium or standees, plus neon sign or cake table.',
+    ...airWeGoMeta(),
     price_breakdown: [
       { label: 'Shiny wall with balloon decor', amount: 6000 },
+      { label: 'Loose Helium 20 / 2 standees', amount: 2100 },
+      { label: 'Neon sign / Cake table', amount: 1000 },
+      { label: 'Package Price', amount: 9999 },
       { label: 'Platform fee', amount: 1000 },
+      { label: 'Transport Fee', amount: 500 },
     ],
-    inclustions: [
-      { text: 'Shiny wall with balloon décor (6×6 ft)', group_title: 'Backdrop' },
-      choiceOption('awg23-helium', 'Helium or Standee (choose 1)', '20 loose helium balloons'),
-      choiceOption('awg23-helium', 'Helium or Standee (choose 1)', '2 small standees / bouquet'),
-      choiceOption('awg23-neon', 'Neon Sign (choose 1)', 'Custom neon sign'),
-      { text: 'Cake table', group_title: 'Cake Table' },
-    ],
+    inclustions: airWeGo23Inclusions(),
   },
   {
     sheet: 'AWG3',
@@ -582,22 +659,20 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_slug_candidates: parentThemeCandidates('air-we-go'),
     budget_level_slug: 'level-3',
     base_price: 13030,
-    description: 'Designed to instantly amp up your space and create a refined, celebratory atmosphere.',
-    key_decor_elements: 'Helium or standee choice, balloon backdrop, and 3D numbers.',
-    ...baseMeta({
-      why_we_love_it:
-        'Balloons lift the spirit of a room, turning a simple gathering into a vibrant celebration.',
-    }),
+    description:
+      'Designed to instantly amp up your space and create a refined, celebratory atmosphere.',
+    key_decor_elements:
+      'Helium or standee choice, balloon backdrop, and 3D numbers.',
+    ...airWeGoMeta(),
     price_breakdown: [
+      { label: 'Loose Helium / Standee', amount: 2100 },
+      { label: 'Balloon backdrop with shiny wall', amount: 6000 },
       { label: '3D Numbers (2)', amount: 2000 },
+      { label: 'Package Price', amount: 11300 },
       { label: 'Platform fee', amount: 1130 },
+      { label: 'Transport fee', amount: 600 },
     ],
-    inclustions: [
-      choiceOption('awg3-helium', 'Helium or Standee (choose 1)', '10 loose helium balloons'),
-      choiceOption('awg3-helium', 'Helium or Standee (choose 1)', 'Small standee / bouquet'),
-      { text: 'Balloon backdrop', group_title: 'Backdrop' },
-      { text: '3D numbers (2)', group_title: 'Statement Element' },
-    ],
+    inclustions: airWeGo3Inclusions(),
   },
   // The First Layer 1–3 live in decor-bohemian-packages.js (Bohemian Excel).
   {
@@ -1027,6 +1102,11 @@ async function seedDecorHousePartyBirthdayPackages(strapi) {
     name: 'Phool-Proof',
     slug: 'phool-proof',
     display_order: 30,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Air We Go',
+    slug: 'air-we-go',
+    display_order: 31,
   });
   await ensureEventDocumentId(strapi, {
     name: 'Birthday Parties',

@@ -76,6 +76,10 @@ async function main() {
     console.log('[seed/decor-house-party-birthday] done:', JSON.stringify(summary, null, 2));
     await dumpSlug(app, 'phool-proof-1');
     await dumpSlug(app, 'phool-proof-2');
+    await dumpSlug(app, 'air-we-go-1');
+    await dumpSlug(app, 'air-we-go-2');
+    await dumpSlug(app, 'air-we-go-2-3');
+    await dumpSlug(app, 'air-we-go-3');
   } finally {
     await app.destroy();
   }
