@@ -58,10 +58,7 @@ function parseDeliveryChargeCsv(content) {
 }
 
 function loadDeliveryChargeRows() {
-  if (fs.existsSync(CSV_PATH)) {
-    return parseDeliveryChargeCsv(fs.readFileSync(CSV_PATH, 'utf8'));
-  }
-
+  // Prefer JSON seed (Location sheet) over CSV when present.
   for (const jsonPath of JSON_PATHS) {
     if (!fs.existsSync(jsonPath)) continue;
     const rows = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
@@ -70,25 +67,73 @@ function loadDeliveryChargeRows() {
     }
   }
 
+  if (fs.existsSync(CSV_PATH)) {
+    return parseDeliveryChargeCsv(fs.readFileSync(CSV_PATH, 'utf8'));
+  }
+
   throw new Error(
-    `[seed/delivery-charges] No data source found. Expected CSV at ${CSV_PATH} or JSON in strapi/src/seed/delivery-charges-data.json`
+    `[seed/delivery-charges] No data source found. Expected JSON in strapi/src/seed/delivery-charges-data.json or CSV at ${CSV_PATH}`
   );
 }
 
-async function seedDeliveryCharges(strapi) {
-  const existing = await strapi.documents('api::delivery-charge.delivery-charge').findMany({
-    status: 'published',
-    limit: 1,
-  });
+function shouldRefreshExistingDelivery() {
+  return process.env.SEED_DELIVERY_REFRESH_EXISTING === 'true';
+}
 
-  if (Array.isArray(existing) && existing.length > 0) {
-    return { skipped: true, created: 0, total: existing.length };
-  }
+async function seedDeliveryCharges(strapi, options = {}) {
+  const refresh =
+    typeof options.refreshExisting === 'boolean'
+      ? options.refreshExisting
+      : shouldRefreshExistingDelivery();
 
   const rows = loadDeliveryChargeRows();
   let created = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  if (!refresh) {
+    const existing = await strapi.documents('api::delivery-charge.delivery-charge').findMany({
+      status: 'published',
+      limit: 1,
+    });
+
+    if (Array.isArray(existing) && existing.length > 0) {
+      return { skipped: true, created: 0, updated: 0, total: existing.length };
+    }
+  }
 
   for (const row of rows) {
+    const found = await strapi.documents('api::delivery-charge.delivery-charge').findMany({
+      filters: { pincode: { $eq: row.pincode } },
+      status: 'published',
+      limit: 1,
+    });
+
+    const existing = Array.isArray(found) ? found[0] : null;
+
+    if (existing?.documentId) {
+      if (!refresh) {
+        skipped += 1;
+        continue;
+      }
+
+      await strapi.documents('api::delivery-charge.delivery-charge').update({
+        documentId: existing.documentId,
+        data: {
+          location: row.location,
+          addon_600: row.addon_600,
+          addon_1200: row.addon_1200,
+          addon_3200: row.addon_3200,
+          is_active: row.is_active !== false,
+        },
+      });
+      await strapi.documents('api::delivery-charge.delivery-charge').publish({
+        documentId: existing.documentId,
+      });
+      updated += 1;
+      continue;
+    }
+
     const entry = await strapi.documents('api::delivery-charge.delivery-charge').create({
       data: row,
     });
@@ -101,7 +146,7 @@ async function seedDeliveryCharges(strapi) {
     }
   }
 
-  return { skipped: false, created, total: created };
+  return { skipped: false, created, updated, skippedRows: skipped, total: rows.length };
 }
 
 module.exports = {

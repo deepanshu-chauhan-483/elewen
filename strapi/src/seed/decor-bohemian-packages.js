@@ -14,6 +14,98 @@ const EVENT_SLUG_CANDIDATES = [
   'birthday-party',
 ];
 
+function choiceOption(groupKey, label, optionTitle, options = {}) {
+  const row = {
+    is_choice_group: true,
+    choice_group_key: groupKey,
+    choice_group_label: label,
+    group_title: label,
+    text: optionTitle,
+  };
+
+  if (options.amount != null) {
+    row._choice_amount = options.amount;
+  }
+
+  return row;
+}
+
+function whenInclusion(parentKey, parentValue, text) {
+  return {
+    text,
+    group_title: `when:${parentKey}:${parentValue}`,
+  };
+}
+
+const FIRST_LAYER_NITTY =
+  'Love the look but want a different colour or style direction? Go ahead and book, we’ll connect to customise to match your event vibe.';
+
+const FIRST_LAYER_PRICE_COVERS = [
+  { text: 'The Complete Look' },
+  { text: 'Professional Setup' },
+  { text: 'Final Dismantling' },
+  { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+  { text: 'No hidden service fees.' },
+];
+
+const FIRST_LAYER_SETUP =
+  'A small area for our team to work and access to water & electricity. Final print content to be shared prior to the event (timeline will be suggested by team Elewen after booking).';
+
+const FIRST_LAYER_BEST =
+  'Home celebrations, terraces, small banquet halls, cafés, or party venues.';
+
+const FIRST_LAYER_WHY =
+  'It creates visible impact with minimal elements. Simple styling, clear focal points, and just enough detail to make the space feel decorated.';
+
+function firstLayerDecorChoice(prefix, { floralLabel, balloonArchLabel }) {
+  return [
+    choiceOption(`${prefix}-decor`, 'Floral or Balloon Decor (choose 1)', floralLabel),
+    whenInclusion(
+      `${prefix}-decor`,
+      floralLabel,
+      '5 centerpieces + 4 crates/urli + 5–7 candles (entrance/corner setup)'
+    ),
+    choiceOption(`${prefix}-decor`, 'Floral or Balloon Decor (choose 1)', balloonArchLabel),
+    whenInclusion(
+      `${prefix}-decor`,
+      balloonArchLabel,
+      'Balloon arch + balloon sign + 5 centerpieces'
+    ),
+    choiceOption(
+      `${prefix}-decor`,
+      'Floral or Balloon Decor (choose 1)',
+      'Ring balloon backdrop with neon sign'
+    ),
+    whenInclusion(
+      `${prefix}-decor`,
+      'Ring balloon backdrop with neon sign',
+      'Ring balloon backdrop with neon sign'
+    ),
+  ];
+}
+
+function firstLayerSignageChoice(prefix) {
+  return [
+    choiceOption(`${prefix}-signage`, 'Entry Signage (choose 1)', 'Easel with sign'),
+    whenInclusion(
+      `${prefix}-signage`,
+      'Easel with sign',
+      'Easel with sign (recommended with floral entrance styling)'
+    ),
+    choiceOption(`${prefix}-signage`, 'Entry Signage (choose 1)', 'Printables + Props'),
+    whenInclusion(
+      `${prefix}-signage`,
+      'Printables + Props',
+      '1 fun quote / bar menu / 1 neon sign + 15 colourful shot glasses'
+    ),
+  ];
+}
+
+// HH / other Bohemian packs still use coaster-style entry rows (kept for reference packs below).
+
+const FIRST_LAYER_DESCRIPTION =
+  'A foundational décor package that sets the tone of your celebration.';
+
 const BOHEMIAN_PACKAGES = [
   {
     sheet: 'FL 1',
@@ -21,38 +113,29 @@ const BOHEMIAN_PACKAGES = [
     slug: 'the-first-layer-1',
     theme_name: 'The First Layer',
     budget_level_slug: 'level-1',
-    base_price: 6980,
-    description: 'Create an immediate sense of warmth from the moment your guests arrive. The Sign & Stem package blends wooden textures with organic florals to set a soulful, bohemian tone for your gathering. A minimalist approach that will never lead you astray.',
-    key_decor_elements: 'Create an immediate sense of warmth from the moment your guests arrive. The Sign & Stem package blends wooden textures with organic florals to set a soulful, bohemian tone for your gathering.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: '',
-    why_we_love_it: 'It serves as the primary "hello," bridging the gap between the exterior world and the curated atmosphere of your event.',
+    base_price: 13250,
+    description: FIRST_LAYER_DESCRIPTION,
+    key_decor_elements:
+      'An impressive entrance along with 5 floral vases that you can set anywhere to enhance the look. Could be further paired with thoughtful detailing with quotes on small easel stands.',
+    nitty_gritty: FIRST_LAYER_NITTY,
+    setup_needs: FIRST_LAYER_SETUP,
+    best_placed_at: FIRST_LAYER_BEST,
+    why_we_love_it: FIRST_LAYER_WHY,
     theme_slug_candidates: ['the-first-layer', 'bohemian'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'Final Dismantling' },
-      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: FIRST_LAYER_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Entry Sign board', amount: 900 },
-      { label: 'Entry Stand', amount: 400 },
-      { label: 'Flower Set up on entry', amount: 1000 },
-      { label: 'Wooden Coaster', amount: 500 },
-      { label: 'Vase', amount: 1000 },
-      { label: 'Bunch of flowers', amount: 2000 },
-      { label: 'Platform fee', amount: 580 },
-      { label: 'Labour & Transport', amount: 600 },
+      { label: 'Floral / Balloon decor (avg)', amount: 7433 },
+      { label: 'Entry Signage / Printables', amount: 1500 },
+      { label: 'Package Price', amount: 11500 },
+      { label: 'Platform fee', amount: 1150 },
+      { label: 'Transport and Labour', amount: 600 },
     ],
-    // PDP sections (Figma): group_title drives Entry setup / Centrepieces rows
     inclustions: [
-      { text: '1 entry easel', group_title: 'Entry setup' },
-      { text: '1 entry board', group_title: 'Entry setup' },
-      { text: 'Complete flower decor (using real flowers)', group_title: 'Entry setup' },
-      { text: '5 wooden coasters', group_title: 'Centrepieces' },
-      { text: '5 vases with 5 bunches of real flowers', group_title: 'Centrepieces' },
+      ...firstLayerDecorChoice('fl1', {
+        floralLabel: 'Floral decor',
+        balloonArchLabel: 'Balloon arch décor',
+      }),
+      ...firstLayerSignageChoice('fl1'),
     ],
   },
   {
@@ -61,38 +144,29 @@ const BOHEMIAN_PACKAGES = [
     slug: 'the-first-layer-2',
     theme_name: 'The First Layer',
     budget_level_slug: 'level-2',
-    base_price: 9070,
-    description: 'Create an immediate sense of warmth from the moment your guests arrive. The Sign & Stem package blends wooden textures with organic florals to set a soulful, bohemian tone for your gathering. A minimalist approach that will never lead you astray.',
-    key_decor_elements: 'Create an immediate sense of warmth from the moment your guests arrive. The Sign & Stem package blends wooden textures with organic florals to set a soulful, bohemian tone for your gathering.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: '',
-    why_we_love_it: 'It serves as the primary "hello," bridging the gap between the exterior world and the curated atmosphere of your event.',
+    base_price: 15670,
+    description: FIRST_LAYER_DESCRIPTION,
+    key_decor_elements:
+      'An impressive entrance along with 5 premium floral vases that you can set anywhere to enhance the look. Could be further paired with thoughtful detailing with quotes on small easel stands.',
+    nitty_gritty: FIRST_LAYER_NITTY,
+    setup_needs: FIRST_LAYER_SETUP,
+    best_placed_at: FIRST_LAYER_BEST,
+    why_we_love_it: FIRST_LAYER_WHY,
     theme_slug_candidates: ['the-first-layer', 'bohemian'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'Final Dismantling' },
-      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: FIRST_LAYER_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Entry Sign board', amount: 900 },
-      { label: 'Entry Stand', amount: 400 },
-      { label: 'Flower Set up on entry', amount: 1000 },
-      { label: 'Wooden Coaster', amount: 500 },
-      { label: 'Vase', amount: 1000 },
-      { label: 'Bunch of flowers', amount: 3900 },
-      { label: 'Platform fee', amount: 770 },
-      { label: 'Labour & Transport', amount: 600 },
+      { label: 'Floral / Balloon decor (premium)', amount: 9700 },
+      { label: 'Entry Signage / Printables', amount: 4000 },
+      { label: 'Package Price', amount: 13700 },
+      { label: 'Platform fee', amount: 1370 },
+      { label: 'Transport and Labour', amount: 600 },
     ],
     inclustions: [
-      { text: '1 entry easel', group_title: 'Entry setup' },
-      { text: '1 entry board', group_title: 'Entry setup' },
-      { text: 'Complete flower decor (using real flowers)', group_title: 'Entry setup' },
-      { text: '6 wooden coasters', group_title: 'Centrepieces' },
-      { text: '3 floral vases', group_title: 'Centrepieces' },
-      { text: '3 candle florals', group_title: 'Centrepieces' },
+      ...firstLayerDecorChoice('fl2', {
+        floralLabel: 'Floral decor (premium flowers)',
+        balloonArchLabel: 'Balloon arch décor (premium mix)',
+      }),
+      ...firstLayerSignageChoice('fl2'),
     ],
   },
   {
@@ -101,21 +175,17 @@ const BOHEMIAN_PACKAGES = [
     slug: 'the-first-layer-3',
     theme_name: 'The First Layer',
     budget_level_slug: 'level-3',
+    // Full LEVEL 3 cost sheet was not provided — keep structure Figma-aligned like L2.
     base_price: 12200,
-    description: 'Create an immediate sense of warmth from the moment your guests arrive. The Sign & Stem package blends wooden textures with organic florals to set a soulful, bohemian tone for your gathering. A minimalist approach that will never lead you astray.',
-    key_decor_elements: 'Create an immediate sense of warmth from the moment your guests arrive. The Sign & Stem package blends wooden textures with organic florals to set a soulful, bohemian tone for your gathering.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: '',
-    why_we_love_it: 'It serves as the primary "hello," bridging the gap between the exterior world and the curated atmosphere of your event.',
+    description: FIRST_LAYER_DESCRIPTION,
+    key_decor_elements:
+      'An impressive entrance with premium floral or balloon styling, plus entry signage or printables/props.',
+    nitty_gritty: FIRST_LAYER_NITTY,
+    setup_needs: FIRST_LAYER_SETUP,
+    best_placed_at: FIRST_LAYER_BEST,
+    why_we_love_it: FIRST_LAYER_WHY,
     theme_slug_candidates: ['the-first-layer', 'bohemian'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'Final Dismantling' },
-      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: FIRST_LAYER_PRICE_COVERS,
     price_breakdown: [
       { label: 'Entry Mirror + candles', amount: 4500 },
       { label: 'Pampous', amount: 1000 },
@@ -124,12 +194,11 @@ const BOHEMIAN_PACKAGES = [
       { label: 'Labour & Transport', amount: 1200 },
     ],
     inclustions: [
-      { text: '1 engraved mirror', group_title: 'Entry setup' },
-      { text: '10 tealight holders', group_title: 'Entry setup' },
-      { text: 'Flower decor with disco balls', group_title: 'Entry setup' },
-      { text: '6 wooden coasters', group_title: 'Centrepieces' },
-      { text: '3 floral vases', group_title: 'Centrepieces' },
-      { text: '3 candle florals', group_title: 'Centrepieces' },
+      ...firstLayerDecorChoice('fl3', {
+        floralLabel: 'Floral decor (premium flowers)',
+        balloonArchLabel: 'Balloon arch décor (premium mix)',
+      }),
+      ...firstLayerSignageChoice('fl3'),
     ],
   },
   {
