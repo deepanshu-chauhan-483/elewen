@@ -65,12 +65,17 @@ DEFAULT_SETUP = "A small area for our team to work, access to water and electric
 PRICE_COVERS = [
     {"text": "The Complete Look"},
     {"text": "Professional Setup"},
+    {"text": "Final Dismantling"},
+    {"text": "Coordination with decor team handled end-to-end to ensure timely setup."},
     {"text": "No hidden service fees."},
 ]
 
 # Card chips must stay short (Baby Shower style). Excel "What's Included" is often too long.
 SHORT_CARD_TAGS: dict[str, list[str]] = {
-    "Del1": ["5 glass floral vases", "20 pastel pillar candles"],
+    "Del1": [
+        "5 Small glass vases with bunches of floral arrangements",
+        "20 Pillar Pastel or neutral-toned candles with Ribbon detailing on candles",
+    ],
     "FF1": ["Custom engraved mirror", "4 big artificial flowers", "Base artificial flowers"],
     "FF2": ["Custom engraved mirror", "Real flower mirror decor", "3 big artificial flowers"],
     "FF3": ["Printed panel backdrop", "Real flower decoration", "Pillar candles in glasses"],

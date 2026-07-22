@@ -14,6 +14,14 @@ const EVENT_SLUG_CANDIDATES = [
   'birthday-party',
 ];
 
+const PASTEL_PRICE_COVERS = [
+  { text: 'The Complete Look' },
+  { text: 'Professional Setup' },
+  { text: 'Final Dismantling' },
+  { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+  { text: 'No hidden service fees.' },
+];
+
 const PASTEL_PACKAGES = [
   {
     sheet: 'Del1',
@@ -22,27 +30,31 @@ const PASTEL_PACKAGES = [
     theme_name: 'Delilah',
     budget_level_slug: 'level-1',
     base_price: 4340,
-    description: 'Delilah is that thoughtful little accent you don’t always notice at first, but once it\'s there, everything feels complete.',
-    key_decor_elements: 'Delilah is that thoughtful little accent you don’t always notice at first, but once it\'s there, everything feels complete.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      "Delilah is that thoughtful little accent you don't always notice at first, but once it's there, everything feels complete.",
+    key_decor_elements:
+      "Delilah is that thoughtful little accent you don't always notice at first, but once it's there, everything feels complete.",
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Light, delicate, and endlessly versatile, Delilah can be arranged in more ways than we can count to elevate any table, bar, entryway, or corner.',
-    why_we_love_it: '',
+    best_placed_at:
+      'Light, delicate, and endlessly versatile, Delilah can be arranged in more ways than we can count to elevate any table, bar, entryway, or corner.',
+    why_we_love_it:
+      'Elewen recommends using Delilah as table centrepieces in pairs, styled with a ribboned candle to gently light up the space and add that perfect pastel touch. Small in size, big on charm.',
     theme_slug_candidates: ['pastel', 'delilah'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
       { label: '5 Small glass vases with delicate floral arrangements', amount: 1500 },
-      { label: '20 Pillar Pastel or neutral-toned candles with Ribbon detailing on candles', amount: 1900 },
+      {
+        label: '20 Pillar Pastel or neutral-toned candles with Ribbon detailing on candles',
+        amount: 1900,
+      },
       { label: 'Platform fee', amount: 340 },
-      { label: 'Labour & Transport', amount: 600 },
+      { label: 'Transportation and Labour Cost', amount: 600 },
     ],
     inclustions: [
-      { text: '5 glass floral vases', group_title: 'Includes' },
-      { text: '20 pastel pillar candles', group_title: 'Includes' },
+      { text: '5 Small glass vases with bunches of floral arrangements' },
+      { text: '20 Pillar Pastel or neutral-toned candles with Ribbon detailing on candles' },
     ],
   },
   {
