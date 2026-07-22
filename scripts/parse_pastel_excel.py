@@ -116,8 +116,16 @@ SHORT_CARD_TAGS: dict[str, list[str]] = {
         "Fabric draping on table",
         "8 Cushions",
     ],
-    "PIP1": ["Single panel backdrop", "Balloon or floral decor", "Happy Birthday neon", "Cake table"],
-    "Pip2": ["Double panel backdrop", "Custom message board", "Cake table"],
+    "PIP1": [
+        "Single Panel Backdrop (Dimensions - 8ft. x 4ft.)",
+        "Happy Birthday Neon Sign",
+        "Cake Table",
+    ],
+    "Pip2": [
+        "Custom shape Double Panel Backdrop",
+        "Custom Message on Board",
+        "Cake table",
+    ],
     "SS1": ["Basic bar", "Custom bar menu + easel", "3 cocktail tables", "3 small centrepieces"],
     "SS2": [
         "Wooden bar",

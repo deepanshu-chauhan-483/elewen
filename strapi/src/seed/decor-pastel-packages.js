@@ -355,31 +355,38 @@ const PASTEL_PACKAGES = [
     theme_name: 'Pretty in Pastel',
     budget_level_slug: 'level-1',
     base_price: 15520,
-    description: 'Designed with a gentle color palette and modern accents, this set is perfect for those who want a sophisticated yet playful backdrop for their important moments.',
-    key_decor_elements: 'Designed with a gentle color palette and modern accents, this set is perfect for those who want a sophisticated yet playful backdrop for their important moments.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      'Designed with a gentle color palette and modern accents, this set is perfect for those who want a sophisticated yet playful backdrop for their important moments.',
+    key_decor_elements:
+      'Designed with a gentle color palette and modern accents, this set is perfect for those who want a sophisticated yet playful backdrop for their important moments.',
+    nitty_gritty:
+      'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: '',
     why_we_love_it: '',
     theme_slug_candidates: ['pastel', 'pretty-in-pastel'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
       { label: 'Single Panel Backdrop', amount: 6000 },
-      { label: 'Complete balloon Decor on Backdrop with 2 LED letters (Dimensions - 8x4ft.)', amount: 4000 },
-      { label: 'Happy Birthaday neon sign', amount: 600 },
+      {
+        label: 'Complete balloon Decor on Backdrop with 2 LED letters (Dimensions - 8x4ft.)',
+        amount: 4000,
+      },
+      { label: 'Happy Birthday neon sign', amount: 600 },
       { label: 'Cake table', amount: 600 },
       { label: 'Platform fee', amount: 1120 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Single panel backdrop', group_title: 'Includes' },
-      { text: 'Balloon or floral decor', group_title: 'Includes' },
-      { text: 'Happy Birthday neon', group_title: 'Includes' },
-      { text: 'Cake table', group_title: 'Includes' },
+      { text: 'Single Panel Backdrop (Dimensions - 8ft. x 4ft.)' },
+      choiceOption(
+        'pip1-backdrop-decor',
+        'Choose 1',
+        'Complete balloon Decor on Backdrop with 2 LED letters (Dimensions - 8x4ft.)'
+      ),
+      choiceOption('pip1-backdrop-decor', 'Choose 1', 'Complete Floral Decor on Backdrop'),
+      { text: 'Happy Birthday Neon Sign' },
+      { text: 'Cake Table' },
     ],
   },
   {
@@ -389,28 +396,30 @@ const PASTEL_PACKAGES = [
     theme_name: 'Pretty in Pastel',
     budget_level_slug: 'level-2',
     base_price: 16050,
-    description: 'Designed with a gentle color palette and modern accents, this set is perfect for those who want a sophisticated yet playful backdrop for their important moments.',
-    key_decor_elements: 'Designed with a gentle color palette and modern accents, this set is perfect for those who want a sophisticated yet playful backdrop for their important moments.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We\'ll contact you to finalize the perfect shade from our available decor to match your vibe.',
+    description:
+      'Designed with a gentle color palette and modern accents, this set is perfect for those who want a sophisticated yet playful backdrop for their important moments.',
+    key_decor_elements:
+      'Designed with a gentle color palette and modern accents, this set is perfect for those who want a sophisticated yet playful backdrop for their important moments.',
+    nitty_gritty:
+      "Love the look but need a different color? go ahead and book! We'll contact you to finalize the perfect shade from our available decor to match your vibe.",
     setup_needs: 'A small area for our team to work, access to water and electricity.',
     best_placed_at: '',
     why_we_love_it: '',
     theme_slug_candidates: ['pastel', 'pretty-in-pastel'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PASTEL_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Custom shape Double Panel Backdrop (dimension of both the panels - 8x8)', amount: 12000 },
+      {
+        label: 'Custom shape Double Panel Backdrop (dimension of both the panels - 8x8)',
+        amount: 12000,
+      },
       { label: 'Cake table', amount: 1500 },
       { label: 'Platform fee', amount: 1350 },
-      { label: 'Labour & Transport', amount: 1200 },
+      { label: 'Transportation and Labour Cost', amount: 1200 },
     ],
     inclustions: [
-      { text: 'Double panel backdrop', group_title: 'Includes' },
-      { text: 'Custom message board', group_title: 'Includes' },
-      { text: 'Cake table', group_title: 'Includes' },
+      { text: 'Custom shape Double Panel Backdrop' },
+      { text: 'Custom Message on Board' },
+      { text: 'Cake table' },
     ],
   },
   {
