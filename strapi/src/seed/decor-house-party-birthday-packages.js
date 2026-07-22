@@ -96,13 +96,46 @@ function baseMeta(overrides = {}) {
   };
 }
 
-/** Party Smart 1 — primary broken example in UI */
+function partySmartMeta(overrides = {}) {
+  return baseMeta({
+    nitty_gritty:
+      'Love the look but want a different colour or style direction? Go ahead and book, we’ll connect to customise to match your event vibe.',
+    setup_needs:
+      'A small area for our team to work and access to water & electricity. Final print content to be shared prior to the event (timeline will be suggested by team Elewen after booking).',
+    best_placed_at:
+      'Home celebrations, terraces, small banquet halls, cafés, or intimate party venues.',
+    why_we_love_it:
+      'Three strong visual elements and a styled bar — just the right balance to make your event look complete, polished, and photo-ready.',
+    price_covers: [
+      { text: 'The Complete Look' },
+      { text: 'Professional Setup' },
+      { text: 'Final Dismantling' },
+      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+      { text: 'No hidden service fees.' },
+    ],
+    ...overrides,
+  });
+}
+
+function partySmartSocialMeta(overrides = {}) {
+  return partySmartMeta({
+    best_placed_at:
+      'Banquet halls, terraces, farmhouses, garden venues, or home celebrations where you want a strong visual impact.',
+    ...overrides,
+  });
+}
+
+/** Party Smart 1 — Figma choose-1 groups */
 function partySmart1Inclusions() {
   return [
     choiceOption('ps1-styling', 'Floral or Balloon Styling (choose 1)', 'Florals'),
     whenInclusion('ps1-styling', 'Florals', '6 premium table centerpieces'),
     choiceOption('ps1-styling', 'Floral or Balloon Styling (choose 1)', 'Balloons'),
-    whenInclusion('ps1-styling', 'Balloons', 'Balloon arch with sign'),
+    whenInclusion(
+      'ps1-styling',
+      'Balloons',
+      'Balloon arch with sign & balloon structures to form a backdrop with sign'
+    ),
 
     choiceOption('ps1-entry', 'Entry Setup (choose 1)', 'Floral entrance'),
     whenInclusion(
@@ -132,7 +165,7 @@ function partySmart1Inclusions() {
 
     choiceOption('ps1-highlight', 'Highlight Detail (choose 1)', '3D Letters (2)'),
     choiceOption('ps1-highlight', 'Highlight Detail (choose 1)', 'Neon Sign'),
-    whenInclusion('ps1-highlight', 'Neon Sign', 'Happy Birthday / Oh Baby'),
+    whenInclusion('ps1-highlight', 'Neon Sign', '“Happy Birthday” / “Oh Baby”'),
   ];
 }
 
@@ -167,7 +200,7 @@ function partySmart2Inclusions() {
     whenInclusion(
       'ps2-backdrop',
       'Backdrop',
-      'Shiny wall, ring backdrop, or single panel (neon / 3D letters)'
+      'Shiny wall / ring with flowers or balloons / single panel backdrop (with neon sign or 3D letters)'
     ),
     choiceOption('ps2-backdrop', 'Backdrop or Bar (choose 1)', 'Bar'),
     whenInclusion('ps2-backdrop', 'Bar', 'Bar with menu and a floral vase'),
@@ -206,7 +239,10 @@ function partySmart23Inclusions() {
       'Guestbook / Take a Shot / Birthday quote signs with 2 small easels'
     ),
 
-    { text: 'Shiny wall / ring / single panel backdrop', group_title: 'Backdrop' },
+    {
+      text: 'Shiny wall / ring with flowers or balloons / single panel backdrop',
+      group_title: 'Backdrop Setup',
+    },
     { text: 'Bar with menu and a floral vase', group_title: 'Bar Setup' },
     { text: '2 round tables with linen', group_title: 'Furniture' },
     { text: '12 chairs with linen', group_title: 'Furniture' },
@@ -242,7 +278,10 @@ function partySmart3Inclusions() {
       'Guestbook / Take a Shot / Birthday quote signs with 2 small easels'
     ),
 
-    { text: 'Shiny wall / ring / single panel backdrop', group_title: 'Backdrop' },
+    {
+      text: 'Shiny wall / ring with flowers or balloons / single panel backdrop',
+      group_title: 'Backdrop Setup',
+    },
     { text: 'Bar with menu and a floral vase', group_title: 'Bar Setup' },
     { text: '2 round tables', group_title: 'Premium Furniture' },
     { text: '20 comfortable chairs', group_title: 'Premium Furniture' },
@@ -287,20 +326,63 @@ function justEnoughMagic2Inclusions() {
   ];
 }
 
+function justEnoughMagicMeta(overrides = {}) {
+  return baseMeta({
+    nitty_gritty:
+      'Love the look but want a different colour or style direction? Go ahead and book, we’ll connect to customise to match your event vibe.',
+    setup_needs:
+      'A small area for our team to work and access to water & electricity. Final print content to be shared prior to the event (timeline will be suggested by team Elewen after booking).',
+    best_placed_at:
+      'Home celebrations, terraces, small banquet halls, cafés, or party venues.',
+    why_we_love_it: 'Warm vibe. Easy hosting. Just enough to make it feel special.',
+    price_covers: [
+      { text: 'The Complete Look' },
+      { text: 'Professional Setup' },
+      { text: 'Final Dismantling' },
+      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+      { text: 'No hidden service fees.' },
+    ],
+    ...overrides,
+  });
+}
+
 function justEnoughMagic3Inclusions() {
   return [
-    { text: '4 flower vases (big and small) + crates or urlis', group_title: 'Entrance Setup' },
-    { text: '5–7 candles in glasses', group_title: 'Entrance Setup' },
-    { text: 'Easel with welcome sign + florals', group_title: 'Entrance Setup' },
-    { text: 'Basic bar setup', group_title: 'Bar Setup' },
-    { text: 'Photo-op (text/colour customisable post booking)', group_title: 'Photo-op' },
+    choiceOption('jem3-styling', 'Florals or Balloons (choose 1)', 'Florals', {
+      amount: 34660,
+    }),
+    whenInclusion(
+      'jem3-styling',
+      'Florals',
+      '4 centerpieces + entrance setup — crates/urli + 5–7 candles + easel with sign + florals'
+    ),
+    choiceOption('jem3-styling', 'Florals or Balloons (choose 1)', 'Balloons', {
+      amount: 33010,
+    }),
+    whenInclusion(
+      'jem3-styling',
+      'Balloons',
+      '4 centerpieces + entrance setup — crates/urli + 5–7 candles + easel with sign + balloon styling'
+    ),
+    {
+      text: '4 flower vases (big and small) + crates or urlis + 5–7 candles in glasses',
+      group_title: 'Entrance Setup',
+    },
+    {
+      text: 'Easel with welcome sign + florals — text customisable when booking',
+      group_title: 'Entrance Setup',
+    },
+    {
+      text: 'Takht bar with black pleated masking',
+      group_title: 'Basic Bar Setup',
+    },
+    {
+      text: 'Fancy backdrop (shiny / one facade + balloons etc.) — photo-op; text and colour customisable post booking',
+      group_title: 'Photo-op',
+    },
     { text: '1 round table', group_title: 'Premium Furniture' },
     { text: '6 fancy chairs', group_title: 'Premium Furniture' },
     { text: '2 cocktail tables', group_title: 'Premium Furniture' },
-    { text: '1 fun quote', group_title: 'Optional Printables' },
-    { text: 'Bar menu', group_title: 'Optional Printables' },
-    { text: 'Take a Shot sign', group_title: 'Optional Printables' },
-    { text: '1 game suggestion', group_title: 'Optional Printables' },
   ];
 }
 
@@ -403,15 +485,19 @@ function aarambh1Inclusions() {
 
 function auraUpgrade1Inclusions() {
   return [
-    { text: '2 printed quote boards with small easels', group_title: 'Signage & Styling' },
+    { text: '2 printed quote/information boards with small easel stands', group_title: 'Signage & Styling' },
     { text: '2 neon signs', group_title: 'Signage & Styling' },
-    choiceOption('au1-lights', 'Lighting (choose 1)', 'Fairy lights with electrician'),
+    choiceOption('au1-lights', 'Lighting (choose 1)', 'Fairy lights with electrician', {
+      amount: 9950,
+    }),
     whenInclusion(
       'au1-lights',
       'Fairy lights with electrician',
-      '10 strings of fairy lights with electrician setup'
+      '10 strings of fairy lights with electrician for setup'
     ),
-    choiceOption('au1-lights', 'Lighting (choose 1)', 'Fairy lights without electrician'),
+    choiceOption('au1-lights', 'Lighting (choose 1)', 'Fairy lights without electrician', {
+      amount: 6650,
+    }),
     whenInclusion(
       'au1-lights',
       'Fairy lights without electrician',
@@ -839,7 +925,7 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     description:
       'A dedicated bar setup along with seating for guests, designed to instantly lift the energy of your event. Simple, stylish, and functional.',
     key_decor_elements:
-      'Fancy bar, bar menu with easel, neon sign, and furniture for mingling and buffet.',
+      'Premium fancy bar, bar menu, neon sign, and furniture for mingling and buffet.',
     ...raiseTheBarMeta({
       why_we_love_it:
         'Because a defined bar corner changes the vibe instantly. Bar and beer pong — gives guests a clear gathering spot and makes the party feel fun',
@@ -855,15 +941,17 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Transport and Labour', amount: 3200 },
       { label: 'Platform fee', amount: 1420 },
     ],
-    // Includes section is customer-facing source of truth (1 round / 8 chairs).
     inclustions: [
-      { text: 'Fancy / premium bar setup', group_title: 'Premium Bar Setup' },
+      { text: 'Premium fancy bar setup', group_title: 'Premium Bar Setup' },
       { text: 'Bar menu with easel', group_title: 'Bar Essentials' },
       { text: '1 bar-themed neon sign', group_title: 'Bar Props' },
       { text: '1 round table with linen', group_title: 'Furniture' },
       { text: '8 basic chairs with linen', group_title: 'Furniture' },
       { text: '2 basic cocktail tables', group_title: 'Furniture' },
-      { text: '2 rectangle tables for buffet with linen', group_title: 'Furniture' },
+      {
+        text: '2 rectangle tables for buffet with linen',
+        group_title: 'Furniture',
+      },
     ],
     addons: [
       optionalPackageAddon(
@@ -884,13 +972,13 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     description:
       'A dedicated bar setup along with a beer pong table, designed to instantly lift the energy of your event. Simple, stylish, and functional.',
     key_decor_elements:
-      'Premium bar cart, neon, beer pong, and upgraded furniture for a fuller celebration corner.',
+      'Premium bar cart, beer pong, neon sign, and upgraded fancy furniture.',
     ...raiseTheBarMeta({
       why_we_love_it:
         'Because a defined bar corner changes the vibe instantly. Bar and beer pong — gives guests a clear gathering spot and makes the party feel fun',
     }),
     price_breakdown: [
-      { label: 'Fancy Bar cart', amount: 7000 },
+      { label: 'Fancy Bar (cart)', amount: 7000 },
       { label: 'Bar essentials', amount: 500 },
       { label: 'Beer Pong Table Set-up', amount: 1500 },
       { label: '2 fancy round tables', amount: 2500 },
@@ -901,16 +989,18 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
       { label: 'Transport and Labour', amount: 3200 },
       { label: 'Platform fee', amount: 500 },
     ],
-    // Cost sheet furniture (fancy) — Includes text looked copy-pasted from 2/3.
     inclustions: [
-      { text: 'Premium bar cart setup', group_title: 'Premium Bar Cart Setup' },
+      { text: 'Premium bar cart setup', group_title: 'Premium Bar Setup' },
       { text: 'Bar menu with easel', group_title: 'Bar Essentials' },
       { text: '1 bar-themed neon sign', group_title: 'Bar Props' },
       { text: 'Beer pong table setup', group_title: 'Games' },
-      { text: '2 fancy round tables', group_title: 'Furniture' },
-      { text: '20 fancy chairs', group_title: 'Furniture' },
+      { text: '1 round table with linen', group_title: 'Furniture' },
+      { text: '8 basic chairs with linen', group_title: 'Furniture' },
       { text: '2 cocktail tables', group_title: 'Furniture' },
-      { text: '4 rectangle tables for buffet with linen', group_title: 'Furniture' },
+      {
+        text: '2 rectangle tables for buffet with linen',
+        group_title: 'Furniture',
+      },
     ],
     addons: [
       optionalPackageAddon(
@@ -966,14 +1056,28 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_slug_candidates: parentThemeCandidates('just-enough-magic'),
     budget_level_slug: 'level-3',
     base_price: 34660,
-    description: 'An intimate party setup, perfect for small gatherings that need warmth without heavy décor.',
-    key_decor_elements: 'Entrance florals, bar, photo-op, premium furniture, and printables.',
-    ...baseMeta(),
+    description:
+      'An intimate party setup, perfect for small gatherings that need warmth without heavy décor.',
+    key_decor_elements:
+      'Styled entrance with florals and candles, a relaxed bar setup, and comfortable seating that allows Just Enough Magic to happen!!',
+    ...justEnoughMagicMeta(),
     price_breakdown: [
+      { label: 'Florals / balloons (avg)', amount: 9000 },
+      { label: 'Bar setup — takht + black masking', amount: 2500 },
+      { label: 'Furniture (fancy)', amount: 4500 },
+      { label: 'Fancy backdrop / photo-op', amount: 8000 },
+      { label: 'Package Price', amount: 28600 },
       { label: 'Transport and labour', amount: 3200 },
       { label: 'Platform fee', amount: 2860 },
     ],
     inclustions: justEnoughMagic3Inclusions(),
+    addons: [
+      optionalPackageAddon(
+        'Printables pack',
+        1500,
+        '1 fun quote, bar menu, Take a Shot sign, and 1 game suggestion'
+      ),
+    ],
   },
   {
     sheet: 'PS1',
@@ -986,10 +1090,14 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     description:
       'A smart, all-in-one party setup that covers the essentials. Designed for hosts who want the space to look lively, styled, and celebration-ready without going over the top.',
     key_decor_elements:
-      'Choose floral or balloon styling, entry setup, a focal bar or backdrop, and a highlight detail.',
-    ...baseMeta(),
+      'A balanced mix of table styling, entrance decor, a visual focal point (backdrop or bar), and playful signage details that tie the entire party together.',
+    ...partySmartMeta(),
     price_breakdown: [
-      { label: 'Balloon Arch with sign & Balloon structures', amount: 7500 },
+      { label: 'Florals / balloons (avg)', amount: 7500 },
+      { label: 'Entry setup (avg)', amount: 4000 },
+      { label: 'Backdrop or bar (avg)', amount: 8000 },
+      { label: '3D letters / neon (avg)', amount: 1000 },
+      { label: 'Package Price', amount: 20500 },
       { label: 'Labour and transport', amount: 3200 },
       { label: 'Platform fee', amount: 2050 },
     ],
@@ -1006,12 +1114,19 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     description:
       'A smart, all-in-one party setup with styling, backdrop or bar options, and basic furniture.',
     key_decor_elements:
-      'Florals or balloons, entry or printables, backdrop or bar, plus seating furniture.',
-    ...baseMeta(),
+      'Table styling + entrance décor + focal backdrop + bar setup + essential furniture for guest comfort and smooth flow.',
+    ...partySmartMeta({
+      why_we_love_it:
+        'Three strong visual elements and a styled bar along with furniture — just the right balance to make your event look complete, polished, and photo-ready.',
+    }),
     price_breakdown: [
-      { label: 'Balloon Arch with sign', amount: 7500 },
+      { label: 'Florals / balloons (avg)', amount: 7500 },
+      { label: 'Entry setup (avg)', amount: 4000 },
+      { label: 'Backdrop (avg)', amount: 10000 },
+      { label: 'Furniture (basic)', amount: 5300 },
+      { label: 'Package Price', amount: 26800 },
+      { label: 'Transport', amount: 3200 },
       { label: 'Platform fee', amount: 2680 },
-      { label: 'Labour & Transport', amount: 3200 },
     ],
     inclustions: partySmart2Inclusions(),
   },
@@ -1026,13 +1141,21 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     description:
       'A smart, all-in-one party setup with styling, backdrop, bar, and furniture included.',
     key_decor_elements:
-      'Florals or balloons, entry or printables, backdrop, bar, and fuller furniture.',
-    ...baseMeta(),
+      'Table styling, a proper entrance setup, a photo-ready backdrop, a functional bar, and structured seating layout.',
+    ...partySmartMeta({
+      why_we_love_it:
+        'Three strong visual elements and a styled bar — just the right balance to make your event look complete, polished, and photo-ready.',
+    }),
     price_breakdown: [
-      { label: 'Balloon Arch with sign', amount: 7500 },
+      { label: 'Florals / balloons (avg)', amount: 7500 },
+      { label: 'Entry setup (avg)', amount: 4000 },
+      { label: 'Backdrop (avg)', amount: 10000 },
+      { label: 'Bar setup (avg)', amount: 8000 },
+      { label: 'Furniture (basic)', amount: 7000 },
+      { label: 'Package Price', amount: 36500 },
       { label: 'Taxes', amount: 3650 },
       { label: 'Platform fee', amount: 3650 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transport', amount: 3200 },
     ],
     inclustions: partySmart23Inclusions(),
   },
@@ -1046,19 +1169,30 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     base_price: 59960,
     description: 'A full-scale party setup with styling, backdrop, bar, and upgraded furniture.',
     key_decor_elements:
-      'Florals or balloons, entry or printables, backdrop, bar, and premium furniture.',
-    ...baseMeta(),
+      'Floral or balloon styling, a strong photo backdrop, a functional bar area, and upgraded furniture that enhances the overall look of the space.',
+    ...partySmartMeta({
+      best_placed_at:
+        'Home celebrations, terraces, small banquet halls, cafés, or any party venues.',
+      why_we_love_it:
+        'Because it upgrades not just the décor — but the hosting experience. Better seating, stronger visuals, and the option to add warm lighting makes the entire space feel thoughtfully done and celebration-ready.',
+    }),
     price_breakdown: [
-      { label: 'Balloon Arch with sign & Balloon structures', amount: 7500 },
+      { label: 'Florals / balloons (avg)', amount: 7500 },
+      { label: 'Entry setup (avg)', amount: 4000 },
+      { label: 'Backdrop (avg)', amount: 8000 },
+      { label: 'Bar setup (avg)', amount: 10000 },
+      { label: 'Premium furniture (avg)', amount: 17800 },
+      { label: 'Package Price', amount: 47300 },
       { label: 'Taxes', amount: 4730 },
       { label: 'Platform fee', amount: 4730 },
+      { label: 'Transport fee', amount: 3200 },
     ],
     inclustions: partySmart3Inclusions(),
     addons: [
       optionalPackageAddon(
         '10 fairy lights with electrician',
         5000,
-        'Adds warmth and evening ambience'
+        '10 fairy lights with electrician to set it up — adds warmth and evening ambience'
       ),
     ],
   },
@@ -1072,22 +1206,36 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     base_price: 59520,
     description:
       'A statement backdrop and a well-styled bar — the two elements that instantly define your event and dominate your photos.',
-    key_decor_elements: 'Entry setup, large panel backdrop, bar, and a custom décor wall.',
-    ...baseMeta(),
+    key_decor_elements:
+      'Think a large, visually striking panel backdrop for all your pictures, paired with a polished bar setup — with supporting entry and interactive decor elements.',
+    ...partySmartSocialMeta(),
     price_breakdown: [
-      { label: 'entry setup', amount: 2000 },
-      { label: 'backdrop', amount: 25000 },
-      { label: 'bar set up', amount: 8000 },
-      { label: 'Decor Elements', amount: 10000 },
+      { label: 'Entry setup', amount: 2000 },
+      { label: 'Large panel backdrop', amount: 25000 },
+      { label: 'Bar setup', amount: 8000 },
+      { label: 'Welcome drink wall / DIY wall', amount: 10000 },
+      { label: 'Package Price', amount: 51200 },
       { label: 'Transport and labour', amount: 3200 },
-      { label: 'taxes', amount: 5120 },
       { label: 'Platform fee', amount: 5120 },
+      { label: 'Taxes', amount: 5120 },
     ],
     inclustions: [
-      { text: 'Easel with welcome board, crates, flowers and candles', group_title: 'Entry Setup' },
-      { text: 'Large panel backdrop', group_title: 'Backdrop' },
-      { text: 'Styled bar area', group_title: 'Bar Setup' },
-      { text: 'Welcome drink wall or DIY wall', group_title: 'Decor Element' },
+      {
+        text: 'Easel with welcome board, crates, flowers and candles',
+        group_title: 'Entry Setup',
+      },
+      {
+        text: 'Large panel backdrop — bold, high-impact focal point for photographs and stage moments',
+        group_title: 'Backdrop / Photo-op',
+      },
+      {
+        text: 'Styled bar area (fancy options available based on theme)',
+        group_title: 'Bar Setup',
+      },
+      {
+        text: 'Welcome drink wall or DIY wall — customised to your occasion and theme',
+        group_title: 'Decor Element Wall',
+      },
     ],
   },
   {
@@ -1099,24 +1247,41 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     budget_level_slug: 'level-3',
     base_price: 63700,
     description:
-      'A statement backdrop and a beautifully styled bar, elevated further with special effects.',
-    key_decor_elements: 'Entry, backdrop, premium bar, décor wall, and SFX additions.',
-    ...baseMeta(),
+      'A statement backdrop and a beautifully styled bar, elevated further with special effects that create unforgettable moments.',
+    key_decor_elements:
+      'A striking backdrop paired with a premium bar setup, enhanced with SFX elements like cold pyros, entry bursts, or a flower shower.',
+    ...partySmartSocialMeta({
+      why_we_love_it:
+        'Because it doesn’t just look good — it creates moments. The backdrop sets the frame, the bar builds the vibe, and the SFX adds that cinematic impact.',
+    }),
     price_breakdown: [
-      { label: 'entry setup', amount: 2000 },
-      { label: 'backdrop', amount: 25000 },
-      { label: 'bar set up', amount: 8000 },
-      { label: 'Decor Elements', amount: 10000 },
-      { label: 'Enhancements', amount: 5000 },
+      { label: 'Entry setup', amount: 2000 },
+      { label: 'Large panel backdrop', amount: 25000 },
+      { label: 'Bar setup', amount: 8000 },
+      { label: 'Welcome drink wall / DIY wall', amount: 10000 },
+      { label: 'SFX enhancements', amount: 5000 },
+      { label: 'Package Price', amount: 55000 },
       { label: 'Transport and labour', amount: 3200 },
       { label: 'Platform fee', amount: 5500 },
     ],
     inclustions: [
-      { text: 'Easel with welcome board, crates, florals and candles', group_title: 'Entry Setup' },
-      { text: 'High-impact backdrop / photo-op', group_title: 'Backdrop' },
+      {
+        text: 'Easel with welcome board, crates, florals and candles',
+        group_title: 'Entry Setup',
+      },
+      {
+        text: 'High-impact backdrop / photo-op focal point for stage moments and photographs',
+        group_title: 'Backdrop / Photo-op',
+      },
       { text: '1 premium bar setup', group_title: 'Bar Setup' },
-      { text: 'Welcome drink wall or DIY wall', group_title: 'Decor Element' },
-      { text: 'Cold pyros / entry effects / flower shower', group_title: 'SFX Additions' },
+      {
+        text: 'Welcome drink wall or DIY wall — print customised to your theme',
+        group_title: 'Decor Element Wall',
+      },
+      {
+        text: 'Cold pyros / entry effects / flower shower (as per venue feasibility)',
+        group_title: 'SFX Additions',
+      },
     ],
   },
   {
@@ -1126,20 +1291,36 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_name: 'Aarambh',
     theme_slug_candidates: parentThemeCandidates('aarambh'),
     budget_level_slug: 'level-1',
-    base_price: 4900,
+    base_price: 5990,
     description: 'A simple, elegant entrance styling designed to warmly welcome your guests.',
-    key_decor_elements: 'Choose lanterns or abras, crates or urlis, plus candles and welcome board.',
+    key_decor_elements:
+      'Choose lanterns or abras, crates or urlis, plus candles and a welcome board.',
     ...baseMeta({
       nitty_gritty:
-        'Love the look but want a different print or styling direction? Go ahead and book — we’ll customise the board design and colour.',
+        'Love the look but want a different print or styling direction? Go ahead and book, we’ll connect to customise the board design and colour to match your event vibe.',
+      setup_needs:
+        'A small area for our team to work and access to electricity. Final print content to be shared prior to the event (timeline will be suggested by team Elewen after booking).',
+      best_placed_at:
+        'Home entrances, terrace entries, banquet hall doors, garden pathways, or any event entry point that deserves a graceful welcome moment.',
+      why_we_love_it:
+        'Terraces, balconies, living rooms, entry walls, bar areas, or any blank space that needs warmth and depth without heavy decor additions.',
+      price_covers: [
+        { text: 'The Complete Look' },
+        { text: 'Professional Setup' },
+        { text: 'Final Dismantling' },
+        { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+        { text: 'No hidden service fees.' },
+      ],
     }),
     price_breakdown: [
+      { label: 'Decor accents (avg)', amount: 600 },
+      { label: 'Styling elements (avg)', amount: 800 },
       { label: 'Candles', amount: 700 },
-      { label: 'Easel with printed Board', amount: 1100 },
+      { label: 'Easel with printed board', amount: 1100 },
       { label: 'Carpet', amount: 300 },
-      { label: 'Transport and labour', amount: 1500 },
+      { label: 'Package Price', amount: 4900 },
       { label: 'Platform fee', amount: 490 },
-      { label: 'Labour & Transport', amount: 600 },
+      { label: 'Transport and labour', amount: 600 },
     ],
     inclustions: aarambh1Inclusions(),
   },
@@ -1152,22 +1333,37 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     budget_level_slug: 'level-1',
     base_price: 9950,
     description: 'Designed to add glow, personality, and depth, without adding bulky décor.',
-    key_decor_elements: 'Printables, neon signs, and a fairy-light lighting choice.',
+    key_decor_elements:
+      'Soft cascading fairy lights, glowing neon accents, and minimal print details that add character while keeping the space clean and elegant.',
     ...baseMeta({
       nitty_gritty:
-        'Love the idea but want different quotes, neon text, or light placement? Go ahead and book — we’ll customise it for your space.',
+        'Love the idea but want different quotes, neon text, or light placement? Go ahead and book, we’ll connect to customise it based on your space and existing decor.',
+      setup_needs:
+        'A small area for our team to work and access to electricity. Final print content to be shared prior to the event (timeline will be suggested by team Elewen after booking).',
+      best_placed_at:
+        'Terraces, balconies, living rooms, entry walls, bar areas, or any blank space that needs warmth and depth without heavy decor additions.',
+      why_we_love_it:
+        'Because sometimes you don’t need more decor. You just need better lighting and the right glow.',
+      price_covers: [
+        { text: 'The Complete Look' },
+        { text: 'Professional Setup' },
+        { text: 'Final Dismantling' },
+        { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+        { text: 'No hidden service fees.' },
+      ],
     }),
     price_breakdown: [
-      { label: '2 Printables - quotes / information with small easel', amount: 1600 },
-      { label: '2 Neon signs', amount: 1200 },
-      { label: '10 strings Fairy lights without electrician', amount: 1000 },
-      { label: '1 big easel + print', amount: 1200 },
-      { label: 'Platform fee', amount: 0 },
+      { label: '2 printables with small easels', amount: 1600 },
+      { label: '2 neon signs', amount: 1200 },
+      { label: 'Fairy lights with electrician (avg)', amount: 5500 },
+      { label: 'Package Price', amount: 8500 },
+      { label: 'Platform fee (10%)', amount: 850 },
+      { label: 'Transport and labour', amount: 600 },
     ],
     inclustions: auraUpgrade1Inclusions(),
     addons: [
+      optionalPackageAddon('10 candles with glass holders', 1000, '10 candles with glass holders'),
       optionalPackageAddon('1 big easel + print', 1200, '1 big easel + print'),
-      optionalPackageAddon('10 candles with glass holders', 0, 'Optional candle add-on'),
     ],
   },
 ];
@@ -1197,6 +1393,26 @@ async function seedDecorHousePartyBirthdayPackages(strapi) {
     name: 'Raise the Bar',
     slug: 'raise-the-bar',
     display_order: 32,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Just Enough Magic',
+    slug: 'just-enough-magic',
+    display_order: 33,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Party Smart',
+    slug: 'party-smart',
+    display_order: 34,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Aarambh',
+    slug: 'aarambh',
+    display_order: 35,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Aura Upgrade',
+    slug: 'aura-upgrade',
+    display_order: 36,
   });
   await ensureEventDocumentId(strapi, {
     name: 'Birthday Parties',

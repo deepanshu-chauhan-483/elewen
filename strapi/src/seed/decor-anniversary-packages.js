@@ -242,6 +242,35 @@ const ANNIVERSARY_PACKAGES = [
     ],
   },
   {
+    sheet: 'FM 1',
+    title: 'Floating Moments 1',
+    slug: 'floating-moments-1',
+    theme_name: 'Floating Moments',
+    theme_slug_candidates: ['floating-moments', 'still-us'],
+    budget_level_slug: 'level-1',
+    base_price: 6100,
+    setup_needs: ANNIVERSARY_SETUP_NEEDS,
+    best_placed_at: FLOATING_MOMENTS_BEST_PLACED,
+    why_we_love_it: FLOATING_MOMENTS_WHY,
+    description:
+      'Floating hearts, personalised balloon accents, and milestone standees that instantly turn any corner into a celebration.',
+    key_decor_elements:
+      'An intimate, beautifully styled setup designed for slow conversations. Think soft florals, cozy seating, and a table that invites you to sit, sip, and spill everything.',
+    price_breakdown: [
+      { label: 'Balloon setup', amount: 2500 },
+      { label: 'Balloon arch / standees', amount: 2500 },
+      { label: 'Platform fee', amount: 500 },
+      { label: 'Labour & Transport', amount: 600 },
+    ],
+    // Same choice pattern as HH1: is_choice_group rows → "What's included" option cards
+    inclustions: [
+      choiceOption('fm1-balloon-setup', 'Balloon Setup', 'Loose Helium 10 heart shaped balloons with sign'),
+      choiceOption('fm1-balloon-setup', 'Balloon Setup', 'Balloon Bouquet'),
+      choiceOption('fm1-arch-setup', 'Balloon Arch Setup', 'Balloon Arch with sign'),
+      choiceOption('fm1-arch-setup', 'Balloon Arch Setup', '2 small standees (10 years)'),
+    ],
+  },
+  {
     sheet: 'FM 2',
     title: 'Floating Moments 2',
     slug: 'floating-moments-2',
@@ -740,6 +769,7 @@ async function seedDecorAnniversaryPackages(strapi) {
   return seedDecorPackages(strapi, ANNIVERSARY_PACKAGES, {
     eventSlugCandidates: ANNIVERSARY_EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/decor-anniversary',
+    refreshExistingDecor: true,
   });
 }
 

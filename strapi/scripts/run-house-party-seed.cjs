@@ -85,6 +85,15 @@ async function main() {
     await dumpSlug(app, 'raise-the-bar-2');
     await dumpSlug(app, 'raise-the-bar-2-3');
     await dumpSlug(app, 'raise-the-bar-3');
+    await dumpSlug(app, 'just-enough-magic-3');
+    await dumpSlug(app, 'party-smart-1');
+    await dumpSlug(app, 'party-smart-2');
+    await dumpSlug(app, 'party-smart-2-3');
+    await dumpSlug(app, 'party-smart-3');
+    await dumpSlug(app, 'party-smart-social-2');
+    await dumpSlug(app, 'party-smart-social-3');
+    await dumpSlug(app, 'entry-setup-aarambh-1');
+    await dumpSlug(app, 'aura-upgrade-1');
   } finally {
     await app.destroy();
   }
