@@ -76,7 +76,7 @@
     "location": "South-West Delhi Delhi Cantonment, Dhaula Kuan",
     "addon_600": 350,
     "addon_1200": 300,
-    "addon_3200": 350,
+    "addon_3200": 300,
     "is_active": true
   },
   {
@@ -116,7 +116,7 @@
     "location": "West Delhi Kirti Nagar, Moti Nagar",
     "addon_600": 300,
     "addon_1200": 200,
-    "addon_3200": 300,
+    "addon_3200": 200,
     "is_active": true
   },
   {
@@ -164,7 +164,7 @@
     "location": "South-West Delhi Chanakyapuri, Diplomatic Enclave",
     "addon_600": 350,
     "addon_1200": 300,
-    "addon_3200": 350,
+    "addon_3200": 300,
     "is_active": true
   },
   {
@@ -380,7 +380,7 @@
     "location": "Central Delhi Rajinder Nagar",
     "addon_600": 0,
     "addon_1200": 300,
-    "addon_3200": 0,
+    "addon_3200": 300,
     "is_active": true
   },
   {
@@ -532,7 +532,7 @@
     "location": "North Delhi Rohini Sector 1-11",
     "addon_600": 300,
     "addon_1200": 200,
-    "addon_3200": 300,
+    "addon_3200": 200,
     "is_active": true
   },
   {

@@ -836,29 +836,41 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_slug_candidates: parentThemeCandidates('raise-the-bar'),
     budget_level_slug: 'level-2',
     base_price: 18820,
-    description: 'A premium bar setup with seating for a fuller celebration corner.',
-    key_decor_elements: 'Premium bar, neon, and furniture for guests.',
-    ...baseMeta(),
+    description:
+      'A dedicated bar setup along with seating for guests, designed to instantly lift the energy of your event. Simple, stylish, and functional.',
+    key_decor_elements:
+      'Fancy bar, bar menu with easel, neon sign, and furniture for mingling and buffet.',
+    ...raiseTheBarMeta({
+      why_we_love_it:
+        'Because a defined bar corner changes the vibe instantly. Bar and beer pong — gives guests a clear gathering spot and makes the party feel fun',
+    }),
     price_breakdown: [
       { label: 'Fancy Bar', amount: 6500 },
       { label: 'Bar essentials', amount: 500 },
+      { label: '2 round tables with linens', amount: 1000 },
       { label: '12 basic chairs with linens', amount: 3200 },
       { label: '2 basic cocktail tables', amount: 1000 },
       { label: '2 Rectangle tables for buffet with linen', amount: 400 },
+      { label: 'Package Price', amount: 14200 },
       { label: 'Transport and Labour', amount: 3200 },
       { label: 'Platform fee', amount: 1420 },
     ],
+    // Includes section is customer-facing source of truth (1 round / 8 chairs).
     inclustions: [
-      { text: 'Premium bar setup', group_title: 'Premium Bar Setup' },
+      { text: 'Fancy / premium bar setup', group_title: 'Premium Bar Setup' },
       { text: 'Bar menu with easel', group_title: 'Bar Essentials' },
-      { text: '1 bar-themed neon sign', group_title: 'Bar Essentials' },
+      { text: '1 bar-themed neon sign', group_title: 'Bar Props' },
       { text: '1 round table with linen', group_title: 'Furniture' },
       { text: '8 basic chairs with linen', group_title: 'Furniture' },
-      { text: '2 cocktail tables', group_title: 'Furniture' },
-      { text: '2 buffet tables with linen', group_title: 'Furniture' },
+      { text: '2 basic cocktail tables', group_title: 'Furniture' },
+      { text: '2 rectangle tables for buffet with linen', group_title: 'Furniture' },
     ],
     addons: [
-      optionalPackageAddon('Bartender (4–5 hours)', 5700, 'Optional bartender for 4–5 hours'),
+      optionalPackageAddon(
+        'Bartender (4–5 hours)',
+        5700,
+        'Optional but recommended — 1 bartender for INR 5,700 for 4–5 hours'
+      ),
     ],
   },
   {
@@ -869,31 +881,43 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     theme_slug_candidates: parentThemeCandidates('raise-the-bar'),
     budget_level_slug: 'level-3',
     base_price: 30200,
-    description: 'A premium bar cart setup with games and upgraded furniture.',
-    key_decor_elements: 'Premium bar cart, beer pong, and fancy seating.',
-    ...baseMeta(),
+    description:
+      'A dedicated bar setup along with a beer pong table, designed to instantly lift the energy of your event. Simple, stylish, and functional.',
+    key_decor_elements:
+      'Premium bar cart, neon, beer pong, and upgraded furniture for a fuller celebration corner.',
+    ...raiseTheBarMeta({
+      why_we_love_it:
+        'Because a defined bar corner changes the vibe instantly. Bar and beer pong — gives guests a clear gathering spot and makes the party feel fun',
+    }),
     price_breakdown: [
-      { label: 'Fancy Bar', amount: 7000 },
+      { label: 'Fancy Bar cart', amount: 7000 },
       { label: 'Bar essentials', amount: 500 },
-      { label: 'Games', amount: 1500 },
+      { label: 'Beer Pong Table Set-up', amount: 1500 },
+      { label: '2 fancy round tables', amount: 2500 },
       { label: '20 fancy chairs', amount: 10000 },
       { label: '2 cocktail tables', amount: 4000 },
       { label: '4 Rectangle tables for buffet with linen', amount: 800 },
+      { label: 'Package Price', amount: 26500 },
       { label: 'Transport and Labour', amount: 3200 },
       { label: 'Platform fee', amount: 500 },
     ],
+    // Cost sheet furniture (fancy) — Includes text looked copy-pasted from 2/3.
     inclustions: [
-      { text: 'Premium bar cart setup', group_title: 'Premium Bar Setup' },
+      { text: 'Premium bar cart setup', group_title: 'Premium Bar Cart Setup' },
       { text: 'Bar menu with easel', group_title: 'Bar Essentials' },
-      { text: '1 bar-themed neon sign', group_title: 'Bar Essentials' },
+      { text: '1 bar-themed neon sign', group_title: 'Bar Props' },
       { text: 'Beer pong table setup', group_title: 'Games' },
-      { text: '1 round table with linen', group_title: 'Furniture' },
+      { text: '2 fancy round tables', group_title: 'Furniture' },
       { text: '20 fancy chairs', group_title: 'Furniture' },
       { text: '2 cocktail tables', group_title: 'Furniture' },
-      { text: '4 buffet tables with linen', group_title: 'Furniture' },
+      { text: '4 rectangle tables for buffet with linen', group_title: 'Furniture' },
     ],
     addons: [
-      optionalPackageAddon('Bartender (4–5 hours)', 5700, 'Optional bartender for 4–5 hours'),
+      optionalPackageAddon(
+        'Bartender (4–5 hours)',
+        5700,
+        'Optional but recommended — 1 bartender for INR 5,700 for 4–5 hours'
+      ),
     ],
   },
   {

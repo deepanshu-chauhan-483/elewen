@@ -83,6 +83,8 @@ async function main() {
     await dumpSlug(app, 'raise-the-bar-1');
     await dumpSlug(app, 'raise-the-bar-1b');
     await dumpSlug(app, 'raise-the-bar-2');
+    await dumpSlug(app, 'raise-the-bar-2-3');
+    await dumpSlug(app, 'raise-the-bar-3');
   } finally {
     await app.destroy();
   }
