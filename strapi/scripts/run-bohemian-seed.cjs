@@ -69,6 +69,10 @@ async function main() {
     await dumpSlug(app, 'signs-and-stems-1');
     await dumpSlug(app, 'signs-and-stems-2');
     await dumpSlug(app, 'signs-and-stems-3');
+    await dumpSlug(app, 'cozy-canopy-2');
+    await dumpSlug(app, 'picnic-a-la-boho-2');
+    await dumpSlug(app, 'vintage-vines-1');
+    await dumpSlug(app, 'catching-dreams-2-3');
   } finally {
     await app.destroy();
   }

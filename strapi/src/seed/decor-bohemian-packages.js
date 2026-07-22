@@ -37,6 +37,15 @@ function whenInclusion(parentKey, parentValue, text) {
   };
 }
 
+function optionalPackageAddon(name, price = 0, description = '') {
+  return {
+    name,
+    price,
+    description: description || name,
+    visibility: true,
+  };
+}
+
 const SIGNS_STEMS_DESCRIPTION =
   'Create an immediate sense of warmth from the moment your guests arrive. The Sign & Stem package blends wooden textures with organic florals to set a soulful, bohemian tone for your gathering. A minimalist approach that will never lead you astray.';
 
@@ -193,29 +202,46 @@ const BOHEMIAN_PACKAGES = [
     slug: 'the-first-layer-3',
     theme_name: 'The First Layer',
     budget_level_slug: 'level-3',
-    base_price: 12200,
-    description: FIRST_LAYER_DESCRIPTION,
+    base_price: 18420,
+    description:
+      'Choice-based styling (floral or balloon) with this foundational décor package that sets the tone of your celebration.',
     key_decor_elements:
-      'An impressive entrance with premium floral or balloon styling, plus entry signage or printables/props.',
+      'Choice-based styling (floral or balloon) with this foundational décor package that sets the tone of your celebration.',
     nitty_gritty: FIRST_LAYER_NITTY,
     setup_needs: FIRST_LAYER_SETUP,
     best_placed_at: FIRST_LAYER_BEST,
-    why_we_love_it: FIRST_LAYER_WHY,
+    why_we_love_it: 'Because you get to choose the mood - balloons or florals.',
     theme_slug_candidates: ['the-first-layer'],
     price_covers: FIRST_LAYER_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Entry Mirror + candles', amount: 4500 },
-      { label: 'Pampous', amount: 1000 },
-      { label: 'Glass candle holders with candles', amount: 4500 },
-      { label: 'Platform fee', amount: 1000 },
-      { label: 'Labour & Transport', amount: 1200 },
+      { label: 'Floral Decor (Premium flowers) / Balloon Arch with sign', amount: 9200 },
+      { label: 'Fancy entry signage + flowers or balloons on signage', amount: 5000 },
+      { label: 'Printables + Props', amount: 2000 },
+      { label: 'Package Price', amount: 16200 },
+      { label: 'Platform fee', amount: 1620 },
+      { label: 'Transport and Labour', amount: 600 },
     ],
     inclustions: [
-      ...firstLayerDecorChoice('fl3', {
-        floralLabel: 'Floral decor (premium flowers)',
-        balloonArchLabel: 'Balloon arch décor (premium mix)',
-      }),
-      ...firstLayerSignageChoice('fl3'),
+      // Guests pick the full floral OR balloon pack — not mix-and-match items.
+      choiceOption('fl3-style', 'Choose Your Style', 'FLORAL (Premium Flowers)'),
+      whenInclusion('fl3-style', 'FLORAL (Premium Flowers)', '5 centerpieces'),
+      whenInclusion('fl3-style', 'FLORAL (Premium Flowers)', 'Entrance floral setup (crates/urli)'),
+      whenInclusion('fl3-style', 'FLORAL (Premium Flowers)', '5–7 candles'),
+      whenInclusion(
+        'fl3-style',
+        'FLORAL (Premium Flowers)',
+        'Fancy entry signage with flowers'
+      ),
+      choiceOption('fl3-style', 'Choose Your Style', 'BALLOON (Premium Mix)'),
+      whenInclusion('fl3-style', 'BALLOON (Premium Mix)', 'Balloon arch with sign'),
+      whenInclusion(
+        'fl3-style',
+        'BALLOON (Premium Mix)',
+        'Fancy entry signage with balloons'
+      ),
+      { text: '1 fun quote', group_title: 'Printables + Props' },
+      { text: '1 Bar menu', group_title: 'Printables + Props' },
+      { text: '1 neon sign / 10 shot glasses', group_title: 'Printables + Props' },
     ],
   },
   {
@@ -527,16 +553,13 @@ const BOHEMIAN_PACKAGES = [
     base_price: 23220,
     description: 'Cozy Canopy seating complete with Rattan accents and dreamy bohemian touches.',
     key_decor_elements: 'Cozy Canopy seating complete with Rattan accents and dreamy bohemian touches.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
     best_placed_at: '',
-    why_we_love_it: '',
+    why_we_love_it:
+      'No fuss setup, perfect for a cozy night in or even a part of the decor at your all your Earthy, Boheminian style bashes.',
     theme_slug_candidates: ['bohemian', 'cozy-canopy'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
       { label: '1 Mattress', amount: 500 },
       { label: '1 Bedsheet', amount: 200 },
@@ -546,17 +569,18 @@ const BOHEMIAN_PACKAGES = [
       { label: 'Cusions', amount: 2000 },
       { label: '2 Rattan Stools', amount: 4000 },
       { label: '10 Candles in glass holders', amount: 2000 },
-      { label: '2 Floral Centrepieces', amount: 2000 },
       { label: 'Platform fee', amount: 1820 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Wooden canopy frame', group_title: 'Includes' },
-      { text: 'Bedsheet + mattress', group_title: 'Includes' },
-      { text: 'Dreamcatcher hanging', group_title: 'Includes' },
-      { text: '2 low puffies', group_title: 'Includes' },
-      { text: 'Cushions', group_title: 'Includes' },
-      { text: '2 rattan stools', group_title: 'Includes' },
+      { text: '1 Bedsheet', group_title: 'The canopy' },
+      { text: '1 Wooden Frame', group_title: 'The canopy' },
+      { text: 'DreamCatcher Hanging', group_title: 'The canopy' },
+      { text: '2 low puffies', group_title: 'The canopy' },
+      { text: 'Cushions', group_title: 'The canopy' },
+      { text: '2 Rattan Stools', group_title: 'Finishing Touches' },
+      choiceOption('cc2-finish', 'Choose 1', '10 Candles in glass holders'),
+      choiceOption('cc2-finish', 'Choose 1', '2 Floral Centrepieces'),
     ],
   },
   {
@@ -566,18 +590,18 @@ const BOHEMIAN_PACKAGES = [
     theme_name: 'Picnic a la Boho',
     budget_level_slug: 'level-2',
     base_price: 30700,
-    description: 'An end to end, all you need to throw a dreamy brunch. Complete with full table ensemble and themed backdrop, this package is all rady to get added to your cart.',
-    key_decor_elements: 'An end to end, all you need to throw a dreamy brunch. Complete with full table ensemble and themed backdrop, this package is all rady to get added to your cart.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Nestled under a large tree or on a manicured lawn to create an outdoor "living room.',
-    why_we_love_it: '',
+    description:
+      'An end to end, all you need to throw a dreamy brunch. Complete with full table ensemble and themed backdrop, this package is all rady to get added to your cart.',
+    key_decor_elements:
+      'An end to end, all you need to throw a dreamy brunch. Complete with full table ensemble and themed backdrop, this package is all rady to get added to your cart.',
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
+    best_placed_at:
+      'Nestled under a large tree or on a manicured lawn to create an outdoor "living room."',
+    why_we_love_it:
+      "It seamlessly blends a cozy, texture-rich lounge with a full-service bar, creating a high-end social sanctuary that guests won't want to leave.",
     theme_slug_candidates: ['bohemian', 'picnic-a-la-boho'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
       { label: 'Mattress', amount: 1000 },
       { label: 'Sheet/ Carpet covering', amount: 2000 },
@@ -588,14 +612,17 @@ const BOHEMIAN_PACKAGES = [
       { label: 'Backdrop', amount: 10000 },
       { label: 'Balloon/ Flower decor on Backdrop', amount: 2000 },
       { label: 'Platform fee', amount: 2500 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Picnic mattress setup', group_title: 'Includes' },
-      { text: '8-seater long table', group_title: 'Includes' },
-      { text: 'Cushions + placemats', group_title: 'Includes' },
-      { text: '4 flower vases', group_title: 'Includes' },
-      { text: 'Backdrop with decor', group_title: 'Includes' },
+      { text: 'Mattress', group_title: 'Picnic Seating & Table Styling' },
+      { text: 'Sheet/ Carpet covering', group_title: 'Picnic Seating & Table Styling' },
+      { text: 'Long Table- 8 seater', group_title: 'Picnic Seating & Table Styling' },
+      { text: 'Cushions', group_title: 'Picnic Seating & Table Styling' },
+      { text: 'Placemats- 8 + Cloth Runner 1', group_title: 'Picnic Seating & Table Styling' },
+      { text: '4 Vases with Flowers', group_title: 'Picnic Seating & Table Styling' },
+      { text: 'Double Panel Backdrop', group_title: 'The Backdrop' },
+      { text: 'Balloon Decor', group_title: 'The Backdrop' },
     ],
   },
   {
@@ -605,31 +632,31 @@ const BOHEMIAN_PACKAGES = [
     theme_name: 'Vintage Vines',
     budget_level_slug: 'level-1',
     base_price: 19480,
-    description: 'A vintage-inspired wooden ladder adorned with a lush, hand-styled floral vine installation accomapnied by a full-scale focal wall designed to harmonize with your venue',
-    key_decor_elements: 'A vintage-inspired wooden ladder adorned with a lush, hand-styled floral vine installation accomapnied by a full-scale focal wall designed to harmonize with your venue',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Nestled under a large tree or on a manicured lawn to create an outdoor "living room.',
-    why_we_love_it: '',
+    description:
+      'A vintage-inspired wooden ladder adorned with a lush, hand-styled floral vine installation accomapnied by a full-scale focal wall designed to harmonize with your venue',
+    key_decor_elements:
+      'A vintage-inspired wooden ladder adorned with a lush, hand-styled floral vine installation accomapnied by a full-scale focal wall designed to harmonize with your venue',
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
+    best_placed_at:
+      'Nestled under a large tree or on a manicured lawn to create an outdoor "living room."',
+    why_we_love_it:
+      'Creates a stylish boho focal point with minimal décor, perfect for effortless photo moments.',
     theme_slug_candidates: ['bohemian', 'vintage-vines'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PAMPOUS_SIMPLE_PRICE_COVERS,
     price_breakdown: [
       { label: 'Ladder', amount: 1500 },
       { label: 'Flower vine Decor', amount: 3000 },
       { label: 'Backdrop', amount: 9500 },
       { label: '1 neon sign', amount: 800 },
       { label: 'Platform fee', amount: 1480 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Wooden ladder', group_title: 'Includes' },
-      { text: 'Flower vine decor', group_title: 'Includes' },
-      { text: 'Bohemian backdrop', group_title: 'Includes' },
-      { text: 'Neon sign', group_title: 'Includes' },
+      { text: '1 wooden Ladder', group_title: 'Ladder Accent' },
+      { text: 'Flower vine Decor', group_title: 'Ladder Accent' },
+      { text: '1 Bohemian Backdrop', group_title: 'Backdrop' },
+      { text: '1 neon sign', group_title: 'Backdrop' },
     ],
   },
   {
@@ -638,19 +665,21 @@ const BOHEMIAN_PACKAGES = [
     slug: 'catching-dreams-2-3',
     theme_name: 'Catching Dreams',
     budget_level_slug: 'level-2',
-    base_price: 35100,
-    description: 'A boho-inspired backdrop and wishes corner featuring dream catchers, pampas décor, florals, and personalized guest messages.',
-    key_decor_elements: 'A boho-inspired backdrop and wishes corner featuring dream catchers, pampas décor, florals, and personalized guest messages.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
-    best_placed_at: 'Entrance, welcome area, photo corner, or beside the stage at weddings, engagements, and bridal celebrations.',
-    why_we_love_it: '',
+    // Core without optional dream-catcher pack + transport + platform = 34100.
+    // Optional pack (₹1000) brings total to sheet approx ₹35100.
+    base_price: 34100,
+    description:
+      'A boho-inspired backdrop and wishes corner featuring dream catchers, pampas décor, florals, and personalized guest messages.',
+    key_decor_elements:
+      'A boho-inspired backdrop and wishes corner featuring dream catchers, pampas décor, florals, and personalized guest messages.',
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
+    best_placed_at:
+      'Entrance, welcome area, photo corner, or beside the stage at weddings, engagements, and bridal celebrations.',
+    why_we_love_it:
+      'Combines beautiful décor with a meaningful guest interaction that creates lasting memories.',
     theme_slug_candidates: ['bohemian', 'catching-dreams'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PAMPOUS_SIMPLE_PRICE_COVERS,
     price_breakdown: [
       { label: 'Wooden Stand', amount: 5000 },
       { label: 'Dream Catchers with blank notes/ customised message- 25', amount: 3000 },
@@ -660,17 +689,28 @@ const BOHEMIAN_PACKAGES = [
       { label: 'Fabric+ dream Catcher decor', amount: 2000 },
       { label: 'Vases with floral arrangements', amount: 3000 },
       { label: 'Lanterns', amount: 2000 },
-      { label: 'Pack of 10 dream catchers for more guests', amount: 1000 },
       { label: 'Platform fee', amount: 2900 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transportation and Labour Cost', amount: 3200 },
     ],
     inclustions: [
-      { text: 'Dreamcatcher backdrop', group_title: 'Includes' },
-      { text: 'Wooden structure', group_title: 'Includes' },
-      { text: 'Pampas + fabric decor', group_title: 'Includes' },
-      { text: '4 floral vases', group_title: 'Includes' },
-      { text: '2 lanterns', group_title: 'Includes' },
-      { text: 'Return favors stand', group_title: 'Includes' },
+      { text: 'Wooden Structure', group_title: 'Dream Catcher Backdrop' },
+      { text: 'Pampous decor', group_title: 'Dream Catcher Backdrop' },
+      { text: 'Fabric & dream Catcher decor', group_title: 'Dream Catcher Backdrop' },
+      { text: '4 Vases with floral arrangements', group_title: 'Dream Catcher Backdrop' },
+      { text: '2 Lanterns', group_title: 'Dream Catcher Backdrop' },
+      { text: 'Wooden Stand', group_title: 'Return Favors Stand' },
+      {
+        text: 'Dream Catchers with blank notes/ customised message- 25',
+        group_title: 'Return Favors Stand',
+      },
+      { text: 'Flower decor base', group_title: 'Return Favors Stand' },
+    ],
+    addons: [
+      optionalPackageAddon(
+        'Pack of 10 dream catchers for more guests',
+        1000,
+        'Optional: Pack of 10 dream catchers for more guests'
+      ),
     ],
   },
 ];
@@ -696,6 +736,31 @@ async function seedDecorBohemianPackages(strapi) {
     name: 'Less is More',
     slug: 'less-is-more',
     display_order: 54,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Perch & Pour',
+    slug: 'perch-and-pour',
+    display_order: 55,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Cozy Canopy',
+    slug: 'cozy-canopy',
+    display_order: 56,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Picnic a la Boho',
+    slug: 'picnic-a-la-boho',
+    display_order: 57,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Vintage Vines',
+    slug: 'vintage-vines',
+    display_order: 58,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Catching Dreams',
+    slug: 'catching-dreams',
+    display_order: 59,
   });
   await ensureEventDocumentId(strapi, {
     name: 'Birthday Parties',
