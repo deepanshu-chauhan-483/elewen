@@ -37,10 +37,13 @@ function whenInclusion(parentKey, parentValue, text) {
   };
 }
 
-const FIRST_LAYER_NITTY =
-  'Love the look but want a different colour or style direction? Go ahead and book, we’ll connect to customise to match your event vibe.';
+const SIGNS_STEMS_DESCRIPTION =
+  'Create an immediate sense of warmth from the moment your guests arrive. The Sign & Stem package blends wooden textures with organic florals to set a soulful, bohemian tone for your gathering. A minimalist approach that will never lead you astray.';
 
-const FIRST_LAYER_PRICE_COVERS = [
+const SIGNS_STEMS_NITTY =
+  'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.';
+
+const SIGNS_STEMS_PRICE_COVERS = [
   { text: 'The Complete Look' },
   { text: 'Professional Setup' },
   { text: 'Final Dismantling' },
@@ -48,253 +51,208 @@ const FIRST_LAYER_PRICE_COVERS = [
   { text: 'No hidden service fees.' },
 ];
 
-const FIRST_LAYER_SETUP =
-  'A small area for our team to work and access to water & electricity. Final print content to be shared prior to the event (timeline will be suggested by team Elewen after booking).';
+const SIGNS_STEMS_SETUP =
+  'A small area for our team to work, access to water and electricity.';
 
-const FIRST_LAYER_BEST =
-  'Home celebrations, terraces, small banquet halls, cafés, or party venues.';
+const SIGNS_STEMS_WHY =
+  'It serves as the primary "hello," bridging the gap between the exterior world and the curated atmosphere of your event.';
 
-const FIRST_LAYER_WHY =
-  'It creates visible impact with minimal elements. Simple styling, clear focal points, and just enough detail to make the space feel decorated.';
-
-function firstLayerDecorChoice(prefix, { floralLabel, balloonArchLabel }) {
-  return [
-    choiceOption(`${prefix}-decor`, 'Floral or Balloon Decor (choose 1)', floralLabel),
-    whenInclusion(
-      `${prefix}-decor`,
-      floralLabel,
-      '5 centerpieces + 4 crates/urli + 5–7 candles (entrance/corner setup)'
-    ),
-    choiceOption(`${prefix}-decor`, 'Floral or Balloon Decor (choose 1)', balloonArchLabel),
-    whenInclusion(
-      `${prefix}-decor`,
-      balloonArchLabel,
-      'Balloon arch + balloon sign + 5 centerpieces'
-    ),
-    choiceOption(
-      `${prefix}-decor`,
-      'Floral or Balloon Decor (choose 1)',
-      'Ring balloon backdrop with neon sign'
-    ),
-    whenInclusion(
-      `${prefix}-decor`,
-      'Ring balloon backdrop with neon sign',
-      'Ring balloon backdrop with neon sign'
-    ),
-  ];
-}
-
-function firstLayerSignageChoice(prefix) {
-  return [
-    choiceOption(`${prefix}-signage`, 'Entry Signage (choose 1)', 'Easel with sign'),
-    whenInclusion(
-      `${prefix}-signage`,
-      'Easel with sign',
-      'Easel with sign (recommended with floral entrance styling)'
-    ),
-    choiceOption(`${prefix}-signage`, 'Entry Signage (choose 1)', 'Printables + Props'),
-    whenInclusion(
-      `${prefix}-signage`,
-      'Printables + Props',
-      '1 fun quote / bar menu / 1 neon sign + 15 colourful shot glasses'
-    ),
-  ];
-}
-
-// HH / other Bohemian packs still use coaster-style entry rows (kept for reference packs below).
-
-const FIRST_LAYER_DESCRIPTION =
-  'A foundational décor package that sets the tone of your celebration.';
+const PAMPOUS_SIMPLE_PRICE_COVERS = [
+  { text: 'The Complete Look' },
+  { text: 'No hidden service fees.' },
+];
 
 const BOHEMIAN_PACKAGES = [
   {
     sheet: 'FL 1',
-    title: 'The First Layer 1',
+    title: 'Signs & Stems 1',
     slug: 'the-first-layer-1',
-    theme_name: 'The First Layer',
+    theme_name: 'Signs & Stems',
     budget_level_slug: 'level-1',
-    base_price: 13250,
-    description: FIRST_LAYER_DESCRIPTION,
-    key_decor_elements:
-      'An impressive entrance along with 5 floral vases that you can set anywhere to enhance the look. Could be further paired with thoughtful detailing with quotes on small easel stands.',
-    nitty_gritty: FIRST_LAYER_NITTY,
-    setup_needs: FIRST_LAYER_SETUP,
-    best_placed_at: FIRST_LAYER_BEST,
-    why_we_love_it: FIRST_LAYER_WHY,
-    theme_slug_candidates: ['the-first-layer', 'bohemian'],
-    price_covers: FIRST_LAYER_PRICE_COVERS,
+    base_price: 6980,
+    description: SIGNS_STEMS_DESCRIPTION,
+    key_decor_elements: SIGNS_STEMS_DESCRIPTION,
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
+    best_placed_at: '',
+    why_we_love_it: SIGNS_STEMS_WHY,
+    theme_slug_candidates: ['signs-and-stems', 'the-first-layer', 'bohemian'],
+    price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Floral / Balloon decor (avg)', amount: 7433 },
-      { label: 'Entry Signage / Printables', amount: 1500 },
-      { label: 'Package Price', amount: 11500 },
-      { label: 'Platform fee', amount: 1150 },
-      { label: 'Transport and Labour', amount: 600 },
+      { label: 'Entry Sign board', amount: 900 },
+      { label: 'Entry Stand', amount: 400 },
+      { label: 'Flower Set up on entry', amount: 1000 },
+      { label: 'Wooden Coaster', amount: 500 },
+      { label: 'Vase', amount: 1000 },
+      { label: 'Bunch of flowers', amount: 2000 },
+      { label: 'Platform fee', amount: 580 },
+      { label: 'Transportation and Labour Cost', amount: 600 },
     ],
     inclustions: [
-      ...firstLayerDecorChoice('fl1', {
-        floralLabel: 'Floral decor',
-        balloonArchLabel: 'Balloon arch décor',
-      }),
-      ...firstLayerSignageChoice('fl1'),
+      { text: '1 entry Easel', group_title: 'Entry setup' },
+      { text: '1 entry board', group_title: 'Entry setup' },
+      { text: 'Complete flower decor (using real flowers)', group_title: 'Entry setup' },
+      { text: '5 wooden coasters', group_title: 'Centrepieces' },
+      { text: '5 vases with 5 bunches of real flowers', group_title: 'Centrepieces' },
     ],
   },
   {
     sheet: 'FL2',
-    title: 'The First Layer 2',
+    title: 'Signs & Stems 2',
     slug: 'the-first-layer-2',
-    theme_name: 'The First Layer',
-    budget_level_slug: 'level-2',
-    base_price: 15670,
-    description: FIRST_LAYER_DESCRIPTION,
-    key_decor_elements:
-      'An impressive entrance along with 5 premium floral vases that you can set anywhere to enhance the look. Could be further paired with thoughtful detailing with quotes on small easel stands.',
-    nitty_gritty: FIRST_LAYER_NITTY,
-    setup_needs: FIRST_LAYER_SETUP,
-    best_placed_at: FIRST_LAYER_BEST,
-    why_we_love_it: FIRST_LAYER_WHY,
-    theme_slug_candidates: ['the-first-layer', 'bohemian'],
-    price_covers: FIRST_LAYER_PRICE_COVERS,
+    theme_name: 'Signs & Stems',
+    budget_level_slug: 'level-1',
+    base_price: 9070,
+    description: SIGNS_STEMS_DESCRIPTION,
+    key_decor_elements: SIGNS_STEMS_DESCRIPTION,
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
+    best_placed_at: '',
+    why_we_love_it: SIGNS_STEMS_WHY,
+    theme_slug_candidates: ['signs-and-stems', 'the-first-layer', 'bohemian'],
+    price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Floral / Balloon decor (premium)', amount: 9700 },
-      { label: 'Entry Signage / Printables', amount: 4000 },
-      { label: 'Package Price', amount: 13700 },
-      { label: 'Platform fee', amount: 1370 },
-      { label: 'Transport and Labour', amount: 600 },
+      { label: 'Entry Sign board', amount: 900 },
+      { label: 'Entry Stand', amount: 400 },
+      { label: 'Flower Set up on entry', amount: 1000 },
+      { label: 'Wooden Coaster', amount: 500 },
+      { label: 'Vase', amount: 1000 },
+      { label: 'Bunch of flowers', amount: 3900 },
+      { label: 'Platform fee', amount: 770 },
+      { label: 'Transportation and Labour Cost', amount: 600 },
     ],
     inclustions: [
-      ...firstLayerDecorChoice('fl2', {
-        floralLabel: 'Floral decor (premium flowers)',
-        balloonArchLabel: 'Balloon arch décor (premium mix)',
-      }),
-      ...firstLayerSignageChoice('fl2'),
+      { text: '1 entry Easel', group_title: 'Entry setup' },
+      { text: '1 entry board', group_title: 'Entry setup' },
+      { text: 'Complete flower decor (using real flowers)', group_title: 'Entry setup' },
+      { text: '6 wooden coasters', group_title: 'Centrepieces' },
+      { text: '3 vases with 3 bunches of real flowers', group_title: 'Centrepieces' },
+      { text: '3 Floral arrangements with candle stands', group_title: 'Centrepieces' },
     ],
   },
   {
     sheet: 'FL 3',
-    title: 'The First Layer 3',
+    title: 'Signs & Stems 3',
     slug: 'the-first-layer-3',
-    theme_name: 'The First Layer',
-    budget_level_slug: 'level-3',
-    // Full LEVEL 3 cost sheet was not provided — keep structure Figma-aligned like L2.
+    theme_name: 'Signs & Stems',
+    budget_level_slug: 'level-1',
     base_price: 12200,
-    description: FIRST_LAYER_DESCRIPTION,
-    key_decor_elements:
-      'An impressive entrance with premium floral or balloon styling, plus entry signage or printables/props.',
-    nitty_gritty: FIRST_LAYER_NITTY,
-    setup_needs: FIRST_LAYER_SETUP,
-    best_placed_at: FIRST_LAYER_BEST,
-    why_we_love_it: FIRST_LAYER_WHY,
-    theme_slug_candidates: ['the-first-layer', 'bohemian'],
-    price_covers: FIRST_LAYER_PRICE_COVERS,
+    description: SIGNS_STEMS_DESCRIPTION,
+    key_decor_elements: SIGNS_STEMS_DESCRIPTION,
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
+    best_placed_at: '',
+    why_we_love_it: SIGNS_STEMS_WHY,
+    theme_slug_candidates: ['signs-and-stems', 'the-first-layer', 'bohemian'],
+    price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
       { label: 'Entry Mirror + candles', amount: 4500 },
       { label: 'Pampous', amount: 1000 },
       { label: 'Glass candle holders with candles', amount: 4500 },
       { label: 'Platform fee', amount: 1000 },
-      { label: 'Labour & Transport', amount: 1200 },
+      { label: 'Transportation and Labour Cost', amount: 1200 },
     ],
     inclustions: [
-      ...firstLayerDecorChoice('fl3', {
-        floralLabel: 'Floral decor (premium flowers)',
-        balloonArchLabel: 'Balloon arch décor (premium mix)',
-      }),
-      ...firstLayerSignageChoice('fl3'),
+      { text: '1 Engraved mirror', group_title: 'Entry setup' },
+      { text: '10 glass candle holders with tealights', group_title: 'Entry setup' },
+      {
+        text: 'Complete flower decor with disco balls (using real flowers)',
+        group_title: 'Entry setup',
+      },
+      { text: '6 wooden coasters', group_title: 'Centrepieces' },
+      { text: '3 vases with 3 bunches of real flowers', group_title: 'Centrepieces' },
+      { text: '3 Floral arrangements with candle stands', group_title: 'Centrepieces' },
     ],
   },
   {
     sheet: 'PP 2',
-    title: 'Pampous Play 2',
+    title: 'Pampous Play 1',
     slug: 'pampous-play-2',
     theme_name: 'Pampous Play',
-    budget_level_slug: 'level-2',
+    budget_level_slug: 'level-1',
     base_price: 8300,
-    description: 'Elegant floral décor set featuring a decorative vase arrangement, and a matching floor standee, designed to add a sophisticated and stylish touch to any celebration.',
-    key_decor_elements: 'Elegant floral décor set featuring a decorative vase arrangement, and a matching floor standee, designed to add a sophisticated and stylish touch to any celebration.',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
+    description:
+      'Elegant floral décor set featuring a decorative vase arrangement, and a matching floor standee, designed to add a sophisticated and stylish touch to any celebration.',
+    key_decor_elements:
+      'Elegant floral décor set featuring a decorative vase arrangement, and a matching floor standee, designed to add a sophisticated and stylish touch to any celebration.',
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
     best_placed_at: '',
-    why_we_love_it: '',
+    why_we_love_it: SIGNS_STEMS_WHY,
     theme_slug_candidates: ['bohemian', 'pampous-play'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PAMPOUS_SIMPLE_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Vase', amount: 3500 },
+      { label: 'Centrepieces 5 / Vase / Bunch of flowers', amount: 3500 },
+      { label: 'Floor Standee with Flower arrangement', amount: 3500 },
       { label: 'Platform fee', amount: 700 },
-      { label: 'Labour & Transport', amount: 600 },
+      { label: 'Transportation and Labour Cost', amount: 600 },
     ],
     inclustions: [
-      { text: '5 floral vase centrepieces', group_title: 'Includes' },
-      { text: '4 metal floral standees', group_title: 'Includes' },
+      { text: '5 bunches of flowers in Vases', group_title: 'Centrepieces' },
+      { text: '4 metal standees with florals', group_title: 'Standees' },
     ],
   },
   {
     sheet: 'PP 3',
-    title: 'Pampous Play 3',
+    title: 'Pampous Play 2',
     slug: 'pampous-play-3',
     theme_name: 'Pampous Play',
-    budget_level_slug: 'level-3',
+    budget_level_slug: 'level-2',
     base_price: 13740,
-    description: 'Elegant floral décor set featuring a decorative a decorative floor standee and a statment backdrop of fresh flowers, designed to add a sophisticated and stylish touch to any celebration.',
-    key_decor_elements: 'Elegant floral décor set featuring a decorative a decorative floor standee and a statment backdrop of fresh flowers, designed to add a sophisticated and stylish touch to any celebr',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
+    description:
+      'Elegant floral décor set featuring a decorative floor standee and a statement backdrop of fresh flowers, designed to add a sophisticated and stylish touch to any celebration.',
+    key_decor_elements:
+      'Elegant floral décor set featuring a decorative floor standee and a statement backdrop of fresh flowers, designed to add a sophisticated and stylish touch to any celebration.',
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
     best_placed_at: '',
-    why_we_love_it: '',
+    why_we_love_it: SIGNS_STEMS_WHY,
     theme_slug_candidates: ['bohemian', 'pampous-play'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    price_covers: PAMPOUS_SIMPLE_PRICE_COVERS,
     price_breakdown: [
       { label: 'Backdrop', amount: 9000 },
       { label: 'Floor Standee', amount: 2400 },
       { label: 'Platform fee', amount: 1140 },
-      { label: 'Labour & Transport', amount: 1200 },
+      { label: 'Transportation and Labour Cost', amount: 1200 },
     ],
     inclustions: [
-      { text: 'Floral ring backdrop', group_title: 'Includes' },
-      { text: 'Custom neon sign', group_title: 'Includes' },
-      { text: '4 metal floral standees', group_title: 'Includes' },
+      { text: '1 floral ring Backdrop', group_title: 'Backdrop' },
+      { text: '1 Custom Neon sign', group_title: 'Backdrop' },
+      { text: '4 metal standees with florals', group_title: 'Standees' },
     ],
   },
   {
     sheet: 'PP3',
-    title: 'Less is More 3',
+    title: 'Pampous Play 3',
     slug: 'less-is-more-3',
-    theme_name: 'Less is More',
-    budget_level_slug: 'level-3',
+    theme_name: 'Pampous Play',
+    budget_level_slug: 'level-1',
     base_price: 19020,
-    description: 'This comprehensive package offers a seamless, high-end look for your celebration, taking the stress out of styling. By combining your entrance statement, aisle styling, and main focal point, we create a cohesive, luxury environment using premium, real pampas textures.',
-    key_decor_elements: 'This comprehensive package offers a seamless, high-end look for your celebration, taking the stress out of styling. By combining your entrance statement, aisle styling, and main fo',
-    nitty_gritty: 'Love the look but need a different color? go ahead and book! We’ll contact you to finalize the perfect shade from our available decor to match your vibe.',
-    setup_needs: 'A small area for our team to work, access to water and electricity.',
+    description:
+      'This comprehensive package offers a seamless, high-end look for your celebration, taking the stress out of styling. By combining your entrance statement, aisle styling, and main focal point, we create a cohesive, luxury environment using premium, real pampas textures.',
+    key_decor_elements:
+      'This comprehensive package offers a seamless, high-end look for your celebration, taking the stress out of styling. By combining your entrance statement, aisle styling, and main focal point, we create a cohesive, luxury environment using premium, real pampas textures.',
+    nitty_gritty: SIGNS_STEMS_NITTY,
+    setup_needs: SIGNS_STEMS_SETUP,
     best_placed_at: '',
     why_we_love_it: '',
-    theme_slug_candidates: ['bohemian', 'less-is-more'],
-    price_covers: [
-      { text: 'The Complete Look' },
-      { text: 'Professional Setup' },
-      { text: 'No hidden service fees.' },
-    ],
+    theme_slug_candidates: ['bohemian', 'pampous-play', 'less-is-more'],
+    price_covers: SIGNS_STEMS_PRICE_COVERS,
     price_breakdown: [
-      { label: 'Happy birthday Bckdrop', amount: 7000 },
+      { label: 'Happy birthday Backdrop', amount: 7000 },
       { label: 'Real Pampus flowers decor', amount: 4500 },
       { label: '1 Easel', amount: 400 },
       { label: '1 signboard with Pampus decor', amount: 1900 },
       { label: '4 Pampus Standees', amount: 2400 },
       { label: 'Platform fee', amount: 1620 },
-      { label: 'Labour & Transport', amount: 1200 },
+      { label: 'Transportation and Labour Cost', amount: 1200 },
     ],
     inclustions: [
-      { text: 'Happy birthday backdrop', group_title: 'Includes' },
-      { text: 'Real pampas decor', group_title: 'Includes' },
-      { text: '1 easel', group_title: 'Includes' },
-      { text: 'Pampas signboard', group_title: 'Includes' },
-      { text: '4 pampas standees', group_title: 'Includes' },
+      { text: 'Happy birthday Backdrop', group_title: 'The Backdrop' },
+      { text: 'Real Pampus flowers decor', group_title: 'The Backdrop' },
+      { text: '1 Easel', group_title: 'Entrance' },
+      { text: '1 signboard with Pampus decor', group_title: 'Entrance' },
+      { text: '4 Pampus Standees', group_title: 'Floral Accents' },
     ],
   },
   {
@@ -564,9 +522,24 @@ const BOHEMIAN_PACKAGES = [
 async function seedDecorBohemianPackages(strapi) {
   await ensureThemeDocumentId(strapi, { name: 'Bohemian', slug: 'bohemian', display_order: 50 });
   await ensureThemeDocumentId(strapi, {
+    name: 'Signs & Stems',
+    slug: 'signs-and-stems',
+    display_order: 51,
+  });
+  await ensureThemeDocumentId(strapi, {
     name: 'The First Layer',
     slug: 'the-first-layer',
-    display_order: 51,
+    display_order: 52,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Pampous Play',
+    slug: 'pampous-play',
+    display_order: 53,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Less is More',
+    slug: 'less-is-more',
+    display_order: 54,
   });
   await ensureEventDocumentId(strapi, {
     name: 'Birthday Parties',
