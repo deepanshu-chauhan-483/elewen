@@ -420,6 +420,27 @@ function auraUpgrade1Inclusions() {
   ];
 }
 
+function raiseTheBarMeta(overrides = {}) {
+  return baseMeta({
+    nitty_gritty:
+      'Love the look but want a different colour or style direction? Go ahead and book, we’ll connect to customise to match your event vibe.',
+    setup_needs:
+      'A small area for our team to work and access to water & electricity. Final print content to be shared prior to the event (timeline will be suggested by team Elewen after booking).',
+    best_placed_at:
+      'Perfect for house parties, birthdays, and intimate gatherings that need a proper bar corner',
+    why_we_love_it:
+      'Because a defined bar corner changes the vibe instantly. It gives guests a clear gathering spot and makes the party feel structured and ready',
+    price_covers: [
+      { text: 'The Complete Look' },
+      { text: 'Professional Setup' },
+      { text: 'Final Dismantling' },
+      { text: 'Coordination with decor team handled end-to-end to ensure timely setup.' },
+      { text: 'No hidden service fees.' },
+    ],
+    ...overrides,
+  });
+}
+
 const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
   {
     sheet: 'PP1',
@@ -685,50 +706,73 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     base_price: 5710,
     description:
       'A dedicated bar setup designed to instantly lift the energy of your event. Simple, stylish, and functional.',
-    key_decor_elements: 'Basic takhat bar, menu, neon, and optional bartender.',
-    ...baseMeta(),
+    key_decor_elements:
+      'Takht bar with black masking, bar menu with easel, bar-themed neon sign, and optional bartender.',
+    ...raiseTheBarMeta(),
     price_breakdown: [
       { label: 'Takht Bar', amount: 2500 },
       { label: 'Bar essentials', amount: 500 },
+      { label: 'Bar props — neon sign', amount: 400 },
+      { label: 'Package Price', amount: 4100 },
       { label: 'Transport and Labour', amount: 1200 },
       { label: 'Platform fee', amount: 410 },
     ],
     inclustions: [
-      { text: 'Basic bar setup with black pleated masking', group_title: 'Basic Bar Setup' },
+      {
+        text: 'Bar made with takht and a table — black pleated masking for a clean finish',
+        group_title: 'Basic Bar Setup',
+      },
       { text: 'Bar menu with easel', group_title: 'Bar Essentials' },
-      { text: '1 bar-themed neon sign', group_title: 'Bar Essentials' },
+      { text: '1 bar-themed neon sign', group_title: 'Bar Props' },
     ],
     addons: [
-      optionalPackageAddon('Bartender (4–5 hours)', 4700, 'Optional bartender for 4–5 hours'),
+      optionalPackageAddon(
+        'Bartender (4–5 hours)',
+        4700,
+        'Optional but recommended — 1 bartender for INR 4,700 for 4–5 hours'
+      ),
     ],
   },
   {
     sheet: 'RTB1B',
-    title: 'Raise the Bar 1B',
+    title: 'Package Bar',
     slug: 'raise-the-bar-1b',
     theme_name: 'Raise the Bar',
     theme_slug_candidates: parentThemeCandidates('raise-the-bar'),
     budget_level_slug: 'level-1',
     base_price: 6810,
     description:
-      'A dedicated bar setup along with a beer pong table — simple, stylish, and functional.',
-    key_decor_elements: 'Basic bar, neon, beer pong table, and optional bartender.',
-    ...baseMeta(),
+      'A dedicated bar setup along with a beer pong table, designed to instantly lift the energy of your event. Simple, stylish, and functional.',
+    key_decor_elements:
+      'Takht bar, bar menu, neon sign, beer pong table, and optional bartender.',
+    ...raiseTheBarMeta({
+      why_we_love_it:
+        'Because a defined bar corner changes the vibe instantly. Bar and beer pong — gives guests a clear gathering spot and makes the party feel fun',
+    }),
     price_breakdown: [
       { label: 'Takht Bar', amount: 2500 },
       { label: 'Bar essentials', amount: 500 },
-      { label: 'Games', amount: 1500 },
+      { label: 'Bar props — neon sign', amount: 400 },
+      { label: 'Beer Pong Table Set-up', amount: 1500 },
+      { label: 'Package Price', amount: 5100 },
       { label: 'Transport and Labour', amount: 1200 },
       { label: 'Platform fee', amount: 510 },
     ],
     inclustions: [
-      { text: 'Basic bar setup with black pleated masking', group_title: 'Basic Bar Setup' },
+      {
+        text: 'Bar made with takht and a table — black pleated masking for a clean finish',
+        group_title: 'Basic Bar Setup',
+      },
       { text: 'Bar menu with easel', group_title: 'Bar Essentials' },
-      { text: '1 bar-themed neon sign', group_title: 'Bar Essentials' },
+      { text: '1 bar-themed neon sign', group_title: 'Bar Props' },
       { text: 'Beer pong table setup', group_title: 'Games' },
     ],
     addons: [
-      optionalPackageAddon('Bartender (4–5 hours)', 4700, 'Optional bartender for 4–5 hours'),
+      optionalPackageAddon(
+        'Bartender (4–5 hours)',
+        4700,
+        'Optional but recommended — 1 bartender for INR 4,700 for 4–5 hours'
+      ),
     ],
   },
   {
@@ -740,31 +784,48 @@ const HOUSE_PARTY_BIRTHDAY_PACKAGES = [
     budget_level_slug: 'level-2',
     base_price: 11760,
     description:
-      'A dedicated bar setup along with a beer pong table and seating for guests to gather.',
-    key_decor_elements: 'Basic bar, beer pong, and furniture for mingling.',
-    ...baseMeta(),
+      'A dedicated bar setup along with a beer pong table, designed to instantly lift the energy of your event. Simple, stylish, and functional.',
+    key_decor_elements:
+      'Takht bar, neon, beer pong, and furniture for guests to gather and buffet.',
+    ...raiseTheBarMeta({
+      why_we_love_it:
+        'Because a defined bar corner changes the vibe instantly. Bar and beer pong — gives guests a clear gathering spot and makes the party feel fun',
+    }),
     price_breakdown: [
       { label: 'Takht Bar', amount: 2500 },
       { label: 'Bar essentials', amount: 500 },
-      { label: 'Games', amount: 1500 },
+      { label: 'Bar props — neon sign', amount: 400 },
+      { label: 'Beer Pong Table Set-up', amount: 1500 },
+      { label: '1 round table with linen', amount: 500 },
       { label: '6 basic chairs with linens', amount: 1600 },
       { label: '2 basic cocktail tables', amount: 1000 },
       { label: '2 Rectangle tables for buffet with linen', amount: 400 },
+      { label: 'Package Price', amount: 9600 },
       { label: 'Transport and Labour', amount: 1200 },
       { label: 'Platform fee', amount: 960 },
     ],
     inclustions: [
-      { text: 'Basic bar setup with black pleated masking', group_title: 'Basic Bar Setup' },
+      {
+        text: 'Bar made with takht and a table — black pleated masking for a clean finish',
+        group_title: 'Basic Bar Setup',
+      },
       { text: 'Bar menu with easel', group_title: 'Bar Essentials' },
-      { text: '1 bar-themed neon sign', group_title: 'Bar Essentials' },
+      { text: '1 bar-themed neon sign', group_title: 'Bar Props' },
       { text: 'Beer pong table setup', group_title: 'Games' },
       { text: '1 round table with linen', group_title: 'Furniture' },
       { text: '6 basic chairs with linen', group_title: 'Furniture' },
-      { text: '2 cocktail tables', group_title: 'Furniture' },
-      { text: '2 buffet tables with linen', group_title: 'Furniture' },
+      { text: '2 basic cocktail tables', group_title: 'Furniture' },
+      {
+        text: '2 rectangle tables for buffet with linen / chat paper',
+        group_title: 'Furniture',
+      },
     ],
     addons: [
-      optionalPackageAddon('Bartender (4–5 hours)', 4700, 'Optional bartender for 4–5 hours'),
+      optionalPackageAddon(
+        'Bartender (4–5 hours)',
+        4700,
+        'Optional but recommended — 1 bartender for INR 4,700 for 4–5 hours'
+      ),
     ],
   },
   {
@@ -1107,6 +1168,11 @@ async function seedDecorHousePartyBirthdayPackages(strapi) {
     name: 'Air We Go',
     slug: 'air-we-go',
     display_order: 31,
+  });
+  await ensureThemeDocumentId(strapi, {
+    name: 'Raise the Bar',
+    slug: 'raise-the-bar',
+    display_order: 32,
   });
   await ensureEventDocumentId(strapi, {
     name: 'Birthday Parties',
