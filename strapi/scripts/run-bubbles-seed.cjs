@@ -70,7 +70,7 @@ async function main() {
       event: result?.eventDocumentId ?? null,
     };
     console.log('[seed/decor-bubbles-black-tie] done:', JSON.stringify(summary, null, 2));
-    await dumpSlug(app, 'social-setup-2');
+    await dumpSlug(app, 'complete-package-bubbles-black-tie');
   } finally {
     await app.destroy();
   }

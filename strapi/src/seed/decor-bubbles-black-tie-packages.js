@@ -432,6 +432,7 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
     slug: 'complete-package-bubbles-black-tie',
     theme_name: 'Complete Package',
     budget_level_slug: 'level-3',
+    // Base assumes Classic furniture (₹12,500) + Premium catering for 35 (₹66,500).
     base_price: 162700,
     description:
       'A thoughtfully styled celebration space with refined details that make the gathering feel elevated and festive.',
@@ -451,25 +452,116 @@ const BUBBLES_BLACK_TIE_PACKAGES = [
       { label: 'Premium Bar Set up', amount: 15000 },
       { label: 'Customized Backdrop', amount: 15000 },
       { label: 'Candles', amount: 3000 },
-      { label: 'Furniture (classic or premium) cost differs', amount: 12500 },
-      { label: '3 round tables + 20 chairs + 3 cocktail tables (premium)', amount: 20000 },
+      { label: 'Furniture (classic)', amount: 12500 },
       { label: 'Fairy Lights with lanterns', amount: 5000 },
       { label: 'Printables', amount: 5000 },
       { label: 'lights', amount: 3000 },
-      { label: 'Veg - 1900 | Non Veg - 2300 (with premium dishes)', amount: 66500 },
+      { label: 'Catering for 35 pax (premium)', amount: 66500 },
       { label: 'props (8-10)', amount: 5000 },
       { label: 'Platform fee', amount: 14500 },
-      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Transport', amount: 3200 },
     ],
+    // Recommended add-ons (Figma / sheet notes) — not included in base price.
+    addons: [
+      optionalPackageAddon('Entrance arch', 0, 'Optional entrance arch add-on'),
+      optionalPackageAddon(
+        'Rectangle table set up',
+        0,
+        'Optional rectangle table set up'
+      ),
+      optionalPackageAddon(
+        'Props (urli / crates etc.)',
+        0,
+        'Optional styling props such as urli, crates, and similar accents'
+      ),
+      optionalPackageAddon(
+        'Professional Bartender',
+        0,
+        'Optional professional bartender for the celebration'
+      ),
+    ],
+    // Figma detail layout: fixed inclusion groups + choose-1 cards (furniture, props, catering).
     inclustions: [
-      { text: '5 premium floral centrepieces', group_title: 'Includes' },
-      { text: 'Golden frame entrance', group_title: 'Includes' },
-      { text: 'Premium bar + menu', group_title: 'Includes' },
-      { text: 'Double panel backdrop', group_title: 'Includes' },
-      { text: 'Furniture set', group_title: 'Includes' },
-      { text: 'Fairy lights + lanterns', group_title: 'Includes' },
-      { text: 'Printables + props', group_title: 'Includes' },
-      { text: 'Catering for 35 pax', group_title: 'Includes' },
+      {
+        text: '5 centerpieces with golden vases styled with premium flowers like carnations, orchids, lilies, etc.',
+        group_title: 'Centerpieces',
+      },
+      {
+        text: '3 additional centerpieces for cocktail tables',
+        group_title: 'Centerpieces',
+      },
+      {
+        text: 'Easel styled like a golden frame with printed welcome board',
+        group_title: 'Entrance Setup',
+      },
+      { text: 'Floral styling', group_title: 'Entrance Setup' },
+      {
+        text: 'Double panel backdrop for a fuller celebration setup',
+        group_title: 'Customized Backdrop',
+      },
+      { text: 'Customized premium bar', group_title: 'Premium Bar Setup' },
+      {
+        text: 'Printed bar menu placed on a small easel',
+        group_title: 'Premium Bar Setup',
+      },
+      { text: 'Candles in glass jars', group_title: 'Candles' },
+      choiceOption(
+        'cp-furniture',
+        'Furniture (choose 1)',
+        'Classic — 3 round tables + 20 chairs + 3 cocktail tables'
+      ),
+      whenInclusion('cp-furniture', 'Classic — 3 round tables + 20 chairs + 3 cocktail tables', '3 round tables'),
+      whenInclusion('cp-furniture', 'Classic — 3 round tables + 20 chairs + 3 cocktail tables', '20 chairs'),
+      whenInclusion(
+        'cp-furniture',
+        'Classic — 3 round tables + 20 chairs + 3 cocktail tables',
+        '3 cocktail tables'
+      ),
+      choiceOption(
+        'cp-furniture',
+        'Furniture (choose 1)',
+        'Premium — 3 round tables + 20 chairs + 3 cocktail tables'
+      ),
+      whenInclusion('cp-furniture', 'Premium — 3 round tables + 20 chairs + 3 cocktail tables', '3 round tables'),
+      whenInclusion('cp-furniture', 'Premium — 3 round tables + 20 chairs + 3 cocktail tables', '20 chairs'),
+      whenInclusion(
+        'cp-furniture',
+        'Premium — 3 round tables + 20 chairs + 3 cocktail tables',
+        '3 cocktail tables'
+      ),
+      { text: '8–10 fairy light strings', group_title: 'Lighting' },
+      { text: '8–10 paper lanterns with warm lights', group_title: 'Lighting' },
+      {
+        text: '3–4 LED Parcans to light up the space and photo-ops',
+        group_title: 'Lighting',
+      },
+      choiceOption('cp-props', 'Props (choose 1)', 'Shades style (8–10 props)'),
+      choiceOption('cp-props', 'Props (choose 1)', 'Feathers style (8–10 props)'),
+      choiceOption('cp-props', 'Props (choose 1)', 'Masks style (8–10 props)'),
+      {
+        text: '2 quotes / interactive engagement with 2 small easel stands',
+        group_title: 'Event Printables',
+      },
+      choiceOption(
+        'cp-catering',
+        'Catering for 35 pax (choose 1)',
+        'Classic menu'
+      ),
+      whenInclusion(
+        'cp-catering',
+        'Classic menu',
+        'Veg ₹1,300 | Non Veg ₹1,890 per person (classic dishes)'
+      ),
+      choiceOption(
+        'cp-catering',
+        'Catering for 35 pax (choose 1)',
+        'Premium menu'
+      ),
+      whenInclusion(
+        'cp-catering',
+        'Premium menu',
+        'Veg ₹1,900 | Non Veg ₹2,300 per person (premium dishes)'
+      ),
     ],
   },
 ];
