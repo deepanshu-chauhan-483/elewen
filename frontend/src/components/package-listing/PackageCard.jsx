@@ -265,18 +265,16 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </p>
         ) : null}
 
-        <div className="mt-4 overflow-hidden">
-          <div className="max-h-[3.25rem] overflow-hidden">
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((tag, i) => (
-                <span
-                  key={i}
-                  className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium leading-none text-[#2D2D2D]"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+        <div className="mt-4">
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag, i) => (
+              <span
+                key={i}
+                className="rounded-full bg-black/5 px-2 py-1.5 text-[12px] font-medium leading-[1.35] text-[#2D2D2D]"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
       </div>
