@@ -174,7 +174,7 @@ export default function PackageResultsHero({
     serviceIdParam || (selectedService?.id != null ? String(selectedService.id) : '')
 
   const eventsWithPackages = useMemo(() => {
-    if (!serviceSlug || serviceSlug === 'sheesha') return allEvents
+    if (!serviceSlug) return allEvents
 
     return filterEventsWithPackages(allEvents, packages, {
       ...eventPackageFilters,
@@ -282,7 +282,7 @@ export default function PackageResultsHero({
 
   useEffect(() => {
     if (!eventSlug && !eventId) return
-    if (!serviceSlug || serviceSlug === 'sheesha') return
+    if (!serviceSlug) return
 
     const selectedStillAllowed = events.some(
       event =>

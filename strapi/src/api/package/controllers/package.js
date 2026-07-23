@@ -48,6 +48,22 @@ const isCateringPackageEntry = entry => {
   return sections.some(section => section?.__component === 'package.cateringpackage');
 };
 
+const isBartendingPackageEntry = entry => {
+  const serviceSlugs = (Array.isArray(entry?.service_categories) ? entry.service_categories : [])
+    .flatMap(category => [
+      String(category?.slug ?? '').toLowerCase(),
+      String(category?.name ?? '').toLowerCase(),
+    ])
+    .filter(Boolean);
+
+  if (serviceSlugs.some(slug => slug.includes('bartend') || slug === 'bar-tending')) {
+    return true;
+  }
+
+  const sections = Array.isArray(entry?.packages) ? entry.packages : [];
+  return sections.some(section => section?.__component === 'package.bartendingpackage');
+};
+
 const mergeAddonsById = (...addonGroups) => {
   const seen = new Set();
   const merged = [];
@@ -244,6 +260,13 @@ const attachReusableAddons = async (entry, strapi) => {
     scopedAddons = await strapi.db.query('api::addon.addon').findMany({
       where: {
         addon_scope: 'catering',
+      },
+      select: addonFields,
+    });
+  } else if (isBartendingPackageEntry(entry)) {
+    scopedAddons = await strapi.db.query('api::addon.addon').findMany({
+      where: {
+        addon_scope: 'bartending',
       },
       select: addonFields,
     });

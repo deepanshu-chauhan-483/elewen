@@ -95,12 +95,9 @@ export default function ServicePackagesPageContent({
     )
   }, [categorySlug, setSearchParams])
 
-  const shouldBypassEventFilters = selectedServiceSlug === 'sheesha'
-  const effectiveCategorySlug = shouldBypassEventFilters
-    ? ''
-    : categorySlug || DEFAULT_EVENT_CATEGORY_SLUG
-  const effectiveEventSlug = shouldBypassEventFilters ? '' : eventSlug
-  const effectiveEventId = shouldBypassEventFilters ? '' : eventId
+  const effectiveCategorySlug = categorySlug || DEFAULT_EVENT_CATEGORY_SLUG
+  const effectiveEventSlug = eventSlug
+  const effectiveEventId = eventId
 
   const packagesData = useMemo(
     () =>
@@ -161,7 +158,6 @@ export default function ServicePackagesPageContent({
   )
 
   const selectedEventHasPackages = useMemo(() => {
-    if (shouldBypassEventFilters) return true
     if (!effectiveEventSlug && !effectiveEventId) return true
     if (!selectedServiceSlug) return true
 
@@ -184,7 +180,6 @@ export default function ServicePackagesPageContent({
     packagesData,
     selectedServiceSlug,
     serviceIdParam,
-    shouldBypassEventFilters,
     themeSlug,
   ])
 

@@ -34,6 +34,37 @@ function packageMatchesLevelFilter(pkg, { levelSlug = '', levelId = '' } = {}) {
   return slugMatch || idMatch
 }
 
+function packageHasServiceSlug(pkg, serviceSlug) {
+  const normalized = normalizeServiceSlug(serviceSlug)
+  if (!normalized) return false
+  return (Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : []).some(
+    value => normalizeServiceSlug(value) === normalized
+  )
+}
+
+/**
+ * Sheesha / catering / bartending packages are offered across Social + Corporate.
+ * Until every package is fully event-linked in CMS, keep them visible under those
+ * categories instead of hiding them behind incomplete event relations.
+ */
+const UNIVERSAL_OCCASION_SERVICE_SLUGS = new Set(['sheesha', 'catering', 'bartending'])
+
+function servicePassesOccasionFilters(pkg, { categorySlug = '', eventSlug = '', eventId = '' } = {}) {
+  const isUniversalService = [...UNIVERSAL_OCCASION_SERVICE_SLUGS].some(slug =>
+    packageHasServiceSlug(pkg, slug)
+  )
+  if (!isUniversalService) return false
+
+  const category = normalizeValue(categorySlug)
+  if (category === 'religious') return false
+  if (category && category !== 'social' && category !== 'corporate') return false
+
+  // Event selection is allowed for UX, but does not exclude these service packages.
+  void eventSlug
+  void eventId
+  return true
+}
+
 const normalizeList = values =>
   (Array.isArray(values) ? values : []).map(value => normalizeValue(value)).filter(Boolean)
 
@@ -574,13 +605,19 @@ export function filterPackages(packages, filters = {}) {
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
 
   return (Array.isArray(packages) ? packages : []).filter(pkg => {
-    if (!includesNormalized(pkg.category_slugs, categorySlug)) return false
-    // ID and slug can disagree (CMS birthday-celebrations vs URL birthday-parties) — OR them.
-    if (eventSlug || eventId) {
-      const byId = eventId ? includesNormalized(pkg.event_ids, eventId) : false
-      const bySlug = eventSlug ? includesEventSlug(pkg.event_slugs, eventSlug) : false
-      if (!(byId || bySlug)) return false
+    const categoryMatched = includesNormalized(pkg.category_slugs, categorySlug)
+    const eventMatched =
+      !eventSlug && !eventId
+        ? true
+        : (eventId ? includesNormalized(pkg.event_ids, eventId) : false) ||
+          (eventSlug ? includesEventSlug(pkg.event_slugs, eventSlug) : false)
+
+    if (!categoryMatched || !eventMatched) {
+      if (!servicePassesOccasionFilters(pkg, { categorySlug, eventSlug, eventId })) {
+        return false
+      }
     }
+
     const serviceSlugs = Array.isArray(pkg.service_slugs) ? pkg.service_slugs : []
     if (
       normalizedServiceSlug &&

@@ -515,11 +515,34 @@ function normalizePackage(pkg, index = 0, options = {}) {
     id: pkg.id,
     documentId: pkg.documentId,
     title: pkg.title,
-    category:
-      pkg.category ??
-      normaliseRelationArray(pkg.events)[0]?.name ??
-      normaliseRelationArray(pkg.events)[0]?.parent_event?.name ??
-      '',
+    category: (() => {
+      const primaryServiceSlug = serviceSlugs.map(normalizeServiceSlug).find(Boolean)
+      if (primaryServiceSlug === 'sheesha') {
+        return (
+          serviceCategories.find(service => normalizeServiceSlug(service?.slug) === 'sheesha')
+            ?.name || 'Sheesha'
+        )
+      }
+      if (primaryServiceSlug === 'catering') {
+        return (
+          serviceCategories.find(service => normalizeServiceSlug(service?.slug) === 'catering')
+            ?.name || 'Catering'
+        )
+      }
+      if (primaryServiceSlug === 'bartending') {
+        return (
+          serviceCategories.find(service => normalizeServiceSlug(service?.slug) === 'bartending')
+            ?.name || 'Bartending'
+        )
+      }
+
+      return (
+        pkg.category ??
+        normaliseRelationArray(pkg.events)[0]?.name ??
+        normaliseRelationArray(pkg.events)[0]?.parent_event?.name ??
+        ''
+      )
+    })(),
     description: blocksToText(pkg.description),
     price: formatPackagePrice(pkg),
     base_price: Number(pkg.base_price ?? pkg.starting_price ?? pkg.price_from ?? 0) || 0,
