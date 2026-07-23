@@ -152,34 +152,50 @@ const ESSENTIAL_PACKAGES = [
     menu_items: [
       {
         title: 'Soup Station 1',
+        category_key: 'soup',
         row_type: 'info',
         sort_order: 1,
       },
       {
         title: 'Pre-plated',
+        category_key: 'pre_plated',
         row_type: 'info',
         sort_order: 2,
       },
       {
         title: 'Starters (Choose 8)',
         choose_hint: 'Choose 4+4 or 8 veg',
+        category_key: 'starters',
+        category_key_extra: 'starters_non_veg',
         row_type: 'choose',
+        max_pick: 8,
+        veg_pick: 4,
+        nonveg_pick: 4,
         sort_order: 3,
       },
       {
         title: 'Main Course (Choose 6)',
         choose_hint: 'Choose 3+3 or 6 veg',
+        category_key: 'main_course_veg',
+        category_key_extra: 'main_course_non_veg',
         row_type: 'choose',
+        max_pick: 6,
+        veg_pick: 3,
+        nonveg_pick: 3,
         sort_order: 4,
       },
       {
         title: 'Accompaniments (Rice + Breads)',
+        category_key: 'rotis_and_rice',
         row_type: 'included',
         sort_order: 5,
       },
       {
         title: 'Dessert (Choose 2)',
+        choose_hint: 'Choose 2',
+        category_key: 'dessert',
         row_type: 'choose',
+        max_pick: 2,
         sort_order: 6,
       },
     ],
@@ -203,8 +219,8 @@ function buildEssentialsBlock(pkgSeed, policyDocumentId) {
   });
 }
 
-async function seedCateringEssentials(strapi) {
-  return seedCateringPackages(strapi, ESSENTIAL_PACKAGES, buildEssentialsBlock);
+async function seedCateringEssentials(strapi, options = {}) {
+  return seedCateringPackages(strapi, ESSENTIAL_PACKAGES, buildEssentialsBlock, options);
 }
 
 module.exports = {

@@ -37,7 +37,7 @@ export function getCateringPricePerPerson(
   return nonVegPrice
 }
 
-export function formatCateringPrice(amount, { suffix = '' } = {}) {
+export function formatCateringPrice(amount, { suffix = '/person' } = {}) {
   const value = Number(amount ?? 0)
   if (!Number.isFinite(value) || value <= 0) return ''
   return `₹${value.toLocaleString('en-IN')}${suffix}`
@@ -63,5 +63,5 @@ export function getCateringPriceRangeLabel(cateringSection, fallbackBasePrice = 
     return formatCateringPrice(minPrice)
   }
 
-  return `₹${minPrice.toLocaleString('en-IN')} – ₹${maxPrice.toLocaleString('en-IN')}`
+  return `₹${minPrice.toLocaleString('en-IN')} – ₹${maxPrice.toLocaleString('en-IN')}/person`
 }

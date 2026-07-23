@@ -27,6 +27,7 @@
     "seed:sufi": "node scripts/run-sufi-seed.cjs",
     "seed:house-party": "node scripts/run-house-party-seed.cjs",
     "seed:catering-all": "node scripts/run-catering-all.cjs",
+    "seed:catering-refresh": "node scripts/run-catering-refresh.cjs",
     "seed:production-data": "node scripts/run-production-data-seed.cjs",
     "seed:delivery-charges": "node scripts/run-delivery-charges-seed.cjs",
     "seed:privacy-policy": "node scripts/run-privacy-policy-seed.cjs",

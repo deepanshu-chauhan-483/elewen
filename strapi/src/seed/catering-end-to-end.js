@@ -359,8 +359,8 @@ function buildEndToEndBlock(pkgSeed, policyDocumentId) {
   });
 }
 
-async function seedCateringEndToEnd(strapi) {
-  return seedCateringPackages(strapi, END_TO_END_PACKAGES, buildEndToEndBlock);
+async function seedCateringEndToEnd(strapi, options = {}) {
+  return seedCateringPackages(strapi, END_TO_END_PACKAGES, buildEndToEndBlock, options);
 }
 
 module.exports = {

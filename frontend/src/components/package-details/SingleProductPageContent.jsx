@@ -493,7 +493,9 @@ function ProductImageLayout({
             }}
           >
             {customDetailsContent ? (
-              <div className="mt-5 md:pr-3">{customDetailsContent}</div>
+              <div id="product-options" className="mt-5 scroll-mt-24 md:pr-3">
+                {customDetailsContent}
+              </div>
             ) : (
               <>
                 <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
@@ -699,7 +701,14 @@ function ProductImageLayout({
               <button
                 type="button"
                 className="text-xs underline sm:text-sm md:text-base"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={() => {
+                  const options = document.getElementById('product-options')
+                  if (options) {
+                    options.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    return
+                  }
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
               >
                 View Options
               </button>

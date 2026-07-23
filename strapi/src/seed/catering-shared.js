@@ -8,7 +8,7 @@ const CATERING_POLICY_SUMMARY = `Policy for all catering packages
 
 1. All the material used is on rent and shall be picked up after the event. The cost given is for one event only.
 2. Additional Guests/Staff: Any extra consumption will be charged accordingly.
-3. Service Duration: Starters served up to 3 hours. Extension at additional cost.
+3. Service Duration: Starters served up to 5 hours. Extension at additional cost.
 4. Client Arrangements: Client to provide space, electricity & basic setup for food preparation.
 5. Food Preparation: Food is partially prepared in advance, with final cooking and finishing touches completed live at the venue for freshness.`;
 
@@ -29,6 +29,131 @@ function buildGuestPricingRules() {
     modifier_value: 0,
     __temp_key__: `guest-${index}`,
   }));
+}
+
+function pickMenuHintText(item = {}) {
+  return [item?.choose_hint, item?.title, item?.details].filter(Boolean).join(' ');
+}
+
+function parseChooseHint(hint = '') {
+  const text = String(hint ?? '').trim();
+  const splitMatch = text.match(/(\d+)\s*\+\s*(\d+)/);
+  const allVegMatch = text.match(/or\s*(\d+)\s*veg/i);
+  const vegPick = splitMatch ? Number(splitMatch[1]) : 0;
+  const nonvegPick = splitMatch ? Number(splitMatch[2]) : 0;
+  const splitTotal = vegPick + nonvegPick;
+  const allVegPick = allVegMatch ? Number(allVegMatch[1]) : 0;
+
+  if (splitMatch) {
+    const maxPick = allVegPick > 0 ? Math.max(splitTotal, allVegPick) : splitTotal;
+    return { maxPick: maxPick > 0 ? maxPick : 1, vegPick, nonvegPick };
+  }
+
+  if (allVegPick > 0) {
+    return { maxPick: allVegPick, vegPick: allVegPick, nonvegPick: 0 };
+  }
+
+  const chooseMatch = text.match(/choose\s*(\d+)/i);
+  const maxPick = chooseMatch ? Number(chooseMatch[1]) : 0;
+  return { maxPick: maxPick > 0 ? maxPick : 0, vegPick: 0, nonvegPick: 0 };
+}
+
+function inferCategoryKeyFromTitle(title = '') {
+  const text = String(title ?? '').toLowerCase();
+  if (/dessert|yoghurt|yogurt/.test(text)) return 'dessert';
+  if (/starter/.test(text)) return 'starters';
+  if (/main\s*course|\bmains\b/.test(text)) return 'main_course_veg';
+  if (/accompaniment|rotis|rice.*bread|bread.*rice|artisan breads/.test(text)) {
+    return 'rotis_and_rice';
+  }
+  if (/pre[-\s]?plated/.test(text)) return 'pre_plated';
+  if (/\bsoup\b/.test(text)) return 'soup';
+  if (/live\s*station/.test(text)) return 'live_stations';
+  if (/\bsalad\b/.test(text)) return 'salad';
+  if (/raita/.test(text)) return 'raita';
+  return null;
+}
+
+function inferCategoryKeyExtra(title = '', rules = {}) {
+  const text = String(title ?? '').toLowerCase();
+  const maxPick = Number(rules.maxPick ?? 0);
+  const hasSplitHint = /(\d+)\s*\+\s*(\d+)/.test(text) || /2\s*\+\s*2/.test(text);
+
+  if (/starter/.test(text) && (maxPick >= 2 || hasSplitHint || /non-?veg/i.test(text))) {
+    return 'starters_non_veg';
+  }
+  if (
+    /main\s*course|\bmains\b/.test(text) &&
+    (maxPick >= 2 || hasSplitHint || /non-?veg/i.test(text))
+  ) {
+    return 'main_course_non_veg';
+  }
+
+  return null;
+}
+
+function normalizeCateringMenuItems(menuItems = []) {
+  if (!Array.isArray(menuItems)) return [];
+
+  return menuItems.map((item, index) => {
+    const title = String(item?.title ?? '').trim();
+    if (!title) return item;
+
+    const hintText = pickMenuHintText(item);
+    const parsed = parseChooseHint(hintText);
+    const categoryKey = item.category_key || inferCategoryKeyFromTitle(title);
+    const categoryKeyExtra =
+      item.category_key_extra || inferCategoryKeyExtra(title, parsed) || undefined;
+
+    let maxPick = Number(item.max_pick) > 0 ? Number(item.max_pick) : parsed.maxPick;
+    let vegPick = Number(item.veg_pick) > 0 ? Number(item.veg_pick) : parsed.vegPick;
+    let nonvegPick =
+      Number(item.nonveg_pick) > 0 ? Number(item.nonveg_pick) : parsed.nonvegPick;
+
+    if (vegPick > 0 && nonvegPick > 0) {
+      maxPick = Math.max(maxPick || 0, vegPick + nonvegPick);
+    }
+
+    if (
+      categoryKey === 'starters' &&
+      categoryKeyExtra === 'starters_non_veg' &&
+      maxPick >= 4 &&
+      !vegPick &&
+      !nonvegPick
+    ) {
+      vegPick = Math.floor(maxPick / 2);
+      nonvegPick = Math.floor(maxPick / 2);
+    }
+
+    if (
+      categoryKey === 'main_course_veg' &&
+      categoryKeyExtra === 'main_course_non_veg' &&
+      maxPick >= 2 &&
+      !vegPick &&
+      !nonvegPick
+    ) {
+      vegPick = Math.floor(maxPick / 2) || 1;
+      nonvegPick = Math.floor(maxPick / 2) || 1;
+    }
+
+    return {
+      ...item,
+      title,
+      choose_hint: item.choose_hint || (parsed.maxPick ? hintText : item.choose_hint),
+      category_key: categoryKey || undefined,
+      category_key_extra: categoryKeyExtra,
+      max_pick: maxPick > 0 ? maxPick : undefined,
+      min_pick:
+        Number(item.min_pick) > 0
+          ? Number(item.min_pick)
+          : maxPick > 0
+            ? maxPick
+            : undefined,
+      veg_pick: vegPick > 0 ? vegPick : undefined,
+      nonveg_pick: nonvegPick > 0 ? nonvegPick : undefined,
+      sort_order: item.sort_order ?? index + 1,
+    };
+  });
 }
 
 function buildCateringComponent({
@@ -59,7 +184,7 @@ function buildCateringComponent({
     internal_package_code: internalPackageCode,
     price_per_person_veg: pricePerPersonVeg,
     price_per_person_non_veg: pricePerPersonNonVeg,
-    menu_items: menuItems,
+    menu_items: normalizeCateringMenuItems(menuItems),
     pricing_rules: buildGuestPricingRules(),
     ...(policyDocumentId ? { policy: policyDocumentId } : {}),
   };
@@ -162,19 +287,43 @@ async function ensureCateringServiceCategory(strapi) {
   return created;
 }
 
-async function ensureCateringPackage(strapi, pkgSeed, cateringBlock, cateringCategoryDocumentId) {
+function shouldRefreshExistingCatering() {
+  const raw = String(process.env.CATERING_REFRESH_EXISTING ?? '')
+    .trim()
+    .toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes';
+}
+
+async function ensureCateringPackage(
+  strapi,
+  pkgSeed,
+  cateringBlock,
+  cateringCategoryDocumentId,
+  options = {}
+) {
+  const refreshExisting =
+    typeof options.refreshExisting === 'boolean'
+      ? options.refreshExisting
+      : shouldRefreshExistingCatering();
   const found = await findPackageBySlug(strapi, pkgSeed.slug);
 
   if (found) {
     const { entry, status } = found;
+    const hasBlock = packageHasCateringBlock(entry);
 
-    if (packageHasCateringBlock(entry)) {
+    if (hasBlock && !refreshExisting) {
       return { skipped: true, documentId: entry.documentId, title: pkgSeed.title };
     }
 
     await strapi.documents('api::package.package').update({
       documentId: entry.documentId,
       data: {
+        title: pkgSeed.title,
+        description: toDescriptionBlocks(pkgSeed.description),
+        base_price: pkgSeed.base_price,
+        is_active: true,
+        visibility: true,
+        is_featured: pkgSeed.is_featured ?? false,
         packages: [cateringBlock],
         service_categories: {
           connect: [{ documentId: cateringCategoryDocumentId }],
@@ -188,8 +337,20 @@ async function ensureCateringPackage(strapi, pkgSeed, cateringBlock, cateringCat
       });
     } catch (publishError) {
       strapi.log.warn(
-        `[seed/catering] Publish after repair for "${pkgSeed.slug}" (${status}): ${publishError.message}`
+        `[seed/catering] Publish after ${hasBlock ? 'refresh' : 'repair'} for "${pkgSeed.slug}" (${status}): ${publishError.message}`
       );
+    }
+
+    if (hasBlock) {
+      strapi.log.info(
+        `[seed/catering] Refreshed cateringpackage on "${pkgSeed.title}" (${pkgSeed.slug})`
+      );
+      return {
+        skipped: false,
+        updated: true,
+        documentId: entry.documentId,
+        title: pkgSeed.title,
+      };
     }
 
     strapi.log.info(
@@ -224,7 +385,7 @@ async function ensureCateringPackage(strapi, pkgSeed, cateringBlock, cateringCat
   return { skipped: false, documentId: created.documentId, title: pkgSeed.title };
 }
 
-async function seedCateringPackages(strapi, packageSeeds, buildBlockForSeed) {
+async function seedCateringPackages(strapi, packageSeeds, buildBlockForSeed, options = {}) {
   const policy = await ensureCateringPolicy(strapi);
   const cateringCategory = await ensureCateringServiceCategory(strapi);
   const policyDocumentId = policy?.documentId;
@@ -242,7 +403,8 @@ async function seedCateringPackages(strapi, packageSeeds, buildBlockForSeed) {
       strapi,
       pkgSeed,
       cateringBlock,
-      categoryDocumentId
+      categoryDocumentId,
+      options
     );
     results.push(result);
   }
@@ -264,6 +426,7 @@ module.exports = {
   findPublishedBySlug,
   findPackageBySlug,
   packageHasCateringBlock,
+  shouldRefreshExistingCatering,
   ensureCateringPolicy,
   ensureCateringServiceCategory,
   ensureCateringPackage,

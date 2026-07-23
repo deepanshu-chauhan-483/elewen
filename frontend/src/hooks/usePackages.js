@@ -3,6 +3,10 @@ import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { PACKAGES_FALLBACK } from '../data/packages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import { preloadImages } from '../utils/preloadAssets'
+import {
+  getCateringDetailSection,
+  getCateringPriceRangeLabel,
+} from '../lib/cateringPricing'
 
 const blocksToText = blocks => {
   if (!blocks) return ''
@@ -650,6 +654,14 @@ function normalizePackage(pkg, index = 0, options = {}) {
     ? resolveBartendingListingPresentation(pkg, detailSections)
     : null
 
+  const cateringSection = serviceSlugs.includes('catering')
+    ? getCateringDetailSection({ detail_sections: detailSections })
+    : null
+
+  const cateringListingPrice = cateringSection
+    ? getCateringPriceRangeLabel(cateringSection, pkg.base_price)
+    : ''
+
   const sharedFields = {
     id: pkg.id,
     documentId: pkg.documentId,
@@ -685,11 +697,16 @@ function normalizePackage(pkg, index = 0, options = {}) {
     description: blocksToText(pkg.description),
     price:
       bartendingPresentation?.price ||
+      cateringListingPrice ||
       formatPackagePrice({
         ...pkg,
         base_price: bartendingPresentation?.base_price ?? pkg.base_price,
       }),
-    base_price: bartendingPresentation?.base_price ?? (Number(pkg.base_price ?? pkg.starting_price ?? pkg.price_from ?? 0) || 0),
+    base_price:
+      Number(cateringSection?.price_per_person_veg ?? 0) ||
+      Number(cateringSection?.price_per_person_non_veg ?? 0) ||
+      bartendingPresentation?.base_price ||
+      (Number(pkg.base_price ?? pkg.starting_price ?? pkg.price_from ?? 0) || 0),
     includes: packageIncludes,
     tags: packageIncludes,
     event_slugs: normaliseRelationArray(pkg.events)
