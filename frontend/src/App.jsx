@@ -1,10 +1,25 @@
 import { useEffect, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useNavigationType,
+} from 'react-router-dom'
 import { useLenis } from './useLenis'
 import NavHeader from './components/NavHeader'
 import Footer from './components/Footer'
 import CmsPageLoader from './components/common/CmsPageLoader'
 import { CompactViewportSync } from './hooks/useCompactViewport'
+import {
+  getLocationScrollKey,
+  readLocationScroll,
+  scrollPageTo,
+  scrollPageToTop,
+  usePersistLocationScroll,
+} from './hooks/useScrollToTop'
 
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const InHousePlannerPage = lazy(() => import('./pages/InHousePlannerPage'))
@@ -101,21 +116,29 @@ function GoogleAuthRedirectBridge() {
 
 function ScrollToTop() {
   const { pathname, search } = useLocation()
+  const navigationType = useNavigationType()
   const lenisRef = useLenis()
+  const locationKey = getLocationScrollKey(pathname, search)
+
+  usePersistLocationScroll(locationKey)
 
   useEffect(() => {
-    const scrollTop = () => {
-      window.scrollTo(0, 0)
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-      const lenis = lenisRef?.current
-      if (lenis) lenis.scrollTo(0, { immediate: true })
+    const lenis = lenisRef?.current
+
+    // Browser Back/Forward: restore the spot the customer left, don't force the hero
+    if (navigationType === 'POP') {
+      const savedY = readLocationScroll(locationKey) ?? 0
+      const restore = () => scrollPageTo(savedY, lenis)
+      restore()
+      const timers = [50, 150, 350].map(delay => window.setTimeout(restore, delay))
+      return () => timers.forEach(timer => window.clearTimeout(timer))
     }
 
+    const scrollTop = () => scrollPageToTop(lenis)
     scrollTop()
-    const t = setTimeout(scrollTop, 150)
-    return () => clearTimeout(t)
-  }, [pathname, search, lenisRef])
+    const t = window.setTimeout(scrollTop, 150)
+    return () => window.clearTimeout(t)
+  }, [locationKey, navigationType, lenisRef])
 
   return null
 }

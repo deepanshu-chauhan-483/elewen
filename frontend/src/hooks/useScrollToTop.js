@@ -1,16 +1,74 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
-export function scrollPageToTop() {
+const SCROLL_STORAGE_PREFIX = 'elewen:scroll:'
+
+export function getLocationScrollKey(pathname = '', search = '') {
+  return `${pathname}${search}`
+}
+
+export function saveLocationScroll(key, y = typeof window !== 'undefined' ? window.scrollY : 0) {
+  if (typeof window === 'undefined' || !key) return
+
+  try {
+    sessionStorage.setItem(`${SCROLL_STORAGE_PREFIX}${key}`, String(Math.max(0, y || 0)))
+  } catch {
+    // Ignore quota / private-mode failures
+  }
+}
+
+export function readLocationScroll(key) {
+  if (typeof window === 'undefined' || !key) return null
+
+  try {
+    const raw = sessionStorage.getItem(`${SCROLL_STORAGE_PREFIX}${key}`)
+    if (raw == null) return null
+    const y = Number(raw)
+    return Number.isFinite(y) ? Math.max(0, y) : null
+  } catch {
+    return null
+  }
+}
+
+export function scrollPageTo(y = 0, lenis) {
   if (typeof window === 'undefined') return
 
-  window.scrollTo({
-    top: 0,
-    left: 0,
-    behavior: 'auto',
-  })
+  const top = Math.max(0, y || 0)
+  window.scrollTo({ top, left: 0, behavior: 'auto' })
+  document.documentElement.scrollTop = top
+  document.body.scrollTop = top
+  if (lenis) lenis.scrollTo(top, { immediate: true })
+}
 
-  document.documentElement.scrollTop = 0
-  document.body.scrollTop = 0
+export function scrollPageToTop(lenis) {
+  scrollPageTo(0, lenis)
+}
+
+/** Persist scroll for the current location; write final value on leave. */
+export function usePersistLocationScroll(locationKey) {
+  const readyRef = useRef(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !locationKey) return undefined
+
+    readyRef.current = false
+    const enableTimer = window.setTimeout(() => {
+      readyRef.current = true
+    }, 350)
+
+    const persist = () => {
+      if (!readyRef.current) return
+      saveLocationScroll(locationKey)
+    }
+
+    window.addEventListener('scroll', persist, { passive: true })
+
+    return () => {
+      window.clearTimeout(enableTimer)
+      // Always save on leave so Back can restore the last spot
+      saveLocationScroll(locationKey)
+      window.removeEventListener('scroll', persist)
+    }
+  }, [locationKey])
 }
 
 export function useScrollToTop(trigger) {

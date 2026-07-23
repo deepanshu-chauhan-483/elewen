@@ -1,8 +1,7 @@
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import { Link, Navigate, useNavigationType, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import PackageCard from '../components/package-listing/PackageCard'
 import PackageListLayout from '../components/package-listing/PackageListLayout'
-import { useScrollToTop } from '../hooks/useScrollToTop'
 import { usePackages } from '../hooks/usePackages'
 import { useBudgetLevelOptions, useFilteredServiceOptions } from '../hooks/useEventTypes'
 import CmsPageLoader from '../components/common/CmsPageLoader'
@@ -10,6 +9,8 @@ import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { DEFAULT_EVENT_CATEGORY_SLUG, resolveServiceLaneId } from '../lib/serviceFlow'
 import { assignDistinctCoverIndices, filterPackages } from '../lib/packageFilters'
 import { filterPackagesBySearch } from '../lib/packageSearch'
+import { getLocationScrollKey, readLocationScroll, scrollPageTo } from '../hooks/useScrollToTop'
+import { useLenis } from '../useLenis'
 
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
@@ -32,6 +33,30 @@ const PKG_LOCAL_IMAGES = [
 
 const DESKTOP_CARDS_PER_ROW = 3
 const MOBILE_CARDS_PER_ROW = 1
+const DEFAULT_LEVEL_PAGINATION = { level1: 0, level2: 0, level3: 0, level4: 0 }
+const LEVEL_PAGINATION_STORAGE_PREFIX = 'elewen:decor-levels-pagination:'
+
+function readStoredLevelPagination(filterKey) {
+  if (typeof window === 'undefined' || !filterKey) return null
+  try {
+    const raw = sessionStorage.getItem(`${LEVEL_PAGINATION_STORAGE_PREFIX}${filterKey}`)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return null
+    return { ...DEFAULT_LEVEL_PAGINATION, ...parsed }
+  } catch {
+    return null
+  }
+}
+
+function writeStoredLevelPagination(filterKey, pagination) {
+  if (typeof window === 'undefined' || !filterKey) return
+  try {
+    sessionStorage.setItem(`${LEVEL_PAGINATION_STORAGE_PREFIX}${filterKey}`, JSON.stringify(pagination))
+  } catch {
+    // Ignore quota / private-mode failures
+  }
+}
 
 function isNumericId(value) {
   return /^\d+$/.test(String(value ?? '').trim())
@@ -156,12 +181,8 @@ export default function DecorLevelsPage() {
     return () => mediaQuery.removeListener(handleViewportChange)
   }, [])
 
-  // Independent pagination state for each level
-  const [pagination, setPagination] = useState({
-    level1: 0,
-    level2: 0,
-    level3: 0,
-  })
+  // Independent pagination state for each level (persisted so Back keeps the same carousel page)
+  const [pagination, setPagination] = useState(DEFAULT_LEVEL_PAGINATION)
   const packagesData = useMemo(
     () =>
       packages.map((pkg, i) => ({
@@ -205,10 +226,25 @@ export default function DecorLevelsPage() {
   }, [filteredPackages, sortValue])
 
   const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${eventSlug}:${eventId}:${serviceIdParam}:${themeParam}:${searchQuery}:${sortValue}`
+  const skipPaginationWriteRef = useRef(false)
+  const navigationType = useNavigationType()
 
   useEffect(() => {
-    setPagination({ level1: 0, level2: 0, level3: 0, level4: 0 })
-  }, [filterKey])
+    skipPaginationWriteRef.current = true
+    if (navigationType === 'POP') {
+      setPagination(readStoredLevelPagination(filterKey) ?? DEFAULT_LEVEL_PAGINATION)
+      return
+    }
+    setPagination(DEFAULT_LEVEL_PAGINATION)
+  }, [filterKey, navigationType])
+
+  useEffect(() => {
+    if (skipPaginationWriteRef.current) {
+      skipPaginationWriteRef.current = false
+      return
+    }
+    writeStoredLevelPagination(filterKey, pagination)
+  }, [filterKey, pagination])
 
   const getPaginatedPackages = (items, page) => {
     const start = page * cardsPerRow
@@ -255,7 +291,25 @@ export default function DecorLevelsPage() {
     }))
   }
 
-  useScrollToTop(JSON.stringify(pagination))
+  const lenisRef = useLenis()
+  const locationScrollKey = getLocationScrollKey(
+    '/packages/decor-levels',
+    searchParams.toString() ? `?${searchParams.toString()}` : ''
+  )
+
+  // After CMS content mounts, re-apply saved scroll so Back does not land on the hero
+  useEffect(() => {
+    if (isStrapiLoading || navigationType !== 'POP') return undefined
+
+    const savedY = readLocationScroll(locationScrollKey)
+    if (savedY == null || savedY <= 0) return undefined
+
+    const lenis = lenisRef?.current
+    const restore = () => scrollPageTo(savedY, lenis)
+    restore()
+    const timers = [50, 200].map(delay => window.setTimeout(restore, delay))
+    return () => timers.forEach(timer => window.clearTimeout(timer))
+  }, [isStrapiLoading, locationScrollKey, lenisRef, navigationType])
 
   const buildViewAllLink = level => {
     const params = new URLSearchParams()
