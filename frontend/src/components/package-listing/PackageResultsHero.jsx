@@ -58,6 +58,15 @@ const CATEGORY_ORDER = ['social', 'corporate', 'religious']
 const SERVICE_ORDER = ['decor', 'catering', 'bartending', 'sheesha']
 const LEVEL_ORDER = ['level-1', 'level-2', 'level-3', 'level-4']
 
+function formatLevelFilterLabel(slug = '', fallback = '') {
+  const normalized = String(slug ?? '')
+    .trim()
+    .toLowerCase()
+  const match = normalized.match(/^level-(\d+)$/)
+  if (match) return `Level ${match[1]}`
+  return fallback || titleizeSlug(slug)
+}
+
 function sortLevelsForHero(levels = []) {
   const list = Array.isArray(levels) ? [...levels] : []
 
@@ -121,7 +130,9 @@ export default function PackageResultsHero({
       serviceSlug,
       serviceId: serviceIdParam || '',
       themeSlug,
-      levelSlug,
+      // Don't shrink the Event pill by the active Level — keep Birthday Parties etc. visible
+      // the same way Theme stays available on decor.
+      levelSlug: serviceSlug === 'catering' ? '' : levelSlug,
     }),
     [categorySlug, levelSlug, serviceIdParam, serviceSlug, themeSlug]
   )
@@ -176,6 +187,12 @@ export default function PackageResultsHero({
   const eventsWithPackages = useMemo(() => {
     if (!serviceSlug) return allEvents
 
+    // Catering / F&B: show the full category event list in the pill (Social → Birthday Parties),
+    // matching decor filter UX. Package rows still filter by Level allowlist.
+    if (serviceSlug === 'catering' || serviceSlug === 'bartending' || serviceSlug === 'sheesha') {
+      return allEvents
+    }
+
     return filterEventsWithPackages(allEvents, packages, {
       ...eventPackageFilters,
       serviceId: resolvedServiceId,
@@ -208,6 +225,20 @@ export default function PackageResultsHero({
   }, [eventId, eventSlug, events])
 
   const isDecorService = serviceSlug === 'decor'
+  const showLevelFilter = serviceSlug === 'decor' || serviceSlug === 'catering'
+
+  useEffect(() => {
+    if (showLevelFilter || !levelSlug) return
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.delete('level')
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [levelSlug, setSearchParams, showLevelFilter])
 
   const { data: allThemes = [] } = useDecorThemeOptions(isDecorService ? resolvedServiceId : '')
 
@@ -302,14 +333,37 @@ export default function PackageResultsHero({
     )
   }, [eventId, eventSlug, events, serviceSlug, setSearchParams])
 
-  const levels = useMemo(
-    () =>
-      sortLevelsForHero(allLevels).map(level => ({
-        value: level.slug,
-        label: level.label ?? titleizeSlug(level.slug),
-      })),
-    [allLevels]
-  )
+  const levels = useMemo(() => {
+    const fromCms = sortLevelsForHero(allLevels)
+    const bySlug = new Map(
+      fromCms.map(level => [String(level?.slug ?? '').trim().toLowerCase(), level])
+    )
+
+    // Decor + catering Level pill always exposes Level 1–3 like the Theme pill options.
+    const source =
+      serviceSlug === 'catering' || serviceSlug === 'decor'
+        ? ['level-1', 'level-2', 'level-3'].map(slug => {
+            const existing = bySlug.get(slug)
+            return (
+              existing ?? {
+                slug,
+                label: formatLevelFilterLabel(slug),
+              }
+            )
+          })
+        : fromCms
+
+    return source.map(level => ({
+      value: level.slug,
+      label: formatLevelFilterLabel(level.slug, level.label ?? titleizeSlug(level.slug)),
+    }))
+  }, [allLevels, serviceSlug])
+
+  const handleApplyFilters = useCallback(() => {
+    const resultsTop =
+      typeof window !== 'undefined' ? Math.max(0, Math.floor(window.innerHeight * 0.55)) : 0
+    window.scrollTo({ top: resultsTop, behavior: 'smooth' })
+  }, [])
 
   const handleFilterChange = useCallback(
     (key, value) => {
@@ -398,7 +452,36 @@ export default function PackageResultsHero({
     ]
   )
 
+  const isCateringService = serviceSlug === 'catering'
+  const isBartendingService = serviceSlug === 'bartending'
+
   const autoFilters = useMemo(() => {
+    const servicePill = isCateringService
+      ? {
+          label: 'Catering',
+          value: 'catering',
+          widthClass: DEFAULT_WIDTHS.event,
+          options: [{ value: 'catering', label: 'Catering' }],
+          onChange: () => {},
+          disabled: true,
+        }
+      : isBartendingService
+        ? {
+            label: 'Bartending',
+            value: 'bartending',
+            widthClass: DEFAULT_WIDTHS.event,
+            options: [{ value: 'bartending', label: 'Bartending' }],
+            onChange: () => {},
+            disabled: true,
+          }
+        : {
+            label: 'Event',
+            value: selectedEventValue,
+            widthClass: DEFAULT_WIDTHS.event,
+            options: events.map(({ value, label }) => ({ value, label })),
+            onChange: event => handleFilterChange('event', event.target.value),
+          }
+
     return [
       {
         label: 'Category',
@@ -407,20 +490,16 @@ export default function PackageResultsHero({
         options: categories.map(toSelectOption),
         onChange: event => handleFilterChange('category', event.target.value),
       },
-      {
-        label: 'Event',
-        value: selectedEventValue,
-        widthClass: DEFAULT_WIDTHS.event,
-        options: events.map(({ value, label }) => ({ value, label })),
-        onChange: event => handleFilterChange('event', event.target.value),
-      },
-      {
-        label: 'Level',
-        value: levelSlug,
-        widthClass: DEFAULT_WIDTHS.level,
-        options: levels,
-        onChange: event => handleFilterChange('level', event.target.value),
-      },
+      servicePill,
+      showLevelFilter
+        ? {
+            label: 'Level',
+            value: levelSlug,
+            widthClass: DEFAULT_WIDTHS.level,
+            options: levels,
+            onChange: event => handleFilterChange('level', event.target.value),
+          }
+        : null,
       isDecorService && categorySlug === DECOR_THEME_CATEGORY_SLUG && showThemeFilter
         ? {
             label: 'Theme',
@@ -435,11 +514,14 @@ export default function PackageResultsHero({
     categorySlug,
     categories,
     handleFilterChange,
+    isBartendingService,
+    isCateringService,
     isDecorService,
     selectedEventValue,
     events,
     levelSlug,
     levels,
+    showLevelFilter,
     themeSlug,
     themes,
     showThemeFilter,
@@ -471,7 +553,7 @@ export default function PackageResultsHero({
             ))}
             <button
               type="button"
-              onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+              onClick={handleApplyFilters}
               className="flex h-[38px] items-center justify-center rounded-full bg-[#CDB17E] px-5 text-[13px] font-medium text-white transition-colors hover:bg-[#C6AB7F] shrink-0"
             >
               Go

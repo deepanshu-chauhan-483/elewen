@@ -1,7 +1,9 @@
 'use strict';
 
 /**
- * Upsert Classic Pour, Signature Mix (House Special), and Exclusive Package bartending entries.
+ * Upsert the three bartending listing packages from the client sheet:
+ * Classic Pour (₹2,970), Signature Mix (₹3,740), House Special (₹6,050).
+ * Exclusive Package sheet rows are add-on options, not listing cards.
  */
 
 const BARTENDING_POLICY_CONTENT =
@@ -16,7 +18,7 @@ const BARTENDING_PACKAGES = [
     hours_range: '3-4 hours',
     price_per_extra_hour: 500,
     description:
-      'Reliable bar service for house parties and celebrations. A professional bartender keeps drinks flowing with a clean, organized bar setup.',
+      'Professional, smooth bar service for intimate gatherings and house parties.\n\nOur reliable, friendly and trained bartender handles drink preparation and guest service so you can relax and enjoy the event without worrying about the bar.',
     ideal_for: 'House parties, birthdays, small celebrations, private gatherings.',
     inclusions: [
       { text: 'Professional trained bartender' },
@@ -38,9 +40,8 @@ const BARTENDING_PACKAGES = [
     ],
   },
   {
-    // Existing CMS title kept; bartender type + quote match Signature Mix sheet (₹3,400 / 3-4 hrs).
-    title: 'The House Special - Premium Bartending Service',
-    slug: 'the-house-special-premium-bartending-service',
+    title: 'Signature Mix',
+    slug: 'signature-mix',
     base_price: 3740,
     bartender_type: 'Signature Mix',
     hours_range: '3-4 hours',
@@ -68,16 +69,16 @@ const BARTENDING_PACKAGES = [
     ],
   },
   {
-    // Client sheet listed "Exclusive Package" without a final marketing name.
-    title: 'Exclusive Package',
-    slug: 'exclusive-package',
+    title: 'House Special',
+    slug: 'the-house-special-premium-bartending-service',
+    legacySlugs: ['house-special', 'exclusive-package'],
     base_price: 6050,
-    bartender_type: 'Exclusive',
+    bartender_type: 'House Special',
     hours_range: '3-4 hours',
     price_per_extra_hour: 500,
     description:
-      'A premium exclusive bartending experience with elevated setup options, including Molecular Bar add-ons for standout cocktail moments.',
-    ideal_for: 'Luxury parties, large celebrations, and signature social or corporate events.',
+      'A high-end bar experience designed to impress your guests.\n\nThe House Special delivers an elevated bar service with a senior bartender skilled in cocktail craft and presentation. Perfect for events where the bar becomes a centerpiece of the experience.',
+    ideal_for: 'Social and corporate events, luxury parties, and large celebrations.',
     inclusions: [
       { text: 'Senior bartender / cocktail specialist' },
       { text: 'Full professional bar toolkit' },
@@ -181,7 +182,13 @@ function buildBartendingComponent(pkgSeed, policyDocumentId) {
 }
 
 async function ensureBartendingPackage(strapi, pkgSeed, bartendingCategoryDocumentId, policyDocumentId) {
-  const found = await findPackageBySlug(strapi, pkgSeed.slug);
+  const slugCandidates = [pkgSeed.slug, ...(Array.isArray(pkgSeed.legacySlugs) ? pkgSeed.legacySlugs : [])];
+  let found = null;
+  for (const slug of slugCandidates) {
+    found = await findPackageBySlug(strapi, slug);
+    if (found) break;
+  }
+
   const bartendingBlock = buildBartendingComponent(pkgSeed, policyDocumentId);
 
   if (found) {
@@ -193,6 +200,7 @@ async function ensureBartendingPackage(strapi, pkgSeed, bartendingCategoryDocume
       documentId: found.entry.documentId,
       data: {
         title: pkgSeed.title,
+        slug: pkgSeed.slug,
         description: toDescriptionBlocks(pkgSeed.description),
         base_price: pkgSeed.base_price,
         is_active: true,

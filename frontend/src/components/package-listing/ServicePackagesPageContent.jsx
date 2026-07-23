@@ -52,7 +52,14 @@ export default function ServicePackagesPageContent({
 
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
-  const [sortValue, setSortValue] = useState('price-desc')
+  const normalizedPropService = normalizeServiceSlug(serviceSlug)
+  const defaultSort =
+    normalizedPropService === 'catering' ||
+    normalizedPropService === 'bartending' ||
+    normalizedPropService === 'sheesha'
+      ? 'price-asc'
+      : 'price-desc'
+  const [sortValue, setSortValue] = useState(defaultSort)
   const [page, setPage] = useState(1)
   // const [searchParams] = useSearchParams()
   // const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
@@ -134,6 +141,20 @@ export default function ServicePackagesPageContent({
     themeSlug,
     levelSlug,
     searchQuery,
+  ])
+
+  useEffect(() => {
+    setPage(1)
+  }, [
+    effectiveCategorySlug,
+    effectiveEventSlug,
+    effectiveEventId,
+    selectedServiceSlug,
+    serviceIdParam,
+    themeSlug,
+    levelSlug,
+    searchQuery,
+    sortValue,
   ])
 
   const sortedPackages = useMemo(() => {

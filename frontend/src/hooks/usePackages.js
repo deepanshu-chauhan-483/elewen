@@ -69,33 +69,168 @@ function getBudgetLevelSlug(level) {
   return String(level?.slug ?? '').trim() || slugify(label)
 }
 
-function inferLevelSlugFromInternalPackageCode(value) {
-  const text = String(value ?? '').trim()
-  if (!text) return ''
+const CATERING_LEVEL_TO_BUDGET_SLUG = {
+  essentials: 'level-1',
+  assisted: 'level-2',
+  end_to_end: 'level-3',
+  'end-to-end': 'level-3',
+}
 
-  const match = text.match(/(\d+)\s*$/)
-  if (!match) return ''
-
-  return `level-${match[1]}`
+function inferLevelSlugFromCateringLevel(value) {
+  const key = String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+  return CATERING_LEVEL_TO_BUDGET_SLUG[key] || ''
 }
 
 function resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel) {
+  const serviceSlugs = normaliseRelationArray(pkg?.service_categories).map(service =>
+    normalizeServiceSlug(service?.slug)
+  )
+  const isCatering = serviceSlugs.includes('catering')
+  const isBartending = serviceSlugs.includes('bartending')
+
+  // Hard catalog map first — client Level 1/2/3 package lists.
+  if (isCatering) {
+    const fromAllowlist = (() => {
+      const slug = String(pkg?.slug ?? '')
+        .trim()
+        .toLowerCase()
+      const map = {
+        'close-circle-catering-1': 'level-1',
+        'easy-hosting-simply-served-1': 'level-1',
+        'close-circle-catering-2': 'level-2',
+        'easy-hosting-simply-served-2': 'level-2',
+        'signature-hosting-2': 'level-2',
+        'signature-hosting-package': 'level-2',
+        'close-circle-catering-3': 'level-3',
+        'effortless-hosting': 'level-3',
+        'the-full-table-experience': 'level-3',
+        'the-social-experience': 'level-3',
+        'the-grand-experience': 'level-3',
+        'the-social-starters': 'level-3',
+        'purely-satvik': 'level-3',
+      }
+      return map[slug] || ''
+    })()
+    if (fromAllowlist) return fromAllowlist
+
+    for (const section of detailSections) {
+      if (section?.__component !== 'package.cateringpackage') continue
+      const fromCateringLevel = inferLevelSlugFromCateringLevel(section?.catering_level)
+      if (fromCateringLevel) return fromCateringLevel
+    }
+
+    // No fallback to budget_level / Package N — excludes Paint & Prosecco stubs.
+    return ''
+  }
+
   for (const section of detailSections) {
     if (section?.__component !== 'package.cateringpackage') continue
-
-    const fromInternalCode = inferLevelSlugFromInternalPackageCode(
-      section?.internal_package_code
-    )
-    if (fromInternalCode) return fromInternalCode
+    const fromCateringLevel = inferLevelSlugFromCateringLevel(section?.catering_level)
+    if (fromCateringLevel) return fromCateringLevel
   }
 
   const fromBudgetLevel = getBudgetLevelSlug(primaryBudgetLevel)
   if (fromBudgetLevel) return fromBudgetLevel
 
-  const slugMatch = String(pkg?.slug ?? '').match(/-(\d+)$/)
-  if (slugMatch) return `level-${slugMatch[1]}`
+  if (!isBartending) {
+    const slugMatch = String(pkg?.slug ?? '').match(/-(\d+)$/)
+    if (slugMatch) return `level-${slugMatch[1]}`
+  }
 
   return ''
+}
+
+function resolveCateringLevelKey(detailSections = []) {
+  for (const section of detailSections) {
+    if (section?.__component !== 'package.cateringpackage') continue
+    const key = String(section?.catering_level ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+    if (key) return key
+  }
+  return ''
+}
+
+function resolveBartenderType(detailSections = []) {
+  for (const section of detailSections) {
+    if (section?.__component !== 'package.bartendingpackage') continue
+    const value = String(section?.bartender_type ?? '').trim()
+    if (value) return value
+  }
+  return ''
+}
+
+/** Normalize bartending card title + quote to the client sheet (3 packages). */
+function resolveBartendingListingPresentation(pkg, detailSections = []) {
+  const bartenderType = resolveBartenderType(detailSections)
+  const typeKey = String(bartenderType ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+  const slug = String(pkg?.slug ?? '')
+    .trim()
+    .toLowerCase()
+  const titleKey = String(pkg?.title ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+
+  const isClassicPour = typeKey.includes('classic-pour') || slug === 'classic-pour'
+
+  // Signature Mix is its own package (₹3,740) — not the House Special row.
+  const isSignatureMix =
+    slug === 'signature-mix' ||
+    titleKey === 'signature-mix' ||
+    (typeKey.includes('signature-mix') &&
+      !titleKey.includes('house-special') &&
+      slug !== 'the-house-special-premium-bartending-service' &&
+      slug !== 'exclusive-package')
+
+  const isHouseSpecial =
+    slug === 'the-house-special-premium-bartending-service' ||
+    slug === 'house-special' ||
+    titleKey.includes('house-special') ||
+    typeKey.includes('house-special') ||
+    // Live CMS still stores House Special with bartender_type "Signature Mix" + ₹6,050 quote.
+    (slug === 'the-house-special-premium-bartending-service' && Number(pkg?.base_price) >= 5000)
+
+  if (isClassicPour) {
+    return {
+      title: 'Classic Pour',
+      bartender_type: 'Classic Pour',
+      base_price: 2970,
+      price: '₹2,970',
+    }
+  }
+
+  if (isSignatureMix) {
+    return {
+      title: 'Signature Mix',
+      bartender_type: 'Signature Mix',
+      base_price: 3740,
+      price: '₹3,740',
+    }
+  }
+
+  if (isHouseSpecial || Number(pkg?.base_price) === 6050 || Number(pkg?.base_price) === 5500) {
+    return {
+      title: 'House Special',
+      bartender_type: 'House Special',
+      base_price: 6050,
+      price: '₹6,050',
+    }
+  }
+
+  return {
+    title: pkg?.title,
+    bartender_type: bartenderType,
+    base_price: Number(pkg?.base_price ?? 0) || 0,
+    price: '',
+  }
 }
 
 function resolveStrapiImageUrl(image) {
@@ -511,10 +646,14 @@ function normalizePackage(pkg, index = 0, options = {}) {
     serviceCategories.flatMap(service => [service?.id, service?.parent_category?.id]).map(String)
   )
 
+  const bartendingPresentation = serviceSlugs.includes('bartending')
+    ? resolveBartendingListingPresentation(pkg, detailSections)
+    : null
+
   const sharedFields = {
     id: pkg.id,
     documentId: pkg.documentId,
-    title: pkg.title,
+    title: bartendingPresentation?.title || pkg.title,
     category: (() => {
       const primaryServiceSlug = serviceSlugs.map(normalizeServiceSlug).find(Boolean)
       if (primaryServiceSlug === 'sheesha') {
@@ -544,8 +683,13 @@ function normalizePackage(pkg, index = 0, options = {}) {
       )
     })(),
     description: blocksToText(pkg.description),
-    price: formatPackagePrice(pkg),
-    base_price: Number(pkg.base_price ?? pkg.starting_price ?? pkg.price_from ?? 0) || 0,
+    price:
+      bartendingPresentation?.price ||
+      formatPackagePrice({
+        ...pkg,
+        base_price: bartendingPresentation?.base_price ?? pkg.base_price,
+      }),
+    base_price: bartendingPresentation?.base_price ?? (Number(pkg.base_price ?? pkg.starting_price ?? pkg.price_from ?? 0) || 0),
     includes: packageIncludes,
     tags: packageIncludes,
     event_slugs: normaliseRelationArray(pkg.events)
@@ -563,6 +707,8 @@ function normalizePackage(pkg, index = 0, options = {}) {
     service_slugs: serviceSlugs,
     service_ids: serviceIds,
     theme_slugs: getPackageThemeSlugs(pkg),
+    catering_level: resolveCateringLevelKey(detailSections),
+    bartender_type: bartendingPresentation?.bartender_type || resolveBartenderType(detailSections),
     level_slug: resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel),
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
     images: listing
@@ -694,7 +840,7 @@ async function fetchPackages(params = {}) {
 
 export function usePackages() {
   return useQuery({
-    queryKey: ['packages', 'live-v8-catering-level-slugs'],
+    queryKey: ['packages', 'live-v13-bartending-three-packages'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
       try {

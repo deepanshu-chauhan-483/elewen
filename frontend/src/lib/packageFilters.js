@@ -19,8 +19,107 @@ const normalizeThemeSlug = value =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-function packageMatchesLevelFilter(pkg, { levelSlug = '', levelId = '' } = {}) {
+/**
+ * Canonical catering catalog by listing Level (client map).
+ * Level 1 = package “1” set, Level 2 = package “2” set, Level 3 = remaining.
+ */
+const CATERING_PACKAGE_LEVEL_BY_SLUG = {
+  'close-circle-catering-1': 'level-1',
+  'easy-hosting-simply-served-1': 'level-1',
+
+  'close-circle-catering-2': 'level-2',
+  'easy-hosting-simply-served-2': 'level-2',
+  'signature-hosting-2': 'level-2',
+  'signature-hosting-package': 'level-2',
+
+  'close-circle-catering-3': 'level-3',
+  'effortless-hosting': 'level-3',
+  'the-full-table-experience': 'level-3',
+  'the-social-experience': 'level-3',
+  'the-grand-experience': 'level-3',
+  'the-social-starters': 'level-3',
+  'purely-satvik': 'level-3',
+}
+
+/**
+ * Bartending listing — Classic Pour, Signature Mix, House Special.
+ * Exclusive sheet rows are add-ons only. Excludes Paint & Prosecco.
+ */
+const BARTENDING_ALLOWED_SLUGS = new Set([
+  'classic-pour',
+  'signature-mix',
+  'the-house-special-premium-bartending-service',
+  'house-special',
+])
+
+function isAllowedBartendingPackage(pkg) {
+  const slug = normalizeValue(pkg?.slug)
+  if (slug === 'exclusive-package' || slug === 'paint-and-prosecco-night') return false
+  if (slug && BARTENDING_ALLOWED_SLUGS.has(slug)) return true
+
+  const titleKey = normalizeLevelSlug(pkg?.title)
+  if (titleKey.includes('paint-and-prosecco')) return false
+  // "Exclusive Package" listing card is not shown; add-ons live on package detail.
+  if (titleKey === 'exclusive-package') return false
+  if (
+    titleKey.includes('classic-pour') ||
+    titleKey.includes('house-special') ||
+    titleKey.includes('signature-mix')
+  ) {
+    return true
+  }
+
+  const bartenderType = normalizeLevelSlug(pkg?.bartender_type)
+  if (
+    bartenderType === 'classic-pour' ||
+    bartenderType === 'signature-mix' ||
+    bartenderType === 'house-special' ||
+    bartenderType.includes('signature-mix') ||
+    bartenderType.includes('classic-pour') ||
+    bartenderType.includes('house-special')
+  ) {
+    return true
+  }
+
+  return false
+}
+
+function getCateringAllowlistLevel(pkg) {
+  const slug = normalizeValue(pkg?.slug)
+  if (slug && CATERING_PACKAGE_LEVEL_BY_SLUG[slug]) {
+    return CATERING_PACKAGE_LEVEL_BY_SLUG[slug]
+  }
+
+  // Title fallback when slug drifts in CMS.
+  const titleKey = normalizeLevelSlug(pkg?.title)
+  const titleAliases = {
+    'close-circle-catering-1': 'level-1',
+    'easy-hosting-simply-served-1': 'level-1',
+    'close-circle-catering-2': 'level-2',
+    'easy-hosting-simply-served-2': 'level-2',
+    'signature-hosting-2': 'level-2',
+    'signature-hosting-package': 'level-2',
+    'close-circle-catering-3': 'level-3',
+    'effortless-hosting': 'level-3',
+    'the-full-table-experience': 'level-3',
+    'the-social-experience': 'level-3',
+    'the-grand-experience': 'level-3',
+    'the-social-starters': 'level-3',
+    'purely-satvik': 'level-3',
+  }
+  return titleAliases[titleKey] || ''
+}
+
+function packageMatchesLevelFilter(pkg, { levelSlug = '', levelId = '', serviceSlug = '' } = {}) {
   if (!levelSlug && !levelId) return true
+
+  const normalizedService = normalizeServiceSlug(serviceSlug)
+  if (normalizedService === 'catering') {
+    const allowedLevel = getCateringAllowlistLevel(pkg)
+    if (!allowedLevel) return false
+    if (!levelSlug) return true
+    return normalizeLevelSlug(levelSlug) === allowedLevel
+  }
 
   const normalizedFilterSlug = normalizeLevelSlug(levelSlug)
   const normalizedPackageSlug = normalizeLevelSlug(pkg?.level_slug)
@@ -632,11 +731,35 @@ export function filterPackages(packages, filters = {}) {
         serviceSlugs.some(value => normalizeServiceSlug(value) === normalizedServiceSlug)
       if (!serviceLaneMatched) return false
     }
+
+    // Catering listing = exact catalog only (Close Circle / Easy Hosting / Level-3 set).
+    // Ignores Paint & Prosecco, birthday stubs, and any cross-level bleed.
+    if (normalizedServiceSlug === 'catering') {
+      const allowedLevel = getCateringAllowlistLevel(pkg)
+      if (!allowedLevel) return false
+      if (levelSlug && normalizeLevelSlug(levelSlug) !== allowedLevel) return false
+      return true
+    }
+
+    // Bartending listing = Classic Pour, House Special, Signature Mix only.
+    if (normalizedServiceSlug === 'bartending') {
+      return isAllowedBartendingPackage(pkg)
+    }
+
     const packageThemeSlugs = Array.isArray(pkg.theme_slugs) ? pkg.theme_slugs : []
     if (themeSlug && !packageThemeSlugsMatchFilter(packageThemeSlugs, themeSlug)) {
       return false
     }
-    if (!packageMatchesLevelFilter(pkg, { levelSlug, levelId })) return false
+
+    // Skip Level chips only when browsing bartending/sheesha lanes.
+    const skipLevelFilter =
+      normalizedServiceSlug === 'bartending' || normalizedServiceSlug === 'sheesha'
+    if (
+      !skipLevelFilter &&
+      !packageMatchesLevelFilter(pkg, { levelSlug, levelId, serviceSlug: normalizedServiceSlug })
+    ) {
+      return false
+    }
     return true
   })
 }
