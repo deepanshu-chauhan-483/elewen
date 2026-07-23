@@ -93,7 +93,7 @@ function ViewAllArrow() {
 export default function DecorLevelsPage() {
   const packagesQuery = usePackages()
   const { data: packages = [] } = packagesQuery
-  const [sortValue, setSortValue] = useState('price-desc')
+  const [sortValue, setSortValue] = useState('price-asc')
   const [searchParams, setSearchParams] = useSearchParams()
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (typeof window === 'undefined') return true
