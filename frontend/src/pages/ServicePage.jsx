@@ -7,7 +7,7 @@ import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import {
   buildServiceDestination,
   buildServicesFlowDestination,
-  SERVICE_PAGE_ALLOWED_SLUGS,
+  getServicePageAllowedSlugs,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
 import { normalizeServiceSlug } from '../lib/packageFilters'
@@ -78,15 +78,19 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
 
 export default function ServicePage() {
   const [searchParams] = useSearchParams()
-  const servicesQuery = useFilteredServiceOptions(SERVICE_PAGE_ALLOWED_SLUGS)
-  const { data: services = [] } = servicesQuery
-  const isStrapiLoading = useStrapiPageLoading(servicesQuery)
-
   const flow = searchParams.get('flow') ?? ''
   const isServicesFlow = flow === SERVICES_FLOW_KEY
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
   const eventId = searchParams.get('eventId') ?? ''
+
+  const allowedServiceSlugs = useMemo(
+    () => getServicePageAllowedSlugs(isServicesFlow ? '' : categorySlug),
+    [categorySlug, isServicesFlow]
+  )
+  const servicesQuery = useFilteredServiceOptions(allowedServiceSlugs)
+  const { data: services = [] } = servicesQuery
+  const isStrapiLoading = useStrapiPageLoading(servicesQuery)
 
   const backTo = useMemo(() => {
     const params = new URLSearchParams()

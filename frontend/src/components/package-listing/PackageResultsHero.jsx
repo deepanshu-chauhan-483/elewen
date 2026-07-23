@@ -15,7 +15,7 @@ import {
   filterThemesByEventPackages,
   normalizeServiceSlug,
 } from '../../lib/packageFilters'
-import { buildServiceDestination, DECOR_THEME_CATEGORY_SLUG, DEFAULT_EVENT_CATEGORY_SLUG } from '../../lib/serviceFlow'
+import { buildServiceDestination, DECOR_THEME_CATEGORY_SLUG, DEFAULT_EVENT_CATEGORY_SLUG, isServiceAllowedForCategory } from '../../lib/serviceFlow'
 import { usePackages } from '../../hooks/usePackages'
 
 function FilterPill({
@@ -136,9 +136,34 @@ export default function PackageResultsHero({
 
   const services = useMemo(
     () =>
-      SERVICE_ORDER.map(slug => allServices.find(service => service.slug === slug)).filter(Boolean),
-    [allServices]
+      SERVICE_ORDER.map(slug => allServices.find(service => service.slug === slug))
+        .filter(Boolean)
+        .filter(service =>
+          isServiceAllowedForCategory(service.slug, categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
+        ),
+    [allServices, categorySlug]
   )
+
+  useEffect(() => {
+    if (!serviceSlug) return
+    if (isServiceAllowedForCategory(serviceSlug, categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)) {
+      return
+    }
+
+    const fallbackService = services.find(service =>
+      isServiceAllowedForCategory(service.slug, categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
+    )
+    if (!fallbackService) return
+
+    const destination = buildServiceDestination({
+      categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
+      eventSlug,
+      eventId,
+      serviceSlug: fallbackService.slug,
+      serviceId: fallbackService.id != null ? String(fallbackService.id) : '',
+    })
+    navigate(destination, { replace: true })
+  }, [categorySlug, eventId, eventSlug, navigate, serviceSlug, services])
 
   const selectedService = useMemo(
     () => services.find(service => normalizeServiceSlug(service.slug) === serviceSlug) ?? null,

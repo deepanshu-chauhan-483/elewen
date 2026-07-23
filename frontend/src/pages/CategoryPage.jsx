@@ -11,6 +11,7 @@ import {
   buildServiceDestination,
   buildServiceFlowParams,
   DEFAULT_EVENT_CATEGORY_SLUG,
+  isServiceAllowedForCategory,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
 import { usePackages } from '../hooks/usePackages'
@@ -167,17 +168,46 @@ export default function CategoryPage() {
   const isServicesFlow = flow === SERVICES_FLOW_KEY
 
   const categoriesQuery = useEventCategoryOptions()
-  const { data: categories = [] } = categoriesQuery
+  const { data: allCategories = [] } = categoriesQuery
+
+  const categories = useMemo(() => {
+    if (!isServicesFlow || !serviceSlug) return allCategories
+    return allCategories.filter(category =>
+      isServiceAllowedForCategory(serviceSlug, category.slug)
+    )
+  }, [allCategories, isServicesFlow, serviceSlug])
 
   const selectedCategoryId = useMemo(() => {
-    if (!categories.length) return effectiveCategorySlug
+    if (!categories.length) {
+      return isServicesFlow && serviceSlug && !isServiceAllowedForCategory(serviceSlug, effectiveCategorySlug)
+        ? DEFAULT_EVENT_CATEGORY_SLUG
+        : effectiveCategorySlug
+    }
     return (
       categories.find(category => category.slug === requestedCategorySlug)?.slug ??
       categories.find(category => category.slug === DEFAULT_EVENT_CATEGORY_SLUG)?.slug ??
       categories[0]?.slug ??
       ''
     )
-  }, [categories, effectiveCategorySlug, requestedCategorySlug])
+  }, [categories, effectiveCategorySlug, isServicesFlow, requestedCategorySlug, serviceSlug])
+
+  useEffect(() => {
+    if (!isServicesFlow || !serviceSlug) return
+    if (isServiceAllowedForCategory(serviceSlug, requestedCategorySlug || effectiveCategorySlug)) {
+      return
+    }
+
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+        nextParams.set('category', DEFAULT_EVENT_CATEGORY_SLUG)
+        nextParams.delete('event')
+        nextParams.delete('eventId')
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [effectiveCategorySlug, isServicesFlow, requestedCategorySlug, serviceSlug, setSearchParams])
 
   const eventsQuery = useEventsByCategory(selectedCategoryId || DEFAULT_EVENT_CATEGORY_SLUG)
   const packagesQuery = usePackages()

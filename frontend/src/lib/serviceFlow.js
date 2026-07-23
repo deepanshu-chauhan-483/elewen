@@ -18,6 +18,29 @@ export const SERVICE_PAGE_ALLOWED_SLUGS = [
   'sheesha-services',
 ]
 
+/** Alcohol / hookah services are not offered for religious occasions. */
+const RELIGIOUS_EXCLUDED_SERVICE_SLUGS = new Set(['bartending', 'sheesha'])
+
+export function isServiceAllowedForCategory(serviceSlug = '', categorySlug = '') {
+  const category = String(categorySlug ?? '')
+    .trim()
+    .toLowerCase()
+  if (category !== 'religious') return true
+
+  const service = normalizeServiceSlug(serviceSlug)
+  return Boolean(service) && !RELIGIOUS_EXCLUDED_SERVICE_SLUGS.has(service)
+}
+
+export function getServicePageAllowedSlugs(categorySlug = '') {
+  const category = String(categorySlug ?? '')
+    .trim()
+    .toLowerCase()
+
+  if (category !== 'religious') return SERVICE_PAGE_ALLOWED_SLUGS
+
+  return SERVICE_PAGE_ALLOWED_SLUGS.filter(slug => isServiceAllowedForCategory(slug, category))
+}
+
 export const SERVICES_FLOW_KEY = 'services'
 
 export const DEFAULT_EVENT_CATEGORY_SLUG = 'social'
