@@ -16,6 +16,9 @@ const SHEESHA_PACKAGE_SLUGS = [
 
 const ALLOWED_PARENT_CATEGORY_SLUGS = new Set(['social', 'corporate']);
 
+/** Exhibition / Seminar have fixed decor catalogs — do not attach Sheesha packages there. */
+const EXCLUDED_EVENT_SLUGS = new Set(['exhibition-stalls', 'seminar-conference']);
+
 async function findSheeshaServiceCategory(strapi) {
   const rows = await strapi.documents('api::service-category.service-category').findMany({
     filters: {
@@ -41,6 +44,11 @@ async function findSocialAndCorporateEvents(strapi) {
   });
 
   return (Array.isArray(rows) ? rows : []).filter(event => {
+    const slug = String(event?.slug ?? '')
+      .trim()
+      .toLowerCase();
+    if (EXCLUDED_EVENT_SLUGS.has(slug)) return false;
+
     const parentSlug = String(event?.parent_event?.slug ?? '')
       .trim()
       .toLowerCase();

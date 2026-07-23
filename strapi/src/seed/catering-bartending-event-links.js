@@ -28,6 +28,9 @@ const BARTENDING_PACKAGE_SLUGS = [
 
 const ALLOWED_PARENT_CATEGORY_SLUGS = new Set(['social', 'corporate'])
 
+/** Exhibition / Seminar have fixed decor catalogs — do not attach F&B packages there. */
+const EXCLUDED_EVENT_SLUGS = new Set(['exhibition-stalls', 'seminar-conference'])
+
 const FALLBACK_SOCIAL_CORPORATE_EVENT_SLUGS = new Set([
   'birthday-parties',
   'anniversaries',
@@ -43,7 +46,6 @@ const FALLBACK_SOCIAL_CORPORATE_EVENT_SLUGS = new Set([
   'engagement',
   'wedding',
   'sufi-night',
-  'exhibition-stalls',
   'seminar-conference',
   'corporate-get-together',
 ])
@@ -57,14 +59,16 @@ async function findSocialAndCorporateEvents(strapi) {
   })
 
   return (Array.isArray(rows) ? rows : []).filter(event => {
+    const slug = String(event?.slug ?? '')
+      .trim()
+      .toLowerCase()
+    if (EXCLUDED_EVENT_SLUGS.has(slug)) return false
+
     const parentSlug = String(event?.parent_event?.slug ?? '')
       .trim()
       .toLowerCase()
     if (ALLOWED_PARENT_CATEGORY_SLUGS.has(parentSlug)) return true
 
-    const slug = String(event?.slug ?? '')
-      .trim()
-      .toLowerCase()
     return FALLBACK_SOCIAL_CORPORATE_EVENT_SLUGS.has(slug)
   })
 }

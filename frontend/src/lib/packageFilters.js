@@ -52,6 +52,94 @@ const BARTENDING_ALLOWED_SLUGS = new Set([
   'house-special',
 ])
 
+/**
+ * Corporate event listings with a fixed decor catalog (blocks F&B bleed).
+ * Keys are canonical event slugs; values are allowed package slugs + title keys.
+ */
+const CORPORATE_EVENT_PACKAGE_ALLOWLISTS = {
+  'exhibition-stalls': {
+    // CMS keeps "Upgarde"; accept Upgrade as an alias.
+    slugs: [
+      'exhibition-essentials-1',
+      'exhibition-essentials-2',
+      'exhibition-essentials-3',
+      'stall-upgarde-1',
+      'stall-upgarde-2',
+      'stall-upgarde-3',
+      'stall-upgrade-1',
+      'stall-upgrade-2',
+      'stall-upgrade-3',
+    ],
+    titles: [
+      'exhibition-essentials-1',
+      'exhibition-essentials-2',
+      'exhibition-essentials-3',
+      'stall-upgarde-1',
+      'stall-upgarde-2',
+      'stall-upgarde-3',
+      'stall-upgrade-1',
+      'stall-upgrade-2',
+      'stall-upgrade-3',
+    ],
+  },
+  'seminar-conference': {
+    // CMS: Branding & Visibility 1 → branding-and-visibility; Registeration typo kept.
+    slugs: [
+      'simply-elevated-1',
+      'simply-elevated-2',
+      'simply-elevated-3',
+      'av-and-tech-basics-1',
+      'av-and-tech-essential-kit-2',
+      'av-and-tech-essential-kit-pro-3',
+      'stage-setup-2',
+      'stage-setup-3',
+      'registeration-and-guest-experience-2',
+      'registration-and-guest-experience-2',
+      'branding-and-visibility',
+      'branding-and-visibility-1',
+      'branding-and-visibility-2',
+    ],
+    titles: [
+      'simply-elevated-1',
+      'simply-elevated-2',
+      'simply-elevated-3',
+      'av-and-tech-basics-1',
+      'av-and-tech-essential-kit-2',
+      'av-and-tech-essential-kit-pro-3',
+      'stage-setup-2',
+      'stage-setup-3',
+      'registeration-and-guest-experience-2',
+      'registration-and-guest-experience-2',
+      'branding-and-visibility',
+      'branding-and-visibility-1',
+      'branding-and-visibility-2',
+    ],
+  },
+}
+
+function getCorporateEventPackageAllowlist(eventSlug = '') {
+  const canonical = canonicalizeEventSlug(eventSlug)
+  if (!canonical) return null
+
+  const entry = CORPORATE_EVENT_PACKAGE_ALLOWLISTS[canonical]
+  if (!entry) return null
+
+  return {
+    slugs: new Set(entry.slugs),
+    titles: new Set(entry.titles),
+  }
+}
+
+function isAllowedCorporateEventPackage(pkg, allowlist) {
+  if (!allowlist) return true
+
+  const slug = normalizeValue(pkg?.slug)
+  if (slug && allowlist.slugs.has(slug)) return true
+
+  const titleKey = normalizeLevelSlug(pkg?.title)
+  return Boolean(titleKey && allowlist.titles.has(titleKey))
+}
+
 function isAllowedBartendingPackage(pkg) {
   const slug = normalizeValue(pkg?.slug)
   if (slug === 'exclusive-package' || slug === 'paint-and-prosecco-night') return false
@@ -319,6 +407,12 @@ const EVENT_SLUG_ALIASES = {
   'house-party': 'house-parties',
   'baby-showers': 'baby-shower',
   weddings: 'wedding',
+  'exhibition-stall': 'exhibition-stalls',
+  exhibition: 'exhibition-stalls',
+  seminar: 'seminar-conference',
+  conference: 'seminar-conference',
+  'seminar-conferences': 'seminar-conference',
+  'seminars-conferences': 'seminar-conference',
 }
 
 export function canonicalizeEventSlug(slug) {
@@ -703,7 +797,15 @@ export function filterPackages(packages, filters = {}) {
 
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
 
+  const corporateEventAllowlist = getCorporateEventPackageAllowlist(eventSlug)
+
   return (Array.isArray(packages) ? packages : []).filter(pkg => {
+    // Corporate event catalogs (Exhibition / Seminar): exact package list only.
+    // Blocks catering/bartending/sheesha bleed via universal occasion filters.
+    if (corporateEventAllowlist) {
+      return isAllowedCorporateEventPackage(pkg, corporateEventAllowlist)
+    }
+
     const categoryMatched = includesNormalized(pkg.category_slugs, categorySlug)
     const eventMatched =
       !eventSlug && !eventId
