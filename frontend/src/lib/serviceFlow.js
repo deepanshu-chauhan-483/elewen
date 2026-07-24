@@ -1,7 +1,7 @@
 import { canonicalizeEventSlug, normalizeServiceSlug } from './packageFilters'
 
 /** Events that show the coming-soon fallback instead of package listings. */
-const FALLBACK_ONLY_EVENT_SLUGS = new Set(['corporate-get-together'])
+const FALLBACK_ONLY_EVENT_SLUGS = new Set(['corporate-get-together', 'house-warming'])
 
 export function isFallbackOnlyEvent(eventSlug = '') {
   return FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
