@@ -174,9 +174,14 @@ const DECOR_THEME_SLUG_ALIASES = {
   'ishq-sufiyana': 'sufi-night',
 }
 
+/** Customer-facing labels that differ from CMS Theme.name (slug stays unchanged for filters). */
+const DECOR_THEME_DISPLAY_LABELS = {
+  'birthday-party': 'General Pack',
+}
+
 const DECOR_THEME_FALLBACK = [
   { id: 'house-party', label: 'House Party', slug: 'house-party', preview_image: null },
-  { id: 'birthday-party', label: 'Birthday Party', slug: 'birthday-party', preview_image: null },
+  { id: 'birthday-party', label: 'General Pack', slug: 'birthday-party', preview_image: null },
   { id: 'still-us', label: 'Still Us', slug: 'still-us', preview_image: null },
   {
     id: 'bubbles-and-black-tie',
@@ -426,6 +431,14 @@ const orderServices = items => {
 const decorThemeCanonicalSlug = theme => {
   const slug = slugify(theme?.slug ?? theme?.label ?? theme?.name)
   return DECOR_THEME_SLUG_ALIASES[slug] ?? slug
+}
+
+const applyDecorThemeDisplayLabel = theme => {
+  if (!theme) return theme
+  const slug = decorThemeCanonicalSlug(theme)
+  const overrideLabel = DECOR_THEME_DISPLAY_LABELS[slug]
+  if (!overrideLabel) return theme
+  return { ...theme, label: overrideLabel }
 }
 
 const decorThemeOrderIndex = theme => {
@@ -856,7 +869,7 @@ export function useDecorThemeOptions(serviceCategoryId) {
     ...query,
     isLoading: query.isLoading || themesPreviewQuery.isLoading,
     isFetching: query.isFetching || themesPreviewQuery.isFetching,
-    data: filterDecorThemes(orderDecorThemes(themesWithFallback)),
+    data: filterDecorThemes(orderDecorThemes(themesWithFallback)).map(applyDecorThemeDisplayLabel),
   }
 }
 
