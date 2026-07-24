@@ -66,6 +66,13 @@ const FURNITURE_ALLOWED_SLUGS = new Set([
   'the-mix-and-mingle2',
   'the-estate-party-pack',
   'the-puja-celebration',
+  'mehndi-on-my-mind',
+  'mehndi-on-my-mind-2-0',
+  'mehndi-on-my-mind-20',
+  'the-low-lounge-social',
+  'the-low-lounge-social-2-0',
+  'the-low-lounge-social2-0',
+  'the-low-lounge-social-20',
 ])
 
 const FURNITURE_ALLOWED_TITLE_KEYS = new Set([
@@ -78,6 +85,13 @@ const FURNITURE_ALLOWED_TITLE_KEYS = new Set([
   'the-mix-and-mingle2',
   'the-estate-party-pack',
   'the-puja-celebration',
+  'mehndi-on-my-mind',
+  'mehndi-on-my-mind-2-0',
+  'mehndi-on-my-mind-20',
+  'the-low-lounge-social',
+  'the-low-lounge-social-2-0',
+  'the-low-lounge-social2-0',
+  'the-low-lounge-social-20',
 ])
 
 function isAllowedFurniturePackage(pkg) {
@@ -93,7 +107,9 @@ function isAllowedFurniturePackage(pkg) {
     titleKey.startsWith('the-sit-down-dinner') ||
     titleKey.startsWith('the-mix-and-mingle') ||
     titleKey === 'the-estate-party-pack' ||
-    titleKey === 'the-puja-celebration'
+    titleKey === 'the-puja-celebration' ||
+    titleKey.startsWith('mehndi-on-my-mind') ||
+    titleKey.startsWith('the-low-lounge-social')
   )
 }
 
@@ -898,7 +914,7 @@ export function filterPackages(packages, filters = {}) {
       return isAllowedBartendingPackage(pkg)
     }
 
-    // Furniture listing = Sit-Down / Mix & Mingle / Estate / Puja only.
+    // Furniture listing = Sit-Down / Mix & Mingle / Estate / Puja / Mehndi / Low Lounge only.
     if (normalizedServiceSlug === 'rental-furniture') {
       return isAllowedFurniturePackage(pkg)
     }

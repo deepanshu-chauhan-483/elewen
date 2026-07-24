@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- * Rental furniture listing packages (Sit-Down / Mix & Mingle / Estate / Puja).
+ * Rental furniture listing packages
+ * (Sit-Down / Mix & Mingle / Estate / Puja / Mehndi / Low Lounge).
  * Uses decorpackages dynamic-zone shape so detail UI can render grouped inclusions
  * and Choose-1 cards (same Figma pattern as Decor).
  *
@@ -197,6 +198,126 @@ const FURNITURE_PACKAGES = [
         group_title: 'The Floor Seating',
       },
       { text: qtyText(10, 'Standard Plastic Chairs'), group_title: 'The Chair Seating' },
+    ],
+  },
+  {
+    title: 'Mehndi On My Mind',
+    slug: 'mehndi-on-my-mind',
+    base_price: 6600,
+    description:
+      'A colorful, traditional layout optimized for high-energy home or lawn celebrations. Features dedicated seating for mehndi artists and clients, a functional beverage bar station, and a mix of traditional floor mattresses and standard chairs for guests.',
+    ideal_for:
+      'Home-based Mehendi functions, pre-wedding family mixers, haldi ceremonies, or traditional bridal showers.',
+    nitty_gritty: linenNitty(),
+    price_breakdown: [
+      { label: 'Package Price', amount: 4000 },
+      { label: 'Labour & Transport', amount: 2200 },
+      { label: 'Platform fee', amount: 400 },
+    ],
+    inclustions: [
+      {
+        text: qtyText(6, 'Standard Plastic Chairs (For Artists)'),
+        group_title: 'The Mehndi Zone',
+      },
+      {
+        text: qtyText(2, 'Basic Coffee tables (For Henna Supplies)'),
+        group_title: 'The Mehndi Zone',
+      },
+      { text: qtyText(4, 'Premium Chairs (for Guests)'), group_title: 'The Mehndi Zone' },
+    ],
+  },
+  {
+    title: 'Mehndi On My Mind 2.0',
+    slug: 'mehndi-on-my-mind-2-0',
+    legacySlugs: ['mehndi-on-my-mind-20'],
+    base_price: 27840,
+    description:
+      'A colorful, traditional layout optimized for high-energy home or lawn celebrations. Features dedicated seating for mehndi artists and clients, a functional beverage bar station, and a mix of traditional floor mattresses and standard chairs for guests.',
+    ideal_for:
+      'Home-based Mehendi functions, pre-wedding family mixers, haldi ceremonies, or traditional bridal showers.',
+    nitty_gritty: linenNitty(),
+    price_breakdown: [
+      { label: 'Package Price', amount: 22400 },
+      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Platform fee', amount: 2240 },
+    ],
+    inclustions: [
+      { text: qtyText(1, 'Fancy Chair (For the Bride)'), group_title: 'The Bridal Zone' },
+      {
+        text: qtyText(2, 'Standard Plastic Chairs (For Artists)'),
+        group_title: 'The Bridal Zone',
+      },
+      {
+        text: qtyText(4, 'Standard Plastic Chairs (For Artists)'),
+        group_title: 'The Mehndi Zone',
+      },
+      {
+        text: qtyText(2, 'Basic Coffee tables (For Henna Supplies)'),
+        group_title: 'The Mehndi Zone',
+      },
+      { text: qtyText(4, 'Premium Chairs (for Guests)'), group_title: 'The Mehndi Zone' },
+      { text: qtyText(1, 'Basic Bar (Elevated)'), group_title: 'The Bar & Mingle' },
+      { text: qtyText(3, 'Cocktail Tables with linen'), group_title: 'The Bar & Mingle' },
+      {
+        text: qtyText(4, 'Buffet Tables with frill'),
+        group_title: 'The Food Presentation & Service',
+      },
+      { text: qtyText(3, 'Round Tables with linen'), group_title: 'The Seating' },
+      { text: qtyText(12, 'Basic Chairs'), group_title: 'The Seating' },
+    ],
+  },
+  {
+    title: 'The Low Lounge Social',
+    slug: 'the-low-lounge-social',
+    base_price: 11450,
+    description:
+      'A relaxed, low-profile floor layout designed for ultimate comfort and interactive hosting. Features a central clustered floor mattress setup perfect for laying out board games, art canvases, or charcuterie boards.',
+    ideal_for: "Sip and paint nights, girls' night in, board game marathons or kid's Parties",
+    nitty_gritty: linenNitty(),
+    price_breakdown: [
+      { label: 'Package Price', amount: 7500 },
+      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Platform fee', amount: 750 },
+    ],
+    inclustions: [
+      {
+        text: qtyText(4, 'Gadda / Floor Mattresses with linen'),
+        group_title: 'The Floor Lounge',
+      },
+      { text: qtyText(8, 'Cushions with linen covers'), group_title: 'The Floor Lounge' },
+      {
+        text: qtyText(
+          2,
+          'Rectangular Wooden Table 5.5 ft (Low-Height Setup for Games/Paint)'
+        ),
+        group_title: 'The Floor Lounge',
+      },
+    ],
+  },
+  {
+    title: 'The Low Lounge Social 2.0',
+    slug: 'the-low-lounge-social-2-0',
+    legacySlugs: ['the-low-lounge-social2-0', 'the-low-lounge-social-20'],
+    base_price: 17500,
+    description:
+      'A relaxed, low-profile floor layout designed for ultimate comfort and interactive hosting. Features a central clustered floor mattress setup perfect for laying out board games, art canvases, or charcuterie boards, paired with high-top cocktail tables for drinks.',
+    ideal_for:
+      "Sip and paint nights, girls' night in, board game marathons, or casual movie nights.",
+    nitty_gritty: linenNitty(),
+    price_breakdown: [
+      { label: 'Package Price', amount: 13000 },
+      { label: 'Labour & Transport', amount: 3200 },
+      { label: 'Platform fee', amount: 1300 },
+    ],
+    inclustions: [
+      { text: qtyText(4, 'Gadda / Floor Mattresses'), group_title: 'The Floor Lounge' },
+      { text: qtyText(8, 'Cushions with linen covers'), group_title: 'The Floor Lounge' },
+      {
+        text: qtyText(2, 'Wooden Table Long (Low-Height Setup for Games/Paint)'),
+        group_title: 'The Floor Lounge',
+      },
+      { text: qtyText(1, 'Takht Bar'), group_title: 'The Bar & Mingle' },
+      { text: qtyText(3, 'Cocktail Tables — Basic'), group_title: 'The Bar & Mingle' },
     ],
   },
 ];

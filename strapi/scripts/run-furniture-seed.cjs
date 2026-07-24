@@ -69,6 +69,10 @@ async function main() {
     await dumpSlug(app, 'the-sit-down-dinner');
     await dumpSlug(app, 'the-estate-party-pack');
     await dumpSlug(app, 'the-puja-celebration');
+    await dumpSlug(app, 'mehndi-on-my-mind');
+    await dumpSlug(app, 'mehndi-on-my-mind-2-0');
+    await dumpSlug(app, 'the-low-lounge-social');
+    await dumpSlug(app, 'the-low-lounge-social-2-0');
   } finally {
     await app.destroy();
   }
