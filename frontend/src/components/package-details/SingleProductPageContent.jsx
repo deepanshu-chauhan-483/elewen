@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
 import PackageCard from '../package-listing/PackageCard'
 import AppImage from '../common/AppImage'
+import CartViewOptionsSheet from '../cart/CartViewOptionsSheet'
 import PackageImageDisclaimer from './PackageImageDisclaimer'
 import { preloadImages } from '../../utils/preloadAssets'
 import { assignDistinctCoverIndices } from '../../lib/packageFilters'
@@ -361,6 +362,16 @@ function ProductImageLayout({
   const initialDisplayImage = mainImage ?? sideImages[0]
   const [selectedOverride, setSelectedOverride] = useState(null)
   const [trackedMainImage, setTrackedMainImage] = useState(normalizedMainImage)
+  const [isCartOptionsOpen, setIsCartOptionsOpen] = useState(false)
+
+  const scrollToProductOptions = useCallback(() => {
+    const options = document.getElementById('product-options')
+    if (options) {
+      options.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   if (trackedMainImage !== normalizedMainImage) {
     setTrackedMainImage(normalizedMainImage)
@@ -701,14 +712,7 @@ function ProductImageLayout({
               <button
                 type="button"
                 className="text-xs underline sm:text-sm md:text-base"
-                onClick={() => {
-                  const options = document.getElementById('product-options')
-                  if (options) {
-                    options.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    return
-                  }
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
-                }}
+                onClick={() => setIsCartOptionsOpen(true)}
               >
                 View Options
               </button>
@@ -746,6 +750,12 @@ function ProductImageLayout({
           </div>
         </div>
       </section>
+
+      <CartViewOptionsSheet
+        open={isCartOptionsOpen}
+        onClose={() => setIsCartOptionsOpen(false)}
+        onBrowseOptions={scrollToProductOptions}
+      />
 
       <Footer />
     </main>
