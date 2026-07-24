@@ -15,7 +15,13 @@ import {
   filterThemesByEventPackages,
   normalizeServiceSlug,
 } from '../../lib/packageFilters'
-import { buildServiceDestination, DECOR_THEME_CATEGORY_SLUG, DEFAULT_EVENT_CATEGORY_SLUG, isServiceAllowedForCategory } from '../../lib/serviceFlow'
+import {
+  buildServiceDestination,
+  DECOR_THEME_CATEGORY_SLUG,
+  DEFAULT_EVENT_CATEGORY_SLUG,
+  isFallbackOnlyEvent,
+  isServiceAllowedForCategory,
+} from '../../lib/serviceFlow'
 import { usePackages } from '../../hooks/usePackages'
 
 function FilterPill({
@@ -400,6 +406,11 @@ export default function PackageResultsHero({
       }
 
       if (key === 'event') {
+        if (isFallbackOnlyEvent(value)) {
+          navigate('/fallback-screen')
+          return
+        }
+
         const matchedEvent = events.find(event => event.value === value) ?? null
 
         nextParams.set('event', value)

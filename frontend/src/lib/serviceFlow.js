@@ -1,4 +1,11 @@
-import { normalizeServiceSlug } from './packageFilters'
+import { canonicalizeEventSlug, normalizeServiceSlug } from './packageFilters'
+
+/** Events that show the coming-soon fallback instead of package listings. */
+const FALLBACK_ONLY_EVENT_SLUGS = new Set(['corporate-get-together'])
+
+export function isFallbackOnlyEvent(eventSlug = '') {
+  return FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
+}
 
 export const SERVICE_ROUTE_MAP = {
   decor: '/event-flow/decor-theme',
@@ -90,6 +97,10 @@ export function buildServiceDestination({
   serviceId = '',
   flow = '',
 }) {
+  if (isFallbackOnlyEvent(eventSlug)) {
+    return '/fallback-screen'
+  }
+
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
   const params = buildServiceFlowParams({
     categorySlug,
@@ -165,6 +176,10 @@ export function buildEventSelectionDestination({
   eventSlug = '',
   eventId = '',
 }) {
+  if (isFallbackOnlyEvent(eventSlug)) {
+    return '/fallback-screen'
+  }
+
   const resolvedCategory = String(categorySlug ?? DEFAULT_EVENT_CATEGORY_SLUG)
     .trim()
     .toLowerCase()

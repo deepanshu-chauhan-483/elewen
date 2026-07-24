@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom'
+
 // FallbackIcon.jsx
 function FallbackIcon() {
   return (
@@ -150,6 +152,8 @@ function FallbackIcon() {
 }
 
 export default function FallbackPage() {
+  const navigate = useNavigate()
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#FAF5F0] px-[clamp(20px,6vw,120px)] text-center mt-10 md:mt-15">
       {/* SVG ILLUSTRATION */}
@@ -171,13 +175,19 @@ export default function FallbackPage() {
       </p>
 
       {/* EMAIL SECTION */}
-      <div className="mt-8 w-full max-w-[550px] flex gap-[8px] md:gap-[16px] flex-col sm:flex-row items-center justify-center">
+      <p className="mt-8 text-[#756B61] text-[clamp(13px,1.8vw,15px)]">
+        Want to be notified when this is ready?
+      </p>
+      <div className="mt-3 w-full max-w-[550px] flex gap-[8px] md:gap-[16px] flex-col sm:flex-row items-center justify-center">
         <input
           placeholder="Your Email Address"
           className="w-full max-w-[400px] bg-[#FAFAFA] text-[#BFAC9B] border border-[#E0DAD1] rounded-md px-4 py-2 outline-none text-[12px] md:text-[16px]"
         />
 
-        <button className="border border-[#2E2A26] max-w-[123px] px-4 py-2 rounded-full text-[12px] md:text-[16px] text-[#1C1C1C] bg-[#FFFFFF]">
+        <button
+          type="button"
+          className="border border-[#2E2A26] max-w-[123px] px-4 py-2 rounded-full text-[12px] md:text-[16px] text-[#1C1C1C] bg-[#FFFFFF]"
+        >
           Notify Me
         </button>
       </div>
@@ -187,6 +197,7 @@ export default function FallbackPage() {
         {/* Explore Button */}
         <button
           type="button"
+          onClick={() => navigate('/event-flow/category')}
           className="flex flex-1 items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-5 pr-1.5 transition-colors hover:bg-[#C6AB7F] group"
         >
           <span className="text-[12px] md:text-[16px] font-medium text-white whitespace-nowrap">
@@ -207,7 +218,11 @@ export default function FallbackPage() {
         </button>
 
         {/* Go Back */}
-        <button className="bg-[#FFFFFF] text-[#CDB17E] px-4 py-3 rounded-full text-[12px] md:text-[16px] whitespace-nowrap">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="bg-[#FFFFFF] text-[#CDB17E] border border-[#CDB17E] px-4 py-3 rounded-full text-[12px] md:text-[16px] whitespace-nowrap"
+        >
           Go Back
         </button>
       </div>

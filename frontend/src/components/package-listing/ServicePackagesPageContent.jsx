@@ -22,7 +22,12 @@ import pkgImg6 from '../../assets/images/IMG_7025.jpg'
 import pkgImg7 from '../../assets/images/IMG_8625.png'
 import pkgImg8 from '../../assets/images/IMG_9814.jpg'
 import pkgImg9 from '../../assets/images/6f6af066.jpg'
-import { DEFAULT_EVENT_CATEGORY_SLUG, SERVICES_FLOW_KEY, buildServiceFlowParams } from '../../lib/serviceFlow'
+import {
+  DEFAULT_EVENT_CATEGORY_SLUG,
+  SERVICES_FLOW_KEY,
+  buildServiceFlowParams,
+  isFallbackOnlyEvent,
+} from '../../lib/serviceFlow'
 
 const PKG_LOCAL_IMAGES = [
   [pkgImg1, pkgImg2, pkgImg3],
@@ -203,6 +208,10 @@ export default function ServicePackagesPageContent({
     serviceIdParam,
     themeSlug,
   ])
+
+  if (isFallbackOnlyEvent(effectiveEventSlug)) {
+    return <Navigate to="/fallback-screen" replace />
+  }
 
   if (isStrapiLoading) {
     return <CmsPageLoader />

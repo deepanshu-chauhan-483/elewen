@@ -8,6 +8,7 @@ import {
   buildServiceDestination,
   buildServicesFlowDestination,
   getServicePageAllowedSlugs,
+  isFallbackOnlyEvent,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
 import { normalizeServiceSlug } from '../lib/packageFilters'
@@ -124,6 +125,10 @@ export default function ServicePage() {
 
   if (!isServicesFlow && (!categorySlug || !eventSlug)) {
     return <Navigate to="/event-flow/category" replace />
+  }
+
+  if (!isServicesFlow && isFallbackOnlyEvent(eventSlug)) {
+    return <Navigate to="/fallback-screen" replace />
   }
 
   if (isStrapiLoading) {
