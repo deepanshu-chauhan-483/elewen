@@ -1345,7 +1345,7 @@ function getCartPackageHref(pkg, selectedOptions = {}, cartItemId = '') {
   const queryString = params.toString()
 
   if (!packageId || !serviceSlug) return ''
-  if (serviceSlug === 'decor') {
+  if (serviceSlug === 'decor' || serviceSlug === 'rental-furniture' || serviceSlug === 'furniture') {
     const basePath = `/packages/decor-single/${packageId}`
     return queryString ? `${basePath}?${queryString}` : basePath
   }

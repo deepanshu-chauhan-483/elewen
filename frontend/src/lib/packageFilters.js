@@ -53,6 +53,51 @@ const BARTENDING_ALLOWED_SLUGS = new Set([
 ])
 
 /**
+ * Rental furniture listing — exact catalog only.
+ * Accept common slug/title variants for 2.0 / spacing drift in CMS.
+ */
+const FURNITURE_ALLOWED_SLUGS = new Set([
+  'the-sit-down-dinner',
+  'the-sit-down-dinner-2-0',
+  'the-sit-down-dinner-2-0-round-tables',
+  'the-sit-down-dinner-20-round-tables',
+  'the-mix-and-mingle',
+  'the-mix-and-mingle-2',
+  'the-mix-and-mingle2',
+  'the-estate-party-pack',
+  'the-puja-celebration',
+])
+
+const FURNITURE_ALLOWED_TITLE_KEYS = new Set([
+  'the-sit-down-dinner',
+  'the-sit-down-dinner-2-0',
+  'the-sit-down-dinner-2-0-round-tables',
+  'the-sit-down-dinner-20-round-tables',
+  'the-mix-and-mingle',
+  'the-mix-and-mingle-2',
+  'the-mix-and-mingle2',
+  'the-estate-party-pack',
+  'the-puja-celebration',
+])
+
+function isAllowedFurniturePackage(pkg) {
+  const slug = normalizeValue(pkg?.slug)
+  if (slug && FURNITURE_ALLOWED_SLUGS.has(slug)) return true
+
+  const titleKey = normalizeLevelSlug(pkg?.title)
+  if (titleKey && FURNITURE_ALLOWED_TITLE_KEYS.has(titleKey)) return true
+
+  // Flexible match when CMS title has extra punctuation / spacing.
+  if (!titleKey) return false
+  return (
+    titleKey.startsWith('the-sit-down-dinner') ||
+    titleKey.startsWith('the-mix-and-mingle') ||
+    titleKey === 'the-estate-party-pack' ||
+    titleKey === 'the-puja-celebration'
+  )
+}
+
+/**
  * Corporate event listings with a fixed decor catalog (blocks F&B bleed).
  * Keys are canonical event slugs; values are allowed package slugs + title keys.
  */
@@ -846,6 +891,16 @@ export function filterPackages(packages, filters = {}) {
     // Bartending listing = Classic Pour, House Special, Signature Mix only.
     if (normalizedServiceSlug === 'bartending') {
       return isAllowedBartendingPackage(pkg)
+    }
+
+    // Furniture listing = Sit-Down / Mix & Mingle / Estate / Puja only.
+    if (normalizedServiceSlug === 'rental-furniture') {
+      return isAllowedFurniturePackage(pkg)
+    }
+
+    // Furniture packages reuse decorpackages CMS shape — keep them out of Decor listings.
+    if (normalizedServiceSlug === 'decor' && isAllowedFurniturePackage(pkg)) {
+      return false
     }
 
     const packageThemeSlugs = Array.isArray(pkg.theme_slugs) ? pkg.theme_slugs : []

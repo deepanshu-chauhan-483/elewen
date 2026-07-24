@@ -315,6 +315,16 @@ export default function PackageDetailsPage() {
     )
   }
 
+  if (
+    normalizedService === 'rental-furniture' ||
+    normalizedService === 'furniture' ||
+    normalizedService === 'furniture-single'
+  ) {
+    return (
+      <Navigate to={`/packages/decor-single/${packageId}${search ? `?${search}` : ''}`} replace />
+    )
+  }
+
   if (normalizedService === 'sheesha' || normalizedService === 'sheesha-single') {
     return (
       <Navigate to={`/packages/sheesha-single/${packageId}${search ? `?${search}` : ''}`} replace />

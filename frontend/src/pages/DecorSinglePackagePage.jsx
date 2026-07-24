@@ -8,7 +8,7 @@ import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
-import { getRelatedPackages } from '../lib/packageFilters'
+import { getRelatedPackages, normalizeServiceSlug } from '../lib/packageFilters'
 import { resolveChooseOneDisplayPrice, shouldShowChoicePrices } from '../lib/chooseOnePricing'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -1140,11 +1140,6 @@ export default function DecorSinglePackagePage() {
     [packages]
   )
 
-  const backHref = useMemo(() => {
-    const next = new URLSearchParams(searchParams)
-    return `/packages/decor${next.toString() ? `?${next.toString()}` : ''}`
-  }, [searchParams])
-
   const pkg = useMemo(
     () =>
       packageDetails
@@ -1159,9 +1154,39 @@ export default function DecorSinglePackagePage() {
     [packageDetails, packageId, packagesData]
   )
 
+  const packageServiceSlug = useMemo(() => {
+    const fromQuery = normalizeServiceSlug(searchParams.get('service'))
+    if (fromQuery === 'rental-furniture') return 'rental-furniture'
+
+    const fromPkg = (Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : []).map(
+      normalizeServiceSlug
+    )
+    if (fromPkg.includes('rental-furniture')) return 'rental-furniture'
+
+    return 'decor'
+  }, [pkg?.service_slugs, searchParams])
+
+  const backHref = useMemo(() => {
+    const next = new URLSearchParams(searchParams)
+    const listingPath =
+      packageServiceSlug === 'rental-furniture' ? '/packages/rental-furniture' : '/packages/decor'
+    return `${listingPath}${next.toString() ? `?${next.toString()}` : ''}`
+  }, [packageServiceSlug, searchParams])
+
   const relatedProducts = useMemo(
-    () => (pkg ? getRelatedPackages(packagesData, pkg, { serviceSlug: 'decor' }) : []),
-    [packagesData, pkg]
+    () =>
+      pkg
+        ? getRelatedPackages(packagesData, pkg, {
+            serviceSlug: packageServiceSlug,
+            matchesPackage: candidate => {
+              if (packageServiceSlug !== 'rental-furniture') return true
+              return (Array.isArray(candidate?.service_slugs) ? candidate.service_slugs : []).some(
+                slug => normalizeServiceSlug(slug) === 'rental-furniture'
+              )
+            },
+          })
+        : [],
+    [packageServiceSlug, packagesData, pkg]
   )
 
   const { data: packageReviews = [] } = usePackageReviews({

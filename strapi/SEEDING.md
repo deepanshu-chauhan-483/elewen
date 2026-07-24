@@ -95,6 +95,14 @@ One-shot production seed (34 packages, slug-deduped):
 cd strapi && npm run seed:excel-decor
 ```
 
+Furniture rental packages (Sit-Down / Mix & Mingle / Estate / Puja):
+
+```bash
+cd strapi && npm run seed:furniture
+# production:
+docker compose run --rm --no-deps strapi node scripts/run-furniture-seed.cjs
+```
+
 **Not seeded from Excel (avoid duplicates):**
 
 - `Final Catering Menu - 14.05.26.xlsx` — same packages as existing `catering-essentials.js`, `catering-assisted.js`, `catering-end-to-end.js`. Re-run those scripts if you need catering refresh.

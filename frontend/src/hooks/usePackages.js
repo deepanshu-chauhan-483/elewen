@@ -370,6 +370,15 @@ function inferServiceSlugsFromSections(pkg) {
   })
 }
 
+function resolvePrimaryServiceSlug(serviceSlugs = []) {
+  const normalized = serviceSlugs.map(normalizeServiceSlug).filter(Boolean)
+  const preferred = ['rental-furniture', 'catering', 'bartending', 'sheesha', 'decor']
+  for (const slug of preferred) {
+    if (normalized.includes(slug)) return slug
+  }
+  return normalized[0] || ''
+}
+
 function isListingChipText(text) {
   const value = String(text ?? '').trim()
   if (!value) return false
@@ -634,18 +643,23 @@ function normalizePackage(pkg, index = 0, options = {}) {
   const budgetLevels = getNestedPackageBudgetLevels(pkg)
   const primaryBudgetLevel = budgetLevels[0] ?? null
   const packageIncludes = buildPackageIncludes(pkg)
-  const serviceSlugs = uniqueValues(
-    serviceCategories
-      .flatMap(service => [
-        service?.slug,
-        normalizeServiceSlug(service?.slug),
-        service?.parent_category?.slug,
-        normalizeServiceSlug(service?.parent_category?.slug),
-        service?.name,
-        normalizeServiceSlug(service?.name),
-      ])
-      .concat(inferServiceSlugsFromSections(pkg))
+  const categoryServiceSlugs = uniqueValues(
+    serviceCategories.flatMap(service => [
+      service?.slug,
+      normalizeServiceSlug(service?.slug),
+      service?.parent_category?.slug,
+      normalizeServiceSlug(service?.parent_category?.slug),
+      service?.name,
+      normalizeServiceSlug(service?.name),
+    ])
   )
+  const hasFurnitureCategory = categoryServiceSlugs.some(
+    slug => normalizeServiceSlug(slug) === 'rental-furniture'
+  )
+  const inferredServiceSlugs = inferServiceSlugsFromSections(pkg).filter(
+    slug => !(hasFurnitureCategory && normalizeServiceSlug(slug) === 'decor')
+  )
+  const serviceSlugs = uniqueValues([...categoryServiceSlugs, ...inferredServiceSlugs])
   const serviceIds = uniqueValues(
     serviceCategories.flatMap(service => [service?.id, service?.parent_category?.id]).map(String)
   )
@@ -662,12 +676,13 @@ function normalizePackage(pkg, index = 0, options = {}) {
     ? getCateringPriceRangeLabel(cateringSection, pkg.base_price)
     : ''
 
+  const primaryServiceSlug = resolvePrimaryServiceSlug(serviceSlugs)
+
   const sharedFields = {
     id: pkg.id,
     documentId: pkg.documentId,
     title: bartendingPresentation?.title || pkg.title,
     category: (() => {
-      const primaryServiceSlug = serviceSlugs.map(normalizeServiceSlug).find(Boolean)
       if (primaryServiceSlug === 'sheesha') {
         return (
           serviceCategories.find(service => normalizeServiceSlug(service?.slug) === 'sheesha')
@@ -684,6 +699,13 @@ function normalizePackage(pkg, index = 0, options = {}) {
         return (
           serviceCategories.find(service => normalizeServiceSlug(service?.slug) === 'bartending')
             ?.name || 'Bartending'
+        )
+      }
+      if (primaryServiceSlug === 'rental-furniture') {
+        return (
+          serviceCategories.find(
+            service => normalizeServiceSlug(service?.slug) === 'rental-furniture'
+          )?.name || 'Furniture'
         )
       }
 

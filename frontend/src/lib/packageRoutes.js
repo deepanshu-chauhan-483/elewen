@@ -6,6 +6,10 @@ export function getPackageHref(serviceSlug, packageId) {
     .replace(/-services?$/, '')
 
   if (normalizedService === 'decor') return `/packages/decor-single/${packageId}`
+  // Furniture uses the same CMS inclusion / Choose-1 detail UI as Decor.
+  if (normalizedService === 'rental-furniture' || normalizedService === 'furniture') {
+    return `/packages/decor-single/${packageId}`
+  }
   if (normalizedService === 'sheesha') return `/packages/sheesha-single/${packageId}`
   if (normalizedService === 'bartending') return `/packages/bartending-single/${packageId}`
   if (normalizedService === 'catering') return `/packages/catering-single/${packageId}`

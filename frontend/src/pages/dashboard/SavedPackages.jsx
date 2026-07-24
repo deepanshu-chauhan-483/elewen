@@ -19,6 +19,9 @@ function getPackageHref(item) {
   const packageId = item?.package?.documentId || item?.packageDocumentId || item?.packageId
 
   if (serviceSlug === 'decor') return `/packages/decor-single/${packageId}`
+  if (serviceSlug === 'rental-furniture' || serviceSlug === 'furniture') {
+    return `/packages/decor-single/${packageId}`
+  }
   if (serviceSlug === 'sheesha') return `/packages/sheesha-single/${packageId}`
   if (serviceSlug === 'bartending') return `/packages/bartending-single/${packageId}`
   if (serviceSlug === 'catering') return `/packages/catering-single/${packageId}`

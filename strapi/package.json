@@ -30,6 +30,7 @@
     "seed:catering-refresh": "node scripts/run-catering-refresh.cjs",
     "seed:production-data": "node scripts/run-production-data-seed.cjs",
     "seed:delivery-charges": "node scripts/run-delivery-charges-seed.cjs",
+    "seed:furniture": "node scripts/run-furniture-seed.cjs",
     "seed:privacy-policy": "node scripts/run-privacy-policy-seed.cjs",
     "develop": "strapi develop --no-watch-admin",
     "develop:admin": "strapi develop",
