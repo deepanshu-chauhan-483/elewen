@@ -479,6 +479,11 @@ const EVENT_SLUG_ALIASES = {
   conference: 'seminar-conference',
   'seminar-conferences': 'seminar-conference',
   'seminars-conferences': 'seminar-conference',
+  pooja: 'pooja-kirtan',
+  kirtan: 'pooja-kirtan',
+  'pujas-festivals': 'pooja-kirtan',
+  'pujas-and-festivals': 'pooja-kirtan',
+  'puja-kirtan': 'pooja-kirtan',
 }
 
 export function canonicalizeEventSlug(slug) {

@@ -103,6 +103,14 @@ cd strapi && npm run seed:furniture
 docker compose run --rm --no-deps strapi node scripts/run-furniture-seed.cjs
 ```
 
+Religious → Pooja / Kirtan decor (Kesari + Shankh):
+
+```bash
+cd strapi && npm run seed:pooja-kirtan
+# production:
+docker compose run --rm --no-deps strapi node scripts/run-pooja-kirtan-seed.cjs
+```
+
 **Not seeded from Excel (avoid duplicates):**
 
 - `Final Catering Menu - 14.05.26.xlsx` — same packages as existing `catering-essentials.js`, `catering-assisted.js`, `catering-end-to-end.js`. Re-run those scripts if you need catering refresh.

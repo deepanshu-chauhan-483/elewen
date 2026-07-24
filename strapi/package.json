@@ -31,6 +31,7 @@
     "seed:production-data": "node scripts/run-production-data-seed.cjs",
     "seed:delivery-charges": "node scripts/run-delivery-charges-seed.cjs",
     "seed:furniture": "node scripts/run-furniture-seed.cjs",
+    "seed:pooja-kirtan": "node scripts/run-pooja-kirtan-seed.cjs",
     "seed:privacy-policy": "node scripts/run-privacy-policy-seed.cjs",
     "develop": "strapi develop --no-watch-admin",
     "develop:admin": "strapi develop",
