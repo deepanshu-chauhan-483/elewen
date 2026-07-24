@@ -279,7 +279,12 @@ function packageHasServiceSlug(pkg, serviceSlug) {
  * Until every package is fully event-linked in CMS, keep them visible under those
  * categories instead of hiding them behind incomplete event relations.
  */
-const UNIVERSAL_OCCASION_SERVICE_SLUGS = new Set(['sheesha', 'catering', 'bartending'])
+const UNIVERSAL_OCCASION_SERVICE_SLUGS = new Set([
+  'sheesha',
+  'catering',
+  'bartending',
+  'rental-furniture',
+])
 
 function servicePassesOccasionFilters(pkg, { categorySlug = '', eventSlug = '', eventId = '' } = {}) {
   const isUniversalService = [...UNIVERSAL_OCCASION_SERVICE_SLUGS].some(slug =>
