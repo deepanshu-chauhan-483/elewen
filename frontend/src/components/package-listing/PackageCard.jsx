@@ -1,11 +1,24 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useWishlist } from '../../hooks/useWishlist'
 import BrandedImage from '../common/BrandedImage'
 import { preloadImages } from '../../utils/preloadAssets'
 import { getPackageHref } from '../../lib/packageRoutes'
+
+const TAG_PILL_CLASS =
+  'inline-flex rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium leading-normal text-[#2D2D2D]'
+
+const MAX_TAG_LINES = 2
+
+function TagPill({ children, className = '', ...rest }) {
+  return (
+    <span className={`${TAG_PILL_CLASS}${className ? ` ${className}` : ''}`} {...rest}>
+      {children}
+    </span>
+  )
+}
 
 function ImageDots({ count, currentIndex = 0 }) {
   if (count <= 1) return null
@@ -48,6 +61,10 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
     if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
     return []
   }, [pkg.includes, pkg.tags])
+  const [visibleTagCount, setVisibleTagCount] = useState(0)
+  const [tagBlockMaxHeight, setTagBlockMaxHeight] = useState(null)
+  const tagsContainerRef = useRef(null)
+  const tagsMeasureRef = useRef(null)
   const location = useLocation()
   const { isSaved, pendingPackageId, toggleSavedPackage } = useWishlist()
   const packageId = pkg.documentId ?? pkg.id
@@ -79,6 +96,95 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
 
     preloadImages([...new Set(urls)])
   }, [currentIndex, images, pkg.documentId, pkg.id])
+
+  useLayoutEffect(() => {
+    if (!tags.length) {
+      setVisibleTagCount(0)
+      setTagBlockMaxHeight(null)
+      return undefined
+    }
+
+    const calculateVisibleTags = () => {
+      const container = tagsContainerRef.current
+      const measureContainer = tagsMeasureRef.current
+
+      if (!container || !measureContainer) return
+
+      const availableWidth = container.clientWidth
+      if (!availableWidth) return
+
+      measureContainer.style.width = `${availableWidth}px`
+
+      const tagNodes = Array.from(measureContainer.querySelectorAll('[data-tag-index]'))
+      const moreNode = measureContainer.querySelector('[data-more-tag]')
+
+      tagNodes.forEach(node => {
+        node.style.display = 'none'
+      })
+
+      if (moreNode) {
+        moreNode.style.display = 'none'
+      }
+
+      if (!tagNodes.length) {
+        setVisibleTagCount(0)
+        return
+      }
+
+      tagNodes[0].style.display = 'inline-flex'
+      const singleLineHeight = measureContainer.scrollHeight
+      const rowGap = 6
+      const maxHeight = singleLineHeight * MAX_TAG_LINES + rowGap
+
+      tagNodes.forEach(node => {
+        node.style.display = 'none'
+      })
+
+      let fittedCount = 0
+
+      for (let tagIndex = 0; tagIndex < tagNodes.length; tagIndex += 1) {
+        tagNodes[tagIndex].style.display = 'inline-flex'
+
+        const hasRemainingTags = tagIndex < tagNodes.length - 1
+        if (moreNode) {
+          moreNode.style.display = hasRemainingTags ? 'inline-flex' : 'none'
+        }
+
+        if (measureContainer.scrollHeight > maxHeight) {
+          tagNodes[tagIndex].style.display = 'none'
+          fittedCount = Math.max(tagIndex, 1)
+          break
+        }
+
+        fittedCount = tagIndex + 1
+      }
+
+      if (fittedCount === tagNodes.length && moreNode) {
+        moreNode.style.display = 'none'
+      }
+
+      setTagBlockMaxHeight(maxHeight)
+      setVisibleTagCount(fittedCount)
+    }
+
+    calculateVisibleTags()
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', calculateVisibleTags)
+      return () => window.removeEventListener('resize', calculateVisibleTags)
+    }
+
+    const resizeObserver = new ResizeObserver(calculateVisibleTags)
+
+    if (tagsContainerRef.current) {
+      resizeObserver.observe(tagsContainerRef.current)
+    }
+
+    return () => resizeObserver.disconnect()
+  }, [tags, pkg.documentId, pkg.id])
+
+  const visibleTags = tags.slice(0, visibleTagCount)
+  const hasMoreTags = tags.length > visibleTagCount
 
   const goToPrevious = () => {
     if (!images.length) return
@@ -265,18 +371,33 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </p>
         ) : null}
 
-        <div className="mt-4 overflow-hidden">
-          <div className="max-h-[4.5rem] overflow-hidden pb-0.5">
+        {tags.length > 0 ? (
+          <div
+            ref={tagsContainerRef}
+            className="mt-4 overflow-hidden"
+            style={tagBlockMaxHeight ? { maxHeight: `${tagBlockMaxHeight}px` } : undefined}
+          >
             <div className="flex flex-wrap gap-1.5">
-              {tags.map((tag, i) => (
-                <span
-                  key={i}
-                  className="rounded-full bg-black/5 px-2 py-1 text-[12px] font-medium leading-normal text-[#2D2D2D]"
-                >
-                  {tag}
-                </span>
+              {visibleTags.map((tag, tagIndex) => (
+                <TagPill key={`${tag}-${tagIndex}`}>{tag}</TagPill>
               ))}
+              {hasMoreTags ? <TagPill>More</TagPill> : null}
             </div>
+          </div>
+        ) : null}
+
+        <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0" aria-hidden="true">
+          <div
+            ref={tagsMeasureRef}
+            className="flex flex-wrap gap-1.5"
+            style={{ position: 'absolute', visibility: 'hidden' }}
+          >
+            {tags.map((tag, tagIndex) => (
+              <TagPill key={`measure-${tag}-${tagIndex}`} data-tag-index={tagIndex}>
+                {tag}
+              </TagPill>
+            ))}
+            <TagPill data-more-tag>More</TagPill>
           </div>
         </div>
       </div>
