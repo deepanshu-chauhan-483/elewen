@@ -1,5 +1,5 @@
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import { useMemo } from 'react'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useCallback, useMemo } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useFilteredServiceOptions } from '../hooks/useEventTypes'
 import CmsPageLoader from '../components/common/CmsPageLoader'
@@ -11,6 +11,10 @@ import {
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
 import { normalizeServiceSlug } from '../lib/packageFilters'
+import {
+  queueHomeScrollRestore,
+  readRememberedHomeScroll,
+} from '../lib/homeReturnScroll'
 
 const EVENT_FLOW_STEPS = [
   { id: 1, label: 'Event' },
@@ -78,6 +82,8 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
 
 export default function ServicePage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const location = useLocation()
   const flow = searchParams.get('flow') ?? ''
   const isServicesFlow = flow === SERVICES_FLOW_KEY
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
@@ -92,11 +98,29 @@ export default function ServicePage() {
   const { data: services = [] } = servicesQuery
   const isStrapiLoading = useStrapiPageLoading(servicesQuery)
 
-  const backTo = useMemo(() => {
+  const cameFromHome =
+    location.state?.from === '/' || location.state?.fromLanding === true
+
+  const categoryBackTo = useMemo(() => {
     const params = new URLSearchParams()
     if (categorySlug) params.set('category', categorySlug)
     return `/event-flow/category${params.toString() ? `?${params.toString()}` : ''}`
   }, [categorySlug])
+
+  const handleBack = useCallback(() => {
+    // Plan Differently / hero shortcut: return to home at the same section (not hero top).
+    if (cameFromHome) {
+      const scrollY =
+        typeof location.state?.scrollY === 'number'
+          ? location.state.scrollY
+          : readRememberedHomeScroll()
+      queueHomeScrollRestore(scrollY)
+      navigate('/')
+      return
+    }
+
+    navigate(categoryBackTo)
+  }, [cameFromHome, categoryBackTo, location.state, navigate])
 
   if (!isServicesFlow && (!categorySlug || !eventSlug)) {
     return <Navigate to="/event-flow/category" replace />
@@ -113,7 +137,8 @@ export default function ServicePage() {
       currentStep={isServicesFlow ? 1 : 2}
       steps={isServicesFlow ? SERVICES_FLOW_STEPS : EVENT_FLOW_STEPS}
       showBackButton={!isServicesFlow}
-      backTo={isServicesFlow ? null : backTo}
+      onBack={isServicesFlow ? null : handleBack}
+      backTo={isServicesFlow ? null : cameFromHome ? '/' : categoryBackTo}
     >
       <div className="flex h-full w-full justify-center">
         <div className="relative left-1/2 w-screen -translate-x-1/2">

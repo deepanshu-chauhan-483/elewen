@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../Footer'
 import NavHeader from '../NavHeader'
 
@@ -45,6 +45,7 @@ export default function EventFlowLayout({
   onSearchChange,
   showBackButton = false,
   backTo = null,
+  onBack = null,
   showNextButton = false,
   nextTo = null,
   showPagination = false,
@@ -53,6 +54,7 @@ export default function EventFlowLayout({
   mobilePaginationWindow = null,
   afterPagination = null,
 }) {
+  const navigate = useNavigate()
   const mobileWindowSize =
     typeof mobilePaginationWindow === 'number' && mobilePaginationWindow > 0
       ? Math.floor(mobilePaginationWindow)
@@ -68,6 +70,20 @@ export default function EventFlowLayout({
         )
       : 0
   const mobileWindowEnd = mobileWindowSize ? mobileWindowStart + mobileWindowSize : paginationCount
+
+  const handleBack = () => {
+    if (typeof onBack === 'function') {
+      onBack()
+      return
+    }
+
+    // Explicit previous flow step only — never history(-1) (that returns to home hero).
+    if (backTo) {
+      navigate(backTo)
+    }
+  }
+
+  const canShowBack = Boolean(showBackButton && (onBack || backTo))
 
   useEffect(() => {
     const html = document.documentElement
@@ -240,14 +256,15 @@ export default function EventFlowLayout({
                 </div>
               ) : null}
 
-              {showBackButton && backTo ? (
-                <Link
-                  to={backTo}
+              {canShowBack ? (
+                <button
+                  type="button"
+                  onClick={handleBack}
                   className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#FAFAFA33] px-3 py-2 text-[11px] leading-none text-white transition-colors hover:bg-[#FAFAFA4D] sm:mr-2 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-[14px]"
                 >
                   <ArrowIcon direction="left" />
                   <span className="whitespace-nowrap">Previous</span>
-                </Link>
+                </button>
               ) : null}
             </div>
           </div>

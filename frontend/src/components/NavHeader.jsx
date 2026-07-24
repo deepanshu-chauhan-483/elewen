@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import ScallopBulbCurtain from './common/ScallopBulbCurtain'
@@ -9,6 +9,7 @@ import { useToast } from './common/useToast'
 import { usePackages } from '../hooks/usePackages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import { filterPackagesBySearch } from '../lib/packageSearch'
+import { shouldPreserveHomeScroll } from '../lib/homeReturnScroll'
 
 function getPackageSearchPriceLabel(pkg) {
   const formattedPrice = String(pkg?.price ?? '').trim()
@@ -306,6 +307,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { pathname } = useLocation()
+  const navigationType = useNavigationType()
   const isHome = pathname === '/'
   const isTransparentHero = pathname === '/' || pathname === '/how-it-work'
   const lastScrollY = useRef(0)
@@ -367,9 +369,12 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       setSearchQuery('')
     }, 0)
     lastScrollY.current = 0
-    window.scrollTo(0, 0)
+    // Don't wipe restored scroll on Previous/Back to Plan Differently.
+    if (navigationType !== 'POP' && !shouldPreserveHomeScroll()) {
+      window.scrollTo(0, 0)
+    }
     return () => clearTimeout(t)
-  }, [pathname])
+  }, [pathname, navigationType])
 
   useEffect(() => {
     document.body.style.overflow = open || searchOpen ? 'hidden' : ''

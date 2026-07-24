@@ -121,6 +121,20 @@ p {
   animation: band-right 60s linear infinite;
 }
 
+/* Hide home content while restoring Plan Differently scroll — prevents hero flash. */
+html.home-scroll-restoring #root {
+  visibility: hidden;
+}
+
+html.home-scroll-restoring::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  background: #f8f4ed;
+  pointer-events: none;
+}
+
 .hero-scroll-bands {
   position: absolute;
   inset: 0;

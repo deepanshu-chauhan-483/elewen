@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useNavigationType } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import HeroPreloader from './HeroPreloader'
@@ -8,6 +8,12 @@ import { useLenis } from '../../useLenis'
 import { getViewportMode } from '../../utils/viewportMode'
 import { waitForHomePageAssets } from '../../utils/homePagePreload'
 import HeroVideo from '../../assets/newvideo.mp4'
+import {
+  getWindowScrollY,
+  peekSkipHeroScrollTop,
+  rememberHomeScroll,
+  shouldPreserveHomeScroll,
+} from '../../lib/homeReturnScroll'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -133,6 +139,7 @@ const buildBandTokens = (tokens, fallbackTokens) => {
 
 const HeroSection = () => {
   const navigate = useNavigate()
+  const navigationType = useNavigationType()
   const { data: cms = {} } = useLandingPage()
   const hero = cms.hero ?? {}
   const leftTaglines = Array.isArray(hero.left_taglines)
@@ -587,6 +594,8 @@ const HeroSection = () => {
   }, [])
 
   useEffect(() => {
+    const isReturningViaBack =
+      navigationType === 'POP' || peekSkipHeroScrollTop() || shouldPreserveHomeScroll()
     const scrollToTop = () => {
       window.scrollTo(0, 0)
       document.documentElement.scrollTop = 0
@@ -604,20 +613,25 @@ const HeroSection = () => {
 
     const runSetup = () => {
       if (cancelled) return
-      scrollToTop()
+      // Keep restored scroll when returning via Previous/Back.
+      if (!isReturningViaBack) scrollToTop()
       ScrollTrigger.refresh()
       teardown = initHeroAnimations()
     }
 
     const waitForScrollZero = (attempt = 0, maxAttempts = 30) => {
       if (cancelled) return
+      if (isReturningViaBack) {
+        runSetup()
+        return
+      }
       scrollToTop()
       const y = getScrollY()
       if (y < 5 || attempt >= maxAttempts) {
         runSetup()
         const t = setTimeout(() => {
           if (cancelled) return
-          scrollToTop()
+          if (!isReturningViaBack) scrollToTop()
           ScrollTrigger.refresh()
         }, 200)
         timeoutIds.push(t)
@@ -625,6 +639,22 @@ const HeroSection = () => {
       }
       const t = setTimeout(() => waitForScrollZero(attempt + 1, maxAttempts), 50)
       timeoutIds.push(t)
+    }
+
+    if (isReturningViaBack) {
+      const frameId = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (cancelled) return
+          ScrollTrigger.refresh()
+          teardown = initHeroAnimations()
+        })
+      })
+      return () => {
+        cancelled = true
+        cancelAnimationFrame(frameId)
+        timeoutIds.forEach(id => clearTimeout(id))
+        teardown()
+      }
     }
 
     scrollToTop()
@@ -641,7 +671,7 @@ const HeroSection = () => {
       teardown()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lenisRef])
+  }, [lenisRef, navigationType])
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -895,11 +925,29 @@ const HeroSection = () => {
                   <div
                     key={resolvedLabel || i}
                     ref={el => (cardRefs.current[i] = el)}
-                    onClick={() => navigate(cardHref)}
+                    onClick={() => {
+                      rememberHomeScroll(lenisRef?.current)
+                      navigate(cardHref, {
+                        state: {
+                          from: '/',
+                          fromLanding: true,
+                          scrollY: getWindowScrollY(lenisRef?.current),
+                        },
+                      })
+                    }}
                     role="button"
                     tabIndex={0}
                     onKeyDown={e => {
-                      if (e.key === 'Enter') navigate(cardHref)
+                      if (e.key === 'Enter') {
+                        rememberHomeScroll(lenisRef?.current)
+                        navigate(cardHref, {
+                          state: {
+                            from: '/',
+                            fromLanding: true,
+                            scrollY: getWindowScrollY(lenisRef?.current),
+                          },
+                        })
+                      }
                     }}
                     style={{ pointerEvents: 'auto' }}
                     className={`hero-desktop-card col-span-1 h-22.5 md:h-[clamp(5.5rem,9.72vw,8.75rem)] md:w-[clamp(7rem,15.28vw,13.75rem)] md:bg-[#591902]/20 md:backdrop-blur-md relative border-r border-white/20 md:border-white/10 md:border-t hover:bg-[#591902]/40 transition-colors duration-300 cursor-pointer ${extra}`}

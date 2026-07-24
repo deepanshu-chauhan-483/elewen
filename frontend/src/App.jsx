@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -20,6 +20,17 @@ import {
   scrollPageToTop,
   usePersistLocationScroll,
 } from './hooks/useScrollToTop'
+import {
+  applyHomeScrollRestore,
+  confirmHomeScrollRestore,
+  consumePendingHomeScroll,
+  finishHomeScrollRestore,
+  markHomeScrollRestoring,
+  peekPendingHomeScroll,
+  readRememberedHomeScroll,
+  getWindowScrollY,
+  shouldPreserveHomeScroll,
+} from './lib/homeReturnScroll'
 
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const InHousePlannerPage = lazy(() => import('./pages/InHousePlannerPage'))
@@ -119,26 +130,93 @@ function ScrollToTop() {
   const navigationType = useNavigationType()
   const lenisRef = useLenis()
   const locationKey = getLocationScrollKey(pathname, search)
+  const homeRestoredRef = useRef(false)
 
-  usePersistLocationScroll(locationKey)
+  const getScrollY = () => getWindowScrollY(lenisRef?.current)
+
+  usePersistLocationScroll(locationKey, getScrollY)
+
+  // Apply home scroll before paint so the disco-ball hero never flashes.
+  useLayoutEffect(() => {
+    homeRestoredRef.current = false
+
+    if (pathname !== '/') return undefined
+
+    const lenis = lenisRef?.current
+    let savedY = null
+    let shouldRestore = false
+
+    if (peekPendingHomeScroll() != null) {
+      savedY = consumePendingHomeScroll() ?? 0
+      shouldRestore = true
+    } else if (navigationType === 'POP') {
+      const persisted = readLocationScroll(locationKey) ?? 0
+      const remembered = readRememberedHomeScroll()
+      savedY = Math.max(persisted, remembered)
+      shouldRestore = savedY >= 80
+    }
+
+    if (!shouldRestore) {
+      finishHomeScrollRestore()
+      return undefined
+    }
+
+    homeRestoredRef.current = true
+    markHomeScrollRestoring()
+    applyHomeScrollRestore(savedY, lenis)
+
+    if (confirmHomeScrollRestore(savedY, lenis)) {
+      return undefined
+    }
+
+    let attempts = 0
+    const retryTimer = window.setInterval(() => {
+      attempts += 1
+      const done = confirmHomeScrollRestore(savedY, lenisRef?.current)
+      if (done || attempts >= 24) {
+        if (!done) finishHomeScrollRestore()
+        window.clearInterval(retryTimer)
+      }
+    }, 50)
+
+    return () => window.clearInterval(retryTimer)
+  }, [locationKey, navigationType, lenisRef, pathname])
 
   useEffect(() => {
     const lenis = lenisRef?.current
 
-    // Browser Back/Forward: restore the spot the customer left, don't force the hero
+    if (pathname === '/' && (shouldPreserveHomeScroll() || homeRestoredRef.current)) {
+      homeRestoredRef.current = false
+      return undefined
+    }
+
+    if (pathname === '/' && navigationType === 'POP') {
+      const persisted = readLocationScroll(locationKey) ?? 0
+      const remembered = readRememberedHomeScroll()
+      const savedY = Math.max(persisted, remembered)
+      if (savedY >= 80) {
+        const restore = () => applyHomeScrollRestore(savedY, lenis)
+        const timers = [50, 150].map(delay => window.setTimeout(restore, delay))
+        return () => timers.forEach(timer => window.clearTimeout(timer))
+      }
+    }
+
     if (navigationType === 'POP') {
       const savedY = readLocationScroll(locationKey) ?? 0
-      const restore = () => scrollPageTo(savedY, lenis)
-      restore()
-      const timers = [50, 150, 350].map(delay => window.setTimeout(restore, delay))
-      return () => timers.forEach(timer => window.clearTimeout(timer))
+      if (savedY > 0) {
+        const restore = () => scrollPageTo(savedY, lenis)
+        restore()
+        const timers = [50, 150].map(delay => window.setTimeout(restore, delay))
+        return () => timers.forEach(timer => window.clearTimeout(timer))
+      }
+      return undefined
     }
 
     const scrollTop = () => scrollPageToTop(lenis)
     scrollTop()
     const t = window.setTimeout(scrollTop, 150)
     return () => window.clearTimeout(t)
-  }, [locationKey, navigationType, lenisRef])
+  }, [locationKey, navigationType, lenisRef, pathname])
 
   return null
 }

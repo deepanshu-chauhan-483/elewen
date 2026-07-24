@@ -44,8 +44,10 @@ export function scrollPageToTop(lenis) {
 }
 
 /** Persist scroll for the current location; write final value on leave. */
-export function usePersistLocationScroll(locationKey) {
+export function usePersistLocationScroll(locationKey, getScrollY) {
   const readyRef = useRef(false)
+  const getScrollYRef = useRef(getScrollY)
+  getScrollYRef.current = getScrollY
 
   useEffect(() => {
     if (typeof window === 'undefined' || !locationKey) return undefined
@@ -55,9 +57,18 @@ export function usePersistLocationScroll(locationKey) {
       readyRef.current = true
     }, 350)
 
+    const resolveY = () => {
+      const getter = getScrollYRef.current
+      if (typeof getter === 'function') {
+        const y = getter()
+        if (Number.isFinite(y)) return Math.max(0, y)
+      }
+      return Math.max(0, window.scrollY || 0)
+    }
+
     const persist = () => {
       if (!readyRef.current) return
-      saveLocationScroll(locationKey)
+      saveLocationScroll(locationKey, resolveY())
     }
 
     window.addEventListener('scroll', persist, { passive: true })
@@ -65,7 +76,7 @@ export function usePersistLocationScroll(locationKey) {
     return () => {
       window.clearTimeout(enableTimer)
       // Always save on leave so Back can restore the last spot
-      saveLocationScroll(locationKey)
+      saveLocationScroll(locationKey, resolveY())
       window.removeEventListener('scroll', persist)
     }
   }, [locationKey])

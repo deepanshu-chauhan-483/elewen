@@ -37,6 +37,8 @@ import {
   buildServicesFlowDestination,
   DEFAULT_EVENT_CATEGORY_SLUG,
 } from '../lib/serviceFlow'
+import { rememberHomeScroll } from '../lib/homeReturnScroll'
+import { useLenis } from '../useLenis'
 import { getPackageHref } from '../lib/packageRoutes'
 import { preventWidow, stripMojibake } from '../lib/textFormat'
 import { PACKAGES_FALLBACK } from '../data/packages'
@@ -566,6 +568,7 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
 const PlanEventSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.plan_event_intro ?? {}
+  const lenisRef = useLenis()
 
   // CMS: Strapi `events` top-level categories + featured sub-type cards
   const { data: categories = [] } = useEventCategories()
@@ -699,6 +702,7 @@ const PlanEventSection = () => {
   return (
     <section
       ref={sectionRef}
+      id="plan-your-event"
       className="relative w-full min-h-auto bg-[#F2F2F2] pt-[32px] md:pt-24 lg:min-h-screen lg:pt-52 flex flex-col overflow-hidden font-sans"
     >
       {/* Background Decor (Desktop predominantly) */}
@@ -917,6 +921,11 @@ const PlanEventSection = () => {
                         card.slug,
                         card.id
                       )}
+                      state={{
+                        from: '/',
+                        fromLanding: true,
+                      }}
+                      onClick={() => rememberHomeScroll(lenisRef?.current)}
                       aria-label={card.title}
                       style={{
                         '--delay': `${0.04 + i * 0.03}s`,
