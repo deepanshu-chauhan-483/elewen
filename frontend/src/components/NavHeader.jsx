@@ -8,6 +8,7 @@ import { useCart } from '../hooks/useCart'
 import { useToast } from './common/useToast'
 import { usePackages } from '../hooks/usePackages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
+import { getPackageHrefFromRecord, getPackageServiceSlug } from '../lib/packageRoutes'
 import { filterPackagesBySearch } from '../lib/packageSearch'
 import { shouldPreserveHomeScroll } from '../lib/homeReturnScroll'
 
@@ -268,7 +269,7 @@ function PackageSearchResults({ results, onSelect, className = '' }) {
   return (
     <div className={className}>
       {results.map(pkg => {
-        const serviceSlug = normalizeServiceSlug(pkg.serviceSlug ?? pkg.service ?? 'decor')
+        const serviceSlug = normalizeServiceSlug(getPackageServiceSlug(pkg) || 'decor')
         const pkgId = pkg.documentId ?? pkg.id
         const priceLabel = getPackageSearchPriceLabel(pkg)
 
@@ -520,9 +521,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   }
 
   const handleSelectPackageResult = pkg => {
-    const serviceSlug = normalizeServiceSlug(pkg.serviceSlug ?? pkg.service ?? 'decor')
-    const pkgId = pkg.documentId ?? pkg.id
-    navigate(`/packages/${serviceSlug}-single/${pkgId}`)
+    navigate(getPackageHrefFromRecord(pkg))
     setSearchQuery('')
     setSearchOpen(false)
     setOpen(false)
@@ -641,9 +640,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               {searchResults.length > 0 && (
                 <div className="absolute left-0 top-full z-50 mt-2 w-[320px] rounded-xl bg-white py-2 shadow-xl border border-[#E0D6CA]">
                   {searchResults.map(pkg => {
-                    const serviceSlug = normalizeServiceSlug(
-                      pkg.serviceSlug ?? pkg.service ?? 'decor'
-                    )
+                    const serviceSlug = normalizeServiceSlug(getPackageServiceSlug(pkg) || 'decor')
                     const pkgId = pkg.documentId ?? pkg.id
                     const priceLabel = getPackageSearchPriceLabel(pkg)
                     return (
@@ -652,7 +649,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                         type="button"
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[#F5F0EA] transition-colors"
                         onClick={() => {
-                          navigate(`/packages/${serviceSlug}-single/${pkgId}`)
+                          navigate(getPackageHrefFromRecord(pkg))
                           setSearchQuery('')
                         }}
                       >
@@ -790,9 +787,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             {searchResults.length > 0 && (
               <div className="absolute left-0 top-full z-50 mt-2 w-[320px] rounded-xl bg-white py-2 shadow-xl border border-[#E0D6CA]">
                 {searchResults.map(pkg => {
-                  const serviceSlug = normalizeServiceSlug(
-                    pkg.serviceSlug ?? pkg.service ?? 'decor'
-                  )
+                  const serviceSlug = normalizeServiceSlug(getPackageServiceSlug(pkg) || 'decor')
                   const pkgId = pkg.documentId ?? pkg.id
                   const priceLabel = getPackageSearchPriceLabel(pkg)
                   return (
@@ -801,7 +796,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                       type="button"
                       className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[#F5F0EA] transition-colors"
                       onClick={() => {
-                        navigate(`/packages/${serviceSlug}-single/${pkgId}`)
+                        navigate(getPackageHrefFromRecord(pkg))
                         setSearchQuery('')
                         setOpen(false)
                       }}

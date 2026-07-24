@@ -17,3 +17,14 @@ export function getPackageHref(serviceSlug, packageId) {
 
   return `/packages/decor-single/${packageId}`
 }
+
+export function getPackageServiceSlug(pkg) {
+  return String(pkg?.serviceSlug ?? pkg?.service_slugs?.[0] ?? pkg?.service ?? '')
+    .trim()
+    .toLowerCase()
+}
+
+export function getPackageHrefFromRecord(pkg) {
+  const packageId = pkg?.documentId ?? pkg?.id
+  return getPackageHref(getPackageServiceSlug(pkg), packageId)
+}

@@ -23,23 +23,35 @@ const PKG_LOCAL_IMAGES = [
   [pkgImg2, pkgImg2, pkgImg2, pkgImg2, pkgImg2],
 ]
 
+const SHEESHA_OPERATOR_POLICY_LINE =
+  'This package includes a complete hookah setup with a dedicated hookah operator for approximately 3-4 hours of service.'
+
+const SHEESHA_DEFAULT_POLICIES_BODY =
+  'All the material used is on rent and shall be picked up after the event. The cost given above is for one event only.'
+
+const SHEESHA_PRICE_COVERS_BODY =
+  '✔ Hookah\t✔ Hookah Operator\t✔ Coal\t✔ Flavor\tPremium hookah base\tStem & tray\tHose / pipe\tMouth tips (disposable)\tTongs\nNo hidden service fees.'
+
+const SHEESHA_SETUP_NEEDS_BODY =
+  'A small area for our team to work, access to water and electricity and gas.'
+
 const SHEESHA_CONTENT = {
   title: 'Basic Indian Hookah',
   price: '₹1850.00',
   intro:
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    'A classic Indian hookah experience with premium flavors and full service setup for your event.',
   accordionSections: [
     {
       title: 'The price you see covers it all',
-      body: 'Everything shown is included in this package.',
+      body: SHEESHA_PRICE_COVERS_BODY,
     },
     {
       title: 'Setup needs',
-      body: 'Basic setup space and ventilation required.',
+      body: SHEESHA_SETUP_NEEDS_BODY,
     },
     {
       title: 'Policies',
-      body: 'Standard service policies apply.',
+      body: `${SHEESHA_OPERATOR_POLICY_LINE}\n\n${SHEESHA_DEFAULT_POLICIES_BODY}`,
     },
     {
       title: 'Cancellation Policy',
@@ -49,25 +61,53 @@ const SHEESHA_CONTENT = {
 }
 
 const SHEESHA_FLAVOR_DESCRIPTION_FALLBACKS = {
-  'love 66': 'A fruity-minty blend with a cool, sweet finish.',
-  'lady killer': 'A smooth mixed-fruit flavor with a rich, sweet profile.',
-  'blue melon': 'A juicy melon blend with a refreshing, icy touch.',
-  'mango tango icy': 'Sweet mango flavor balanced with an extra cooling finish.',
-  'berlin nights': 'A bold fruit-forward mix with a slightly cool aftertaste.',
-  'hurrem sultan': 'A fragrant, sweet blend with a smooth, elegant finish.',
+  commissioner: 'Bold classic blend with a smooth finish.',
+  seabridge: 'Cool ocean freshness with subtle sweetness.',
+  'dubai special': 'Rich Middle Eastern mix, sweet and smooth.',
+  'pan kiwi mint': 'Tangy kiwi layered with paan mint.',
+  'paan mint cigar': 'Strong paan flavor with cool mint.',
+  'brain freezer': 'Intense icy mint for extreme cooling.',
+  apple: 'Crisp sweet apple with smooth smoke.',
+  watermelon: 'Juicy watermelon with light refreshing sweetness.',
+  'love 66':
+    'Our house blend of honeydew melon, watermelon, passionfruit, and mint.',
+  'lady killer': 'A refreshing mix of melon, mango, berries, and mint.',
+  'blue melon': 'A sweet combo of blueberry and melon.',
+  'mango tango icy': 'Intense mango with an icy menthol blast.',
+  'berlin nights': 'A popular peach-based blend.',
+  'hurrem sultan': 'A unique, aromatic blend.',
   'double apple': 'A classic apple flavor with warm spice notes.',
-  mint: 'Intense icy mint for extreme cooling',
-  'turkish mastic': 'A creamy, aromatic flavor with a distinctive herbal sweetness.',
+  'turkish mastic': 'A sweet and earthy resin flavor.',
+  mint: 'Cooling and refreshing.',
+}
+
+function ensureSheeshaPoliciesSection(sections) {
+  return (Array.isArray(sections) ? sections : []).map(section => {
+    if (section?.title !== 'Policies') return section
+
+    const body = String(section.body ?? '').trim()
+    if (body.includes('dedicated hookah operator')) return section
+
+    return {
+      ...section,
+      body: body
+        ? `${SHEESHA_OPERATOR_POLICY_LINE}\n\n${body}`
+        : `${SHEESHA_OPERATOR_POLICY_LINE}\n\n${SHEESHA_DEFAULT_POLICIES_BODY}`,
+    }
+  })
 }
 
 function buildSheeshaAccordionSections(pkg) {
-  return Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
-    ? pkg.detail_accordion_sections
-    : SHEESHA_CONTENT.accordionSections
+  const sections =
+    Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
+      ? pkg.detail_accordion_sections
+      : SHEESHA_CONTENT.accordionSections
+
+  return ensureSheeshaPoliciesSection(sections)
 }
 
 function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancellationSection) {
-  const sections = Array.isArray(baseSections) ? [...baseSections] : []
+  const sections = ensureSheeshaPoliciesSection(Array.isArray(baseSections) ? [...baseSections] : [])
   const fallbackCancellation =
     sections.find(section => section?.title === 'Cancellation Policy') ??
     fallbackCancellationSection ??
