@@ -681,6 +681,7 @@ function normalizePackage(pkg, index = 0, options = {}) {
   const sharedFields = {
     id: pkg.id,
     documentId: pkg.documentId,
+    slug: String(pkg.slug ?? '').trim(),
     title: bartendingPresentation?.title || pkg.title,
     category: (() => {
       if (primaryServiceSlug === 'sheesha') {

@@ -102,14 +102,15 @@ function isAllowedFurniturePackage(pkg) {
   if (titleKey && FURNITURE_ALLOWED_TITLE_KEYS.has(titleKey)) return true
 
   // Flexible match when CMS title has extra punctuation / spacing.
-  if (!titleKey) return false
+  if (!titleKey && !slug) return false
+  const key = titleKey || normalizeLevelSlug(slug)
   return (
-    titleKey.startsWith('the-sit-down-dinner') ||
-    titleKey.startsWith('the-mix-and-mingle') ||
-    titleKey === 'the-estate-party-pack' ||
-    titleKey === 'the-puja-celebration' ||
-    titleKey.startsWith('mehndi-on-my-mind') ||
-    titleKey.startsWith('the-low-lounge-social')
+    key.startsWith('the-sit-down-dinner') ||
+    key.startsWith('the-mix-and-mingle') ||
+    key === 'the-estate-party-pack' ||
+    key === 'the-puja-celebration' ||
+    key.startsWith('mehndi-on-my-mind') ||
+    key.startsWith('the-low-lounge-social')
   )
 }
 
