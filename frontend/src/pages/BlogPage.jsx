@@ -226,50 +226,50 @@ const BlogPage = () => {
       </section>
 
       <section className="bg-[#FFFFFF]">
-        <div className="mx-auto grid max-w-[1720px] gap-10 px-5 pt-10 pb-5 md:relative md:grid-cols-[220px_minmax(0,1fr)] md:gap-16 md:px-10 md:py-20 lg:px-[96px]">
-          <div className="absolute bottom-0 left-[252px] top-0 hidden w-px bg-[#A7AE98] md:block" />
+        <div className="mx-auto grid max-w-[1720px] gap-10 px-5 pt-10 pb-5 md:grid-cols-[minmax(0,280px)_minmax(0,1fr)] md:gap-0 md:px-10 md:py-20 lg:px-[96px]">
+          <div className="border-b border-[#A7AE98] md:border-b-0 md:border-r md:border-[#A7AE98] md:pr-8 lg:pr-10">
+            <aside className="px-[10px] pb-5 md:sticky md:top-28 md:px-0 md:pb-0">
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[12px] md:block md:space-y-8 md:text-[16px]">
+                {categories.map((category, index) => {
+                  const active = activeCategory === category
+                  return (
+                    <div key={category} className="flex items-center md:block">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveCategory(category)
+                          setCurrentPage(1)
+                        }}
+                        className={`relative text-left text-[16px] leading-[1.5] md:w-full md:max-w-full md:whitespace-normal md:break-words ${
+                          active ? 'text-[#202716]' : 'text-[#9B9A92]'
+                        }`}
+                        style={{
+                          fontFamily: "'Poppins', sans-serif",
+                          fontWeight: 500,
+                          letterSpacing: '0',
+                        }}
+                      >
+                        <span className="relative inline-block max-w-full md:pb-[8px]">
+                          {category}
+                          <span
+                            className={`absolute bottom-0 left-0 h-px bg-[#A7AE98] transition-all duration-300 ease-out ${
+                              active ? 'w-full opacity-100' : 'w-0 opacity-0'
+                            }`}
+                          />
+                        </span>
+                      </button>
 
-          <aside className="self-start border-b border-[#A7AE98] px-[10px] pb-5 md:sticky md:top-28 md:border-b-0 md:pb-0 md:pr-10 md:px-0">
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[12px] md:block md:space-y-8 md:text-[16px]">
-              {categories.map((category, index) => {
-                const active = activeCategory === category
-                return (
-                  <div key={category} className="flex items-center md:block">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveCategory(category)
-                        setCurrentPage(1)
-                      }}
-                      className={`relative text-left text-[16px] leading-[1.5] md:w-full ${
-                        active ? 'text-[#202716]' : 'text-[#9B9A92]'
-                      }`}
-                      style={{
-                        fontFamily: "'Poppins', sans-serif",
-                        fontWeight: 500,
-                        letterSpacing: '0',
-                      }}
-                    >
-                      <span className="relative inline-block md:pb-[8px]">
-                        {category}
-                        <span
-                          className={`absolute bottom-0 left-0 h-px bg-[#A7AE98] transition-all duration-300 ease-out ${
-                            active ? 'w-full opacity-100' : 'w-0 opacity-0'
-                          }`}
-                        />
-                      </span>
-                    </button>
+                      {index < categories.length - 1 ? (
+                        <span className="ml-4 text-[#202716] md:hidden">|</span>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+            </aside>
+          </div>
 
-                    {index < categories.length - 1 ? (
-                      <span className="ml-4 text-[#202716] md:hidden">|</span>
-                    ) : null}
-                  </div>
-                )
-              })}
-            </div>
-          </aside>
-
-          <div>
+          <div className="md:pl-12 lg:pl-16">
             <div ref={blogListTopRef} />
 
             {visiblePosts.length === 0 ? (
