@@ -618,6 +618,7 @@ const EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES = new Set([
 ])
 
 const DECOR_THEME_ALLOWLIST_ALIASES = {
+  'general-pack': 'birthday-party',
   'bubbles-black-tie': 'bubbles-and-black-tie',
   'little-honey': 'a-little-honey',
   'ishq-sufiyana': 'sufi-night',

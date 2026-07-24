@@ -169,9 +169,17 @@ const DECOR_THEME_DISPLAY_ORDER = [
 ]
 
 const DECOR_THEME_SLUG_ALIASES = {
+  'general-pack': 'birthday-party',
   'little-honey': 'a-little-honey',
   'bubbles-black-tie': 'bubbles-and-black-tie',
   'ishq-sufiyana': 'sufi-night',
+}
+
+const ACTIVE_THEME_FETCH_PARAMS = {
+  'filters[is_active][$eq]': 'true',
+  'populate[preview_image]': 'true',
+  sort: 'display_order:asc',
+  'pagination[pageSize]': '100',
 }
 
 /** Customer-facing labels that differ from CMS Theme.name (slug stays unchanged for filters). */
@@ -465,6 +473,34 @@ const mergeMissingDecorThemes = (themes, fallbackThemes) => {
   return [...themes, ...missing]
 }
 
+const buildThemePreviewBySlug = themes => {
+  const previewBySlug = new Map()
+
+  for (const theme of Array.isArray(themes) ? themes : []) {
+    if (!theme?.preview_image) continue
+
+    for (const key of [
+      slugify(theme.slug ?? theme.label),
+      decorThemeCanonicalSlug(theme),
+    ]) {
+      if (key && !previewBySlug.has(key)) previewBySlug.set(key, theme.preview_image)
+    }
+  }
+
+  return previewBySlug
+}
+
+const applyThemePreviewImages = (themes, previewBySlug) =>
+  (Array.isArray(themes) ? themes : []).map(option => {
+    const backendPreview =
+      option.preview_image ||
+      previewBySlug.get(slugify(option.slug ?? option.label)) ||
+      previewBySlug.get(decorThemeCanonicalSlug(option)) ||
+      null
+
+    return backendPreview ? { ...option, preview_image: backendPreview } : option
+  })
+
 const filterDecorThemes = themes =>
   (Array.isArray(themes) ? themes : []).filter(theme => {
     const label = String(theme?.label ?? theme?.name ?? '')
@@ -569,7 +605,7 @@ const resolveWizardStepsFromStrapi = async serviceCategoryId => {
         }
 
         if (step.source === 'themes') {
-          params['populate[preview_image]'] = 'true'
+          Object.assign(params, ACTIVE_THEME_FETCH_PARAMS)
         }
 
         const { data: items } = await strapiGet(`/${step.source}`, params)
@@ -835,11 +871,7 @@ export function useDecorThemeOptions(serviceCategoryId) {
     queryFn: async () => {
       if (USE_FALLBACK) return []
       try {
-        const { data } = await strapiGet('/themes', {
-          'filters[is_active][$eq]': 'true',
-          'populate[preview_image]': 'true',
-          sort: 'display_order:asc',
-        })
+        const { data } = await strapiGet('/themes', ACTIVE_THEME_FETCH_PARAMS)
         return sortByDisplayOrder((data ?? []).map(mapWizardOption))
       } catch {
         return []
@@ -851,25 +883,15 @@ export function useDecorThemeOptions(serviceCategoryId) {
 
   const step = findStepBySource(query.data?.steps, 'themes')
   const wizardOptions = step?.options?.length ? step.options : DECOR_THEME_FALLBACK
-  const previewBySlug = new Map(
-    (themesPreviewQuery.data ?? [])
-      .map(theme => [slugify(theme.slug ?? theme.label), theme.preview_image])
-      .filter(([, previewImage]) => Boolean(previewImage))
-  )
-
-  const mergedOptions = wizardOptions.map(option => {
-    const slugKey = slugify(option.slug ?? option.label)
-    const backendPreview = option.preview_image || previewBySlug.get(slugKey) || null
-    return backendPreview ? { ...option, preview_image: backendPreview } : option
-  })
-
-  const themesWithFallback = mergeMissingDecorThemes(mergedOptions, DECOR_THEME_FALLBACK)
+  const previewBySlug = buildThemePreviewBySlug(themesPreviewQuery.data)
+  const themesWithFallback = mergeMissingDecorThemes(wizardOptions, DECOR_THEME_FALLBACK)
+  const themesWithPreviews = applyThemePreviewImages(themesWithFallback, previewBySlug)
 
   return {
     ...query,
     isLoading: query.isLoading || themesPreviewQuery.isLoading,
     isFetching: query.isFetching || themesPreviewQuery.isFetching,
-    data: filterDecorThemes(orderDecorThemes(themesWithFallback)).map(applyDecorThemeDisplayLabel),
+    data: filterDecorThemes(orderDecorThemes(themesWithPreviews)).map(applyDecorThemeDisplayLabel),
   }
 }
 
