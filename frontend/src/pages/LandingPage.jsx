@@ -3963,9 +3963,47 @@ const CelebrationFeelingSection = () => {
   )
 }
 
+const PLANNING_GUIDES_UI_KEY = 'elewen:planning-guides-ui'
+
+function readPlanningGuidesUi() {
+  if (typeof window === 'undefined') return { category: null, page: 0 }
+
+  try {
+    const raw = sessionStorage.getItem(PLANNING_GUIDES_UI_KEY)
+    if (!raw) return { category: null, page: 0 }
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return { category: null, page: 0 }
+
+    return {
+      category: typeof parsed.category === 'string' ? parsed.category : null,
+      page: Number.isFinite(parsed.page) ? Math.max(0, Number(parsed.page)) : 0,
+    }
+  } catch {
+    return { category: null, page: 0 }
+  }
+}
+
+function writePlanningGuidesUi(next) {
+  if (typeof window === 'undefined') return
+
+  try {
+    const current = readPlanningGuidesUi()
+    sessionStorage.setItem(
+      PLANNING_GUIDES_UI_KEY,
+      JSON.stringify({
+        category: next.category !== undefined ? next.category : current.category,
+        page: next.page !== undefined ? next.page : current.page,
+      })
+    )
+  } catch {
+    // Ignore quota / private-mode failures.
+  }
+}
+
 const PlanningGuidesSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.blogs_intro ?? {}
+  const lenisRef = useLenis()
 
   // CMS: Strapi `blogs` published posts + derived categories
   const { data: categories = [] } = useBlogCategories()
@@ -3974,8 +4012,8 @@ const PlanningGuidesSection = () => {
   const safeCategories = Array.isArray(categories) ? categories : []
   const safeAllBlogs = Array.isArray(allBlogs) ? allBlogs : []
 
-  const [selectedCategory, setSelectedCategory] = useState(null)
-  const [page, setPage] = useState(0)
+  const [selectedCategory, setSelectedCategory] = useState(() => readPlanningGuidesUi().category)
+  const [page, setPage] = useState(() => readPlanningGuidesUi().page)
   const [isMobile, setIsMobile] = useState(false)
   const [carouselViewportWidth, setCarouselViewportWidth] = useState(0)
   const [isCarouselSliding, setIsCarouselSliding] = useState(false)
@@ -3989,7 +4027,18 @@ const PlanningGuidesSection = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const activeCategory = selectedCategory ?? safeCategories[0] ?? null
+  const activeCategory =
+    (selectedCategory && safeCategories.includes(selectedCategory) ? selectedCategory : null) ??
+    safeCategories[0] ??
+    null
+
+  // Drop a stale restored category if CMS categories changed.
+  useEffect(() => {
+    if (!selectedCategory || safeCategories.length === 0) return
+    if (safeCategories.includes(selectedCategory)) return
+    setSelectedCategory(null)
+    writePlanningGuidesUi({ category: null, page: 0 })
+  }, [safeCategories, selectedCategory])
 
   const filteredBlogs = activeCategory
     ? safeAllBlogs.filter(b => b?.category === activeCategory)
@@ -4015,23 +4064,40 @@ const PlanningGuidesSection = () => {
       ? 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 9%, black 22%, black 86%, rgba(0,0,0,0.5) 95%, transparent 100%)'
       : 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 5%, black 14%, black 78%, rgba(0,0,0,0.3) 91%, transparent 100%)'
 
+  useEffect(() => {
+    if (page === safePage) return
+    setPage(safePage)
+    writePlanningGuidesUi({ page: safePage })
+  }, [page, safePage])
+
   const handleCategorySelect = cat => {
     setSelectedCategory(cat)
     setSlideDirection('next')
     setPage(0)
+    writePlanningGuidesUi({ category: cat, page: 0 })
   }
   const goToPrevPage = () => {
     setSlideDirection('prev')
-    setPage(p => Math.max(0, p - 1))
+    setPage(p => {
+      const next = Math.max(0, p - 1)
+      writePlanningGuidesUi({ page: next })
+      return next
+    })
   }
   const goToNextPage = () => {
     setSlideDirection('next')
-    setPage(p => Math.min(totalPages - 1, p + 1))
+    setPage(p => {
+      const next = Math.min(totalPages - 1, p + 1)
+      writePlanningGuidesUi({ page: next })
+      return next
+    })
   }
   const goToPage = nextPage => {
     if (nextPage === safePage) return
     setSlideDirection(nextPage < safePage ? 'prev' : 'next')
-    setPage(Math.min(nextPage, totalPages - 1))
+    const next = Math.min(nextPage, totalPages - 1)
+    setPage(next)
+    writePlanningGuidesUi({ page: next })
   }
 
   const sectionRef = useRef(null)
@@ -4240,6 +4306,13 @@ const PlanningGuidesSection = () => {
                     <Link
                       key={blog.slug ?? blog.documentId ?? blog.id ?? blog.title}
                       to={`/blogs/${blog.slug}`}
+                      onClick={() => {
+                        // Persist active tab + scroll so browser Back restores this exact view.
+                        if (activeCategory) {
+                          writePlanningGuidesUi({ category: activeCategory, page: safePage })
+                        }
+                        rememberHomeScroll(lenisRef?.current)
+                      }}
                       className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.04 + i * 0.03}s`,

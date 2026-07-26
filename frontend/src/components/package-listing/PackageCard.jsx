@@ -182,7 +182,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
 
     return () => resizeObserver.disconnect()
   }, [tags, pkg.documentId, pkg.id])
-
+  
   const visibleTags = tags.slice(0, visibleTagCount)
   const hasMoreTags = tags.length > visibleTagCount
 
