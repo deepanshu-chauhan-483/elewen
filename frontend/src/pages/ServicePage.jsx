@@ -8,6 +8,7 @@ import {
   buildServiceDestination,
   buildServicesFlowDestination,
   getServicePageAllowedSlugs,
+  isConsultationOnlyEvent,
   isFallbackOnlyEvent,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
@@ -129,6 +130,10 @@ export default function ServicePage() {
 
   if (!isServicesFlow && isFallbackOnlyEvent(eventSlug)) {
     return <Navigate to="/fallback-screen" replace />
+  }
+
+  if (!isServicesFlow && isConsultationOnlyEvent(eventSlug)) {
+    return <Navigate to="/book-consultation" replace />
   }
 
   if (isStrapiLoading) {

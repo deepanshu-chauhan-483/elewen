@@ -4,7 +4,7 @@ import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useBudgetLevelOptions } from '../hooks/useEventTypes'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { buildServiceSelectionBackTo, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
+import { buildServiceSelectionBackTo, isConsultationOnlyEvent, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Category' },
@@ -83,6 +83,10 @@ export default function BartendingLevelsPage() {
 
   if (!hasEventContext && isServicesFlow && !serviceSlug) {
     return <Navigate to="/event-flow/service?flow=services" replace />
+  }
+
+  if (hasEventContext && isConsultationOnlyEvent(eventId)) {
+    return <Navigate to="/book-consultation" replace />
   }
 
   if (isStrapiLoading) {

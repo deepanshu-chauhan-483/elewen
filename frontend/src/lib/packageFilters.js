@@ -561,9 +561,10 @@ function dedupeThemesBySlug(themes) {
   const seen = new Set()
 
   return (Array.isArray(themes) ? themes : []).filter(theme => {
-    const key = slugifyThemeValue(theme?.slug)
-    if (!key || seen.has(key)) return false
-    seen.add(key)
+    const key = normalizeThemeSlug(theme?.slug)
+    const canonicalKey = DECOR_THEME_ALLOWLIST_ALIASES[key] ?? key
+    if (!canonicalKey || seen.has(canonicalKey)) return false
+    seen.add(canonicalKey)
     return true
   })
 }
@@ -622,6 +623,7 @@ const EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES = new Set([
 const DECOR_THEME_ALLOWLIST_ALIASES = {
   'general-pack': 'birthday-party',
   'bubbles-black-tie': 'bubbles-and-black-tie',
+  'bubbles-and-black-tie-1': 'bubbles-and-black-tie',
   'little-honey': 'a-little-honey',
   'ishq-sufiyana': 'sufi-night',
   'oh-baby-basics': 'oh-baby',

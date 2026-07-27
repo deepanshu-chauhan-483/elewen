@@ -10,6 +10,7 @@ import { filterEventsWithPackages, normalizeServiceSlug } from '../lib/packageFi
 import {
   buildServiceDestination,
   buildServiceFlowParams,
+  buildEventSelectionDestination,
   DEFAULT_EVENT_CATEGORY_SLUG,
   isServiceAllowedForCategory,
   SERVICES_FLOW_KEY,
@@ -100,11 +101,6 @@ function EventCard({
   serviceSlug = '',
   serviceId = '',
 }) {
-  const params = new URLSearchParams()
-  params.set('category', categorySlug)
-  params.set('event', event.slug)
-  if (event.id != null) params.set('eventId', String(event.id))
-
   const destination = isServicesFlow
     ? buildServiceDestination({
         categorySlug,
@@ -114,7 +110,11 @@ function EventCard({
         serviceId,
         flow: SERVICES_FLOW_KEY,
       })
-    : `/event-flow/service?${params.toString()}`
+    : buildEventSelectionDestination({
+        categorySlug,
+        eventSlug: event.slug,
+        eventId: event.id != null ? String(event.id) : '',
+      })
 
   return (
     <Link

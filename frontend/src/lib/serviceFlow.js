@@ -3,8 +3,22 @@ import { canonicalizeEventSlug, normalizeServiceSlug } from './packageFilters'
 /** Events that show the coming-soon fallback instead of package listings. */
 const FALLBACK_ONLY_EVENT_SLUGS = new Set(['corporate-get-together', 'house-warming'])
 
+/** Social events that skip package listings and open book-a-consultation instead. */
+const CONSULTATION_ONLY_EVENT_SLUGS = new Set([
+  'engagement',
+  'sufi-night',
+  'haldi',
+  'wedding',
+])
+
+export const BOOK_CONSULTATION_PATH = '/book-consultation'
+
 export function isFallbackOnlyEvent(eventSlug = '') {
   return FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
+}
+
+export function isConsultationOnlyEvent(eventSlug = '') {
+  return CONSULTATION_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
 }
 
 export const SERVICE_ROUTE_MAP = {
@@ -101,6 +115,10 @@ export function buildServiceDestination({
     return '/fallback-screen'
   }
 
+  if (isConsultationOnlyEvent(eventSlug)) {
+    return BOOK_CONSULTATION_PATH
+  }
+
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
   const params = buildServiceFlowParams({
     categorySlug,
@@ -178,6 +196,10 @@ export function buildEventSelectionDestination({
 }) {
   if (isFallbackOnlyEvent(eventSlug)) {
     return '/fallback-screen'
+  }
+
+  if (isConsultationOnlyEvent(eventSlug)) {
+    return BOOK_CONSULTATION_PATH
   }
 
   const resolvedCategory = String(categorySlug ?? DEFAULT_EVENT_CATEGORY_SLUG)

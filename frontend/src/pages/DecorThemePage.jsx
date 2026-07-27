@@ -12,6 +12,7 @@ import {
   buildServiceSelectionBackTo,
   DECOR_THEME_CATEGORY_SLUG,
   DEFAULT_EVENT_CATEGORY_SLUG,
+  isConsultationOnlyEvent,
   resolveServiceLaneId,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
@@ -302,6 +303,10 @@ export default function DecorThemePage() {
         replace
       />
     )
+  }
+
+  if (flow !== SERVICES_FLOW_KEY && isConsultationOnlyEvent(eventId)) {
+    return <Navigate to="/book-consultation" replace />
   }
 
   if (categoryId !== DECOR_THEME_CATEGORY_SLUG || serviceSlug !== 'decor') {

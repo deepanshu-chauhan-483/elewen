@@ -26,6 +26,7 @@ import {
   DEFAULT_EVENT_CATEGORY_SLUG,
   SERVICES_FLOW_KEY,
   buildServiceFlowParams,
+  isConsultationOnlyEvent,
   isFallbackOnlyEvent,
 } from '../../lib/serviceFlow'
 
@@ -211,6 +212,10 @@ export default function ServicePackagesPageContent({
 
   if (isFallbackOnlyEvent(effectiveEventSlug)) {
     return <Navigate to="/fallback-screen" replace />
+  }
+
+  if (isConsultationOnlyEvent(effectiveEventSlug)) {
+    return <Navigate to="/book-consultation" replace />
   }
 
   if (isStrapiLoading) {

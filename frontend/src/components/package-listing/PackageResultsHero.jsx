@@ -19,6 +19,7 @@ import {
   buildServiceDestination,
   DECOR_THEME_CATEGORY_SLUG,
   DEFAULT_EVENT_CATEGORY_SLUG,
+  isConsultationOnlyEvent,
   isFallbackOnlyEvent,
   isServiceAllowedForCategory,
 } from '../../lib/serviceFlow'
@@ -408,6 +409,11 @@ export default function PackageResultsHero({
       if (key === 'event') {
         if (isFallbackOnlyEvent(value)) {
           navigate('/fallback-screen')
+          return
+        }
+
+        if (isConsultationOnlyEvent(value)) {
+          navigate('/book-consultation')
           return
         }
 
