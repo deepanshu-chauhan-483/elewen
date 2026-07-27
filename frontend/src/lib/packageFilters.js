@@ -291,6 +291,17 @@ function packageHasServiceSlug(pkg, serviceSlug) {
   )
 }
 
+function resolvePackagePrimaryServiceSlug(pkg) {
+  const slugs = (Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : [])
+    .map(normalizeServiceSlug)
+    .filter(Boolean)
+  const preferred = ['rental-furniture', 'catering', 'bartending', 'sheesha', 'decor']
+  for (const slug of preferred) {
+    if (slugs.includes(slug)) return slug
+  }
+  return slugs[0] || ''
+}
+
 /**
  * Sheesha / catering / bartending packages are offered across Social + Corporate.
  * Until every package is fully event-linked in CMS, keep them visible under those
@@ -1016,6 +1027,14 @@ export function filterPackages(packages, filters = {}) {
       return false
     }
 
+    if (
+      normalizedServiceSlug === 'decor' &&
+      canonicalEventSlug === 'proposal' &&
+      packageBelongsToGeneralPackCatalog(pkg)
+    ) {
+      return false
+    }
+
     const categoryMatched = includesNormalized(pkg.category_slugs, categorySlug)
     const eventMatched =
       !eventSlug && !eventId
@@ -1026,6 +1045,9 @@ export function filterPackages(packages, filters = {}) {
             (eventSlug ? includesEventSlug(pkg.event_slugs, eventSlug) : false)
 
     if (!categoryMatched || !eventMatched) {
+      if (normalizedServiceSlug === 'decor') {
+        return false
+      }
       if (!servicePassesOccasionFilters(pkg, { categorySlug, eventSlug, eventId })) {
         return false
       }
@@ -1068,6 +1090,13 @@ export function filterPackages(packages, filters = {}) {
     // Furniture packages reuse decorpackages CMS shape — keep them out of Decor listings.
     if (normalizedServiceSlug === 'decor' && isAllowedFurniturePackage(pkg)) {
       return false
+    }
+
+    if (normalizedServiceSlug === 'decor') {
+      const primaryService = resolvePackagePrimaryServiceSlug(pkg)
+      if (primaryService && primaryService !== 'decor') {
+        return false
+      }
     }
 
     const packageThemeSlugs = Array.isArray(pkg.theme_slugs) ? pkg.theme_slugs : []
