@@ -6,8 +6,14 @@ import { usePackages } from '../hooks/usePackages'
 import { useBudgetLevelOptions, useFilteredServiceOptions } from '../hooks/useEventTypes'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
-import { DEFAULT_EVENT_CATEGORY_SLUG, isConsultationOnlyEvent, resolveServiceLaneId } from '../lib/serviceFlow'
-import { assignDistinctCoverIndices, filterPackages, requiresGeneralPackThemeSelection } from '../lib/packageFilters'
+import {
+  DECOR_THEME_CATEGORY_SLUG,
+  DEFAULT_EVENT_CATEGORY_SLUG,
+  isConsultationOnlyEvent,
+  resolveServiceLaneId,
+  SERVICES_FLOW_KEY,
+} from '../lib/serviceFlow'
+import { assignDistinctCoverIndices, filterPackages, filterPackagesByBudgetLevel, requiresDecorThemeSelection } from '../lib/packageFilters'
 import { enrichPackagesWithHousePartyImages } from '../lib/housePartyPackageMedia'
 import { filterPackagesBySearch } from '../lib/packageSearch'
 import { getLocationScrollKey, readLocationScroll, scrollPageTo } from '../hooks/useScrollToTop'
@@ -256,7 +262,7 @@ export default function DecorLevelsPage() {
     const sections = levels.map((level, index) => ({
       ...level,
       key: `level${index + 1}`,
-      packages: filterPackages(sortedPackages, {
+      packages: filterPackagesByBudgetLevel(sortedPackages, {
         levelSlug: level.slug,
         levelId: isNumericId(level?.id) ? String(level.id) : '',
       }),
@@ -329,7 +335,15 @@ export default function DecorLevelsPage() {
     return <Navigate to="/book-consultation" replace />
   }
 
-  if (requiresGeneralPackThemeSelection(eventSlug) && !themeParam) {
+  const isSocialDecor =
+    (categorySlug || DEFAULT_EVENT_CATEGORY_SLUG) === DECOR_THEME_CATEGORY_SLUG
+
+  if (isSocialDecor && !eventSlug && !eventId && flow !== SERVICES_FLOW_KEY) {
+    const params = new URLSearchParams(searchParams)
+    return <Navigate to={`/event-flow/event?${params.toString()}`} replace />
+  }
+
+  if (requiresDecorThemeSelection(eventSlug) && !themeParam) {
     const params = new URLSearchParams(searchParams)
     return <Navigate to={`/event-flow/decor-theme?${params.toString()}`} replace />
   }
