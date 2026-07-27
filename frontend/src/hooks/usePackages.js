@@ -169,7 +169,7 @@ function resolveBartenderType(detailSections = []) {
   return ''
 }
 
-/** Normalize bartending card title + quote to the client sheet (3 packages). */
+/** Normalize bartending card title + bartender type to the client sheet (3 packages). Price comes from Strapi. */
 function resolveBartendingListingPresentation(pkg, detailSections = []) {
   const bartenderType = resolveBartenderType(detailSections)
   const typeKey = String(bartenderType ?? '')
@@ -183,10 +183,12 @@ function resolveBartendingListingPresentation(pkg, detailSections = []) {
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
+  const basePrice = Number(pkg?.base_price ?? 0) || 0
+  const price = formatPackagePrice({ ...pkg, base_price: basePrice })
 
   const isClassicPour = typeKey.includes('classic-pour') || slug === 'classic-pour'
 
-  // Signature Mix is its own package (₹3,740) — not the House Special row.
+  // Signature Mix is its own package — not the House Special row.
   const isSignatureMix =
     slug === 'signature-mix' ||
     titleKey === 'signature-mix' ||
@@ -200,15 +202,14 @@ function resolveBartendingListingPresentation(pkg, detailSections = []) {
     slug === 'house-special' ||
     titleKey.includes('house-special') ||
     typeKey.includes('house-special') ||
-    // Live CMS still stores House Special with bartender_type "Signature Mix" + ₹6,050 quote.
-    (slug === 'the-house-special-premium-bartending-service' && Number(pkg?.base_price) >= 5000)
+    (slug === 'the-house-special-premium-bartending-service' && basePrice >= 5000)
 
   if (isClassicPour) {
     return {
       title: 'Classic Pour',
       bartender_type: 'Classic Pour',
-      base_price: 2970,
-      price: '₹2,970',
+      base_price: basePrice,
+      price,
     }
   }
 
@@ -216,25 +217,25 @@ function resolveBartendingListingPresentation(pkg, detailSections = []) {
     return {
       title: 'Signature Mix',
       bartender_type: 'Signature Mix',
-      base_price: 3740,
-      price: '₹3,740',
+      base_price: basePrice,
+      price,
     }
   }
 
-  if (isHouseSpecial || Number(pkg?.base_price) === 6050 || Number(pkg?.base_price) === 5500) {
+  if (isHouseSpecial) {
     return {
       title: 'House Special',
       bartender_type: 'House Special',
-      base_price: 6050,
-      price: '₹6,050',
+      base_price: basePrice,
+      price,
     }
   }
 
   return {
     title: pkg?.title,
     bartender_type: bartenderType,
-    base_price: Number(pkg?.base_price ?? 0) || 0,
-    price: '',
+    base_price: basePrice,
+    price,
   }
 }
 
@@ -897,7 +898,7 @@ async function fetchPackages(params = {}) {
 
 export function usePackages() {
   return useQuery({
-    queryKey: ['packages', 'live-v13-bartending-three-packages'],
+    queryKey: ['packages', 'live-v14-strapi-bartending-prices'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
       try {
@@ -916,7 +917,7 @@ export function usePackages() {
 
 export function usePackageById(packageId) {
   return useQuery({
-    queryKey: ['package', packageId, 'live-v4'],
+    queryKey: ['package', packageId, 'live-v5'],
     enabled: Boolean(packageId),
     queryFn: async () => {
       if (USE_FALLBACK) {
