@@ -473,6 +473,8 @@ const EVENT_SLUG_ALIASES = {
   'birthday-party': 'birthday-parties',
   'house-party': 'house-parties',
   'baby-showers': 'baby-shower',
+  'bridal-showers': 'bridal-shower',
+  'diwali-parties': 'diwali-party',
   weddings: 'wedding',
   'exhibition-stall': 'exhibition-stalls',
   exhibition: 'exhibition-stalls',
@@ -583,10 +585,8 @@ function themeMatchesSlugSet(theme, usedSlugs) {
   })
 }
 
-/** House Party / Birthday Party — shown on every social decor event. */
+/** General Pack — shown on most social decor events (not House Party theme). */
 const UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS = [
-  'house-party',
-  'house-parties',
   'birthday-party',
   'birthday-parties',
 ]
@@ -598,11 +598,16 @@ const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
   'birthday-parties': [
     'birthday-party',
     'birthday-parties',
+    'house-party',
+    'house-parties',
     'bubbles-and-black-tie',
     'bohemian',
     'pastel',
   ],
   'baby-shower': ['a-little-honey', 'little-honey', 'oh-baby'],
+  'bridal-shower': ['birthday-party', 'birthday-parties', 'general-pack'],
+  'diwali-party': ['birthday-party', 'birthday-parties', 'general-pack'],
+  mehendi: [],
   engagement: ['sufi-night', 'ishq-sufiyana'],
   proposal: [
     'the-walk-to-forever',
@@ -618,7 +623,28 @@ const EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES = new Set([
   'house-parties',
   'birthday-parties',
   'bachelors',
+  'bridal-shower',
+  'diwali-party',
+  'mehendi',
 ])
+
+/** Never show General Pack theme or its decor packages (mehndi only). */
+const EVENTS_WITHOUT_GENERAL_PACK_CATALOG = new Set(['mehendi'])
+
+/** Bridal / Diwali: theme step shows General Pack only; packages appear after theme selection. */
+const GENERAL_PACK_THEME_ONLY_EVENT_SLUGS = new Set(['bridal-shower', 'diwali-party'])
+
+function eventBlocksGeneralPackCatalog(eventSlug = '') {
+  return EVENTS_WITHOUT_GENERAL_PACK_CATALOG.has(canonicalizeEventSlug(eventSlug))
+}
+
+function eventUsesGeneralPackThemeOnly(eventSlug = '') {
+  return GENERAL_PACK_THEME_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
+}
+
+export function requiresGeneralPackThemeSelection(eventSlug = '') {
+  return eventUsesGeneralPackThemeOnly(eventSlug)
+}
 
 const DECOR_THEME_ALLOWLIST_ALIASES = {
   'general-pack': 'birthday-party',
@@ -840,6 +866,24 @@ export function packageThemeSlugsMatchFilter(packageThemeSlugs, themeSlug = '') 
   })
 }
 
+function packageBelongsToGeneralPackCatalog(pkg) {
+  const themeSlugs = Array.isArray(pkg?.theme_slugs) ? pkg.theme_slugs : []
+  if (!themeSlugs.length) return false
+  return packageThemeSlugsMatchFilter(themeSlugs, 'birthday-party')
+}
+
+function themeIsGeneralPackCatalog(theme) {
+  const generalPackSlugs = expandThemeFilterSlugs('birthday-party')
+  return getThemeSlugVariants(theme).some(variant => generalPackSlugs.has(slugifyThemeValue(variant)))
+}
+
+function themeIsHouseParty(theme) {
+  return getThemeSlugVariants(theme).some(variant => {
+    const normalized = slugifyThemeValue(variant)
+    return normalized === 'house-party' || normalized === 'house-parties'
+  })
+}
+
 function buildAllowedSocialDecorThemeSlugSet(eventSlug = '') {
   const canonicalEventSlug = canonicalizeEventSlug(eventSlug)
 
@@ -889,7 +933,15 @@ function themeMatchesAllowedSet(theme, allowedSlugs) {
 /** Restrict social decor theme pickers to event-specific + universal general-pack themes. */
 export function filterDecorThemesBySocialEvent(themes, eventSlug = '') {
   const allowedSlugs = buildAllowedSocialDecorThemeSlugSet(eventSlug)
-  return dedupeThemesBySlug(themes).filter(theme => themeMatchesAllowedSet(theme, allowedSlugs))
+  return dedupeThemesBySlug(themes).filter(theme => {
+    if (eventBlocksGeneralPackCatalog(eventSlug) && themeIsGeneralPackCatalog(theme)) {
+      return false
+    }
+    if (eventUsesGeneralPackThemeOnly(eventSlug) && themeIsHouseParty(theme)) {
+      return false
+    }
+    return themeMatchesAllowedSet(theme, allowedSlugs)
+  })
 }
 
 /** Prefer themes linked on packages for this event; if none linked, show all CMS themes. */
@@ -907,6 +959,10 @@ export function filterThemesByEventPackages(themes, packages, filters = {}) {
 
   const usedThemeSlugs = collectThemeSlugsFromPackages(matchingPackages)
   const allThemes = dedupeThemesBySlug(Array.isArray(themes) ? themes : [])
+
+  if (eventUsesGeneralPackThemeOnly(filters.eventSlug ?? '')) {
+    return allThemes
+  }
 
   // No package↔theme links for this event yet — still show the full theme list.
   if (!usedThemeSlugs.size) return allThemes
@@ -930,8 +986,10 @@ export function filterPackages(packages, filters = {}) {
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
 
   const corporateEventAllowlist = getCorporateEventPackageAllowlist(eventSlug)
+  const canonicalEventSlug = canonicalizeEventSlug(eventSlug)
   const usesGeneralPackCatalog =
     normalizedServiceSlug === 'decor' &&
+    !eventBlocksGeneralPackCatalog(eventSlug) &&
     (isGeneralPackThemeSlug(themeSlug) ||
       (!themeSlug &&
         GENERAL_PACK_EVENT_SLUGS.some(slug => eventSlugsMatch(eventSlug, slug))))
@@ -941,6 +999,23 @@ export function filterPackages(packages, filters = {}) {
     // Blocks catering/bartending/sheesha bleed via universal occasion filters.
     if (corporateEventAllowlist) {
       return isAllowedCorporateEventPackage(pkg, corporateEventAllowlist)
+    }
+
+    if (
+      normalizedServiceSlug === 'decor' &&
+      eventBlocksGeneralPackCatalog(canonicalEventSlug) &&
+      packageBelongsToGeneralPackCatalog(pkg)
+    ) {
+      return false
+    }
+
+    if (
+      normalizedServiceSlug === 'decor' &&
+      eventUsesGeneralPackThemeOnly(canonicalEventSlug) &&
+      packageBelongsToGeneralPackCatalog(pkg) &&
+      !isGeneralPackThemeSlug(themeSlug)
+    ) {
+      return false
     }
 
     const categoryMatched = includesNormalized(pkg.category_slugs, categorySlug)

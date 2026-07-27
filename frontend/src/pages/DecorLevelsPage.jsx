@@ -7,7 +7,7 @@ import { useBudgetLevelOptions, useFilteredServiceOptions } from '../hooks/useEv
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { DEFAULT_EVENT_CATEGORY_SLUG, isConsultationOnlyEvent, resolveServiceLaneId } from '../lib/serviceFlow'
-import { assignDistinctCoverIndices, filterPackages } from '../lib/packageFilters'
+import { assignDistinctCoverIndices, filterPackages, requiresGeneralPackThemeSelection } from '../lib/packageFilters'
 import { filterPackagesBySearch } from '../lib/packageSearch'
 import { getLocationScrollKey, readLocationScroll, scrollPageTo } from '../hooks/useScrollToTop'
 import { useLenis } from '../useLenis'
@@ -326,6 +326,11 @@ export default function DecorLevelsPage() {
 
   if (isConsultationOnlyEvent(eventSlug)) {
     return <Navigate to="/book-consultation" replace />
+  }
+
+  if (requiresGeneralPackThemeSelection(eventSlug) && !themeParam) {
+    const params = new URLSearchParams(searchParams)
+    return <Navigate to={`/event-flow/decor-theme?${params.toString()}`} replace />
   }
 
   if (isStrapiLoading) {
