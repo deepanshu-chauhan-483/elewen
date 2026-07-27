@@ -8,6 +8,7 @@ import CartViewOptionsSheet from '../cart/CartViewOptionsSheet'
 import PackageImageDisclaimer from './PackageImageDisclaimer'
 import { preloadImages } from '../../utils/preloadAssets'
 import { assignDistinctCoverIndices } from '../../lib/packageFilters'
+import { BOOK_CONSULTATION_PATH } from '../../lib/serviceFlow'
 
 const MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS =
   'h-[min(70vh,32rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]'
@@ -15,6 +16,33 @@ const MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS =
 // ponytail: cap side thumbnails to main image height; extra images scroll inside
 const SIDE_IMAGES_DESKTOP_HEIGHT_CLASS =
   'md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:max-h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:min-h-0'
+
+function ConsultationLinkButton({ label, className = '' }) {
+  return (
+    <Link
+      to={BOOK_CONSULTATION_PATH}
+      className={`group flex w-full items-center justify-between rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[#C6AB7F] ${className}`}
+    >
+      <span className="mr-5">{label}</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#D4BA8E] shadow-sm">
+        <svg
+          className="h-[20px] w-[20px] transition-transform duration-300 ease-out group-hover:rotate-45"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </Link>
+  )
+}
 
 function QuantityControl({ quantity, onDecrement, onIncrement }) {
   return (
@@ -208,10 +236,12 @@ export default function SingleProductPageContent({
   ctaButtonText = 'Book a Consultation',
   testimonials = [],
   hideHeaderPrice = false,
+  consultationOnly = false,
 }) {
   const desktopSectionTop = '58px'
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
+  const hidePrice = hideHeaderPrice || consultationOnly
 
   return (
     <ProductImageLayout
@@ -238,12 +268,13 @@ export default function SingleProductPageContent({
       ctaButtonText={ctaButtonText}
       testimonials={testimonials}
       desktopSectionTop={desktopSectionTop}
-      hideHeaderPrice={hideHeaderPrice}
+      hideHeaderPrice={hidePrice}
+      consultationOnly={consultationOnly}
     />
   )
 }
 
-function RelatedProductsCarousel({ products }) {
+function RelatedProductsCarousel({ products, hidePrice = false }) {
   const CARDS_PER_VIEW = 3
   const [page, setPage] = useState(0)
   const totalPages = Math.max(1, Math.ceil(products.length / CARDS_PER_VIEW))
@@ -268,7 +299,7 @@ function RelatedProductsCarousel({ products }) {
 
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {visibleProducts.map(product => (
-            <PackageCard key={product.id ?? product.title} pkg={product} />
+            <PackageCard key={product.id ?? product.title} pkg={product} hidePrice={hidePrice} />
           ))}
         </div>
       </div>
@@ -357,6 +388,7 @@ function ProductImageLayout({
   testimonials,
   desktopSectionTop,
   hideHeaderPrice,
+  consultationOnly = false,
 }) {
   const normalizedMainImage = mainImage ?? null
   const initialDisplayImage = mainImage ?? sideImages[0]
@@ -535,45 +567,54 @@ function ProductImageLayout({
 
                 {customPriceContent ? customPriceContent : null}
 
-                <QuantityControl
-                  quantity={quantity}
-                  onDecrement={onDecrement}
-                  onIncrement={onIncrement}
-                />
+                {!consultationOnly ? (
+                  <QuantityControl
+                    quantity={quantity}
+                    onDecrement={onDecrement}
+                    onIncrement={onIncrement}
+                  />
+                ) : null}
 
                 {promptContent && <div className="mt-5">{promptContent}</div>}
 
-                <button
-                  type="button"
-                  disabled={addToCartDisabled}
-                  onClick={onAddToCart}
-                  className={`group ${promptContent ? 'mt-4' : 'mt-5'} flex w-full items-center justify-between rounded-full pl-6 pr-1.5 py-1.5 text-[13px] font-medium transition-colors ${
-                    addToCartDisabled
-                      ? 'cursor-not-allowed bg-[#CDB17E] text-[#8A847E]'
-                      : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
-                  }`}
-                >
-                  <span className="mr-5">{addToCartButtonLabel}</span>
-                  <span
-                    className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ${
-                      addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
+                {consultationOnly ? (
+                  <ConsultationLinkButton
+                    label={ctaButtonText}
+                    className={promptContent ? 'mt-4' : 'mt-5'}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    disabled={addToCartDisabled}
+                    onClick={onAddToCart}
+                    className={`group ${promptContent ? 'mt-4' : 'mt-5'} flex w-full items-center justify-between rounded-full pl-6 pr-1.5 py-1.5 text-[13px] font-medium transition-colors ${
+                      addToCartDisabled
+                        ? 'cursor-not-allowed bg-[#CDB17E] text-[#8A847E]'
+                        : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
                     }`}
                   >
-                    <svg
-                      className={`h-[24px] w-[24px] transition-transform duration-300 ease-out ${
-                        addToCartDisabled ? '' : 'group-hover:rotate-none'
+                    <span className="mr-5">{addToCartButtonLabel}</span>
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ${
+                        addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
                       }`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v10M7 12h10" />
-                    </svg>
-                  </span>
-                </button>
+                      <svg
+                        className={`h-[24px] w-[24px] transition-transform duration-300 ease-out ${
+                          addToCartDisabled ? '' : 'group-hover:rotate-none'
+                        }`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v10M7 12h10" />
+                      </svg>
+                    </span>
+                  </button>
+                )}
 
-                {addToCartMessage ? (
+                {!consultationOnly && addToCartMessage ? (
                   <p className="mt-3 text-[12px] leading-[1.5] text-[#591902] opacity-70">
                     {addToCartMessage}
                   </p>
@@ -602,7 +643,7 @@ function ProductImageLayout({
       <section className="pb-16">
         <div className="mx-auto md:w-full max-w-[1540px]">
           {relatedProducts.length > 0 ? (
-            <RelatedProductsCarousel products={relatedProducts} ctaButtonText={ctaButtonText} />
+            <RelatedProductsCarousel products={relatedProducts} hidePrice={consultationOnly} />
           ) : null}
 
           <div className="mt-8 bg-[#E7E0DA] py-6 px-6 sm:px-[40px] lg:px-[60px]">
@@ -701,51 +742,82 @@ function ProductImageLayout({
               <h2 className="min-w-0 text-[11px] font-semibold leading-snug sm:text-xs md:text-sm lg:text-base">
                 {title}
               </h2>
-              <span className="hidden shrink-0 md:inline">•</span>
-              <span className="shrink-0 text-xs font-bold sm:text-sm md:text-base text-[#D4BA8E]">
-                {price}
-              </span>
+              {!consultationOnly ? (
+                <>
+                  <span className="hidden shrink-0 md:inline">•</span>
+                  <span className="shrink-0 text-xs font-bold sm:text-sm md:text-base text-[#D4BA8E]">
+                    {price}
+                  </span>
+                </>
+              ) : null}
             </div>
 
             {/* Right */}
             <div className="flex shrink-0 items-center gap-2 sm:gap-4 md:gap-6">
-              <button
-                type="button"
-                className="text-xs underline sm:text-sm md:text-base"
-                onClick={() => setIsCartOptionsOpen(true)}
-              >
-                View Options
-              </button>
-
-              <button
-                className={`group flex items-center rounded-full py-1.5 pl-3 pr-1 text-[12px] font-medium transition-colors sm:pl-4 sm:pr-1.5 sm:text-[13px] md:pl-6 ${
-                  addToCartDisabled
-                    ? 'cursor-not-allowed bg-[#CDB17E] text-[#8A847E]'
-                    : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
-                }`}
-                disabled={addToCartDisabled}
-                type="button"
-                onClick={onAddToCart}
-              >
-                <span className="mr-2 sm:mr-3 md:mr-5">{addToCartButtonLabel}</span>
-                <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full shadow-sm sm:h-8 sm:w-8 ${
-                    addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
-                  }`}
+              {!consultationOnly ? (
+                <button
+                  type="button"
+                  className="text-xs underline sm:text-sm md:text-base"
+                  onClick={() => setIsCartOptionsOpen(true)}
                 >
-                  <svg
-                    className={`h-[24px] w-[24px] transition-transform duration-300 ease-out ${
-                      addToCartDisabled ? '' : 'group-hover:rotate-none'
+                  View Options
+                </button>
+              ) : null}
+
+              {consultationOnly ? (
+                <Link
+                  to={BOOK_CONSULTATION_PATH}
+                  className="group flex items-center rounded-full bg-[#D4BA8E] py-1.5 pl-3 pr-1 text-[12px] font-medium text-white transition-colors hover:bg-[#C6AB7F] sm:pl-4 sm:pr-1.5 sm:text-[13px] md:pl-6"
+                >
+                  <span className="mr-2 sm:mr-3 md:mr-5">{ctaButtonText}</span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#D4BA8E] shadow-sm sm:h-8 sm:w-8">
+                    <svg
+                      className="h-[20px] w-[20px] transition-transform duration-300 ease-out group-hover:rotate-45"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M5.82812 5.83398H14.1615M14.1615 5.83398V14.1673M14.1615 5.83398L5.82812 14.1673"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </Link>
+              ) : (
+                <button
+                  className={`group flex items-center rounded-full py-1.5 pl-3 pr-1 text-[12px] font-medium transition-colors sm:pl-4 sm:pr-1.5 sm:text-[13px] md:pl-6 ${
+                    addToCartDisabled
+                      ? 'cursor-not-allowed bg-[#CDB17E] text-[#8A847E]'
+                      : 'bg-[#D4BA8E] text-white hover:bg-[#C6AB7F]'
+                  }`}
+                  disabled={addToCartDisabled}
+                  type="button"
+                  onClick={onAddToCart}
+                >
+                  <span className="mr-2 sm:mr-3 md:mr-5">{addToCartButtonLabel}</span>
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-full shadow-sm sm:h-8 sm:w-8 ${
+                      addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'
                     }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v10M7 12h10" />
-                  </svg>
-                </span>
-              </button>
+                    <svg
+                      className={`h-[24px] w-[24px] transition-transform duration-300 ease-out ${
+                        addToCartDisabled ? '' : 'group-hover:rotate-none'
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v10M7 12h10" />
+                    </svg>
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </div>

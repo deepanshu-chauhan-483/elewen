@@ -9,6 +9,7 @@ import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
 import { getRelatedPackages, normalizeServiceSlug } from '../lib/packageFilters'
+import { isCorporateCategory } from '../lib/serviceFlow'
 import { withHousePartyPackageImages } from '../lib/housePartyPackageMedia'
 import { resolveChooseOneDisplayPrice, shouldShowChoicePrices } from '../lib/chooseOnePricing'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
@@ -1014,6 +1015,7 @@ function DecorPackageSections({
   onMessageChange,
   onSelect,
   onTextItemClick,
+  hidePrices = false,
 }) {
   const visibleSections = useMemo(() => filterVisibleDecorSections(sections), [sections])
   const hasInclusionSections = visibleSections.length > 0
@@ -1070,7 +1072,7 @@ function DecorPackageSections({
                     key={`${sectionKey}-${item.title}-${(item.bullets ?? []).join('|')}`}
                     item={item}
                     wide={useWideCards}
-                    showPrice={shouldShowChoicePrices(section)}
+                    showPrice={!hidePrices && shouldShowChoicePrices(section)}
                     onClick={() => onSelect(sectionKey, item.title)}
                   />
                 ))}
@@ -1109,6 +1111,7 @@ export default function DecorSinglePackagePage() {
   const { showToast } = useToast()
   const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
   const cartItemId = searchParams.get('cartItemId') ?? ''
+  const consultationOnly = isCorporateCategory(searchParams.get('category') ?? '')
   const {
     customizations,
     activeCustomization,
@@ -1442,6 +1445,7 @@ export default function DecorSinglePackagePage() {
           onMessageChange={handleMessageChange}
           onSelect={handleSelect}
           onTextItemClick={handleTextItemClick}
+          hidePrices={consultationOnly}
         />
       }
       accordionSections={accordionSections}
@@ -1457,6 +1461,8 @@ export default function DecorSinglePackagePage() {
       onDecrement={handleDecrease}
       onIncrement={handleIncrease}
       testimonials={packageReviews}
+      consultationOnly={consultationOnly}
+      ctaButtonText="Book a consultation"
     />
   )
 }

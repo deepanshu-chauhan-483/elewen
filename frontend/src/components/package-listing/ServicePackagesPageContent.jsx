@@ -27,6 +27,7 @@ import {
   SERVICES_FLOW_KEY,
   buildServiceFlowParams,
   isConsultationOnlyEvent,
+  isCorporateCategory,
   isFallbackOnlyEvent,
 } from '../../lib/serviceFlow'
 
@@ -86,6 +87,7 @@ export default function ServicePackagesPageContent({
   // }, [categoryId, eventId, themeId, levelId])
 
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+  const hidePackagePrice = isCorporateCategory(categorySlug)
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
   const eventId = searchParams.get('eventId') ?? ''
   const selectedServiceSlug =
@@ -260,7 +262,7 @@ export default function ServicePackagesPageContent({
       {visiblePackages.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visiblePackages.map(pkg => (
-            <PackageCard key={pkg.id ?? pkg.documentId ?? pkg.title} pkg={pkg} />
+            <PackageCard key={pkg.id ?? pkg.documentId ?? pkg.title} pkg={pkg} hidePrice={hidePackagePrice} />
           ))}
         </div>
       ) : (

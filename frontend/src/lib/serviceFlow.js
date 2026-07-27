@@ -13,6 +13,12 @@ const CONSULTATION_ONLY_EVENT_SLUGS = new Set([
 
 export const BOOK_CONSULTATION_PATH = '/book-consultation'
 
+export function isCorporateCategory(categorySlug = '') {
+  return String(categorySlug ?? '')
+    .trim()
+    .toLowerCase() === 'corporate'
+}
+
 export function isFallbackOnlyEvent(eventSlug = '') {
   return FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
 }

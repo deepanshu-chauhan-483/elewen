@@ -39,7 +39,7 @@ function ImageDots({ count, currentIndex = 0 }) {
   )
 }
 
-export default function PackageCard({ pkg, className = '', compactMode = false }) {
+export default function PackageCard({ pkg, className = '', compactMode = false, hidePrice = false }) {
   const images = useMemo(() => pkg.images || [], [pkg.images])
   const pkgId = pkg.documentId ?? pkg.id
   const coverIndex = Number.isInteger(pkg.coverImageIndex) ? pkg.coverImageIndex : 0
@@ -365,7 +365,9 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           </span>
         </div>
 
-        {pkg.price ? (
+        {hidePrice ? (
+          <div className="min-h-[20px]" aria-hidden="true" />
+        ) : pkg.price ? (
           <p className="mt-0 min-h-[20px] text-[13px] leading-none text-[#2D2D2D]">
             Price <span className="text-[15px] font-bold text-[#591902]">{pkg.price}</span>
           </p>

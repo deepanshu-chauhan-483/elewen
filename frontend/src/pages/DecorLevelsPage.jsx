@@ -10,6 +10,7 @@ import {
   DECOR_THEME_CATEGORY_SLUG,
   DEFAULT_EVENT_CATEGORY_SLUG,
   isConsultationOnlyEvent,
+  isCorporateCategory,
   isFallbackOnlyEvent,
   resolveServiceLaneId,
   SERVICES_FLOW_KEY,
@@ -136,6 +137,7 @@ export default function DecorLevelsPage() {
   const themeParam = searchParams.get('theme')?.toLowerCase() ?? ''
 
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
+  const hidePackagePrice = isCorporateCategory(categorySlug)
 
   useEffect(() => {
     if (categorySlug) return
@@ -428,6 +430,7 @@ export default function DecorLevelsPage() {
                           pkg={pkg}
                           className="h-full w-full"
                           compactMode={!isDesktopViewport}
+                          hidePrice={hidePackagePrice}
                         />
                       </div>
                     ))}
