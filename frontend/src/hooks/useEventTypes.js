@@ -285,59 +285,6 @@ const slugify = value =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-/** Duplicate CMS event — hidden after Bachelors card was renamed to Bridal Shower. */
-const HIDDEN_EVENT_SLUGS = new Set(['bridal-shower', 'bridal-showers'])
-
-const EVENT_DISPLAY_TITLE_OVERRIDES = {
-  bachelors: 'Bridal Shower',
-  'bachelors-bachelorette': 'Bridal Shower',
-  bachelorette: 'Bridal Shower',
-  bachelor: 'Bridal Shower',
-}
-
-const EVENT_DISPLAY_TAGLINE_OVERRIDES = {
-  bachelors: 'All about the bride, fun, and great vibes',
-  'bachelors-bachelorette': 'All about the bride, fun, and great vibes',
-  bachelorette: 'All about the bride, fun, and great vibes',
-  bachelor: 'All about the bride, fun, and great vibes',
-}
-
-function resolveEventCardSlug(event = {}) {
-  return event.slug?.trim() || slugify(event.title ?? event.name ?? '')
-}
-
-function isHiddenEventCard(event = {}) {
-  const slug = resolveEventCardSlug(event)
-  const canonical = canonicalizeEventSlug(slug)
-  return HIDDEN_EVENT_SLUGS.has(slug) || HIDDEN_EVENT_SLUGS.has(canonical)
-}
-
-function applyEventDisplayOverrides(event = {}) {
-  const slug = resolveEventCardSlug(event)
-  const canonical = canonicalizeEventSlug(slug)
-  const titleOverride =
-    EVENT_DISPLAY_TITLE_OVERRIDES[slug] ?? EVENT_DISPLAY_TITLE_OVERRIDES[canonical]
-  const taglineOverride =
-    EVENT_DISPLAY_TAGLINE_OVERRIDES[slug] ?? EVENT_DISPLAY_TAGLINE_OVERRIDES[canonical]
-
-  if (!titleOverride && !taglineOverride) return event
-
-  return {
-    ...event,
-    ...(titleOverride ? { title: titleOverride } : {}),
-    ...(taglineOverride
-      ? {
-          tagline: taglineOverride,
-          description: taglineOverride,
-        }
-      : {}),
-  }
-}
-
-function filterVisibleEventCards(events = []) {
-  return (Array.isArray(events) ? events : []).filter(event => !isHiddenEventCard(event))
-}
-
 const getBudgetLevelSlug = level => {
   const label = String(level?.label ?? level?.name ?? '').trim()
 
@@ -381,9 +328,7 @@ const socialEventOrderIndex = title => {
 }
 
 const orderEventsForCategory = (events, categorySlug) => {
-  const list = filterVisibleEventCards(Array.isArray(events) ? events : []).map(
-    applyEventDisplayOverrides
-  )
+  const list = Array.isArray(events) ? [...events] : []
 
   if (slugify(categorySlug) !== 'social') return list
 
@@ -412,7 +357,7 @@ const mapEventCard = event => {
     blocksToText(event.description) || event.tagline?.trim() || ''
   )
 
-  return applyEventDisplayOverrides({
+  return {
     id: event.id,
     documentId: event.documentId,
     slug: event.slug?.trim() || slugify(event.name),
@@ -422,7 +367,7 @@ const mapEventCard = event => {
     category: (event.parent_event?.name ?? '').trim(),
     categorySlug: event.parent_event?.slug?.trim() || slugify(event.parent_event?.name),
     image: toAbsoluteStrapiUrl(event.icon?.url),
-  })
+  }
 }
 
 const mapServiceCategory = service => {
@@ -765,7 +710,7 @@ export function useEventCards() {
           'populate[1]': 'icon',
           sort: 'name:asc',
         })
-        return filterVisibleEventCards(data.map(mapEventCard)).sort((a, b) => {
+        return data.map(mapEventCard).sort((a, b) => {
           if (slugify(a.category) === 'social' && slugify(b.category) === 'social') {
             return socialEventOrderIndex(a.title) - socialEventOrderIndex(b.title)
           }

@@ -671,6 +671,7 @@ const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
     'pastel',
   ],
   'baby-shower': ['a-little-honey', 'little-honey', 'oh-baby', 'birthday-party', 'general-pack'],
+  'bridal-shower': ['birthday-party', 'birthday-parties', 'general-pack'],
   'diwali-party': ['birthday-party', 'birthday-parties', 'general-pack'],
   mehendi: [],
   engagement: ['sufi-night', 'ishq-sufiyana'],
@@ -688,6 +689,7 @@ const EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES = new Set([
   'house-parties',
   'birthday-parties',
   'bachelors',
+  'bridal-shower',
   'diwali-party',
   'mehendi',
 ])
@@ -696,7 +698,7 @@ const EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES = new Set([
 const EVENTS_WITHOUT_GENERAL_PACK_CATALOG = new Set(['mehendi'])
 
 /** Bridal / Diwali: theme step shows General Pack only; packages appear after theme selection. */
-const GENERAL_PACK_THEME_ONLY_EVENT_SLUGS = new Set(['diwali-party'])
+const GENERAL_PACK_THEME_ONLY_EVENT_SLUGS = new Set(['bridal-shower', 'diwali-party'])
 
 function eventBlocksGeneralPackCatalog(eventSlug = '') {
   return EVENTS_WITHOUT_GENERAL_PACK_CATALOG.has(canonicalizeEventSlug(eventSlug))
@@ -712,6 +714,7 @@ const DECOR_EVENTS_REQUIRING_THEME_SELECTION = new Set([
   'house-parties',
   'baby-shower',
   'birthday-parties',
+  'bridal-shower',
   'diwali-party',
 ])
 
