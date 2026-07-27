@@ -76,7 +76,11 @@ export function mergeMenuLibraryWithFallback(byKey = {}) {
   const merged = { ...CATERING_MENU_FALLBACK }
 
   for (const [key, dishes] of Object.entries(byKey)) {
-    if (Array.isArray(dishes) && dishes.length) merged[key] = dishes
+    if (!Array.isArray(dishes) || !dishes.length) continue
+
+    const fallbackDishes = merged[key] ?? []
+    // Prefer whichever source has the fuller category (guards against stale partial CMS data).
+    merged[key] = dishes.length >= fallbackDishes.length ? dishes : fallbackDishes
   }
 
   return merged

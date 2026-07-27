@@ -1,0 +1,260 @@
+#!/usr/bin/env node
+'use strict';
+
+const { CATERING_MENU_CATEGORIES } = require('../strapi/src/seed/catering-menu-data');
+
+const EXPECTED = {
+  pre_plated: [
+    'Spicy Madras Bhel',
+    'Masala Makhana',
+    'Cocktail Samosa',
+    'Avocado Papdi Chaat',
+    'Roasted Masala Peanuts',
+  ],
+  starters: [
+    'Dahi Ke Kebab',
+    'Veg Manchurian',
+    'Falafel Hummus & Pita',
+    'Potato Chow Chu',
+    'Hara Bhara Kebab',
+    'Corn Cheese Balls',
+    'Stuffed Mushrooms',
+    'Crispy Baby Corn',
+    'Veg Spring Rolls',
+    'Cottage Cheese Shanghai',
+    'Tandoori Paneer Tikka',
+    'Paneer Popcorn',
+    'Chinatown Chilli Paneer',
+    'Truffle Mushroom Galouti',
+    'Tandoori Mushroom Tikka',
+    'Mushroom Pepper Fry',
+    'Chennai Mushroom 65',
+    'Mushroom Chimichurri',
+    'Crispy Chilli Garlic Tofu',
+    'Tandoori Soya Chaap',
+    'Korean Gochujang Tofu',
+    'Thai Cigar Rolls',
+    'Cheese Croquettes',
+    'Cheese & Gherkin Kachori',
+    'Crispy Lotus Stem',
+    'Crispy Honey Chilli Potatoes',
+  ],
+  starters_non_veg: [
+    'Chicken Tikka Choice',
+    'Chennai Chicken 65',
+    'Peri Peri Chicken Skewers',
+    'Chicken Popcorn',
+    'Chicken Spring Rolls',
+    'Korean Fried Chicken',
+    'Chicken Asian Heat',
+    'Chicken Seekh Kebab',
+    'Crispy Honey Chicken',
+    'Mutton Seekh Kebab',
+    'Nawabi Mutton Galouti',
+    'Mutton Shami Kebab',
+    'Cheddar Sole Fish Tikka',
+    'Ajwaini Fish Tikka',
+    "Bird's Eye Chilli Fish",
+    'Fish Fingers',
+    'Amritsari Fish Fry',
+    'Fish Tikka Ajwani',
+    'Crispy Fish Chilli',
+    'Tempura Prawns',
+    'Tandoori Masala Prawns',
+    'Kasundi Prawns',
+    'Butter Garlic Prawns',
+    'Prawn Tempura Spicy Mayo',
+    'Prawn Salt & Pepper',
+  ],
+  soup: [
+    'Manchow Soup',
+    'Tom Yum',
+    'Sweet Corn Soup',
+    'Cream of Mushroom',
+    'Lemon Coriander',
+    'Hot & Sour Soup',
+    'Tomato Basil Soup',
+    'Talumein Soup',
+    'Roasted Pumpkin Soup',
+    'Shorba (Veg / Non-Veg)',
+    'Broccoli Almond Soup',
+    'Thai Coconut Soup (Tom Kha Style)',
+  ],
+  main_course_veg: [
+    'Dal Makhani',
+    'Dal Bukhara',
+    'Amritsari Chole',
+    'Methi Malai Mutter',
+    'Baby Potato Masala',
+    'Paneer Lababdar',
+    'Paneer Makhani',
+    'Paneer Pasanda',
+    'Kadhai Paneer',
+    'Paneer Khurchan',
+    'Veg Jalfrezi',
+    'Paneer Butter Masala',
+    'Kofta Curry',
+    'Chilli Garlic Tofu',
+    'Teppanyaki Vegetables',
+    'Veg Manchurian Gravy',
+    'Kung Pao Cashews',
+    'Spinach Ricotta Cannelloni',
+    'Oyster Chilly Garlic Sauce',
+    'Vegetable Lasagna',
+    'Thai Green Curry',
+    'Thai Red Curry',
+    'Schezwan Peppercorn Sauce',
+    'Hot Chilly Basil (Tofu/Paneer)',
+    'Steaks (Pepper / Mushroom Sauce)',
+    'Hakka Noodles',
+    'Chilli Garlic Noodles',
+    'Schezwan Noodles',
+    'Pad Thai Noodles',
+    'Udon Noodles',
+    'Singapore Noodles',
+    'Ramen Bowl',
+    'Penne Alfredo',
+    'Penne Arrabiata',
+    'Spaghetti Aglio-e-Olio',
+  ],
+  main_course_non_veg: [
+    'Butter Chicken',
+    'Chicken Tikka Masala',
+    'Chicken Korma',
+    'Kadhai Chicken',
+    'Dhaba Chicken',
+    'Chicken Khurchan',
+    'Chicken Vindaloo',
+    'Chicken Saagwala',
+    'Chicken Curry Homestyle',
+    'Grilled Fish Lemon Butter',
+    'Fish Curry Coastal Style',
+    'Grilled Fish Peri Peri',
+    'Prawns in Garlic Sauce',
+    'Prawns Teriyaki',
+    'Prawn Thai Curry',
+    'Prawns Curry Coastal',
+    'Chicken Stroganoff',
+    'BBQ Chicken Grill',
+    'Fish Steak (Herb / Garlic Butter)',
+    'Peri Peri Fish Grill',
+    'Fish Sizzler',
+    'Grilled Prawns Garlic Butter',
+  ],
+  rotis_and_rice: [
+    'Butter Naan',
+    'Garlic Naan',
+    'Lachha Paratha',
+    'Tandoori Roti',
+    'Missi Roti',
+    'Stuffed Kulcha',
+  ],
+  rice: [
+    'Hyderabadi Veg Biryani',
+    'Hyderabadi Chicken Biryani',
+    'Afghani Soya Chaap Biryani',
+    'Chicken Dum Biryani',
+    'Hyderabadi Mutton Biryani',
+    'Lucknowi (Awadhi) Biryani',
+    'Kolkata Biryani',
+    'Paneer Biryani',
+    'Steam Rice',
+    'Jeera Rice',
+    'Kaju Matar Pulao',
+    'Veg Fried Rice',
+    'Egg Fried Rice',
+    'Chicken Fried Rice',
+    'Thai Basil Rice',
+    'Kashmiri Pulao',
+    'Burnt Garlic Fried Rice (Indo-Asian twist)',
+    'Peri Peri Biryani',
+    'Mediterranean Herb Biryani',
+  ],
+  raita: ['Cucumber Raita', 'Boondi Raita', 'Mix Veg Raita', 'Fruit Raita'],
+  salad: [
+    'Garden Fresh Salad',
+    'Sprouts & Chana Salad',
+    'Classic Caesar Salad',
+    'Greek Salad',
+    'Mediterranean Couscous Salad',
+    'Pesto Pasta Salad',
+    'Avocado & Quinoa Salad',
+    'Roasted Veggie Salad',
+    'Kachumber Salad',
+    'Corn & Capsicum Chaat Salad',
+  ],
+  live_stations: [
+    'Pasta Station',
+    'Woodfired Pizza Station',
+    'Ramen Bar Station',
+    'Quesadilla Station',
+    'Kebab & Tandoor Station',
+    'Kulcha & Tawa Station',
+    'Chaat Studio',
+    'Dimsum Bar',
+    'Sushi Bar',
+    'Noodles Bar',
+    'Mumbai Street Counter',
+    'Shawarma Station',
+    'Taco & Burrito Bar',
+    'Jalebi Rabri Counter',
+    'Waffle & Pancake Station',
+    'Crepe Station',
+    'Chocolate Fountain',
+  ],
+  dessert: [
+    'Gulab Jamun',
+    'Jalebi with Rabri',
+    'Rasmalai',
+    'Gajar Halwa',
+    'Moong Dal Halwa',
+    'Malpua with Rabri',
+    'Ice Cream Selection',
+    'Kulfi (Malai / Pista)',
+    'Matka Kulfi',
+    'Fruit Cream',
+    'Classic Cheesecake',
+    'Biscoff Cheesecake',
+    'Blueberry Cheesecake',
+    'Italian Tiramisu',
+    'Chocolate Mousse',
+    'Banoffee Pie',
+    'Tres Leches Cake',
+    'Brownie with Ice Cream',
+    'Chocolate Lava Cake',
+    'Chocolate Truffle Cake',
+  ],
+};
+
+const byKey = Object.fromEntries(
+  CATERING_MENU_CATEGORIES.map(c => [c.category_key, c.dishes.map(d => d.name)])
+);
+
+let missing = 0;
+let extra = 0;
+
+for (const [key, expectedNames] of Object.entries(EXPECTED)) {
+  const actual = new Set(byKey[key] ?? []);
+  for (const name of expectedNames) {
+    if (!actual.has(name)) {
+      console.log(`MISSING [${key}]: ${name}`);
+      missing++;
+    }
+  }
+  const expectedSet = new Set(expectedNames);
+  for (const name of byKey[key] ?? []) {
+    if (!expectedSet.has(name)) {
+      console.log(`EXTRA [${key}]: ${name}`);
+      extra++;
+    }
+  }
+}
+
+const expectedTotal = Object.values(EXPECTED).reduce((n, arr) => n + arr.length, 0);
+const actualTotal = CATERING_MENU_CATEGORIES.reduce((n, c) => n + c.dishes.length, 0);
+
+console.log('\n--- Summary ---');
+console.log(`Expected (client sheet): ${expectedTotal}`);
+console.log(`Seed library total: ${actualTotal}`);
+console.log(`Missing: ${missing}, Extra: ${extra}`);
+process.exit(missing || extra ? 1 : 0);
