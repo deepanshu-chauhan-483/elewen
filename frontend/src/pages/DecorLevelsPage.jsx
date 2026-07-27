@@ -10,6 +10,7 @@ import {
   DECOR_THEME_CATEGORY_SLUG,
   DEFAULT_EVENT_CATEGORY_SLUG,
   isConsultationOnlyEvent,
+  isFallbackOnlyEvent,
   resolveServiceLaneId,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
@@ -333,6 +334,10 @@ export default function DecorLevelsPage() {
 
   if (isConsultationOnlyEvent(eventSlug)) {
     return <Navigate to="/book-consultation" replace />
+  }
+
+  if (isFallbackOnlyEvent(eventSlug)) {
+    return <Navigate to="/fallback-screen" replace />
   }
 
   const isSocialDecor =

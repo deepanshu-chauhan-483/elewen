@@ -1,7 +1,7 @@
 import { canonicalizeEventSlug, normalizeServiceSlug } from './packageFilters'
 
 /** Events that show the coming-soon fallback instead of package listings. */
-const FALLBACK_ONLY_EVENT_SLUGS = new Set(['corporate-get-together', 'house-warming'])
+const FALLBACK_ONLY_EVENT_SLUGS = new Set(['corporate-get-together', 'house-warming', 'diwali-party'])
 
 /** Social events that skip package listings and open book-a-consultation instead. */
 const CONSULTATION_ONLY_EVENT_SLUGS = new Set([

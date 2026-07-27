@@ -6,6 +6,7 @@ import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventT
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { buildEventSelectionDestination } from '../lib/serviceFlow'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Category' },
@@ -34,14 +35,15 @@ function EventCarouselArrow({ direction = 'left' }) {
 }
 
 function EventCard({ categorySlug, event }) {
-  const params = new URLSearchParams()
-  params.set('category', categorySlug)
-  params.set('event', event.slug)
-  if (event.id != null) params.set('eventId', String(event.id))
+  const destination = buildEventSelectionDestination({
+    categorySlug,
+    eventSlug: event.slug,
+    eventId: event.id != null ? String(event.id) : '',
+  })
 
   return (
     <Link
-      to={`/event-flow/service?${params.toString()}`}
+      to={destination}
       aria-label={event.title}
       className="group flex h-full max-h-[424px] w-full max-w-[298px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px]"
     >

@@ -14,6 +14,7 @@ import {
   DECOR_THEME_CATEGORY_SLUG,
   DEFAULT_EVENT_CATEGORY_SLUG,
   isConsultationOnlyEvent,
+  isFallbackOnlyEvent,
   resolveServiceLaneId,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
@@ -310,6 +311,10 @@ export default function DecorThemePage() {
 
   if (flow !== SERVICES_FLOW_KEY && isConsultationOnlyEvent(eventId)) {
     return <Navigate to="/book-consultation" replace />
+  }
+
+  if (flow !== SERVICES_FLOW_KEY && isFallbackOnlyEvent(eventId)) {
+    return <Navigate to="/fallback-screen" replace />
   }
 
   if (categoryId !== DECOR_THEME_CATEGORY_SLUG || serviceSlug !== 'decor') {
