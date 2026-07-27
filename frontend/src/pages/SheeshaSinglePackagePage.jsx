@@ -429,6 +429,7 @@ export default function SheeshaSinglePackagePage() {
   const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null
   const packageTitle = pkg.title || SHEESHA_CONTENT.title
   const packagePrice = pkg.price || SHEESHA_CONTENT.price
+  const packageSizeLabel = pkg.sheesha_size_label ?? ''
   const packageIntro = pkg.description || SHEESHA_CONTENT.intro
   const accordionSections = mergeAccordionSections(
     buildSheeshaAccordionSections(pkg),
@@ -501,6 +502,13 @@ export default function SheeshaSinglePackagePage() {
       title={packageTitle}
       price={packagePrice}
       intro={packageIntro}
+      beforePriceContent={
+        packageSizeLabel ? (
+          <p className="text-[14px] font-medium leading-[1.4] text-[#591902]">
+            Size: <span className="font-semibold">{packageSizeLabel}</span>
+          </p>
+        ) : null
+      }
       accordionSections={accordionSections}
       mainImage={pkg.images?.[0] ?? sideImages[0]}
       sideImages={sideImages}

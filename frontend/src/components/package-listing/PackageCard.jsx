@@ -373,6 +373,13 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           <div className="min-h-[20px]" aria-hidden="true" />
         )}
 
+        {pkg.sheesha_size_label ? (
+          <p className="mt-1 min-h-[18px] text-[12px] leading-none text-[#2D2D2D]">
+            Size{' '}
+            <span className="text-[13px] font-semibold text-[#591902]">{pkg.sheesha_size_label}</span>
+          </p>
+        ) : null}
+
         <div
           ref={tagsContainerRef}
           className="mt-4 min-h-[52px] overflow-hidden"

@@ -7,6 +7,7 @@ import {
   getCateringDetailSection,
   getCateringPriceRangeLabel,
 } from '../lib/cateringPricing'
+import { resolveSheeshaSizeLabel } from '../lib/sheeshaPackageMeta'
 
 const blocksToText = blocks => {
   if (!blocks) return ''
@@ -311,6 +312,12 @@ function getNestedPackagePriceBreakdowns(pkg) {
 function getNestedPackagePricingRules(pkg) {
   return getNestedPackageSections(pkg).flatMap(section =>
     Array.isArray(section?.pricing_rules) ? section.pricing_rules : []
+  )
+}
+
+function getSheeshaDetailSection(pkg) {
+  return getNestedPackageSections(pkg).find(
+    section => section?.__component === 'package.sheeshapackage'
   )
 }
 
@@ -677,6 +684,15 @@ function normalizePackage(pkg, index = 0, options = {}) {
     : ''
 
   const primaryServiceSlug = resolvePrimaryServiceSlug(serviceSlugs)
+  const sheeshaSection = primaryServiceSlug === 'sheesha' ? getSheeshaDetailSection(pkg) : null
+  const sheeshaSizeLabel =
+    primaryServiceSlug === 'sheesha'
+      ? resolveSheeshaSizeLabel({
+          ...pkg,
+          sheesha_size: sheeshaSection?.size,
+          detail_sections: detailSections,
+        })
+      : ''
 
   const sharedFields = {
     id: pkg.id,
@@ -751,6 +767,7 @@ function normalizePackage(pkg, index = 0, options = {}) {
     bartender_type: bartendingPresentation?.bartender_type || resolveBartenderType(detailSections),
     level_slug: resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel),
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
+    ...(sheeshaSizeLabel ? { sheesha_size_label: sheeshaSizeLabel } : {}),
     images: listing
       ? buildListingCoverImages(pkg, detailSections)
       : buildPackageImageUrls(pkg, detailSections),
