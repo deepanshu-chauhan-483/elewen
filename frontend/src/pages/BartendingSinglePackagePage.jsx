@@ -393,20 +393,8 @@ function BartendingBeforePriceContent({ intro, pkg, selectedHours, onSelectHours
 
       <div className="mt-6 border-t border-[#36402280] pt-6">
         <p className="text-[16px] font-semibold text-[#2D2D2D]">Number of hours</p>
-        <div className="mt-4 flex items-center gap-3">
-          <input
-            type="number"
-            min="1"
-            max="24"
-            value={selectedHours || ''}
-            onChange={e => onSelectHours(e.target.value)}
-            placeholder="Enter hours"
-            className="w-[140px] rounded-[8px] border border-[#591902] bg-[#F8F4ED] px-4 py-2.5 text-[14px] text-[#591902] outline-none focus:ring-1 focus:ring-[#CDB17E]"
-          />
-          <span className="text-[13px] text-[#591902]/60">hrs</span>
-        </div>
         {hourOptions.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {hourOptions.map(option => (
               <button
                 key={option.id}
