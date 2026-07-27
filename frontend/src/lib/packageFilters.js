@@ -75,6 +75,17 @@ const FURNITURE_ALLOWED_SLUGS = new Set([
   'the-low-lounge-social-20',
 ])
 
+/** House Party decor — exact catalog only (Phool-Proof, Soft Glow Szn, Hosting Hero, Entertainment Kit). */
+const HOUSE_PARTY_ALLOWED_SLUGS = new Set([
+  'phool-proof-1',
+  'phool-proof-2',
+  'soft-glow-szn-1',
+  'soft-glow-szn-2',
+  'soft-glow-szn-3',
+  'hosting-hero-essentials',
+  'entertainment-kit',
+])
+
 const FURNITURE_ALLOWED_TITLE_KEYS = new Set([
   'the-sit-down-dinner',
   'the-sit-down-dinner-2-0',
@@ -704,34 +715,8 @@ const THEME_PARENT_CHILD_SLUGS = {
   'oh-baby': ['oh-baby-basics', 'baby-in-bloom', 'up-up-and-baby', 'baby-shower'],
   'sufi-night': ['ishq-sufiyana'],
   'ishq-sufiyana': ['sufi-night'],
-  'house-party': [
-    'general-pack',
-    'phool-proof',
-    'air-we-go',
-    'the-first-layer',
-    'raise-the-bar',
-    'just-enough-magic',
-    'party-smart',
-    'aarambh',
-    'aura-upgrade',
-    'house-parties',
-    'birthday-party',
-    'birthday-parties',
-  ],
-  'house-parties': [
-    'general-pack',
-    'phool-proof',
-    'air-we-go',
-    'the-first-layer',
-    'raise-the-bar',
-    'just-enough-magic',
-    'party-smart',
-    'aarambh',
-    'aura-upgrade',
-    'house-party',
-    'birthday-party',
-    'birthday-parties',
-  ],
+  'house-party': ['house-party', 'house-parties'],
+  'house-parties': ['house-party', 'house-parties'],
   'birthday-party': [
     'general-pack',
     'phool-proof',
@@ -774,21 +759,14 @@ const THEME_PARENT_CHILD_SLUGS = {
   'our-private-corner': ['our-private-corner-2', 'our-private-corner-3'],
 }
 
-/** House Party + General Pack share one decor catalog across these events/themes. */
-const GENERAL_PACK_EVENT_SLUGS = [
-  'house-parties',
-  'birthday-parties',
-  'house-party',
-  'birthday-party',
-]
+/** General Pack decor catalog events (Birthday Parties — not House Party). */
+const GENERAL_PACK_EVENT_SLUGS = ['birthday-parties', 'birthday-party']
 
 function isGeneralPackThemeSlug(themeSlug = '') {
   const normalized = normalizeThemeSlug(themeSlug)
   if (!normalized) return false
 
   if (
-    normalized === 'house-party' ||
-    normalized === 'house-parties' ||
     normalized === 'birthday-party' ||
     normalized === 'birthday-parties' ||
     normalized === 'general-pack'
@@ -805,15 +783,27 @@ function packageMatchesGeneralPackEvent(pkg, eventSlug = '', eventId = '') {
   return GENERAL_PACK_EVENT_SLUGS.some(slug => includesEventSlug(pkg.event_slugs, slug))
 }
 
-/** House Party picker theme should list the same packages as General Pack. */
 function resolvePackageThemeFilterSlug(themeSlug = '') {
   const normalized = normalizeThemeSlug(themeSlug)
-  if (normalized === 'house-party' || normalized === 'house-parties') {
-    return 'birthday-party'
-  }
-
   const aliased = DECOR_THEME_ALLOWLIST_ALIASES[normalized]
   return aliased ? normalizeThemeSlug(aliased) : normalized
+}
+
+function isHousePartyThemeSlug(themeSlug = '') {
+  const normalized = normalizeThemeSlug(themeSlug)
+  return normalized === 'house-party' || normalized === 'house-parties'
+}
+
+function isHousePartyEventSlug(eventSlug = '') {
+  const normalized = canonicalizeEventSlug(eventSlug)
+  return normalized === 'house-parties' || normalized === 'house-party'
+}
+
+function isAllowedHousePartyPackage(pkg) {
+  const slug = String(pkg?.slug ?? '')
+    .trim()
+    .toLowerCase()
+  return Boolean(slug && HOUSE_PARTY_ALLOWED_SLUGS.has(slug))
 }
 
 /** Expand a theme filter slug to every slug that should count as a match. */
@@ -1097,6 +1087,23 @@ export function filterPackages(packages, filters = {}) {
       if (primaryService && primaryService !== 'decor') {
         return false
       }
+    }
+
+    if (
+      normalizedServiceSlug === 'decor' &&
+      (isHousePartyThemeSlug(themeSlug) || isHousePartyEventSlug(eventSlug)) &&
+      !isAllowedHousePartyPackage(pkg)
+    ) {
+      return false
+    }
+
+    if (
+      normalizedServiceSlug === 'decor' &&
+      isGeneralPackThemeSlug(themeSlug) &&
+      !isHousePartyThemeSlug(themeSlug) &&
+      isAllowedHousePartyPackage(pkg)
+    ) {
+      return false
     }
 
     const packageThemeSlugs = Array.isArray(pkg.theme_slugs) ? pkg.theme_slugs : []

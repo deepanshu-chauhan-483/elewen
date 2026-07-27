@@ -8,6 +8,7 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { filterDecorThemesBySocialEvent, filterThemesByEventPackages } from '../lib/packageFilters'
+import { HOUSE_PARTY_THEME_PREVIEW } from '../lib/housePartyPackageMedia'
 import {
   buildServiceSelectionBackTo,
   DECOR_THEME_CATEGORY_SLUG,
@@ -39,6 +40,8 @@ const OFFLINE_THEME_PREVIEW_BY_SLUG = {
   disco: themeImg3,
   floral: themeImg2,
   retro: themeImg4,
+  'house-party': HOUSE_PARTY_THEME_PREVIEW,
+  'house-parties': HOUSE_PARTY_THEME_PREVIEW,
 }
 const DESKTOP_CARDS_PER_PAGE = 4
 const MOBILE_CARDS_PER_PAGE = 1

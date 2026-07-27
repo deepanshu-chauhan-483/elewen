@@ -9,6 +9,7 @@ import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
 import { usePackageReviews } from '../hooks/usePackageReviews'
 import { getRelatedPackages, normalizeServiceSlug } from '../lib/packageFilters'
+import { withHousePartyPackageImages } from '../lib/housePartyPackageMedia'
 import { resolveChooseOneDisplayPrice, shouldShowChoicePrices } from '../lib/chooseOnePricing'
 import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
@@ -1131,26 +1132,40 @@ export default function DecorSinglePackagePage() {
 
   const packagesData = useMemo(
     () =>
-      packages.map((pkg, index) => ({
-        ...pkg,
-        images: pkg.images?.length
-          ? pkg.images
-          : (PKG_LOCAL_IMAGES[index % PKG_LOCAL_IMAGES.length] ?? []),
-      })),
+      packages.map((pkg, index) => {
+        const withOffline = withHousePartyPackageImages(pkg)
+        return {
+          ...withOffline,
+          images: withOffline.images?.length
+            ? withOffline.images
+            : (PKG_LOCAL_IMAGES[index % PKG_LOCAL_IMAGES.length] ?? []),
+        }
+      }),
     [packages]
   )
 
   const pkg = useMemo(
-    () =>
-      packageDetails
-        ? {
-            ...packageDetails,
-            images: packageDetails.images?.length
-              ? packageDetails.images
-              : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
-                PKG_LOCAL_IMAGES[0]),
-          }
-        : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId)),
+    () => {
+      const resolved =
+        packageDetails
+          ? {
+              ...withHousePartyPackageImages(packageDetails),
+              images: packageDetails.images?.length
+                ? packageDetails.images
+                : (PKG_LOCAL_IMAGES[packageDetails._index % PKG_LOCAL_IMAGES.length] ??
+                  PKG_LOCAL_IMAGES[0]),
+            }
+          : packagesData.find(item => buildPackageId(item) === normalisePackageId(packageId))
+
+      if (!resolved) return resolved
+
+      const withOffline = withHousePartyPackageImages(resolved)
+      if (withOffline.images?.length) {
+        return { ...withOffline, images: withOffline.images }
+      }
+
+      return resolved
+    },
     [packageDetails, packageId, packagesData]
   )
 

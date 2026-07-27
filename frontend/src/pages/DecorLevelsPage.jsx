@@ -8,6 +8,7 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { DEFAULT_EVENT_CATEGORY_SLUG, isConsultationOnlyEvent, resolveServiceLaneId } from '../lib/serviceFlow'
 import { assignDistinctCoverIndices, filterPackages, requiresGeneralPackThemeSelection } from '../lib/packageFilters'
+import { enrichPackagesWithHousePartyImages } from '../lib/housePartyPackageMedia'
 import { filterPackagesBySearch } from '../lib/packageSearch'
 import { getLocationScrollKey, readLocationScroll, scrollPageTo } from '../hooks/useScrollToTop'
 import { useLenis } from '../useLenis'
@@ -185,7 +186,7 @@ export default function DecorLevelsPage() {
   const [pagination, setPagination] = useState(DEFAULT_LEVEL_PAGINATION)
   const packagesData = useMemo(
     () =>
-      packages.map((pkg, i) => ({
+      enrichPackagesWithHousePartyImages(packages).map((pkg, i) => ({
         ...pkg,
         images: pkg.images?.length
           ? pkg.images
