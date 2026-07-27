@@ -1,6 +1,20 @@
 'use strict';
 
 const { buildCateringComponent, seedCateringPackages } = require('./catering-shared');
+const {
+  chooseRow,
+  splitStarterRow,
+  splitMainRow,
+  accompanimentsRows,
+  soupRow,
+  prePlatedRow,
+  raitaRow,
+  saladRow,
+  liveStationRow,
+  dessertRow,
+  breadsRow,
+  riceRow,
+} = require('./catering-menu-items-shared');
 
 const END_TO_END_LEVEL_DESCRIPTION =
   'End-to-end catering where food preparation, live cooking, serving staff, buffet setup, and essential logistics are handled professionally so you can host without managing the kitchen or service.';
@@ -60,33 +74,11 @@ const END_TO_END_PACKAGES = [
     exclusions: END_TO_END_EXCLUSIONS,
     client_requirements: END_TO_END_CLIENT_REQUIREMENTS,
     menu_items: [
-      {
-        title: 'Starters (Choose 2+2) or 4 veg',
-        choose_hint: 'Choose 2+2 or 4 veg',
-        row_type: 'choose',
-        sort_order: 1,
-      },
-      {
-        title: 'Main Course (Choose 2+2) or 4 veg',
-        choose_hint: 'Choose 2+2 or 4 veg',
-        row_type: 'choose',
-        sort_order: 2,
-      },
-      {
-        title: 'Accompaniments (Rice + Breads)',
-        row_type: 'included',
-        sort_order: 3,
-      },
-      {
-        title: '1 Yoghurt',
-        row_type: 'included',
-        sort_order: 4,
-      },
-      {
-        title: 'Dessert (Choose 1)',
-        row_type: 'choose',
-        sort_order: 5,
-      },
+      splitStarterRow(4, 1),
+      splitMainRow(4, 2),
+      ...accompanimentsRows(3),
+      raitaRow(5, 1),
+      dessertRow(1, 6),
     ],
   },
   {
@@ -102,31 +94,13 @@ const END_TO_END_PACKAGES = [
     exclusions: END_TO_END_EXCLUSIONS,
     client_requirements: END_TO_END_CLIENT_REQUIREMENTS,
     menu_items: [
-      { title: 'Pre-plated', row_type: 'info', sort_order: 1 },
-      {
-        title: 'Starters (Choose 3+3) or 6 veg',
-        choose_hint: 'Choose 3+3 or 6 veg',
-        row_type: 'choose',
-        sort_order: 2,
-      },
-      {
-        title: 'Main Course (Choose 2+2) or 4 veg',
-        choose_hint: 'Choose 2+2 or 4 veg',
-        row_type: 'choose',
-        sort_order: 3,
-      },
-      { title: '1 Salad', row_type: 'included', sort_order: 4 },
-      { title: '1 Yoghurt', row_type: 'included', sort_order: 5 },
-      {
-        title: 'Accompaniments (Rice + Breads)',
-        row_type: 'included',
-        sort_order: 6,
-      },
-      {
-        title: 'Dessert (Choose 2)',
-        row_type: 'choose',
-        sort_order: 7,
-      },
+      prePlatedRow(1),
+      splitStarterRow(6, 2),
+      splitMainRow(4, 3),
+      saladRow(4, 1),
+      raitaRow(5, 1),
+      ...accompanimentsRows(6),
+      dessertRow(2, 8),
     ],
   },
   {
@@ -142,32 +116,14 @@ const END_TO_END_PACKAGES = [
     exclusions: END_TO_END_EXCLUSIONS,
     client_requirements: END_TO_END_CLIENT_REQUIREMENTS,
     menu_items: [
-      { title: 'Soup Station 1', row_type: 'included', sort_order: 1 },
-      { title: 'Pre-plated', row_type: 'info', sort_order: 2 },
-      {
-        title: 'Starters (Choose 4+4) or 8 veg',
-        choose_hint: 'Choose 4+4 or 8 veg',
-        row_type: 'choose',
-        sort_order: 3,
-      },
-      {
-        title: 'Main Course (Choose 3+3) or 6 veg',
-        choose_hint: 'Choose 3+3 or 6 veg',
-        row_type: 'choose',
-        sort_order: 4,
-      },
-      { title: '2 Salad', row_type: 'included', sort_order: 5 },
-      { title: '1 Yoghurt', row_type: 'included', sort_order: 6 },
-      {
-        title: 'Accompaniments (Rice + Breads)',
-        row_type: 'included',
-        sort_order: 7,
-      },
-      {
-        title: 'Dessert (Choose 2)',
-        row_type: 'choose',
-        sort_order: 8,
-      },
+      soupRow(1, { title: 'Soup Station (Choose 1)' }),
+      prePlatedRow(2),
+      splitStarterRow(8, 3),
+      splitMainRow(6, 4),
+      saladRow(5, 2),
+      raitaRow(6, 1),
+      ...accompanimentsRows(7),
+      dessertRow(2, 9),
     ],
   },
   {
@@ -183,33 +139,15 @@ const END_TO_END_PACKAGES = [
     exclusions: END_TO_END_EXCLUSIONS,
     client_requirements: END_TO_END_CLIENT_REQUIREMENTS,
     menu_items: [
-      { title: 'Soup Station 2', row_type: 'included', sort_order: 1 },
-      { title: 'Pre-plated', row_type: 'info', sort_order: 2 },
-      {
-        title: 'Starters (Choose 5+5) or 10 veg',
-        choose_hint: 'Choose 5+5 or 10 veg',
-        row_type: 'choose',
-        sort_order: 3,
-      },
-      {
-        title: 'Main Course (Choose 3+3) or 6 veg',
-        choose_hint: 'Choose 3+3 or 6 veg',
-        row_type: 'choose',
-        sort_order: 4,
-      },
-      { title: '1 Live station', row_type: 'included', sort_order: 5 },
-      { title: '3 Salad', row_type: 'included', sort_order: 6 },
-      { title: '1 Yoghurt', row_type: 'included', sort_order: 7 },
-      {
-        title: 'Accompaniments (Rice + Breads)',
-        row_type: 'included',
-        sort_order: 8,
-      },
-      {
-        title: 'Dessert (Choose 3)',
-        row_type: 'choose',
-        sort_order: 9,
-      },
+      soupRow(1, { title: 'Soup Station (Choose 2)', max_pick: 2 }),
+      prePlatedRow(2),
+      splitStarterRow(10, 3),
+      splitMainRow(6, 4),
+      liveStationRow(5, 1),
+      saladRow(6, 3),
+      raitaRow(7, 1),
+      ...accompanimentsRows(8),
+      dessertRow(3, 10),
     ],
   },
   {
@@ -225,24 +163,10 @@ const END_TO_END_PACKAGES = [
     exclusions: END_TO_END_EXCLUSIONS,
     client_requirements: END_TO_END_CLIENT_REQUIREMENTS,
     menu_items: [
-      {
-        title: 'Starters (Choose 4+4) or 8 veg',
-        choose_hint: 'Choose 4+4 or 8 veg',
-        row_type: 'choose',
-        sort_order: 1,
-      },
-      {
-        title: 'Main Course (Choose 1+1)',
-        choose_hint: 'Choose 1+1',
-        row_type: 'choose',
-        sort_order: 2,
-      },
-      {
-        title: 'Accompaniments (Rice + Breads)',
-        row_type: 'included',
-        sort_order: 3,
-      },
-      { title: '1 Signature dessert', row_type: 'included', sort_order: 4 },
+      splitStarterRow(8, 1),
+      splitMainRow(2, 2),
+      ...accompanimentsRows(3),
+      dessertRow(1, 5),
     ],
   },
   {
@@ -258,28 +182,11 @@ const END_TO_END_PACKAGES = [
     exclusions: END_TO_END_EXCLUSIONS,
     client_requirements: END_TO_END_CLIENT_REQUIREMENTS,
     menu_items: [
-      {
-        title: '10 curated starters (veg / non-veg)',
-        details: 'Includes seafood option',
-        row_type: 'choose',
-        sort_order: 1,
-      },
-      {
-        title: '6 premium main course selections',
-        row_type: 'choose',
-        sort_order: 2,
-      },
-      {
-        title: 'Artisan breads, signature rice & curated sides',
-        row_type: 'included',
-        sort_order: 3,
-      },
-      {
-        title: '3 handcrafted desserts',
-        row_type: 'included',
-        sort_order: 4,
-      },
-      { title: '1 Live station', row_type: 'included', sort_order: 5 },
+      splitStarterRow(10, 1),
+      splitMainRow(6, 2),
+      ...accompanimentsRows(3),
+      dessertRow(3, 5),
+      liveStationRow(6, 1),
     ],
   },
   {
@@ -294,15 +201,7 @@ const END_TO_END_PACKAGES = [
     inclusions: END_TO_END_INCLUSIONS,
     exclusions: END_TO_END_EXCLUSIONS,
     client_requirements: END_TO_END_CLIENT_REQUIREMENTS,
-    menu_items: [
-      {
-        title: 'Choice of 8 signature starters (veg / non-veg)',
-        details: 'Includes seafood option (fish or prawn)',
-        row_type: 'choose',
-        sort_order: 1,
-      },
-      { title: '1 Signature dessert', row_type: 'included', sort_order: 2 },
-    ],
+    menu_items: [splitStarterRow(8, 1), dessertRow(1, 2)],
   },
   {
     title: 'Purely Satvik',
@@ -319,24 +218,22 @@ const END_TO_END_PACKAGES = [
     nitty_gritty: END_TO_END_NITTY_GRITTY,
     ideal_for: SATVIK_IDEAL_FOR,
     menu_items: [
-      { title: '5 Satvik main course creations', row_type: 'included', sort_order: 1 },
+      chooseRow({
+        title: 'Main Course (Choose 5)',
+        category_key: 'main_course_veg',
+        max_pick: 5,
+        sort_order: 1,
+      }),
       {
         title: 'No onion, no garlic preparations (on request)',
         row_type: 'info',
         sort_order: 2,
       },
-      { title: 'Temple-style aromatic rice', row_type: 'included', sort_order: 3 },
-      {
-        title: 'Fresh salads & house-churned yogurt',
-        row_type: 'included',
-        sort_order: 4,
-      },
-      { title: 'Artisan breads', row_type: 'included', sort_order: 5 },
-      {
-        title: '2 handcrafted eggless desserts',
-        row_type: 'included',
-        sort_order: 6,
-      },
+      riceRow(3, 1),
+      saladRow(4, 1),
+      raitaRow(5, 1),
+      breadsRow(6, 2),
+      dessertRow(2, 7),
     ],
   },
 ];

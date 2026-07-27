@@ -1,6 +1,12 @@
 'use strict';
 
 const { buildCateringComponent, seedCateringPackages } = require('./catering-shared');
+const {
+  splitStarterRow,
+  splitMainRow,
+  accompanimentsRows,
+  dessertRow,
+} = require('./catering-menu-items-shared');
 
 const ASSISTED_LEVEL_DESCRIPTION =
   'This level caters to people who want good quality food with classic dishes and need waiters to service. Seafood & cutlery is not included in this category of menu.';
@@ -39,34 +45,9 @@ const ASSISTED_PACKAGES = [
     client_requirements:
       'Water supply, Electricity points, Serving Cutlery, Kitchen Tables.',
     menu_items: [
-      {
-        title: 'Starters (Choose 6)',
-        choose_hint: 'Choose 3+3 or 6 veg',
-        category_key: 'starters',
-        category_key_extra: 'starters_non_veg',
-        row_type: 'choose',
-        max_pick: 6,
-        veg_pick: 3,
-        nonveg_pick: 3,
-        sort_order: 1,
-      },
-      {
-        title: 'Main Course (Choose 2)',
-        choose_hint: '1+1 or 2 veg',
-        category_key: 'main_course_veg',
-        category_key_extra: 'main_course_non_veg',
-        row_type: 'choose',
-        max_pick: 2,
-        veg_pick: 1,
-        nonveg_pick: 1,
-        sort_order: 2,
-      },
-      {
-        title: 'Accompaniments (Rice + Breads)',
-        category_key: 'rotis_and_rice',
-        row_type: 'included',
-        sort_order: 3,
-      },
+      splitStarterRow(6, 1),
+      splitMainRow(2, 2),
+      ...accompanimentsRows(3),
     ],
   },
   {
@@ -89,42 +70,10 @@ const ASSISTED_PACKAGES = [
     ],
     client_requirements: 'Water supply, Electricity points, Serving Cutlery.',
     menu_items: [
-      {
-        title: 'Starters (Choose 8)',
-        choose_hint: 'Choose 4+4 or 8 veg',
-        category_key: 'starters',
-        category_key_extra: 'starters_non_veg',
-        row_type: 'choose',
-        max_pick: 8,
-        veg_pick: 4,
-        nonveg_pick: 4,
-        sort_order: 1,
-      },
-      {
-        title: 'Main Course (Choose 2)',
-        choose_hint: '1+1 or 2 veg',
-        category_key: 'main_course_veg',
-        category_key_extra: 'main_course_non_veg',
-        row_type: 'choose',
-        max_pick: 2,
-        veg_pick: 1,
-        nonveg_pick: 1,
-        sort_order: 2,
-      },
-      {
-        title: 'Accompaniments (Rice + Breads)',
-        category_key: 'rotis_and_rice',
-        row_type: 'included',
-        sort_order: 3,
-      },
-      {
-        title: 'Dessert (Choose 1)',
-        choose_hint: 'Choose 1',
-        category_key: 'dessert',
-        row_type: 'choose',
-        max_pick: 1,
-        sort_order: 4,
-      },
+      splitStarterRow(8, 1),
+      splitMainRow(2, 2),
+      ...accompanimentsRows(3),
+      dessertRow(1, 5),
     ],
   },
 ];

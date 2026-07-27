@@ -5,6 +5,7 @@ import {
   ensureMenuRow,
   getDishesForMenuRow,
   isAllVegSelectionMode,
+  resolveRulesForVegPreference,
   serializeSelection,
   validateMenuSelection,
 } from '../../lib/cateringMenuSelection'
@@ -47,6 +48,7 @@ function parseInitialSelection(initialSelection) {
 function CateringMenuChooseModalContent({
   row,
   menuByCategory = {},
+  vegPreference = '',
   initialSelection = '',
   onClose,
   onConfirm,
@@ -57,21 +59,24 @@ function CateringMenuChooseModalContent({
   const resolvedRow = useMemo(() => ensureMenuRow(row), [row])
 
   const dishes = useMemo(
-    () => (resolvedRow ? getDishesForMenuRow(resolvedRow, menuByCategory) : []),
-    [menuByCategory, resolvedRow]
+    () => (resolvedRow ? getDishesForMenuRow(resolvedRow, menuByCategory, vegPreference) : []),
+    [menuByCategory, resolvedRow, vegPreference]
   )
 
-  const rules = resolvedRow?.rules ?? { maxPick: 1 }
-  const rulesLabel = buildRulesLabel(rules)
+  const rules = useMemo(
+    () => resolveRulesForVegPreference(resolvedRow?.rules ?? { maxPick: 1 }, vegPreference),
+    [resolvedRow?.rules, vegPreference]
+  )
+  const rulesLabel = buildRulesLabel(rules, vegPreference)
+
+  const showSplit = Boolean(rules.vegPick && rules.nonvegPick && !String(vegPreference ?? '').trim())
+  const allVegMode = isAllVegSelectionMode(selected, dishes, rules)
 
   const vegDishes = useMemo(
     () => dishes.filter(dish => dish.dietary === 'veg' || dish.dietary === 'both'),
     [dishes]
   )
   const nonvegDishes = useMemo(() => dishes.filter(dish => dish.dietary === 'non_veg'), [dishes])
-
-  const showSplit = Boolean(rules.vegPick && rules.nonvegPick)
-  const allVegMode = isAllVegSelectionMode(selected, dishes, rules)
 
   if (!resolvedRow) return null
 
@@ -223,6 +228,7 @@ export default function CateringMenuChooseModal({
   open,
   row,
   menuByCategory = {},
+  vegPreference = '',
   initialSelection = '',
   onClose,
   onConfirm,
@@ -233,9 +239,10 @@ export default function CateringMenuChooseModal({
 
   return (
     <CateringMenuChooseModalContent
-      key={`${resolvedRow.title}-${initialSelection}`}
+      key={`${resolvedRow.title}-${initialSelection}-${vegPreference}`}
       row={row}
       menuByCategory={menuByCategory}
+      vegPreference={vegPreference}
       initialSelection={initialSelection}
       onClose={onClose}
       onConfirm={onConfirm}

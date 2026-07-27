@@ -50,7 +50,7 @@ const DEFAULT_VEG_OPTIONS = ['Veg', 'Non-Veg']
 
 const FALLBACK_MENU_ROWS = [
   {
-    title: 'Starters (Choose 4)',
+    title: 'Starters (Choose 2+2) or 4 veg',
     chooseHint: 'Choose 2+2 or 4 veg',
     categoryKey: 'starters',
     categoryKeyExtra: 'starters_non_veg',
@@ -60,7 +60,7 @@ const FALLBACK_MENU_ROWS = [
     rules: { maxPick: 4, vegPick: 2, nonvegPick: 2, minPick: 4, allVegPick: 4, allowsAllVeg: true },
   },
   {
-    title: 'Main Course (Choose 4)',
+    title: 'Main Course (Choose 2+2) or 4 veg',
     chooseHint: 'Choose 2+2 or 4 veg',
     categoryKey: 'main_course_veg',
     categoryKeyExtra: 'main_course_non_veg',
@@ -70,19 +70,22 @@ const FALLBACK_MENU_ROWS = [
     rules: { maxPick: 4, vegPick: 2, nonvegPick: 2, minPick: 4, allVegPick: 4, allowsAllVeg: true },
   },
   {
-    title: 'Accompaniments (Rice + Breads)',
+    title: 'Breads (Choose 2)',
+    chooseHint: 'Choose 2',
     categoryKey: 'rotis_and_rice',
-    variant: 'included',
-    actionLabel: 'Included',
-    selectionKey: 'menu-fallback-accompaniments',
-    rules: {
-      maxPick: 0,
-      vegPick: 0,
-      nonvegPick: 0,
-      minPick: 0,
-      allVegPick: 0,
-      allowsAllVeg: false,
-    },
+    variant: 'choose',
+    actionLabel: 'Choose',
+    selectionKey: 'menu-fallback-breads',
+    rules: { maxPick: 2, vegPick: 0, nonvegPick: 0, minPick: 2, allVegPick: 2, allowsAllVeg: false },
+  },
+  {
+    title: 'Rice (Choose 1)',
+    chooseHint: 'Choose 1',
+    categoryKey: 'rice',
+    variant: 'choose',
+    actionLabel: 'Choose',
+    selectionKey: 'menu-fallback-rice',
+    rules: { maxPick: 1, vegPick: 0, nonvegPick: 0, minPick: 1, allVegPick: 1, allowsAllVeg: false },
   },
   {
     title: 'Dessert (Choose 1)',
@@ -566,6 +569,7 @@ export default function CateringSinglePackagePage() {
     updateActiveCustomization(data => ({
       ...data,
       vegPreference: value,
+      menuSelections: {},
     }))
   }
 
@@ -714,6 +718,7 @@ export default function CateringSinglePackagePage() {
         open={menuModalOpen}
         row={activeMenuRow}
         menuByCategory={menuByCategory}
+        vegPreference={vegPreference}
         initialSelection={activeMenuInitialValue}
         onClose={() => {
           setMenuModalOpen(false)

@@ -1,4 +1,5 @@
 import { CATERING_MENU_FALLBACK } from './cateringMenuFallback'
+import { isNonVegPreference } from './cateringPricing'
 
 function pickHintText(item = {}) {
   return [item?.choose_hint, item?.chooseHint, item?.title, item?.details, item?.subtitle]
@@ -12,12 +13,14 @@ export function inferCategoryKeyFromTitle(title = '') {
   if (/dessert/.test(text)) return 'dessert'
   if (/starter/.test(text)) return 'starters'
   if (/main\s*course|\bmains\b/.test(text)) return 'main_course_veg'
-  if (/accompaniment|rotis|rice.*bread|bread.*rice/.test(text)) return 'rotis_and_rice'
   if (/pre[-\s]?plated/.test(text)) return 'pre_plated'
   if (/\bsoup\b/.test(text)) return 'soup'
   if (/live\s*station/.test(text)) return 'live_stations'
   if (/\bsalad\b/.test(text)) return 'salad'
-  if (/raita/.test(text)) return 'raita'
+  if (/raita|yoghurt|yogurt/.test(text)) return 'raita'
+  if (/\bbread/.test(text)) return 'rotis_and_rice'
+  if (/\brice\b/.test(text) && !/bread/.test(text)) return 'rice'
+  if (/accompaniment|rotis/.test(text)) return 'rotis_and_rice'
 
   return null
 }
@@ -236,13 +239,55 @@ export function mapCateringMenuRow(item, index) {
   }
 }
 
-export function getCategoryKeysForRow(row = {}) {
-  return [row.categoryKey, row.categoryKeyExtra].filter(Boolean)
+export function getCategoryKeysForRow(row = {}, vegPreference = '') {
+  const keys = [row.categoryKey, row.categoryKeyExtra].filter(Boolean)
+  if (!keys.length || !String(vegPreference ?? '').trim()) return keys
+
+  const nonVeg = isNonVegPreference(vegPreference)
+  const hasStarterSplit = keys.includes('starters') && keys.includes('starters_non_veg')
+  const hasMainSplit =
+    keys.includes('main_course_veg') && keys.includes('main_course_non_veg')
+
+  if (hasStarterSplit) {
+    return [nonVeg ? 'starters_non_veg' : 'starters']
+  }
+
+  if (hasMainSplit) {
+    return [nonVeg ? 'main_course_non_veg' : 'main_course_veg']
+  }
+
+  return keys
 }
 
-export function getDishesForMenuRow(row, menuByCategory = {}) {
+function filterDishesByVegPreference(dishes = [], vegPreference = '') {
+  if (!String(vegPreference ?? '').trim()) return dishes
+
+  const nonVeg = isNonVegPreference(vegPreference)
+  return dishes.filter(dish => {
+    if (nonVeg) return dish.dietary === 'non_veg' || dish.dietary === 'both'
+    return dish.dietary === 'veg' || dish.dietary === 'both'
+  })
+}
+
+export function resolveRulesForVegPreference(rules = {}, vegPreference = '') {
+  if (!String(vegPreference ?? '').trim()) return rules
+
+  const maxPick = Number(rules.maxPick) > 0 ? Number(rules.maxPick) : 1
+  const minPick = Number(rules.minPick) > 0 ? Number(rules.minPick) : maxPick
+
+  return {
+    minPick,
+    maxPick,
+    vegPick: 0,
+    nonvegPick: 0,
+    allVegPick: maxPick,
+    allowsAllVeg: false,
+  }
+}
+
+export function getDishesForMenuRow(row, menuByCategory = {}, vegPreference = '') {
   const resolvedRow = ensureMenuRow(row) ?? row
-  const keys = getCategoryKeysForRow(resolvedRow)
+  const keys = getCategoryKeysForRow(resolvedRow, vegPreference)
   if (!keys.length) return []
 
   const dishes = []
@@ -257,7 +302,10 @@ export function getDishesForMenuRow(row, menuByCategory = {}) {
     }
   }
 
-  return dishes.sort((left, right) => Number(left.sort_order ?? 0) - Number(right.sort_order ?? 0))
+  return filterDishesByVegPreference(
+    dishes.sort((left, right) => Number(left.sort_order ?? 0) - Number(right.sort_order ?? 0)),
+    vegPreference
+  )
 }
 
 export function formatSelectionSummary(selectedNames = [], rules = {}) {
@@ -272,9 +320,14 @@ export function formatSelectionSummary(selectedNames = [], rules = {}) {
   return names.join(', ')
 }
 
-export function buildRulesLabel(rules = {}) {
+export function buildRulesLabel(rules = {}, vegPreference = '') {
   const { vegPick, nonvegPick, allVegPick } = rules
   const maxPick = Number(rules.maxPick) > 0 ? Number(rules.maxPick) : 1
+
+  if (String(vegPreference ?? '').trim()) {
+    if (maxPick === 1) return `Choose 1 ${isNonVegPreference(vegPreference) ? 'non-veg' : 'veg'} item`
+    return `Choose ${maxPick} ${isNonVegPreference(vegPreference) ? 'non-veg' : 'veg'} items`
+  }
 
   if (vegPick && nonvegPick) {
     return `Choose ${vegPick} veg + ${nonvegPick} non-veg (or ${allVegPick || maxPick} veg)`
