@@ -2,7 +2,7 @@
 'use strict';
 
 /**
- * One-shot seed for House Party decor catalog.
+ * Seeds General Pack (Birthday) + House Party decor catalogs.
  *
  *   cd strapi
  *   $env:SEED_DECOR_REFRESH_EXISTING="true"
@@ -11,9 +11,13 @@
 const path = require('node:path');
 const Strapi = require('@strapi/strapi');
 const {
-  seedDecorHousePartyBirthdayPackages,
-  HOUSE_PARTY_BIRTHDAY_PACKAGES,
-} = require('../src/seed/decor-house-party-birthday-packages');
+  GENERAL_PACK_PACKAGE_SLUGS,
+  seedDecorGeneralPackPackages,
+} = require('../src/seed/decor-general-pack-packages');
+const {
+  HOUSE_PARTY_PACKAGE_SLUGS,
+  seedDecorHousePartyPackages,
+} = require('../src/seed/decor-house-party-packages');
 
 async function dumpSlug(strapi, slug) {
   const rows = await strapi.documents('api::package.package').findMany({
@@ -23,7 +27,7 @@ async function dumpSlug(strapi, slug) {
       packages: {
         on: {
           'package.decorpackages': {
-            populate: ['inclustions', 'addons', 'elements', 'theme'],
+            populate: ['theme'],
           },
         },
       },
@@ -43,11 +47,12 @@ async function dumpSlug(strapi, slug) {
   const eventSlugs = (row.events || []).map(event => event.slug).filter(Boolean);
 
   console.log(
-    'VERIFY %s: price=%s theme=%s events=%s title=%s',
+    'VERIFY %s: price=%s theme=%s events=%s active=%s title=%s',
     slug,
     row.base_price,
     themeSlug,
     JSON.stringify(eventSlugs),
+    row.is_active,
     row.title
   );
 }
@@ -57,20 +62,23 @@ async function main() {
   const app = await Strapi.createStrapi({ appDir }).load();
 
   try {
-    const result = await seedDecorHousePartyBirthdayPackages(app);
-    const packages = result?.packages ?? [];
-    const summary = {
-      created: packages.filter(item => !item.skipped && !item.repaired && !item.updated).length,
-      updated: packages.filter(item => item.updated).length,
-      repaired: packages.filter(item => item.repaired).length,
-      skipped: packages.filter(item => item.skipped).length,
-      archivedLegacy: result?.archivedLegacy ?? 0,
-      event: result?.eventDocumentId ?? null,
-    };
-    console.log('[seed/decor-house-party-birthday] done:', JSON.stringify(summary, null, 2));
+    const general = await seedDecorGeneralPackPackages(app);
+    const house = await seedDecorHousePartyPackages(app);
 
-    for (const pkg of HOUSE_PARTY_BIRTHDAY_PACKAGES) {
-      await dumpSlug(app, pkg.slug);
+    console.log('[seed/decor-general-pack] done:', {
+      updated: (general.packages ?? []).filter(item => item.updated).length,
+      restoredVisibility: general.restoredVisibility ?? 0,
+    });
+    console.log('[seed/decor-house-party] done:', {
+      updated: (house.packages ?? []).filter(item => item.updated).length,
+      repairedEventLinks: house.repairedEventLinks ?? 0,
+    });
+
+    for (const slug of GENERAL_PACK_PACKAGE_SLUGS) {
+      await dumpSlug(app, slug);
+    }
+    for (const slug of HOUSE_PARTY_PACKAGE_SLUGS) {
+      await dumpSlug(app, slug);
     }
   } finally {
     await app.destroy();

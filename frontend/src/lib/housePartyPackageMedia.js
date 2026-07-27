@@ -2,11 +2,11 @@
 const HOUSE_PARTY_MEDIA_BASE = '/offline-media/house-party'
 
 const PACKAGE_IMAGES_BY_SLUG = {
-  'phool-proof-1': [
+  'hp-phool-proof-1': [
     `${HOUSE_PARTY_MEDIA_BASE}/phool-proof.png`,
     `${HOUSE_PARTY_MEDIA_BASE}/house-party-packages.png`,
   ],
-  'phool-proof-2': [
+  'hp-phool-proof-2': [
     `${HOUSE_PARTY_MEDIA_BASE}/phool-proof.png`,
     `${HOUSE_PARTY_MEDIA_BASE}/house-party-packages.png`,
   ],

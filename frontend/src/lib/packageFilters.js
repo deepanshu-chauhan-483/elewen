@@ -77,8 +77,8 @@ const FURNITURE_ALLOWED_SLUGS = new Set([
 
 /** House Party decor — exact catalog only (Phool-Proof, Soft Glow Szn, Hosting Hero, Entertainment Kit). */
 const HOUSE_PARTY_ALLOWED_SLUGS = new Set([
-  'phool-proof-1',
-  'phool-proof-2',
+  'hp-phool-proof-1',
+  'hp-phool-proof-2',
   'soft-glow-szn-1',
   'soft-glow-szn-2',
   'soft-glow-szn-3',
@@ -727,8 +727,6 @@ const THEME_PARENT_CHILD_SLUGS = {
     'party-smart',
     'aarambh',
     'aura-upgrade',
-    'house-party',
-    'house-parties',
     'birthday-parties',
   ],
   'birthday-parties': [
@@ -741,8 +739,6 @@ const THEME_PARENT_CHILD_SLUGS = {
     'party-smart',
     'aarambh',
     'aura-upgrade',
-    'house-party',
-    'house-parties',
     'birthday-party',
   ],
   'the-walk-to-forever': [
