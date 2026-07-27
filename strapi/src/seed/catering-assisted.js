@@ -5,6 +5,8 @@ const {
   splitStarterRow,
   splitMainRow,
   accompanimentsRows,
+  raitaRow,
+  saladRow,
   dessertRow,
 } = require('./catering-menu-items-shared');
 
@@ -72,8 +74,10 @@ const ASSISTED_PACKAGES = [
     menu_items: [
       splitStarterRow(8, 1),
       splitMainRow(2, 2),
-      ...accompanimentsRows(3),
-      dessertRow(1, 5),
+      saladRow(3, 1),
+      raitaRow(4, 1),
+      ...accompanimentsRows(5),
+      dessertRow(1, 7),
     ],
   },
 ];

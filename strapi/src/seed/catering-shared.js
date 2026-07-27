@@ -60,17 +60,17 @@ function parseChooseHint(hint = '') {
 
 function inferCategoryKeyFromTitle(title = '') {
   const text = String(title ?? '').toLowerCase();
-  if (/dessert|yoghurt|yogurt/.test(text)) return 'dessert';
+  if (/dessert/.test(text)) return 'dessert';
   if (/starter/.test(text)) return 'starters';
   if (/main\s*course|\bmains\b/.test(text)) return 'main_course_veg';
-  if (/accompaniment|rotis|rice.*bread|bread.*rice|artisan breads/.test(text)) {
-    return 'rotis_and_rice';
-  }
   if (/pre[-\s]?plated/.test(text)) return 'pre_plated';
   if (/\bsoup\b/.test(text)) return 'soup';
   if (/live\s*station/.test(text)) return 'live_stations';
   if (/\bsalad\b/.test(text)) return 'salad';
-  if (/raita/.test(text)) return 'raita';
+  if (/raita|yoghurt|yogurt/.test(text)) return 'raita';
+  if (/\bbread/.test(text)) return 'rotis_and_rice';
+  if (/\brice\b/.test(text) && !/bread/.test(text)) return 'rice';
+  if (/accompaniment|rotis|artisan breads/.test(text)) return 'rotis_and_rice';
   return null;
 }
 

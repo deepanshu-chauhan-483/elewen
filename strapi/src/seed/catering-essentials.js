@@ -7,6 +7,9 @@ const {
   accompanimentsRows,
   soupRow,
   prePlatedRow,
+  raitaRow,
+  saladRow,
+  liveStationRow,
   dessertRow,
 } = require('./catering-menu-items-shared');
 
@@ -72,8 +75,10 @@ const ESSENTIAL_PACKAGES = [
       prePlatedRow(1),
       splitStarterRow(6, 2),
       splitMainRow(4, 3),
-      ...accompanimentsRows(4),
-      dessertRow(2, 6),
+      saladRow(4, 1),
+      raitaRow(5, 1),
+      ...accompanimentsRows(6),
+      dessertRow(2, 8),
     ],
   },
   {
@@ -89,12 +94,15 @@ const ESSENTIAL_PACKAGES = [
     exclusions: ESSENTIALS_EXCLUSIONS,
     client_requirements: ESSENTIALS_CLIENT_REQUIREMENTS,
     menu_items: [
-      soupRow(1, { title: 'Soup Station (Choose 1)' }),
+      soupRow(1, { title: 'Soup (Choose 1)' }),
       prePlatedRow(2),
       splitStarterRow(8, 3),
       splitMainRow(6, 4),
-      ...accompanimentsRows(5),
-      dessertRow(2, 7),
+      saladRow(5, 1),
+      raitaRow(6, 1),
+      liveStationRow(7, 1),
+      ...accompanimentsRows(8),
+      dessertRow(2, 10),
     ],
   },
 ];
