@@ -36,7 +36,6 @@ const FALLBACK_SOCIAL_CORPORATE_EVENT_SLUGS = new Set([
   'anniversaries',
   'house-parties',
   'baby-shower',
-  'bridal-shower',
   'bachelors-bachelorette',
   'proposals',
   'diwali-party',
