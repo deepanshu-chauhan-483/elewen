@@ -598,8 +598,6 @@ const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
   'birthday-parties': [
     'birthday-party',
     'birthday-parties',
-    'house-party',
-    'house-parties',
     'bubbles-and-black-tie',
     'bohemian',
     'pastel',
