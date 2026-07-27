@@ -2,11 +2,13 @@
 
 /**
  * Decor packages for Religious → Pooja / Kirtan (Kesari + Shankh).
- * Figma detail UI: grouped inclusions + Choose 1 (Kesari 3).
+ * Figma listing: Level rows + card chips from inclusions.
+ * Figma detail: grouped inclusions, Choose 1 cards, message field, accordions.
+ *
  * Customer-facing price = Final Price only. Internal line costs stay off-site.
  *
- * Shankh Final Prices were missing from the client paste — set SHANKH_FINAL_PRICES
- * before those four packages will seed / show.
+ * Shankh Final Prices default to ₹500 placeholder (client edits in Strapi).
+ * Override via env: SHANKH_PRICE, SHANKH_2_PRICE, SHANKH_3_PRICE, SHANKH_3_1_PRICE.
  */
 
 const {
@@ -19,18 +21,31 @@ const {
 
 const EVENT_SLUG_CANDIDATES = [
   'pooja-kirtan',
+  'pooja-events',
+  'pooja-event',
   'pooja',
   'kirtan',
   'pujas-festivals',
   'pujas-and-festivals',
 ];
 
-/** Fill these Final Prices (₹) before Shankh packages seed. */
+function envPrice(key, fallback = null) {
+  const raw = process.env[key];
+  if (raw == null || String(raw).trim() === '') return fallback;
+  const n = Number(String(raw).replace(/,/g, '').trim());
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+/**
+ * Placeholder Final Prices (₹) until client edits in Strapi.
+ * Override via env: SHANKH_PRICE, SHANKH_2_PRICE, SHANKH_3_PRICE, SHANKH_3_1_PRICE.
+ */
+const SHANKH_PLACEHOLDER_PRICE = 500;
 const SHANKH_FINAL_PRICES = {
-  shankh: null,
-  'shankh-2': null,
-  'shankh-3': null,
-  'shankh-3-1': null,
+  shankh: envPrice('SHANKH_PRICE', SHANKH_PLACEHOLDER_PRICE),
+  'shankh-2': envPrice('SHANKH_2_PRICE', SHANKH_PLACEHOLDER_PRICE),
+  'shankh-3': envPrice('SHANKH_3_PRICE', SHANKH_PLACEHOLDER_PRICE),
+  'shankh-3-1': envPrice('SHANKH_3_1_PRICE', SHANKH_PLACEHOLDER_PRICE),
 };
 
 const POOJA_NITTY_GRITTY =
@@ -59,6 +74,35 @@ const SHANKH_WHY_BASE =
 const SHANKH_WHY_TABLE =
   'Fragrant mogra and rajnigandha trays, complemented by delicate floral arrangements, bring warmth, depth, and sophistication to your space.';
 
+const SHANKH_COMPLETE_SETUP = [
+  { text: '1 Wooden frame', group_title: 'A Complete Setup' },
+  { text: 'Fabric draping', group_title: 'A Complete Setup' },
+  { text: 'Mix of premium flower decor', group_title: 'A Complete Setup' },
+  { text: '1 Altar Wooden Table with Linen', group_title: 'A Complete Setup' },
+  { text: '1 Floral Rangoli', group_title: 'A Complete Setup' },
+  { text: '2 Brass diya stands', group_title: 'A Complete Setup' },
+];
+
+const SHANKH_TABLE_DECOR = [
+  {
+    text: '5 Metal trays laden with mogra and rajnigandha',
+    group_title: 'Table Decor',
+  },
+  {
+    text: '8 Floral arrangements in small vases of assorted sizes',
+    group_title: 'Table Decor',
+  },
+];
+
+const SHANKH_ENTRANCE = [
+  {
+    text: 'Premium florals (add your text when booking)',
+    group_title: 'Entrance Setup',
+  },
+  { text: 'Easel and Board', group_title: 'Entrance Setup' },
+  { text: '2 Floral Vases', group_title: 'Entrance Setup' },
+];
+
 function choiceOption(groupKey, label, optionTitle, options = {}) {
   const row = {
     is_choice_group: true,
@@ -80,6 +124,24 @@ function whenInclusion(parentKey, parentValue, text) {
     text,
     group_title: `when:${parentKey}:${parentValue}`,
   };
+}
+
+/** Shankh 3.1 — sheet lists priced seating options (Choose 1). */
+function shankh31SeatingChoice() {
+  return [
+    choiceOption(
+      'shankh31-seating',
+      'The Seating (choose 1)',
+      '6 Gadda Mattresses + 12 Pillows',
+      { amount: 1500 }
+    ),
+    choiceOption(
+      'shankh31-seating',
+      'The Seating (choose 1)',
+      '8 Standard Plastic Chairs',
+      { amount: 2000 }
+    ),
+  ];
 }
 
 const KESARI_PACKAGES = [
@@ -238,12 +300,7 @@ const SHANKH_PACKAGES = [
     price_covers: POOJA_PRICE_COVERS,
     price_breakdown: [],
     inclustions: [
-      { text: '1 Wooden frame', group_title: 'A Complete Setup' },
-      { text: 'Fabric draping', group_title: 'A Complete Setup' },
-      { text: 'Mix of premium flower decor', group_title: 'A Complete Setup' },
-      { text: '1 Altar Wooden Table with Linen', group_title: 'A Complete Setup' },
-      { text: '1 Floral Rangoli', group_title: 'A Complete Setup' },
-      { text: '2 Brass diya stands', group_title: 'A Complete Setup' },
+      ...SHANKH_COMPLETE_SETUP,
       { text: '2 Urlis with flowers', group_title: 'A Complete Setup' },
       { text: '12 Mitti diyas', group_title: 'A Complete Setup' },
     ],
@@ -266,22 +323,10 @@ const SHANKH_PACKAGES = [
     price_covers: POOJA_PRICE_COVERS,
     price_breakdown: [],
     inclustions: [
-      { text: '1 Wooden frame', group_title: 'A Complete Setup' },
-      { text: 'Fabric draping', group_title: 'A Complete Setup' },
-      { text: 'Mix of premium flower decor', group_title: 'A Complete Setup' },
-      { text: '1 Altar Wooden Table with Linen', group_title: 'A Complete Setup' },
-      { text: '1 Floral Rangoli', group_title: 'A Complete Setup' },
-      { text: '2 Brass diya stands', group_title: 'A Complete Setup' },
+      ...SHANKH_COMPLETE_SETUP,
       { text: '2 Urlis with flowers', group_title: 'A Complete Setup' },
       { text: '12 Mitti diyas', group_title: 'A Complete Setup' },
-      {
-        text: '5 Metal trays laden with mogra and rajnigandha',
-        group_title: 'Table Decor',
-      },
-      {
-        text: '8 Floral arrangements in small vases of assorted sizes',
-        group_title: 'Table Decor',
-      },
+      ...SHANKH_TABLE_DECOR,
     ],
   },
   {
@@ -302,28 +347,11 @@ const SHANKH_PACKAGES = [
     price_covers: POOJA_PRICE_COVERS,
     price_breakdown: [],
     inclustions: [
-      { text: '1 Wooden frame', group_title: 'A Complete Setup' },
-      { text: 'Fabric draping', group_title: 'A Complete Setup' },
-      { text: 'Mix of premium flower decor', group_title: 'A Complete Setup' },
-      { text: '1 Altar Wooden Table with Linen', group_title: 'A Complete Setup' },
-      { text: '1 Floral Rangoli', group_title: 'A Complete Setup' },
-      { text: '2 Brass diya stands', group_title: 'A Complete Setup' },
+      ...SHANKH_COMPLETE_SETUP,
       { text: '2 Urlis with flowers', group_title: 'A Complete Setup' },
       { text: '12 Mitti diyas', group_title: 'A Complete Setup' },
-      {
-        text: '5 Metal trays laden with mogra and rajnigandha',
-        group_title: 'Table Decor',
-      },
-      {
-        text: '8 Floral arrangements in small vases of assorted sizes',
-        group_title: 'Table Decor',
-      },
-      {
-        text: 'Premium florals (add your text when booking)',
-        group_title: 'Entrance Setup',
-      },
-      { text: 'Easel and Board', group_title: 'Entrance Setup' },
-      { text: '2 Floral Vases', group_title: 'Entrance Setup' },
+      ...SHANKH_TABLE_DECOR,
+      ...SHANKH_ENTRANCE,
     ],
   },
   {
@@ -345,21 +373,11 @@ const SHANKH_PACKAGES = [
     price_covers: POOJA_PRICE_COVERS,
     price_breakdown: [],
     inclustions: [
-      { text: '1 Wooden frame', group_title: 'A Complete Setup' },
-      { text: 'Fabric draping', group_title: 'A Complete Setup' },
-      { text: 'Mix of premium flower decor', group_title: 'A Complete Setup' },
-      { text: '1 Altar Wooden Table with Linen', group_title: 'A Complete Setup' },
-      { text: '1 Floral Rangoli', group_title: 'A Complete Setup' },
-      { text: '2 Brass diya stands', group_title: 'A Complete Setup' },
+      ...SHANKH_COMPLETE_SETUP,
+      // Sheet omits urlis for 3.1
       { text: '12 Mitti diyas', group_title: 'A Complete Setup' },
-      {
-        text: 'Premium florals (add your text when booking)',
-        group_title: 'Entrance Setup',
-      },
-      { text: 'Easel and Board', group_title: 'Entrance Setup' },
-      { text: '2 Floral Vases', group_title: 'Entrance Setup' },
-      { text: '6 Gadda Mattresses + 12 Pillows', group_title: 'The Seating' },
-      { text: '8 Standard Plastic Chairs', group_title: 'The Seating' },
+      ...SHANKH_ENTRANCE,
+      ...shankh31SeatingChoice(),
     ],
   },
 ];
@@ -377,11 +395,19 @@ async function seedDecorPoojaKirtanPackages(strapi) {
     slug: 'shankh',
     display_order: 81,
   });
+
+  // Live CMS name is "Pooja / Kirtan" under Religious (customers call this Pooja Events).
   await ensureEventDocumentId(strapi, {
     name: 'Pooja / Kirtan',
     slugCandidates: EVENT_SLUG_CANDIDATES,
     display_order: 1,
+    is_featured: true,
+    tagline: 'Sacred moments shared in a peaceful setting',
+    parentName: 'Religious',
+    parentSlugCandidates: ['religious'],
+    parent_display_order: 3,
   });
+
   await ensureBudgetLevelDocumentId(strapi, {
     name: 'Level 1',
     slug: 'level-1',
@@ -408,7 +434,7 @@ async function seedDecorPoojaKirtanPackages(strapi) {
 
   if (skippedMissingPrice.length) {
     strapi.log.warn(
-      `[seed/decor-pooja-kirtan] Skipping packages with missing Final Price: ${skippedMissingPrice.join(', ')}. Set SHANKH_FINAL_PRICES in decor-pooja-kirtan-packages.js.`
+      `[seed/decor-pooja-kirtan] Skipping packages with missing Final Price: ${skippedMissingPrice.join(', ')}. Set SHANKH_FINAL_PRICES or env SHANKH_PRICE / SHANKH_2_PRICE / SHANKH_3_PRICE / SHANKH_3_1_PRICE.`
     );
   }
 

@@ -482,6 +482,8 @@ const EVENT_SLUG_ALIASES = {
   'seminars-conferences': 'seminar-conference',
   pooja: 'pooja-kirtan',
   kirtan: 'pooja-kirtan',
+  'pooja-events': 'pooja-kirtan',
+  'pooja-event': 'pooja-kirtan',
   'pujas-festivals': 'pooja-kirtan',
   'pujas-and-festivals': 'pooja-kirtan',
   'puja-kirtan': 'pooja-kirtan',

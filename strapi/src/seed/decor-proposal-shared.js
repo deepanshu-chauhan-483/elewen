@@ -178,6 +178,7 @@ async function findEventDocumentId(strapi, slugCandidates = PROPOSAL_EVENT_SLUG_
 
 /**
  * Find or create a published Event so packages can link during seed.
+ * Optional parentEvent* links the event under a category (e.g. Religious).
  */
 async function ensureEventDocumentId(strapi, options = {}) {
   const slugCandidates = Array.isArray(options.slugCandidates)
@@ -185,9 +186,41 @@ async function ensureEventDocumentId(strapi, options = {}) {
     : [options.slug].filter(Boolean);
   const name = String(options.name ?? '').trim();
   const primarySlug = String(slugCandidates[0] ?? '').trim();
+  const parentSlugCandidates = Array.isArray(options.parentSlugCandidates)
+    ? options.parentSlugCandidates
+    : [options.parentSlug].filter(Boolean);
+
+  let parentDocumentId = null;
+  if (parentSlugCandidates.length) {
+    parentDocumentId = await findEventDocumentId(strapi, parentSlugCandidates);
+    if (!parentDocumentId && options.parentName) {
+      parentDocumentId = await ensureEventDocumentId(strapi, {
+        name: options.parentName,
+        slugCandidates: parentSlugCandidates,
+        display_order: options.parent_display_order ?? 0,
+      });
+    }
+  }
 
   const existing = await findEventDocumentId(strapi, slugCandidates);
-  if (existing) return existing;
+  if (existing) {
+    if (parentDocumentId) {
+      try {
+        await strapi.documents('api::event.event').update({
+          documentId: existing,
+          data: {
+            parent_event: { connect: [{ documentId: parentDocumentId }] },
+          },
+        });
+        await strapi.documents('api::event.event').publish({ documentId: existing });
+      } catch (error) {
+        strapi.log.warn(
+          `[seed] Could not link event "${primarySlug || name}" to parent: ${error?.message || error}`
+        );
+      }
+    }
+    return existing;
+  }
 
   if (!primarySlug || !name) return null;
 
@@ -196,8 +229,12 @@ async function ensureEventDocumentId(strapi, options = {}) {
       name,
       slug: primarySlug,
       is_active: true,
-      is_featured: false,
+      is_featured: Boolean(options.is_featured),
       display_order: options.display_order ?? 0,
+      ...(options.tagline ? { tagline: options.tagline } : {}),
+      ...(parentDocumentId
+        ? { parent_event: { connect: [{ documentId: parentDocumentId }] } }
+        : {}),
     },
     status: 'published',
   });

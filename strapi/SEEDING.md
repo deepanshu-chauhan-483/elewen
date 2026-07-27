@@ -109,6 +109,9 @@ Religious → Pooja / Kirtan decor (Kesari + Shankh):
 cd strapi && npm run seed:pooja-kirtan
 # production:
 docker compose run --rm --no-deps strapi node scripts/run-pooja-kirtan-seed.cjs
+
+# Shankh needs Final Prices — set in decor-pooja-kirtan-packages.js or via env:
+# SHANKH_PRICE=… SHANKH_2_PRICE=… SHANKH_3_PRICE=… SHANKH_3_1_PRICE=… npm run seed:pooja-kirtan
 ```
 
 **Not seeded from Excel (avoid duplicates):**
