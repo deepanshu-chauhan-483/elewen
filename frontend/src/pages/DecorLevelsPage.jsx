@@ -359,7 +359,9 @@ export default function DecorLevelsPage() {
           <br /> Choose the level that matches your event mood, guest count, and decor complexity.
         </p>
 
-        {levelSections.map(level => {
+        {levelSections
+          .filter(level => level.packages.length > 0)
+          .map(level => {
           const levelKey = level.key
           const totalPages = getTotalPages(level.packages)
           const currentPage = Math.min(pagination[levelKey] || 0, totalPages - 1)

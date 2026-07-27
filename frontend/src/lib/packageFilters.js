@@ -670,6 +670,7 @@ const THEME_PARENT_CHILD_SLUGS = {
   'sufi-night': ['ishq-sufiyana'],
   'ishq-sufiyana': ['sufi-night'],
   'house-party': [
+    'general-pack',
     'phool-proof',
     'air-we-go',
     'the-first-layer',
@@ -683,6 +684,7 @@ const THEME_PARENT_CHILD_SLUGS = {
     'birthday-parties',
   ],
   'house-parties': [
+    'general-pack',
     'phool-proof',
     'air-we-go',
     'the-first-layer',
@@ -696,6 +698,7 @@ const THEME_PARENT_CHILD_SLUGS = {
     'birthday-parties',
   ],
   'birthday-party': [
+    'general-pack',
     'phool-proof',
     'air-we-go',
     'the-first-layer',
@@ -709,6 +712,7 @@ const THEME_PARENT_CHILD_SLUGS = {
     'birthday-parties',
   ],
   'birthday-parties': [
+    'general-pack',
     'phool-proof',
     'air-we-go',
     'the-first-layer',
@@ -735,9 +739,51 @@ const THEME_PARENT_CHILD_SLUGS = {
   'our-private-corner': ['our-private-corner-2', 'our-private-corner-3'],
 }
 
+/** House Party + General Pack share one decor catalog across these events/themes. */
+const GENERAL_PACK_EVENT_SLUGS = [
+  'house-parties',
+  'birthday-parties',
+  'house-party',
+  'birthday-party',
+]
+
+function isGeneralPackThemeSlug(themeSlug = '') {
+  const normalized = normalizeThemeSlug(themeSlug)
+  if (!normalized) return false
+
+  if (
+    normalized === 'house-party' ||
+    normalized === 'house-parties' ||
+    normalized === 'birthday-party' ||
+    normalized === 'birthday-parties' ||
+    normalized === 'general-pack'
+  ) {
+    return true
+  }
+
+  const aliased = DECOR_THEME_ALLOWLIST_ALIASES[normalized]
+  return aliased ? isGeneralPackThemeSlug(aliased) : false
+}
+
+function packageMatchesGeneralPackEvent(pkg, eventSlug = '', eventId = '') {
+  if (eventId && includesNormalized(pkg.event_ids, eventId)) return true
+  return GENERAL_PACK_EVENT_SLUGS.some(slug => includesEventSlug(pkg.event_slugs, slug))
+}
+
+/** House Party picker theme should list the same packages as General Pack. */
+function resolvePackageThemeFilterSlug(themeSlug = '') {
+  const normalized = normalizeThemeSlug(themeSlug)
+  if (normalized === 'house-party' || normalized === 'house-parties') {
+    return 'birthday-party'
+  }
+
+  const aliased = DECOR_THEME_ALLOWLIST_ALIASES[normalized]
+  return aliased ? normalizeThemeSlug(aliased) : normalized
+}
+
 /** Expand a theme filter slug to every slug that should count as a match. */
 export function expandThemeFilterSlugs(themeSlug = '') {
-  const normalized = normalizeThemeSlug(themeSlug)
+  const normalized = normalizeThemeSlug(resolvePackageThemeFilterSlug(themeSlug))
   if (!normalized) return new Set()
 
   const expanded = new Set([normalized])
@@ -752,6 +798,15 @@ export function expandThemeFilterSlugs(themeSlug = '') {
     for (const child of THEME_PARENT_CHILD_SLUGS[key] ?? []) {
       const childSlug = normalizeThemeSlug(child)
       if (childSlug) expanded.add(childSlug)
+    }
+  }
+
+  for (const key of [...expanded]) {
+    const aliased = DECOR_THEME_ALLOWLIST_ALIASES[key]
+    if (aliased) expanded.add(normalizeThemeSlug(aliased))
+
+    for (const [alias, canonical] of Object.entries(DECOR_THEME_ALLOWLIST_ALIASES)) {
+      if (normalizeThemeSlug(canonical) === key) expanded.add(normalizeThemeSlug(alias))
     }
   }
 
@@ -875,6 +930,11 @@ export function filterPackages(packages, filters = {}) {
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
 
   const corporateEventAllowlist = getCorporateEventPackageAllowlist(eventSlug)
+  const usesGeneralPackCatalog =
+    normalizedServiceSlug === 'decor' &&
+    (isGeneralPackThemeSlug(themeSlug) ||
+      (!themeSlug &&
+        GENERAL_PACK_EVENT_SLUGS.some(slug => eventSlugsMatch(eventSlug, slug))))
 
   return (Array.isArray(packages) ? packages : []).filter(pkg => {
     // Corporate event catalogs (Exhibition / Seminar): exact package list only.
@@ -887,8 +947,10 @@ export function filterPackages(packages, filters = {}) {
     const eventMatched =
       !eventSlug && !eventId
         ? true
-        : (eventId ? includesNormalized(pkg.event_ids, eventId) : false) ||
-          (eventSlug ? includesEventSlug(pkg.event_slugs, eventSlug) : false)
+        : usesGeneralPackCatalog
+          ? packageMatchesGeneralPackEvent(pkg, eventSlug, eventId)
+          : (eventId ? includesNormalized(pkg.event_ids, eventId) : false) ||
+            (eventSlug ? includesEventSlug(pkg.event_slugs, eventSlug) : false)
 
     if (!categoryMatched || !eventMatched) {
       if (!servicePassesOccasionFilters(pkg, { categorySlug, eventSlug, eventId })) {
