@@ -399,15 +399,15 @@ export default function DecorLevelsPage() {
 
               <div className="relative overflow-visible">
                 {visiblePackages.length > 0 ? (
-                  <div className="mx-auto grid w-[min(322px,calc(100vw-5.5rem))] grid-cols-1 justify-items-center gap-4 md:w-full sm:grid-cols-2 sm:justify-items-stretch lg:grid-cols-3">
+                  <div className="mx-auto grid w-[min(322px,calc(100vw-5.5rem))] grid-cols-1 items-stretch justify-items-center gap-4 md:w-full sm:grid-cols-2 sm:justify-items-stretch lg:grid-cols-3">
                     {visiblePackages.map((pkg, index) => (
                       <div
                         key={`${level.id}-${pkg.id ?? pkg.title}-${index}`}
-                        className="w-full max-w-[322px] md:max-w-none"
+                        className="flex h-full w-full max-w-[322px] md:max-w-none"
                       >
                         <PackageCard
                           pkg={pkg}
-                          className="h-auto"
+                          className="h-full w-full"
                           compactMode={!isDesktopViewport}
                         />
                       </div>

@@ -615,8 +615,8 @@ const UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS = [
 
 /** Extra themes per event (plus universal themes above). */
 const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
-  anniversary: ['still-us', 'bubbles-and-black-tie'],
-  'house-parties': ['house-party', 'house-parties'],
+  anniversary: ['still-us', 'bubbles-and-black-tie', 'birthday-party', 'general-pack'],
+  'house-parties': ['house-party', 'house-parties', 'birthday-party', 'general-pack'],
   'birthday-parties': [
     'birthday-party',
     'birthday-parties',
@@ -624,7 +624,7 @@ const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
     'bohemian',
     'pastel',
   ],
-  'baby-shower': ['a-little-honey', 'little-honey', 'oh-baby'],
+  'baby-shower': ['a-little-honey', 'little-honey', 'oh-baby', 'birthday-party', 'general-pack'],
   'bridal-shower': ['birthday-party', 'birthday-parties', 'general-pack'],
   'diwali-party': ['birthday-party', 'birthday-parties', 'general-pack'],
   mehendi: [],
@@ -939,8 +939,10 @@ export function filterDecorThemesBySocialEvent(themes, eventSlug = '') {
   })
 }
 
-/** Prefer themes linked on packages for this event; if none linked, show all CMS themes. */
+/** Prefer themes linked on packages for this event; merge with the event theme allowlist. */
 export function filterThemesByEventPackages(themes, packages, filters = {}) {
+  const allowedSlugs = buildAllowedSocialDecorThemeSlugSet(filters.eventSlug ?? '')
+
   const matchingPackages = filterPackages(packages, {
     categorySlug: filters.categorySlug ?? '',
     eventSlug: filters.eventSlug ?? '',
@@ -959,11 +961,14 @@ export function filterThemesByEventPackages(themes, packages, filters = {}) {
     return allThemes
   }
 
-  // No package↔theme links for this event yet — still show the full theme list.
-  if (!usedThemeSlugs.size) return allThemes
+  const fromAllowlist = allThemes.filter(theme => themeMatchesAllowedSet(theme, allowedSlugs))
+  const fromPackages = allThemes.filter(theme => themeMatchesSlugSet(theme, usedThemeSlugs))
+  const merged = dedupeThemesBySlug([...fromAllowlist, ...fromPackages])
 
-  const scoped = allThemes.filter(theme => themeMatchesSlugSet(theme, usedThemeSlugs))
-  return scoped.length > 0 ? scoped : allThemes
+  // No package↔theme links for this event yet — still show the full theme list.
+  if (!usedThemeSlugs.size) return fromAllowlist.length > 0 ? fromAllowlist : allThemes
+
+  return merged.length > 0 ? merged : allThemes
 }
 
 export function filterPackages(packages, filters = {}) {
@@ -1087,7 +1092,7 @@ export function filterPackages(packages, filters = {}) {
 
     if (
       normalizedServiceSlug === 'decor' &&
-      (isHousePartyThemeSlug(themeSlug) || isHousePartyEventSlug(eventSlug)) &&
+      isHousePartyThemeSlug(themeSlug) &&
       !isAllowedHousePartyPackage(pkg)
     ) {
       return false

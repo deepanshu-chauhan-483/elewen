@@ -232,7 +232,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
           window.open(packageHref, '_blank', 'noopener')
         }
       }}
-      className={`relative flex cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
+      className={`relative flex h-full cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
     >
       <div
         className="relative h-[280px] overflow-hidden rounded-[6px] bg-[#E8E2DA]"
@@ -352,10 +352,10 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
         <ImageDots count={images.length} currentIndex={currentIndex} />
       </div>
 
-      <div className="flex flex-col px-1 pb-1 pt-3">
+      <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
         <div className="flex items-start justify-between gap-2">
           <h3
-            className="min-w-0 flex-1 text-[12px] font-semibold leading-[1.35] text-[#2D2D2D] sm:text-[13px]"
+            className="min-h-[34px] min-w-0 flex-1 text-[12px] font-semibold leading-[1.35] text-[#2D2D2D] sm:text-[13px]"
             style={{ fontFamily: 'Poppins' }}
           >
             {pkg.title}
@@ -366,25 +366,27 @@ export default function PackageCard({ pkg, className = '', compactMode = false }
         </div>
 
         {pkg.price ? (
-          <p className="mt-0 text-[13px] leading-none text-[#2D2D2D]">
+          <p className="mt-0 min-h-[20px] text-[13px] leading-none text-[#2D2D2D]">
             Price <span className="text-[15px] font-bold text-[#591902]">{pkg.price}</span>
           </p>
-        ) : null}
+        ) : (
+          <div className="min-h-[20px]" aria-hidden="true" />
+        )}
 
-        {tags.length > 0 ? (
-          <div
-            ref={tagsContainerRef}
-            className="mt-4 overflow-hidden"
-            style={tagBlockMaxHeight ? { maxHeight: `${tagBlockMaxHeight}px` } : undefined}
-          >
+        <div
+          ref={tagsContainerRef}
+          className="mt-4 min-h-[52px] overflow-hidden"
+          style={tagBlockMaxHeight ? { maxHeight: `${tagBlockMaxHeight}px` } : undefined}
+        >
+          {tags.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {visibleTags.map((tag, tagIndex) => (
                 <TagPill key={`${tag}-${tagIndex}`}>{tag}</TagPill>
               ))}
               {hasMoreTags ? <TagPill>More</TagPill> : null}
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
 
         <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0" aria-hidden="true">
           <div
