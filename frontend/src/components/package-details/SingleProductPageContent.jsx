@@ -11,11 +11,113 @@ import { assignDistinctCoverIndices } from '../../lib/packageFilters'
 import { BOOK_CONSULTATION_PATH } from '../../lib/serviceFlow'
 
 const MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS =
-  'h-[min(70vh,32rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]'
+  'h-[min(52vh,18.75rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]'
 
-// ponytail: cap side thumbnails to main image height; extra images scroll inside
-const SIDE_IMAGES_DESKTOP_HEIGHT_CLASS =
-  'md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:max-h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:min-h-0'
+// Cap side thumbnails to main image height; extra images scroll inside the column.
+const SIDE_IMAGES_COLUMN_CLASS =
+  'max-h-[min(52vh,18.75rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:max-h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:min-h-0'
+
+const SIDE_THUMB_BUTTON_CLASS =
+  'h-[clamp(3.5rem,11vw,5.125rem)] w-[clamp(3.25rem,14vw,5rem)] shrink-0 overflow-hidden rounded-[12px] transition-opacity md:h-[clamp(5.125rem,6.5vw,6.4375rem)] md:w-[clamp(4rem,5vw,5rem)]'
+
+function ProductImageLightbox({
+  open,
+  image,
+  title,
+  imageMeta,
+  onClose,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+}) {
+  useEffect(() => {
+    if (!open) return undefined
+
+    const onKeyDown = event => {
+      if (event.key === 'Escape') onClose()
+      if (event.key === 'ArrowLeft' && hasPrev) onPrev()
+      if (event.key === 'ArrowRight' && hasNext) onNext()
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open, onClose, onPrev, onNext, hasPrev, hasNext])
+
+  if (!open || !image) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/92 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${title} image preview`}
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-2xl leading-none text-white"
+        aria-label="Close image preview"
+      >
+        ×
+      </button>
+
+      {hasPrev ? (
+        <button
+          type="button"
+          onClick={event => {
+            event.stopPropagation()
+            onPrev()
+          }}
+          className="absolute left-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white md:left-4"
+          aria-label="Previous image"
+        >
+          ‹
+        </button>
+      ) : null}
+
+      {hasNext ? (
+        <button
+          type="button"
+          onClick={event => {
+            event.stopPropagation()
+            onNext()
+          }}
+          className="absolute right-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white md:right-4"
+          aria-label="Next image"
+        >
+          ›
+        </button>
+      ) : null}
+
+      <div
+        className="relative max-h-[90vh] max-w-[min(100%,42rem)]"
+        onClick={event => event.stopPropagation()}
+      >
+        <AppImage
+          src={image}
+          alt={title}
+          eager
+          className="max-h-[90vh] w-full object-contain"
+        />
+        {imageMeta?.heading || imageMeta?.text ? (
+          <div className="absolute bottom-3 right-3 max-w-[80%] rounded-full bg-[#591902] px-3.5 py-1.5 text-white shadow-sm">
+            <p className="truncate text-[11px] font-semibold leading-none tracking-wide">
+              {imageMeta?.heading || imageMeta?.text}
+            </p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
 
 function ConsultationLinkButton({ label, className = '' }) {
   return (
@@ -395,6 +497,7 @@ function ProductImageLayout({
   const [selectedOverride, setSelectedOverride] = useState(null)
   const [trackedMainImage, setTrackedMainImage] = useState(normalizedMainImage)
   const [isCartOptionsOpen, setIsCartOptionsOpen] = useState(false)
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
 
   const scrollToProductOptions = useCallback(() => {
     const options = document.getElementById('product-options')
@@ -416,6 +519,19 @@ function ProductImageLayout({
       ? selectedOverride
       : initialDisplayImage
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
+  const activeGalleryIndex = Math.max(0, galleryUrls.indexOf(activeImage))
+  const hasGalleryPrev = galleryUrls.length > 1 && activeGalleryIndex > 0
+  const hasGalleryNext = galleryUrls.length > 1 && activeGalleryIndex < galleryUrls.length - 1
+
+  const showPreviousGalleryImage = useCallback(() => {
+    if (!hasGalleryPrev) return
+    setSelectedOverride(galleryUrls[activeGalleryIndex - 1])
+  }, [activeGalleryIndex, galleryUrls, hasGalleryPrev])
+
+  const showNextGalleryImage = useCallback(() => {
+    if (!hasGalleryNext) return
+    setSelectedOverride(galleryUrls[activeGalleryIndex + 1])
+  }, [activeGalleryIndex, galleryUrls, hasGalleryNext])
 
   useEffect(() => {
     const urls = [mainImage, ...sideImages].filter(Boolean)
@@ -439,15 +555,45 @@ function ProductImageLayout({
             className="top-15 md:sticky md:self-start md:shrink-0"
             style={{ top: desktopSectionTop }}
           >
-            <div className="flex flex-col gap-4 md:flex-row md:items-start">
-              {/* Main Image */}
+            <div className="flex w-full flex-row items-start gap-2 pt-4 md:gap-4 md:pt-0">
+              {sideImages.length > 0 ? (
+                <div
+                  className={`flex w-[clamp(3.25rem,14vw,5rem)] min-w-[3.25rem] shrink-0 flex-col items-end gap-2 overflow-y-auto pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_COLUMN_CLASS}`}
+                  data-lenis-prevent
+                >
+                  {sideImages.map((image, index) => (
+                    <button
+                      type="button"
+                      key={`${image}-${index}`}
+                      onClick={() => setSelectedOverride(image)}
+                      className={`${SIDE_THUMB_BUTTON_CLASS} ${
+                        activeImage === image ? 'opacity-100' : 'opacity-40'
+                      }`}
+                      aria-label={`Show ${title} preview ${index + 1}`}
+                      aria-pressed={activeImage === image}
+                    >
+                      <AppImage
+                        src={image}
+                        alt={`${title} preview ${index + 1}`}
+                        className="h-full w-full rounded-[14px] object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
               <div
-                className="order-1 pt-8 md:pt-0 mx-auto w-full shrink-0 md:order-2"
+                className="min-w-0 flex-1 md:shrink-0"
                 style={{
                   maxWidth: 'clamp(17.5rem, 38vw, 37.5rem)',
                 }}
               >
-                <div className={`relative w-full ${MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS}`}>
+                <button
+                  type="button"
+                  className={`relative block w-full md:pointer-events-none md:cursor-default ${MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS}`}
+                  onClick={() => setIsLightboxOpen(true)}
+                  aria-label={`View ${title} image fullscreen`}
+                >
                   <AppImage
                     src={activeImage}
                     alt={title}
@@ -456,7 +602,7 @@ function ProductImageLayout({
                   />
 
                   {activeImageMeta?.heading || activeImageMeta?.text ? (
-                    <div className="absolute bottom-3 right-3 z-10 max-w-[70%] rounded-full bg-[#591902] px-3.5 py-1.5 text-white shadow-sm">
+                    <div className="pointer-events-none absolute bottom-3 right-3 z-10 max-w-[70%] rounded-full bg-[#591902] px-3.5 py-1.5 text-white shadow-sm">
                       <p className="truncate text-[11px] font-semibold leading-none tracking-wide">
                         {activeImageMeta?.heading || activeImageMeta?.text}
                       </p>
@@ -464,7 +610,7 @@ function ProductImageLayout({
                   ) : (
                     <div
                       aria-hidden="true"
-                      className="absolute bottom-0.5 right-1 z-10 rounded-full bg-white/10 p-1.5 backdrop-blur-xs"
+                      className="pointer-events-none absolute bottom-0.5 right-1 z-10 rounded-full bg-white/10 p-1.5 backdrop-blur-xs"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -496,35 +642,9 @@ function ProductImageLayout({
                       </svg>
                     </div>
                   )}
-                </div>
+                </button>
                 <PackageImageDisclaimer className="mt-1.5 text-center" />
               </div>
-
-              {/* Side Images */}
-              {sideImages.length > 0 ? (
-                <div
-                  className={`order-2 flex w-full gap-2 pb-2 max-md:max-h-none md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:shrink-0 md:flex-col md:items-end md:justify-start md:gap-0 md:space-y-2 md:overflow-y-auto md:pb-0 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_DESKTOP_HEIGHT_CLASS}`}
-                  data-lenis-prevent
-                >
-                  {sideImages.map((image, index) => (
-                    <button
-                      type="button"
-                      key={`${image}-${index}`}
-                      onClick={() => setSelectedOverride(image)}
-                      className={`aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-[12px] transition-opacity md:aspect-auto md:flex-none md:shrink-0 md:h-[clamp(5.125rem,6.5vw,6.4375rem)] md:w-[clamp(4rem,5vw,5rem)] ${
-                        activeImage === image ? 'opacity-100' : 'opacity-40'
-                      }`}
-                      aria-label={`Show ${title} preview ${index + 1}`}
-                    >
-                      <AppImage
-                        src={image}
-                        alt={`${title} preview ${index + 1}`}
-                        className="h-full w-full rounded-[14px] object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              ) : null}
             </div>
           </div>
 
@@ -822,6 +942,18 @@ function ProductImageLayout({
           </div>
         </div>
       </section>
+
+      <ProductImageLightbox
+        open={isLightboxOpen}
+        image={activeImage}
+        title={title}
+        imageMeta={activeImageMeta}
+        onClose={() => setIsLightboxOpen(false)}
+        onPrev={showPreviousGalleryImage}
+        onNext={showNextGalleryImage}
+        hasPrev={hasGalleryPrev}
+        hasNext={hasGalleryNext}
+      />
 
       <CartViewOptionsSheet
         open={isCartOptionsOpen}
