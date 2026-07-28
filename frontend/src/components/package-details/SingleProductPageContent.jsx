@@ -10,51 +10,39 @@ import { preloadImages } from '../../utils/preloadAssets'
 import { assignDistinctCoverIndices } from '../../lib/packageFilters'
 import { BOOK_CONSULTATION_PATH } from '../../lib/serviceFlow'
 
-const MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS =
-  'h-[min(52vh,18.75rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]'
+const GALLERY_VIEWPORT_HEIGHT_CLASS =
+  'h-[min(52vh,20rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]'
 
 // Cap side thumbnails to main image height; extra images scroll inside the column.
-const SIDE_IMAGES_COLUMN_CLASS =
-  'max-h-[min(52vh,18.75rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:max-h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:min-h-0'
+const SIDE_IMAGES_SCROLL_CLASS =
+  'h-[min(52vh,20rem)] max-h-[min(52vh,20rem)] min-h-0 md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)] md:max-h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]'
 
 const SIDE_THUMB_BUTTON_CLASS =
-  'h-[clamp(3.5rem,11vw,5.125rem)] w-[clamp(3.25rem,14vw,5rem)] shrink-0 overflow-hidden rounded-[12px] transition-opacity md:h-[clamp(5.125rem,6.5vw,6.4375rem)] md:w-[clamp(4rem,5vw,5rem)]'
+  'shrink-0 overflow-hidden rounded-[12px] transition-opacity h-[clamp(3.75rem,11vw,4.5rem)] w-full md:h-[clamp(5.125rem,6.5vw,6.4375rem)] md:w-[clamp(4rem,5vw,5rem)]'
 
-function ProductImageLightbox({
-  open,
-  image,
-  title,
-  imageMeta,
-  onClose,
-  onPrev,
-  onNext,
-  hasPrev,
-  hasNext,
-}) {
+function PackageImageLightbox({ open, image, title, onClose }) {
   useEffect(() => {
     if (!open) return undefined
 
-    const onKeyDown = event => {
-      if (event.key === 'Escape') onClose()
-      if (event.key === 'ArrowLeft' && hasPrev) onPrev()
-      if (event.key === 'ArrowRight' && hasNext) onNext()
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') onClose?.()
     }
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open, onClose, onPrev, onNext, hasPrev, hasNext])
+  }, [open, onClose])
 
   if (!open || !image) return null
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/92 p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4"
       role="dialog"
       aria-modal="true"
       aria-label={`${title} image preview`}
@@ -68,52 +56,18 @@ function ProductImageLightbox({
       >
         ×
       </button>
-
-      {hasPrev ? (
-        <button
-          type="button"
-          onClick={event => {
-            event.stopPropagation()
-            onPrev()
-          }}
-          className="absolute left-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white md:left-4"
-          aria-label="Previous image"
-        >
-          ‹
-        </button>
-      ) : null}
-
-      {hasNext ? (
-        <button
-          type="button"
-          onClick={event => {
-            event.stopPropagation()
-            onNext()
-          }}
-          className="absolute right-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white md:right-4"
-          aria-label="Next image"
-        >
-          ›
-        </button>
-      ) : null}
-
       <div
-        className="relative max-h-[90vh] max-w-[min(100%,42rem)]"
+        className="max-h-[90vh] max-w-full"
         onClick={event => event.stopPropagation()}
+        onKeyDown={() => {}}
+        role="presentation"
       >
         <AppImage
           src={image}
           alt={title}
           eager
-          className="max-h-[90vh] w-full object-contain"
+          className="max-h-[90vh] max-w-full object-contain"
         />
-        {imageMeta?.heading || imageMeta?.text ? (
-          <div className="absolute bottom-3 right-3 max-w-[80%] rounded-full bg-[#591902] px-3.5 py-1.5 text-white shadow-sm">
-            <p className="truncate text-[11px] font-semibold leading-none tracking-wide">
-              {imageMeta?.heading || imageMeta?.text}
-            </p>
-          </div>
-        ) : null}
       </div>
     </div>
   )
@@ -519,19 +473,10 @@ function ProductImageLayout({
       ? selectedOverride
       : initialDisplayImage
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
-  const activeGalleryIndex = Math.max(0, galleryUrls.indexOf(activeImage))
-  const hasGalleryPrev = galleryUrls.length > 1 && activeGalleryIndex > 0
-  const hasGalleryNext = galleryUrls.length > 1 && activeGalleryIndex < galleryUrls.length - 1
 
-  const showPreviousGalleryImage = useCallback(() => {
-    if (!hasGalleryPrev) return
-    setSelectedOverride(galleryUrls[activeGalleryIndex - 1])
-  }, [activeGalleryIndex, galleryUrls, hasGalleryPrev])
-
-  const showNextGalleryImage = useCallback(() => {
-    if (!hasGalleryNext) return
-    setSelectedOverride(galleryUrls[activeGalleryIndex + 1])
-  }, [activeGalleryIndex, galleryUrls, hasGalleryNext])
+  useEffect(() => {
+    setIsLightboxOpen(false)
+  }, [activeImage])
 
   useEffect(() => {
     const urls = [mainImage, ...sideImages].filter(Boolean)
@@ -555,44 +500,16 @@ function ProductImageLayout({
             className="top-15 md:sticky md:self-start md:shrink-0"
             style={{ top: desktopSectionTop }}
           >
-            <div className="flex w-full flex-row items-start gap-2 pt-4 md:gap-4 md:pt-0">
-              {sideImages.length > 0 ? (
-                <div
-                  className={`flex w-[clamp(3.25rem,14vw,5rem)] min-w-[3.25rem] shrink-0 flex-col items-end gap-2 overflow-y-auto pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_COLUMN_CLASS}`}
-                  data-lenis-prevent
-                >
-                  {sideImages.map((image, index) => (
-                    <button
-                      type="button"
-                      key={`${image}-${index}`}
-                      onClick={() => setSelectedOverride(image)}
-                      className={`${SIDE_THUMB_BUTTON_CLASS} ${
-                        activeImage === image ? 'opacity-100' : 'opacity-40'
-                      }`}
-                      aria-label={`Show ${title} preview ${index + 1}`}
-                      aria-pressed={activeImage === image}
-                    >
-                      <AppImage
-                        src={image}
-                        alt={`${title} preview ${index + 1}`}
-                        className="h-full w-full rounded-[14px] object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
+            <div className="flex w-full flex-row items-start gap-2 pt-8 md:gap-4 md:pt-0">
+              {/* Main Image */}
               <div
-                className="min-w-0 flex-1 md:shrink-0"
-                style={{
-                  maxWidth: 'clamp(17.5rem, 38vw, 37.5rem)',
-                }}
+                className="order-2 min-w-0 flex-1 mx-auto md:order-2 md:max-w-[clamp(17.5rem,38vw,37.5rem)]"
               >
                 <button
                   type="button"
-                  className={`relative block w-full md:pointer-events-none md:cursor-default ${MAIN_IMAGE_VIEWPORT_HEIGHT_CLASS}`}
-                  onClick={() => setIsLightboxOpen(true)}
-                  aria-label={`View ${title} image fullscreen`}
+                  onClick={() => activeImage && setIsLightboxOpen(true)}
+                  className={`relative block w-full cursor-zoom-in ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
+                  aria-label={`View full size image for ${title}`}
                 >
                   <AppImage
                     src={activeImage}
@@ -645,6 +562,33 @@ function ProductImageLayout({
                 </button>
                 <PackageImageDisclaimer className="mt-1.5 text-center" />
               </div>
+
+              {/* Side Images */}
+              {sideImages.length > 0 ? (
+                <div
+                  className={`order-1 flex w-[4.25rem] min-w-[4.25rem] shrink-0 flex-col items-stretch gap-2 overflow-y-auto pb-0 pt-0 md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:gap-2 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_SCROLL_CLASS}`}
+                  data-lenis-prevent
+                >
+                  {sideImages.map((image, index) => (
+                    <button
+                      type="button"
+                      key={`${image}-${index}`}
+                      onClick={() => setSelectedOverride(image)}
+                      className={`${SIDE_THUMB_BUTTON_CLASS} ${
+                        activeImage === image ? 'opacity-100' : 'opacity-40'
+                      }`}
+                      aria-label={`Show ${title} preview ${index + 1}`}
+                      aria-pressed={activeImage === image}
+                    >
+                      <AppImage
+                        src={image}
+                        alt={`${title} preview ${index + 1}`}
+                        className="h-full w-full rounded-[14px] object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -943,18 +887,6 @@ function ProductImageLayout({
         </div>
       </section>
 
-      <ProductImageLightbox
-        open={isLightboxOpen}
-        image={activeImage}
-        title={title}
-        imageMeta={activeImageMeta}
-        onClose={() => setIsLightboxOpen(false)}
-        onPrev={showPreviousGalleryImage}
-        onNext={showNextGalleryImage}
-        hasPrev={hasGalleryPrev}
-        hasNext={hasGalleryNext}
-      />
-
       <CartViewOptionsSheet
         open={isCartOptionsOpen}
         onClose={() => setIsCartOptionsOpen(false)}
@@ -962,6 +894,12 @@ function ProductImageLayout({
       />
 
       <Footer />
+      <PackageImageLightbox
+        open={isLightboxOpen}
+        image={activeImage}
+        title={title}
+        onClose={() => setIsLightboxOpen(false)}
+      />
     </main>
   )
 }
