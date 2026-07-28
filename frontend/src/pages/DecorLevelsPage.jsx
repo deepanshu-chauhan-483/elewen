@@ -301,6 +301,29 @@ export default function DecorLevelsPage() {
     }))
   }
 
+  const carouselTouchStartX = useRef(0)
+  const carouselTouchStartY = useRef(0)
+
+  const handleCarouselTouchStart = e => {
+    carouselTouchStartX.current = e.touches[0].clientX
+    carouselTouchStartY.current = e.touches[0].clientY
+  }
+
+  const handleCarouselTouchEnd = (e, levelKey, totalPages, currentPage) => {
+    const touchEndX = e.changedTouches[0].clientX
+    const touchEndY = e.changedTouches[0].clientY
+    const diffX = carouselTouchStartX.current - touchEndX
+    const diffY = Math.abs(carouselTouchStartY.current - touchEndY)
+
+    if (Math.abs(diffX) > 30 && Math.abs(diffX) > diffY) {
+      if (diffX > 0) {
+        updatePage(levelKey, totalPages, currentPage + 1)
+      } else {
+        updatePage(levelKey, totalPages, currentPage - 1)
+      }
+    }
+  }
+
   const lenisRef = useLenis()
   const locationScrollKey = getLocationScrollKey(
     '/packages/decor-levels',
@@ -418,7 +441,11 @@ export default function DecorLevelsPage() {
                 </Link>
               </div>
 
-              <div className="relative overflow-visible">
+              <div
+                className="relative overflow-visible"
+                onTouchStart={handleCarouselTouchStart}
+                onTouchEnd={e => handleCarouselTouchEnd(e, levelKey, totalPages, currentPage)}
+              >
                 {visiblePackages.length > 0 ? (
                   <div className="mx-auto grid w-[min(322px,calc(100vw-5.5rem))] grid-cols-1 items-stretch justify-items-center gap-4 md:w-full sm:grid-cols-2 sm:justify-items-stretch lg:grid-cols-3">
                     {visiblePackages.map((pkg, index) => (

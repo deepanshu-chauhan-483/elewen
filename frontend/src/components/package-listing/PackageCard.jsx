@@ -197,14 +197,17 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
   }
 
   const handleTouchStart = e => {
+    e.stopPropagation()
     startX.current = e.touches[0].clientX
   }
 
   const handleTouchMove = e => {
+    e.stopPropagation()
     endX.current = e.touches[0].clientX
   }
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = e => {
+    e.stopPropagation()
     const diff = startX.current - endX.current
 
     if (diff > 50) {
