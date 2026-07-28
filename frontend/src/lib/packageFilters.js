@@ -1,3 +1,5 @@
+import { inferLevelSlugFromCateringLevel } from './cateringPricing'
+
 const normalizeValue = value =>
   String(value ?? '')
     .trim()
@@ -18,28 +20,6 @@ const normalizeThemeSlug = value =>
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-
-/**
- * Canonical catering catalog by listing Level (client map).
- * Level 1 = package “1” set, Level 2 = package “2” set, Level 3 = remaining.
- */
-const CATERING_PACKAGE_LEVEL_BY_SLUG = {
-  'close-circle-catering-1': 'level-1',
-  'easy-hosting-simply-served-1': 'level-1',
-
-  'close-circle-catering-2': 'level-2',
-  'easy-hosting-simply-served-2': 'level-2',
-  'signature-hosting-2': 'level-2',
-  'signature-hosting-package': 'level-2',
-
-  'close-circle-catering-3': 'level-3',
-  'effortless-hosting': 'level-3',
-  'the-full-table-experience': 'level-3',
-  'the-social-experience': 'level-3',
-  'the-grand-experience': 'level-3',
-  'the-social-starters': 'level-3',
-  'purely-satvik': 'level-3',
-}
 
 /**
  * Bartending listing — Classic Pour, Signature Mix, House Special.
@@ -284,30 +264,12 @@ function isAllowedBartendingPackage(pkg) {
   return false
 }
 
-function getCateringAllowlistLevel(pkg) {
-  const slug = normalizeValue(pkg?.slug)
-  if (slug && CATERING_PACKAGE_LEVEL_BY_SLUG[slug]) {
-    return CATERING_PACKAGE_LEVEL_BY_SLUG[slug]
-  }
+/** Level from Strapi: normalized level_slug, or catering_level enum. */
+function getCateringCmsLevel(pkg) {
+  const fromLevelSlug = normalizeLevelSlug(pkg?.level_slug)
+  if (/^level-\d+$/.test(fromLevelSlug)) return fromLevelSlug
 
-  // Title fallback when slug drifts in CMS.
-  const titleKey = normalizeLevelSlug(pkg?.title)
-  const titleAliases = {
-    'close-circle-catering-1': 'level-1',
-    'easy-hosting-simply-served-1': 'level-1',
-    'close-circle-catering-2': 'level-2',
-    'easy-hosting-simply-served-2': 'level-2',
-    'signature-hosting-2': 'level-2',
-    'signature-hosting-package': 'level-2',
-    'close-circle-catering-3': 'level-3',
-    'effortless-hosting': 'level-3',
-    'the-full-table-experience': 'level-3',
-    'the-social-experience': 'level-3',
-    'the-grand-experience': 'level-3',
-    'the-social-starters': 'level-3',
-    'purely-satvik': 'level-3',
-  }
-  return titleAliases[titleKey] || ''
+  return inferLevelSlugFromCateringLevel(pkg?.catering_level)
 }
 
 function packageMatchesLevelFilter(pkg, { levelSlug = '', levelId = '', serviceSlug = '' } = {}) {
@@ -315,10 +277,10 @@ function packageMatchesLevelFilter(pkg, { levelSlug = '', levelId = '', serviceS
 
   const normalizedService = normalizeServiceSlug(serviceSlug)
   if (normalizedService === 'catering') {
-    const allowedLevel = getCateringAllowlistLevel(pkg)
-    if (!allowedLevel) return false
+    const cmsLevel = getCateringCmsLevel(pkg)
+    if (!cmsLevel) return false
     if (!levelSlug) return true
-    return normalizeLevelSlug(levelSlug) === allowedLevel
+    return normalizeLevelSlug(levelSlug) === cmsLevel
   }
 
   const normalizedFilterSlug = normalizeLevelSlug(levelSlug)
@@ -1154,12 +1116,12 @@ export function filterPackages(packages, filters = {}) {
       if (!serviceLaneMatched) return false
     }
 
-    // Catering listing = exact catalog only (Close Circle / Easy Hosting / Level-3 set).
-    // Ignores Paint & Prosecco, birthday stubs, and any cross-level bleed.
+    // Catering listing = packages with a CMS level (catering_level / budget_level).
+    // Stubs without a level stay hidden.
     if (normalizedServiceSlug === 'catering') {
-      const allowedLevel = getCateringAllowlistLevel(pkg)
-      if (!allowedLevel) return false
-      if (levelSlug && normalizeLevelSlug(levelSlug) !== allowedLevel) return false
+      const cmsLevel = getCateringCmsLevel(pkg)
+      if (!cmsLevel) return false
+      if (levelSlug && normalizeLevelSlug(levelSlug) !== cmsLevel) return false
       return true
     }
 

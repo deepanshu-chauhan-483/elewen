@@ -195,7 +195,7 @@ export default function PackageResultsHero({
     if (!serviceSlug) return allEvents
 
     // Catering / F&B: show the full category event list in the pill (Social → Birthday Parties),
-    // matching decor filter UX. Package rows still filter by Level allowlist.
+    // matching decor filter UX. Package rows still filter by CMS catering_level / budget_level.
     if (serviceSlug === 'catering' || serviceSlug === 'bartending' || serviceSlug === 'sheesha') {
       return allEvents
     }

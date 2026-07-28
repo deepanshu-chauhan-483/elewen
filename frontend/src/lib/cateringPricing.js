@@ -6,6 +6,23 @@ export function getCateringDetailSection(pkg) {
   )
 }
 
+/** Strapi catering_level enum → listing Level slug (Level 1 / 2 / 3). */
+const CATERING_LEVEL_TO_BUDGET_SLUG = {
+  essentials: 'level-1',
+  assisted: 'level-2',
+  end_to_end: 'level-3',
+  'end-to-end': 'level-3',
+}
+
+/** Map CMS catering_level (essentials / assisted / end_to_end) to level-1/2/3. */
+export function inferLevelSlugFromCateringLevel(value) {
+  const key = String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+  return CATERING_LEVEL_TO_BUDGET_SLUG[key] || ''
+}
+
 export function isNonVegPreference(vegPreference = '') {
   return String(vegPreference).toLowerCase().includes('non')
 }

@@ -6,6 +6,7 @@ import { preloadImages } from '../utils/preloadAssets'
 import {
   getCateringDetailSection,
   getCateringPriceRangeLabel,
+  inferLevelSlugFromCateringLevel,
 } from '../lib/cateringPricing'
 import { resolveSheeshaSizeLabel } from '../lib/sheeshaPackageMeta'
 
@@ -74,21 +75,6 @@ function getBudgetLevelSlug(level) {
   return String(level?.slug ?? '').trim() || slugify(label)
 }
 
-const CATERING_LEVEL_TO_BUDGET_SLUG = {
-  essentials: 'level-1',
-  assisted: 'level-2',
-  end_to_end: 'level-3',
-  'end-to-end': 'level-3',
-}
-
-function inferLevelSlugFromCateringLevel(value) {
-  const key = String(value ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-  return CATERING_LEVEL_TO_BUDGET_SLUG[key] || ''
-}
-
 function resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel) {
   const serviceSlugs = normaliseRelationArray(pkg?.service_categories).map(service =>
     normalizeServiceSlug(service?.slug)
@@ -96,38 +82,18 @@ function resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel) {
   const isCatering = serviceSlugs.includes('catering')
   const isBartending = serviceSlugs.includes('bartending')
 
-  // Hard catalog map first — client Level 1/2/3 package lists.
+  // Catering: Strapi catering_level first, then budget_level relation.
   if (isCatering) {
-    const fromAllowlist = (() => {
-      const slug = String(pkg?.slug ?? '')
-        .trim()
-        .toLowerCase()
-      const map = {
-        'close-circle-catering-1': 'level-1',
-        'easy-hosting-simply-served-1': 'level-1',
-        'close-circle-catering-2': 'level-2',
-        'easy-hosting-simply-served-2': 'level-2',
-        'signature-hosting-2': 'level-2',
-        'signature-hosting-package': 'level-2',
-        'close-circle-catering-3': 'level-3',
-        'effortless-hosting': 'level-3',
-        'the-full-table-experience': 'level-3',
-        'the-social-experience': 'level-3',
-        'the-grand-experience': 'level-3',
-        'the-social-starters': 'level-3',
-        'purely-satvik': 'level-3',
-      }
-      return map[slug] || ''
-    })()
-    if (fromAllowlist) return fromAllowlist
-
     for (const section of detailSections) {
       if (section?.__component !== 'package.cateringpackage') continue
       const fromCateringLevel = inferLevelSlugFromCateringLevel(section?.catering_level)
       if (fromCateringLevel) return fromCateringLevel
     }
 
-    // No fallback to budget_level / Package N — excludes Paint & Prosecco stubs.
+    const fromBudgetLevel = getBudgetLevelSlug(primaryBudgetLevel)
+    if (fromBudgetLevel) return fromBudgetLevel
+
+    // No slug-digit fallback — keeps untitled stubs (e.g. Paint & Prosecco) out of levels.
     return ''
   }
 
