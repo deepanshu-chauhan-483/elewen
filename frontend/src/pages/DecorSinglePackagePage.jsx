@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
+import InclusionImageToast from '../components/package-details/InclusionImageToast'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
@@ -1132,6 +1133,7 @@ export default function DecorSinglePackagePage() {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [addToCartMessage, setAddToCartMessage] = useState('')
   const [selectedTextImage, setSelectedTextImage] = useState('')
+  const [toastImage, setToastImage] = useState(null)
 
   const packagesData = useMemo(
     () =>
@@ -1303,6 +1305,15 @@ export default function DecorSinglePackagePage() {
     setAddToCartMessage('')
     setSelectedTextImage('')
 
+    const currentSections = activeCustomization?.data?.sections ?? []
+    const selectedChoiceItem = currentSections
+      .find(section => (section.groupKey ?? section.title) === sectionKey)
+      ?.items?.find(item => typeof item !== 'string' && item.title === itemTitle)
+
+    if (selectedChoiceItem?.images?.length) {
+      setToastImage(selectedChoiceItem.images[0])
+    }
+
     setCustomizations(prev =>
       prev.map((customization, customizationIndex) => {
         if (customizationIndex !== activeIndex) return customization
@@ -1356,6 +1367,7 @@ export default function DecorSinglePackagePage() {
     if (!nextImage) return
 
     setSelectedTextImage(nextImage)
+    setToastImage(nextImage)
   }
 
   const handlePackageAddToCart = async () => {
@@ -1428,41 +1440,44 @@ export default function DecorSinglePackagePage() {
   )
 
   return (
-    <SingleProductPageContent
-      title={packageTitle}
-      price={packagePrice}
-      intro={packageIntro}
-      promptContent={
-        showRepeatPrompt && (
-          <RepeatCustomizationPrompt onRepeat={handleRepeat} onCreateNew={handleNew} />
-        )
-      }
-      customContent={
-        <DecorPackageSections
-          keyDecorText={keyDecorText}
-          sections={sections}
-          message={message}
-          onMessageChange={handleMessageChange}
-          onSelect={handleSelect}
-          onTextItemClick={handleTextItemClick}
-          hidePrices={consultationOnly}
-        />
-      }
-      accordionSections={accordionSections}
-      mainImage={selectedTextImage || activeMainImage || sideImages[0]}
-      sideImages={sideImages}
-      imageMetaByUrl={imageMetaByUrl}
-      relatedProducts={relatedProducts}
-      addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
-      addToCartMessage={addToCartMessage}
-      disableAddToCart={isDisabled}
-      onAddToCart={handlePackageAddToCart}
-      quantity={quantity}
-      onDecrement={handleDecrease}
-      onIncrement={handleIncrease}
-      testimonials={packageReviews}
-      consultationOnly={consultationOnly}
-      ctaButtonText="Book a consultation"
-    />
+    <>
+      <SingleProductPageContent
+        title={packageTitle}
+        price={packagePrice}
+        intro={packageIntro}
+        promptContent={
+          showRepeatPrompt && (
+            <RepeatCustomizationPrompt onRepeat={handleRepeat} onCreateNew={handleNew} />
+          )
+        }
+        customContent={
+          <DecorPackageSections
+            keyDecorText={keyDecorText}
+            sections={sections}
+            message={message}
+            onMessageChange={handleMessageChange}
+            onSelect={handleSelect}
+            onTextItemClick={handleTextItemClick}
+            hidePrices={consultationOnly}
+          />
+        }
+        accordionSections={accordionSections}
+        mainImage={selectedTextImage || activeMainImage || sideImages[0]}
+        sideImages={sideImages}
+        imageMetaByUrl={imageMetaByUrl}
+        relatedProducts={relatedProducts}
+        addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
+        addToCartMessage={addToCartMessage}
+        disableAddToCart={isDisabled}
+        onAddToCart={handlePackageAddToCart}
+        quantity={quantity}
+        onDecrement={handleDecrease}
+        onIncrement={handleIncrease}
+        testimonials={packageReviews}
+        consultationOnly={consultationOnly}
+        ctaButtonText="Book a consultation"
+      />
+      <InclusionImageToast image={toastImage} onClose={() => setToastImage(null)} />
+    </>
   )
 }
