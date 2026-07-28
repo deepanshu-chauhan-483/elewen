@@ -513,6 +513,9 @@ function CouponCard({
   onApplyCoupon,
   onRemoveCoupon,
 }) {
+  const isCouponApplied =
+    Boolean(cart?.couponId || cart?.couponGrantId) || Number(cart?.discountAmount ?? 0) > 0
+
   return (
     <form onSubmit={onApplyCoupon} className="rounded-xl border border-[#95796066] p-5">
       <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
@@ -522,24 +525,28 @@ function CouponCard({
         Have a code? Apply it here to unlock savings.
       </p>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex items-end gap-3">
         <input
           type="text"
           value={couponCode}
           onChange={event => onCouponChange(event.target.value.toUpperCase())}
           placeholder="Enter coupon code"
-          className="w-full border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
+          className="min-w-0 flex-1 border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
         />
-        <button type="submit" disabled={isApplyingCoupon || !couponCode.trim()} className="hidden">
+        <button
+          type="submit"
+          disabled={isApplyingCoupon || !couponCode.trim()}
+          className="shrink-0 rounded-full bg-[#364022] px-5 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+        >
           {isApplyingCoupon ? 'Applying...' : 'Apply'}
         </button>
       </div>
 
-      {cart?.couponId ? (
+      {isCouponApplied ? (
         <div className="mt-4 flex items-start justify-between rounded-xl bg-[#F3F3F3] p-4">
           <div>
             <p className="text-sm font-medium text-[#2C2C2C]">
-              Coupon Applied: {cart?.couponCode ?? couponCode ?? 'SAVE2000'}
+              Coupon Applied: {cart?.couponCode ?? couponCode ?? '—'}
             </p>
             <p className="text-sm text-gray-500">
               {formatCompactCurrency(cart.discountAmount)} has been deducted from your total
@@ -1699,18 +1706,15 @@ export default function CartPage() {
       ) : (
         <div className="flex flex-col items-stretch gap-[clamp(24px,5vw,100px)] md:flex-row">
           <div className="flex-1 space-y-6">
-            {/* Coupon only for multiple packages */}
-            {!hasSingleItem ? (
-              <CouponCard
-                couponCode={couponCode}
-                couponMessage={couponMessage}
-                cart={cart}
-                isApplyingCoupon={isApplyingCoupon}
-                onCouponChange={setCouponCode}
-                onApplyCoupon={handleApplyCoupon}
-                onRemoveCoupon={handleRemoveCoupon}
-              />
-            ) : null}
+            <CouponCard
+              couponCode={couponCode}
+              couponMessage={couponMessage}
+              cart={cart}
+              isApplyingCoupon={isApplyingCoupon}
+              onCouponChange={setCouponCode}
+              onApplyCoupon={handleApplyCoupon}
+              onRemoveCoupon={handleRemoveCoupon}
+            />
 
             {/* Mobile Pincode Card for both single + multi package */}
             <div className="md:hidden">

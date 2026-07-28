@@ -93,6 +93,18 @@ const ctaBtn = (text, url) => `
     </tr>
   </table>`
 
+/** Large copy-friendly coupon code block for customer emails */
+const couponCodeBlock = code => `
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+    <tr>
+      <td align="center" style="background:#2a2418;border:2px dashed #c9a96e;border-radius:10px;padding:22px 16px;">
+        <p style="margin:0 0 8px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#c9a96e;font-weight:700;">Your coupon code</p>
+        <p style="margin:0;font-size:32px;line-height:1.2;font-weight:800;letter-spacing:3px;color:#ffffff;font-family:Consolas,'Courier New',monospace;">${code}</p>
+        <p style="margin:10px 0 0;font-size:13px;color:#aaaaaa;">Copy this exact code and paste it on the cart page</p>
+      </td>
+    </tr>
+  </table>`
+
 // ─── Templates ────────────────────────────────────────────────────────────────
 
 export const templates = {
@@ -225,10 +237,11 @@ export const templates = {
       `
       <div style="margin-bottom:20px;">${badge('Referral Coupon')}</div>
       ${h1(title || 'You received a coupon')}
-      ${p(`Use code <strong style="color:#fff;">${code}</strong> for ${discountLabel}.`)}
+      ${p(`You get <strong style="color:#fff;">${discountLabel}</strong> on your next booking.`)}
+      ${couponCodeBlock(code)}
       ${divider()}
       ${infoTable(`
-        ${infoRow('Coupon code', code)}
+        ${infoRow('Coupon code', `<strong style="color:#c9a96e;font-size:16px;letter-spacing:1px;">${code}</strong>`)}
         ${infoRow('Offer', discountLabel)}
         ${infoRow('Valid till', validTo || 'See terms')}
       `)}
@@ -245,15 +258,16 @@ export const templates = {
       `
       <div style="margin-bottom:20px;">${badge('Special Offer')}</div>
       ${h1('You have a discount waiting')}
-      ${p(`Use coupon code <strong style="color:#fff;">${code}</strong> for ${discountLabel} on your next booking.`)}
+      ${p(`You get <strong style="color:#fff;">${discountLabel}</strong> on your next booking. Use the code below on the cart page.`)}
+      ${couponCodeBlock(code)}
       ${divider()}
       ${infoTable(`
-        ${infoRow('Coupon code', code)}
+        ${infoRow('Coupon code', `<strong style="color:#c9a96e;font-size:16px;letter-spacing:1px;">${code}</strong>`)}
         ${infoRow('Offer', discountLabel)}
         ${validTo ? infoRow('Valid till', validTo) : ''}
       `)}
       ${terms ? `${divider()}${p(`<strong style="color:#fff;">Terms &amp; conditions</strong><br/>${terms}`)}` : ''}
-      ${p('Log in, add packages to your cart, and enter this code on the cart page before checkout.')}
+      ${p('Log in, add packages to your cart, enter this exact code under Apply Coupon, then tap Apply before checkout.')}
       ${ctaBtn('Login & shop', loginUrl)}
     `
     ),
