@@ -21,6 +21,18 @@
     "sort_order": {
       "type": "integer",
       "default": 0
+    },
+    "level_1": {
+      "type": "boolean",
+      "default": true
+    },
+    "level_2": {
+      "type": "boolean",
+      "default": true
+    },
+    "level_3": {
+      "type": "boolean",
+      "default": true
     }
   },
   "config": {}

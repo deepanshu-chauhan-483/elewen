@@ -9,6 +9,7 @@ import { getServiceProductDetails } from '../data/serviceProductDetails'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 import { useCateringMenu } from '../hooks/useCateringMenu'
+import { CATERING_PACKAGE_MENU_ROWS } from '../lib/cateringPackageMenuRows'
 import { mapCateringMenuRow } from '../lib/cateringMenuSelection'
 import { useCart } from '../hooks/useCart'
 import useCustomization from '../hooks/useCustomization'
@@ -227,9 +228,45 @@ function buildGuestOptions(pkg) {
   return DEFAULT_GUEST_OPTIONS
 }
 
+const ADDON_LIKE_MENU_TITLES = [
+  'live station',
+  'soup station',
+  'serving staff',
+  'cutlery',
+  'water bottles',
+  'grazing table',
+  'afternoon hi-tea',
+  'buffet',
+]
+
+function looksLikeAddonMenuRow(item = {}) {
+  const title = String(item?.title ?? '')
+    .trim()
+    .toLowerCase()
+  if (item?.category_key) return false
+  return ADDON_LIKE_MENU_TITLES.some(fragment => title.includes(fragment))
+}
+
+function isUsableMenuItems(menuItems = []) {
+  if (!Array.isArray(menuItems) || !menuItems.length) return false
+  if (menuItems.every(looksLikeAddonMenuRow)) return false
+  return menuItems.some(
+    item =>
+      item?.category_key ||
+      /starter|main course|dessert|bread|rice|accompaniment|salad|raita|soup|pre-plated|pre plated/i.test(
+        String(item?.title ?? '')
+      )
+  )
+}
+
 function buildMenuRows(pkg) {
   const cateringSection = getCateringDetailSection(pkg)
-  const menuItems = Array.isArray(cateringSection?.menu_items) ? cateringSection.menu_items : []
+  let menuItems = Array.isArray(cateringSection?.menu_items) ? cateringSection.menu_items : []
+
+  if (!isUsableMenuItems(menuItems)) {
+    const slug = String(pkg?.slug ?? '').trim()
+    menuItems = CATERING_PACKAGE_MENU_ROWS[slug] ?? []
+  }
 
   if (menuItems.length) {
     return [...menuItems]
@@ -719,6 +756,7 @@ export default function CateringSinglePackagePage() {
         row={activeMenuRow}
         menuByCategory={menuByCategory}
         vegPreference={vegPreference}
+        packageLevelSlug={pkg?.level_slug ?? ''}
         initialSelection={activeMenuInitialValue}
         onClose={() => {
           setMenuModalOpen(false)

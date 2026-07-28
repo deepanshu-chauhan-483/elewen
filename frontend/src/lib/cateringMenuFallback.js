@@ -6,31 +6,46 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Spicy Madras Bhel",
       "description": "Crispy puffed rice layered with vibrant tangy chutneys.",
       "dietary": "veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Masala Makhana",
       "description": "Roasted lotus seeds with aromatic spice blend.",
       "dietary": "veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Cocktail Samosa",
       "description": "Bite-sized samosas with flavorful stuffing.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Avocado Papdi Chaat",
       "description": "Crispy papdi topped with creamy avocado & chutneys.",
       "dietary": "veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Roasted Masala Peanuts",
       "description": "Crunchy peanuts tossed in bold Indian spices.",
       "dietary": "veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     }
   ],
   "starters": [
@@ -38,157 +53,235 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Dahi Ke Kebab",
       "description": "Crispy yogurt kebabs with mild spices.",
       "dietary": "veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Veg Manchurian",
       "description": "Crispy vegetable dumplings tossed in Indo-Chinese sauce.",
       "dietary": "veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Falafel Hummus & Pita",
       "description": "Crispy chickpea bites with creamy dips.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Potato Chow Chu",
       "description": "Crispy potatoes tossed in spicy chilli sauce.",
       "dietary": "veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Hara Bhara Kebab",
       "description": "Spinach and pea patties with mild spices.",
       "dietary": "veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Corn Cheese Balls",
       "description": "Crispy corn and cheese bites.",
       "dietary": "veg",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Stuffed Mushrooms",
       "description": "Cheese-filled mushrooms baked or grilled.",
       "dietary": "veg",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Crispy Baby Corn",
       "description": "Crunchy baby corn in light spices.",
       "dietary": "veg",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Veg Spring Rolls",
       "description": "Golden crispy rolls with seasoned vegetables.",
       "dietary": "veg",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Cottage Cheese Shanghai",
       "description": "Paneer in rich Indo-Asian sauce.",
       "dietary": "veg",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Tandoori Paneer Tikka",
       "description": "Piri Piri Spiced | Achari | Classic Chilli.",
       "dietary": "veg",
-      "sort_order": 11
+      "sort_order": 11,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Paneer Popcorn",
       "description": "Crispy bite-sized paneer pops.",
       "dietary": "veg",
-      "sort_order": 12
+      "sort_order": 12,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chinatown Chilli Paneer",
       "description": "Wok-tossed paneer in spicy sauce.",
       "dietary": "veg",
-      "sort_order": 13
+      "sort_order": 13,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Truffle Mushroom Galouti",
       "description": "Soft mushroom patties with truffle aroma.",
       "dietary": "veg",
-      "sort_order": 14
+      "sort_order": 14,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Tandoori Mushroom Tikka",
       "description": "Malai | Achari | Tikka Masala.",
       "dietary": "veg",
-      "sort_order": 15
+      "sort_order": 15,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Mushroom Pepper Fry",
       "description": "Spicy mushrooms tossed with black pepper.",
       "dietary": "veg",
-      "sort_order": 16
+      "sort_order": 16,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chennai Mushroom 65",
       "description": "Crispy fried mushrooms in South Indian spices.",
       "dietary": "veg",
-      "sort_order": 17
+      "sort_order": 17,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Mushroom Chimichurri",
       "description": "Peruvian delicacy cooked to perfection.",
       "dietary": "veg",
-      "sort_order": 18
+      "sort_order": 18,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Crispy Chilli Garlic Tofu",
       "description": "Fried tofu tossed in spicy garlic sauce.",
       "dietary": "veg",
-      "sort_order": 19
+      "sort_order": 19,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Tandoori Soya Chaap",
       "description": "Smoky grilled plant protein with spices.",
       "dietary": "veg",
-      "sort_order": 20
+      "sort_order": 20,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Korean Gochujang Tofu",
       "description": "Korean delicacy cooked to perfection.",
       "dietary": "veg",
-      "sort_order": 21
+      "sort_order": 21,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Thai Cigar Rolls",
       "description": "Crispy rolls with sweet chilli dip.",
       "dietary": "veg",
-      "sort_order": 22
+      "sort_order": 22,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Cheese Croquettes",
       "description": "Golden fried cheese and jalapenos bites.",
       "dietary": "veg",
-      "sort_order": 23
+      "sort_order": 23,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Cheese & Gherkin Kachori",
       "description": "Crispy kachori stuffed with cheese.",
       "dietary": "veg",
-      "sort_order": 24
+      "sort_order": 24,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Crispy Lotus Stem",
       "description": "Sweet and spicy crunchy lotus stem.",
       "dietary": "veg",
-      "sort_order": 25
+      "sort_order": 25,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Crispy Honey Chilli Potatoes",
       "description": "Sweet and spicy crunchy potatoes.",
       "dietary": "veg",
-      "sort_order": 26
+      "sort_order": 26,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     }
   ],
   "starters_non_veg": [
@@ -196,151 +289,226 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Chicken Tikka Choice",
       "description": "Kesar Kali Mirch | Tahini Chicken | Classic Red Chilli.",
       "dietary": "non_veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chennai Chicken 65",
       "description": "Crispy fried chicken with bold South Indian spices.",
       "dietary": "non_veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Peri Peri Chicken Skewers",
       "description": "Grilled chicken with peri peri spice.",
       "dietary": "non_veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Popcorn",
       "description": "Crispy bite-sized chicken pieces.",
       "dietary": "non_veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Spring Rolls",
       "description": "Crispy rolls with chicken filling.",
       "dietary": "non_veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Korean Fried Chicken",
       "description": "Crispy chicken in spicy glaze.",
       "dietary": "non_veg",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Asian Heat",
       "description": "Crispy chicken tossed with chilli peanuts.",
       "dietary": "non_veg",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Seekh Kebab",
       "description": "Juicy minced chicken skewers.",
       "dietary": "non_veg",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Crispy Honey Chicken",
       "description": "Crispy chicken glazed with sweet soy.",
       "dietary": "non_veg",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Mutton Seekh Kebab",
       "description": "Juicy minced mutton skewers.",
       "dietary": "non_veg",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Nawabi Mutton Galouti",
       "description": "Soft Awadhi-style melt-in-mouth kebabs.",
       "dietary": "non_veg",
-      "sort_order": 11
+      "sort_order": 11,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Mutton Shami Kebab",
       "description": "Soft minced mutton patties.",
       "dietary": "non_veg",
-      "sort_order": 12
+      "sort_order": 12,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Cheddar Sole Fish Tikka",
       "description": "Grilled fish with cheese crust.",
       "dietary": "non_veg",
-      "sort_order": 13
+      "sort_order": 13,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Ajwaini Fish Tikka",
       "description": "Fish flavoured with carom spices.",
       "dietary": "non_veg",
-      "sort_order": 14
+      "sort_order": 14,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Bird's Eye Chilli Fish",
       "description": "Spicy wok-tossed fish.",
       "dietary": "non_veg",
-      "sort_order": 15
+      "sort_order": 15,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Fish Fingers",
       "description": "Crumb fried crispy fish bites.",
       "dietary": "non_veg",
-      "sort_order": 16
+      "sort_order": 16,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Amritsari Fish Fry",
       "description": "Crispy spiced fish fritters.",
       "dietary": "non_veg",
-      "sort_order": 17
+      "sort_order": 17,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Fish Tikka Ajwani",
       "description": "Grilled fish with carom flavour.",
       "dietary": "non_veg",
-      "sort_order": 18
+      "sort_order": 18,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Crispy Fish Chilli",
       "description": "Spicy wok-tossed fish.",
       "dietary": "non_veg",
-      "sort_order": 19
+      "sort_order": 19,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Tempura Prawns",
       "description": "Crispy battered prawns with dip.",
       "dietary": "non_veg",
-      "sort_order": 20
+      "sort_order": 20,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Tandoori Masala Prawns",
       "description": "Grilled prawns with bold spices.",
       "dietary": "non_veg",
-      "sort_order": 21
+      "sort_order": 21,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Kasundi Prawns",
       "description": "Prawns in mustard glaze.",
       "dietary": "non_veg",
-      "sort_order": 22
+      "sort_order": 22,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Butter Garlic Prawns",
       "description": "Prawns tossed in garlic butter.",
       "dietary": "non_veg",
-      "sort_order": 23
+      "sort_order": 23,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Prawn Tempura Spicy Mayo",
       "description": "Crispy prawns with spicy dip.",
       "dietary": "non_veg",
-      "sort_order": 24
+      "sort_order": 24,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Prawn Salt & Pepper",
       "description": "Lightly spiced crispy prawns.",
       "dietary": "non_veg",
-      "sort_order": 25
+      "sort_order": 25,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     }
   ],
   "soup": [
@@ -348,73 +516,109 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Manchow Soup",
       "description": "Spicy Indo-Chinese soup.",
       "dietary": "both",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Tom Yum",
       "description": "Thai hot & sour soup.",
       "dietary": "both",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Sweet Corn Soup",
       "description": "Classic comfort soup.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Cream of Mushroom",
       "description": "Rich creamy soup.",
       "dietary": "veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Lemon Coriander",
       "description": "Light refreshing broth.",
       "dietary": "veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Hot & Sour Soup",
       "description": "Tangy and spicy Asian-style soup.",
       "dietary": "both",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Tomato Basil Soup",
       "description": "Creamy tomato soup with basil.",
       "dietary": "veg",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Talumein Soup",
       "description": "Hearty noodle soup with vegetables.",
       "dietary": "veg",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Roasted Pumpkin Soup",
       "description": "Creamy pumpkin with subtle spice notes.",
       "dietary": "veg",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Shorba (Veg / Non-Veg)",
       "description": "Aromatic Indian spiced broth.",
       "dietary": "both",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Broccoli Almond Soup",
       "description": "Nutty, smooth, and nourishing.",
       "dietary": "veg",
-      "sort_order": 11
+      "sort_order": 11,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Thai Coconut Soup (Tom Kha Style)",
       "description": "Creamy coconut broth with subtle Asian flavors.",
       "dietary": "veg",
-      "sort_order": 12
+      "sort_order": 12,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     }
   ],
   "main_course_veg": [
@@ -422,211 +626,316 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Dal Makhani",
       "description": "Slow-cooked lentils with butter and cream.",
       "dietary": "veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Dal Bukhara",
       "description": "Rich black lentils simmered overnight.",
       "dietary": "veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Amritsari Chole",
       "description": "Spiced chickpea curry.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Methi Malai Mutter",
       "description": "Creamy fenugreek and peas curry.",
       "dietary": "veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Baby Potato Masala",
       "description": "Spiced semi-dry potato preparation.",
       "dietary": "veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Paneer Lababdar",
       "description": "Creamy tomato-based paneer curry.",
       "dietary": "veg",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Paneer Makhani",
       "description": "Rich buttery paneer gravy.",
       "dietary": "veg",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Paneer Pasanda",
       "description": "Stuffed paneer in Mughlai sauce.",
       "dietary": "veg",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kadhai Paneer",
       "description": "Spicy capsicum-onion paneer.",
       "dietary": "veg",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Paneer Khurchan",
       "description": "Stir-fried paneer with spices.",
       "dietary": "veg",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Veg Jalfrezi",
       "description": "Spicy mixed vegetable curry.",
       "dietary": "veg",
-      "sort_order": 11
+      "sort_order": 11,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Paneer Butter Masala",
       "description": "Rich tomato-based paneer curry.",
       "dietary": "veg",
-      "sort_order": 12
+      "sort_order": 12,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kofta Curry",
       "description": "Soft dumplings in gravy.",
       "dietary": "veg",
-      "sort_order": 13
+      "sort_order": 13,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chilli Garlic Tofu",
       "description": "Spicy wok-tossed tofu.",
       "dietary": "veg",
-      "sort_order": 14
+      "sort_order": 14,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Teppanyaki Vegetables",
       "description": "Grilled vegetables with Asian seasoning.",
       "dietary": "veg",
-      "sort_order": 15
+      "sort_order": 15,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Veg Manchurian Gravy",
       "description": "Vegetable dumplings in Indo-Chinese sauce.",
       "dietary": "veg",
-      "sort_order": 16
+      "sort_order": 16,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kung Pao Cashews",
       "description": "Spicy stir-fried with peanuts & dry red chillies.",
       "dietary": "veg",
-      "sort_order": 17
+      "sort_order": 17,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Spinach Ricotta Cannelloni",
       "description": "Pasta stuffed with spinach and cheese.",
       "dietary": "veg",
-      "sort_order": 18
+      "sort_order": 18,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Oyster Chilly Garlic Sauce",
       "description": "Savory wok-tossed vegetables.",
       "dietary": "veg",
-      "sort_order": 19
+      "sort_order": 19,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Vegetable Lasagna",
       "description": "Layered pasta with cheese and sauce.",
       "dietary": "veg",
-      "sort_order": 20
+      "sort_order": 20,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Thai Green Curry",
       "description": "Coconut curry with Thai herbs.",
       "dietary": "veg",
-      "sort_order": 21
+      "sort_order": 21,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Thai Red Curry",
       "description": "Spicy coconut curry with vegetables.",
       "dietary": "veg",
-      "sort_order": 22
+      "sort_order": 22,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Schezwan Peppercorn Sauce",
       "description": "Spicy Indo-Chinese vegetable stir fry.",
       "dietary": "veg",
-      "sort_order": 23
+      "sort_order": 23,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Hot Chilly Basil (Tofu/Paneer)",
       "description": "Wok-tossed with basil pad cha style lightly tossed vegetables.",
       "dietary": "veg",
-      "sort_order": 24
+      "sort_order": 24,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Steaks (Pepper / Mushroom Sauce)",
       "description": "Grilled paneer / tofu with rich sauce.",
       "dietary": "veg",
-      "sort_order": 25
+      "sort_order": 25,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Hakka Noodles",
       "description": "Classic Indo-Chinese noodles.",
       "dietary": "veg",
-      "sort_order": 26
+      "sort_order": 26,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chilli Garlic Noodles",
       "description": "Spicy garlic tossed noodles.",
       "dietary": "veg",
-      "sort_order": 27
+      "sort_order": 27,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Schezwan Noodles",
       "description": "Hot and spicy noodles.",
       "dietary": "veg",
-      "sort_order": 28
+      "sort_order": 28,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Pad Thai Noodles",
       "description": "Sweet and tangy Thai noodles.",
       "dietary": "veg",
-      "sort_order": 29
+      "sort_order": 29,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Udon Noodles",
       "description": "Thick Japanese noodles in broth.",
       "dietary": "veg",
-      "sort_order": 30
+      "sort_order": 30,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Singapore Noodles",
       "description": "Light curry flavoured noodles.",
       "dietary": "veg",
-      "sort_order": 31
+      "sort_order": 31,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Ramen Bowl",
       "description": "Japanese noodle soup with toppings.",
       "dietary": "veg",
-      "sort_order": 32
+      "sort_order": 32,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Penne Alfredo",
       "description": "Creamy white sauce pasta.",
       "dietary": "veg",
-      "sort_order": 33
+      "sort_order": 33,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Penne Arrabiata",
       "description": "Spicy tomato-based pasta.",
       "dietary": "veg",
-      "sort_order": 34
+      "sort_order": 34,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Spaghetti Aglio-e-Olio",
       "description": "Olive oil, garlic and herbs.",
       "dietary": "veg",
-      "sort_order": 35
+      "sort_order": 35,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     }
   ],
   "main_course_non_veg": [
@@ -634,133 +943,199 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Butter Chicken",
       "description": "Creamy tomato-based chicken curry.",
       "dietary": "non_veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Tikka Masala",
       "description": "Grilled chicken in rich gravy.",
       "dietary": "non_veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Korma",
       "description": "Mild creamy Mughlai curry.",
       "dietary": "non_veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kadhai Chicken",
       "description": "Spicy wok-style chicken.",
       "dietary": "non_veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Dhaba Chicken",
       "description": "Rustic spiced chicken curry.",
       "dietary": "non_veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Khurchan",
       "description": "Stir-fried shredded chicken.",
       "dietary": "non_veg",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Vindaloo",
       "description": "Spicy tangy curry.",
       "dietary": "non_veg",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Saagwala",
       "description": "Spinach-based chicken curry.",
       "dietary": "non_veg",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Curry Homestyle",
       "description": "Traditional Indian chicken curry.",
       "dietary": "non_veg",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Grilled Fish Lemon Butter",
       "description": "Fish with light buttery sauce.",
       "dietary": "non_veg",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Fish Curry Coastal Style",
       "description": "Light coconut-based curry.",
       "dietary": "non_veg",
-      "sort_order": 11
+      "sort_order": 11,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Grilled Fish Peri Peri",
       "description": "Spicy grilled fish.",
       "dietary": "non_veg",
-      "sort_order": 12
+      "sort_order": 12,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Prawns in Garlic Sauce",
       "description": "Wok-tossed prawns in garlic.",
       "dietary": "non_veg",
-      "sort_order": 13
+      "sort_order": 13,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Prawns Teriyaki",
       "description": "Sweet soy glazed prawns.",
       "dietary": "non_veg",
-      "sort_order": 14
+      "sort_order": 14,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Prawn Thai Curry",
       "description": "Coconut curry with Thai spices.",
       "dietary": "non_veg",
-      "sort_order": 15
+      "sort_order": 15,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Prawns Curry Coastal",
       "description": "Coconut-based prawn curry.",
       "dietary": "non_veg",
-      "sort_order": 16
+      "sort_order": 16,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Chicken Stroganoff",
       "description": "Creamy chicken with mushrooms.",
       "dietary": "non_veg",
-      "sort_order": 17
+      "sort_order": 17,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "BBQ Chicken Grill",
       "description": "Chargrilled chicken with smoky glaze.",
       "dietary": "non_veg",
-      "sort_order": 18
+      "sort_order": 18,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Fish Steak (Herb / Garlic Butter)",
       "description": "Pan-grilled fish with herbs.",
       "dietary": "non_veg",
-      "sort_order": 19
+      "sort_order": 19,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Peri Peri Fish Grill",
       "description": "Spicy grilled fish fillet.",
       "dietary": "non_veg",
-      "sort_order": 20
+      "sort_order": 20,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Fish Sizzler",
       "description": "Grilled fish with vegetables on sizzler.",
       "dietary": "non_veg",
-      "sort_order": 21
+      "sort_order": 21,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Grilled Prawns Garlic Butter",
       "description": "Juicy prawns with garlic butter.",
       "dietary": "non_veg",
-      "sort_order": 22
+      "sort_order": 22,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     }
   ],
   "rotis_and_rice": [
@@ -768,37 +1143,55 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Butter Naan",
       "description": "Soft refined flour bread with butter.",
       "dietary": "veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Garlic Naan",
       "description": "Naan flavoured with garlic.",
       "dietary": "veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Lachha Paratha",
       "description": "Layered crispy whole wheat bread.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Tandoori Roti",
       "description": "Classic whole wheat bread.",
       "dietary": "veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Missi Roti",
       "description": "Gram flour bread with spices.",
       "dietary": "veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Stuffed Kulcha",
       "description": "Leavened bread stuffed with potato or paneer.",
       "dietary": "veg",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     }
   ],
   "rice": [
@@ -806,115 +1199,172 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Hyderabadi Veg Biryani",
       "description": "Aromatic dum cooked vegetable rice.",
       "dietary": "veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Hyderabadi Chicken Biryani",
       "description": "Fragrant rice with spiced chicken.",
       "dietary": "non_veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Afghani Soya Chaap Biryani",
       "description": "Creamy, smoky, indulgent.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Dum Biryani",
       "description": "Classic layered chicken biryani.",
       "dietary": "non_veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Hyderabadi Mutton Biryani",
       "description": "Rich dum cooked mutton biryani.",
       "dietary": "non_veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Lucknowi (Awadhi) Biryani",
       "description": "Subtle, slow-cooked, mildly spiced.",
       "dietary": "both",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kolkata Biryani",
       "description": "Subtle spiced rice with potato.",
       "dietary": "both",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Paneer Biryani",
       "description": "Flavourful rice with marinated paneer.",
       "dietary": "veg",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Steam Rice",
       "description": "Light and fluffy plain rice.",
       "dietary": "veg",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Jeera Rice",
       "description": "Cumin flavoured aromatic rice.",
       "dietary": "veg",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kaju Matar Pulao",
       "description": "Rice with cashew and green peas.",
       "dietary": "veg",
-      "sort_order": 11
+      "sort_order": 11,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Veg Fried Rice",
       "description": "Wok-tossed vegetable rice.",
       "dietary": "veg",
-      "sort_order": 12
+      "sort_order": 12,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Egg Fried Rice",
       "description": "Classic egg and rice combination.",
       "dietary": "non_veg",
-      "sort_order": 13
+      "sort_order": 13,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chicken Fried Rice",
       "description": "Rice tossed with chicken and sauces.",
       "dietary": "non_veg",
-      "sort_order": 14
+      "sort_order": 14,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Thai Basil Rice",
       "description": "Fragrant rice with Thai herbs.",
       "dietary": "veg",
-      "sort_order": 15
+      "sort_order": 15,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kashmiri Pulao",
       "description": "Sweet-savoury rice with dry fruits.",
       "dietary": "veg",
-      "sort_order": 16
+      "sort_order": 16,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Burnt Garlic Fried Rice (Indo-Asian twist)",
       "description": "Wok-tossed rice with garlic notes.",
       "dietary": "veg",
-      "sort_order": 17
+      "sort_order": 17,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Peri Peri Biryani",
       "description": "Spicy fusion with bold flavours.",
       "dietary": "both",
-      "sort_order": 18
+      "sort_order": 18,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Mediterranean Herb Biryani",
       "description": "Olive oil, herbs & light seasoning.",
       "dietary": "veg",
-      "sort_order": 19
+      "sort_order": 19,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     }
   ],
   "raita": [
@@ -922,25 +1372,37 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Cucumber Raita",
       "description": "Fresh yogurt with cucumber and mild spices.",
       "dietary": "veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Boondi Raita",
       "description": "Creamy yogurt with spiced crispy boondi.",
       "dietary": "veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Mix Veg Raita",
       "description": "Yogurt with seasonal vegetables.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Fruit Raita",
       "description": "Sweet yogurt with fresh fruits.",
       "dietary": "veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     }
   ],
   "salad": [
@@ -948,61 +1410,91 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Garden Fresh Salad",
       "description": "Seasonal greens, cucumber, tomato, carrot & lemon dressing.",
       "dietary": "veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Sprouts & Chana Salad",
       "description": "Protein-rich mix with onions, tomatoes & chaat masala.",
       "dietary": "veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Classic Caesar Salad",
       "description": "Crisp lettuce, parmesan, croutons & creamy Caesar dressing.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Greek Salad",
       "description": "Cucumber, tomato, olives & feta with olive oil dressing.",
       "dietary": "veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Mediterranean Couscous Salad",
       "description": "Fluffy couscous with herbs, roasted vegetables & citrus notes.",
       "dietary": "veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Pesto Pasta Salad",
       "description": "Al dente pasta tossed in basil pesto & fresh vegetables.",
       "dietary": "veg",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Avocado & Quinoa Salad",
       "description": "Superfood blend with citrus dressing.",
       "dietary": "veg",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Roasted Veggie Salad",
       "description": "Charred seasonal vegetables with herb dressing.",
       "dietary": "veg",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kachumber Salad",
       "description": "Classic Indian chopped salad with lemon & spices.",
       "dietary": "veg",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Corn & Capsicum Chaat Salad",
       "description": "Sweet corn tossed with spices & herbs.",
       "dietary": "veg",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     }
   ],
   "live_stations": [
@@ -1010,103 +1502,154 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Pasta Station",
       "description": "Custom pasta with sauces like Alfredo & Arrabiata.",
       "dietary": "both",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Woodfired Pizza Station",
       "description": "Fresh wood-fired pizzas with toppings.",
       "dietary": "both",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Ramen Bar Station",
       "description": "Rich broths, comforting ramen bowls.",
       "dietary": "both",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Quesadilla Station",
       "description": "Melty bites, packed with bold flavors.",
       "dietary": "both",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Kebab & Tandoor Station",
       "description": "Smoky grills, rich authentic flavors.",
       "dietary": "both",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Kulcha & Tawa Station",
       "description": "Buttered breads, hot off the tawa.",
       "dietary": "veg",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Chaat Studio",
       "description": "Tangy, spicy, sweet street delights.",
       "dietary": "veg",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Dimsum Bar",
       "description": "Freshly steamed bites of perfection.",
       "dietary": "both",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Sushi Bar",
       "description": "Fresh rolls, art on every plate.",
       "dietary": "both",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Noodles Bar",
       "description": "Wok-tossed noodles, full of flavor.",
       "dietary": "both",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Mumbai Street Counter",
       "description": "Iconic Mumbai flavors, street-style magic.",
       "dietary": "veg",
-      "sort_order": 11
+      "sort_order": 11,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Shawarma Station",
       "description": "Juicy wraps, loaded with flavor.",
       "dietary": "non_veg",
-      "sort_order": 12
+      "sort_order": 12,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Taco & Burrito Bar",
       "description": "Build-your-own tacos and burritos.",
       "dietary": "both",
-      "sort_order": 13
+      "sort_order": 13,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Jalebi Rabri Counter",
       "description": "Golden jalebis, decadently paired with rabri.",
       "dietary": "veg",
-      "sort_order": 14
+      "sort_order": 14,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Waffle & Pancake Station",
       "description": "Fluffy pancakes, golden crispy waffles.",
       "dietary": "veg",
-      "sort_order": 15
+      "sort_order": 15,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Crepe Station",
       "description": "Thin crepes filled with sweet delights.",
       "dietary": "veg",
-      "sort_order": 16
+      "sort_order": 16,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     },
     {
       "name": "Chocolate Fountain",
       "description": "Dip, swirl, indulge in chocolate bliss.",
       "dietary": "veg",
-      "sort_order": 17
+      "sort_order": 17,
+      "level_1": false,
+      "level_2": false,
+      "level_3": true
     }
   ],
   "dessert": [
@@ -1114,121 +1657,181 @@ export const CATERING_MENU_FALLBACK = {
       "name": "Gulab Jamun",
       "description": "Soft dumplings soaked in sugar syrup.",
       "dietary": "veg",
-      "sort_order": 1
+      "sort_order": 1,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Jalebi with Rabri",
       "description": "Crispy jalebi with creamy rabri.",
       "dietary": "veg",
-      "sort_order": 2
+      "sort_order": 2,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Rasmalai",
       "description": "Soft cottage cheese in saffron milk.",
       "dietary": "veg",
-      "sort_order": 3
+      "sort_order": 3,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Gajar Halwa",
       "description": "Slow-cooked carrot dessert.",
       "dietary": "veg",
-      "sort_order": 4
+      "sort_order": 4,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Moong Dal Halwa",
       "description": "Rich lentil halwa with ghee.",
       "dietary": "veg",
-      "sort_order": 5
+      "sort_order": 5,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Malpua with Rabri",
       "description": "Soft pancakes with sweet rabri.",
       "dietary": "veg",
-      "sort_order": 6
+      "sort_order": 6,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Ice Cream Selection",
       "description": "Assorted classic flavours.",
       "dietary": "veg",
-      "sort_order": 7
+      "sort_order": 7,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Kulfi (Malai / Pista)",
       "description": "Traditional Indian frozen dessert.",
       "dietary": "veg",
-      "sort_order": 8
+      "sort_order": 8,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Matka Kulfi",
       "description": "Kulfi served in earthen pot.",
       "dietary": "veg",
-      "sort_order": 9
+      "sort_order": 9,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Fruit Cream",
       "description": "Fresh fruits with sweet cream.",
       "dietary": "veg",
-      "sort_order": 10
+      "sort_order": 10,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Classic Cheesecake",
       "description": "Creamy baked cheesecake.",
       "dietary": "veg",
-      "sort_order": 11
+      "sort_order": 11,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Biscoff Cheesecake",
       "description": "Rich cheesecake with biscoff.",
       "dietary": "veg",
-      "sort_order": 12
+      "sort_order": 12,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Blueberry Cheesecake",
       "description": "Cheesecake with berry compote.",
       "dietary": "veg",
-      "sort_order": 13
+      "sort_order": 13,
+      "level_1": false,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Italian Tiramisu",
       "description": "Coffee-flavoured layered dessert.",
       "dietary": "veg",
-      "sort_order": 14
+      "sort_order": 14,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chocolate Mousse",
       "description": "Light and airy chocolate dessert.",
       "dietary": "veg",
-      "sort_order": 15
+      "sort_order": 15,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Banoffee Pie",
       "description": "Banana, caramel and cream dessert.",
       "dietary": "veg",
-      "sort_order": 16
+      "sort_order": 16,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Tres Leches Cake",
       "description": "Milk-soaked soft sponge cake.",
       "dietary": "veg",
-      "sort_order": 17
+      "sort_order": 17,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Brownie with Ice Cream",
       "description": "Warm brownie with vanilla scoop.",
       "dietary": "veg",
-      "sort_order": 18
+      "sort_order": 18,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chocolate Lava Cake",
       "description": "Molten chocolate centre cake.",
       "dietary": "veg",
-      "sort_order": 19
+      "sort_order": 19,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     },
     {
       "name": "Chocolate Truffle Cake",
       "description": "Dense chocolate layered cake.",
       "dietary": "veg",
-      "sort_order": 20
+      "sort_order": 20,
+      "level_1": true,
+      "level_2": true,
+      "level_3": true
     }
   ]
 }

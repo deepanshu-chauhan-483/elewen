@@ -285,7 +285,7 @@ export function resolveRulesForVegPreference(rules = {}, vegPreference = '') {
   }
 }
 
-export function getDishesForMenuRow(row, menuByCategory = {}, vegPreference = '') {
+export function getDishesForMenuRow(row, menuByCategory = {}, vegPreference = '', packageLevelSlug = '') {
   const resolvedRow = ensureMenuRow(row) ?? row
   const keys = getCategoryKeysForRow(resolvedRow, vegPreference)
   if (!keys.length) return []
@@ -295,6 +295,7 @@ export function getDishesForMenuRow(row, menuByCategory = {}, vegPreference = ''
 
   for (const key of keys) {
     for (const dish of menuByCategory[key] ?? []) {
+      if (!dishAvailableAtPackageLevel(dish, packageLevelSlug)) continue
       const id = `${key}-${dish.name}`
       if (seen.has(id)) continue
       seen.add(id)
@@ -364,6 +365,9 @@ export function normalizeCateringMenuLibrary(data) {
         description: dish.description || '',
         dietary: dish.dietary || 'veg',
         sort_order: dish.sort_order ?? index,
+        level_1: dish.level_1 !== false,
+        level_2: dish.level_2 !== false,
+        level_3: dish.level_3 !== false,
       }))
       .sort((a, b) => Number(a.sort_order) - Number(b.sort_order))
 
@@ -375,6 +379,18 @@ export function normalizeCateringMenuLibrary(data) {
   }
 
   return mergeMenuLibraryWithFallback(byKey)
+}
+
+function dishAvailableAtPackageLevel(dish, packageLevelSlug = '') {
+  const level = String(packageLevelSlug ?? '')
+    .trim()
+    .toLowerCase()
+  if (!/^level-\d+$/.test(level)) return true
+
+  if (level === 'level-1') return dish.level_1 !== false
+  if (level === 'level-2') return dish.level_2 !== false
+  if (level === 'level-3') return dish.level_3 !== false
+  return true
 }
 
 function countVegSelections(selectedNames = [], dishMap = new Map()) {

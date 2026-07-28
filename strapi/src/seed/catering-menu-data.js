@@ -304,4 +304,80 @@ const CATERING_MENU_CATEGORIES = [
   },
 ];
 
-module.exports = { CATERING_MENU_CATEGORIES };
+const LEVEL3_ONLY_CATEGORIES = new Set(['pre_plated', 'soup', 'live_stations']);
+
+const LEVEL2_3_CATEGORIES = new Set(['raita', 'salad']);
+
+const LEVEL3_ONLY_STARTER_NONVEG = new Set([
+  'Cheddar Sole Fish Tikka',
+  'Ajwaini Fish Tikka',
+  "Bird's Eye Chilli Fish",
+  'Fish Fingers',
+  'Amritsari Fish Fry',
+  'Fish Tikka Ajwani',
+  'Crispy Fish Chilli',
+  'Tempura Prawns',
+  'Tandoori Masala Prawns',
+  'Kasundi Prawns',
+  'Butter Garlic Prawns',
+  'Prawn Tempura Spicy Mayo',
+  'Prawn Salt & Pepper',
+]);
+
+const LEVEL3_ONLY_MAIN_NONVEG = new Set([
+  'Grilled Fish Lemon Butter',
+  'Fish Curry Coastal Style',
+  'Grilled Fish Peri Peri',
+  'Prawns in Garlic Sauce',
+  'Prawns Teriyaki',
+  'Prawn Thai Curry',
+  'Prawns Curry Coastal',
+  'BBQ Chicken Grill',
+  'Fish Steak (Herb / Garlic Butter)',
+  'Peri Peri Fish Grill',
+  'Fish Sizzler',
+  'Grilled Prawns Garlic Butter',
+]);
+
+const LEVEL2_3_DESSERTS = new Set(['Biscoff Cheesecake', 'Blueberry Cheesecake']);
+
+function applyDishLevelFlags(dish, categoryKey) {
+  const base = {
+    ...dish,
+    level_1: true,
+    level_2: true,
+    level_3: true,
+  };
+
+  if (LEVEL3_ONLY_CATEGORIES.has(categoryKey)) {
+    return { ...base, level_1: false, level_2: false, level_3: true };
+  }
+
+  if (LEVEL2_3_CATEGORIES.has(categoryKey)) {
+    return { ...base, level_1: false, level_2: true, level_3: true };
+  }
+
+  if (categoryKey === 'starters_non_veg' && LEVEL3_ONLY_STARTER_NONVEG.has(dish.name)) {
+    return { ...base, level_1: false, level_2: false, level_3: true };
+  }
+
+  if (categoryKey === 'main_course_non_veg' && LEVEL3_ONLY_MAIN_NONVEG.has(dish.name)) {
+    return { ...base, level_1: false, level_2: false, level_3: true };
+  }
+
+  if (categoryKey === 'dessert' && LEVEL2_3_DESSERTS.has(dish.name)) {
+    return { ...base, level_1: false, level_2: true, level_3: true };
+  }
+
+  return base;
+}
+
+const CATERING_MENU_CATEGORIES_WITH_LEVELS = CATERING_MENU_CATEGORIES.map(category => ({
+  ...category,
+  dishes: (category.dishes ?? []).map(dish => applyDishLevelFlags(dish, category.category_key)),
+}));
+
+module.exports = {
+  CATERING_MENU_CATEGORIES: CATERING_MENU_CATEGORIES_WITH_LEVELS,
+  applyDishLevelFlags,
+};

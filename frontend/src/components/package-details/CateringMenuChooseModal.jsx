@@ -49,6 +49,7 @@ function CateringMenuChooseModalContent({
   row,
   menuByCategory = {},
   vegPreference = '',
+  packageLevelSlug = '',
   initialSelection = '',
   onClose,
   onConfirm,
@@ -59,8 +60,11 @@ function CateringMenuChooseModalContent({
   const resolvedRow = useMemo(() => ensureMenuRow(row), [row])
 
   const dishes = useMemo(
-    () => (resolvedRow ? getDishesForMenuRow(resolvedRow, menuByCategory, vegPreference) : []),
-    [menuByCategory, resolvedRow, vegPreference]
+    () =>
+      resolvedRow
+        ? getDishesForMenuRow(resolvedRow, menuByCategory, vegPreference, packageLevelSlug)
+        : [],
+    [menuByCategory, packageLevelSlug, resolvedRow, vegPreference]
   )
 
   const rules = useMemo(
@@ -229,6 +233,7 @@ export default function CateringMenuChooseModal({
   row,
   menuByCategory = {},
   vegPreference = '',
+  packageLevelSlug = '',
   initialSelection = '',
   onClose,
   onConfirm,
@@ -239,10 +244,11 @@ export default function CateringMenuChooseModal({
 
   return (
     <CateringMenuChooseModalContent
-      key={`${resolvedRow.title}-${initialSelection}-${vegPreference}`}
+      key={`${resolvedRow.title}-${initialSelection}-${vegPreference}-${packageLevelSlug}`}
       row={row}
       menuByCategory={menuByCategory}
       vegPreference={vegPreference}
+      packageLevelSlug={packageLevelSlug}
       initialSelection={initialSelection}
       onClose={onClose}
       onConfirm={onConfirm}

@@ -19,6 +19,9 @@ for (const category of CATERING_MENU_CATEGORIES) {
     ...(dish.description ? { description: dish.description } : {}),
     dietary: dish.dietary,
     sort_order: dish.sort_order,
+    level_1: dish.level_1 !== false,
+    level_2: dish.level_2 !== false,
+    level_3: dish.level_3 !== false,
   }));
   total += category.dishes.length;
 }
