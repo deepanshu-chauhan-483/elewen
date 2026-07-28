@@ -15,6 +15,21 @@
       "type": "string",
       "required": true
     },
+    "title": {
+      "type": "string"
+    },
+    "coupon_kind": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "first_order",
+        "referral",
+        "festive",
+        "seasonal",
+        "decor_monthly"
+      ],
+      "default": "public"
+    },
     "discount_type": {
       "type": "enumeration",
       "enum": [
@@ -25,6 +40,45 @@
     "discount_value": {
       "type": "decimal",
       "required": true
+    },
+    "min_order_value": {
+      "type": "decimal",
+      "default": 0
+    },
+    "max_order_value": {
+      "type": "decimal"
+    },
+    "max_discount_amount": {
+      "type": "decimal"
+    },
+    "first_order_only": {
+      "type": "boolean",
+      "default": false
+    },
+    "service_filter": {
+      "type": "enumeration",
+      "enum": [
+        "all",
+        "decor"
+      ],
+      "default": "all"
+    },
+    "terms_customer": {
+      "type": "text"
+    },
+    "admin_notes": {
+      "type": "text"
+    },
+    "validity_days": {
+      "type": "integer"
+    },
+    "is_user_specific": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_shareable": {
+      "type": "boolean",
+      "default": true
     },
     "max_uses": {
       "type": "integer"

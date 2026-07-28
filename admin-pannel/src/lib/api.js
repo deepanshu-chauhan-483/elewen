@@ -173,6 +173,16 @@ export const adminBooking = (token, bookingId) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminBookingCouponSuggestion = (token, bookingId) =>
+  request('GET', `/admin/bookings/${bookingId}/coupon-suggestion`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const adminSendReferralCoupon = (token, bookingId, body) =>
+  request('POST', `/admin/bookings/${bookingId}/send-referral-coupon`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminUpdateBookingStatus = (token, bookingId, body) =>
   request('PATCH', `/admin/bookings/${bookingId}/status`, body, {
     headers: { Authorization: `Bearer ${token}` },
@@ -305,6 +315,11 @@ export const adminUpdateCoupon = (token, couponId, body) =>
 
 export const adminDeleteCoupon = (token, couponId) =>
   request('DELETE', `/admin/coupons/${couponId}`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const adminShareCoupon = (token, couponId, body) =>
+  request('POST', `/admin/coupons/${couponId}/share`, body, {
     headers: { Authorization: `Bearer ${token}` },
   })
 

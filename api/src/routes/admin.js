@@ -5,6 +5,7 @@ import {
   addAdminSupportMessage,
   createAdminCoupon,
   deleteAdminCoupon,
+  shareAdminCoupon,
   getAdminBooking,
   getAdminMessageThread,
   getAdminOverview,
@@ -36,6 +37,11 @@ import {
   updateAdminVendor,
 } from '../controllers/admin.js'
 import {
+  getAdminBookingCouponSuggestion,
+  getMyCoupons,
+  sendAdminReferralCoupon,
+} from '../controllers/couponGrants.js'
+import {
   createAssignment,
   deleteAssignment,
   reassignAssignment,
@@ -52,6 +58,8 @@ router.get('/overview', getAdminOverview)
 
 router.get('/bookings', listAdminBookings)
 router.get('/bookings/:id', getAdminBooking)
+router.get('/bookings/:id/coupon-suggestion', getAdminBookingCouponSuggestion)
+router.post('/bookings/:id/send-referral-coupon', sendAdminReferralCoupon)
 router.patch('/bookings/:id/status', updateAdminBookingStatus)
 router.post('/bookings/:id/notes', addAdminBookingNote)
 
@@ -86,6 +94,7 @@ router.patch('/vendor-payouts/:id', updateVendorPayout)
 
 router.get('/coupons', listAdminCoupons)
 router.post('/coupons', createAdminCoupon)
+router.post('/coupons/:id/share', shareAdminCoupon)
 router.patch('/coupons/:id', updateAdminCoupon)
 router.delete('/coupons/:id', deleteAdminCoupon)
 

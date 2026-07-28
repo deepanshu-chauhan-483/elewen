@@ -147,6 +147,9 @@ export interface PackageCateringMenuDish extends Struct.ComponentSchema {
     description: Schema.Attribute.Text
     dietary: Schema.Attribute.Enumeration<['veg', 'non_veg', 'both']> &
       Schema.Attribute.DefaultTo<'veg'>
+    level_1: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
+    level_2: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
+    level_3: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
     name: Schema.Attribute.String & Schema.Attribute.Required
     sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
   }

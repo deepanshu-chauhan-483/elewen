@@ -218,6 +218,45 @@ export const templates = {
       `)}
     `
     ),
+
+  coupon_granted: ({ code, title, discountLabel, terms, validTo, note }) =>
+    layout(
+      'Your Elewen coupon',
+      `
+      <div style="margin-bottom:20px;">${badge('Referral Coupon')}</div>
+      ${h1(title || 'You received a coupon')}
+      ${p(`Use code <strong style="color:#fff;">${code}</strong> for ${discountLabel}.`)}
+      ${divider()}
+      ${infoTable(`
+        ${infoRow('Coupon code', code)}
+        ${infoRow('Offer', discountLabel)}
+        ${infoRow('Valid till', validTo || 'See terms')}
+      `)}
+      ${terms ? `${divider()}${p(`<strong style="color:#fff;">Terms &amp; conditions</strong><br/>${terms}`)}` : ''}
+      ${note ? p(note) : ''}
+      ${p('You can copy this code and share it with family or friends. It can be used only once within the validity period.')}
+      ${ctaBtn('View My Coupons', `${process.env.APP_URL || 'https://elewen.in'}/dashboard/profile#my-coupons`)}
+    `
+    ),
+
+  coupon_share: ({ code, discountLabel, terms, validTo, loginUrl }) =>
+    layout(
+      'Your Elewen discount coupon',
+      `
+      <div style="margin-bottom:20px;">${badge('Special Offer')}</div>
+      ${h1('You have a discount waiting')}
+      ${p(`Use coupon code <strong style="color:#fff;">${code}</strong> for ${discountLabel} on your next booking.`)}
+      ${divider()}
+      ${infoTable(`
+        ${infoRow('Coupon code', code)}
+        ${infoRow('Offer', discountLabel)}
+        ${validTo ? infoRow('Valid till', validTo) : ''}
+      `)}
+      ${terms ? `${divider()}${p(`<strong style="color:#fff;">Terms &amp; conditions</strong><br/>${terms}`)}` : ''}
+      ${p('Log in, add packages to your cart, and enter this code on the cart page before checkout.')}
+      ${ctaBtn('Login & shop', loginUrl)}
+    `
+    ),
 }
 
 // ─── Send email ───────────────────────────────────────────────────────────────

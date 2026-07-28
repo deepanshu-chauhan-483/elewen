@@ -179,6 +179,7 @@ model Cart {
   userId         String?    @db.VarChar(50)              // FK → strapi up_users (null = guest cart)
   sessionId      String?    @db.VarChar(255)
   couponId       String?    @db.VarChar(50)              // FK → strapi coupons
+  couponGrantId  String?    @db.Uuid                     // FK → user_coupon_grants
   eventDate      DateTime?  @db.Date
   eventCity      String?    @db.VarChar(100)
   guestCount     Int?
@@ -228,6 +229,7 @@ model Booking {
   advanceAmount    Decimal       @db.Decimal(12, 2)
   remainingAmount  Decimal       @db.Decimal(12, 2)
   couponId         String?       @db.VarChar(50)        // FK → strapi coupons
+  couponGrantId    String?       @db.Uuid               // FK → user_coupon_grants
   discountAmount   Decimal       @default(0) @db.Decimal(12, 2)
   infoStatus       InfoStatus?
   feedbackSubmitted Boolean      @default(false)
@@ -494,15 +496,51 @@ model VendorBankInfo {
 
 model CouponUsage {
   id        String   @id @default(uuid()) @db.Uuid
-  couponId  String   @db.VarChar(50)                       // FK → strapi coupons
+  couponId  String?  @db.VarChar(50)                       // FK → strapi coupons
+  grantId   String?  @db.Uuid                             // FK → user_coupon_grants
   bookingId String   @unique @db.Uuid
   userId    String   @db.VarChar(50)                       // FK → strapi up_users
   usedAt    DateTime @default(now())
 
   booking   Booking  @relation(fields: [bookingId], references: [id])
+  grant     UserCouponGrant? @relation(fields: [grantId], references: [id])
 
   @@unique([couponId, userId])
   @@map("coupon_usage")
+}
+
+model UserCouponGrant {
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @db.VarChar(50)
+  assignedByAdminId   String?  @db.VarChar(50)
+  sourceBookingId     String?  @db.Uuid
+  templateKey         String   @db.VarChar(100)
+  code                String   @unique @db.VarChar(50)
+  title               String   @db.VarChar(255)
+  discount_type       String   @db.VarChar(20)
+  discount_value      Decimal  @db.Decimal(12, 2)
+  min_order_value     Decimal  @default(0) @db.Decimal(12, 2)
+  max_order_value     Decimal? @db.Decimal(12, 2)
+  max_discount_amount Decimal? @db.Decimal(12, 2)
+  terms_customer      String?
+  first_order_only    Boolean  @default(false)
+  service_filter      String   @default("all") @db.VarChar(20)
+  is_shareable        Boolean  @default(true)
+  valid_from          DateTime
+  valid_to            DateTime
+  status              String   @default("active") @db.VarChar(20)
+  sent_at             DateTime?
+  used_at             DateTime?
+  used_by_user_id     String?  @db.VarChar(50)
+  used_on_booking_id  String?  @db.Uuid
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  couponUsages        CouponUsage[]
+
+  @@index([userId, status])
+  @@index([code])
+  @@map("user_coupon_grants")
 }
 
 // ─── MESSAGING ────────────────────────────────────────────────────────────────

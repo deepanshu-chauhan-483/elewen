@@ -5,9 +5,25 @@ import {
   DashboardPageIntro,
   SectionCard,
 } from '../../components/dashboard/DashboardUI'
-import { useDashboardSession, useDashboardUpdateProfile } from '../../hooks/useDashboardData'
+import { useDashboardSession, useDashboardUpdateProfile, useDashboardCoupons } from '../../hooks/useDashboardData'
 import { getInitials } from '../../components/dashboard/dashboardUtils'
 import { isValidIndianPhone, normalizeIndianPhone } from '../../lib/phone'
+
+function formatCouponDiscount(coupon) {
+  if (coupon.discount_type === 'percentage') {
+    return `${coupon.discount_value}% off`
+  }
+  return `₹${Number(coupon.discount_value ?? 0).toLocaleString('en-IN')} off`
+}
+
+function formatCouponDate(value) {
+  if (!value) return '—'
+  return new Date(value).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
 function buildFullName(session) {
   return (
     [session?.profile?.first_name, session?.profile?.last_name].filter(Boolean).join(' ') ||
@@ -54,9 +70,11 @@ function ProfileValue({ value }) {
 
 export default function ProfilePage() {
   const { data: session, isLoading: sessionLoading, error: sessionError } = useDashboardSession()
+  const { data: coupons = [], isLoading: couponsLoading } = useDashboardCoupons()
   const updateProfileMutation = useDashboardUpdateProfile()
   const [isEditing, setIsEditing] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [copiedCode, setCopiedCode] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const initialForm = useMemo(() => buildInitialForm(session), [session])
   const [form, setForm] = useState(() => buildInitialForm(session))
@@ -144,6 +162,16 @@ export default function ProfilePage() {
       if (error?.fieldErrors && typeof error.fieldErrors === 'object') {
         setFieldErrors(error.fieldErrors)
       }
+    }
+  }
+
+  const handleCopyCode = async code => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      window.setTimeout(() => setCopiedCode(''), 2000)
+    } catch {
+      setCopiedCode('')
     }
   }
 
@@ -265,6 +293,81 @@ export default function ProfilePage() {
           </div>
         </form>
       </SectionCard>
+
+      <div className="mt-6" id="my-coupons">
+        <SectionCard>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-serif text-[#2E2E2E]">My coupons</h2>
+            <p className="mt-1 text-sm text-[#6B7280]">
+              Referral and reward coupons sent to your account. Copy a code to use at checkout.
+            </p>
+          </div>
+        </div>
+
+        {couponsLoading ? (
+          <p className="mt-4 text-sm text-[#6B7280]">Loading your coupons...</p>
+        ) : coupons.length ? (
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {coupons.map(coupon => (
+              <div
+                key={coupon.id}
+                className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-[#2E2E2E]">
+                      {coupon.title || formatCouponDiscount(coupon)}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[#8F8F8F]">
+                      {coupon.code}
+                    </p>
+                  </div>
+                  <span
+                    className={[
+                      'rounded-full px-2.5 py-1 text-[11px] font-medium capitalize',
+                      coupon.status === 'active'
+                        ? 'bg-[#E7F6EC] text-[#12803D]'
+                        : 'bg-[#F3F4F6] text-[#6B7280]',
+                    ].join(' ')}
+                  >
+                    {coupon.status}
+                  </span>
+                </div>
+
+                <p className="mt-3 text-sm text-[#4B5563]">
+                  {formatCouponDiscount(coupon)}
+                  {coupon.min_order_value
+                    ? ` · Min order ₹${Number(coupon.min_order_value).toLocaleString('en-IN')}`
+                    : ''}
+                </p>
+                <p className="mt-1 text-xs text-[#8F8F8F]">
+                  Valid till {formatCouponDate(coupon.valid_to)}
+                </p>
+                {coupon.terms_customer ? (
+                  <p className="mt-3 text-xs leading-5 text-[#6B7280]">{coupon.terms_customer}</p>
+                ) : null}
+
+                {coupon.status === 'active' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleCopyCode(coupon.code)}
+                    className="mt-4 rounded-full border border-[#CDB17E] px-4 py-2 text-sm text-[#5A1E0E] transition hover:bg-[#F5EDE3]"
+                  >
+                    {copiedCode === coupon.code ? 'Copied!' : 'Copy code'}
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-[#6B7280]">
+            No coupons yet. After your event is complete, our team may send you a referral offer by
+            email and here in your profile.
+          </p>
+        )}
+        </SectionCard>
+      </div>
     </div>
   )
 }

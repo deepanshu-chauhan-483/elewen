@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client'
 import { randomUUID } from 'crypto'
 import prisma from '../lib/prisma.js'
 import { notify } from '../lib/notify.js'
+import { sendEmail, templates } from '../lib/email.js'
 import {
   enrichBookings,
   enrichSampleTastes,
@@ -15,6 +16,7 @@ import {
   strapiServerGet,
   strapiServerPost,
   strapiServerPut,
+  strapiFindUserByEmail,
 } from '../lib/strapi.js'
 import { cacheDelPattern } from '../lib/cache.js'
 
@@ -444,8 +446,20 @@ function mapCouponRecord(coupon) {
     id: String(coupon.id),
     documentId: coupon.document_id ?? coupon.documentId ?? null,
     code: coupon.code ?? '',
+    title: coupon.title ?? '',
+    coupon_kind: coupon.coupon_kind ?? 'public',
     discount_type: coupon.discount_type ?? 'percentage',
     discount_value: Number(coupon.discount_value ?? 0),
+    min_order_value: Number(coupon.min_order_value ?? 0),
+    max_order_value: coupon.max_order_value != null ? Number(coupon.max_order_value) : null,
+    max_discount_amount:
+      coupon.max_discount_amount != null ? Number(coupon.max_discount_amount) : null,
+    first_order_only: Boolean(coupon.first_order_only),
+    service_filter: coupon.service_filter ?? 'all',
+    terms_customer: coupon.terms_customer ?? '',
+    admin_notes: coupon.admin_notes ?? '',
+    is_user_specific: Boolean(coupon.is_user_specific),
+    is_shareable: coupon.is_shareable !== false,
     max_uses: coupon.max_uses ?? null,
     used_count: coupon.used_count ?? 0,
     valid_from: coupon.valid_from ?? null,
@@ -2912,18 +2926,7 @@ export async function listAdminCoupons(req, res, next) {
       const seenCodes = new Set()
       return res.json({
         coupons: (response?.data ?? [])
-          .map(coupon => ({
-            id: String(coupon.id),
-            documentId: coupon.documentId ?? null,
-            code: coupon.code ?? '',
-            discount_type: coupon.discount_type ?? 'percentage',
-            discount_value: Number(coupon.discount_value ?? 0),
-            max_uses: coupon.max_uses ?? null,
-            used_count: coupon.used_count ?? 0,
-            valid_from: coupon.valid_from ?? null,
-            valid_to: coupon.valid_to ?? null,
-            is_active: Boolean(coupon.is_active),
-          }))
+          .map(coupon => mapCouponRecord(coupon))
           .filter(c => {
             const key = String(c.code).toUpperCase()
             if (!key || seenCodes.has(key)) return false
@@ -2947,6 +2950,22 @@ export async function listAdminCoupons(req, res, next) {
     }
   } catch (err) {
     next(err)
+  }
+}
+
+function buildCouponPayload(body = {}) {
+  return {
+    title: normalizeNullableText(body.title),
+    coupon_kind: normalizeNullableText(body.coupon_kind || 'public'),
+    terms_customer: normalizeNullableText(body.terms_customer),
+    admin_notes: normalizeNullableText(body.admin_notes),
+    min_order_value: normalizeNullableNumber(body.min_order_value) ?? 0,
+    max_order_value: normalizeNullableNumber(body.max_order_value),
+    max_discount_amount: normalizeNullableNumber(body.max_discount_amount),
+    first_order_only: Boolean(body.first_order_only),
+    service_filter: normalizeNullableText(body.service_filter || 'all'),
+    is_user_specific: Boolean(body.is_user_specific),
+    is_shareable: body.is_shareable !== false,
   }
 }
 
@@ -2976,6 +2995,7 @@ export async function createAdminCoupon(req, res, next) {
       valid_from: normalizeNullableText(req.body.valid_from),
       valid_to: normalizeNullableText(req.body.valid_to),
       is_active: req.body.is_active !== false,
+      ...buildCouponPayload(req.body),
     }
 
     try {
@@ -3015,6 +3035,26 @@ export async function updateAdminCoupon(req, res, next) {
       payload.valid_from = normalizeNullableText(req.body.valid_from)
     if (req.body.valid_to !== undefined) payload.valid_to = normalizeNullableText(req.body.valid_to)
     if (req.body.is_active !== undefined) payload.is_active = Boolean(req.body.is_active)
+    if (req.body.title !== undefined) payload.title = normalizeNullableText(req.body.title)
+    if (req.body.coupon_kind !== undefined)
+      payload.coupon_kind = normalizeNullableText(req.body.coupon_kind)
+    if (req.body.terms_customer !== undefined)
+      payload.terms_customer = normalizeNullableText(req.body.terms_customer)
+    if (req.body.admin_notes !== undefined)
+      payload.admin_notes = normalizeNullableText(req.body.admin_notes)
+    if (req.body.min_order_value !== undefined)
+      payload.min_order_value = normalizeNullableNumber(req.body.min_order_value) ?? 0
+    if (req.body.max_order_value !== undefined)
+      payload.max_order_value = normalizeNullableNumber(req.body.max_order_value)
+    if (req.body.max_discount_amount !== undefined)
+      payload.max_discount_amount = normalizeNullableNumber(req.body.max_discount_amount)
+    if (req.body.first_order_only !== undefined)
+      payload.first_order_only = Boolean(req.body.first_order_only)
+    if (req.body.service_filter !== undefined)
+      payload.service_filter = normalizeNullableText(req.body.service_filter)
+    if (req.body.is_user_specific !== undefined)
+      payload.is_user_specific = Boolean(req.body.is_user_specific)
+    if (req.body.is_shareable !== undefined) payload.is_shareable = Boolean(req.body.is_shareable)
 
     if (
       payload.discount_type !== undefined &&
@@ -3073,6 +3113,81 @@ export async function deleteAdminCoupon(req, res, next) {
     await prisma.$queryRaw`DELETE FROM public.coupons WHERE id = ${Number.parseInt(String(req.params.id), 10)}`
     await cacheDelPattern('strapi:GET:/api/coupons*')
     return res.json({ success: true })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function shareAdminCoupon(req, res, next) {
+  try {
+    const coupon = await fetchCouponById(req.params.id)
+    if (!coupon) {
+      return res.status(404).json({ error: 'Coupon not found' })
+    }
+
+    if (!coupon.is_active) {
+      return res.status(400).json({ error: 'Coupon is inactive. Enable it before sharing.' })
+    }
+
+    const email = normalizeText(req.body.email).toLowerCase()
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'A valid customer email is required.' })
+    }
+
+    const appUrl = String(process.env.APP_URL || 'https://elewen.in').replace(/\/$/, '')
+    const loginUrl = `${appUrl}/login?redirect=${encodeURIComponent('/cart')}`
+
+    const discountLabel =
+      coupon.discount_type === 'percentage'
+        ? `${coupon.discount_value}% off`
+        : `Rs ${Number(coupon.discount_value).toLocaleString('en-IN')} off`
+
+    const validTo = coupon.valid_to
+      ? new Date(coupon.valid_to).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : null
+
+    const terms = coupon.terms_customer ?? ''
+    const subject = `Your Elewen coupon: ${coupon.code}`
+
+    if (templates.coupon_share) {
+      const html = templates.coupon_share({
+        code: coupon.code,
+        discountLabel,
+        terms,
+        validTo,
+        loginUrl,
+      })
+      await sendEmail(email, subject, html)
+    }
+
+    let userId = null
+    try {
+      const user = await strapiFindUserByEmail(email)
+      userId = user?.id ?? null
+    } catch {
+      userId = null
+    }
+
+    if (userId) {
+      await notify(String(userId), {
+        type: 'system',
+        title: 'You received a discount coupon',
+        message: `Use code ${coupon.code} for ${discountLabel} on your next order.`,
+        linkUrl: '/cart',
+      })
+    }
+
+    return res.json({
+      success: true,
+      email,
+      couponCode: coupon.code,
+      loginUrl,
+      notifiedInApp: Boolean(userId),
+    })
   } catch (err) {
     next(err)
   }

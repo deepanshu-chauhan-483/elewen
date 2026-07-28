@@ -397,6 +397,9 @@ export const dashboardGetHelp = token =>
 export const dashboardGetSummary = token =>
   apiGet('/dashboard/customer/summary', { headers: { Authorization: `Bearer ${token}` } })
 
+export const dashboardGetCoupons = token =>
+  apiGet('/dashboard/customer/coupons', { headers: { Authorization: `Bearer ${token}` } })
+
 /* ── Consultation ─────────────────────────────────────────────────────────── */
 
 /**

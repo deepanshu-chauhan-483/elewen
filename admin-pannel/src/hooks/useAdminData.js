@@ -5,6 +5,8 @@ import {
   adminAddSupportMessage,
   adminAlerts,
   adminBooking,
+  adminBookingCouponSuggestion,
+  adminSendReferralCoupon,
   adminBookings,
   adminCoupons,
   adminCreateCoupon,
@@ -29,6 +31,7 @@ import {
   adminUpdateAlert,
   adminUpdateBookingStatus,
   adminDeleteCoupon,
+  adminShareCoupon,
   adminUpdateCoupon,
   adminUpdateSampleTasteStatus,
   adminUpdateSettings,
@@ -169,6 +172,30 @@ export function useAdminBooking(bookingId) {
     queryKey: ['admin', 'booking', bookingId],
     enabled: Boolean(bookingId),
     queryFn: token => adminBooking(token, bookingId).then(response => response?.booking ?? null),
+  })
+}
+
+export function useAdminBookingCouponSuggestion(bookingId, enabled = true) {
+  return useAuthedAdminQuery({
+    queryKey: ['admin', 'booking', bookingId, 'coupon-suggestion'],
+    enabled: Boolean(bookingId) && enabled,
+    queryFn: token =>
+      adminBookingCouponSuggestion(token, bookingId).then(response => response ?? null),
+  })
+}
+
+export function useAdminSendReferralCoupon() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ bookingId, body }) =>
+      withAdminToken(token => adminSendReferralCoupon(token, bookingId, body)),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
+      queryClient.invalidateQueries({
+        queryKey: ['admin', 'booking', variables?.bookingId, 'coupon-suggestion'],
+      })
+    },
   })
 }
 
@@ -468,6 +495,13 @@ export function useAdminDeleteCoupon() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'coupons'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'payments', 'workspace'] })
     },
+  })
+}
+
+export function useAdminShareCoupon() {
+  return useMutation({
+    mutationFn: ({ couponId, email }) =>
+      withAdminToken(token => adminShareCoupon(token, couponId, { email })),
   })
 }
 

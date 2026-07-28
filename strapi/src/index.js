@@ -384,6 +384,20 @@ module.exports = {
       }
     }
 
+    if (isSeedEnabled('SEED_COUPON_TEMPLATES')) {
+      try {
+        const { seedCouponTemplates } = require('./seed/coupon-templates');
+        const couponResults = await seedCouponTemplates(strapi);
+        const created = couponResults.filter(item => item.created).length;
+        const updated = couponResults.filter(item => item.updated).length;
+        strapi.log.info(
+          `[seed/coupon-templates] created=${created}, updated=${updated}, total=${couponResults.length}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/coupon-templates] Coupon template seed failed:', error);
+      }
+    }
+
     if (isSeedEnabled('SEED_DECOR_BABY_SHOWER_PACKAGES')) {
       try {
         const { seedDecorBabyShowerPackages } = require('./seed/decor-baby-shower-packages');

@@ -11,6 +11,7 @@ import {
   clearStoredJwt,
   dashboardGetHelp,
   dashboardGetSummary,
+  dashboardGetCoupons,
   getValidStoredJwt,
   getStoredJwt,
   messageGetOrCreateThread,
@@ -104,6 +105,17 @@ export function useDashboardSummary() {
     queryFn: async token => {
       const response = await dashboardGetSummary(token)
       return response?.summary ?? {}
+    },
+  })
+}
+
+export function useDashboardCoupons() {
+  return useAuthedDashboardQuery({
+    queryKey: ['dashboard', 'coupons'],
+    staleTime: 30 * 1000,
+    queryFn: async token => {
+      const response = await dashboardGetCoupons(token)
+      return response?.coupons ?? []
     },
   })
 }

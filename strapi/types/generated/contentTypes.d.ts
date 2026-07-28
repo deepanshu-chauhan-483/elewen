@@ -891,22 +891,38 @@ export interface ApiCouponCoupon extends Struct.CollectionTypeSchema {
     draftAndPublish: true
   }
   attributes: {
+    admin_notes: Schema.Attribute.Text
     code: Schema.Attribute.String & Schema.Attribute.Required
+    coupon_kind: Schema.Attribute.Enumeration<
+      ['public', 'first_order', 'referral', 'festive', 'seasonal', 'decor_monthly']
+    > &
+      Schema.Attribute.DefaultTo<'public'>
     createdAt: Schema.Attribute.DateTime
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
     discount_type: Schema.Attribute.Enumeration<['percentage', 'flat']>
     discount_value: Schema.Attribute.Decimal & Schema.Attribute.Required
+    first_order_only: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>
     is_active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
+    is_shareable: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
+    is_user_specific: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>
     locale: Schema.Attribute.String & Schema.Attribute.Private
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::coupon.coupon'> &
       Schema.Attribute.Private
+    max_discount_amount: Schema.Attribute.Decimal
+    max_order_value: Schema.Attribute.Decimal
     max_uses: Schema.Attribute.Integer
+    min_order_value: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>
     publishedAt: Schema.Attribute.DateTime
+    service_filter: Schema.Attribute.Enumeration<['all', 'decor']> &
+      Schema.Attribute.DefaultTo<'all'>
+    terms_customer: Schema.Attribute.Text
+    title: Schema.Attribute.String
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
     used_count: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
     valid_from: Schema.Attribute.Date
     valid_to: Schema.Attribute.Date
+    validity_days: Schema.Attribute.Integer
   }
 }
 

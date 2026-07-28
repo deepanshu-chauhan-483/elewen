@@ -12,6 +12,7 @@ import {
   useAdminCreateCoupon,
   useAdminCreateVendorPayout,
   useAdminDeleteCoupon,
+  useAdminShareCoupon,
   useAdminPaymentWorkspace,
   useAdminProcessRefund,
   useAdminRefunds,
@@ -768,8 +769,14 @@ function VendorPayments({
 // ---------------------------------------------------------------------------
 const BLANK_COUPON_FORM = {
   code: '',
+  title: '',
   discount_type: 'percentage',
   discount_value: '',
+  min_order_value: '',
+  max_order_value: '',
+  terms_customer: '',
+  admin_notes: '',
+  first_order_only: 'false',
   max_uses: '',
   used_count: '0',
   valid_from: '',
@@ -779,6 +786,7 @@ const BLANK_COUPON_FORM = {
 
 const COUPON_FIELDS = [
   { key: 'code', label: 'Coupon code', type: 'text', placeholder: 'Coupon code (e.g. SAVE20)' },
+  { key: 'title', label: 'Display title', type: 'text', placeholder: 'Flat Rs 500 off' },
   {
     key: 'discount_type',
     label: 'Discount type',
@@ -789,10 +797,21 @@ const COUPON_FIELDS = [
     ],
   },
   { key: 'discount_value', label: 'Discount value', type: 'number' },
+  { key: 'min_order_value', label: 'Min order (Rs)', type: 'number', placeholder: 'e.g. 5000' },
+  { key: 'max_order_value', label: 'Max order (Rs)', type: 'number', placeholder: 'Optional cap' },
   { key: 'max_uses', label: 'Max uses', type: 'number', placeholder: 'Blank = unlimited' },
   { key: 'used_count', label: 'Used count', type: 'number', placeholder: 'Default 0' },
   { key: 'valid_from', label: 'Valid from', type: 'date' },
   { key: 'valid_to', label: 'Valid to', type: 'date' },
+  {
+    key: 'first_order_only',
+    label: 'First order only',
+    type: 'select',
+    options: [
+      { value: 'false', label: 'No' },
+      { value: 'true', label: 'Yes' },
+    ],
+  },
   {
     key: 'is_active',
     label: 'Status',
@@ -801,6 +820,20 @@ const COUPON_FIELDS = [
       { value: 'true', label: 'Active' },
       { value: 'false', label: 'Inactive' },
     ],
+  },
+  {
+    key: 'terms_customer',
+    label: 'T&C (shown to customer)',
+    type: 'textarea',
+    placeholder: 'Valid on orders above Rs 5000…',
+    rows: 3,
+  },
+  {
+    key: 'admin_notes',
+    label: 'Admin notes',
+    type: 'textarea',
+    placeholder: 'When to send, campaign notes…',
+    rows: 2,
   },
 ]
 
@@ -843,11 +876,23 @@ function toDateInputValue(value) {
 function couponFormFromSource(source = {}) {
   return {
     code: String(source.code ?? '').toUpperCase(),
+    title: String(source.title ?? ''),
     discount_type: source.discount_type ?? 'percentage',
     discount_value:
       source.discount_value !== undefined && source.discount_value !== null
         ? String(source.discount_value)
         : '',
+    min_order_value:
+      source.min_order_value !== undefined && source.min_order_value !== null
+        ? String(source.min_order_value)
+        : '',
+    max_order_value:
+      source.max_order_value !== undefined && source.max_order_value !== null
+        ? String(source.max_order_value)
+        : '',
+    terms_customer: String(source.terms_customer ?? ''),
+    admin_notes: String(source.admin_notes ?? ''),
+    first_order_only: source.first_order_only ? 'true' : 'false',
     max_uses:
       source.max_uses !== undefined && source.max_uses !== null ? String(source.max_uses) : '',
     used_count:
@@ -881,9 +926,18 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
       <div key={field.key}>
         <p className="mb-1 text-xs text-[#8F8F8F]">{field.label}</p>
         <CustomSelect
-          value={field.key === 'is_active' ? String(value) : value}
+          value={
+            field.key === 'is_active' || field.key === 'first_order_only'
+              ? String(value)
+              : value
+          }
           onChange={nextValue =>
-            onChange(field.key, field.key === 'is_active' ? nextValue === 'true' : nextValue)
+            onChange(
+              field.key,
+              field.key === 'is_active' || field.key === 'first_order_only'
+                ? nextValue === 'true'
+                : nextValue
+            )
           }
           className={`min-h-10 rounded-lg bg-[#F3F3F3] ${selectClassName}`.trim()}
         >
@@ -1158,6 +1212,7 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }) {
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState(couponFormFromSource(coupon))
+  const shareCouponMutation = useAdminShareCoupon()
   const setField = (key, value) => setEditForm(current => ({ ...current, [key]: value }))
 
   function openEdit() {
@@ -1178,8 +1233,14 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
         couponId: coupon.id,
         body: {
           code: editForm.code,
+          title: editForm.title || null,
           discount_type: editForm.discount_type,
           discount_value: Number(editForm.discount_value),
+          min_order_value: editForm.min_order_value ? Number(editForm.min_order_value) : 0,
+          max_order_value: editForm.max_order_value ? Number(editForm.max_order_value) : null,
+          terms_customer: editForm.terms_customer || null,
+          admin_notes: editForm.admin_notes || null,
+          first_order_only: editForm.first_order_only === true || editForm.first_order_only === 'true',
           max_uses: editForm.max_uses ? Number(editForm.max_uses) : null,
           used_count: Number(editForm.used_count || 0),
           valid_from: editForm.valid_from || null,
@@ -1191,15 +1252,21 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
     )
   }
 
-  const shareMailto = buildMailtoHref('', `Elewen offer: ${coupon.code}`, [
-    'Hello,',
-    '',
-    `Use coupon code ${coupon.code} for ${
-      coupon.discount_type === 'percentage'
-        ? `${coupon.discount_value}% off`
-        : `${formatCurrency(coupon.discount_value)} off`
-    }.`,
-  ])
+  async function handleShareCoupon() {
+    const email = window.prompt('Customer email to send this coupon to:')
+    if (!email?.trim()) return
+
+    try {
+      const result = await shareCouponMutation.mutateAsync({
+        couponId: coupon.id,
+        email: email.trim(),
+      })
+      const inAppNote = result?.notifiedInApp ? ' In-app notification sent too.' : ''
+      window.alert(`Coupon ${coupon.code} emailed to ${email.trim()}.${inAppNote}`)
+    } catch (error) {
+      window.alert(error?.message ?? 'Could not send coupon email. Please try again.')
+    }
+  }
 
   return (
     <div className="rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 space-y-3">
@@ -1248,7 +1315,12 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
           >
             Copy Code
           </GhostBtn>
-          <GhostBtn onClick={() => window.open(shareMailto, '_self')}>Share Coupon</GhostBtn>
+          <GhostBtn
+            disabled={shareCouponMutation.isPending || !coupon.is_active}
+            onClick={handleShareCoupon}
+          >
+            {shareCouponMutation.isPending ? 'Sending…' : 'Share Coupon'}
+          </GhostBtn>
           <DangerBtn
             disabled={deleteCouponMutation.isPending}
             onClick={() => {
@@ -1314,8 +1386,14 @@ function CouponSectionDynamic({
     createCouponMutation.mutate(
       {
         code: form.code,
+        title: form.title || undefined,
         discount_type: form.discount_type,
         discount_value: Number(form.discount_value),
+        min_order_value: form.min_order_value ? Number(form.min_order_value) : 0,
+        max_order_value: form.max_order_value ? Number(form.max_order_value) : null,
+        terms_customer: form.terms_customer || null,
+        admin_notes: form.admin_notes || null,
+        first_order_only: form.first_order_only === true || form.first_order_only === 'true',
         max_uses: form.max_uses ? Number(form.max_uses) : null,
         used_count: Number(form.used_count || 0),
         valid_from: form.valid_from || null,

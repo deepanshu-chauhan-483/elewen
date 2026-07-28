@@ -2,6 +2,7 @@ import prisma from '../lib/prisma.js'
 import { computeCartItemsWithDeliveryCharges } from '../lib/deliveryChargePricing.js'
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
+import { resolveAppliedCoupon } from '../lib/coupons.js'
 import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
 import { createOperationalAlert } from '../lib/alerts.js'
 import {
@@ -324,48 +325,8 @@ const getAdvancePct = async () => {
 }
 
 // ─── Helper: re-validate coupon before booking ────────────────────────────────
-const validateCoupon = async (couponId, subtotal, userId) => {
-  try {
-    const { data: coupons } = await strapiGet('/coupons', {
-      'filters[id][$eq]': couponId,
-    })
-    const coupon = coupons?.[0]
-    if (!coupon?.is_active) return { valid: false, discount: 0, couponId: null }
-
-    if (userId) {
-      const existingUsage = await prisma.couponUsage.findFirst({
-        where: {
-          couponId: String(coupon.id),
-          userId: String(userId),
-        },
-        select: { id: true },
-      })
-
-      if (existingUsage) {
-        return { valid: false, discount: 0, couponId: null }
-      }
-    }
-
-    const now = new Date()
-    if (coupon.valid_from && new Date(coupon.valid_from) > now)
-      return { valid: false, discount: 0, couponId: null }
-    if (coupon.valid_to && new Date(coupon.valid_to) < now)
-      return { valid: false, discount: 0, couponId: null }
-    if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses)
-      return { valid: false, discount: 0, couponId: null }
-
-    let discount = 0
-    if (coupon.discount_type === 'percentage') {
-      discount = (subtotal * Number(coupon.discount_value)) / 100
-    } else {
-      discount = Math.min(Number(coupon.discount_value), subtotal)
-    }
-
-    return { valid: true, discount, couponId: String(coupon.id) }
-  } catch {
-    return { valid: false, discount: 0, couponId: null }
-  }
-}
+const validateCoupon = async (couponId, subtotal, userId, couponGrantId = null) =>
+  resolveAppliedCoupon({ couponId, couponGrantId, userId, subtotal })
 
 // ─── POST /bookings ────────────────────────────────────────────────────────────
 // Creates a booking from the user's current cart.
@@ -414,13 +375,19 @@ export const createBooking = async (req, res, next) => {
     // Re-validate coupon (race condition protection — someone else may have exhausted it)
     let discountAmount = 0
     let validCouponId = null
-    if (cart.couponId) {
-      const couponResult = await validateCoupon(cart.couponId, subtotal, userId)
+    let validCouponGrantId = null
+    if (cart.couponId || cart.couponGrantId) {
+      const couponResult = await resolveAppliedCoupon({
+        couponId: cart.couponId,
+        couponGrantId: cart.couponGrantId,
+        userId,
+        subtotal,
+      })
       if (couponResult.valid) {
         discountAmount = couponResult.discount
         validCouponId = couponResult.couponId
+        validCouponGrantId = couponResult.couponGrantId
       }
-      // If coupon is now invalid, proceed without discount (don't block booking)
     }
 
     const totalPrice = Math.max(0, subtotal - discountAmount)
@@ -443,6 +410,7 @@ export const createBooking = async (req, res, next) => {
           advanceAmount: advanceAmount.toFixed(2),
           remainingAmount: remainingAmount.toFixed(2),
           couponId: validCouponId,
+          couponGrantId: validCouponGrantId,
           discountAmount: discountAmount.toFixed(2),
           infoStatus: 'waiting',
         },
@@ -474,7 +442,34 @@ export const createBooking = async (req, res, next) => {
       })
 
       // Record coupon usage if applicable
-      if (validCouponId) {
+      if (validCouponGrantId) {
+        const grant = await tx.userCouponGrant.findUnique({
+          where: { id: validCouponGrantId },
+          select: { id: true, status: true },
+        })
+
+        if (!grant || grant.status !== 'active') {
+          throw createBadRequestError('This coupon is no longer valid')
+        }
+
+        await tx.couponUsage.create({
+          data: {
+            grantId: validCouponGrantId,
+            bookingId: newBooking.id,
+            userId,
+          },
+        })
+
+        await tx.userCouponGrant.update({
+          where: { id: validCouponGrantId },
+          data: {
+            status: 'used',
+            used_at: new Date(),
+            used_by_user_id: userId,
+            used_on_booking_id: newBooking.id,
+          },
+        })
+      } else if (validCouponId) {
         const existingUsage = await tx.couponUsage.findFirst({
           where: {
             couponId: validCouponId,

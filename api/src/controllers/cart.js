@@ -1,6 +1,12 @@
 import prisma from '../lib/prisma.js'
 import { strapiGet } from '../lib/strapi.js'
 import {
+  findGrantById,
+  normalizeStrapiCoupon,
+  resolveAppliedCoupon,
+  resolveCouponByCode,
+} from '../lib/coupons.js'
+import {
   attachSelectedOptionsToCartItems,
   buildStoredCartItemTitle,
   getDisplayTitle,
@@ -17,14 +23,28 @@ const getCartWithItems = cartId =>
     include: cartInclude,
   })
 
-const getCouponSnapshot = async couponId => {
+const getCouponSnapshot = async (couponId, couponGrantId) => {
+  if (couponGrantId) {
+    const grant = await findGrantById(couponGrantId)
+    if (!grant) return null
+    return {
+      id: grant.grantId,
+      code: grant.code,
+      discount_type: grant.discount_type,
+      discount_value: grant.discount_value,
+      is_active: grant.status === 'active',
+      terms_customer: grant.terms_customer,
+      source: 'grant',
+    }
+  }
+
   if (!couponId) return null
 
   try {
     const { data: coupons } = await strapiGet('/coupons', {
       'filters[id][$eq]': couponId,
     })
-    const coupon = coupons?.[0]
+    const coupon = normalizeStrapiCoupon(coupons?.[0])
     if (!coupon) return null
 
     return {
@@ -33,6 +53,8 @@ const getCouponSnapshot = async couponId => {
       discount_type: coupon.discount_type ?? '',
       discount_value: coupon.discount_value ?? 0,
       is_active: Boolean(coupon.is_active),
+      terms_customer: coupon.terms_customer ?? '',
+      source: 'strapi',
     }
   } catch {
     return null
@@ -42,7 +64,7 @@ const getCouponSnapshot = async couponId => {
 const attachCouponDetails = async cart => {
   if (!cart) return cart
 
-  const coupon = await getCouponSnapshot(cart.couponId)
+  const coupon = await getCouponSnapshot(cart.couponId, cart.couponGrantId)
 
   return {
     ...cart,
@@ -52,6 +74,8 @@ const attachCouponDetails = async cart => {
           code: coupon.code,
           discount_type: coupon.discount_type,
           discount_value: coupon.discount_value,
+          terms_customer: coupon.terms_customer ?? '',
+          source: coupon.source,
         }
       : null,
   }
@@ -184,38 +208,40 @@ async function resolvePackageById(packageId) {
 }
 
 // ─── Helper: recalculate cart totals ─────────────────────────────────────────
-// couponIdOverride: pass null to explicitly remove coupon, a string to set one,
-// or undefined to keep whatever couponId is already on the cart.
-const recalcCart = async (cartId, couponIdOverride) => {
+// couponOverride: { couponId, couponGrantId } or undefined to read from cart
+const recalcCart = async (cartId, couponOverride) => {
   const items = await prisma.cartItem.findMany({ where: { cartId } })
   const subtotal = items.reduce((sum, item) => sum + Number(item.totalPrice), 0)
 
-  let couponId
-  if (couponIdOverride !== undefined) {
-    couponId = couponIdOverride
-  } else {
-    const cart = await prisma.cart.findUnique({ where: { id: cartId }, select: { couponId: true } })
-    couponId = cart.couponId
+  const cart = await prisma.cart.findUnique({
+    where: { id: cartId },
+    select: { couponId: true, couponGrantId: true, userId: true },
+  })
+
+  let couponId = cart?.couponId ?? null
+  let couponGrantId = cart?.couponGrantId ?? null
+
+  if (couponOverride !== undefined) {
+    couponId = couponOverride.couponId ?? null
+    couponGrantId = couponOverride.couponGrantId ?? null
   }
 
   let discountAmount = 0
-  if (couponId) {
-    try {
-      const { data: coupons } = await strapiGet('/coupons', {
-        'filters[id][$eq]': couponId,
-      })
-      const coupon = coupons?.[0]
-      if (coupon?.is_active) {
-        if (coupon.discount_type === 'percentage') {
-          discountAmount = (subtotal * Number(coupon.discount_value)) / 100
-        } else {
-          discountAmount = Math.min(Number(coupon.discount_value), subtotal)
-        }
-      } else {
-        couponId = null // coupon became inactive — detach
-      }
-    } catch {
-      couponId = null // coupon not found — detach
+  if (couponId || couponGrantId) {
+    const result = await resolveAppliedCoupon({
+      couponId,
+      couponGrantId,
+      userId: cart?.userId,
+      subtotal,
+    })
+
+    if (result.valid) {
+      discountAmount = result.discount
+      couponId = result.couponId
+      couponGrantId = result.couponGrantId
+    } else {
+      couponId = null
+      couponGrantId = null
     }
   }
 
@@ -227,6 +253,7 @@ const recalcCart = async (cartId, couponIdOverride) => {
       discountAmount: discountAmount.toFixed(2),
       total: total.toFixed(2),
       couponId,
+      couponGrantId,
     },
   })
 }
@@ -594,55 +621,34 @@ export const applyCoupon = async (req, res, next) => {
     const userId = String(req.user.id)
     const { code } = req.body
 
-    const cart = await prisma.cart.findFirst({ where: { userId } })
+    const cart = await prisma.cart.findFirst({ where: { userId }, include: cartInclude })
     if (!cart) return res.status(404).json({ error: 'Cart not found' })
 
-    // Find coupon in Strapi by code
-    const { data: coupons } = await strapiGet('/coupons', {
-      'filters[code][$eq]': code.toUpperCase(),
-      'filters[is_active][$eq]': true,
-    })
+    const subtotal = cart.items.reduce((sum, item) => sum + Number(item.totalPrice), 0)
+    const result = await resolveCouponByCode(code, { userId, subtotal })
 
-    if (!coupons?.length) {
-      return res.status(404).json({ error: 'Invalid or inactive coupon code' })
+    if (!result.valid) {
+      return res.status(400).json({ error: result.error ?? 'Invalid or inactive coupon code' })
     }
 
-    const coupon = coupons[0]
-    const now = new Date()
-
-    const existingUsage = await prisma.couponUsage.findFirst({
-      where: {
-        couponId: String(coupon.id),
-        userId,
+    await prisma.cart.update({
+      where: { id: cart.id },
+      data: {
+        couponId: result.couponId,
+        couponGrantId: result.couponGrantId,
       },
-      select: { id: true },
     })
-
-    if (existingUsage) {
-      return res.status(400).json({ error: 'You have already used this coupon' })
-    }
-
-    if (coupon.valid_from && new Date(coupon.valid_from) > now) {
-      return res.status(400).json({ error: 'This coupon is not yet active' })
-    }
-    if (coupon.valid_to && new Date(coupon.valid_to) < now) {
-      return res.status(400).json({ error: 'This coupon has expired' })
-    }
-    if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) {
-      return res.status(400).json({ error: 'This coupon has reached its usage limit' })
-    }
-
-    await prisma.cart.update({ where: { id: cart.id }, data: { couponId: String(coupon.id) } })
-    await recalcCart(cart.id, String(coupon.id))
+    await recalcCart(cart.id)
 
     const updated = await getCartWithItems(cart.id)
 
     res.json({
       cart: attachSelectedOptionsToCartItems(await attachCouponDetails(updated)),
       coupon: {
-        code: coupon.code,
-        discount_type: coupon.discount_type,
-        discount_value: coupon.discount_value,
+        code: result.coupon.code,
+        discount_type: result.coupon.discount_type,
+        discount_value: result.coupon.discount_value,
+        terms_customer: result.coupon.terms_customer ?? '',
       },
     })
   } catch (err) {
@@ -658,8 +664,11 @@ export const removeCoupon = async (req, res, next) => {
     const cart = await prisma.cart.findFirst({ where: { userId } })
     if (!cart) return res.status(404).json({ error: 'Cart not found' })
 
-    await prisma.cart.update({ where: { id: cart.id }, data: { couponId: null } })
-    await recalcCart(cart.id, null)
+    await prisma.cart.update({
+      where: { id: cart.id },
+      data: { couponId: null, couponGrantId: null },
+    })
+    await recalcCart(cart.id, { couponId: null, couponGrantId: null })
 
     const updated = await getCartWithItems(cart.id)
 

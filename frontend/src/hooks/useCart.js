@@ -187,9 +187,14 @@ async function fetchAndValidateCoupon(code) {
   return {
     id: String(raw.id),
     code: String(c.code ?? code).toUpperCase(),
-    discount_type: String(c.discount_type ?? 'fixed'), // 'fixed' | 'percentage'
+    discount_type: String(c.discount_type ?? 'fixed'),
     discount_value: Number(c.discount_value ?? 0),
     min_order_value: Number(c.min_order_value ?? 0),
+    max_order_value: c.max_order_value != null ? Number(c.max_order_value) : null,
+    max_discount_amount:
+      c.max_discount_amount != null ? Number(c.max_discount_amount) : null,
+    first_order_only: Boolean(c.first_order_only),
+    terms_customer: c.terms_customer ?? '',
   }
 }
 
@@ -200,8 +205,17 @@ function computeDiscount(coupon, subtotal) {
       `Minimum order of Rs${coupon.min_order_value.toLocaleString('en-IN')} required for this coupon.`
     )
   }
+  if (coupon.max_order_value != null && subtotal > coupon.max_order_value) {
+    throw new Error(
+      `This coupon is valid on orders up to Rs${coupon.max_order_value.toLocaleString('en-IN')} only.`
+    )
+  }
   if (coupon.discount_type === 'percentage') {
-    return Math.min((subtotal * coupon.discount_value) / 100, subtotal)
+    let discount = Math.min((subtotal * coupon.discount_value) / 100, subtotal)
+    if (coupon.max_discount_amount != null) {
+      discount = Math.min(discount, coupon.max_discount_amount)
+    }
+    return discount
   }
   return Math.min(coupon.discount_value, subtotal)
 }

@@ -12,8 +12,10 @@ import { useScrollToTop } from '../hooks/useScrollToTop'
 import {
   useAdminAddBookingNote,
   useAdminBooking,
+  useAdminBookingCouponSuggestion,
   useAdminBookings,
   useAdminCreateVendorAssignment,
+  useAdminSendReferralCoupon,
   useAdminUpdateBookingStatus,
   useAdminVendors,
 } from '../hooks/useAdminData'
@@ -410,6 +412,100 @@ function buildPaymentDetailRows(booking) {
     },
   ]
 }
+const REFERRAL_TIER_OPTIONS = [
+  { value: 'referral_500', label: 'Referral — Rs 500 off' },
+  { value: 'referral_800', label: 'Referral — Rs 800 off' },
+  { value: 'referral_1500', label: 'Referral — Rs 1,500 off' },
+]
+
+function ReferralCouponPanel({ bookingId, bookingStatus, bookingTotal }) {
+  const canSend = ['post_event', 'completed'].includes(String(bookingStatus ?? '').toLowerCase())
+  const suggestionQuery = useAdminBookingCouponSuggestion(bookingId, canSend)
+  const sendMutation = useAdminSendReferralCoupon()
+  const [tierKey, setTierKey] = useState('')
+  const [sendMessage, setSendMessage] = useState('')
+  const [sendError, setSendError] = useState('')
+
+  useEffect(() => {
+    const suggested = suggestionQuery.data?.suggestedTier?.key
+    if (suggested) setTierKey(suggested)
+  }, [suggestionQuery.data?.suggestedTier?.key])
+
+  if (!canSend) {
+    return (
+      <p className="text-sm text-[#8F8F8F]">
+        Referral coupons can be sent manually after the booking reaches Post Event or Completed.
+      </p>
+    )
+  }
+
+  const existingGrant = suggestionQuery.data?.existingGrant
+
+  if (existingGrant) {
+    return (
+      <div className="rounded-xl bg-white px-4 py-3">
+        <p className="text-sm font-medium text-[#2D2D2D]">Referral coupon already sent</p>
+        <p className="mt-1 text-sm text-[#6B7280]">
+          Code <span className="font-semibold text-[#2D2D2D]">{existingGrant.code}</span> ·{' '}
+          {existingGrant.status}
+        </p>
+        {existingGrant.terms_customer ? (
+          <p className="mt-2 text-xs leading-5 text-[#8F8F8F]">{existingGrant.terms_customer}</p>
+        ) : null}
+      </div>
+    )
+  }
+
+  const handleSend = async () => {
+    setSendError('')
+    setSendMessage('')
+    try {
+      const response = await sendMutation.mutateAsync({
+        bookingId,
+        body: { tierKey: tierKey || undefined },
+      })
+      setSendMessage(`Coupon ${response?.grant?.code ?? ''} sent by email and inbox.`)
+    } catch (error) {
+      setSendError(error?.message ?? 'Could not send referral coupon.')
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-[#6B7280]">
+        Booking total: {formatCurrency(bookingTotal)}. Suggested tier:{' '}
+        {suggestionQuery.data?.suggestedTier?.title ?? 'None — choose manually.'}
+      </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <p className="mb-1.5 text-xs text-[#8F8F8F]">Referral tier</p>
+          <CustomSelect
+            value={tierKey}
+            onChange={setTierKey}
+            className="min-h-10 rounded-full bg-[#F3F3F3]"
+          >
+            <option value="">Use suggested tier</option>
+            {REFERRAL_TIER_OPTIONS.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </CustomSelect>
+        </div>
+        <PrimaryBtn disabled={sendMutation.isPending} onClick={handleSend}>
+          {sendMutation.isPending ? 'Sending…' : 'Send referral coupon'}
+        </PrimaryBtn>
+      </div>
+      {sendMessage ? <p className="text-sm text-[#12803D]">{sendMessage}</p> : null}
+      {sendError ? <p className="text-sm text-[#8A1C1C]">{sendError}</p> : null}
+      <p className="text-xs leading-5 text-[#8F8F8F]">
+        Manual action only. Sends a unique one-time code by email and customer inbox. Valid for 2
+        months and shareable with family or friends.
+      </p>
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Admin Booking Accordion Card
 // ---------------------------------------------------------------------------
@@ -696,6 +792,18 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
               ) : (
                 <p className="mt-3 text-sm text-[#8F8F8F]">No internal notes saved yet.</p>
               )}
+            </div>
+          </div>
+
+          {/* ── Referral Coupon ── */}
+          <div className="py-6 border-t border-[#00000033]">
+            <SectionLabel>Referral Coupon</SectionLabel>
+            <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+              <ReferralCouponPanel
+                bookingId={booking.id}
+                bookingStatus={bookingDetails?.status ?? booking.status}
+                bookingTotal={bookingDetails?.totalPrice ?? booking.totalPrice}
+              />
             </div>
           </div>
 
