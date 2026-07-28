@@ -5,6 +5,10 @@ import { useBudgetLevelOptions } from '../hooks/useEventTypes'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { buildServiceSelectionBackTo, isConsultationOnlyEvent, SERVICES_FLOW_KEY } from '../lib/serviceFlow'
+import {
+  applyServiceLevelDescriptions,
+  BARTENDING_LEVEL_DESCRIPTIONS,
+} from '../lib/serviceLevelDescriptions'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Category' },
@@ -61,6 +65,10 @@ export default function BartendingLevelsPage() {
 
   const levelsQuery = useBudgetLevelOptions(serviceId)
   const { data: levels = [] } = levelsQuery
+  const levelsWithDescriptions = useMemo(
+    () => applyServiceLevelDescriptions(levels, BARTENDING_LEVEL_DESCRIPTIONS),
+    [levels]
+  )
   const isStrapiLoading = useStrapiPageLoading(levelsQuery)
 
   const backTo = useMemo(() => {
@@ -104,7 +112,7 @@ export default function BartendingLevelsPage() {
     >
       <div className="flex pb-6 md:h-[50svh] w-full items-start md:pb-0">
         <div className="flex w-full flex-col gap-4 md:flex-row md:gap-4">
-          {levels.map(level => (
+          {levelsWithDescriptions.map(level => (
             <LevelCard
               key={level.id ?? level.slug}
               categoryId={categoryId}
