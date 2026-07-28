@@ -1,5 +1,3 @@
-import { inferLevelSlugFromCateringLevel } from './cateringPricing'
-
 const normalizeValue = value =>
   String(value ?? '')
     .trim()
@@ -20,6 +18,25 @@ const normalizeThemeSlug = value =>
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+
+/**
+ * Catering listing — official catalog only (Level from Strapi budget_level).
+ */
+const CATERING_ALLOWED_SLUGS = new Set([
+  'close-circle-catering-1',
+  'close-circle-catering-2',
+  'close-circle-catering-3',
+  'easy-hosting-simply-served-1',
+  'easy-hosting-simply-served-2',
+  'effortless-hosting',
+  'signature-hosting-package',
+  'signature-hosting-2',
+  'the-full-table-experience',
+  'the-social-experience',
+  'the-grand-experience',
+  'the-social-starters',
+  'purely-satvik',
+])
 
 /**
  * Bartending listing — Classic Pour, Signature Mix, House Special.
@@ -232,6 +249,14 @@ function isAllowedCorporateEventPackage(pkg, allowlist) {
   return Boolean(titleKey && allowlist.titles.has(titleKey))
 }
 
+function isAllowedCateringPackage(pkg) {
+  const slug = normalizeValue(pkg?.slug)
+  if (slug && CATERING_ALLOWED_SLUGS.has(slug)) return true
+
+  const titleKey = normalizeLevelSlug(pkg?.title)
+  return Boolean(titleKey && CATERING_ALLOWED_SLUGS.has(titleKey))
+}
+
 function isAllowedBartendingPackage(pkg) {
   const slug = normalizeValue(pkg?.slug)
   if (slug === 'exclusive-package' || slug === 'paint-and-prosecco-night') return false
@@ -264,12 +289,11 @@ function isAllowedBartendingPackage(pkg) {
   return false
 }
 
-/** Level from Strapi budget_level (preferred) or catering_level fallback. */
+/** Website Level 1/2/3 from Strapi budget_level only (set on normalized level_slug). */
 function getCateringCmsLevel(pkg) {
   const fromLevelSlug = normalizeLevelSlug(pkg?.level_slug)
   if (/^level-\d+$/.test(fromLevelSlug)) return fromLevelSlug
-
-  return inferLevelSlugFromCateringLevel(pkg?.catering_level)
+  return ''
 }
 
 function packageMatchesLevelFilter(pkg, { levelSlug = '', levelId = '', serviceSlug = '' } = {}) {
@@ -1116,9 +1140,9 @@ export function filterPackages(packages, filters = {}) {
       if (!serviceLaneMatched) return false
     }
 
-    // Catering listing = packages with a CMS level (catering_level / budget_level).
-    // Stubs without a level stay hidden.
+    // Catering listing = official catalog + Strapi budget_level (Level 1/2/3).
     if (normalizedServiceSlug === 'catering') {
+      if (!isAllowedCateringPackage(pkg)) return false
       const cmsLevel = getCateringCmsLevel(pkg)
       if (!cmsLevel) return false
       if (levelSlug && normalizeLevelSlug(levelSlug) !== cmsLevel) return false
