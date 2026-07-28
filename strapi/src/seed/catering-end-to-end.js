@@ -64,6 +64,7 @@ const END_TO_END_PACKAGES = [
   {
     title: 'Effortless Hosting',
     slug: 'effortless-hosting',
+    budget_level_slug: 'level-3',
     base_price: 1495,
     price_per_person_veg: 1495,
     price_per_person_non_veg: 1595,
@@ -86,6 +87,7 @@ const END_TO_END_PACKAGES = [
   {
     title: 'Signature Hosting Package',
     slug: 'signature-hosting-package',
+    budget_level_slug: 'level-2',
     base_price: 1995,
     price_per_person_veg: 1995,
     price_per_person_non_veg: 1995,
@@ -108,6 +110,7 @@ const END_TO_END_PACKAGES = [
   {
     title: 'Signature Hosting 2',
     slug: 'signature-hosting-2',
+    budget_level_slug: 'level-2',
     base_price: 2295,
     price_per_person_veg: 2295,
     price_per_person_non_veg: 2295,
@@ -131,6 +134,7 @@ const END_TO_END_PACKAGES = [
   {
     title: 'The Full Table Experience',
     slug: 'the-full-table-experience',
+    budget_level_slug: 'level-3',
     base_price: 2800,
     price_per_person_veg: 2800,
     price_per_person_non_veg: 2800,
@@ -155,6 +159,7 @@ const END_TO_END_PACKAGES = [
   {
     title: 'The Social Experience',
     slug: 'the-social-experience',
+    budget_level_slug: 'level-3',
     base_price: 1795,
     price_per_person_veg: 1795,
     price_per_person_non_veg: 1795,
@@ -176,6 +181,7 @@ const END_TO_END_PACKAGES = [
   {
     title: 'The Grand Experience',
     slug: 'the-grand-experience',
+    budget_level_slug: 'level-3',
     base_price: 2595,
     price_per_person_veg: 2595,
     price_per_person_non_veg: 2595,
@@ -199,6 +205,7 @@ const END_TO_END_PACKAGES = [
   {
     title: 'The Social Starters',
     slug: 'the-social-starters',
+    budget_level_slug: 'level-3',
     base_price: 1495,
     price_per_person_veg: 1495,
     price_per_person_non_veg: 1495,
@@ -213,6 +220,7 @@ const END_TO_END_PACKAGES = [
   {
     title: 'Purely Satvik',
     slug: 'purely-satvik',
+    budget_level_slug: 'level-3',
     base_price: 1195,
     price_per_person_veg: 1195,
     price_per_person_non_veg: 1195,
@@ -245,11 +253,12 @@ const END_TO_END_PACKAGES = [
   },
 ];
 
-function buildEndToEndBlock(pkgSeed, policyDocumentId) {
+function buildEndToEndBlock(pkgSeed, policyDocumentId, budgetLevelDocumentId) {
   return buildCateringComponent({
     cateringLevel: 'end_to_end',
     levelDescription: END_TO_END_LEVEL_DESCRIPTION,
     policyDocumentId,
+    budgetLevelDocumentId,
     inclusions: pkgSeed.inclusions,
     exclusions: pkgSeed.exclusions,
     clientRequirements: pkgSeed.client_requirements,

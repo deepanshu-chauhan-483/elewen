@@ -43,6 +43,7 @@ const ESSENTIAL_PACKAGES = [
   {
     title: 'Close Circle Catering 1',
     slug: 'close-circle-catering-1',
+    budget_level_slug: 'level-1',
     base_price: 1100,
     price_per_person_veg: 1100,
     price_per_person_non_veg: 1200,
@@ -62,6 +63,7 @@ const ESSENTIAL_PACKAGES = [
   {
     title: 'Close Circle Catering 2',
     slug: 'close-circle-catering-2',
+    budget_level_slug: 'level-2',
     base_price: 1500,
     price_per_person_veg: 1500,
     price_per_person_non_veg: 1500,
@@ -84,6 +86,7 @@ const ESSENTIAL_PACKAGES = [
   {
     title: 'Close Circle Catering 3',
     slug: 'close-circle-catering-3',
+    budget_level_slug: 'level-3',
     base_price: 2000,
     price_per_person_veg: 2000,
     price_per_person_non_veg: 2000,
@@ -107,11 +110,12 @@ const ESSENTIAL_PACKAGES = [
   },
 ];
 
-function buildEssentialsBlock(pkgSeed, policyDocumentId) {
+function buildEssentialsBlock(pkgSeed, policyDocumentId, budgetLevelDocumentId) {
   return buildCateringComponent({
     cateringLevel: 'essentials',
     levelDescription: ESSENTIALS_LEVEL_DESCRIPTION,
     policyDocumentId,
+    budgetLevelDocumentId,
     inclusions: pkgSeed.inclusions,
     exclusions: pkgSeed.exclusions,
     clientRequirements: pkgSeed.client_requirements,

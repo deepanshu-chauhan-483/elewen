@@ -30,6 +30,7 @@ const ASSISTED_PACKAGES = [
   {
     title: 'Easy Hosting / Simply Served 1',
     slug: 'easy-hosting-simply-served-1',
+    budget_level_slug: 'level-1',
     base_price: 1700,
     price_per_person_veg: 1700,
     price_per_person_non_veg: 1700,
@@ -55,6 +56,7 @@ const ASSISTED_PACKAGES = [
   {
     title: 'Easy Hosting / Simply Served 2',
     slug: 'easy-hosting-simply-served-2',
+    budget_level_slug: 'level-2',
     base_price: 2000,
     price_per_person_veg: 2000,
     price_per_person_non_veg: 2000,
@@ -82,11 +84,12 @@ const ASSISTED_PACKAGES = [
   },
 ];
 
-function buildAssistedBlock(pkgSeed, policyDocumentId) {
+function buildAssistedBlock(pkgSeed, policyDocumentId, budgetLevelDocumentId) {
   return buildCateringComponent({
     cateringLevel: 'assisted',
     levelDescription: ASSISTED_LEVEL_DESCRIPTION,
     policyDocumentId,
+    budgetLevelDocumentId,
     inclusions: pkgSeed.inclusions,
     exclusions: pkgSeed.exclusions,
     clientRequirements: pkgSeed.client_requirements,

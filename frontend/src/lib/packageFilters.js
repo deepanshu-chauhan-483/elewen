@@ -264,7 +264,7 @@ function isAllowedBartendingPackage(pkg) {
   return false
 }
 
-/** Level from Strapi: normalized level_slug, or catering_level enum. */
+/** Level from Strapi budget_level (preferred) or catering_level fallback. */
 function getCateringCmsLevel(pkg) {
   const fromLevelSlug = normalizeLevelSlug(pkg?.level_slug)
   if (/^level-\d+$/.test(fromLevelSlug)) return fromLevelSlug

@@ -160,6 +160,7 @@ function buildCateringComponent({
   cateringLevel,
   levelDescription,
   policyDocumentId,
+  budgetLevelDocumentId,
   inclusions,
   exclusions,
   clientRequirements,
@@ -187,6 +188,7 @@ function buildCateringComponent({
     menu_items: normalizeCateringMenuItems(menuItems),
     pricing_rules: buildGuestPricingRules(),
     ...(policyDocumentId ? { policy: policyDocumentId } : {}),
+    ...(budgetLevelDocumentId ? { budget_level: budgetLevelDocumentId } : {}),
   };
 }
 
@@ -312,6 +314,60 @@ async function ensureCateringPackage(
     const hasBlock = packageHasCateringBlock(entry);
 
     if (hasBlock && !refreshExisting) {
+      // Still sync budget_level so Level 1/2/3 can be corrected without rewriting menus.
+      const existingBlocks = Array.isArray(entry.packages) ? entry.packages : [];
+      const nextBudgetLevel = cateringBlock?.budget_level ?? null;
+      let levelChanged = false;
+      const nextBlocks = existingBlocks.map(block => {
+        if (block?.__component !== 'package.cateringpackage') return block;
+        const current =
+          block?.budget_level?.documentId ??
+          block?.budget_level?.id ??
+          block?.budget_level ??
+          null;
+        if (String(current ?? '') === String(nextBudgetLevel ?? '')) return block;
+        levelChanged = true;
+        return {
+          ...block,
+          budget_level: nextBudgetLevel,
+        };
+      });
+
+      if (levelChanged && nextBudgetLevel) {
+        const sanitized = nextBlocks.map(block => {
+          if (block?.__component !== 'package.cateringpackage') return block;
+          const copy = { ...block, budget_level: nextBudgetLevel };
+          delete copy.id;
+          delete copy.documentId;
+          if (copy.policy?.documentId) copy.policy = copy.policy.documentId;
+          else if (copy.policy && typeof copy.policy === 'object') delete copy.policy;
+          return copy;
+        });
+
+        await strapi.documents('api::package.package').update({
+          documentId: entry.documentId,
+          data: { packages: sanitized },
+        });
+
+        try {
+          await strapi.documents('api::package.package').publish({
+            documentId: entry.documentId,
+          });
+        } catch (publishError) {
+          strapi.log.warn(
+            `[seed/catering] Publish after budget_level sync for "${pkgSeed.slug}" (${status}): ${publishError.message}`
+          );
+        }
+
+        return {
+          skipped: false,
+          updated: true,
+          budgetLevelOnly: true,
+          documentId: entry.documentId,
+          title: pkgSeed.title,
+        };
+      }
+
       return { skipped: true, documentId: entry.documentId, title: pkgSeed.title };
     }
 
@@ -390,6 +446,8 @@ async function seedCateringPackages(strapi, packageSeeds, buildBlockForSeed, opt
   const cateringCategory = await ensureCateringServiceCategory(strapi);
   const policyDocumentId = policy?.documentId;
   const categoryDocumentId = cateringCategory?.documentId;
+  const { ensureBudgetLevelDocumentId } = require('./decor-proposal-shared');
+  const levelCache = new Map();
 
   if (!policyDocumentId || !categoryDocumentId) {
     throw new Error('Catering seed failed: missing policy or service category documentId.');
@@ -398,7 +456,24 @@ async function seedCateringPackages(strapi, packageSeeds, buildBlockForSeed, opt
   const results = [];
 
   for (const pkgSeed of packageSeeds) {
-    const cateringBlock = buildBlockForSeed(pkgSeed, policyDocumentId);
+    let budgetLevelDocumentId = null;
+    const levelSlug = String(pkgSeed.budget_level_slug ?? '').trim();
+    if (levelSlug) {
+      if (!levelCache.has(levelSlug)) {
+        const orderMatch = levelSlug.match(/(\d+)/);
+        levelCache.set(
+          levelSlug,
+          await ensureBudgetLevelDocumentId(strapi, {
+            slug: levelSlug,
+            name: `Level ${orderMatch?.[1] ?? ''}`.trim() || levelSlug,
+            display_order: Number(orderMatch?.[1] ?? 0) || 0,
+          })
+        );
+      }
+      budgetLevelDocumentId = levelCache.get(levelSlug);
+    }
+
+    const cateringBlock = buildBlockForSeed(pkgSeed, policyDocumentId, budgetLevelDocumentId);
     const result = await ensureCateringPackage(
       strapi,
       pkgSeed,
