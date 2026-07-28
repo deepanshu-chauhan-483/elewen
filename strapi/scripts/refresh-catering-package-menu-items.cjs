@@ -9,6 +9,9 @@
  */
 const path = require('node:path');
 const Strapi = require('@strapi/strapi');
+const { ESSENTIAL_PACKAGES } = require('../src/seed/catering-essentials');
+const { ASSISTED_PACKAGES } = require('../src/seed/catering-assisted');
+const { END_TO_END_PACKAGES } = require('../src/seed/catering-end-to-end');
 const { seedCateringMenuLibrary } = require('../src/seed/catering-menu-library');
 const { findPackageBySlug } = require('../src/seed/catering-shared');
 
