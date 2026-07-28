@@ -127,71 +127,15 @@ function resolveBartenderType(detailSections = []) {
   return ''
 }
 
-/** Normalize bartending card title + bartender type to the client sheet (3 packages). Price comes from Strapi. */
+/** Bartending listing: title + bartender_type + price all from Strapi (no hardcoded names). */
 function resolveBartendingListingPresentation(pkg, detailSections = []) {
   const bartenderType = resolveBartenderType(detailSections)
-  const typeKey = String(bartenderType ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-  const slug = String(pkg?.slug ?? '')
-    .trim()
-    .toLowerCase()
-  const titleKey = String(pkg?.title ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
   const basePrice = Number(pkg?.base_price ?? 0) || 0
   const price = formatPackagePrice({ ...pkg, base_price: basePrice })
 
-  const isClassicPour = typeKey.includes('classic-pour') || slug === 'classic-pour'
-
-  // Signature Mix is its own package — not the House Special row.
-  const isSignatureMix =
-    slug === 'signature-mix' ||
-    titleKey === 'signature-mix' ||
-    (typeKey.includes('signature-mix') &&
-      !titleKey.includes('house-special') &&
-      slug !== 'the-house-special-premium-bartending-service' &&
-      slug !== 'exclusive-package')
-
-  const isHouseSpecial =
-    slug === 'the-house-special-premium-bartending-service' ||
-    slug === 'house-special' ||
-    titleKey.includes('house-special') ||
-    typeKey.includes('house-special') ||
-    (slug === 'the-house-special-premium-bartending-service' && basePrice >= 5000)
-
-  if (isClassicPour) {
-    return {
-      title: 'Classic Pour',
-      bartender_type: 'Classic Pour',
-      base_price: basePrice,
-      price,
-    }
-  }
-
-  if (isSignatureMix) {
-    return {
-      title: 'Signature Mix',
-      bartender_type: 'Signature Mix',
-      base_price: basePrice,
-      price,
-    }
-  }
-
-  if (isHouseSpecial) {
-    return {
-      title: 'House Special',
-      bartender_type: 'House Special',
-      base_price: basePrice,
-      price,
-    }
-  }
-
   return {
     title: pkg?.title,
-    bartender_type: bartenderType,
+    bartender_type: bartenderType || pkg?.title || '',
     base_price: basePrice,
     price,
   }
