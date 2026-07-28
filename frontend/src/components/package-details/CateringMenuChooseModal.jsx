@@ -7,6 +7,7 @@ import {
   isAllVegSelectionMode,
   resolveRulesForVegPreference,
   serializeSelection,
+  shouldShowSplitMenuSelection,
   validateMenuSelection,
 } from '../../lib/cateringMenuSelection'
 
@@ -73,7 +74,7 @@ function CateringMenuChooseModalContent({
   )
   const rulesLabel = buildRulesLabel(rules, vegPreference)
 
-  const showSplit = Boolean(rules.vegPick && rules.nonvegPick && !String(vegPreference ?? '').trim())
+  const showSplit = shouldShowSplitMenuSelection(rules, vegPreference)
   const allVegMode = isAllVegSelectionMode(selected, dishes, rules)
 
   const vegDishes = useMemo(

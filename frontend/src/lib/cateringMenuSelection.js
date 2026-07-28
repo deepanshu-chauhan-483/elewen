@@ -248,12 +248,17 @@ export function getCategoryKeysForRow(row = {}, vegPreference = '') {
   const hasMainSplit =
     keys.includes('main_course_veg') && keys.includes('main_course_non_veg')
 
+  // Non-veg: load both veg and non-veg category libraries for split selection.
+  if (nonVeg && (hasStarterSplit || hasMainSplit)) {
+    return keys
+  }
+
   if (hasStarterSplit) {
-    return [nonVeg ? 'starters_non_veg' : 'starters']
+    return ['starters']
   }
 
   if (hasMainSplit) {
-    return [nonVeg ? 'main_course_non_veg' : 'main_course_veg']
+    return ['main_course_veg']
   }
 
   return keys
@@ -262,15 +267,21 @@ export function getCategoryKeysForRow(row = {}, vegPreference = '') {
 function filterDishesByVegPreference(dishes = [], vegPreference = '') {
   if (!String(vegPreference ?? '').trim()) return dishes
 
-  const nonVeg = isNonVegPreference(vegPreference)
-  return dishes.filter(dish => {
-    if (nonVeg) return dish.dietary === 'non_veg' || dish.dietary === 'both'
-    return dish.dietary === 'veg' || dish.dietary === 'both'
-  })
+  if (isNonVegPreference(vegPreference)) {
+    // Non-veg: show full menu; split UI groups veg vs non-veg picks.
+    return dishes
+  }
+
+  return dishes.filter(dish => dish.dietary === 'veg' || dish.dietary === 'both')
 }
 
 export function resolveRulesForVegPreference(rules = {}, vegPreference = '') {
   if (!String(vegPreference ?? '').trim()) return rules
+
+  // Non-veg with split picks: keep veg + non-veg section rules.
+  if (isNonVegPreference(vegPreference) && rules.vegPick && rules.nonvegPick) {
+    return rules
+  }
 
   const maxPick = Number(rules.maxPick) > 0 ? Number(rules.maxPick) : 1
   const minPick = Number(rules.minPick) > 0 ? Number(rules.minPick) : maxPick
@@ -283,6 +294,14 @@ export function resolveRulesForVegPreference(rules = {}, vegPreference = '') {
     allVegPick: maxPick,
     allowsAllVeg: false,
   }
+}
+
+/** Split veg / non-veg sections in the choose modal. */
+export function shouldShowSplitMenuSelection(rules = {}, vegPreference = '') {
+  if (!rules.vegPick || !rules.nonvegPick) return false
+  const pref = String(vegPreference ?? '').trim()
+  if (!pref) return true
+  return isNonVegPreference(vegPreference)
 }
 
 export function getDishesForMenuRow(row, menuByCategory = {}, vegPreference = '', packageLevelSlug = '') {
@@ -326,8 +345,12 @@ export function buildRulesLabel(rules = {}, vegPreference = '') {
   const maxPick = Number(rules.maxPick) > 0 ? Number(rules.maxPick) : 1
 
   if (String(vegPreference ?? '').trim()) {
-    if (maxPick === 1) return `Choose 1 ${isNonVegPreference(vegPreference) ? 'non-veg' : 'veg'} item`
-    return `Choose ${maxPick} ${isNonVegPreference(vegPreference) ? 'non-veg' : 'veg'} items`
+    const nonVeg = isNonVegPreference(vegPreference)
+    if (nonVeg && vegPick && nonvegPick) {
+      return `Choose ${vegPick} veg + ${nonvegPick} non-veg (or ${allVegPick || maxPick} veg)`
+    }
+    if (maxPick === 1) return `Choose 1 ${nonVeg ? 'non-veg' : 'veg'} item`
+    return `Choose ${maxPick} ${nonVeg ? 'non-veg' : 'veg'} items`
   }
 
   if (vegPick && nonvegPick) {
