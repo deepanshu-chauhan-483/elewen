@@ -145,6 +145,34 @@ function getCartItemQuantity(item) {
   return Math.max(1, Number(item?.quantity ?? 1))
 }
 
+function CartQuantityControl({ quantity, disabled, onDecrement, onIncrement }) {
+  return (
+    <div className="flex shrink-0 items-center border border-[#D9D9D9] bg-white">
+      <button
+        type="button"
+        onClick={onDecrement}
+        disabled={disabled || quantity <= 1}
+        className="flex h-[28px] w-[28px] items-center justify-center border-r border-[#D9D9D9] text-[16px] font-light text-black disabled:opacity-40"
+        aria-label="Decrease quantity"
+      >
+        −
+      </button>
+      <div className="flex h-[28px] min-w-[28px] items-center justify-center px-1 text-[14px] font-medium text-black">
+        {quantity}
+      </div>
+      <button
+        type="button"
+        onClick={onIncrement}
+        disabled={disabled}
+        className="flex h-[28px] w-[28px] items-center justify-center border-l border-[#D9D9D9] text-[16px] font-light text-black disabled:opacity-40"
+        aria-label="Increase quantity"
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
 function getSummaryIncludedItems(item) {
   if (item?.itemType === 'addon') return []
 
@@ -587,6 +615,7 @@ function SinglePackageCard({
   item,
   pendingItemId,
   onRemoveItem,
+  onUpdateQuantity,
   detailsForm,
   onEditDate,
   onEditCity,
@@ -624,20 +653,21 @@ function SinglePackageCard({
           ) : null}
         </div>
 
-        <div className="items-start">
+        <div className="min-w-0 flex-1 items-start">
           <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h3
               className="min-w-0 font-medium text-[12px] leading-snug md:text-[14px] text-[#1C1C1C]"
               style={{ fontFamily: "'Poppins'" }}
             >
               {packageTitle}
             </h3>
-            {packageQuantity > 1 ? (
-              <span className="rounded-full bg-[#EFE7DC] px-2 py-1 text-[10px] md:text-[12px] font-medium text-[#591902]">
-                x{packageQuantity}
-              </span>
-            ) : null}
+            <CartQuantityControl
+              quantity={packageQuantity}
+              disabled={isPending}
+              onDecrement={() => onUpdateQuantity(item.id, packageQuantity - 1)}
+              onIncrement={() => onUpdateQuantity(item.id, packageQuantity + 1)}
+            />
           </div>
           <p className="text-[10px] md:text-[12px] text-[#6A6864]">
             {eventLocation} · {eventDate}
@@ -894,7 +924,7 @@ const CATEGORY_ICONS = {
   Addons: '➕',
 }
 
-function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
+function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuantity }) {
   const groupedItems = cartItems.reduce((groups, item) => {
     const category = getCartGroupLabel(item)
     const existingGroup = groups.find(group => group.category === category)
@@ -983,11 +1013,12 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem }) {
                             {packageTitle}
                           </h3>
                         )}
-                        {packageQuantity > 1 ? (
-                          <span className="rounded-full bg-[#EFE7DC] px-2 py-1 text-xs font-medium text-[#591902]">
-                            x{packageQuantity}
-                          </span>
-                        ) : null}
+                        <CartQuantityControl
+                          quantity={packageQuantity}
+                          disabled={isPending}
+                          onDecrement={() => onUpdateQuantity(item.id, packageQuantity - 1)}
+                          onIncrement={() => onUpdateQuantity(item.id, packageQuantity + 1)}
+                        />
                       </div>
 
                       <div className="text-right">
@@ -1437,6 +1468,7 @@ export default function CartPage() {
     error,
     isLoggedIn,
     removeItem,
+    updateItemQuantity,
     applyCoupon,
     clearCoupon,
     updateCartDetails,
@@ -1605,6 +1637,19 @@ export default function CartPage() {
     }
   }
 
+  const handleUpdateQuantity = async (itemId, quantity) => {
+    const nextQuantity = Math.max(1, Number(quantity ?? 1))
+    if (pendingItemId) return
+    setPendingItemId(itemId)
+    try {
+      await updateItemQuantity(itemId, nextQuantity)
+    } catch (err) {
+      console.error('[cart-page] update quantity failed', err)
+    } finally {
+      setPendingItemId('')
+    }
+  }
+
   const handleApplyCoupon = async event => {
     event.preventDefault()
     if (!couponCode.trim() || isApplyingCoupon) return
@@ -1746,6 +1791,7 @@ export default function CartPage() {
                 item={cartItems[0]}
                 pendingItemId={pendingItemId}
                 onRemoveItem={handleRemoveItem}
+                onUpdateQuantity={handleUpdateQuantity}
                 detailsForm={detailsForm}
                 onEditDate={() => handleEditField('date')}
                 onEditCity={() => handleEditField('city')}
@@ -1761,6 +1807,7 @@ export default function CartPage() {
                 cartItems={cartItems}
                 pendingItemId={pendingItemId}
                 onRemoveItem={handleRemoveItem}
+                onUpdateQuantity={handleUpdateQuantity}
               />
             )}
 
