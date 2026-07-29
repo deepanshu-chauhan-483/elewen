@@ -937,6 +937,11 @@ const CelebrationEveryDaySection = () => {
   const activeAccentRef = useRef(null)
   const incomingAccentRef = useRef(null)
   const incomingLayerRef = useRef(null)
+  const isFastCelebrationCategory = name => {
+    const key = toBucketKey(name)
+    return key === 'haldi' || key === 'mehendi'
+  }
+
   const incoming = incomingName
     ? (RESOLVED_CATEGORY_DATA.find(c => c.name === incomingName) ?? null)
     : null
@@ -958,6 +963,9 @@ const CelebrationEveryDaySection = () => {
     if (nextName === resolvedActiveName) return
 
     setIsAnimating(true)
+
+    const fastSwap =
+      isFastCelebrationCategory(resolvedActiveName) || isFastCelebrationCategory(nextName)
 
     const top = [mobileWrapsRef.current.topLeft, mobileWrapsRef.current.topRight].filter(Boolean)
 
@@ -999,22 +1007,54 @@ const CelebrationEveryDaySection = () => {
               onComplete: () => setIsAnimating(false),
             })
 
-            .to(inTop, { y: 0, autoAlpha: 1, duration: 0.7, stagger: 0.05 }, 0)
+            .to(
+              inTop,
+              { y: 0, autoAlpha: 1, duration: fastSwap ? 0.35 : 0.7, stagger: 0.05 },
+              0
+            )
 
-            .to(inBottom, { y: 0, autoAlpha: 1, duration: 0.7, stagger: 0.05 }, 0)
+            .to(
+              inBottom,
+              { y: 0, autoAlpha: 1, duration: fastSwap ? 0.35 : 0.7, stagger: 0.05 },
+              0
+            )
 
-            .to(inText, { yPercent: 0, autoAlpha: 1, duration: 0.55 }, 0.82)
+            .to(inText, { yPercent: 0, autoAlpha: 1, duration: fastSwap ? 0.28 : 0.55 }, fastSwap ? 0.4 : 0.82)
         })
       },
     })
 
     outTl
 
-      .to(top, { y: -24, autoAlpha: 0, duration: 0.45, stagger: 0.04, ease: 'power2.in' }, 0)
+      .to(
+        top,
+        {
+          y: -24,
+          autoAlpha: 0,
+          duration: fastSwap ? 0.22 : 0.45,
+          stagger: 0.04,
+          ease: 'power2.in',
+        },
+        0
+      )
 
-      .to(bottom, { y: 24, autoAlpha: 0, duration: 0.45, stagger: 0.04, ease: 'power2.in' }, 0)
+      .to(
+        bottom,
+        {
+          y: 24,
+          autoAlpha: 0,
+          duration: fastSwap ? 0.22 : 0.45,
+          stagger: 0.04,
+          ease: 'power2.in',
+        },
+        0
+      )
 
-      .to(text, { yPercent: -100, autoAlpha: 0, duration: 0.32, ease: 'power2.in' }, 0.03)
+      .to(
+        text,
+        { yPercent: -100, autoAlpha: 0, duration: fastSwap ? 0.18 : 0.32, ease: 'power2.in' },
+        0.03
+      )
   }
 
   const animateSwap = nextName => {
@@ -1027,6 +1067,16 @@ const CelebrationEveryDaySection = () => {
 
     setIsAnimating(true)
     setIncomingName(nextName)
+
+    const fastSwap =
+      isFastCelebrationCategory(resolvedActiveName) || isFastCelebrationCategory(nextName)
+    const slideDuration = fastSwap ? 0.52 : 1.05
+    const slideInDuration = fastSwap ? 0.48 : 0.95
+    const slideInStart = fastSwap ? 0.72 : 1.45
+    const slideInBottomStart = fastSwap ? 0.8 : 1.57
+    const incomingLayerAt = fastSwap ? 0.68 : 1.4
+    const headingOutDuration = fastSwap ? 0.22 : 0.42
+    const headingInDuration = fastSwap ? 0.32 : 0.6
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -1105,7 +1155,7 @@ const CelebrationEveryDaySection = () => {
                     autoAlpha: 1,
                     y: 0,
                     letterSpacing: '0.08em',
-                    duration: 0.6,
+                    duration: headingInDuration,
                     ease: 'expo.out',
                   },
                   0
@@ -1120,7 +1170,7 @@ const CelebrationEveryDaySection = () => {
           outTop,
           {
             y: '-100%',
-            duration: 1.05,
+            duration: slideDuration,
             stagger: 0,
             ease: 'power3.inOut',
           },
@@ -1132,7 +1182,7 @@ const CelebrationEveryDaySection = () => {
             outBottomLeft,
             {
               y: '100%',
-              duration: 1.05,
+              duration: slideDuration,
               ease: 'power3.inOut',
             },
             0
@@ -1144,7 +1194,7 @@ const CelebrationEveryDaySection = () => {
             outBottomRight,
             {
               y: '100%',
-              duration: 1.05,
+              duration: slideDuration,
               ease: 'power3.inOut',
             },
             0
@@ -1156,7 +1206,7 @@ const CelebrationEveryDaySection = () => {
             outAccent,
             {
               y: '-100%',
-              duration: 1.05,
+              duration: slideDuration,
               ease: 'power3.inOut',
             },
             0
@@ -1169,24 +1219,24 @@ const CelebrationEveryDaySection = () => {
             {
               autoAlpha: 0,
               y: -18,
-              duration: 0.42,
+              duration: headingOutDuration,
               ease: 'power2.inOut',
             },
             0.05
           )
         }
 
-        tl.set(incomingLayerRef.current, { opacity: 1 }, 1.4)
+        tl.set(incomingLayerRef.current, { opacity: 1 }, incomingLayerAt)
 
         tl.to(
           inTop,
           {
             y: 0,
-            duration: 0.95,
+            duration: slideInDuration,
             stagger: 0,
             ease: 'power3.out',
           },
-          1.45
+          slideInStart
         )
 
         if (inBottomLeft) {
@@ -1194,10 +1244,10 @@ const CelebrationEveryDaySection = () => {
             inBottomLeft,
             {
               y: 0,
-              duration: 0.9,
+              duration: fastSwap ? 0.45 : 0.9,
               ease: 'power3.out',
             },
-            1.57
+            slideInBottomStart
           )
         }
 
@@ -1206,10 +1256,10 @@ const CelebrationEveryDaySection = () => {
             inBottomRight,
             {
               y: 0,
-              duration: 0.9,
+              duration: fastSwap ? 0.45 : 0.9,
               ease: 'power3.out',
             },
-            1.57
+            slideInBottomStart
           )
         }
 
@@ -1218,10 +1268,10 @@ const CelebrationEveryDaySection = () => {
             inAccent,
             {
               y: 0,
-              duration: 0.9,
+              duration: fastSwap ? 0.45 : 0.9,
               ease: 'power3.out',
             },
-            1.57
+            slideInBottomStart
           )
         }
       })
@@ -1545,8 +1595,12 @@ const CelebrationEveryDaySection = () => {
 
                 {/* ACTIVE category heading in beige block */}
                 <h3
-                  className="absolute left-[0px] top-[400px] w-[640px] h-[200px] flex items-center pl-[100px] pr-[40px] text-[#FFFFFF] text-[60px] leading-[1] font-normal tracking-wider uppercase z-20 overflow-hidden pointer-events-none"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                  className="absolute left-[0px] top-[400px] w-[640px] h-[200px] flex items-center justify-center px-[40px] text-center text-[#FFFFFF] text-[60px] leading-[1] font-normal tracking-wider uppercase z-20 overflow-hidden pointer-events-none"
+                  style={{
+                    fontFamily: isFastCelebrationCategory(active.name)
+                      ? "'Malgin', serif"
+                      : "'Poppins', sans-serif",
+                  }}
                 >
                   <span
                     key={active.name}
@@ -1606,8 +1660,13 @@ const CelebrationEveryDaySection = () => {
                     />
 
                     <h3
-                      className="absolute left-[0px] top-[400px] w-[640px] h-[200px] flex items-center pl-[100px] pr-[40px] text-[#FFFFFF] text-[60px] leading-[1] font-normal tracking-wider uppercase z-20 overflow-hidden pointer-events-none"
-                      style={{ fontFamily: "'Poppins', sans-serif", opacity: 0 }}
+                      className="absolute left-[0px] top-[400px] w-[640px] h-[200px] flex items-center justify-center px-[40px] text-center text-[#FFFFFF] text-[60px] leading-[1] font-normal tracking-wider uppercase z-20 overflow-hidden pointer-events-none"
+                      style={{
+                        fontFamily: isFastCelebrationCategory(incoming.name)
+                          ? "'Malgin', serif"
+                          : "'Poppins', sans-serif",
+                        opacity: 0,
+                      }}
                     >
                       <span
                         ref={incomingHeadingRef}
