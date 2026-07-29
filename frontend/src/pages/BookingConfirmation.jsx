@@ -77,7 +77,7 @@ const DEFAULT_STEPS = [
   {
     title: 'Confirmation Email',
     desc: 'A booking confirmation has been sent to your email address.',
-  },
+    },
   {
     title: 'Vendor Coordination',
     desc: 'Our team will contact you within 24 hours to confirm details.',
@@ -89,6 +89,25 @@ const DEFAULT_STEPS = [
   {
     title: 'Balance Payment',
     desc: 'The remaining amount will be due before the event date.',
+  },
+]
+
+const HOOKAH_COD_PENDING_STEPS = [
+  {
+    title: 'Request received',
+    desc: 'Your Hookah booking request is with our team for review.',
+  },
+  {
+    title: 'Admin confirmation',
+    desc: 'Once confirmed by Elewen, your booking status will update to Confirmed.',
+  },
+  {
+    title: 'Delivery coordination',
+    desc: 'Our team will contact you to finalize delivery details.',
+  },
+  {
+    title: 'Pay on delivery',
+    desc: 'The full amount is collected when your Hookah is delivered.',
   },
 ]
 
@@ -161,18 +180,12 @@ export default function BookingConfirmation() {
       }
     : isSheeshaCodBooking
       ? {
-          heading: 'Booking Confirmed!',
+          heading: 'Booking Received!',
           intro:
-            'Your Hookah booking is confirmed. Pay on delivery when your order arrives. Details below.',
+            'Your Hookah booking request has been submitted. Our team will confirm it shortly. Amount is due on delivery.',
           amountLabel: paymentSummary.primaryLabel,
           amountSubtext: paymentSummary.secondaryLabel,
-          steps: [
-            ...DEFAULT_STEPS.slice(0, 3),
-            {
-              title: 'Pay on Delivery',
-              desc: 'The full amount is collected when your Hookah is delivered.',
-            },
-          ],
+          steps: HOOKAH_COD_PENDING_STEPS,
         }
       : {
           heading: 'Booking Confirmed!',

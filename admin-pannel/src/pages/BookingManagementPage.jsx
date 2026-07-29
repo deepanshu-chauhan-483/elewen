@@ -390,6 +390,7 @@ function getLatestStatusNote(statusLogs = []) {
 
 function buildPaymentDetailRows(booking) {
   const paymentSummary = booking?.paymentSummary ?? {}
+  const isCodBooking = Boolean(paymentSummary?.isCodBooking)
   const advanceAmount = paymentSummary?.advanceAmount ?? booking?.advanceAmount ?? 0
   const remainingAmount = paymentSummary?.scheduledRemainingAmount ?? booking?.remainingAmount ?? 0
   const totalAmount = paymentSummary?.totalPrice ?? booking?.totalPrice ?? 0
@@ -398,13 +399,13 @@ function buildPaymentDetailRows(booking) {
   return [
     {
       id: `${booking?.id ?? 'booking'}-payment-advance`,
-      label: 'Advance',
+      label: isCodBooking ? 'Advance (COD — none)' : 'Advance',
       amount: advanceAmount,
       bookedAt,
     },
     {
       id: `${booking?.id ?? 'booking'}-payment-remaining`,
-      label: 'Remaining',
+      label: isCodBooking ? 'Due on delivery' : 'Remaining',
       amount: remainingAmount,
       bookedAt,
     },

@@ -1723,6 +1723,14 @@ export async function collectAdminBookingCod(req, res, next) {
         },
       })
 
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          advanceAmount: '0.00',
+          remainingAmount: '0.00',
+        },
+      })
+
       return payment
     })
 

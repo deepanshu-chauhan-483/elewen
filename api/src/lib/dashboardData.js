@@ -1,6 +1,7 @@
 import { strapiGet } from './strapi.js'
 import { cacheGet, cacheSet, TTL } from './cache.js'
 import { calculateBookingRefundPreview, getCancellationPolicyData } from './cancellationPolicy.js'
+import { isCodPayment } from './sheeshaCheckout.js'
 
 const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'
 
@@ -458,14 +459,17 @@ export function filterBookingsByType(bookings = [], type = 'all') {
 }
 
 function getPaymentSummary(booking) {
-  const successfulPayments = Array.isArray(booking?.payments)
-    ? booking.payments.filter(payment => payment.status === 'success')
-    : []
+  const payments = Array.isArray(booking?.payments) ? booking.payments : []
+  const successfulPayments = payments.filter(payment => payment.status === 'success')
+  const hasCodPayment = payments.some(isCodPayment)
 
   const amountPaid = successfulPayments.reduce((sum, payment) => sum + toNumber(payment.amount), 0)
   const totalPrice = roundCurrency(booking?.totalPrice)
-  const advanceAmount = roundCurrency(booking?.advanceAmount)
-  const scheduledRemainingAmount = roundCurrency(booking?.remainingAmount)
+  // Hookah COD: no advance — remaining is full unpaid balance until collected.
+  const advanceAmount = hasCodPayment ? 0 : roundCurrency(booking?.advanceAmount)
+  const scheduledRemainingAmount = hasCodPayment
+    ? roundCurrency(Math.max(totalPrice - amountPaid, 0))
+    : roundCurrency(booking?.remainingAmount)
   const amountDue = roundCurrency(Math.max(totalPrice - amountPaid, 0))
 
   return {
@@ -483,6 +487,7 @@ function getPaymentSummary(booking) {
         payment => payment.paymentType === 'remaining' || payment.paymentType === 'full'
       ),
     paymentCount: successfulPayments.length,
+    isCodBooking: hasCodPayment,
   }
 }
 
@@ -525,6 +530,9 @@ export async function enrichBookings(bookings = []) {
 
     return {
       ...booking,
+      // Surface COD-aware amounts on the booking row so admin/customer UIs stay consistent.
+      advanceAmount: paymentSummary.advanceAmount,
+      remainingAmount: paymentSummary.scheduledRemainingAmount,
       bookingCategory: getBookingCategory(booking),
       statusLabel: BOOKING_STATUS_LABELS[booking.status] ?? booking.status ?? 'Unknown',
       latestStatusLog,

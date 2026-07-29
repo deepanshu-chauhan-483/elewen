@@ -411,7 +411,8 @@ export const createBooking = async (req, res, next) => {
     const totalPrice = Math.max(0, subtotal - discountAmount)
 
     // Fetch advance payment percentage from global settings
-    const advancePct = await getAdvancePct()
+    // Hookah-only COD: no advance — full amount due on delivery.
+    const advancePct = isSheeshaOnlyBooking ? 0 : await getAdvancePct()
     const advanceAmount = (totalPrice * advancePct) / 100
     const remainingAmount = totalPrice - advanceAmount
 
@@ -1198,22 +1199,14 @@ export const confirmCodBooking = async (req, res, next) => {
         })
       }
 
-      if (booking.status === 'new') {
-        await tx.booking.update({
-          where: { id },
-          data: { status: 'confirmed' },
-        })
-
-        await tx.bookingStatusLog.create({
-          data: {
-            bookingId: id,
-            previousStatus: 'new',
-            newStatus: 'confirmed',
-            changedBy: userId,
-            note: 'Hookah booking confirmed — pay on delivery (COD)',
-          },
-        })
-      }
+      // Keep status as `new` until admin confirms. No Cashfree advance for Hookah COD.
+      await tx.booking.update({
+        where: { id },
+        data: {
+          advanceAmount: '0.00',
+          remainingAmount: totalPrice.toFixed(2),
+        },
+      })
 
       return codPayment
     })
@@ -1231,8 +1224,9 @@ export const confirmCodBooking = async (req, res, next) => {
 
     notify(userId, {
       type: 'booking_update',
-      title: 'Hookah Booking Confirmed',
-      message: 'Your Hookah booking is confirmed. Amount is due on delivery.',
+      title: 'Hookah booking received',
+      message:
+        'Your Hookah booking request was submitted. We will confirm it shortly. Amount is due on delivery.',
       linkUrl: `/dashboard/bookings/${id}`,
     }).catch(() => {})
 
