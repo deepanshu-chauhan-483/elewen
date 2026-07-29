@@ -33,6 +33,16 @@ function toBucketKey(value = '') {
   const compact = normalizeKey(value).replace(/[^a-z0-9]/g, '')
   const aliasMap = {
     gunsgulaabs: 'guns',
+    thetrial: 'trail',
+    thenightmanager: 'nightmanager',
+    citroenbasalt: 'citroen',
+    marutisuzukidzire: 'marutidzire',
+    danubepropertylaunch: 'danube',
+    ushaproductlaunch: 'usha',
+    indusindbankhnnetworkingdinner: 'indusind',
+    indusindbankhninetworkingdinner: 'indusind',
+    hmstorelaunch: 'hm',
+    nirmalmindabooklaunch: 'nirmalminda',
   }
 
   return aliasMap[compact] ?? compact
@@ -171,6 +181,7 @@ function normalizeGrandCelebrationItems(section = {}) {
       return {
         id: String(index + 1).padStart(2, '0'),
         title,
+        category: item.category ?? '',
         desc: item.desc ?? item.description ?? item.body ?? '',
         image: fallbackImage,
         fallbackImage,
@@ -180,24 +191,35 @@ function normalizeGrandCelebrationItems(section = {}) {
     .filter(item => item.title || item.image)
 }
 
+const CATEGORY_NAME_CORRECTIONS = {
+  aniversaries: 'Anniversaries',
+  annversaries: 'Anniversaries',
+  anniversarys: 'Anniversaries',
+  aniversary: 'Anniversaries',
+}
+
+function correctCategoryName(name) {
+  return CATEGORY_NAME_CORRECTIONS[name.trim().toLowerCase()] ?? name
+}
+
 function normalizeCelebrationCategories(section = {}) {
   const categories = section.categories ?? section.items ?? []
 
   return (Array.isArray(categories) ? categories : [])
     .map((item, index) => {
-      const name =
+      const rawName =
         item.tab_label ??
         item.label ??
         item.name ??
         item.title ??
         item.heading ??
         `Category ${index + 1}`
+      const name = correctCategoryName(rawName)
       const bucketKey = toBucketKey(name)
       const fallbackImages = CELEBRATION_CATEGORY_FALLBACKS[bucketKey] ?? {}
       return {
         name,
         heading: item.heading ?? String(name).toUpperCase(),
-        desc: item.description ?? item.desc ?? item.body ?? '',
         images: {
           topLeft: fallbackImages.topLeft ?? '',
           topRight: fallbackImages.topRight ?? '',
@@ -587,6 +609,12 @@ const GrandCelebrationsSection = () => {
                 })}
               </div>
 
+              {mobileActiveItem?.category && (
+                <span className="mt-4 text-[#7A2D06] text-[10px] uppercase tracking-[0.1em] font-medium text-center">
+                  {mobileActiveItem.category}
+                </span>
+              )}
+
               <h4
                 className="mt-6 text-[#2D2D2D] text-[16px] leading-[1] font-serif uppercase text-center"
                 style={{ fontFamily: "'Malgin', serif" }}
@@ -640,6 +668,11 @@ const GrandCelebrationsSection = () => {
                     </div>
 
                     <div className="mt-6 w-full flex flex-col gap-[12px] pr-4">
+                      {item.category && (
+                        <span className="text-[#7A2D06] text-[10px] uppercase tracking-[0.1em] font-medium">
+                          <GCTextReveal>{item.category}</GCTextReveal>
+                        </span>
+                      )}
                       <div className="flex gap-[12px] items-start">
                         <span
                           className="text-[#000000] text-[27px] leading-[1] font-serif shrink-0"
@@ -700,6 +733,11 @@ const GrandCelebrationsSection = () => {
                         </div>
 
                         <div className="mt-6 w-full flex flex-col gap-[12px] pr-4">
+                          {item.category && (
+                            <span className="text-[#7A2D06] text-[10px] uppercase tracking-[0.1em] font-medium">
+                              <GCTextReveal>{item.category}</GCTextReveal>
+                            </span>
+                          )}
                           <div className="flex gap-[12px] items-start">
                             <span
                               className="text-[#000000] text-[27px] leading-[1] font-serif shrink-0"
@@ -887,8 +925,6 @@ const CelebrationEveryDaySection = () => {
 
   const headingRef = useRef(null)
 
-  const descRef = useRef(null)
-
   const mobileWrapsRef = useRef({
     topLeft: null,
     topRight: null,
@@ -896,11 +932,8 @@ const CelebrationEveryDaySection = () => {
     bottomRight: null,
   })
   const mobileHeadingRef = useRef(null)
-  const mobileDescRef = useRef(null)
 
   const incomingHeadingRef = useRef(null)
-
-  const incomingDescRef = useRef(null)
   const activeAccentRef = useRef(null)
   const incomingAccentRef = useRef(null)
   const incomingLayerRef = useRef(null)
@@ -932,7 +965,7 @@ const CelebrationEveryDaySection = () => {
       Boolean
     )
 
-    const text = [mobileHeadingRef.current, mobileDescRef.current].filter(Boolean)
+    const text = [mobileHeadingRef.current].filter(Boolean)
 
     const outTl = gsap.timeline({
       defaults: { ease: 'power2.inOut' },
@@ -950,7 +983,7 @@ const CelebrationEveryDaySection = () => {
             mobileWrapsRef.current.bottomRight,
           ].filter(Boolean)
 
-          const inText = [mobileHeadingRef.current, mobileDescRef.current].filter(Boolean)
+          const inText = [mobileHeadingRef.current].filter(Boolean)
 
           gsap.set(inTop, { y: 24, autoAlpha: 0 })
 
@@ -1020,7 +1053,6 @@ const CelebrationEveryDaySection = () => {
         const inAccent = incomingAccentRef.current
 
         const outHeading = headingRef.current
-        const outDesc = descRef.current
         if (incomingLayerRef.current) gsap.set(incomingLayerRef.current, { opacity: 0 })
 
         gsap.set(inTop, {
@@ -1045,20 +1077,12 @@ const CelebrationEveryDaySection = () => {
 
             requestAnimationFrame(() => {
               const nextHeading = headingRef.current
-              const nextDesc = descRef.current
 
               if (nextHeading) {
                 gsap.set(nextHeading, {
                   autoAlpha: 0,
                   y: 24,
                   letterSpacing: '0.18em',
-                })
-              }
-
-              if (nextDesc) {
-                gsap.set(nextDesc, {
-                  autoAlpha: 0,
-                  y: 24,
                 })
               }
 
@@ -1088,18 +1112,6 @@ const CelebrationEveryDaySection = () => {
                 )
               }
 
-              if (nextDesc) {
-                textTl.to(
-                  nextDesc,
-                  {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: 0.45,
-                    ease: 'power3.out',
-                  },
-                  0
-                )
-              }
             })
           },
         })
@@ -1161,19 +1173,6 @@ const CelebrationEveryDaySection = () => {
               ease: 'power2.inOut',
             },
             0.05
-          )
-        }
-
-        if (outDesc) {
-          tl.to(
-            outDesc,
-            {
-              autoAlpha: 0,
-              y: -10,
-              duration: 0.36,
-              ease: 'power2.inOut',
-            },
-            0.1
           )
         }
 
@@ -1429,13 +1428,6 @@ const CelebrationEveryDaySection = () => {
           >
             {active.heading}
           </h3>
-          <p
-            ref={mobileDescRef}
-            className="mt-3 text-center text-[#2D2D2D] opacity-60 text-[14px] leading-[1.7]"
-            style={{ willChange: 'transform' }}
-          >
-            {active.desc}
-          </p>
         </div>
       </div>
 
@@ -1551,33 +1543,20 @@ const CelebrationEveryDaySection = () => {
                   setRef={el => (activeWrapsRef.current.bottomRight = el)}
                 />
 
-                {/* ACTIVE text */}
-                <div className="absolute left-[640px] top-[362px] w-[800px] flex justify-center z-20 pointer-events-none">
-                  <h3
-                    className="w-full max-w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
-                    style={{ fontFamily: "'Poppins', sans-serif" }}
-                  >
-                    <span
-                      key={active.name}
-                      ref={headingRef}
-                      className="inline-block"
-                      style={{ willChange: 'transform', opacity: isAnimating ? 0 : 1 }}
-                    >
-                      {active.heading}
-                    </span>
-                  </h3>
-                </div>
-
-                <p className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden">
+                {/* ACTIVE category heading in beige block */}
+                <h3
+                  className="absolute left-[0px] top-[400px] w-[640px] h-[200px] flex items-center pl-[100px] pr-[40px] text-[#FFFFFF] text-[60px] leading-[1] font-normal tracking-wider uppercase z-20 overflow-hidden pointer-events-none"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                >
                   <span
                     key={active.name}
-                    ref={descRef}
+                    ref={headingRef}
                     className="inline-block"
                     style={{ willChange: 'transform', opacity: isAnimating ? 0 : 1 }}
                   >
-                    {active.desc}
+                    {active.heading}
                   </span>
-                </p>
+                </h3>
 
                 {/* INCOMING layer (only during click animation) */}
                 {incoming && (
@@ -1626,33 +1605,18 @@ const CelebrationEveryDaySection = () => {
                       setRef={el => (incomingWrapsRef.current.bottomRight = el)}
                     />
 
-                    <div className="absolute left-[640px] top-[362px] w-[800px] flex justify-center z-20 pointer-events-none">
-                      <h3
-                        className="w-full max-w-[441px] text-[#FFFFFF] text-[60px] leading-[1] text-center font-normal drop-shadow-md tracking-wider uppercase overflow-hidden"
-                        style={{ fontFamily: "'Poppins', sans-serif", opacity: 0 }}
-                      >
-                        <span
-                          ref={incomingHeadingRef}
-                          className="inline-block"
-                          style={{ willChange: 'transform' }}
-                        >
-                          {incoming.heading}
-                        </span>
-                      </h3>
-                    </div>
-
-                    <p
-                      className="absolute left-[100px] top-[455px] w-[340px] text-[#FFFFFF] text-[12px] font-medium leading-[1.5] z-20 overflow-hidden"
-                      style={{ opacity: 0 }}
+                    <h3
+                      className="absolute left-[0px] top-[400px] w-[640px] h-[200px] flex items-center pl-[100px] pr-[40px] text-[#FFFFFF] text-[60px] leading-[1] font-normal tracking-wider uppercase z-20 overflow-hidden pointer-events-none"
+                      style={{ fontFamily: "'Poppins', sans-serif", opacity: 0 }}
                     >
                       <span
-                        ref={incomingDescRef}
+                        ref={incomingHeadingRef}
                         className="inline-block"
                         style={{ willChange: 'transform' }}
                       >
-                        {incoming.desc}
+                        {incoming.heading}
                       </span>
-                    </p>
+                    </h3>
                   </div>
                 )}
               </div>
