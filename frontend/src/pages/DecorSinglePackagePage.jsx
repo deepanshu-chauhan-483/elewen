@@ -1283,7 +1283,7 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-[8px] border px-3.5 py-2.5 text-left transition-all ${
+      className={`text-left rounded-[8px] border px-3.5 py-2.5 transition-all ${
         wide || bullets.length ? 'min-w-[220px] flex-1 basis-[220px]' : 'min-w-[120px]'
       } ${
         selected
@@ -1315,34 +1315,46 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
 
 function DecorTextRow({ section, onItemClick }) {
   const firstItem = Array.isArray(section.items) ? section.items[0] : ''
+  const isSingleItem = section.items.length === 1
 
   return (
-    <div>
+    <div className="text-left">
       <button
         type="button"
         onClick={() => {
           if (!onItemClick || !firstItem) return
           onItemClick(section.title, firstItem)
         }}
-        className={`text-[13px] font-semibold leading-none text-[#591902] ${
+        className={`text-left text-[13px] font-semibold leading-none text-[#591902] ${
           onItemClick && firstItem ? 'cursor-pointer' : 'cursor-default'
         }`}
       >
         {section.title}
       </button>
-      <div className="mt-3 flex flex-wrap items-center gap-y-2">
+      <div
+        className={
+          isSingleItem
+            ? 'mt-3 w-full text-left'
+            : 'mt-3 flex w-full flex-wrap items-start justify-start gap-y-2'
+        }
+      >
         {section.items.map((item, index) => (
-          <div key={`${section.title}-${item}`} className="flex items-center">
+          <div
+            key={`${section.title}-${item}`}
+            className={isSingleItem ? 'w-full text-left' : 'flex items-center'}
+          >
             <button
               type="button"
               onClick={() => onItemClick?.(section.title, item)}
-              className={`text-[12px] leading-none text-[#591902] opacity-50 ${
-                onItemClick ? 'cursor-pointer' : 'cursor-default'
-              }`}
+              className={`text-left text-[#591902] opacity-50 ${
+                isSingleItem
+                  ? 'block w-full text-[12px] leading-[1.55]'
+                  : 'text-[12px] leading-none'
+              } ${onItemClick ? 'cursor-pointer' : 'cursor-default'}`}
             >
               {item}
             </button>
-            {index < section.items.length - 1 ? (
+            {!isSingleItem && index < section.items.length - 1 ? (
               <span className="mx-2 text-[12px] leading-none text-[#591902] opacity-50">|</span>
             ) : null}
           </div>
@@ -1388,7 +1400,7 @@ function DecorPackageSections({
   const hasInclusionSections = visibleSections.length > 0
 
   return (
-    <div>
+    <div className="text-left">
       {keyDecorText ? (
         <div className="border-b border-[#E5E0D8] pb-5">
           <p className="text-[13px] font-semibold text-[#2D2D2D]">Key Decor Elements</p>
@@ -1398,13 +1410,13 @@ function DecorPackageSections({
 
       {hasInclusionSections ? (
         <p
-          className={`text-[16px] font-semibold text-[#2D2D2D] ${keyDecorText ? 'pt-5' : ''}`}
+          className={`text-left text-[16px] font-semibold text-[#2D2D2D] ${keyDecorText ? 'pt-5' : ''}`}
         >
           What&apos;s included:
         </p>
       ) : null}
 
-      <div className={`space-y-6 ${hasInclusionSections ? 'mt-5' : keyDecorText ? 'pt-5' : ''}`}>
+      <div className={`space-y-6 text-left ${hasInclusionSections ? 'mt-5' : keyDecorText ? 'pt-5' : ''}`}>
         {visibleSections.map((section, index) => {
           if (section.type === 'text-row') {
             return (
@@ -1430,10 +1442,10 @@ function DecorPackageSections({
               key={`${sectionKey}-${index}`}
               className={index > 0 ? 'border-t border-[#E5E0D8] pt-5' : ''}
             >
-              <p className="text-[13px] font-semibold leading-none text-[#591902]">
+              <p className="text-left text-[13px] font-semibold leading-none text-[#591902]">
                 {section.title}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap justify-start gap-2">
                 {section.items.map(item => (
                   <DecorOptionButton
                     key={`${sectionKey}-${item.title}-${(item.bullets ?? []).join('|')}`}
