@@ -1,8 +1,22 @@
 import { normalizeServiceSlug } from './packageFilters'
 
+/** Only real bookable service lanes — ignore parent/category CMS noise. */
+const PRODUCT_SERVICE_SLUGS = new Set([
+  'sheesha',
+  'hookah',
+  'decor',
+  'catering',
+  'bartending',
+  'rental-furniture',
+])
+
 export function isSheeshaServiceSlug(slug = '') {
   const normalized = normalizeServiceSlug(slug)
-  return normalized === 'sheesha' || normalized === 'hookah'
+  return (
+    normalized === 'sheesha' ||
+    normalized === 'hookah' ||
+    normalized === 'sheesha-services'
+  )
 }
 
 export function isCodPayment(payment) {
@@ -21,7 +35,7 @@ export function isCodPendingPayment(payment) {
 export function getPackageServiceSlugs(pkg) {
   return (Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : [])
     .map(normalizeServiceSlug)
-    .filter(Boolean)
+    .filter(slug => PRODUCT_SERVICE_SLUGS.has(slug))
 }
 
 export function classifyCartPackages(cartItems = []) {
