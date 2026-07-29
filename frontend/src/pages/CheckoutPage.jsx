@@ -29,7 +29,7 @@ import {
   paymentCreateOrder,
   paymentVerify,
 } from '../lib/api'
-import { classifyCartPackages } from '../lib/sheeshaCheckout'
+import { classifyCartPackages, MIXED_HOOKAH_CART_MESSAGE } from '../lib/sheeshaCheckout'
 import HookahAgeConfirmModal from '../components/checkout/HookahAgeConfirmModal'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
@@ -563,6 +563,7 @@ export default function CheckoutPage() {
     data: paymentCancelledToastMessage = 'Payment cancelled. You can continue from checkout anytime.',
   } = usePaymentCancelledToastMessage()
   const hasShownCheckoutToastRef = useRef(false)
+  const hasShownMixedHookahToastRef = useRef(false)
   const draftBookingRef = useRef(null)
   const paymentFailureToastShownRef = useRef(false)
   const queryParams = new URLSearchParams(location.search)
@@ -714,6 +715,12 @@ export default function CheckoutPage() {
     navigate,
     showToast,
   ])
+
+  useEffect(() => {
+    if (!isMixedSheeshaCheckout || hasShownMixedHookahToastRef.current) return
+    hasShownMixedHookahToastRef.current = true
+    showToast({ message: MIXED_HOOKAH_CART_MESSAGE, duration: 4500 })
+  }, [isMixedSheeshaCheckout, showToast])
 
   useEffect(() => {
     try {
@@ -1164,12 +1171,6 @@ export default function CheckoutPage() {
       <div className="mb-10">
         <h2 className="text-4xl text-[#2C2C2C]">{pageContent.heading}</h2>
         <p className="mt-2 text-gray-500">{pageContent.intro}</p>
-        {isMixedSheeshaCheckout ? (
-          <p className="mt-4 rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-sm text-[#B42318]">
-            Hookah and other services cannot be booked together. Please remove items and place
-            separate bookings.
-          </p>
-        ) : null}
       </div>
 
       <div className="flex flex-col gap-[clamp(24px,5vw,100px)] md:flex-row">
@@ -1420,9 +1421,7 @@ export default function CheckoutPage() {
               type="button"
               onClick={() => {
                 if (isMixedSheeshaCheckout) {
-                  setFormError(
-                    'Hookah and other services cannot be booked together. Please place separate bookings.'
-                  )
+                  showToast({ message: MIXED_HOOKAH_CART_MESSAGE, duration: 4500 })
                   return
                 }
                 if (isSheeshaOnlyCheckout) {

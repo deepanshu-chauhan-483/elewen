@@ -212,7 +212,7 @@ export const createOrder = async (req, res, next) => {
     if (cartClassification.isMixedSheeshaCart) {
       return res.status(400).json({
         error:
-          'Hookah and other services cannot be booked together. Please place separate bookings.',
+          'Hookah needs a separate booking — it can’t be combined with other services in the same cart.',
         code: 'MIXED_SHEESHA_CART',
       })
     }

@@ -1,5 +1,9 @@
 import { normalizeServiceSlug } from './packageFilters'
 
+/** Shown when Hookah is mixed with other services in the same cart. */
+export const MIXED_HOOKAH_CART_MESSAGE =
+  'Hookah needs a separate booking — it can’t be combined with other services in the same cart.'
+
 /** Only real bookable service lanes — ignore parent/category CMS noise. */
 const PRODUCT_SERVICE_SLUGS = new Set([
   'sheesha',

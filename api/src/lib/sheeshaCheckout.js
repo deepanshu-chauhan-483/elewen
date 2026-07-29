@@ -173,7 +173,7 @@ export async function assertSheeshaOnlyCart(cartItems = []) {
 
   if (classification.isMixedSheeshaCart) {
     const error = new Error(
-      'Hookah and other services cannot be booked together. Please place separate bookings.'
+      'Hookah needs a separate booking — it can’t be combined with other services in the same cart.'
     )
     error.status = 400
     throw error
