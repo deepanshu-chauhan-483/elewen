@@ -11,6 +11,10 @@ import {
 import { createOperationalAlert } from '../lib/alerts.js'
 import { notify } from '../lib/notify.js'
 import { invalidateDashboardCache } from './dashboard.js'
+import {
+  classifyCartItems,
+  isCodPayment,
+} from '../lib/sheeshaCheckout.js'
 
 const TEST_PAYMENT_APP_ID = process.env.CASHFREE_TEST_APP_ID || 'TEST_elewen_dashboard_bypass'
 
@@ -180,11 +184,38 @@ export const createOrder = async (req, res, next) => {
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { payments: { where: { status: 'success' } } },
+      include: { payments: true },
     })
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    if ((booking.payments ?? []).some(isCodPayment)) {
+      return res.status(400).json({
+        error: 'Online payment is not available for Hookah pay-on-delivery bookings.',
+        code: 'SHEESHA_COD_ONLY',
+      })
+    }
+
+    const cart = await prisma.cart.findFirst({
+      where: { userId },
+      include: { items: true },
+    })
+    const cartClassification = await classifyCartItems(cart?.items ?? [])
+    if (cartClassification.isSheeshaOnly) {
+      return res.status(400).json({
+        error: 'Hookah bookings must use pay-on-delivery checkout.',
+        code: 'SHEESHA_COD_ONLY',
+      })
+    }
+
+    if (cartClassification.isMixedSheeshaCart) {
+      return res.status(400).json({
+        error:
+          'Hookah and other services cannot be booked together. Please place separate bookings.',
+        code: 'MIXED_SHEESHA_CART',
+      })
+    }
 
     let amount
     try {

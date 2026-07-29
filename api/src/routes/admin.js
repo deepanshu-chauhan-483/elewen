@@ -30,6 +30,7 @@ import {
   sendAdminMessage,
   updateAdminAlert,
   updateAdminBookingStatus,
+  collectAdminBookingCod,
   updateAdminCoupon,
   updateAdminSampleTasteStatus,
   updateAdminSettings,
@@ -61,6 +62,7 @@ router.get('/bookings/:id', getAdminBooking)
 router.get('/bookings/:id/coupon-suggestion', getAdminBookingCouponSuggestion)
 router.post('/bookings/:id/send-referral-coupon', sendAdminReferralCoupon)
 router.patch('/bookings/:id/status', updateAdminBookingStatus)
+router.post('/bookings/:id/cod/collect', collectAdminBookingCod)
 router.post('/bookings/:id/notes', addAdminBookingNote)
 
 router.get('/sample-taste', listAdminSampleTastes)

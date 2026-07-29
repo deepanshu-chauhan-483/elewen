@@ -2,6 +2,7 @@ import prisma from '../lib/prisma.js'
 import { fetchDashboardHelpContent, getBookingCategory } from '../lib/dashboardData.js'
 import { strapiServerGet } from '../lib/strapi.js'
 import { withCache, cacheDel, TTL } from '../lib/cache.js'
+import { BOOKING_VISIBLE_PAYMENT_FILTER } from '../lib/sheeshaCheckout.js'
 
 export const getCustomerHelp = async (req, res, next) => {
   try {
@@ -33,9 +34,7 @@ export const getCustomerSummary = async (req, res, next) => {
         prisma.booking.findMany({
           where: {
             userId,
-            payments: {
-              some: { status: 'success' },
-            },
+            payments: BOOKING_VISIBLE_PAYMENT_FILTER,
           },
           select: { id: true, status: true, eventDate: true },
         }),

@@ -193,6 +193,11 @@ export const adminAddBookingNote = (token, bookingId, body) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminCollectBookingCod = (token, bookingId) =>
+  request('POST', `/admin/bookings/${bookingId}/cod/collect`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminSampleTastes = (token, params = {}) =>
   request('GET', withQuery('/admin/sample-taste', params), null, {
     headers: { Authorization: `Bearer ${token}` },

@@ -25,6 +25,7 @@ import {
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { getAdminBadgeClass } from '../lib/adminBadges'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
+import { bookingHasHookahCod, isCodPayment } from '../lib/sheeshaCheckout'
 
 // ---------------------------------------------------------------------------
 // Shared primitives — consistent with BookingManagementPage style
@@ -214,6 +215,8 @@ function Tabs({ items, value, onChange, size = 'md' }) {
 // ---------------------------------------------------------------------------
 
 function BookingPaymentRow({ booking }) {
+  const showHookahCodBadge = bookingHasHookahCod(booking)
+
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
       <div className="flex-1 min-w-0">
@@ -242,6 +245,7 @@ function BookingPaymentRow({ booking }) {
       </div>
       <div className="flex flex-wrap gap-2">
         <Badge status={booking.status} label={booking.statusLabel} />
+        {showHookahCodBadge ? <Badge status="pending" label="Hookah · COD" /> : null}
         <Badge
           status={booking.vendorAssignments?.length ? 'assigned' : 'unassigned'}
           label={booking.vendorAssignments?.length ? 'Vendor assigned' : 'No vendor'}
@@ -262,6 +266,8 @@ function PaymentRecordRow({
   const latestRefund =
     [...refunds].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0] ??
     null
+  const showHookahCodBadge = isCodPayment(payment)
+
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
       <div className="flex-1 min-w-0">
@@ -278,6 +284,7 @@ function PaymentRecordRow({
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Badge status={payment.status} />
+        {showHookahCodBadge ? <Badge status="pending" label="Hookah · COD" /> : null}
         <Badge status={payment.paymentMethod} label={payment.paymentMethod || 'Method pending'} />
         {latestRefund ? (
           <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />

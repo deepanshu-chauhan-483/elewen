@@ -23,11 +23,14 @@ import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 import { openCashfreeCheckout } from '../lib/cashfreeCheckout'
 import {
   bookingAddNote,
+  bookingConfirmCod,
   bookingCreate,
   getStoredJwt,
   paymentCreateOrder,
   paymentVerify,
 } from '../lib/api'
+import { classifyCartPackages } from '../lib/sheeshaCheckout'
+import HookahAgeConfirmModal from '../components/checkout/HookahAgeConfirmModal'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 const CART_PIN_CODE_KEY = 'elewen_cart_pin_code'
@@ -593,6 +596,13 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('upi')
   const [formError, setFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showAgeModal, setShowAgeModal] = useState(false)
+
+  const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
+  const isSheeshaOnlyCheckout =
+    cartClassification.isSheeshaOnly && !isSampleTastingCheckout && cartItems.length > 0
+  const isMixedSheeshaCheckout =
+    cartClassification.isMixedSheeshaCart && !isSampleTastingCheckout && cartItems.length > 0
 
   const packageLookup = useMemo(
     () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
@@ -660,14 +670,23 @@ export default function CheckoutPage() {
         detailsIntro: "We'll use these details to confirm and coordinate your event",
         ctaLabel: 'Confirm Booking',
       }
-    : {
-        heading: 'Checkout',
-        intro: 'Review your event packages and complete your booking.',
-        summaryTitle: 'Booking Summary',
-        detailsTitle: 'Event Information',
-        detailsIntro: "We'll use these details to plan and coordinate your event.",
-        ctaLabel: 'Pay Advance & Confirm Booking',
-      }
+    : isSheeshaOnlyCheckout
+      ? {
+          heading: 'Checkout',
+          intro: 'Review your Hookah booking and confirm pay-on-delivery.',
+          summaryTitle: 'Booking Summary',
+          detailsTitle: 'Event Information',
+          detailsIntro: "We'll use these details to plan and coordinate your Hookah delivery.",
+          ctaLabel: 'Confirm booking (Pay on delivery)',
+        }
+      : {
+          heading: 'Checkout',
+          intro: 'Review your event packages and complete your booking.',
+          summaryTitle: 'Booking Summary',
+          detailsTitle: 'Event Information',
+          detailsIntro: "We'll use these details to plan and coordinate your event.",
+          ctaLabel: 'Pay Advance & Confirm Booking',
+        }
 
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
   const [paymentOption, setPaymentOption] = useState('advance')
@@ -981,6 +1000,117 @@ export default function CheckoutPage() {
     }
   }
 
+  const handleCodCheckout = async () => {
+    const token = getStoredJwt()
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (!fullName.trim() || !phone.trim() || !email.trim()) {
+      setFormError('Please fill in your contact details.')
+      return
+    }
+
+    if (!eventDate || !eventAddress.trim() || !guestCount || Number(guestCount) < 1) {
+      setFormError('Please complete the event information form before confirming.')
+      return
+    }
+
+    const nextPincodeState = getPincodeValidationState(pinCode, serviceAreas, isLoadingServiceAreas)
+    if (!nextPincodeState.isValid) {
+      setFormError(nextPincodeState.message || 'Please enter a valid serviceable pincode.')
+      return
+    }
+
+    setFormError('')
+    setIsSubmitting(true)
+
+    try {
+      await updateCartDetails({
+        eventDate,
+        eventCity: eventAddress.trim(),
+        guestCount: Number(guestCount),
+      })
+
+      let booking = draftBookingRef.current
+
+      if (!booking?.id) {
+        const bookingResponse = await bookingCreate(token, {
+          eventTime: eventTime || '',
+          deliveryPincode: pinCode,
+        })
+        booking = bookingResponse?.booking
+        if (booking?.id) {
+          draftBookingRef.current = booking
+        }
+      }
+
+      if (!booking?.id) {
+        throw new Error('Booking could not be created.')
+      }
+
+      const extraDetails = [
+        `Contact name: ${fullName.trim()}`,
+        `Phone: ${phone.trim()}`,
+        `Email: ${email.trim()}`,
+        `Event date: ${eventDate}`,
+        `Event time: ${eventTime || 'Not provided'}`,
+        `Event address: ${eventAddress.trim()}`,
+        `PIN code: ${pinCode || 'Not provided'}`,
+        `Guest count: ${guestCount}`,
+        `Special request: ${specialRequest.trim() || 'Not provided'}`,
+        `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
+        'Payment method: Pay on delivery (Hookah COD)',
+      ].join('\n')
+
+      await bookingAddNote(token, booking.id, { note: extraDetails }).catch(() => {})
+
+      const ageConfirmedAt = new Date().toISOString()
+      const confirmResponse = await bookingConfirmCod(token, booking.id, { ageConfirmedAt })
+      const confirmedBooking = confirmResponse?.booking ?? booking
+
+      setShowAgeModal(false)
+      setIsSubmitting(false)
+
+      navigate(`/booking-confirmation?bookingId=${booking.id}`, {
+        state: {
+          booking: confirmedBooking,
+          payment: {
+            advanceAmount: 0,
+            amountPaid: 0,
+            paymentType: 'full',
+            totalAmount: computedTotal,
+            balanceDue: computedTotal,
+            codPending: true,
+          },
+          checkoutInfo: {
+            fullName,
+            phone,
+            email,
+            eventDate,
+            eventTime,
+            eventAddress,
+            pinCode,
+            guestCount,
+            specialRequest,
+            checkoutMode: 'sheesha-cod',
+            selectedItems: itemSummaries.map(({ item, summary }) => ({
+              id: item?.id,
+              title: item?.title,
+              amount: Number(summary?.total ?? item?.totalPrice ?? 0),
+              additionalInfo: String(item?.additionalInfo ?? '').trim(),
+            })),
+            showBookingConfirmationToast: true,
+          },
+        },
+      })
+    } catch (err) {
+      setFormError(getPaymentErrorMessage(err))
+      setIsSubmitting(false)
+    }
+  }
+
   if (isStrapiLoading) {
     return <CmsPageLoader />
   }
@@ -1034,6 +1164,12 @@ export default function CheckoutPage() {
       <div className="mb-10">
         <h2 className="text-4xl text-[#2C2C2C]">{pageContent.heading}</h2>
         <p className="mt-2 text-gray-500">{pageContent.intro}</p>
+        {isMixedSheeshaCheckout ? (
+          <p className="mt-4 rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-sm text-[#B42318]">
+            Hookah and other services cannot be booked together. Please remove items and place
+            separate bookings.
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-[clamp(24px,5vw,100px)] md:flex-row">
@@ -1147,14 +1283,22 @@ export default function CheckoutPage() {
                 <span>{formatCurrency(computedTotal)}</span>
               </div>
 
-              <div className="flex justify-between rounded-lg bg-[#F1F1F1] px-4 py-3 text-base font-medium">
-                <span>Advance Payable ({advancePercentage}%)</span>
-                <span>{formatCurrency(advancePayable)}</span>
-              </div>
+              {isSheeshaOnlyCheckout ? (
+                <p className="text-sm font-medium text-[#591902]">
+                  Amount due on delivery: {formatCurrency(computedTotal)}
+                </p>
+              ) : (
+                <>
+                  <div className="flex justify-between rounded-lg bg-[#F1F1F1] px-4 py-3 text-base font-medium">
+                    <span>Advance Payable ({advancePercentage}%)</span>
+                    <span>{formatCurrency(advancePayable)}</span>
+                  </div>
 
-              <p className="text-xs text-gray-500">
-                Balance: {formatCurrency(balanceDue)} due on event day
-              </p>
+                  <p className="text-xs text-gray-500">
+                    Balance: {formatCurrency(balanceDue)} due on event day
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -1259,19 +1403,35 @@ export default function CheckoutPage() {
             ) : null}
           </div>
 
-          <PaymentMethod selected={paymentMethod} onChange={setPaymentMethod} />
+          {!isSheeshaOnlyCheckout ? (
+            <PaymentMethod selected={paymentMethod} onChange={setPaymentMethod} />
+          ) : null}
 
           <div className="rounded-xl border border-[#95796066] p-5">
             <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
-              🔒 Secure payment · Instant confirmation · Easy cancellation
+              {isSheeshaOnlyCheckout
+                ? '🔒 Booking confirmation · Pay on delivery · Easy cancellation'
+                : '🔒 Secure payment · Instant confirmation · Easy cancellation'}
             </div>
 
             {formError ? <p className="mb-4 text-sm text-[#B42318]">{formError}</p> : null}
 
             <button
               type="button"
-              onClick={() => setShowPaymentPopup(true)}
-              disabled={isSubmitting}
+              onClick={() => {
+                if (isMixedSheeshaCheckout) {
+                  setFormError(
+                    'Hookah and other services cannot be booked together. Please place separate bookings.'
+                  )
+                  return
+                }
+                if (isSheeshaOnlyCheckout) {
+                  setShowAgeModal(true)
+                  return
+                }
+                setShowPaymentPopup(true)
+              }}
+              disabled={isSubmitting || isMixedSheeshaCheckout}
               className="mx-auto mt-4 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
             >
               <span className="mr-5 text-[15px] font-medium text-white">
@@ -1298,18 +1458,29 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <PaymentOptionPopup
-        open={showPaymentPopup}
-        onClose={() => setShowPaymentPopup(false)}
-        selected={paymentOption}
-        setSelected={setPaymentOption}
-        advanceAmount={advancePayable}
-        fullAmount={computedTotal}
-        advancePercentage={advancePercentage}
-        onConfirm={type => {
-          setShowPaymentPopup(false)
-          handleCheckout(type)
+      {!isSheeshaOnlyCheckout ? (
+        <PaymentOptionPopup
+          open={showPaymentPopup}
+          onClose={() => setShowPaymentPopup(false)}
+          selected={paymentOption}
+          setSelected={setPaymentOption}
+          advanceAmount={advancePayable}
+          fullAmount={computedTotal}
+          advancePercentage={advancePercentage}
+          onConfirm={type => {
+            setShowPaymentPopup(false)
+            handleCheckout(type)
+          }}
+        />
+      ) : null}
+
+      <HookahAgeConfirmModal
+        open={showAgeModal}
+        onClose={() => {
+          if (!isSubmitting) setShowAgeModal(false)
         }}
+        onConfirm={handleCodCheckout}
+        isSubmitting={isSubmitting}
       />
     </div>
   )

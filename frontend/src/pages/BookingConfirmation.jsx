@@ -126,6 +126,8 @@ export default function BookingConfirmation() {
   const payment = state?.payment ?? null
   const checkoutInfo = state?.checkoutInfo ?? {}
   const isSampleTastingBooking = checkoutInfo?.checkoutMode === 'sample-tasting'
+  const isSheeshaCodBooking =
+    checkoutInfo?.checkoutMode === 'sheesha-cod' || payment?.codPending === true
   const customer = {
     fullName:
       checkoutInfo?.fullName ||
@@ -157,23 +159,41 @@ export default function BookingConfirmation() {
         amountSubtext: null,
         steps: SAMPLE_TASTING_STEPS,
       }
-    : {
-        heading: 'Booking Confirmed!',
-        intro: 'Your event has been successfully booked. Details below.',
-        amountLabel: paymentSummary.primaryLabel,
-        amountSubtext: paymentSummary.isFullyPaid
-          ? 'No balance is pending for this booking.'
-          : 'Balance due before event',
-        steps: paymentSummary.isFullyPaid
-          ? [
-              ...DEFAULT_STEPS.slice(0, 3),
-              {
-                title: 'Payment Completed',
-                desc: 'Your booking has already been fully paid and your receipt is ready to download.',
-              },
-            ]
-          : DEFAULT_STEPS,
-      }
+    : isSheeshaCodBooking
+      ? {
+          heading: 'Booking Confirmed!',
+          intro:
+            'Your Hookah booking is confirmed. Pay on delivery when your order arrives. Details below.',
+          amountLabel: paymentSummary.primaryLabel,
+          amountSubtext: paymentSummary.secondaryLabel,
+          steps: [
+            ...DEFAULT_STEPS.slice(0, 3),
+            {
+              title: 'Pay on Delivery',
+              desc: 'The full amount is collected when your Hookah is delivered.',
+            },
+          ],
+        }
+      : {
+          heading: 'Booking Confirmed!',
+          intro: 'Your event has been successfully booked. Details below.',
+          amountLabel: paymentSummary.primaryLabel,
+          amountSubtext: paymentSummary.isFullyPaid
+            ? 'No balance is pending for this booking.'
+            : 'Balance due before event',
+          steps: paymentSummary.isFullyPaid
+            ? [
+                ...DEFAULT_STEPS.slice(0, 3),
+                {
+                  title: 'Payment Completed',
+                  desc: 'Your booking has already been fully paid and your receipt is ready to download.',
+                },
+              ]
+            : DEFAULT_STEPS,
+        }
+  const confirmationAmount = isSheeshaCodBooking
+    ? paymentSummary.amountDue
+    : paymentSummary.amountPaid
 
   const packageLabel = getBookingPackageNamesText(
     booking,
@@ -270,9 +290,9 @@ export default function BookingConfirmation() {
 
             <div className="text-right">
               <p className="text-lg font-semibold text-[#957960]">
-                {formatCurrency(paymentSummary.amountPaid)}
+                {formatCurrency(confirmationAmount)}
               </p>
-              {pageContent.amountSubtext ? (
+              {pageContent.amountSubtext && !isSheeshaCodBooking ? (
                 <p className="text-sm text-gray-700">
                   {paymentSummary.isFullyPaid
                     ? 'Fully paid'

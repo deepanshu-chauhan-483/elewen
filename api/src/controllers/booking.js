@@ -10,6 +10,13 @@ import {
   getCancellationPolicyData,
 } from '../lib/cancellationPolicy.js'
 import { invalidateDashboardCache } from './dashboard.js'
+import {
+  assertSheeshaOnlyCart,
+  BOOKING_VISIBLE_PAYMENT_FILTER,
+  classifyCartItems,
+  clearUserCart,
+  isCodPendingPayment,
+} from '../lib/sheeshaCheckout.js'
 
 const DEFAULT_ADVANCE_PCT = 30
 
@@ -346,6 +353,17 @@ export const createBooking = async (req, res, next) => {
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' })
     }
+
+    const cartClassification = await classifyCartItems(cart.items)
+    if (cartClassification.isMixedSheeshaCart) {
+      return res.status(400).json({
+        error:
+          'Hookah and other services cannot be booked together. Please place separate bookings.',
+        code: 'MIXED_SHEESHA_CART',
+      })
+    }
+
+    const isSheeshaOnlyBooking = cartClassification.isSheeshaOnly
     const resolvedEventDate =
       cart.eventDate ??
       (isSampleTastingCheckout && fallbackEventDate && !Number.isNaN(fallbackEventDate.getTime())
@@ -538,7 +556,9 @@ export const createBooking = async (req, res, next) => {
     notify(userId, {
       type: 'booking_update',
       title: 'Booking Placed',
-      message: 'Your booking has been received. Complete the advance payment to confirm.',
+      message: isSheeshaOnlyBooking
+        ? 'Your Hookah booking has been received. Confirm pay-on-delivery to complete booking.'
+        : 'Your booking has been received. Complete the advance payment to confirm.',
       linkUrl: `/dashboard/bookings/${booking.id}`,
       emailTemplate: 'booking_created',
       emailData: {
@@ -569,9 +589,7 @@ export const listBookings = async (req, res, next) => {
     const limit = Math.min(50, Math.max(1, Number(req.query?.limit ?? 20)))
     const baseWhere = {
       userId,
-      payments: {
-        some: { status: 'success' },
-      },
+      payments: BOOKING_VISIBLE_PAYMENT_FILTER,
     }
 
     const bookings = await prisma.booking.findMany({
@@ -587,9 +605,20 @@ export const listBookings = async (req, res, next) => {
         },
         statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
         payments: {
-          where: { status: 'success' },
+          where: {
+            OR: [{ status: 'success' }, { status: 'pending', providerOrderId: 'COD' }],
+          },
           orderBy: { createdAt: 'desc' },
-          select: { id: true, amount: true, paymentType: true, status: true, createdAt: true },
+          select: {
+            id: true,
+            amount: true,
+            paymentType: true,
+            status: true,
+            provider: true,
+            paymentMethod: true,
+            providerOrderId: true,
+            createdAt: true,
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -647,10 +676,9 @@ export const getBooking = async (req, res, next) => {
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
-    if (
-      !Array.isArray(booking.payments) ||
-      !booking.payments.some(payment => payment.status === 'success')
-    ) {
+    const hasSuccessfulPayment = booking.payments.some(payment => payment.status === 'success')
+    const hasCodPendingPayment = booking.payments.some(isCodPendingPayment)
+    if (!hasSuccessfulPayment && !hasCodPendingPayment) {
       return res.status(404).json({ error: 'Booking not found' })
     }
 
@@ -1096,6 +1124,125 @@ export const addFile = async (req, res, next) => {
 
     res.status(201).json({ file })
   } catch (err) {
+    next(err)
+  }
+}
+
+// ─── POST /bookings/:id/confirm-cod ───────────────────────────────────────────
+// Hookah-only pay-on-delivery confirmation. Never calls Cashfree.
+export const confirmCodBooking = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+    const ageConfirmedAt = String(req.body?.ageConfirmedAt ?? '').trim()
+
+    if (!ageConfirmedAt) {
+      return res.status(400).json({ error: 'Age confirmation is required for Hookah bookings.' })
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { payments: true },
+    })
+
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    if (booking.payments.some(payment => payment.status === 'success')) {
+      return res.status(400).json({ error: 'This booking has already been paid.' })
+    }
+
+    const cart = await prisma.cart.findFirst({
+      where: { userId },
+      include: { items: true },
+    })
+
+    await assertSheeshaOnlyCart(cart?.items ?? [])
+
+    const existingCodPayment = booking.payments.find(isCodPendingPayment)
+    const totalPrice = roundCurrency(booking.totalPrice)
+    const clientIp =
+      String(req.headers['x-forwarded-for'] ?? '')
+        .split(',')[0]
+        ?.trim() ||
+      req.ip ||
+      ''
+
+    const payment = await prisma.$transaction(async tx => {
+      let codPayment = existingCodPayment
+
+      if (!codPayment) {
+        codPayment = await tx.payment.create({
+          data: {
+            bookingId: id,
+            paymentType: 'full',
+            amount: totalPrice.toFixed(2),
+            status: 'pending',
+            provider: 'manual',
+            paymentMethod: 'offline',
+            providerOrderId: 'COD',
+          },
+        })
+
+        await tx.paymentLog.create({
+          data: {
+            paymentId: codPayment.id,
+            action: 'created',
+            performedBy: userId,
+            metadata: {
+              cod: true,
+              ageConfirmedAt,
+              ip: clientIp,
+            },
+          },
+        })
+      }
+
+      if (booking.status === 'new') {
+        await tx.booking.update({
+          where: { id },
+          data: { status: 'confirmed' },
+        })
+
+        await tx.bookingStatusLog.create({
+          data: {
+            bookingId: id,
+            previousStatus: 'new',
+            newStatus: 'confirmed',
+            changedBy: userId,
+            note: 'Hookah booking confirmed — pay on delivery (COD)',
+          },
+        })
+      }
+
+      return codPayment
+    })
+
+    await clearUserCart(userId)
+
+    const fullBooking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        statusLogs: { orderBy: { createdAt: 'asc' } },
+        payments: { orderBy: { createdAt: 'desc' } },
+      },
+    })
+
+    notify(userId, {
+      type: 'booking_update',
+      title: 'Hookah Booking Confirmed',
+      message: 'Your Hookah booking is confirmed. Amount is due on delivery.',
+      linkUrl: `/dashboard/bookings/${id}`,
+    }).catch(() => {})
+
+    invalidateDashboardCache(userId).catch(() => {})
+
+    res.json({ booking: fullBooking, payment })
+  } catch (err) {
+    if (err?.status === 400) {
+      return res.status(400).json({ error: err.message })
+    }
     next(err)
   }
 }

@@ -5,6 +5,7 @@ import {
   getPackageLineSubtitle,
   parseBookingItemTitle,
 } from './bookingDisplay'
+import { isCodPendingPayment } from './sheeshaCheckout'
 
 function toNumber(value) {
   if (value == null) return null
@@ -160,6 +161,31 @@ export function getReceiptPaymentSummary({
     amountPaid +
       pickNumber(paymentSummary?.amountDue, booking?.remainingAmount, payment?.balanceDue)
   )
+  const isSheeshaCodBooking =
+    checkoutInfo?.checkoutMode === 'sheesha-cod' ||
+    payment?.codPending === true ||
+    (Array.isArray(booking?.payments) && booking.payments.some(isCodPendingPayment))
+
+  if (isSheeshaCodBooking) {
+    const codDue = Math.max(
+      0,
+      totalAmount > 0
+        ? totalAmount - amountPaid
+        : pickNumber(paymentSummary?.amountDue, booking?.remainingAmount, payment?.balanceDue, totalAmount)
+    )
+
+    return {
+      totalAmount,
+      amountPaid,
+      amountDue: codDue,
+      isFullyPaid: false,
+      primaryLabel: 'Amount due on delivery',
+      secondaryLabel: 'Pay when your Hookah is delivered',
+      showSecondaryAmount: true,
+      eventDate: checkoutInfo?.eventDate ?? booking?.eventDate ?? '',
+    }
+  }
+
   const paidInFullFromCheckout = String(payment?.paymentType ?? '').toLowerCase() === 'full'
   const amountDue = paidInFullFromCheckout
     ? 0

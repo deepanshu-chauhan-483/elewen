@@ -310,6 +310,11 @@ export const bookingCancel = (token, bookingId, body = {}) =>
 export const bookingAddNote = (token, bookingId, body) =>
   apiPost(`/bookings/${bookingId}/notes`, body, { headers: { Authorization: `Bearer ${token}` } })
 
+export const bookingConfirmCod = (token, bookingId, body = {}) =>
+  apiPost(`/bookings/${bookingId}/confirm-cod`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 /* -- Payments ---------------------------------------------------------------- */
 
 export const paymentCreateOrder = (token, body) =>

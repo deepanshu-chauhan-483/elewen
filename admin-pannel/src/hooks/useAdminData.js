@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   adminAddBookingNote,
+  adminCollectBookingCod,
   adminAddSupportMessage,
   adminAlerts,
   adminBooking,
@@ -222,6 +223,22 @@ export function useAdminAddBookingNote() {
     onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
+    },
+  })
+}
+
+export function useAdminCollectBookingCod() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ bookingId }) =>
+      withAdminToken(token => adminCollectBookingCod(token, bookingId)),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payments'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payment-workspace'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })
     },
   })
 }

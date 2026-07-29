@@ -19,6 +19,7 @@ import {
   strapiFindUserByEmail,
 } from '../lib/strapi.js'
 import { cacheDelPattern } from '../lib/cache.js'
+import { isCodPendingPayment } from '../lib/sheeshaCheckout.js'
 
 const BOOKING_STATUSES = [
   'new',
@@ -1680,6 +1681,61 @@ export async function updateAdminBookingStatus(req, res, next) {
     }).catch(() => {})
 
     res.json({ booking: updatedBooking })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function collectAdminBookingCod(req, res, next) {
+  try {
+    const bookingId = req.params.id
+    const adminId = String(req.user.id)
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { payments: true },
+    })
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    const codPayment = (booking.payments ?? []).find(isCodPendingPayment)
+    if (!codPayment) {
+      return res.status(400).json({ error: 'No pending Hookah COD payment found for this booking.' })
+    }
+
+    const updatedPayment = await prisma.$transaction(async tx => {
+      const payment = await tx.payment.update({
+        where: { id: codPayment.id },
+        data: { status: 'success' },
+      })
+
+      await tx.paymentLog.create({
+        data: {
+          paymentId: codPayment.id,
+          action: 'verified',
+          performedBy: adminId,
+          metadata: {
+            cod: true,
+            collectedOnDelivery: true,
+          },
+        },
+      })
+
+      return payment
+    })
+
+    notify(booking.userId, {
+      type: 'payment_update',
+      title: 'Payment received',
+      message: 'Your Hookah delivery payment has been recorded. Thank you!',
+      linkUrl: `/dashboard/bookings/${bookingId}`,
+    }).catch(() => {})
+
+    await cacheDelPattern(`dashboard:summary:${booking.userId}`)
+
+    res.json({ booking, payment: updatedPayment })
   } catch (err) {
     next(err)
   }

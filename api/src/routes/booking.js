@@ -4,6 +4,7 @@ import {
   createBooking,
   listBookings,
   getBooking,
+  confirmCodBooking,
   updateStatus,
   cancelBooking,
   addTimeline,
@@ -79,6 +80,17 @@ router.get('/', listBookings)
  *         description: Booking not found
  */
 router.get('/:id', getBooking)
+
+/**
+ * @openapi
+ * /bookings/{id}/confirm-cod:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Confirm a Hookah-only booking with pay-on-delivery (COD)
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/:id/confirm-cod', confirmCodBooking)
 
 /**
  * @openapi

@@ -14,12 +14,17 @@ import {
   useAdminBooking,
   useAdminBookingCouponSuggestion,
   useAdminBookings,
+  useAdminCollectBookingCod,
   useAdminCreateVendorAssignment,
   useAdminSendReferralCoupon,
   useAdminUpdateBookingStatus,
   useAdminVendors,
 } from '../hooks/useAdminData'
 import { getAdminBadgeClass } from '../lib/adminBadges'
+import {
+  bookingHasHookahCod,
+  bookingHasPendingHookahCod,
+} from '../lib/sheeshaCheckout'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
 
 // ---------------------------------------------------------------------------
@@ -526,11 +531,16 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
   const updateStatusMutation = useAdminUpdateBookingStatus()
   const addNoteMutation = useAdminAddBookingNote()
   const createAssignmentMutation = useAdminCreateVendorAssignment()
+  const collectCodMutation = useAdminCollectBookingCod()
+  const [collectCodMessage, setCollectCodMessage] = useState('')
+  const [collectCodError, setCollectCodError] = useState('')
 
   const borderColor = borderColorMap[booking.status?.toLowerCase()] ?? 'border-[#CDB17E]'
   const subtitle = getSubtitle(booking)
   const bookingDetails = bookingQuery.data ?? booking
   const paymentDetailRows = useMemo(() => buildPaymentDetailRows(bookingDetails), [bookingDetails])
+  const showHookahCodBadge = bookingHasHookahCod(bookingDetails)
+  const canCollectHookahCod = bookingHasPendingHookahCod(bookingDetails)
   const latestStatusNote = getLatestStatusNote(bookingDetails?.statusLogs)
   const internalNotes = (Array.isArray(bookingDetails?.notes) ? bookingDetails.notes : []).filter(
     entry => entry?.isInternal === true
@@ -582,6 +592,17 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
     setInternalNote('')
   }
 
+  const handleCollectHookahCod = async () => {
+    setCollectCodMessage('')
+    setCollectCodError('')
+    try {
+      await collectCodMutation.mutateAsync({ bookingId: booking.id })
+      setCollectCodMessage('Hookah COD payment marked as collected.')
+    } catch (error) {
+      setCollectCodError(error?.message || 'Could not mark COD as collected.')
+    }
+  }
+
   // Check which status options are allowed
   const isStatusAllowed = optionStatus => {
     const remainingAmount = bookingDetails?.remainingAmount ?? 0
@@ -613,6 +634,11 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
               <div className="shrink-0">
                 <StatusBadge status={booking.status} label={booking.statusLabel} />
               </div>
+              {showHookahCodBadge ? (
+                <div className="shrink-0">
+                  <StatusBadge status="pending" label="Hookah · COD" />
+                </div>
+              ) : null}
             </div>
             <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p>
 
@@ -938,6 +964,22 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
             ) : (
               <p className="text-sm text-[#8F8F8F]">No payments recorded yet.</p>
             )}
+            {canCollectHookahCod ? (
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <PrimaryBtn
+                  disabled={collectCodMutation.isPending}
+                  onClick={handleCollectHookahCod}
+                >
+                  {collectCodMutation.isPending ? 'Updating…' : 'Mark collected on delivery'}
+                </PrimaryBtn>
+                {collectCodMessage ? (
+                  <p className="text-sm text-[#238E64]">{collectCodMessage}</p>
+                ) : null}
+                {collectCodError ? (
+                  <p className="text-sm text-[#8A1C1C]">{collectCodError}</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
