@@ -159,6 +159,46 @@ function mapMediaToUrls(media) {
   return normaliseMediaArray(media).map(resolveStrapiImageUrl).filter(Boolean)
 }
 
+function filenameLabelFromUrl(url = '') {
+  const raw = String(url ?? '')
+    .split('?')[0]
+    .split('#')[0]
+    .split('/')
+    .pop()
+
+  if (!raw) return ''
+
+  return raw
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** Keep media labels (name/alt/caption) for decor inclusion click → image matching. */
+function mapMediaToAssets(media) {
+  return normaliseMediaArray(media)
+    .map(image => {
+      const url = resolveStrapiImageUrl(image)
+      if (!url) return null
+
+      if (typeof image === 'string') {
+        const label = filenameLabelFromUrl(url)
+        return label ? { url, label } : { url, label: '' }
+      }
+
+      const label =
+        String(image?.name ?? '').trim() ||
+        String(image?.alternativeText ?? '').trim() ||
+        String(image?.caption ?? '').trim() ||
+        filenameLabelFromUrl(url) ||
+        filenameLabelFromUrl(image?.url)
+
+      return { url, label }
+    })
+    .filter(Boolean)
+}
+
 function buildListingCoverImages(pkg, detailSections = []) {
   const packageImages = mapMediaToUrls(pkg?.images)
   if (packageImages.length) return packageImages
@@ -683,6 +723,7 @@ function normalizePackage(pkg, index = 0, options = {}) {
 
   return {
     ...sharedFields,
+    image_assets: mapMediaToAssets(pkg?.images),
     detail_sections: detailSections,
     detail_inclusions: buildDetailHighlights(pkg),
     detail_addons: buildAddonList(getNestedPackageAddons(pkg)),

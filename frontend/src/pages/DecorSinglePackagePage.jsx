@@ -250,6 +250,320 @@ function getInclusionImages(inclusion) {
     .filter(Boolean)
 }
 
+function getPackageFallbackImages(pkg) {
+  return uniqueValues(
+    (Array.isArray(pkg?.images) ? pkg.images : [])
+      .map(image => normalizeGalleryImageUrl(image))
+      .filter(Boolean)
+  )
+}
+
+function getPackageImageAssets(pkg) {
+  const assets = Array.isArray(pkg?.image_assets) ? pkg.image_assets : []
+  if (assets.length) {
+    return assets
+      .map(asset => {
+        const url = normalizeGalleryImageUrl(asset?.url || asset)
+        if (!url) return null
+        return {
+          url,
+          label: cleanText(asset?.label || asset?.name || asset?.alternativeText || asset?.caption),
+        }
+      })
+      .filter(Boolean)
+  }
+
+  // Fallback when only URL strings exist — derive a label from the filename.
+  return getPackageFallbackImages(pkg).map(url => ({
+    url,
+    label: cleanText(
+      String(url)
+        .split('?')[0]
+        .split('/')
+        .pop()
+        ?.replace(/\.[a-z0-9]+$/i, '')
+        .replace(/[_-]+/g, ' ') ?? ''
+    ),
+  }))
+}
+
+function slugifyMatchKey(value = '') {
+  return cleanText(value)
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function expandMatchLabels(...labels) {
+  const expanded = new Set()
+
+  labels
+    .map(label => cleanText(label))
+    .filter(Boolean)
+    .forEach(label => {
+      expanded.add(label)
+
+      const withoutChoose = label.replace(/\(\s*choose\s*\d+\s*\)/gi, '').trim()
+      if (withoutChoose) expanded.add(withoutChoose)
+
+      const withoutPrefix = withoutChoose
+        .replace(/^(basic|premium|fancy|customized|custom)\s+/i, '')
+        .trim()
+      if (withoutPrefix) expanded.add(withoutPrefix)
+
+      // Common decor aliases used in media filenames / alt text.
+      if (/entrance/i.test(label)) {
+        expanded.add('Entrance Setup')
+        expanded.add('Entrance')
+      }
+      if (/\bbar\b/i.test(label)) {
+        expanded.add('Bar Setup')
+        expanded.add('Basic Bar Setup')
+        expanded.add('Premium Bar Setup')
+        expanded.add('Bar')
+      }
+      if (/photo[\s-]?op|backdrop/i.test(label)) {
+        expanded.add('Photo-op')
+        expanded.add('Photo Op')
+        expanded.add('Backdrop')
+        expanded.add('Fancy backdrop')
+      }
+      if (/furniture|chair|table/i.test(label)) {
+        expanded.add('Premium Furniture')
+        expanded.add('Furniture')
+      }
+      if (/floral|flower/i.test(label)) {
+        expanded.add('Florals')
+        expanded.add('Floral')
+      }
+      if (/balloon/i.test(label)) {
+        expanded.add('Balloons')
+        expanded.add('Balloon')
+      }
+      if (/printable/i.test(label)) {
+        expanded.add('Printables')
+      }
+    })
+
+  return [...expanded]
+}
+
+function scoreImageLabelMatch(targetLabel, imageLabel) {
+  const target = slugifyMatchKey(targetLabel)
+  const candidate = slugifyMatchKey(imageLabel)
+  if (!target || !candidate) return 0
+  if (target === candidate) return 100
+
+  const targetParts = target.split('-').filter(Boolean)
+  const candidateParts = candidate.split('-').filter(Boolean)
+  const candidateSet = new Set(candidateParts)
+
+  // Prefer full phrase containment for multi-word section titles (Entrance Setup, Bar Setup).
+  if (targetParts.length >= 2 && candidate.includes(target)) return 92
+  if (candidateParts.length >= 2 && target.includes(candidate)) return 90
+
+  // Single-word targets (Florals / Balloons) must be a primary label, not a mention inside
+  // a longer unrelated filename like "entrance-setup-with-florals".
+  if (targetParts.length === 1) {
+    const token = targetParts[0]
+    if (!candidateSet.has(token)) {
+      // Allow floral ↔ florals style near-matches on short labels.
+      const stem = token.replace(/s$/, '')
+      const stemmedHit = [...candidateSet].some(
+        part => part === stem || part.replace(/s$/, '') === stem
+      )
+      if (!stemmedHit) return 0
+    }
+
+    if (candidateParts.length === 1) return 95
+    if (candidateParts.length === 2) return 80
+    return 35
+  }
+
+  const significant = targetParts.filter(token => token.length > 2)
+  if (!significant.length) return 0
+
+  const overlap = significant.filter(token => candidateSet.has(token)).length
+  const ratio = overlap / significant.length
+  if (ratio >= 1) return 88
+  if (ratio >= 0.66) return 72
+  return 0
+}
+
+function findBestMatchingImage(assets, labels, usedUrls) {
+  const candidates = (Array.isArray(assets) ? assets : []).filter(
+    asset => asset?.url && !usedUrls.has(asset.url)
+  )
+  if (!candidates.length) return ''
+
+  const searchLabels = expandMatchLabels(...(Array.isArray(labels) ? labels : [labels]))
+  let best = null
+  let bestScore = 0
+
+  candidates.forEach(asset => {
+    searchLabels.forEach(label => {
+      const score = scoreImageLabelMatch(label, asset.label)
+      if (score > bestScore) {
+        bestScore = score
+        best = asset
+      }
+    })
+  })
+
+  // Require a meaningful name match so we don't pick an unrelated gallery photo.
+  if (!best || bestScore < 50) return ''
+
+  usedUrls.add(best.url)
+  return best.url
+}
+
+function takeNextUnusedImage(assets, usedUrls) {
+  const next = (Array.isArray(assets) ? assets : []).find(
+    asset => asset?.url && !usedUrls.has(asset.url)
+  )
+  if (!next?.url) return ''
+  usedUrls.add(next.url)
+  return next.url
+}
+
+/**
+ * When inclusion.images is missing (common on General Pack), map package gallery
+ * images onto text/choice sections by media name/alt first, then unused gallery
+ * order — so clicks sync the correct named photo without reseeding CMS media.
+ */
+function buildDecorGalleryFallbackSupport(pkg) {
+  if (!pkg) {
+    return {
+      textImageBySectionItem: {},
+      choiceImagesByGroupOption: new Map(),
+      metaByUrl: {},
+    }
+  }
+
+  const assets = getPackageImageAssets(pkg)
+  const usedUrls = new Set()
+  const textEntries = []
+  const choiceImagesByGroupOption = new Map()
+  const metaEntries = []
+  const pendingTextGroups = []
+  const pendingChoiceItems = []
+
+  getDecorDetailSections(pkg).forEach(section => {
+    const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
+    const orderedGroups = collectOrderedInclusionGroups(inclusions)
+
+    orderedGroups.forEach(group => {
+      if (group.type === 'choice') {
+        const sectionTitle = buildChoiceSectionTitle(group.displayTitle, 'Choose 1')
+
+        group.items.forEach(item => {
+          const optionTitle =
+            cleanText(parseLegacyChoiceTitle(item?.text).title) || cleanText(item?.text)
+          if (!optionTitle) return
+
+          const ownImages = getInclusionImages(item)
+          if (ownImages[0]) {
+            choiceImagesByGroupOption.set(`${group.key}::${optionTitle}`, ownImages[0])
+            metaEntries.push([
+              ownImages[0],
+              { heading: optionTitle || sectionTitle, text: optionTitle },
+            ])
+            return
+          }
+
+          const namedImage = findBestMatchingImage(
+            assets,
+            [optionTitle, group.displayTitle, sectionTitle],
+            usedUrls
+          )
+
+          if (namedImage) {
+            choiceImagesByGroupOption.set(`${group.key}::${optionTitle}`, namedImage)
+            metaEntries.push([
+              namedImage,
+              { heading: optionTitle || sectionTitle, text: optionTitle },
+            ])
+            return
+          }
+
+          pendingChoiceItems.push({
+            mapKey: `${group.key}::${optionTitle}`,
+            sectionTitle,
+            optionTitle,
+          })
+        })
+        return
+      }
+
+      const sectionTitle = buildTextSectionTitle(group.title, 'Included details')
+      const items = group.items.filter(item => cleanText(item?.text))
+      if (!items.length) return
+
+      const groupHasOwnImages = items.some(item => getInclusionImages(item).length > 0)
+      if (groupHasOwnImages) {
+        items.forEach(item => {
+          const text = cleanText(item?.text)
+          const ownImages = getInclusionImages(item)
+          if (!text || !ownImages[0]) return
+          textEntries.push([`${sectionTitle}::${text}`, ownImages[0]])
+          metaEntries.push([ownImages[0], { heading: sectionTitle, text }])
+        })
+        return
+      }
+
+      const namedImage = findBestMatchingImage(assets, [sectionTitle, group.title], usedUrls)
+      if (namedImage) {
+        items.forEach(item => {
+          const text = cleanText(item?.text)
+          if (!text) return
+          textEntries.push([`${sectionTitle}::${text}`, namedImage])
+          metaEntries.push([namedImage, { heading: sectionTitle, text }])
+        })
+        return
+      }
+
+      pendingTextGroups.push({ sectionTitle, items })
+    })
+  })
+
+  // Second pass: only unmatched sections take leftover gallery photos.
+  pendingTextGroups.forEach(group => {
+    const fallbackImage = takeNextUnusedImage(assets, usedUrls)
+    if (!fallbackImage) return
+
+    group.items.forEach(item => {
+      const text = cleanText(item?.text)
+      if (!text) return
+      textEntries.push([`${group.sectionTitle}::${text}`, fallbackImage])
+      metaEntries.push([fallbackImage, { heading: group.sectionTitle, text }])
+    })
+  })
+
+  pendingChoiceItems.forEach(item => {
+    const fallbackImage = takeNextUnusedImage(assets, usedUrls)
+    if (!fallbackImage) return
+
+    choiceImagesByGroupOption.set(item.mapKey, fallbackImage)
+    metaEntries.push([
+      fallbackImage,
+      { heading: item.optionTitle || item.sectionTitle, text: item.optionTitle },
+    ])
+  })
+
+  assets.forEach(asset => {
+    if (!asset?.url || metaEntries.some(([url]) => url === asset.url)) return
+    if (!asset.label) return
+    metaEntries.push([asset.url, { heading: asset.label, text: asset.label }])
+  })
+
+  return {
+    textImageBySectionItem: Object.fromEntries(textEntries),
+    choiceImagesByGroupOption,
+    metaByUrl: Object.fromEntries(metaEntries),
+  }
+}
+
 function displayInclusionHeading(value = '') {
   const normalized = cleanText(value)
   if (!normalized) return ''
@@ -260,7 +574,7 @@ function displayInclusionHeading(value = '') {
   return normalized
 }
 
-function buildDecorImageMetaMap(pkg) {
+function buildDecorImageMetaMap(pkg, fallbackMetaByUrl = {}) {
   const entries = []
   const packageTitle = cleanText(pkg?.title)
 
@@ -313,31 +627,55 @@ function buildDecorImageMetaMap(pkg) {
   ;(Array.isArray(pkg?.images) ? pkg.images : []).forEach(image => {
     const url = normalizeGalleryImageUrl(image)
     if (!url || entries.some(([existing]) => existing === url)) return
-    entries.push([url, { heading: packageTitle, text: packageTitle }])
+    const fallbackMeta = fallbackMetaByUrl?.[url]
+    const assetLabel = cleanText(
+      (Array.isArray(pkg?.image_assets) ? pkg.image_assets : []).find(
+        asset => normalizeGalleryImageUrl(asset?.url || asset) === url
+      )?.label
+    )
+    entries.push([
+      url,
+      fallbackMeta ??
+        (assetLabel ? { heading: assetLabel, text: assetLabel } : { heading: packageTitle, text: packageTitle }),
+    ])
+  })
+
+  Object.entries(fallbackMetaByUrl ?? {}).forEach(([url, meta]) => {
+    if (!url || entries.some(([existing]) => existing === url)) return
+    entries.push([url, meta])
   })
 
   return Object.fromEntries(entries)
 }
 
-function buildDecorTextImageMap(pkg) {
+function buildDecorTextImageMap(pkg, fallbackTextImageBySectionItem = {}) {
   const entries = []
 
   getDecorDetailSections(pkg).forEach(section => {
     const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
-    const textGroups = groupItemsByTitle(inclusions.filter(item => !item?.is_choice_group))
+    const orderedGroups = collectOrderedInclusionGroups(inclusions).filter(
+      group => group.type === 'text'
+    )
 
-    textGroups.forEach(group => {
+    orderedGroups.forEach(group => {
       const sectionTitle = buildTextSectionTitle(group.title, 'Included details')
 
       group.items.forEach(item => {
         const text = cleanText(item?.text)
         const images = getInclusionImages(item)
+        const key = `${sectionTitle}::${text}`
+        const image = images[0] || fallbackTextImageBySectionItem[key]
 
-        if (!text || !images.length) return
+        if (!text || !image) return
 
-        entries.push([`${sectionTitle}::${text}`, images[0]])
+        entries.push([key, image])
       })
     })
+  })
+
+  Object.entries(fallbackTextImageBySectionItem ?? {}).forEach(([key, image]) => {
+    if (!key || !image || entries.some(([existing]) => existing === key)) return
+    entries.push([key, image])
   })
 
   return Object.fromEntries(entries)
@@ -489,7 +827,13 @@ function resolveChoiceGroupMeta(item = {}) {
   }
 }
 
-function createChoiceItem({ inclusion, element, fallbackTitle, whenBullets = new Map() }) {
+function createChoiceItem({
+  inclusion,
+  element,
+  fallbackTitle,
+  whenBullets = new Map(),
+  fallbackImage = '',
+}) {
   const parsedLegacyTitle = parseLegacyChoiceTitle(inclusion?.text)
   const inclusionText = parsedLegacyTitle.title
   const elementTitle = cleanText(element?.title)
@@ -519,13 +863,16 @@ function createChoiceItem({ inclusion, element, fallbackTitle, whenBullets = new
     descriptionParts.push(cleanText(element.description))
   }
 
+  const ownImages = getInclusionImages(inclusion)
+  const images = ownImages.length ? ownImages : fallbackImage ? [fallbackImage] : []
+
   return {
     title,
     bullets,
     description: bullets.length ? bullets.join('\n') : descriptionParts.join('\n'),
     price,
     priceAmount: Number.isFinite(priceAmount) && priceAmount > 0 ? priceAmount : null,
-    images: getInclusionImages(inclusion),
+    images,
     selected: false,
   }
 }
@@ -608,7 +955,9 @@ function collectOrderedInclusionGroups(inclusions = []) {
   return groups
 }
 
-function buildDecorCustomizationSections(pkg) {
+function buildDecorCustomizationSections(pkg, choiceImagesByGroupOption = new Map()) {
+  if (!pkg) return []
+
   return getDecorDetailSections(pkg).flatMap(section => {
     const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
     const whenBullets = indexWhenInclusions(inclusions)
@@ -631,11 +980,17 @@ function buildDecorCustomizationSections(pkg) {
               elementCursor += 1
             }
 
+            const optionTitle =
+              cleanText(parseLegacyChoiceTitle(item?.text).title) || cleanText(item?.text)
+            const fallbackImage =
+              choiceImagesByGroupOption.get(`${group.key}::${optionTitle}`) || ''
+
             return createChoiceItem({
               inclusion: item,
               element,
               fallbackTitle: `Option ${itemIndex + 1}`,
               whenBullets,
+              fallbackImage,
             })
           })
           .filter(item => item.title)
@@ -959,11 +1314,22 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
 }
 
 function DecorTextRow({ section, onItemClick }) {
+  const firstItem = Array.isArray(section.items) ? section.items[0] : ''
+
   return (
     <div>
-      <p className="text-[13px] font-semibold leading-none text-[#591902]">
+      <button
+        type="button"
+        onClick={() => {
+          if (!onItemClick || !firstItem) return
+          onItemClick(section.title, firstItem)
+        }}
+        className={`text-[13px] font-semibold leading-none text-[#591902] ${
+          onItemClick && firstItem ? 'cursor-pointer' : 'cursor-default'
+        }`}
+      >
         {section.title}
-      </p>
+      </button>
       <div className="mt-3 flex flex-wrap items-center gap-y-2">
         {section.items.map((item, index) => (
           <div key={`${section.title}-${item}`} className="flex items-center">
@@ -1215,13 +1581,23 @@ export default function DecorSinglePackagePage() {
     title: pkg?.title,
   })
 
-  const sectionTemplate = useMemo(() => buildDecorCustomizationSections(pkg), [pkg])
+  const galleryFallbackSupport = useMemo(() => buildDecorGalleryFallbackSupport(pkg), [pkg])
+  const sectionTemplate = useMemo(
+    () => buildDecorCustomizationSections(pkg, galleryFallbackSupport.choiceImagesByGroupOption),
+    [pkg, galleryFallbackSupport]
+  )
   const sectionTemplateSignature = useMemo(
     () => serializeSections(sectionTemplate),
     [sectionTemplate]
   )
-  const imageMetaByUrl = useMemo(() => buildDecorImageMetaMap(pkg), [pkg])
-  const textImageBySectionItem = useMemo(() => buildDecorTextImageMap(pkg), [pkg])
+  const imageMetaByUrl = useMemo(
+    () => buildDecorImageMetaMap(pkg, galleryFallbackSupport.metaByUrl),
+    [pkg, galleryFallbackSupport]
+  )
+  const textImageBySectionItem = useMemo(
+    () => buildDecorTextImageMap(pkg, galleryFallbackSupport.textImageBySectionItem),
+    [pkg, galleryFallbackSupport]
+  )
 
   useEffect(() => {
     if (!pkg) return
@@ -1310,8 +1686,10 @@ export default function DecorSinglePackagePage() {
       .find(section => (section.groupKey ?? section.title) === sectionKey)
       ?.items?.find(item => typeof item !== 'string' && item.title === itemTitle)
 
-    if (selectedChoiceItem?.images?.length) {
-      setToastImage(selectedChoiceItem.images[0])
+    const choiceImage = selectedChoiceItem?.images?.[0] || ''
+    if (choiceImage) {
+      setSelectedTextImage(choiceImage)
+      setToastImage(choiceImage)
     }
 
     setCustomizations(prev =>
