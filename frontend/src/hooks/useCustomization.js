@@ -27,8 +27,20 @@ export default function useCustomization({
   }
 
   const handleIncrease = () => {
-    if (!activeCustomization.isAddedToCart) return
-    setShowRepeatPrompt(true)
+    if (activeCustomization?.isAddedToCart) {
+      setShowRepeatPrompt(true)
+      return
+    }
+
+    const sourceData = activeCustomization?.data ?? createInitialData()
+    setCustomizations(prev => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        data: cloneData(sourceData),
+        isAddedToCart: false,
+      },
+    ])
   }
 
   const handleRepeat = () => {

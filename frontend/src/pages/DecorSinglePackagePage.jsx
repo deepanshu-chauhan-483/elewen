@@ -1799,7 +1799,7 @@ export default function DecorSinglePackagePage() {
       } else {
         await addPackage({
           packageId: Number(pkg.id),
-          quantity: 1,
+          quantity,
           selectedOptions: selectedOpts,
         })
         handleAddToCart()
