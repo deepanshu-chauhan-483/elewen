@@ -1277,10 +1277,8 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
         couponId: coupon.id,
         email,
       })
-      const sentCode = result?.couponCode ?? coupon.code
-      const inAppNote = result?.notifiedInApp ? ' In-app notification sent too.' : ''
       showToast({
-        message: `Personal coupon ${sentCode} emailed to ${email}. Only that customer can use it.${inAppNote}`,
+        message: 'Coupon shared successfully',
         tone: 'success',
       })
       setShareOpen(false)
