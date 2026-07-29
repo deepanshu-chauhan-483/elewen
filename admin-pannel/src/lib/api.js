@@ -183,6 +183,11 @@ export const adminSendReferralCoupon = (token, bookingId, body) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminSendPersonalizationEmail = (token, bookingId, body) =>
+  request('POST', `/admin/bookings/${bookingId}/send-personalization-email`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminUpdateBookingStatus = (token, bookingId, body) =>
   request('PATCH', `/admin/bookings/${bookingId}/status`, body, {
     headers: { Authorization: `Bearer ${token}` },

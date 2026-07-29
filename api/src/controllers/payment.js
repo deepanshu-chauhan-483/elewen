@@ -15,6 +15,7 @@ import {
   classifyCartItems,
   isCodPayment,
 } from '../lib/sheeshaCheckout.js'
+import { sendBookingConfirmedEmail } from '../lib/bookingEmailService.js'
 
 const TEST_PAYMENT_APP_ID = process.env.CASHFREE_TEST_APP_ID || 'TEST_elewen_dashboard_bypass'
 
@@ -116,6 +117,11 @@ async function ensureConfirmedBooking(payment, userId, note) {
         note,
       },
     })
+
+    // Mail 1 — idempotent; Hookah COD does not use this path
+    sendBookingConfirmedEmail(payment.bookingId).catch(err =>
+      console.error('[booking-email] confirmed after payment failed', payment.bookingId, err?.message)
+    )
   }
 
   return prisma.booking.findUnique({ where: { id: payment.bookingId } })
@@ -580,6 +586,14 @@ export const handleWebhook = async (req, res) => {
                   paymentType: payment.paymentType,
                 },
               }).catch(() => {})
+
+              sendBookingConfirmedEmail(payment.bookingId).catch(err =>
+                console.error(
+                  '[booking-email] confirmed after webhook failed',
+                  payment.bookingId,
+                  err?.message
+                )
+              )
             }
           }
 

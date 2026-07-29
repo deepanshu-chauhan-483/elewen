@@ -249,13 +249,54 @@ model Booking {
   messageThread     MessageThread?
   supportTickets    SupportTicket[]
   sampleBookings    SampleTasteBooking[]
+  emailLogs         BookingEmailLog[]
+  personalizations  BookingPersonalization[]
 
   @@index([userId])
   @@index([userId, status])
   @@index([userId, createdAt(sort: Desc)])
   @@index([status])
   @@index([createdAt(sort: Desc)])
+  @@index([eventDate])
   @@map("bookings")
+}
+
+model BookingEmailLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @db.Uuid
+  emailType String   @db.VarChar(50)
+  subject   String?  @db.VarChar(255)
+  metadata  Json?
+  sentAt    DateTime @default(now())
+
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, emailType])
+  @@index([emailType, sentAt])
+  @@map("booking_email_logs")
+}
+
+model BookingPersonalization {
+  id               String    @id @default(uuid()) @db.Uuid
+  bookingId        String    @db.Uuid
+  serviceName      String    @db.VarChar(255)
+  designImage1     String?
+  designImage2     String?
+  designImage3     String?
+  responseDeadline DateTime? @db.Date
+  status           String    @default("pending") @db.VarChar(30)
+  customerChoice   String?   @db.VarChar(20)
+  customerText     String?
+  customerNotes    String?
+  sentAt           DateTime?
+  submittedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  booking          Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_personalizations")
 }
 
 model BookingItem {

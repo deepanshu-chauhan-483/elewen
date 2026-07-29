@@ -23,11 +23,13 @@ import notificationRoutes from './routes/notification.js'
 import wishlistRoutes from './routes/wishlist.js'
 import dashboardRoutes from './routes/dashboard.js'
 import adminRoutes from './routes/admin.js'
+import jobsRoutes from './routes/jobs.js'
 import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { bootstrapDefaultAdmin, getDefaultAdminCredentials } from './lib/bootstrapAdmin.js'
 import { connectRedis, disconnectRedis } from './lib/cache.js'
+import { startBookingEmailScheduler } from './jobs/bookingEmailCron.js'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 // Load only api/.env so local dev does not pick up root docker-compose .env
@@ -128,6 +130,7 @@ app.use('/notifications', notificationRoutes)
 app.use('/wishlist', wishlistRoutes)
 app.use('/dashboard', dashboardRoutes)
 app.use('/admin', adminRoutes)
+app.use('/jobs', jobsRoutes)
 
 // ─── Dev-only test pages ──────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {
@@ -163,6 +166,8 @@ async function start() {
   server = app.listen(PORT, () => {
     console.log(`API running on port ${PORT}`)
     console.log(`Swagger docs: http://localhost:${PORT}/api-docs`)
+
+    startBookingEmailScheduler()
 
     if (process.env.NODE_ENV !== 'production' && defaultAdminState?.user?.id) {
       console.log(`[admin-bootstrap] Login email: ${credentials.email}`)

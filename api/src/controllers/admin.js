@@ -21,6 +21,11 @@ import { cacheDelPattern } from '../lib/cache.js'
 import { isCodPendingPayment } from '../lib/sheeshaCheckout.js'
 import { buildUniqueGrantCode, mapGrantForCustomer } from '../lib/coupons.js'
 import { findCustomerByEmail } from '../lib/userLookup.js'
+import {
+  sendBookingConfirmedEmail,
+  sendBookingPersonalizationEmail,
+  sendPostEventFeedbackEmail,
+} from '../lib/bookingEmailService.js'
 
 const BOOKING_STATUSES = [
   'new',
@@ -1681,7 +1686,86 @@ export async function updateAdminBookingStatus(req, res, next) {
       linkUrl: `/dashboard/bookings/${bookingId}`,
     }).catch(() => {})
 
+    // Lifecycle emails (fire-and-forget)
+    if (status === 'confirmed' && booking.status !== 'confirmed') {
+      sendBookingConfirmedEmail(bookingId)
+        .then(result => {
+          if (!result?.sent) {
+            console.warn('[booking-email] confirmed email not sent:', bookingId, result)
+          }
+        })
+        .catch(err => console.error('[booking-email] confirmed failed', bookingId, err?.message))
+    }
+
+    if (
+      (status === 'post_event' || status === 'completed') &&
+      booking.status !== status
+    ) {
+      sendPostEventFeedbackEmail(bookingId)
+        .then(result => {
+          if (!result?.sent && result?.reason !== 'already_sent') {
+            console.warn('[booking-email] post-event email not sent:', bookingId, result)
+          }
+        })
+        .catch(err => console.error('[booking-email] post-event failed', bookingId, err?.message))
+    }
+
     res.json({ booking: updatedBooking })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function sendAdminBookingPersonalizationEmail(req, res, next) {
+  try {
+    const bookingId = req.params.id
+    const serviceName = normalizeText(req.body.serviceName) || 'decor'
+    const designImage1 = normalizeText(req.body.designImage1)
+    const designImage2 = normalizeText(req.body.designImage2)
+    const designImage3 = normalizeText(req.body.designImage3)
+    const responseDeadline = normalizeText(req.body.responseDeadline)
+    const force = Boolean(req.body.force)
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { id: true, status: true },
+    })
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({ error: 'Cannot send personalization email for a cancelled booking.' })
+    }
+
+    if (!designImage1 && !designImage2 && !designImage3) {
+      return res.status(400).json({
+        error: 'Add at least one design image URL before sending the personalization email.',
+      })
+    }
+
+    const result = await sendBookingPersonalizationEmail(bookingId, {
+      serviceName,
+      designImage1,
+      designImage2,
+      designImage3,
+      responseDeadline,
+      force,
+    })
+
+    if (!result?.sent) {
+      return res.status(400).json({
+        error: result?.message || 'Could not send personalization email.',
+        reason: result?.reason,
+      })
+    }
+
+    res.json({
+      ok: true,
+      personalizationId: result.personalizationId,
+      subject: result.subject,
+    })
   } catch (err) {
     next(err)
   }

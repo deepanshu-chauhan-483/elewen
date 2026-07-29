@@ -48,7 +48,7 @@ const createInApp = async (userId, type, title, message, linkUrl) => {
 // Always fire-and-forget — never throws. Callers should NOT await this.
 export const notify = async (
   userId,
-  { type, title, message, linkUrl, emailTemplate, emailData }
+  { type, title, message, linkUrl, emailTemplate, emailData, emailSubject }
 ) => {
   // 1. In-app notification (DB)
   await createInApp(userId, type, title, message, linkUrl)
@@ -57,9 +57,11 @@ export const notify = async (
   if (emailTemplate && templates[emailTemplate]) {
     const email = await getUserEmail(userId)
     if (email) {
-      const subject = title
+      const subject = emailSubject || title
       const html = templates[emailTemplate](emailData || {})
       await sendEmail(email, subject, html)
     }
   }
 }
+
+export { getUserEmail }

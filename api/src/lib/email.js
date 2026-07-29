@@ -271,6 +271,186 @@ export const templates = {
       ${ctaBtn('Login & shop', loginUrl)}
     `
     ),
+
+  // ─── Lifecycle emails (admin confirm / personalization / T-2 / post-event) ───
+
+  booking_confirmed_lifecycle: ({
+    bookingIdShort,
+    eventType,
+    eventDate,
+    eventTime,
+    venueName,
+    servicesBooked,
+    packageBooked,
+    totalAmount,
+    amountPaid,
+    remainingBalance,
+    isCodBooking,
+    isFullyPaid,
+    updateDetailsUrl,
+    supportPhone,
+  }) =>
+    layout(
+      "You're all set! Here's what happens next",
+      `
+      <div style="margin-bottom:20px;">${badge('Booking Confirmed', '#22c55e')}</div>
+      ${h1('Booking Confirmed ✅')}
+      ${p("Your booking with Elewen has been successfully confirmed, and we're excited to be a part of your celebration! Here's everything you need to know.")}
+      ${divider()}
+      ${p('<strong style="color:#fff;">📋 Your Booking</strong>')}
+      ${infoTable(`
+        ${infoRow('Booking ID', bookingIdShort)}
+        ${infoRow('Event', eventType)}
+        ${infoRow('Event Date', eventDate)}
+        ${infoRow('Event Time', eventTime)}
+        ${infoRow('Venue', venueName)}
+        ${infoRow('Services Booked', servicesBooked)}
+        ${infoRow('Package Booked', packageBooked)}
+      `)}
+      ${divider()}
+      ${p('<strong style="color:#fff;">💳 Payment Summary</strong>')}
+      ${infoTable(`
+        ${infoRow('Total Booking Amount', totalAmount)}
+        ${infoRow(
+          'Amount Paid',
+          isCodBooking
+            ? `${amountPaid} (Pay on delivery — no advance required)`
+            : isFullyPaid
+              ? `${amountPaid} (Full payment received)`
+              : `${amountPaid} (typically 30% advance)`
+        )}
+        ${infoRow(
+          'Remaining Balance',
+          isFullyPaid
+            ? `${remainingBalance}`
+            : isCodBooking
+              ? `${remainingBalance} (due on delivery)`
+              : `${remainingBalance} (typically 70% before the event)`
+        )}
+      `)}
+      ${divider()}
+      ${p('<strong style="color:#fff;">📝 Action Required (IMPORTANT)</strong>')}
+      ${p('To help our team prepare for your event, please make sure the following details are updated in your booking (if you haven\'t already):')}
+      ${ctaBtn('Update Event Details', updateDetailsUrl)}
+      ${divider()}
+      ${p('<strong style="color:#fff;">What Happens Next?</strong>')}
+      ${p("We've got things covered from here.")}
+      ${p('✔ Your booking has been confirmed.<br/>✔ Our team will send you options to customize text or the colour palette (if applicable).<br/>✔ We\'ll send you one final update 2 days before your event with delivery status, final logistical details, and a remaining payment reminder (if applicable).')}
+      ${divider()}
+      ${p('<strong style="color:#fff;">A Few Things to Keep in Mind</strong>')}
+      ${p('Outstanding/remaining payments must be completed before your event begins. If your event details change (date, venue, timings or guest count), contact us as soon as possible. Any booking changes or additional service requests are subject to availability and may result in revised pricing.')}
+      ${divider()}
+      ${p('Thank you for choosing Elewen. We\'re looking forward to helping you create a memorable event. ✨')}
+      ${p(`Team Elewen<br/>${supportPhone || '9810937700'}`)}
+    `
+    ),
+
+  booking_personalization: ({
+    serviceName,
+    designImage1,
+    designImage2,
+    designImage3,
+    responseDeadline,
+    personalizeUrl,
+    supportPhone,
+  }) => {
+    const designBlock = (label, url) =>
+      url
+        ? `
+      <div style="margin:16px 0;padding:16px;background:#222;border-radius:8px;">
+        <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#c9a96e;">${label}</p>
+        <img src="${url}" alt="${label}" style="display:block;width:100%;max-width:520px;border-radius:8px;border:1px solid #333;" />
+      </div>`
+        : `
+      <div style="margin:16px 0;padding:16px;background:#222;border-radius:8px;">
+        <p style="margin:0;font-size:14px;font-weight:700;color:#c9a96e;">${label}</p>
+        <p style="margin:8px 0 0;font-size:13px;color:#888;">Image will be shared by your planner.</p>
+      </div>`
+
+    return layout(
+      "Let's personalise your booking with Elewen",
+      `
+      ${h1("Let's personalise your booking ✨")}
+      ${p(`We're getting everything ready for your event, and it's now time to customise your <strong style="color:#fff;">${serviceName || 'service'}</strong>.`)}
+      ${divider()}
+      ${p('<strong style="color:#fff;">Please choose your preferred design</strong>')}
+      ${p("We've shortlisted a few options based on your booking.")}
+      ${designBlock('Design Option 1', designImage1)}
+      ${designBlock('Design Option 2', designImage2)}
+      ${designBlock('Design Option 3', designImage3)}
+      ${p('👉 Simply reply with Option 1, 2 or 3 — or open your booking to share details.')}
+      ${ctaBtn('Open My Booking', personalizeUrl)}
+      ${divider()}
+      ${p('<strong style="color:#fff;">What would you like it to say?</strong>')}
+      ${p('Please share the exact text you\'d like us to use. For example:')}
+      ${p('Welcome to Aarav\'s First Birthday<br/>Happy 25th Anniversary<br/>Congratulations, Riya &amp; Arjun')}
+      ${divider()}
+      ${p('<strong style="color:#fff;">Anything else you\'d like us to know?</strong>')}
+      ${p('If you have any special requests or instructions, you can add them while submitting your selections. We will review your request and check its feasibility.')}
+      ${divider()}
+      ${p(`Please send us your selections by <strong style="color:#fff;">${responseDeadline}</strong> so our team has enough time to prepare everything for your event.`)}
+      ${p("If we don't hear back by then, we'll proceed with the default option discussed during your booking.")}
+      ${p(`Team Elewen<br/>${supportPhone || '9810937700'}`)}
+    `
+    )
+  },
+
+  booking_pre_event_2day: ({
+    remainingBalanceRaw,
+    remainingBalance,
+    paymentUrl,
+    supportPhone,
+  }) =>
+    layout(
+      'Just 2 days to go!',
+      `
+      ${h1('Your event is almost here! 🎉')}
+      ${p('Just a quick update from the Elewen team — everything is on track for your upcoming event.')}
+      ${divider()}
+      ${p('<strong style="color:#fff;">Status Update</strong>')}
+      ${p('✅ All booked services have been confirmed<br/>✅ Our team will reach on the discussed time<br/>✅ Your dedicated planner from team Elewen will coordinate everything with you.')}
+      ${divider()}
+      ${p('<strong style="color:#fff;">Remaining Payment</strong>')}
+      ${
+        Number(remainingBalanceRaw) > 0
+          ? `${p(`If your balance payment is still pending (${remainingBalance}), please keep it ready. As per our payment policy, the remaining amount will be collected before the event begins.`)}${ctaBtn('Complete Payment', paymentUrl)}`
+          : p('Your payment is complete — no remaining balance due. Thank you!')
+      }
+      ${divider()}
+      ${p('<strong style="color:#fff;">🤝 Our Promise to You</strong>')}
+      ${p('Your experience matters to us. While we work closely with our vendors to ensure everything goes smoothly, if you face any concerns during the event, please let us know as soon as possible. Share a few photos of the issue with our support team so we can assess it quickly and work towards the best possible resolution.')}
+      ${p("We're committed to making things right wherever we can, because your trust means everything to us.")}
+      ${divider()}
+      ${p('<strong style="color:#fff;">Final Checklist</strong>')}
+      ${p('Before the big day, please ensure:<br/>✓ Venue access is available for setup<br/>✓ Your event-day contact person is available on call<br/>✓ Parking/loading instructions (if any) have been shared<br/>✓ Need us during the event? We are just a call / WhatsApp message away')}
+      ${divider()}
+      ${p("We're excited to be a part of your celebration and can't wait to help make it a memorable one.")}
+      ${p('See you in 2 days!')}
+      ${p(`Team Elewen<br/>${supportPhone || '9810937700'}`)}
+    `
+    ),
+
+  booking_post_event_feedback: ({ couponValue, feedbackUrl, supportPhone }) =>
+    layout(
+      'Tell us how we did & enjoy a little thank-you!',
+      `
+      ${h1('Thank you for celebrating with Elewen! ✨')}
+      ${p('We hope your event was everything you envisioned and more. It was a pleasure being a part of your special day, and we truly appreciate you choosing Elewen.')}
+      ${divider()}
+      ${p('<strong style="color:#fff;">A Little Something for You 🎁</strong>')}
+      ${p("Let's be honest... filling out feedback forms isn't exactly everyone's favourite thing. 😄")}
+      ${p(`So here's a little thank-you from us! Once you submit your feedback, you'll receive an exclusive <strong style="color:#fff;">${couponValue}</strong> Elewen Gift Coupon.`)}
+      ${p('You can:<br/>🎉 Save it for your next Elewen booking, or<br/>🎁 Gift it to a friend or family member planning an event.')}
+      ${p('Valid for 2 months from the date of issue. It\'s our way of saying thanks for helping us get better. ❤️')}
+      ${divider()}
+      ${p('<strong style="color:#fff;">We\'d Love Your Feedback 💛</strong>')}
+      ${p('Your feedback helps us improve and helps future customers book with confidence. It\'ll only take a minute, we promise. 😊')}
+      ${ctaBtn('⭐ Leave Your Feedback', feedbackUrl)}
+      ${divider()}
+      ${p(`— Team Elewen<br/>${supportPhone || '9810937700'}`)}
+      ${p('<em style="color:#888;">"Here\'s to planning differently"</em>')}
+    `
+    ),
 }
 
 // ─── Send email ───────────────────────────────────────────────────────────────

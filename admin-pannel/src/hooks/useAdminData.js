@@ -8,6 +8,7 @@ import {
   adminBooking,
   adminBookingCouponSuggestion,
   adminSendReferralCoupon,
+  adminSendPersonalizationEmail,
   adminBookings,
   adminCoupons,
   adminCreateCoupon,
@@ -196,6 +197,19 @@ export function useAdminSendReferralCoupon() {
       queryClient.invalidateQueries({
         queryKey: ['admin', 'booking', variables?.bookingId, 'coupon-suggestion'],
       })
+    },
+  })
+}
+
+export function useAdminSendPersonalizationEmail() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ bookingId, body }) =>
+      withAdminToken(token => adminSendPersonalizationEmail(token, bookingId, body)),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
     },
   })
 }

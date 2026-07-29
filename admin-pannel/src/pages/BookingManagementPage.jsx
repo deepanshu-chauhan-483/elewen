@@ -17,6 +17,7 @@ import {
   useAdminCollectBookingCod,
   useAdminCreateVendorAssignment,
   useAdminSendReferralCoupon,
+  useAdminSendPersonalizationEmail,
   useAdminUpdateBookingStatus,
   useAdminVendors,
 } from '../hooks/useAdminData'
@@ -424,6 +425,96 @@ const REFERRAL_TIER_OPTIONS = [
   { value: 'referral_1500', label: 'Referral — Rs 1,500 off' },
 ]
 
+function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
+  const sendMutation = useAdminSendPersonalizationEmail()
+  const [serviceName, setServiceName] = useState('decor')
+  const [designImage1, setDesignImage1] = useState('')
+  const [designImage2, setDesignImage2] = useState('')
+  const [designImage3, setDesignImage3] = useState('')
+  const [responseDeadline, setResponseDeadline] = useState('')
+  const [sendMessage, setSendMessage] = useState('')
+  const [sendError, setSendError] = useState('')
+
+  const status = String(bookingStatus ?? '').toLowerCase()
+  const canSend = !['new', 'cancelled'].includes(status)
+
+  if (!canSend) {
+    return (
+      <p className="text-sm text-[#8F8F8F]">
+        Confirm the booking first, then send design / text / colour options to the customer.
+      </p>
+    )
+  }
+
+  const handleSend = async () => {
+    setSendError('')
+    setSendMessage('')
+    try {
+      await sendMutation.mutateAsync({
+        bookingId,
+        body: {
+          serviceName: serviceName.trim() || 'decor',
+          designImage1: designImage1.trim(),
+          designImage2: designImage2.trim(),
+          designImage3: designImage3.trim(),
+          responseDeadline: responseDeadline || undefined,
+        },
+      })
+      setSendMessage('Personalization email sent to the customer.')
+    } catch (error) {
+      setSendError(error?.message ?? 'Could not send personalization email.')
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-[#6B7280]">
+        Manual Mail 2 — upload/paste up to 3 design image URLs and a reply deadline, then send.
+      </p>
+      <div>
+        <p className="mb-1.5 text-xs text-[#8F8F8F]">Service name</p>
+        <input
+          type="text"
+          value={serviceName}
+          onChange={event => setServiceName(event.target.value)}
+          placeholder="e.g. decor backdrop"
+          className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+        />
+      </div>
+      {[
+        ['Design image 1 URL', designImage1, setDesignImage1],
+        ['Design image 2 URL', designImage2, setDesignImage2],
+        ['Design image 3 URL', designImage3, setDesignImage3],
+      ].map(([label, value, setter]) => (
+        <div key={label}>
+          <p className="mb-1.5 text-xs text-[#8F8F8F]">{label}</p>
+          <input
+            type="url"
+            value={value}
+            onChange={event => setter(event.target.value)}
+            placeholder="https://..."
+            className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+          />
+        </div>
+      ))}
+      <div>
+        <p className="mb-1.5 text-xs text-[#8F8F8F]">Response deadline</p>
+        <input
+          type="date"
+          value={responseDeadline}
+          onChange={event => setResponseDeadline(event.target.value)}
+          className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+        />
+      </div>
+      <PrimaryBtn disabled={sendMutation.isPending} onClick={handleSend}>
+        {sendMutation.isPending ? 'Sending…' : 'Send personalization email'}
+      </PrimaryBtn>
+      {sendMessage ? <p className="text-sm text-[#12803D]">{sendMessage}</p> : null}
+      {sendError ? <p className="text-sm text-[#8A1C1C]">{sendError}</p> : null}
+    </div>
+  )
+}
+
 function ReferralCouponPanel({ bookingId, bookingStatus, bookingTotal }) {
   const canSend = ['post_event', 'completed'].includes(String(bookingStatus ?? '').toLowerCase())
   const suggestionQuery = useAdminBookingCouponSuggestion(bookingId, canSend)
@@ -819,6 +910,17 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
               ) : (
                 <p className="mt-3 text-sm text-[#8F8F8F]">No internal notes saved yet.</p>
               )}
+            </div>
+          </div>
+
+          {/* ── Personalization email (Mail 2) ── */}
+          <div className="py-6 border-t border-[#00000033]">
+            <SectionLabel>Personalization Email</SectionLabel>
+            <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+              <PersonalizationEmailPanel
+                bookingId={booking.id}
+                bookingStatus={bookingDetails?.status ?? booking.status}
+              />
             </div>
           </div>
 
