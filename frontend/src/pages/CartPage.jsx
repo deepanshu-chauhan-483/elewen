@@ -1835,7 +1835,7 @@ export default function CartPage() {
                         checkoutToastMessage,
                       },
                     })
-                  : navigate('/login')
+                  : navigate('/login', { state: { from: '/checkout' } })
               }
               onSampleTasteBooking={handleSampleTasteBooking}
               showSampleTasteBooking={showSampleTasteBooking}

@@ -773,7 +773,7 @@ export default function CheckoutPage() {
   const handleCheckout = async paymentType => {
     const token = getStoredJwt()
     if (!token) {
-      navigate('/login')
+      navigate('/login', { state: { from: '/checkout' } })
       return
     }
 
@@ -1010,7 +1010,7 @@ export default function CheckoutPage() {
   const handleCodCheckout = async () => {
     const token = getStoredJwt()
     if (!token) {
-      navigate('/login')
+      navigate('/login', { state: { from: '/checkout' } })
       return
     }
 
@@ -1130,6 +1130,7 @@ export default function CheckoutPage() {
           <p className="mt-2 text-gray-500">Your checkout is linked to your account cart.</p>
           <Link
             to="/login"
+            state={{ from: '/checkout' }}
             className="mx-auto mt-6 flex w-fit items-center rounded-full bg-[#D4BA8E] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#C6AB7F]"
           >
             Go to Login
