@@ -18,6 +18,7 @@ import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDel
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
 import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
+import { classifyCartPackages } from '../lib/sheeshaCheckout'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
@@ -1131,6 +1132,9 @@ function PriceSummaryCard({
   const advancePercentage = Number(globalSettings?.advance_payment_percentage ?? 30)
   const advancePayable = computedTotal * (advancePercentage / 100)
   const balanceDue = Math.max(0, computedTotal - advancePayable)
+  const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
+  const isSheeshaOnlyCart =
+    cartClassification.isSheeshaOnly && cartItems.length > 0
 
   return (
     <div className="space-y-4">
@@ -1248,24 +1252,34 @@ function PriceSummaryCard({
             </span>
           </div>
 
-          <div className="flex items-center justify-between rounded-[12px] bg-[#EFEFEF] px-4 py-3">
-            <span className="font-medium text-[#1C1C1C]">
-              Advance Payable ({advancePercentage}%)
-            </span>
-            <span className="text-lg font-medium text-[#1C1C1C]">
-              {formatCurrency(advancePayable)}
-            </span>
-          </div>
+          {isSheeshaOnlyCart ? (
+            <p className="text-sm font-medium text-[#591902]">
+              Amount due on delivery: {formatCurrency(computedTotal)}
+            </p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between rounded-[12px] bg-[#EFEFEF] px-4 py-3">
+                <span className="font-medium text-[#1C1C1C]">
+                  Advance Payable ({advancePercentage}%)
+                </span>
+                <span className="text-lg font-medium text-[#1C1C1C]">
+                  {formatCurrency(advancePayable)}
+                </span>
+              </div>
 
-          <p className="text-xs text-[#767676]">
-            Balance: {formatCurrency(balanceDue)} due on event day
-          </p>
+              <p className="text-xs text-[#767676]">
+                Balance: {formatCurrency(balanceDue)} due on event day
+              </p>
+            </>
+          )}
         </div>
       </div>
 
       <div className="rounded-xl border border-[#95796066] p-5">
         <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
-          🔒 Secure payment · Instant confirmation · Easy cancellation
+          {isSheeshaOnlyCart
+            ? '🔒 Booking confirmation · Pay on delivery · Easy cancellation'
+            : '🔒 Secure payment · Instant confirmation · Easy cancellation'}
         </div>
 
         {showSampleTasteBooking ? (
