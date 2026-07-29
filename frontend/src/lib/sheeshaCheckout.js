@@ -10,6 +10,13 @@ const PRODUCT_SERVICE_SLUGS = new Set([
   'rental-furniture',
 ])
 
+const NON_SHEESHA_PRODUCT_SLUGS = new Set([
+  'decor',
+  'catering',
+  'bartending',
+  'rental-furniture',
+])
+
 export function isSheeshaServiceSlug(slug = '') {
   const normalized = normalizeServiceSlug(slug)
   return (
@@ -38,22 +45,69 @@ export function getPackageServiceSlugs(pkg) {
     .filter(slug => PRODUCT_SERVICE_SLUGS.has(slug))
 }
 
+function textLooksLikeSheesha(...values) {
+  return values.some(value => {
+    const text = String(value ?? '')
+      .trim()
+      .toLowerCase()
+    return text.includes('sheesha') || text.includes('hookah')
+  })
+}
+
+/** True when this cart line is a Hookah/Sheesha package (or its add-on). */
+export function isSheeshaCartItem(item) {
+  const pkg = item?.packageData
+  const slugs = getPackageServiceSlugs(pkg)
+  if (slugs.some(isSheeshaServiceSlug)) return true
+
+  return textLooksLikeSheesha(
+    pkg?.category,
+    pkg?.title,
+    pkg?.slug,
+    item?.displayTitle,
+    item?.title,
+    item?.addonTitle
+  )
+}
+
+/** True when this cart line is a non-Hookah product service. */
+export function isNonSheeshaProductCartItem(item) {
+  if (isSheeshaCartItem(item)) return false
+
+  const slugs = getPackageServiceSlugs(item?.packageData)
+  if (slugs.some(slug => NON_SHEESHA_PRODUCT_SLUGS.has(slug))) return true
+
+  const pkg = item?.packageData
+  const haystack = [pkg?.category, pkg?.title, pkg?.slug, item?.displayTitle, item?.title]
+    .map(value => String(value ?? '').toLowerCase())
+    .join(' ')
+
+  return (
+    haystack.includes('decor') ||
+    haystack.includes('catering') ||
+    haystack.includes('bartend') ||
+    haystack.includes('furniture') ||
+    haystack.includes('rental')
+  )
+}
+
 export function classifyCartPackages(cartItems = []) {
+  const items = Array.isArray(cartItems) ? cartItems : []
   const slugs = new Set()
 
-  ;(Array.isArray(cartItems) ? cartItems : []).forEach(item => {
+  items.forEach(item => {
     getPackageServiceSlugs(item?.packageData).forEach(slug => slugs.add(slug))
   })
 
+  const hasSheesha = items.some(isSheeshaCartItem)
+  const hasNonSheesha = items.some(isNonSheeshaProductCartItem)
   const serviceSlugs = [...slugs]
-  const hasSheesha = serviceSlugs.some(isSheeshaServiceSlug)
-  const hasNonSheesha = serviceSlugs.some(slug => !isSheeshaServiceSlug(slug))
 
   return {
     serviceSlugs,
     hasSheesha,
     hasNonSheesha,
-    isSheeshaOnly: hasSheesha && !hasNonSheesha && serviceSlugs.length > 0,
+    isSheeshaOnly: hasSheesha && !hasNonSheesha && items.length > 0,
     isMixedSheeshaCart: hasSheesha && hasNonSheesha,
   }
 }
