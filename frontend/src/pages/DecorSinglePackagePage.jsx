@@ -13,7 +13,6 @@ import { getRelatedPackages, normalizeServiceSlug } from '../lib/packageFilters'
 import { isCorporateCategory } from '../lib/serviceFlow'
 import { withHousePartyPackageImages } from '../lib/housePartyPackageMedia'
 import { resolveChooseOneDisplayPrice, shouldShowChoicePrices } from '../lib/chooseOnePricing'
-import RepeatCustomizationPrompt from '../components/common/RepeatCustomizationPrompt'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -1486,28 +1485,18 @@ export default function DecorSinglePackagePage() {
   const { data: packages = [] } = packagesQuery
   const { data: packageDetails } = packageQuery
   const { data: cancellationPolicy } = cancellationQuery
-  const { addPackage, updateCartItemDetails } = useCart()
+  const { cart, addPackage, updateCartItemDetails } = useCart()
   const { showToast } = useToast()
   const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
   const cartItemId = searchParams.get('cartItemId') ?? ''
   const consultationOnly = isCorporateCategory(searchParams.get('category') ?? '')
-  const {
-    customizations,
-    activeCustomization,
-    activeIndex,
-    showRepeatPrompt,
-    handleAddToCart,
-    handleIncrease,
-    handleRepeat,
-    handleNew,
-    handleDecrease,
-    setCustomizations,
-  } = useCustomization({
+  const { activeCustomization, activeIndex, setCustomizations } = useCustomization({
     createInitialData: () => ({
       sections: [],
       message: '',
     }),
   })
+  const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [addToCartMessage, setAddToCartMessage] = useState('')
   const [selectedTextImage, setSelectedTextImage] = useState('')
@@ -1652,14 +1641,16 @@ export default function DecorSinglePackagePage() {
 
       return hasChanges ? nextCustomizations : prev
     })
-  }, [
-    customizations.length,
-    pkg,
-    searchParams,
-    sectionTemplate,
-    sectionTemplateSignature,
-    setCustomizations,
-  ])
+  }, [pkg, searchParams, sectionTemplate, sectionTemplateSignature, setCustomizations])
+
+  useEffect(() => {
+    if (!cartItemId) return
+
+    const cartItem = (cart?.items ?? []).find(item => String(item.id) === String(cartItemId))
+    if (!cartItem) return
+
+    setQuantity(Math.max(1, Number(cartItem.quantity ?? 1)))
+  }, [cart?.items, cartItemId])
 
   if (isStrapiLoading) {
     return <CmsPageLoader />
@@ -1686,7 +1677,6 @@ export default function DecorSinglePackagePage() {
     [...mergedSource, mainImageCandidate, ...selectedChoiceImages].filter(Boolean)
   )
   const sideImages = buildDecorSideImages(sourceImages)
-  const quantity = customizations.length
   const message = activeCustomization?.data?.message ?? ''
 
   const handleSelect = (sectionKey, itemTitle) => {
@@ -1761,15 +1751,12 @@ export default function DecorSinglePackagePage() {
   }
 
   const handlePackageAddToCart = async () => {
+    if (isAddingToCart) return
+
     setAddToCartMessage('')
 
     if (!pkg?.id) {
       setAddToCartMessage('This package is missing its cart ID. Please refresh and try again.')
-      return
-    }
-
-    if (!cartItemId && activeCustomization?.isAddedToCart) {
-      handleIncrease()
       return
     }
 
@@ -1802,7 +1789,6 @@ export default function DecorSinglePackagePage() {
           quantity,
           selectedOptions: selectedOpts,
         })
-        handleAddToCart()
         showToast({ message: cartToastMessage })
       }
     } catch (err) {
@@ -1835,11 +1821,6 @@ export default function DecorSinglePackagePage() {
         title={packageTitle}
         price={packagePrice}
         intro={packageIntro}
-        promptContent={
-          showRepeatPrompt && (
-            <RepeatCustomizationPrompt onRepeat={handleRepeat} onCreateNew={handleNew} />
-          )
-        }
         customContent={
           <DecorPackageSections
             keyDecorText={keyDecorText}
@@ -1861,8 +1842,14 @@ export default function DecorSinglePackagePage() {
         disableAddToCart={isDisabled}
         onAddToCart={handlePackageAddToCart}
         quantity={quantity}
-        onDecrement={handleDecrease}
-        onIncrement={handleIncrease}
+        onDecrement={() => {
+          setAddToCartMessage('')
+          setQuantity(current => Math.max(1, current - 1))
+        }}
+        onIncrement={() => {
+          setAddToCartMessage('')
+          setQuantity(current => current + 1)
+        }}
         testimonials={packageReviews}
         consultationOnly={consultationOnly}
         ctaButtonText="Book a consultation"
