@@ -6,6 +6,7 @@ import {
   SectionLoadingState,
   CustomSelect,
 } from '../components/ui/AdminUI'
+import { useAdminToast } from '../components/common/AdminToastProvider'
 import {
   useAdminBookings,
   useAdminCoupons,
@@ -1218,8 +1219,11 @@ function renderFormField({ field, value, onChange, selectClassName = '' }) {
 
 function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }) {
   const [editing, setEditing] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareEmail, setShareEmail] = useState('')
   const [editForm, setEditForm] = useState(couponFormFromSource(coupon))
   const shareCouponMutation = useAdminShareCoupon()
+  const { showToast } = useAdminToast()
   const setField = (key, value) => setEditForm(current => ({ ...current, [key]: value }))
 
   function openEdit() {
@@ -1259,23 +1263,44 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
     )
   }
 
-  async function handleShareCoupon() {
-    const email = window.prompt('Customer email to send this coupon to:')
-    if (!email?.trim()) return
+  async function handleShareCoupon(event) {
+    event?.preventDefault?.()
+
+    const email = shareEmail.trim()
+    if (!email) {
+      showToast({ message: 'Enter the customer email address.', tone: 'error' })
+      return
+    }
 
     try {
       const result = await shareCouponMutation.mutateAsync({
         couponId: coupon.id,
-        email: email.trim(),
+        email,
       })
       const sentCode = result?.couponCode ?? coupon.code
       const inAppNote = result?.notifiedInApp ? ' In-app notification sent too.' : ''
-      window.alert(
-        `Personal coupon ${sentCode} emailed to ${email.trim()}. Only that customer can use it.${inAppNote}`
-      )
+      showToast({
+        message: `Personal coupon ${sentCode} emailed to ${email}. Only that customer can use it.${inAppNote}`,
+        tone: 'success',
+      })
+      setShareOpen(false)
+      setShareEmail('')
     } catch (error) {
-      window.alert(error?.message ?? 'Could not send coupon email. Please try again.')
+      showToast({
+        message: error?.message ?? 'Could not send coupon email. Please try again.',
+        tone: 'error',
+      })
     }
+  }
+
+  function toggleSharePanel() {
+    setShareOpen(current => {
+      const next = !current
+      if (!next) {
+        setShareEmail('')
+      }
+      return next
+    })
   }
 
   return (
@@ -1327,9 +1352,9 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
           </GhostBtn>
           <GhostBtn
             disabled={shareCouponMutation.isPending || !coupon.is_active}
-            onClick={handleShareCoupon}
+            onClick={toggleSharePanel}
           >
-            {shareCouponMutation.isPending ? 'Sending…' : 'Share Coupon'}
+            {shareOpen ? 'Close Share' : shareCouponMutation.isPending ? 'Sending…' : 'Share Coupon'}
           </GhostBtn>
           <DangerBtn
             disabled={deleteCouponMutation.isPending}
@@ -1369,6 +1394,47 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
             <GhostBtn onClick={() => setEditing(false)}>Cancel</GhostBtn>
           </div>
         </div>
+      )}
+
+      {shareOpen && (
+        <form
+          className="border-t border-[#E4DED8] pt-3"
+          onSubmit={handleShareCoupon}
+        >
+          <p className="text-sm font-medium text-[#1C1C1C]">Send personal coupon to customer</p>
+          <p className="mt-1 text-xs text-[#8F8F8F]">
+            A unique code is created for this email only. They cannot share it with others.
+          </p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex-1 space-y-1">
+              <span className="text-xs uppercase tracking-widest text-[#8F8F8F]">
+                Customer email
+              </span>
+              <input
+                type="email"
+                autoComplete="email"
+                value={shareEmail}
+                onChange={event => setShareEmail(event.target.value)}
+                placeholder="customer@example.com"
+                className="w-full rounded-2xl border border-[#E4DED8] bg-[#F3F3F3] px-4 py-3 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+              />
+            </label>
+            <div className="flex shrink-0 gap-2">
+              <PrimaryBtn disabled={shareCouponMutation.isPending} onClick={handleShareCoupon}>
+                {shareCouponMutation.isPending ? 'Sending…' : 'Send Coupon'}
+              </PrimaryBtn>
+              <GhostBtn
+                disabled={shareCouponMutation.isPending}
+                onClick={() => {
+                  setShareOpen(false)
+                  setShareEmail('')
+                }}
+              >
+                Cancel
+              </GhostBtn>
+            </div>
+          </div>
+        </form>
       )}
     </div>
   )
