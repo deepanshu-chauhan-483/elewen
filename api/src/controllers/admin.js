@@ -16,11 +16,11 @@ import {
   strapiServerGet,
   strapiServerPost,
   strapiServerPut,
-  strapiFindUserByEmail,
 } from '../lib/strapi.js'
 import { cacheDelPattern } from '../lib/cache.js'
 import { isCodPendingPayment } from '../lib/sheeshaCheckout.js'
 import { buildUniqueGrantCode, mapGrantForCustomer } from '../lib/coupons.js'
+import { findCustomerByEmail } from '../lib/userLookup.js'
 
 const BOOKING_STATUSES = [
   'new',
@@ -3199,7 +3199,7 @@ export async function shareAdminCoupon(req, res, next) {
       return res.status(400).json({ error: 'A valid customer email is required.' })
     }
 
-    const user = await strapiFindUserByEmail(email).catch(() => null)
+    const user = await findCustomerByEmail(email)
     if (!user?.id) {
       return res.status(400).json({
         error: 'No customer account found for this email. Ask them to register first.',

@@ -286,23 +286,36 @@ export async function strapiGetUserById(userId) {
 
 // ---------------- FIND USER BY EMAIL ----------------
 export async function strapiFindUserByEmail(email) {
+  const normalized = String(email ?? '').trim().toLowerCase()
+  if (!normalized) return null
+
   let lastError = null
 
   for (const base of getBaseCandidates()) {
     try {
-      const res = await fetch(
-        `${base}/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
-        {
-          headers: buildHeaders(),
-        }
-      )
+      const query = new URLSearchParams({
+        'filters[email][$eqi]': normalized,
+        'pagination[pageSize]': '1',
+      })
+
+      const res = await fetch(`${base}/api/users?${query.toString()}`, {
+        headers: buildHeaders(),
+      })
 
       if (!res.ok) {
         throw await makeStrapiError(res, 'Failed to find user by email')
       }
 
-      const data = await res.json()
-      return data?.[0] ?? null
+      const payload = await res.json()
+      const users = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : payload?.id != null
+            ? [payload]
+            : []
+
+      return users[0] ?? null
     } catch (error) {
       if (!shouldRetryWithNextBase(error)) {
         throw error
