@@ -247,7 +247,7 @@ export const templates = {
       `)}
       ${terms ? `${divider()}${p(`<strong style="color:#fff;">Terms &amp; conditions</strong><br/>${terms}`)}` : ''}
       ${note ? p(note) : ''}
-      ${p('You can copy this code and share it with family or friends. It can be used only once within the validity period.')}
+      ${p('This code is assigned to your account only and can be used once within the validity period.')}
       ${ctaBtn('View My Coupons', `${process.env.APP_URL || 'https://elewen.in'}/dashboard/profile#my-coupons`)}
     `
     ),

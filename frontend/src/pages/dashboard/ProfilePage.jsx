@@ -328,10 +328,12 @@ export default function ProfilePage() {
                       'rounded-full px-2.5 py-1 text-[11px] font-medium capitalize',
                       coupon.status === 'active'
                         ? 'bg-[#E7F6EC] text-[#12803D]'
-                        : 'bg-[#F3F4F6] text-[#6B7280]',
+                        : coupon.status === 'used'
+                          ? 'bg-[#F3F4F6] text-[#6B7280]'
+                          : 'bg-[#F3F4F6] text-[#6B7280]',
                     ].join(' ')}
                   >
-                    {coupon.status}
+                    {coupon.status === 'used' ? 'Used' : coupon.status}
                   </span>
                 </div>
 
@@ -356,6 +358,10 @@ export default function ProfilePage() {
                   >
                     {copiedCode === coupon.code ? 'Copied!' : 'Copy code'}
                   </button>
+                ) : coupon.status === 'used' ? (
+                  <p className="mt-4 text-sm font-medium text-[#6B7280]">
+                    Used by you — cannot use again
+                  </p>
                 ) : null}
               </div>
             ))}

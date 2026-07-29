@@ -20,6 +20,7 @@ import {
 } from '../lib/strapi.js'
 import { cacheDelPattern } from '../lib/cache.js'
 import { isCodPendingPayment } from '../lib/sheeshaCheckout.js'
+import { buildUniqueGrantCode, mapGrantForCustomer } from '../lib/coupons.js'
 
 const BOOKING_STATUSES = [
   'new',
@@ -3198,6 +3199,46 @@ export async function shareAdminCoupon(req, res, next) {
       return res.status(400).json({ error: 'A valid customer email is required.' })
     }
 
+    const user = await strapiFindUserByEmail(email).catch(() => null)
+    if (!user?.id) {
+      return res.status(400).json({
+        error: 'No customer account found for this email. Ask them to register first.',
+      })
+    }
+
+    const userId = String(user.id)
+    const adminId = String(req.user.id)
+    const code = await buildUniqueGrantCode('ELE')
+    const validFrom = coupon.valid_from ? new Date(coupon.valid_from) : new Date()
+    const validTo = coupon.valid_to
+      ? new Date(coupon.valid_to)
+      : new Date(validFrom.getTime() + 60 * 24 * 60 * 60 * 1000)
+
+    const grant = await prisma.userCouponGrant.create({
+      data: {
+        userId,
+        assignedByAdminId: adminId,
+        templateKey: `admin_share_${coupon.id}`,
+        code,
+        title: coupon.title || `Personal offer — ${coupon.code}`,
+        discount_type: coupon.discount_type,
+        discount_value: coupon.discount_value,
+        min_order_value: coupon.min_order_value ?? 0,
+        max_order_value: coupon.max_order_value ?? null,
+        max_discount_amount: coupon.max_discount_amount ?? null,
+        terms_customer:
+          coupon.terms_customer ||
+          'This coupon is assigned to your account only and can be used once.',
+        first_order_only: Boolean(coupon.first_order_only),
+        service_filter: coupon.service_filter ?? 'all',
+        is_shareable: false,
+        valid_from: validFrom,
+        valid_to: validTo,
+        status: 'active',
+        sent_at: validFrom,
+      },
+    })
+
     const appUrl = String(process.env.APP_URL || 'https://elewen.in').replace(/\/$/, '')
     const loginUrl = `${appUrl}/login?redirect=${encodeURIComponent('/cart')}`
 
@@ -3206,51 +3247,40 @@ export async function shareAdminCoupon(req, res, next) {
         ? `${coupon.discount_value}% off`
         : `Rs ${Number(coupon.discount_value).toLocaleString('en-IN')} off`
 
-    const validTo = coupon.valid_to
-      ? new Date(coupon.valid_to).toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })
-      : null
+    const validToLabel = validTo.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
 
-    const terms = coupon.terms_customer ?? ''
-    const subject = `Your Elewen coupon: ${coupon.code}`
+    const terms = grant.terms_customer ?? ''
+    const subject = `Your Elewen coupon: ${code}`
 
     if (templates.coupon_share) {
       const html = templates.coupon_share({
-        code: coupon.code,
+        code,
         discountLabel,
         terms,
-        validTo,
+        validTo: validToLabel,
         loginUrl,
       })
       await sendEmail(email, subject, html)
     }
 
-    let userId = null
-    try {
-      const user = await strapiFindUserByEmail(email)
-      userId = user?.id ?? null
-    } catch {
-      userId = null
-    }
-
-    if (userId) {
-      await notify(String(userId), {
-        type: 'system',
-        title: 'You received a discount coupon',
-        message: `Use code ${coupon.code} for ${discountLabel} on your next order.`,
-        linkUrl: '/cart',
-      })
-    }
+    await notify(userId, {
+      type: 'system',
+      title: 'You received a discount coupon',
+      message: `Use code ${code} for ${discountLabel} on your next order. This code is for your account only.`,
+      linkUrl: '/dashboard/profile#my-coupons',
+    })
 
     return res.json({
       success: true,
       email,
-      couponCode: coupon.code,
+      couponCode: code,
+      grant: mapGrantForCustomer(grant),
       loginUrl,
-      notifiedInApp: Boolean(userId),
+      notifiedInApp: true,
     })
   } catch (err) {
     next(err)

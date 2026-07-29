@@ -164,7 +164,15 @@ function validateOrderBounds(coupon, subtotal) {
 }
 
 export async function validateGrantForUser({ grant, userId, subtotal }) {
-  if (!grant || grant.status !== 'active') {
+  if (!grant) {
+    return { valid: false, error: 'Invalid or inactive coupon code' }
+  }
+
+  if (grant.status === 'used') {
+    return { valid: false, error: 'You have already used this coupon.' }
+  }
+
+  if (grant.status !== 'active') {
     return { valid: false, error: 'Invalid or inactive coupon code' }
   }
 
@@ -178,8 +186,8 @@ export async function validateGrantForUser({ grant, userId, subtotal }) {
     return { valid: false, error: 'This coupon is valid on first order only.' }
   }
 
-  // Shareable grants can be used by anyone once; non-shareable must match owner.
-  if (!grant.is_shareable && String(grant.ownerUserId) !== String(userId)) {
+  // Personal grants are always owner-only — even if someone else knows the code.
+  if (String(grant.ownerUserId) !== String(userId)) {
     return { valid: false, error: 'This coupon is not assigned to your account.' }
   }
 
@@ -285,6 +293,15 @@ export async function resolveAppliedCoupon({ couponId, couponGrantId, userId, su
 export function generateCouponCode(prefix = 'REF') {
   const token = randomBytes(3).toString('hex').toUpperCase()
   return `${prefix}-${token}`
+}
+
+export async function buildUniqueGrantCode(prefix = 'ELE') {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const code = generateCouponCode(prefix)
+    const existingGrant = await prisma.userCouponGrant.findUnique({ where: { code } })
+    if (!existingGrant) return code
+  }
+  throw new Error('Could not generate a unique coupon code')
 }
 
 export function mapGrantForCustomer(grant) {

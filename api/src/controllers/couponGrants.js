@@ -1,17 +1,12 @@
 import prisma from '../lib/prisma.js'
 import { notify } from '../lib/notify.js'
 import { suggestReferralTier, getReferralTierByKey } from '../lib/couponTemplates.js'
-import { generateCouponCode, mapGrantForCustomer } from '../lib/coupons.js'
+import { buildUniqueGrantCode, mapGrantForCustomer } from '../lib/coupons.js'
 
 const REFERRAL_VALIDITY_DAYS = 60
 
 async function buildUniqueReferralCode() {
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const code = generateCouponCode('REF')
-    const existingGrant = await prisma.userCouponGrant.findUnique({ where: { code } })
-    if (!existingGrant) return code
-  }
-  throw new Error('Could not generate a unique coupon code')
+  return buildUniqueGrantCode('REF')
 }
 
 export async function getMyCoupons(req, res, next) {
@@ -149,7 +144,7 @@ export async function sendAdminReferralCoupon(req, res, next) {
         terms_customer: tier.terms_customer,
         first_order_only: false,
         service_filter: 'all',
-        is_shareable: tier.is_shareable !== false,
+        is_shareable: false,
         valid_from: validFrom,
         valid_to: validTo,
         status: 'active',

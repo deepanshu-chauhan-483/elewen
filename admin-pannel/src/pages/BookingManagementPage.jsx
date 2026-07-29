@@ -506,7 +506,7 @@ function ReferralCouponPanel({ bookingId, bookingStatus, bookingTotal }) {
       {sendError ? <p className="text-sm text-[#8A1C1C]">{sendError}</p> : null}
       <p className="text-xs leading-5 text-[#8F8F8F]">
         Manual action only. Sends a unique one-time code by email and customer inbox. Valid for 2
-        months and shareable with family or friends.
+        months and assigned to that customer only.
       </p>
     </div>
   )

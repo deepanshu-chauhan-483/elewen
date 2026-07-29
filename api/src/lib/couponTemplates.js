@@ -10,10 +10,10 @@ export const REFERRAL_TIERS = [
     max_booking_total: 14999.99,
     validity_days: 60,
     terms_customer:
-      'Flat ₹500 off. Valid on orders above ₹5,000. Valid for up to 2 months. Can be used by you or your family/friend. Coupon can be used only once.',
+      'Flat ₹500 off. Valid on orders above ₹5,000. Valid for up to 2 months. Assigned to your account only. Can be used once.',
     admin_notes:
-      'Sent manually after booking is complete via email + inbox. Shareable within validity.',
-    is_shareable: true,
+      'Sent manually after booking is complete via email + inbox. Owner-only; not shareable.',
+    is_shareable: false,
   },
   {
     key: 'referral_800',
@@ -25,10 +25,10 @@ export const REFERRAL_TIERS = [
     max_booking_total: 29999.99,
     validity_days: 60,
     terms_customer:
-      'Flat ₹800 off. Valid on orders above ₹5,000. Valid for up to 2 months. Can be used by you or your family/friend. Coupon can be used only once.',
+      'Flat ₹800 off. Valid on orders above ₹5,000. Valid for up to 2 months. Assigned to your account only. Can be used once.',
     admin_notes:
-      'Sent manually after booking is complete via email + inbox. Shareable within validity.',
-    is_shareable: true,
+      'Sent manually after booking is complete via email + inbox. Owner-only; not shareable.',
+    is_shareable: false,
   },
   {
     key: 'referral_1500',
@@ -40,10 +40,10 @@ export const REFERRAL_TIERS = [
     max_booking_total: null,
     validity_days: 60,
     terms_customer:
-      'Flat ₹1,500 off. Valid on orders above ₹5,000. Valid for up to 2 months. Can be used by you or your family/friend. Coupon can be used only once.',
+      'Flat ₹1,500 off. Valid on orders above ₹5,000. Valid for up to 2 months. Assigned to your account only. Can be used once.',
     admin_notes:
-      'Sent manually after booking is complete via email + inbox. Shareable within validity.',
-    is_shareable: true,
+      'Sent manually after booking is complete via email + inbox. Owner-only; not shareable.',
+    is_shareable: false,
   },
 ]
 

@@ -1268,8 +1268,11 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
         couponId: coupon.id,
         email: email.trim(),
       })
+      const sentCode = result?.couponCode ?? coupon.code
       const inAppNote = result?.notifiedInApp ? ' In-app notification sent too.' : ''
-      window.alert(`Coupon ${coupon.code} emailed to ${email.trim()}.${inAppNote}`)
+      window.alert(
+        `Personal coupon ${sentCode} emailed to ${email.trim()}. Only that customer can use it.${inAppNote}`
+      )
     } catch (error) {
       window.alert(error?.message ?? 'Could not send coupon email. Please try again.')
     }
