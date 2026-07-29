@@ -598,12 +598,6 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAgeModal, setShowAgeModal] = useState(false)
 
-  const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
-  const isSheeshaOnlyCheckout =
-    cartClassification.isSheeshaOnly && !isSampleTastingCheckout && cartItems.length > 0
-  const isMixedSheeshaCheckout =
-    cartClassification.isMixedSheeshaCart && !isSampleTastingCheckout && cartItems.length > 0
-
   const packageLookup = useMemo(
     () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
     [packages]
@@ -627,6 +621,12 @@ export default function CheckoutPage() {
       }),
     [cart?.items, packageLookup]
   )
+
+  const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
+  const isSheeshaOnlyCheckout =
+    cartClassification.isSheeshaOnly && !isSampleTastingCheckout && cartItems.length > 0
+  const isMixedSheeshaCheckout =
+    cartClassification.isMixedSheeshaCart && !isSampleTastingCheckout && cartItems.length > 0
 
   // const itemCount = useMemo(
   //   () => cartItems.reduce((sum, item) => sum + Number(item?.quantity ?? 0), 0),
