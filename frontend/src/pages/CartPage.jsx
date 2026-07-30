@@ -1313,32 +1313,11 @@ function PriceSummaryCard({
             : '🔒 Secure payment · Instant confirmation · Easy cancellation'}
         </div>
 
-        {showSampleTasteBooking ? (
-          <button
-            type="button"
-            onClick={onSampleTasteBooking}
-            className="mx-auto mb-4 flex w-full items-center justify-between rounded-full bg-[#F3F0EA] py-1.5 pl-6 pr-1.5 text-[#6B5B4D] transition-colors hover:bg-[#EBE4D9]"
-          >
-            <span className="mr-5 text-[15px] font-medium">Book Tasting Session</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
-              <svg
-                className="h-[18px] w-[18px] text-[#957960]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
-              </svg>
-            </div>
-          </button>
-        ) : null}
-
         <button
           type="button"
           onClick={onCheckout}
           disabled={isCheckoutDisabled}
-          className="mx-auto mt-4 flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
+          className="mx-auto flex w-full items-center justify-between rounded-full bg-[#D4BA8E] py-1.5 pl-6 pr-1.5 transition-colors hover:bg-[#C6AB7F] group disabled:cursor-not-allowed disabled:bg-[#CFCBC5]"
         >
           <span className="mr-5 text-[15px] font-medium text-white">Proceed to Checkout</span>
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
