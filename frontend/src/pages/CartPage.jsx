@@ -10,6 +10,7 @@ import {
   useCouponToastMessage,
 } from '../hooks/useMessagingContent'
 import { usePackages } from '../hooks/usePackages'
+import { useWishlist } from '../hooks/useWishlist'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
@@ -925,6 +926,9 @@ const CATEGORY_ICONS = {
 }
 
 function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuantity }) {
+  const { showToast } = useToast()
+  const { isSaved, toggleSavedPackage, pendingPackageId: wishlistPendingId } = useWishlist()
+
   const groupedItems = cartItems.reduce((groups, item) => {
     const category = getCartGroupLabel(item)
     const existingGroup = groups.find(group => group.category === category)
@@ -959,6 +963,30 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
     )
   }
 
+  const handleSaveHookahToWishlist = async item => {
+    const wishlistPackageId = String(item?.packageData?.id ?? item?.packageId ?? '').trim()
+    if (!wishlistPackageId) {
+      showToast({ message: 'Could not save this package to wishlist.' })
+      return
+    }
+
+    const alreadySaved =
+      isSaved(wishlistPackageId) ||
+      (item?.packageData?.documentId && isSaved(item.packageData.documentId))
+
+    if (alreadySaved) {
+      showToast({ message: 'Already saved to wishlist.' })
+      return
+    }
+
+    try {
+      await toggleSavedPackage({ packageId: wishlistPackageId })
+      showToast({ message: 'Saved to wishlist. Book it later from Saved Packages.' })
+    } catch {
+      showToast({ message: 'Could not save this package to wishlist.' })
+    }
+  }
+
   return (
     <div className="space-y-4">
       {groupedItems.map(group => (
@@ -975,12 +1003,6 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
               {group.packages.reduce((sum, item) => sum + getCartItemQuantity(item), 0)} packages
             </span>
           </div>
-
-          {isHookahCategory(group.category) ? (
-            <p className="border-b border-[#95796033] bg-[#FBF8F3] px-4 py-2.5 text-[12px] leading-[1.5] text-[#6B5B4D]">
-              Save this package to wishlist and book later
-            </p>
-          ) : null}
 
           <div className="space-y-4 bg-[#FFFFFF] p-4">
             {group.packages.map(item => {
@@ -1006,6 +1028,14 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                 .filter(Boolean)
                 .slice(0, 4)
               const canViewPackage = item?.itemType !== 'addon' && packageHref
+              const showHookahWishlistAction =
+                isHookahCategory(group.category) && item?.itemType !== 'addon'
+              const wishlistPackageId = String(
+                item?.packageData?.id ?? item?.packageId ?? ''
+              ).trim()
+              const isWishlistPending =
+                Boolean(wishlistPendingId) &&
+                String(wishlistPendingId) === wishlistPackageId
 
               return (
                 <div
@@ -1058,7 +1088,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                       ))}
                     </div>
 
-                    <div className="mt-4 flex items-center gap-2">
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
                       {item?.itemType !== 'addon' ? (
                         <Link
                           to={`/single-package-cart?itemId=${encodeURIComponent(item.id)}`}
@@ -1068,6 +1098,18 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                         >
                           <EyeIcon />
                         </Link>
+                      ) : null}
+                      {showHookahWishlistAction ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSaveHookahToWishlist(item)}
+                          disabled={isPending || isWishlistPending}
+                          className="max-w-[220px] text-left text-[12px] font-medium leading-[1.35] text-[#591902] underline underline-offset-2 transition-colors hover:text-[#3D1201] disabled:opacity-60 sm:max-w-none"
+                        >
+                          {isWishlistPending
+                            ? 'Saving...'
+                            : 'Save this package to wishlist and book later'}
+                        </button>
                       ) : null}
                       <button
                         type="button"
