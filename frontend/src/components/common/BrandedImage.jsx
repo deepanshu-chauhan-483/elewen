@@ -54,7 +54,7 @@ export default function BrandedImage({
         alt={alt}
         eager={eager}
         onError={handleError}
-        className={`w-full h-full object-cover ${imgClassName}`}
+        className={`h-full w-full origin-top-left scale-[1.08] object-cover object-[center_top] ${imgClassName}`}
       />
 
       {/* Elewen logo overlay — sits exactly where the Gemini watermark appears */}

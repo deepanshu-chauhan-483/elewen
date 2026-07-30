@@ -57,7 +57,7 @@ function PackageImageLightbox({ open, image, title, onClose }) {
         ×
       </button>
       <div
-        className="max-h-[90vh] max-w-full"
+        className="max-h-[90vh] max-w-full overflow-hidden"
         onClick={event => event.stopPropagation()}
         onKeyDown={() => {}}
         role="presentation"
@@ -66,7 +66,7 @@ function PackageImageLightbox({ open, image, title, onClose }) {
           src={image}
           alt={title}
           eager
-          className="max-h-[90vh] max-w-full object-contain"
+          className="max-h-[90vh] max-w-full origin-top-left scale-[1.08] object-contain object-[center_top]"
         />
       </div>
     </div>
@@ -508,14 +508,14 @@ function ProductImageLayout({
                 <button
                   type="button"
                   onClick={() => activeImage && setIsLightboxOpen(true)}
-                  className={`relative block w-full cursor-zoom-in ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
+                  className={`relative block w-full cursor-zoom-in overflow-hidden ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
                   aria-label={`View full size image for ${title}`}
                 >
                   <AppImage
                     src={activeImage}
                     alt={title}
                     eager
-                    className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white object-cover object-center"
+                    className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white object-cover object-[center_top] origin-top-left scale-[1.08]"
                   />
 
                   {activeImageMeta?.heading || activeImageMeta?.text ? (
@@ -574,7 +574,7 @@ function ProductImageLayout({
                       type="button"
                       key={`${image}-${index}`}
                       onClick={() => setSelectedOverride(image)}
-                      className={`${SIDE_THUMB_BUTTON_CLASS} ${
+                      className={`overflow-hidden ${SIDE_THUMB_BUTTON_CLASS} ${
                         activeImage === image ? 'opacity-100' : 'opacity-40'
                       }`}
                       aria-label={`Show ${title} preview ${index + 1}`}
@@ -583,7 +583,7 @@ function ProductImageLayout({
                       <AppImage
                         src={image}
                         alt={`${title} preview ${index + 1}`}
-                        className="h-full w-full rounded-[14px] object-cover"
+                        className="h-full w-full rounded-[14px] object-cover object-[center_top] origin-top-left scale-[1.08]"
                       />
                     </button>
                   ))}
