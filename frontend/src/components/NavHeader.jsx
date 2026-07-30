@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
 import ScallopBulbCurtain from './common/ScallopBulbCurtain'
+import HookahAgeConfirmModal from './checkout/HookahAgeConfirmModal'
 import { authLogout, clearStoredJwt, getStoredJwt } from '../lib/api'
 import { useCart } from '../hooks/useCart'
 import { useToast } from './common/useToast'
@@ -11,6 +12,12 @@ import { normalizeServiceSlug } from '../lib/packageFilters'
 import { getPackageHrefFromRecord, getPackageServiceSlug } from '../lib/packageRoutes'
 import { filterPackagesBySearch } from '../lib/packageSearch'
 import { shouldPreserveHomeScroll } from '../lib/homeReturnScroll'
+import {
+  isHookahAgeConfirmed,
+  isHookahSearchQuery,
+  isSheeshaPackageRecord,
+  setHookahAgeConfirmed,
+} from '../lib/hookahAgeGate'
 
 function getPackageSearchPriceLabel(pkg) {
   const formattedPrice = String(pkg?.price ?? '').trim()
@@ -300,11 +307,21 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const [open, setOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [hookahAgeConfirmed, setHookahAgeConfirmedState] = useState(() => isHookahAgeConfirmed())
+  const [showHookahAgeModal, setShowHookahAgeModal] = useState(false)
+  const [pendingHookahAction, setPendingHookahAction] = useState(null)
+  const dismissedHookahQueryRef = useRef('')
   const { data: allPackages = [] } = usePackages()
-  const searchResults =
+  const rawSearchResults =
     searchQuery.trim().length >= 2
       ? filterPackagesBySearch(allPackages, searchQuery).slice(0, 8)
       : []
+  const searchResults = useMemo(() => {
+    if (hookahAgeConfirmed) return rawSearchResults
+    return rawSearchResults.filter(pkg => !isSheeshaPackageRecord(pkg))
+  }, [hookahAgeConfirmed, rawSearchResults])
+  const hasBlockedHookahResults =
+    !hookahAgeConfirmed && rawSearchResults.some(pkg => isSheeshaPackageRecord(pkg))
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { pathname } = useLocation()
@@ -520,24 +537,82 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     setSearchOpen(true)
   }
 
+  const requestHookahAgeThen = action => {
+    if (hookahAgeConfirmed || isHookahAgeConfirmed()) {
+      setHookahAgeConfirmedState(true)
+      action()
+      return
+    }
+    setPendingHookahAction(() => action)
+    setShowHookahAgeModal(true)
+  }
+
+  const handleHookahAgeConfirm = () => {
+    setHookahAgeConfirmed()
+    setHookahAgeConfirmedState(true)
+    setShowHookahAgeModal(false)
+    dismissedHookahQueryRef.current = ''
+    const action = pendingHookahAction
+    setPendingHookahAction(null)
+    action?.()
+  }
+
+  const handleHookahAgeCancel = () => {
+    dismissedHookahQueryRef.current = searchQuery.trim().toLowerCase()
+    setShowHookahAgeModal(false)
+    setPendingHookahAction(null)
+  }
+
   const handleSelectPackageResult = pkg => {
-    navigate(getPackageHrefFromRecord(pkg))
-    setSearchQuery('')
-    setSearchOpen(false)
-    setOpen(false)
+    const go = () => {
+      navigate(getPackageHrefFromRecord(pkg))
+      setSearchQuery('')
+      setSearchOpen(false)
+      setOpen(false)
+    }
+
+    if (isSheeshaPackageRecord(pkg)) {
+      requestHookahAgeThen(go)
+      return
+    }
+
+    go()
   }
 
   const submitSearchQuery = () => {
     const query = searchQuery.trim()
     if (!query) return
-    navigate(`/package-listing?search=${encodeURIComponent(query)}`)
-    setSearchQuery('')
-    setSearchOpen(false)
-    setOpen(false)
+
+    const go = () => {
+      navigate(`/package-listing?search=${encodeURIComponent(query)}`)
+      setSearchQuery('')
+      setSearchOpen(false)
+      setOpen(false)
+    }
+
+    if (isHookahSearchQuery(query) || hasBlockedHookahResults) {
+      requestHookahAgeThen(go)
+      return
+    }
+
+    go()
   }
+
+  useEffect(() => {
+    if (hookahAgeConfirmed) return
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+    if (!isHookahSearchQuery(normalizedQuery) && !hasBlockedHookahResults) return
+    if (dismissedHookahQueryRef.current === normalizedQuery) return
+    setShowHookahAgeModal(true)
+  }, [hasBlockedHookahResults, hookahAgeConfirmed, searchQuery])
 
   return (
     <>
+      <HookahAgeConfirmModal
+        open={showHookahAgeModal}
+        onClose={handleHookahAgeCancel}
+        onConfirm={handleHookahAgeConfirm}
+      />
       <header
         ref={headerRef}
         className={`nav-header-shell fixed top-0 left-0 right-0 z-[60] ${searchQuery.trim() ? 'overflow-visible' : 'overflow-hidden'} px-6 py-[8px] transition-all duration-[600ms] ease-[cubic-bezier(0.32,0,0.15,1)] md:px-10 md:py-[12px] ${visibilityClass} ${transformClass}`}
@@ -629,8 +704,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                   onChange={e => setSearchQuery(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === 'Enter' && searchQuery.trim()) {
-                      navigate(`/package-listing?search=${encodeURIComponent(searchQuery.trim())}`)
-                      setSearchQuery('')
+                      submitSearchQuery()
                     }
                   }}
                   className="w-full bg-transparent text-[13px] font-medium tracking-wide outline-none placeholder:opacity-70"
@@ -648,10 +722,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                         key={pkgId}
                         type="button"
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[#F5F0EA] transition-colors"
-                        onClick={() => {
-                          navigate(getPackageHrefFromRecord(pkg))
-                          setSearchQuery('')
-                        }}
+                        onClick={() => handleSelectPackageResult(pkg)}
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[13px] font-medium text-[#2D2D2D]">
@@ -776,9 +847,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 onChange={e => setSearchQuery(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && searchQuery.trim()) {
-                    navigate(`/package-listing?search=${encodeURIComponent(searchQuery.trim())}`)
-                    setSearchQuery('')
-                    setOpen(false)
+                    submitSearchQuery()
                   }
                 }}
                 className="w-full bg-transparent text-sm font-medium tracking-wide text-white/80 outline-none placeholder:text-white/60"
@@ -795,11 +864,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                       key={pkgId}
                       type="button"
                       className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[#F5F0EA] transition-colors"
-                      onClick={() => {
-                        navigate(getPackageHrefFromRecord(pkg))
-                        setSearchQuery('')
-                        setOpen(false)
-                      }}
+                      onClick={() => handleSelectPackageResult(pkg)}
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-medium text-[#2D2D2D]">

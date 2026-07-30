@@ -4,6 +4,7 @@ import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
+import HookahAgeGate from '../components/checkout/HookahAgeGate'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
@@ -416,11 +417,19 @@ export default function SheeshaSinglePackagePage() {
   })
 
   if (isStrapiLoading) {
-    return <CmsPageLoader />
+    return (
+      <HookahAgeGate cancelTo="/packages/sheesha">
+        <CmsPageLoader />
+      </HookahAgeGate>
+    )
   }
 
   if (!pkg) {
-    return <Navigate to={backHref} replace />
+    return (
+      <HookahAgeGate cancelTo="/packages/sheesha">
+        <Navigate to={backHref} replace />
+      </HookahAgeGate>
+    )
   }
 
   const source = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
@@ -497,6 +506,7 @@ export default function SheeshaSinglePackagePage() {
   }
 
   return (
+    <HookahAgeGate cancelTo={backHref}>
     <SingleProductPageContent
       backHref={backHref}
       title={packageTitle}
@@ -535,5 +545,6 @@ export default function SheeshaSinglePackagePage() {
       }
       testimonials={packageReviews}
     />
+    </HookahAgeGate>
   )
 }
