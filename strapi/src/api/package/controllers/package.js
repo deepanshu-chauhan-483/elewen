@@ -11,11 +11,17 @@ const resolveAddonImageUrl = addon => {
   if (!image) return null;
   if (typeof image === 'string') return image;
 
+  // Strapi may return a single media object, an array, or a { data } wrapper.
+  const media = Array.isArray(image) ? image[0] : image?.data ?? image;
+  if (!media) return null;
+  if (typeof media === 'string') return media;
+
   const rawUrl =
-    image.url ??
-    image.formats?.medium?.url ??
-    image.formats?.small?.url ??
-    image.formats?.large?.url ??
+    media.url ??
+    media.formats?.large?.url ??
+    media.formats?.medium?.url ??
+    media.formats?.small?.url ??
+    media.attributes?.url ??
     null;
 
   if (!rawUrl) return null;
@@ -111,7 +117,11 @@ const nestedPackagePopulate = {
               service: true,
             },
           },
-          addons: true,
+          addons: {
+            populate: {
+              image: true,
+            },
+          },
           inclustions: {
             populate: {
               images: true,
@@ -132,7 +142,11 @@ const nestedPackagePopulate = {
               service: true,
             },
           },
-          addons: true,
+          addons: {
+            populate: {
+              image: true,
+            },
+          },
           inclusions: true,
           policy: true,
           price_covers: true,
@@ -141,7 +155,11 @@ const nestedPackagePopulate = {
       },
       'package.bartendingpackage': {
         populate: {
-          inclusions: true,
+          inclusions: {
+            populate: {
+              images: true,
+            },
+          },
           exclusions: true,
           policy: true,
           price_covers: true,
@@ -155,7 +173,11 @@ const nestedPackagePopulate = {
           menu_items: true,
           inclusions: true,
           exclusions: true,
-          addons: true,
+          addons: {
+            populate: {
+              image: true,
+            },
+          },
           policy: true,
           price_covers: true,
           price_breakdown: true,
@@ -167,12 +189,19 @@ const nestedPackagePopulate = {
   },
 };
 
+const preferPopulatedMedia = (primary, fallback) => {
+  if (Array.isArray(primary) && primary.length > 0) return primary;
+  if (Array.isArray(fallback) && fallback.length > 0) return fallback;
+  return primary ?? fallback ?? null;
+};
+
 const mergeEntryWithNestedPackages = (entry, nestedEntry) => {
   if (!entry || !nestedEntry) return entry;
 
   return {
     ...entry,
-    images: nestedEntry.images ?? entry.images,
+    // Never wipe package images with an empty nested populate result.
+    images: preferPopulatedMedia(nestedEntry.images, entry.images),
     events: nestedEntry.events ?? entry.events,
     service_categories: nestedEntry.service_categories ?? entry.service_categories,
     packages: nestedEntry.packages ?? entry.packages,
