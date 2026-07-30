@@ -54,10 +54,10 @@ function PackageImageLightbox({ open, image, title, onClose }) {
         className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-2xl leading-none text-white"
         aria-label="Close image preview"
       >
-        ×
+        ??
       </button>
       <div
-        className="max-h-[90vh] max-w-full overflow-hidden"
+        className="max-h-[90vh] max-w-full"
         onClick={event => event.stopPropagation()}
         onKeyDown={() => {}}
         role="presentation"
@@ -66,7 +66,7 @@ function PackageImageLightbox({ open, image, title, onClose }) {
           src={image}
           alt={title}
           eager
-          className="max-h-[90vh] max-w-full origin-top-left scale-[1.08] object-contain object-[center_top]"
+          className="max-h-[90vh] max-w-full object-contain"
         />
       </div>
     </div>
@@ -112,7 +112,7 @@ function QuantityControl({ quantity, onDecrement, onIncrement }) {
           onClick={onDecrement}
           className="flex h-[28px] w-[28px] items-center justify-center border-r border-[#D9D9D9] text-[18px] font-light text-black"
         >
-          −
+          ???
         </button>
 
         {/* Quantity */}
@@ -508,14 +508,14 @@ function ProductImageLayout({
                 <button
                   type="button"
                   onClick={() => activeImage && setIsLightboxOpen(true)}
-                  className={`relative block w-full cursor-zoom-in overflow-hidden ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
+                  className={`relative block w-full cursor-zoom-in ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
                   aria-label={`View full size image for ${title}`}
                 >
                   <AppImage
                     src={activeImage}
                     alt={title}
                     eager
-                    className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white object-cover object-[center_top] origin-top-left scale-[1.08]"
+                    className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white object-cover object-center"
                   />
 
                   {activeImageMeta?.heading || activeImageMeta?.text ? (
@@ -574,7 +574,7 @@ function ProductImageLayout({
                       type="button"
                       key={`${image}-${index}`}
                       onClick={() => setSelectedOverride(image)}
-                      className={`overflow-hidden ${SIDE_THUMB_BUTTON_CLASS} ${
+                      className={`${SIDE_THUMB_BUTTON_CLASS} ${
                         activeImage === image ? 'opacity-100' : 'opacity-40'
                       }`}
                       aria-label={`Show ${title} preview ${index + 1}`}
@@ -583,7 +583,7 @@ function ProductImageLayout({
                       <AppImage
                         src={image}
                         alt={`${title} preview ${index + 1}`}
-                        className="h-full w-full rounded-[14px] object-cover object-[center_top] origin-top-left scale-[1.08]"
+                        className="h-full w-full rounded-[14px] object-cover"
                       />
                     </button>
                   ))}
@@ -808,7 +808,7 @@ function ProductImageLayout({
               </h2>
               {!consultationOnly ? (
                 <>
-                  <span className="hidden shrink-0 md:inline">•</span>
+                  <span className="hidden shrink-0 md:inline">???</span>
                   <span className="shrink-0 text-xs font-bold sm:text-sm md:text-base text-[#D4BA8E]">
                     {price}
                   </span>

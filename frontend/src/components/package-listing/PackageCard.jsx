@@ -250,7 +250,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
             position="bottom-right"
             showLogoBg={true}
             className="h-full w-full"
-            imgClassName="object-cover object-[center_top]"
+            imgClassName="object-cover object-center"
           />
         ) : (
           <div className="flex h-[280px] w-full items-center justify-center bg-[#E7DDCF] px-6 text-center text-[18px] font-semibold uppercase tracking-[0.08em] text-[#8C4A22]">

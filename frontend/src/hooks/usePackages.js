@@ -497,9 +497,7 @@ function buildAddonList(items = []) {
       image:
         (typeof item?.image === 'string' ? toAbsoluteStrapiUrl(item.image) : '') ||
         resolveStrapiImageUrl(item?.image) ||
-        resolveStrapiImageUrl(
-          Array.isArray(item?.image) ? item.image[0] : item?.image?.data
-        ),
+        resolveStrapiImageUrl(Array.isArray(item?.image) ? item.image[0] : item?.image?.data),
     }))
     .filter(item => {
       if (!item.name) return false
@@ -753,7 +751,7 @@ function getPackageListingPopulateParams() {
     'populate[packages][on][package.decorpackages][populate][budget_level]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][inclusions]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][elements][populate]': 'service',
-    'populate[packages][on][package.bartendingpackage][populate][inclusions][populate][0]': 'images',
+    'populate[packages][on][package.bartendingpackage][populate][inclusions]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][budget_level]': 'true',
     'populate[packages][on][package.cateringpackage][populate][inclusions]': 'true',
     'populate[packages][on][package.cateringpackage][populate][budget_level]': 'true',
@@ -764,10 +762,10 @@ function getPackagePopulateParams() {
   return {
     'populate[images]': 'true',
     'populate[events][populate][0]': 'parent_event',
-    'populate[reusable_addons][populate][0]': 'image',
+    'populate[reusable_addons]': 'true',
     'populate[service_categories][populate][0]': 'parent_category',
     'populate[packages][on][package.decorpackages][populate][elements][populate]': 'service',
-    'populate[packages][on][package.decorpackages][populate][addons][populate][0]': 'image',
+    'populate[packages][on][package.decorpackages][populate][addons]': 'true',
     'populate[packages][on][package.decorpackages][populate][inclustions]': 'true',
     'populate[packages][on][package.decorpackages][populate][policy]': 'true',
     'populate[packages][on][package.decorpackages][populate][price_covers]': 'true',
@@ -776,12 +774,12 @@ function getPackagePopulateParams() {
     'populate[packages][on][package.decorpackages][populate][budget_level]': 'true',
     'populate[packages][on][package.decorpackages][populate][backdrop_images]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][elements][populate]': 'service',
-    'populate[packages][on][package.sheeshapackage][populate][addons][populate][0]': 'image',
+    'populate[packages][on][package.sheeshapackage][populate][addons]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][inclusions]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][policy]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][price_covers]': 'true',
     'populate[packages][on][package.sheeshapackage][populate][flavor]': 'true',
-    'populate[packages][on][package.bartendingpackage][populate][inclusions][populate][0]': 'images',
+    'populate[packages][on][package.bartendingpackage][populate][inclusions]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][exclusions]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][policy]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][price_covers]': 'true',
@@ -791,7 +789,7 @@ function getPackagePopulateParams() {
     'populate[packages][on][package.cateringpackage][populate][menu_items]': 'true',
     'populate[packages][on][package.cateringpackage][populate][inclusions]': 'true',
     'populate[packages][on][package.cateringpackage][populate][exclusions]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][addons][populate][0]': 'image',
+    'populate[packages][on][package.cateringpackage][populate][addons]': 'true',
     'populate[packages][on][package.cateringpackage][populate][policy]': 'true',
     'populate[packages][on][package.cateringpackage][populate][price_covers]': 'true',
     'populate[packages][on][package.cateringpackage][populate][price_breakdown]': 'true',
@@ -847,7 +845,7 @@ async function fetchPackages(params = {}) {
 
 export function usePackages() {
   return useQuery({
-    queryKey: ['packages', 'live-v15-bartending-addon-images'],
+    queryKey: ['packages', 'live-v16-packages-api-fix'],
     queryFn: async () => {
       if (USE_FALLBACK) return PACKAGES_FALLBACK
       try {
@@ -866,7 +864,7 @@ export function usePackages() {
 
 export function usePackageById(packageId) {
   return useQuery({
-    queryKey: ['package', packageId, 'live-v5'],
+    queryKey: ['package', packageId, 'live-v6'],
     enabled: Boolean(packageId),
     queryFn: async () => {
       if (USE_FALLBACK) {

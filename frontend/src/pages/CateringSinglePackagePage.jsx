@@ -549,10 +549,10 @@ export default function CateringSinglePackagePage() {
     return <Navigate to={backHref} replace />
   }
 
+  // Use CMS images as-is (no pad/repeat to 5). Fallback local set only when CMS has none.
   const sourceImages = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
-  const sideImages = Array.from({ length: Math.max(5, sourceImages.length || 1) }).map(
-    (_, index) => sourceImages[index % sourceImages.length]
-  )
+  const mainImage = sourceImages[0]
+  const sideImages = sourceImages.slice(1)
 
   const quantity = customizations.length
   const menuSelections = activeCustomization?.data?.menuSelections ?? {}
@@ -805,7 +805,7 @@ export default function CateringSinglePackagePage() {
           />
         }
         accordionSections={[]}
-        mainImage={sourceImages[0] ?? sideImages[0]}
+        mainImage={mainImage}
         sideImages={sideImages}
         relatedProducts={relatedProducts}
         testimonials={packageReviews}

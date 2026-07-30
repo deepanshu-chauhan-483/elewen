@@ -48,16 +48,16 @@ export default function BrandedImage({
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {/* Main image — src comes directly from Strapi, nothing modified */}
+      {/* Main image ??? src comes directly from Strapi, nothing modified */}
       <AppImage
         src={activeSrc}
         alt={alt}
         eager={eager}
         onError={handleError}
-        className={`h-full w-full origin-top-left scale-[1.08] object-cover object-[center_top] ${imgClassName}`}
+        className={`w-full h-full object-cover ${imgClassName}`}
       />
 
-      {/* Elewen logo overlay — sits exactly where the Gemini watermark appears */}
+      {/* Elewen logo overlay ??? sits exactly where the Gemini watermark appears */}
       <div
         aria-hidden="true"
         className={`absolute ${positionClasses} z-10 p-1.5 ${

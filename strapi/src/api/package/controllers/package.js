@@ -117,11 +117,7 @@ const nestedPackagePopulate = {
               service: true,
             },
           },
-          addons: {
-            populate: {
-              image: true,
-            },
-          },
+          addons: true,
           inclustions: {
             populate: {
               images: true,
@@ -142,11 +138,7 @@ const nestedPackagePopulate = {
               service: true,
             },
           },
-          addons: {
-            populate: {
-              image: true,
-            },
-          },
+          addons: true,
           inclusions: true,
           policy: true,
           price_covers: true,
@@ -173,11 +165,7 @@ const nestedPackagePopulate = {
           menu_items: true,
           inclusions: true,
           exclusions: true,
-          addons: {
-            populate: {
-              image: true,
-            },
-          },
+          addons: true,
           policy: true,
           price_covers: true,
           price_breakdown: true,
