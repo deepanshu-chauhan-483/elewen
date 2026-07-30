@@ -77,7 +77,7 @@ const DEFAULT_STEPS = [
   {
     title: 'Confirmation Email',
     desc: 'A booking confirmation has been sent to your email address.',
-    },
+  },
   {
     title: 'Vendor Coordination',
     desc: 'Our team will contact you within 24 hours to confirm details.',
@@ -85,6 +85,25 @@ const DEFAULT_STEPS = [
   {
     title: 'Event Planning',
     desc: 'Your event brief and package notes will be reviewed internally.',
+  },
+  {
+    title: 'Balance Payment',
+    desc: 'The remaining amount will be due before the event date.',
+  },
+]
+
+const ADVANCE_PENDING_STEPS = [
+  {
+    title: 'Payment received',
+    desc: 'Your advance payment was successful. Your booking is with our team for review.',
+  },
+  {
+    title: 'Admin confirmation',
+    desc: 'Once Elewen confirms your booking, you will get a confirmation notification and email.',
+  },
+  {
+    title: 'Vendor Coordination',
+    desc: 'Our team will contact you within 24 hours to confirm details.',
   },
   {
     title: 'Balance Payment',
@@ -147,6 +166,10 @@ export default function BookingConfirmation() {
   const isSampleTastingBooking = checkoutInfo?.checkoutMode === 'sample-tasting'
   const isSheeshaCodBooking =
     checkoutInfo?.checkoutMode === 'sheesha-cod' || payment?.codPending === true
+  // Cashfree advance packages stay `new` until admin confirms — show Received, not Confirmed.
+  const bookingStatus = String(booking?.status ?? 'new').toLowerCase()
+  const isAwaitingAdminConfirm =
+    !isSampleTastingBooking && !isSheeshaCodBooking && bookingStatus === 'new'
   const customer = {
     fullName:
       checkoutInfo?.fullName ||
@@ -177,6 +200,7 @@ export default function BookingConfirmation() {
         amountLabel: 'Total Amount Paid',
         amountSubtext: null,
         steps: SAMPLE_TASTING_STEPS,
+        toastMessage: bookingConfirmationToastMessage,
       }
     : isSheeshaCodBooking
       ? {
@@ -186,24 +210,40 @@ export default function BookingConfirmation() {
           amountLabel: paymentSummary.primaryLabel,
           amountSubtext: paymentSummary.secondaryLabel,
           steps: HOOKAH_COD_PENDING_STEPS,
+          toastMessage:
+            'Your booking has been received. We will confirm it shortly.',
         }
-      : {
-          heading: 'Booking Confirmed!',
-          intro: 'Your event has been successfully booked. Details below.',
-          amountLabel: paymentSummary.primaryLabel,
-          amountSubtext: paymentSummary.isFullyPaid
-            ? 'No balance is pending for this booking.'
-            : 'Balance due before event',
-          steps: paymentSummary.isFullyPaid
-            ? [
-                ...DEFAULT_STEPS.slice(0, 3),
-                {
-                  title: 'Payment Completed',
-                  desc: 'Your booking has already been fully paid and your receipt is ready to download.',
-                },
-              ]
-            : DEFAULT_STEPS,
-        }
+      : isAwaitingAdminConfirm
+        ? {
+            heading: 'Booking Received!',
+            intro:
+              'Your advance payment was successful. Our team will review and confirm your booking shortly. Details below.',
+            amountLabel: paymentSummary.primaryLabel,
+            amountSubtext: paymentSummary.isFullyPaid
+              ? 'No balance is pending for this booking.'
+              : 'Balance due before event',
+            steps: ADVANCE_PENDING_STEPS,
+            toastMessage:
+              'Your booking has been received. We will confirm it shortly.',
+          }
+        : {
+            heading: 'Booking Confirmed!',
+            intro: 'Your event has been successfully booked. Details below.',
+            amountLabel: paymentSummary.primaryLabel,
+            amountSubtext: paymentSummary.isFullyPaid
+              ? 'No balance is pending for this booking.'
+              : 'Balance due before event',
+            steps: paymentSummary.isFullyPaid
+              ? [
+                  ...DEFAULT_STEPS.slice(0, 3),
+                  {
+                    title: 'Payment Completed',
+                    desc: 'Your booking has already been fully paid and your receipt is ready to download.',
+                  },
+                ]
+              : DEFAULT_STEPS,
+            toastMessage: bookingConfirmationToastMessage,
+          }
   const confirmationAmount = isSheeshaCodBooking
     ? paymentSummary.amountDue
     : paymentSummary.amountPaid
@@ -225,9 +265,9 @@ export default function BookingConfirmation() {
     if (hasShownToastRef.current) return
 
     hasShownToastRef.current = true
-    showToast({ message: bookingConfirmationToastMessage })
+    showToast({ message: pageContent.toastMessage })
   }, [
-    bookingConfirmationToastMessage,
+    pageContent.toastMessage,
     showToast,
     state?.checkoutInfo?.showBookingConfirmationToast,
   ])
