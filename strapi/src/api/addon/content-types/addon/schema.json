@@ -41,6 +41,11 @@
       "type": "boolean",
       "default": true
     },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
     "pricing_rules": {
       "type": "component",
       "component": "package.package-pricing-rule",

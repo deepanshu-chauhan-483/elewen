@@ -124,6 +124,9 @@ function getPackageDetailAddons(pkg) {
       price: roundCurrency(item?.price),
       unit: String(item?.unit ?? '').trim(),
       max_quantity: Number(item?.max_quantity ?? 1),
+      image:
+        (typeof item?.image === 'string' && item.image ? toAbsoluteUrl(item.image) : null) ||
+        getFirstMediaUrl(item?.image),
     }))
     .filter(item => {
       if (!item.name) return false
@@ -243,7 +246,7 @@ async function fetchPackagesByIds(ids = []) {
       'populate[4]=packages.inclusions',
       'populate[5]=packages.inclustions',
       'populate[6]=packages.addons',
-      'populate[7]=reusable_addons',
+      'populate[7]=reusable_addons.image',
       `pagination[pageSize]=${Math.max(uniqueIds.length, 1)}`,
       'publicationState=preview',
     ].join('&')

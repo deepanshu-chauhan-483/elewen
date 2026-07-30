@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { usePackageById } from '../hooks/usePackages'
+import BartendingAddonMedia from '../components/bartending/BartendingAddonMedia'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 
@@ -8,77 +9,6 @@ function formatCurrency(value) {
   const amount = Number(value)
   if (!Number.isFinite(amount) || amount <= 0) return ''
   return `₹${amount.toLocaleString('en-IN')}`
-}
-
-function AddonIllustration({ name = '' }) {
-  const normalized = String(name).toLowerCase()
-
-  if (normalized.includes('wine')) {
-    return (
-      <svg width="64" height="64" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-        <path d="M15 5h12v6a6 6 0 1 1-12 0V5Z" stroke="currentColor" strokeWidth="1.3" />
-        <path d="M21 17v11M17 33h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      </svg>
-    )
-  }
-
-  if (normalized.includes('cocktail') || normalized.includes('mocktail')) {
-    return (
-      <svg width="64" height="64" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-        <path d="M11 10h20l-10 10-10-10Z" stroke="currentColor" strokeWidth="1.3" />
-        <path
-          d="M21 20v10M16 33h10"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-        />
-        <path d="m27 8 4-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      </svg>
-    )
-  }
-
-  if (normalized.includes('whiskey') || normalized.includes('glass')) {
-    return (
-      <svg width="64" height="64" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-        <path d="M12 10h18l-2 18H14l-2-18Z" stroke="currentColor" strokeWidth="1.3" />
-      </svg>
-    )
-  }
-
-  if (normalized.includes('ingredient') || normalized.includes('bill')) {
-    return (
-      <svg width="64" height="64" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-        <path d="M16 8h10l4 6v16H12V8h4Z" stroke="currentColor" strokeWidth="1.3" />
-        <path d="M26 8v6h6" stroke="currentColor" strokeWidth="1.3" />
-        <path d="M17 21h8M17 25h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      </svg>
-    )
-  }
-
-  if (normalized.includes('bar')) {
-    return (
-      <svg width="64" height="64" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-        <path d="M9 16h24v8H9v-8Z" stroke="currentColor" strokeWidth="1.3" />
-        <path
-          d="M12 24v8M30 24v8M16 12v4M21 10v6M26 12v4"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-        />
-      </svg>
-    )
-  }
-
-  return (
-    <svg width="64" height="64" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-      <path
-        d="M16 6h10l4 8v14a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5V14l4-8Z"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <path d="M16 14h14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  )
 }
 
 function BackArrow() {
@@ -149,8 +79,14 @@ export default function BartendingAddonDetailPage() {
 
       <div className="mx-auto max-w-lg px-4 pb-16 pt-6">
         {/* Illustration card */}
-        <div className="flex h-[180px] items-center justify-center rounded-[16px] bg-white text-[#957960] shadow-sm">
-          <AddonIllustration name={addon.name} />
+        <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[16px] bg-white text-[#957960] shadow-sm">
+          <BartendingAddonMedia
+            name={addon.name}
+            image={addon.image}
+            size={64}
+            className="h-full w-full"
+            imgClassName="h-full w-full object-cover"
+          />
         </div>
 
         {/* Name + price */}

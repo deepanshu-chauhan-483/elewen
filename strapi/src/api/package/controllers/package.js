@@ -6,18 +6,26 @@
 
 const { createCoreController } = require('@strapi/strapi').factories;
 
-const addonFields = [
-  'id',
-  'documentId',
-  'name',
-  'description',
-  'price',
-  'max_price',
-  'addon_scope',
-  'unit',
-  'max_quantity',
-  'visibility',
-];
+const resolveAddonImageUrl = addon => {
+  const image = addon?.image;
+  if (!image) return null;
+  if (typeof image === 'string') return image;
+
+  const rawUrl =
+    image.url ??
+    image.formats?.medium?.url ??
+    image.formats?.small?.url ??
+    image.formats?.large?.url ??
+    null;
+
+  if (!rawUrl) return null;
+  if (String(rawUrl).startsWith('http://') || String(rawUrl).startsWith('https://')) {
+    return rawUrl;
+  }
+
+  const base = String(process.env.PUBLIC_URL ?? '').replace(/\/$/, '');
+  return base ? `${base}${rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`}` : rawUrl;
+};
 
 const normalizeAddon = addon => ({
   id: addon?.id,
@@ -30,6 +38,7 @@ const normalizeAddon = addon => ({
   unit: addon?.unit ?? '',
   max_quantity: addon?.max_quantity ?? 1,
   visibility: addon?.visibility !== false,
+  image: resolveAddonImageUrl(addon),
 });
 
 const isCateringPackageEntry = entry => {
@@ -252,7 +261,7 @@ const attachReusableAddons = async (entry, strapi) => {
         id: entry.id,
       },
     },
-    select: addonFields,
+    populate: { image: true },
   });
 
   let scopedAddons = [];
@@ -261,14 +270,14 @@ const attachReusableAddons = async (entry, strapi) => {
       where: {
         addon_scope: 'catering',
       },
-      select: addonFields,
+      populate: { image: true },
     });
   } else if (isBartendingPackageEntry(entry)) {
     scopedAddons = await strapi.db.query('api::addon.addon').findMany({
       where: {
         addon_scope: 'bartending',
       },
-      select: addonFields,
+      populate: { image: true },
     });
   }
 

@@ -494,6 +494,9 @@ function buildAddonList(items = []) {
       unit: String(item?.unit ?? '').trim(),
       max_quantity: Number(item?.max_quantity ?? 1),
       visibility: item?.visibility !== false,
+      image:
+        (typeof item?.image === 'string' ? toAbsoluteStrapiUrl(item.image) : '') ||
+        resolveStrapiImageUrl(item?.image),
     }))
     .filter(item => {
       if (!item.name) return false
