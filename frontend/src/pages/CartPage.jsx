@@ -947,11 +947,16 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
     return groups
   }, [])
 
-  const isDecorCategory = category => {
+  const isHookahCategory = category => {
     const normalized = String(category ?? '')
       .trim()
       .toLowerCase()
-    return normalized === 'decor' || normalized === 'décor'
+    return (
+      normalized === 'sheesha' ||
+      normalized === 'hookah' ||
+      normalized.includes('sheesha') ||
+      normalized.includes('hookah')
+    )
   }
 
   return (
@@ -971,10 +976,9 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
             </span>
           </div>
 
-          {isDecorCategory(group.category) ? (
+          {isHookahCategory(group.category) ? (
             <p className="border-b border-[#95796033] bg-[#FBF8F3] px-4 py-2.5 text-[12px] leading-[1.5] text-[#6B5B4D]">
-              Prefer to decide later? Save decor packages to your wishlist and shop from there
-              whenever you&apos;re ready.
+              Save this package to wishlist and book later
             </p>
           ) : null}
 
