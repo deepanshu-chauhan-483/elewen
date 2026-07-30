@@ -180,9 +180,9 @@ export function buildBookingEmailContext(booking, extras = {}) {
 }
 
 /**
- * Mail 1 eligibility:
+ * Mail 1 eligibility (sent when admin sets status to confirmed):
  * - Non-Hookah: advance (>= advanceAmount) or full payment successful
- * - Hookah COD: no 30% required — admin confirm alone is enough
+ * - Hookah COD: no advance required — admin confirm alone is enough
  */
 export function canSendConfirmedEmail(booking) {
   const paymentSummary = booking?.paymentSummary ?? {}
@@ -259,7 +259,7 @@ async function dispatchLifecycleEmail({
   return { sent: true, emailType, subject }
 }
 
-/** Mail 1 — automatic when admin confirms (Hookah skips 30% rule). */
+/** Mail 1 — when admin confirms booking (after advance paid, or Hookah COD). */
 export async function sendBookingConfirmedEmail(bookingId, { force = false } = {}) {
   const booking = await loadBookingForEmail(bookingId)
   if (!booking) return { sent: false, reason: 'not_found' }

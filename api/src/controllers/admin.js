@@ -1679,14 +1679,16 @@ export async function updateAdminBookingStatus(req, res, next) {
       return nextBooking
     })
 
-    notify(booking.userId, {
-      type: 'booking_update',
-      title: `Booking updated to ${status.replaceAll('_', ' ')}`,
-      message: note || `Your booking status is now ${status.replaceAll('_', ' ')}.`,
-      linkUrl: `/dashboard/bookings/${bookingId}`,
-    }).catch(() => {})
+    // Confirmed uses sendBookingConfirmedEmail only (single in-app + email notification).
+    if (status !== 'confirmed') {
+      notify(booking.userId, {
+        type: 'booking_update',
+        title: `Booking updated to ${status.replaceAll('_', ' ')}`,
+        message: note || `Your booking status is now ${status.replaceAll('_', ' ')}.`,
+        linkUrl: `/dashboard/bookings/${bookingId}`,
+      }).catch(() => {})
+    }
 
-    // Lifecycle emails (fire-and-forget)
     if (status === 'confirmed' && booking.status !== 'confirmed') {
       sendBookingConfirmedEmail(bookingId)
         .then(result => {

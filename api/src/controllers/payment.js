@@ -100,10 +100,12 @@ async function ensureConfirmedBooking(payment, userId, note) {
   const booking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
   if (!booking) return null
 
-  if (
-    booking.status === 'new' &&
-    (payment.paymentType === 'advance' || payment.paymentType === 'full')
-  ) {
+  // Advance payment alone does not confirm — admin confirms after internal review.
+  if (payment.paymentType !== 'full') {
+    return booking
+  }
+
+  if (booking.status === 'new') {
     await prisma.booking.update({
       where: { id: payment.bookingId },
       data: { status: 'confirmed' },
@@ -118,7 +120,6 @@ async function ensureConfirmedBooking(payment, userId, note) {
       },
     })
 
-    // Mail 1 — idempotent; Hookah COD does not use this path
     sendBookingConfirmedEmail(payment.bookingId).catch(err =>
       console.error('[booking-email] confirmed after payment failed', payment.bookingId, err?.message)
     )
@@ -375,12 +376,10 @@ export const verifyPayment = async (req, res, next) => {
     if (!payment) return res.status(404).json({ error: 'Payment not found' })
     if (payment.booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
     if (payment.status === 'success') {
-      // Payment already verified (e.g. by webhook before verify was called).
-      // Still confirm booking in case the webhook's async booking update failed.
       const booking = await ensureConfirmedBooking(
         payment,
         userId,
-        'Confirmed on re-verify (webhook may have set payment success first)'
+        'Confirmed on re-verify after full payment (webhook may have set payment success first)'
       )
       return res.json({ message: 'Payment already verified', payment, booking })
     }
@@ -469,20 +468,22 @@ export const verifyPayment = async (req, res, next) => {
       },
     })
 
-    // Auto-confirm booking on advance payment (new → confirmed)
     const confirmedBooking = await ensureConfirmedBooking(
       payment,
       userId,
       allowTestBypass
         ? 'Auto-confirmed via test payment bypass'
-        : 'Auto-confirmed after advance payment received'
+        : 'Auto-confirmed after full payment received'
     )
 
     // Notify on successful payment
     notify(payment.booking.userId, {
       type: 'payment',
       title: 'Payment Received',
-      message: `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} ${payment.paymentType} payment confirmed.`,
+      message:
+        payment.paymentType === 'advance'
+          ? `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} advance payment confirmed. We will confirm your booking shortly.`
+          : `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} ${payment.paymentType} payment confirmed.`,
       linkUrl: `/dashboard/bookings/${payment.bookingId}`,
       emailTemplate: 'payment_success',
       emailData: {
@@ -560,41 +561,19 @@ export const handleWebhook = async (req, res) => {
           })
           const booking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
 
-          if (payment.paymentType === 'advance') {
-            if (booking?.status === 'new') {
-              await prisma.booking.update({
-                where: { id: payment.bookingId },
-                data: { status: 'confirmed' },
-              })
-              await prisma.bookingStatusLog.create({
-                data: {
-                  bookingId: payment.bookingId,
-                  previousStatus: 'new',
-                  newStatus: 'confirmed',
-                  note: 'Auto-confirmed via Cashfree payment webhook',
-                },
-              })
-              notify(booking.userId, {
-                type: 'payment',
-                title: 'Payment Received',
-                message: `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} advance payment confirmed.`,
-                linkUrl: `/dashboard/bookings/${payment.bookingId}`,
-                emailTemplate: 'payment_success',
-                emailData: {
-                  bookingId: payment.bookingId,
-                  amount: payment.amount,
-                  paymentType: payment.paymentType,
-                },
-              }).catch(() => {})
-
-              sendBookingConfirmedEmail(payment.bookingId).catch(err =>
-                console.error(
-                  '[booking-email] confirmed after webhook failed',
-                  payment.bookingId,
-                  err?.message
-                )
-              )
-            }
+          if (payment.paymentType === 'advance' && booking) {
+            notify(booking.userId, {
+              type: 'payment',
+              title: 'Payment Received',
+              message: `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} advance payment confirmed. We will confirm your booking shortly.`,
+              linkUrl: `/dashboard/bookings/${payment.bookingId}`,
+              emailTemplate: 'payment_success',
+              emailData: {
+                bookingId: payment.bookingId,
+                amount: payment.amount,
+                paymentType: payment.paymentType,
+              },
+            }).catch(() => {})
           }
 
           if (payment.paymentType === 'full') {
