@@ -1,4 +1,4 @@
-import { strapiServerDelete, strapiServerGet, strapiServerPost } from '../lib/strapi.js'
+import { strapiGetUserById, strapiServerDelete, strapiServerGet, strapiServerPost } from '../lib/strapi.js'
 import { enrichSavedPackages } from '../lib/dashboardData.js'
 import { cacheDel, cacheDelContaining } from '../lib/cache.js'
 
@@ -149,6 +149,34 @@ export const addWishlistItem = async (req, res, next) => {
       return res.status(400).json({ error: 'packageId is required' })
     }
 
+    if (!userId || Number.isNaN(Number(userId))) {
+      return res.status(401).json({
+        error: 'Your session is invalid. Please log out and log in again, then save to wishlist.',
+        code: 'INVALID_USER_SESSION',
+      })
+    }
+
+    // Strapi rejects saved-package create if the linked user row is missing.
+    let strapiUser = null
+    try {
+      strapiUser = await strapiGetUserById(userId)
+    } catch (userLookupErr) {
+      if (userLookupErr?.status === 404) {
+        return res.status(401).json({
+          error: 'Your account was not found in Strapi. Please log out and log in again.',
+          code: 'STRAPI_USER_MISSING',
+        })
+      }
+      throw userLookupErr
+    }
+
+    if (!strapiUser?.id) {
+      return res.status(401).json({
+        error: 'Your account was not found in Strapi. Please log out and log in again.',
+        code: 'STRAPI_USER_MISSING',
+      })
+    }
+
     const packageLookup = await strapiServerGet(
       `/api/packages?filters[id][$eq]=${packageId}&pagination[pageSize]=1&publicationState=preview`
     )
@@ -169,8 +197,8 @@ export const addWishlistItem = async (req, res, next) => {
 
     const created = await strapiServerPost('/saved-packages', {
       data: {
-        user: Number(userId),
-        package: Number(packageId),
+        user: Number(strapiUser.id),
+        package: Number(pkg.id ?? packageId),
         custom_config: customConfig,
       },
     })
@@ -192,6 +220,17 @@ export const addWishlistItem = async (req, res, next) => {
 
     res.status(201).json({ item, saved: true })
   } catch (err) {
+    const message = String(err?.message ?? '')
+    if (
+      message.includes('plugin::users-permissions.user') ||
+      message.includes('associated with this entity do not exist')
+    ) {
+      return res.status(401).json({
+        error: 'Your account was not found in Strapi. Please log out and log in again, then save to wishlist.',
+        code: 'STRAPI_USER_MISSING',
+        fields: err.fields ?? undefined,
+      })
+    }
     next(err)
   }
 }
