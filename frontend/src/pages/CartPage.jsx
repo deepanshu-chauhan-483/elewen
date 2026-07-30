@@ -1356,7 +1356,7 @@ function PriceSummaryCard({
             </svg>
           </div>
         </button>
-        {isCheckoutDisabled ? (
+        {isCheckoutDisabled && checkoutDisabledMessage ? (
           <p className="mt-3 text-sm text-[#8B8B8B]">{checkoutDisabledMessage}</p>
         ) : null}
       </div>
@@ -1528,8 +1528,9 @@ export default function CartPage() {
   const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
   const isMixedSheeshaCart = cartClassification.isMixedSheeshaCart
   const isCheckoutDisabled = !isPincodeValid || isMixedSheeshaCart
+  // Mixed-cart guidance lives under the Hookah section — not under checkout.
   const checkoutDisabledMessage = isMixedSheeshaCart
-    ? 'Remove Hookah or other services to continue — mixed carts cannot checkout together.'
+    ? ''
     : 'Enter your pincode to enable checkout.'
 
   const showSampleTasteBooking = useMemo(
