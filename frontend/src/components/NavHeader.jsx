@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
@@ -316,12 +316,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     searchQuery.trim().length >= 2
       ? filterPackagesBySearch(allPackages, searchQuery).slice(0, 8)
       : []
-  const searchResults = useMemo(() => {
-    if (hookahAgeConfirmed) return rawSearchResults
-    return rawSearchResults.filter(pkg => !isSheeshaPackageRecord(pkg))
-  }, [hookahAgeConfirmed, rawSearchResults])
-  const hasBlockedHookahResults =
-    !hookahAgeConfirmed && rawSearchResults.some(pkg => isSheeshaPackageRecord(pkg))
+  // Always show Hookah matches in the dropdown; age gate runs on click.
+  const searchResults = rawSearchResults
+  const hasHookahSearchHits = rawSearchResults.some(pkg => isSheeshaPackageRecord(pkg))
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { pathname } = useLocation()
@@ -537,8 +534,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     setSearchOpen(true)
   }
 
-  const requestHookahAgeThen = action => {
-    if (hookahAgeConfirmed || isHookahAgeConfirmed()) {
+  const requestHookahAgeThen = (action, { force = false } = {}) => {
+    if (!force && (hookahAgeConfirmed || isHookahAgeConfirmed())) {
       setHookahAgeConfirmedState(true)
       action()
       return
@@ -551,7 +548,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     setHookahAgeConfirmed()
     setHookahAgeConfirmedState(true)
     setShowHookahAgeModal(false)
-    dismissedHookahQueryRef.current = ''
+    // Prevent the search-query effect from immediately reopening the modal.
+    dismissedHookahQueryRef.current = searchQuery.trim().toLowerCase()
     const action = pendingHookahAction
     setPendingHookahAction(null)
     action?.()
@@ -571,8 +569,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       setOpen(false)
     }
 
-    if (isSheeshaPackageRecord(pkg)) {
-      requestHookahAgeThen(go)
+    // Opening Hookah from search always asks for age confirmation first.
+    if (isSheeshaPackageRecord(pkg) || isHookahSearchQuery(searchQuery)) {
+      requestHookahAgeThen(go, { force: true })
       return
     }
 
@@ -590,8 +589,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       setOpen(false)
     }
 
-    if (isHookahSearchQuery(query) || hasBlockedHookahResults) {
-      requestHookahAgeThen(go)
+    if (isHookahSearchQuery(query) || hasHookahSearchHits) {
+      requestHookahAgeThen(go, { force: true })
       return
     }
 
@@ -599,12 +598,14 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   }
 
   useEffect(() => {
-    if (hookahAgeConfirmed) return
+    if (hookahAgeConfirmed || isHookahAgeConfirmed()) return
+    if (!isHookahSearchQuery(searchQuery) && !hasHookahSearchHits) return
     const normalizedQuery = searchQuery.trim().toLowerCase()
-    if (!isHookahSearchQuery(normalizedQuery) && !hasBlockedHookahResults) return
     if (dismissedHookahQueryRef.current === normalizedQuery) return
+    if (showHookahAgeModal) return
+    setPendingHookahAction(null)
     setShowHookahAgeModal(true)
-  }, [hasBlockedHookahResults, hookahAgeConfirmed, searchQuery])
+  }, [hasHookahSearchHits, hookahAgeConfirmed, searchQuery, showHookahAgeModal])
 
   return (
     <>

@@ -18,7 +18,7 @@ import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDel
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
 import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
-import { classifyCartPackages } from '../lib/sheeshaCheckout'
+import { classifyCartPackages, MIXED_HOOKAH_CART_MESSAGE } from '../lib/sheeshaCheckout'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
@@ -947,6 +947,13 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
     return groups
   }, [])
 
+  const isDecorCategory = category => {
+    const normalized = String(category ?? '')
+      .trim()
+      .toLowerCase()
+    return normalized === 'decor' || normalized === 'décor'
+  }
+
   return (
     <div className="space-y-4">
       {groupedItems.map(group => (
@@ -963,6 +970,13 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
               {group.packages.reduce((sum, item) => sum + getCartItemQuantity(item), 0)} packages
             </span>
           </div>
+
+          {isDecorCategory(group.category) ? (
+            <p className="border-b border-[#95796033] bg-[#FBF8F3] px-4 py-2.5 text-[12px] leading-[1.5] text-[#6B5B4D]">
+              Prefer to decide later? Save decor packages to your wishlist and shop from there
+              whenever you&apos;re ready.
+            </p>
+          ) : null}
 
           <div className="space-y-4 bg-[#FFFFFF] p-4">
             {group.packages.map(item => {
@@ -1137,6 +1151,7 @@ function PriceSummaryCard({
   showSampleTasteBooking = false,
   pincodeCard = null,
   isCheckoutDisabled = false,
+  checkoutDisabledMessage = 'Enter your pincode to enable checkout.',
   cateringDiscountSettings = null,
   deliveryCharge = null,
 }) {
@@ -1338,7 +1353,7 @@ function PriceSummaryCard({
           </div>
         </button>
         {isCheckoutDisabled ? (
-          <p className="mt-3 text-sm text-[#8B8B8B]">Enter your pincode to enable checkout.</p>
+          <p className="mt-3 text-sm text-[#8B8B8B]">{checkoutDisabledMessage}</p>
         ) : null}
       </div>
     </div>
@@ -1506,7 +1521,12 @@ export default function CartPage() {
 
   const hasItems = cartItems.length > 0
   const hasSingleItem = cartItems.length === 1
-  const isCheckoutDisabled = !isPincodeValid
+  const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
+  const isMixedSheeshaCart = cartClassification.isMixedSheeshaCart
+  const isCheckoutDisabled = !isPincodeValid || isMixedSheeshaCart
+  const checkoutDisabledMessage = isMixedSheeshaCart
+    ? 'Remove Hookah or other services to continue — mixed carts cannot checkout together.'
+    : 'Enter your pincode to enable checkout.'
 
   const showSampleTasteBooking = useMemo(
     () => cartItems.some(isSampleTasteEligibleItem),
@@ -1735,6 +1755,15 @@ export default function CartPage() {
         <p className="text-gray-500">Check your selections and confirm details before checkout.</p>
       </div>
 
+      {isMixedSheeshaCart ? (
+        <div
+          role="alert"
+          className="mb-6 rounded-[12px] border border-[#D4A574] bg-[#FFF8F0] px-4 py-3 text-[13px] leading-[1.55] text-[#591902] md:text-[14px]"
+        >
+          {MIXED_HOOKAH_CART_MESSAGE}
+        </div>
+      ) : null}
+
       {loading ? (
         <div className="rounded-2xl border border-[#95796066] bg-white p-8 text-center text-gray-500">
           Loading your cart...
@@ -1806,19 +1835,23 @@ export default function CartPage() {
               cartItems={cartItems}
               cart={cart}
               singleItem={hasSingleItem}
-              onCheckout={() =>
-                isLoggedIn
-                  ? navigate('/checkout', {
-                      state: {
-                        showCheckoutToast: true,
-                        checkoutToastMessage,
-                      },
-                    })
-                  : navigate('/login', { state: { from: '/checkout' } })
-              }
+              onCheckout={() => {
+                if (isMixedSheeshaCart) return
+                if (isLoggedIn) {
+                  navigate('/checkout', {
+                    state: {
+                      showCheckoutToast: true,
+                      checkoutToastMessage,
+                    },
+                  })
+                  return
+                }
+                navigate('/login', { state: { from: '/checkout' } })
+              }}
               onSampleTasteBooking={handleSampleTasteBooking}
               showSampleTasteBooking={showSampleTasteBooking}
               isCheckoutDisabled={isCheckoutDisabled}
+              checkoutDisabledMessage={checkoutDisabledMessage}
               cateringDiscountSettings={cateringDiscountSettings}
               deliveryCharge={activeDeliveryCharge}
               pincodeCard={

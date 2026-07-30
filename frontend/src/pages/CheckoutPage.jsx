@@ -563,7 +563,6 @@ export default function CheckoutPage() {
     data: paymentCancelledToastMessage = 'Payment cancelled. You can continue from checkout anytime.',
   } = usePaymentCancelledToastMessage()
   const hasShownCheckoutToastRef = useRef(false)
-  const hasShownMixedHookahToastRef = useRef(false)
   const draftBookingRef = useRef(null)
   const paymentFailureToastShownRef = useRef(false)
   const queryParams = new URLSearchParams(location.search)
@@ -715,12 +714,6 @@ export default function CheckoutPage() {
     navigate,
     showToast,
   ])
-
-  useEffect(() => {
-    if (!isMixedSheeshaCheckout || hasShownMixedHookahToastRef.current) return
-    hasShownMixedHookahToastRef.current = true
-    showToast({ message: MIXED_HOOKAH_CART_MESSAGE, duration: 4500 })
-  }, [isMixedSheeshaCheckout, showToast])
 
   useEffect(() => {
     try {
@@ -1174,6 +1167,18 @@ export default function CheckoutPage() {
         <p className="mt-2 text-gray-500">{pageContent.intro}</p>
       </div>
 
+      {isMixedSheeshaCheckout ? (
+        <div
+          role="alert"
+          className="mb-6 rounded-[12px] border border-[#D4A574] bg-[#FFF8F0] px-4 py-3 text-[13px] leading-[1.55] text-[#591902] md:text-[14px]"
+        >
+          {MIXED_HOOKAH_CART_MESSAGE}
+          <Link to="/cart" className="mt-2 block font-medium underline underline-offset-2">
+            Back to cart to fix this
+          </Link>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-[clamp(24px,5vw,100px)] md:flex-row">
         <div className="flex-1 space-y-6">
           {isSampleTastingCheckout ? (
@@ -1421,10 +1426,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               onClick={() => {
-                if (isMixedSheeshaCheckout) {
-                  showToast({ message: MIXED_HOOKAH_CART_MESSAGE, duration: 4500 })
-                  return
-                }
+                if (isMixedSheeshaCheckout) return
                 if (isSheeshaOnlyCheckout) {
                   setShowAgeModal(true)
                   return
