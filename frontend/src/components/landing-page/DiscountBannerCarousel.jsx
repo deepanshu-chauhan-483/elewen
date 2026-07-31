@@ -9,10 +9,10 @@ function formatDiscount(banner) {
   return `₹${value.toLocaleString('en-IN')} OFF`
 }
 
-function CouponPromoCard({ banner }) {
+function CouponPromoChip({ banner }) {
   const code = String(banner?.code ?? '').toUpperCase()
   const discount = formatDiscount(banner)
-  const title = banner?.title?.trim() || 'Special Offer'
+  const title = banner?.title?.trim()
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
@@ -37,23 +37,19 @@ function CouponPromoCard({ banner }) {
 
   return (
     <article className="discount-banner-card">
-      <div className="discount-banner-card-glow" aria-hidden="true" />
-      <p className="discount-banner-eyebrow">{title}</p>
-      <p className="discount-banner-discount">{discount}</p>
-      <div className="discount-banner-code-row">
-        <span className="discount-banner-code" title="Coupon code">
-          {code}
-        </span>
-        <button
-          type="button"
-          className="discount-banner-copy"
-          onClick={handleCopy}
-          aria-label={`Copy coupon code ${code}`}
-        >
-          {copied ? 'Copied!' : 'Copy code'}
-        </button>
-      </div>
-      <p className="discount-banner-hint">Use at checkout for instant savings</p>
+      <span className="discount-banner-discount">{discount}</span>
+      {title ? <span className="discount-banner-eyebrow">{title}</span> : null}
+      <span className="discount-banner-code" title="Coupon code">
+        {code}
+      </span>
+      <button
+        type="button"
+        className="discount-banner-copy"
+        onClick={handleCopy}
+        aria-label={`Copy coupon code ${code}`}
+      >
+        {copied ? 'Copied!' : 'Copy'}
+      </button>
     </article>
   )
 }
@@ -68,17 +64,18 @@ export default function DiscountBannerCarousel() {
   if (!banners.length) return null
 
   // Enough duplicates for a seamless long track even with 1–2 offers
-  const loop = banners.length === 1 ? [...banners, ...banners, ...banners, ...banners] : [...banners, ...banners]
+  const loop =
+    banners.length === 1
+      ? [...banners, ...banners, ...banners, ...banners, ...banners, ...banners]
+      : [...banners, ...banners, ...banners]
   const track = [...loop, ...loop]
 
   return (
     <section aria-label="Discount offers" className="discount-banner-carousel">
-      <div className="discount-banner-inner">
-        <div className="discount-banner-track">
-          {track.map((banner, index) => (
-            <CouponPromoCard key={`${banner.id ?? banner.code}-${index}`} banner={banner} />
-          ))}
-        </div>
+      <div className="discount-banner-track">
+        {track.map((banner, index) => (
+          <CouponPromoChip key={`${banner.id ?? banner.code}-${index}`} banner={banner} />
+        ))}
       </div>
     </section>
   )
