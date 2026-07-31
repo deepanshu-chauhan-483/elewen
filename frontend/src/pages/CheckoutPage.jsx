@@ -530,6 +530,13 @@ function SpecialRequest({ preferences, onChange, onSubmit, message }) {
   )
 }
 
+function buildVenueAddress({ line1 = '', line2 = '', floor = '' } = {}) {
+  return [line1, line2, floor ? `Floor: ${floor}` : '']
+    .map(value => String(value ?? '').trim())
+    .filter(Boolean)
+    .join(', ')
+}
+
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -584,7 +591,10 @@ export default function CheckoutPage() {
     cart?.eventDate ? String(cart.eventDate).slice(0, 10) : ''
   )
   const [eventTime, setEventTime] = useState('')
-  const [eventAddress, setEventAddress] = useState(cart?.eventCity ?? '')
+  const [addressLine1, setAddressLine1] = useState(cart?.eventCity ?? '')
+  const [addressLine2, setAddressLine2] = useState('')
+  const [addressFloor, setAddressFloor] = useState('')
+  const [hasLift, setHasLift] = useState('')
   const [pinCode, setPinCode] = useState('')
   const [pinCodeMessage, setPinCodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
@@ -592,11 +602,25 @@ export default function CheckoutPage() {
   const [guestCount, setGuestCount] = useState(
     cart?.guestCount != null ? String(cart.guestCount) : ''
   )
+  const [setupArrivalTime, setSetupArrivalTime] = useState('')
+  const [eventDayContactName, setEventDayContactName] = useState('')
+  const [eventDayContactPhone, setEventDayContactPhone] = useState('')
+  const [parkingInstructions, setParkingInstructions] = useState('')
   const [specialRequest, setSpecialRequest] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('upi')
   const [formError, setFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAgeModal, setShowAgeModal] = useState(false)
+
+  const eventAddress = useMemo(
+    () =>
+      buildVenueAddress({
+        line1: addressLine1,
+        line2: addressLine2,
+        floor: addressFloor,
+      }),
+    [addressFloor, addressLine1, addressLine2]
+  )
 
   const packageLookup = useMemo(
     () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
@@ -669,23 +693,30 @@ export default function CheckoutPage() {
         detailsTitle: 'Your Details',
         detailsIntro: "We'll use these details to confirm and coordinate your event",
         ctaLabel: 'Confirm Booking',
+        ctaTagline: '',
       }
     : isSheeshaOnlyCheckout
       ? {
           heading: 'Checkout',
-          intro: 'Review your Hookah booking and confirm pay-on-delivery.',
+          intro:
+            "We can't wait to bring your event to life. Share a few details and we'll take it from here.",
           summaryTitle: 'Booking Summary',
-          detailsTitle: 'Event Information',
-          detailsIntro: "We'll use these details to plan and coordinate your Hookah delivery.",
+          detailsTitle: 'Customer Form',
+          detailsIntro:
+            "We can't wait to bring your event to life. Share a few details and we'll take it from here.",
           ctaLabel: 'Confirm booking (Pay on delivery)',
+          ctaTagline: 'Let it all come together!!',
         }
       : {
           heading: 'Checkout',
-          intro: 'Review your event packages and complete your booking.',
+          intro:
+            "We can't wait to bring your event to life. Share a few details and we'll take it from here.",
           summaryTitle: 'Booking Summary',
-          detailsTitle: 'Event Information',
-          detailsIntro: "We'll use these details to plan and coordinate your event.",
-          ctaLabel: 'Pay Advance & Confirm Booking',
+          detailsTitle: 'Customer Form',
+          detailsIntro:
+            "We can't wait to bring your event to life. Share a few details and we'll take it from here.",
+          ctaLabel: 'Proceed to checkout',
+          ctaTagline: 'Let it all come together!!',
         }
 
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
@@ -777,7 +808,7 @@ export default function CheckoutPage() {
 
     if (
       !isSampleTastingCheckout &&
-      (!eventDate || !eventAddress.trim() || !guestCount || Number(guestCount) < 1)
+      (!eventDate || !addressLine1.trim() || !guestCount || Number(guestCount) < 1)
     ) {
       setFormError('Please complete the event information form before payment.')
       return
@@ -871,9 +902,17 @@ export default function CheckoutPage() {
             `Email: ${email.trim()}`,
             `Event date: ${eventDate}`,
             `Event time: ${eventTime || 'Not provided'}`,
-            `Event address: ${eventAddress.trim()}`,
+            `Event address line 1: ${addressLine1.trim() || 'Not provided'}`,
+            `Event address line 2: ${addressLine2.trim() || 'Not provided'}`,
+            `Event location floor: ${addressFloor.trim() || 'Not provided'}`,
+            `Event address: ${eventAddress || 'Not provided'}`,
             `PIN code: ${pinCode || 'Not provided'}`,
+            `Lift in building: ${hasLift || 'Not provided'}`,
             `Guest count: ${guestCount}`,
+            `Earliest setup arrival time: ${setupArrivalTime || 'Not provided'}`,
+            `Event-day contact: ${eventDayContactName.trim() || 'Not provided'}`,
+            `Event-day contact mobile: ${eventDayContactPhone.trim() || 'Not provided'}`,
+            `Parking or loading instructions: ${parkingInstructions.trim() || 'Not provided'}`,
             `Special request: ${specialRequest.trim() || 'Not provided'}`,
             `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
           ].join('\n')
@@ -912,8 +951,16 @@ export default function CheckoutPage() {
               eventDate: isSampleTastingCheckout ? sessionDetails.dateLabel : eventDate,
               eventTime: isSampleTastingCheckout ? sessionDetails.timeLabel : eventTime,
               eventAddress: isSampleTastingCheckout ? sessionDetails.address : eventAddress,
+              addressLine1,
+              addressLine2,
+              addressFloor,
+              hasLift,
               pinCode,
               guestCount,
+              setupArrivalTime,
+              eventDayContactName,
+              eventDayContactPhone,
+              parkingInstructions,
               specialRequest,
               checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
               selectedItems: itemSummaries.map(({ item, summary }) => ({
@@ -971,8 +1018,16 @@ export default function CheckoutPage() {
               eventDate: isSampleTastingCheckout ? sessionDetails.dateLabel : eventDate,
               eventTime: isSampleTastingCheckout ? sessionDetails.timeLabel : eventTime,
               eventAddress: isSampleTastingCheckout ? sessionDetails.address : eventAddress,
+              addressLine1,
+              addressLine2,
+              addressFloor,
+              hasLift,
               pinCode,
               guestCount,
+              setupArrivalTime,
+              eventDayContactName,
+              eventDayContactPhone,
+              parkingInstructions,
               specialRequest,
               checkoutMode: isSampleTastingCheckout ? 'sample-tasting' : 'standard',
               selectedItems: itemSummaries.map(({ item, summary }) => ({
@@ -1012,7 +1067,7 @@ export default function CheckoutPage() {
       return
     }
 
-    if (!eventDate || !eventAddress.trim() || !guestCount || Number(guestCount) < 1) {
+    if (!eventDate || !addressLine1.trim() || !guestCount || Number(guestCount) < 1) {
       setFormError('Please complete the event information form before confirming.')
       return
     }
@@ -1056,9 +1111,17 @@ export default function CheckoutPage() {
         `Email: ${email.trim()}`,
         `Event date: ${eventDate}`,
         `Event time: ${eventTime || 'Not provided'}`,
-        `Event address: ${eventAddress.trim()}`,
+        `Event address line 1: ${addressLine1.trim() || 'Not provided'}`,
+        `Event address line 2: ${addressLine2.trim() || 'Not provided'}`,
+        `Event location floor: ${addressFloor.trim() || 'Not provided'}`,
+        `Event address: ${eventAddress || 'Not provided'}`,
         `PIN code: ${pinCode || 'Not provided'}`,
+        `Lift in building: ${hasLift || 'Not provided'}`,
         `Guest count: ${guestCount}`,
+        `Earliest setup arrival time: ${setupArrivalTime || 'Not provided'}`,
+        `Event-day contact: ${eventDayContactName.trim() || 'Not provided'}`,
+        `Event-day contact mobile: ${eventDayContactPhone.trim() || 'Not provided'}`,
+        `Parking or loading instructions: ${parkingInstructions.trim() || 'Not provided'}`,
         `Special request: ${specialRequest.trim() || 'Not provided'}`,
         `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
         'Payment method: Pay on delivery (Hookah COD)',
@@ -1091,8 +1154,16 @@ export default function CheckoutPage() {
             eventDate,
             eventTime,
             eventAddress,
+            addressLine1,
+            addressLine2,
+            addressFloor,
+            hasLift,
             pinCode,
             guestCount,
+            setupArrivalTime,
+            eventDayContactName,
+            eventDayContactPhone,
+            parkingInstructions,
             specialRequest,
             checkoutMode: 'sheesha-cod',
             selectedItems: itemSummaries.map(({ item, summary }) => ({
@@ -1321,6 +1392,13 @@ export default function CheckoutPage() {
             <p className="mt-3 text-[14px] text-[#7A7A7A]">{pageContent.detailsIntro}</p>
 
             <div className="mt-10 space-y-4">
+              <h3
+                className="text-[18px] font-semibold text-[#2C2C2C]"
+                style={{ fontFamily: "'Poppins'" }}
+              >
+                Basic Details
+              </h3>
+
               <input
                 type="text"
                 value={fullName}
@@ -1331,18 +1409,18 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <input
-                  type="text"
-                  value={phone}
-                  onChange={event => setPhone(event.target.value)}
-                  placeholder="Phone Number"
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
-                />
-
-                <input
                   type="email"
                   value={email}
                   onChange={event => setEmail(event.target.value)}
                   placeholder="Email Address"
+                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                />
+
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={event => setPhone(event.target.value)}
+                  placeholder="Phone Number"
                   className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                 />
               </div>
@@ -1358,24 +1436,44 @@ export default function CheckoutPage() {
                 </h3>
 
                 <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <DateTimePicker
-                    type="date"
-                    min={getMinEventDate()}
-                    value={eventDate}
-                    onChange={event => setEventDate(event.target.value)}
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
-                  />
-                  <DateTimePicker
-                    type="time"
-                    value={eventTime}
-                    onChange={event => setEventTime(event.target.value)}
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                  <div className="space-y-2">
+                    <p className="text-[12px] text-[#7A7A7A]">Event Date</p>
+                    <DateTimePicker
+                      type="date"
+                      min={getMinEventDate()}
+                      value={eventDate}
+                      onChange={event => setEventDate(event.target.value)}
+                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[12px] text-[#7A7A7A]">What time does the event start</p>
+                    <DateTimePicker
+                      type="time"
+                      value={eventTime}
+                      onChange={event => setEventTime(event.target.value)}
+                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={addressLine1}
+                    onChange={event => setAddressLine1(event.target.value)}
+                    placeholder="Event Location / Venue Address (first line)"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none md:col-span-2"
                   />
                   <input
                     type="text"
-                    value={eventAddress}
-                    onChange={event => setEventAddress(event.target.value)}
-                    placeholder="Event Address"
+                    value={addressLine2}
+                    onChange={event => setAddressLine2(event.target.value)}
+                    placeholder="Second line"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={addressFloor}
+                    onChange={event => setAddressFloor(event.target.value)}
+                    placeholder="Event location floor"
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                   />
                   <input
@@ -1388,6 +1486,18 @@ export default function CheckoutPage() {
                     placeholder="PIN Code"
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                   />
+                  <div className="space-y-2">
+                    <p className="text-[12px] text-[#7A7A7A]">Is there a lift in your building?</p>
+                    <select
+                      value={hasLift}
+                      onChange={event => setHasLift(event.target.value)}
+                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                    >
+                      <option value="">Select</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
                   {pinCodeMessage ? (
                     <p
                       className={`text-[12px] md:col-span-2 ${
@@ -1402,7 +1512,39 @@ export default function CheckoutPage() {
                     min="1"
                     value={guestCount}
                     onChange={event => setGuestCount(event.target.value)}
-                    placeholder="Number of Guests"
+                    placeholder="Guest Count"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                  />
+                  <div className="space-y-2">
+                    <p className="text-[12px] text-[#7A7A7A]">
+                      What is the earliest time that our team can reach the venue for set-up
+                    </p>
+                    <DateTimePicker
+                      type="time"
+                      value={setupArrivalTime}
+                      onChange={event => setSetupArrivalTime(event.target.value)}
+                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={eventDayContactName}
+                    onChange={event => setEventDayContactName(event.target.value)}
+                    placeholder="Event-day contact person"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={eventDayContactPhone}
+                    onChange={event => setEventDayContactPhone(event.target.value)}
+                    placeholder="Event-day contact mobile number"
+                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={parkingInstructions}
+                    onChange={event => setParkingInstructions(event.target.value)}
+                    placeholder="Parking or loading instructions (if applicable)"
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none md:col-span-2"
                   />
                 </div>
@@ -1456,6 +1598,11 @@ export default function CheckoutPage() {
                 </svg>
               </div>
             </button>
+            {pageContent.ctaTagline ? (
+              <p className="mt-3 text-center text-sm font-medium text-[#591902]">
+                {pageContent.ctaTagline}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
