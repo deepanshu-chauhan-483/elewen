@@ -4,7 +4,21 @@ import { useToast } from '../components/common/useToast'
 import { getFieldErrors, getGlobalErrorMessage } from '../lib/formErrors'
 import { submitVendorRegistration } from '../lib/api'
 
-const SERVICE_OPTIONS = ['Decor', 'Catering Services', 'Sheesha Services', 'Bartending']
+const SERVICE_OPTIONS = [
+  'Decorator',
+  'Catering Services',
+  'Bartending Services',
+  'Production',
+  'Fabrication (Tenting)',
+  'Merchandise & Stationary / Printing',
+  'Photographer / Videographer',
+  'Designer 2D / 3D',
+  'Tech Engagements',
+  'Artist - Emcee, Dancer, Make-up Artist, Art Installation etc.',
+  'Sound / Light / Technical Support',
+  'Other',
+]
+
 const EVENT_TYPE_OPTIONS = [
   'Wedding',
   'Birthday',
@@ -13,6 +27,13 @@ const EVENT_TYPE_OPTIONS = [
   'Corporate',
   'Baby Shower',
   'Private Dinner',
+]
+
+const VERIFICATION_DOCUMENT_OPTIONS = [
+  'Aadhaar Card',
+  'PAN Card',
+  'Business Registration Certificate',
+  'GST Certificate',
 ]
 
 const INITIAL_FORM = {
@@ -28,6 +49,7 @@ const INITIAL_FORM = {
   eventType: '',
   portfolioLink: '',
   workSample: null,
+  verificationDocumentType: '',
   verificationDocument: null,
 }
 
@@ -226,7 +248,7 @@ function MultiSelect({ label, selected, onChange, error }) {
   )
 }
 
-function Select({ label, value, onChange, error }) {
+function Select({ label, value, onChange, error, options = EVENT_TYPE_OPTIONS, placeholder }) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[14px] text-[#364022]">{label}</label>
@@ -235,9 +257,9 @@ function Select({ label, value, onChange, error }) {
         <CustomSelect
           variant="form"
           value={value}
-          options={EVENT_TYPE_OPTIONS}
+          options={options}
           onChange={nextValue => onChange?.({ target: { value: nextValue } })}
-          placeholder="Select event type"
+          placeholder={placeholder || 'Select'}
           renderArrow={({ isOpen }) => <DropdownArrow isOpen={isOpen} />}
           ariaLabel={label}
         />
@@ -252,7 +274,7 @@ function Upload({ label, full, file, onChange, accept, error }) {
 
   return (
     <div className={`flex flex-col gap-2 ${full ? 'w-full' : ''}`}>
-      <label className="text-[14px] text-[#364022]">{label}</label>
+      {label ? <label className="text-[14px] text-[#364022]">{label}</label> : null}
 
       <input
         ref={inputRef}
@@ -337,8 +359,10 @@ export default function VendorRegistration() {
     if (!formData.websiteSocialPortfolio.trim())
       nextErrors.websiteSocialPortfolio = 'Website / Social / Portfolio is required'
     if (!formData.serviceCategories.length)
-      nextErrors.serviceCategories = 'Select at least one service'
+      nextErrors.serviceCategories = 'Select at least one service category'
     if (!formData.eventType) nextErrors.eventType = 'Select an event type'
+    if (!formData.verificationDocumentType)
+      nextErrors.verificationDocumentType = 'Select a verification document type'
     if (!formData.verificationDocument)
       nextErrors.verificationDocument = 'Verification document is required'
 
@@ -378,7 +402,9 @@ export default function VendorRegistration() {
         event_types: [formData.eventType],
         portfolio_link: formData.portfolioLink.trim(),
         experience_years: payloadPreview.experienceYears,
-        description: '',
+        description: formData.verificationDocumentType
+          ? `Verification document type: ${formData.verificationDocumentType}`
+          : '',
         work_sample: workSamplePayload,
         verification_document: verificationDocumentPayload,
       })
@@ -400,6 +426,7 @@ export default function VendorRegistration() {
         portfolio_link: 'portfolioLink',
         established_in: 'establishedIn',
         team_size: 'teamSize',
+        description: 'verificationDocumentType',
       })
 
       if (Object.keys(nextFieldErrors).length > 0) {
@@ -519,12 +546,12 @@ export default function VendorRegistration() {
               className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
               style={{ fontFamily: "'Malgin', serif" }}
             >
-              Company Details
+              About Your Company
             </h2>
 
             <div className="flex flex-col gap-[clamp(20px,3vw,30px)]">
               <MultiSelect
-                label="Services You Offer*"
+                label="Select your service category (You may select more than one category)*"
                 selected={formData.serviceCategories}
                 onChange={serviceCategories => {
                   setFormData(previous => ({ ...previous, serviceCategories }))
@@ -534,27 +561,29 @@ export default function VendorRegistration() {
                 error={fieldErrors.serviceCategories}
               />
               <Select
-                label="Event Types You Cater To*"
+                label="What kind of events do you usually cater to?*"
                 value={formData.eventType}
                 onChange={event => {
                   setFormData(previous => ({ ...previous, eventType: event.target.value }))
                   setSubmitError('')
                   setFieldErrors(previous => ({ ...previous, eventType: '' }))
                 }}
+                options={EVENT_TYPE_OPTIONS}
+                placeholder="Select event type"
                 error={fieldErrors.eventType}
               />
 
               <div className="grid md:grid-cols-2 gap-[clamp(20px,3vw,40px)]">
                 <Input
-                  label="Portfolio Link"
+                  label="Share links of your best recent projects*"
                   name="portfolioLink"
                   value={formData.portfolioLink}
                   onChange={handleInputChange}
-                  placeholder="Paste your portfolio link"
+                  placeholder="Paste project / portfolio links"
                   error={fieldErrors.portfolioLink}
                 />
                 <Upload
-                  label="Upload Work Samples"
+                  label="Share pictures of your best recent projects"
                   file={formData.workSample}
                   onChange={file => setFileValue('workSample', file)}
                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
@@ -562,14 +591,35 @@ export default function VendorRegistration() {
                 />
               </div>
 
-              <Upload
-                label="Verification Document*"
-                full
-                file={formData.verificationDocument}
-                onChange={file => setFileValue('verificationDocument', file)}
-                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                error={fieldErrors.verificationDocument}
-              />
+              <div className="flex flex-col gap-3">
+                <p className="text-[14px] text-[#364022]">
+                  Upload any 1 of the following documents for verification. (This is for internal use
+                  only and ensures credibility on the platform)*
+                </p>
+                <Select
+                  label="Document type*"
+                  value={formData.verificationDocumentType}
+                  onChange={event => {
+                    setFormData(previous => ({
+                      ...previous,
+                      verificationDocumentType: event.target.value,
+                    }))
+                    setSubmitError('')
+                    setFieldErrors(previous => ({ ...previous, verificationDocumentType: '' }))
+                  }}
+                  options={VERIFICATION_DOCUMENT_OPTIONS}
+                  placeholder="Select document type"
+                  error={fieldErrors.verificationDocumentType}
+                />
+                <Upload
+                  label=""
+                  full
+                  file={formData.verificationDocument}
+                  onChange={file => setFileValue('verificationDocument', file)}
+                  accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                  error={fieldErrors.verificationDocument}
+                />
+              </div>
             </div>
 
             {submitError ? (
