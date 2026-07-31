@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  SectionLoadingState,
-  StatusBadge,
-} from '../components/ui/AdminUI'
+import { ErrorState, LoadingState, SectionLoadingState } from '../components/ui/AdminUI'
 import {
   useAdminBooking,
   useAdminMessageThread,
@@ -16,6 +10,10 @@ import {
 import { formatDate } from '../lib/formatters'
 
 const PAGE_SIZE = 10
+
+// ---------------------------------------------------------------------------
+// Helpers — matched to customer MessagesUpdates
+// ---------------------------------------------------------------------------
 
 function isPreviousThread(thread) {
   return ['completed', 'cancelled', 'canceled'].includes(
@@ -59,39 +57,24 @@ function getInitials(name = '') {
 }
 
 function getBookingTitle(booking) {
-  const title =
-    booking?.package?.title ||
-    booking?.event?.name ||
-    booking?.displaySubtitle ||
-    booking?.detailSubtitle ||
-    booking?.selectedItemsSummary ||
-    ''
+  const title = booking?.package?.title || booking?.event?.name || ''
   const trimmed = String(title).trim()
-  // Never show raw booking UUIDs in the chat list
   if (!trimmed || /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(trimmed)) return 'Booking'
   return trimmed
 }
 
 function getBookingSubtitle(booking) {
-  const title = getBookingTitle(booking).trim().toLowerCase()
   const parts = [
     booking?.event?.name,
     booking?.package?.serviceCategories?.[0]?.name || booking?.package?.serviceCategory,
+    booking?.statusLabel,
   ].filter(Boolean)
-
-  let subtitle = parts.slice(0, 2).join(' · ').trim()
-
-  if (!subtitle) {
-    const fallback = String(
-      booking?.statusLabel || booking?.detailSubtitle || booking?.displaySubtitle || ''
-    ).trim()
-    // Don't repeat the package title on the second line
-    if (fallback && fallback.toLowerCase() !== title) subtitle = fallback
-  }
-
-  if (subtitle && subtitle.toLowerCase() === title) return ''
-  return subtitle
+  return parts.slice(0, 2).join(' · ') || booking?.statusLabel || 'Booking'
 }
+
+// ---------------------------------------------------------------------------
+// Icons — same as customer
+// ---------------------------------------------------------------------------
 
 function ArrowIcon({ direction = 'right' }) {
   const rotationClass = direction === 'left' ? '' : 'rotate-180'
@@ -148,6 +131,49 @@ function SendIcon() {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Status badge — same borderless map as customer MessagesUpdates
+// ---------------------------------------------------------------------------
+
+const statusMap = {
+  active: 'bg-[#EAF8F1] text-[#238E64]',
+  confirmed: 'bg-[#EEF4FF] text-[#3061C6]',
+  pending: 'bg-[#FFF4E5] text-[#C07318]',
+  delivered: 'bg-[#EEF4FF] text-[#3061C6]',
+  completed: 'bg-[#F3F4F6] text-[#6B7280]',
+  cancelled: 'bg-[#FFF1F0] text-[#591902]',
+  resolved: 'bg-[#EAF8F1] text-[#238E64]',
+  in_progress: 'bg-[#FFF4E5] text-[#C07318]',
+  upcoming: 'bg-[#EEF4FF] text-[#3061C6]',
+}
+
+function StatusBadge({ status, label }) {
+  const key = status?.toLowerCase()?.replace(/[\s-]+/g, '_') ?? ''
+  const cls = statusMap[key] ?? 'bg-[#FFF4E5] text-[#C07318]'
+  const text =
+    label ?? (key ? key.charAt(0).toUpperCase() + key.slice(1).replaceAll('_', ' ') : '-')
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${cls}`}
+    >
+      {text}
+    </span>
+  )
+}
+
+function MessageEmptyState({ title, body }) {
+  return (
+    <div className="rounded-3xl border border-dashed border-[#D6CDC3] bg-[#F7F5F2] p-8">
+      <h2 className="text-lg font-medium text-[#2E2E2E]">{title}</h2>
+      <p className="mt-2 max-w-2xl text-sm text-[#6B7280]">{body}</p>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Avatar
+// ---------------------------------------------------------------------------
+
 function Avatar({ name = '', size = 'md', tone = 'brand' }) {
   const initials = getInitials(name) || '?'
   const sizeClass = size === 'sm' ? 'h-8 w-8 text-[10px]' : 'h-9 w-9 text-xs'
@@ -160,6 +186,10 @@ function Avatar({ name = '', size = 'md', tone = 'brand' }) {
     </div>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Thread card
+// ---------------------------------------------------------------------------
 
 function ThreadCard({ threadItem, isSelected, onClick }) {
   const booking = threadItem.bookingSummary
@@ -177,10 +207,8 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-bold text-[#1C1C1C]">{packageTitle}</p>
-          {subtitle ? (
-            <p className="mt-1 truncate text-[12px] font-normal text-[#8A8A8A]">{subtitle}</p>
-          ) : null}
+          <p className="truncate text-[14px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
+          <p className="mt-1 truncate text-[12px] text-[#8A8A8A]">{subtitle}</p>
         </div>
         {unread > 0 ? (
           <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[#C45C4A] px-1.5 text-[10px] font-bold text-white">
@@ -191,6 +219,10 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
     </button>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Message bubble
+// ---------------------------------------------------------------------------
 
 function MessageBubble({ message, isAdmin }) {
   const senderName = message.sender?.name || (isAdmin ? 'Admin' : 'Customer')
@@ -228,6 +260,10 @@ function MessageBubble({ message, isAdmin }) {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Booking updates
+// ---------------------------------------------------------------------------
+
 function BookingUpdatesPanel({ bookingId }) {
   const { data: booking, isLoading } = useAdminBooking(bookingId)
 
@@ -257,13 +293,26 @@ function BookingUpdatesPanel({ bookingId }) {
         }))
     }
 
+    if (booking?.latestStatusLog) {
+      const log = booking.latestStatusLog
+      return [
+        {
+          id: 'latest',
+          title: log?.statusLabel || log?.status || booking?.statusLabel || 'Update',
+          description: log?.note || 'Latest booking status update.',
+          status: booking?.status || 'upcoming',
+          at: log?.createdAt || '',
+        },
+      ]
+    }
+
     return []
   }, [booking])
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
       <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
-        <h3 className="text-[15px] font-bold text-[#1C1C1C]">Booking Updates</h3>
+        <h3 className="text-[15px] font-semibold text-[#1C1C1C]">Booking Updates</h3>
       </div>
 
       <div
@@ -285,9 +334,7 @@ function BookingUpdatesPanel({ bookingId }) {
               className={`py-4 ${index > 0 ? 'border-t border-[#F0EBE4]' : ''}`}
             >
               <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 flex-1 text-[13px] font-bold leading-snug text-[#1C1C1C]">
-                  {update.title}
-                </p>
+                <p className="text-[13px] font-semibold text-[#1C1C1C]">{update.title}</p>
                 <StatusBadge
                   status={update.status}
                   label={update.status === 'upcoming' ? 'Upcoming' : undefined}
@@ -310,6 +357,10 @@ function BookingUpdatesPanel({ bookingId }) {
     </div>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Conversation
+// ---------------------------------------------------------------------------
 
 function ConversationPanel({
   thread,
@@ -350,10 +401,8 @@ function ConversationPanel({
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-[#F0EBE4] px-5 py-4">
         <div className="min-w-0">
-          <p className="truncate text-[16px] font-bold text-[#1C1C1C]">{packageTitle}</p>
-          {subtitle ? (
-            <p className="mt-1 text-[12px] font-normal text-[#8A8A8A]">{subtitle}</p>
-          ) : null}
+          <p className="truncate text-[16px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
+          <p className="mt-1 text-[12px] text-[#8A8A8A]">{subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge
@@ -385,7 +434,7 @@ function ConversationPanel({
           })
         ) : (
           <div className="flex flex-1 items-center justify-center">
-            <EmptyState
+            <MessageEmptyState
               title={isReadOnly ? 'No previous messages' : 'No messages yet'}
               body={
                 isReadOnly
@@ -457,6 +506,10 @@ function ConversationPanel({
   )
 }
 
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export default function MessageBoxPage() {
   const [searchParams] = useSearchParams()
   const [threadTab, setThreadTab] = useState('active')
@@ -479,7 +532,6 @@ export default function MessageBoxPage() {
     [allThreads]
   )
 
-  // Respect the user's tab choice so Previous / Active booking always works
   const filteredThreads = threadTab === 'previous' ? previousThreads : activeThreads
   const totalPages = Math.max(1, Math.ceil(filteredThreads.length / PAGE_SIZE))
   const visiblePage = Math.min(currentPage, totalPages)
@@ -501,7 +553,6 @@ export default function MessageBoxPage() {
     return undefined
   }, [currentPage, totalPages])
 
-  // Deep-link once per bookingId — do not fight manual Active / Previous tab clicks
   useEffect(() => {
     const bookingIdParam = String(searchParams.get('bookingId') ?? '').trim()
     if (!bookingIdParam || !allThreads.length) return undefined
@@ -518,7 +569,6 @@ export default function MessageBoxPage() {
     return () => cancelAnimationFrame(frameId)
   }, [searchParams, allThreads])
 
-  // Keep selection if it exists in the current tab; otherwise clear (don't force-switch tabs)
   useEffect(() => {
     if (
       selectedBookingId &&
@@ -531,7 +581,6 @@ export default function MessageBoxPage() {
     return undefined
   }, [filteredThreads, selectedBookingId])
 
-  // Auto-select first visible thread when none selected
   useEffect(() => {
     if (!selectedBookingId && visibleThreads[0]?.bookingId) {
       const frameId = requestAnimationFrame(() =>
@@ -581,7 +630,7 @@ export default function MessageBoxPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 lg:h-[calc(100dvh-140px)] lg:min-h-[560px] lg:overflow-hidden">
+    <div className="flex flex-col gap-5 lg:h-[calc(100dvh-160px)] lg:min-h-[560px] lg:overflow-hidden">
       <div className="shrink-0">
         <h1
           className="text-[28px] leading-none text-[#1C1C1C] md:text-[32px]"
@@ -598,8 +647,8 @@ export default function MessageBoxPage() {
         {/* Column 1 — Chat list */}
         <div className="flex h-[min(420px,55vh)] min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white lg:h-full">
           <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
-            <h2 className="text-[15px] font-bold text-[#1C1C1C]">Chat</h2>
-            <div className="mt-3 flex flex-nowrap gap-2">
+            <h2 className="text-[15px] font-semibold text-[#1C1C1C]">Chat</h2>
+            <div className="mt-3 flex gap-2">
               {[
                 { key: 'active', label: 'Active booking' },
                 { key: 'previous', label: 'Previous booking' },
@@ -608,7 +657,7 @@ export default function MessageBoxPage() {
                   key={tab.key}
                   type="button"
                   onClick={() => handleTabChange(tab.key)}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
                     threadTab === tab.key
                       ? 'bg-[#591902] text-white'
                       : 'bg-[#F3F3F3] text-[#5A5A5A] hover:bg-[#EBEBEB]'
@@ -639,7 +688,7 @@ export default function MessageBoxPage() {
                 />
               ))
             ) : (
-              <EmptyState
+              <MessageEmptyState
                 title={
                   threadTab === 'active' ? 'No active booking threads' : 'No previous threads'
                 }
