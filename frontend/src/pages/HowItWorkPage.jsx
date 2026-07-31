@@ -6,6 +6,54 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { preventWidow, stripMojibake } from '../lib/textFormat'
 
+const FAQ_URL_SPLIT_REGEX = /(https?:\/\/[^\s<]+)/g
+
+function renderFaqAnswerWithLinks(answer) {
+  const text = String(answer ?? '')
+  const parts = text.split(FAQ_URL_SPLIT_REGEX)
+
+  return parts.map((part, index) => {
+    if (!/^https?:\/\//i.test(part)) return part
+
+    const href = part.replace(/[),.;!?]+$/g, '')
+    const trailing = part.slice(href.length)
+
+    try {
+      const url = new URL(href)
+      const host = url.hostname.replace(/^www\./i, '').toLowerCase()
+      const isElewenHost = host === 'elewen.co.in' || host.endsWith('.elewen.co.in')
+
+      if (isElewenHost) {
+        const to = `${url.pathname}${url.search}${url.hash}` || '/'
+        return (
+          <span key={`${href}-${index}`}>
+            <Link to={to} className="underline underline-offset-2 hover:text-[#6C2205]">
+              {href}
+            </Link>
+            {trailing}
+          </span>
+        )
+      }
+    } catch {
+      // Fall through to external anchor.
+    }
+
+    return (
+      <span key={`${href}-${index}`}>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2 hover:text-[#6C2205]"
+        >
+          {href}
+        </a>
+        {trailing}
+      </span>
+    )
+  })
+}
+
 const HERO_TAGS = [
   'BIRTHDAYS',
   'ANNIVERSARIES',
@@ -530,7 +578,7 @@ const NeedToKnowSection = ({ section }) => {
                   >
                     <div className="overflow-hidden">
                       <p className="max-w-[760px] pb-5 text-[12px] leading-[1.5] text-[#B29078] min-[540px]:pb-6 min-[540px]:text-[16px]">
-                        {faq.answer}
+                        {renderFaqAnswerWithLinks(faq.answer)}
                       </p>
                     </div>
                   </div>
