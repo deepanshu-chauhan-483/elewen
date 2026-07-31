@@ -112,7 +112,7 @@ function QuantityControl({ quantity, onDecrement, onIncrement }) {
           onClick={onDecrement}
           className="flex h-[28px] w-[28px] items-center justify-center border-r border-[#D9D9D9] text-[18px] font-light text-black"
         >
-          ???
+          −
         </button>
 
         {/* Quantity */}
@@ -808,7 +808,7 @@ function ProductImageLayout({
               </h2>
               {!consultationOnly ? (
                 <>
-                  <span className="hidden shrink-0 md:inline">???</span>
+                  <span className="hidden shrink-0 md:inline">–</span>
                   <span className="shrink-0 text-xs font-bold sm:text-sm md:text-base text-[#D4BA8E]">
                     {price}
                   </span>
