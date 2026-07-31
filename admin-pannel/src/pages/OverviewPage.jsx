@@ -347,8 +347,6 @@ const getPendingActionRoute = itemId => {
       return '/bookings?status=new'
     case 'vendor-pending':
       return '/vendors'
-    case 'sample-taste':
-      return '/sample-taste'
     case 'support-queue':
       return '/support'
     default:

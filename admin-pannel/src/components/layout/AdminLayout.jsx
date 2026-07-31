@@ -41,20 +41,6 @@ const OverviewIcon = ({ isActive }) => {
   )
 }
 
-const SampleBookingIcon = ({ isActive }) => {
-  const stroke = getIconStroke(isActive)
-
-  return (
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M1.6665 9.99784H18.3332M16.6665 9.99784V16.6645C16.6665 17.1065 16.4909 17.5305 16.1783 17.843C15.8658 18.1556 15.4419 18.3312 14.9998 18.3312H4.99984C4.55781 18.3312 4.13389 18.1556 3.82133 17.843C3.50877 17.5305 3.33317 17.1065 3.33317 16.6645V9.99784M3.33317 6.6645L16.6665 3.33117M7.38317 5.64784L7.00817 4.1395C6.95444 3.9272 6.94308 3.70638 6.97474 3.48969C7.0064 3.27299 7.08045 3.06465 7.19267 2.87659C7.30489 2.68852 7.45307 2.52442 7.62875 2.39366C7.80442 2.2629 8.00415 2.16804 8.2165 2.1145L9.83317 1.7145C10.046 1.66091 10.2674 1.64989 10.4845 1.68208C10.7017 1.71427 10.9103 1.78904 11.0985 1.90209C11.2866 2.01514 11.4506 2.16425 11.581 2.34085C11.7113 2.51745 11.8055 2.71806 11.8582 2.93117L12.2332 4.43117"
-        stroke={stroke}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 const BookingIcon = ({ isActive }) => {
   const stroke = getIconStroke(isActive)
 
@@ -185,7 +171,6 @@ const AlertIcon = ({ isActive }) => {
 
 const navigation = [
   { to: '/overview', label: 'Overview', icon: OverviewIcon },
-  { to: '/sample-taste', label: 'Sample Taste Booking', icon: SampleBookingIcon },
   { to: '/bookings', label: 'Booking Management', icon: BookingIcon },
   { to: '/tracker', label: 'Booking Status Tracker', icon: TrackerIcon },
   { to: '/vendors', label: 'Vendor Management', icon: VendorIcon },

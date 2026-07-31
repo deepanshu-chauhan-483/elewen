@@ -9,7 +9,6 @@ const BookingStatusTrackerPage = lazy(() => import('./pages/BookingStatusTracker
 const MessageBoxPage = lazy(() => import('./pages/MessageBoxPage'))
 const OverviewPage = lazy(() => import('./pages/OverviewPage'))
 const PaymentManagementPage = lazy(() => import('./pages/PaymentManagementPage'))
-const SampleTastePage = lazy(() => import('./pages/SampleTastePage'))
 const SupportPage = lazy(() => import('./pages/SupportPage'))
 const ConsultationsPage = lazy(() => import('./pages/ConsultationsPage'))
 const SystemAlertsPage = lazy(() => import('./pages/SystemAlertsPage'))
@@ -28,7 +27,6 @@ export default function App() {
           <Route path="/" element={<AdminLayout />}>
             <Route index element={<Navigate to="/overview" replace />} />
             <Route path="overview" element={<OverviewPage />} />
-            <Route path="sample-taste" element={<SampleTastePage />} />
             <Route path="bookings" element={<BookingManagementPage />} />
             <Route path="tracker" element={<BookingStatusTrackerPage />} />
             <Route path="vendors" element={<VendorManagementPage />} />
