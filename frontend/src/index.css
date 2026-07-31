@@ -121,37 +121,164 @@ p {
   animation: band-right 60s linear infinite;
 }
 
-/* Homepage discount banner ticker (admin Share Banner) */
+/* Homepage discount banner carousel (admin Share Banner) */
 .discount-banner-carousel {
-  height: 44px;
-  display: flex;
-  align-items: center;
+  width: 100%;
+  background: linear-gradient(180deg, #f2f2f2 0%, #efe8df 45%, #f2f2f2 100%);
+  padding: 28px 0 20px;
+}
+
+@media (min-width: 768px) {
+  .discount-banner-carousel {
+    padding: 40px 0 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .discount-banner-carousel {
+    padding: 52px 0 36px;
+  }
+}
+
+.discount-banner-inner {
+  width: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 }
 
 .discount-banner-track {
   display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
+  align-items: stretch;
+  gap: 18px;
+  padding: 4px 12px;
+  width: max-content;
   will-change: transform;
-  animation: discount-banner-scroll 40s linear infinite;
+  animation: discount-banner-scroll 32s linear infinite;
 }
 
-.discount-banner-item {
+.discount-banner-carousel:hover .discount-banner-track {
+  animation-play-state: paused;
+}
+
+.discount-banner-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(86vw, 340px);
+  min-height: 148px;
+  padding: 18px 20px 16px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #591902 0%, #7a3210 48%, #3d1202 100%);
+  color: #fff8ef;
+  box-shadow: 0 10px 28px rgba(89, 25, 2, 0.22);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+@media (min-width: 768px) {
+  .discount-banner-card {
+    width: 380px;
+    min-height: 168px;
+    padding: 22px 24px 18px;
+    border-radius: 22px;
+  }
+}
+
+.discount-banner-card-glow {
+  position: absolute;
+  inset: auto -20% -40% auto;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(212, 186, 142, 0.35) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.discount-banner-eyebrow {
+  position: relative;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4ba8e;
+}
+
+.discount-banner-discount {
+  position: relative;
+  margin: 0;
+  font-family: 'Malgin', Georgia, serif;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 400;
+  color: #ffffff;
+}
+
+@media (min-width: 768px) {
+  .discount-banner-discount {
+    font-size: 34px;
+  }
+}
+
+.discount-banner-code-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.discount-banner-code {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 28px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1.5px dashed rgba(212, 186, 142, 0.85);
+  border-radius: 10px;
+  background: rgba(255, 248, 239, 0.08);
   font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: #591902;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #f5e6c8;
 }
 
-.discount-banner-star {
-  color: #cdb17e;
+.discount-banner-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: #d4ba8e;
+  color: #591902;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.discount-banner-copy:hover {
+  background: #c6ab7f;
+}
+
+.discount-banner-copy:active {
+  transform: scale(0.97);
+}
+
+.discount-banner-hint {
+  position: relative;
+  margin: 4px 0 0;
+  font-family: 'Poppins', sans-serif;
   font-size: 11px;
+  color: rgba(255, 248, 239, 0.7);
 }
 
 @keyframes discount-banner-scroll {

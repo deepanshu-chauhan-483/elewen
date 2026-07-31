@@ -32,6 +32,7 @@ import {
 import { useTestimonials } from '../hooks/useTestimonials'
 import { useBlogs, useBlogCategories } from '../hooks/useBlogs'
 import { useLandingPage } from '../hooks/useCmsPages'
+import { useDiscountBanners } from '../hooks/useDiscountBanners'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import {
   buildEventSelectionDestination,
@@ -570,6 +571,8 @@ const PlanEventSection = () => {
   const { data: cms = {} } = useLandingPage()
   const s = cms.plan_event_intro ?? {}
   const lenisRef = useLenis()
+  const { data: discountBanners = [] } = useDiscountBanners()
+  const hasDiscountBanners = discountBanners.length > 0
 
   // CMS: Strapi `events` top-level categories + featured sub-type cards
   const { data: categories = [] } = useEventCategories()
@@ -704,7 +707,11 @@ const PlanEventSection = () => {
     <section
       ref={sectionRef}
       id="plan-your-event"
-      className="relative w-full min-h-auto bg-[#F2F2F2] pt-[32px] md:pt-24 lg:min-h-screen lg:pt-52 flex flex-col overflow-hidden font-sans"
+      className={`relative w-full min-h-auto bg-[#F2F2F2] flex flex-col overflow-hidden font-sans ${
+        hasDiscountBanners
+          ? 'pt-6 md:pt-10 lg:min-h-screen lg:pt-16'
+          : 'pt-[32px] md:pt-24 lg:min-h-screen lg:pt-52'
+      }`}
     >
       {/* Background Decor (Desktop predominantly) */}
       {/* <div className="absolute top-0 left-0 w-full hidden md:flex pointer-events-none z-0">
