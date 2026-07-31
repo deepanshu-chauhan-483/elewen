@@ -270,6 +270,8 @@ const TRUST_ITEMS = [
 export default function SingleProductPageContent({
   title,
   price,
+  originalPrice = '',
+  discountBadge = '',
   intro,
   customDetailsContent = null,
   beforePriceContent = null,
@@ -303,6 +305,8 @@ export default function SingleProductPageContent({
     <ProductImageLayout
       title={title}
       price={price}
+      originalPrice={originalPrice}
+      discountBadge={discountBadge}
       intro={intro}
       customDetailsContent={customDetailsContent}
       beforePriceContent={beforePriceContent}
@@ -422,6 +426,8 @@ function RelatedProductsCarousel({ products, hidePrice = false }) {
 function ProductImageLayout({
   title,
   price,
+  originalPrice = '',
+  discountBadge = '',
   intro,
   customDetailsContent,
   beforePriceContent,
@@ -613,9 +619,17 @@ function ProductImageLayout({
                     {title}
                   </h1>
                   {!hideHeaderPrice ? (
-                    <p className="shrink-0 pt-1 text-[20px] font-medium text-[#591902] sm:text-[22px]">
-                      {price}
-                    </p>
+                    <div className="shrink-0 pt-1 text-right">
+                      {discountBadge ? (
+                        <span className="mb-1 inline-flex rounded-full bg-[#591902] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#F5E6C8]">
+                          {discountBadge}
+                        </span>
+                      ) : null}
+                      <p className="text-[20px] font-medium text-[#591902] sm:text-[22px]">{price}</p>
+                      {originalPrice ? (
+                        <p className="text-[13px] text-[#8A847E] line-through">{originalPrice}</p>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
 
@@ -811,6 +825,14 @@ function ProductImageLayout({
                   <span className="hidden shrink-0 md:inline">–</span>
                   <span className="shrink-0 text-xs font-bold sm:text-sm md:text-base text-[#D4BA8E]">
                     {price}
+                    {originalPrice ? (
+                      <span className="ml-2 font-normal text-white/60 line-through">{originalPrice}</span>
+                    ) : null}
+                    {discountBadge ? (
+                      <span className="ml-2 rounded-full bg-[#D4BA8E]/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-[#D4BA8E]">
+                        {discountBadge}
+                      </span>
+                    ) : null}
                   </span>
                 </>
               ) : null}

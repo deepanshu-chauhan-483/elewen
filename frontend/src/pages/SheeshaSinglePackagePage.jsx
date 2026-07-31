@@ -438,6 +438,8 @@ export default function SheeshaSinglePackagePage() {
   const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null
   const packageTitle = pkg.title || SHEESHA_CONTENT.title
   const packagePrice = pkg.price || SHEESHA_CONTENT.price
+  const packageOriginalPrice = pkg.compare_at_price || ''
+  const packageDiscountBadge = pkg.discount_badge || ''
   const packageSizeLabel = pkg.sheesha_size_label ?? ''
   const packageIntro = pkg.description || SHEESHA_CONTENT.intro
   const accordionSections = mergeAccordionSections(
@@ -511,6 +513,8 @@ export default function SheeshaSinglePackagePage() {
       backHref={backHref}
       title={packageTitle}
       price={packagePrice}
+      originalPrice={packageOriginalPrice}
+      discountBadge={packageDiscountBadge}
       intro={packageIntro}
       beforePriceContent={
         packageSizeLabel ? (

@@ -301,6 +301,8 @@ function QuantityControl({ quantity, onDecrement, onIncrement }) {
 export default function CateringPackageDetails({
   title,
   price,
+  originalPrice = '',
+  discountBadge = '',
   intro,
   guestOptions = [],
   vegOptions = [],
@@ -340,7 +342,17 @@ export default function CateringPackageDetails({
           {title}
         </h1>
         {price ? (
-          <p className="shrink-0 pt-1 text-[22px] font-medium text-[#591902]">{price}</p>
+          <div className="shrink-0 pt-1 text-right">
+            {discountBadge ? (
+              <span className="mb-1 inline-flex rounded-full bg-[#591902] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#F5E6C8]">
+                {discountBadge}
+              </span>
+            ) : null}
+            <p className="text-[22px] font-medium text-[#591902]">{price}</p>
+            {originalPrice ? (
+              <p className="text-[13px] text-[#8A847E] line-through">{originalPrice}</p>
+            ) : null}
+          </div>
         ) : null}
       </div>
 

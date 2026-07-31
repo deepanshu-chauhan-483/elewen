@@ -1807,6 +1807,8 @@ export default function DecorSinglePackagePage() {
     pkg.base_price ?? 0,
     pkg.price || DECOR_CONTENT.price
   )
+  const packageOriginalPrice = pkg.compare_at_price || ''
+  const packageDiscountBadge = pkg.discount_badge || ''
   const packageIntro = buildDecorIntro(pkg)
   const keyDecorText = buildKeyDecorText(pkg)
   const accordionSections = mergeAccordionSections(
@@ -1820,6 +1822,8 @@ export default function DecorSinglePackagePage() {
       <SingleProductPageContent
         title={packageTitle}
         price={packagePrice}
+        originalPrice={packageOriginalPrice}
+        discountBadge={packageDiscountBadge}
         intro={packageIntro}
         customContent={
           <DecorPackageSections

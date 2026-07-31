@@ -28,6 +28,7 @@ import {
 import { resolveCateringAddonLineTotal } from '../lib/cateringAddonPricing'
 import { buildCateringCartLineTotal } from '../lib/cateringCartPricing'
 import { resolveCateringGuestDiscount } from '../lib/cateringGuestDiscount'
+import { applyPackageDiscount, resolvePackageSalePricing } from '../lib/packageDiscount'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -474,9 +475,14 @@ export default function CateringSinglePackagePage() {
 
   const discountPerPerson = Number(guestDiscountTier?.discount_per_person ?? 0)
 
-  const effectiveUnitPrice = useMemo(
-    () => Math.max(0, unitPricePerPerson - discountPerPerson),
-    [discountPerPerson, unitPricePerPerson]
+  const effectiveUnitPrice = useMemo(() => {
+    const afterPackageSale = applyPackageDiscount(unitPricePerPerson, pkg)
+    return Math.max(0, afterPackageSale - discountPerPerson)
+  }, [discountPerPerson, pkg, unitPricePerPerson])
+
+  const packageSaleMeta = useMemo(
+    () => resolvePackageSalePricing(pkg, unitPricePerPerson),
+    [pkg, unitPricePerPerson]
   )
 
   const displayPrice = useMemo(() => {
@@ -485,6 +491,22 @@ export default function CateringSinglePackagePage() {
     }
     return getCateringPriceRangeLabel(cateringSection, pkg?.base_price ?? 0) || pkg?.price || ''
   }, [cateringSection, effectiveUnitPrice, pkg?.base_price, pkg?.price])
+
+  const packageOriginalPrice = useMemo(() => {
+    if (!packageSaleMeta.hasDiscount || !(unitPricePerPerson > 0)) return ''
+    const originalAfterGuest = Math.max(0, unitPricePerPerson - discountPerPerson)
+    return originalAfterGuest > effectiveUnitPrice
+      ? formatCateringPrice(originalAfterGuest)
+      : packageSaleMeta.originalLabel
+  }, [
+    discountPerPerson,
+    effectiveUnitPrice,
+    packageSaleMeta.hasDiscount,
+    packageSaleMeta.originalLabel,
+    unitPricePerPerson,
+  ])
+
+  const packageDiscountBadge = packageSaleMeta.hasDiscount ? packageSaleMeta.badge : ''
 
   const addons = useMemo(() => {
     const sectionAddons = Array.isArray(cateringSection?.addons)
@@ -767,11 +789,15 @@ export default function CateringSinglePackagePage() {
       <SingleProductPageContent
         title={pkg.title || cateringDetails.heroBadge}
         price={displayPrice}
+        originalPrice={packageOriginalPrice}
+        discountBadge={packageDiscountBadge}
         intro=""
         customDetailsContent={
           <CateringPackageDetails
             title={pkg.title || cateringDetails.heroBadge}
             price={displayPrice}
+            originalPrice={packageOriginalPrice}
+            discountBadge={packageDiscountBadge}
             intro={pkg.description || cateringDetails.intro}
             guestOptions={guestOptions}
             vegOptions={DEFAULT_VEG_OPTIONS}

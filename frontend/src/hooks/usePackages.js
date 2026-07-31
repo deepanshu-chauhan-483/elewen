@@ -9,6 +9,7 @@ import {
   inferLevelSlugFromCateringLevel,
 } from '../lib/cateringPricing'
 import { resolveSheeshaSizeLabel } from '../lib/sheeshaPackageMeta'
+import { resolvePackageSalePricing } from '../lib/packageDiscount'
 
 const blocksToText = blocks => {
   if (!blocks) return ''
@@ -357,16 +358,8 @@ function buildPackageIncludes(pkg) {
 }
 
 function formatPackagePrice(pkg) {
-  const raw =
-    pkg?.base_price ??
-    pkg?.starting_price ??
-    pkg?.price_from ??
-    (typeof pkg?.price === 'number' ? pkg.price : null)
-
-  const amount = Number(raw)
-  if (Number.isFinite(amount) && amount > 0) {
-    return `₹${amount.toLocaleString('en-IN')}`
-  }
+  const sale = resolvePackageSalePricing(pkg)
+  if (sale.saleLabel) return sale.saleLabel
 
   if (typeof pkg?.price === 'string' && pkg.price.trim()) {
     return pkg.price.trim()
@@ -630,6 +623,22 @@ function normalizePackage(pkg, index = 0, options = {}) {
     ? getCateringPriceRangeLabel(cateringSection, pkg.base_price)
     : ''
 
+  const numericBaseForSale =
+    Number(cateringSection?.price_per_person_veg ?? 0) ||
+    Number(cateringSection?.price_per_person_non_veg ?? 0) ||
+    bartendingPresentation?.base_price ||
+    (Number(pkg.base_price ?? pkg.starting_price ?? pkg.price_from ?? 0) || 0)
+
+  const salePricing = resolvePackageSalePricing(pkg, numericBaseForSale)
+  const formattedSalePrice =
+    bartendingPresentation?.price ||
+    cateringListingPrice ||
+    salePricing.saleLabel ||
+    formatPackagePrice({
+      ...pkg,
+      base_price: numericBaseForSale,
+    })
+
   const primaryServiceSlug = resolvePrimaryServiceSlug(serviceSlugs)
   const sheeshaSection = primaryServiceSlug === 'sheesha' ? getSheeshaDetailSection(pkg) : null
   const sheeshaSizeLabel =
@@ -681,18 +690,21 @@ function normalizePackage(pkg, index = 0, options = {}) {
       )
     })(),
     description: blocksToText(pkg.description),
-    price:
-      bartendingPresentation?.price ||
-      cateringListingPrice ||
-      formatPackagePrice({
-        ...pkg,
-        base_price: bartendingPresentation?.base_price ?? pkg.base_price,
-      }),
-    base_price:
-      Number(cateringSection?.price_per_person_veg ?? 0) ||
-      Number(cateringSection?.price_per_person_non_veg ?? 0) ||
-      bartendingPresentation?.base_price ||
-      (Number(pkg.base_price ?? pkg.starting_price ?? pkg.price_from ?? 0) || 0),
+    price: formattedSalePrice,
+    compare_at_price:
+      !bartendingPresentation?.price && !cateringListingPrice && salePricing.hasDiscount
+        ? salePricing.originalLabel
+        : '',
+    discount_badge:
+      !bartendingPresentation?.price && !cateringListingPrice && salePricing.hasDiscount
+        ? salePricing.badge
+        : '',
+    discount_active: salePricing.hasDiscount,
+    discount_type: pkg.discount_type ?? 'percentage',
+    discount_value: Number(pkg.discount_value ?? 0) || 0,
+    discount_valid_from: pkg.discount_valid_from ?? null,
+    discount_valid_to: pkg.discount_valid_to ?? null,
+    base_price: numericBaseForSale,
     includes: packageIncludes,
     tags: packageIncludes,
     event_slugs: normaliseRelationArray(pkg.events)

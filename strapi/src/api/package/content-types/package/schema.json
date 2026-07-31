@@ -26,6 +26,31 @@
       "type": "decimal",
       "required": true
     },
+    "discount_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "discount_type": {
+      "type": "enumeration",
+      "enum": [
+        "percentage",
+        "flat"
+      ],
+      "default": "percentage"
+    },
+    "discount_value": {
+      "type": "decimal",
+      "default": 0
+    },
+    "discount_badge": {
+      "type": "string"
+    },
+    "discount_valid_from": {
+      "type": "date"
+    },
+    "discount_valid_to": {
+      "type": "date"
+    },
     "is_featured": {
       "type": "boolean",
       "default": false

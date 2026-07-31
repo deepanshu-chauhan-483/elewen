@@ -11,6 +11,7 @@ import {
   getStoredJwt,
 } from '../lib/api'
 import { strapiGet } from '../lib/strapi'
+import { applyPackageDiscount } from '../lib/packageDiscount'
 import { createContext, createElement, useContext, useMemo } from 'react'
 
 const CART_EVENT = 'elewen-cart-change'
@@ -254,10 +255,21 @@ async function fetchPackageSnapshot(packageId) {
   if (!pkg) throw new Error('Package not found')
 
   const attrs = pkg.attributes ?? pkg
+  const basePrice = Number(attrs.base_price ?? 0)
+  const discountFields = {
+    discount_active: attrs.discount_active === true,
+    discount_type: attrs.discount_type ?? 'percentage',
+    discount_value: Number(attrs.discount_value ?? 0) || 0,
+    discount_valid_from: attrs.discount_valid_from ?? null,
+    discount_valid_to: attrs.discount_valid_to ?? null,
+  }
+
   return {
     id: pkg.id,
     title: attrs.title ?? 'Package',
-    basePrice: Number(attrs.base_price ?? 0),
+    basePrice,
+    salePrice: applyPackageDiscount(basePrice, discountFields),
+    ...discountFields,
   }
 }
 
@@ -294,7 +306,7 @@ async function addPackageToGuestCart({
     ? addonUnitPrice
     : Number.isFinite(resolvedOverride) && resolvedOverride > 0
       ? resolvedOverride
-      : snapshot.basePrice
+      : snapshot.salePrice
   const itemTotal =
     Number.isFinite(resolvedLineTotal) && resolvedLineTotal > 0
       ? resolvedLineTotal
@@ -757,7 +769,7 @@ function useCartController() {
 
       if (isChangingSelection && currentQuantity > 1) {
         const snapshot = await fetchPackageSnapshot(item.packageId)
-        const unitPrice = Number(item.unitPrice ?? snapshot.basePrice ?? 0)
+        const unitPrice = Number(item.unitPrice ?? snapshot.salePrice ?? snapshot.basePrice ?? 0)
         const nextSelectionKey = buildSelectionKey(normalizedSelectedOptions)
         const matchingEditedItem = guestCart.items.find(
           entry =>

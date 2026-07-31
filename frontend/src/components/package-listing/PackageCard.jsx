@@ -371,9 +371,21 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
         {hidePrice ? (
           <div className="min-h-[20px]" aria-hidden="true" />
         ) : pkg.price ? (
-          <p className="mt-0 min-h-[20px] text-[13px] leading-none text-[#2D2D2D]">
-            Price <span className="text-[15px] font-bold text-[#591902]">{pkg.price}</span>
-          </p>
+          <div className="mt-0 min-h-[20px] text-[13px] leading-none text-[#2D2D2D]">
+            <p>
+              Price <span className="text-[15px] font-bold text-[#591902]">{pkg.price}</span>
+              {pkg.compare_at_price ? (
+                <span className="ml-2 text-[12px] font-normal text-[#8A847E] line-through">
+                  {pkg.compare_at_price}
+                </span>
+              ) : null}
+            </p>
+            {pkg.discount_badge ? (
+              <span className="mt-1 inline-flex rounded-full bg-[#591902] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#F5E6C8]">
+                {pkg.discount_badge}
+              </span>
+            ) : null}
+          </div>
         ) : (
           <div className="min-h-[20px]" aria-hidden="true" />
         )}

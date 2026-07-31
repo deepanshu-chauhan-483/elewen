@@ -12,6 +12,7 @@ import {
   getDisplayTitle,
   normalizeSelectedOptions,
 } from '../lib/cartItemMeta.js'
+import { applyPackageDiscount } from '../lib/packageDiscount.js'
 
 const cartInclude = {
   items: { orderBy: { createdAt: 'asc' } },
@@ -335,10 +336,12 @@ export const addItem = async (req, res, next) => {
           : Number(matchedAddon?.price ?? 0)
     } else {
       const resolvedCustomPrice = Number(customUnitPrice ?? 0)
-      unitPrice =
-        Number.isFinite(resolvedCustomPrice) && resolvedCustomPrice > 0
-          ? resolvedCustomPrice
-          : Number(pkg.base_price)
+      if (Number.isFinite(resolvedCustomPrice) && resolvedCustomPrice > 0) {
+        // Client already computed adjusted price (hours, catering, package sale)
+        unitPrice = resolvedCustomPrice
+      } else {
+        unitPrice = applyPackageDiscount(Number(pkg.base_price), pkg)
+      }
     }
 
     const title = pkg.title

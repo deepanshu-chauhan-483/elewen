@@ -13,6 +13,7 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import BartendingAddonMedia from '../components/bartending/BartendingAddonMedia'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getRelatedPackages } from '../lib/packageFilters'
+import { resolvePackageSalePricing } from '../lib/packageDiscount'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -534,10 +535,15 @@ export default function BartendingSinglePackagePage() {
   const selectedHourModifier =
     hourOptions.find(option => option.label === selectedHours)?.priceModifier ?? 0
   const packageBasePrice = Number(pkg?.base_price ?? 0)
+  const preDiscountUnit = packageBasePrice + selectedHourModifier
+  const salePricing = resolvePackageSalePricing(pkg, preDiscountUnit)
+  const cartUnitPrice = salePricing.hasDiscount ? salePricing.salePrice : preDiscountUnit
   const displayPrice =
-    packageBasePrice > 0
-      ? formatCurrency(packageBasePrice + selectedHourModifier, { showDecimals: true })
+    preDiscountUnit > 0
+      ? formatCurrency(cartUnitPrice, { showDecimals: true })
       : pkg.price || (pkg.base_price ? formatCurrency(pkg.base_price) : '')
+  const packageOriginalPrice = salePricing.hasDiscount ? salePricing.originalLabel : ''
+  const packageDiscountBadge = salePricing.hasDiscount ? salePricing.badge : ''
 
   const updateActiveCustomization = updater => {
     setCustomizations(prev =>
@@ -626,7 +632,7 @@ export default function BartendingSinglePackagePage() {
           packageId: numericPackageId,
           quantity: 1,
           selectedOptions,
-          unitPrice: packageBasePrice + selectedHourModifier,
+          unitPrice: cartUnitPrice,
         })
         await Promise.all(
           selectedAddons.map(addon =>
@@ -652,6 +658,8 @@ export default function BartendingSinglePackagePage() {
     <SingleProductPageContent
       title={pkg.title || 'Bartending Package'}
       price={displayPrice}
+      originalPrice={packageOriginalPrice}
+      discountBadge={packageDiscountBadge}
       intro=""
       hideHeaderPrice
       beforePriceContent={

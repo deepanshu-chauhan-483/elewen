@@ -1303,6 +1303,13 @@ export interface ApiPackagePackage extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private
     description: Schema.Attribute.Blocks
+    discount_active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>
+    discount_badge: Schema.Attribute.String
+    discount_type: Schema.Attribute.Enumeration<['percentage', 'flat']> &
+      Schema.Attribute.DefaultTo<'percentage'>
+    discount_valid_from: Schema.Attribute.Date
+    discount_valid_to: Schema.Attribute.Date
+    discount_value: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>
     events: Schema.Attribute.Relation<'manyToMany', 'api::event.event'>
     images: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios', true>
     internal_notes: Schema.Attribute.Text
