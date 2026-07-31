@@ -2383,7 +2383,14 @@ export async function listAdminMessageThreads(req, res, next) {
 
     const threads = await prisma.messageThread.findMany({
       include: {
-        booking: true,
+        booking: {
+          include: {
+            items: true,
+            notes: true,
+            statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+            vendorAssignments: true,
+          },
+        },
         messages: {
           orderBy: { createdAt: 'desc' },
           take: 1,
@@ -2394,26 +2401,23 @@ export async function listAdminMessageThreads(req, res, next) {
     })
 
     const enrichedBookings = await enrichBookingsWithCustomer(
-      threads.map(thread => ({
-        ...thread.booking,
-        items: [],
-        notes: [],
-        statusLogs: [],
-        payments: [],
-        vendorAssignments: [],
-      }))
+      threads.map(thread => thread.booking).filter(Boolean)
     )
-    const bookingMap = new Map(enrichedBookings.map(booking => [booking.id, booking]))
+    const bookingMap = new Map(
+      enrichedBookings.map(booking => [String(booking.id), booking])
+    )
 
     const visibleThreads = threads.filter(thread => {
       if (!search) return true
-      const booking = bookingMap.get(thread.bookingId)
+      const booking = bookingMap.get(String(thread.bookingId))
       const haystack = [
         thread.bookingId,
         booking?.customer?.name,
         booking?.customer?.email,
         booking?.package?.title,
         booking?.event?.name,
+        booking?.displaySubtitle,
+        booking?.detailSubtitle,
       ]
         .filter(Boolean)
         .join(' ')
@@ -2439,7 +2443,7 @@ export async function listAdminMessageThreads(req, res, next) {
     const mappedThreads = visibleThreads
       .map((thread, index) => ({
         ...thread,
-        bookingSummary: bookingMap.get(thread.bookingId) ?? null,
+        bookingSummary: bookingMap.get(String(thread.bookingId)) ?? null,
         latestMessage: thread.messages[0] ?? null,
         unreadCount: unreadCounts[index] ?? 0,
       }))

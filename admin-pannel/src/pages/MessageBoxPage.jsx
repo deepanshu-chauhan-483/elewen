@@ -58,14 +58,27 @@ function getInitials(name = '') {
     .join('')
 }
 
-function getThreadSubtitle(thread) {
-  const booking = thread?.bookingSummary
+function getBookingTitle(booking) {
+  const title =
+    booking?.package?.title ||
+    booking?.event?.name ||
+    booking?.displaySubtitle ||
+    booking?.detailSubtitle ||
+    booking?.selectedItemsSummary ||
+    ''
+  const trimmed = String(title).trim()
+  // Never show raw booking UUIDs in the chat list
+  if (!trimmed || /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(trimmed)) return 'Booking'
+  return trimmed
+}
+
+function getBookingSubtitle(booking) {
   const parts = [
-    booking?.customer?.name,
     booking?.event?.name,
     booking?.package?.serviceCategories?.[0]?.name || booking?.package?.serviceCategory,
   ].filter(Boolean)
-  return parts.slice(0, 2).join(' · ') || booking?.statusLabel || 'Booking'
+  if (parts.length) return parts.slice(0, 2).join(' · ')
+  return booking?.detailSubtitle || booking?.displaySubtitle || booking?.statusLabel || 'Booking'
 }
 
 function ArrowIcon({ direction = 'right' }) {
@@ -137,8 +150,9 @@ function Avatar({ name = '', size = 'md', tone = 'brand' }) {
 }
 
 function ThreadCard({ threadItem, isSelected, onClick }) {
-  const packageTitle = threadItem.bookingSummary?.package?.title || threadItem.bookingId
-  const subtitle = getThreadSubtitle(threadItem)
+  const booking = threadItem.bookingSummary
+  const packageTitle = getBookingTitle(booking)
+  const subtitle = getBookingSubtitle(booking)
   const unread = threadItem.unreadCount || 0
 
   return (
@@ -292,15 +306,8 @@ function ConversationPanel({
 }) {
   const messagesScrollRef = useRef(null)
   const booking = thread?.bookingSummary
-  const packageTitle = booking?.package?.title || thread?.bookingId || 'Booking'
-  const subtitle = [
-    booking?.customer?.name,
-    booking?.event?.name,
-    booking?.package?.serviceCategories?.[0]?.name,
-  ]
-    .filter(Boolean)
-    .slice(0, 2)
-    .join(' · ')
+  const packageTitle = getBookingTitle(booking)
+  const subtitle = getBookingSubtitle(booking)
 
   useEffect(() => {
     if (!messagesScrollRef.current || !thread?.messages?.length) return
@@ -328,9 +335,7 @@ function ConversationPanel({
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-[#F0EBE4] px-5 py-4">
         <div className="min-w-0">
           <p className="truncate text-[16px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
-          <p className="mt-1 text-[12px] text-[#8A8A8A]">
-            {subtitle || booking?.customer?.email || 'Conversation'}
-          </p>
+          <p className="mt-1 text-[12px] text-[#8A8A8A]">{subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge
