@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ErrorState, LoadingState, SectionLoadingState } from '../components/ui/AdminUI'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionLoadingState,
+} from '../components/ui/AdminUI'
 import {
   useAdminBooking,
   useAdminMessageThread,
@@ -10,10 +15,6 @@ import {
 import { formatDate } from '../lib/formatters'
 
 const PAGE_SIZE = 10
-
-// ---------------------------------------------------------------------------
-// Helpers — matched to customer MessagesUpdates
-// ---------------------------------------------------------------------------
 
 function isPreviousThread(thread) {
   return ['completed', 'cancelled', 'canceled'].includes(
@@ -57,8 +58,15 @@ function getInitials(name = '') {
 }
 
 function getBookingTitle(booking) {
-  const title = booking?.package?.title || booking?.event?.name || ''
+  const title =
+    booking?.package?.title ||
+    booking?.event?.name ||
+    booking?.displaySubtitle ||
+    booking?.detailSubtitle ||
+    booking?.selectedItemsSummary ||
+    ''
   const trimmed = String(title).trim()
+  // Never show raw booking UUIDs in the chat list
   if (!trimmed || /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(trimmed)) return 'Booking'
   return trimmed
 }
@@ -67,14 +75,44 @@ function getBookingSubtitle(booking) {
   const parts = [
     booking?.event?.name,
     booking?.package?.serviceCategories?.[0]?.name || booking?.package?.serviceCategory,
-    booking?.statusLabel,
   ].filter(Boolean)
-  return parts.slice(0, 2).join(' · ') || booking?.statusLabel || 'Booking'
+  if (parts.length) return parts.slice(0, 2).join(' · ')
+
+  const title = getBookingTitle(booking)
+  const detail = String(booking?.detailSubtitle || booking?.displaySubtitle || '').trim()
+  if (detail && detail !== title) return detail
+
+  return booking?.statusLabel || 'Booking'
 }
 
-// ---------------------------------------------------------------------------
-// Icons — same as customer
-// ---------------------------------------------------------------------------
+const statusMap = {
+  active: 'bg-[#EAF8F1] text-[#238E64]',
+  confirmed: 'bg-[#EEF4FF] text-[#3061C6]',
+  pending: 'bg-[#FFF4E5] text-[#C07318]',
+  delivered: 'bg-[#EEF4FF] text-[#3061C6]',
+  completed: 'bg-[#F3F4F6] text-[#6B7280]',
+  cancelled: 'bg-[#FFF1F0] text-[#591902]',
+  resolved: 'bg-[#EAF8F1] text-[#238E64]',
+  in_progress: 'bg-[#FFF4E5] text-[#C07318]',
+  upcoming: 'bg-[#EEF4FF] text-[#3061C6]',
+}
+
+function MessageStatusBadge({ status, label }) {
+  const key = String(status ?? '')
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+  const cls = statusMap[key] ?? 'bg-[#FFF4E5] text-[#C07318]'
+  const text =
+    label ??
+    (key ? key.charAt(0).toUpperCase() + key.slice(1).replaceAll('_', ' ') : '-')
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-normal whitespace-nowrap ${cls}`}
+    >
+      {text}
+    </span>
+  )
+}
 
 function ArrowIcon({ direction = 'right' }) {
   const rotationClass = direction === 'left' ? '' : 'rotate-180'
@@ -131,49 +169,6 @@ function SendIcon() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Status badge — same borderless map as customer MessagesUpdates
-// ---------------------------------------------------------------------------
-
-const statusMap = {
-  active: 'bg-[#EAF8F1] text-[#238E64]',
-  confirmed: 'bg-[#EEF4FF] text-[#3061C6]',
-  pending: 'bg-[#FFF4E5] text-[#C07318]',
-  delivered: 'bg-[#EEF4FF] text-[#3061C6]',
-  completed: 'bg-[#F3F4F6] text-[#6B7280]',
-  cancelled: 'bg-[#FFF1F0] text-[#591902]',
-  resolved: 'bg-[#EAF8F1] text-[#238E64]',
-  in_progress: 'bg-[#FFF4E5] text-[#C07318]',
-  upcoming: 'bg-[#EEF4FF] text-[#3061C6]',
-}
-
-function StatusBadge({ status, label }) {
-  const key = status?.toLowerCase()?.replace(/[\s-]+/g, '_') ?? ''
-  const cls = statusMap[key] ?? 'bg-[#FFF4E5] text-[#C07318]'
-  const text =
-    label ?? (key ? key.charAt(0).toUpperCase() + key.slice(1).replaceAll('_', ' ') : '-')
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${cls}`}
-    >
-      {text}
-    </span>
-  )
-}
-
-function MessageEmptyState({ title, body }) {
-  return (
-    <div className="rounded-3xl border border-dashed border-[#D6CDC3] bg-[#F7F5F2] p-8">
-      <h2 className="text-lg font-medium text-[#2E2E2E]">{title}</h2>
-      <p className="mt-2 max-w-2xl text-sm text-[#6B7280]">{body}</p>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Avatar
-// ---------------------------------------------------------------------------
-
 function Avatar({ name = '', size = 'md', tone = 'brand' }) {
   const initials = getInitials(name) || '?'
   const sizeClass = size === 'sm' ? 'h-8 w-8 text-[10px]' : 'h-9 w-9 text-xs'
@@ -186,10 +181,6 @@ function Avatar({ name = '', size = 'md', tone = 'brand' }) {
     </div>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Thread card
-// ---------------------------------------------------------------------------
 
 function ThreadCard({ threadItem, isSelected, onClick }) {
   const booking = threadItem.bookingSummary
@@ -207,7 +198,7 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
+          <p className="truncate text-[14px] font-normal text-[#1C1C1C]">{packageTitle}</p>
           <p className="mt-1 truncate text-[12px] text-[#8A8A8A]">{subtitle}</p>
         </div>
         {unread > 0 ? (
@@ -219,10 +210,6 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
     </button>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Message bubble
-// ---------------------------------------------------------------------------
 
 function MessageBubble({ message, isAdmin }) {
   const senderName = message.sender?.name || (isAdmin ? 'Admin' : 'Customer')
@@ -260,10 +247,6 @@ function MessageBubble({ message, isAdmin }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Booking updates
-// ---------------------------------------------------------------------------
-
 function BookingUpdatesPanel({ bookingId }) {
   const { data: booking, isLoading } = useAdminBooking(bookingId)
 
@@ -293,26 +276,13 @@ function BookingUpdatesPanel({ bookingId }) {
         }))
     }
 
-    if (booking?.latestStatusLog) {
-      const log = booking.latestStatusLog
-      return [
-        {
-          id: 'latest',
-          title: log?.statusLabel || log?.status || booking?.statusLabel || 'Update',
-          description: log?.note || 'Latest booking status update.',
-          status: booking?.status || 'upcoming',
-          at: log?.createdAt || '',
-        },
-      ]
-    }
-
     return []
   }, [booking])
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
       <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
-        <h3 className="text-[15px] font-semibold text-[#1C1C1C]">Booking Updates</h3>
+        <h3 className="text-[15px] font-normal text-[#1C1C1C]">Booking Updates</h3>
       </div>
 
       <div
@@ -334,8 +304,8 @@ function BookingUpdatesPanel({ bookingId }) {
               className={`py-4 ${index > 0 ? 'border-t border-[#F0EBE4]' : ''}`}
             >
               <div className="flex items-start justify-between gap-3">
-                <p className="text-[13px] font-semibold text-[#1C1C1C]">{update.title}</p>
-                <StatusBadge
+                <p className="text-[13px] font-normal text-[#1C1C1C]">{update.title}</p>
+                <MessageStatusBadge
                   status={update.status}
                   label={update.status === 'upcoming' ? 'Upcoming' : undefined}
                 />
@@ -357,10 +327,6 @@ function BookingUpdatesPanel({ bookingId }) {
     </div>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Conversation
-// ---------------------------------------------------------------------------
 
 function ConversationPanel({
   thread,
@@ -401,11 +367,11 @@ function ConversationPanel({
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-[#F0EBE4] px-5 py-4">
         <div className="min-w-0">
-          <p className="truncate text-[16px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
+          <p className="truncate text-[16px] font-normal text-[#1C1C1C]">{packageTitle}</p>
           <p className="mt-1 text-[12px] text-[#8A8A8A]">{subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge
+          <MessageStatusBadge
             status={isReadOnly ? 'resolved' : booking?.status}
             label={isReadOnly ? 'Read only' : booking?.statusLabel || 'In Progress'}
           />
@@ -434,7 +400,7 @@ function ConversationPanel({
           })
         ) : (
           <div className="flex flex-1 items-center justify-center">
-            <MessageEmptyState
+            <EmptyState
               title={isReadOnly ? 'No previous messages' : 'No messages yet'}
               body={
                 isReadOnly
@@ -506,10 +472,6 @@ function ConversationPanel({
   )
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
 export default function MessageBoxPage() {
   const [searchParams] = useSearchParams()
   const [threadTab, setThreadTab] = useState('active')
@@ -532,7 +494,18 @@ export default function MessageBoxPage() {
     [allThreads]
   )
 
-  const filteredThreads = threadTab === 'previous' ? previousThreads : activeThreads
+  // Same tab behavior as customer Messages & Updates
+  const effectiveTab = useMemo(() => {
+    if (threadTab === 'active' && activeThreads.length === 0 && previousThreads.length > 0) {
+      return 'previous'
+    }
+    if (threadTab === 'previous' && previousThreads.length === 0 && activeThreads.length > 0) {
+      return 'active'
+    }
+    return threadTab
+  }, [threadTab, activeThreads.length, previousThreads.length])
+
+  const filteredThreads = effectiveTab === 'previous' ? previousThreads : activeThreads
   const totalPages = Math.max(1, Math.ceil(filteredThreads.length / PAGE_SIZE))
   const visiblePage = Math.min(currentPage, totalPages)
   const visibleThreads = useMemo(
@@ -543,7 +516,7 @@ export default function MessageBoxPage() {
   useEffect(() => {
     const frameId = requestAnimationFrame(() => setCurrentPage(1))
     return () => cancelAnimationFrame(frameId)
-  }, [threadTab])
+  }, [effectiveTab])
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -553,6 +526,7 @@ export default function MessageBoxPage() {
     return undefined
   }, [currentPage, totalPages])
 
+  // Deep-link once per bookingId (don't fight manual Active/Previous clicks)
   useEffect(() => {
     const bookingIdParam = String(searchParams.get('bookingId') ?? '').trim()
     if (!bookingIdParam || !allThreads.length) return undefined
@@ -570,11 +544,7 @@ export default function MessageBoxPage() {
   }, [searchParams, allThreads])
 
   useEffect(() => {
-    if (
-      selectedBookingId &&
-      filteredThreads.length > 0 &&
-      !filteredThreads.some(thread => thread.bookingId === selectedBookingId)
-    ) {
+    if (selectedBookingId && !filteredThreads.some(thread => thread.bookingId === selectedBookingId)) {
       const frameId = requestAnimationFrame(() => setSelectedBookingId(''))
       return () => cancelAnimationFrame(frameId)
     }
@@ -621,16 +591,8 @@ export default function MessageBoxPage() {
     setDraft('')
   }
 
-  function handleTabChange(nextTab) {
-    if (nextTab === threadTab) return
-    setThreadTab(nextTab)
-    setSelectedBookingId('')
-    setCurrentPage(1)
-    setDraft('')
-  }
-
   return (
-    <div className="flex flex-col gap-5 lg:h-[calc(100dvh-160px)] lg:min-h-[560px] lg:overflow-hidden">
+    <div className="flex flex-col gap-5 lg:h-[calc(100dvh-140px)] lg:min-h-[560px] lg:overflow-hidden">
       <div className="shrink-0">
         <h1
           className="text-[28px] leading-none text-[#1C1C1C] md:text-[32px]"
@@ -647,7 +609,7 @@ export default function MessageBoxPage() {
         {/* Column 1 — Chat list */}
         <div className="flex h-[min(420px,55vh)] min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white lg:h-full">
           <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
-            <h2 className="text-[15px] font-semibold text-[#1C1C1C]">Chat</h2>
+            <h2 className="text-[15px] font-normal text-[#1C1C1C]">Chat</h2>
             <div className="mt-3 flex gap-2">
               {[
                 { key: 'active', label: 'Active booking' },
@@ -656,9 +618,9 @@ export default function MessageBoxPage() {
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => handleTabChange(tab.key)}
-                  className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
-                    threadTab === tab.key
+                  onClick={() => setThreadTab(tab.key)}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-normal transition ${
+                    effectiveTab === tab.key
                       ? 'bg-[#591902] text-white'
                       : 'bg-[#F3F3F3] text-[#5A5A5A] hover:bg-[#EBEBEB]'
                   }`}
@@ -688,12 +650,12 @@ export default function MessageBoxPage() {
                 />
               ))
             ) : (
-              <MessageEmptyState
+              <EmptyState
                 title={
-                  threadTab === 'active' ? 'No active booking threads' : 'No previous threads'
+                  effectiveTab === 'active' ? 'No active booking threads' : 'No previous threads'
                 }
                 body={
-                  threadTab === 'active'
+                  effectiveTab === 'active'
                     ? 'When a booking becomes active, its conversation thread will show up here.'
                     : 'Completed or cancelled booking conversations will appear here as read-only history.'
                 }
@@ -711,7 +673,7 @@ export default function MessageBoxPage() {
               >
                 <ArrowIcon direction="left" />
               </button>
-              <span className="text-xs font-semibold text-[#1C1C1C]">
+              <span className="text-xs font-normal text-[#1C1C1C]">
                 {visiblePage} / {totalPages}
               </span>
               <button
