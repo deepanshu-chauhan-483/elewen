@@ -204,9 +204,9 @@ export default function BookingConfirmation() {
       }
     : isSheeshaCodBooking
       ? {
-          heading: 'Booking Received!',
+          heading: 'Your Celebration Is Booked! 🎉',
           intro:
-            'Your Hookah booking request has been submitted. Our team will confirm it shortly. Amount is due on delivery.',
+            "We're excited to bring your event to life. Track your booking details, manage event information, and stay updated every step of the way.",
           amountLabel: paymentSummary.primaryLabel,
           amountSubtext: paymentSummary.secondaryLabel,
           steps: HOOKAH_COD_PENDING_STEPS,
@@ -215,9 +215,9 @@ export default function BookingConfirmation() {
         }
       : isAwaitingAdminConfirm
         ? {
-            heading: 'Booking Received!',
+            heading: 'Your Celebration Is Booked! 🎉',
             intro:
-              'Your advance payment was successful. Our team will review and confirm your booking shortly. Details below.',
+              "We're excited to bring your event to life. Track your booking details, manage event information, and stay updated every step of the way.",
             amountLabel: paymentSummary.primaryLabel,
             amountSubtext: paymentSummary.isFullyPaid
               ? 'No balance is pending for this booking.'
@@ -227,8 +227,9 @@ export default function BookingConfirmation() {
               'Your booking has been received. We will confirm it shortly.',
           }
         : {
-            heading: 'Booking Confirmed!',
-            intro: 'Your event has been successfully booked. Details below.',
+            heading: 'Your Celebration Is Booked! 🎉',
+            intro:
+              "We're excited to bring your event to life. Track your booking details, manage event information, and stay updated every step of the way.",
             amountLabel: paymentSummary.primaryLabel,
             amountSubtext: paymentSummary.isFullyPaid
               ? 'No balance is pending for this booking.'
@@ -244,14 +245,33 @@ export default function BookingConfirmation() {
               : DEFAULT_STEPS,
             toastMessage: bookingConfirmationToastMessage,
           }
-  const confirmationAmount = isSheeshaCodBooking
-    ? paymentSummary.amountDue
-    : paymentSummary.amountPaid
 
   const packageLabel = getBookingPackageNamesText(
     booking,
     booking?.packageId ? `Package ID ${booking.packageId}` : 'Selected package'
   )
+  const personalisationText = [
+    checkoutInfo?.specialRequest || booking?.specialRequest,
+    additionalInfo,
+  ]
+    .map(value => String(value ?? '').trim())
+    .filter(Boolean)
+    .join(' | ')
+  const bookingStatusLabel =
+    booking?.statusLabel ||
+    (bookingStatus
+      ? bookingStatus.charAt(0).toUpperCase() + bookingStatus.slice(1)
+      : 'Not available')
+  const bookedOnLabel = booking?.createdAt
+    ? formatDate(booking.createdAt)
+    : 'Not available'
+  const eventTimeLabel =
+    checkoutInfo?.eventTime || booking?.eventTime || sessionDetails.timeLabel || 'Not provided'
+  const packageTotalDisplay = formatCurrency(paymentSummary.totalAmount)
+  const amountPaidDisplay = formatCurrency(
+    isSheeshaCodBooking ? 0 : paymentSummary.amountPaid
+  )
+  const balanceDueDisplay = formatCurrency(paymentSummary.amountDue)
   const receiptData = buildReceiptData({
     booking,
     payment,
@@ -333,36 +353,25 @@ export default function BookingConfirmation() {
 
           <hr className="my-4 border-[#0000001A]" />
 
-          <div className="mb-6 flex items-center justify-between rounded-xl bg-[#F8F4ED] p-5">
-            <div>
-              <p className="font-medium text-[#957960]">{pageContent.amountLabel}</p>
-              {pageContent.amountSubtext ? (
-                <p className="text-sm text-gray-500">{pageContent.amountSubtext}</p>
-              ) : null}
-            </div>
-
-            <div className="text-right">
-              <p className="text-lg font-semibold text-[#957960]">
-                {formatCurrency(confirmationAmount)}
-              </p>
-              {pageContent.amountSubtext && !isSheeshaCodBooking ? (
-                <p className="text-sm text-gray-700">
-                  {paymentSummary.isFullyPaid
-                    ? 'Fully paid'
-                    : formatCurrency(paymentSummary.amountDue)}
-                </p>
-              ) : null}
-            </div>
+          <div className="space-y-3 text-[12px] md:text-[14px]">
+            <Detail label="Booking ID" value={booking?.id ?? 'Not available'} />
+            <Detail label="Booking Status" value={bookingStatusLabel} />
+            <Detail label="Booked On" value={bookedOnLabel} />
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
 
           <div className="space-y-3 text-[12px] md:text-[14px]">
-            <Detail label="Booking ID" value={booking?.id ?? 'Not available'} />
+            <Detail label="Your Selected Package" value={packageLabel} />
+            <Detail
+              label="Personalisation & Special Requests (if any)"
+              value={personalisationText || 'Not provided'}
+            />
             <Detail
               label="Event Date"
               value={formatDate(checkoutInfo?.eventDate ?? booking?.eventDate)}
             />
+            <Detail label="Event Time" value={eventTimeLabel} />
             <Detail
               label="Location"
               value={
@@ -373,27 +382,34 @@ export default function BookingConfirmation() {
               }
             />
             <Detail
-              label="PIN Code"
-              value={checkoutInfo?.pinCode || booking?.pinCode || 'Not provided'}
-            />
-            <Detail
-              label="Guests"
+              label="Expected Guests"
               value={checkoutInfo?.guestCount || booking?.guestCount || 'Not provided'}
             />
-            <Detail
-              label="Special Request"
-              value={checkoutInfo?.specialRequest || booking?.specialRequest || 'Not provided'}
-            />
-            <Detail label="Additional Info" value={additionalInfo || 'Not provided'} />
-            <Detail label="Package" value={packageLabel} />
-            <Detail label="Contact" value={customer.fullName || 'Not provided'} />
           </div>
 
           <hr className="my-4 border-[#0000001A]" />
 
-          <p className="text-xs text-gray-500">
-            Questions? Contact us at support@elewen.in or call +91 98XX XXXXX
-          </p>
+          <div className="space-y-3 text-[12px] md:text-[14px]">
+            <p className="font-medium text-[#2C2C2C]">Payment Overview</p>
+            <Detail label="Package Total" value={packageTotalDisplay} />
+            <Detail label="Amount Paid" value={amountPaidDisplay} />
+            <Detail label="Balance Due" value={balanceDueDisplay} />
+          </div>
+
+          <hr className="my-4 border-[#0000001A]" />
+
+          <div className="space-y-2">
+            <p className="text-[12px] font-medium text-[#2C2C2C] md:text-[14px]">
+              Need to Update Something?
+            </p>
+            <p className="text-xs text-gray-500 md:text-sm">
+              Contact our team as soon as possible and we&apos;ll do our best to accommodate your
+              request.
+            </p>
+            <p className="text-xs text-gray-500">
+              Questions? Contact us at support@elewen.in or call +91 98XX XXXXX
+            </p>
+          </div>
         </div>
 
         <div className="flex-1">
