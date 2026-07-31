@@ -5,20 +5,71 @@ import {
   ErrorState,
   LoadingState,
   SectionLoadingState,
-  CustomSelect,
   StatusBadge,
 } from '../components/ui/AdminUI'
 import {
+  useAdminBooking,
   useAdminMessageThread,
   useAdminMessageThreads,
   useAdminSendMessage,
 } from '../hooks/useAdminData'
-import { useDebouncedValue } from '../hooks/useDebouncedValue'
-import { formatDate, formatDateTime } from '../lib/formatters'
+import { formatDate } from '../lib/formatters'
+
+const PAGE_SIZE = 10
+
+function isPreviousThread(thread) {
+  return ['completed', 'cancelled', 'canceled'].includes(
+    String(thread?.bookingSummary?.status ?? '')
+      .trim()
+      .toLowerCase()
+  )
+}
+
+function formatUpdateTime(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const now = new Date()
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+
+  const time = new Intl.DateTimeFormat('en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+
+  if (isToday) return `Today · ${time}`
+
+  return `${new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+  }).format(date)} · ${time}`
+}
+
+function getInitials(name = '') {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(word => word[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
+function getThreadSubtitle(thread) {
+  const booking = thread?.bookingSummary
+  const parts = [
+    booking?.customer?.name,
+    booking?.event?.name,
+    booking?.package?.serviceCategories?.[0]?.name || booking?.package?.serviceCategory,
+  ].filter(Boolean)
+  return parts.slice(0, 2).join(' · ') || booking?.statusLabel || 'Booking'
+}
 
 function ArrowIcon({ direction = 'right' }) {
   const rotationClass = direction === 'left' ? '' : 'rotate-180'
-
   return (
     <svg className={`h-6 w-6 ${rotationClass}`} viewBox="0 0 36 36" fill="none">
       <path
@@ -31,36 +82,54 @@ function ArrowIcon({ direction = 'right' }) {
   )
 }
 
-function isArchivedThread(thread) {
-  return ['completed', 'cancelled'].includes(
-    String(thread?.bookingSummary?.status ?? '').toLowerCase()
+function CalendarIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M5.333 2v2.667M10.667 2v2.667M2.667 6.667h10.666M3.333 4.667h9.334c.736 0 1.333.597 1.333 1.333v6.667c0 .736-.597 1.333-1.333 1.333H3.333A1.333 1.333 0 0 1 2 12.667V6c0-.736.597-1.333 1.333-1.333Z"
+        stroke="#8F8F8F"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 
-function getLatestThreadTime(thread) {
-  return thread?.latestMessage?.createdAt || thread?.createdAt || null
+function PaperclipIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M17.5 9.167 10.175 16.49a4.167 4.167 0 1 1-5.892-5.892l7.325-7.325a2.5 2.5 0 0 1 3.535 3.536L7.818 13.233a.833.833 0 1 1-1.178-1.178l6.667-6.667"
+        stroke="#8F8F8F"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
 }
 
-function getInitials(name = '') {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(word => word[0].toUpperCase())
-    .join('')
+function SendIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M3.333 10 17.5 2.5 12.5 17.5 10 11.667 3.333 10Z"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
 }
 
-function buildBookingWorkspaceHref(bookingId = '') {
-  const id = String(bookingId ?? '').trim()
-  return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
-}
-
-function Avatar({ name = '', size = 'md' }) {
+function Avatar({ name = '', size = 'md', tone = 'brand' }) {
   const initials = getInitials(name) || '?'
-  const sizeClass = size === 'sm' ? 'h-8 w-8 text-[10px]' : 'h-10 w-10 text-xs'
+  const sizeClass = size === 'sm' ? 'h-8 w-8 text-[10px]' : 'h-9 w-9 text-xs'
+  const toneClass = tone === 'olive' ? 'bg-[#3E4E22] text-white' : 'bg-[#591902] text-[#FAFAFA]'
   return (
     <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-[#591902] font-semibold text-[#FAFAFA] ${sizeClass}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${sizeClass} ${toneClass}`}
     >
       {initials}
     </div>
@@ -68,49 +137,28 @@ function Avatar({ name = '', size = 'md' }) {
 }
 
 function ThreadCard({ threadItem, isSelected, onClick }) {
-  const customerName = threadItem.bookingSummary?.customer?.name || 'Customer'
   const packageTitle = threadItem.bookingSummary?.package?.title || threadItem.bookingId
+  const subtitle = getThreadSubtitle(threadItem)
   const unread = threadItem.unreadCount || 0
-  const isArchived = isArchivedThread(threadItem)
-  const time = getLatestThreadTime(threadItem)
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group w-full rounded-2xl border p-4 text-left transition-all duration-200 ${
-        isSelected
-          ? 'border-[#591902] bg-[#F7EEE8] shadow-[0_4px_16px_rgba(89,25,2,0.10)]'
-          : 'border-[#E4DED8] bg-white hover:border-[#C6A15B] hover:bg-[#FDFAF7]'
+      className={`w-full rounded-2xl px-4 py-3.5 text-left transition-colors ${
+        isSelected ? 'bg-[#F5EDE3]' : 'bg-transparent hover:bg-[#F8F4ED]'
       }`}
     >
-      <div className="flex items-start gap-3">
-        <Avatar name={customerName} size="md" />
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <p
-              className={`truncate text-sm font-semibold ${isSelected ? 'text-[#591902]' : 'text-[#1C1C1C]'}`}
-            >
-              {customerName}
-            </p>
-            {unread > 0 ? (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#591902] px-1.5 text-[10px] font-bold text-white">
-                {unread}
-              </span>
-            ) : isArchived ? (
-              <span className="rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] text-[#4B5563]">
-                Closed
-              </span>
-            ) : null}
-          </div>
-
-          <p className="mt-0.5 truncate text-xs text-[#6B7280]">{packageTitle}</p>
-          {time ? (
-            <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-[#8F8F8F]">
-              {formatDateTime(time)}
-            </p>
-          ) : null}
+          <p className="truncate text-[14px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
+          <p className="mt-1 truncate text-[12px] text-[#8A8A8A]">{subtitle}</p>
         </div>
+        {unread > 0 ? (
+          <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[#C45C4A] px-1.5 text-[10px] font-bold text-white">
+            {unread}
+          </span>
+        ) : null}
       </div>
     </button>
   )
@@ -118,348 +166,297 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
 
 function MessageBubble({ message, isAdmin }) {
   const senderName = message.sender?.name || (isAdmin ? 'Admin' : 'Customer')
-  const typeLabel = String(message.messageType ?? 'text').replaceAll('_', ' ')
 
   return (
-    <div className={`flex gap-2 ${isAdmin ? 'flex-row-reverse' : 'flex-row'}`}>
-      <Avatar name={senderName} size="sm" />
-      <div className={`flex max-w-[75%] flex-col gap-1 ${isAdmin ? 'items-end' : 'items-start'}`}>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.14em] text-[#8F8F8F]">
-            {senderName}
-          </span>
-          <span className="text-[10px] text-[#8F8F8F]">·</span>
-          <span className="text-[10px] text-[#8F8F8F]">{typeLabel}</span>
-        </div>
-        <div
-          className={`rounded-2xl px-4 py-3 ${
-            isAdmin
-              ? 'rounded-tr-sm bg-[#591902] text-[#FAFAFA]'
-              : 'rounded-tl-sm bg-white text-[#1C1C1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
-          }`}
-        >
-          {message.messageText ? <p className="text-sm leading-6">{message.messageText}</p> : null}
-          {message.attachments?.length ? (
-            <div className={`${message.messageText ? 'mt-3' : ''} space-y-2`}>
-              {message.attachments.map(attachment => (
-                <a
-                  key={attachment.id}
-                  href={attachment.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`block rounded-xl border px-3 py-2 text-xs ${
-                    isAdmin
-                      ? 'border-white/20 bg-white/10 text-white'
-                      : 'border-[#E4DED8] bg-[#F7F5F2] text-[#6B7280]'
-                  }`}
-                >
-                  {attachment.fileType || 'Attachment'}
-                </a>
-              ))}
-            </div>
-          ) : null}
-        </div>
-        <p className="text-[10px] text-[#8F8F8F]">{formatDateTime(message.createdAt)}</p>
+    <div className={`flex items-end gap-2 ${isAdmin ? 'flex-row-reverse' : 'flex-row'}`}>
+      <Avatar name={senderName} size="sm" tone={isAdmin ? 'olive' : 'brand'} />
+      <div
+        className={`max-w-[78%] rounded-[18px] px-4 py-3 text-[13px] leading-[1.55] ${
+          isAdmin
+            ? 'rounded-br-md bg-[#3E4E22] text-white'
+            : 'rounded-bl-md bg-[#F3EDE4] text-[#2C2C2C]'
+        }`}
+      >
+        {message.messageText ? (
+          <p className="whitespace-pre-wrap">{message.messageText}</p>
+        ) : null}
+        {message.attachments?.length ? (
+          <div className={`${message.messageText ? 'mt-2' : ''} space-y-1`}>
+            {message.attachments.map(attachment => (
+              <a
+                key={attachment.id}
+                href={attachment.fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={`block text-xs underline ${isAdmin ? 'text-white/90' : 'text-[#591902]'}`}
+              >
+                {attachment.fileType || 'Attachment'}
+              </a>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   )
 }
 
-function MessageThreadPanel({
-  thread,
-  messageText,
-  messageType,
-  attachmentUrl,
-  attachmentType,
-  messagesEndRef,
-  sendMessageMutation,
-  onClose,
-  onMessageTextChange,
-  onMessageTypeChange,
-  onAttachmentUrlChange,
-  onAttachmentTypeChange,
-  onSend,
-}) {
-  const [renderedThread, setRenderedThread] = useState(thread)
-  const [isPanelVisible, setIsPanelVisible] = useState(false)
+function BookingUpdatesPanel({ bookingId }) {
+  const { data: booking, isLoading } = useAdminBooking(bookingId)
 
-  useEffect(() => {
-    if (thread) {
-      const frameId = requestAnimationFrame(() => {
-        setRenderedThread(thread)
-        setIsPanelVisible(true)
-      })
-      return () => cancelAnimationFrame(frameId)
+  const updates = useMemo(() => {
+    const timeline = Array.isArray(booking?.timeline) ? booking.timeline : []
+    if (timeline.length) {
+      return timeline.map((item, index) => ({
+        id: item?.id ?? `timeline-${index}`,
+        title: item?.title || item?.label || 'Update',
+        description: item?.description || item?.note || '',
+        status: item?.status || 'upcoming',
+        at: item?.timelineDate || item?.date || item?.createdAt || '',
+      }))
     }
 
-    const frameId = requestAnimationFrame(() => setIsPanelVisible(false))
-    const timeoutId = setTimeout(() => setRenderedThread(null), 300)
-    return () => {
-      cancelAnimationFrame(frameId)
-      clearTimeout(timeoutId)
+    const logs = Array.isArray(booking?.statusLogs) ? booking.statusLogs : []
+    if (logs.length) {
+      return [...logs]
+        .reverse()
+        .slice(0, 12)
+        .map((log, index) => ({
+          id: log?.id ?? `log-${index}`,
+          title: log?.statusLabel || log?.status || 'Status update',
+          description: log?.note || log?.message || '',
+          status: log?.status || 'upcoming',
+          at: log?.createdAt || '',
+        }))
     }
-  }, [thread])
 
-  if (!renderedThread) return null
-
-  const booking = renderedThread.bookingSummary
-  const isReadOnly = isArchivedThread(renderedThread)
+    return []
+  }, [booking])
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex justify-end bg-black/25 transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-        isPanelVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
-      }`}
-      onClick={onClose}
-    >
-      <aside
-        className={`flex h-full min-h-0 w-full max-w-[760px] flex-col overflow-hidden bg-[#FAFAFA] shadow-[-16px_0_40px_rgba(17,24,39,0.18)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          isPanelVisible ? 'translate-x-0' : 'translate-x-full'
-        }`}
-        onClick={event => event.stopPropagation()}
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
+      <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
+        <h3 className="text-[15px] font-semibold text-[#1C1C1C]">Booking Updates</h3>
+      </div>
+
+      <div
+        className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-2"
+        data-lenis-prevent
       >
-        <div className="flex items-center justify-between gap-4 border-b border-[#E4DED8] bg-white px-5 py-4">
-          <div className="flex items-center gap-3">
-            <Avatar name={booking?.customer?.name} size="md" />
-            <div>
-              <p className="text-sm font-semibold text-[#1C1C1C]">
-                {booking?.customer?.name || 'Customer'}
-              </p>
-              <p className="text-xs text-[#6B7280]">
-                {booking?.customer?.email || 'No email on file'}
-              </p>
-            </div>
+        {!bookingId ? (
+          <div className="py-10 text-center text-[13px] text-[#8A8A8A]">
+            Select a chat to view booking updates.
           </div>
-          <div className="flex items-center gap-3">
-            <StatusBadge
-              status={isReadOnly ? 'resolved' : booking?.status}
-              label={isReadOnly ? 'Read only' : booking?.statusLabel}
-            />
-            <button
-              type="button"
-              onClick={event => {
-                event.stopPropagation()
-                onClose()
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-full p-2 text-[#957960] transition hover:bg-[#F3EEE8]"
-              aria-label="Close message thread"
+        ) : isLoading ? (
+          <div className="py-10">
+            <SectionLoadingState label="Loading updates…" minHeightClass="min-h-[120px]" />
+          </div>
+        ) : updates.length ? (
+          updates.map((update, index) => (
+            <div
+              key={update.id}
+              className={`py-4 ${index > 0 ? 'border-t border-[#F0EBE4]' : ''}`}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M15 5L5 15M5 5L15 15"
-                  stroke="#1C1C1C"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-[13px] font-semibold text-[#1C1C1C]">{update.title}</p>
+                <StatusBadge
+                  status={update.status}
+                  label={update.status === 'upcoming' ? 'Upcoming' : undefined}
                 />
-              </svg>
-            </button>
+              </div>
+              {update.at ? (
+                <p className="mt-1.5 text-[11px] text-[#9A9A9A]">{formatUpdateTime(update.at)}</p>
+              ) : null}
+              {update.description ? (
+                <p className="mt-2 text-[12px] leading-[1.55] text-[#6B6B6B]">{update.description}</p>
+              ) : null}
+            </div>
+          ))
+        ) : (
+          <div className="py-10 text-center text-[13px] text-[#8A8A8A]">
+            No booking updates yet for this conversation.
           </div>
-        </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
-        <div className="border-b border-[#E4DED8] bg-[#F7F5F2] px-5 py-3">
-          <p className="text-xs text-[#6B7280]">
-            <span className="font-medium text-[#2D2D2D]">
-              {booking?.package?.title || renderedThread.bookingId}
-            </span>
-            {booking?.eventDate ? (
-              <span className="ml-2 text-[#8F8F8F]">· {formatDate(booking.eventDate)}</span>
-            ) : null}
+function ConversationPanel({
+  thread,
+  threadLoading,
+  isReadOnly,
+  draft,
+  sendMessageMutation,
+  onDraftChange,
+  onSend,
+}) {
+  const messagesScrollRef = useRef(null)
+  const booking = thread?.bookingSummary
+  const packageTitle = booking?.package?.title || thread?.bookingId || 'Booking'
+  const subtitle = [
+    booking?.customer?.name,
+    booking?.event?.name,
+    booking?.package?.serviceCategories?.[0]?.name,
+  ]
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(' · ')
+
+  useEffect(() => {
+    if (!messagesScrollRef.current || !thread?.messages?.length) return
+    const raf = requestAnimationFrame(() => {
+      if (messagesScrollRef.current) {
+        messagesScrollRef.current.scrollTop = messagesScrollRef.current.scrollHeight
+      }
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [thread?.messages?.length, thread?.bookingId])
+
+  if (!thread && !threadLoading) {
+    return (
+      <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-[20px] border border-[#EDE7DF] bg-white px-6 text-center">
+        <p className="text-[15px] font-medium text-[#1C1C1C]">Select a booking chat</p>
+        <p className="mt-2 max-w-sm text-[13px] text-[#8A8A8A]">
+          Choose an active or previous booking from the left to view and reply to the conversation.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
+      <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-[#F0EBE4] px-5 py-4">
+        <div className="min-w-0">
+          <p className="truncate text-[16px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
+          <p className="mt-1 text-[12px] text-[#8A8A8A]">
+            {subtitle || booking?.customer?.email || 'Conversation'}
           </p>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#6B7280]">
-            <span className="rounded-full bg-white px-3 py-1">
-              Booking ID: {renderedThread.bookingId}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge
+            status={isReadOnly ? 'resolved' : booking?.status}
+            label={isReadOnly ? 'Read only' : booking?.statusLabel || 'In Progress'}
+          />
+          {booking?.eventDate ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F5F5] px-3 py-1 text-[11px] text-[#6B6B6B]">
+              <CalendarIcon />
+              {formatDate(booking.eventDate)}
             </span>
-            <span className="rounded-full bg-white px-3 py-1">
-              Vendors: {booking?.vendorAssignments?.length ?? 0}
-            </span>
-            <a
-              href={buildBookingWorkspaceHref(renderedThread.bookingId)}
-              className="inline-flex items-center rounded-full border border-[#CDB17E] bg-white px-3 py-1 font-semibold text-[#CDB17E] hover:bg-[#FAF6F1]"
-            >
-              View Booking Details
-            </a>
+          ) : null}
+        </div>
+      </div>
+
+      <div
+        ref={messagesScrollRef}
+        className="hide-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-5 py-5"
+        data-lenis-prevent
+      >
+        {threadLoading ? (
+          <div className="flex flex-1 items-center justify-center">
+            <SectionLoadingState label="Loading conversation…" minHeightClass="min-h-[160px]" />
           </div>
-        </div>
+        ) : thread?.messages?.length ? (
+          thread.messages.map(message => {
+            const isAdmin = String(message.senderId) !== String(booking?.customer?.id)
+            return <MessageBubble key={message.id} message={message} isAdmin={isAdmin} />
+          })
+        ) : (
+          <div className="flex flex-1 items-center justify-center">
+            <EmptyState
+              title={isReadOnly ? 'No previous messages' : 'No messages yet'}
+              body={
+                isReadOnly
+                  ? 'This previous booking has no stored conversation history.'
+                  : 'Start the conversation here. Your message will appear in this booking thread.'
+              }
+            />
+          </div>
+        )}
+      </div>
 
-        <div
-          className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto hide-scrollbar px-5 py-5"
-          data-lenis-prevent
-        >
-          {renderedThread.messages?.length ? (
-            renderedThread.messages.map(message => {
-              const isAdmin = String(message.senderId) !== String(booking?.customer?.id)
-              return <MessageBubble key={message.id} message={message} isAdmin={isAdmin} />
-            })
-          ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <EmptyState
-                title="No messages yet"
-                body="Once a message is sent, the conversation will appear here."
-              />
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+      <div className="shrink-0 border-t border-[#F0EBE4] px-4 py-4">
+        {isReadOnly ? (
+          <div className="mb-3 rounded-xl border border-dashed border-[#D6CDC3] bg-[#FAFAFA] px-4 py-3 text-xs text-[#6B7280]">
+            This booking is closed. The thread is read-only.
+          </div>
+        ) : null}
 
-        <div className="shrink-0 border-t border-[#E4DED8] bg-[#FAFAFA] px-5 py-4">
-          {isReadOnly ? (
-            <div className="mb-3 flex items-center gap-2 rounded-xl border border-dashed border-[#D6CDC3] bg-white px-4 py-3 text-xs text-[#6B7280]">
-              <svg
-                className="h-4 w-4 shrink-0 text-[#8F8F8F]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+        <div className="flex items-center gap-2 rounded-full border border-[#E8E2DA] bg-[#FAFAFA] px-3 py-2">
+          <span className="flex h-9 w-9 items-center justify-center text-[#8F8F8F]" aria-hidden="true">
+            <PaperclipIcon />
+          </span>
+          <input
+            type="text"
+            value={draft}
+            onChange={e => onDraftChange(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                onSend()
+              }
+            }}
+            disabled={isReadOnly || sendMessageMutation.isPending || !thread?.id}
+            placeholder={isReadOnly ? 'Read-only thread.' : 'Type message'}
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-[#2D2D2D] outline-none placeholder:text-[#9A9A9A] disabled:cursor-not-allowed disabled:opacity-60"
+          />
+          <button
+            type="button"
+            disabled={
+              isReadOnly || !draft.trim() || sendMessageMutation.isPending || !thread?.id
+            }
+            onClick={onSend}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#591902] text-white transition hover:bg-[#7A2B08] disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Send message"
+          >
+            {sendMessageMutation.isPending ? (
+              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              This booking is closed. The thread is read-only.
-            </div>
-          ) : null}
-
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="text-[11px] uppercase tracking-[0.14em] text-[#8F8F8F]">
-                Type:
-              </label>
-              <CustomSelect
-                value={messageType}
-                onChange={onMessageTypeChange}
-                menuClassName="z-[70]"
-              >
-                <option value="text">Text reply</option>
-                <option value="status_update">Status update</option>
-                <option value="system">System note</option>
-              </CustomSelect>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <input
-                type="url"
-                value={attachmentUrl}
-                onChange={event => onAttachmentUrlChange(event.target.value)}
-                disabled={isReadOnly}
-                placeholder="Attachment URL (optional)"
-                className="w-full rounded-full border border-[#E4DED8] bg-white px-4 py-2.5 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
-              />
-              <input
-                type="text"
-                value={attachmentType}
-                onChange={event => onAttachmentTypeChange(event.target.value)}
-                disabled={isReadOnly}
-                placeholder="Attachment type (optional)"
-                className="w-full rounded-full border border-[#E4DED8] bg-white px-4 py-2.5 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
-              />
-            </div>
-
-            <div className="flex items-end gap-3">
-              <textarea
-                value={messageText}
-                onChange={event => onMessageTextChange(event.target.value)}
-                disabled={isReadOnly}
-                placeholder={
-                  isReadOnly ? 'Read-only thread.' : 'Write your message to the customer...'
-                }
-                rows={3}
-                className="flex-1 resize-none rounded-2xl border border-[#E4DED8] bg-white px-4 py-3 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] disabled:cursor-not-allowed disabled:opacity-60"
-              />
-              <button
-                type="button"
-                disabled={
-                  sendMessageMutation.isPending ||
-                  (!messageText.trim() && !attachmentUrl.trim()) ||
-                  isReadOnly
-                }
-                onClick={onSend}
-                className="flex h-12 shrink-0 items-center justify-center gap-2 self-end rounded-full bg-[#591902] px-4 text-white shadow-[0_4px_12px_rgba(89,25,2,0.25)] transition hover:bg-[#7A2B08] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="hidden text-sm font-medium sm:inline">
-                  {sendMessageMutation.isPending ? 'Sending' : 'Send'}
-                </span>
-                <span>
-                  {sendMessageMutation.isPending ? (
-                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 12L20 3L14 21L11 13L3 12Z"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </button>
-            </div>
-          </div>
+            ) : (
+              <SendIcon />
+            )}
+          </button>
         </div>
-      </aside>
+      </div>
     </div>
   )
 }
 
 export default function MessageBoxPage() {
   const [searchParams] = useSearchParams()
-  const [search, setSearch] = useState('')
-  const debouncedSearch = useDebouncedValue(search)
   const [threadTab, setThreadTab] = useState('active')
   const [selectedBookingId, setSelectedBookingId] = useState(
     String(searchParams.get('bookingId') ?? '').trim()
   )
-  const [messageText, setMessageText] = useState('')
-  const [messageType, setMessageType] = useState('text')
-  const [attachmentUrl, setAttachmentUrl] = useState('')
-  const [attachmentType, setAttachmentType] = useState('')
-  const messagesEndRef = useRef(null)
+  const [draft, setDraft] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const PAGE_SIZE = 10
 
-  const threadsQuery = useAdminMessageThreads({ search: debouncedSearch })
+  const threadsQuery = useAdminMessageThreads()
   const allThreads = useMemo(() => threadsQuery.data?.threads ?? [], [threadsQuery.data?.threads])
+
   const activeThreads = useMemo(
-    () => allThreads.filter(thread => !isArchivedThread(thread)),
+    () => allThreads.filter(thread => !isPreviousThread(thread)),
     [allThreads]
   )
-  const archivedThreads = useMemo(
-    () => allThreads.filter(thread => isArchivedThread(thread)),
+  const previousThreads = useMemo(
+    () => allThreads.filter(thread => isPreviousThread(thread)),
     [allThreads]
   )
-  const effectiveThreadTab = useMemo(() => {
-    if (threadTab === 'active' && activeThreads.length === 0 && archivedThreads.length > 0) {
-      return 'archived'
-    }
-    if (threadTab === 'archived' && archivedThreads.length === 0 && activeThreads.length > 0) {
-      return 'active'
-    }
-    return threadTab
-  }, [activeThreads.length, archivedThreads.length, threadTab])
-  const filteredThreads = effectiveThreadTab === 'archived' ? archivedThreads : activeThreads
+
+  // Respect the user's tab choice so Previous booking always works
+  const filteredThreads = threadTab === 'previous' ? previousThreads : activeThreads
   const totalPages = Math.max(1, Math.ceil(filteredThreads.length / PAGE_SIZE))
   const visiblePage = Math.min(currentPage, totalPages)
   const visibleThreads = useMemo(
@@ -470,7 +467,7 @@ export default function MessageBoxPage() {
   useEffect(() => {
     const frameId = requestAnimationFrame(() => setCurrentPage(1))
     return () => cancelAnimationFrame(frameId)
-  }, [search, effectiveThreadTab])
+  }, [threadTab])
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -480,9 +477,26 @@ export default function MessageBoxPage() {
     return undefined
   }, [currentPage, totalPages])
 
+  // Deep-link: open the right tab for the bookingId in the URL
+  useEffect(() => {
+    const bookingIdParam = String(searchParams.get('bookingId') ?? '').trim()
+    if (!bookingIdParam || !allThreads.length) return undefined
+
+    const matched = allThreads.find(thread => thread.bookingId === bookingIdParam)
+    if (!matched) return undefined
+
+    const frameId = requestAnimationFrame(() => {
+      setSelectedBookingId(bookingIdParam)
+      setThreadTab(isPreviousThread(matched) ? 'previous' : 'active')
+    })
+    return () => cancelAnimationFrame(frameId)
+  }, [searchParams, allThreads])
+
+  // Keep selection if it exists in the current tab; otherwise clear (don't force-switch tabs)
   useEffect(() => {
     if (
       selectedBookingId &&
+      filteredThreads.length > 0 &&
       !filteredThreads.some(thread => thread.bookingId === selectedBookingId)
     ) {
       const frameId = requestAnimationFrame(() => setSelectedBookingId(''))
@@ -491,177 +505,166 @@ export default function MessageBoxPage() {
     return undefined
   }, [filteredThreads, selectedBookingId])
 
+  // Auto-select first visible thread when none selected
   useEffect(() => {
-    const bookingIdParam = String(searchParams.get('bookingId') ?? '').trim()
-    if (!bookingIdParam) return undefined
-    const frameId = requestAnimationFrame(() => setSelectedBookingId(bookingIdParam))
-    return () => cancelAnimationFrame(frameId)
-  }, [searchParams])
+    if (!selectedBookingId && visibleThreads[0]?.bookingId) {
+      const frameId = requestAnimationFrame(() =>
+        setSelectedBookingId(visibleThreads[0].bookingId)
+      )
+      return () => cancelAnimationFrame(frameId)
+    }
+    return undefined
+  }, [selectedBookingId, visibleThreads])
 
   const selectedThreadListItem = useMemo(
     () => filteredThreads.find(thread => thread.bookingId === selectedBookingId) ?? null,
     [filteredThreads, selectedBookingId]
   )
 
+  const isReadOnly = isPreviousThread(selectedThreadListItem)
   const threadQuery = useAdminMessageThread(selectedThreadListItem?.bookingId)
   const sendMessageMutation = useAdminSendMessage()
   const isListLoading = threadsQuery.isFetching && !threadsQuery.isLoading
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [threadQuery.data?.messages?.length, selectedBookingId])
+  const thread =
+    threadQuery.data?.bookingId === selectedBookingId ? threadQuery.data : null
 
   if (threadsQuery.isLoading) return <LoadingState label="Loading message threads..." />
   if (threadsQuery.error)
     return <ErrorState label="Admin message threads are unavailable right now." />
 
-  const thread = threadQuery.data?.bookingId === selectedBookingId ? threadQuery.data : null
+  async function handleSend() {
+    if (!draft.trim() || !thread?.id || isReadOnly) return
+
+    await sendMessageMutation.mutateAsync({
+      threadId: thread.id,
+      bookingId: thread.bookingId,
+      messageType: 'text',
+      messageText: draft.trim(),
+      attachments: [],
+    })
+    setDraft('')
+  }
 
   return (
-    <div className="flex h-fit min-h-0 flex-col gap-6">
-      <div>
-        <h1 className="text-2xl text-[#1C1C1C]">Message Box</h1>
-        <p className="mt-1 text-sm text-[#6B7280]">
-          Review booking conversations, post planner updates, and manage completed booking history.
+    <div className="flex flex-col gap-5 lg:h-[calc(100dvh-140px)] lg:min-h-[560px] lg:overflow-hidden">
+      <div className="shrink-0">
+        <h1
+          className="text-[28px] leading-none text-[#1C1C1C] md:text-[32px]"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          Messages &amp; Updates
+        </h1>
+        <p className="mt-2 max-w-2xl text-[13px] leading-[1.5] text-[#8A8A8A]">
+          Stay connected with your event team and track important updates related to your bookings.
         </p>
       </div>
 
-      <div className="min-h-0 flex-1">
-        <div className="mb-4 rounded-2xl bg-[#FFFFFF] px-3 py-5">
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8F8F8F]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-              />
-            </svg>
-            <input
-              type="search"
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder="Search customer or booking..."
-              className="w-full rounded-full border border-[#E4DED8] bg-[#F7F5F2] py-2.5 pl-9 pr-4 text-sm text-[#2D2D2D] outline-none transition focus:border-[#C6A15B] focus:bg-white"
-            />
-          </div>
-
-          <div className="mt-4 flex gap-1 rounded-full bg-[#F3F3F3] p-1">
-            {[
-              { key: 'active', label: 'Active', count: activeThreads.length },
-              { key: 'archived', label: 'Closed', count: archivedThreads.length },
-            ].map(tab => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setThreadTab(tab.key)}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-all duration-200 ${
-                  effectiveThreadTab === tab.key
-                    ? 'bg-[#591902] text-white shadow-sm'
-                    : 'text-[#6B7280] hover:text-[#2D2D2D]'
-                }`}
-              >
-                {tab.label}
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    effectiveThreadTab === tab.key
-                      ? 'bg-white/20 text-white'
-                      : 'bg-[#E8E2DA] text-[#6B7280]'
+      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden max-lg:auto-rows-auto lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)_minmax(0,300px)]">
+        {/* Column 1 — Chat list */}
+        <div className="flex h-[min(420px,55vh)] min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white lg:h-full">
+          <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
+            <h2 className="text-[15px] font-semibold text-[#1C1C1C]">Chat</h2>
+            <div className="mt-3 flex gap-2">
+              {[
+                { key: 'active', label: 'Active booking' },
+                { key: 'previous', label: 'Previous booking' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setThreadTab(tab.key)
+                    setSelectedBookingId('')
+                    setCurrentPage(1)
+                  }}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
+                    threadTab === tab.key
+                      ? 'bg-[#591902] text-white'
+                      : 'bg-[#F3F3F3] text-[#5A5A5A] hover:bg-[#EBEBEB]'
                   }`}
                 >
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          <div
+            className="hide-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2"
+            data-lenis-prevent
+          >
+            {isListLoading ? (
+              <SectionLoadingState
+                label="Loading message threads..."
+                minHeightClass="min-h-[200px]"
+              />
+            ) : filteredThreads.length ? (
+              visibleThreads.map(threadItem => (
+                <ThreadCard
+                  key={threadItem.id}
+                  threadItem={threadItem}
+                  isSelected={selectedThreadListItem?.id === threadItem.id}
+                  onClick={() => setSelectedBookingId(threadItem.bookingId)}
+                />
+              ))
+            ) : (
+              <EmptyState
+                title={
+                  threadTab === 'active' ? 'No active booking threads' : 'No previous threads'
+                }
+                body={
+                  threadTab === 'active'
+                    ? 'When a booking becomes active, its conversation thread will show up here.'
+                    : 'Completed or cancelled booking conversations will appear here as read-only history.'
+                }
+              />
+            )}
+          </div>
+
+          {filteredThreads.length > PAGE_SIZE ? (
+            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-[#F0EBE4] px-3 py-3">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={visiblePage === 1}
+                className="rounded-full border border-[#E4DED8] bg-white px-2.5 py-2 text-xs disabled:opacity-50"
+              >
+                <ArrowIcon direction="left" />
+              </button>
+              <span className="text-xs font-semibold text-[#1C1C1C]">
+                {visiblePage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={visiblePage === totalPages}
+                className="rounded-full border border-[#E4DED8] bg-white px-2.5 py-2 text-xs disabled:opacity-50"
+              >
+                <ArrowIcon direction="right" />
+              </button>
+            </div>
+          ) : null}
         </div>
 
-        <div
-          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 hide-scrollbar"
-          data-lenis-prevent
-        >
-          {isListLoading ? (
-            <SectionLoadingState
-              label="Loading message threads..."
-              minHeightClass="min-h-[320px]"
-            />
-          ) : filteredThreads.length ? (
-            visibleThreads.map(threadItem => (
-              <ThreadCard
-                key={threadItem.id}
-                threadItem={threadItem}
-                isSelected={selectedThreadListItem?.id === threadItem.id}
-                onClick={() => setSelectedBookingId(threadItem.bookingId)}
-              />
-            ))
-          ) : (
-            <EmptyState
-              title="No threads"
-              body="Booking conversations will appear here once customers start messaging."
-            />
-          )}
+        {/* Column 2 — Conversation */}
+        <div className="h-[min(520px,65vh)] min-h-0 overflow-hidden lg:h-full">
+          <ConversationPanel
+            thread={thread}
+            threadLoading={Boolean(selectedBookingId) && threadQuery.isLoading}
+            isReadOnly={isReadOnly}
+            draft={draft}
+            sendMessageMutation={sendMessageMutation}
+            onDraftChange={setDraft}
+            onSend={handleSend}
+          />
+        </div>
+
+        {/* Column 3 — Booking updates */}
+        <div className="h-[min(360px,50vh)] min-h-0 overflow-hidden lg:h-full">
+          <BookingUpdatesPanel bookingId={selectedBookingId} />
         </div>
       </div>
-
-      <MessageThreadPanel
-        thread={thread}
-        messageText={messageText}
-        messageType={messageType}
-        attachmentUrl={attachmentUrl}
-        attachmentType={attachmentType}
-        messagesEndRef={messagesEndRef}
-        sendMessageMutation={sendMessageMutation}
-        onClose={() => setSelectedBookingId('')}
-        onMessageTextChange={setMessageText}
-        onMessageTypeChange={setMessageType}
-        onAttachmentUrlChange={setAttachmentUrl}
-        onAttachmentTypeChange={setAttachmentType}
-        onSend={async () => {
-          if (!thread) return
-
-          await sendMessageMutation.mutateAsync({
-            threadId: thread.id,
-            bookingId: thread.bookingId,
-            messageType,
-            messageText,
-            attachments: attachmentUrl
-              ? [{ fileUrl: attachmentUrl, fileType: attachmentType || null }]
-              : [],
-          })
-          setMessageText('')
-          setAttachmentUrl('')
-          setAttachmentType('')
-        }}
-      />
-
-      {filteredThreads.length ? (
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={visiblePage === 1}
-            className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <ArrowIcon direction="left" />
-          </button>
-          <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-[#1C1C1C]">
-            {visiblePage} / {totalPages}
-          </div>
-          <button
-            type="button"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={visiblePage === totalPages}
-            className="rounded-full border border-[#E4DED8] bg-white px-3 py-3 text-xs font-semibold text-[#1C1C1C] transition hover:border-[#D4BA8E] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <ArrowIcon direction="right" />
-          </button>
-        </div>
-      ) : null}
     </div>
   )
 }
