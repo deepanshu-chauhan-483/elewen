@@ -1418,6 +1418,10 @@ export interface ApiPlannerLeadPlannerLead extends Struct.CollectionTypeSchema {
     event_type: Schema.Attribute.String
     full_name: Schema.Attribute.String & Schema.Attribute.Required
     guest_count: Schema.Attribute.Integer
+    interest_source: Schema.Attribute.String
+    interested_package_id: Schema.Attribute.String
+    interested_package_slug: Schema.Attribute.String
+    interested_package_title: Schema.Attribute.String
     lead_type: Schema.Attribute.Enumeration<['planner', 'consultation', 'contact us']>
     locale: Schema.Attribute.String & Schema.Attribute.Private
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::planner-lead.planner-lead'> &

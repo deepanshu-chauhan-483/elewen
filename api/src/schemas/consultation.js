@@ -27,4 +27,8 @@ export const createConsultationSchema = Joi.object({
   city: Joi.string().max(100).allow('', null).optional(),
   budget_range: Joi.string().max(100).allow('', null).optional(),
   vision_notes: Joi.string().max(2000).allow('', null).optional(),
+  interested_package_id: Joi.string().max(100).allow('', null).optional(),
+  interested_package_title: Joi.string().max(255).allow('', null).optional(),
+  interested_package_slug: Joi.string().max(255).allow('', null).optional(),
+  interest_source: Joi.string().max(100).allow('', null).optional(),
 })

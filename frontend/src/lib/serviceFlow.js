@@ -13,6 +13,30 @@ const CONSULTATION_ONLY_EVENT_SLUGS = new Set([
 
 export const BOOK_CONSULTATION_PATH = '/book-consultation'
 
+/** Build /book-consultation URL with optional package interest query params. */
+export function buildBookConsultationPath({
+  packageId,
+  packageTitle,
+  packageSlug,
+  source,
+} = {}) {
+  const params = new URLSearchParams()
+  if (packageId != null && String(packageId).trim()) {
+    params.set('packageId', String(packageId).trim())
+  }
+  if (packageSlug != null && String(packageSlug).trim()) {
+    params.set('packageSlug', String(packageSlug).trim())
+  }
+  if (packageTitle != null && String(packageTitle).trim()) {
+    params.set('packageTitle', String(packageTitle).trim())
+  }
+  if (source != null && String(source).trim()) {
+    params.set('source', String(source).trim())
+  }
+  const query = params.toString()
+  return query ? `${BOOK_CONSULTATION_PATH}?${query}` : BOOK_CONSULTATION_PATH
+}
+
 export function isCorporateCategory(categorySlug = '') {
   return String(categorySlug ?? '')
     .trim()

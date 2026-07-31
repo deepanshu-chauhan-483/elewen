@@ -421,6 +421,10 @@ export const dashboardGetCoupons = token =>
  * @param {string} [body.city]
  * @param {string} [body.budget_range]
  * @param {string} [body.vision_notes]
+ * @param {string} [body.interested_package_id]
+ * @param {string} [body.interested_package_title]
+ * @param {string} [body.interested_package_slug]
+ * @param {string} [body.interest_source]
  */
 export function submitConsultation(body) {
   return apiPost('/consultations', body)

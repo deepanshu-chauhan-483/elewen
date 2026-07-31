@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import DateTimePicker from '../components/common/DateTimePicker'
 import { getFieldErrors } from '../lib/formErrors'
 import { useConsultation } from '../hooks/useConsultation'
@@ -35,6 +35,7 @@ const RevealLine = ({ children, delay, className = '' }) => (
 const BookConsultationPage = () => {
   const pageRef = useRef(null)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { mutate: submitConsultation, isPending, isError, error } = useConsultation()
   const [fieldErrors, setFieldErrors] = useState({})
   const [form, setForm] = useState({
@@ -47,6 +48,15 @@ const BookConsultationPage = () => {
     budget_range: '',
     vision_notes: '',
   })
+
+  const interestedPackage = useMemo(() => {
+    const packageId = String(searchParams.get('packageId') ?? '').trim()
+    const packageTitle = String(searchParams.get('packageTitle') ?? '').trim()
+    const packageSlug = String(searchParams.get('packageSlug') ?? '').trim()
+    const source = String(searchParams.get('source') ?? '').trim()
+    if (!packageId && !packageTitle) return null
+    return { packageId, packageTitle, packageSlug, source }
+  }, [searchParams])
 
   useEffect(() => {
     const page = pageRef.current
@@ -110,7 +120,21 @@ const BookConsultationPage = () => {
       return
     }
     setFieldErrors({})
-    submitConsultation(form, {
+    submitConsultation(
+      {
+        ...form,
+        ...(interestedPackage?.packageId
+          ? { interested_package_id: interestedPackage.packageId }
+          : {}),
+        ...(interestedPackage?.packageTitle
+          ? { interested_package_title: interestedPackage.packageTitle }
+          : {}),
+        ...(interestedPackage?.packageSlug
+          ? { interested_package_slug: interestedPackage.packageSlug }
+          : {}),
+        ...(interestedPackage?.source ? { interest_source: interestedPackage.source } : {}),
+      },
+      {
       onSuccess: () => {
         navigate('/consultation-confirmation', {
           state: {
@@ -122,13 +146,15 @@ const BookConsultationPage = () => {
             location: form.city,
             budget: form.budget_range,
             notes: form.vision_notes,
+            interestedPackageTitle: interestedPackage?.packageTitle || '',
           },
         })
       },
       onError: submitError => {
         setFieldErrors(getFieldErrors(submitError))
       },
-    })
+    }
+    )
   }
 
   return (
@@ -264,6 +290,22 @@ const BookConsultationPage = () => {
             className="card-reveal rounded-[28px] border-t-[4px] border-[#6D2005] bg-[#F8F4ED] px-6 py-7 md:px-8 md:py-8 lg:px-11 lg:py-11"
             style={{ '--delay': '0.12s' }}
           >
+            {interestedPackage?.packageTitle ? (
+              <div className="mb-6 rounded-2xl border border-[#D8CEC2] bg-white/70 px-4 py-3 md:mb-8">
+                <p
+                  className="text-[11px] uppercase tracking-[0.08em] text-[#8A847E]"
+                  style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 500 }}
+                >
+                  Interested package
+                </p>
+                <p
+                  className="mt-1 text-[15px] text-[#591902] md:text-[16px]"
+                  style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600 }}
+                >
+                  {interestedPackage.packageTitle}
+                </p>
+              </div>
+            ) : null}
             <div className="grid gap-x-6 gap-y-4 md:grid-cols-2 lg:gap-x-6 lg:gap-y-6">
               <input
                 type="text"

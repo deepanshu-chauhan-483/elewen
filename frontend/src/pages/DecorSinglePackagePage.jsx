@@ -1856,6 +1856,16 @@ export default function DecorSinglePackagePage() {
         }}
         testimonials={packageReviews}
         consultationOnly={consultationOnly}
+        consultationPackage={
+          consultationOnly
+            ? {
+                id: pkg.id,
+                title: packageTitle,
+                slug: pkg.slug,
+                source: 'corporate-decor',
+              }
+            : null
+        }
         ctaButtonText="Book a consultation"
       />
       <InclusionImageToast image={toastImage} onClose={() => setToastImage(null)} />

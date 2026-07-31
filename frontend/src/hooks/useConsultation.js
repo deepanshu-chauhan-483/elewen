@@ -8,7 +8,8 @@ import { submitConsultation } from '../lib/api'
  * Strapi table:  planner_leads (lead_type = 'consultation')
  *
  * Required fields: full_name, email, phone
- * Optional: event_type, event_date, guest_count, city, budget_range, vision_notes
+ * Optional: event_type, event_date, guest_count, city, budget_range, vision_notes,
+ *           interested_package_id, interested_package_title, interested_package_slug, interest_source
  *
  * Usage:
  *   const { mutate, isPending, isSuccess, isError } = useConsultation()

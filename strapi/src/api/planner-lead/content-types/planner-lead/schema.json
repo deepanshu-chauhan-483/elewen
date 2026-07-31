@@ -53,6 +53,18 @@
     "budget_range": {
       "type": "string"
     },
+    "interested_package_id": {
+      "type": "string"
+    },
+    "interested_package_title": {
+      "type": "string"
+    },
+    "interested_package_slug": {
+      "type": "string"
+    },
+    "interest_source": {
+      "type": "string"
+    },
     "custom_fields": {
       "type": "json"
     },

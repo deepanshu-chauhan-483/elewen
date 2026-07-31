@@ -8,7 +8,7 @@ import CartViewOptionsSheet from '../cart/CartViewOptionsSheet'
 import PackageImageDisclaimer from './PackageImageDisclaimer'
 import { preloadImages } from '../../utils/preloadAssets'
 import { assignDistinctCoverIndices } from '../../lib/packageFilters'
-import { BOOK_CONSULTATION_PATH } from '../../lib/serviceFlow'
+import { BOOK_CONSULTATION_PATH, buildBookConsultationPath } from '../../lib/serviceFlow'
 
 const GALLERY_VIEWPORT_HEIGHT_CLASS =
   'h-[min(52vh,20rem)] md:h-[clamp(26.25rem,calc(100vh-8.25rem),58.375rem)]'
@@ -73,10 +73,10 @@ function PackageImageLightbox({ open, image, title, onClose }) {
   )
 }
 
-function ConsultationLinkButton({ label, className = '' }) {
+function ConsultationLinkButton({ label, className = '', consultationPath = BOOK_CONSULTATION_PATH }) {
   return (
     <Link
-      to={BOOK_CONSULTATION_PATH}
+      to={consultationPath}
       className={`group flex w-full items-center justify-between rounded-full bg-[#D4BA8E] pl-6 pr-1.5 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[#C6AB7F] ${className}`}
     >
       <span className="mr-5">{label}</span>
@@ -295,11 +295,18 @@ export default function SingleProductPageContent({
   testimonials = [],
   hideHeaderPrice = false,
   consultationOnly = false,
+  consultationPackage = null,
 }) {
   const desktopSectionTop = '58px'
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
   const hidePrice = hideHeaderPrice || consultationOnly
+  const consultationPath = buildBookConsultationPath({
+    packageId: consultationPackage?.id ?? consultationPackage?.packageId,
+    packageTitle: consultationPackage?.title ?? consultationPackage?.packageTitle,
+    packageSlug: consultationPackage?.slug ?? consultationPackage?.packageSlug,
+    source: consultationPackage?.source ?? (consultationOnly ? 'corporate-decor' : undefined),
+  })
 
   return (
     <ProductImageLayout
@@ -330,6 +337,7 @@ export default function SingleProductPageContent({
       desktopSectionTop={desktopSectionTop}
       hideHeaderPrice={hidePrice}
       consultationOnly={consultationOnly}
+      consultationPath={consultationPath}
     />
   )
 }
@@ -475,6 +483,7 @@ function ProductImageLayout({
   desktopSectionTop,
   hideHeaderPrice,
   consultationOnly = false,
+  consultationPath = BOOK_CONSULTATION_PATH,
 }) {
   const normalizedMainImage = mainImage ?? null
   const initialDisplayImage = mainImage ?? sideImages[0]
@@ -676,6 +685,7 @@ function ProductImageLayout({
                 {consultationOnly ? (
                   <ConsultationLinkButton
                     label={ctaButtonText}
+                    consultationPath={consultationPath}
                     className={promptContent ? 'mt-4' : 'mt-5'}
                   />
                 ) : (
@@ -873,7 +883,7 @@ function ProductImageLayout({
 
               {consultationOnly ? (
                 <Link
-                  to={BOOK_CONSULTATION_PATH}
+                  to={consultationPath}
                   className="group flex items-center rounded-full bg-[#D4BA8E] py-1.5 pl-3 pr-1 text-[12px] font-medium text-white transition-colors hover:bg-[#C6AB7F] sm:pl-4 sm:pr-1.5 sm:text-[13px] md:pl-6"
                 >
                   <span className="mr-2 sm:mr-3 md:mr-5">{ctaButtonText}</span>
