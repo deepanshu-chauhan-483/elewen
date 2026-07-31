@@ -21,6 +21,7 @@ import white11logo from '../assets/images/white11logo.png'
 
 import CelebrationDoor from '../components/landing-page/CelebrationDoor'
 import HeroSection from '../components/landing-page/HeroSection'
+import DiscountBannerCarousel from '../components/landing-page/DiscountBannerCarousel'
 import { usePackages } from '../hooks/usePackages'
 import { useEventCategories, useEventCards, useServiceCards } from '../hooks/useEventTypes'
 import {
@@ -5103,6 +5104,7 @@ export default function LandingPage() {
   return (
     <div ref={rootRef} className="relative">
       <HeroSection />
+      <DiscountBannerCarousel />
       <PlanEventSection />
       <WhatToPlanSection />
       <ChecklistSection />

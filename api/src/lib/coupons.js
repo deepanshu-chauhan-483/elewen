@@ -30,6 +30,7 @@ export function normalizeStrapiCoupon(raw) {
     service_filter: c.service_filter ?? 'all',
     terms_customer: c.terms_customer ?? '',
     is_active: Boolean(c.is_active),
+    banner_shared: Boolean(c.banner_shared),
     max_uses: c.max_uses ?? null,
     used_count: Number(c.used_count ?? 0),
     valid_from: c.valid_from ?? null,
@@ -319,4 +320,29 @@ export function mapGrantForCustomer(grant) {
     sent_at: grant.sent_at,
     is_shareable: grant.is_shareable,
   }
+}
+
+/** Active coupons the admin has shared to the homepage discount banner carousel. */
+export async function listSharedDiscountBanners() {
+  const rows = await prisma.$queryRaw`
+    SELECT
+      c.id,
+      c.code,
+      c.title,
+      c.discount_type,
+      c.discount_value
+    FROM public.coupons c
+    WHERE COALESCE(c.is_active, false) = true
+      AND COALESCE(c.banner_shared, false) = true
+    ORDER BY c.updated_at DESC NULLS LAST, c.id DESC
+    LIMIT 50
+  `
+
+  return (rows ?? []).map(row => ({
+    id: String(row.id),
+    code: String(row.code ?? '').toUpperCase(),
+    title: row.title ?? '',
+    discount_type: row.discount_type ?? 'flat',
+    discount_value: Number(row.discount_value ?? 0),
+  }))
 }

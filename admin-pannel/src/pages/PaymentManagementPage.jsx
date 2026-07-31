@@ -1354,6 +1354,19 @@ function CouponRowDynamic({ coupon, updateCouponMutation, deleteCouponMutation }
           >
             {shareOpen ? 'Close Share' : shareCouponMutation.isPending ? 'Sending…' : 'Share Coupon'}
           </GhostBtn>
+          <GhostBtn
+            disabled={
+              updateCouponMutation.isPending || (!coupon.is_active && !coupon.banner_shared)
+            }
+            onClick={() =>
+              updateCouponMutation.mutate({
+                couponId: coupon.id,
+                body: { banner_shared: !coupon.banner_shared },
+              })
+            }
+          >
+            {coupon.banner_shared ? 'Stop Banner' : 'Share Banner'}
+          </GhostBtn>
           <DangerBtn
             disabled={deleteCouponMutation.isPending}
             onClick={() => {

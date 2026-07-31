@@ -420,6 +420,7 @@ async function fetchCouponsFromDatabase({ search = '', page = 1, limit = 12 } = 
       c.valid_from,
       c.valid_to,
       c.is_active,
+      COALESCE(c.banner_shared, false) AS banner_shared,
       c.created_at
     FROM public.coupons c
     WHERE (
@@ -472,6 +473,7 @@ function mapCouponRecord(coupon) {
     valid_from: coupon.valid_from ?? null,
     valid_to: coupon.valid_to ?? null,
     is_active: Boolean(coupon.is_active),
+    banner_shared: Boolean(coupon.banner_shared),
   }
 }
 
@@ -531,6 +533,7 @@ async function fetchCouponByIdFromDatabase(id) {
       c.valid_from,
       c.valid_to,
       c.is_active,
+      COALESCE(c.banner_shared, false) AS banner_shared,
       c.created_at
     FROM public.coupons c
     WHERE c.id = ${numericId}
@@ -592,6 +595,8 @@ async function updateCouponInDatabase(id, payload) {
   const current = await fetchCouponByIdFromDatabase(id)
   if (!current) return null
   const documentId = current.documentId ?? randomUUID()
+  const nextBannerShared =
+    payload.banner_shared !== undefined ? Boolean(payload.banner_shared) : Boolean(current.banner_shared)
 
   const [updated] = await prisma.$queryRaw`
     UPDATE public.coupons
@@ -605,6 +610,7 @@ async function updateCouponInDatabase(id, payload) {
       valid_from = ${payload.valid_from ?? current.valid_from}::date,
       valid_to = ${payload.valid_to ?? current.valid_to}::date,
       is_active = ${payload.is_active ?? current.is_active},
+      banner_shared = ${nextBannerShared},
       updated_at = NOW(),
       published_at = COALESCE(published_at, NOW())
     WHERE id = ${Number.parseInt(String(id), 10)}
@@ -619,6 +625,7 @@ async function updateCouponInDatabase(id, payload) {
       valid_from,
       valid_to,
       is_active,
+      COALESCE(banner_shared, false) AS banner_shared,
       created_at
   `
 
@@ -2870,6 +2877,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           valid_from: coupon.valid_from ?? null,
           valid_to: coupon.valid_to ?? null,
           is_active: Boolean(coupon.is_active),
+          banner_shared: Boolean(coupon.banner_shared),
         })),
         settings: settingsResponse?.data ?? null,
       },
@@ -3185,7 +3193,11 @@ export async function updateAdminCoupon(req, res, next) {
     if (req.body.valid_from !== undefined)
       payload.valid_from = normalizeNullableText(req.body.valid_from)
     if (req.body.valid_to !== undefined) payload.valid_to = normalizeNullableText(req.body.valid_to)
-    if (req.body.is_active !== undefined) payload.is_active = Boolean(req.body.is_active)
+    if (req.body.is_active !== undefined) {
+      payload.is_active = Boolean(req.body.is_active)
+      // Hide from homepage carousel when the coupon itself is turned off
+      if (!payload.is_active) payload.banner_shared = false
+    }
     if (req.body.title !== undefined) payload.title = normalizeNullableText(req.body.title)
     if (req.body.coupon_kind !== undefined)
       payload.coupon_kind = normalizeNullableText(req.body.coupon_kind)
@@ -3206,6 +3218,17 @@ export async function updateAdminCoupon(req, res, next) {
     if (req.body.is_user_specific !== undefined)
       payload.is_user_specific = Boolean(req.body.is_user_specific)
     if (req.body.is_shareable !== undefined) payload.is_shareable = Boolean(req.body.is_shareable)
+    if (req.body.banner_shared !== undefined) payload.banner_shared = Boolean(req.body.banner_shared)
+
+    if (payload.banner_shared === true) {
+      const willBeActive =
+        payload.is_active !== undefined ? Boolean(payload.is_active) : Boolean(coupon.is_active)
+      if (!willBeActive) {
+        return res
+          .status(400)
+          .json({ error: 'Enable the coupon before sharing it on the homepage banner.' })
+      }
+    }
 
     if (
       payload.discount_type !== undefined &&
@@ -3221,8 +3244,19 @@ export async function updateAdminCoupon(req, res, next) {
         const updated = await strapiServerPut(`/api/coupons/${coupon.documentId}`, {
           data: payload,
         })
+        // Ensure homepage banner flag is on the shared Postgres row even if Strapi
+        // schema has not been restarted yet after adding banner_shared.
+        if (payload.banner_shared !== undefined) {
+          await updateCouponInDatabase(req.params.id, {
+            banner_shared: payload.banner_shared,
+          }).catch(() => null)
+        }
         await cacheDelPattern('strapi:GET:/api/coupons*')
-        return res.json({ coupon: updated?.data ?? null })
+        return res.json({
+          coupon: updated?.data
+            ? { ...mapCouponRecord(updated.data), banner_shared: payload.banner_shared ?? Boolean(updated.data.banner_shared) }
+            : null,
+        })
       } catch {
         const updated = await updateCouponInDatabase(req.params.id, payload)
         if (!updated) {

@@ -121,6 +121,54 @@ p {
   animation: band-right 60s linear infinite;
 }
 
+/* Homepage discount banner ticker (admin Share Banner) */
+.discount-banner-carousel {
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.discount-banner-track {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+  animation: discount-banner-scroll 40s linear infinite;
+}
+
+.discount-banner-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 28px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #591902;
+  text-transform: uppercase;
+}
+
+.discount-banner-star {
+  color: #cdb17e;
+  font-size: 11px;
+}
+
+@keyframes discount-banner-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discount-banner-track {
+    animation: none;
+  }
+}
+
 /* Hide home content while restoring Plan Differently scroll — prevents hero flash. */
 html.home-scroll-restoring #root {
   visibility: hidden;

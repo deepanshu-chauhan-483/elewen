@@ -893,6 +893,7 @@ export interface ApiCouponCoupon extends Struct.CollectionTypeSchema {
   }
   attributes: {
     admin_notes: Schema.Attribute.Text
+    banner_shared: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>
     code: Schema.Attribute.String & Schema.Attribute.Required
     coupon_kind: Schema.Attribute.Enumeration<
       ['public', 'first_order', 'referral', 'festive', 'seasonal', 'decor_monthly']
