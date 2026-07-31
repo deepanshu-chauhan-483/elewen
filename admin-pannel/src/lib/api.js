@@ -372,3 +372,13 @@ export const adminUpdateAlert = (token, alertId, body) =>
   request('PATCH', `/admin/alerts/${alertId}`, body, {
     headers: { Authorization: `Bearer ${token}` },
   })
+
+export const adminConsultations = (token, params = {}) =>
+  request('GET', withQuery('/admin/consultations', params), null, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const adminUpdateConsultation = (token, consultationId, body) =>
+  request('PATCH', `/admin/consultations/${consultationId}`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })

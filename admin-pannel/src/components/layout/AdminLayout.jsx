@@ -153,6 +153,21 @@ const HelpIcon = ({ isActive }) => {
   )
 }
 
+const ConsultationIcon = ({ isActive }) => {
+  const stroke = getIconStroke(isActive)
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M5.333 6.667H10.667M5.333 9.333H8.667M8 14C11.314 14 14 11.314 14 8C14 4.686 11.314 2 8 2C4.686 2 2 4.686 2 8C2 9.214 2.364 10.34 2.99 11.274L2 14L4.726 13.01C5.66 13.636 6.786 14 8 14Z"
+        stroke={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 const AlertIcon = ({ isActive }) => {
   const stroke = getIconStroke(isActive)
 
@@ -176,6 +191,7 @@ const navigation = [
   { to: '/vendors', label: 'Vendor Management', icon: VendorIcon },
   { to: '/messages', label: 'Message Box', icon: MessageIcon },
   { to: '/payments', label: 'Payment Management', icon: PaymentIcon },
+  { to: '/consultations', label: 'Consultations', icon: ConsultationIcon },
   { to: '/support', label: 'Help & Support', icon: HelpIcon },
   { to: '/alerts', label: 'System Alerts', icon: AlertIcon },
 ]

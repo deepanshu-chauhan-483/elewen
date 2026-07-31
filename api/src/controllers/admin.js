@@ -3783,3 +3783,215 @@ export async function updateAdminAlert(req, res, next) {
     next(err)
   }
 }
+
+const CONSULTATION_LEAD_STATUSES = ['new', 'contacted', 'converted', 'closed']
+
+function mapConsultationLead(raw) {
+  if (!raw) return null
+  const row = raw.attributes ?? raw
+  const custom =
+    row.custom_fields && typeof row.custom_fields === 'object' && !Array.isArray(row.custom_fields)
+      ? row.custom_fields
+      : {}
+
+  return {
+    id: String(raw.id ?? row.id ?? ''),
+    documentId: raw.documentId ?? row.documentId ?? row.document_id ?? null,
+    lead_type: row.lead_type ?? 'consultation',
+    full_name: row.full_name ?? '',
+    email: row.email ?? '',
+    phone: row.phone ?? '',
+    event_type: row.event_type ?? '',
+    event_date: row.event_date ?? null,
+    city: row.city ?? '',
+    budget_range: row.budget_range ?? '',
+    vision_notes: row.vision_notes ?? '',
+    interested_package_id: row.interested_package_id ?? custom.interested_package_id ?? null,
+    interested_package_title:
+      row.interested_package_title ?? custom.interested_package_title ?? '',
+    interested_package_slug: row.interested_package_slug ?? custom.interested_package_slug ?? '',
+    interest_source: row.interest_source ?? custom.interest_source ?? '',
+    planner_lead_status: row.planner_lead_status ?? 'new',
+    createdAt: row.createdAt ?? row.created_at ?? null,
+    updatedAt: row.updatedAt ?? row.updated_at ?? null,
+  }
+}
+
+async function fetchConsultationsFromDatabase({
+  search = '',
+  status = '',
+  page = 1,
+  limit = 20,
+} = {}) {
+  const offset = Math.max(page - 1, 0) * limit
+  const trimmedSearch = normalizeText(search)
+  const searchPattern = `%${trimmedSearch}%`
+  const statusFilter = CONSULTATION_LEAD_STATUSES.includes(status) ? status : ''
+
+  const rows = await prisma.$queryRaw`
+    SELECT
+      pl.id,
+      pl.document_id,
+      pl.lead_type,
+      pl.full_name,
+      pl.email,
+      pl.phone,
+      pl.event_type,
+      pl.event_date,
+      pl.city,
+      pl.budget_range,
+      pl.vision_notes,
+      pl.custom_fields,
+      pl.planner_lead_status,
+      pl.created_at,
+      pl.updated_at
+    FROM public.planner_leads pl
+    WHERE pl.lead_type = 'consultation'
+      AND (
+        ${statusFilter} = ''
+        OR COALESCE(pl.planner_lead_status, 'new') = ${statusFilter}
+      )
+      AND (
+        ${trimmedSearch} = ''
+        OR COALESCE(pl.full_name, '') ILIKE ${searchPattern}
+        OR COALESCE(pl.email, '') ILIKE ${searchPattern}
+        OR COALESCE(pl.phone, '') ILIKE ${searchPattern}
+        OR COALESCE(pl.custom_fields::text, '') ILIKE ${searchPattern}
+      )
+    ORDER BY pl.created_at DESC NULLS LAST, pl.id DESC
+    OFFSET ${offset}
+    LIMIT ${limit}
+  `
+
+  const [countRow] = await prisma.$queryRaw`
+    SELECT COUNT(*)::int AS total
+    FROM public.planner_leads pl
+    WHERE pl.lead_type = 'consultation'
+      AND (
+        ${statusFilter} = ''
+        OR COALESCE(pl.planner_lead_status, 'new') = ${statusFilter}
+      )
+      AND (
+        ${trimmedSearch} = ''
+        OR COALESCE(pl.full_name, '') ILIKE ${searchPattern}
+        OR COALESCE(pl.email, '') ILIKE ${searchPattern}
+        OR COALESCE(pl.phone, '') ILIKE ${searchPattern}
+        OR COALESCE(pl.custom_fields::text, '') ILIKE ${searchPattern}
+      )
+  `
+
+  const total = Number(countRow?.total ?? 0)
+  return {
+    consultations: (rows ?? []).map(mapConsultationLead),
+    page,
+    pages: Math.max(1, Math.ceil(total / limit)),
+    total,
+  }
+}
+
+export async function listAdminConsultations(req, res, next) {
+  try {
+    const search = normalizeText(req.query.search)
+    const status = normalizeText(req.query.status).toLowerCase()
+    const page = toPositiveInt(req.query.page, 1)
+    const limit = Math.min(toPositiveInt(req.query.limit, 20), 50)
+
+    const query = [
+      'publicationState=preview',
+      `pagination[page]=${page}`,
+      `pagination[pageSize]=${limit}`,
+      'sort[0]=createdAt:desc',
+      'filters[lead_type][$eq]=consultation',
+    ]
+
+    if (status && CONSULTATION_LEAD_STATUSES.includes(status)) {
+      query.push(`filters[planner_lead_status][$eq]=${encodeURIComponent(status)}`)
+    }
+
+    if (search) {
+      const encoded = encodeURIComponent(search)
+      query.push(`filters[$or][0][full_name][$containsi]=${encoded}`)
+      query.push(`filters[$or][1][email][$containsi]=${encoded}`)
+      query.push(`filters[$or][2][phone][$containsi]=${encoded}`)
+      query.push(`filters[$or][3][interested_package_title][$containsi]=${encoded}`)
+    }
+
+    try {
+      const response = await strapiServerGet(`/api/planner-leads?${query.join('&')}`)
+      return res.json({
+        consultations: (response?.data ?? []).map(mapConsultationLead),
+        page: response?.meta?.pagination?.page ?? page,
+        pages: response?.meta?.pagination?.pageCount ?? 1,
+        total: response?.meta?.pagination?.total ?? 0,
+      })
+    } catch {
+      const result = await fetchConsultationsFromDatabase({ search, status, page, limit })
+      return res.json(result)
+    }
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateAdminConsultation(req, res, next) {
+  try {
+    const id = String(req.params.id ?? '').trim()
+    if (!id) return res.status(400).json({ error: 'Consultation id is required' })
+
+    const status = normalizeText(req.body.planner_lead_status ?? req.body.status).toLowerCase()
+    if (!CONSULTATION_LEAD_STATUSES.includes(status)) {
+      return res.status(400).json({
+        error: `planner_lead_status must be one of: ${CONSULTATION_LEAD_STATUSES.join(', ')}`,
+      })
+    }
+
+    let documentId = id
+    const numericId = Number.parseInt(id, 10)
+
+    try {
+      if (/^\d+$/.test(id)) {
+        const found = await strapiServerGet(
+          `/api/planner-leads?filters[id][$eq]=${encodeURIComponent(id)}&publicationState=preview&pagination[pageSize]=1`
+        )
+        documentId = found?.data?.[0]?.documentId ?? documentId
+      }
+
+      const updated = await strapiServerPut(`/api/planner-leads/${documentId}`, {
+        data: { planner_lead_status: status },
+      })
+      return res.json({ consultation: mapConsultationLead(updated?.data ?? updated) })
+    } catch {
+      if (!Number.isFinite(numericId)) {
+        return res.status(404).json({ error: 'Consultation not found' })
+      }
+
+      const [updated] = await prisma.$queryRaw`
+        UPDATE public.planner_leads
+        SET planner_lead_status = ${status}, updated_at = NOW()
+        WHERE id = ${numericId} AND lead_type = 'consultation'
+        RETURNING
+          id,
+          document_id,
+          lead_type,
+          full_name,
+          email,
+          phone,
+          event_type,
+          event_date,
+          city,
+          budget_range,
+          vision_notes,
+          custom_fields,
+          planner_lead_status,
+          created_at,
+          updated_at
+      `
+
+      if (!updated) return res.status(404).json({ error: 'Consultation not found' })
+      return res.json({ consultation: mapConsultationLead(updated) })
+    }
+  } catch (err) {
+    next(err)
+  }
+}
+

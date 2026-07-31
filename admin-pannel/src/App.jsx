@@ -11,6 +11,7 @@ const OverviewPage = lazy(() => import('./pages/OverviewPage'))
 const PaymentManagementPage = lazy(() => import('./pages/PaymentManagementPage'))
 const SampleTastePage = lazy(() => import('./pages/SampleTastePage'))
 const SupportPage = lazy(() => import('./pages/SupportPage'))
+const ConsultationsPage = lazy(() => import('./pages/ConsultationsPage'))
 const SystemAlertsPage = lazy(() => import('./pages/SystemAlertsPage'))
 const VendorManagementPage = lazy(() => import('./pages/VendorManagementPage'))
 
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="vendors" element={<VendorManagementPage />} />
             <Route path="messages" element={<MessageBoxPage />} />
             <Route path="payments" element={<PaymentManagementPage />} />
+            <Route path="consultations" element={<ConsultationsPage />} />
             <Route path="support" element={<SupportPage />} />
             <Route path="alerts" element={<SystemAlertsPage />} />
           </Route>

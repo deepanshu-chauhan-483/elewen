@@ -17,6 +17,7 @@ import {
   getAdminVendorWorkspace,
   listAdminAlerts,
   listAdminBookings,
+  listAdminConsultations,
   listAdminCoupons,
   listAdminMessageThreads,
   listAdminPayments,
@@ -32,6 +33,7 @@ import {
   updateAdminBookingStatus,
   collectAdminBookingCod,
   sendAdminBookingPersonalizationEmail,
+  updateAdminConsultation,
   updateAdminCoupon,
   updateAdminSampleTasteStatus,
   updateAdminSettings,
@@ -109,6 +111,9 @@ router.get('/support', listAdminSupportTickets)
 router.get('/support/:id', getAdminSupportTicket)
 router.patch('/support/:id', updateAdminSupportTicket)
 router.post('/support/:id/messages', addAdminSupportMessage)
+
+router.get('/consultations', listAdminConsultations)
+router.patch('/consultations/:id', updateAdminConsultation)
 
 router.get('/alerts', listAdminAlerts)
 router.patch('/alerts/:id', updateAdminAlert)

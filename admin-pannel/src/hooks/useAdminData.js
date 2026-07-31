@@ -10,6 +10,7 @@ import {
   adminSendReferralCoupon,
   adminSendPersonalizationEmail,
   adminBookings,
+  adminConsultations,
   adminCoupons,
   adminCreateCoupon,
   adminCreateVendorAssignment,
@@ -32,6 +33,7 @@ import {
   adminSupportTickets,
   adminUpdateAlert,
   adminUpdateBookingStatus,
+  adminUpdateConsultation,
   adminDeleteCoupon,
   adminShareCoupon,
   adminUpdateCoupon,
@@ -619,6 +621,25 @@ export function useAdminUpdateAlert() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'alerts'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })
+    },
+  })
+}
+
+export function useAdminConsultations(params = {}) {
+  return useAuthedAdminQuery({
+    queryKey: ['admin', 'consultations', JSON.stringify(params)],
+    queryFn: token => adminConsultations(token, params),
+  })
+}
+
+export function useAdminUpdateConsultation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ consultationId, body }) =>
+      withAdminToken(token => adminUpdateConsultation(token, consultationId, body)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'consultations'] })
     },
   })
 }
