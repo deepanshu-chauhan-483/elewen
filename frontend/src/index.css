@@ -121,110 +121,84 @@ p {
   animation: band-right 60s linear infinite;
 }
 
-/* Homepage discount banner carousel (admin Share Banner) — simple continuous strip */
-.discount-banner-carousel {
+/* Homepage offer marquee (admin Share Banner) — continuous strip, no cards */
+.offer-marquee {
   width: 100%;
   overflow: hidden;
-  background: #f2f2f2;
-  border-top: 1px solid #e5e0d8;
-  border-bottom: 1px solid #e5e0d8;
-  padding: 14px 0;
+  background: #ece8e1;
+  border-top: 1px solid #ddd6cb;
+  border-bottom: 1px solid #ddd6cb;
+  padding: 12px 0;
 }
 
-@media (min-width: 768px) {
-  .discount-banner-carousel {
-    padding: 16px 0;
-  }
-}
-
-.discount-banner-track {
+.offer-marquee-track {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
   width: max-content;
   will-change: transform;
-  animation: discount-banner-scroll 28s linear infinite;
+  animation: offer-marquee-scroll 35s linear infinite;
 }
 
-.discount-banner-carousel:hover .discount-banner-track {
+.offer-marquee:hover .offer-marquee-track {
   animation-play-state: paused;
 }
 
-.discount-banner-card {
-  flex: 0 0 auto;
+.offer-marquee-item {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid #e0d6c8;
-  color: #3d4035;
+  padding: 0 8px;
   white-space: nowrap;
+  font-family: 'Poppins', sans-serif;
+  color: #3d4035;
 }
 
-.discount-banner-eyebrow {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: #727355;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.discount-banner-discount {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
+.offer-marquee-discount {
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #3d4035;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.discount-banner-code {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
-  border: 1px dashed #c4b8a4;
-  border-radius: 999px;
-  background: #f7f3ec;
-  font-family: 'Poppins', sans-serif;
+.offer-marquee-dot {
+  color: #9a9286;
+  font-size: 14px;
+}
+
+.offer-marquee-code {
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #3d4035;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5c564c;
+  border-bottom: 1px dashed #b5aa9a;
+  padding-bottom: 1px;
 }
 
-.discount-banner-copy {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  padding: 0 12px;
+.offer-marquee-copy {
   border: none;
-  border-radius: 999px;
-  background: #d4ba8e;
-  color: #3d4035;
+  background: transparent;
+  color: #8a7350;
   font-family: 'Poppins', sans-serif;
   font-size: 11px;
   font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  padding: 0;
 }
 
-.discount-banner-copy:hover {
-  background: #c6ab7f;
+.offer-marquee-copy:hover {
+  color: #3d4035;
 }
 
-.discount-banner-copy:active {
-  transform: scale(0.97);
+.offer-marquee-sep {
+  margin: 0 18px 0 10px;
+  color: #c4b8a4;
+  font-size: 11px;
 }
 
-@keyframes discount-banner-scroll {
+@keyframes offer-marquee-scroll {
   from {
     transform: translateX(0);
   }
@@ -234,8 +208,33 @@ p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .discount-banner-track {
+  .offer-marquee-track {
     animation: none;
+  }
+}
+
+/* Legacy discount-banner classes kept empty so old cached CSS cannot restore red cards */
+.discount-banner-carousel,
+.discount-banner-inner,
+.discount-banner-track,
+.discount-banner-card,
+.discount-banner-card-glow,
+.discount-banner-eyebrow,
+.discount-banner-discount,
+.discount-banner-code-row,
+.discount-banner-code,
+.discount-banner-copy,
+.discount-banner-hint {
+  all: unset;
+  display: none !important;
+}
+
+@keyframes discount-banner-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
