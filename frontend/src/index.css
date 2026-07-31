@@ -296,6 +296,28 @@ p {
   }
 }
 
+.package-offer-badge {
+  animation: package-offer-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes package-offer-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 12px rgba(205, 177, 126, 0.45);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 4px 16px rgba(205, 177, 126, 0.75);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .package-offer-badge {
+    animation: none;
+  }
+}
+
 /* Hide home content while restoring Plan Differently scroll — prevents hero flash. */
 html.home-scroll-restoring #root {
   visibility: hidden;

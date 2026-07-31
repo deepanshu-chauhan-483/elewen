@@ -342,15 +342,16 @@ export default function CateringPackageDetails({
           {title}
         </h1>
         {price ? (
-          <div className="shrink-0 pt-1 text-right">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 pt-1">
             {discountBadge ? (
-              <span className="mb-1 inline-flex rounded-full bg-[#591902] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#F5E6C8]">
+              <span className="package-offer-badge inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#CDB17E] via-[#E2C89A] to-[#D4BA8E] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#591902] shadow-[0_2px_12px_rgba(205,177,126,0.55)] sm:text-[11px]">
+                <span aria-hidden="true">★</span>
                 {discountBadge}
               </span>
             ) : null}
-            <p className="text-[22px] font-medium text-[#591902]">{price}</p>
+            <span className="text-[22px] font-medium text-[#591902]">{price}</span>
             {originalPrice ? (
-              <p className="text-[13px] text-[#8A847E] line-through">{originalPrice}</p>
+              <span className="text-[13px] text-[#8A847E] line-through">{originalPrice}</span>
             ) : null}
           </div>
         ) : null}

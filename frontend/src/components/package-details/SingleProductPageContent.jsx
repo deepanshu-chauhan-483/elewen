@@ -423,6 +423,30 @@ function RelatedProductsCarousel({ products, hidePrice = false }) {
   )
 }
 
+function PackageOfferPrice({
+  price,
+  originalPrice = '',
+  discountBadge = '',
+  priceClassName = 'text-[20px] font-medium text-[#591902] sm:text-[22px]',
+}) {
+  if (!price) return null
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 pt-1">
+      {discountBadge ? (
+        <span className="package-offer-badge inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#CDB17E] via-[#E2C89A] to-[#D4BA8E] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#591902] shadow-[0_2px_12px_rgba(205,177,126,0.55)] sm:text-[11px]">
+          <span aria-hidden="true">★</span>
+          {discountBadge}
+        </span>
+      ) : null}
+      <span className={priceClassName}>{price}</span>
+      {originalPrice ? (
+        <span className="text-[12px] text-[#8A847E] line-through sm:text-[13px]">{originalPrice}</span>
+      ) : null}
+    </div>
+  )
+}
+
 function ProductImageLayout({
   title,
   price,
@@ -613,23 +637,17 @@ function ProductImageLayout({
               <>
                 <div className="mt-5 flex items-start justify-between gap-4 md:pr-3">
                   <h1
-                    className="text-[28px] leading-[0.95] text-[#591902] sm:text-[34px] md:text-[36px]"
+                    className="min-w-0 text-[28px] leading-[0.95] text-[#591902] sm:text-[34px] md:text-[36px]"
                     style={{ fontFamily: "'Malgin', serif" }}
                   >
                     {title}
                   </h1>
                   {!hideHeaderPrice ? (
-                    <div className="shrink-0 pt-1 text-right">
-                      {discountBadge ? (
-                        <span className="mb-1 inline-flex rounded-full bg-[#591902] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#F5E6C8]">
-                          {discountBadge}
-                        </span>
-                      ) : null}
-                      <p className="text-[20px] font-medium text-[#591902] sm:text-[22px]">{price}</p>
-                      {originalPrice ? (
-                        <p className="text-[13px] text-[#8A847E] line-through">{originalPrice}</p>
-                      ) : null}
-                    </div>
+                    <PackageOfferPrice
+                      price={price}
+                      originalPrice={originalPrice}
+                      discountBadge={discountBadge}
+                    />
                   ) : null}
                 </div>
 
@@ -824,15 +842,18 @@ function ProductImageLayout({
                 <>
                   <span className="hidden shrink-0 md:inline">–</span>
                   <span className="shrink-0 text-xs font-bold sm:text-sm md:text-base text-[#D4BA8E]">
-                    {price}
-                    {originalPrice ? (
-                      <span className="ml-2 font-normal text-white/60 line-through">{originalPrice}</span>
-                    ) : null}
-                    {discountBadge ? (
-                      <span className="ml-2 rounded-full bg-[#D4BA8E]/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-[#D4BA8E]">
-                        {discountBadge}
-                      </span>
-                    ) : null}
+                    <span className="inline-flex flex-wrap items-center gap-2">
+                      {discountBadge ? (
+                        <span className="package-offer-badge inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#CDB17E] to-[#D4BA8E] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#591902]">
+                          <span aria-hidden="true">★</span>
+                          {discountBadge}
+                        </span>
+                      ) : null}
+                      <span>{price}</span>
+                      {originalPrice ? (
+                        <span className="font-normal text-white/60 line-through">{originalPrice}</span>
+                      ) : null}
+                    </span>
                   </span>
                 </>
               ) : null}
