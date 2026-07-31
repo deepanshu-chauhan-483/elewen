@@ -65,6 +65,16 @@ export default function DiscountBannerCarousel() {
 
   return (
     <section aria-label="Discount offers" className="offer-marquee">
+      <div className="offer-marquee-stars" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
       <div className="offer-marquee-track">
         {track.map((banner, index) => (
           <OfferMarqueeItem key={`${banner.id ?? banner.code}-${index}`} banner={banner} />
