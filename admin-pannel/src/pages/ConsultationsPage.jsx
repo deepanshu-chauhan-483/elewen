@@ -158,7 +158,7 @@ export default function ConsultationsPage() {
               setPage(1)
             }}
           >
-            <option value="">All statuses</option>
+            <option value="">All Status</option>
             <option value="new">New</option>
             <option value="contacted">Contacted</option>
             <option value="converted">Converted</option>
