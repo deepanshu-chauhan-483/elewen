@@ -73,12 +73,24 @@ function getBookingTitle(booking) {
 }
 
 function getBookingSubtitle(booking) {
+  const title = getBookingTitle(booking).trim().toLowerCase()
   const parts = [
     booking?.event?.name,
     booking?.package?.serviceCategories?.[0]?.name || booking?.package?.serviceCategory,
   ].filter(Boolean)
-  if (parts.length) return parts.slice(0, 2).join(' · ')
-  return booking?.detailSubtitle || booking?.displaySubtitle || booking?.statusLabel || 'Booking'
+
+  let subtitle = parts.slice(0, 2).join(' · ').trim()
+
+  if (!subtitle) {
+    const fallback = String(
+      booking?.statusLabel || booking?.detailSubtitle || booking?.displaySubtitle || ''
+    ).trim()
+    // Don't repeat the package title on the second line
+    if (fallback && fallback.toLowerCase() !== title) subtitle = fallback
+  }
+
+  if (subtitle && subtitle.toLowerCase() === title) return ''
+  return subtitle
 }
 
 function ArrowIcon({ direction = 'right' }) {
@@ -165,8 +177,10 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
-          <p className="mt-1 truncate text-[12px] text-[#8A8A8A]">{subtitle}</p>
+          <p className="truncate text-[14px] font-bold text-[#1C1C1C]">{packageTitle}</p>
+          {subtitle ? (
+            <p className="mt-1 truncate text-[12px] font-normal text-[#8A8A8A]">{subtitle}</p>
+          ) : null}
         </div>
         {unread > 0 ? (
           <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[#C45C4A] px-1.5 text-[10px] font-bold text-white">
@@ -249,7 +263,7 @@ function BookingUpdatesPanel({ bookingId }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
       <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
-        <h3 className="text-[15px] font-semibold text-[#1C1C1C]">Booking Updates</h3>
+        <h3 className="text-[15px] font-bold text-[#1C1C1C]">Booking Updates</h3>
       </div>
 
       <div
@@ -271,7 +285,9 @@ function BookingUpdatesPanel({ bookingId }) {
               className={`py-4 ${index > 0 ? 'border-t border-[#F0EBE4]' : ''}`}
             >
               <div className="flex items-start justify-between gap-3">
-                <p className="text-[13px] font-semibold text-[#1C1C1C]">{update.title}</p>
+                <p className="min-w-0 flex-1 text-[13px] font-bold leading-snug text-[#1C1C1C]">
+                  {update.title}
+                </p>
                 <StatusBadge
                   status={update.status}
                   label={update.status === 'upcoming' ? 'Upcoming' : undefined}
@@ -334,8 +350,10 @@ function ConversationPanel({
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-[#F0EBE4] px-5 py-4">
         <div className="min-w-0">
-          <p className="truncate text-[16px] font-semibold text-[#1C1C1C]">{packageTitle}</p>
-          <p className="mt-1 text-[12px] text-[#8A8A8A]">{subtitle}</p>
+          <p className="truncate text-[16px] font-bold text-[#1C1C1C]">{packageTitle}</p>
+          {subtitle ? (
+            <p className="mt-1 text-[12px] font-normal text-[#8A8A8A]">{subtitle}</p>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge
@@ -447,6 +465,7 @@ export default function MessageBoxPage() {
   )
   const [draft, setDraft] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const appliedDeepLinkRef = useRef('')
 
   const threadsQuery = useAdminMessageThreads()
   const allThreads = useMemo(() => threadsQuery.data?.threads ?? [], [threadsQuery.data?.threads])
@@ -460,7 +479,7 @@ export default function MessageBoxPage() {
     [allThreads]
   )
 
-  // Respect the user's tab choice so Previous booking always works
+  // Respect the user's tab choice so Previous / Active booking always works
   const filteredThreads = threadTab === 'previous' ? previousThreads : activeThreads
   const totalPages = Math.max(1, Math.ceil(filteredThreads.length / PAGE_SIZE))
   const visiblePage = Math.min(currentPage, totalPages)
@@ -482,15 +501,17 @@ export default function MessageBoxPage() {
     return undefined
   }, [currentPage, totalPages])
 
-  // Deep-link: open the right tab for the bookingId in the URL
+  // Deep-link once per bookingId — do not fight manual Active / Previous tab clicks
   useEffect(() => {
     const bookingIdParam = String(searchParams.get('bookingId') ?? '').trim()
     if (!bookingIdParam || !allThreads.length) return undefined
+    if (appliedDeepLinkRef.current === bookingIdParam) return undefined
 
     const matched = allThreads.find(thread => thread.bookingId === bookingIdParam)
     if (!matched) return undefined
 
     const frameId = requestAnimationFrame(() => {
+      appliedDeepLinkRef.current = bookingIdParam
       setSelectedBookingId(bookingIdParam)
       setThreadTab(isPreviousThread(matched) ? 'previous' : 'active')
     })
@@ -551,6 +572,14 @@ export default function MessageBoxPage() {
     setDraft('')
   }
 
+  function handleTabChange(nextTab) {
+    if (nextTab === threadTab) return
+    setThreadTab(nextTab)
+    setSelectedBookingId('')
+    setCurrentPage(1)
+    setDraft('')
+  }
+
   return (
     <div className="flex flex-col gap-5 lg:h-[calc(100dvh-140px)] lg:min-h-[560px] lg:overflow-hidden">
       <div className="shrink-0">
@@ -569,8 +598,8 @@ export default function MessageBoxPage() {
         {/* Column 1 — Chat list */}
         <div className="flex h-[min(420px,55vh)] min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white lg:h-full">
           <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
-            <h2 className="text-[15px] font-semibold text-[#1C1C1C]">Chat</h2>
-            <div className="mt-3 flex gap-2">
+            <h2 className="text-[15px] font-bold text-[#1C1C1C]">Chat</h2>
+            <div className="mt-3 flex flex-nowrap gap-2">
               {[
                 { key: 'active', label: 'Active booking' },
                 { key: 'previous', label: 'Previous booking' },
@@ -578,12 +607,8 @@ export default function MessageBoxPage() {
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => {
-                    setThreadTab(tab.key)
-                    setSelectedBookingId('')
-                    setCurrentPage(1)
-                  }}
-                  className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
+                  onClick={() => handleTabChange(tab.key)}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
                     threadTab === tab.key
                       ? 'bg-[#591902] text-white'
                       : 'bg-[#F3F3F3] text-[#5A5A5A] hover:bg-[#EBEBEB]'
