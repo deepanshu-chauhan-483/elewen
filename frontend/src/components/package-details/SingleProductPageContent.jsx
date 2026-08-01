@@ -78,8 +78,7 @@ function PackageImageLightbox({ open, image, title, onClose }) {
           src={image}
           alt={title}
           eager
-          cropGeminiMark
-          className="block max-h-[90vh] max-w-full object-contain"
+          className="block max-h-[90vh] max-w-full origin-top object-contain scale-[1.12]"
         />
       </div>
     </div>

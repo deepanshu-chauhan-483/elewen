@@ -9,8 +9,8 @@ const POSITION_MAP = {
 /**
  * BrandedImage
  *
- * Package photo with Gemini watermark cropped off the bottom (display-only).
- * Original Strapi files are unchanged.
+ * Fills the frame fully. When cropWatermark is on, scales from the top so only
+ * the bottom strip (Gemini mark) is clipped by overflow — no empty white gaps.
  */
 export default function BrandedImage({
   src,
@@ -36,6 +36,8 @@ export default function BrandedImage({
   }
 
   const positionClasses = POSITION_MAP[position] ?? POSITION_MAP['bottom-right']
+  // Scale from top; parent overflow:hidden clips the bottom watermark only.
+  const cropClasses = cropWatermark ? 'scale-[1.12] origin-top' : ''
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
@@ -44,8 +46,7 @@ export default function BrandedImage({
         alt={alt}
         eager={eager}
         onError={handleError}
-        cropGeminiMark={cropWatermark}
-        className={`h-full w-full object-cover object-top ${imgClassName}`}
+        className={`h-full w-full object-cover object-top ${cropClasses} ${imgClassName}`}
       />
 
       {showLogo ? (

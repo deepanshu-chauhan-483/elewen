@@ -39,13 +39,12 @@ export default function InclusionImageToast({ image, onClose }) {
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
-          <div className="h-[150px] w-full bg-[#E8E2DA]">
+          <div className="h-[150px] w-full overflow-hidden bg-[#E8E2DA]">
             <AppImage
               src={image}
               alt="Inclusion preview"
               eager
-              cropGeminiMark
-              className="h-full w-full object-cover object-top"
+              className="h-full w-full origin-top object-cover object-top scale-[1.12]"
             />
           </div>
         </div>
