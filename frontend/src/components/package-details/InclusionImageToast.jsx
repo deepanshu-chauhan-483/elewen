@@ -44,7 +44,8 @@ export default function InclusionImageToast({ image, onClose }) {
               src={image}
               alt="Inclusion preview"
               eager
-              className="h-full w-full object-cover"
+              cropGeminiMark
+              className="h-full w-full object-cover object-top"
             />
           </div>
         </div>

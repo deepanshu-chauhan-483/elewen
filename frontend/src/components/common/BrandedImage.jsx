@@ -9,22 +9,8 @@ const POSITION_MAP = {
 /**
  * BrandedImage
  *
- * Renders a Strapi image and crops a thin bottom strip so Gemini watermarks
- * (usually bottom-right) stay outside the visible frame. Original files in
- * Strapi are unchanged — this is display-only.
- *
- * Props:
- *   src           {string}   Image URL (Cloudinary / Strapi / any)
- *   alt           {string}   Alt text for the main image
- *   fallbackSrc   {string}   URL to show if src fails to load
- *   position      {'bottom-right'|'bottom-left'}  Logo placement (default: 'bottom-right')
- *   showLogo      {boolean}  Show Elewen logo overlay (default: false when cropping)
- *   showLogoBg    {boolean}  Adds a frosted pill behind the logo (default: true)
- *   cropWatermark {boolean}  Crop bottom to hide Gemini mark (default: true)
- *   eager         {boolean}  Use loading="eager" for above-fold images
- *   className     {string}   Classes on the outer wrapper div
- *   imgClassName  {string}   Classes on the <img> element
- *   logoClassName {string}   Extra classes on the logo container
+ * Package photo with Gemini watermark cropped off the bottom (display-only).
+ * Original Strapi files are unchanged.
  */
 export default function BrandedImage({
   src,
@@ -50,8 +36,6 @@ export default function BrandedImage({
   }
 
   const positionClasses = POSITION_MAP[position] ?? POSITION_MAP['bottom-right']
-  // Scale from top-left so the bottom-right Gemini watermark is clipped by overflow.
-  const cropClasses = cropWatermark ? 'scale-[1.14] origin-top-left' : ''
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
@@ -60,7 +44,8 @@ export default function BrandedImage({
         alt={alt}
         eager={eager}
         onError={handleError}
-        className={`h-full w-full object-cover ${cropClasses} ${imgClassName}`}
+        cropGeminiMark={cropWatermark}
+        className={`h-full w-full object-cover object-top ${imgClassName}`}
       />
 
       {showLogo ? (
