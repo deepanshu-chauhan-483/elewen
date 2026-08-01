@@ -50,8 +50,8 @@ export default function BrandedImage({
   }
 
   const positionClasses = POSITION_MAP[position] ?? POSITION_MAP['bottom-right']
-  // Scale from the top so the bottom ~7% (Gemini corner) is clipped by overflow.
-  const cropClasses = cropWatermark ? 'scale-[1.08] origin-top' : ''
+  // Scale from top-left so the bottom-right Gemini watermark is clipped by overflow.
+  const cropClasses = cropWatermark ? 'scale-[1.14] origin-top-left' : ''
 
   return (
     <div className={`relative overflow-hidden ${className}`}>

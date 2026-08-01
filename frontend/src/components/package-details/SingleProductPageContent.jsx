@@ -58,17 +58,17 @@ function PackageImageLightbox({ open, image, title, onClose }) {
         ×
       </button>
       <div
-        className="max-h-[90vh] max-w-full overflow-hidden"
+        className="relative max-h-[90vh] max-w-full overflow-hidden"
         onClick={event => event.stopPropagation()}
         onKeyDown={() => {}}
         role="presentation"
       >
-        {/* Clip bottom strip where Gemini watermarks sit on most package photos */}
+        {/* Scale from top-left so bottom-right Gemini watermark is clipped */}
         <AppImage
           src={image}
           alt={title}
           eager
-          className="max-h-[90vh] max-w-full object-contain [clip-path:inset(0_0_4.5%_0)]"
+          className="block max-h-[90vh] max-w-full origin-top-left object-contain scale-[1.14]"
         />
       </div>
     </div>
