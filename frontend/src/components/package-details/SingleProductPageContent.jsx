@@ -4,6 +4,7 @@ import NavHeader from '../NavHeader'
 import Footer from '../Footer'
 import PackageCard from '../package-listing/PackageCard'
 import AppImage from '../common/AppImage'
+import BrandedImage from '../common/BrandedImage'
 import CartViewOptionsSheet from '../cart/CartViewOptionsSheet'
 import PackageImageDisclaimer from './PackageImageDisclaimer'
 import { preloadImages } from '../../utils/preloadAssets'
@@ -54,19 +55,20 @@ function PackageImageLightbox({ open, image, title, onClose }) {
         className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-2xl leading-none text-white"
         aria-label="Close image preview"
       >
-        ??
+        ×
       </button>
       <div
-        className="max-h-[90vh] max-w-full"
+        className="max-h-[90vh] max-w-full overflow-hidden"
         onClick={event => event.stopPropagation()}
         onKeyDown={() => {}}
         role="presentation"
       >
+        {/* Clip bottom strip where Gemini watermarks sit on most package photos */}
         <AppImage
           src={image}
           alt={title}
           eager
-          className="max-h-[90vh] max-w-full object-contain"
+          className="max-h-[90vh] max-w-full object-contain [clip-path:inset(0_0_4.5%_0)]"
         />
       </div>
     </div>
@@ -547,14 +549,16 @@ function ProductImageLayout({
                 <button
                   type="button"
                   onClick={() => activeImage && setIsLightboxOpen(true)}
-                  className={`relative block w-full cursor-zoom-in ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
+                  className={`relative block w-full cursor-zoom-in overflow-hidden ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
                   aria-label={`View full size image for ${title}`}
                 >
-                  <AppImage
+                  <BrandedImage
                     src={activeImage}
                     alt={title}
                     eager
-                    className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white object-cover object-center"
+                    cropWatermark
+                    className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white"
+                    imgClassName="object-cover object-center"
                   />
 
                   {activeImageMeta?.heading || activeImageMeta?.text ? (
@@ -563,41 +567,7 @@ function ProductImageLayout({
                         {activeImageMeta?.heading || activeImageMeta?.text}
                       </p>
                     </div>
-                  ) : (
-                    <div
-                      aria-hidden="true"
-                      className="pointer-events-none absolute bottom-0.5 right-1 z-10 rounded-full bg-white/10 p-1.5 backdrop-blur-xs"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="15"
-                        height="15"
-                        viewBox="0 0 343 398"
-                        fill="none"
-                      >
-                        <path
-                          d="M94.5506 0L0 46.2991L4.29775 55.2139C16.9045 49.2707 26.7416 46.2991 33.809 46.2991C38.7753 46.2991 42.9775 47.737 46.4157 50.6127C50.0449 53.4884 52.5281 57.9937 53.8652 64.1286C55.7753 72.1806 56.7303 90.3935 56.7303 118.767V329.27C56.7303 352.659 55.6798 366.75 53.5787 371.543C51.4775 376.145 47.7528 379.883 42.4045 382.759C37.0562 385.443 25.2135 386.976 6.8764 387.36V398H104.006V329.27V0H94.5506Z"
-                          fill="black"
-                        />
-                        <path
-                          d="M255.343 0L124 69.6041L128.298 78.5188C140.905 72.5756 187.533 46.2991 194.601 46.2991C199.567 46.2991 203.769 47.737 207.207 50.6127C210.836 53.4884 213.32 57.9937 214.657 64.1286C216.567 72.1806 217.522 90.3935 217.522 118.767V132H264.798V0H255.343Z"
-                          fill="black"
-                        />
-                        <path
-                          d="M167.668 387.36V398H264.798V329.27V328H217.522V329.27C217.522 352.659 216.471 366.75 214.37 371.543C212.269 376.145 208.544 379.883 203.196 382.759C197.848 385.443 186.005 386.976 167.668 387.36Z"
-                          fill="black"
-                        />
-                        <path
-                          d="M132 356.32C132.524 363.657 133.324 368.551 134.402 371C136.499 375.571 140.164 379.643 145.5 382.5C150.208 384.853 160.349 386.537 175.235 387.163L207 387.375V398H124V0H132V356.32Z"
-                          fill="black"
-                        />
-                        <path
-                          d="M293 356.32C293.524 363.657 294.324 368.551 295.402 371C297.499 375.571 301.164 379.643 306.5 382.5C311.836 385.167 324.152 386.976 342.448 387.357L342.436 387.488L343 387.494V398H285V0H293V356.32Z"
-                          fill="black"
-                        />
-                      </svg>
-                    </div>
-                  )}
+                  ) : null}
                 </button>
                 <PackageImageDisclaimer className="mt-1.5 text-center" />
               </div>
@@ -619,10 +589,12 @@ function ProductImageLayout({
                       aria-label={`Show ${title} preview ${index + 1}`}
                       aria-pressed={activeImage === image}
                     >
-                      <AppImage
+                      <BrandedImage
                         src={image}
                         alt={`${title} preview ${index + 1}`}
-                        className="h-full w-full rounded-[14px] object-cover"
+                        cropWatermark
+                        className="h-full w-full rounded-[14px]"
+                        imgClassName="rounded-[14px] object-cover"
                       />
                     </button>
                   ))}
