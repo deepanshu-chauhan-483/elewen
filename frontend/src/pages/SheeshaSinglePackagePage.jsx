@@ -4,6 +4,7 @@ import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
+import HookahAgeGate from '../components/checkout/HookahAgeGate'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
@@ -326,6 +327,14 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
 }
 
 export default function SheeshaSinglePackagePage() {
+  return (
+    <HookahAgeGate cancelTo="/packages/sheesha">
+      <SheeshaSinglePackagePageBody />
+    </HookahAgeGate>
+  )
+}
+
+function SheeshaSinglePackagePageBody() {
   // const navigate = useNavigate()
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()

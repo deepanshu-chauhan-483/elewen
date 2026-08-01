@@ -4,15 +4,13 @@ import HookahAgeConfirmModal from './HookahAgeConfirmModal'
 import { isHookahAgeConfirmed, setHookahAgeConfirmed } from '../../lib/hookahAgeGate'
 
 /**
- * Blocks Hookah/Sheesha pages until the customer confirms they are 18+.
- * Confirmation is stored for the browser tab/session — listing and PDP share it
- * so the disclaimer is only shown once.
+ * One shared 18+ gate for Hookah/Sheesha.
+ * Shows once (search, listing, or PDP). After confirm, never again in this browser.
  */
 export default function HookahAgeGate({ children, cancelTo = '/' }) {
   const navigate = useNavigate()
   const [confirmed, setConfirmed] = useState(() => isHookahAgeConfirmed())
 
-  // Re-read shared confirmation when landing on listing or PDP.
   useEffect(() => {
     if (isHookahAgeConfirmed()) setConfirmed(true)
   }, [])
