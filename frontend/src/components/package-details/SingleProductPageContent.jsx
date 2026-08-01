@@ -74,12 +74,12 @@ function PackageImageLightbox({ open, image, title, onClose }) {
         onKeyDown={() => {}}
         role="presentation"
       >
-        {/* Scale from top-left so bottom-right Gemini watermark is clipped */}
         <AppImage
           src={image}
           alt={title}
           eager
-          className="block max-h-[90vh] max-w-full origin-top-left object-contain scale-[1.14]"
+          cropGeminiMark
+          className="block max-h-[90vh] max-w-full object-contain"
         />
       </div>
     </div>
