@@ -259,31 +259,36 @@ function getPackageFallbackImages(pkg) {
 
 function getPackageImageAssets(pkg) {
   const assets = Array.isArray(pkg?.image_assets) ? pkg.image_assets : []
-  if (assets.length) {
-    return assets
-      .map(asset => {
-        const url = normalizeGalleryImageUrl(asset?.url || asset)
-        if (!url) return null
-        return {
-          url,
-          label: cleanText(asset?.label || asset?.name || asset?.alternativeText || asset?.caption),
-        }
-      })
-      .filter(Boolean)
-  }
+  const byUrl = new Map()
 
-  // Fallback when only URL strings exist — derive a label from the filename.
-  return getPackageFallbackImages(pkg).map(url => ({
-    url,
-    label: cleanText(
-      String(url)
-        .split('?')[0]
-        .split('/')
-        .pop()
-        ?.replace(/\.[a-z0-9]+$/i, '')
-        .replace(/[_-]+/g, ' ') ?? ''
-    ),
-  }))
+  assets.forEach(asset => {
+    const url = normalizeGalleryImageUrl(asset?.url || asset)
+    if (!url) return
+    byUrl.set(url, {
+      url,
+      label: cleanText(asset?.label || asset?.name || asset?.alternativeText || asset?.caption),
+    })
+  })
+
+  // Include any gallery URLs missing from image_assets (section media, etc.).
+  getPackageFallbackImages(pkg).forEach(url => {
+    if (byUrl.has(url)) return
+    byUrl.set(url, {
+      url,
+      label: cleanText(
+        String(url)
+          .split('?')[0]
+          .split('/')
+          .pop()
+          ?.replace(/\.[a-z0-9]+$/i, '')
+          .replace(/[_-]+/g, ' ') ?? ''
+      ),
+    })
+  })
+
+  if (byUrl.size) return [...byUrl.values()]
+
+  return []
 }
 
 function slugifyMatchKey(value = '') {
@@ -312,9 +317,18 @@ function expandMatchLabels(...labels) {
       if (withoutPrefix) expanded.add(withoutPrefix)
 
       // Common decor aliases used in media filenames / alt text.
-      if (/entrance/i.test(label)) {
+      if (/entr(y|ance)/i.test(label)) {
         expanded.add('Entrance Setup')
+        expanded.add('Entry setup')
+        expanded.add('Entry Setup')
         expanded.add('Entrance')
+        expanded.add('Entry')
+      }
+      if (/cent(?:re|er)\s*pieces?/i.test(label) || /centrepiece|centerpiece/i.test(label)) {
+        expanded.add('Centrepieces')
+        expanded.add('Centrepiece')
+        expanded.add('Centerpieces')
+        expanded.add('Centerpiece')
       }
       if (/\bbar\b/i.test(label)) {
         expanded.add('Bar Setup')
@@ -377,7 +391,8 @@ function scoreImageLabelMatch(targetLabel, imageLabel) {
 
     if (candidateParts.length === 1) return 95
     if (candidateParts.length === 2) return 80
-    return 35
+    // Longer filenames like "signs-stems-centrepiece" still count as a real hit.
+    return 70
   }
 
   const significant = targetParts.filter(token => token.length > 2)
@@ -501,12 +516,21 @@ function buildDecorGalleryFallbackSupport(pkg) {
 
       const groupHasOwnImages = items.some(item => getInclusionImages(item).length > 0)
       if (groupHasOwnImages) {
+        // Image may be on only one row in the group — share it so title/first-item
+        // clicks still resolve (Signs & Stems Centrepieces pattern).
+        const sharedOwnImage =
+          items.map(item => getInclusionImages(item)[0]).find(Boolean) || ''
+        if (sharedOwnImage) usedUrls.add(sharedOwnImage)
+
         items.forEach(item => {
           const text = cleanText(item?.text)
+          if (!text) return
           const ownImages = getInclusionImages(item)
-          if (!text || !ownImages[0]) return
-          textEntries.push([`${sectionTitle}::${text}`, ownImages[0]])
-          metaEntries.push([ownImages[0], { heading: sectionTitle, text }])
+          const image = ownImages[0] || sharedOwnImage
+          if (!image) return
+          if (ownImages[0]) usedUrls.add(ownImages[0])
+          textEntries.push([`${sectionTitle}::${text}`, image])
+          metaEntries.push([image, { heading: sectionTitle, text }])
         })
         return
       }
@@ -658,12 +682,15 @@ function buildDecorTextImageMap(pkg, fallbackTextImageBySectionItem = {}) {
 
     orderedGroups.forEach(group => {
       const sectionTitle = buildTextSectionTitle(group.title, 'Included details')
+      const sharedOwnImage =
+        group.items.map(item => getInclusionImages(item)[0]).find(Boolean) || ''
 
       group.items.forEach(item => {
         const text = cleanText(item?.text)
         const images = getInclusionImages(item)
         const key = `${sectionTitle}::${text}`
-        const image = images[0] || fallbackTextImageBySectionItem[key]
+        const image =
+          images[0] || sharedOwnImage || fallbackTextImageBySectionItem[key]
 
         if (!text || !image) return
 
@@ -1743,7 +1770,15 @@ export default function DecorSinglePackagePage() {
   }
 
   const handleTextItemClick = (sectionTitle, itemText) => {
-    const nextImage = textImageBySectionItem[`${sectionTitle}::${itemText}`]
+    const directKey = `${sectionTitle}::${itemText}`
+    let nextImage = textImageBySectionItem[directKey]
+
+    // Title click uses the first bullet; image may only be mapped on another row.
+    if (!nextImage) {
+      const prefix = `${sectionTitle}::`
+      nextImage = Object.entries(textImageBySectionItem).find(([key]) => key.startsWith(prefix))?.[1]
+    }
+
     if (!nextImage) return
 
     setSelectedTextImage(nextImage)
