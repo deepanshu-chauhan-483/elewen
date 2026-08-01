@@ -59,14 +59,8 @@ export default function ServicePackagesPageContent({
 
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
-  const normalizedPropService = normalizeServiceSlug(serviceSlug)
-  const defaultSort =
-    normalizedPropService === 'catering' ||
-    normalizedPropService === 'bartending' ||
-    normalizedPropService === 'sheesha'
-      ? 'price-asc'
-      : 'price-desc'
-  const [sortValue, setSortValue] = useState(defaultSort)
+  // All service listings (furniture, decor, catering, etc.) default to price low → high.
+  const [sortValue, setSortValue] = useState('price-asc')
   const [page, setPage] = useState(1)
   // const [searchParams] = useSearchParams()
   // const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
