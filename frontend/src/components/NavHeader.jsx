@@ -534,8 +534,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     setSearchOpen(true)
   }
 
-  const requestHookahAgeThen = (action, { force = false } = {}) => {
-    if (!force && (hookahAgeConfirmed || isHookahAgeConfirmed())) {
+  const requestHookahAgeThen = action => {
+    // One confirmation per session covers listing, search, and PDP.
+    if (hookahAgeConfirmed || isHookahAgeConfirmed()) {
       setHookahAgeConfirmedState(true)
       action()
       return
@@ -569,9 +570,8 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
       setOpen(false)
     }
 
-    // Opening Hookah from search always asks for age confirmation first.
     if (isSheeshaPackageRecord(pkg) || isHookahSearchQuery(searchQuery)) {
-      requestHookahAgeThen(go, { force: true })
+      requestHookahAgeThen(go)
       return
     }
 
@@ -590,7 +590,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
     }
 
     if (isHookahSearchQuery(query) || hasHookahSearchHits) {
-      requestHookahAgeThen(go, { force: true })
+      requestHookahAgeThen(go)
       return
     }
 
