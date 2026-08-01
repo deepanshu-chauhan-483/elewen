@@ -4,7 +4,7 @@ import { isSheeshaServiceSlug } from './sheeshaCheckout'
 
 const HOOKAH_AGE_CONFIRMED_KEY = 'elewen_hookah_age_confirmed'
 
-/** In-memory backup if web storage is unavailable (same JS tab). */
+/** In-memory backup if web storage is unavailable. */
 let hookahAgeConfirmedMemory = false
 
 function readStoredConfirmation() {
@@ -13,20 +13,32 @@ function readStoredConfirmation() {
   } catch {
     // Ignore.
   }
+
   try {
-    if (sessionStorage.getItem(HOOKAH_AGE_CONFIRMED_KEY) === '1') return true
+    // Migrate older session-only flag so existing confirms still count.
+    if (sessionStorage.getItem(HOOKAH_AGE_CONFIRMED_KEY) === '1') {
+      try {
+        localStorage.setItem(HOOKAH_AGE_CONFIRMED_KEY, '1')
+      } catch {
+        // Ignore.
+      }
+      return true
+    }
   } catch {
     // Ignore.
   }
+
   return false
 }
 
 export function isHookahAgeConfirmed() {
   if (hookahAgeConfirmedMemory) return true
+
   if (readStoredConfirmation()) {
     hookahAgeConfirmedMemory = true
     return true
   }
+
   return false
 }
 
@@ -36,12 +48,13 @@ export function setHookahAgeConfirmed() {
   try {
     localStorage.setItem(HOOKAH_AGE_CONFIRMED_KEY, '1')
   } catch {
-    // Ignore.
+    // Ignore — memory flag still covers this tab.
   }
+
   try {
     sessionStorage.setItem(HOOKAH_AGE_CONFIRMED_KEY, '1')
   } catch {
-    // Ignore — memory + whichever storage worked still covers this browser.
+    // Ignore.
   }
 }
 

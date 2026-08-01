@@ -4,7 +4,6 @@ import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
-import HookahAgeGate from '../components/checkout/HookahAgeGate'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
@@ -327,21 +326,6 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
 }
 
 export default function SheeshaSinglePackagePage() {
-  const [searchParams] = useSearchParams()
-  const backHref = useMemo(() => {
-    const next = new URLSearchParams(searchParams)
-    return `/packages/sheesha${next.toString() ? `?${next.toString()}` : ''}`
-  }, [searchParams])
-
-  // One stable gate for the whole PDP — avoids remounting the modal when data loads.
-  return (
-    <HookahAgeGate cancelTo={backHref}>
-      <SheeshaSinglePackageContent />
-    </HookahAgeGate>
-  )
-}
-
-function SheeshaSinglePackageContent() {
   // const navigate = useNavigate()
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
