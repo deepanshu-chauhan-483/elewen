@@ -23,10 +23,21 @@ export default function InclusionImageToast({ image, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-[16px] leading-none text-white transition-colors hover:bg-black/70"
+            className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
             aria-label="Close image preview"
           >
-            ×
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.25"
+              strokeLinecap="round"
+              className="h-3.5 w-3.5"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
           </button>
           <div className="h-[150px] w-full bg-[#E8E2DA]">
             <AppImage
