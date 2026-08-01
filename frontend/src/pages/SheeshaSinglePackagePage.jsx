@@ -327,6 +327,21 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
 }
 
 export default function SheeshaSinglePackagePage() {
+  const [searchParams] = useSearchParams()
+  const backHref = useMemo(() => {
+    const next = new URLSearchParams(searchParams)
+    return `/packages/sheesha${next.toString() ? `?${next.toString()}` : ''}`
+  }, [searchParams])
+
+  // One stable gate for the whole PDP — avoids remounting the modal when data loads.
+  return (
+    <HookahAgeGate cancelTo={backHref}>
+      <SheeshaSinglePackageContent />
+    </HookahAgeGate>
+  )
+}
+
+function SheeshaSinglePackageContent() {
   // const navigate = useNavigate()
   const { packageId = '' } = useParams()
   const [searchParams] = useSearchParams()
@@ -417,19 +432,11 @@ export default function SheeshaSinglePackagePage() {
   })
 
   if (isStrapiLoading) {
-    return (
-      <HookahAgeGate cancelTo="/packages/sheesha">
-        <CmsPageLoader />
-      </HookahAgeGate>
-    )
+    return <CmsPageLoader />
   }
 
   if (!pkg) {
-    return (
-      <HookahAgeGate cancelTo="/packages/sheesha">
-        <Navigate to={backHref} replace />
-      </HookahAgeGate>
-    )
+    return <Navigate to={backHref} replace />
   }
 
   const source = pkg.images?.length ? pkg.images : PKG_LOCAL_IMAGES[0]
@@ -508,7 +515,6 @@ export default function SheeshaSinglePackagePage() {
   }
 
   return (
-    <HookahAgeGate cancelTo={backHref}>
     <SingleProductPageContent
       backHref={backHref}
       title={packageTitle}
@@ -549,6 +555,5 @@ export default function SheeshaSinglePackagePage() {
       }
       testimonials={packageReviews}
     />
-    </HookahAgeGate>
   )
 }
