@@ -46,7 +46,7 @@ export default function BrandedImage({
         alt={alt}
         eager={eager}
         onError={handleError}
-        className={`h-full w-full object-cover object-top ${cropClasses} ${imgClassName}`}
+        className={`h-full w-full ${cropClasses} ${imgClassName || 'object-cover object-top'}`}
       />
 
       {showLogo ? (

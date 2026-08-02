@@ -249,6 +249,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
             alt={pkg.title}
             position="bottom-right"
             showLogoBg={true}
+            cropWatermark={false}
             className="h-full w-full"
             imgClassName="object-cover object-center"
           />
