@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import DateTimePicker from '../components/common/DateTimePicker'
 import { useToast } from '../components/common/useToast'
@@ -31,11 +31,42 @@ import {
 } from '../lib/api'
 import { classifyCartPackages, MIXED_HOOKAH_CART_MESSAGE } from '../lib/sheeshaCheckout'
 import HookahAgeConfirmModal from '../components/checkout/HookahAgeConfirmModal'
+import {
+  isValidOptionalIndianPhone,
+  validateCheckoutContactDetails,
+} from '../lib/contactValidation'
+import { normalizeIndianPhone } from '../lib/phone'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
 const CART_PIN_CODE_KEY = 'elewen_cart_pin_code'
 const CART_ADDITIONAL_INFO_KEY = '__additional_info__'
 const TEMP_BYPASS_PINCODE_VALIDATION = false
+
+const CHECKOUT_FIELD_SCROLL_ORDER = [
+  'fullName',
+  'email',
+  'phone',
+  'eventDate',
+  'addressLine1',
+  'pinCode',
+  'guestCount',
+  'eventDayContactPhone',
+]
+
+function scrollToFirstCheckoutFieldError(errors, fieldRefMap) {
+  for (const key of CHECKOUT_FIELD_SCROLL_ORDER) {
+    if (!errors[key]) continue
+
+    const node = fieldRefMap[key]?.current
+    if (!node) continue
+
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (typeof node.focus === 'function') {
+      window.setTimeout(() => node.focus(), 300)
+    }
+    break
+  }
+}
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -609,8 +640,32 @@ export default function CheckoutPage() {
   const [specialRequest, setSpecialRequest] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('upi')
   const [formError, setFormError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAgeModal, setShowAgeModal] = useState(false)
+
+  const fullNameRef = useRef(null)
+  const emailRef = useRef(null)
+  const phoneRef = useRef(null)
+  const eventDateRef = useRef(null)
+  const addressLine1Ref = useRef(null)
+  const pinCodeRef = useRef(null)
+  const guestCountRef = useRef(null)
+  const eventDayContactPhoneRef = useRef(null)
+
+  const checkoutFieldRefMap = useMemo(
+    () => ({
+      fullName: fullNameRef,
+      email: emailRef,
+      phone: phoneRef,
+      eventDate: eventDateRef,
+      addressLine1: addressLine1Ref,
+      pinCode: pinCodeRef,
+      guestCount: guestCountRef,
+      eventDayContactPhone: eventDayContactPhoneRef,
+    }),
+    []
+  )
 
   const eventAddress = useMemo(
     () =>
@@ -794,6 +849,57 @@ export default function CheckoutPage() {
     setPinCodeMessage(message)
   }, [debouncedPinCode, pinCode, isLoadingServiceAreas, serviceAreas, deliveryCharges])
 
+  const validateBeforeProceed = useCallback(() => {
+    setFormError('')
+
+    const nextFieldErrors = validateCheckoutContactDetails({ fullName, email, phone })
+
+    if (eventDayContactPhone.trim() && !isValidOptionalIndianPhone(eventDayContactPhone)) {
+      nextFieldErrors.eventDayContactPhone = 'Enter a valid 10-digit mobile number.'
+    }
+
+    if (!isSampleTastingCheckout) {
+      if (!eventDate) {
+        nextFieldErrors.eventDate = 'Please select an event date.'
+      }
+      if (!addressLine1.trim()) {
+        nextFieldErrors.addressLine1 = 'Please enter the event address.'
+      }
+      if (!guestCount || Number(guestCount) < 1) {
+        nextFieldErrors.guestCount = 'Please enter guest count.'
+      }
+
+      const pincodeState = getPincodeValidationState(pinCode, serviceAreas, isLoadingServiceAreas)
+      if (!pincodeState.isValid) {
+        nextFieldErrors.pinCode =
+          pincodeState.message || 'Please enter a valid serviceable pincode.'
+      }
+    }
+
+    setFieldErrors(nextFieldErrors)
+
+    if (Object.keys(nextFieldErrors).length) {
+      scrollToFirstCheckoutFieldError(nextFieldErrors, checkoutFieldRefMap)
+      return false
+    }
+
+    setFieldErrors({})
+    return true
+  }, [
+    addressLine1,
+    checkoutFieldRefMap,
+    email,
+    eventDate,
+    eventDayContactPhone,
+    fullName,
+    guestCount,
+    isLoadingServiceAreas,
+    isSampleTastingCheckout,
+    phone,
+    pinCode,
+    serviceAreas,
+  ])
+
   const handleCheckout = async paymentType => {
     const token = getStoredJwt()
     if (!token) {
@@ -801,29 +907,8 @@ export default function CheckoutPage() {
       return
     }
 
-    if (!fullName.trim() || !phone.trim() || !email.trim()) {
-      setFormError('Please fill in your contact details.')
+    if (!validateBeforeProceed()) {
       return
-    }
-
-    if (
-      !isSampleTastingCheckout &&
-      (!eventDate || !addressLine1.trim() || !guestCount || Number(guestCount) < 1)
-    ) {
-      setFormError('Please complete the event information form before payment.')
-      return
-    }
-
-    if (!isSampleTastingCheckout) {
-      const nextPincodeState = getPincodeValidationState(
-        pinCode,
-        serviceAreas,
-        isLoadingServiceAreas
-      )
-      if (!nextPincodeState.isValid) {
-        setFormError(nextPincodeState.message || 'Please enter a valid serviceable pincode.')
-        return
-      }
     }
 
     setFormError('')
@@ -1062,19 +1147,7 @@ export default function CheckoutPage() {
       return
     }
 
-    if (!fullName.trim() || !phone.trim() || !email.trim()) {
-      setFormError('Please fill in your contact details.')
-      return
-    }
-
-    if (!eventDate || !addressLine1.trim() || !guestCount || Number(guestCount) < 1) {
-      setFormError('Please complete the event information form before confirming.')
-      return
-    }
-
-    const nextPincodeState = getPincodeValidationState(pinCode, serviceAreas, isLoadingServiceAreas)
-    if (!nextPincodeState.isValid) {
-      setFormError(nextPincodeState.message || 'Please enter a valid serviceable pincode.')
+    if (!validateBeforeProceed()) {
       return
     }
 
@@ -1400,29 +1473,67 @@ export default function CheckoutPage() {
               </h3>
 
               <input
+                ref={fullNameRef}
                 type="text"
                 value={fullName}
-                onChange={event => setFullName(event.target.value)}
+                onChange={event => {
+                  setFormError('')
+                  setFieldErrors(prev => ({ ...prev, fullName: '' }))
+                  setFullName(event.target.value)
+                }}
                 placeholder="Full Name"
-                className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
+                  fieldErrors.fullName ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+                }`}
               />
+              {fieldErrors.fullName ? (
+                <p className="text-sm text-[#B42318]">{fieldErrors.fullName}</p>
+              ) : null}
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={event => setEmail(event.target.value)}
-                  placeholder="Email Address"
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
-                />
+                <div>
+                  <input
+                    ref={emailRef}
+                    type="email"
+                    value={email}
+                    onChange={event => {
+                      setFormError('')
+                      setFieldErrors(prev => ({ ...prev, email: '' }))
+                      setEmail(event.target.value)
+                    }}
+                    placeholder="Email Address"
+                    autoComplete="email"
+                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
+                      fieldErrors.email ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+                    }`}
+                  />
+                  {fieldErrors.email ? (
+                    <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.email}</p>
+                  ) : null}
+                </div>
 
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={event => setPhone(event.target.value)}
-                  placeholder="Phone Number"
-                  className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
-                />
+                <div>
+                  <input
+                    ref={phoneRef}
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    value={phone}
+                    onChange={event => {
+                      setFormError('')
+                      setFieldErrors(prev => ({ ...prev, phone: '' }))
+                      setPhone(normalizeIndianPhone(event.target.value).slice(0, 10))
+                    }}
+                    placeholder="Phone Number"
+                    autoComplete="tel"
+                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
+                      fieldErrors.phone ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+                    }`}
+                  />
+                  {fieldErrors.phone ? (
+                    <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.phone}</p>
+                  ) : null}
+                </div>
               </div>
             </div>
 
@@ -1436,15 +1547,23 @@ export default function CheckoutPage() {
                 </h3>
 
                 <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
+                  <div ref={eventDateRef} tabIndex={-1} className="space-y-2">
                     <p className="text-[12px] text-[#7A7A7A]">Event Date</p>
                     <DateTimePicker
                       type="date"
                       min={getMinEventDate()}
                       value={eventDate}
-                      onChange={event => setEventDate(event.target.value)}
-                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                      onChange={event => {
+                        setFieldErrors(prev => ({ ...prev, eventDate: '' }))
+                        setEventDate(event.target.value)
+                      }}
+                      className={`w-full border-b bg-transparent pb-3 text-[16px] outline-none ${
+                        fieldErrors.eventDate ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+                      }`}
                     />
+                    {fieldErrors.eventDate ? (
+                      <p className="text-sm text-[#B42318]">{fieldErrors.eventDate}</p>
+                    ) : null}
                   </div>
                   <div className="space-y-2">
                     <p className="text-[12px] text-[#7A7A7A]">What time does the event start</p>
@@ -1456,12 +1575,21 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <input
+                    ref={addressLine1Ref}
                     type="text"
                     value={addressLine1}
-                    onChange={event => setAddressLine1(event.target.value)}
+                    onChange={event => {
+                      setFieldErrors(prev => ({ ...prev, addressLine1: '' }))
+                      setAddressLine1(event.target.value)
+                    }}
                     placeholder="Event Location / Venue Address (first line)"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none md:col-span-2"
+                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none md:col-span-2 ${
+                      fieldErrors.addressLine1 ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+                    }`}
                   />
+                  {fieldErrors.addressLine1 ? (
+                    <p className="text-sm text-[#B42318] md:col-span-2">{fieldErrors.addressLine1}</p>
+                  ) : null}
                   <input
                     type="text"
                     value={addressLine2}
@@ -1477,14 +1605,20 @@ export default function CheckoutPage() {
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                   />
                   <input
+                    ref={pinCodeRef}
                     type="text"
+                    inputMode="numeric"
+                    maxLength={6}
                     value={pinCode}
                     onChange={event => {
                       setFormError('')
+                      setFieldErrors(prev => ({ ...prev, pinCode: '' }))
                       setPinCode(normalizePincode(event.target.value))
                     }}
                     placeholder="PIN Code"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
+                      fieldErrors.pinCode ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+                    }`}
                   />
                   <div className="space-y-2">
                     <p className="text-[12px] text-[#7A7A7A]">Is there a lift in your building?</p>
@@ -1498,7 +1632,9 @@ export default function CheckoutPage() {
                       <option value="no">No</option>
                     </select>
                   </div>
-                  {pinCodeMessage ? (
+                  {fieldErrors.pinCode ? (
+                    <p className="text-[12px] text-[#B42318] md:col-span-2">{fieldErrors.pinCode}</p>
+                  ) : pinCodeMessage ? (
                     <p
                       className={`text-[12px] md:col-span-2 ${
                         isPincodeValid ? 'text-[#2E7D32]' : 'text-[#B42318]'
@@ -1508,13 +1644,22 @@ export default function CheckoutPage() {
                     </p>
                   ) : null}
                   <input
+                    ref={guestCountRef}
                     type="number"
                     min="1"
                     value={guestCount}
-                    onChange={event => setGuestCount(event.target.value)}
+                    onChange={event => {
+                      setFieldErrors(prev => ({ ...prev, guestCount: '' }))
+                      setGuestCount(event.target.value)
+                    }}
                     placeholder="Guest Count"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
+                      fieldErrors.guestCount ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+                    }`}
                   />
+                  {fieldErrors.guestCount ? (
+                    <p className="text-sm text-[#B42318]">{fieldErrors.guestCount}</p>
+                  ) : null}
                   <div className="space-y-2">
                     <p className="text-[12px] text-[#7A7A7A]">
                       What is the earliest time that our team can reach the venue for set-up
@@ -1534,12 +1679,24 @@ export default function CheckoutPage() {
                     className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
                   />
                   <input
-                    type="text"
+                    ref={eventDayContactPhoneRef}
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     value={eventDayContactPhone}
-                    onChange={event => setEventDayContactPhone(event.target.value)}
+                    onChange={event => {
+                      setFormError('')
+                      setFieldErrors(prev => ({ ...prev, eventDayContactPhone: '' }))
+                      setEventDayContactPhone(normalizeIndianPhone(event.target.value).slice(0, 10))
+                    }}
                     placeholder="Event-day contact mobile number"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
+                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
+                      fieldErrors.eventDayContactPhone ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+                    }`}
                   />
+                  {fieldErrors.eventDayContactPhone ? (
+                    <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.eventDayContactPhone}</p>
+                  ) : null}
                   <input
                     type="text"
                     value={parkingInstructions}
@@ -1569,6 +1726,7 @@ export default function CheckoutPage() {
               type="button"
               onClick={() => {
                 if (isMixedSheeshaCheckout) return
+                if (!validateBeforeProceed()) return
                 if (isSheeshaOnlyCheckout) {
                   setShowAgeModal(true)
                   return
