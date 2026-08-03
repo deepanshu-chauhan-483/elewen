@@ -227,14 +227,6 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
   style,
 }) {
   const navigate = useNavigate()
-  const [showAllIncludes, setShowAllIncludes] = useState(false)
-  const [visibleTagCount, setVisibleTagCount] = useState(0)
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return window.innerWidth >= 768
-  })
-  const visibleTagsViewportRef = useRef(null)
-  const hiddenTagsMeasureRef = useRef(null)
   const fallbackImages = pkg.fallbackImages ?? []
   const packageId = pkg.documentId ?? pkg.id
   const serviceSlug = String(pkg.serviceSlug ?? pkg.service_slugs?.[0] ?? '')
@@ -253,120 +245,25 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
     if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
     return []
   }, [pkg.includes, pkg.tags])
-  const hasMoreIncludes = tags.length > visibleTagCount
-  const visibleTags = showAllIncludes ? tags : tags.slice(0, visibleTagCount)
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
+  const renderTagPills = (textClassName = '') =>
+    tags.map((tag, tagIndex) => (
+      <div
+        key={`${tag}-${tagIndex}`}
+        className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
+        style={{
+          background: 'rgba(0, 0, 0, 0.05)',
+          padding: isMobile ? '1.2px 7.4px' : '2px 12px',
+        }}
+      >
+        <span
+          className={`text-[#2D2D2D] font-medium leading-[150%] font-['Poppins'] md:font-sans ${textClassName || 'text-[12px] md:text-[18px]'}`}
+        >
+          {tag}
+        </span>
+      </div>
+    ))
 
-    const mediaQuery = window.matchMedia('(min-width: 768px)')
-    const handleViewportChange = event => {
-      setIsDesktopViewport(event.matches)
-    }
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleViewportChange)
-      return () => mediaQuery.removeEventListener('change', handleViewportChange)
-    }
-
-    mediaQuery.addListener(handleViewportChange)
-    return () => mediaQuery.removeListener(handleViewportChange)
-  }, [])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowAllIncludes(false)
-      setVisibleTagCount(0)
-    }, 0)
-    return () => clearTimeout(timer)
-  }, [pkg.id, pkg.documentId, tags.length, isDesktopViewport])
-
-  useEffect(() => {
-    if (!isActive) return undefined
-
-    const calculateVisibleTags = () => {
-      const viewport = visibleTagsViewportRef.current
-      const measureContainer = hiddenTagsMeasureRef.current
-
-      if (!viewport || !measureContainer) return
-
-      const availableHeight = viewport.clientHeight
-      const availableWidth = viewport.clientWidth
-
-      if (!availableHeight || !availableWidth) {
-        setVisibleTagCount(isDesktopViewport ? tags.length : Math.min(tags.length, 1))
-        return
-      }
-
-      measureContainer.style.width = `${availableWidth}px`
-
-      const tagNodes = Array.from(measureContainer.querySelectorAll('[data-tag-index]'))
-      const moreNode = measureContainer.querySelector('[data-more-tag]')
-
-      tagNodes.forEach(node => {
-        node.style.display = 'none'
-      })
-
-      if (moreNode) {
-        moreNode.style.display = 'none'
-      }
-
-      let fittedCount = tagNodes.length
-
-      for (let tagIndex = 0; tagIndex < tagNodes.length; tagIndex += 1) {
-        tagNodes[tagIndex].style.display = 'inline-flex'
-
-        const hasRemainingTags = tagIndex < tagNodes.length - 1
-        if (moreNode) {
-          moreNode.style.display = hasRemainingTags ? 'inline-flex' : 'none'
-        }
-
-        if (measureContainer.scrollHeight > availableHeight) {
-          tagNodes[tagIndex].style.display = 'none'
-          fittedCount = Math.max(tagIndex, 1)
-          break
-        }
-      }
-
-      if (fittedCount === tagNodes.length && moreNode) {
-        moreNode.style.display = 'none'
-      }
-
-      const nextVisibleCount = isDesktopViewport
-        ? fittedCount
-        : tags.length > 0
-          ? Math.max(fittedCount, 1)
-          : 0
-
-      setVisibleTagCount(nextVisibleCount)
-    }
-
-    if (showAllIncludes) {
-      const timer = setTimeout(() => {
-        setVisibleTagCount(tags.length)
-      }, 0)
-      return () => clearTimeout(timer)
-    }
-
-    calculateVisibleTags()
-
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', calculateVisibleTags)
-      return () => window.removeEventListener('resize', calculateVisibleTags)
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      calculateVisibleTags()
-    })
-
-    if (visibleTagsViewportRef.current) {
-      resizeObserver.observe(visibleTagsViewportRef.current)
-    }
-
-    return () => resizeObserver.disconnect()
-  }, [showAllIncludes, tags.length, isDesktopViewport, isActive])
-
-  const previewTags = tags.slice(0, isMobile ? 2 : 3)
   const handleCardClick = () => {
     if (usePackageCylinder && !isActive) {
       onActivate(index)
@@ -449,120 +346,23 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
           </div>
 
           <div className="flex flex-col items-start w-full gap-[12px] md:gap-[8px] min-h-0 flex-1">
-            {isActive ? (
+            {tags.length > 0 ? (
               <>
-                <p className="text-[#2D2D2D] w-full font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-                  Includes :
-                </p>
-                <div
-                  ref={visibleTagsViewportRef}
-                  className={`w-full min-h-0 ${showAllIncludes ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`}
-                >
+                {isActive ? (
+                  <p className="text-[#2D2D2D] w-full font-medium text-[16px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
+                    Includes :
+                  </p>
+                ) : null}
+                <div className="w-full overflow-hidden max-h-[47px] md:max-h-[68px]">
                   <div className="flex flex-wrap gap-[2.5px] md:gap-1">
-                    {visibleTags.map((tag, tagIndex) => (
-                      <div
-                        key={`${tag}-${tagIndex}`}
-                        className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
-                        style={{
-                          background: 'rgba(0, 0, 0, 0.05)',
-                          padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                        }}
-                      >
-                        <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-                          {tag}
-                        </span>
-                      </div>
-                    ))}
-                    {hasMoreIncludes && !showAllIncludes ? (
-                      <button
-                        type="button"
-                        onClick={event => {
-                          event.stopPropagation()
-                          setShowAllIncludes(true)
-                        }}
-                        className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
-                        style={{
-                          background: 'rgba(0, 0, 0, 0.05)',
-                          padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                        }}
-                      >
-                        More
-                      </button>
-                    ) : null}
+                    {renderTagPills(isActive ? '' : 'text-[12px] md:text-[16px]')}
                   </div>
                 </div>
               </>
-            ) : previewTags.length > 0 ? (
-              <div className="flex flex-wrap gap-[2.5px] md:gap-1 w-full">
-                {previewTags.map((tag, tagIndex) => (
-                  <div
-                    key={`${tag}-${tagIndex}`}
-                    className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
-                    style={{
-                      background: 'rgba(0, 0, 0, 0.05)',
-                      padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                    }}
-                  >
-                    <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[16px] leading-[150%] font-['Poppins'] md:font-sans">
-                      {tag}
-                    </span>
-                  </div>
-                ))}
-                {tags.length > previewTags.length ? (
-                  <div
-                    className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
-                    style={{
-                      background: 'rgba(0, 0, 0, 0.05)',
-                      padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                    }}
-                  >
-                    <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[16px] leading-[150%] font-['Poppins'] md:font-sans">
-                      More
-                    </span>
-                  </div>
-                ) : null}
-              </div>
             ) : null}
           </div>
         </div>
       </div>
-
-      {isActive ? (
-        <div className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0">
-          <div
-            ref={hiddenTagsMeasureRef}
-            className="flex flex-wrap gap-[2.5px] md:gap-1"
-            style={{ position: 'absolute', visibility: 'hidden' }}
-          >
-            {tags.map((tag, tagIndex) => (
-              <div
-                key={`${tag}-${tagIndex}`}
-                data-tag-index={tagIndex}
-                className="flex justify-center items-center rounded-[29px] md:rounded-[48px]"
-                style={{
-                  background: 'rgba(0, 0, 0, 0.05)',
-                  padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-                }}
-              >
-                <span className="text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans">
-                  {tag}
-                </span>
-              </div>
-            ))}
-            <button
-              type="button"
-              data-more-tag
-              className="flex justify-center items-center rounded-[29px] md:rounded-[48px] text-[#2D2D2D] font-medium text-[12px] md:text-[18px] leading-[150%] font-['Poppins'] md:font-sans"
-              style={{
-                background: 'rgba(0, 0, 0, 0.05)',
-                padding: isMobile ? '1.2px 7.4px' : '2px 12px',
-              }}
-            >
-              More
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 })
