@@ -859,7 +859,7 @@ function ProductImageLayout({
                   className="text-xs underline sm:text-sm md:text-base"
                   onClick={() => setIsCartOptionsOpen(true)}
                 >
-                  View Options
+                  View Basket
                 </button>
               ) : null}
 
