@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import DateTimePicker from '../components/common/DateTimePicker'
 import { useToast } from '../components/common/useToast'
@@ -442,7 +442,17 @@ function getSuggestedAddonsWithPricing(cartItems) {
     })
 }
 
-function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
+function PincodeCard({
+  pincode,
+  message,
+  isChecking,
+  onChange,
+  onSubmit,
+  sectionRef,
+  inputRef,
+  highlightRequired = false,
+  highlightMessage = '',
+}) {
   const isValid =
     pincode.trim().length > 5
       ? message?.toLowerCase().includes('not available')
@@ -453,7 +463,13 @@ function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
       : null
 
   return (
-    <form onSubmit={onSubmit} className="rounded-xl border border-[#95796066] p-5">
+    <form
+      ref={sectionRef}
+      onSubmit={onSubmit}
+      className={`rounded-xl border p-5 ${
+        highlightRequired ? 'border-[#8F2D1F] ring-1 ring-[#8F2D1F]/25' : 'border-[#95796066]'
+      }`}
+    >
       <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
         Enter Pincode
       </h2>
@@ -465,11 +481,14 @@ function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
       <div className="flex flex-col gap-3">
         <div className="relative">
           <input
+            ref={inputRef}
             type="text"
             value={pincode}
             onChange={e => onChange(e.target.value)}
             placeholder="Enter pincode"
-            className="w-full border-b border-[#2D2D2D] bg-transparent py-2 pr-10 text-[14px] text-[#2C2C2C] focus:outline-none"
+            className={`w-full border-b bg-transparent py-2 pr-10 text-[14px] text-[#2C2C2C] focus:outline-none ${
+              highlightRequired ? 'border-[#8F2D1F]' : 'border-[#2D2D2D]'
+            }`}
           />
 
           {/* Status Icon */}
@@ -522,14 +541,19 @@ function PincodeCard({ pincode, message, isChecking, onChange, onSubmit }) {
         Service only available at Delhi, Gurgaon and Noida.
       </p>
 
-      {/* {message && (
+      {highlightRequired && highlightMessage ? (
+        <p className="mt-2 text-sm text-[#8F2D1F]">{highlightMessage}</p>
+      ) : null}
+
+      {!highlightRequired && message && message !== highlightMessage ? (
         <p
-          className={`mt-2 text-sm ${isValid ? 'text-green-600' : 'text-red-500'
-            }`}
+          className={`mt-2 text-sm ${
+            isValid === false ? 'text-[#8F2D1F]' : isValid === true ? 'text-green-600' : 'text-gray-500'
+          }`}
         >
           {message}
         </p>
-      )} */}
+      ) : null}
     </form>
   )
 }
@@ -1569,6 +1593,11 @@ export default function CartPage() {
   const [pincodeMessage, setPincodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [isPincodeValid, setIsPincodeValid] = useState(false)
+  const [pincodeHighlightRequired, setPincodeHighlightRequired] = useState(false)
+  const [checkoutPincodePrompt, setCheckoutPincodePrompt] = useState('')
+  const [pendingCheckoutAfterPincode, setPendingCheckoutAfterPincode] = useState(false)
+  const pincodeSectionRef = useRef(null)
+  const pincodeInputRef = useRef(null)
   const [pendingItemId, setPendingItemId] = useState('')
   const [editingField, setEditingField] = useState('')
   const [isSavingDetails, setIsSavingDetails] = useState(false)
@@ -1616,11 +1645,70 @@ export default function CartPage() {
   const hasSingleItem = cartItems.length === 1
   const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
   const isMixedSheeshaCart = cartClassification.isMixedSheeshaCart
-  const isCheckoutDisabled = !isPincodeValid || isMixedSheeshaCart
-  // Mixed-cart guidance lives under the Hookah section — not under checkout.
-  const checkoutDisabledMessage = isMixedSheeshaCart
-    ? ''
-    : 'Enter your pincode to enable checkout.'
+  const isCheckoutDisabled = isMixedSheeshaCart
+  const checkoutDisabledMessage = ''
+
+  const proceedToCheckout = useCallback(() => {
+    if (isMixedSheeshaCart) return
+
+    if (!isPincodeValid) {
+      setPincodeHighlightRequired(true)
+      setCheckoutPincodePrompt('Please enter your pincode to continue to checkout.')
+      setPendingCheckoutAfterPincode(true)
+      pincodeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      window.setTimeout(() => pincodeInputRef.current?.focus(), 300)
+      return
+    }
+
+    setPincodeHighlightRequired(false)
+    setCheckoutPincodePrompt('')
+    setPendingCheckoutAfterPincode(false)
+
+    if (isLoggedIn) {
+      navigate('/checkout', {
+        state: {
+          showCheckoutToast: true,
+          checkoutToastMessage,
+        },
+      })
+      return
+    }
+
+    navigate('/login', { state: { from: '/checkout' } })
+  }, [
+    checkoutToastMessage,
+    isLoggedIn,
+    isMixedSheeshaCart,
+    isPincodeValid,
+    navigate,
+  ])
+
+  useEffect(() => {
+    if (!pendingCheckoutAfterPincode || !isPincodeValid || isMixedSheeshaCart) return
+
+    setPincodeHighlightRequired(false)
+    setCheckoutPincodePrompt('')
+    setPendingCheckoutAfterPincode(false)
+
+    if (isLoggedIn) {
+      navigate('/checkout', {
+        state: {
+          showCheckoutToast: true,
+          checkoutToastMessage,
+        },
+      })
+      return
+    }
+
+    navigate('/login', { state: { from: '/checkout' } })
+  }, [
+    checkoutToastMessage,
+    isLoggedIn,
+    isMixedSheeshaCart,
+    isPincodeValid,
+    navigate,
+    pendingCheckoutAfterPincode,
+  ])
 
   const showSampleTasteBooking = useMemo(
     () => cartItems.some(isSampleTasteEligibleItem),
@@ -1787,6 +1875,8 @@ export default function CartPage() {
 
     setPincode(normalizedPincode)
     setIsPincodeValid(false)
+    setPincodeHighlightRequired(false)
+    setCheckoutPincodePrompt('')
 
     if (!normalizedPincode) {
       setIsCheckingPincode(false)
@@ -1873,6 +1963,10 @@ export default function CartPage() {
               isChecking={isCheckingPincode}
               onChange={handlePincodeChange}
               onSubmit={handlePincodeSubmit}
+              sectionRef={pincodeSectionRef}
+              inputRef={pincodeInputRef}
+              highlightRequired={pincodeHighlightRequired}
+              highlightMessage={checkoutPincodePrompt}
             />
 
             {/* Mobile Coupon Card for both single + multi package */}
@@ -1929,19 +2023,7 @@ export default function CartPage() {
               cartItems={cartItems}
               cart={cart}
               singleItem={hasSingleItem}
-              onCheckout={() => {
-                if (isMixedSheeshaCart) return
-                if (isLoggedIn) {
-                  navigate('/checkout', {
-                    state: {
-                      showCheckoutToast: true,
-                      checkoutToastMessage,
-                    },
-                  })
-                  return
-                }
-                navigate('/login', { state: { from: '/checkout' } })
-              }}
+              onCheckout={proceedToCheckout}
               onSampleTasteBooking={handleSampleTasteBooking}
               showSampleTasteBooking={showSampleTasteBooking}
               isCheckoutDisabled={isCheckoutDisabled}
