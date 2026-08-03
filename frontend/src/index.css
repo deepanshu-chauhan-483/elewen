@@ -444,6 +444,11 @@ html.home-scroll-restoring::before {
     user-select: none;
   }
 
+  .mobile-carousel-scroll {
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .hero-band-row {
     left: -15%;
     width: 170%;
@@ -1771,76 +1776,4 @@ html.home-scroll-restoring::before {
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
-}
-
-/* Dual price range slider (package listing) */
-.price-range-thumb {
-  pointer-events: none;
-  margin: 0;
-  padding: 0;
-}
-
-.price-range-thumb::-webkit-slider-runnable-track {
-  background: transparent;
-  height: 4px;
-}
-
-.price-range-thumb::-moz-range-track {
-  background: transparent;
-  height: 4px;
-  border: none;
-}
-
-.price-range-thumb::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  pointer-events: auto;
-  position: relative;
-  z-index: 5;
-  width: 16px;
-  height: 16px;
-  margin-top: -6px;
-  border-radius: 9999px;
-  border: 2px solid #8c3b11;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(89, 25, 2, 0.25);
-  cursor: pointer;
-}
-
-.price-range-thumb::-moz-range-thumb {
-  pointer-events: auto;
-  width: 16px;
-  height: 16px;
-  border-radius: 9999px;
-  border: 2px solid #8c3b11;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(89, 25, 2, 0.25);
-  cursor: pointer;
-}
-
-.price-range-thumb:focus {
-  outline: none;
-}
-
-.price-range-thumb:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #cdb17e;
-  outline-offset: 2px;
-}
-
-.price-range-thumb:focus-visible::-moz-range-thumb {
-  outline: 2px solid #cdb17e;
-  outline-offset: 2px;
-}
-
-.price-range-thumb--compact::-webkit-slider-thumb {
-  width: 12px;
-  height: 12px;
-  margin-top: -4.5px;
-  border-width: 1.5px;
-}
-
-.price-range-thumb--compact::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-width: 1.5px;
 }

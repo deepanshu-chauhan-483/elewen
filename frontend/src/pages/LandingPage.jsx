@@ -126,41 +126,14 @@ const buildServiceListingHref = (serviceSlug, serviceId) => {
   })
 }
 
-const getMobileCarouselTranslateX = ({ totalItems, page, cardWidth, cardGap }) => {
-  if (totalItems <= 1) return 'translateX(0px)'
-  return `translateX(calc(50% - ${cardWidth / 2}px - ${page * (cardWidth + cardGap)}px))`
-}
-
-const useMobileCarouselSwipe = (onPrev, onNext, enabled) => {
-  const touchStartX = useRef(0)
-  const touchStartY = useRef(0)
-
-  return enabled
-    ? {
-        onTouchStart: event => {
-          touchStartX.current = event.touches[0].clientX
-          touchStartY.current = event.touches[0].clientY
-        },
-        onTouchEnd: event => {
-          const endX = event.changedTouches[0].clientX
-          const endY = event.changedTouches[0].clientY
-          const diffX = touchStartX.current - endX
-          const diffY = Math.abs(touchStartY.current - endY)
-
-          if (Math.abs(diffX) > 35 && Math.abs(diffX) > diffY) {
-            if (diffX > 0) onNext()
-            else onPrev()
-          }
-        },
-      }
-    : {}
-}
-
 const MOBILE_CAROUSEL_STAGE_CLASS =
-  'relative min-h-[400px] md:min-h-0 w-screen max-w-[100vw] left-1/2 -translate-x-1/2 overflow-visible md:static md:w-auto md:max-w-none md:left-auto md:translate-x-0'
+  'relative min-h-[400px] md:min-h-0 w-full max-w-[100vw] md:static md:w-auto md:max-w-none'
 
 const MOBILE_CAROUSEL_VIEWPORT_CLASS =
-  'mobile-swipe-surface w-[min(322px,calc(100%-5.5rem))] mx-auto overflow-hidden md:w-auto md:mx-0 md:px-0'
+  'mobile-carousel-scroll w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory px-4 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:overflow-hidden md:w-auto md:snap-none md:mx-0'
+
+const MOBILE_CAROUSEL_TRACK_CLASS =
+  'flex w-max md:w-full gap-4 md:gap-4 justify-start md:transition-[transform,opacity] md:duration-[950ms] md:ease-[cubic-bezier(0.19,1,0.22,1)] md:will-change-transform'
 
 const MOBILE_CAROUSEL_ARROW_BTN_LEFT =
   'pointer-events-auto w-[64px] h-[64px] rounded-full bg-[#ECE7DC] flex items-center justify-end px-2 disabled:opacity-40 transition-opacity shadow-[0_0_0_1px_rgba(205,177,126,0.06)]'
@@ -453,7 +426,6 @@ const PlanEventSection = () => {
 
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
-  const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
   const resolvedMobileCardWidth = getResolvedMobileCardWidth(carouselViewportWidth, mobileCardWidth)
 
   useEffect(() => {
@@ -685,7 +657,7 @@ const PlanEventSection = () => {
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden min-w-0">
             <div className={MOBILE_CAROUSEL_STAGE_CLASS}>
-              <div className="pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 md:hidden">
+              <div className="hidden pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2">
                 <button
                   type="button"
                   onClick={goToPrevPage}
@@ -700,7 +672,6 @@ const PlanEventSection = () => {
               <div
                 ref={carouselViewportRef}
                 className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
-                {...carouselTouch}
                 style={{
                   maskImage: isCarouselSliding ? edgeFadeMask : 'none',
                   WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
@@ -709,17 +680,14 @@ const PlanEventSection = () => {
                 }}
               >
                 <div
-                  className="flex gap-4 md:gap-4 justify-start transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
-                  style={{
-                    transform: isMobile
-                      ? getMobileCarouselTranslateX({
-                          totalItems: filteredCards.length,
-                          page: safePage,
-                          cardWidth: resolvedMobileCardWidth,
-                          cardGap: mobileCardGap,
-                        })
-                      : `translateX(-${safePage * carouselViewportWidth}px)`,
-                  }}
+                  className={MOBILE_CAROUSEL_TRACK_CLASS}
+                  style={
+                    isMobile
+                      ? undefined
+                      : {
+                          transform: `translateX(-${safePage * carouselViewportWidth}px)`,
+                        }
+                  }
                 >
                   {filteredCards.map((card, i) => (
                     <Link
@@ -741,7 +709,7 @@ const PlanEventSection = () => {
                           ? `${resolvedMobileCardWidth}px`
                           : `calc((100% - ${(currentCardsPerPage - 1) * 24}px) / ${currentCardsPerPage})`,
                       }}
-                      className="bg-white p-[10px] md:p-2.5 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="snap-center bg-white p-[10px] md:p-2.5 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                     >
                       <div className="flex-1 rounded-[8px] md:rounded-b-none bg-[#FFFFFF] relative overflow-hidden h-full md:min-h-0">
                         {card.image ? (
@@ -777,7 +745,7 @@ const PlanEventSection = () => {
                 </div>
               </div>
 
-              <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
+              <div className="hidden pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2">
                 <button
                   type="button"
                   onClick={goToNextPage}
@@ -849,8 +817,8 @@ const PlanEventSection = () => {
               </button>
             </div>
 
-            {/* Mobile Pagination Dots */}
-            <div className="flex md:hidden items-center justify-center gap-[5px] mt-10 mb-8">
+            {/* Mobile Pagination Dots — hidden; mobile uses horizontal scroll */}
+            <div className="hidden items-center justify-center gap-[5px] mt-10 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
@@ -987,7 +955,6 @@ const WhatToPlanSection = () => {
 
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
-  const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
   const resolvedMobileCardWidth = getResolvedMobileCardWidth(carouselViewportWidth, mobileCardWidth)
 
   useEffect(() => {
@@ -1172,7 +1139,7 @@ const WhatToPlanSection = () => {
         <div className="flex-1 py-4 md:py-8 lg:py-16 px-6 md:px-8 lg:px-8">
           <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-visible md:overflow-hidden">
             <div className={MOBILE_CAROUSEL_STAGE_CLASS}>
-              <div className="pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 md:hidden">
+              <div className="hidden pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2">
                 <button
                   type="button"
                   onClick={goToPrevPage}
@@ -1187,26 +1154,22 @@ const WhatToPlanSection = () => {
               <div
                 ref={carouselViewportRef}
                 className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
-                {...carouselTouch}
               >
                 <div
-                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
-                  style={{
-                    transform: isMobile
-                      ? getMobileCarouselTranslateX({
-                          totalItems: filteredCards.length,
-                          page: safePage,
-                          cardWidth: resolvedMobileCardWidth,
-                          cardGap: mobileCardGap,
-                        })
-                      : `translateX(-${safePage * carouselViewportWidth}px)`,
-                  }}
+                  className={`${MOBILE_CAROUSEL_TRACK_CLASS} md:gap-6`}
+                  style={
+                    isMobile
+                      ? undefined
+                      : {
+                          transform: `translateX(-${safePage * carouselViewportWidth}px)`,
+                        }
+                  }
                 >
                   {filteredCards.map((card, i) => (
                     <Link
                       key={card.slug ?? card.documentId ?? card.id ?? card.title}
                       to={buildServiceListingHref(card.slug ?? card.title, card.id)}
-                      className="bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="snap-center bg-white p-[10px] md:p-2.5 mx-auto md:mx-0 rounded-[8px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.04 + i * 0.03}s`,
                         width: isMobile
@@ -1239,7 +1202,7 @@ const WhatToPlanSection = () => {
                 </div>
               </div>
 
-              <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
+              <div className="hidden pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2">
                 <button
                   type="button"
                   onClick={goToNextPage}
@@ -1311,8 +1274,8 @@ const WhatToPlanSection = () => {
               </button>
             </div>
 
-            {/* Mobile Pagination Dots */}
-            <div className="flex md:hidden items-center justify-center gap-[5px] mt-10 mb-8">
+            {/* Mobile Pagination Dots — hidden; mobile uses horizontal scroll */}
+            <div className="hidden items-center justify-center gap-[5px] mt-10 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
@@ -3397,113 +3360,92 @@ const PackagesSection = () => {
           }}
         />
 
-        <div
-          className="relative min-h-[480px] md:min-h-[790px] w-full grid place-content-center overflow-hidden px-0 z-10"
-          style={{
-            perspective: isMobile ? '130em' : '80em',
-            maskImage: isMobile
-              ? 'none'
-              : 'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
-            WebkitMaskImage: isMobile
-              ? 'none'
-              : 'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
-          }}
-        >
-          {/* --- Mobile Only Navigation Arrows (Half Circles on Edges) --- */}
-          <div
-            className={`absolute inset-y-0 left-0 right-0 md:hidden z-[100] flex items-center justify-between pointer-events-none ${showNavButtons ? '' : 'hidden'}`}
-          >
-            <button
-              type="button"
-              onClick={handlePrev}
-              className="pointer-events-auto w-[34px] h-[68px] bg-[#1C1C1C] hover:bg-black rounded-r-full flex items-center justify-center transition-colors pr-[2px]"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M19 12H5M12 5L5 12L12 19"
-                  stroke="#FAFAFA"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              className="pointer-events-auto w-[34px] h-[68px] bg-[#1C1C1C] hover:bg-black rounded-l-full flex items-center justify-center transition-colors pl-[2px]"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M5 12H19M12 5L19 12L12 19"
-                  stroke="#FAFAFA"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
+        {isMobile ? (
+          <div className="relative min-h-[480px] w-full z-10">
+            <div className="mobile-carousel-scroll flex w-full gap-3 overflow-x-auto overflow-y-hidden snap-x snap-mandatory px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {packagesData.map((pkg, index) => (
+                <div
+                  key={`pkg-mobile-${pkg.id ?? pkg.documentId ?? 'fallback'}-${index}`}
+                  className="snap-center shrink-0 pointer-events-auto"
+                >
+                  <LandingPackageCarouselCard
+                    pkg={pkg}
+                    index={index}
+                    isActive
+                    isMobile
+                    usePackageCylinder={false}
+                    onActivate={handleActivate}
+                    style={{
+                      position: 'relative',
+                      transform: 'none',
+                      opacity: 1,
+                      pointerEvents: 'auto',
+                      boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-
+        ) : (
           <div
-            className="grid place-self-center w-full max-w-[100vw] pointer-events-none"
+            className="relative min-h-[790px] w-full grid place-content-center overflow-hidden px-0 z-10"
             style={{
-              transformStyle: 'preserve-3d',
-              transform: `translate3d(0, 0, 0) rotateY(${usePackageCylinder ? -effectiveVirtualIndex * 36 : 0}deg)`,
-              transition: disableTransition ? 'none' : PACKAGE_CAROUSEL_TRANSITION,
-              willChange: 'transform',
+              perspective: '80em',
+              maskImage:
+                'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
+              WebkitMaskImage:
+                'linear-gradient(90deg, transparent 0%, black 28%, black 72%, transparent 100%)',
             }}
-            onTransitionEnd={handleTransitionEnd}
-            onTouchStart={isMobile && usePackageCylinder ? handleTouchStart : undefined}
-            onTouchEnd={isMobile && usePackageCylinder ? handleTouchEnd : undefined}
           >
-            {renderCards.map(({ pkg, index }) => {
-              const baseAngle = 36
-              const halfAngleDeg = baseAngle / 2
-              const halfAngleRad = (halfAngleDeg * Math.PI) / 180
-              const cardWidth = isMobile ? 289 : 640
-              const gap = isMobile ? 12 : 8
-              const radius = (cardWidth / 2 + gap / 2) / Math.tan(halfAngleRad)
-              const isActive = index === effectiveVirtualIndex
+            <div
+              className="grid place-self-center w-full max-w-[100vw] pointer-events-none"
+              style={{
+                transformStyle: 'preserve-3d',
+                transform: `translate3d(0, 0, 0) rotateY(${usePackageCylinder ? -effectiveVirtualIndex * 36 : 0}deg)`,
+                transition: disableTransition ? 'none' : PACKAGE_CAROUSEL_TRANSITION,
+                willChange: 'transform',
+              }}
+              onTransitionEnd={handleTransitionEnd}
+            >
+              {renderCards.map(({ pkg, index }) => {
+                const baseAngle = 36
+                const halfAngleDeg = baseAngle / 2
+                const halfAngleRad = (halfAngleDeg * Math.PI) / 180
+                const cardWidth = 640
+                const gap = 8
+                const radius = (cardWidth / 2 + gap / 2) / Math.tan(halfAngleRad)
+                const isActive = index === effectiveVirtualIndex
 
-              return (
-                <LandingPackageCarouselCard
-                  key={`pkg-${pkg.id ?? pkg.documentId ?? 'fallback'}-${index}`}
-                  pkg={pkg}
-                  index={index}
-                  isActive={isActive}
-                  isMobile={isMobile}
-                  usePackageCylinder={usePackageCylinder}
-                  onActivate={handleActivate}
-                  style={{
-                    transform: `rotateY(${index * 36}deg) translateZ(${-radius}px)`,
-                    boxShadow: isActive
-                      ? '0 12px 32px rgba(0,0,0,0.15)'
-                      : '0 6px 20px rgba(0,0,0,0.1)',
-                    opacity: isActive ? 1 : isMobile ? 0 : 0.92,
-                    pointerEvents: isActive ? 'auto' : isMobile ? 'none' : 'auto',
-                    zIndex: getPackageCardZIndex(index, effectiveVirtualIndex, totalCards),
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                    transition: disableTransition
-                      ? 'none'
-                      : 'opacity 0.28s ease-out, box-shadow 0.28s ease-out',
-                  }}
-                />
-              )
-            })}
+                return (
+                  <LandingPackageCarouselCard
+                    key={`pkg-${pkg.id ?? pkg.documentId ?? 'fallback'}-${index}`}
+                    pkg={pkg}
+                    index={index}
+                    isActive={isActive}
+                    isMobile={false}
+                    usePackageCylinder={usePackageCylinder}
+                    onActivate={handleActivate}
+                    style={{
+                      transform: `rotateY(${index * 36}deg) translateZ(${-radius}px)`,
+                      boxShadow: isActive
+                        ? '0 12px 32px rgba(0,0,0,0.15)'
+                        : '0 6px 20px rgba(0,0,0,0.1)',
+                      opacity: isActive ? 1 : 0.92,
+                      pointerEvents: isActive ? 'auto' : 'auto',
+                      zIndex: getPackageCardZIndex(index, effectiveVirtualIndex, totalCards),
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                      transition: disableTransition
+                        ? 'none'
+                        : 'opacity 0.28s ease-out, box-shadow 0.28s ease-out',
+                    }}
+                  />
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Bottom curved edge */}
         <div
@@ -3573,10 +3515,8 @@ const PackagesSection = () => {
         </button>
       </div>
 
-      {/* Mobile Main Pagination Dots */}
-      <div
-        className={`${showNavButtons ? 'flex md:hidden' : 'hidden'} items-center justify-center gap-[6px] mt-[16px] z-20 relative`}
-      >
+      {/* Mobile Main Pagination Dots — hidden; mobile uses horizontal scroll */}
+      <div className="hidden items-center justify-center gap-[6px] mt-[16px] z-20 relative">
         {visiblePackageDots.map(idx => (
           <div
             key={idx}
@@ -3910,7 +3850,6 @@ const PlanningGuidesSection = () => {
 
   const sectionRef = useRef(null)
   const carouselViewportRef = useRef(null)
-  const carouselTouch = useMobileCarouselSwipe(goToPrevPage, goToNextPage, isMobile)
   const resolvedMobileCardWidth = getResolvedMobileCardWidth(carouselViewportWidth, mobileCardWidth)
 
   useEffect(() => {
@@ -4074,7 +4013,7 @@ const PlanningGuidesSection = () => {
           {/* Cards Carousel Area */}
           <div className="flex-1 py-0 md:py-6 lg:py-16 px-0 md:px-0 lg:px-8 w-full overflow-x-hidden md:overflow-visible md:overflow-hidden">
             <div className={MOBILE_CAROUSEL_STAGE_CLASS}>
-              <div className="pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 md:hidden">
+              <div className="hidden pointer-events-none absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2">
                 <button
                   type="button"
                   onClick={goToPrevPage}
@@ -4089,7 +4028,6 @@ const PlanningGuidesSection = () => {
               <div
                 ref={carouselViewportRef}
                 className={MOBILE_CAROUSEL_VIEWPORT_CLASS}
-                {...carouselTouch}
                 style={{
                   maskImage: isCarouselSliding ? edgeFadeMask : 'none',
                   WebkitMaskImage: isMobile ? 'none' : isCarouselSliding ? edgeFadeMask : 'none',
@@ -4098,17 +4036,14 @@ const PlanningGuidesSection = () => {
                 }}
               >
                 <div
-                  className="flex gap-4 md:gap-6 transition-[transform,opacity] duration-[950ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
-                  style={{
-                    transform: isMobile
-                      ? getMobileCarouselTranslateX({
-                          totalItems: filteredBlogs.length,
-                          page: safePage,
-                          cardWidth: resolvedMobileCardWidth,
-                          cardGap: mobileCardGap,
-                        })
-                      : `translateX(-${safePage * carouselViewportWidth}px)`,
-                  }}
+                  className={`${MOBILE_CAROUSEL_TRACK_CLASS} md:gap-6`}
+                  style={
+                    isMobile
+                      ? undefined
+                      : {
+                          transform: `translateX(-${safePage * carouselViewportWidth}px)`,
+                        }
+                  }
                 >
                   {filteredBlogs.map((blog, i) => (
                     <Link
@@ -4121,7 +4056,7 @@ const PlanningGuidesSection = () => {
                         }
                         rememberHomeScroll(lenisRef?.current)
                       }}
-                      className="bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
+                      className="snap-center bg-white p-[10px] md:p-2.5 rounded-[10px] md:rounded-[24px] shadow-sm flex flex-col h-[394px] md:h-[460px] group cursor-pointer relative card-reveal plan-event-card shrink-0"
                       style={{
                         '--delay': `${0.04 + i * 0.03}s`,
                         width: isMobile
@@ -4154,7 +4089,7 @@ const PlanningGuidesSection = () => {
                 </div>
               </div>
 
-              <div className="pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2 md:hidden">
+              <div className="hidden pointer-events-none absolute top-1/2 right-0 z-20 translate-x-1/2 -translate-y-1/2">
                 <button
                   type="button"
                   onClick={goToNextPage}
@@ -4224,8 +4159,8 @@ const PlanningGuidesSection = () => {
               </button>
             </div>
 
-            {/* Mobile Pagination Dots */}
-            <div className="flex md:hidden items-center justify-center gap-[4px] mt-6 mb-8">
+            {/* Mobile Pagination Dots — hidden; mobile uses horizontal scroll */}
+            <div className="hidden items-center justify-center gap-[4px] mt-6 mb-8">
               {[...Array(totalPages)].map((_, i) => (
                 <div
                   key={i}
