@@ -128,6 +128,8 @@ export default function DecorLevelsPage() {
   const packagesQuery = usePackages()
   const { data: packages = [] } = packagesQuery
   const [sortValue, setSortValue] = useState('price-asc')
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (typeof window === 'undefined') return true
@@ -226,18 +228,48 @@ export default function DecorLevelsPage() {
     searchQuery,
   ])
 
+  const priceBounds = useMemo(() => {
+    const prices = filteredPackages
+      .map(pkg => Number(pkg.base_price) || 0)
+      .filter(price => price > 0)
+
+    if (!prices.length) return { min: 0, max: 0 }
+
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    }
+  }, [filteredPackages])
+
+  const priceFilteredPackages = useMemo(() => {
+    const minValue = priceMin === '' ? null : Number(priceMin)
+    const maxValue = priceMax === '' ? null : Number(priceMax)
+
+    return filteredPackages.filter(pkg => {
+      const price = Number(pkg.base_price) || 0
+      if (minValue != null && !Number.isNaN(minValue) && price < minValue) return false
+      if (maxValue != null && !Number.isNaN(maxValue) && price > maxValue) return false
+      return true
+    })
+  }, [filteredPackages, priceMin, priceMax])
+
   const sortedPackages = useMemo(() => {
-    const items = [...filteredPackages]
+    const items = [...priceFilteredPackages]
     if (sortValue === 'price-asc')
       return items.sort((a, b) => (a.base_price ?? 0) - (b.base_price ?? 0))
     if (sortValue === 'price-desc')
       return items.sort((a, b) => (b.base_price ?? 0) - (a.base_price ?? 0))
     return items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-  }, [filteredPackages, sortValue])
+  }, [priceFilteredPackages, sortValue])
 
-  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${eventSlug}:${eventId}:${serviceIdParam}:${themeParam}:${searchQuery}:${sortValue}`
+  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${eventSlug}:${eventId}:${serviceIdParam}:${themeParam}:${searchQuery}:${sortValue}:${priceMin}:${priceMax}`
   const skipPaginationWriteRef = useRef(false)
   const navigationType = useNavigationType()
+
+  useEffect(() => {
+    setPriceMin('')
+    setPriceMax('')
+  }, [categorySlug, eventSlug, eventId, serviceIdParam, themeParam, searchQuery])
 
   useEffect(() => {
     skipPaginationWriteRef.current = true
@@ -391,7 +423,13 @@ export default function DecorLevelsPage() {
     <PackageListLayout
       totalCount={sortedPackages.length}
       sortValue={sortValue}
-      onSortChange={e => setSortValue(e.target.value)}
+      onSortChange={value => setSortValue(value)}
+      showPriceFilter={!hidePackagePrice}
+      priceMin={priceMin}
+      priceMax={priceMax}
+      priceBounds={priceBounds}
+      onPriceMinChange={setPriceMin}
+      onPriceMaxChange={setPriceMax}
       page={1}
       totalPages={1}
       onPrevPage={() => {}}
