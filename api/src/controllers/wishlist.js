@@ -1,4 +1,4 @@
-import { strapiGetUserById, strapiServerDelete, strapiServerGet, strapiServerPost } from '../lib/strapi.js'
+import { strapiServerDelete, strapiServerGet, strapiServerPost } from '../lib/strapi.js'
 import { enrichSavedPackages } from '../lib/dashboardData.js'
 import { cacheDel, cacheDelContaining } from '../lib/cache.js'
 
@@ -99,39 +99,45 @@ function normalizeSavedPackage(entry) {
   }
 }
 
-async function resolvePackage(packageRef) {
-  const value = String(packageRef ?? '').trim()
-  if (!value) return null
+async function resolvePackageRef(packageId) {
+  const normalized = String(packageId ?? '').trim()
+  if (!normalized) return null
 
-  const byId = await strapiServerGet(
-    `/api/packages?filters[id][$eq]=${encodeURIComponent(value)}&pagination[pageSize]=1&publicationState=preview`
+  const filterKey = /^\d+$/.test(normalized) ? 'filters[id][$eq]' : 'filters[documentId][$eq]'
+  const result = await strapiServerGet(
+    `/api/packages?${filterKey}=${encodeURIComponent(normalized)}&pagination[pageSize]=1&publicationState=preview`
   )
-  if (byId?.data?.[0]) return byId.data[0]
 
-  const byDocumentId = await strapiServerGet(
-    `/api/packages?filters[documentId][$eq]=${encodeURIComponent(value)}&pagination[pageSize]=1&publicationState=preview`
-  )
-  return byDocumentId?.data?.[0] ?? null
+  return result?.data?.[0] ?? null
 }
 
-async function findSavedPackage(userId, packageRef, pkg = null) {
-  const resolved = pkg ?? (await resolvePackage(packageRef))
-  const numericId = resolved?.id != null ? String(resolved.id) : ''
-  const documentId = resolved?.documentId ? String(resolved.documentId) : ''
-  const fallback = String(packageRef ?? '').trim()
+async function findSavedPackage(userId, packageId) {
+  const normalized = String(packageId ?? '').trim()
+  if (!normalized) return null
 
-  const attempts = [...new Set([numericId, documentId, fallback].filter(Boolean))]
+  const pkg = await resolvePackageRef(normalized)
+  const numericPackageId = pkg?.id != null ? String(pkg.id) : /^\d+$/.test(normalized) ? normalized : null
+  const documentId = pkg?.documentId ?? (/^\d+$/.test(normalized) ? null : normalized)
 
-  for (const value of attempts) {
-    const byPackageId = await strapiServerGet(
-      `/api/saved-packages?filters[user][id][$eq]=${userId}&filters[package][id][$eq]=${encodeURIComponent(value)}&populate[package]=true&pagination[pageSize]=1&publicationState=preview`
+  const attempts = []
+
+  if (numericPackageId) {
+    attempts.push(
+      `/api/saved-packages?filters[user][id][$eq]=${userId}&filters[package][id][$eq]=${numericPackageId}&populate[package]=true&pagination[pageSize]=1&publicationState=preview`
     )
-    if (byPackageId?.data?.[0]) return byPackageId.data[0]
+  }
 
-    const byPackageDocumentId = await strapiServerGet(
-      `/api/saved-packages?filters[user][id][$eq]=${userId}&filters[package][documentId][$eq]=${encodeURIComponent(value)}&populate[package]=true&pagination[pageSize]=1&publicationState=preview`
+  if (documentId) {
+    attempts.push(
+      `/api/saved-packages?filters[user][id][$eq]=${userId}&filters[package][documentId][$eq]=${encodeURIComponent(documentId)}&populate[package]=true&pagination[pageSize]=1&publicationState=preview`
     )
-    if (byPackageDocumentId?.data?.[0]) return byPackageDocumentId.data[0]
+  }
+
+  for (const path of attempts) {
+    const result = await strapiServerGet(path)
+    if (result?.data?.[0]) {
+      return result.data[0]
+    }
   }
 
   return null
@@ -179,41 +185,24 @@ export const addWishlistItem = async (req, res, next) => {
       return res.status(400).json({ error: 'packageId is required' })
     }
 
-    if (!userId || Number.isNaN(Number(userId))) {
+    const strapiUserId = Number.parseInt(userId, 10)
+    if (!Number.isInteger(strapiUserId) || strapiUserId <= 0) {
       return res.status(401).json({
         error: 'Your session is invalid. Please log out and log in again, then save to wishlist.',
         code: 'INVALID_USER_SESSION',
       })
     }
 
-    // Strapi rejects saved-package create if the linked user row is missing.
-    let strapiUser = null
-    try {
-      strapiUser = await strapiGetUserById(userId)
-    } catch (userLookupErr) {
-      if (userLookupErr?.status === 404) {
-        return res.status(401).json({
-          error: 'Your account was not found in Strapi. Please log out and log in again.',
-          code: 'STRAPI_USER_MISSING',
-        })
-      }
-      throw userLookupErr
-    }
-
-    if (!strapiUser?.id) {
-      return res.status(401).json({
-        error: 'Your account was not found in Strapi. Please log out and log in again.',
-        code: 'STRAPI_USER_MISSING',
-      })
-    }
-
-    const pkg = await resolvePackage(packageId)
+    const packageLookup = await strapiServerGet(
+      `/api/packages?filters[id][$eq]=${packageId}&pagination[pageSize]=1&publicationState=preview`
+    )
+    const pkg = packageLookup?.data?.[0]
 
     if (!pkg) {
       return res.status(404).json({ error: 'Package not found' })
     }
 
-    const existing = await findSavedPackage(userId, packageId, pkg)
+    const existing = await findSavedPackage(userId, packageId)
     if (existing) {
       const [item] = await enrichSavedPackages([normalizeSavedPackage(existing)])
       return res.status(200).json({
@@ -224,8 +213,8 @@ export const addWishlistItem = async (req, res, next) => {
 
     const created = await strapiServerPost('/saved-packages', {
       data: {
-        user: Number(strapiUser.id),
-        package: Number(pkg.id),
+        user: strapiUserId,
+        package: Number(pkg.id ?? packageId),
         custom_config: customConfig,
       },
     })
@@ -265,9 +254,7 @@ export const addWishlistItem = async (req, res, next) => {
 export const removeWishlistItem = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const packageId = String(
-      req.params.packageId ?? req.body?.packageId ?? req.query?.packageId ?? ''
-    ).trim()
+    const packageId = String(req.params.packageId ?? '').trim()
 
     if (!packageId) {
       return res.status(400).json({ error: 'packageId is required' })
@@ -275,14 +262,14 @@ export const removeWishlistItem = async (req, res, next) => {
 
     const existing = await findSavedPackage(userId, packageId)
     if (!existing) {
-      return res.json({ removed: false, packageId, saved: false })
+      return res.json({ removed: false, packageId })
     }
 
     const targetId = existing.documentId ?? existing.id
     await strapiServerDelete(`/api/saved-packages/${targetId}?publicationState=preview`)
     await invalidateWishlistCache(userId)
 
-    res.json({ removed: true, packageId, saved: false })
+    res.json({ removed: true, packageId })
   } catch (err) {
     next(err)
   }

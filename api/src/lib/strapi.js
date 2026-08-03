@@ -88,18 +88,13 @@ const requestJson = async (path, { method = 'GET', headers = {}, body, prefixApi
         throw await makeStrapiError(res, `${method} ${path} failed`)
       }
 
-      const text = await res.text()
-      if (!text || !String(text).trim()) {
-        return null
-      }
+      // Strapi often returns 204 or an empty body for DELETE and some user lookups.
+      if (res.status === 204) return null
 
-      try {
-        return JSON.parse(text)
-      } catch {
-        const error = new Error(`${method} ${path} returned invalid JSON`)
-        error.status = 502
-        throw error
-      }
+      const text = await res.text()
+      if (!text.trim()) return null
+
+      return JSON.parse(text)
     } catch (error) {
       if (!shouldRetryWithNextBase(error)) {
         throw error
@@ -289,18 +284,46 @@ export async function strapiGetMe(jwt) {
 
 // ---------------- GET USER BY ID ----------------
 export async function strapiGetUserById(userId) {
-  const user = await requestJson(`/api/users/${userId}`, {
-    headers: buildHeaders(),
-    prefixApi: false,
-  })
+  const parsedUserId = Number.parseInt(String(userId ?? ''), 10)
+  if (!Number.isInteger(parsedUserId)) return null
 
-  if (!user || user?.id == null) {
-    const error = new Error('User not found')
-    error.status = 404
-    throw error
+  let lastError = null
+
+  for (const base of getBaseCandidates()) {
+    try {
+      const query = new URLSearchParams({
+        'filters[id][$eq]': String(parsedUserId),
+        'pagination[pageSize]': '1',
+      })
+
+      const res = await fetch(`${base}/api/users?${query.toString()}`, {
+        headers: buildHeaders(),
+      })
+
+      if (!res.ok) {
+        throw await makeStrapiError(res, 'Failed to get user by id')
+      }
+
+      const payload = await res.json()
+      const users = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : payload?.id != null
+            ? [payload]
+            : []
+
+      return users[0] ?? null
+    } catch (error) {
+      if (!shouldRetryWithNextBase(error)) {
+        throw error
+      }
+
+      lastError = error
+    }
   }
 
-  return user
+  throw lastError ?? new Error('Failed to get user by id')
 }
 
 // ---------------- FIND USER BY EMAIL ----------------
