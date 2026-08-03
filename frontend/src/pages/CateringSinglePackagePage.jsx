@@ -47,7 +47,7 @@ const PKG_LOCAL_IMAGES = [
   [pkgImg5, pkgImg1, pkgImg8],
 ]
 
-const DEFAULT_GUEST_OPTIONS = ['30', '50', '75', '100', '150']
+const DEFAULT_GUEST_OPTIONS = ['30', '40', '50', '75', '100', '150']
 const DEFAULT_VEG_OPTIONS = ['Veg', 'Non-Veg']
 
 const FALLBACK_MENU_ROWS = [
@@ -224,9 +224,16 @@ function buildGuestOptions(pkg) {
     .map(rule => String(rule?.label ?? rule?.value ?? '').trim())
     .filter(Boolean)
 
-  if (guestRules.length) return guestRules
+  const options = guestRules.length ? guestRules : DEFAULT_GUEST_OPTIONS
 
-  return DEFAULT_GUEST_OPTIONS
+  if (options.includes('40')) return options
+
+  const numericOptions = options.filter(value => /^\d+$/.test(value)).map(Number)
+  if (!numericOptions.length) return [...options, '40']
+
+  return [...new Set([...numericOptions, 40])]
+    .sort((left, right) => left - right)
+    .map(String)
 }
 
 const ADDON_LIKE_MENU_TITLES = [
