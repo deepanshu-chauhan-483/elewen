@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import navLogo from '../assets/images/navbar.png'
 import mobilenavlogo from '../assets/images/mobile_nav_logo_light.png'
@@ -9,9 +9,9 @@ import { useCart } from '../hooks/useCart'
 import { useWishlist } from '../hooks/useWishlist'
 import { useToast } from './common/useToast'
 import { usePackages } from '../hooks/usePackages'
-import { normalizeServiceSlug } from '../lib/packageFilters'
+import { isCorporateDecorPackage, normalizeServiceSlug } from '../lib/packageFilters'
 import { getPackageHrefFromRecord, getPackageServiceSlug } from '../lib/packageRoutes'
-import { filterPackagesBySearch } from '../lib/packageSearch'
+import { filterNavHeaderSearchResults } from '../lib/packageSearch'
 import { shouldPreserveHomeScroll } from '../lib/homeReturnScroll'
 import {
   isHookahAgeConfirmed,
@@ -22,6 +22,8 @@ import {
 } from '../lib/hookahAgeGate'
 
 function getPackageSearchPriceLabel(pkg) {
+  if (isCorporateDecorPackage(pkg)) return ''
+
   const formattedPrice = String(pkg?.price ?? '').trim()
   if (formattedPrice) return formattedPrice
 
@@ -390,10 +392,10 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const [pendingHookahAction, setPendingHookahAction] = useState(null)
   const dismissedHookahQueryRef = useRef('')
   const { data: allPackages = [] } = usePackages()
-  const rawSearchResults =
-    searchQuery.trim().length >= 2
-      ? filterPackagesBySearch(allPackages, searchQuery).slice(0, 8)
-      : []
+  const rawSearchResults = useMemo(
+    () => filterNavHeaderSearchResults(allPackages, searchQuery).slice(0, 8),
+    [allPackages, searchQuery]
+  )
   // Always show Hookah matches in the dropdown; age gate runs on click.
   const searchResults = rawSearchResults
   const hasHookahSearchHits = rawSearchResults.some(pkg => isSheeshaPackageRecord(pkg))

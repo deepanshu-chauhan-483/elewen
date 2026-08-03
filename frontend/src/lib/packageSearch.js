@@ -1,4 +1,4 @@
-import { normalizeServiceSlug, packageThemeSlugsMatchFilter } from './packageFilters'
+import { isCorporateDecorPackage, normalizeServiceSlug, packageThemeSlugsMatchFilter } from './packageFilters'
 
 /**
  * Shared package search matching for nav + listing pages.
@@ -323,4 +323,60 @@ export function filterPackagesBySearch(packages, query) {
   if (themeHits.length > 0) return themeHits
 
   return list.filter(pkg => packageMatchesSearch(pkg, q))
+}
+
+/** Nav header dropdown — corporate packages only for corporate-specific or exact-name search. */
+const CORPORATE_NAV_SEARCH_KEYWORDS = [
+  'registration and guest experience',
+  'registeration and guest experience',
+  'branding and visibility',
+  'exhibition essentials',
+  'stall upgrade',
+  'stall upgarde',
+  'simply elevated',
+  'av and tech',
+  'stage setup',
+  'corporate package',
+  'corporate packages',
+  'corporate decor',
+  'corporate',
+  'exhibition',
+  'conference',
+  'seminar',
+  'stall',
+  'stalls',
+]
+
+function matchesCorporateNavSearchQuery(query = '') {
+  const q = normalizeSearchQuery(query)
+  if (!q) return false
+
+  const sorted = [...CORPORATE_NAV_SEARCH_KEYWORDS].sort((a, b) => b.length - a.length)
+  return sorted.some(keyword => {
+    const k = normalizeSearchQuery(keyword)
+    if (!k) return false
+    if (q === k) return true
+    if (k.includes(' ')) return q.includes(k)
+    return false
+  })
+}
+
+function corporatePackageAllowedInNavSearch(pkg, query) {
+  if (!isCorporateDecorPackage(pkg)) return true
+  if (packageMatchesDirectTitleSearch(pkg, query)) return true
+  return matchesCorporateNavSearchQuery(query)
+}
+
+export function filterNavHeaderSearchResults(packages, query) {
+  try {
+    const list = Array.isArray(packages) ? packages : []
+    const q = String(query ?? '').trim()
+    if (!q || q.length < 2) return []
+
+    return filterPackagesBySearch(list, q).filter(pkg =>
+      corporatePackageAllowedInNavSearch(pkg, q)
+    )
+  } catch {
+    return []
+  }
 }

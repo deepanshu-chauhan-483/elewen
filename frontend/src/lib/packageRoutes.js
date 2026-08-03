@@ -1,4 +1,4 @@
-import { normalizeServiceSlug } from './packageFilters'
+import { isCorporateDecorPackage, normalizeServiceSlug } from './packageFilters'
 
 export function getPackageHref(serviceSlug, packageId) {
   const normalizedService = normalizeServiceSlug(
@@ -27,7 +27,19 @@ export function getPackageServiceSlug(pkg) {
   return normalizeServiceSlug(raw) || raw.toLowerCase()
 }
 
+function withCorporateConsultationCategory(href) {
+  if (!href || href.includes('category=corporate')) return href
+  const separator = href.includes('?') ? '&' : '?'
+  return `${href}${separator}category=corporate`
+}
+
 export function getPackageHrefFromRecord(pkg) {
   const packageId = pkg?.documentId ?? pkg?.id
-  return getPackageHref(getPackageServiceSlug(pkg), packageId)
+  if (packageId == null || String(packageId).trim() === '') {
+    return '/packages/decor'
+  }
+
+  const href = getPackageHref(getPackageServiceSlug(pkg), packageId)
+  if (!isCorporateDecorPackage(pkg)) return href
+  return withCorporateConsultationCategory(href)
 }

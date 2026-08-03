@@ -226,6 +226,25 @@ const CORPORATE_EVENT_PACKAGE_ALLOWLISTS = {
   },
 }
 
+const ALL_CORPORATE_PACKAGE_SLUGS = new Set(
+  Object.values(CORPORATE_EVENT_PACKAGE_ALLOWLISTS).flatMap(entry => entry.slugs)
+)
+
+const ALL_CORPORATE_PACKAGE_TITLE_KEYS = new Set(
+  Object.values(CORPORATE_EVENT_PACKAGE_ALLOWLISTS).flatMap(entry => entry.titles)
+)
+
+/** Exhibition / seminar decor packages — consultation-only, hidden from generic search. */
+export function isCorporateDecorPackage(pkg) {
+  if (!pkg) return false
+
+  const slug = normalizeValue(pkg?.slug)
+  if (slug && ALL_CORPORATE_PACKAGE_SLUGS.has(slug)) return true
+
+  const titleKey = normalizeLevelSlug(pkg?.title)
+  return Boolean(titleKey && ALL_CORPORATE_PACKAGE_TITLE_KEYS.has(titleKey))
+}
+
 function getCorporateEventPackageAllowlist(eventSlug = '') {
   const canonical = canonicalizeEventSlug(eventSlug)
   if (!canonical) return null
