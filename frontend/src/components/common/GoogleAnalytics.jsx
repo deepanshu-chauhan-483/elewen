@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 
-const GA_MEASUREMENT_ID = 'G-7G04KM15HC'
+const GA_MEASUREMENT_ID = 'G-RZM6FDENC3'
 
 /**
  * Sends a GA4 page_view on every client-side route change.
