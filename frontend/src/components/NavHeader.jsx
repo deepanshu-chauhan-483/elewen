@@ -297,7 +297,7 @@ function CartButton({ count, className, iconColor }) {
   )
 }
 
-function HomeHeaderActions({
+function HeaderActions({
   isLoggedIn,
   userInitial,
   cartCount,
@@ -604,8 +604,6 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const resolvedMobileIconColor = useBlackNavAccent ? '#000000' : mobileIconColor
   const overlayActionClass =
     'flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-70'
-  const isSinglePackagePage = /^\/packages\/[^/]+\/[^/]+$/.test(pathname)
-  const shouldShowNavbarCart = isSinglePackagePage && itemCount > 0
 
   const closeMobileSearch = () => {
     setSearchOpen(false)
@@ -849,21 +847,13 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             >
               <SearchIcon color={resolvedMobileIconColor} />
             </button>
-            {isHome ? (
-              <HomeHeaderActions
-                isLoggedIn={isLoggedIn}
-                userInitial={userInitial}
-                cartCount={itemCount}
-                wishlistCount={wishlistCount}
-                iconColor={isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor}
-              />
-            ) : shouldShowNavbarCart ? (
-              <CartButton
-                count={itemCount}
-                className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center leading-none text-inherit"
-                iconColor={isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor}
-              />
-            ) : null}
+            <HeaderActions
+              isLoggedIn={isLoggedIn}
+              userInitial={userInitial}
+              cartCount={itemCount}
+              wishlistCount={wishlistCount}
+              iconColor={isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor}
+            />
             <button
               onClick={() => setOpen(true)}
               aria-label="Open menu"
