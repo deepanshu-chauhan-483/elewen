@@ -1867,24 +1867,24 @@ export default function CartPage() {
       ) : (
         <div className="flex flex-col items-stretch gap-[clamp(24px,5vw,100px)] md:flex-row">
           <div className="flex-1 space-y-6">
-            <CouponCard
-              couponCode={couponCode}
-              couponMessage={couponMessage}
-              cart={cart}
-              isApplyingCoupon={isApplyingCoupon}
-              onCouponChange={setCouponCode}
-              onApplyCoupon={handleApplyCoupon}
-              onRemoveCoupon={handleRemoveCoupon}
+            <PincodeCard
+              pincode={pincode}
+              message={pincodeMessage}
+              isChecking={isCheckingPincode}
+              onChange={handlePincodeChange}
+              onSubmit={handlePincodeSubmit}
             />
 
-            {/* Mobile Pincode Card for both single + multi package */}
+            {/* Mobile Coupon Card for both single + multi package */}
             <div className="md:hidden">
-              <PincodeCard
-                pincode={pincode}
-                message={pincodeMessage}
-                isChecking={isCheckingPincode}
-                onChange={handlePincodeChange}
-                onSubmit={handlePincodeSubmit}
+              <CouponCard
+                couponCode={couponCode}
+                couponMessage={couponMessage}
+                cart={cart}
+                isApplyingCoupon={isApplyingCoupon}
+                onCouponChange={setCouponCode}
+                onApplyCoupon={handleApplyCoupon}
+                onRemoveCoupon={handleRemoveCoupon}
               />
             </div>
 
@@ -1951,12 +1951,14 @@ export default function CartPage() {
               pincodeCard={
                 /* Desktop only */
                 <div className="hidden md:block">
-                  <PincodeCard
-                    pincode={pincode}
-                    message={pincodeMessage}
-                    isChecking={isCheckingPincode}
-                    onChange={handlePincodeChange}
-                    onSubmit={handlePincodeSubmit}
+                  <CouponCard
+                    couponCode={couponCode}
+                    couponMessage={couponMessage}
+                    cart={cart}
+                    isApplyingCoupon={isApplyingCoupon}
+                    onCouponChange={setCouponCode}
+                    onApplyCoupon={handleApplyCoupon}
+                    onRemoveCoupon={handleRemoveCoupon}
                   />
                 </div>
               }
