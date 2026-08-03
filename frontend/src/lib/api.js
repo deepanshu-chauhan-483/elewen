@@ -83,6 +83,7 @@ export function clearStoredJwt() {
   localStorage.removeItem(LEGACY_JWT_STORAGE_KEY)
   sessionStorage.removeItem(JWT_STORAGE_KEY)
   sessionStorage.removeItem(LEGACY_JWT_STORAGE_KEY)
+  localStorage.removeItem('elewen_user')
   window.dispatchEvent(new Event(AUTH_EVENT))
 }
 

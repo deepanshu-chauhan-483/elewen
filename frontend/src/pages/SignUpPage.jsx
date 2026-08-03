@@ -71,8 +71,8 @@ export default function SignUpPage() {
         setEmailPending(true)
         return
       }
-      setStoredJwt(data.jwt)
       localStorage.setItem('elewen_user', JSON.stringify(data.user))
+      setStoredJwt(data.jwt)
       showToast({ message: 'Sign up successful.' })
       navigate('/', { replace: true })
     } catch (err) {

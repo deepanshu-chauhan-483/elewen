@@ -61,8 +61,8 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const data = await authLogin({ email, password })
-      setStoredJwt(data.jwt)
       localStorage.setItem('elewen_user', JSON.stringify(data.user))
+      setStoredJwt(data.jwt)
       showToast({ message: 'Login successful.' })
       navigate(redirectTarget, { replace: true })
     } catch (err) {

@@ -6,6 +6,7 @@ import ScallopBulbCurtain from './common/ScallopBulbCurtain'
 import HookahAgeConfirmModal from './checkout/HookahAgeConfirmModal'
 import { authLogout, clearStoredJwt, getStoredJwt } from '../lib/api'
 import { useCart } from '../hooks/useCart'
+import { useWishlist } from '../hooks/useWishlist'
 import { useToast } from './common/useToast'
 import { usePackages } from '../hooks/usePackages'
 import { normalizeServiceSlug } from '../lib/packageFilters'
@@ -108,6 +109,32 @@ const GLASS_BLUR_DESKTOP = 'blur(1px)'
 const BLACK_NAV_ACCENT_PATHS = ['/book-consultation', '/consultation-confirmation']
 const WHITE_NAV_BG_PATHS = ['/faqs', '/legalpages', '/privacy']
 const DASHBOARD_HOME_PATH = '/user-dashboard/active-booking'
+const WISHLIST_PATH = '/user-dashboard/saved'
+const STORED_USER_KEY = 'elewen_user'
+
+function getStoredUser() {
+  try {
+    const raw = localStorage.getItem(STORED_USER_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function getUserDisplayInitial(user = getStoredUser()) {
+  const firstName = String(user?.first_name ?? user?.firstName ?? '').trim()
+  if (firstName) return firstName.charAt(0).toUpperCase()
+
+  const lastName = String(user?.last_name ?? user?.lastName ?? '').trim()
+  if (lastName) return lastName.charAt(0).toUpperCase()
+
+  const email = String(user?.email ?? '').trim()
+  if (email) return email.charAt(0).toUpperCase()
+
+  return 'U'
+}
 const hasSeenHeroPreloader = () =>
   typeof window !== 'undefined' && window.__elewenHeroPreloaderSeen === true
 
@@ -166,40 +193,39 @@ const resolveNavAppearanceFromPoint = (x, y) => {
   return { themeName: 'light', surface }
 }
 
-function DashboardIcon() {
+function WishlistIcon({ color = '#FAFAFA' }) {
   return (
     <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
+      className="block h-8 w-8 shrink-0 translate-y-[2px]"
+      viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="mt-2"
+      aria-hidden="true"
     >
       <path
-        d="M9 3H4C3.44772 3 3 3.44772 3 4V11C3 11.5523 3.44772 12 4 12H9C9.55228 12 10 11.5523 10 11V4C10 3.44772 9.55228 3 9 3Z"
-        stroke="#FAFAFA"
+        d="M11.5 8H20.5C21.6046 8 22.5 8.89543 22.5 10V25L16 20.75L9.5 25V10C9.5 8.89543 10.3954 8 11.5 8Z"
+        stroke={color}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+function UserIcon({ color = '#FAFAFA' }) {
+  return (
+    <svg
+      className="block h-8 w-8 shrink-0"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx="16" cy="11" r="4.25" stroke={color} strokeWidth="1.5" />
       <path
-        d="M20 3H15C14.4477 3 14 3.44772 14 4V7C14 7.55228 14.4477 8 15 8H20C20.5523 8 21 7.55228 21 7V4C21 3.44772 20.5523 3 20 3Z"
-        stroke="#FAFAFA"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M20 12H15C14.4477 12 14 12.4477 14 13V20C14 20.5523 14.4477 21 15 21H20C20.5523 21 21 20.5523 21 20V13C21 12.4477 20.5523 12 20 12Z"
-        stroke="#FAFAFA"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 16H4C3.44772 16 3 16.4477 3 17V20C3 20.5523 3.44772 21 4 21H9C9.55228 21 10 20.5523 10 20V17C10 16.4477 9.55228 16 9 16Z"
-        stroke="#FAFAFA"
+        d="M7.5 25.5C8.7 20.9 11.8 18.25 16 18.25C20.2 18.25 23.3 20.9 24.5 25.5"
+        stroke={color}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -211,7 +237,7 @@ function DashboardIcon() {
 function SearchIcon({ color = '#262626' }) {
   return (
     <svg
-      className="h-[32px] w-[32px]"
+      className="block h-8 w-8 shrink-0"
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -232,13 +258,14 @@ function SearchIcon({ color = '#262626' }) {
 function CartIcon({ color = '#FAFAFA' }) {
   return (
     <svg
-      className="w-[32px] h-[32px]"
+      className="block h-8 w-8 shrink-0"
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <path
-        d="M16 17.2002C16 18.2611 15.5786 19.2785 14.8284 20.0286C14.0783 20.7788 13.0609 21.2002 12 21.2002C10.9391 21.2002 9.92172 20.7788 9.17157 20.0286C8.42143 19.2785 8 18.2611 8 17.2002M3.103 13.2342H20.897M3.4 12.6672C3.14036 13.0134 3 13.4345 3 13.8672V27.2002C3 27.7306 3.21071 28.2393 3.58579 28.6144C3.96086 28.9895 4.46957 29.2002 5 29.2002H19C19.5304 29.2002 20.0391 28.9895 20.4142 28.6144C20.7893 28.2393 21 27.7306 21 27.2002V13.8672C21 13.4345 20.8596 13.0134 20.6 12.6672L18.6 10.0002C18.4137 9.7518 18.1721 9.5502 17.8944 9.41134C17.6167 9.27249 17.3105 9.2002 17 9.2002H7C6.68951 9.2002 6.38328 9.27249 6.10557 9.41134C5.82786 9.5502 5.58629 9.7518 5.4 10.0002L3.4 12.6672Z"
+        d="M20.2 17.4C20.2 18.5 19.75 19.55 18.95 20.35C18.15 21.15 17.1 21.6 16 21.6C14.9 21.6 13.85 21.15 13.05 20.35C12.25 19.55 11.8 18.5 11.8 17.4M7.2 13.4H24.8M7.5 12.8C7.25 13.15 7.1 13.55 7.1 14V25.2C7.1 25.75 7.3 26.25 7.7 26.65C8.1 27.05 8.6 27.25 9.15 27.25H22.85C23.4 27.25 23.9 27.05 24.3 26.65C24.7 26.25 24.9 25.75 24.9 25.2V14C24.9 13.55 24.75 13.15 24.5 12.8L22.45 10.1C22.25 9.85 22 9.65 21.7 9.5C21.4 9.35 21.05 9.3 20.7 9.3H11.3C10.95 9.3 10.6 9.35 10.3 9.5C10 9.65 9.75 9.85 9.55 10.1L7.5 12.8Z"
         stroke={color}
         strokeWidth="1.5"
         strokeLinecap="round"
@@ -257,7 +284,7 @@ function CartButton({ count, className, iconColor }) {
     <button
       type="button"
       aria-label="Cart"
-      className={`relative ${className}`}
+      className={`relative inline-flex items-center justify-center leading-none ${className}`}
       onClick={handleClick}
     >
       <CartIcon color={iconColor} />
@@ -267,6 +294,56 @@ function CartButton({ count, className, iconColor }) {
         </span>
       ) : null}
     </button>
+  )
+}
+
+function HomeHeaderActions({
+  isLoggedIn,
+  userInitial,
+  cartCount,
+  wishlistCount,
+  iconColor,
+  className = '',
+}) {
+  const wishlistHref = isLoggedIn
+    ? WISHLIST_PATH
+    : `/login?redirect=${encodeURIComponent(WISHLIST_PATH)}`
+  const userHref = isLoggedIn
+    ? DASHBOARD_HOME_PATH
+    : `/login?redirect=${encodeURIComponent(DASHBOARD_HOME_PATH)}`
+
+  const actionClass =
+    'relative inline-flex h-8 w-8 shrink-0 items-center justify-center p-0 m-0 leading-none'
+
+  return (
+    <div className={`flex h-8 items-center gap-2.5 md:gap-3 ${className}`}>
+      <Link to={wishlistHref} aria-label="Wishlist" className={actionClass}>
+        <WishlistIcon color={iconColor} />
+        {wishlistCount > 0 ? (
+          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] w-[18px] md:min-h-5 md:min-w-5 items-center justify-center rounded-full bg-[#D4BA8E] px-1 text-[8px] md:text-[11px] font-semibold leading-none text-[#111110]">
+            {wishlistCount > 99 ? '99+' : wishlistCount}
+          </span>
+        ) : null}
+      </Link>
+
+      <CartButton count={cartCount} className={actionClass} iconColor={iconColor} />
+
+      <Link to={userHref} aria-label={isLoggedIn ? 'Dashboard' : 'Login'} className={actionClass}>
+        {isLoggedIn ? (
+          <span
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold leading-none"
+            style={{
+              color: iconColor,
+              boxShadow: `inset 0 0 0 1.5px ${iconColor}`,
+            }}
+          >
+            {userInitial}
+          </span>
+        ) : (
+          <UserIcon color={iconColor} />
+        )}
+      </Link>
+    </div>
   )
 }
 
@@ -330,6 +407,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const mobileSearchInputRef = useRef(null)
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!getStoredJwt())
+  const [userInitial, setUserInitial] = useState(() => getUserDisplayInitial())
   const [entered, setEntered] = useState(() => !isHome || hasSeenHeroPreloader())
   const [hidden, setHidden] = useState(false)
   const [navThemeName, setNavThemeName] = useState(isTransparentHero ? 'dark' : 'light')
@@ -338,11 +416,16 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   )
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
   const { itemCount } = useCart()
+  const { savedPackageIds } = useWishlist()
+  const wishlistCount = savedPackageIds.length
   const useBlackNavAccent = BLACK_NAV_ACCENT_PATHS.includes(pathname)
   const useWhiteNavBackground = WHITE_NAV_BG_PATHS.includes(pathname)
 
   useEffect(() => {
-    const sync = () => setIsLoggedIn(!!getStoredJwt())
+    const sync = () => {
+      setIsLoggedIn(!!getStoredJwt())
+      setUserInitial(getUserDisplayInitial())
+    }
     window.addEventListener('storage', sync)
     window.addEventListener('elewen-auth-change', sync)
     return () => {
@@ -757,26 +840,34 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             </Link>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex h-8 items-center gap-2 md:gap-3">
             <button
-              className="relative flex h-8 w-8 shrink-0 items-center justify-center md:hidden"
+              className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center leading-none md:hidden"
               aria-label="Search"
               type="button"
               onClick={openMobileSearch}
             >
               <SearchIcon color={resolvedMobileIconColor} />
             </button>
-            {shouldShowNavbarCart ? (
+            {isHome ? (
+              <HomeHeaderActions
+                isLoggedIn={isLoggedIn}
+                userInitial={userInitial}
+                cartCount={itemCount}
+                wishlistCount={wishlistCount}
+                iconColor={isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor}
+              />
+            ) : shouldShowNavbarCart ? (
               <CartButton
                 count={itemCount}
-                className="relative flex h-8 w-8 shrink-0 items-center justify-center text-inherit"
+                className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center leading-none text-inherit"
                 iconColor={isDesktop ? resolvedDesktopIconColor : resolvedMobileIconColor}
               />
             ) : null}
             <button
               onClick={() => setOpen(true)}
               aria-label="Open menu"
-              className="group flex h-8 w-8 shrink-0 flex-col items-end justify-center gap-[5px] md:hidden"
+              className="group inline-flex h-8 w-8 shrink-0 flex-col items-end justify-center gap-[5px] leading-none md:hidden"
               type="button"
             >
               <div
@@ -795,7 +886,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             <button
               onClick={() => setOpen(true)}
               aria-label="Open menu"
-              className="group hidden flex-col gap-1 p-0.5 md:flex"
+              className="group hidden h-8 w-8 shrink-0 flex-col items-center justify-center gap-1 leading-none md:inline-flex"
               type="button"
             >
               <div
@@ -928,7 +1019,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 aria-label="Dashboard"
                 className={overlayActionClass}
               >
-                <DashboardIcon />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold leading-none text-white shadow-[inset_0_0_0_1.5px_#FAFAFA]">
+                  {userInitial}
+                </span>
               </Link>
             ) : null}
             <CartButton count={itemCount} className={overlayActionClass} />
@@ -962,7 +1055,9 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 aria-label="Dashboard"
                 className={overlayActionClass}
               >
-                <DashboardIcon />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold leading-none text-white shadow-[inset_0_0_0_1.5px_#FAFAFA]">
+                  {userInitial}
+                </span>
               </Link>
             ) : null}
             <CartButton count={itemCount} className={overlayActionClass} />

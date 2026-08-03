@@ -76,8 +76,8 @@ export default function AuthCallbackPage() {
 
     authGoogleSession(access_token)
       .then(({ jwt, user }) => {
-        setStoredJwt(jwt)
         localStorage.setItem('elewen_user', JSON.stringify(user))
+        setStoredJwt(jwt)
         const redirect = normalizeRedirectTarget(
           sessionStorage.getItem('elewen_auth_redirect') || '/'
         )
