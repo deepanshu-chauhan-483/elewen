@@ -1,9 +1,13 @@
+import { normalizeServiceSlug } from './packageFilters'
+
 export function getPackageHref(serviceSlug, packageId) {
-  const normalizedService = String(serviceSlug ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/-single$/, '')
-    .replace(/-services?$/, '')
+  const normalizedService = normalizeServiceSlug(
+    String(serviceSlug ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/-single$/, '')
+      .replace(/-services?$/, '')
+  )
 
   if (normalizedService === 'decor') return `/packages/decor-single/${packageId}`
   // Furniture uses the same CMS inclusion / Choose-1 detail UI as Decor.
@@ -19,9 +23,8 @@ export function getPackageHref(serviceSlug, packageId) {
 }
 
 export function getPackageServiceSlug(pkg) {
-  return String(pkg?.serviceSlug ?? pkg?.service_slugs?.[0] ?? pkg?.service ?? '')
-    .trim()
-    .toLowerCase()
+  const raw = String(pkg?.serviceSlug ?? pkg?.service_slugs?.[0] ?? pkg?.service ?? '').trim()
+  return normalizeServiceSlug(raw) || raw.toLowerCase()
 }
 
 export function getPackageHrefFromRecord(pkg) {

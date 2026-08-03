@@ -1,4 +1,4 @@
-import { packageThemeSlugsMatchFilter } from './packageFilters'
+import { normalizeServiceSlug, packageThemeSlugsMatchFilter } from './packageFilters'
 
 /**
  * Shared package search matching for nav + listing pages.
@@ -47,7 +47,20 @@ const CATERING_SEARCH_KEYWORDS = [
   'catering',
 ]
 
-const BARTENDING_SEARCH_KEYWORDS = ['bartenders', 'bartender', 'bartending', 'drinks']
+const BARTENDING_SEARCH_KEYWORDS = [
+  'bar-tending',
+  'bar tending',
+  'bartenders',
+  'bartender',
+  'bartending',
+  'drinks',
+  'classic pour',
+  'signature mix',
+  'house special',
+]
+
+/** Named bartending packages — match title/type, not every bartending card. */
+const BARTENDING_PACKAGE_NAME_KEYWORDS = ['classic pour', 'signature mix', 'house special']
 
 const DECOR_SEARCH_KEYWORDS = [
   'projector / plasma screen',
@@ -104,10 +117,10 @@ function matchesAnySearchKeyword(query, keywords) {
 }
 
 function packageHasServiceSlug(pkg, serviceSlug) {
-  const target = normalizeSearchQuery(serviceSlug)
+  const target = normalizeServiceSlug(serviceSlug)
   const slugs = Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : []
 
-  return slugs.some(slug => normalizeSearchQuery(slug) === target)
+  return slugs.some(slug => normalizeServiceSlug(slug) === target)
 }
 
 function aliasGroupMatchesToken(token, aliases) {
@@ -175,6 +188,30 @@ function packageThemeSearchBlob(pkg) {
     .join(' ')
 }
 
+function packageDirectSearchBlob(pkg) {
+  const slug = String(pkg?.slug ?? '').trim()
+
+  return [
+    pkg?.title,
+    pkg?.bartender_type,
+    slug,
+    slug.replace(/-/g, ' '),
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
+/** Strong match on package name / bartender tier / slug (before theme-only results). */
+function packageMatchesDirectTitleSearch(pkg, query) {
+  const q = String(query ?? '').trim()
+  if (!q) return false
+
+  const blob = packageDirectSearchBlob(pkg)
+  if (!blob) return false
+
+  return fuzzyMatchText(blob, q) || textContainsTerm(blob, q)
+}
+
 function packageSearchBlob(pkg) {
   const includes = Array.isArray(pkg?.includes)
     ? pkg.includes
@@ -182,8 +219,13 @@ function packageSearchBlob(pkg) {
       ? pkg.tags
       : []
 
+  const slug = String(pkg?.slug ?? '').trim()
+
   return [
     pkg?.title,
+    pkg?.bartender_type,
+    slug,
+    slug.replace(/-/g, ' '),
     pkg?.category,
     pkg?.description,
     pkg?.desc,
@@ -248,6 +290,11 @@ export function packageMatchesSearch(pkg, query) {
     return packageHasServiceSlug(pkg, 'catering')
   }
 
+  if (matchesAnySearchKeyword(q, BARTENDING_PACKAGE_NAME_KEYWORDS)) {
+    if (!packageHasServiceSlug(pkg, 'bartending')) return false
+    return packageMatchesDirectTitleSearch(pkg, q)
+  }
+
   if (matchesAnySearchKeyword(q, BARTENDING_SEARCH_KEYWORDS)) {
     return packageHasServiceSlug(pkg, 'bartending')
   }
@@ -262,13 +309,15 @@ export function packageMatchesSearch(pkg, query) {
 }
 
 /**
- * Prefer theme-only results when the query matches any package theme.
- * Falls back to full-text search only when no theme matches.
+ * Prefer direct title/slug matches, then theme-only results, then broader text search.
  */
 export function filterPackagesBySearch(packages, query) {
   const list = Array.isArray(packages) ? packages : []
   const q = String(query ?? '').trim()
   if (!q) return list
+
+  const directHits = list.filter(pkg => packageMatchesDirectTitleSearch(pkg, q))
+  if (directHits.length > 0) return directHits
 
   const themeHits = list.filter(pkg => packageMatchesThemeSearch(pkg, q))
   if (themeHits.length > 0) return themeHits
