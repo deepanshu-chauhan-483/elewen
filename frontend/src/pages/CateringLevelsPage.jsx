@@ -111,7 +111,6 @@ export default function CateringLevelsPage() {
   return (
     <EventFlowLayout
       title="Choose your package level"
-      subtitle="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
       currentStep={3}
       steps={FLOW_STEPS}
       showBackButton
