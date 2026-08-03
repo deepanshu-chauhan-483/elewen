@@ -88,7 +88,18 @@ const requestJson = async (path, { method = 'GET', headers = {}, body, prefixApi
         throw await makeStrapiError(res, `${method} ${path} failed`)
       }
 
-      return res.json()
+      const text = await res.text()
+      if (!text || !String(text).trim()) {
+        return null
+      }
+
+      try {
+        return JSON.parse(text)
+      } catch {
+        const error = new Error(`${method} ${path} returned invalid JSON`)
+        error.status = 502
+        throw error
+      }
     } catch (error) {
       if (!shouldRetryWithNextBase(error)) {
         throw error
@@ -278,10 +289,18 @@ export async function strapiGetMe(jwt) {
 
 // ---------------- GET USER BY ID ----------------
 export async function strapiGetUserById(userId) {
-  return requestJson(`/api/users/${userId}`, {
+  const user = await requestJson(`/api/users/${userId}`, {
     headers: buildHeaders(),
     prefixApi: false,
   })
+
+  if (!user || user?.id == null) {
+    const error = new Error('User not found')
+    error.status = 404
+    throw error
+  }
+
+  return user
 }
 
 // ---------------- FIND USER BY EMAIL ----------------

@@ -99,12 +99,42 @@ function normalizeSavedPackage(entry) {
   }
 }
 
-async function findSavedPackage(userId, packageId) {
-  const result = await strapiServerGet(
-    `/api/saved-packages?filters[user][id][$eq]=${userId}&filters[package][id][$eq]=${packageId}&populate[package]=true&pagination[pageSize]=1&publicationState=preview`
-  )
+async function resolvePackage(packageRef) {
+  const value = String(packageRef ?? '').trim()
+  if (!value) return null
 
-  return result?.data?.[0] ?? null
+  const byId = await strapiServerGet(
+    `/api/packages?filters[id][$eq]=${encodeURIComponent(value)}&pagination[pageSize]=1&publicationState=preview`
+  )
+  if (byId?.data?.[0]) return byId.data[0]
+
+  const byDocumentId = await strapiServerGet(
+    `/api/packages?filters[documentId][$eq]=${encodeURIComponent(value)}&pagination[pageSize]=1&publicationState=preview`
+  )
+  return byDocumentId?.data?.[0] ?? null
+}
+
+async function findSavedPackage(userId, packageRef, pkg = null) {
+  const resolved = pkg ?? (await resolvePackage(packageRef))
+  const numericId = resolved?.id != null ? String(resolved.id) : ''
+  const documentId = resolved?.documentId ? String(resolved.documentId) : ''
+  const fallback = String(packageRef ?? '').trim()
+
+  const attempts = [...new Set([numericId, documentId, fallback].filter(Boolean))]
+
+  for (const value of attempts) {
+    const byPackageId = await strapiServerGet(
+      `/api/saved-packages?filters[user][id][$eq]=${userId}&filters[package][id][$eq]=${encodeURIComponent(value)}&populate[package]=true&pagination[pageSize]=1&publicationState=preview`
+    )
+    if (byPackageId?.data?.[0]) return byPackageId.data[0]
+
+    const byPackageDocumentId = await strapiServerGet(
+      `/api/saved-packages?filters[user][id][$eq]=${userId}&filters[package][documentId][$eq]=${encodeURIComponent(value)}&populate[package]=true&pagination[pageSize]=1&publicationState=preview`
+    )
+    if (byPackageDocumentId?.data?.[0]) return byPackageDocumentId.data[0]
+  }
+
+  return null
 }
 
 async function invalidateWishlistCache(userId) {
@@ -177,16 +207,13 @@ export const addWishlistItem = async (req, res, next) => {
       })
     }
 
-    const packageLookup = await strapiServerGet(
-      `/api/packages?filters[id][$eq]=${packageId}&pagination[pageSize]=1&publicationState=preview`
-    )
-    const pkg = packageLookup?.data?.[0]
+    const pkg = await resolvePackage(packageId)
 
     if (!pkg) {
       return res.status(404).json({ error: 'Package not found' })
     }
 
-    const existing = await findSavedPackage(userId, packageId)
+    const existing = await findSavedPackage(userId, packageId, pkg)
     if (existing) {
       const [item] = await enrichSavedPackages([normalizeSavedPackage(existing)])
       return res.status(200).json({
@@ -198,7 +225,7 @@ export const addWishlistItem = async (req, res, next) => {
     const created = await strapiServerPost('/saved-packages', {
       data: {
         user: Number(strapiUser.id),
-        package: Number(pkg.id ?? packageId),
+        package: Number(pkg.id),
         custom_config: customConfig,
       },
     })
@@ -238,7 +265,9 @@ export const addWishlistItem = async (req, res, next) => {
 export const removeWishlistItem = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const packageId = String(req.params.packageId ?? '').trim()
+    const packageId = String(
+      req.params.packageId ?? req.body?.packageId ?? req.query?.packageId ?? ''
+    ).trim()
 
     if (!packageId) {
       return res.status(400).json({ error: 'packageId is required' })
@@ -246,14 +275,14 @@ export const removeWishlistItem = async (req, res, next) => {
 
     const existing = await findSavedPackage(userId, packageId)
     if (!existing) {
-      return res.json({ removed: false, packageId })
+      return res.json({ removed: false, packageId, saved: false })
     }
 
     const targetId = existing.documentId ?? existing.id
     await strapiServerDelete(`/api/saved-packages/${targetId}?publicationState=preview`)
     await invalidateWishlistCache(userId)
 
-    res.json({ removed: true, packageId })
+    res.json({ removed: true, packageId, saved: false })
   } catch (err) {
     next(err)
   }

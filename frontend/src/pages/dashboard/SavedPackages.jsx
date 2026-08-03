@@ -186,7 +186,7 @@ function PackageCard({ item, isPending, onRemove }) {
 }
 
 export default function SavedPackages() {
-  const { wishlist = [], isLoading, toggleSavedPackage, pendingPackageId } = useWishlist()
+  const { wishlist = [], isLoading, removeSavedPackage, pendingPackageId } = useWishlist()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
   const filteredWishlist = wishlist.filter(item =>
@@ -248,7 +248,11 @@ export default function SavedPackages() {
                 key={item.id || item.packageId}
                 item={item}
                 isPending={isPending}
-                onRemove={() => toggleSavedPackage({ packageId: item.packageId })}
+                onRemove={() =>
+                  removeSavedPackage({
+                    packageId: item.packageId || item.packageDocumentId || item.package?.id,
+                  })
+                }
               />
             )
           })}

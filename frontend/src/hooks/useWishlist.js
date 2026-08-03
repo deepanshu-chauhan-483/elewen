@@ -315,5 +315,16 @@ export function useWishlist() {
         saved: savedPackageIdSet.has(String(packageId)),
         customConfig,
       }),
+    removeSavedPackage: ({ packageId } = {}) =>
+      toggleMutation.mutateAsync({
+        packageId: String(packageId ?? '').trim(),
+        saved: true,
+      }),
+    addSavedPackage: ({ packageId, customConfig } = {}) =>
+      toggleMutation.mutateAsync({
+        packageId: String(packageId ?? '').trim(),
+        saved: false,
+        customConfig,
+      }),
   }
 }
