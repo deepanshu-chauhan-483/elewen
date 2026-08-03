@@ -93,6 +93,81 @@ const ctaBtn = (text, url) => `
     </tr>
   </table>`
 
+const HOOKAH_JOURNEY_SECTIONS = [
+  {
+    title: 'Booking',
+    items: [
+      'Booking placed',
+      'Payment received',
+      'Confirmation email & call from our team',
+    ],
+  },
+  {
+    title: 'Customisation (if applicable)',
+    items: [
+      'Your celebration details shared',
+      'We begin designing your setup',
+      'Final deck shared for your approval',
+    ],
+  },
+  {
+    title: 'Event Day',
+    items: [
+      'Elewen vendor network arrives',
+      'Setup completed and styled',
+      'Final payment',
+      'Dismantling after the celebration',
+    ],
+  },
+  {
+    title: 'After',
+    items: ["Review us and join the Fam! (we'd love to hear from you 🤍)"],
+  },
+]
+
+const hookahJourneyHtml = () =>
+  HOOKAH_JOURNEY_SECTIONS.map(
+    section => `
+      <p style="margin:16px 0 8px;font-size:14px;font-weight:700;color:#fff;">${section.title}</p>
+      ${section.items
+        .map(
+          item =>
+            `<p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#cccccc;">⬜ ${item}</p>`
+        )
+        .join('')}`
+  ).join('')
+
+const hookahConfirmationBody = ({
+  packageBooked,
+  eventDate,
+  venueName,
+  totalAmount,
+  supportPhone,
+  bookingUrl,
+}) => `
+  ${h1("It's Official! Your Celebration Just Got an Upgrade.")}
+  ${p(`Thank you for choosing our <strong style="color:#fff;">${packageBooked}</strong> Packages. We've received your booking and your date is officially secured in our calendar.`)}
+  ${p("Sit back and relax. We'll take it from here.")}
+  ${divider()}
+  ${p('<strong style="color:#fff;">Booking Summary</strong>')}
+  ${infoTable(`
+    ${infoRow('Package', packageBooked)}
+    ${infoRow('Date', eventDate)}
+    ${infoRow('Location', venueName)}
+    ${infoRow('Total Pay', totalAmount)}
+  `)}
+  ${divider()}
+  ${p('<strong style="color:#fff;">Need to add something?</strong>')}
+  ${p(`If you have any last-minute questions or want to add an extra touch to your decor, simply email or call us at ${supportPhone || '9810937700'}.`)}
+  ${divider()}
+  ${p('<strong style="color:#fff;">✨ Your Elewen Journey</strong>')}
+  ${p("We'll keep ticking things off, so you always know exactly where we are.")}
+  ${hookahJourneyHtml()}
+  ${bookingUrl ? ctaBtn('View Booking', bookingUrl) : ''}
+  ${divider()}
+  ${p(`Team Elewen<br/>${supportPhone || '9810937700'}`)}
+`
+
 /** Large copy-friendly coupon code block for customer emails */
 const couponCodeBlock = code => `
   <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
@@ -273,6 +348,49 @@ export const templates = {
     ),
 
   // ─── Lifecycle emails (admin confirm / personalization / T-2 / post-event) ───
+
+  booking_hookah_placed: ({
+    packageBooked,
+    eventDate,
+    venueName,
+    totalAmount,
+    supportPhone,
+    bookingUrl,
+  }) =>
+    layout(
+      "It's Official! Your Celebration Just Got an Upgrade.",
+      hookahConfirmationBody({
+        packageBooked,
+        eventDate,
+        venueName,
+        totalAmount,
+        supportPhone,
+        bookingUrl,
+      })
+    ),
+
+  booking_hookah_confirmed_lifecycle: ({
+    packageBooked,
+    eventDate,
+    venueName,
+    totalAmount,
+    supportPhone,
+    bookingUrl,
+  }) =>
+    layout(
+      "It's Official! Your Celebration Just Got an Upgrade.",
+      `
+      <div style="margin-bottom:20px;">${badge('Booking Confirmed', '#22c55e')}</div>
+      ${hookahConfirmationBody({
+        packageBooked,
+        eventDate,
+        venueName,
+        totalAmount,
+        supportPhone,
+        bookingUrl,
+      })}
+    `
+    ),
 
   booking_confirmed_lifecycle: ({
     bookingIdShort,

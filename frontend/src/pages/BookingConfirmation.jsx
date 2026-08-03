@@ -10,6 +10,41 @@ import {
   getReceiptPaymentSummary,
 } from '../lib/receipt'
 import { getBookingPackageNamesText, parseBookingItemTitle } from '../lib/bookingDisplay'
+import { isCodPayment } from '../lib/sheeshaCheckout'
+
+const SUPPORT_PHONE = '+91 9810937700'
+
+const HOOKAH_JOURNEY_SECTIONS = [
+  {
+    title: 'Booking',
+    items: [
+      'Booking placed',
+      'Payment received',
+      'Confirmation email & call from our team',
+    ],
+  },
+  {
+    title: 'Customisation (if applicable)',
+    items: [
+      'Your celebration details shared',
+      'We begin designing your setup',
+      'Final deck shared for your approval',
+    ],
+  },
+  {
+    title: 'Event Day',
+    items: [
+      'Elewen vendor network arrives',
+      'Setup completed and styled',
+      'Final payment',
+      'Dismantling after the celebration',
+    ],
+  },
+  {
+    title: 'After',
+    items: ["Review us and join the Fam! (we'd love to hear from you 🤍)"],
+  },
+]
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -111,25 +146,6 @@ const ADVANCE_PENDING_STEPS = [
   },
 ]
 
-const HOOKAH_COD_PENDING_STEPS = [
-  {
-    title: 'Request received',
-    desc: 'Your Hookah booking request is with our team for review.',
-  },
-  {
-    title: 'Admin confirmation',
-    desc: 'Once confirmed by Elewen, your booking status will update to Confirmed.',
-  },
-  {
-    title: 'Delivery coordination',
-    desc: 'Our team will contact you to finalize delivery details.',
-  },
-  {
-    title: 'Pay on delivery',
-    desc: 'The full amount is collected when your Hookah is delivered.',
-  },
-]
-
 const SAMPLE_TASTING_STEPS = [
   {
     title: 'Order Confirmation',
@@ -165,7 +181,10 @@ export default function BookingConfirmation() {
   const checkoutInfo = state?.checkoutInfo ?? {}
   const isSampleTastingBooking = checkoutInfo?.checkoutMode === 'sample-tasting'
   const isSheeshaCodBooking =
-    checkoutInfo?.checkoutMode === 'sheesha-cod' || payment?.codPending === true
+    checkoutInfo?.checkoutMode === 'sheesha-cod' ||
+    payment?.codPending === true ||
+    booking?.paymentSummary?.isCodBooking === true ||
+    (Array.isArray(booking?.payments) && booking.payments.some(isCodPayment))
   // Cashfree advance packages stay `new` until admin confirms — show Received, not Confirmed.
   const bookingStatus = String(booking?.status ?? 'new').toLowerCase()
   const isAwaitingAdminConfirm =
@@ -204,14 +223,9 @@ export default function BookingConfirmation() {
       }
     : isSheeshaCodBooking
       ? {
-          heading: 'Your Celebration Is Booked! 🎉',
-          intro:
-            "We're excited to bring your event to life. Track your booking details, manage event information, and stay updated every step of the way.",
-          amountLabel: paymentSummary.primaryLabel,
-          amountSubtext: paymentSummary.secondaryLabel,
-          steps: HOOKAH_COD_PENDING_STEPS,
-          toastMessage:
-            'Your booking has been received. We will confirm it shortly.',
+          heading: "It's Official! Your Celebration Just Got an Upgrade.",
+          intro: null,
+          toastMessage: 'Your booking has been received. We will confirm it shortly.',
         }
       : isAwaitingAdminConfirm
         ? {
@@ -280,6 +294,13 @@ export default function BookingConfirmation() {
     isSampleTastingBooking,
   })
 
+  const locationLabel =
+    checkoutInfo?.eventAddress ||
+    booking?.address?.summary ||
+    booking?.locationSummary ||
+    'Not provided'
+  const eventDateLabel = formatDate(checkoutInfo?.eventDate ?? booking?.eventDate)
+
   useEffect(() => {
     if (state?.checkoutInfo?.showBookingConfirmationToast === false) return
     if (hasShownToastRef.current) return
@@ -291,6 +312,120 @@ export default function BookingConfirmation() {
     showToast,
     state?.checkoutInfo?.showBookingConfirmationToast,
   ])
+
+  if (isSheeshaCodBooking) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">
+        <div className="flex flex-col gap-[clamp(24px,6vw,80px)] md:flex-row">
+          <div className="flex-1 space-y-6">
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#B7B59F] text-xl text-white">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6L9 17L4 12"
+                  stroke="#FAFAFA"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            <h1 className="mb-2 text-[16px] font-semibold text-[#2C2C2C] md:text-[27px]">
+              It&apos;s Official! Your Celebration Just Got an Upgrade.
+            </h1>
+
+            <div className="space-y-3 text-[12px] text-gray-500 md:text-[16px]">
+              <p>
+                Thank you for choosing our {packageLabel} Packages. We&apos;ve received your
+                booking and your date is officially secured in our calendar.
+              </p>
+              <p>Sit back and relax. We&apos;ll take it from here.</p>
+            </div>
+
+            <div className="mb-8 flex flex-wrap gap-4">
+              <button
+                type="button"
+                onClick={() => downloadReceipt(receiptData)}
+                className="rounded-full bg-[#D8C9AF] px-4 py-2 text-[12px] text-[#6B5B4D]"
+              >
+                Download Receipt
+              </button>
+
+              <Link
+                to="/"
+                className="rounded-full border border-[#957960] px-4 py-2 text-[12px] text-[#957960]"
+              >
+                Back to Home
+              </Link>
+            </div>
+
+            <hr className="my-4 border-[#0000001A]" />
+
+            <div className="space-y-3 text-[12px] md:text-[14px]">
+              <p className="font-medium text-[#2C2C2C]">Booking Summary</p>
+              <Detail label="Package" value={packageLabel} />
+              <Detail label="Date" value={eventDateLabel} />
+              <Detail label="Location" value={locationLabel} />
+              <Detail label="Total Pay" value={packageTotalDisplay} />
+            </div>
+
+            <hr className="my-4 border-[#0000001A]" />
+
+            <div className="space-y-2">
+              <p className="text-[12px] font-medium text-[#2C2C2C] md:text-[14px]">
+                Need to add something?
+              </p>
+              <p className="text-xs text-gray-500 md:text-sm">
+                If you have any last-minute questions or want to add an extra touch to your decor,
+                simply email or call us at {SUPPORT_PHONE}.
+              </p>
+              <p className="text-xs text-gray-500">
+                Questions? Contact us at support@elewen.in or call {SUPPORT_PHONE}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <div className="h-fit max-w-[458px] rounded-2xl bg-[#EADEC8] p-6 lg:ml-auto">
+              <h3 className="mb-2 text-[12px] font-medium text-[#591902]">
+                ✨ Your Elewen Journey
+              </h3>
+              <p className="mb-6 text-[11px] text-[#364022] md:text-[12px]">
+                We&apos;ll keep ticking things off, so you always know exactly where we are.
+              </p>
+
+              <div className="space-y-6">
+                {HOOKAH_JOURNEY_SECTIONS.map(section => (
+                  <div key={section.title}>
+                    <p className="mb-3 text-[14px] font-medium text-[#1C1C1C]">{section.title}</p>
+                    <ul className="space-y-2">
+                      {section.items.map(item => (
+                        <li
+                          key={item}
+                          className="flex items-start gap-2 text-[12px] text-[#364022] md:text-[13px]"
+                        >
+                          <span aria-hidden="true" className="mt-0.5 shrink-0">
+                            ⬜
+                          </span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">

@@ -10,6 +10,7 @@ import {
   getCancellationPolicyData,
 } from '../lib/cancellationPolicy.js'
 import { invalidateDashboardCache } from './dashboard.js'
+import { sendHookahBookingPlacedEmail } from '../lib/bookingEmailService.js'
 import {
   assertSheeshaOnlyCart,
   BOOKING_VISIBLE_PAYMENT_FILTER,
@@ -561,14 +562,18 @@ export const createBooking = async (req, res, next) => {
         ? 'Your Hookah booking has been received. Confirm pay-on-delivery to complete booking.'
         : 'Your booking has been received. Complete the advance payment to confirm.',
       linkUrl: `/dashboard/bookings/${booking.id}`,
-      emailTemplate: 'booking_created',
-      emailData: {
-        bookingId: booking.id,
-        totalPrice: booking.totalPrice,
-        advanceAmount: booking.advanceAmount,
-        eventDate: booking.eventDate,
-        guestCount: booking.guestCount,
-      },
+      ...(isSheeshaOnlyBooking
+        ? {}
+        : {
+            emailTemplate: 'booking_created',
+            emailData: {
+              bookingId: booking.id,
+              totalPrice: booking.totalPrice,
+              advanceAmount: booking.advanceAmount,
+              eventDate: booking.eventDate,
+              guestCount: booking.guestCount,
+            },
+          }),
     }).catch(() => {})
 
     invalidateDashboardCache(userId).catch(() => {})
@@ -1222,13 +1227,9 @@ export const confirmCodBooking = async (req, res, next) => {
       },
     })
 
-    notify(userId, {
-      type: 'booking_update',
-      title: 'Hookah booking received',
-      message:
-        'Your Hookah booking request was submitted. We will confirm it shortly. Amount is due on delivery.',
-      linkUrl: `/dashboard/bookings/${id}`,
-    }).catch(() => {})
+    sendHookahBookingPlacedEmail(id).catch(err =>
+      console.error('[booking-email] hookah placed failed', id, err?.message)
+    )
 
     invalidateDashboardCache(userId).catch(() => {})
 

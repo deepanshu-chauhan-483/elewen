@@ -270,16 +270,73 @@ export async function sendBookingConfirmedEmail(bookingId, { force = false } = {
   }
 
   const ctx = buildBookingEmailContext(booking)
+  const isHookah = ctx.isCodBooking
+
   return dispatchLifecycleEmail({
     booking,
     emailType: BOOKING_EMAIL_TYPES.CONFIRMED,
-    templateKey: 'booking_confirmed_lifecycle',
-    subject: "You're all set! Here's what happens next 🎉",
+    templateKey: isHookah ? 'booking_hookah_confirmed_lifecycle' : 'booking_confirmed_lifecycle',
+    subject: isHookah
+      ? "It's Official! Your Celebration Just Got an Upgrade."
+      : "You're all set! Here's what happens next 🎉",
     title: 'Booking Confirmed',
     message: 'Your booking with Elewen has been confirmed. Check your email for next steps.',
-    emailData: ctx,
+    emailData: isHookah
+      ? {
+          packageBooked: ctx.packageBooked,
+          eventDate: ctx.eventDate,
+          venueName: ctx.venueName,
+          totalAmount: ctx.totalAmount,
+          supportPhone: ctx.supportPhone,
+          bookingUrl: ctx.bookingUrl,
+        }
+      : ctx,
     force,
   })
+}
+
+/** Hookah COD — sent when customer completes pay-on-delivery booking at checkout. */
+export async function sendHookahBookingPlacedEmail(bookingId) {
+  const booking = await loadBookingForEmail(bookingId)
+  if (!booking) return { sent: false, reason: 'not_found' }
+
+  const ctx = buildBookingEmailContext(booking)
+  if (!ctx.isCodBooking) return { sent: false, reason: 'not_hookah_cod' }
+
+  const emailType = 'booking_hookah_placed'
+  if (await hasSentEmail(booking.id, emailType)) {
+    return { sent: false, reason: 'already_sent' }
+  }
+
+  const subject = "It's Official! Your Celebration Just Got an Upgrade."
+  const claimed = await markEmailSent(booking.id, emailType, subject)
+  if (!claimed) return { sent: false, reason: 'already_sent' }
+
+  const email = await getUserEmail(booking.userId)
+  if (!email) {
+    console.warn('[booking-email] No email for user', booking.userId)
+    return { sent: false, reason: 'no_user_email' }
+  }
+
+  const html = templates.booking_hookah_placed({
+    packageBooked: ctx.packageBooked,
+    eventDate: ctx.eventDate,
+    venueName: ctx.venueName,
+    totalAmount: ctx.totalAmount,
+    supportPhone: ctx.supportPhone,
+    bookingUrl: ctx.bookingUrl,
+  })
+  await sendEmail(email, subject, html)
+
+  await notify(booking.userId, {
+    type: 'booking_update',
+    title: 'Hookah booking received',
+    message:
+      'Your Hookah booking request was submitted. We will confirm it shortly. Amount is due on delivery.',
+    linkUrl: `/dashboard/bookings/${booking.id}`,
+  }).catch(() => {})
+
+  return { sent: true, emailType, subject }
 }
 
 /** Mail 2 — admin manual personalization email. */
