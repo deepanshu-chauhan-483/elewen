@@ -8,6 +8,7 @@ import { buildServiceSelectionBackTo, isConsultationOnlyEvent, SERVICES_FLOW_KEY
 import {
   applyServiceLevelDescriptions,
   CATERING_LEVEL_DESCRIPTIONS,
+  CATERING_LEVEL_STARTING_PRICES,
 } from '../lib/serviceLevelDescriptions'
 
 const FLOW_STEPS = [
@@ -32,17 +33,24 @@ function LevelCard({ categoryId, eventId, eventNumericId, serviceSlug, serviceId
       to={`/packages/${serviceSlug}?${params.toString()}`}
       className="group flex min-h-[160px] flex-1 basis-[240px] flex-col rounded-[12px] border border-[#E2CDB8] bg-white px-4 py-4 text-[#2D2D2D] transition-transform hover:-translate-y-1 hover:border-[#591902] hover:bg-[#591902] hover:text-white md:min-h-[180px] md:px-5 md:py-5"
     >
-      <h2
-        className="text-[20px] leading-[1] md:text-[28px]"
-        style={{ fontFamily: "'Malgin', serif" }}
-      >
-        {level.label}
-      </h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2
+          className="text-[20px] leading-[1] md:text-[28px]"
+          style={{ fontFamily: "'Malgin', serif" }}
+        >
+          {level.label}
+        </h2>
+        {level.startingPriceLabel ? (
+          <p className="text-[10px] font-medium leading-tight text-[#591902] transition-colors group-hover:text-white/90 md:text-[12px]">
+            {level.startingPriceLabel}
+          </p>
+        ) : null}
+      </div>
       <p className="mt-4 max-w-[280px] text-[14px] leading-[1.45] text-[#8F8B86] transition-colors group-hover:text-white/70 md:text-[16px]">
         {level.description}
       </p>
       <span className="mt-auto pt-5 text-[10px] font-medium text-[#591902] transition-colors group-hover:text-white md:text-[12px]">
-        {level.price || 'View packages'}
+        View packages
       </span>
     </Link>
   )
@@ -60,7 +68,12 @@ export default function CateringLevelsPage() {
   const levelsQuery = useBudgetLevelOptions(serviceId)
   const { data: levels = [] } = levelsQuery
   const levelsWithDescriptions = useMemo(
-    () => applyServiceLevelDescriptions(levels, CATERING_LEVEL_DESCRIPTIONS),
+    () =>
+      applyServiceLevelDescriptions(
+        levels,
+        CATERING_LEVEL_DESCRIPTIONS,
+        CATERING_LEVEL_STARTING_PRICES
+      ),
     [levels]
   )
   const isStrapiLoading = useStrapiPageLoading(levelsQuery)

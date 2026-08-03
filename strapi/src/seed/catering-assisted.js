@@ -11,7 +11,7 @@ const {
 } = require('./catering-menu-items-shared');
 
 const ASSISTED_LEVEL_DESCRIPTION =
-  'This level caters to people who want good quality food with classic dishes and need waiters to service. Seafood & cutlery is not included in this category of menu.';
+  'This level caters to people who want good quality food with classic dishes and need waiters to SERVE. Sea food and DINING cutlery not included in this category of menu.';
 
 const ASSISTED_INCLUSIONS = [
   { text: 'Raw material' },

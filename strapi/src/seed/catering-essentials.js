@@ -14,7 +14,7 @@ const {
 } = require('./catering-menu-items-shared');
 
 const ESSENTIALS_LEVEL_DESCRIPTION =
-  'This level caters to people who want good quality food with classic dishes but do not need waiters, cutlery etc. Seafood is not included in this category of menu.';
+  'This level caters to people who want good quality food with classic dishes but do not need waiters, cutlery etc. Sea food is not included in this category of menu.';
 
 const ESSENTIALS_INCLUSIONS = [
   { text: 'Raw material' },
