@@ -1,30 +1,31 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer } from 'react'
 import { useNavigate } from 'react-router-dom'
 import HookahAgeConfirmModal from './HookahAgeConfirmModal'
-import { isHookahAgeConfirmed, setHookahAgeConfirmed } from '../../lib/hookahAgeGate'
+import {
+  isHookahAgeConfirmed,
+  setHookahAgeConfirmed,
+  subscribeHookahAgeConfirmation,
+} from '../../lib/hookahAgeGate'
 
 /**
  * One shared 18+ gate for Hookah/Sheesha.
- * Shows once (search, listing, or PDP). After confirm, never again in this browser.
+ * Shows once per browser (search, listing, PDP, Most Loved links). Never again after confirm.
  */
 export default function HookahAgeGate({ children, cancelTo = '/' }) {
   const navigate = useNavigate()
-  const [confirmed, setConfirmed] = useState(() => isHookahAgeConfirmed())
+  const [, bumpConfirmed] = useReducer(count => count + 1, 0)
 
-  useEffect(() => {
-    if (isHookahAgeConfirmed()) setConfirmed(true)
-  }, [])
+  useEffect(() => subscribeHookahAgeConfirmation(bumpConfirmed), [])
 
   const handleConfirm = () => {
     setHookahAgeConfirmed()
-    setConfirmed(true)
   }
 
   const handleCancel = () => {
     navigate(cancelTo, { replace: true })
   }
 
-  if (!confirmed) {
+  if (!isHookahAgeConfirmed()) {
     return (
       <HookahAgeConfirmModal open onClose={handleCancel} onConfirm={handleConfirm} />
     )

@@ -3,6 +3,7 @@ import { getPackageServiceSlug } from './packageRoutes'
 import { isSheeshaServiceSlug } from './sheeshaCheckout'
 
 const HOOKAH_AGE_CONFIRMED_KEY = 'elewen_hookah_age_confirmed'
+export const HOOKAH_AGE_CONFIRMED_EVENT = 'elewen-hookah-age-confirmed'
 
 /** In-memory backup if web storage is unavailable. */
 let hookahAgeConfirmedMemory = false
@@ -42,6 +43,25 @@ export function isHookahAgeConfirmed() {
   return false
 }
 
+function notifyHookahAgeConfirmed() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(HOOKAH_AGE_CONFIRMED_EVENT))
+}
+
+/** Keep NavHeader + page gates in sync after any confirm path. */
+export function subscribeHookahAgeConfirmation(listener) {
+  if (typeof window === 'undefined') return () => {}
+
+  const handleConfirm = () => listener()
+  window.addEventListener(HOOKAH_AGE_CONFIRMED_EVENT, handleConfirm)
+  window.addEventListener('storage', handleConfirm)
+
+  return () => {
+    window.removeEventListener(HOOKAH_AGE_CONFIRMED_EVENT, handleConfirm)
+    window.removeEventListener('storage', handleConfirm)
+  }
+}
+
 export function setHookahAgeConfirmed() {
   hookahAgeConfirmedMemory = true
 
@@ -56,6 +76,8 @@ export function setHookahAgeConfirmed() {
   } catch {
     // Ignore.
   }
+
+  notifyHookahAgeConfirmed()
 }
 
 export function isHookahSearchQuery(query = '') {

@@ -18,6 +18,7 @@ import {
   isHookahSearchQuery,
   isSheeshaPackageRecord,
   setHookahAgeConfirmed,
+  subscribeHookahAgeConfirmation,
 } from '../lib/hookahAgeGate'
 
 function getPackageSearchPriceLabel(pkg) {
@@ -422,6 +423,13 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   const useWhiteNavBackground = WHITE_NAV_BG_PATHS.includes(pathname)
 
   useEffect(() => {
+    return subscribeHookahAgeConfirmation(() => {
+      setHookahAgeConfirmedState(true)
+      setShowHookahAgeModal(false)
+    })
+  }, [])
+
+  useEffect(() => {
     const sync = () => {
       setIsLoggedIn(!!getStoredJwt())
       setUserInitial(getUserDisplayInitial())
@@ -611,6 +619,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   }
 
   const openMobileSearch = () => {
+    setHookahAgeConfirmedState(isHookahAgeConfirmed())
     setOpen(false)
     setSearchOpen(true)
   }
@@ -679,7 +688,12 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
   }
 
   useEffect(() => {
-    if (hookahAgeConfirmed || isHookahAgeConfirmed()) return
+    if (isHookahAgeConfirmed()) {
+      setHookahAgeConfirmedState(true)
+      setShowHookahAgeModal(false)
+      return
+    }
+    if (hookahAgeConfirmed) return
     if (!isHookahSearchQuery(searchQuery) && !hasHookahSearchHits) return
     const normalizedQuery = searchQuery.trim().toLowerCase()
     if (dismissedHookahQueryRef.current === normalizedQuery) return
