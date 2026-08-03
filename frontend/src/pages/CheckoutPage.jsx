@@ -34,6 +34,7 @@ import HookahAgeConfirmModal from '../components/checkout/HookahAgeConfirmModal'
 import {
   isValidOptionalIndianPhone,
   validateCheckoutContactDetails,
+  validateCheckoutEventDetails,
 } from '../lib/contactValidation'
 import { normalizeIndianPhone } from '../lib/phone'
 
@@ -47,11 +48,35 @@ const CHECKOUT_FIELD_SCROLL_ORDER = [
   'email',
   'phone',
   'eventDate',
+  'eventTime',
   'addressLine1',
+  'addressLine2',
+  'addressFloor',
   'pinCode',
-  'guestCount',
   'eventDayContactPhone',
 ]
+
+function CheckoutFieldLabel({ label, required = false }) {
+  return (
+    <p className="text-[12px] text-[#7A7A7A]">
+      {label}
+      {required ? <span className="text-[#B42318]"> *</span> : null}
+      {!required ? <span className="text-[#A5A39E]"> (Optional)</span> : null}
+    </p>
+  )
+}
+
+function checkoutInputClass(hasError) {
+  return `w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
+    hasError ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+  }`
+}
+
+function checkoutPickerClass(hasError) {
+  return `w-full border-b bg-transparent pb-3 text-[16px] outline-none ${
+    hasError ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+  }`
+}
 
 function scrollToFirstCheckoutFieldError(errors, fieldRefMap) {
   for (const key of CHECKOUT_FIELD_SCROLL_ORDER) {
@@ -648,9 +673,11 @@ export default function CheckoutPage() {
   const emailRef = useRef(null)
   const phoneRef = useRef(null)
   const eventDateRef = useRef(null)
+  const eventTimeRef = useRef(null)
   const addressLine1Ref = useRef(null)
+  const addressLine2Ref = useRef(null)
+  const addressFloorRef = useRef(null)
   const pinCodeRef = useRef(null)
-  const guestCountRef = useRef(null)
   const eventDayContactPhoneRef = useRef(null)
 
   const checkoutFieldRefMap = useMemo(
@@ -659,9 +686,11 @@ export default function CheckoutPage() {
       email: emailRef,
       phone: phoneRef,
       eventDate: eventDateRef,
+      eventTime: eventTimeRef,
       addressLine1: addressLine1Ref,
+      addressLine2: addressLine2Ref,
+      addressFloor: addressFloorRef,
       pinCode: pinCodeRef,
-      guestCount: guestCountRef,
       eventDayContactPhone: eventDayContactPhoneRef,
     }),
     []
@@ -702,6 +731,12 @@ export default function CheckoutPage() {
   )
 
   const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
+  const resolvedGuestCount = useMemo(() => {
+    const parsed = Number(guestCount)
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+    const fromCart = getGuestCountFromCartItems(cartItems)
+    return fromCart > 0 ? fromCart : 1
+  }, [cartItems, guestCount])
   const isSheeshaOnlyCheckout =
     cartClassification.isSheeshaOnly && !isSampleTastingCheckout && cartItems.length > 0
   const isMixedSheeshaCheckout =
@@ -859,15 +894,16 @@ export default function CheckoutPage() {
     }
 
     if (!isSampleTastingCheckout) {
-      if (!eventDate) {
-        nextFieldErrors.eventDate = 'Please select an event date.'
-      }
-      if (!addressLine1.trim()) {
-        nextFieldErrors.addressLine1 = 'Please enter the event address.'
-      }
-      if (!guestCount || Number(guestCount) < 1) {
-        nextFieldErrors.guestCount = 'Please enter guest count.'
-      }
+      Object.assign(
+        nextFieldErrors,
+        validateCheckoutEventDetails({
+          eventDate,
+          eventTime,
+          addressLine1,
+          addressLine2,
+          addressFloor,
+        })
+      )
 
       const pincodeState = getPincodeValidationState(pinCode, serviceAreas, isLoadingServiceAreas)
       if (!pincodeState.isValid) {
@@ -887,12 +923,14 @@ export default function CheckoutPage() {
     return true
   }, [
     addressLine1,
+    addressLine2,
+    addressFloor,
     checkoutFieldRefMap,
     email,
     eventDate,
+    eventTime,
     eventDayContactPhone,
     fullName,
-    guestCount,
     isLoadingServiceAreas,
     isSampleTastingCheckout,
     phone,
@@ -919,7 +957,7 @@ export default function CheckoutPage() {
         await updateCartDetails({
           eventDate,
           eventCity: eventAddress.trim(),
-          guestCount: Number(guestCount),
+          guestCount: resolvedGuestCount,
         })
       }
 
@@ -993,7 +1031,7 @@ export default function CheckoutPage() {
             `Event address: ${eventAddress || 'Not provided'}`,
             `PIN code: ${pinCode || 'Not provided'}`,
             `Lift in building: ${hasLift || 'Not provided'}`,
-            `Guest count: ${guestCount}`,
+            `Guest count: ${resolvedGuestCount}`,
             `Earliest setup arrival time: ${setupArrivalTime || 'Not provided'}`,
             `Event-day contact: ${eventDayContactName.trim() || 'Not provided'}`,
             `Event-day contact mobile: ${eventDayContactPhone.trim() || 'Not provided'}`,
@@ -1041,7 +1079,7 @@ export default function CheckoutPage() {
               addressFloor,
               hasLift,
               pinCode,
-              guestCount,
+              guestCount: resolvedGuestCount,
               setupArrivalTime,
               eventDayContactName,
               eventDayContactPhone,
@@ -1108,7 +1146,7 @@ export default function CheckoutPage() {
               addressFloor,
               hasLift,
               pinCode,
-              guestCount,
+              guestCount: resolvedGuestCount,
               setupArrivalTime,
               eventDayContactName,
               eventDayContactPhone,
@@ -1158,7 +1196,7 @@ export default function CheckoutPage() {
       await updateCartDetails({
         eventDate,
         eventCity: eventAddress.trim(),
-        guestCount: Number(guestCount),
+        guestCount: resolvedGuestCount,
       })
 
       let booking = draftBookingRef.current
@@ -1190,7 +1228,7 @@ export default function CheckoutPage() {
         `Event address: ${eventAddress || 'Not provided'}`,
         `PIN code: ${pinCode || 'Not provided'}`,
         `Lift in building: ${hasLift || 'Not provided'}`,
-        `Guest count: ${guestCount}`,
+        `Guest count: ${resolvedGuestCount}`,
         `Earliest setup arrival time: ${setupArrivalTime || 'Not provided'}`,
         `Event-day contact: ${eventDayContactName.trim() || 'Not provided'}`,
         `Event-day contact mobile: ${eventDayContactPhone.trim() || 'Not provided'}`,
@@ -1232,7 +1270,7 @@ export default function CheckoutPage() {
             addressFloor,
             hasLift,
             pinCode,
-            guestCount,
+            guestCount: resolvedGuestCount,
             setupArrivalTime,
             eventDayContactName,
             eventDayContactPhone,
@@ -1463,6 +1501,10 @@ export default function CheckoutPage() {
               {pageContent.detailsTitle}
             </h2>
             <p className="mt-3 text-[14px] text-[#7A7A7A]">{pageContent.detailsIntro}</p>
+            <p className="mt-2 text-[12px] text-[#7A7A7A]">
+              Fields marked with <span className="text-[#B42318]">*</span> are required. Others are
+              optional.
+            </p>
 
             <div className="mt-10 space-y-4">
               <h3
@@ -1472,26 +1514,28 @@ export default function CheckoutPage() {
                 Basic Details
               </h3>
 
-              <input
-                ref={fullNameRef}
-                type="text"
-                value={fullName}
-                onChange={event => {
-                  setFormError('')
-                  setFieldErrors(prev => ({ ...prev, fullName: '' }))
-                  setFullName(event.target.value)
-                }}
-                placeholder="Full Name"
-                className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
-                  fieldErrors.fullName ? 'border-[#B42318]' : 'border-[#2D2D2D]'
-                }`}
-              />
-              {fieldErrors.fullName ? (
-                <p className="text-sm text-[#B42318]">{fieldErrors.fullName}</p>
-              ) : null}
+              <div>
+                <CheckoutFieldLabel label="Full Name" required />
+                <input
+                  ref={fullNameRef}
+                  type="text"
+                  value={fullName}
+                  onChange={event => {
+                    setFormError('')
+                    setFieldErrors(prev => ({ ...prev, fullName: '' }))
+                    setFullName(event.target.value)
+                  }}
+                  placeholder="Enter your full name"
+                  className={checkoutInputClass(Boolean(fieldErrors.fullName))}
+                />
+                {fieldErrors.fullName ? (
+                  <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.fullName}</p>
+                ) : null}
+              </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
+                  <CheckoutFieldLabel label="Email Address" required />
                   <input
                     ref={emailRef}
                     type="email"
@@ -1501,11 +1545,9 @@ export default function CheckoutPage() {
                       setFieldErrors(prev => ({ ...prev, email: '' }))
                       setEmail(event.target.value)
                     }}
-                    placeholder="Email Address"
+                    placeholder="Enter your email address"
                     autoComplete="email"
-                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
-                      fieldErrors.email ? 'border-[#B42318]' : 'border-[#2D2D2D]'
-                    }`}
+                    className={checkoutInputClass(Boolean(fieldErrors.email))}
                   />
                   {fieldErrors.email ? (
                     <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.email}</p>
@@ -1513,6 +1555,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div>
+                  <CheckoutFieldLabel label="Phone Number" required />
                   <input
                     ref={phoneRef}
                     type="tel"
@@ -1524,11 +1567,9 @@ export default function CheckoutPage() {
                       setFieldErrors(prev => ({ ...prev, phone: '' }))
                       setPhone(normalizeIndianPhone(event.target.value).slice(0, 10))
                     }}
-                    placeholder="Phone Number"
+                    placeholder="Enter 10-digit mobile number"
                     autoComplete="tel"
-                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
-                      fieldErrors.phone ? 'border-[#B42318]' : 'border-[#2D2D2D]'
-                    }`}
+                    className={checkoutInputClass(Boolean(fieldErrors.phone))}
                   />
                   {fieldErrors.phone ? (
                     <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.phone}</p>
@@ -1548,7 +1589,7 @@ export default function CheckoutPage() {
 
                 <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div ref={eventDateRef} tabIndex={-1} className="space-y-2">
-                    <p className="text-[12px] text-[#7A7A7A]">Event Date</p>
+                    <CheckoutFieldLabel label="Event Date" required />
                     <DateTimePicker
                       type="date"
                       min={getMinEventDate()}
@@ -1557,71 +1598,97 @@ export default function CheckoutPage() {
                         setFieldErrors(prev => ({ ...prev, eventDate: '' }))
                         setEventDate(event.target.value)
                       }}
-                      className={`w-full border-b bg-transparent pb-3 text-[16px] outline-none ${
-                        fieldErrors.eventDate ? 'border-[#B42318]' : 'border-[#2D2D2D]'
-                      }`}
+                      className={checkoutPickerClass(Boolean(fieldErrors.eventDate))}
                     />
                     {fieldErrors.eventDate ? (
                       <p className="text-sm text-[#B42318]">{fieldErrors.eventDate}</p>
                     ) : null}
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-[12px] text-[#7A7A7A]">What time does the event start</p>
+                  <div ref={eventTimeRef} tabIndex={-1} className="space-y-2">
+                    <CheckoutFieldLabel label="What time does the event start" required />
                     <DateTimePicker
                       type="time"
                       value={eventTime}
-                      onChange={event => setEventTime(event.target.value)}
-                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                      onChange={event => {
+                        setFieldErrors(prev => ({ ...prev, eventTime: '' }))
+                        setEventTime(event.target.value)
+                      }}
+                      className={checkoutPickerClass(Boolean(fieldErrors.eventTime))}
+                    />
+                    {fieldErrors.eventTime ? (
+                      <p className="text-sm text-[#B42318]">{fieldErrors.eventTime}</p>
+                    ) : null}
+                  </div>
+                  <div className="md:col-span-2">
+                    <CheckoutFieldLabel label="Event Location / Venue Address (first line)" required />
+                    <input
+                      ref={addressLine1Ref}
+                      type="text"
+                      value={addressLine1}
+                      onChange={event => {
+                        setFieldErrors(prev => ({ ...prev, addressLine1: '' }))
+                        setAddressLine1(event.target.value)
+                      }}
+                      placeholder="Building, street, area"
+                      className={checkoutInputClass(Boolean(fieldErrors.addressLine1))}
+                    />
+                    {fieldErrors.addressLine1 ? (
+                      <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.addressLine1}</p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <CheckoutFieldLabel label="Second line" required />
+                    <input
+                      ref={addressLine2Ref}
+                      type="text"
+                      value={addressLine2}
+                      onChange={event => {
+                        setFieldErrors(prev => ({ ...prev, addressLine2: '' }))
+                        setAddressLine2(event.target.value)
+                      }}
+                      placeholder="Landmark, block, or locality"
+                      className={checkoutInputClass(Boolean(fieldErrors.addressLine2))}
+                    />
+                    {fieldErrors.addressLine2 ? (
+                      <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.addressLine2}</p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <CheckoutFieldLabel label="Event location floor" required />
+                    <input
+                      ref={addressFloorRef}
+                      type="text"
+                      value={addressFloor}
+                      onChange={event => {
+                        setFieldErrors(prev => ({ ...prev, addressFloor: '' }))
+                        setAddressFloor(event.target.value)
+                      }}
+                      placeholder="Ground floor, 3rd floor, etc."
+                      className={checkoutInputClass(Boolean(fieldErrors.addressFloor))}
+                    />
+                    {fieldErrors.addressFloor ? (
+                      <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.addressFloor}</p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <CheckoutFieldLabel label="PIN Code" required />
+                    <input
+                      ref={pinCodeRef}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={pinCode}
+                      onChange={event => {
+                        setFormError('')
+                        setFieldErrors(prev => ({ ...prev, pinCode: '' }))
+                        setPinCode(normalizePincode(event.target.value))
+                      }}
+                      placeholder="Enter 6-digit pincode"
+                      className={checkoutInputClass(Boolean(fieldErrors.pinCode))}
                     />
                   </div>
-                  <input
-                    ref={addressLine1Ref}
-                    type="text"
-                    value={addressLine1}
-                    onChange={event => {
-                      setFieldErrors(prev => ({ ...prev, addressLine1: '' }))
-                      setAddressLine1(event.target.value)
-                    }}
-                    placeholder="Event Location / Venue Address (first line)"
-                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none md:col-span-2 ${
-                      fieldErrors.addressLine1 ? 'border-[#B42318]' : 'border-[#2D2D2D]'
-                    }`}
-                  />
-                  {fieldErrors.addressLine1 ? (
-                    <p className="text-sm text-[#B42318] md:col-span-2">{fieldErrors.addressLine1}</p>
-                  ) : null}
-                  <input
-                    type="text"
-                    value={addressLine2}
-                    onChange={event => setAddressLine2(event.target.value)}
-                    placeholder="Second line"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
-                  />
-                  <input
-                    type="text"
-                    value={addressFloor}
-                    onChange={event => setAddressFloor(event.target.value)}
-                    placeholder="Event location floor"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
-                  />
-                  <input
-                    ref={pinCodeRef}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    value={pinCode}
-                    onChange={event => {
-                      setFormError('')
-                      setFieldErrors(prev => ({ ...prev, pinCode: '' }))
-                      setPinCode(normalizePincode(event.target.value))
-                    }}
-                    placeholder="PIN Code"
-                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
-                      fieldErrors.pinCode ? 'border-[#B42318]' : 'border-[#2D2D2D]'
-                    }`}
-                  />
                   <div className="space-y-2">
-                    <p className="text-[12px] text-[#7A7A7A]">Is there a lift in your building?</p>
+                    <CheckoutFieldLabel label="Is there a lift in your building?" />
                     <select
                       value={hasLift}
                       onChange={event => setHasLift(event.target.value)}
@@ -1643,67 +1710,66 @@ export default function CheckoutPage() {
                       {isCheckingPincode ? 'Checking availability...' : pinCodeMessage}
                     </p>
                   ) : null}
-                  <input
-                    ref={guestCountRef}
-                    type="number"
-                    min="1"
-                    value={guestCount}
-                    onChange={event => {
-                      setFieldErrors(prev => ({ ...prev, guestCount: '' }))
-                      setGuestCount(event.target.value)
-                    }}
-                    placeholder="Guest Count"
-                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
-                      fieldErrors.guestCount ? 'border-[#B42318]' : 'border-[#2D2D2D]'
-                    }`}
-                  />
-                  {fieldErrors.guestCount ? (
-                    <p className="text-sm text-[#B42318]">{fieldErrors.guestCount}</p>
-                  ) : null}
+                  <div>
+                    <CheckoutFieldLabel label="Guest Count" />
+                    <input
+                      type="number"
+                      min="1"
+                      value={guestCount}
+                      onChange={event => setGuestCount(event.target.value)}
+                      placeholder="Number of guests"
+                      className={checkoutInputClass(false)}
+                    />
+                  </div>
                   <div className="space-y-2">
-                    <p className="text-[12px] text-[#7A7A7A]">
-                      What is the earliest time that our team can reach the venue for set-up
-                    </p>
+                    <CheckoutFieldLabel label="What is the earliest time that our team can reach the venue for set-up" />
                     <DateTimePicker
                       type="time"
                       value={setupArrivalTime}
                       onChange={event => setSetupArrivalTime(event.target.value)}
-                      className="w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none"
+                      className={checkoutPickerClass(false)}
                     />
                   </div>
-                  <input
-                    type="text"
-                    value={eventDayContactName}
-                    onChange={event => setEventDayContactName(event.target.value)}
-                    placeholder="Event-day contact person"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
-                  />
-                  <input
-                    ref={eventDayContactPhoneRef}
-                    type="tel"
-                    inputMode="numeric"
-                    maxLength={10}
-                    value={eventDayContactPhone}
-                    onChange={event => {
-                      setFormError('')
-                      setFieldErrors(prev => ({ ...prev, eventDayContactPhone: '' }))
-                      setEventDayContactPhone(normalizeIndianPhone(event.target.value).slice(0, 10))
-                    }}
-                    placeholder="Event-day contact mobile number"
-                    className={`w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
-                      fieldErrors.eventDayContactPhone ? 'border-[#B42318]' : 'border-[#2D2D2D]'
-                    }`}
-                  />
-                  {fieldErrors.eventDayContactPhone ? (
-                    <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.eventDayContactPhone}</p>
-                  ) : null}
-                  <input
-                    type="text"
-                    value={parkingInstructions}
-                    onChange={event => setParkingInstructions(event.target.value)}
-                    placeholder="Parking or loading instructions (if applicable)"
-                    className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none md:col-span-2"
-                  />
+                  <div>
+                    <CheckoutFieldLabel label="Event-day contact person" />
+                    <input
+                      type="text"
+                      value={eventDayContactName}
+                      onChange={event => setEventDayContactName(event.target.value)}
+                      placeholder="Name of on-site contact"
+                      className={checkoutInputClass(false)}
+                    />
+                  </div>
+                  <div>
+                    <CheckoutFieldLabel label="Event-day contact mobile number" />
+                    <input
+                      ref={eventDayContactPhoneRef}
+                      type="tel"
+                      inputMode="numeric"
+                      maxLength={10}
+                      value={eventDayContactPhone}
+                      onChange={event => {
+                        setFormError('')
+                        setFieldErrors(prev => ({ ...prev, eventDayContactPhone: '' }))
+                        setEventDayContactPhone(normalizeIndianPhone(event.target.value).slice(0, 10))
+                      }}
+                      placeholder="10-digit mobile number"
+                      className={checkoutInputClass(Boolean(fieldErrors.eventDayContactPhone))}
+                    />
+                    {fieldErrors.eventDayContactPhone ? (
+                      <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.eventDayContactPhone}</p>
+                    ) : null}
+                  </div>
+                  <div className="md:col-span-2">
+                    <CheckoutFieldLabel label="Parking or loading instructions (if applicable)" />
+                    <input
+                      type="text"
+                      value={parkingInstructions}
+                      onChange={event => setParkingInstructions(event.target.value)}
+                      placeholder="Share parking or loading details"
+                      className={checkoutInputClass(false)}
+                    />
+                  </div>
                 </div>
               </div>
             ) : null}
