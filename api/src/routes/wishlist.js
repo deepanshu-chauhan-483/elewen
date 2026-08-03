@@ -8,6 +8,7 @@ router.use(requireAuth)
 
 router.get('/', getWishlist)
 router.post('/', addWishlistItem)
+router.post('/remove', removeWishlistItem)
 router.delete('/:packageId', removeWishlistItem)
 
 export default router

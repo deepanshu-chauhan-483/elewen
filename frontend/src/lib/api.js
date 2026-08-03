@@ -287,11 +287,7 @@ export const wishlistGet = token =>
 export const wishlistAdd = (token, body) =>
   apiPost('/wishlist', body, { headers: { Authorization: `Bearer ${token}` } })
 export const wishlistRemove = (token, packageId) =>
-  apiPost(
-    '/wishlist/remove',
-    { packageId: String(packageId ?? '').trim() },
-    { headers: { Authorization: `Bearer ${token}` } }
-  )
+  apiDel(`/wishlist/${packageId}`, { headers: { Authorization: `Bearer ${token}` } })
 
 /* -- Bookings ---------------------------------------------------------------- */
 

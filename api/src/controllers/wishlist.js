@@ -254,7 +254,7 @@ export const addWishlistItem = async (req, res, next) => {
 export const removeWishlistItem = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
-    const packageId = String(req.params.packageId ?? '').trim()
+    const packageId = String(req.params.packageId ?? req.body?.packageId ?? '').trim()
 
     if (!packageId) {
       return res.status(400).json({ error: 'packageId is required' })
