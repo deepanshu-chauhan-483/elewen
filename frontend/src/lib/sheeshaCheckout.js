@@ -4,6 +4,10 @@ import { normalizeServiceSlug } from './packageFilters'
 export const MIXED_HOOKAH_CART_MESSAGE =
   'Hookah packages require a separate booking and payment process. For this reason, they cannot be combined with other services in the same cart. Please complete your current booking or start a new one for your Hookah booking.'
 
+/** Shown on each Hookah line item when the cart also has other services. */
+export const MIXED_HOOKAH_ITEM_HINT =
+  'Please add to wishlist and book this Hookah package separately.'
+
 /** Only real bookable service lanes — ignore parent/category CMS noise. */
 const PRODUCT_SERVICE_SLUGS = new Set([
   'sheesha',

@@ -19,7 +19,7 @@ import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDel
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
 import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
-import { classifyCartPackages, MIXED_HOOKAH_CART_MESSAGE } from '../lib/sheeshaCheckout'
+import { classifyCartPackages, isSheeshaCartItem, MIXED_HOOKAH_CART_MESSAGE, MIXED_HOOKAH_ITEM_HINT } from '../lib/sheeshaCheckout'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
@@ -970,7 +970,7 @@ const CATEGORY_ICONS = {
   Addons: '➕',
 }
 
-function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuantity }) {
+function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuantity, isMixedSheeshaCart = false }) {
   const { showToast } = useToast()
   const { isSaved, toggleSavedPackage, pendingPackageId: wishlistPendingId } = useWishlist()
 
@@ -1129,6 +1129,10 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                         </span>
                       ))}
                     </div>
+
+                    {isMixedSheeshaCart && isSheeshaCartItem(item) ? (
+                      <p className="mt-2 text-sm text-[#591902]">{MIXED_HOOKAH_ITEM_HINT}</p>
+                    ) : null}
 
                     <div className="mt-4 flex flex-wrap items-center gap-2">
                       {item?.itemType !== 'addon' ? (
@@ -2004,6 +2008,7 @@ export default function CartPage() {
                 pendingItemId={pendingItemId}
                 onRemoveItem={handleRemoveItem}
                 onUpdateQuantity={handleUpdateQuantity}
+                isMixedSheeshaCart={isMixedSheeshaCart}
               />
             )}
 
