@@ -30,7 +30,6 @@ import {
   paymentVerify,
 } from '../lib/api'
 import { classifyCartPackages, MIXED_HOOKAH_CART_MESSAGE } from '../lib/sheeshaCheckout'
-import HookahAgeConfirmModal from '../components/checkout/HookahAgeConfirmModal'
 import {
   isValidOptionalIndianPhone,
   validateCheckoutContactDetails,
@@ -667,7 +666,6 @@ export default function CheckoutPage() {
   const [formError, setFormError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showAgeModal, setShowAgeModal] = useState(false)
 
   const fullNameRef = useRef(null)
   const emailRef = useRef(null)
@@ -1244,7 +1242,6 @@ export default function CheckoutPage() {
       const confirmResponse = await bookingConfirmCod(token, booking.id, { ageConfirmedAt })
       const confirmedBooking = confirmResponse?.booking ?? booking
 
-      setShowAgeModal(false)
       setIsSubmitting(false)
 
       navigate(`/booking-confirmation?bookingId=${booking.id}`, {
@@ -1794,7 +1791,7 @@ export default function CheckoutPage() {
                 if (isMixedSheeshaCheckout) return
                 if (!validateBeforeProceed()) return
                 if (isSheeshaOnlyCheckout) {
-                  setShowAgeModal(true)
+                  handleCodCheckout()
                   return
                 }
                 setShowPaymentPopup(true)
@@ -1846,15 +1843,6 @@ export default function CheckoutPage() {
           }}
         />
       ) : null}
-
-      <HookahAgeConfirmModal
-        open={showAgeModal}
-        onClose={() => {
-          if (!isSubmitting) setShowAgeModal(false)
-        }}
-        onConfirm={handleCodCheckout}
-        isSubmitting={isSubmitting}
-      />
     </div>
   )
 }
