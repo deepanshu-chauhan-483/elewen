@@ -911,6 +911,27 @@ function DeleteIcon() {
   )
 }
 
+function WishlistHeartIcon({ saved = false }) {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill={saved ? '#5A1E0E' : 'none'}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 21s-6.716-4.35-9.193-8.107C.708 9.704 1.48 5.5 5.538 4.39A5.39 5.39 0 0 1 12 6.303a5.39 5.39 0 0 1 6.462-1.913c4.057 1.11 4.83 5.314 2.73 8.503C18.716 16.65 12 21 12 21Z"
+        stroke="#5A1E0E"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 const CATEGORY_ICONS = {
   Decor: '🌸',
   Décor: '🌸',
@@ -951,20 +972,10 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
     return groups
   }, [])
 
-  const isHookahCategory = category => {
-    const normalized = String(category ?? '')
-      .trim()
-      .toLowerCase()
-    return (
-      normalized === 'sheesha' ||
-      normalized === 'hookah' ||
-      normalized.includes('sheesha') ||
-      normalized.includes('hookah')
-    )
-  }
-
-  const handleSaveHookahToWishlist = async item => {
-    const wishlistPackageId = String(item?.packageData?.id ?? item?.packageId ?? '').trim()
+  const handleToggleWishlist = async item => {
+    const wishlistPackageId = String(
+      item?.packageData?.id ?? item?.packageData?.documentId ?? item?.packageId ?? ''
+    ).trim()
     if (!wishlistPackageId) {
       showToast({ message: 'Could not save this package to wishlist.' })
       return
@@ -972,18 +983,18 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
 
     const alreadySaved =
       isSaved(wishlistPackageId) ||
-      (item?.packageData?.documentId && isSaved(item.packageData.documentId))
-
-    if (alreadySaved) {
-      showToast({ message: 'Already saved to wishlist.' })
-      return
-    }
+      (item?.packageData?.documentId && isSaved(item.packageData.documentId)) ||
+      (item?.packageData?.id && isSaved(item.packageData.id))
 
     try {
       await toggleSavedPackage({ packageId: wishlistPackageId })
-      showToast({ message: 'Saved to wishlist. Book it later from Saved Packages.' })
+      showToast({
+        message: alreadySaved
+          ? 'Removed from wishlist.'
+          : 'Saved to wishlist. Book it later from Saved Packages.',
+      })
     } catch {
-      showToast({ message: 'Could not save this package to wishlist.' })
+      showToast({ message: 'Could not update wishlist.' })
     }
   }
 
@@ -1028,14 +1039,21 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                 .filter(Boolean)
                 .slice(0, 4)
               const canViewPackage = item?.itemType !== 'addon' && packageHref
-              const showHookahWishlistAction =
-                isHookahCategory(group.category) && item?.itemType !== 'addon'
+              const canWishlist = item?.itemType !== 'addon'
               const wishlistPackageId = String(
-                item?.packageData?.id ?? item?.packageId ?? ''
+                item?.packageData?.id ?? item?.packageData?.documentId ?? item?.packageId ?? ''
               ).trim()
+              const savedToWishlist =
+                Boolean(wishlistPackageId) &&
+                (isSaved(wishlistPackageId) ||
+                  (item?.packageData?.documentId && isSaved(item.packageData.documentId)) ||
+                  (item?.packageData?.id && isSaved(item.packageData.id)))
               const isWishlistPending =
                 Boolean(wishlistPendingId) &&
-                String(wishlistPendingId) === wishlistPackageId
+                [wishlistPackageId, item?.packageData?.id, item?.packageData?.documentId]
+                  .filter(Boolean)
+                  .map(String)
+                  .includes(String(wishlistPendingId))
 
               return (
                 <div
@@ -1099,16 +1117,45 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                           <EyeIcon />
                         </Link>
                       ) : null}
-                      {showHookahWishlistAction ? (
+                      {canWishlist ? (
                         <button
                           type="button"
-                          onClick={() => handleSaveHookahToWishlist(item)}
-                          disabled={isPending || isWishlistPending}
-                          className="max-w-[220px] text-left text-[12px] font-medium leading-[1.35] text-[#591902] underline underline-offset-2 transition-colors hover:text-[#3D1201] disabled:opacity-60 sm:max-w-none"
+                          onClick={() => handleToggleWishlist(item)}
+                          disabled={isPending || isWishlistPending || !wishlistPackageId}
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-[#EFE7DC] disabled:opacity-60"
+                          aria-label={
+                            isWishlistPending
+                              ? 'Updating wishlist'
+                              : savedToWishlist
+                                ? 'Remove from wishlist'
+                                : 'Add to wishlist'
+                          }
+                          aria-pressed={savedToWishlist}
+                          title={savedToWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
                         >
-                          {isWishlistPending
-                            ? 'Saving...'
-                            : 'Save this package to wishlist and book later'}
+                          {isWishlistPending ? (
+                            <svg
+                              className="h-[15px] w-[15px] animate-spin text-[#5A1E0E]"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v8H4z"
+                              />
+                            </svg>
+                          ) : (
+                            <WishlistHeartIcon saved={savedToWishlist} />
+                          )}
                         </button>
                       ) : null}
                       <button
