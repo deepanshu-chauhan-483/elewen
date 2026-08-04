@@ -11,7 +11,6 @@ import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 import { useCateringMenu } from '../hooks/useCateringMenu'
 import { CATERING_PACKAGE_MENU_ROWS } from '../lib/cateringPackageMenuRows'
 import { mapCateringMenuRow } from '../lib/cateringMenuSelection'
-import { resolveCateringCatalogSlug } from '../lib/packageFilters'
 import { useCart } from '../hooks/useCart'
 import useCustomization from '../hooks/useCustomization'
 import { useCartToastMessage } from '../hooks/useMessagingContent'
@@ -274,9 +273,14 @@ function buildMenuRows(pkg) {
 
   if (!isUsableMenuItems(menuItems)) {
     const slug = String(pkg?.slug ?? '').trim()
-    const catalogSlug = resolveCateringCatalogSlug(slug) || slug
-    menuItems =
-      CATERING_PACKAGE_MENU_ROWS[slug] ?? CATERING_PACKAGE_MENU_ROWS[catalogSlug] ?? []
+    // Client-renamed slugs → original seed menu row keys (images/menus stay on same entry).
+    const menuSlugAliases = {
+      'smart-serve-1': 'close-circle-catering-1',
+      'smart-serve': 'close-circle-catering-1',
+      'easy-hosting': 'easy-hosting-simply-served-1',
+    }
+    const menuKey = menuSlugAliases[slug] || slug
+    menuItems = CATERING_PACKAGE_MENU_ROWS[menuKey] ?? CATERING_PACKAGE_MENU_ROWS[slug] ?? []
   }
 
   if (menuItems.length) {

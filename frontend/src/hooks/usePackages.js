@@ -83,7 +83,7 @@ function resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel) {
   const isCatering = serviceSlugs.includes('catering')
   const isBartending = serviceSlugs.includes('bartending')
 
-  // Catering Level 1/2/3: prefer CMS budget_level, then slug suffix, then catering_level.
+  // Catering Level 1/2/3: prefer CMS budget_level; fall back so renames still list.
   if (isCatering) {
     const fromBudgetLevel = getBudgetLevelSlug(primaryBudgetLevel)
     if (fromBudgetLevel) return fromBudgetLevel
