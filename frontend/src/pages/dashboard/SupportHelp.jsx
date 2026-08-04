@@ -260,9 +260,9 @@ export default function SupportHelp() {
     setReply('')
   }
 
-  const supportPhone = help?.primaryPhone || SUPPORT_CONTACT.phone
-  const supportEmail = help?.supportEmail || SUPPORT_CONTACT.email
-  const supportWhatsApp = help?.whatsappNumber || SUPPORT_CONTACT.whatsapp
+  const supportPhone = SUPPORT_CONTACT.phone
+  const supportEmail = SUPPORT_CONTACT.email
+  const supportWhatsApp = SUPPORT_CONTACT.whatsapp
 
   return (
     <div className="space-y-6">
@@ -285,21 +285,13 @@ export default function SupportHelp() {
       {/* ── Direct support contact ── */}
       <div className="rounded-2xl border border-[#EDE8E1] bg-[#FBF7F3] p-5">
         <h2 className="mb-1 text-xl text-[#1C1C1C]">Direct Support</h2>
-        <p className="mb-4 text-sm text-[#8F8F8F]">
-          Live contact details from your dashboard settings.
-        </p>
+        <p className="mb-4 text-sm text-[#8F8F8F]">Reach the Elewen team using the contact details below.</p>
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <ContactCard label="Phone" value={supportPhone} />
           <ContactCard label="Email" value={supportEmail} />
           <ContactCard label="WhatsApp" value={supportWhatsApp} />
         </div>
-
-        {help?.responseExpectationText && (
-          <p className="mt-3 rounded-2xl border border-[#EDE8E1] bg-white px-4 py-3 text-sm text-[#6B7280]">
-            {help.responseExpectationText}
-          </p>
-        )}
 
         {/* Note: booking-specific messaging is handled via Messages module */}
         <div className="mt-3 flex items-start gap-2 rounded-xl border border-dashed border-[#D6CDC3] bg-white px-4 py-3 text-xs text-[#6B7280]">

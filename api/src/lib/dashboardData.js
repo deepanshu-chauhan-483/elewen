@@ -635,14 +635,10 @@ export async function enrichSavedPackages(items = []) {
 }
 
 export async function fetchDashboardHelpContent() {
-  const result = await strapiGet('/global-setting', { publicationState: 'preview' })
-  const data = result?.data ?? result ?? {}
-
   return {
-    primaryPhone: data.primary_phone ?? '9810937700',
-    supportEmail: data.support_email ?? 'info@elewen.co.in',
-    supportAvailabilityText: data.support_availability_text ?? '',
-    whatsappNumber: data.whatsapp_number ?? '9810937700',
-    responseExpectationText: data.response_expectation_text ?? '',
+    primaryPhone: '9810937700',
+    supportEmail: 'info@elewen.co.in',
+    whatsappNumber: '9810937700',
+    responseExpectationText: '',
   }
 }
