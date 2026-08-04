@@ -16,6 +16,7 @@ import {
   isCodPayment,
 } from '../lib/sheeshaCheckout.js'
 import { sendBookingConfirmedEmail } from '../lib/bookingEmailService.js'
+import { customerBookingDetailsPath, customerPaymentReturnUrl } from '../lib/customerUrls.js'
 
 const TEST_PAYMENT_APP_ID = process.env.CASHFREE_TEST_APP_ID || 'TEST_elewen_dashboard_bypass'
 
@@ -308,6 +309,8 @@ export const createOrder = async (req, res, next) => {
         amount,
         customerId: userId,
         customerPhone: '9999999999',
+        customerEmail: req.user?.email || undefined,
+        returnUrl: customerPaymentReturnUrl(bookingId),
         note: `${paymentType} payment for booking ${bookingId}`,
       })
 
@@ -349,8 +352,146 @@ export const createOrder = async (req, res, next) => {
   }
 }
 
+async function processPaymentVerification({
+  payment,
+  userId,
+  gatewayOrderId,
+  gatewayPaymentId = null,
+  paymentMethod = null,
+  testBypass = false,
+}) {
+  if (!payment) {
+    const error = new Error('Payment not found')
+    error.status = 404
+    throw error
+  }
+  if (payment.booking.userId !== userId) {
+    const error = new Error('Forbidden')
+    error.status = 403
+    throw error
+  }
+  if (payment.status === 'success') {
+    const booking = await ensureConfirmedBooking(
+      payment,
+      userId,
+      'Confirmed on re-verify after full payment (webhook may have set payment success first)'
+    )
+    return { message: 'Payment already verified', payment, booking }
+  }
+  if (payment.providerOrderId !== gatewayOrderId) {
+    const error = new Error('Order ID mismatch')
+    error.status = 400
+    throw error
+  }
+
+  const allowTestBypass =
+    Boolean(testBypass) && payment.provider === 'manual' && isTestPaymentModeEnabled()
+
+  let gatewayPaymentData = {}
+  let isValid = allowTestBypass
+
+  if (allowTestBypass) {
+    gatewayPaymentData = {
+      cf_payment_id: gatewayPaymentId || `test_payment_${payment.id.replace(/-/g, '')}`,
+      order_id: gatewayOrderId,
+      payment_method: paymentMethod || 'offline',
+      order_status: 'PAID',
+      testMode: true,
+    }
+  } else {
+    try {
+      gatewayPaymentData = await fetchCashfreeOrder(gatewayOrderId)
+      isValid = String(gatewayPaymentData?.order_status ?? '').toUpperCase() === 'PAID'
+    } catch {
+      isValid = false
+    }
+  }
+
+  if (!isValid) {
+    await prisma.payment.update({ where: { id: payment.id }, data: { status: 'failed' } })
+    await prisma.paymentLog.create({
+      data: {
+        paymentId: payment.id,
+        action: 'failed',
+        performedBy: userId,
+        metadata: {
+          reason: 'Gateway verification failed',
+          gatewayOrderId,
+          gatewayPaymentId,
+        },
+      },
+    })
+    const error = new Error('Payment verification failed')
+    error.status = 400
+    throw error
+  }
+
+  const resolvedMethod =
+    paymentMethod || mapCashfreePaymentMethod(gatewayPaymentData) || 'card'
+  const validMethods = ['card', 'upi', 'netbanking', 'offline']
+  const finalMethod = validMethods.includes(resolvedMethod) ? resolvedMethod : 'card'
+
+  const updatedPayment = await prisma.payment.update({
+    where: { id: payment.id },
+    data: {
+      status: 'success',
+      providerPaymentId:
+        gatewayPaymentId ||
+        gatewayPaymentData?.payments?.[0]?.cf_payment_id ||
+        gatewayPaymentData?.cf_payment_id ||
+        `test_payment_${payment.id.replace(/-/g, '')}`,
+      paymentMethod: finalMethod,
+    },
+  })
+
+  await prisma.paymentTransaction.create({
+    data: {
+      paymentId: payment.id,
+      gatewayResponse: gatewayPaymentData,
+      status: 'success',
+    },
+  })
+
+  await prisma.paymentLog.create({
+    data: {
+      paymentId: payment.id,
+      action: 'verified',
+      performedBy: userId,
+      metadata: { gatewayPaymentId: updatedPayment.providerPaymentId, method: finalMethod },
+    },
+  })
+
+  const confirmedBooking = await ensureConfirmedBooking(
+    payment,
+    userId,
+    allowTestBypass
+      ? 'Auto-confirmed via test payment bypass'
+      : 'Auto-confirmed after full payment received'
+  )
+
+  notify(payment.booking.userId, {
+    type: 'payment',
+    title: 'Payment Received',
+    message:
+      payment.paymentType === 'advance'
+        ? `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} advance payment confirmed. We will confirm your booking shortly.`
+        : `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} ${payment.paymentType} payment confirmed.`,
+    linkUrl: customerBookingDetailsPath(payment.bookingId),
+    emailTemplate: 'payment_success',
+    emailData: {
+      bookingId: payment.bookingId,
+      amount: payment.amount,
+      paymentType: payment.paymentType,
+    },
+  }).catch(() => {})
+
+  await clearUserCart(payment.booking.userId).catch(() => {})
+  await invalidateDashboardCache(payment.booking.userId).catch(() => {})
+
+  return { payment: updatedPayment, booking: confirmedBooking }
+}
+
 // ─── POST /payments/verify ────────────────────────────────────────────────────
-// Verifies Cashfree payment after checkout completes.
 export const verifyPayment = async (req, res, next) => {
   try {
     const {
@@ -360,145 +501,68 @@ export const verifyPayment = async (req, res, next) => {
       paymentMethod,
       testBypass = false,
     } = req.body
-    const resolvedGatewayOrderId = gatewayOrderId
-    const resolvedGatewayPaymentId = gatewayPaymentId
     const userId = String(req.user.id)
 
-    if (!resolvedGatewayOrderId) {
+    if (!gatewayOrderId) {
       return res.status(400).json({ error: 'gatewayOrderId is required' })
     }
 
-    // Find the Payment record
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
       include: { booking: true },
     })
-    if (!payment) return res.status(404).json({ error: 'Payment not found' })
-    if (payment.booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
-    if (payment.status === 'success') {
-      const booking = await ensureConfirmedBooking(
-        payment,
-        userId,
-        'Confirmed on re-verify after full payment (webhook may have set payment success first)'
-      )
-      return res.json({ message: 'Payment already verified', payment, booking })
-    }
-    if (payment.providerOrderId !== resolvedGatewayOrderId) {
-      return res.status(400).json({ error: 'Order ID mismatch' })
-    }
 
-    const allowTestBypass =
-      Boolean(testBypass) && payment.provider === 'manual' && isTestPaymentModeEnabled()
-
-    let gatewayPaymentData = {}
-    let isValid = allowTestBypass
-
-    if (allowTestBypass) {
-      gatewayPaymentData = {
-        cf_payment_id:
-          resolvedGatewayPaymentId || `test_payment_${payment.id.replace(/-/g, '')}`,
-        order_id: resolvedGatewayOrderId,
-        payment_method: paymentMethod || 'offline',
-        order_status: 'PAID',
-        testMode: true,
-      }
-    } else {
-      try {
-        gatewayPaymentData = await fetchCashfreeOrder(resolvedGatewayOrderId)
-        isValid = String(gatewayPaymentData?.order_status ?? '').toUpperCase() === 'PAID'
-      } catch {
-        isValid = false
-      }
-    }
-
-    if (!isValid) {
-      // Mark as failed and log
-      await prisma.payment.update({ where: { id: paymentId }, data: { status: 'failed' } })
-      await prisma.paymentLog.create({
-        data: {
-          paymentId,
-          action: 'failed',
-          performedBy: userId,
-          metadata: {
-            reason: 'Gateway verification failed',
-            gatewayOrderId: resolvedGatewayOrderId,
-            gatewayPaymentId: resolvedGatewayPaymentId,
-          },
-        },
-      })
-      return res.status(400).json({ error: 'Payment verification failed' })
-    }
-
-    const resolvedMethod =
-      paymentMethod ||
-      mapCashfreePaymentMethod(gatewayPaymentData) ||
-      'card'
-    const validMethods = ['card', 'upi', 'netbanking', 'offline']
-    const finalMethod = validMethods.includes(resolvedMethod) ? resolvedMethod : 'card'
-
-    const updatedPayment = await prisma.payment.update({
-      where: { id: paymentId },
-      data: {
-        status: 'success',
-        providerPaymentId:
-          resolvedGatewayPaymentId ||
-          gatewayPaymentData?.payments?.[0]?.cf_payment_id ||
-          gatewayPaymentData?.cf_payment_id ||
-          `test_payment_${payment.id.replace(/-/g, '')}`,
-        paymentMethod: finalMethod,
-      },
-    })
-
-    // Store full gateway response in payment_transactions
-    await prisma.paymentTransaction.create({
-      data: {
-        paymentId,
-        gatewayResponse: gatewayPaymentData,
-        status: 'success',
-      },
-    })
-
-    // Audit log
-    await prisma.paymentLog.create({
-      data: {
-        paymentId,
-        action: 'verified',
-        performedBy: userId,
-        metadata: { gatewayPaymentId: updatedPayment.providerPaymentId, method: finalMethod },
-      },
-    })
-
-    const confirmedBooking = await ensureConfirmedBooking(
+    const result = await processPaymentVerification({
       payment,
       userId,
-      allowTestBypass
-        ? 'Auto-confirmed via test payment bypass'
-        : 'Auto-confirmed after full payment received'
-    )
+      gatewayOrderId,
+      gatewayPaymentId,
+      paymentMethod,
+      testBypass,
+    })
 
-    // Notify on successful payment
-    notify(payment.booking.userId, {
-      type: 'payment',
-      title: 'Payment Received',
-      message:
-        payment.paymentType === 'advance'
-          ? `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} advance payment confirmed. We will confirm your booking shortly.`
-          : `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} ${payment.paymentType} payment confirmed.`,
-      linkUrl: `/dashboard/bookings/${payment.bookingId}`,
-      emailTemplate: 'payment_success',
-      emailData: {
-        bookingId: payment.bookingId,
-        amount: payment.amount,
-        paymentType: payment.paymentType,
-      },
-    }).catch(() => {})
-
-    await clearUserCart(payment.booking.userId).catch(() => {})
-    await invalidateDashboardCache(payment.booking.userId).catch(() => {})
-
-    res.json({ payment: updatedPayment, booking: confirmedBooking })
+    return res.json(result)
   } catch (err) {
-    next(err)
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message })
+    }
+    return next(err)
+  }
+}
+
+// ─── POST /payments/complete-return ───────────────────────────────────────────
+export const completePaymentReturn = async (req, res, next) => {
+  try {
+    const { gatewayOrderId, bookingId, gatewayPaymentId, paymentMethod } = req.body
+    const userId = String(req.user.id)
+
+    if (!gatewayOrderId) {
+      return res.status(400).json({ error: 'gatewayOrderId is required' })
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: {
+        providerOrderId: gatewayOrderId,
+        ...(bookingId ? { bookingId } : {}),
+        booking: { userId },
+      },
+      include: { booking: true },
+    })
+
+    const result = await processPaymentVerification({
+      payment,
+      userId,
+      gatewayOrderId,
+      gatewayPaymentId,
+      paymentMethod,
+    })
+
+    return res.json(result)
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message })
+    }
+    return next(err)
   }
 }
 
@@ -566,7 +630,7 @@ export const handleWebhook = async (req, res) => {
               type: 'payment',
               title: 'Payment Received',
               message: `₹${(payment.amount.toNumber?.() ?? Number(payment.amount)).toLocaleString('en-IN')} advance payment confirmed. We will confirm your booking shortly.`,
-              linkUrl: `/dashboard/bookings/${payment.bookingId}`,
+              linkUrl: customerBookingDetailsPath(payment.bookingId),
               emailTemplate: 'payment_success',
               emailData: {
                 bookingId: payment.bookingId,
@@ -616,7 +680,7 @@ export const handleWebhook = async (req, res) => {
               type: 'payment',
               title: 'Payment Failed',
               message: 'Your payment could not be processed. Please try again.',
-              linkUrl: `/dashboard/bookings/${payment.bookingId}`,
+              linkUrl: customerBookingDetailsPath(payment.bookingId),
               emailTemplate: 'payment_failed',
               emailData: { bookingId: payment.bookingId, amount: payment.amount },
             }).catch(() => {})
@@ -876,7 +940,7 @@ export const processRefund = async (req, res, next) => {
           type: 'payment',
           title: 'Refund Initiated',
           message: `₹${(updated.amount.toNumber?.() ?? Number(updated.amount)).toLocaleString('en-IN')} refund has been processed and will reflect in 5–7 business days.`,
-          linkUrl: `/dashboard/bookings/${updated.bookingId}`,
+          linkUrl: customerBookingDetailsPath(updated.bookingId),
           emailTemplate: 'refund_processed',
           emailData: { bookingId: updated.bookingId, amount: updated.amount },
         }).catch(() => {})
