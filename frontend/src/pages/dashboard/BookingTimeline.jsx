@@ -17,14 +17,14 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 
 const TIMELINE_DISPLAY_ORDER = [
-  'Inquiry / Booking Placed',
-  'Internal Review & Confirmation',
+  'Booking request received',
+  'Booking Confirmed',
   'Information Collection',
-  'Planning & Preparation',
-  'Pre-event Final Checks',
-  'Event Day / Execution',
-  'Event Complete',
-  'Post Event Follow Up',
+  'Pre-Event Planning',
+  'Final payment',
+  'Setup completed and styled',
+  'Dismantling after the celebration',
+  "Review us and join the Fam! (we'd love to hear from you 🤍)",
 ]
 
 const STATUS_PILL = {
@@ -479,7 +479,7 @@ export default function BookingTimeline() {
                     ) : null}
 
                     {activeBooking?.status === 'pre_event' &&
-                    item.title === 'Pre-event Final Checks' &&
+                    item.title === 'Final payment' &&
                     item.status === 'blocked' ? (
                       <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-4 py-3">
                         <div className="flex flex-wrap gap-6">

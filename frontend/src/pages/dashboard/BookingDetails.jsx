@@ -196,14 +196,14 @@ function buildPaymentDetailRows(booking) {
 }
 
 const TIMELINE_DISPLAY_ORDER = [
-  'Inquiry / Booking Placed',
-  'Internal Review & Confirmation',
+  'Booking request received',
+  'Booking Confirmed',
   'Information Collection',
-  'Planning & Preparation',
-  'Pre-event Final Checks',
-  'Event Day / Execution',
-  'Event Complete',
-  'Post Event Follow Up',
+  'Pre-Event Planning',
+  'Final payment',
+  'Setup completed and styled',
+  'Dismantling after the celebration',
+  "Review us and join the Fam! (we'd love to hear from you 🤍)",
 ]
 
 function normalizeTimelineItem(item) {

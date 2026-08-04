@@ -24,45 +24,57 @@ const DEFAULT_ADVANCE_PCT = 30
 const BOOKING_TIMELINE_STEPS = [
   {
     key: 'inquiry',
-    title: 'Inquiry / Booking Placed',
-    description: 'Your booking request has been received and logged in the system.',
+    title: 'Booking request received',
+    description:
+      'Your Payment has been received and your booking request is being reviewed.',
   },
   {
     key: 'internal_review',
-    title: 'Internal Review & Confirmation',
-    description: 'Our team is reviewing the booking details and confirming the next steps.',
+    title: 'Booking Confirmed',
+    description: 'Your event is officially marked in our calendars.',
   },
   {
     key: 'information_collection',
     title: 'Information Collection',
-    description: 'We are collecting any booking details needed before planning begins.',
+    description:
+      'We are collecting any booking details needed and customisation requests before planning begins. (if applicable)',
   },
   {
     key: 'planning_preparation',
-    title: 'Planning & Preparation',
-    description: 'Vendor coordination, logistics, and event preparation are underway.',
+    title: 'Pre-Event Planning',
+    description: 'Your event preparations are underway.',
   },
   {
     key: 'pre_event_final_checks',
-    title: 'Pre-event Final Checks',
-    description: 'Final checks are in progress before the event day execution begins.',
+    title: 'Final payment',
+    description: 'Please make the final payment to team Elewen before your event begins.',
   },
   {
     key: 'event_day_execution',
-    title: 'Event Day / Execution',
+    title: 'Setup completed and styled',
     description: 'Your event is now in live execution with the on-ground team.',
   },
   {
     key: 'event_complete',
-    title: 'Event Complete',
-    description: 'The event has concluded and wrap-up is now in progress.',
+    title: 'Dismantling after the celebration',
+    description: 'Wrap-up is complete. Thank you for trusting us on your special day.',
   },
   {
     key: 'post_event_follow_up',
-    title: 'Post Event Follow Up',
-    description: 'Final follow-ups, feedback, and any closing items are being completed.',
+    title: "Review us and join the Fam! (we'd love to hear from you 🤍)",
+    description: 'Check your inbox! Our feedback form and a special surprise awaits you!',
   },
 ]
+
+const LEGACY_TIMELINE_TITLE_INDEX = new Map([
+  ['Inquiry / Booking Placed', 0],
+  ['Internal Review & Confirmation', 1],
+  ['Planning & Preparation', 3],
+  ['Pre-event Final Checks', 4],
+  ['Event Day / Execution', 5],
+  ['Event Complete', 6],
+  ['Post Event Follow Up', 7],
+])
 
 const STATUS_TO_TIMELINE_INDEX = {
   new: 0,
@@ -75,8 +87,14 @@ const STATUS_TO_TIMELINE_INDEX = {
 }
 
 const TIMELINE_STEP_INDEX_BY_TITLE = new Map(
-  BOOKING_TIMELINE_STEPS.map((step, index) => [step.title, index])
+  BOOKING_TIMELINE_STEPS.flatMap((step, index) => [[step.title, index]])
 )
+
+function getTimelineStepIndex(title) {
+  return (
+    TIMELINE_STEP_INDEX_BY_TITLE.get(title) ?? LEGACY_TIMELINE_TITLE_INDEX.get(title) ?? null
+  )
+}
 
 function getTimelineIndexForStatus(status) {
   if (status === 'completed') return 6
@@ -282,7 +300,7 @@ async function ensureBookingTimeline(tx, booking) {
 
   await Promise.all(
     timelineEntries.map(entry => {
-      const stepIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(entry.title)
+      const stepIndex = getTimelineStepIndex(entry.title)
       if (!Number.isInteger(stepIndex)) {
         return Promise.resolve(null)
       }
@@ -293,13 +311,14 @@ async function ensureBookingTimeline(tx, booking) {
         booking.status === 'pre_event' &&
         step?.key === 'pre_event_final_checks' &&
         paymentSummary.amountDue > 0
-          ? 'Final checks are in progress. Remaining payment must be completed before execution can begin.'
-          : entry.description || step?.description || null
+          ? 'Please make the final payment to team Elewen before your event begins. Remaining payment must be completed before execution can begin.'
+          : step?.description || null
       const nextTimelineDate = entry.timelineDate ?? getTimelineStepDate(step?.key, booking)
 
       return tx.bookingTimeline.update({
         where: { id: entry.id },
         data: {
+          title: step.title,
           status: nextStatus,
           description: nextDescription,
           timelineDate: nextTimelineDate,
@@ -1024,13 +1043,12 @@ export const getTimeline = async (req, res, next) => {
 
       return entries
         .sort((left, right) => {
-          const leftIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(left.title) ?? Number.MAX_SAFE_INTEGER
-          const rightIndex =
-            TIMELINE_STEP_INDEX_BY_TITLE.get(right.title) ?? Number.MAX_SAFE_INTEGER
+          const leftIndex = getTimelineStepIndex(left.title) ?? Number.MAX_SAFE_INTEGER
+          const rightIndex = getTimelineStepIndex(right.title) ?? Number.MAX_SAFE_INTEGER
           return leftIndex - rightIndex
         })
         .map(entry => {
-          const stepIndex = TIMELINE_STEP_INDEX_BY_TITLE.get(entry.title)
+          const stepIndex = getTimelineStepIndex(entry.title)
           const stageNote = stageNotes.get(stepIndex)
 
           if (!stageNote) return entry
