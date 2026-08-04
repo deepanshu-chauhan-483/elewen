@@ -78,14 +78,13 @@ export default function BartendingAddonDetailPage() {
       </div>
 
       <div className="mx-auto max-w-lg px-4 pb-16 pt-6">
-        {/* Illustration card */}
-        <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[16px] bg-white text-[#957960] shadow-sm">
+        <div className="flex justify-center">
           <BartendingAddonMedia
             name={addon.name}
             image={addon.image}
             size={64}
-            className="h-full w-full"
-            imgClassName="h-full w-full object-cover"
+            className="flex h-[320px] w-[280px] items-center justify-center"
+            imgClassName="block max-h-[320px] max-w-[280px] object-contain object-center"
           />
         </div>
 

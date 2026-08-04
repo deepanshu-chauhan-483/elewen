@@ -230,17 +230,22 @@ function BartendingAddonCard({ addon, isSelected = false, onToggle, onViewDetail
   return (
     <article
       onClick={() => onToggle?.(addon)}
-      className={`flex h-[231px] w-full min-w-0 flex-col justify-between rounded-[6px] border p-3 transition-all ${
+      className={`flex h-[250px] w-full min-w-0 flex-col justify-between rounded-[6px] border p-3 transition-all ${
         isSelected
           ? 'border-[#B08E66] bg-[#957960]'
           : 'border-[#F0E5D8] bg-white hover:border-[#D4B173]'
       }`}
     >
-      <div className="mx-auto flex h-[49px] w-[72px] items-center justify-center overflow-hidden rounded-[6px] bg-[#F7F4EF] p-2 text-[#2D2D2D]">
-        <BartendingAddonMedia name={addon.name} image={addon.image} size={42} />
+      <div className="mx-auto flex h-[64px] w-[96px] items-center justify-center overflow-hidden rounded-[6px]">
+        <BartendingAddonMedia
+          name={addon.name}
+          image={addon.image}
+          size={52}
+          imgClassName="h-full w-full object-cover"
+        />
       </div>
 
-      <div className="flex h-[90px] w-[72px] flex-col gap-2 mx-auto">
+      <div className="mx-auto flex h-[90px] w-[96px] flex-col gap-2">
         <p className={`text-[12px] font-semibold ${isSelected ? 'text-white' : 'text-[#7B330B]'}`}>
           {formatCurrency(addon.price)}
         </p>
