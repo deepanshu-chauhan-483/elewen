@@ -22,9 +22,19 @@ export const customerMessagesPath = (bookingId = '') =>
     ? `/user-dashboard/messages?bookingId=${encodeURIComponent(String(bookingId))}`
     : '/user-dashboard/messages'
 
-/** Cashfree replaces `{order_id}` in this URL after payment (including UPI QR on mobile). */
-export const customerPaymentReturnPath = bookingId =>
-  `/payment/return?bookingId=${encodeURIComponent(String(bookingId ?? ''))}&order_id={order_id}`
+/** Cashfree replaces `{order_id}` in this URL after payment (max 250 chars). */
+export const customerPaymentReturnPath = () => '/payment/return?order_id={order_id}'
 
-export const customerPaymentReturnUrl = bookingId =>
-  `${appBaseUrl()}${customerPaymentReturnPath(bookingId)}`
+export const customerPaymentReturnUrl = () =>
+  `${appBaseUrl()}${customerPaymentReturnPath()}`
+
+export const cashfreeWebhookUrl = () => {
+  const apiBase = String(process.env.PUBLIC_API_URL || 'https://api.elewen.co.in').replace(/\/$/, '')
+  return `${apiBase}/payments/webhook`
+}
+
+/** Fallback when Cashfree dashboard still points at the API host (APISIX → redirect to SPA). */
+export const apiPaymentReturnRedirectUrl = () => {
+  const apiBase = String(process.env.PUBLIC_API_URL || 'https://api.elewen.co.in').replace(/\/$/, '')
+  return `${apiBase}/payments/return?order_id={order_id}`
+}
