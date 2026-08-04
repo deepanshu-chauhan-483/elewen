@@ -265,6 +265,7 @@ export default function DecorThemePage() {
     params.set('service', serviceSlug)
     if (resolvedServiceId) params.set('serviceId', resolvedServiceId)
     if (flow) params.set('flow', flow)
+    params.set('skipTheme', '1')
     return `/packages/decor-levels?${params.toString()}`
   }, [categoryId, eventId, eventNumericId, flow, resolvedServiceId, serviceSlug])
 

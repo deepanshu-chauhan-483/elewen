@@ -128,8 +128,6 @@ export default function DecorLevelsPage() {
   const packagesQuery = usePackages()
   const { data: packages = [] } = packagesQuery
   const [sortValue, setSortValue] = useState('price-asc')
-  const [priceMin, setPriceMin] = useState('')
-  const [priceMax, setPriceMax] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (typeof window === 'undefined') return true
@@ -137,6 +135,7 @@ export default function DecorLevelsPage() {
   })
 
   const themeParam = searchParams.get('theme')?.toLowerCase() ?? ''
+  const skipTheme = searchParams.get('skipTheme') === '1'
 
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
   const hidePackagePrice = isCorporateCategory(categorySlug)
@@ -228,48 +227,18 @@ export default function DecorLevelsPage() {
     searchQuery,
   ])
 
-  const priceBounds = useMemo(() => {
-    const prices = filteredPackages
-      .map(pkg => Number(pkg.base_price) || 0)
-      .filter(price => price > 0)
-
-    if (!prices.length) return { min: 0, max: 0 }
-
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
-    }
-  }, [filteredPackages])
-
-  const priceFilteredPackages = useMemo(() => {
-    const minValue = priceMin === '' ? null : Number(priceMin)
-    const maxValue = priceMax === '' ? null : Number(priceMax)
-
-    return filteredPackages.filter(pkg => {
-      const price = Number(pkg.base_price) || 0
-      if (minValue != null && !Number.isNaN(minValue) && price < minValue) return false
-      if (maxValue != null && !Number.isNaN(maxValue) && price > maxValue) return false
-      return true
-    })
-  }, [filteredPackages, priceMin, priceMax])
-
   const sortedPackages = useMemo(() => {
-    const items = [...priceFilteredPackages]
+    const items = [...filteredPackages]
     if (sortValue === 'price-asc')
       return items.sort((a, b) => (a.base_price ?? 0) - (b.base_price ?? 0))
     if (sortValue === 'price-desc')
       return items.sort((a, b) => (b.base_price ?? 0) - (a.base_price ?? 0))
     return items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-  }, [priceFilteredPackages, sortValue])
+  }, [filteredPackages, sortValue])
 
-  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${eventSlug}:${eventId}:${serviceIdParam}:${themeParam}:${searchQuery}:${sortValue}:${priceMin}:${priceMax}`
+  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${eventSlug}:${eventId}:${serviceIdParam}:${themeParam}:${searchQuery}:${sortValue}`
   const skipPaginationWriteRef = useRef(false)
   const navigationType = useNavigationType()
-
-  useEffect(() => {
-    setPriceMin('')
-    setPriceMax('')
-  }, [categorySlug, eventSlug, eventId, serviceIdParam, themeParam, searchQuery])
 
   useEffect(() => {
     skipPaginationWriteRef.current = true
@@ -405,7 +374,7 @@ export default function DecorLevelsPage() {
     return <Navigate to={`/event-flow/event?${params.toString()}`} replace />
   }
 
-  if (requiresDecorThemeSelection(eventSlug) && !themeParam) {
+  if (requiresDecorThemeSelection(eventSlug) && !themeParam && !skipTheme) {
     const params = new URLSearchParams(searchParams)
     return <Navigate to={`/event-flow/decor-theme?${params.toString()}`} replace />
   }
@@ -423,13 +392,7 @@ export default function DecorLevelsPage() {
     <PackageListLayout
       totalCount={sortedPackages.length}
       sortValue={sortValue}
-      onSortChange={value => setSortValue(value)}
-      showPriceFilter={!hidePackagePrice}
-      priceMin={priceMin}
-      priceMax={priceMax}
-      priceBounds={priceBounds}
-      onPriceMinChange={setPriceMin}
-      onPriceMaxChange={setPriceMax}
+      onSortChange={e => setSortValue(e.target.value)}
       page={1}
       totalPages={1}
       onPrevPage={() => {}}
