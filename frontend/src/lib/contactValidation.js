@@ -35,13 +35,7 @@ export function validateCheckoutContactDetails({ fullName, email, phone }) {
   return errors
 }
 
-export function validateCheckoutEventDetails({
-  eventDate,
-  eventTime,
-  addressLine1,
-  addressLine2,
-  addressFloor,
-}) {
+export function validateCheckoutEventDetails({ eventDate, eventTime, addressLine1 }) {
   const errors = {}
 
   if (!String(eventDate ?? '').trim()) {
@@ -52,12 +46,6 @@ export function validateCheckoutEventDetails({
   }
   if (!String(addressLine1 ?? '').trim()) {
     errors.addressLine1 = 'Please enter the venue address (first line).'
-  }
-  if (!String(addressLine2 ?? '').trim()) {
-    errors.addressLine2 = 'Please enter the venue address (second line).'
-  }
-  if (!String(addressFloor ?? '').trim()) {
-    errors.addressFloor = 'Please enter the event location floor.'
   }
 
   return errors

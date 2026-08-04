@@ -898,8 +898,6 @@ export default function CheckoutPage() {
           eventDate,
           eventTime,
           addressLine1,
-          addressLine2,
-          addressFloor,
         })
       )
 
@@ -1634,7 +1632,7 @@ export default function CheckoutPage() {
                     ) : null}
                   </div>
                   <div>
-                    <CheckoutFieldLabel label="Second line" required />
+                    <CheckoutFieldLabel label="Second line" />
                     <input
                       ref={addressLine2Ref}
                       type="text"
@@ -1651,7 +1649,7 @@ export default function CheckoutPage() {
                     ) : null}
                   </div>
                   <div>
-                    <CheckoutFieldLabel label="Event location floor" required />
+                    <CheckoutFieldLabel label="Event location floor" />
                     <input
                       ref={addressFloorRef}
                       type="text"
