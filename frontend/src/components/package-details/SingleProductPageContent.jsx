@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { cloneElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import NavHeader from '../NavHeader'
-import { useCart } from '../../hooks/useCart'
 import Footer from '../Footer'
 import PackageCard from '../package-listing/PackageCard'
 import AppImage from '../common/AppImage'
@@ -312,9 +311,24 @@ export default function SingleProductPageContent({
   consultationPackage = null,
 }) {
   const desktopSectionTop = '58px'
+  const [stickyShowsGoToCart, setStickyShowsGoToCart] = useState(false)
   const addToCartDisabled = disableAddToCart || isAddingToCart
   const addToCartButtonLabel = isAddingToCart ? 'Adding...' : addToCartLabel
   const hidePrice = hideHeaderPrice || consultationOnly
+
+  useEffect(() => {
+    setStickyShowsGoToCart(false)
+  }, [packageId, title])
+
+  const handleAddToCartClick = useCallback(() => {
+    onAddToCart?.()
+    setStickyShowsGoToCart(true)
+  }, [onAddToCart])
+
+  const enhancedCustomDetailsContent = customDetailsContent
+    ? cloneElement(customDetailsContent, { onAddToCart: handleAddToCartClick })
+    : null
+
   const consultationPath = buildBookConsultationPath({
     packageId: consultationPackage?.id ?? consultationPackage?.packageId,
     packageTitle: consultationPackage?.title ?? consultationPackage?.packageTitle,
@@ -329,7 +343,7 @@ export default function SingleProductPageContent({
       originalPrice={originalPrice}
       discountBadge={discountBadge}
       intro={intro}
-      customDetailsContent={customDetailsContent}
+      customDetailsContent={enhancedCustomDetailsContent}
       beforePriceContent={beforePriceContent}
       customPriceContent={customPriceContent}
       customContent={customContent}
@@ -347,7 +361,8 @@ export default function SingleProductPageContent({
       isAddingToCart={isAddingToCart}
       addToCartMessage={addToCartMessage}
       relatedProducts={relatedProducts}
-      onAddToCart={onAddToCart}
+      onAddToCart={handleAddToCartClick}
+      stickyShowsGoToCart={stickyShowsGoToCart}
       packageId={packageId}
       ctaButtonText={ctaButtonText}
       testimonials={testimonials}
@@ -497,6 +512,7 @@ function ProductImageLayout({
   addToCartMessage,
   relatedProducts,
   onAddToCart,
+  stickyShowsGoToCart = false,
   packageId = null,
   ctaButtonText,
   testimonials,
@@ -506,36 +522,26 @@ function ProductImageLayout({
   consultationPath = BOOK_CONSULTATION_PATH,
 }) {
   const navigate = useNavigate()
-  const { cart } = useCart()
   const normalizedMainImage = mainImage ?? null
   const initialDisplayImage = mainImage ?? sideImages[0]
   const [selectedOverride, setSelectedOverride] = useState(null)
   const [trackedMainImage, setTrackedMainImage] = useState(normalizedMainImage)
   const [isCartOptionsOpen, setIsCartOptionsOpen] = useState(false)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
-  const [addedToCartLocally, setAddedToCartLocally] = useState(false)
-
-  const isPackageInCart = useMemo(() => {
-    if (!packageId) return addedToCartLocally
-    return (cart?.items ?? []).some(item => String(item.packageId) === String(packageId))
-  }, [addedToCartLocally, cart?.items, packageId])
 
   const stickyAddToCartLabel = isAddingToCart
     ? 'Adding...'
-    : isPackageInCart
+    : stickyShowsGoToCart
       ? 'Go to cart'
       : addToCartLabel
 
   const handleStickyAddToCart = useCallback(() => {
-    if (isPackageInCart && !isAddingToCart) {
+    if (stickyShowsGoToCart && !isAddingToCart) {
       navigate('/cart')
       return
     }
     onAddToCart?.()
-    if (!packageId) {
-      setAddedToCartLocally(true)
-    }
-  }, [isAddingToCart, isPackageInCart, navigate, onAddToCart, packageId])
+  }, [isAddingToCart, navigate, onAddToCart, stickyShowsGoToCart])
 
   const scrollToProductOptions = useCallback(() => {
     const options = document.getElementById('product-options')
