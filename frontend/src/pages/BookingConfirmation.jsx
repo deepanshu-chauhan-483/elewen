@@ -13,6 +13,7 @@ import { getBookingPackageNamesText, parseBookingItemTitle } from '../lib/bookin
 import { isCodPayment } from '../lib/sheeshaCheckout'
 
 const SUPPORT_PHONE = '+91 9810937700'
+const SUPPORT_EMAIL = 'info@elewen.co.in'
 
 const HOOKAH_NEXT_STEPS = [
   {
@@ -419,7 +420,7 @@ export default function BookingConfirmation() {
                 simply email or call us at {SUPPORT_PHONE}.
               </p>
               <p className="text-xs text-gray-500">
-                Questions? Contact us at support@elewen.in or call {SUPPORT_PHONE}
+                Questions? Contact us at {SUPPORT_EMAIL} or call {SUPPORT_PHONE}
               </p>
             </div>
           </div>
@@ -547,7 +548,7 @@ export default function BookingConfirmation() {
               request.
             </p>
             <p className="text-xs text-gray-500">
-              Questions? Contact us at support@elewen.in or call +91 98XX XXXXX
+              Questions? Contact us at {SUPPORT_EMAIL} or call {SUPPORT_PHONE}
             </p>
           </div>
         </div>

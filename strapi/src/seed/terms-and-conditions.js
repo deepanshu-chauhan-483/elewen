@@ -8,7 +8,7 @@ const TERMS_AND_CONDITIONS_PAYLOAD = {
   version: '1.0',
   effectiveDate: '2025-09-04',
   lastUpdated: '2025-09-04',
-  contactEmail: 'Elewen.events@gmail.com',
+  contactEmail: 'info@elewen.co.in',
   governingLaw: 'India',
   jurisdiction: 'New Delhi, India',
   sections: [
@@ -352,7 +352,7 @@ const TERMS_AND_CONDITIONS_PAYLOAD = {
         {
           clauseNumber: '17.1',
           content:
-            'For support, disputes, refunds, or general assistance, please contact:\nElewen.events@gmail.com\n\nOr use the contact form available on the Elewen website.\n\nElewen will acknowledge all queries and make reasonable efforts to respond promptly and efficiently.',
+            'For support, disputes, refunds, or general assistance, please contact:\ninfo@elewen.co.in\n\nOr use the contact form available on the Elewen website.\n\nElewen will acknowledge all queries and make reasonable efforts to respond promptly and efficiently.',
           applicableTo: 'all',
         },
       ],

@@ -108,7 +108,7 @@ export default function ContactUsPage() {
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-white/80">
                   <div className="flex flex-wrap items-center md:gap-2 lg:gap-6 text-[14px] font-medium">
                     <a
-                      href="mailto:xyz@gmail.com"
+                      href="mailto:info@elewen.co.in"
                       className="flex items-center transition-opacity hover:opacity-100"
                     >
                       <span className="flex h-7 w-7 items-center justify-start text-white">

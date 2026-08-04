@@ -81,7 +81,7 @@ const DOCUMENT_CONFIG = {
         id: 'contact-us',
         title: '10. Contact Us',
         content: [
-          'If you have any questions about this Privacy Policy, write to us at: Elewen.events@gmail.com',
+          'If you have any questions about this Privacy Policy, write to us at: info@elewen.co.in',
         ],
       },
     ],

@@ -23,6 +23,7 @@ const formatAddress = value => {
 }
 
 const FROM = process.env.SMTP_FROM || 'deepanshuchauhan483@gmail.com'
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'info@elewen.co.in'
 
 // ─── Base layout ──────────────────────────────────────────────────────────────
 const layout = (title, bodyHtml) => `
@@ -55,7 +56,7 @@ const layout = (title, bodyHtml) => `
           <tr>
             <td style="padding:24px 40px;border-top:1px solid #2a2a2a;">
               <p style="margin:0;font-size:12px;color:#666;text-align:center;">
-                Questions? Reply to this email or contact us at support@elewen.in<br/>
+                Questions? Reply to this email or contact us at ${SUPPORT_EMAIL}<br/>
                 <span style="color:#444;">© 2026 Elewen. All rights reserved.</span>
               </p>
             </td>

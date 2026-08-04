@@ -7,7 +7,7 @@ const PRIVACY_POLICY_PAYLOAD = {
   title: 'Privacy Policy',
   effectiveDate: '2025-09-04',
   lastUpdated: '2025-09-04',
-  contactEmail: 'Elewen.events@gmail.com',
+  contactEmail: 'info@elewen.co.in',
   governingLaw: 'India',
   jurisdiction: 'Delhi',
   sections: [
@@ -87,7 +87,7 @@ const PRIVACY_POLICY_PAYLOAD = {
       clauses: [
         {
           content:
-            '• We retain customer and vendor data indefinitely for records, analytics, and platform improvement.\n• If you wish to have your data deleted, you may email us at Elewen.events@gmail.com, and we’ll process your request in line with Indian IT and DPDP regulations.',
+            '• We retain customer and vendor data indefinitely for records, analytics, and platform improvement.\n• If you wish to have your data deleted, you may email us at info@elewen.co.in, and we’ll process your request in line with Indian IT and DPDP regulations.',
           applicableTo: 'all',
         },
       ],
@@ -171,7 +171,7 @@ const PRIVACY_POLICY_PAYLOAD = {
       clauses: [
         {
           content:
-            'If you have any questions about this Privacy Policy, write to us at:\nElewen.events@gmail.com',
+            'If you have any questions about this Privacy Policy, write to us at:\ninfo@elewen.co.in',
           applicableTo: 'all',
         },
       ],
