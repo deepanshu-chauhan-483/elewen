@@ -21,13 +21,19 @@ const normalizeThemeSlug = value =>
 
 /**
  * Catering listing — official catalog only (Level from Strapi budget_level).
+ * Keep old seed slugs + client renames so CMS title/slug edits still list.
  */
 const CATERING_ALLOWED_SLUGS = new Set([
   'close-circle-catering-1',
   'close-circle-catering-2',
   'close-circle-catering-3',
+  'smart-serve-1',
+  'smart-serve',
   'easy-hosting-simply-served-1',
   'easy-hosting-simply-served-2',
+  'easy-hosting',
+  'easy-hosting-1',
+  'easy-hosting-2',
   'effortless-hosting',
   'signature-hosting-package',
   'signature-hosting-2',
@@ -37,6 +43,21 @@ const CATERING_ALLOWED_SLUGS = new Set([
   'the-social-starters',
   'purely-satvik',
 ])
+
+/** Client-renamed slugs → canonical seed slug (menus / fallbacks). */
+export const CATERING_SLUG_ALIASES = {
+  'smart-serve-1': 'close-circle-catering-1',
+  'smart-serve': 'close-circle-catering-1',
+  'easy-hosting': 'easy-hosting-simply-served-1',
+  'easy-hosting-1': 'easy-hosting-simply-served-1',
+  'easy-hosting-2': 'easy-hosting-simply-served-2',
+}
+
+export function resolveCateringCatalogSlug(slug) {
+  const key = normalizeValue(slug)
+  if (!key) return ''
+  return CATERING_SLUG_ALIASES[key] || key
+}
 
 /**
  * Bartending listing — Classic Pour, Signature Mix, House Special.
@@ -270,10 +291,17 @@ function isAllowedCorporateEventPackage(pkg, allowlist) {
 
 function isAllowedCateringPackage(pkg) {
   const slug = normalizeValue(pkg?.slug)
-  if (slug && CATERING_ALLOWED_SLUGS.has(slug)) return true
+  const catalogSlug = resolveCateringCatalogSlug(slug)
+  if (slug && (CATERING_ALLOWED_SLUGS.has(slug) || CATERING_ALLOWED_SLUGS.has(catalogSlug))) {
+    return true
+  }
 
   const titleKey = normalizeLevelSlug(pkg?.title)
-  return Boolean(titleKey && CATERING_ALLOWED_SLUGS.has(titleKey))
+  if (titleKey && CATERING_ALLOWED_SLUGS.has(titleKey)) return true
+  // Client title renames (e.g. "Smart Serve") still map via alias keys.
+  if (titleKey && CATERING_SLUG_ALIASES[titleKey]) return true
+  if (titleKey.startsWith('smart-serve') || titleKey.startsWith('easy-hosting')) return true
+  return false
 }
 
 function isAllowedBartendingPackage(pkg) {
