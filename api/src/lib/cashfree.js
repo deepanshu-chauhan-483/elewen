@@ -47,8 +47,13 @@ export async function createCashfreeOrder({
   customerPhone,
   customerEmail,
   returnUrl,
+  notifyUrl,
   note,
 }) {
+  const orderMeta = {}
+  if (returnUrl) orderMeta.return_url = returnUrl
+  if (notifyUrl) orderMeta.notify_url = notifyUrl
+
   const response = await fetch(`${getBaseUrl()}/orders`, {
     method: 'POST',
     headers: getHeaders(),
@@ -61,7 +66,7 @@ export async function createCashfreeOrder({
         customer_phone: customerPhone || '9999999999',
         customer_email: customerEmail || undefined,
       },
-      order_meta: returnUrl ? { return_url: returnUrl } : undefined,
+      order_meta: Object.keys(orderMeta).length ? orderMeta : undefined,
       order_note: note || undefined,
     }),
   })

@@ -329,6 +329,9 @@ export const paymentCompleteReturn = (token, body) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const paymentReturnContext = orderId =>
+  apiGet(withQuery('/payments/return-context', { order_id: orderId }))
+
 export const paymentGetByBooking = (token, bookingId) =>
   apiGet(withQuery('/payments', { bookingId }), { headers: { Authorization: `Bearer ${token}` } })
 
