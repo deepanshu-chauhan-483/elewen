@@ -74,11 +74,13 @@ function PackageImageLightbox({ open, image, title, onClose }) {
         onKeyDown={() => {}}
         role="presentation"
       >
-        <AppImage
+        <BrandedImage
           src={image}
           alt={title}
           eager
-          className="block max-h-[90vh] max-w-full origin-top object-contain scale-[1.12]"
+          fill={false}
+          className="max-h-[90vh] max-w-full"
+          imgClassName="object-contain"
         />
       </div>
     </div>
@@ -605,7 +607,6 @@ function ProductImageLayout({
                     src={activeImage}
                     alt={title}
                     eager
-                    cropWatermark
                     className="h-full w-full border-l-2 border-r-2 border-b-2 border-[#727355] bg-white"
                     imgClassName="object-cover object-center"
                   />
@@ -641,7 +642,6 @@ function ProductImageLayout({
                       <BrandedImage
                         src={image}
                         alt={`${title} preview ${index + 1}`}
-                        cropWatermark
                         className="h-full w-full rounded-[14px]"
                         imgClassName="rounded-[14px] object-cover"
                       />
@@ -839,10 +839,11 @@ function ProductImageLayout({
                       </p>
                       <p className="text-[12px] md:text-[16px] text-[#2D2D2D]">{item.date}</p>
                     </div>
-                    <img
+                    <BrandedImage
                       src={item.image || mainImage}
                       alt={`${item.name} event`}
-                      className="mt-3 h-[324px] w-full object-cover"
+                      className="mt-3 h-[324px] w-full"
+                      imgClassName="object-cover"
                     />
                     <p className="mt-3 text-[12px] md:text-[16px] leading-[1.6] text-[#2D2D2D]">
                       {item.quote}

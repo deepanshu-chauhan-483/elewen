@@ -18,6 +18,7 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import white11logo from '../assets/images/white11logo.png'
+import BrandedImage from '../components/common/BrandedImage'
 
 import CelebrationDoor from '../components/landing-page/CelebrationDoor'
 import HeroSection from '../components/landing-page/HeroSection'
@@ -207,12 +208,6 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
     .toLowerCase()
   const packageHref = packageId ? getPackageHref(serviceSlug, packageId) : ''
 
-  const handleImageError = (event, imageIndex = 0) => {
-    const fallbackSrc = fallbackImages[imageIndex % Math.max(fallbackImages.length, 1)]
-    if (fallbackSrc && event.currentTarget.src !== fallbackSrc) {
-      event.currentTarget.src = fallbackSrc
-    }
-  }
   const tags = useMemo(() => {
     if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
     if (Array.isArray(pkg.tags)) return pkg.tags.filter(Boolean)
@@ -268,13 +263,13 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
         <div
           className={`relative w-full h-[240px] md:h-[450px] bg-[#EAEAEA] overflow-hidden rounded-[8px] md:rounded-none`}
         >
-          <img
+          <BrandedImage
             src={pkg.images?.[0] ?? fallbackImages[0] ?? ''}
             alt={pkg.title}
-            className="w-full h-full object-cover object-center"
-            loading={isActive ? 'eager' : 'lazy'}
-            decoding="async"
-            onError={event => handleImageError(event, 0)}
+            eager={isActive}
+            fallbackSrc={fallbackImages[0] ?? ''}
+            className="h-full w-full"
+            imgClassName="object-cover object-center"
           />
 
           {pkg.price ? (

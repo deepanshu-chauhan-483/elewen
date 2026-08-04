@@ -12,6 +12,7 @@ import {
 import { usePackages } from '../hooks/usePackages'
 import { useWishlist } from '../hooks/useWishlist'
 import CmsPageLoader from '../components/common/CmsPageLoader'
+import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import { useServiceAreas } from '../hooks/useServiceAreas'
@@ -668,12 +669,11 @@ function SinglePackageCard({
         <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
         <div className="ml-2 h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200">
           {packageImage ? (
-            <img
+            <BrandedImage
               src={packageImage}
               alt={packageTitle}
-              className="h-full w-full object-cover"
-              loading="lazy"
-              decoding="async"
+              className="h-full w-full"
+              imgClassName="object-cover"
             />
           ) : null}
         </div>

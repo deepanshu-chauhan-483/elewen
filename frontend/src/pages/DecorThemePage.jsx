@@ -6,6 +6,7 @@ import { useDecorThemeOptions, useFilteredServiceOptions } from '../hooks/useEve
 import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
+import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { filterDecorThemesBySocialEvent, filterThemesByEventPackages } from '../lib/packageFilters'
 import { HOUSE_PARTY_THEME_PREVIEW } from '../lib/housePartyPackageMedia'
@@ -133,13 +134,11 @@ function ThemeCard({
     >
       <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
         {image ? (
-          <img
+          <BrandedImage
             src={image}
             alt={theme.label}
-            className="h-full w-full object-cover object-center"
-            loading="lazy"
-            decoding="async"
-            style={{ transform: 'none' }}
+            className="h-full w-full"
+            imgClassName="object-cover object-center"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[#E8DDD1] px-4 text-center text-[13px] text-[#7C7065] md:text-[14px]">

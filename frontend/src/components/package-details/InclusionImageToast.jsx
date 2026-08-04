@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import AppImage from '../common/AppImage'
+import BrandedImage from '../common/BrandedImage'
 
 const AUTO_DISMISS_MS = 3000
 
@@ -40,11 +40,12 @@ export default function InclusionImageToast({ image, onClose }) {
             </svg>
           </button>
           <div className="h-[150px] w-full overflow-hidden bg-[#E8E2DA]">
-            <AppImage
+            <BrandedImage
               src={image}
               alt="Inclusion preview"
               eager
-              className="h-full w-full origin-top object-cover object-top scale-[1.12]"
+              className="h-full w-full"
+              imgClassName="object-cover object-top"
             />
           </div>
         </div>

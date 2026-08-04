@@ -17,9 +17,10 @@ export default function BrandedImage({
   alt = '',
   fallbackSrc,
   position = 'bottom-right',
-  showLogo = false,
+  showLogo = true,
   showLogoBg = true,
   cropWatermark = true,
+  fill = true,
   eager = false,
   className = '',
   imgClassName = '',
@@ -46,7 +47,11 @@ export default function BrandedImage({
         alt={alt}
         eager={eager}
         onError={handleError}
-        className={`h-full w-full ${cropClasses} ${imgClassName || 'object-cover object-top'}`}
+        className={
+          fill
+            ? `h-full w-full ${cropClasses} ${imgClassName || 'object-cover object-top'}`
+            : `block max-h-[90vh] max-w-full ${cropClasses} ${imgClassName || 'object-contain'}`
+        }
       />
 
       {showLogo ? (

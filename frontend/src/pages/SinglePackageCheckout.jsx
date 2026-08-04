@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
+import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
@@ -436,12 +437,11 @@ export default function SinglePackageCheckout() {
             <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
             <div className="ml-2 h-20 w-20 overflow-hidden rounded-lg bg-gray-200">
               {packageImage ? (
-                <img
+                <BrandedImage
                   src={packageImage}
                   alt={packageTitle}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
+                  className="h-full w-full"
+                  imgClassName="object-cover"
                 />
               ) : null}
             </div>

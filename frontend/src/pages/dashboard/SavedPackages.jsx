@@ -8,6 +8,7 @@ import {
 } from '../../components/dashboard/dashboardUtils'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
 import { DashboardLoadingState } from '../../components/dashboard/DashboardUI'
+import BrandedImage from '../../components/common/BrandedImage'
 
 function getPackageHref(item) {
   const serviceSlug = String(item?.serviceCategories?.[0]?.slug ?? '')
@@ -61,10 +62,11 @@ function PackageCard({ item, isPending, onRemove }) {
         {/* ── Image panel ── */}
         <div className="relative h-52 lg:h-auto lg:w-64 flex-shrink-0 overflow-hidden">
           {item.imageUrl ? (
-            <img
+            <BrandedImage
               src={item.imageUrl}
               alt={item.title || 'Saved package'}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="h-full w-full"
+              imgClassName="object-cover"
             />
           ) : (
             <div className="h-full w-full bg-gradient-to-br from-[#E7DDCF] to-[#D4C4B0] flex items-center justify-center">
@@ -186,7 +188,7 @@ function PackageCard({ item, isPending, onRemove }) {
 }
 
 export default function SavedPackages() {
-  const { wishlist = [], isLoading, removeSavedPackage, pendingPackageId } = useWishlist()
+  const { wishlist = [], isLoading, toggleSavedPackage, pendingPackageId } = useWishlist()
   const { searchTerm } = useDashboardSearch()
   const debouncedSearchTerm = useDebouncedValue(searchTerm)
   const filteredWishlist = wishlist.filter(item =>
@@ -248,11 +250,7 @@ export default function SavedPackages() {
                 key={item.id || item.packageId}
                 item={item}
                 isPending={isPending}
-                onRemove={() =>
-                  removeSavedPackage({
-                    packageId: item.packageId || item.packageDocumentId || item.package?.id,
-                  })
-                }
+                onRemove={() => toggleSavedPackage({ packageId: item.packageId })}
               />
             )
           })}
