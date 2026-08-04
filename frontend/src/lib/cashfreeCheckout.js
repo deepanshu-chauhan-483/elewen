@@ -22,6 +22,11 @@ export function loadCashfreeScript() {
   })
 }
 
+export function isMobileCheckoutDevice() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(max-width: 768px)').matches
+}
+
 export async function openCashfreeCheckout({ paymentSessionId, environment = 'sandbox' }) {
   const scriptLoaded = await loadCashfreeScript()
   if (!scriptLoaded || !window.Cashfree) {
@@ -34,6 +39,6 @@ export async function openCashfreeCheckout({ paymentSessionId, environment = 'sa
 
   return cashfree.checkout({
     paymentSessionId,
-    redirectTarget: '_modal',
+    redirectTarget: isMobileCheckoutDevice() ? '_self' : '_modal',
   })
 }

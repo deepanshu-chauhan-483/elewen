@@ -21,3 +21,10 @@ export const customerMessagesPath = (bookingId = '') =>
   bookingId
     ? `/user-dashboard/messages?bookingId=${encodeURIComponent(String(bookingId))}`
     : '/user-dashboard/messages'
+
+/** Cashfree replaces `{order_id}` in this URL after payment (including UPI QR on mobile). */
+export const customerPaymentReturnPath = bookingId =>
+  `/payment/return?bookingId=${encodeURIComponent(String(bookingId ?? ''))}&order_id={order_id}`
+
+export const customerPaymentReturnUrl = bookingId =>
+  `${appBaseUrl()}${customerPaymentReturnPath(bookingId)}`

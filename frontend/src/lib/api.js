@@ -324,6 +324,11 @@ export const paymentCreateOrder = (token, body) =>
 export const paymentVerify = (token, body) =>
   apiPost('/payments/verify', body, { headers: { Authorization: `Bearer ${token}` } })
 
+export const paymentCompleteReturn = (token, body) =>
+  apiPost('/payments/complete-return', body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const paymentGetByBooking = (token, bookingId) =>
   apiGet(withQuery('/payments', { bookingId }), { headers: { Authorization: `Bearer ${token}` } })
 
