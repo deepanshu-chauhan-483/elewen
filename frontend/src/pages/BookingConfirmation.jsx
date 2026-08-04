@@ -62,12 +62,12 @@ function WhatHappensNextPanel({ steps }) {
         <div className="absolute bottom-2 left-4 top-2 w-[1px] border-l border-dashed border-[#C8B89E]" />
 
         {steps.map((step, i) => (
-          <div key={step.title} className="relative flex gap-4">
-            <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#CDB17E] bg-white text-[#957960]">
+          <div key={step.title} className="relative flex items-start gap-4">
+            <div className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#CDB17E] bg-white text-sm text-[#957960]">
               {i + 1}
             </div>
 
-            <div>
+            <div className="min-w-0 flex-1 pt-0.5">
               <p className="text-[16px] font-medium text-[#1C1C1C]">{step.title}</p>
               <p className="text-[12px] text-[#364022]">{step.desc}</p>
             </div>
