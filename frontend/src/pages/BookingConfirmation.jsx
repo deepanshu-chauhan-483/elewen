@@ -14,30 +14,22 @@ import { isCodPayment } from '../lib/sheeshaCheckout'
 
 const SUPPORT_PHONE = '+91 9810937700'
 
-const HOOKAH_JOURNEY_SECTIONS = [
+const HOOKAH_NEXT_STEPS = [
   {
-    title: 'Booking',
-    items: [
-      'Booking placed',
-      'Payment due',
-      'Confirmation email & call from our team',
-    ],
+    title: 'Payment Due',
+    desc: 'We have received your request, our team will contact you shortly for advance payment. Post payment, your booking shall be confirmed',
   },
   {
-    title: 'Customisation (if applicable)',
-    items: [
-      'Your celebration details shared',
-      'We begin designing your setup',
-      'Final deck shared for your approval',
-    ],
+    title: 'Admin confirmation',
+    desc: 'Once Elewen confirms your booking, you will get a confirmation notification and email.',
   },
   {
-    title: 'Event Day',
-    items: [
-      'Elewen vendor network arrives',
-      'Setup completed and styled',
-      'Final payment',
-    ],
+    title: 'Vendor Coordination',
+    desc: 'Our team will contact you within 24 hours to confirm details.',
+  },
+  {
+    title: 'Balance Payment',
+    desc: 'The remaining amount will be due before the event date.',
   },
 ]
 
@@ -61,31 +53,24 @@ function isHookahBooking(booking, checkoutInfo, isSheeshaCodBooking) {
   })
 }
 
-function ElewenJourneyPanel() {
+function WhatHappensNextPanel({ steps }) {
   return (
     <div className="h-fit max-w-[458px] rounded-2xl bg-[#EADEC8] p-6 lg:ml-auto">
-      <h3 className="mb-2 text-[12px] font-medium text-[#591902]">✨ Your Elewen Journey</h3>
-      <p className="mb-6 text-[11px] text-[#364022] md:text-[12px]">
-        We&apos;ll keep ticking things off, so you always know exactly where we are.
-      </p>
+      <h3 className="mb-6 text-[12px] font-medium text-[#591902]">What Happens Next</h3>
 
-      <div className="space-y-6">
-        {HOOKAH_JOURNEY_SECTIONS.map(section => (
-          <div key={section.title}>
-            <p className="mb-3 text-[14px] font-medium text-[#1C1C1C]">{section.title}</p>
-            <ul className="space-y-2">
-              {section.items.map(item => (
-                <li
-                  key={item}
-                  className="flex items-start gap-2 text-[12px] text-[#364022] md:text-[13px]"
-                >
-                  <span aria-hidden="true" className="mt-0.5 shrink-0">
-                    ⬜
-                  </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+      <div className="relative space-y-8">
+        <div className="absolute bottom-2 left-4 top-2 w-[1px] border-l border-dashed border-[#C8B89E]" />
+
+        {steps.map((step, i) => (
+          <div key={step.title} className="relative flex gap-4">
+            <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#CDB17E] bg-white text-[#957960]">
+              {i + 1}
+            </div>
+
+            <div>
+              <p className="text-[16px] font-medium text-[#1C1C1C]">{step.title}</p>
+              <p className="text-[12px] text-[#364022]">{step.desc}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -440,7 +425,7 @@ export default function BookingConfirmation() {
           </div>
 
           <div className="flex-1">
-            <ElewenJourneyPanel />
+            <WhatHappensNextPanel steps={HOOKAH_NEXT_STEPS} />
           </div>
         </div>
       </div>
@@ -569,28 +554,9 @@ export default function BookingConfirmation() {
 
         <div className="flex-1">
           {isHookah ? (
-            <ElewenJourneyPanel />
+            <WhatHappensNextPanel steps={HOOKAH_NEXT_STEPS} />
           ) : (
-            <div className="h-fit max-w-[458px] rounded-2xl bg-[#EADEC8] p-6 lg:ml-auto">
-              <h3 className="mb-6 text-[12px] font-medium text-[#591902]">What Happens Next</h3>
-
-              <div className="relative space-y-8">
-                <div className="absolute bottom-2 left-4 top-2 w-[1px] border-l border-dashed border-[#C8B89E]" />
-
-                {pageContent.steps.map((step, i) => (
-                  <div key={i} className="relative flex gap-4">
-                    <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#CDB17E] bg-white text-[#957960]">
-                      {i + 1}
-                    </div>
-
-                    <div>
-                      <p className="text-[16px] font-medium text-[#1C1C1C]">{step.title}</p>
-                      <p className="text-[12px] text-[#364022]">{step.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <WhatHappensNextPanel steps={pageContent.steps} />
           )}
         </div>
       </div>
