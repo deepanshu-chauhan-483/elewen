@@ -19,7 +19,7 @@ const HOOKAH_JOURNEY_SECTIONS = [
     title: 'Booking',
     items: [
       'Booking placed',
-      'Payment received',
+      'Payment due',
       'Confirmation email & call from our team',
     ],
   },
@@ -37,14 +37,61 @@ const HOOKAH_JOURNEY_SECTIONS = [
       'Elewen vendor network arrives',
       'Setup completed and styled',
       'Final payment',
-      'Dismantling after the celebration',
     ],
   },
-  {
-    title: 'After',
-    items: ["Review us and join the Fam! (we'd love to hear from you 🤍)"],
-  },
 ]
+
+function isHookahBooking(booking, checkoutInfo, isSheeshaCodBooking) {
+  if (isSheeshaCodBooking || checkoutInfo?.checkoutMode === 'sheesha-cod') return true
+
+  const items = Array.isArray(booking?.items) ? booking.items : []
+  const selectedItems = Array.isArray(checkoutInfo?.selectedItems) ? checkoutInfo.selectedItems : []
+  const source = items.length ? items : selectedItems
+  if (!source.length) return false
+
+  const packageItems = source.filter(item => {
+    const parsed = parseBookingItemTitle(item?.title ?? '')
+    return parsed.itemType !== 'addon'
+  })
+  if (!packageItems.length) return false
+
+  return packageItems.every(item => {
+    const text = String(item?.title ?? item?.name ?? '').toLowerCase()
+    return text.includes('hookah') || text.includes('sheesha') || text.includes('hukkah')
+  })
+}
+
+function ElewenJourneyPanel() {
+  return (
+    <div className="h-fit max-w-[458px] rounded-2xl bg-[#EADEC8] p-6 lg:ml-auto">
+      <h3 className="mb-2 text-[12px] font-medium text-[#591902]">✨ Your Elewen Journey</h3>
+      <p className="mb-6 text-[11px] text-[#364022] md:text-[12px]">
+        We&apos;ll keep ticking things off, so you always know exactly where we are.
+      </p>
+
+      <div className="space-y-6">
+        {HOOKAH_JOURNEY_SECTIONS.map(section => (
+          <div key={section.title}>
+            <p className="mb-3 text-[14px] font-medium text-[#1C1C1C]">{section.title}</p>
+            <ul className="space-y-2">
+              {section.items.map(item => (
+                <li
+                  key={item}
+                  className="flex items-start gap-2 text-[12px] text-[#364022] md:text-[13px]"
+                >
+                  <span aria-hidden="true" className="mt-0.5 shrink-0">
+                    ⬜
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0)
@@ -185,6 +232,7 @@ export default function BookingConfirmation() {
     payment?.codPending === true ||
     booking?.paymentSummary?.isCodBooking === true ||
     (Array.isArray(booking?.payments) && booking.payments.some(isCodPayment))
+  const isHookah = isHookahBooking(booking, checkoutInfo, isSheeshaCodBooking)
   // Cashfree advance packages stay `new` until admin confirms — show Received, not Confirmed.
   const bookingStatus = String(booking?.status ?? 'new').toLowerCase()
   const isAwaitingAdminConfirm =
@@ -392,35 +440,7 @@ export default function BookingConfirmation() {
           </div>
 
           <div className="flex-1">
-            <div className="h-fit max-w-[458px] rounded-2xl bg-[#EADEC8] p-6 lg:ml-auto">
-              <h3 className="mb-2 text-[12px] font-medium text-[#591902]">
-                ✨ Your Elewen Journey
-              </h3>
-              <p className="mb-6 text-[11px] text-[#364022] md:text-[12px]">
-                We&apos;ll keep ticking things off, so you always know exactly where we are.
-              </p>
-
-              <div className="space-y-6">
-                {HOOKAH_JOURNEY_SECTIONS.map(section => (
-                  <div key={section.title}>
-                    <p className="mb-3 text-[14px] font-medium text-[#1C1C1C]">{section.title}</p>
-                    <ul className="space-y-2">
-                      {section.items.map(item => (
-                        <li
-                          key={item}
-                          className="flex items-start gap-2 text-[12px] text-[#364022] md:text-[13px]"
-                        >
-                          <span aria-hidden="true" className="mt-0.5 shrink-0">
-                            ⬜
-                          </span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ElewenJourneyPanel />
           </div>
         </div>
       </div>
@@ -548,26 +568,30 @@ export default function BookingConfirmation() {
         </div>
 
         <div className="flex-1">
-          <div className="h-fit max-w-[458px] rounded-2xl bg-[#EADEC8] p-6 lg:ml-auto">
-            <h3 className="mb-6 text-[12px] font-medium text-[#591902]">What Happens Next</h3>
+          {isHookah ? (
+            <ElewenJourneyPanel />
+          ) : (
+            <div className="h-fit max-w-[458px] rounded-2xl bg-[#EADEC8] p-6 lg:ml-auto">
+              <h3 className="mb-6 text-[12px] font-medium text-[#591902]">What Happens Next</h3>
 
-            <div className="relative space-y-8">
-              <div className="absolute bottom-2 left-4 top-2 w-[1px] border-l border-dashed border-[#C8B89E]" />
+              <div className="relative space-y-8">
+                <div className="absolute bottom-2 left-4 top-2 w-[1px] border-l border-dashed border-[#C8B89E]" />
 
-              {pageContent.steps.map((step, i) => (
-                <div key={i} className="relative flex gap-4">
-                  <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#CDB17E] bg-white text-[#957960]">
-                    {i + 1}
+                {pageContent.steps.map((step, i) => (
+                  <div key={i} className="relative flex gap-4">
+                    <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#CDB17E] bg-white text-[#957960]">
+                      {i + 1}
+                    </div>
+
+                    <div>
+                      <p className="text-[16px] font-medium text-[#1C1C1C]">{step.title}</p>
+                      <p className="text-[12px] text-[#364022]">{step.desc}</p>
+                    </div>
                   </div>
-
-                  <div>
-                    <p className="text-[16px] font-medium text-[#1C1C1C]">{step.title}</p>
-                    <p className="text-[12px] text-[#364022]">{step.desc}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

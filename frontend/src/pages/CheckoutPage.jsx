@@ -792,7 +792,7 @@ export default function CheckoutPage() {
           detailsTitle: 'Customer Form',
           detailsIntro:
             "We can't wait to bring your event to life. Share a few details and we'll take it from here.",
-          ctaLabel: 'Confirm booking (Pay on delivery)',
+          ctaLabel: 'Confirm booking',
           ctaTagline: 'Let it all come together!!',
         }
       : {
@@ -1777,7 +1777,7 @@ export default function CheckoutPage() {
           <div className="rounded-xl border border-[#95796066] p-5">
             <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
               {isSheeshaOnlyCheckout
-                ? '🔒 Booking confirmation · Pay on delivery · Easy cancellation'
+                ? '🔒 Booking confirmation · Easy cancellation'
                 : '🔒 Secure payment · Instant confirmation · Easy cancellation'}
             </div>
 
