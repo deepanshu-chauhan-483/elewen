@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import NavHeader from '../NavHeader'
+import { useCart } from '../../hooks/useCart'
 import Footer from '../Footer'
 import PackageCard from '../package-listing/PackageCard'
 import AppImage from '../common/AppImage'
@@ -303,6 +304,7 @@ export default function SingleProductPageContent({
   disableAddToCart = false,
   isAddingToCart = false,
   onAddToCart,
+  packageId = null,
   ctaButtonText = 'Book a Consultation',
   testimonials = [],
   hideHeaderPrice = false,
@@ -341,9 +343,12 @@ export default function SingleProductPageContent({
       promptContent={promptContent}
       addToCartDisabled={addToCartDisabled}
       addToCartButtonLabel={addToCartButtonLabel}
+      addToCartLabel={addToCartLabel}
+      isAddingToCart={isAddingToCart}
       addToCartMessage={addToCartMessage}
       relatedProducts={relatedProducts}
       onAddToCart={onAddToCart}
+      packageId={packageId}
       ctaButtonText={ctaButtonText}
       testimonials={testimonials}
       desktopSectionTop={desktopSectionTop}
@@ -487,9 +492,12 @@ function ProductImageLayout({
   promptContent,
   addToCartDisabled,
   addToCartButtonLabel,
+  addToCartLabel,
+  isAddingToCart = false,
   addToCartMessage,
   relatedProducts,
   onAddToCart,
+  packageId = null,
   ctaButtonText,
   testimonials,
   desktopSectionTop,
@@ -497,12 +505,37 @@ function ProductImageLayout({
   consultationOnly = false,
   consultationPath = BOOK_CONSULTATION_PATH,
 }) {
+  const navigate = useNavigate()
+  const { cart } = useCart()
   const normalizedMainImage = mainImage ?? null
   const initialDisplayImage = mainImage ?? sideImages[0]
   const [selectedOverride, setSelectedOverride] = useState(null)
   const [trackedMainImage, setTrackedMainImage] = useState(normalizedMainImage)
   const [isCartOptionsOpen, setIsCartOptionsOpen] = useState(false)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+  const [addedToCartLocally, setAddedToCartLocally] = useState(false)
+
+  const isPackageInCart = useMemo(() => {
+    if (!packageId) return addedToCartLocally
+    return (cart?.items ?? []).some(item => String(item.packageId) === String(packageId))
+  }, [addedToCartLocally, cart?.items, packageId])
+
+  const stickyAddToCartLabel = isAddingToCart
+    ? 'Adding...'
+    : isPackageInCart
+      ? 'Go to cart'
+      : addToCartLabel
+
+  const handleStickyAddToCart = useCallback(() => {
+    if (isPackageInCart && !isAddingToCart) {
+      navigate('/cart')
+      return
+    }
+    onAddToCart?.()
+    if (!packageId) {
+      setAddedToCartLocally(true)
+    }
+  }, [isAddingToCart, isPackageInCart, navigate, onAddToCart, packageId])
 
   const scrollToProductOptions = useCallback(() => {
     const options = document.getElementById('product-options')
@@ -895,9 +928,9 @@ function ProductImageLayout({
                   }`}
                   disabled={addToCartDisabled}
                   type="button"
-                  onClick={onAddToCart}
+                  onClick={handleStickyAddToCart}
                 >
-                  <span className="mr-2 sm:mr-3 md:mr-5">{addToCartButtonLabel}</span>
+                  <span className="mr-2 sm:mr-3 md:mr-5">{stickyAddToCartLabel}</span>
                   <span
                     className={`flex h-7 w-7 items-center justify-center rounded-full shadow-sm sm:h-8 sm:w-8 ${
                       addToCartDisabled ? 'bg-[#E2DEDA] text-[#9B958E]' : 'bg-white text-[#D4BA8E]'

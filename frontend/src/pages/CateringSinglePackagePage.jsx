@@ -799,6 +799,11 @@ export default function CateringSinglePackagePage() {
         originalPrice={packageOriginalPrice}
         discountBadge={packageDiscountBadge}
         intro=""
+        addToCartLabel={isAddingToCart ? 'Adding...' : 'Add to cart'}
+        disableAddToCart={isAddingToCart}
+        isAddingToCart={isAddingToCart}
+        onAddToCart={handleAddToCart}
+        packageId={pkg?.id}
         customDetailsContent={
           <CateringPackageDetails
             title={pkg.title || cateringDetails.heroBadge}

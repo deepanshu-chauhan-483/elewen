@@ -695,6 +695,7 @@ export default function BartendingSinglePackagePage() {
       addToCartMessage={addToCartMessage}
       disableAddToCart={isAddingToCart}
       onAddToCart={handleAddToCart}
+      packageId={pkg?.id}
       quantity={quantity}
       onDecrement={handleDecrease}
       onIncrement={() => {

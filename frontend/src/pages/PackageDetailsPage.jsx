@@ -415,6 +415,7 @@ export default function PackageDetailsPage() {
       addToCartMessage={addToCartMessage}
       disableAddToCart={isAddingToCart}
       onAddToCart={handleAddToCart}
+      packageId={pkg?.id}
       quantity={quantity}
       onDecrement={() => {
         setAddToCartMessage('')

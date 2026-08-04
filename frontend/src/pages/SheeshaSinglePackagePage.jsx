@@ -530,6 +530,7 @@ function SheeshaSinglePackagePageBody() {
       addToCartMessage={addToCartMessage}
       disableAddToCart={isAddingToCart}
       onAddToCart={handlePackageAddToCart}
+      packageId={pkg?.id}
       quantity={quantity}
       onDecrement={handleDecrease}
       onIncrement={handleIncrease}

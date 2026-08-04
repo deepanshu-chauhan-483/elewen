@@ -1880,6 +1880,7 @@ export default function DecorSinglePackagePage() {
         addToCartMessage={addToCartMessage}
         disableAddToCart={isDisabled}
         onAddToCart={handlePackageAddToCart}
+        packageId={pkg?.id}
         quantity={quantity}
         onDecrement={() => {
           setAddToCartMessage('')
