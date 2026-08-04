@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { DASHBOARD } from '../../constants/dashboard'
 
 const getIconStroke = isActive => (isActive ? '#591902' : '#FAFAFA')
@@ -197,14 +197,18 @@ export default function Sidebar({ isMobileOpen = false, onMobileClose = () => {}
         }}
       >
         <div className="flex h-[68px] items-center justify-between bg-[#FAFAFA] px-4 md:hidden">
-          <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
+          <Link to="/" aria-label="Back to homepage" onClick={onMobileClose}>
+            <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
+          </Link>
           <button type="button" aria-label="Close sidebar" onClick={onMobileClose}>
             <CloseIcon />
           </button>
         </div>
 
         <div className="hidden bg-[#FAFAFA] py-4 pl-5 h-[66px] md:block border-r-[0.5px] border-[#591902]">
-          <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
+          <Link to="/" aria-label="Back to homepage">
+            <h1 className="text-3xl font-serif text-[#591902]">ELEWEN</h1>
+          </Link>
         </div>
 
         <div className="flex flex-col gap-1 px-4 pt-6">
