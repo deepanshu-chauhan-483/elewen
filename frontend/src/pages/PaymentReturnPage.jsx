@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { getStoredJwt, paymentCompleteReturn, paymentReturnContext } from '../lib/api'
+import { getStoredJwt, paymentCompleteReturn } from '../lib/api'
 
 function parseApiError(error) {
   return (
@@ -14,17 +14,19 @@ function parseApiError(error) {
 export default function PaymentReturnPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const bookingId = searchParams.get('bookingId') || ''
   const gatewayOrderId =
     searchParams.get('order_id') || searchParams.get('orderId') || searchParams.get('orderid') || ''
 
   const [status, setStatus] = useState('loading')
   const [message, setMessage] = useState('Confirming your payment…')
-  const [resolvedBookingId, setResolvedBookingId] = useState(searchParams.get('bookingId') || '')
 
   useEffect(() => {
     let active = true
 
     async function finalizeReturn() {
+      const token = getStoredJwt()
+
       if (!gatewayOrderId) {
         if (!active) return
         setStatus('info')
@@ -34,27 +36,11 @@ export default function PaymentReturnPage() {
         return
       }
 
-      let bookingId = resolvedBookingId
-
-      try {
-        if (!bookingId) {
-          const context = await paymentReturnContext(gatewayOrderId)
-          bookingId = context?.bookingId || ''
-          if (active && bookingId) setResolvedBookingId(bookingId)
-        }
-      } catch {
-        // Context lookup is best-effort; webhook may still confirm payment.
-      }
-
-      const token = getStoredJwt()
-
       if (!token) {
         if (!active) return
         setStatus('info')
         setMessage(
-          bookingId
-            ? 'Payment received. You can view your booking status below or check your email for confirmation.'
-            : 'Payment received by Cashfree. If you paid using a QR code on another device, you can close this page — your checkout tab or email will update shortly.'
+          'Payment received by Cashfree. If you paid using a QR code on another device, you can close this page — your checkout tab or email will update shortly.'
         )
         return
       }
@@ -69,9 +55,9 @@ export default function PaymentReturnPage() {
         if (!active) return
 
         const booking = response?.booking
-        const nextBookingId = booking?.id || bookingId
+        const resolvedBookingId = booking?.id || bookingId
 
-        navigate(`/booking-confirmation?bookingId=${nextBookingId}`, {
+        navigate(`/booking-confirmation?bookingId=${resolvedBookingId}`, {
           replace: true,
           state: {
             booking,
@@ -96,7 +82,7 @@ export default function PaymentReturnPage() {
     return () => {
       active = false
     }
-  }, [gatewayOrderId, navigate, resolvedBookingId])
+  }, [bookingId, gatewayOrderId, navigate])
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
@@ -110,9 +96,9 @@ export default function PaymentReturnPage() {
             </h1>
             <p className="mt-3 text-sm leading-6 text-[#6B7280]">{message}</p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              {resolvedBookingId ? (
+              {bookingId ? (
                 <Link
-                  to={`/booking-confirmation?bookingId=${resolvedBookingId}`}
+                  to={`/booking-confirmation?bookingId=${bookingId}`}
                   className="rounded-full bg-[#364022] px-5 py-2 text-sm font-medium text-white"
                 >
                   View booking status

@@ -25,7 +25,7 @@ import dashboardRoutes from './routes/dashboard.js'
 import adminRoutes from './routes/admin.js'
 import jobsRoutes from './routes/jobs.js'
 import couponRoutes from './routes/coupons.js'
-import { handleWebhook, handlePaymentReturnRedirect, getPaymentReturnContext } from './controllers/payment.js'
+import { handleWebhook } from './controllers/payment.js'
 import { swaggerSpec } from './swagger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { bootstrapDefaultAdmin, getDefaultAdminCredentials } from './lib/bootstrapAdmin.js'
@@ -80,8 +80,6 @@ app.use(
 // Cashfree signature verification requires the raw request body (Buffer).
 // express.json() would parse and discard the raw body, breaking HMAC verification.
 app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook)
-app.get('/payments/return', handlePaymentReturnRedirect)
-app.get('/payments/return-context', getPaymentReturnContext)
 
 app.use(express.json({ limit: '15mb' }))
 app.use(cookieParser())

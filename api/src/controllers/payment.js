@@ -16,7 +16,7 @@ import {
   isCodPayment,
 } from '../lib/sheeshaCheckout.js'
 import { sendBookingConfirmedEmail } from '../lib/bookingEmailService.js'
-import { customerBookingDetailsPath, customerPaymentReturnUrl, cashfreeWebhookUrl, appBaseUrl } from '../lib/customerUrls.js'
+import { customerBookingDetailsPath, customerPaymentReturnUrl } from '../lib/customerUrls.js'
 
 const TEST_PAYMENT_APP_ID = process.env.CASHFREE_TEST_APP_ID || 'TEST_elewen_dashboard_bypass'
 
@@ -310,8 +310,7 @@ export const createOrder = async (req, res, next) => {
         customerId: userId,
         customerPhone: '9999999999',
         customerEmail: req.user?.email || undefined,
-        returnUrl: customerPaymentReturnUrl(),
-        notifyUrl: cashfreeWebhookUrl(),
+        returnUrl: customerPaymentReturnUrl(bookingId),
         note: `${paymentType} payment for booking ${bookingId}`,
       })
 
@@ -563,54 +562,6 @@ export const completePaymentReturn = async (req, res, next) => {
     if (err.status) {
       return res.status(err.status).json({ error: err.message })
     }
-    return next(err)
-  }
-}
-
-// ─── GET /payments/return ─────────────────────────────────────────────────────
-// Public redirect for Cashfree return (when dashboard points at api.elewen.co.in).
-export function handlePaymentReturnRedirect(req, res) {
-  const orderId = String(req.query.order_id || req.query.orderId || '').trim()
-  const bookingId = String(req.query.bookingId || req.query.booking_id || '').trim()
-  const params = new URLSearchParams()
-  if (orderId) params.set('order_id', orderId)
-  if (bookingId) params.set('bookingId', bookingId)
-  const suffix = params.toString() ? `?${params.toString()}` : ''
-  return res.redirect(302, `${appBaseUrl()}/payment/return${suffix}`)
-}
-
-// ─── GET /payments/return-context ─────────────────────────────────────────────
-// Public lookup so the SPA can resolve bookingId from Cashfree order_id after QR pay.
-export async function getPaymentReturnContext(req, res, next) {
-  try {
-    const gatewayOrderId = String(req.query.order_id || req.query.orderId || '').trim()
-    if (!gatewayOrderId) {
-      return res.status(400).json({ error: 'order_id is required' })
-    }
-
-    const payment = await prisma.payment.findFirst({
-      where: { providerOrderId: gatewayOrderId },
-      select: {
-        id: true,
-        status: true,
-        bookingId: true,
-        paymentType: true,
-        amount: true,
-      },
-    })
-
-    if (!payment) {
-      return res.status(404).json({ error: 'Payment not found for this order' })
-    }
-
-    return res.json({
-      bookingId: payment.bookingId,
-      paymentId: payment.id,
-      status: payment.status,
-      paymentType: payment.paymentType,
-      amount: toNumberAmount(payment.amount),
-    })
-  } catch (err) {
     return next(err)
   }
 }
