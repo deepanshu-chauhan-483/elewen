@@ -16,6 +16,7 @@ import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
+import CheckoutCouponSection from '../components/checkout/CheckoutCouponSection'
 import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
 import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
@@ -615,7 +616,7 @@ export default function CheckoutPage() {
     deliveryChargesQuery
   )
 
-  const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
+  const { cart, loading, isLoggedIn, updateCartDetails, applyCoupon, clearCoupon } = useCart()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
   const {
@@ -666,6 +667,7 @@ export default function CheckoutPage() {
   const [formError, setFormError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
   const fullNameRef = useRef(null)
   const emailRef = useRef(null)
@@ -1377,6 +1379,17 @@ export default function CheckoutPage() {
               onSubmit={event => event.preventDefault()}
             />
           )}
+
+          <CheckoutCouponSection
+            cart={cart}
+            isLoggedIn={isLoggedIn}
+            isApplyingCoupon={isApplyingCoupon}
+            onApplyCoupon={applyCoupon}
+            onRemoveCoupon={clearCoupon}
+            onApplyingChange={setIsApplyingCoupon}
+            showToast={showToast}
+          />
+
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#1F2A16] px-5 py-3 text-white">
               <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>

@@ -2,6 +2,11 @@ import prisma from './prisma.js'
 import { notify, getUserEmail } from './notify.js'
 import { sendEmail, templates } from './email.js'
 import { enrichBookings } from './dashboardData.js'
+import {
+  appBaseUrl,
+  customerBookingDetailsPath,
+  customerBookingDetailsUrl,
+} from './customerUrls.js'
 import { isCodPayment } from './sheeshaCheckout.js'
 
 export const BOOKING_EMAIL_TYPES = {
@@ -11,7 +16,7 @@ export const BOOKING_EMAIL_TYPES = {
   POST_EVENT_FEEDBACK: 'booking_post_event_feedback',
 }
 
-const APP_URL = () => String(process.env.APP_URL || 'https://elewen.co.in').replace(/\/$/, '')
+const APP_URL = () => appBaseUrl()
 const SUPPORT_PHONE = '9810937700'
 const DEFAULT_FEEDBACK_COUPON_VALUE = Number(process.env.FEEDBACK_COUPON_VALUE || 500)
 
@@ -139,7 +144,7 @@ export function buildBookingEmailContext(booking, extras = {}) {
     booking?.address?.line1 ||
     'To be confirmed'
 
-  const bookingPath = `/dashboard/bookings/${booking.id}`
+  const bookingPath = customerBookingDetailsPath(booking.id)
   const appUrl = APP_URL()
 
   return {
@@ -253,7 +258,7 @@ async function dispatchLifecycleEmail({
     type: 'booking_update',
     title,
     message,
-    linkUrl: `/dashboard/bookings/${booking.id}`,
+    linkUrl: customerBookingDetailsPath(booking.id),
   }).catch(() => {})
 
   return { sent: true, emailType, subject }
@@ -333,7 +338,7 @@ export async function sendHookahBookingPlacedEmail(bookingId) {
     title: 'Hookah booking received',
     message:
       'Your Hookah booking request was submitted. We will confirm it shortly. Amount is due on delivery.',
-    linkUrl: `/dashboard/bookings/${booking.id}`,
+    linkUrl: customerBookingDetailsPath(booking.id),
   }).catch(() => {})
 
   return { sent: true, emailType, subject }
@@ -375,7 +380,7 @@ export async function sendBookingPersonalizationEmail(
     designImage2: personalization.designImage2,
     designImage3: personalization.designImage3,
     responseDeadline: personalization.responseDeadline,
-    personalizeUrl: `${APP_URL()}/dashboard/bookings/${bookingId}`,
+    personalizeUrl: customerBookingDetailsUrl(bookingId),
   })
 
   // Each admin send is logged separately so planners can re-send with new options.

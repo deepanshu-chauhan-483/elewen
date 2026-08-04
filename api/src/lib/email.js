@@ -1,4 +1,8 @@
 import nodemailer from 'nodemailer'
+import {
+  customerBookingDetailsUrl,
+  customerProfileCouponsUrl,
+} from './customerUrls.js'
 
 const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails'
 
@@ -43,7 +47,7 @@ const layout = (title, bodyHtml) => `
           <tr>
             <td style="background:#c9a96e;padding:24px 40px;">
               <p style="margin:0;font-size:22px;font-weight:700;color:#0d0d0d;letter-spacing:2px;text-transform:uppercase;">ELEWEN</p>
-              <p style="margin:4px 0 0;font-size:12px;color:#0d0d0d;opacity:0.7;letter-spacing:1px;">EVENT EXPERIENCES</p>
+              <p style="margin:4px 0 0;font-size:12px;color:#0d0d0d;opacity:0.7;letter-spacing:1px;">Plan differently.</p>
             </td>
           </tr>
           <!-- Body -->
@@ -200,7 +204,7 @@ export const templates = {
       `)}
       ${divider()}
       ${p('To confirm your booking, please complete the advance payment.')}
-      ${ctaBtn('Pay Advance & Confirm', `${process.env.APP_URL || 'https://elewen.in'}/dashboard/bookings/${bookingId}`)}
+      ${ctaBtn('Pay Advance & Confirm', customerBookingDetailsUrl(bookingId))}
     `
     ),
 
@@ -220,7 +224,7 @@ export const templates = {
       `)}
       ${divider()}
       ${p('Our team will be in touch shortly to begin planning your event.')}
-      ${ctaBtn('View Booking', `${process.env.APP_URL || 'https://elewen.in'}/dashboard/bookings/${bookingId}`)}
+      ${ctaBtn('View Booking', customerBookingDetailsUrl(bookingId))}
     `
     ),
 
@@ -238,7 +242,7 @@ export const templates = {
         ${infoRow('Previous Status', previousStatus.replace('_', ' '))}
         ${infoRow('New Status', newStatus.replace('_', ' '))}
       `)}
-      ${ctaBtn('View Booking', `${process.env.APP_URL || 'https://elewen.in'}/dashboard/bookings/${bookingId}`)}
+      ${ctaBtn('View Booking', customerBookingDetailsUrl(bookingId))}
     `
     ),
 
@@ -272,7 +276,7 @@ export const templates = {
         ${infoRow('Amount', `₹${Number(amount).toLocaleString('en-IN')}`)}
         ${infoRow('Type', paymentType.charAt(0).toUpperCase() + paymentType.slice(1) + ' Payment')}
       `)}
-      ${ctaBtn('View Booking', `${process.env.APP_URL || 'https://elewen.in'}/dashboard/bookings/${bookingId}`)}
+      ${ctaBtn('View Booking', customerBookingDetailsUrl(bookingId))}
     `
     ),
 
@@ -288,7 +292,7 @@ export const templates = {
         ${infoRow('Booking ID', `#${bookingId.slice(0, 8).toUpperCase()}`)}
         ${infoRow('Amount', `₹${Number(amount).toLocaleString('en-IN')}`)}
       `)}
-      ${ctaBtn('Retry Payment', `${process.env.APP_URL || 'https://elewen.in'}/dashboard/bookings/${bookingId}`)}
+      ${ctaBtn('Retry Payment', customerBookingDetailsUrl(bookingId))}
     `
     ),
 
@@ -324,7 +328,7 @@ export const templates = {
       ${terms ? `${divider()}${p(`<strong style="color:#fff;">Terms &amp; conditions</strong><br/>${terms}`)}` : ''}
       ${note ? p(note) : ''}
       ${p('This code is assigned to your account only and can be used once within the validity period.')}
-      ${ctaBtn('View My Coupons', `${process.env.APP_URL || 'https://elewen.in'}/dashboard/profile#my-coupons`)}
+      ${ctaBtn('View My Coupons', customerProfileCouponsUrl())}
     `
     ),
 

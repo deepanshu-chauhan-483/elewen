@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useToast } from '../../components/common/useToast'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
@@ -467,10 +467,10 @@ const StatusBadge = ({ status }) => {
   )
 }
 
-function BookingAccordionCard({ booking, session, packages }) {
+function BookingAccordionCard({ booking, session, packages, defaultOpen = false }) {
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
   const [showCancel, setShowCancel] = useState(false)
   const [reason, setReason] = useState('')
   const [hasAcceptedPolicy, setHasAcceptedPolicy] = useState(false)
@@ -827,6 +827,8 @@ function BookingAccordionCard({ booking, session, packages }) {
 }
 
 export default function BookingDetailsAccordion() {
+  const [searchParams] = useSearchParams()
+  const requestedBookingId = searchParams.get('bookingId') || ''
   // const { data: bookings = [] } = useDashboardBookings('all')
   const { data: session } = useDashboardSession()
   const { data: packages = [] } = usePackages()
@@ -895,6 +897,7 @@ export default function BookingDetailsAccordion() {
           booking={booking}
           session={session}
           packages={packages}
+          defaultOpen={requestedBookingId && String(booking.id) === String(requestedBookingId)}
         />
       ))}
     </div>
