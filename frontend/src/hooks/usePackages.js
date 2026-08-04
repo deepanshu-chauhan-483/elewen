@@ -83,8 +83,14 @@ function resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel) {
   const isCatering = serviceSlugs.includes('catering')
   const isBartending = serviceSlugs.includes('bartending')
 
-  // Catering Level 1/2/3 = Strapi budget_level only (client edits budget_level in CMS).
+  // Catering listing Level 1/2/3: catering tier (essentials/assisted/end_to_end), then budget_level.
   if (isCatering) {
+    for (const section of detailSections) {
+      if (section?.__component !== 'package.cateringpackage') continue
+      const fromCateringLevel = inferLevelSlugFromCateringLevel(section?.catering_level)
+      if (fromCateringLevel) return fromCateringLevel
+    }
+
     const fromBudgetLevel = getBudgetLevelSlug(primaryBudgetLevel)
     if (fromBudgetLevel) return fromBudgetLevel
     return ''

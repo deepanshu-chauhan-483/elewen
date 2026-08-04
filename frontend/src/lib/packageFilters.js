@@ -1,3 +1,5 @@
+import { inferLevelSlugFromCateringLevel } from './cateringPricing'
+
 const normalizeValue = value =>
   String(value ?? '')
     .trim()
@@ -20,14 +22,24 @@ const normalizeThemeSlug = value =>
     .replace(/^-+|-+$/g, '')
 
 /**
- * Catering listing — official catalog only (Level from Strapi budget_level).
+ * Catering listing — official catalog (Level from catering_level tier, budget_level fallback).
+ * Keep seed slugs + client-renamed slugs so CMS title/slug edits still list.
  */
 const CATERING_ALLOWED_SLUGS = new Set([
   'close-circle-catering-1',
   'close-circle-catering-2',
   'close-circle-catering-3',
+  'smart-serve-1',
+  'smart-serve',
+  'chefs-selection',
+  'chef-s-selection',
   'easy-hosting-simply-served-1',
   'easy-hosting-simply-served-2',
+  'easy-hosting',
+  'easy-hosting-1',
+  'simply-served',
+  'simply-served-1',
+  'easy-hosting-2',
   'effortless-hosting',
   'signature-hosting-package',
   'signature-hosting-2',
@@ -37,6 +49,28 @@ const CATERING_ALLOWED_SLUGS = new Set([
   'the-social-starters',
   'purely-satvik',
 ])
+
+/** Client-renamed slugs → canonical seed slug (menus / fallbacks). */
+export const CATERING_SLUG_ALIASES = {
+  'smart-serve-1': 'close-circle-catering-2',
+  'smart-serve': 'close-circle-catering-2',
+  'chefs-selection': 'close-circle-catering-3',
+  'chef-s-selection': 'close-circle-catering-3',
+  'easy-hosting': 'easy-hosting-simply-served-1',
+  'easy-hosting-1': 'easy-hosting-simply-served-1',
+  'simply-served': 'easy-hosting-simply-served-2',
+  'simply-served-1': 'easy-hosting-simply-served-2',
+  'easy-hosting-2': 'easy-hosting-simply-served-2',
+}
+
+export function resolveCateringCatalogSlug(slug) {
+  const key = normalizeValue(slug)
+  if (!key) return ''
+  return CATERING_SLUG_ALIASES[key] || key
+}
+
+/** Packages with a real catering_level enum are catalog packages (even after rename). */
+const CATERING_LEVEL_KEYS = new Set(['essentials', 'assisted', 'end_to_end', 'end-to-end'])
 
 /**
  * Bartending listing — Classic Pour, Signature Mix, House Special.
@@ -270,10 +304,27 @@ function isAllowedCorporateEventPackage(pkg, allowlist) {
 
 function isAllowedCateringPackage(pkg) {
   const slug = normalizeValue(pkg?.slug)
-  if (slug && CATERING_ALLOWED_SLUGS.has(slug)) return true
+  const catalogSlug = resolveCateringCatalogSlug(slug)
+  if (slug && (CATERING_ALLOWED_SLUGS.has(slug) || CATERING_ALLOWED_SLUGS.has(catalogSlug))) {
+    return true
+  }
 
   const titleKey = normalizeLevelSlug(pkg?.title)
-  return Boolean(titleKey && CATERING_ALLOWED_SLUGS.has(titleKey))
+  if (titleKey && CATERING_ALLOWED_SLUGS.has(titleKey)) return true
+  if (titleKey && CATERING_SLUG_ALIASES[titleKey]) return true
+  if (
+    titleKey.includes('smart-serve') ||
+    titleKey.includes('easy-hosting') ||
+    titleKey.includes('simply-served') ||
+    titleKey.includes('chefs-selection') ||
+    titleKey.includes('chef-s-selection') ||
+    titleKey.includes('close-circle-catering')
+  ) {
+    return true
+  }
+
+  const cateringLevel = normalizeValue(pkg?.catering_level).replace(/\s+/g, '_')
+  return CATERING_LEVEL_KEYS.has(cateringLevel)
 }
 
 function isAllowedBartendingPackage(pkg) {
@@ -308,8 +359,11 @@ function isAllowedBartendingPackage(pkg) {
   return false
 }
 
-/** Website Level 1/2/3 from Strapi budget_level only (set on normalized level_slug). */
+/** Listing Level 1/2/3: catering tier first (essentials/assisted/end_to_end), then budget_level. */
 function getCateringCmsLevel(pkg) {
+  const fromCateringLevel = inferLevelSlugFromCateringLevel(pkg?.catering_level)
+  if (fromCateringLevel) return fromCateringLevel
+
   const fromLevelSlug = normalizeLevelSlug(pkg?.level_slug)
   if (/^level-\d+$/.test(fromLevelSlug)) return fromLevelSlug
   return ''

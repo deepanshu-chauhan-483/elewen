@@ -10,6 +10,7 @@ import { useCancellationPolicy } from '../hooks/useCancellationPolicy'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 import { useCateringMenu } from '../hooks/useCateringMenu'
 import { CATERING_PACKAGE_MENU_ROWS } from '../lib/cateringPackageMenuRows'
+import { resolveCateringCatalogSlug } from '../lib/packageFilters'
 import { mapCateringMenuRow } from '../lib/cateringMenuSelection'
 import { useCart } from '../hooks/useCart'
 import useCustomization from '../hooks/useCustomization'
@@ -273,7 +274,8 @@ function buildMenuRows(pkg) {
 
   if (!isUsableMenuItems(menuItems)) {
     const slug = String(pkg?.slug ?? '').trim()
-    menuItems = CATERING_PACKAGE_MENU_ROWS[slug] ?? []
+    const menuKey = resolveCateringCatalogSlug(slug) || slug
+    menuItems = CATERING_PACKAGE_MENU_ROWS[menuKey] ?? CATERING_PACKAGE_MENU_ROWS[slug] ?? []
   }
 
   if (menuItems.length) {
