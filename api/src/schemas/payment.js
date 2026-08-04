@@ -22,15 +22,6 @@ export const verifyPaymentSchema = Joi.object({
   testBypass: Joi.boolean().optional(),
 })
 
-export const completePaymentReturnSchema = Joi.object({
-  gatewayOrderId: Joi.string().required().messages({
-    'any.required': 'gatewayOrderId is required',
-  }),
-  bookingId: Joi.string().allow('', null).optional(),
-  gatewayPaymentId: Joi.string().allow('', null).optional(),
-  paymentMethod: Joi.string().valid('card', 'upi', 'netbanking', 'offline').allow(null).optional(),
-})
-
 export const requestRefundSchema = Joi.object({
   paymentId: Joi.string().required().messages({
     'any.required': 'paymentId is required',

@@ -3,7 +3,6 @@ import { requireAuth } from '../middleware/auth.js'
 import {
   createOrder,
   verifyPayment,
-  completePaymentReturn,
   getPayments,
   getAllPayments,
   requestRefund,
@@ -17,7 +16,6 @@ import { validate } from '../middleware/validate.js'
 import {
   createOrderSchema,
   verifyPaymentSchema,
-  completePaymentReturnSchema,
   requestRefundSchema,
   processRefundSchema,
   createVendorPayoutSchema,
@@ -151,7 +149,6 @@ router.post('/create-order', validate(createOrderSchema), createOrder)
  *         description: Payment record not found
  */
 router.post('/verify', validate(verifyPaymentSchema), verifyPayment)
-router.post('/complete-return', validate(completePaymentReturnSchema), completePaymentReturn)
 
 /**
  * @openapi
