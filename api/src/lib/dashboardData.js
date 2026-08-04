@@ -639,10 +639,10 @@ export async function fetchDashboardHelpContent() {
   const data = result?.data ?? result ?? {}
 
   return {
-    primaryPhone: data.primary_phone ?? '',
-    supportEmail: data.support_email ?? '',
+    primaryPhone: data.primary_phone ?? '9810937700',
+    supportEmail: data.support_email ?? 'info@elewen.co.in',
     supportAvailabilityText: data.support_availability_text ?? '',
-    whatsappNumber: data.whatsapp_number ?? '',
+    whatsappNumber: data.whatsapp_number ?? '9810937700',
     responseExpectationText: data.response_expectation_text ?? '',
   }
 }

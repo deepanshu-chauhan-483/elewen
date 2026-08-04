@@ -24,6 +24,22 @@ import {
 } from '../../components/dashboard/dashboardUtils'
 
 // ---------------------------------------------------------------------------
+// Direct support defaults (used when CMS settings are missing/outdated)
+// ---------------------------------------------------------------------------
+
+const SUPPORT_CONTACT = {
+  email: 'info@elewen.co.in',
+  phone: '9810937700',
+  whatsapp: '9810937700',
+}
+
+function getWhatsAppUrl(number) {
+  const digits = String(number ?? '').replace(/[^\d]/g, '')
+  const normalized = digits.startsWith('91') ? digits : `91${digits}`
+  return `https://wa.me/${normalized}`
+}
+
+// ---------------------------------------------------------------------------
 // Shared primitives
 // ---------------------------------------------------------------------------
 
@@ -244,6 +260,10 @@ export default function SupportHelp() {
     setReply('')
   }
 
+  const supportPhone = help?.primaryPhone || SUPPORT_CONTACT.phone
+  const supportEmail = help?.supportEmail || SUPPORT_CONTACT.email
+  const supportWhatsApp = help?.whatsappNumber || SUPPORT_CONTACT.whatsapp
+
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -269,11 +289,10 @@ export default function SupportHelp() {
           Live contact details from your dashboard settings.
         </p>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <ContactCard label="Phone" value={help?.primaryPhone} />
-          <ContactCard label="Email" value={help?.supportEmail} />
-          <ContactCard label="WhatsApp" value={help?.whatsappNumber} />
-          <ContactCard label="Availability" value={help?.supportAvailabilityText} />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <ContactCard label="Phone" value={supportPhone} />
+          <ContactCard label="Email" value={supportEmail} />
+          <ContactCard label="WhatsApp" value={supportWhatsApp} />
         </div>
 
         {help?.responseExpectationText && (
@@ -310,14 +329,8 @@ export default function SupportHelp() {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          {help?.whatsappNumber && (
-            <GoldBtn href={`https://wa.me/${String(help.whatsappNumber).replace(/[^\d]/g, '')}`}>
-              Call / WhatsApp
-            </GoldBtn>
-          )}
-          {help?.supportEmail && (
-            <OutlineBtn href={`mailto:${help.supportEmail}`}>Email Us</OutlineBtn>
-          )}
+          <OutlineBtn href={getWhatsAppUrl(supportWhatsApp)}>Call / WhatsApp</OutlineBtn>
+          <OutlineBtn href={`mailto:${supportEmail}`}>Email Us</OutlineBtn>
           <button
             type="button"
             onClick={() => navigate('/user-dashboard/messages')}
