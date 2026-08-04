@@ -78,7 +78,6 @@ const VendorRegistration = lazy(() => import('./pages/VendorRegistrationForm'))
 const FallbackPage = lazy(() => import('./pages/FallbackScreen'))
 const DashboardLayout = lazy(() => import('./components/dashboard/DashboardLayout'))
 const ActiveBookings = lazy(() => import('./pages/dashboard/ActiveBookings'))
-const DashboardSampleTasteBooking = lazy(() => import('./pages/dashboard/SampleTasteBooking'))
 const BookingTimeline = lazy(() => import('./pages/dashboard/BookingTimeline'))
 const BookingDetails = lazy(() => import('./pages/dashboard/BookingDetails'))
 const MessagesUpdates = lazy(() => import('./pages/dashboard/MessagesUpdates'))
@@ -312,7 +311,6 @@ function AppLayout() {
             <Route index element={<Navigate to="active-booking" replace />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="active-booking" element={<ActiveBookings />} />
-            <Route path="sample-taste" element={<DashboardSampleTasteBooking />} />
             <Route path="timeline" element={<BookingTimeline />} />
             <Route path="details" element={<BookingDetails />} />
             <Route path="messages" element={<MessagesUpdates />} />
