@@ -309,6 +309,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   const [emailNote, setEmailNote] = useState('')
   const [emailHtml, setEmailHtml] = useState('')
   const [previewStale, setPreviewStale] = useState(false)
+  const [imagesMissing, setImagesMissing] = useState(false)
   const [sendMessage, setSendMessage] = useState('')
   const [sendError, setSendError] = useState('')
 
@@ -321,6 +322,28 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
         Confirm the booking first, then send design / text / colour options to the customer.
       </p>
     )
+  }
+
+  const hasDesignImage = Boolean(
+    designImage1.trim() || designImage2.trim() || designImage3.trim()
+  )
+
+  const friendlyPreviewError = error => {
+    const raw = String(error?.message ?? '')
+    if (/design image/i.test(raw) || /at least one/i.test(raw)) {
+      return 'Please paste at least one design image link in the boxes above, then try Preview again.'
+    }
+    if (/cancelled/i.test(raw)) {
+      return 'This booking is cancelled, so the personalization email cannot be sent.'
+    }
+    if (/no email|user email/i.test(raw)) {
+      return 'This customer has no email on file. Add an email before sending.'
+    }
+    // Never show raw "API 400 on POST ..." text to admins
+    if (/^API\s+\d+/i.test(raw)) {
+      return 'Something went wrong while preparing the email. Please check the details above and try again.'
+    }
+    return raw || 'Could not prepare the email preview. Please try again.'
   }
 
   const payloadFields = (includeCopy = true) => ({
@@ -355,9 +378,25 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     setComposerOpen(true)
   }
 
+  const ensureDesignImages = () => {
+    if (hasDesignImage) {
+      setImagesMissing(false)
+      return true
+    }
+    setImagesMissing(true)
+    setComposerOpen(false)
+    setSendMessage('')
+    setSendError(
+      'Add at least one design image link above (paste a photo URL for Option 1, 2, or 3), then click Preview.'
+    )
+    return false
+  }
+
   const handlePreview = async ({ seedCopy = !composerOpen } = {}) => {
     setSendError('')
     setSendMessage('')
+    if (!ensureDesignImages()) return
+
     try {
       const result = await previewMutation.mutateAsync({
         bookingId,
@@ -366,7 +405,10 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
       applyPreviewResult(result, { seedCopy })
     } catch (error) {
       if (!composerOpen) setComposerOpen(false)
-      setSendError(error?.message ?? 'Could not preview personalization email.')
+      if (/design image|at least one/i.test(String(error?.message ?? ''))) {
+        setImagesMissing(true)
+      }
+      setSendError(friendlyPreviewError(error))
     }
   }
 
@@ -375,9 +417,17 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     setPreviewStale(true)
   }
 
+  const handleImageChange = setter => event => {
+    setter(event.target.value)
+    setImagesMissing(false)
+    if (sendError) setSendError('')
+  }
+
   const handleSend = async () => {
     setSendError('')
     setSendMessage('')
+    if (!ensureDesignImages()) return
+
     try {
       if (previewStale) {
         const refreshed = await previewMutation.mutateAsync({
@@ -395,15 +445,22 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
       setComposerOpen(false)
       setPreviewStale(false)
     } catch (error) {
-      setSendError(error?.message ?? 'Could not send personalization email.')
+      if (/design image|at least one/i.test(String(error?.message ?? ''))) {
+        setImagesMissing(true)
+      }
+      setSendError(friendlyPreviewError(error))
     }
   }
+
+  const imageInputClass = imagesMissing
+    ? 'min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none ring-1 ring-[#C45C4A]'
+    : 'min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none'
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#6B7280]">
-        Preview the Elewen-branded email, edit wording in plain language if needed, then send from
-        Elewen mail (not your personal Gmail/Outlook).
+        Paste design photo links, preview the Elewen email, edit wording if needed, then send from
+        Elewen mail.
       </p>
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Service name</p>
@@ -415,22 +472,35 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
           className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
         />
       </div>
-      {[
-        ['Design image 1 URL', designImage1, setDesignImage1],
-        ['Design image 2 URL', designImage2, setDesignImage2],
-        ['Design image 3 URL', designImage3, setDesignImage3],
-      ].map(([label, value, setter]) => (
-        <div key={label}>
-          <p className="mb-1.5 text-xs text-[#8F8F8F]">{label}</p>
-          <input
-            type="url"
-            value={value}
-            onChange={event => setter(event.target.value)}
-            placeholder="https://..."
-            className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
-          />
-        </div>
-      ))}
+      <div className="space-y-3">
+        <p className="text-xs font-medium text-[#2D2D2D]">
+          Design photo links <span className="text-[#C45C4A]">*</span>
+          <span className="ml-1 font-normal text-[#8F8F8F]">
+            (paste at least one image link from Drive / website)
+          </span>
+        </p>
+        {[
+          ['Design option 1 image link', designImage1, setDesignImage1],
+          ['Design option 2 image link', designImage2, setDesignImage2],
+          ['Design option 3 image link', designImage3, setDesignImage3],
+        ].map(([label, value, setter]) => (
+          <div key={label}>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">{label}</p>
+            <input
+              type="url"
+              value={value}
+              onChange={handleImageChange(setter)}
+              placeholder="https://..."
+              className={imageInputClass}
+            />
+          </div>
+        ))}
+        {imagesMissing ? (
+          <p className="rounded-xl bg-[#FFF1EE] px-3 py-2 text-sm text-[#8A1C1C]">
+            Please add at least one design photo link above before previewing or sending.
+          </p>
+        ) : null}
+      </div>
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Response deadline</p>
         <input
