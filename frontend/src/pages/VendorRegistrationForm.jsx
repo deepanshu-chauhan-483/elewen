@@ -106,16 +106,75 @@ async function toUploadPayload(file) {
   }
 }
 
-function Input({ label, name, placeholder, value, onChange, error }) {
+function isLikelyUrl(value) {
+  const trimmed = String(value ?? '').trim()
+  if (!trimmed) return false
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      new URL(trimmed)
+      return true
+    } catch {
+      return false
+    }
+  }
+  // Allow social handles / domains without protocol (e.g. instagram.com/brand)
+  return /^[\w.-]+\.[\w.-]+(\/[\w./?%&=-]*)?$/i.test(trimmed) || trimmed.startsWith('@')
+}
+
+function normalizePhone(value) {
+  return String(value ?? '').replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '')
+}
+
+function isValidIndianPhone(value) {
+  return /^[6-9]\d{9}$/.test(normalizePhone(value))
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? '').trim())
+}
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+const ALLOWED_UPLOAD_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+])
+
+function validateUpload(file, { required = false, label = 'File' } = {}) {
+  if (!file) {
+    return required ? `${label} is required` : ''
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return `${label} must be 5 MB or smaller`
+  }
+  if (file.type && !ALLOWED_UPLOAD_TYPES.has(file.type)) {
+    return `${label} must be JPG, PNG, PDF, or DOC`
+  }
+  return ''
+}
+
+function Input({ label, name, placeholder, value, onChange, error, type = 'text', inputMode, maxLength }) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[14px] text-[#364022]">{label}</label>
+    <div className="flex flex-col gap-2" data-field={name}>
+      <label className="text-[14px] text-[#364022]" htmlFor={name}>
+        {label}
+      </label>
       <input
+        id={name}
         name={name}
+        type={type}
+        inputMode={inputMode}
+        maxLength={maxLength}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="bg-white border border-[#E5E5E5] p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874]"
+        aria-invalid={Boolean(error)}
+        className={`bg-white border p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874] ${
+          error ? 'border-[#8F2D1F]' : 'border-[#E5E5E5]'
+        }`}
       />
       {error ? <p className="text-[12px] text-[#8F2D1F]">{error}</p> : null}
     </div>
@@ -124,14 +183,23 @@ function Input({ label, name, placeholder, value, onChange, error }) {
 
 function PhoneInput({ value, onChange, error }) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[14px] text-[#364022]">Phone number*</label>
+    <div className="flex flex-col gap-2" data-field="phone">
+      <label className="text-[14px] text-[#364022]" htmlFor="phone">
+        Phone number*
+      </label>
       <input
+        id="phone"
         name="phone"
+        type="tel"
+        inputMode="numeric"
+        maxLength={10}
         value={value}
         onChange={onChange}
-        placeholder="Enter mobile number"
-        className="flex-1 bg-white border border-[#E5E5E5] p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874]"
+        placeholder="10-digit mobile number"
+        aria-invalid={Boolean(error)}
+        className={`flex-1 bg-white border p-3 rounded-md outline-none focus:ring-1 focus:ring-[#C4A874] ${
+          error ? 'border-[#8F2D1F]' : 'border-[#E5E5E5]'
+        }`}
       />
       {error ? <p className="text-[12px] text-[#8F2D1F]">{error}</p> : null}
     </div>
@@ -172,11 +240,13 @@ function MultiSelect({ label, selected, onChange, error }) {
   )
 
   return (
-    <div className="flex flex-col gap-2 relative" ref={ref}>
+    <div className="flex flex-col gap-2 relative" ref={ref} data-field="serviceCategories">
       <label className="text-[14px] text-[#364022]">{label}</label>
 
       <div
-        className="bg-white border border-[#E5E5E5] rounded-md p-2 flex flex-wrap items-center gap-2 cursor-text"
+        className={`bg-white border rounded-md p-2 flex flex-wrap items-center gap-2 cursor-text ${
+          error ? 'border-[#8F2D1F]' : 'border-[#E5E5E5]'
+        }`}
         onClick={() => setOpen(true)}
       >
         {selected.map(item => (
@@ -248,12 +318,20 @@ function MultiSelect({ label, selected, onChange, error }) {
   )
 }
 
-function Select({ label, value, onChange, error, options = EVENT_TYPE_OPTIONS, placeholder }) {
+function Select({
+  label,
+  value,
+  onChange,
+  error,
+  options = EVENT_TYPE_OPTIONS,
+  placeholder,
+  fieldKey,
+}) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" data-field={fieldKey}>
       <label className="text-[14px] text-[#364022]">{label}</label>
 
-      <div className="relative">
+      <div className={`relative rounded-md ${error ? 'ring-1 ring-[#8F2D1F]' : ''}`}>
         <CustomSelect
           variant="form"
           value={value}
@@ -269,11 +347,11 @@ function Select({ label, value, onChange, error, options = EVENT_TYPE_OPTIONS, p
   )
 }
 
-function Upload({ label, full, file, onChange, accept, error }) {
+function Upload({ label, full, file, onChange, accept, error, fieldKey }) {
   const inputRef = useRef(null)
 
   return (
-    <div className={`flex flex-col gap-2 ${full ? 'w-full' : ''}`}>
+    <div className={`flex flex-col gap-2 ${full ? 'w-full' : ''}`} data-field={fieldKey}>
       {label ? <label className="text-[14px] text-[#364022]">{label}</label> : null}
 
       <input
@@ -287,7 +365,11 @@ function Upload({ label, full, file, onChange, accept, error }) {
         }}
       />
 
-      <div className="flex items-center justify-between bg-white border border-[#E5E5E5] p-3 rounded-md">
+      <div
+        className={`flex items-center justify-between bg-white border p-3 rounded-md ${
+          error ? 'border-[#8F2D1F]' : 'border-[#E5E5E5]'
+        }`}
+      >
         <span className={`text-[14px] ${file ? 'text-[#364022]' : 'text-gray-400'}`}>
           {file?.name || 'Upload file'}
         </span>
@@ -335,7 +417,8 @@ export default function VendorRegistration() {
 
   const handleInputChange = event => {
     const { name, value } = event.target
-    setFormData(previous => ({ ...previous, [name]: value }))
+    const nextValue = name === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value
+    setFormData(previous => ({ ...previous, [name]: nextValue }))
     setSubmitError('')
     setFieldErrors(previous => ({ ...previous, [name]: '' }))
   }
@@ -348,25 +431,98 @@ export default function VendorRegistration() {
 
   const validateForm = () => {
     const nextErrors = {}
+    const currentYear = new Date().getFullYear()
 
-    if (!formData.businessName.trim()) nextErrors.businessName = 'Business name is required'
-    if (!formData.contactPersonName.trim())
+    if (!formData.businessName.trim()) {
+      nextErrors.businessName = 'Business name is required'
+    } else if (formData.businessName.trim().length < 2) {
+      nextErrors.businessName = 'Business name must be at least 2 characters'
+    }
+
+    if (!formData.contactPersonName.trim()) {
       nextErrors.contactPersonName = 'Primary contact name is required'
-    if (!formData.phone.trim()) nextErrors.phone = 'Phone number is required'
-    if (!formData.email.trim()) nextErrors.email = 'Email address is required'
-    if (!formData.operatingLocation.trim())
+    } else if (formData.contactPersonName.trim().length < 2) {
+      nextErrors.contactPersonName = 'Contact name must be at least 2 characters'
+    }
+
+    if (!formData.phone.trim()) {
+      nextErrors.phone = 'Phone number is required'
+    } else if (!isValidIndianPhone(formData.phone)) {
+      nextErrors.phone = 'Enter a valid 10-digit Indian mobile number'
+    }
+
+    if (!formData.email.trim()) {
+      nextErrors.email = 'Email address is required'
+    } else if (!isValidEmail(formData.email)) {
+      nextErrors.email = 'Enter a valid email address'
+    }
+
+    if (!formData.operatingLocation.trim()) {
       nextErrors.operatingLocation = 'Operating location is required'
-    if (!formData.websiteSocialPortfolio.trim())
+    } else if (!extractCity(formData.operatingLocation) || extractCity(formData.operatingLocation).length < 2) {
+      nextErrors.operatingLocation = 'Enter a valid city / service area'
+    }
+
+    if (formData.teamSize.trim()) {
+      const teamSizeNumber = Number.parseInt(formData.teamSize, 10)
+      if (!Number.isFinite(teamSizeNumber) || teamSizeNumber < 1) {
+        nextErrors.teamSize = 'Enter a valid team size (number)'
+      }
+    }
+
+    if (!formData.websiteSocialPortfolio.trim()) {
       nextErrors.websiteSocialPortfolio = 'Website / Social / Portfolio is required'
-    if (!formData.serviceCategories.length)
+    } else if (!isLikelyUrl(formData.websiteSocialPortfolio)) {
+      nextErrors.websiteSocialPortfolio = 'Enter a valid website, social, or portfolio link'
+    }
+
+    if (formData.establishedIn.trim()) {
+      const year = Number.parseInt(formData.establishedIn, 10)
+      if (!Number.isFinite(year) || year < 1900 || year > currentYear) {
+        nextErrors.establishedIn = `Enter a valid year between 1900 and ${currentYear}`
+      }
+    }
+
+    if (!formData.serviceCategories.length) {
       nextErrors.serviceCategories = 'Select at least one service category'
-    if (!formData.eventType) nextErrors.eventType = 'Select an event type'
-    if (!formData.verificationDocumentType)
+    }
+
+    if (!formData.eventType) {
+      nextErrors.eventType = 'Select an event type'
+    }
+
+    if (!formData.portfolioLink.trim()) {
+      nextErrors.portfolioLink = 'Share at least one recent project link'
+    } else if (!isLikelyUrl(formData.portfolioLink)) {
+      nextErrors.portfolioLink = 'Enter a valid project / portfolio link'
+    }
+
+    const workSampleError = validateUpload(formData.workSample, {
+      required: false,
+      label: 'Work sample',
+    })
+    if (workSampleError) nextErrors.workSample = workSampleError
+
+    if (!formData.verificationDocumentType) {
       nextErrors.verificationDocumentType = 'Select a verification document type'
-    if (!formData.verificationDocument)
-      nextErrors.verificationDocument = 'Verification document is required'
+    }
+
+    const verificationError = validateUpload(formData.verificationDocument, {
+      required: true,
+      label: 'Verification document',
+    })
+    if (verificationError) nextErrors.verificationDocument = verificationError
 
     return nextErrors
+  }
+
+  const scrollToFirstError = errors => {
+    const firstKey = Object.keys(errors)[0]
+    if (!firstKey) return
+    requestAnimationFrame(() => {
+      const node = document.querySelector(`[data-field="${firstKey}"]`)
+      node?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
   }
 
   const handleSubmit = async event => {
@@ -377,6 +533,8 @@ export default function VendorRegistration() {
     const validationError = validateForm()
     if (Object.keys(validationError).length > 0) {
       setFieldErrors(validationError)
+      setSubmitError('Please fix the highlighted fields before submitting.')
+      scrollToFirstError(validationError)
       return
     }
 
@@ -392,7 +550,7 @@ export default function VendorRegistration() {
         business_name: formData.businessName.trim(),
         contact_person_name: formData.contactPersonName.trim(),
         email: formData.email.trim(),
-        phone: formData.phone.trim(),
+        phone: normalizePhone(formData.phone),
         city: payloadPreview.city,
         operating_location: formData.operatingLocation.trim(),
         team_size: formData.teamSize.trim(),
@@ -431,6 +589,7 @@ export default function VendorRegistration() {
 
       if (Object.keys(nextFieldErrors).length > 0) {
         setFieldErrors(nextFieldErrors)
+        scrollToFirstError(nextFieldErrors)
       } else {
         setSubmitError(
           getGlobalErrorMessage(error, 'Failed to submit vendor registration. Please try again.')
@@ -461,9 +620,9 @@ export default function VendorRegistration() {
         </p>
       </section>
 
-      <form onSubmit={handleSubmit}>
-        <section className="py-[clamp(50px,6vw,100px)] px-[clamp(10px,10vw,200px)] bg-[#F8F4ED]">
-          <div className="mx-auto">
+      <form onSubmit={handleSubmit} noValidate>
+        <section className="py-[clamp(50px,6vw,100px)] px-4 sm:px-8 lg:px-12 bg-[#F8F4ED]">
+          <div className="mx-auto w-full max-w-[980px]">
             <h2
               className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
               style={{ fontFamily: "'Malgin', serif" }}
@@ -471,13 +630,14 @@ export default function VendorRegistration() {
               Basic Details
             </h2>
 
-            <div className="grid md:grid-cols-2 gap-[clamp(20px,3vw,30px)]">
+            <div className="grid md:grid-cols-2 gap-5 md:gap-6">
               <Input
                 label="Business Name*"
                 name="businessName"
                 value={formData.businessName}
                 onChange={handleInputChange}
                 placeholder="Enter your business name"
+                maxLength={100}
                 error={fieldErrors.businessName}
               />
               <Input
@@ -486,6 +646,7 @@ export default function VendorRegistration() {
                 value={formData.contactPersonName}
                 onChange={handleInputChange}
                 placeholder="Enter full name"
+                maxLength={100}
                 error={fieldErrors.contactPersonName}
               />
 
@@ -497,9 +658,11 @@ export default function VendorRegistration() {
               <Input
                 label="Email Address*"
                 name="email"
+                type="email"
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Enter email address"
+                maxLength={120}
                 error={fieldErrors.email}
               />
 
@@ -509,6 +672,7 @@ export default function VendorRegistration() {
                 value={formData.operatingLocation}
                 onChange={handleInputChange}
                 placeholder="City & service area"
+                maxLength={200}
                 error={fieldErrors.operatingLocation}
               />
               <Input
@@ -516,7 +680,9 @@ export default function VendorRegistration() {
                 name="teamSize"
                 value={formData.teamSize}
                 onChange={handleInputChange}
-                placeholder="e.g. 8 members"
+                placeholder="e.g. 8"
+                inputMode="numeric"
+                maxLength={4}
                 error={fieldErrors.teamSize}
               />
 
@@ -526,6 +692,7 @@ export default function VendorRegistration() {
                 value={formData.websiteSocialPortfolio}
                 onChange={handleInputChange}
                 placeholder="Paste link"
+                maxLength={300}
                 error={fieldErrors.websiteSocialPortfolio}
               />
               <Input
@@ -534,14 +701,16 @@ export default function VendorRegistration() {
                 value={formData.establishedIn}
                 onChange={handleInputChange}
                 placeholder="e.g. 2021"
+                inputMode="numeric"
+                maxLength={4}
                 error={fieldErrors.establishedIn}
               />
             </div>
           </div>
         </section>
 
-        <section className="px-[clamp(10px,10vw,200px)] bg-[#FFFFFF]">
-          <div className="mx-auto my-[clamp(50px,6vw,80px)]">
+        <section className="px-4 sm:px-8 lg:px-12 bg-[#FFFFFF]">
+          <div className="mx-auto my-[clamp(50px,6vw,80px)] w-full max-w-[980px]">
             <h2
               className="text-center text-[22px] md:text-[27px] mb-8 text-[#591902]"
               style={{ fontFamily: "'Malgin', serif" }}
@@ -549,7 +718,7 @@ export default function VendorRegistration() {
               About Your Company
             </h2>
 
-            <div className="flex flex-col gap-[clamp(20px,3vw,30px)]">
+            <div className="flex flex-col gap-5 md:gap-6">
               <MultiSelect
                 label="Select your service category (You may select more than one category)*"
                 selected={formData.serviceCategories}
@@ -562,6 +731,7 @@ export default function VendorRegistration() {
               />
               <Select
                 label="What kind of events do you usually cater to?*"
+                fieldKey="eventType"
                 value={formData.eventType}
                 onChange={event => {
                   setFormData(previous => ({ ...previous, eventType: event.target.value }))
@@ -573,17 +743,19 @@ export default function VendorRegistration() {
                 error={fieldErrors.eventType}
               />
 
-              <div className="grid md:grid-cols-2 gap-[clamp(20px,3vw,40px)]">
+              <div className="grid md:grid-cols-2 gap-5 md:gap-6">
                 <Input
                   label="Share links of your best recent projects*"
                   name="portfolioLink"
                   value={formData.portfolioLink}
                   onChange={handleInputChange}
                   placeholder="Paste project / portfolio links"
+                  maxLength={300}
                   error={fieldErrors.portfolioLink}
                 />
                 <Upload
                   label="Share pictures of your best recent projects"
+                  fieldKey="workSample"
                   file={formData.workSample}
                   onChange={file => setFileValue('workSample', file)}
                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
@@ -598,6 +770,7 @@ export default function VendorRegistration() {
                 </p>
                 <Select
                   label="Document type*"
+                  fieldKey="verificationDocumentType"
                   value={formData.verificationDocumentType}
                   onChange={event => {
                     setFormData(previous => ({
@@ -614,11 +787,15 @@ export default function VendorRegistration() {
                 <Upload
                   label=""
                   full
+                  fieldKey="verificationDocument"
                   file={formData.verificationDocument}
                   onChange={file => setFileValue('verificationDocument', file)}
                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
                   error={fieldErrors.verificationDocument}
                 />
+                <p className="text-[12px] text-[#8F8F8F]">
+                  Accepted: JPG, PNG, PDF, DOC — max 5 MB
+                </p>
               </div>
             </div>
 
