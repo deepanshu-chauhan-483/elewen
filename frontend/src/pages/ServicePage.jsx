@@ -49,9 +49,9 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
   return (
     <Link
       to={destination}
-      className="group flex h-[340px] max-w-[235px] md:w-full md:max-h-[384px] md:max-w-[235px] min-w-0 flex-col justify-end overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-auto"
+      className="group flex min-h-[340px] max-w-[260px] md:w-full md:max-w-[260px] min-w-0 flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-auto"
     >
-      <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
+      <div className="relative mb-2 h-[240px] overflow-hidden rounded-[12px] bg-[#F4EEE6] md:h-[260px]">
         {service.image ? (
           <img
             src={service.image}
@@ -67,14 +67,14 @@ function ServiceCard({ categorySlug, eventSlug, eventId, service, flow }) {
           </div>
         )}
       </div>
-      <div className="flex h-[72px] flex-col rounded-[10px] bg-[#7E8061] px-3 py-3 text-white md:h-[88px] md:px-4 md:py-3.5">
+      <div className="flex min-h-[72px] flex-1 flex-col rounded-[10px] bg-[#7E8061] px-3 py-3 text-white md:min-h-[88px] md:px-4 md:py-3.5">
         <h2
           className="flex text-[15px] font-medium leading-[1.2] text-white md:text-[16px]"
           style={{ fontFamily: "'Poppins'" }}
         >
           {service.name}
         </h2>
-        <p className="mt-1.5 min-h-0 flex-1 overflow-y-auto pr-1 text-[12px] leading-[1.38] text-white/75 [&::-webkit-scrollbar]:hidden md:text-[13px]">
+        <p className="mt-1.5 pr-1 text-[12px] leading-[1.38] text-white/75 md:text-[13px]">
           {service.description}
         </p>
       </div>
