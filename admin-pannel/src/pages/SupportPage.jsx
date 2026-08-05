@@ -694,7 +694,7 @@ export default function SupportPage() {
           {/* Priority + Status filters */}
           <div className="mb-4 grid grid-cols-2 gap-2">
             <CustomSelect value={statusFilter} onChange={setStatusFilter}>
-              <option value="">All Statuses</option>
+              <option value="">All Status</option>
               <option value="open">Open</option>
               <option value="in_progress">In Progress</option>
               <option value="resolved">Resolved</option>
