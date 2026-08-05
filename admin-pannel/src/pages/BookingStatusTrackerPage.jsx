@@ -9,22 +9,15 @@ import {
 import { useAdminBookings, useAdminUpdateBookingStatus } from '../hooks/useAdminData'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { getAdminBadgeClass } from '../lib/adminBadges'
+import {
+  BOOKING_STAGE_GUIDANCE,
+  BOOKING_STATUS_LABELS,
+  NEXT_STAGE_MAP,
+  TRACKER_STAGES,
+  canProgressToStage,
+  resolveTrackerBucket,
+} from '../lib/bookingStages'
 import { formatCurrency, formatDate } from '../lib/formatters'
-
-// ---------------------------------------------------------------------------
-// Stage config
-// ---------------------------------------------------------------------------
-const stages = [
-  { key: 'all', label: 'All Bookings' },
-  { key: 'new', label: 'New' },
-  { key: 'confirmed', label: 'Confirmed' },
-  { key: 'info_collection', label: 'Info Collection' },
-  { key: 'planning', label: 'Planning' },
-  { key: 'pre_event', label: 'Pre Event' },
-  { key: 'execution', label: 'Execution' },
-  { key: 'post_event', label: 'Post Event' },
-  { key: 'completed', label: 'Completed' },
-]
 
 const borderColorMap = {
   new: 'border-[#C57A1E]',
@@ -38,48 +31,22 @@ const borderColorMap = {
   cancelled: 'border-[#8A1C1C]',
 }
 
-const nextStageMap = {
-  new: 'confirmed',
-  confirmed: 'info_collection',
-  info_collection: 'planning',
-  planning: 'pre_event',
-  pre_event: 'execution',
-  execution: 'post_event',
-  post_event: 'completed',
-}
-
 function buildBookingWorkspaceHref(bookingId = '') {
   const id = String(bookingId ?? '').trim()
   return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
 }
 
 function stageGuidance(status = '') {
-  switch (String(status).toLowerCase()) {
-    case 'new':
-      return 'Review the booking, confirm it, and capture any immediate requirements.'
-    case 'confirmed':
-      return 'Collect missing customer information and move the booking into planning.'
-    case 'info_collection':
-      return 'Verify requirements, save internal notes, and prepare the planning handoff.'
-    case 'planning':
-      return 'Treat this stage as operational planning. Use booking details for assignments and prep.'
-    case 'pre_event':
-      return 'Run final checks for execution readiness, vendor assignment, and payment status.'
-    case 'execution':
-      return 'This booking is on event day. Monitor active execution and capture any updates.'
-    case 'post_event':
-      return 'Review post-event follow-ups, feedback, and completion readiness.'
-    case 'completed':
-      return 'Booking is complete. Use the booking workspace for final history and summaries.'
-    default:
-      return 'Open the booking workspace to continue the operational flow.'
-  }
+  return (
+    BOOKING_STAGE_GUIDANCE[String(status).toLowerCase()] ??
+    'Open the booking workspace to continue the operational flow.'
+  )
 }
 
 function StatusBadge({ status, label }) {
   const key = status?.toLowerCase() ?? ''
   const cls = getAdminBadgeClass(status, { preset: 'vivid' })
-  const text = label ?? key.charAt(0).toUpperCase() + key.slice(1) ?? '-'
+  const text = label ?? BOOKING_STATUS_LABELS[key] ?? key
 
   return (
     <span
@@ -121,21 +88,33 @@ function ArrowIcon({ direction = 'right' }) {
     </svg>
   )
 }
+
 function getSubtitle(booking) {
-  return [
-    // booking?.detailSubtitle,
-    booking?.event?.name,
-    booking?.package?.serviceCategories?.[0]?.name,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  return [booking?.event?.name, booking?.package?.serviceCategories?.[0]?.name].filter(Boolean).join(' · ')
+}
+
+function getStageEmptyStateBody(stageKey = '') {
+  if (stageKey === 'new') {
+    return 'Bookings move past this stage automatically after full payment or admin confirmation. Advance-only bookings stay here until you confirm them.'
+  }
+
+  return 'Select a different stage or check back when bookings move into this step.'
 }
 
 function BookingCard({ booking }) {
   const borderColor = borderColorMap[booking.status?.toLowerCase()] ?? 'border-[#CDB17E]'
   const subtitle = getSubtitle(booking)
   const updateStatusMutation = useAdminUpdateBookingStatus()
-  const nextStage = nextStageMap[String(booking.status ?? '').toLowerCase()]
+  const nextStage = NEXT_STAGE_MAP[String(booking.status ?? '').toLowerCase()]
+  const remainingAmount = Number(booking?.remainingAmount ?? 0)
+  const advanceValidation =
+    nextStage &&
+    canProgressToStage(
+      booking.status,
+      nextStage,
+      remainingAmount,
+      booking?.eventDate
+    )
 
   return (
     <div
@@ -189,6 +168,9 @@ function BookingCard({ booking }) {
       <div className="mt-4 rounded-xl border border-[#E4DED8] bg-[#FBF7F3] px-4 py-4">
         <p className="text-[11px] tracking-[0.16em] text-[#767676]">STAGE ACTION</p>
         <p className="mt-2 text-sm leading-6 text-[#2D2D2D]">{stageGuidance(booking.status)}</p>
+        {advanceValidation && !advanceValidation.allowed ? (
+          <p className="mt-2 text-sm text-[#8A1C1C]">{advanceValidation.message}</p>
+        ) : null}
         <div className="mt-4 flex flex-wrap gap-2">
           <a
             href={buildBookingWorkspaceHref(booking.id)}
@@ -196,21 +178,24 @@ function BookingCard({ booking }) {
           >
             Open Booking Details
           </a>
-          {nextStage ? (
+          {nextStage && advanceValidation?.allowed ? (
             <button
               type="button"
               disabled={updateStatusMutation.isPending}
               onClick={() =>
                 updateStatusMutation.mutate({
                   bookingId: booking.id,
-                  body: { status: nextStage, note: `Advanced from tracker to ${nextStage}` },
+                  body: {
+                    status: nextStage,
+                    note: `Advanced from tracker to ${BOOKING_STATUS_LABELS[nextStage] ?? nextStage}`,
+                  },
                 })
               }
               className="inline-flex h-10 items-center justify-center rounded-full bg-[#CDB17E] px-5 text-sm font-semibold text-[#FAFAFA] hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {updateStatusMutation.isPending
                 ? 'Updating...'
-                : `Move to ${stages.find(stage => stage.key === nextStage)?.label || nextStage}`}
+                : `Move to ${BOOKING_STATUS_LABELS[nextStage] ?? nextStage}`}
             </button>
           ) : null}
         </div>
@@ -223,41 +208,39 @@ export default function BookingStatusTrackerPage() {
   const [activeStage, setActiveStage] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
+  const trackerBucket = resolveTrackerBucket(activeStage)
   const bookingsQuery = useAdminBookings({
-    bucket: 'active',
+    bucket: trackerBucket,
     status: activeStage === 'all' ? '' : activeStage,
     page: currentPage,
     limit: PAGE_SIZE,
   })
 
   const bookings = useMemo(() => bookingsQuery.data?.bookings ?? [], [bookingsQuery.data?.bookings])
+  const statusCounts = bookingsQuery.data?.statusCounts ?? {}
   const totalBookings = Number(bookingsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
 
   useScrollToTop(currentPage)
   const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
-  // const counts = useMemo(() => {
-  //   const map = {
-  //     all:
-  //       Number(statusCounts.new ?? 0) +
-  //       Number(statusCounts.confirmed ?? 0) +
-  //       Number(statusCounts.info_collection ?? 0) +
-  //       Number(statusCounts.planning ?? 0) +
-  //       Number(statusCounts.pre_event ?? 0) +
-  //       Number(statusCounts.execution ?? 0) +
-  //       Number(statusCounts.post_event ?? 0) +
-  //       Number(statusCounts.completed ?? 0),
-  //   }
-  //   stages.forEach(stage => {
-  //     if (stage.key !== 'all') {
-  //       map[stage.key] = Number(statusCounts[stage.key] ?? 0)
-  //     }
-  //   })
-  //   return map
-  // }, [statusCounts])
 
-  const activeLabel = stages.find(stage => stage.key === activeStage)?.label ?? 'All Bookings'
+  const counts = useMemo(() => {
+    const map = { all: 0 }
+    TRACKER_STAGES.forEach(stage => {
+      if (stage.key === 'all') {
+        map.all = Object.values(statusCounts).reduce(
+          (sum, count) => sum + Number(count ?? 0),
+          0
+        )
+        return
+      }
+      map[stage.key] = Number(statusCounts[stage.key] ?? 0)
+    })
+    return map
+  }, [statusCounts])
+
+  const activeLabel = TRACKER_STAGES.find(stage => stage.key === activeStage)?.label ?? 'All Bookings'
 
   if (bookingsQuery.isLoading) return <LoadingState label="Loading booking pipeline..." />
   if (bookingsQuery.error)
@@ -284,9 +267,12 @@ export default function BookingStatusTrackerPage() {
           }}
           className="min-h-10 rounded-full bg-[#F3F3F3]"
         >
-          {stages.map(stage => (
+          {TRACKER_STAGES.map(stage => (
             <option key={stage.key} value={stage.key}>
               {stage.label}
+              {stage.key === 'all'
+                ? ` (${counts.all})`
+                : ` (${counts[stage.key] ?? 0})`}
             </option>
           ))}
         </CustomSelect>
@@ -333,7 +319,7 @@ export default function BookingStatusTrackerPage() {
       ) : (
         <ResultsEmptyState
           title={`No bookings in "${activeLabel}"`}
-          body="Select a different stage or check back when bookings move into this step."
+          body={getStageEmptyStateBody(activeStage)}
         />
       )}
     </div>

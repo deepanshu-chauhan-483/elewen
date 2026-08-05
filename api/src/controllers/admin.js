@@ -26,30 +26,12 @@ import {
   sendBookingPersonalizationEmail,
   sendPostEventFeedbackEmail,
 } from '../lib/bookingEmailService.js'
-
-const BOOKING_STATUSES = [
-  'new',
-  'confirmed',
-  'info_collection',
-  'planning',
-  'pre_event',
-  'execution',
-  'post_event',
-  'completed',
-  'cancelled',
-]
-
-// Stage progression order - must follow this sequence
-const STAGE_PROGRESSION = [
-  'new',
-  'confirmed',
-  'info_collection',
-  'planning',
-  'pre_event',
-  'execution',
-  'post_event',
-  'completed',
-]
+import {
+  BOOKING_STAGE_PROGRESSION as STAGE_PROGRESSION,
+  BOOKING_STATUSES,
+  BOOKING_STATUS_LABELS,
+} from '../lib/bookingStages.js'
+import { ensureBookingTimeline } from './booking.js'
 
 // Validate stage progression
 function validateStageProgression(currentStatus, newStatus, remainingAmount = 0) {
@@ -897,7 +879,7 @@ async function enrichSamplesWithCustomer(samples = []) {
 }
 
 function buildBookingBucketFilter(bucket = 'all') {
-  if (bucket === 'active') {
+  if (bucket === 'active' || bucket === 'incomplete') {
     return {
       status: {
         notIn: ['completed', 'cancelled'],
@@ -1517,12 +1499,12 @@ export async function listAdminBookings(req, res, next) {
       }, statusCounts)
       metrics = {
         total,
-        active: visibleBookings.filter(booking => getBookingCategory(booking) === 'active').length,
-        previous: visibleBookings.filter(booking => getBookingCategory(booking) === 'previous')
+        active: matchingBookings.filter(booking => getBookingCategory(booking) === 'active').length,
+        previous: matchingBookings.filter(booking => getBookingCategory(booking) === 'previous')
           .length,
       }
     } else {
-      const [bookings, count, statusCountRows] = await Promise.all([
+      const [bookings, count, statusCountRows, metricsBookings] = await Promise.all([
         prisma.booking.findMany({
           where: baseWhere,
           include: bookingInclude,
@@ -1536,6 +1518,10 @@ export async function listAdminBookings(req, res, next) {
           where: bookingBucketFilter,
           _count: { _all: true },
         }),
+        prisma.booking.findMany({
+          where: baseWhere,
+          select: { status: true, eventDate: true },
+        }),
       ])
 
       enrichedBookings = await enrichBookingsWithCustomer(bookings)
@@ -1547,8 +1533,8 @@ export async function listAdminBookings(req, res, next) {
       })
       metrics = {
         total,
-        active: enrichedBookings.filter(booking => getBookingCategory(booking) === 'active').length,
-        previous: enrichedBookings.filter(booking => getBookingCategory(booking) === 'previous')
+        active: metricsBookings.filter(booking => getBookingCategory(booking) === 'active').length,
+        previous: metricsBookings.filter(booking => getBookingCategory(booking) === 'previous')
           .length,
       }
     }
@@ -1661,7 +1647,7 @@ export async function updateAdminBookingStatus(req, res, next) {
         data: { status },
       })
 
-      await tx.bookingStatusLog.create({
+      const statusLog = await tx.bookingStatusLog.create({
         data: {
           bookingId,
           previousStatus: booking.status,
@@ -1683,6 +1669,11 @@ export async function updateAdminBookingStatus(req, res, next) {
         })
       }
 
+      await ensureBookingTimeline(tx, {
+        ...nextBooking,
+        statusLogs: [statusLog],
+      })
+
       return nextBooking
     })
 
@@ -1690,8 +1681,10 @@ export async function updateAdminBookingStatus(req, res, next) {
     if (status !== 'confirmed') {
       notify(booking.userId, {
         type: 'booking_update',
-        title: `Booking updated to ${status.replaceAll('_', ' ')}`,
-        message: note || `Your booking status is now ${status.replaceAll('_', ' ')}.`,
+        title: `Booking updated to ${BOOKING_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')}`,
+        message:
+          note ||
+          `Your booking status is now ${BOOKING_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')}.`,
         linkUrl: `/dashboard/bookings/${bookingId}`,
       }).catch(() => {})
     }

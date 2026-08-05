@@ -27,39 +27,21 @@ import {
   bookingHasPendingHookahCod,
 } from '../lib/sheeshaCheckout'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
+import {
+  BOOKING_STATUSES,
+  BOOKING_STATUS_LABELS,
+  canProgressToStage,
+  getBookingStatusLabel,
+} from '../lib/bookingStages'
 
-// ---------------------------------------------------------------------------
-// Stage progression order - stages must follow this sequence
-// ---------------------------------------------------------------------------
-const STAGE_PROGRESSION = [
-  'new',
-  'confirmed',
-  'info_collection',
-  'planning',
-  'pre_event',
-  'execution',
-  'post_event',
-  'completed',
-]
-
-const VALID_BOOKING_BUCKETS = new Set(['all', 'active', 'today', 'upcoming', 'completed'])
-const VALID_BOOKING_STATUSES = new Set([
-  '',
-  'new',
-  'confirmed',
-  'info_collection',
-  'planning',
-  'pre_event',
-  'execution',
-  'post_event',
-  'completed',
-  'cancelled',
-])
+const VALID_BOOKING_BUCKETS = new Set(['all', 'active', 'today', 'upcoming', 'completed', 'incomplete'])
+const VALID_BOOKING_STATUSES = new Set(['', ...BOOKING_STATUSES])
 
 function normalizeBookingBucket(value) {
   const normalizedValue = String(value ?? '')
     .trim()
     .toLowerCase()
+  if (normalizedValue === 'incomplete') return 'active'
   return VALID_BOOKING_BUCKETS.has(normalizedValue) ? normalizedValue : 'all'
 }
 
@@ -70,22 +52,7 @@ function normalizeBookingStatus(value) {
   return VALID_BOOKING_STATUSES.has(normalizedValue) ? normalizedValue : ''
 }
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000
 const CART_META_SEPARATOR = '||__ELEWEN_META__||'
-
-function startOfDay(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  date.setHours(0, 0, 0, 0)
-  return date
-}
-
-function getDaysSinceEvent(eventDate) {
-  const eventDay = startOfDay(eventDate)
-  const today = startOfDay(new Date())
-  if (!eventDay || !today) return null
-  return Math.floor((today.getTime() - eventDay.getTime()) / MS_PER_DAY)
-}
 
 function parseBookingItemTitle(title = '') {
   const rawTitle = String(title ?? '')
@@ -140,69 +107,6 @@ function buildAdminMessageHref(bookingId = '') {
 function buildAdminSupportHref(bookingId = '') {
   const id = String(bookingId ?? '').trim()
   return id ? `/support?bookingId=${encodeURIComponent(id)}` : '/support'
-}
-
-// Special case: cancelled can happen anytime
-// const SPECIAL_STATUSES = ['cancelled']
-
-function canProgressToStage(currentStatus, newStatus, remainingAmount = 0, eventDate = null) {
-  // Special case: can always go to cancelled
-  if (newStatus === 'cancelled') return { allowed: true }
-
-  // Can't change to same status
-  if (currentStatus === newStatus) return { allowed: false, message: 'Already in this stage.' }
-
-  const currentIndex = STAGE_PROGRESSION.indexOf(currentStatus?.toLowerCase())
-  const newIndex = STAGE_PROGRESSION.indexOf(newStatus?.toLowerCase())
-
-  // If either status is not in progression order
-  if (currentIndex === -1 || newIndex === -1) {
-    return { allowed: false, message: 'Invalid stage transition.' }
-  }
-
-  // Can't go backward
-  if (newIndex < currentIndex) {
-    return { allowed: false, message: 'Cannot move back to a previous stage.' }
-  }
-
-  // Execution stage requires full payment
-  if (newStatus === 'execution' && remainingAmount > 0) {
-    return {
-      allowed: false,
-      message: `Cannot move to "Execution" stage. Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
-    }
-  }
-
-  const daysSinceEvent = getDaysSinceEvent(eventDate)
-  if (['execution', 'post_event', 'completed'].includes(newStatus) && daysSinceEvent == null) {
-    return {
-      allowed: false,
-      message: 'Event date is required before using execution, post-event, or completed stages.',
-    }
-  }
-
-  if (newStatus === 'execution' && daysSinceEvent !== 0) {
-    return {
-      allowed: false,
-      message: 'Execution stage is only available on the booking event date.',
-    }
-  }
-
-  if (newStatus === 'post_event' && !(daysSinceEvent >= 1)) {
-    return {
-      allowed: false,
-      message: 'Post Event stage becomes available after the event date has passed.',
-    }
-  }
-
-  if (newStatus === 'completed' && !(daysSinceEvent >= 2)) {
-    return {
-      allowed: false,
-      message: 'Completed stage becomes available two days after the event date.',
-    }
-  }
-
-  return { allowed: true }
 }
 
 // ---------------------------------------------------------------------------
@@ -369,9 +273,7 @@ function SectionLabel({ children }) {
 }
 
 function formatStageLabel(value = '') {
-  return String(value ?? '')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\b\w/g, char => char.toUpperCase())
+  return getBookingStatusLabel(value)
 }
 
 function getSubtitle(booking) {
@@ -814,30 +716,11 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
                     onChange={handleStatusInputChange}
                     className="min-h-10 rounded-full bg-[#F3F3F3]"
                   >
-                    <option value="new" disabled={!isStatusAllowed('new')}>
-                      New
-                    </option>
-                    <option value="confirmed" disabled={!isStatusAllowed('confirmed')}>
-                      Confirmed
-                    </option>
-                    <option value="info_collection" disabled={!isStatusAllowed('info_collection')}>
-                      Info Collection
-                    </option>
-                    <option value="planning" disabled={!isStatusAllowed('planning')}>
-                      Planning
-                    </option>
-                    <option value="pre_event" disabled={!isStatusAllowed('pre_event')}>
-                      Pre Event
-                    </option>
-                    <option value="execution" disabled={!isStatusAllowed('execution')}>
-                      Execution
-                    </option>
-                    <option value="post_event" disabled={!isStatusAllowed('post_event')}>
-                      Post Event
-                    </option>
-                    <option value="completed" disabled={!isStatusAllowed('completed')}>
-                      Completed
-                    </option>
+                    {BOOKING_STATUSES.filter(status => status !== 'cancelled').map(status => (
+                      <option key={status} value={status} disabled={!isStatusAllowed(status)}>
+                        {BOOKING_STATUS_LABELS[status]}
+                      </option>
+                    ))}
                     <option value="cancelled">Cancelled</option>
                   </CustomSelect>
                 </div>
@@ -1092,8 +975,8 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
 
 const bookingBucketTabs = [
   { key: 'today', label: "Today's Bookings" },
-  { key: 'all', label: 'New Bookings' },
-  { key: 'upcoming', label: 'Upcoming Bookings' },
+  { key: 'all', label: 'Total Bookings' },
+  { key: 'active', label: 'Incomplete Bookings' },
   { key: 'completed', label: 'Completed Bookings' },
 ]
 
@@ -1222,7 +1105,7 @@ export default function BookingManagementPage() {
             className="min-h-10 rounded-full bg-[#F3F3F3]"
           >
             <option value="all">All Buckets</option>
-            <option value="active">Active</option>
+            <option value="active">Incomplete (in progress)</option>
             <option value="today">Today</option>
             <option value="upcoming">Upcoming</option>
             <option value="completed">Completed</option>
@@ -1236,15 +1119,11 @@ export default function BookingManagementPage() {
             className="min-h-10 rounded-full bg-[#F3F3F3]"
           >
             <option value="">All Stages</option>
-            <option value="new">New</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="info_collection">Info Collection</option>
-            <option value="planning">Planning</option>
-            <option value="pre_event">Pre Event</option>
-            <option value="execution">Execution</option>
-            <option value="post_event">Post Event</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            {BOOKING_STATUSES.map(status => (
+              <option key={status} value={status}>
+                {BOOKING_STATUS_LABELS[status]}
+              </option>
+            ))}
           </CustomSelect>
           <CustomSelect
             value={sortBy}
@@ -1259,8 +1138,8 @@ export default function BookingManagementPage() {
           </CustomSelect>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
-          Bucket filters by booking group: Active, Today, Upcoming, or Completed. Stage filters by
-          workflow status like Confirmed or Planning. Sort only changes the order of the results.
+          Total shows every booking. Incomplete shows in-progress bookings. Stage filters match the
+          customer timeline steps. Sort only changes the order of the results.
         </p>
       </div>
 

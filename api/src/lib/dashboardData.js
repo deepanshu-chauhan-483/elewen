@@ -2,20 +2,9 @@ import { strapiGet } from './strapi.js'
 import { cacheGet, cacheSet, TTL } from './cache.js'
 import { calculateBookingRefundPreview, getCancellationPolicyData } from './cancellationPolicy.js'
 import { isCodPayment } from './sheeshaCheckout.js'
+import { BOOKING_STATUS_LABELS } from './bookingStages.js'
 
 const STRAPI_BASE = process.env.STRAPI_URL || 'http://localhost:1337'
-
-const BOOKING_STATUS_LABELS = {
-  new: 'In Progress',
-  confirmed: 'Confirmed',
-  info_collection: 'Info Collection',
-  planning: 'Planning',
-  pre_event: 'Pre Event',
-  execution: 'Execution',
-  post_event: 'Post Event',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-}
 
 const SAMPLE_STATUS_LABELS = {
   new: 'Requested',

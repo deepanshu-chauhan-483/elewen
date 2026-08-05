@@ -357,7 +357,7 @@ const getPendingActionRoute = itemId => {
 const getBookingOverviewRoute = metricKey => {
   switch (metricKey) {
     case 'total':
-      return '/bookings'
+      return '/bookings?bucket=all'
     case 'new':
       return '/bookings?status=new'
     case 'ongoing':
@@ -367,7 +367,7 @@ const getBookingOverviewRoute = metricKey => {
     case 'upcoming':
       return '/bookings?bucket=upcoming'
     default:
-      return '/bookings'
+      return '/bookings?bucket=all'
   }
 }
 
@@ -436,14 +436,7 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          label="Total Bookings"
-          value={formatCount(metrics.totalBookings)}
-          helper="All records"
-          accent
-          onClick={() => navigate(getBookingOverviewRoute('total'))}
-        />
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           label="New"
           value={formatCount(metrics.newBookingsCount)}
