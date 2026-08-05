@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
-import { usePackages } from '../hooks/usePackages'
+import { useCartPackagePricingLookup, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
@@ -322,10 +322,7 @@ export default function SinglePackageCheckout() {
   const [addingAddonId, setAddingAddonId] = useState('')
   const itemId = searchParams.get('itemId') ?? ''
 
-  const packageLookup = useMemo(
-    () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
-    [packages]
-  )
+  const { resolvePackageData } = useCartPackagePricingLookup(cart?.items ?? [], packages)
 
   const item = useMemo(() => {
     const cartItem = (cart?.items ?? []).find(entry => entry.id === itemId)
@@ -345,9 +342,9 @@ export default function SinglePackageCheckout() {
       addonTitle: parsedTitle.addonTitle,
       parentPackageId: parsedTitle.parentPackageId,
       additionalInfo: parsedTitle.additionalInfo,
-      packageData: packageLookup.get(String(cartItem.packageId)) ?? null,
+      packageData: resolvePackageData(cartItem.packageId),
     }
-  }, [cart?.items, itemId, packageLookup])
+  }, [cart?.items, itemId, resolvePackageData])
 
   const relatedAddonItems = useMemo(() => {
     const relatedPackageIds = getPackageRelationIds(item)

@@ -1,13 +1,15 @@
 export default function PriceSummaryDiscountRows({
   guestDiscountSummary = null,
   couponDiscount = 0,
+  transportAddonTotal = 0,
   formatCurrency,
 }) {
   const guestDiscounts = guestDiscountSummary?.discounts ?? []
   const totalGuestDiscount = Number(guestDiscountSummary?.totalGuestDiscount ?? 0)
   const couponAmount = Number(couponDiscount ?? 0)
+  const transportAmount = Number(transportAddonTotal ?? 0)
 
-  if (!guestDiscounts.length && couponAmount <= 0) return null
+  if (!guestDiscounts.length && couponAmount <= 0 && transportAmount <= 0) return null
 
   return (
     <div className="space-y-2 text-sm">
@@ -46,6 +48,13 @@ export default function PriceSummaryDiscountRows({
         <div className="flex justify-between text-[#6B1D0C]">
           <span className="text-[#787575]">Discount coupon applied</span>
           <span className="text-[#787575]">-{formatCurrency(couponAmount)}</span>
+        </div>
+      ) : null}
+
+      {transportAmount > 0 ? (
+        <div className="flex justify-between gap-3">
+          <span className="min-w-0 text-[#787575]">Zone transport add-on</span>
+          <span className="shrink-0 text-[#1C1C1C]">+{formatCurrency(transportAmount)}</span>
         </div>
       ) : null}
     </div>

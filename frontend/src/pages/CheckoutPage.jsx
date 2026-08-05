@@ -10,7 +10,7 @@ import {
 } from '../hooks/useMessagingContent'
 import { useGlobalSettings } from '../hooks/useCmsPages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
-import { usePackages } from '../hooks/usePackages'
+import { useCartPackagePricingLookup, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useServiceAreas } from '../hooks/useServiceAreas'
@@ -18,7 +18,7 @@ import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDel
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
 import CheckoutCouponSection from '../components/checkout/CheckoutCouponSection'
 import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
-import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
+import { aggregateAppliedGuestDiscounts, aggregateTransportAddonTotal, getCartItemSummary } from '../lib/cartItemPricing'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 import { openCashfreeCheckout } from '../lib/cashfreeCheckout'
@@ -655,6 +655,7 @@ export default function CheckoutPage() {
   const [pinCodeMessage, setPinCodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [isPincodeValid, setIsPincodeValid] = useState(false)
+  const debouncedPinCode = useDebouncedValue(pinCode, 500)
   const [guestCount, setGuestCount] = useState(
     cart?.guestCount != null ? String(cart.guestCount) : ''
   )
@@ -706,10 +707,7 @@ export default function CheckoutPage() {
     [addressFloor, addressLine1, addressLine2]
   )
 
-  const packageLookup = useMemo(
-    () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
-    [packages]
-  )
+  const { resolvePackageData } = useCartPackagePricingLookup(cart?.items ?? [], packages)
 
   const cartItems = useMemo(
     () =>
@@ -724,10 +722,10 @@ export default function CheckoutPage() {
           ...item,
           ...parsedTitle,
           selectedOptions,
-          packageData: packageLookup.get(String(item.packageId)) ?? null,
+          packageData: resolvePackageData(item.packageId),
         }
       }),
-    [cart?.items, packageLookup]
+    [cart?.items, resolvePackageData]
   )
 
   const cartClassification = useMemo(() => classifyCartPackages(cartItems), [cartItems])
@@ -755,11 +753,11 @@ export default function CheckoutPage() {
           cateringDiscountSettings,
           cartItems,
           deliveryCharge: isPincodeValid
-            ? getDeliveryChargeForPincode(deliveryCharges, pinCode)
+            ? getDeliveryChargeForPincode(deliveryCharges, debouncedPinCode)
             : null,
         }),
       })),
-    [cartItems, cateringDiscountSettings, deliveryCharges, isPincodeValid, pinCode]
+    [cartItems, cateringDiscountSettings, deliveryCharges, debouncedPinCode, isPincodeValid]
   )
   const hasAutoFilledGuestCountRef = useRef(false)
   const computedSubtotal = useMemo(
@@ -768,6 +766,10 @@ export default function CheckoutPage() {
   )
   const guestDiscountSummary = useMemo(
     () => aggregateAppliedGuestDiscounts(itemSummaries),
+    [itemSummaries]
+  )
+  const transportAddonTotal = useMemo(
+    () => aggregateTransportAddonTotal(itemSummaries),
     [itemSummaries]
   )
   const discountAmount = Number(cart?.discountAmount ?? 0)
@@ -811,7 +813,6 @@ export default function CheckoutPage() {
 
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
   const [paymentOption, setPaymentOption] = useState('advance')
-  const debouncedPinCode = useDebouncedValue(pinCode, 500)
 
   useEffect(() => {
     if (!location.state?.showCheckoutToast || hasShownCheckoutToastRef.current) return
@@ -883,6 +884,10 @@ export default function CheckoutPage() {
 
     setPinCodeMessage(message)
   }, [debouncedPinCode, pinCode, isLoadingServiceAreas, serviceAreas, deliveryCharges])
+
+  useEffect(() => {
+    draftBookingRef.current = null
+  }, [debouncedPinCode])
 
   const validateBeforeProceed = useCallback(() => {
     setFormError('')
@@ -1464,6 +1469,7 @@ export default function CheckoutPage() {
                 <PriceSummaryDiscountRows
                   guestDiscountSummary={guestDiscountSummary}
                   couponDiscount={discountAmount}
+                  transportAddonTotal={transportAddonTotal}
                   formatCurrency={formatCurrency}
                 />
 

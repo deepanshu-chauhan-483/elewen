@@ -99,8 +99,8 @@ export function applyDeliveryChargesToBreakdown(
 if (import.meta.env?.DEV) {
   const sample = normalizeDeliveryCharge({
     pincode: '110015',
-    addon_600: 300,
-    addon_1200: 300,
+    addon_600: 200,
+    addon_1200: 200,
     addon_3200: 200,
   })
   const at600 = applyDeliveryChargesToBreakdown(
@@ -118,7 +118,7 @@ if (import.meta.env?.DEV) {
     sample,
     1
   )
-  console.assert(at600.total === 900, '110015 @600 base should total 900')
+  console.assert(at600.total === 800, '110015 @600 base should total 800')
   console.assert(at3200.total === 3400, '110015 @3200 base should total 3400')
   console.assert(transportOnly.total === 3400, '110015 Transport@3200 should total 3400')
 }

@@ -9,7 +9,7 @@ import {
   useCheckoutToastMessage,
   useCouponToastMessage,
 } from '../hooks/useMessagingContent'
-import { usePackages } from '../hooks/usePackages'
+import { useCartPackagePricingLookup, usePackages } from '../hooks/usePackages'
 import { useWishlist } from '../hooks/useWishlist'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import BrandedImage from '../components/common/BrandedImage'
@@ -18,7 +18,7 @@ import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDispl
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
-import { aggregateAppliedGuestDiscounts, getCartItemSummary } from '../lib/cartItemPricing'
+import { aggregateAppliedGuestDiscounts, aggregateTransportAddonTotal, getCartItemSummary } from '../lib/cartItemPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import { classifyCartPackages, isSheeshaCartItem, MIXED_HOOKAH_CART_MESSAGE, MIXED_HOOKAH_ITEM_HINT } from '../lib/sheeshaCheckout'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
@@ -1290,6 +1290,10 @@ function PriceSummaryCard({
     () => aggregateAppliedGuestDiscounts(itemSummaries),
     [itemSummaries]
   )
+  const transportAddonTotal = useMemo(
+    () => aggregateTransportAddonTotal(itemSummaries),
+    [itemSummaries]
+  )
   const computedSubtotal = itemSummaries.reduce(
     (sum, entry) => sum + Number(entry.summary.total ?? 0),
     0
@@ -1401,6 +1405,7 @@ function PriceSummaryCard({
             <PriceSummaryDiscountRows
               guestDiscountSummary={guestDiscountSummary}
               couponDiscount={discountAmount}
+              transportAddonTotal={transportAddonTotal}
               formatCurrency={formatCurrency}
             />
 
@@ -1615,10 +1620,7 @@ export default function CartPage() {
   const [addingAddonId, setAddingAddonId] = useState('')
 
   const items = useMemo(() => cart?.items ?? [], [cart?.items])
-  const packageLookup = useMemo(
-    () => new Map(packages.map(pkg => [String(pkg.id), pkg])),
-    [packages]
-  )
+  const { resolvePackageData } = useCartPackagePricingLookup(items, packages)
 
   const cartItems = useMemo(
     () =>
@@ -1639,10 +1641,10 @@ export default function CartPage() {
           itemType: parsedTitle.itemType,
           addonTitle: parsedTitle.addonTitle,
           additionalInfo: parsedTitle.additionalInfo,
-          packageData: packageLookup.get(String(item.packageId)) ?? null,
+          packageData: resolvePackageData(item.packageId),
         }
       }),
-    [items, packageLookup]
+    [items, resolvePackageData]
   )
 
   const hasItems = cartItems.length > 0

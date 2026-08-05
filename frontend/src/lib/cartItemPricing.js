@@ -28,10 +28,6 @@ function getBreakdownAmount(entry) {
   return Number.isFinite(amount) && amount > 0 ? amount : 0
 }
 
-function isDecorPackageData(pkg) {
-  return Array.isArray(pkg?.service_slugs) && pkg.service_slugs.includes('decor')
-}
-
 function getPackageBreakdownRows(pkg) {
   return (Array.isArray(pkg?.detail_price_breakdown) ? pkg.detail_price_breakdown : [])
     .map(entry => {
@@ -99,6 +95,13 @@ export function aggregateAppliedGuestDiscounts(itemSummaries = []) {
   }
 }
 
+export function aggregateTransportAddonTotal(itemSummaries = []) {
+  return itemSummaries.reduce(
+    (sum, { summary }) => sum + Number(summary?.transportAddonTotal ?? 0),
+    0
+  )
+}
+
 export function getCartItemSummary(
   item,
   { cateringDiscountSettings = null, cartItems = [], deliveryCharge = null } = {}
@@ -129,9 +132,7 @@ export function getCartItemSummary(
   }
 
   const quantity = Math.max(1, Number(item?.quantity ?? 1))
-  const breakdownRows = isDecorPackageData(item?.packageData)
-    ? []
-    : getPackageBreakdownRows(item?.packageData)
+  const breakdownRows = getPackageBreakdownRows(item?.packageData)
 
   if (!breakdownRows.length) {
     return {
@@ -159,6 +160,6 @@ export function getCartItemSummary(
 
   return {
     rows: baseRows,
-    total: cartTotal > 0 ? cartTotal : breakdownTotal,
+    total: breakdownTotal > 0 ? breakdownTotal : cartTotal,
   }
 }

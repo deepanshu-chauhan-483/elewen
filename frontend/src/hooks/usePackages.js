@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { strapiGet, USE_FALLBACK } from '../lib/strapi'
 import { PACKAGES_FALLBACK } from '../data/packages'
@@ -880,24 +881,32 @@ export function usePackages() {
   })
 }
 
+async function fetchPackageById(packageId, { listing = false } = {}) {
+  const id = String(packageId ?? '').trim()
+  if (!id) return null
+
+  if (USE_FALLBACK) {
+    return (
+      PACKAGES_FALLBACK.find(
+        pkg => String(pkg.documentId ?? pkg.id) === id || String(pkg.id) === id
+      ) ?? null
+    )
+  }
+
+  const filters = isNumericId(id)
+    ? { 'filters[id][$eq]': id }
+    : { 'filters[documentId][$eq]': id }
+
+  const items = await fetchPackages({ ...filters, listing })
+  return items[0] ?? null
+}
+
 export function usePackageById(packageId) {
   return useQuery({
     queryKey: ['package', packageId, 'live-v6'],
     enabled: Boolean(packageId),
     queryFn: async () => {
-      if (USE_FALLBACK) {
-        return (
-          PACKAGES_FALLBACK.find(pkg => String(pkg.documentId ?? pkg.id) === String(packageId)) ??
-          null
-        )
-      }
-
-      const filters = isNumericId(packageId)
-        ? { 'filters[id][$eq]': String(packageId) }
-        : { 'filters[documentId][$eq]': String(packageId) }
-
-      const items = await fetchPackages({ ...filters, listing: false })
-      const pkg = items[0] ?? null
+      const pkg = await fetchPackageById(packageId, { listing: false })
       if (pkg?.images?.length) preloadImages(pkg.images.slice(0, 1))
       return pkg
     },
@@ -905,4 +914,65 @@ export function usePackageById(packageId) {
     gcTime: 15 * 60 * 1000,
     retry: 1,
   })
+}
+
+function normalizePackageIds(packageIds = []) {
+  return [...new Set(packageIds.map(id => String(id ?? '').trim()).filter(Boolean))].sort()
+}
+
+export function usePackagePricingDetails(packageIds = []) {
+  const normalizedIds = useMemo(() => normalizePackageIds(packageIds), [packageIds])
+
+  return useQuery({
+    queryKey: ['packages', 'pricing-details', normalizedIds.join(',')],
+    enabled: normalizedIds.length > 0,
+    queryFn: async () => {
+      if (USE_FALLBACK) {
+        return PACKAGES_FALLBACK.filter(
+          pkg =>
+            normalizedIds.includes(String(pkg.id)) ||
+            normalizedIds.includes(String(pkg.documentId ?? ''))
+        )
+      }
+
+      const results = await Promise.all(
+        normalizedIds.map(id => fetchPackageById(id, { listing: false }))
+      )
+      return results.filter(Boolean)
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: 1,
+  })
+}
+
+export function useCartPackagePricingLookup(cartItems = [], listingPackages = []) {
+  const packageIds = useMemo(
+    () => normalizePackageIds((cartItems ?? []).map(item => item?.packageId)),
+    [cartItems]
+  )
+  const listingLookup = useMemo(
+    () => new Map((listingPackages ?? []).map(pkg => [String(pkg.id), pkg])),
+    [listingPackages]
+  )
+  const pricingQuery = usePackagePricingDetails(packageIds)
+  const pricingLookup = useMemo(
+    () => new Map((pricingQuery.data ?? []).map(pkg => [String(pkg.id), pkg])),
+    [pricingQuery.data]
+  )
+
+  const resolvePackageData = useCallback(
+    packageId => {
+      const key = String(packageId ?? '')
+      return pricingLookup.get(key) ?? listingLookup.get(key) ?? null
+    },
+    [listingLookup, pricingLookup]
+  )
+
+  return {
+    resolvePackageData,
+    listingLookup,
+    pricingLookup,
+    pricingQuery,
+  }
 }
