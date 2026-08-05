@@ -85,6 +85,23 @@ function getBookingSubtitle(booking) {
   return booking?.statusLabel || 'Booking'
 }
 
+function getCustomerDisplay(booking) {
+  const customer = booking?.customer ?? {}
+  const name = String(customer.name ?? '').trim()
+  const email = String(customer.email ?? '').trim()
+  const phone = String(customer.phone ?? '').trim()
+  const displayName = name || email || 'Customer'
+
+  return {
+    displayName,
+    email,
+    phone,
+    detailLine: [email && email !== displayName ? email : null, phone || null]
+      .filter(Boolean)
+      .join(' · '),
+  }
+}
+
 const statusMap = {
   active: 'bg-[#EAF8F1] text-[#238E64]',
   confirmed: 'bg-[#EEF4FF] text-[#3061C6]',
@@ -184,6 +201,7 @@ function Avatar({ name = '', size = 'md', tone = 'brand' }) {
 
 function ThreadCard({ threadItem, isSelected, onClick }) {
   const booking = threadItem.bookingSummary
+  const customer = getCustomerDisplay(booking)
   const packageTitle = getBookingTitle(booking)
   const subtitle = getBookingSubtitle(booking)
   const unread = threadItem.unreadCount || 0
@@ -198,8 +216,13 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-normal text-[#1C1C1C]">{packageTitle}</p>
-          <p className="mt-1 truncate text-[12px] text-[#8A8A8A]">{subtitle}</p>
+          <p className="truncate text-[14px] font-medium text-[#1C1C1C]">{customer.displayName}</p>
+          {customer.detailLine ? (
+            <p className="mt-0.5 truncate text-[12px] text-[#6B6B6B]">{customer.detailLine}</p>
+          ) : null}
+          <p className="mt-1 truncate text-[12px] text-[#8A8A8A]">
+            {[packageTitle, subtitle].filter(Boolean).join(' · ')}
+          </p>
         </div>
         {unread > 0 ? (
           <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[#C45C4A] px-1.5 text-[10px] font-bold text-white">
@@ -211,8 +234,11 @@ function ThreadCard({ threadItem, isSelected, onClick }) {
   )
 }
 
-function MessageBubble({ message, isAdmin }) {
-  const senderName = message.sender?.name || (isAdmin ? 'Admin' : 'Customer')
+function MessageBubble({ message, isAdmin, customerLabel = 'Customer' }) {
+  const senderName = message.sender?.name || (isAdmin ? 'Admin' : customerLabel)
+  const senderDetail = !isAdmin
+    ? [message.sender?.email, message.sender?.phone].filter(Boolean).join(' · ')
+    : ''
 
   return (
     <div className={`flex items-end gap-2 ${isAdmin ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -224,6 +250,12 @@ function MessageBubble({ message, isAdmin }) {
             : 'rounded-bl-md bg-[#F3EDE4] text-[#2C2C2C]'
         }`}
       >
+        {!isAdmin ? (
+          <p className="mb-1 text-[11px] font-medium text-[#591902]">
+            {senderName}
+            {senderDetail ? <span className="font-normal text-[#7A5A4A]"> · {senderDetail}</span> : null}
+          </p>
+        ) : null}
         {message.messageText ? (
           <p className="whitespace-pre-wrap">{message.messageText}</p>
         ) : null}
@@ -247,7 +279,7 @@ function MessageBubble({ message, isAdmin }) {
   )
 }
 
-function BookingUpdatesPanel({ bookingId }) {
+function BookingUpdatesPanel({ bookingId, customerLabel = '' }) {
   const { data: booking, isLoading } = useAdminBooking(bookingId)
 
   const updates = useMemo(() => {
@@ -283,6 +315,9 @@ function BookingUpdatesPanel({ bookingId }) {
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
       <div className="shrink-0 border-b border-[#F0EBE4] px-5 py-4">
         <h3 className="text-[15px] font-normal text-[#1C1C1C]">Booking Updates</h3>
+        {customerLabel ? (
+          <p className="mt-1 truncate text-[12px] text-[#8A8A8A]">Customer: {customerLabel}</p>
+        ) : null}
       </div>
 
       <div
@@ -339,6 +374,7 @@ function ConversationPanel({
 }) {
   const messagesScrollRef = useRef(null)
   const booking = thread?.bookingSummary
+  const customer = getCustomerDisplay(booking)
   const packageTitle = getBookingTitle(booking)
   const subtitle = getBookingSubtitle(booking)
 
@@ -367,8 +403,12 @@ function ConversationPanel({
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#EDE7DF] bg-white">
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-[#F0EBE4] px-5 py-4">
         <div className="min-w-0">
-          <p className="truncate text-[16px] font-normal text-[#1C1C1C]">{packageTitle}</p>
-          <p className="mt-1 text-[12px] text-[#8A8A8A]">{subtitle}</p>
+          <p className="truncate text-[16px] font-medium text-[#1C1C1C]">{customer.displayName}</p>
+          {customer.detailLine ? (
+            <p className="mt-0.5 truncate text-[12px] text-[#6B6B6B]">{customer.detailLine}</p>
+          ) : null}
+          <p className="mt-1 truncate text-[13px] text-[#1C1C1C]">{packageTitle}</p>
+          <p className="mt-0.5 text-[12px] text-[#8A8A8A]">{subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <MessageStatusBadge
@@ -396,7 +436,14 @@ function ConversationPanel({
         ) : thread?.messages?.length ? (
           thread.messages.map(message => {
             const isAdmin = String(message.senderId) !== String(booking?.customer?.id)
-            return <MessageBubble key={message.id} message={message} isAdmin={isAdmin} />
+            return (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isAdmin={isAdmin}
+                customerLabel={customer.displayName}
+              />
+            )
           })
         ) : (
           <div className="flex flex-1 items-center justify-center">
@@ -573,6 +620,9 @@ export default function MessageBoxPage() {
 
   const thread =
     threadQuery.data?.bookingId === selectedBookingId ? threadQuery.data : null
+  const selectedCustomer = getCustomerDisplay(
+    thread?.bookingSummary ?? selectedThreadListItem?.bookingSummary
+  )
 
   if (threadsQuery.isLoading) return <LoadingState label="Loading message threads..." />
   if (threadsQuery.error)
@@ -601,7 +651,8 @@ export default function MessageBoxPage() {
           Messages &amp; Updates
         </h1>
         <p className="mt-2 max-w-2xl text-[13px] leading-[1.5] text-[#8A8A8A]">
-          Stay connected with your event team and track important updates related to your bookings.
+          Each chat is tied to a booking customer. Use the customer name and email in the list to
+          see who you are messaging.
         </p>
       </div>
 
@@ -703,7 +754,14 @@ export default function MessageBoxPage() {
 
         {/* Column 3 — Booking updates */}
         <div className="h-[min(360px,50vh)] min-h-0 overflow-hidden lg:h-full">
-          <BookingUpdatesPanel bookingId={selectedBookingId} />
+          <BookingUpdatesPanel
+            bookingId={selectedBookingId}
+            customerLabel={
+              [selectedCustomer.displayName, selectedCustomer.email]
+                .filter((value, index, list) => value && list.indexOf(value) === index)
+                .join(' · ') || ''
+            }
+          />
         </div>
       </div>
     </div>
