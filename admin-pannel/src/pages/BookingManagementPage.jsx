@@ -16,6 +16,7 @@ import {
   useAdminBookings,
   useAdminCreateVendorAssignment,
   useAdminSendReferralCoupon,
+  useAdminPreviewPersonalizationEmail,
   useAdminSendPersonalizationEmail,
   useAdminUpdateBookingStatus,
   useAdminVendors,
@@ -155,33 +156,6 @@ function GhostBtn({ children, onClick, disabled }) {
   )
 }
 
-function buildMailtoHref(to, subject, bodyLines = []) {
-  const recipient = String(to ?? '').trim()
-  if (!recipient) return ''
-
-  // Use encodeURIComponent (spaces → %20). URLSearchParams uses +, which Outlook/Gmail
-  // often show as literal "+" instead of spaces in mailto bodies.
-  const parts = []
-  if (subject) parts.push(`subject=${encodeURIComponent(subject)}`)
-
-  const body = bodyLines.filter(line => line != null && line !== false).join('\n')
-  if (body) parts.push(`body=${encodeURIComponent(body)}`)
-
-  const query = parts.join('&')
-  return `mailto:${recipient}${query ? `?${query}` : ''}`
-}
-
-function formatPersonalizationDeadline(value) {
-  if (!value) return ''
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
-
 function LinkBtn({ href, children }) {
   if (!href) return null
 
@@ -319,21 +293,27 @@ const REFERRAL_TIER_OPTIONS = [
   { value: 'referral_1500', label: 'Referral — Rs 1,500 off' },
 ]
 
-function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail, customerName }) {
+function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) {
+  const previewMutation = useAdminPreviewPersonalizationEmail()
   const sendMutation = useAdminSendPersonalizationEmail()
   const [serviceName, setServiceName] = useState('decor')
   const [designImage1, setDesignImage1] = useState('')
   const [designImage2, setDesignImage2] = useState('')
   const [designImage3, setDesignImage3] = useState('')
   const [responseDeadline, setResponseDeadline] = useState('')
+  const [composerOpen, setComposerOpen] = useState(false)
+  const [emailTo, setEmailTo] = useState(String(customerEmail ?? '').trim())
   const [emailSubject, setEmailSubject] = useState("Let's personalise your booking with Elewen")
+  const [emailHeadline, setEmailHeadline] = useState('')
+  const [emailIntro, setEmailIntro] = useState('')
   const [emailNote, setEmailNote] = useState('')
+  const [emailHtml, setEmailHtml] = useState('')
+  const [previewStale, setPreviewStale] = useState(false)
   const [sendMessage, setSendMessage] = useState('')
   const [sendError, setSendError] = useState('')
 
   const status = String(bookingStatus ?? '').toLowerCase()
   const canSend = !['new', 'cancelled'].includes(status)
-  const recipient = String(customerEmail ?? '').trim()
 
   if (!canSend) {
     return (
@@ -343,88 +323,87 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail, cu
     )
   }
 
-  const handleOpenInMailApp = async () => {
+  const payloadFields = (includeCopy = true) => ({
+    serviceName: serviceName.trim() || 'decor',
+    designImage1: designImage1.trim(),
+    designImage2: designImage2.trim(),
+    designImage3: designImage3.trim(),
+    responseDeadline: responseDeadline || undefined,
+    channel: 'smtp',
+    ...(includeCopy
+      ? {
+          subject: emailSubject.trim() || undefined,
+          headline: emailHeadline.trim() || undefined,
+          introText: emailIntro.trim() || undefined,
+          customMessage: emailNote.trim() || undefined,
+        }
+      : {}),
+  })
+
+  const applyPreviewResult = (result, { seedCopy } = { seedCopy: false }) => {
+    setEmailTo(result?.to || String(customerEmail ?? '').trim() || '')
+    setEmailHtml(result?.html ?? '')
+    if (seedCopy) {
+      setEmailSubject(result?.subject ?? result?.defaults?.subject ?? '')
+      setEmailHeadline(result?.headline ?? result?.defaults?.headline ?? '')
+      setEmailIntro(result?.introText ?? result?.defaults?.introText ?? '')
+      setEmailNote(result?.customMessage ?? '')
+    } else if (result?.subject) {
+      setEmailSubject(result.subject)
+    }
+    setPreviewStale(false)
+    setComposerOpen(true)
+  }
+
+  const handlePreview = async ({ seedCopy = !composerOpen } = {}) => {
     setSendError('')
     setSendMessage('')
-
-    if (!recipient) {
-      setSendError('This booking has no customer email on file.')
-      return
-    }
-
-    const images = [designImage1.trim(), designImage2.trim(), designImage3.trim()].filter(Boolean)
-    if (!images.length) {
-      setSendError('Add at least one design image URL before opening the email.')
-      return
-    }
-
-    const service = serviceName.trim() || 'decor'
-    const subject = emailSubject.trim() || "Let's personalise your booking with Elewen"
-    const note = emailNote.trim()
-    const deadlineLabel = formatPersonalizationDeadline(responseDeadline)
-    const bookingUrl = `https://elewen.co.in/user-dashboard/details?bookingId=${encodeURIComponent(bookingId)}`
-    const firstName = String(customerName ?? '').trim().split(/\s+/)[0] || 'there'
-
-    const bodyLines = [
-      `Hi ${firstName},`,
-      '',
-      `We're getting everything ready for your event, and it's now time to customise your ${service}.`,
-      note ? '' : null,
-      note || null,
-      '',
-      'Please choose your preferred design:',
-      designImage1.trim() ? `Option 1: ${designImage1.trim()}` : null,
-      designImage2.trim() ? `Option 2: ${designImage2.trim()}` : null,
-      designImage3.trim() ? `Option 3: ${designImage3.trim()}` : null,
-      '',
-      'Reply with Option 1, 2 or 3 — or open your booking:',
-      bookingUrl,
-      '',
-      'What would you like it to say? Please share the exact text (for example: Welcome to Aarav\'s First Birthday).',
-      '',
-      deadlineLabel
-        ? `Please send us your selections by ${deadlineLabel} so our team has enough time to prepare.`
-        : 'Please send us your selections soon so our team has enough time to prepare.',
-      '',
-      'Team Elewen',
-      '9810937700',
-    ]
-
-    const mailtoHref = buildMailtoHref(recipient, subject, bodyLines)
-    if (!mailtoHref) {
-      setSendError('Could not open the email app for this customer.')
-      return
-    }
-
     try {
+      const result = await previewMutation.mutateAsync({
+        bookingId,
+        body: payloadFields(composerOpen),
+      })
+      applyPreviewResult(result, { seedCopy })
+    } catch (error) {
+      if (!composerOpen) setComposerOpen(false)
+      setSendError(error?.message ?? 'Could not preview personalization email.')
+    }
+  }
+
+  const markCopyChanged = setter => event => {
+    setter(event.target.value)
+    setPreviewStale(true)
+  }
+
+  const handleSend = async () => {
+    setSendError('')
+    setSendMessage('')
+    try {
+      if (previewStale) {
+        const refreshed = await previewMutation.mutateAsync({
+          bookingId,
+          body: payloadFields(true),
+        })
+        applyPreviewResult(refreshed, { seedCopy: false })
+      }
+
       await sendMutation.mutateAsync({
         bookingId,
-        body: {
-          serviceName: service,
-          designImage1: designImage1.trim(),
-          designImage2: designImage2.trim(),
-          designImage3: designImage3.trim(),
-          responseDeadline: responseDeadline || undefined,
-          subject,
-          customMessage: note || undefined,
-          channel: 'mailto',
-        },
+        body: payloadFields(true),
       })
-
-      window.open(mailtoHref, '_self')
-      setSendMessage(
-        'Email app opened. Review the message in Outlook / Gmail, then send it from there.'
-      )
+      setSendMessage('Personalization email sent from Elewen to the customer.')
+      setComposerOpen(false)
+      setPreviewStale(false)
     } catch (error) {
-      setSendError(error?.message ?? 'Could not prepare the personalization email.')
+      setSendError(error?.message ?? 'Could not send personalization email.')
     }
   }
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#6B7280]">
-        Same as Vendor Management — opens your phone or laptop mail app (Outlook, Gmail, etc.) with
-        the customer, subject, and message ready. You review and send from there.
+        Preview the Elewen-branded email, edit wording in plain language if needed, then send from
+        Elewen mail (not your personal Gmail/Outlook).
       </p>
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Service name</p>
@@ -461,33 +440,122 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail, cu
           className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
         />
       </div>
-      <div>
-        <p className="mb-1.5 text-xs text-[#8F8F8F]">Email subject</p>
-        <input
-          type="text"
-          value={emailSubject}
-          onChange={event => setEmailSubject(event.target.value)}
-          className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
-        />
+
+      <div className="flex flex-wrap gap-2">
+        <PrimaryBtn
+          disabled={previewMutation.isPending || sendMutation.isPending}
+          onClick={() => handlePreview({ seedCopy: !composerOpen })}
+        >
+          {previewMutation.isPending
+            ? 'Loading preview…'
+            : composerOpen
+              ? 'Refresh preview'
+              : 'Preview Elewen email'}
+        </PrimaryBtn>
+        {composerOpen ? (
+          <GhostBtn
+            disabled={previewMutation.isPending}
+            onClick={() => {
+              setComposerOpen(false)
+              setSendError('')
+              setPreviewStale(false)
+            }}
+          >
+            Close preview
+          </GhostBtn>
+        ) : null}
       </div>
-      <div>
-        <p className="mb-1.5 text-xs text-[#8F8F8F]">Extra note (optional)</p>
-        <textarea
-          value={emailNote}
-          onChange={event => setEmailNote(event.target.value)}
-          rows={3}
-          placeholder="e.g. Hi — these are the three backdrop options we discussed on call."
-          className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
-        />
-      </div>
-      <div className="rounded-xl bg-white px-4 py-3 text-sm text-[#6B7280]">
-        <p>
-          <span className="font-medium text-[#2D2D2D]">To:</span> {recipient || 'No email on file'}
-        </p>
-      </div>
-      <PrimaryBtn disabled={sendMutation.isPending || !recipient} onClick={handleOpenInMailApp}>
-        {sendMutation.isPending ? 'Preparing…' : 'Open in Mail / Outlook'}
-      </PrimaryBtn>
+
+      {composerOpen ? (
+        <div className="space-y-4 rounded-2xl border border-[#E4DED8] bg-white p-4">
+          <div>
+            <p className="text-sm font-semibold text-[#1C1C1C]">Elewen email preview</p>
+            <p className="mt-1 text-xs text-[#8F8F8F]">
+              Same branded format the customer will receive. Edit wording below if needed — no code.
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-[#FBF7F3] px-4 py-3 text-sm text-[#6B7280]">
+            <p>
+              <span className="font-medium text-[#2D2D2D]">From:</span> Elewen mail
+            </p>
+            <p className="mt-1">
+              <span className="font-medium text-[#2D2D2D]">To:</span> {emailTo || '—'}
+            </p>
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Email subject</p>
+            <input
+              type="text"
+              value={emailSubject}
+              onChange={markCopyChanged(setEmailSubject)}
+              className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+            />
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Title inside email</p>
+            <input
+              type="text"
+              value={emailHeadline}
+              onChange={markCopyChanged(setEmailHeadline)}
+              className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+            />
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Opening message</p>
+            <textarea
+              value={emailIntro}
+              onChange={markCopyChanged(setEmailIntro)}
+              rows={3}
+              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
+            />
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Extra note from planner (optional)</p>
+            <textarea
+              value={emailNote}
+              onChange={markCopyChanged(setEmailNote)}
+              rows={3}
+              placeholder="e.g. These are the three backdrop options we discussed on call."
+              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
+            />
+          </div>
+
+          {previewStale ? (
+            <p className="rounded-xl bg-[#FFF8E8] px-3 py-2 text-xs text-[#8A6A2F]">
+              Wording changed — click <strong>Refresh preview</strong> to update the mail view, or
+              send and we will refresh automatically.
+            </p>
+          ) : null}
+
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Customer email preview</p>
+            <iframe
+              title="Personalization email preview"
+              srcDoc={emailHtml}
+              sandbox=""
+              className="h-[520px] w-full rounded-2xl border border-[#E4DED8] bg-[#0d0d0d]"
+            />
+          </div>
+
+          <PrimaryBtn
+            disabled={
+              sendMutation.isPending ||
+              previewMutation.isPending ||
+              !emailSubject.trim() ||
+              !emailHtml.trim()
+            }
+            onClick={handleSend}
+          >
+            {sendMutation.isPending ? 'Sending…' : 'Send from Elewen'}
+          </PrimaryBtn>
+        </div>
+      ) : null}
+
       {sendMessage ? <p className="text-sm text-[#12803D]">{sendMessage}</p> : null}
       {sendError ? <p className="text-sm text-[#8A1C1C]">{sendError}</p> : null}
     </div>
@@ -1087,7 +1155,6 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
                 bookingId={booking.id}
                 bookingStatus={bookingDetails?.status ?? booking.status}
                 customerEmail={bookingDetails?.customer?.email}
-                customerName={bookingDetails?.customer?.name}
               />
             </div>
           </div>
