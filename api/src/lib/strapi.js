@@ -7,7 +7,7 @@
  * - Content create/update endpoints expect `{ data: ... }`
  */
 
-import { withCache, cacheDel, TTL } from './cache.js'
+import { withCache, cacheDel, cacheDelPattern, TTL } from './cache.js'
 
 const getBaseCandidates = () => {
   // ponytail: never use VITE_STRAPI_URL here — root/docker .env sets it to production
@@ -202,7 +202,14 @@ export async function strapiAdminPut(path, body) {
 }
 
 // ---------------- SERVER GET ----------------
-export async function strapiServerGet(path) {
+export async function strapiServerGet(path, { skipCache = false } = {}) {
+  if (skipCache) {
+    return requestJson(path, {
+      headers: buildHeaders(),
+      prefixApi: !path.startsWith('/api/'),
+    })
+  }
+
   const key = `strapi:GET:${path}`
   return withCache(key, TTL.STRAPI, () =>
     requestJson(path, {
@@ -215,6 +222,10 @@ export async function strapiServerGet(path) {
 // Call after writes to Strapi so stale cache is cleared for that path
 export async function invalidateStrapiCache(path) {
   await cacheDel(`strapi:GET:${path}`)
+}
+
+export async function invalidateStrapiCachePattern(pattern) {
+  await cacheDelPattern(pattern)
 }
 
 // ---------------- SERVER POST ----------------

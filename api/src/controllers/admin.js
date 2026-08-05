@@ -939,9 +939,9 @@ function buildPaymentSummaryFromPayments(payments = []) {
   }
 }
 
-async function safeStrapiServerGet(path, fallback = null) {
+async function safeStrapiServerGet(path, fallback = null, options = {}) {
   try {
-    return await strapiServerGet(path)
+    return await strapiServerGet(path, options)
   } catch {
     return fallback
   }
@@ -1063,7 +1063,7 @@ async function fetchVendorDirectory({
   let vendors
 
   try {
-    response = await strapiServerGet(`/api/vendors?${query.join('&')}`)
+    response = await strapiServerGet(`/api/vendors?${query.join('&')}`, { skipCache: true })
     vendors = response?.data ?? []
   } catch {
     return fetchVendorDirectoryFromDatabase({
@@ -1313,7 +1313,8 @@ export async function getAdminOverview(req, res, next) {
       }),
       safeStrapiServerGet(
         '/api/vendors?filters[vendor_status][$eq]=pending&publicationState=preview&pagination[page]=1&pagination[pageSize]=5',
-        { data: [], meta: { pagination: { total: 0 } } }
+        { data: [], meta: { pagination: { total: 0 } } },
+        { skipCache: true }
       ),
     ])
 
@@ -2259,6 +2260,8 @@ export async function updateAdminVendor(req, res, next) {
         data: payload,
       })
 
+      await cacheDelPattern('strapi:GET:/api/vendors*')
+
       return res.json({
         vendor: {
           ...mapVendorPreview(updated?.data ?? currentVendor),
@@ -2319,6 +2322,7 @@ export async function updateAdminVendor(req, res, next) {
         return res.status(404).json({ error: 'Vendor not found' })
       }
 
+      await cacheDelPattern('strapi:GET:/api/vendors*')
       res.json({ vendor: mapVendorDirectoryRow(updatedRow) })
     }
   } catch (err) {

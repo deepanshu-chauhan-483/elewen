@@ -1,6 +1,12 @@
 import crypto from 'crypto'
 import prisma from '../lib/prisma.js'
-import { strapiPost, strapiServerPost, strapiServerUpload, strapiUpload } from '../lib/strapi.js'
+import {
+  invalidateStrapiCachePattern,
+  strapiPost,
+  strapiServerPost,
+  strapiServerUpload,
+  strapiUpload,
+} from '../lib/strapi.js'
 
 function toTrimmedString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -70,43 +76,84 @@ async function findVendorByEmailInDatabase(email) {
 }
 
 async function createVendorInDatabase(payload) {
-  const [created] = await prisma.$queryRaw`
-    INSERT INTO public.vendors (
-      document_id,
-      company_name,
-      contact_person,
-      email,
-      phone,
-      location_city,
-      service_area,
-      experience_years,
-      team_size,
-      vendor_status,
-      is_available,
-      registration_data,
-      created_at,
-      updated_at
-    )
-    VALUES (
-      ${crypto.randomBytes(12).toString('hex')},
-      ${payload.company_name},
-      ${payload.contact_person},
-      ${payload.email},
-      ${payload.phone},
-      ${payload.location_city},
-      ${payload.service_area},
-      ${payload.experience_years},
-      ${payload.team_size},
-      ${payload.vendor_status},
-      ${true},
-      ${payload.registration_data},
-      NOW(),
-      NOW()
-    )
-    RETURNING id, document_id
-  `
-
-  return created ?? null
+  const registrationJson = JSON.stringify(payload.registration_data ?? {})
+  try {
+    const [created] = await prisma.$queryRaw`
+      INSERT INTO public.vendors (
+        document_id,
+        company_name,
+        contact_person,
+        email,
+        phone,
+        location_city,
+        service_area,
+        experience_years,
+        team_size,
+        vendor_status,
+        is_available,
+        registration_data,
+        published_at,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        ${crypto.randomBytes(12).toString('hex')},
+        ${payload.company_name},
+        ${payload.contact_person},
+        ${payload.email},
+        ${payload.phone},
+        ${payload.location_city},
+        ${payload.service_area},
+        ${payload.experience_years},
+        ${payload.team_size},
+        ${payload.vendor_status},
+        ${false},
+        ${registrationJson}::jsonb,
+        NOW(),
+        NOW(),
+        NOW()
+      )
+      RETURNING id, document_id
+    `
+    return created ?? null
+  } catch {
+    const [created] = await prisma.$queryRaw`
+      INSERT INTO public.vendors (
+        document_id,
+        company_name,
+        contact_person,
+        email,
+        phone,
+        location_city,
+        service_area,
+        experience_years,
+        team_size,
+        vendor_status,
+        is_available,
+        registration_data,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        ${crypto.randomBytes(12).toString('hex')},
+        ${payload.company_name},
+        ${payload.contact_person},
+        ${payload.email},
+        ${payload.phone},
+        ${payload.location_city},
+        ${payload.service_area},
+        ${payload.experience_years},
+        ${payload.team_size},
+        ${payload.vendor_status},
+        ${false},
+        ${registrationJson}::jsonb,
+        NOW(),
+        NOW()
+      )
+      RETURNING id, document_id
+    `
+    return created ?? null
+  }
 }
 
 async function uploadFileToStrapi(file) {
@@ -222,6 +269,7 @@ export const registerVendor = async (req, res, next) => {
         experience_years: experienceYears,
         team_size: teamSize,
         vendor_status: 'pending',
+        is_available: false,
         registration_data: registrationData,
       },
     }
@@ -229,14 +277,15 @@ export const registerVendor = async (req, res, next) => {
     let createdVendor
 
     try {
-      createdVendor = await strapiServerPost('/api/vendors', payload)
+      // Publish immediately so Admin Vendor Management Pending Requests can list it.
+      createdVendor = await strapiServerPost('/api/vendors?status=published', payload)
     } catch (err) {
       if (!shouldFallbackToPublicStrapi(err)) {
         throw err
       }
 
       try {
-        createdVendor = await strapiPost('/vendors', payload)
+        createdVendor = await strapiPost('/vendors?status=published', payload)
       } catch (publicErr) {
         if (!shouldFallbackToPublicStrapi(publicErr)) {
           throw publicErr
@@ -251,6 +300,8 @@ export const registerVendor = async (req, res, next) => {
         createdVendor = { data: created }
       }
     }
+
+    await invalidateStrapiCachePattern('strapi:GET:/api/vendors*')
 
     const vendorId = createdVendor?.data?.id
 
