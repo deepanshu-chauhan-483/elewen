@@ -94,3 +94,16 @@ export function getBookingPackageNamesText(booking = null, fallback = 'Selected 
   const packageNames = getBookingPackageNames(booking)
   return packageNames.length ? packageNames.join(', ') : fallback
 }
+
+export function getBookingDisplayTitle(booking = null, fallback = 'Booking') {
+  const fromItems = getBookingPackageNamesText(booking, '')
+  if (fromItems) return fromItems
+
+  return (
+    String(booking?.displaySubtitle ?? '').trim() ||
+    String(booking?.selectedItemsSummary ?? '').trim() ||
+    String(booking?.package?.title ?? '').trim() ||
+    String(booking?.event?.name ?? '').trim() ||
+    fallback
+  )
+}

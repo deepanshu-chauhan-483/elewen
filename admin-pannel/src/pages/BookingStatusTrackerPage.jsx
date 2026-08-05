@@ -17,6 +17,7 @@ import {
   canProgressToStage,
   resolveTrackerBucket,
 } from '../lib/bookingStages'
+import { getBookingDisplayTitle } from '../lib/bookingDisplay'
 import { formatCurrency, formatDate } from '../lib/formatters'
 
 const borderColorMap = {
@@ -127,7 +128,7 @@ function BookingCard({ booking }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start gap-3">
             <h3 className="text-[17px] font-medium leading-tight text-[#2E2E2E]">
-              {booking.package?.title || booking.event?.name || booking.id}
+              {getBookingDisplayTitle(booking)}
             </h3>
             <div className="shrink-0">
               <StatusBadge status={booking.status} label={booking.statusLabel} />

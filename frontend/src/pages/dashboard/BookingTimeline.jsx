@@ -8,6 +8,7 @@ import {
   formatDashboardDate,
   matchesDashboardSearch,
 } from '../../components/dashboard/dashboardUtils'
+import { getBookingDisplayTitle } from '../../lib/bookingDisplay'
 import {
   useDashboardBooking,
   useDashboardBookingTimeline,
@@ -395,7 +396,7 @@ export default function BookingTimeline() {
               }
             `}
           >
-            <p className="mb-0.5 text-sm font-semibold">{booking.package?.title || 'Booking'}</p>
+            <p className="mb-0.5 text-sm font-semibold">{getBookingDisplayTitle(booking)}</p>
             <p
               className={`text-xs ${
                 selectedBooking?.id === booking.id ? 'text-[#F5E6CC]/75' : 'text-[#8C7B6B]'
@@ -414,7 +415,7 @@ export default function BookingTimeline() {
               className="mb-1 text-lg font-semibold tracking-tight text-[#F5E6CC]"
               style={{ fontFamily: 'poppins' }}
             >
-              {activeBooking?.package?.title || 'Booking'}
+              {getBookingDisplayTitle(activeBooking)}
             </h2>
             <p className="text-sm text-[#D4A96A]">
               {activeBooking?.displaySubtitle || activeBooking?.event?.name || 'Event'} -{' '}

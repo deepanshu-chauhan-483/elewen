@@ -27,6 +27,7 @@ import {
   bookingHasPendingHookahCod,
 } from '../lib/sheeshaCheckout'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
+import { getBookingPackageNamesText } from '../lib/bookingDisplay'
 import {
   BOOKING_STATUSES,
   BOOKING_STATUS_LABELS,
@@ -50,53 +51,6 @@ function normalizeBookingStatus(value) {
     .trim()
     .toLowerCase()
   return VALID_BOOKING_STATUSES.has(normalizedValue) ? normalizedValue : ''
-}
-
-const CART_META_SEPARATOR = '||__ELEWEN_META__||'
-
-function parseBookingItemTitle(title = '') {
-  const rawTitle = String(title ?? '')
-  const [displayTitle, metaPart] = rawTitle.split(CART_META_SEPARATOR)
-
-  if (!metaPart) {
-    return {
-      displayTitle: String(displayTitle || rawTitle).trim(),
-      itemType: 'package',
-    }
-  }
-
-  try {
-    const parsed = JSON.parse(metaPart)
-    return {
-      displayTitle: String(displayTitle || rawTitle).trim(),
-      itemType: parsed?.itemType ?? 'package',
-    }
-  } catch {
-    return {
-      displayTitle: String(displayTitle || rawTitle).trim(),
-      itemType: 'package',
-    }
-  }
-}
-
-function getBookingPackageNames(booking = null) {
-  const packageNames = (Array.isArray(booking?.items) ? booking.items : [])
-    .map(item => parseBookingItemTitle(item?.title))
-    .filter(item => item.itemType !== 'addon')
-    .map(item => item.displayTitle)
-    .filter(Boolean)
-
-  const uniquePackageNames = [...new Set(packageNames)]
-
-  if (uniquePackageNames.length) return uniquePackageNames
-
-  const fallbackTitle = String(booking?.package?.title ?? '').trim()
-  return fallbackTitle ? [fallbackTitle] : []
-}
-
-function getBookingPackageNamesText(booking = null, fallback = 'Selected package') {
-  const packageNames = getBookingPackageNames(booking)
-  return packageNames.length ? packageNames.join(', ') : fallback
 }
 
 function buildAdminMessageHref(bookingId = '') {
@@ -514,7 +468,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
   const [internalNote, setInternalNote] = useState('')
   const [vendorId, setVendorId] = useState('')
   const [statusError, setStatusError] = useState('')
-  const bookingTitle = getBookingPackageNamesText(booking, booking.event?.name || booking.id)
+  const bookingTitle = getBookingPackageNamesText(booking, booking.event?.name || 'Booking')
 
   const bookingQuery = useAdminBooking(open ? booking.id : null)
   const vendorsQuery = useAdminVendors({
