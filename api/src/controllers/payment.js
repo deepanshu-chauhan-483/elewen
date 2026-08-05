@@ -1,5 +1,7 @@
 import prisma from '../lib/prisma.js'
 import {
+  buildCashfreeNotifyUrl,
+  buildCashfreeReturnUrl,
   createCashfreeOrder,
   createCashfreeRefund,
   fetchCashfreeOrder,
@@ -308,6 +310,8 @@ export const createOrder = async (req, res, next) => {
         amount,
         customerId: userId,
         customerPhone: '9999999999',
+        returnUrl: buildCashfreeReturnUrl({ paymentId: payment.id, bookingId }),
+        notifyUrl: buildCashfreeNotifyUrl(),
         note: `${paymentType} payment for booking ${bookingId}`,
       })
 

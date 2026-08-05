@@ -68,6 +68,7 @@ const CateringSinglePackagePage = lazy(() => import('./pages/CateringSinglePacka
 const BartendingAddonDetailPage = lazy(() => import('./pages/BartendingAddonDetailPage'))
 const SinglePackageCheckout = lazy(() => import('./pages/SinglePackageCheckout'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
+const PaymentReturnPage = lazy(() => import('./pages/PaymentReturnPage'))
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'))
 const CartPage = lazy(() => import('./pages/CartPage'))
 const SampleTasteBooking = lazy(() => import('./pages/SampleTestBooking'))
@@ -265,6 +266,7 @@ function AppLayout() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/single-package-cart" element={<SinglePackageCheckout />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/payment/return" element={<PaymentReturnPage />} />
           <Route path="/booking-confirmation" element={<BookingConfirmation />} />
           <Route path="/sample-test-booking" element={<SampleTasteBooking />} />
           <Route path="/blogs" element={<BlogPage />} />

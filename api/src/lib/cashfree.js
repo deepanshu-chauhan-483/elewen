@@ -40,6 +40,24 @@ export function getCashfreeEnvironment() {
     : 'sandbox'
 }
 
+export function buildCashfreeReturnUrl({ paymentId, bookingId }) {
+  const siteUrl = String(process.env.APP_URL || process.env.PUBLIC_SITE_URL || 'https://elewen.co.in').replace(
+    /\/$/,
+    ''
+  )
+  const params = new URLSearchParams({
+    payment_id: String(paymentId ?? ''),
+    booking_id: String(bookingId ?? ''),
+  })
+  // Cashfree replaces {order_id} with the gateway order id on redirect.
+  return `${siteUrl}/payment/return?${params.toString()}&order_id={order_id}`
+}
+
+export function buildCashfreeNotifyUrl() {
+  const apiUrl = String(process.env.PUBLIC_API_URL || 'https://api.elewen.co.in').replace(/\/$/, '')
+  return `${apiUrl}/payments/webhook`
+}
+
 export async function createCashfreeOrder({
   orderId,
   amount,
@@ -47,8 +65,13 @@ export async function createCashfreeOrder({
   customerPhone,
   customerEmail,
   returnUrl,
+  notifyUrl,
   note,
 }) {
+  const orderMeta = {}
+  if (returnUrl) orderMeta.return_url = returnUrl
+  if (notifyUrl) orderMeta.notify_url = notifyUrl
+
   const response = await fetch(`${getBaseUrl()}/orders`, {
     method: 'POST',
     headers: getHeaders(),
@@ -61,7 +84,7 @@ export async function createCashfreeOrder({
         customer_phone: customerPhone || '9999999999',
         customer_email: customerEmail || undefined,
       },
-      order_meta: returnUrl ? { return_url: returnUrl } : undefined,
+      order_meta: Object.keys(orderMeta).length ? orderMeta : undefined,
       order_note: note || undefined,
     }),
   })
