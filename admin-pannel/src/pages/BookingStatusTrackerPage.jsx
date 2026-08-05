@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   ErrorState,
   LoadingState,
@@ -173,12 +174,12 @@ function BookingCard({ booking }) {
           <p className="mt-2 text-sm text-[#8A1C1C]">{advanceValidation.message}</p>
         ) : null}
         <div className="mt-4 flex flex-wrap gap-2">
-          <a
-            href={buildBookingWorkspaceHref(booking.id)}
+          <Link
+            to={buildBookingWorkspaceHref(booking.id)}
             className="inline-flex h-10 items-center justify-center rounded-full border border-[#CDB17E] bg-white px-5 text-sm text-[#CDB17E] hover:bg-[#FAF6F1]"
           >
             Open Booking Details
-          </a>
+          </Link>
           {nextStage && advanceValidation?.allowed ? (
             <button
               type="button"

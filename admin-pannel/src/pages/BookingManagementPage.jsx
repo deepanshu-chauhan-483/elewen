@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   ErrorState,
   LoadingState,
@@ -161,13 +161,22 @@ function GhostBtn({ children, onClick, disabled }) {
 
 function LinkBtn({ href, children }) {
   if (!href) return null
+
+  const className =
+    'inline-flex h-10 items-center justify-center rounded-full border border-[#CDB17E] bg-white px-5 text-sm text-[#CDB17E] transition hover:bg-[#FAF6F1]'
+
+  if (/^https?:\/\//i.test(href)) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={className}>
+        {children}
+      </a>
+    )
+  }
+
   return (
-    <a
-      href={href}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#CDB17E] bg-white px-5 text-sm text-[#CDB17E] transition hover:bg-[#FAF6F1]"
-    >
+    <Link to={href} className={className}>
       {children}
-    </a>
+    </Link>
   )
 }
 
@@ -789,6 +798,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
 
   return (
     <div
+      id={booking?.id ? `booking-card-${booking.id}` : undefined}
       className={[
         'rounded-2xl bg-white shadow-sm transition-all hover:shadow-md',
         open ? `border-t-4 ${borderColor}` : `border-l-4 ${borderColor}`,
@@ -1211,6 +1221,36 @@ export default function BookingManagementPage() {
   const totalBookings = Number(bookingsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
   const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
+  const linkedOpenBookingId = String(openBookingId || initialOpenBookingId || '').trim()
+  const openedBookingQuery = useAdminBooking(linkedOpenBookingId || null)
+
+  const displayBookings = useMemo(() => {
+    if (!linkedOpenBookingId) return bookings
+
+    if (bookings.some(booking => booking.id === linkedOpenBookingId)) {
+      return bookings
+    }
+
+    const openedBooking = openedBookingQuery.data
+    if (openedBooking?.id === linkedOpenBookingId) {
+      return [openedBooking, ...bookings]
+    }
+
+    return bookings
+  }, [bookings, linkedOpenBookingId, openedBookingQuery.data])
+
+  useEffect(() => {
+    if (!linkedOpenBookingId) return undefined
+
+    const timer = setTimeout(() => {
+      document.getElementById(`booking-card-${linkedOpenBookingId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }, 250)
+
+    return () => clearTimeout(timer)
+  }, [linkedOpenBookingId, openedBookingQuery.isLoading, bookingsQuery.isLoading])
 
   // if (bookingsQuery.isLoading) return <LoadingState label="Loading bookings…" />
   // if (bookingsQuery.error) return <ErrorState label="Bookings could not be loaded right now." />
@@ -1347,10 +1387,10 @@ export default function BookingManagementPage() {
       {/* ── Accordion list ── */}
       {isResultsLoading ? (
         <SectionLoadingState label="Loading bookings..." />
-      ) : bookings.length ? (
+      ) : displayBookings.length ? (
         <div>
           <div className="space-y-3">
-            {bookings.map(booking => (
+            {displayBookings.map(booking => (
               <BookingAccordionCard
                 key={`${booking.id}:${booking.status ?? ''}`}
                 booking={booking}
