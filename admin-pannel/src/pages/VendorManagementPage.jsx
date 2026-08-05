@@ -208,13 +208,14 @@ function buildMailtoHref(to, subject, bodyLines = []) {
   const recipient = String(to ?? '').trim()
   if (!recipient) return ''
 
-  const params = new URLSearchParams()
-  if (subject) params.set('subject', subject)
+  // encodeURIComponent → %20 for spaces. URLSearchParams uses +, which many mail apps show literally.
+  const parts = []
+  if (subject) parts.push(`subject=${encodeURIComponent(subject)}`)
 
   const body = bodyLines.filter(Boolean).join('\n')
-  if (body) params.set('body', body)
+  if (body) parts.push(`body=${encodeURIComponent(body)}`)
 
-  const query = params.toString()
+  const query = parts.join('&')
   return `mailto:${recipient}${query ? `?${query}` : ''}`
 }
 

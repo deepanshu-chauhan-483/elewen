@@ -159,13 +159,15 @@ function buildMailtoHref(to, subject, bodyLines = []) {
   const recipient = String(to ?? '').trim()
   if (!recipient) return ''
 
-  const params = new URLSearchParams()
-  if (subject) params.set('subject', subject)
+  // Use encodeURIComponent (spaces → %20). URLSearchParams uses +, which Outlook/Gmail
+  // often show as literal "+" instead of spaces in mailto bodies.
+  const parts = []
+  if (subject) parts.push(`subject=${encodeURIComponent(subject)}`)
 
   const body = bodyLines.filter(line => line != null && line !== false).join('\n')
-  if (body) params.set('body', body)
+  if (body) parts.push(`body=${encodeURIComponent(body)}`)
 
-  const query = params.toString()
+  const query = parts.join('&')
   return `mailto:${recipient}${query ? `?${query}` : ''}`
 }
 
