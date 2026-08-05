@@ -304,7 +304,11 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
   const [composerOpen, setComposerOpen] = useState(false)
   const [emailTo, setEmailTo] = useState('')
   const [emailSubject, setEmailSubject] = useState('')
+  const [emailHeadline, setEmailHeadline] = useState('')
+  const [emailIntro, setEmailIntro] = useState('')
+  const [emailNote, setEmailNote] = useState('')
   const [emailHtml, setEmailHtml] = useState('')
+  const [previewStale, setPreviewStale] = useState(false)
   const [sendMessage, setSendMessage] = useState('')
   const [sendError, setSendError] = useState('')
 
@@ -319,46 +323,78 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
     )
   }
 
-  const payloadFields = () => ({
+  const payloadFields = (includeCopy = true) => ({
     serviceName: serviceName.trim() || 'decor',
     designImage1: designImage1.trim(),
     designImage2: designImage2.trim(),
     designImage3: designImage3.trim(),
     responseDeadline: responseDeadline || undefined,
+    ...(includeCopy
+      ? {
+          subject: emailSubject.trim() || undefined,
+          headline: emailHeadline.trim() || undefined,
+          introText: emailIntro.trim() || undefined,
+          customMessage: emailNote.trim() || undefined,
+        }
+      : {}),
   })
 
-  const handlePreview = async () => {
+  const applyPreviewResult = (result, { seedCopy } = { seedCopy: false }) => {
+    setEmailTo(result?.to ?? '')
+    setEmailHtml(result?.html ?? '')
+    if (seedCopy) {
+      setEmailSubject(result?.subject ?? result?.defaults?.subject ?? '')
+      setEmailHeadline(result?.headline ?? result?.defaults?.headline ?? '')
+      setEmailIntro(result?.introText ?? result?.defaults?.introText ?? '')
+      setEmailNote(result?.customMessage ?? '')
+    } else {
+      if (result?.subject) setEmailSubject(result.subject)
+    }
+    setPreviewStale(false)
+    setComposerOpen(true)
+  }
+
+  const handlePreview = async ({ seedCopy = !composerOpen } = {}) => {
     setSendError('')
     setSendMessage('')
     try {
       const result = await previewMutation.mutateAsync({
         bookingId,
-        body: payloadFields(),
+        body: payloadFields(composerOpen),
       })
-      setEmailTo(result?.to ?? '')
-      setEmailSubject(result?.subject ?? '')
-      setEmailHtml(result?.html ?? '')
-      setComposerOpen(true)
+      applyPreviewResult(result, { seedCopy })
     } catch (error) {
-      setComposerOpen(false)
+      if (!composerOpen) setComposerOpen(false)
       setSendError(error?.message ?? 'Could not preview personalization email.')
     }
+  }
+
+  const markCopyChanged = setter => event => {
+    setter(event.target.value)
+    setPreviewStale(true)
   }
 
   const handleSend = async () => {
     setSendError('')
     setSendMessage('')
     try {
+      if (previewStale) {
+        const refreshed = await previewMutation.mutateAsync({
+          bookingId,
+          body: payloadFields(true),
+        })
+        applyPreviewResult(refreshed, { seedCopy: false })
+      }
+
       await sendMutation.mutateAsync({
         bookingId,
         body: {
-          ...payloadFields(),
-          subject: emailSubject.trim() || undefined,
-          html: emailHtml.trim() || undefined,
+          ...payloadFields(true),
         },
       })
       setSendMessage('Personalization email sent to the customer.')
       setComposerOpen(false)
+      setPreviewStale(false)
     } catch (error) {
       setSendError(error?.message ?? 'Could not send personalization email.')
     }
@@ -367,8 +403,8 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#6B7280]">
-        Manual Mail 2 — add design image URLs and a reply deadline, preview the email, edit the
-        subject or HTML if needed, then send.
+        Add design images and a reply deadline, then preview the email as the customer will see it.
+        You can change the wording in plain language before sending.
       </p>
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Service name</p>
@@ -407,8 +443,15 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <PrimaryBtn disabled={previewMutation.isPending || sendMutation.isPending} onClick={handlePreview}>
-          {previewMutation.isPending ? 'Loading preview…' : 'Preview & edit email'}
+        <PrimaryBtn
+          disabled={previewMutation.isPending || sendMutation.isPending}
+          onClick={() => handlePreview({ seedCopy: !composerOpen })}
+        >
+          {previewMutation.isPending
+            ? 'Loading preview…'
+            : composerOpen
+              ? 'Refresh preview'
+              : 'Preview email'}
         </PrimaryBtn>
         {composerOpen ? (
           <GhostBtn
@@ -416,58 +459,96 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
             onClick={() => {
               setComposerOpen(false)
               setSendError('')
+              setPreviewStale(false)
             }}
           >
-            Close editor
+            Close preview
           </GhostBtn>
         ) : null}
       </div>
 
       {composerOpen ? (
-        <div className="space-y-3 rounded-2xl border border-[#E4DED8] bg-white p-4">
+        <div className="space-y-4 rounded-2xl border border-[#E4DED8] bg-white p-4">
           <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">To</p>
+            <p className="text-sm font-semibold text-[#1C1C1C]">Email as customer will see it</p>
+            <p className="mt-1 text-xs text-[#8F8F8F]">
+              Change the wording below in simple text. No code needed.
+            </p>
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Sending to</p>
             <p className="text-sm text-[#2D2D2D]">{emailTo || '—'}</p>
           </div>
+
           <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Subject</p>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Email subject</p>
             <input
               type="text"
               value={emailSubject}
-              onChange={event => setEmailSubject(event.target.value)}
+              onChange={markCopyChanged(setEmailSubject)}
               className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
             />
           </div>
+
           <div>
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <p className="text-xs text-[#8F8F8F]">Email HTML (edit if needed)</p>
-              <button
-                type="button"
-                className="text-xs font-medium text-[#8A6A2F] underline underline-offset-2"
-                onClick={handlePreview}
-                disabled={previewMutation.isPending}
-              >
-                Reset from template
-              </button>
-            </div>
-            <textarea
-              value={emailHtml}
-              onChange={event => setEmailHtml(event.target.value)}
-              rows={10}
-              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 font-mono text-xs leading-5 text-[#2D2D2D] outline-none"
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Title inside email</p>
+            <input
+              type="text"
+              value={emailHeadline}
+              onChange={markCopyChanged(setEmailHeadline)}
+              className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
             />
           </div>
+
           <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Live preview</p>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Opening message</p>
+            <textarea
+              value={emailIntro}
+              onChange={markCopyChanged(setEmailIntro)}
+              rows={3}
+              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
+            />
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Extra note from planner (optional)</p>
+            <textarea
+              value={emailNote}
+              onChange={markCopyChanged(setEmailNote)}
+              rows={3}
+              placeholder="e.g. Hi Priya — these are the three backdrop options we discussed on call."
+              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
+            />
+          </div>
+
+          {previewStale ? (
+            <p className="rounded-xl bg-[#FFF8E8] px-3 py-2 text-xs text-[#8A6A2F]">
+              Wording changed — click <strong>Refresh preview</strong> to update the mail view below,
+              or send and we will refresh automatically.
+            </p>
+          ) : null}
+
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Mail preview</p>
             <iframe
               title="Personalization email preview"
               srcDoc={emailHtml}
               sandbox=""
-              className="h-[420px] w-full rounded-2xl border border-[#E4DED8] bg-white"
+              className="h-[520px] w-full rounded-2xl border border-[#E4DED8] bg-[#0d0d0d]"
             />
           </div>
-          <PrimaryBtn disabled={sendMutation.isPending || !emailSubject.trim() || !emailHtml.trim()} onClick={handleSend}>
-            {sendMutation.isPending ? 'Sending…' : 'Send personalization email'}
+
+          <PrimaryBtn
+            disabled={
+              sendMutation.isPending ||
+              previewMutation.isPending ||
+              !emailSubject.trim() ||
+              !emailHtml.trim()
+            }
+            onClick={handleSend}
+          >
+            {sendMutation.isPending ? 'Sending…' : 'Send this email'}
           </PrimaryBtn>
         </div>
       ) : null}

@@ -1722,16 +1722,26 @@ export async function updateAdminBookingStatus(req, res, next) {
 }
 
 const MAX_EMAIL_HTML_CHARS = 200_000
+const MAX_PLAIN_COPY_CHARS = 5_000
 
 function readPersonalizationPayload(body = {}) {
+  const readPlain = (value, max = MAX_PLAIN_COPY_CHARS) => {
+    if (typeof value !== 'string') return null
+    const trimmed = value.trim()
+    if (!trimmed) return null
+    return trimmed.slice(0, max)
+  }
+
   return {
     serviceName: normalizeText(body.serviceName) || 'decor',
     designImage1: normalizeText(body.designImage1),
     designImage2: normalizeText(body.designImage2),
     designImage3: normalizeText(body.designImage3),
     responseDeadline: normalizeText(body.responseDeadline),
-    subject:
-      typeof body.subject === 'string' && body.subject.trim() ? body.subject.trim() : null,
+    subject: readPlain(body.subject, 200),
+    headline: readPlain(body.headline, 200),
+    introText: readPlain(body.introText),
+    customMessage: readPlain(body.customMessage),
     html: typeof body.html === 'string' && body.html.trim() ? body.html.trim() : null,
     force: Boolean(body.force),
   }
@@ -1776,6 +1786,10 @@ export async function previewAdminBookingPersonalizationEmail(req, res, next) {
       subject: result.subject,
       html: result.html,
       serviceName: result.serviceName,
+      headline: result.headline,
+      introText: result.introText,
+      customMessage: result.customMessage,
+      defaults: result.defaults,
     })
   } catch (err) {
     next(err)

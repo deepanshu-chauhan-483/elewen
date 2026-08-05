@@ -273,13 +273,23 @@ async function dispatchLifecycleEmail({
 }
 
 const DEFAULT_PERSONALIZATION_SUBJECT = "Let's personalise your booking with Elewen"
+const DEFAULT_PERSONALIZATION_HEADLINE = "Let's personalise your booking ✨"
 
 function buildPersonalizationContext(
   booking,
-  { serviceName, designImage1, designImage2, designImage3, responseDeadline } = {}
+  {
+    serviceName,
+    designImage1,
+    designImage2,
+    designImage3,
+    responseDeadline,
+    headline,
+    introText,
+    customMessage,
+  } = {}
 ) {
   const deadlineDate = responseDeadline ? new Date(responseDeadline) : null
-  return buildBookingEmailContext(booking, {
+  const ctx = buildBookingEmailContext(booking, {
     serviceName: String(serviceName || 'decor').trim() || 'decor',
     designImage1: designImage1 || null,
     designImage2: designImage2 || null,
@@ -288,12 +298,39 @@ function buildPersonalizationContext(
       deadlineDate && !Number.isNaN(deadlineDate.getTime()) ? deadlineDate : null,
     personalizeUrl: customerBookingDetailsUrl(booking.id),
   })
+
+  return {
+    ...ctx,
+    headline: typeof headline === 'string' && headline.trim() ? headline.trim() : null,
+    introText: typeof introText === 'string' && introText.trim() ? introText.trim() : null,
+    customMessage:
+      typeof customMessage === 'string' && customMessage.trim() ? customMessage.trim() : null,
+  }
+}
+
+function personalizationCopyDefaults(serviceName = 'decor') {
+  return {
+    subject: DEFAULT_PERSONALIZATION_SUBJECT,
+    headline: DEFAULT_PERSONALIZATION_HEADLINE,
+    introText: `We're getting everything ready for your event, and it's now time to customise your ${serviceName}.`,
+    customMessage: '',
+  }
 }
 
 /** Preview Mail 2 — does not create records or send. */
 export async function previewBookingPersonalizationEmail(
   bookingId,
-  { serviceName, designImage1, designImage2, designImage3, responseDeadline } = {}
+  {
+    serviceName,
+    designImage1,
+    designImage2,
+    designImage3,
+    responseDeadline,
+    subject: subjectOverride = null,
+    headline = null,
+    introText = null,
+    customMessage = null,
+  } = {}
 ) {
   const booking = await loadBookingForEmail(bookingId)
   if (!booking) return { ok: false, reason: 'not_found', message: 'Booking not found.' }
@@ -310,13 +347,20 @@ export async function previewBookingPersonalizationEmail(
     designImage2,
     designImage3,
     responseDeadline,
+    headline,
+    introText,
+    customMessage,
   })
   const to = await getUserEmail(booking.userId)
   if (!to) {
     return { ok: false, reason: 'no_user_email', message: 'Customer has no email on file.' }
   }
 
-  const subject = DEFAULT_PERSONALIZATION_SUBJECT
+  const defaults = personalizationCopyDefaults(ctx.serviceName)
+  const subject =
+    typeof subjectOverride === 'string' && subjectOverride.trim()
+      ? subjectOverride.trim()
+      : defaults.subject
   const html = templates.booking_personalization(ctx)
 
   return {
@@ -325,6 +369,10 @@ export async function previewBookingPersonalizationEmail(
     subject,
     html,
     serviceName: ctx.serviceName,
+    headline: ctx.headline || defaults.headline,
+    introText: ctx.introText || defaults.introText,
+    customMessage: ctx.customMessage || '',
+    defaults,
   }
 }
 
@@ -408,7 +456,7 @@ export async function sendHookahBookingPlacedEmail(bookingId) {
   return { sent: true, emailType, subject }
 }
 
-/** Mail 2 — admin manual personalization email. Supports subject/html overrides after preview. */
+/** Mail 2 — admin manual personalization email. Supports plain-text copy overrides after preview. */
 export async function sendBookingPersonalizationEmail(
   bookingId,
   {
@@ -418,6 +466,9 @@ export async function sendBookingPersonalizationEmail(
     designImage3,
     responseDeadline,
     subject: subjectOverride = null,
+    headline = null,
+    introText = null,
+    customMessage = null,
     html: htmlOverride = null,
     force = false,
   } = {}
@@ -446,6 +497,9 @@ export async function sendBookingPersonalizationEmail(
     designImage2: personalization.designImage2,
     designImage3: personalization.designImage3,
     responseDeadline: personalization.responseDeadline,
+    headline,
+    introText,
+    customMessage,
   })
 
   // Each admin send is logged separately so planners can re-send with new options.

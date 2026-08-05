@@ -476,7 +476,33 @@ export const templates = {
     responseDeadline,
     personalizeUrl,
     supportPhone,
+    headline,
+    introText,
+    customMessage,
   }) => {
+    const escapeHtml = value =>
+      String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    const plainToHtml = value => escapeHtml(value).replace(/\r\n|\r|\n/g, '<br/>')
+
+    const safeService = escapeHtml(serviceName || 'service')
+    const title = headline?.trim()
+      ? plainToHtml(headline.trim())
+      : "Let's personalise your booking ✨"
+    const intro = introText?.trim()
+      ? plainToHtml(introText.trim())
+      : `We're getting everything ready for your event, and it's now time to customise your <strong style="color:#fff;">${safeService}</strong>.`
+    const note = customMessage?.trim()
+      ? `
+      <div style="margin:16px 0;padding:16px;background:#222;border-radius:8px;border-left:3px solid #c9a96e;">
+        <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#c9a96e;">Note from your planner</p>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#cccccc;">${plainToHtml(customMessage.trim())}</p>
+      </div>`
+      : ''
+
     const designBlock = (label, url) =>
       url
         ? `
@@ -493,8 +519,9 @@ export const templates = {
     return layout(
       "Let's personalise your booking with Elewen",
       `
-      ${h1("Let's personalise your booking ✨")}
-      ${p(`We're getting everything ready for your event, and it's now time to customise your <strong style="color:#fff;">${serviceName || 'service'}</strong>.`)}
+      ${h1(title)}
+      ${p(intro)}
+      ${note}
       ${divider()}
       ${p('<strong style="color:#fff;">Please choose your preferred design</strong>')}
       ${p("We've shortlisted a few options based on your booking.")}
