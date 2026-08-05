@@ -300,6 +300,28 @@ function CartButton({ count, className, iconColor }) {
   )
 }
 
+function OverlayWishlistLink({ isLoggedIn, wishlistCount, className, onNavigate }) {
+  const wishlistHref = isLoggedIn
+    ? WISHLIST_PATH
+    : `/login?redirect=${encodeURIComponent(WISHLIST_PATH)}`
+
+  return (
+    <Link
+      to={wishlistHref}
+      onClick={onNavigate}
+      aria-label="Wishlist"
+      className={`relative inline-flex items-center justify-center leading-none ${className}`}
+    >
+      <WishlistIcon color="#FAFAFA" />
+      {wishlistCount > 0 ? (
+        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] w-[18px] md:min-h-5 md:min-w-5 items-center justify-center rounded-full bg-[#D4BA8E] px-1 text-[8px] md:text-[11px] font-semibold leading-none text-[#111110]">
+          {wishlistCount > 99 ? '99+' : wishlistCount}
+        </span>
+      ) : null}
+    </Link>
+  )
+}
+
 function HeaderActions({
   isLoggedIn,
   userInitial,
@@ -1018,6 +1040,12 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 />
               </svg>
             </button>
+            <OverlayWishlistLink
+              isLoggedIn={isLoggedIn}
+              wishlistCount={wishlistCount}
+              className={overlayActionClass}
+              onNavigate={() => setOpen(false)}
+            />
             {isLoggedIn ? (
               <Link
                 to={DASHBOARD_HOME_PATH}
@@ -1030,7 +1058,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 </span>
               </Link>
             ) : null}
-            <CartButton count={itemCount} className={overlayActionClass} />
+            <CartButton count={itemCount} className={overlayActionClass} iconColor="#FAFAFA" />
             <button
               onClick={() => setOpen(false)}
               aria-label="Close menu"
@@ -1054,6 +1082,12 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
             </button>
           </div>
           <div className="ml-auto hidden items-center  gap-3 md:flex">
+            <OverlayWishlistLink
+              isLoggedIn={isLoggedIn}
+              wishlistCount={wishlistCount}
+              className={overlayActionClass}
+              onNavigate={() => setOpen(false)}
+            />
             {isLoggedIn ? (
               <Link
                 to={DASHBOARD_HOME_PATH}
@@ -1066,7 +1100,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
                 </span>
               </Link>
             ) : null}
-            <CartButton count={itemCount} className={overlayActionClass} />
+            <CartButton count={itemCount} className={overlayActionClass} iconColor="#FAFAFA" />
             <button
               onClick={() => setOpen(false)}
               aria-label="Close menu"
