@@ -227,6 +227,8 @@ async function dispatchLifecycleEmail({
   message,
   emailData,
   force = false,
+  subjectOverride = null,
+  htmlOverride = null,
 }) {
   if (!booking?.id || !booking?.userId) {
     return { sent: false, reason: 'missing_booking' }
@@ -236,12 +238,18 @@ async function dispatchLifecycleEmail({
     return { sent: false, reason: 'already_sent' }
   }
 
-  if (!templates[templateKey]) {
+  const finalSubject =
+    typeof subjectOverride === 'string' && subjectOverride.trim()
+      ? subjectOverride.trim()
+      : subject
+
+  const hasHtmlOverride = typeof htmlOverride === 'string' && htmlOverride.trim()
+  if (!hasHtmlOverride && !templates[templateKey]) {
     return { sent: false, reason: 'missing_template' }
   }
 
-  const claimed = force ? true : await markEmailSent(booking.id, emailType, subject)
-  if (!claimed) {
+  const claimed = await markEmailSent(booking.id, emailType, finalSubject)
+  if (!claimed && !force) {
     return { sent: false, reason: 'already_sent' }
   }
 
@@ -251,8 +259,8 @@ async function dispatchLifecycleEmail({
     return { sent: false, reason: 'no_user_email' }
   }
 
-  const html = templates[templateKey](emailData)
-  await sendEmail(email, subject, html)
+  const html = hasHtmlOverride ? htmlOverride.trim() : templates[templateKey](emailData)
+  await sendEmail(email, finalSubject, html)
 
   await notify(booking.userId, {
     type: 'booking_update',
@@ -261,7 +269,63 @@ async function dispatchLifecycleEmail({
     linkUrl: customerBookingDetailsPath(booking.id),
   }).catch(() => {})
 
-  return { sent: true, emailType, subject }
+  return { sent: true, emailType, subject: finalSubject }
+}
+
+const DEFAULT_PERSONALIZATION_SUBJECT = "Let's personalise your booking with Elewen"
+
+function buildPersonalizationContext(
+  booking,
+  { serviceName, designImage1, designImage2, designImage3, responseDeadline } = {}
+) {
+  const deadlineDate = responseDeadline ? new Date(responseDeadline) : null
+  return buildBookingEmailContext(booking, {
+    serviceName: String(serviceName || 'decor').trim() || 'decor',
+    designImage1: designImage1 || null,
+    designImage2: designImage2 || null,
+    designImage3: designImage3 || null,
+    responseDeadline:
+      deadlineDate && !Number.isNaN(deadlineDate.getTime()) ? deadlineDate : null,
+    personalizeUrl: customerBookingDetailsUrl(booking.id),
+  })
+}
+
+/** Preview Mail 2 — does not create records or send. */
+export async function previewBookingPersonalizationEmail(
+  bookingId,
+  { serviceName, designImage1, designImage2, designImage3, responseDeadline } = {}
+) {
+  const booking = await loadBookingForEmail(bookingId)
+  if (!booking) return { ok: false, reason: 'not_found', message: 'Booking not found.' }
+  if (booking.status === 'cancelled') {
+    return { ok: false, reason: 'cancelled', message: 'Cannot preview email for a cancelled booking.' }
+  }
+  if (!templates.booking_personalization) {
+    return { ok: false, reason: 'missing_template', message: 'Personalization email template is missing.' }
+  }
+
+  const ctx = buildPersonalizationContext(booking, {
+    serviceName,
+    designImage1,
+    designImage2,
+    designImage3,
+    responseDeadline,
+  })
+  const to = await getUserEmail(booking.userId)
+  if (!to) {
+    return { ok: false, reason: 'no_user_email', message: 'Customer has no email on file.' }
+  }
+
+  const subject = DEFAULT_PERSONALIZATION_SUBJECT
+  const html = templates.booking_personalization(ctx)
+
+  return {
+    ok: true,
+    to,
+    subject,
+    html,
+    serviceName: ctx.serviceName,
+  }
 }
 
 /** Mail 1 — when admin confirms booking (after advance paid, or Hookah COD). */
@@ -344,7 +408,7 @@ export async function sendHookahBookingPlacedEmail(bookingId) {
   return { sent: true, emailType, subject }
 }
 
-/** Mail 2 — admin manual personalization email. */
+/** Mail 2 — admin manual personalization email. Supports subject/html overrides after preview. */
 export async function sendBookingPersonalizationEmail(
   bookingId,
   {
@@ -353,6 +417,8 @@ export async function sendBookingPersonalizationEmail(
     designImage2,
     designImage3,
     responseDeadline,
+    subject: subjectOverride = null,
+    html: htmlOverride = null,
     force = false,
   } = {}
 ) {
@@ -374,13 +440,12 @@ export async function sendBookingPersonalizationEmail(
     },
   })
 
-  const ctx = buildBookingEmailContext(booking, {
+  const ctx = buildPersonalizationContext(booking, {
     serviceName: personalization.serviceName,
     designImage1: personalization.designImage1,
     designImage2: personalization.designImage2,
     designImage3: personalization.designImage3,
     responseDeadline: personalization.responseDeadline,
-    personalizeUrl: customerBookingDetailsUrl(bookingId),
   })
 
   // Each admin send is logged separately so planners can re-send with new options.
@@ -390,11 +455,13 @@ export async function sendBookingPersonalizationEmail(
     booking,
     emailType,
     templateKey: 'booking_personalization',
-    subject: "Let's personalise your booking with Elewen",
+    subject: DEFAULT_PERSONALIZATION_SUBJECT,
     title: "Let's personalise your booking",
     message: `Please choose your preferred design options for ${ctx.serviceName}.`,
     emailData: ctx,
     force: true,
+    subjectOverride,
+    htmlOverride,
   })
 
   return { ...result, personalizationId: personalization.id }

@@ -188,6 +188,11 @@ export const adminSendPersonalizationEmail = (token, bookingId, body) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminPreviewPersonalizationEmail = (token, bookingId, body) =>
+  request('POST', `/admin/bookings/${bookingId}/preview-personalization-email`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminUpdateBookingStatus = (token, bookingId, body) =>
   request('PATCH', `/admin/bookings/${bookingId}/status`, body, {
     headers: { Authorization: `Bearer ${token}` },

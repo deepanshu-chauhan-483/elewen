@@ -9,6 +9,7 @@ import {
   adminBookingCouponSuggestion,
   adminSendReferralCoupon,
   adminSendPersonalizationEmail,
+  adminPreviewPersonalizationEmail,
   adminBookings,
   adminConsultations,
   adminCoupons,
@@ -200,6 +201,13 @@ export function useAdminSendReferralCoupon() {
         queryKey: ['admin', 'booking', variables?.bookingId, 'coupon-suggestion'],
       })
     },
+  })
+}
+
+export function useAdminPreviewPersonalizationEmail() {
+  return useMutation({
+    mutationFn: ({ bookingId, body }) =>
+      withAdminToken(token => adminPreviewPersonalizationEmail(token, bookingId, body)),
   })
 }
 

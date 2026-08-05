@@ -32,6 +32,7 @@ import {
   updateAdminAlert,
   updateAdminBookingStatus,
   collectAdminBookingCod,
+  previewAdminBookingPersonalizationEmail,
   sendAdminBookingPersonalizationEmail,
   updateAdminConsultation,
   updateAdminCoupon,
@@ -66,6 +67,7 @@ router.get('/bookings/:id/coupon-suggestion', getAdminBookingCouponSuggestion)
 router.post('/bookings/:id/send-referral-coupon', sendAdminReferralCoupon)
 router.patch('/bookings/:id/status', updateAdminBookingStatus)
 router.post('/bookings/:id/cod/collect', collectAdminBookingCod)
+router.post('/bookings/:id/preview-personalization-email', previewAdminBookingPersonalizationEmail)
 router.post('/bookings/:id/send-personalization-email', sendAdminBookingPersonalizationEmail)
 router.post('/bookings/:id/notes', addAdminBookingNote)
 

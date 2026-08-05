@@ -22,6 +22,7 @@ import { isCodPendingPayment } from '../lib/sheeshaCheckout.js'
 import { buildUniqueGrantCode, mapGrantForCustomer } from '../lib/coupons.js'
 import { findCustomerByEmail } from '../lib/userLookup.js'
 import {
+  previewBookingPersonalizationEmail,
   sendBookingConfirmedEmail,
   sendBookingPersonalizationEmail,
   sendPostEventFeedbackEmail,
@@ -1720,15 +1721,71 @@ export async function updateAdminBookingStatus(req, res, next) {
   }
 }
 
+const MAX_EMAIL_HTML_CHARS = 200_000
+
+function readPersonalizationPayload(body = {}) {
+  return {
+    serviceName: normalizeText(body.serviceName) || 'decor',
+    designImage1: normalizeText(body.designImage1),
+    designImage2: normalizeText(body.designImage2),
+    designImage3: normalizeText(body.designImage3),
+    responseDeadline: normalizeText(body.responseDeadline),
+    subject:
+      typeof body.subject === 'string' && body.subject.trim() ? body.subject.trim() : null,
+    html: typeof body.html === 'string' && body.html.trim() ? body.html.trim() : null,
+    force: Boolean(body.force),
+  }
+}
+
+export async function previewAdminBookingPersonalizationEmail(req, res, next) {
+  try {
+    const bookingId = req.params.id
+    const payload = readPersonalizationPayload(req.body)
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { id: true, status: true },
+    })
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({ error: 'Cannot preview personalization email for a cancelled booking.' })
+    }
+
+    if (!payload.designImage1 && !payload.designImage2 && !payload.designImage3) {
+      return res.status(400).json({
+        error: 'Add at least one design image URL before previewing the personalization email.',
+      })
+    }
+
+    const result = await previewBookingPersonalizationEmail(bookingId, payload)
+
+    if (!result?.ok) {
+      return res.status(400).json({
+        error: result?.message || 'Could not preview personalization email.',
+        reason: result?.reason,
+      })
+    }
+
+    res.json({
+      ok: true,
+      to: result.to,
+      subject: result.subject,
+      html: result.html,
+      serviceName: result.serviceName,
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function sendAdminBookingPersonalizationEmail(req, res, next) {
   try {
     const bookingId = req.params.id
-    const serviceName = normalizeText(req.body.serviceName) || 'decor'
-    const designImage1 = normalizeText(req.body.designImage1)
-    const designImage2 = normalizeText(req.body.designImage2)
-    const designImage3 = normalizeText(req.body.designImage3)
-    const responseDeadline = normalizeText(req.body.responseDeadline)
-    const force = Boolean(req.body.force)
+    const payload = readPersonalizationPayload(req.body)
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
@@ -1743,20 +1800,19 @@ export async function sendAdminBookingPersonalizationEmail(req, res, next) {
       return res.status(400).json({ error: 'Cannot send personalization email for a cancelled booking.' })
     }
 
-    if (!designImage1 && !designImage2 && !designImage3) {
+    if (!payload.designImage1 && !payload.designImage2 && !payload.designImage3) {
       return res.status(400).json({
         error: 'Add at least one design image URL before sending the personalization email.',
       })
     }
 
-    const result = await sendBookingPersonalizationEmail(bookingId, {
-      serviceName,
-      designImage1,
-      designImage2,
-      designImage3,
-      responseDeadline,
-      force,
-    })
+    if (payload.html && payload.html.length > MAX_EMAIL_HTML_CHARS) {
+      return res.status(400).json({
+        error: `Email HTML is too long (max ${MAX_EMAIL_HTML_CHARS.toLocaleString()} characters).`,
+      })
+    }
+
+    const result = await sendBookingPersonalizationEmail(bookingId, payload)
 
     if (!result?.sent) {
       return res.status(400).json({

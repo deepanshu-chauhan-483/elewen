@@ -16,6 +16,7 @@ import {
   useAdminBookings,
   useAdminCreateVendorAssignment,
   useAdminSendReferralCoupon,
+  useAdminPreviewPersonalizationEmail,
   useAdminSendPersonalizationEmail,
   useAdminUpdateBookingStatus,
   useAdminVendors,
@@ -293,12 +294,17 @@ const REFERRAL_TIER_OPTIONS = [
 ]
 
 function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
+  const previewMutation = useAdminPreviewPersonalizationEmail()
   const sendMutation = useAdminSendPersonalizationEmail()
   const [serviceName, setServiceName] = useState('decor')
   const [designImage1, setDesignImage1] = useState('')
   const [designImage2, setDesignImage2] = useState('')
   const [designImage3, setDesignImage3] = useState('')
   const [responseDeadline, setResponseDeadline] = useState('')
+  const [composerOpen, setComposerOpen] = useState(false)
+  const [emailTo, setEmailTo] = useState('')
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailHtml, setEmailHtml] = useState('')
   const [sendMessage, setSendMessage] = useState('')
   const [sendError, setSendError] = useState('')
 
@@ -313,6 +319,32 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
     )
   }
 
+  const payloadFields = () => ({
+    serviceName: serviceName.trim() || 'decor',
+    designImage1: designImage1.trim(),
+    designImage2: designImage2.trim(),
+    designImage3: designImage3.trim(),
+    responseDeadline: responseDeadline || undefined,
+  })
+
+  const handlePreview = async () => {
+    setSendError('')
+    setSendMessage('')
+    try {
+      const result = await previewMutation.mutateAsync({
+        bookingId,
+        body: payloadFields(),
+      })
+      setEmailTo(result?.to ?? '')
+      setEmailSubject(result?.subject ?? '')
+      setEmailHtml(result?.html ?? '')
+      setComposerOpen(true)
+    } catch (error) {
+      setComposerOpen(false)
+      setSendError(error?.message ?? 'Could not preview personalization email.')
+    }
+  }
+
   const handleSend = async () => {
     setSendError('')
     setSendMessage('')
@@ -320,14 +352,13 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
       await sendMutation.mutateAsync({
         bookingId,
         body: {
-          serviceName: serviceName.trim() || 'decor',
-          designImage1: designImage1.trim(),
-          designImage2: designImage2.trim(),
-          designImage3: designImage3.trim(),
-          responseDeadline: responseDeadline || undefined,
+          ...payloadFields(),
+          subject: emailSubject.trim() || undefined,
+          html: emailHtml.trim() || undefined,
         },
       })
       setSendMessage('Personalization email sent to the customer.')
+      setComposerOpen(false)
     } catch (error) {
       setSendError(error?.message ?? 'Could not send personalization email.')
     }
@@ -336,7 +367,8 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#6B7280]">
-        Manual Mail 2 — upload/paste up to 3 design image URLs and a reply deadline, then send.
+        Manual Mail 2 — add design image URLs and a reply deadline, preview the email, edit the
+        subject or HTML if needed, then send.
       </p>
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Service name</p>
@@ -373,9 +405,73 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
           className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
         />
       </div>
-      <PrimaryBtn disabled={sendMutation.isPending} onClick={handleSend}>
-        {sendMutation.isPending ? 'Sending…' : 'Send personalization email'}
-      </PrimaryBtn>
+
+      <div className="flex flex-wrap gap-2">
+        <PrimaryBtn disabled={previewMutation.isPending || sendMutation.isPending} onClick={handlePreview}>
+          {previewMutation.isPending ? 'Loading preview…' : 'Preview & edit email'}
+        </PrimaryBtn>
+        {composerOpen ? (
+          <GhostBtn
+            disabled={previewMutation.isPending}
+            onClick={() => {
+              setComposerOpen(false)
+              setSendError('')
+            }}
+          >
+            Close editor
+          </GhostBtn>
+        ) : null}
+      </div>
+
+      {composerOpen ? (
+        <div className="space-y-3 rounded-2xl border border-[#E4DED8] bg-white p-4">
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">To</p>
+            <p className="text-sm text-[#2D2D2D]">{emailTo || '—'}</p>
+          </div>
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Subject</p>
+            <input
+              type="text"
+              value={emailSubject}
+              onChange={event => setEmailSubject(event.target.value)}
+              className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+            />
+          </div>
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="text-xs text-[#8F8F8F]">Email HTML (edit if needed)</p>
+              <button
+                type="button"
+                className="text-xs font-medium text-[#8A6A2F] underline underline-offset-2"
+                onClick={handlePreview}
+                disabled={previewMutation.isPending}
+              >
+                Reset from template
+              </button>
+            </div>
+            <textarea
+              value={emailHtml}
+              onChange={event => setEmailHtml(event.target.value)}
+              rows={10}
+              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 font-mono text-xs leading-5 text-[#2D2D2D] outline-none"
+            />
+          </div>
+          <div>
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Live preview</p>
+            <iframe
+              title="Personalization email preview"
+              srcDoc={emailHtml}
+              sandbox=""
+              className="h-[420px] w-full rounded-2xl border border-[#E4DED8] bg-white"
+            />
+          </div>
+          <PrimaryBtn disabled={sendMutation.isPending || !emailSubject.trim() || !emailHtml.trim()} onClick={handleSend}>
+            {sendMutation.isPending ? 'Sending…' : 'Send personalization email'}
+          </PrimaryBtn>
+        </div>
+      ) : null}
+
       {sendMessage ? <p className="text-sm text-[#12803D]">{sendMessage}</p> : null}
       {sendError ? <p className="text-sm text-[#8A1C1C]">{sendError}</p> : null}
     </div>
