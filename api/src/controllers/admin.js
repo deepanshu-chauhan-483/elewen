@@ -1565,6 +1565,7 @@ export async function getAdminBooking(req, res, next) {
         payments: { include: { refunds: true }, orderBy: { createdAt: 'desc' } },
         cancellation: true,
         files: { orderBy: { createdAt: 'desc' } },
+        personalizations: { orderBy: { createdAt: 'desc' } },
         messageThread: {
           include: {
             messages: {

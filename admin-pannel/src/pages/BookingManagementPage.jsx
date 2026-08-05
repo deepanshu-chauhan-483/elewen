@@ -27,7 +27,13 @@ import {
   bookingHasPendingHookahCod,
 } from '../lib/sheeshaCheckout'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
-import { getBookingPackageNamesText } from '../lib/bookingDisplay'
+import {
+  buildAddonItemRows,
+  buildSelectedItemRows,
+  formatInfoStatus,
+  getBookingAdditionalInfoText,
+  getBookingPackageNamesText,
+} from '../lib/bookingDisplay'
 import {
   BOOKING_STATUSES,
   BOOKING_STATUS_LABELS,
@@ -459,6 +465,224 @@ function ReferralCouponPanel({ bookingId, bookingStatus, bookingTotal }) {
   )
 }
 
+function PendingValue({ value, notProvidedLabel = 'Pending' }) {
+  const text = String(value ?? '').trim()
+  if (!text) {
+    return <span className="text-[#C57A1E]">{notProvidedLabel}</span>
+  }
+  return text
+}
+
+function CustomerInformationSection({ booking }) {
+  const infoStatus = formatInfoStatus(booking?.infoStatus)
+  const packageNamesText = getBookingPackageNamesText(booking, '')
+  const selectedItemRows = buildSelectedItemRows(booking)
+  const addonRows = buildAddonItemRows(booking)
+  const additionalInfo = getBookingAdditionalInfoText(booking)
+  const files = Array.isArray(booking?.files) ? booking.files : []
+  const personalizations = Array.isArray(booking?.personalizations) ? booking.personalizations : []
+  const locationText = String(booking?.locationSummary ?? booking?.address?.summary ?? '').trim()
+
+  const summaryFields = [
+    {
+      label: 'PACKAGE',
+      value: packageNamesText,
+      notProvidedLabel: 'Pending',
+    },
+    {
+      label: 'EVENT',
+      value: booking?.event?.name,
+      notProvidedLabel: 'Pending',
+    },
+    {
+      label: 'EVENT DATE',
+      value: booking?.eventDate ? formatDate(booking.eventDate) : '',
+      notProvidedLabel: 'Pending',
+    },
+    {
+      label: 'EVENT TIME',
+      value: booking?.eventTime,
+      notProvidedLabel: 'Pending',
+    },
+    {
+      label: 'GUESTS',
+      value: booking?.guestCount ? String(booking.guestCount) : '',
+      notProvidedLabel: 'Pending',
+    },
+    {
+      label: 'LOCATION',
+      value: locationText,
+      notProvidedLabel: 'Pending',
+    },
+    {
+      label: 'PIN CODE',
+      value: booking?.pinCode,
+      notProvidedLabel: 'Pending',
+    },
+    {
+      label: 'SPECIAL REQUEST',
+      value: booking?.specialRequest,
+      notProvidedLabel: 'Not provided',
+    },
+    {
+      label: 'ADDITIONAL INFO',
+      value: additionalInfo,
+      notProvidedLabel: 'Not provided',
+    },
+    {
+      label: 'INFORMATION COLLECTION',
+      value: infoStatus.label,
+      notProvidedLabel: 'Pending',
+    },
+    {
+      label: 'CHECKOUT MODE',
+      value: booking?.checkoutMode
+        ? String(booking.checkoutMode).replace(/-/g, ' ')
+        : 'Standard booking',
+      notProvidedLabel: 'Standard booking',
+    },
+    {
+      label: 'FEEDBACK',
+      value: booking?.feedbackSubmitted ? 'Submitted' : '',
+      notProvidedLabel: 'Pending',
+    },
+  ]
+
+  return (
+    <div className="py-6 border-t border-[#00000033]">
+      <SectionLabel>Customer Information</SectionLabel>
+      <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4 space-y-5">
+        <div className="grid grid-cols-2 gap-5 md:grid-cols-3">
+          {summaryFields.map(field => (
+            <div key={field.label}>
+              <p className="text-[11px] tracking-[0.16em] text-[#767676]">{field.label}</p>
+              <p className="mt-0.5 text-sm text-[#2D2D2D]">
+                <PendingValue value={field.value} notProvidedLabel={field.notProvidedLabel} />
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <p className="mb-3 text-[11px] tracking-[0.16em] text-[#767676]">SELECTED ITEMS</p>
+          {selectedItemRows.length ? (
+            <div className="space-y-2">
+              {selectedItemRows.map(item => (
+                <div key={item.id} className="flex justify-between rounded-xl bg-white px-4 py-3">
+                  <div className="min-w-0 pr-4">
+                    <p className="text-sm text-[#2D2D2D]">{item.title}</p>
+                    {item.includes ? (
+                      <p className="mt-1 text-xs text-[#8F8F8F]">{item.includes}</p>
+                    ) : null}
+                    <p className="mt-1 text-xs text-[#8F8F8F]">
+                      Additional info:{' '}
+                      {item.additionalInfo ? (
+                        item.additionalInfo
+                      ) : (
+                        <span className="text-[#C57A1E]">Pending</span>
+                      )}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-medium text-[#2D2D2D]">
+                    {formatCurrency(item.amount)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[#C57A1E]">Pending</p>
+          )}
+        </div>
+
+        {addonRows.length ? (
+          <div>
+            <p className="mb-3 text-[11px] tracking-[0.16em] text-[#767676]">ADD-ONS</p>
+            <div className="space-y-2">
+              {addonRows.map(item => (
+                <div key={item.id} className="flex justify-between rounded-xl bg-white px-4 py-3">
+                  <div className="min-w-0 pr-4">
+                    <p className="text-sm text-[#2D2D2D]">{item.title}</p>
+                    {item.includes ? (
+                      <p className="mt-1 text-xs text-[#8F8F8F]">{item.includes}</p>
+                    ) : null}
+                    {item.additionalInfo ? (
+                      <p className="mt-1 text-xs text-[#8F8F8F]">Additional info: {item.additionalInfo}</p>
+                    ) : null}
+                  </div>
+                  <p className="shrink-0 text-sm font-medium text-[#2D2D2D]">
+                    {formatCurrency(item.amount)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div>
+          <p className="mb-3 text-[11px] tracking-[0.16em] text-[#767676]">UPLOADED FILES</p>
+          {files.length ? (
+            <div className="space-y-2">
+              {files.map(file => (
+                <div key={file.id} className="rounded-xl bg-white px-4 py-3">
+                  <a
+                    href={file.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-[#7A5C2E] underline-offset-2 hover:underline"
+                  >
+                    {file.fileType || 'File'} — View
+                  </a>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[#C57A1E]">Pending</p>
+          )}
+        </div>
+
+        <div>
+          <p className="mb-3 text-[11px] tracking-[0.16em] text-[#767676]">PERSONALIZATION</p>
+          {personalizations.length ? (
+            <div className="space-y-2">
+              {personalizations.map(entry => (
+                <div key={entry.id} className="rounded-xl bg-white px-4 py-3">
+                  <p className="text-sm font-medium text-[#2D2D2D]">
+                    {entry.serviceName || 'Personalization'}
+                  </p>
+                  <p className="mt-1 text-xs text-[#8F8F8F]">
+                    Status:{' '}
+                    {String(entry.status ?? 'pending').toLowerCase() === 'pending' ? (
+                      <span className="text-[#C57A1E]">Pending</span>
+                    ) : (
+                      entry.status
+                    )}
+                  </p>
+                  <p className="mt-1 text-xs text-[#8F8F8F]">
+                    Customer choice:{' '}
+                    {entry.customerChoice ? (
+                      entry.customerChoice
+                    ) : (
+                      <span className="text-[#C57A1E]">Pending</span>
+                    )}
+                  </p>
+                  {entry.customerText ? (
+                    <p className="mt-1 text-sm text-[#2D2D2D]">{entry.customerText}</p>
+                  ) : null}
+                  {entry.customerNotes ? (
+                    <p className="mt-1 text-xs text-[#8F8F8F]">Notes: {entry.customerNotes}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[#8F8F8F]">No personalization request sent yet.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Admin Booking Accordion Card
 // ---------------------------------------------------------------------------
@@ -657,6 +881,8 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
               </div>
             ))}
           </div>
+
+          <CustomerInformationSection booking={bookingDetails} />
 
           {/* ── Update Status ── */}
           <div className="py-6 border-t border-[#00000033]">
