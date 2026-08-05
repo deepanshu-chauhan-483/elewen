@@ -16,7 +16,6 @@ import {
   useAdminBookings,
   useAdminCreateVendorAssignment,
   useAdminSendReferralCoupon,
-  useAdminPreviewPersonalizationEmail,
   useAdminSendPersonalizationEmail,
   useAdminUpdateBookingStatus,
   useAdminVendors,
@@ -156,6 +155,31 @@ function GhostBtn({ children, onClick, disabled }) {
   )
 }
 
+function buildMailtoHref(to, subject, bodyLines = []) {
+  const recipient = String(to ?? '').trim()
+  if (!recipient) return ''
+
+  const params = new URLSearchParams()
+  if (subject) params.set('subject', subject)
+
+  const body = bodyLines.filter(line => line != null && line !== false).join('\n')
+  if (body) params.set('body', body)
+
+  const query = params.toString()
+  return `mailto:${recipient}${query ? `?${query}` : ''}`
+}
+
+function formatPersonalizationDeadline(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 function LinkBtn({ href, children }) {
   if (!href) return null
 
@@ -293,27 +317,21 @@ const REFERRAL_TIER_OPTIONS = [
   { value: 'referral_1500', label: 'Referral — Rs 1,500 off' },
 ]
 
-function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
-  const previewMutation = useAdminPreviewPersonalizationEmail()
+function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail, customerName }) {
   const sendMutation = useAdminSendPersonalizationEmail()
   const [serviceName, setServiceName] = useState('decor')
   const [designImage1, setDesignImage1] = useState('')
   const [designImage2, setDesignImage2] = useState('')
   const [designImage3, setDesignImage3] = useState('')
   const [responseDeadline, setResponseDeadline] = useState('')
-  const [composerOpen, setComposerOpen] = useState(false)
-  const [emailTo, setEmailTo] = useState('')
-  const [emailSubject, setEmailSubject] = useState('')
-  const [emailHeadline, setEmailHeadline] = useState('')
-  const [emailIntro, setEmailIntro] = useState('')
+  const [emailSubject, setEmailSubject] = useState("Let's personalise your booking with Elewen")
   const [emailNote, setEmailNote] = useState('')
-  const [emailHtml, setEmailHtml] = useState('')
-  const [previewStale, setPreviewStale] = useState(false)
   const [sendMessage, setSendMessage] = useState('')
   const [sendError, setSendError] = useState('')
 
   const status = String(bookingStatus ?? '').toLowerCase()
   const canSend = !['new', 'cancelled'].includes(status)
+  const recipient = String(customerEmail ?? '').trim()
 
   if (!canSend) {
     return (
@@ -323,88 +341,88 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
     )
   }
 
-  const payloadFields = (includeCopy = true) => ({
-    serviceName: serviceName.trim() || 'decor',
-    designImage1: designImage1.trim(),
-    designImage2: designImage2.trim(),
-    designImage3: designImage3.trim(),
-    responseDeadline: responseDeadline || undefined,
-    ...(includeCopy
-      ? {
-          subject: emailSubject.trim() || undefined,
-          headline: emailHeadline.trim() || undefined,
-          introText: emailIntro.trim() || undefined,
-          customMessage: emailNote.trim() || undefined,
-        }
-      : {}),
-  })
-
-  const applyPreviewResult = (result, { seedCopy } = { seedCopy: false }) => {
-    setEmailTo(result?.to ?? '')
-    setEmailHtml(result?.html ?? '')
-    if (seedCopy) {
-      setEmailSubject(result?.subject ?? result?.defaults?.subject ?? '')
-      setEmailHeadline(result?.headline ?? result?.defaults?.headline ?? '')
-      setEmailIntro(result?.introText ?? result?.defaults?.introText ?? '')
-      setEmailNote(result?.customMessage ?? '')
-    } else {
-      if (result?.subject) setEmailSubject(result.subject)
-    }
-    setPreviewStale(false)
-    setComposerOpen(true)
-  }
-
-  const handlePreview = async ({ seedCopy = !composerOpen } = {}) => {
+  const handleOpenInMailApp = async () => {
     setSendError('')
     setSendMessage('')
-    try {
-      const result = await previewMutation.mutateAsync({
-        bookingId,
-        body: payloadFields(composerOpen),
-      })
-      applyPreviewResult(result, { seedCopy })
-    } catch (error) {
-      if (!composerOpen) setComposerOpen(false)
-      setSendError(error?.message ?? 'Could not preview personalization email.')
+
+    if (!recipient) {
+      setSendError('This booking has no customer email on file.')
+      return
     }
-  }
 
-  const markCopyChanged = setter => event => {
-    setter(event.target.value)
-    setPreviewStale(true)
-  }
+    const images = [designImage1.trim(), designImage2.trim(), designImage3.trim()].filter(Boolean)
+    if (!images.length) {
+      setSendError('Add at least one design image URL before opening the email.')
+      return
+    }
 
-  const handleSend = async () => {
-    setSendError('')
-    setSendMessage('')
+    const service = serviceName.trim() || 'decor'
+    const subject = emailSubject.trim() || "Let's personalise your booking with Elewen"
+    const note = emailNote.trim()
+    const deadlineLabel = formatPersonalizationDeadline(responseDeadline)
+    const bookingUrl = `https://elewen.co.in/user-dashboard/details?bookingId=${encodeURIComponent(bookingId)}`
+    const firstName = String(customerName ?? '').trim().split(/\s+/)[0] || 'there'
+
+    const bodyLines = [
+      `Hi ${firstName},`,
+      '',
+      `We're getting everything ready for your event, and it's now time to customise your ${service}.`,
+      note ? '' : null,
+      note || null,
+      '',
+      'Please choose your preferred design:',
+      designImage1.trim() ? `Option 1: ${designImage1.trim()}` : null,
+      designImage2.trim() ? `Option 2: ${designImage2.trim()}` : null,
+      designImage3.trim() ? `Option 3: ${designImage3.trim()}` : null,
+      '',
+      'Reply with Option 1, 2 or 3 — or open your booking:',
+      bookingUrl,
+      '',
+      'What would you like it to say? Please share the exact text (for example: Welcome to Aarav\'s First Birthday).',
+      '',
+      deadlineLabel
+        ? `Please send us your selections by ${deadlineLabel} so our team has enough time to prepare.`
+        : 'Please send us your selections soon so our team has enough time to prepare.',
+      '',
+      'Team Elewen',
+      '9810937700',
+    ]
+
+    const mailtoHref = buildMailtoHref(recipient, subject, bodyLines)
+    if (!mailtoHref) {
+      setSendError('Could not open the email app for this customer.')
+      return
+    }
+
     try {
-      if (previewStale) {
-        const refreshed = await previewMutation.mutateAsync({
-          bookingId,
-          body: payloadFields(true),
-        })
-        applyPreviewResult(refreshed, { seedCopy: false })
-      }
-
       await sendMutation.mutateAsync({
         bookingId,
         body: {
-          ...payloadFields(true),
+          serviceName: service,
+          designImage1: designImage1.trim(),
+          designImage2: designImage2.trim(),
+          designImage3: designImage3.trim(),
+          responseDeadline: responseDeadline || undefined,
+          subject,
+          customMessage: note || undefined,
+          channel: 'mailto',
         },
       })
-      setSendMessage('Personalization email sent to the customer.')
-      setComposerOpen(false)
-      setPreviewStale(false)
+
+      window.open(mailtoHref, '_self')
+      setSendMessage(
+        'Email app opened. Review the message in Outlook / Gmail, then send it from there.'
+      )
     } catch (error) {
-      setSendError(error?.message ?? 'Could not send personalization email.')
+      setSendError(error?.message ?? 'Could not prepare the personalization email.')
     }
   }
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#6B7280]">
-        Add design images and a reply deadline, then preview the email as the customer will see it.
-        You can change the wording in plain language before sending.
+        Same as Vendor Management — opens your phone or laptop mail app (Outlook, Gmail, etc.) with
+        the customer, subject, and message ready. You review and send from there.
       </p>
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Service name</p>
@@ -441,118 +459,33 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus }) {
           className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
         />
       </div>
-
-      <div className="flex flex-wrap gap-2">
-        <PrimaryBtn
-          disabled={previewMutation.isPending || sendMutation.isPending}
-          onClick={() => handlePreview({ seedCopy: !composerOpen })}
-        >
-          {previewMutation.isPending
-            ? 'Loading preview…'
-            : composerOpen
-              ? 'Refresh preview'
-              : 'Preview email'}
-        </PrimaryBtn>
-        {composerOpen ? (
-          <GhostBtn
-            disabled={previewMutation.isPending}
-            onClick={() => {
-              setComposerOpen(false)
-              setSendError('')
-              setPreviewStale(false)
-            }}
-          >
-            Close preview
-          </GhostBtn>
-        ) : null}
+      <div>
+        <p className="mb-1.5 text-xs text-[#8F8F8F]">Email subject</p>
+        <input
+          type="text"
+          value={emailSubject}
+          onChange={event => setEmailSubject(event.target.value)}
+          className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+        />
       </div>
-
-      {composerOpen ? (
-        <div className="space-y-4 rounded-2xl border border-[#E4DED8] bg-white p-4">
-          <div>
-            <p className="text-sm font-semibold text-[#1C1C1C]">Email as customer will see it</p>
-            <p className="mt-1 text-xs text-[#8F8F8F]">
-              Change the wording below in simple text. No code needed.
-            </p>
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Sending to</p>
-            <p className="text-sm text-[#2D2D2D]">{emailTo || '—'}</p>
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Email subject</p>
-            <input
-              type="text"
-              value={emailSubject}
-              onChange={markCopyChanged(setEmailSubject)}
-              className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
-            />
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Title inside email</p>
-            <input
-              type="text"
-              value={emailHeadline}
-              onChange={markCopyChanged(setEmailHeadline)}
-              className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
-            />
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Opening message</p>
-            <textarea
-              value={emailIntro}
-              onChange={markCopyChanged(setEmailIntro)}
-              rows={3}
-              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
-            />
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Extra note from planner (optional)</p>
-            <textarea
-              value={emailNote}
-              onChange={markCopyChanged(setEmailNote)}
-              rows={3}
-              placeholder="e.g. Hi Priya — these are the three backdrop options we discussed on call."
-              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
-            />
-          </div>
-
-          {previewStale ? (
-            <p className="rounded-xl bg-[#FFF8E8] px-3 py-2 text-xs text-[#8A6A2F]">
-              Wording changed — click <strong>Refresh preview</strong> to update the mail view below,
-              or send and we will refresh automatically.
-            </p>
-          ) : null}
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Mail preview</p>
-            <iframe
-              title="Personalization email preview"
-              srcDoc={emailHtml}
-              sandbox=""
-              className="h-[520px] w-full rounded-2xl border border-[#E4DED8] bg-[#0d0d0d]"
-            />
-          </div>
-
-          <PrimaryBtn
-            disabled={
-              sendMutation.isPending ||
-              previewMutation.isPending ||
-              !emailSubject.trim() ||
-              !emailHtml.trim()
-            }
-            onClick={handleSend}
-          >
-            {sendMutation.isPending ? 'Sending…' : 'Send this email'}
-          </PrimaryBtn>
-        </div>
-      ) : null}
-
+      <div>
+        <p className="mb-1.5 text-xs text-[#8F8F8F]">Extra note (optional)</p>
+        <textarea
+          value={emailNote}
+          onChange={event => setEmailNote(event.target.value)}
+          rows={3}
+          placeholder="e.g. Hi — these are the three backdrop options we discussed on call."
+          className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
+        />
+      </div>
+      <div className="rounded-xl bg-white px-4 py-3 text-sm text-[#6B7280]">
+        <p>
+          <span className="font-medium text-[#2D2D2D]">To:</span> {recipient || 'No email on file'}
+        </p>
+      </div>
+      <PrimaryBtn disabled={sendMutation.isPending || !recipient} onClick={handleOpenInMailApp}>
+        {sendMutation.isPending ? 'Preparing…' : 'Open in Mail / Outlook'}
+      </PrimaryBtn>
       {sendMessage ? <p className="text-sm text-[#12803D]">{sendMessage}</p> : null}
       {sendError ? <p className="text-sm text-[#8A1C1C]">{sendError}</p> : null}
     </div>
@@ -1151,6 +1084,8 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
               <PersonalizationEmailPanel
                 bookingId={booking.id}
                 bookingStatus={bookingDetails?.status ?? booking.status}
+                customerEmail={bookingDetails?.customer?.email}
+                customerName={bookingDetails?.customer?.name}
               />
             </div>
           </div>

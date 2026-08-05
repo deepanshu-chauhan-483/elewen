@@ -456,7 +456,7 @@ export async function sendHookahBookingPlacedEmail(bookingId) {
   return { sent: true, emailType, subject }
 }
 
-/** Mail 2 — admin manual personalization email. Supports plain-text copy overrides after preview. */
+/** Mail 2 — admin manual personalization email. Supports SMTP or mailto (external mail app). */
 export async function sendBookingPersonalizationEmail(
   bookingId,
   {
@@ -470,6 +470,7 @@ export async function sendBookingPersonalizationEmail(
     introText = null,
     customMessage = null,
     html: htmlOverride = null,
+    channel = 'smtp',
     force = false,
   } = {}
 ) {
@@ -504,6 +505,31 @@ export async function sendBookingPersonalizationEmail(
 
   // Each admin send is logged separately so planners can re-send with new options.
   const emailType = `${BOOKING_EMAIL_TYPES.PERSONALIZATION}_${String(personalization.id).slice(0, 8)}`
+  const finalSubject =
+    typeof subjectOverride === 'string' && subjectOverride.trim()
+      ? subjectOverride.trim()
+      : DEFAULT_PERSONALIZATION_SUBJECT
+
+  // Admin opens Outlook/Gmail via mailto (same pattern as Vendor Management).
+  // Record the design options + notify in-app, but do not send via Elewen SMTP.
+  if (String(channel).toLowerCase() === 'mailto') {
+    await markEmailSent(booking.id, emailType, finalSubject, { channel: 'mailto' })
+    await notify(booking.userId, {
+      type: 'booking_update',
+      title: "Let's personalise your booking",
+      message: `Please choose your preferred design options for ${ctx.serviceName}.`,
+      linkUrl: customerBookingDetailsPath(booking.id),
+    }).catch(() => {})
+
+    return {
+      sent: true,
+      channel: 'mailto',
+      emailType,
+      subject: finalSubject,
+      personalizationId: personalization.id,
+      to: await getUserEmail(booking.userId),
+    }
+  }
 
   const result = await dispatchLifecycleEmail({
     booking,
@@ -518,7 +544,7 @@ export async function sendBookingPersonalizationEmail(
     htmlOverride,
   })
 
-  return { ...result, personalizationId: personalization.id }
+  return { ...result, personalizationId: personalization.id, channel: 'smtp' }
 }
 
 /** Mail 3 — 2 days before event (cron). */

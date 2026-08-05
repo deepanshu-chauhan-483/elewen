@@ -1743,6 +1743,7 @@ function readPersonalizationPayload(body = {}) {
     introText: readPlain(body.introText),
     customMessage: readPlain(body.customMessage),
     html: typeof body.html === 'string' && body.html.trim() ? body.html.trim() : null,
+    channel: normalizeText(body.channel)?.toLowerCase() === 'mailto' ? 'mailto' : 'smtp',
     force: Boolean(body.force),
   }
 }
@@ -1839,6 +1840,7 @@ export async function sendAdminBookingPersonalizationEmail(req, res, next) {
       ok: true,
       personalizationId: result.personalizationId,
       subject: result.subject,
+      channel: result.channel || 'smtp',
     })
   } catch (err) {
     next(err)
