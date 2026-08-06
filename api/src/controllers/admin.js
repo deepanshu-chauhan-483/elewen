@@ -1204,6 +1204,7 @@ export async function getAdminOverview(req, res, next) {
       pendingPayouts,
       recentBookings,
       upcomingBookings,
+      cancelledBookingsRaw,
       alerts,
       vendorsResponse,
     ] = await Promise.all([
@@ -1303,6 +1304,21 @@ export async function getAdminOverview(req, res, next) {
         orderBy: { eventDate: 'asc' },
         take: 8,
       }),
+      prisma.booking.findMany({
+        where: {
+          status: 'cancelled',
+        },
+        include: {
+          items: true,
+          notes: true,
+          statusLogs: { orderBy: { createdAt: 'desc' }, take: 2 },
+          payments: { orderBy: { createdAt: 'desc' } },
+          vendorAssignments: true,
+          cancellation: true,
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 40,
+      }),
       prisma.alert.findMany({
         where: {
           status: {
@@ -1324,11 +1340,23 @@ export async function getAdminOverview(req, res, next) {
       (sum, payout) => sum + toNumber(payout.amount),
       0
     )
-    const [recent, upcoming, allAlertUsers] = await Promise.all([
+    const [recent, upcoming, cancelledEnriched, allAlertUsers] = await Promise.all([
       enrichBookingsWithCustomer(recentBookings),
       enrichBookingsWithCustomer(upcomingBookings),
+      enrichBookingsWithCustomer(cancelledBookingsRaw),
       fetchUsersByIds(alerts.map(alert => alert.resolvedBy).filter(Boolean)),
     ])
+    const customerCancelledBookings = cancelledEnriched
+      .filter(booking => {
+        const requestedBy = String(booking.cancellation?.requestedBy ?? '')
+        const customerId = String(booking.userId ?? '')
+        if (requestedBy && customerId && requestedBy === customerId) return true
+        const cancelNote = String(
+          (booking.statusLogs ?? []).find(log => log.newStatus === 'cancelled')?.note ?? ''
+        ).toLowerCase()
+        return cancelNote.includes('cancelled by customer')
+      })
+      .slice(0, 8)
     const unassignedUpcomingCount = upcoming.filter(
       booking => (booking.vendorAssignments?.length ?? 0) === 0
     ).length
@@ -1412,6 +1440,7 @@ export async function getAdminOverview(req, res, next) {
         systemHealth,
         recentBookings: recent,
         upcomingBookings: upcoming,
+        customerCancelledBookings,
         vendorApprovals: (vendorsResponse?.data ?? []).map(vendor => ({
           id: String(vendor.id),
           documentId: vendor.documentId ?? null,

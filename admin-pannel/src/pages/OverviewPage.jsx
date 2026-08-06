@@ -232,7 +232,12 @@ function HealthCard({ item, onClick }) {
 // ---------------------------------------------------------------------------
 // TableFilter
 // ---------------------------------------------------------------------------
-const TABLE_TABS = ['all', 'confirmed', 'pending', 'new']
+const TABLE_TABS = [
+  { key: 'all', label: 'All' },
+  { key: 'confirmed', label: 'Confirmed' },
+  { key: 'new', label: 'New' },
+  { key: 'cancelled_by_customer', label: 'Cancel new / in process' },
+]
 
 function TableFilter({ active, onChange }) {
   return (
@@ -244,8 +249,8 @@ function TableFilter({ active, onChange }) {
         className="min-h-9 rounded-full border-[#E4DED8] bg-white py-2 text-xs font-semibold capitalize text-[#6B7280]"
       >
         {TABLE_TABS.map(tab => (
-          <option key={tab} value={tab}>
-            {tab === 'all' ? 'All' : tab}
+          <option key={tab.key} value={tab.key}>
+            {tab.label}
           </option>
         ))}
       </CustomSelect>
@@ -281,12 +286,29 @@ function PaginationControls({ currentPage, totalPages, onPageChange }) {
   )
 }
 
-function UpcomingEventCard({ booking }) {
+function UpcomingEventCard({ booking, onClick }) {
   const eventTitle = booking.event?.name || booking.package?.title || booking.id
   const vendorAssigned = Boolean(booking.vendorAssignments?.length)
 
   return (
-    <article className="rounded-2xl border border-[#E4DED8] bg-white p-4 shadow-sm">
+    <article
+      className={`rounded-2xl border border-[#E4DED8] bg-white p-4 shadow-sm${
+        onClick ? ' cursor-pointer transition hover:border-[#D4BA8E]' : ''
+      }`}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
@@ -358,18 +380,23 @@ const getBookingOverviewRoute = metricKey => {
   switch (metricKey) {
     case 'total':
       return '/bookings?bucket=all'
-    case 'new':
-      return '/bookings?status=new'
-    case 'ongoing':
+    case 'today':
+      return '/bookings?bucket=today'
+    case 'live':
       return '/bookings?bucket=active'
     case 'completed':
       return '/bookings?bucket=completed&status=completed'
     case 'upcoming':
       return '/bookings?bucket=upcoming'
+    case 'cancelled':
+      return '/bookings?status=cancelled'
     default:
       return '/bookings?bucket=all'
   }
 }
+
+const getBookingDetailRoute = bookingId =>
+  `/bookings?status=cancelled&open=${encodeURIComponent(bookingId)}`
 
 const getHealthRoute = label => {
   switch (label) {
@@ -399,9 +426,14 @@ export default function OverviewPage() {
     ? overview.overdueAlerts
     : (overview.alerts ?? [])
   const upcomingBookings = overview.upcomingBookings ?? []
+  const customerCancelledBookings = overview.customerCancelledBookings ?? []
 
   const filteredBookings =
-    tab === 'all' ? upcomingBookings : upcomingBookings.filter(b => b.status === tab)
+    tab === 'cancelled_by_customer'
+      ? customerCancelledBookings
+      : tab === 'all'
+        ? upcomingBookings
+        : upcomingBookings.filter(b => b.status === tab)
   const totalPages = Math.max(1, Math.ceil(filteredBookings.length / TABLE_PAGE_SIZE))
   const visiblePage = Math.min(currentPage, totalPages)
   const paginatedBookings = filteredBookings.slice(
@@ -438,18 +470,18 @@ export default function OverviewPage() {
 
       <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCard
-          label="New"
-          value={formatCount(metrics.newBookingsCount)}
-          helper="Need confirmation"
+          label="Today's booking"
+          value={formatCount(metrics.todayBookingsCount)}
+          helper="Events today"
           accent
-          onClick={() => navigate(getBookingOverviewRoute('new'))}
+          onClick={() => navigate(getBookingOverviewRoute('today'))}
         />
         <MetricCard
-          label="Ongoing"
+          label="Live booking"
           value={formatCount(metrics.activeBookingsCount)}
-          helper="Confirmed / active"
+          helper="Live / in progress"
           accent
-          onClick={() => navigate(getBookingOverviewRoute('ongoing'))}
+          onClick={() => navigate(getBookingOverviewRoute('live'))}
         />
         <MetricCard
           label="Completed"
@@ -562,34 +594,54 @@ export default function OverviewPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedBookings.map(booking => (
-                    <tr key={booking.id} className="bg-white">
-                      <td className="rounded-l-xl px-3 py-3.5 text-sm text-gray-800">
-                        {formatDate(booking.eventDate)}
-                      </td>
-                      <td className="px-3 py-3.5 text-sm font-semibold text-[#1C1C1C]">
-                        {booking.event?.name || booking.package?.title || booking.id}
-                      </td>
-                      <td className="px-3 py-3.5 text-sm text-gray-500">
-                        {booking.locationSummary || 'Venue pending'}
-                      </td>
-                      <td className="px-3 py-3.5 text-sm text-gray-800">
-                        {booking.customer?.name || 'Customer'}
-                      </td>
-                      <td className="px-3 py-3.5 text-sm text-gray-500">
-                        {booking.package?.serviceCategories?.[0]?.name || 'General service'}
-                      </td>
-                      <td className="px-3 py-3.5 text-sm">
-                        <StatusBadge
-                          status={booking.vendorAssignments?.length ? 'confirmed' : 'pending'}
-                          label={booking.vendorAssignments?.length ? 'Assigned' : 'Unassigned'}
-                        />
-                      </td>
-                      <td className="rounded-r-xl px-3 py-3.5 text-sm">
-                        <StatusBadge status={booking.status} label={booking.statusLabel} />
-                      </td>
-                    </tr>
-                  ))}
+                  {paginatedBookings.map(booking => {
+                    const isCancelledTab = tab === 'cancelled_by_customer'
+                    const openCancelled = () => navigate(getBookingDetailRoute(booking.id))
+                    return (
+                      <tr
+                        key={booking.id}
+                        className={`bg-white${isCancelledTab ? ' cursor-pointer transition hover:bg-[#FBF8F3]' : ''}`}
+                        onClick={isCancelledTab ? openCancelled : undefined}
+                        onKeyDown={
+                          isCancelledTab
+                            ? event => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault()
+                                  openCancelled()
+                                }
+                              }
+                            : undefined
+                        }
+                        role={isCancelledTab ? 'button' : undefined}
+                        tabIndex={isCancelledTab ? 0 : undefined}
+                      >
+                        <td className="rounded-l-xl px-3 py-3.5 text-sm text-gray-800">
+                          {formatDate(booking.eventDate)}
+                        </td>
+                        <td className="px-3 py-3.5 text-sm font-semibold text-[#1C1C1C]">
+                          {booking.event?.name || booking.package?.title || booking.id}
+                        </td>
+                        <td className="px-3 py-3.5 text-sm text-gray-500">
+                          {booking.locationSummary || 'Venue pending'}
+                        </td>
+                        <td className="px-3 py-3.5 text-sm text-gray-800">
+                          {booking.customer?.name || 'Customer'}
+                        </td>
+                        <td className="px-3 py-3.5 text-sm text-gray-500">
+                          {booking.package?.serviceCategories?.[0]?.name || 'General service'}
+                        </td>
+                        <td className="px-3 py-3.5 text-sm">
+                          <StatusBadge
+                            status={booking.vendorAssignments?.length ? 'confirmed' : 'pending'}
+                            label={booking.vendorAssignments?.length ? 'Assigned' : 'Unassigned'}
+                          />
+                        </td>
+                        <td className="rounded-r-xl px-3 py-3.5 text-sm">
+                          <StatusBadge status={booking.status} label={booking.statusLabel} />
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
               <PaginationControls
@@ -602,7 +654,15 @@ export default function OverviewPage() {
             {/* Mobile cards */}
             <div className="space-y-3 md:hidden">
               {paginatedBookings.map(booking => (
-                <UpcomingEventCard key={booking.id} booking={booking} />
+                <UpcomingEventCard
+                  key={booking.id}
+                  booking={booking}
+                  onClick={
+                    tab === 'cancelled_by_customer'
+                      ? () => navigate(getBookingDetailRoute(booking.id))
+                      : undefined
+                  }
+                />
               ))}
               <div className="overflow-hidden rounded-[8px] border border-[#E4DED8] bg-white">
                 <PaginationControls
