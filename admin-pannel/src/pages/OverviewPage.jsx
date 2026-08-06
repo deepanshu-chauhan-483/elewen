@@ -387,7 +387,8 @@ const getBookingOverviewRoute = metricKey => {
     case 'completed':
       return '/bookings?bucket=completed'
     case 'upcoming':
-      return '/bookings?bucket=upcoming'
+      // Overview "Upcoming Events" = active events in the next window → Live Bookings.
+      return '/bookings?bucket=live'
     case 'cancelled':
       return '/bookings?bucket=cancelled'
     default:

@@ -55,7 +55,7 @@ function normalizeBookingBucket(value) {
   const normalizedValue = String(value ?? '')
     .trim()
     .toLowerCase()
-  if (normalizedValue === 'active') return 'live'
+  if (normalizedValue === 'active' || normalizedValue === 'upcoming') return 'live'
   return VALID_BOOKING_BUCKETS.has(normalizedValue) ? normalizedValue : 'today'
 }
 
