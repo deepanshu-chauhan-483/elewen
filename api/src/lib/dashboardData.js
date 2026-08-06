@@ -455,20 +455,26 @@ function getPaymentSummary(booking) {
   const successfulPayments = payments.filter(payment => payment.status === 'success')
   const hasCodPayment = payments.some(isCodPayment)
 
-  const amountPaid = successfulPayments.reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+  const amountPaid = roundCurrency(
+    successfulPayments.reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+  )
   const totalPrice = roundCurrency(booking?.totalPrice)
   // Hookah COD: no advance — remaining is full unpaid balance until collected.
   const advanceAmount = hasCodPayment ? 0 : roundCurrency(booking?.advanceAmount)
-  const scheduledRemainingAmount = hasCodPayment
-    ? roundCurrency(Math.max(totalPrice - amountPaid, 0))
-    : roundCurrency(booking?.remainingAmount)
   const amountDue = roundCurrency(Math.max(totalPrice - amountPaid, 0))
+  // Actual advance collected (capped at required advance). Fully paid bookings still show the advance portion.
+  const advancePaidAmount = hasCodPayment
+    ? 0
+    : roundCurrency(Math.min(amountPaid, advanceAmount > 0 ? advanceAmount : 0))
+  // Remaining always reflects money still owed after successful payments (₹0 when fully paid).
+  const scheduledRemainingAmount = amountDue
 
   return {
     totalPrice,
     advanceAmount,
+    advancePaidAmount,
     scheduledRemainingAmount,
-    amountPaid: roundCurrency(amountPaid),
+    amountPaid,
     amountDue,
     advancePaid: successfulPayments.some(
       payment => payment.paymentType === 'advance' || payment.paymentType === 'full'
@@ -522,9 +528,12 @@ export async function enrichBookings(bookings = []) {
 
     return {
       ...booking,
-      // Surface COD-aware amounts on the booking row so admin/customer UIs stay consistent.
+      // Surface live payment-aware amounts so admin/customer UIs stay consistent.
+      // advanceAmount = required advance; remainingAmount = actual amount still due.
       advanceAmount: paymentSummary.advanceAmount,
-      remainingAmount: paymentSummary.scheduledRemainingAmount,
+      remainingAmount: paymentSummary.amountDue,
+      amountPaid: paymentSummary.amountPaid,
+      advancePaidAmount: paymentSummary.advancePaidAmount,
       bookingCategory: getBookingCategory(booking),
       statusLabel: BOOKING_STATUS_LABELS[booking.status] ?? booking.status ?? 'Unknown',
       latestStatusLog,

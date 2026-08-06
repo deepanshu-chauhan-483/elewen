@@ -276,25 +276,45 @@ function getLatestStatusNote(statusLogs = []) {
     .find(log => String(log?.note ?? '').trim())
 }
 
-function buildPaymentDetailRows(booking) {
+function getBookingPaymentDisplay(booking) {
   const paymentSummary = booking?.paymentSummary ?? {}
   const isCodBooking = Boolean(paymentSummary?.isCodBooking)
-  const advanceAmount = paymentSummary?.advanceAmount ?? booking?.advanceAmount ?? 0
-  const remainingAmount = paymentSummary?.scheduledRemainingAmount ?? booking?.remainingAmount ?? 0
-  const totalAmount = paymentSummary?.totalPrice ?? booking?.totalPrice ?? 0
+  const amountPaid = Number(paymentSummary?.amountPaid ?? booking?.amountPaid ?? 0)
+  const amountDue = Number(
+    paymentSummary?.amountDue ?? booking?.remainingAmount ?? booking?.amountDue ?? 0
+  )
+  const requiredAdvance = Number(paymentSummary?.advanceAmount ?? booking?.advanceAmount ?? 0)
+  const advancePaidAmount = Number(
+    paymentSummary?.advancePaidAmount ??
+      booking?.advancePaidAmount ??
+      (isCodBooking ? 0 : Math.min(amountPaid, requiredAdvance > 0 ? requiredAdvance : 0))
+  )
+
+  return {
+    isCodBooking,
+    requiredAdvance,
+    advancePaidAmount,
+    amountDue,
+    amountPaid,
+    totalAmount: Number(paymentSummary?.totalPrice ?? booking?.totalPrice ?? 0),
+  }
+}
+
+function buildPaymentDetailRows(booking) {
+  const { isCodBooking, requiredAdvance, amountDue, totalAmount } = getBookingPaymentDisplay(booking)
   const bookedAt = booking?.bookedAt ?? booking?.createdAt ?? ''
 
   return [
     {
       id: `${booking?.id ?? 'booking'}-payment-advance`,
-      label: isCodBooking ? 'Advance (COD — none)' : 'Advance',
-      amount: advanceAmount,
+      label: isCodBooking ? 'Advance (COD — none)' : 'Advance required',
+      amount: requiredAdvance,
       bookedAt,
     },
     {
       id: `${booking?.id ?? 'booking'}-payment-remaining`,
-      label: isCodBooking ? 'Due on delivery' : 'Remaining',
-      amount: remainingAmount,
+      label: isCodBooking ? 'Due on delivery' : 'Remaining due',
+      amount: amountDue,
       bookedAt,
     },
     {
@@ -986,6 +1006,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
   const borderColor = borderColorMap[borderStatusKey] ?? 'border-[#CDB17E]'
   const subtitle = getSubtitle(booking)
   const bookingDetails = bookingQuery.data ?? booking
+  const paymentDisplay = getBookingPaymentDisplay(bookingDetails)
   const paymentDetailRows = useMemo(() => buildPaymentDetailRows(bookingDetails), [bookingDetails])
   const showHookahCodBadge = bookingHasHookahCod(bookingDetails)
   const latestStatusNote = getLatestStatusNote(bookingDetails?.statusLogs)
@@ -996,13 +1017,17 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
     String(booking.status ?? '').toLowerCase() === 'cancelled'
       ? cancelledBadge
       : { status: booking.status, label: booking.statusLabel }
+  const remainingForValidation =
+    bookingDetails?.paymentSummary?.amountDue ??
+    bookingDetails?.remainingAmount ??
+    booking?.remainingAmount ??
+    0
 
   const handleUpdateStatus = async () => {
-    const remainingAmount = bookingDetails?.remainingAmount ?? 0
     const validation = canProgressToStage(
       booking.status,
       statusInput,
-      remainingAmount,
+      remainingForValidation,
       bookingDetails?.eventDate ?? booking?.eventDate
     )
 
@@ -1021,11 +1046,10 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
 
   const handleStatusInputChange = newStatus => {
     setStatusInput(newStatus)
-    const remainingAmount = bookingDetails?.remainingAmount ?? 0
     const validation = canProgressToStage(
       booking.status,
       newStatus,
-      remainingAmount,
+      remainingForValidation,
       bookingDetails?.eventDate ?? booking?.eventDate
     )
     if (!validation.allowed) {
@@ -1045,11 +1069,10 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
 
   // Check which status options are allowed
   const isStatusAllowed = optionStatus => {
-    const remainingAmount = bookingDetails?.remainingAmount ?? 0
     const validation = canProgressToStage(
       booking.status,
       optionStatus,
-      remainingAmount,
+      remainingForValidation,
       bookingDetails?.eventDate ?? booking?.eventDate
     )
     return validation.allowed
@@ -1096,13 +1119,13 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
                 <div className="flex flex-col">
                   <p className="text-[11px] text-[#767676]">ADVANCE PAID</p>
                   <p className="font-medium text-[#2D2D2D]">
-                    {formatCurrency(booking.advanceAmount)}
+                    {formatCurrency(paymentDisplay.advancePaidAmount)}
                   </p>
                 </div>
                 <div className="flex flex-col">
                   <p className="text-[11px] text-[#767676]">REMAINING</p>
                   <p className="font-medium text-[#2D2D2D]">
-                    {formatCurrency(booking.remainingAmount)}
+                    {formatCurrency(paymentDisplay.amountDue)}
                   </p>
                 </div>
               </div>
@@ -1116,11 +1139,11 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
           <div className="mt-3 flex gap-8 text-sm md:hidden">
             <div>
               <p className="text-[11px] text-[#767676]">ADVANCE PAID</p>
-              <p className="font-medium">{formatCurrency(booking.advanceAmount)}</p>
+              <p className="font-medium">{formatCurrency(paymentDisplay.advancePaidAmount)}</p>
             </div>
             <div>
               <p className="text-[11px] text-[#767676]">REMAINING</p>
-              <p className="font-medium">{formatCurrency(booking.remainingAmount)}</p>
+              <p className="font-medium">{formatCurrency(paymentDisplay.amountDue)}</p>
             </div>
           </div>
         )}
@@ -1140,8 +1163,11 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
                 value: bookingDetails.guestCount ? String(bookingDetails.guestCount) : 'Pending',
               },
               { label: 'LOCATION', value: bookingDetails.locationSummary },
-              { label: 'ADVANCE', value: formatCurrency(bookingDetails.advanceAmount) },
-              { label: 'REMAINING', value: formatCurrency(bookingDetails.remainingAmount) },
+              {
+                label: 'ADVANCE PAID',
+                value: formatCurrency(paymentDisplay.advancePaidAmount),
+              },
+              { label: 'REMAINING', value: formatCurrency(paymentDisplay.amountDue) },
               { label: 'BOOKING ID', value: `#${bookingDetails.id}` },
             ].map(f => (
               <div key={f.label}>
