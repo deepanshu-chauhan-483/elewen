@@ -39,6 +39,7 @@ import {
   buildEventSelectionDestination,
   buildServicesFlowDestination,
   DEFAULT_EVENT_CATEGORY_SLUG,
+  isCorporatePackage,
 } from '../lib/serviceFlow'
 import { rememberHomeScroll } from '../lib/homeReturnScroll'
 import { useLenis } from '../useLenis'
@@ -207,6 +208,8 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
     .trim()
     .toLowerCase()
   const packageHref = packageId ? getPackageHref(serviceSlug, packageId) : ''
+  // Most Loved carousel: hide "Starting from" only for Corporate packages
+  const hidePrice = isCorporatePackage(pkg)
 
   const tags = useMemo(() => {
     if (Array.isArray(pkg.includes)) return pkg.includes.filter(Boolean)
@@ -272,7 +275,7 @@ const LandingPackageCarouselCard = memo(function LandingPackageCarouselCard({
             imgClassName="object-cover object-center"
           />
 
-          {pkg.price ? (
+          {pkg.price && !hidePrice ? (
             <div
               className="absolute right-[12px] md:right-4 top-[12px] md:top-4 flex items-center justify-center gap-1 bg-white rounded-[22px] md:rounded-[36px] z-10 pointer-events-none"
               style={{ padding: isMobile ? '2.5px 7.4px' : '4px 12px' }}

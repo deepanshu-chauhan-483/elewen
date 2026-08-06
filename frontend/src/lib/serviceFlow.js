@@ -43,6 +43,37 @@ export function isCorporateCategory(categorySlug = '') {
     .toLowerCase() === 'corporate'
 }
 
+/** True when this package is a Corporate event package (not Sheesha/Catering/etc. by service). */
+export function isCorporatePackage(pkg = {}) {
+  const serviceSlugs = [
+    pkg?.serviceSlug,
+    ...(Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : []),
+  ]
+  if (serviceSlugs.some(slug => serviceAlwaysShowsPackagePrice(slug))) return false
+
+  if (isCorporateCategory(pkg?.category)) return true
+  if (isCorporateCategory(pkg?.category_slug)) return true
+
+  const slugs = [
+    ...(Array.isArray(pkg?.category_slugs) ? pkg.category_slugs : []),
+  ]
+    .map(value => String(value ?? '').trim().toLowerCase())
+    .filter(Boolean)
+
+  return slugs.some(slug => slug === 'corporate')
+}
+
+/** Services that should always show listing prices, even under corporate event category. */
+export function serviceAlwaysShowsPackagePrice(serviceSlug = '') {
+  const normalized = normalizeServiceSlug(serviceSlug)
+  return (
+    normalized === 'sheesha' ||
+    normalized === 'catering' ||
+    normalized === 'bartending' ||
+    normalized === 'rental-furniture'
+  )
+}
+
 export function isFallbackOnlyEvent(eventSlug = '') {
   return FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
 }

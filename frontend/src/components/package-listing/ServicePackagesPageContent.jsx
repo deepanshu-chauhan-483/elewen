@@ -29,6 +29,7 @@ import {
   isConsultationOnlyEvent,
   isCorporateCategory,
   isFallbackOnlyEvent,
+  serviceAlwaysShowsPackagePrice,
 } from '../../lib/serviceFlow'
 
 const PKG_LOCAL_IMAGES = [
@@ -62,8 +63,6 @@ export default function ServicePackagesPageContent({
   // All service listings (furniture, decor, catering, etc.) default to price low → high.
   const [sortValue, setSortValue] = useState('price-asc')
   const [page, setPage] = useState(1)
-  const [priceMin, setPriceMin] = useState('')
-  const [priceMax, setPriceMax] = useState('')
   // const [searchParams] = useSearchParams()
   // const categoryId = searchParams.get('category')?.toLowerCase() ?? ''
   // const eventId = searchParams.get('event')?.toLowerCase() ?? ''
@@ -83,7 +82,11 @@ export default function ServicePackagesPageContent({
   // }, [categoryId, eventId, themeId, levelId])
 
   const categorySlug = searchParams.get('category')?.toLowerCase() ?? ''
-  const hidePackagePrice = isCorporateCategory(categorySlug)
+  // Corporate category hides prices for decor consultation packages only —
+  // Sheesha / Catering / Bartending / Furniture must still show price.
+  const hidePackagePrice =
+    isCorporateCategory(categorySlug) &&
+    !serviceAlwaysShowsPackagePrice(searchParams.get('service') || serviceSlug)
   const eventSlug = searchParams.get('event')?.toLowerCase() ?? ''
   const eventId = searchParams.get('eventId') ?? ''
   const selectedServiceSlug =
@@ -149,8 +152,6 @@ export default function ServicePackagesPageContent({
 
   useEffect(() => {
     setPage(1)
-    setPriceMin('')
-    setPriceMax('')
   }, [
     effectiveCategorySlug,
     effectiveEventSlug,
@@ -160,46 +161,18 @@ export default function ServicePackagesPageContent({
     themeSlug,
     levelSlug,
     searchQuery,
+    sortValue,
   ])
 
-  useEffect(() => {
-    setPage(1)
-  }, [sortValue, priceMin, priceMax])
-
-  const priceBounds = useMemo(() => {
-    const prices = filteredPackages
-      .map(pkg => Number(pkg.base_price) || 0)
-      .filter(price => price > 0)
-
-    if (!prices.length) return { min: 0, max: 0 }
-
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
-    }
-  }, [filteredPackages])
-
-  const priceFilteredPackages = useMemo(() => {
-    const minValue = priceMin === '' ? null : Number(priceMin)
-    const maxValue = priceMax === '' ? null : Number(priceMax)
-
-    return filteredPackages.filter(pkg => {
-      const price = Number(pkg.base_price) || 0
-      if (minValue != null && !Number.isNaN(minValue) && price < minValue) return false
-      if (maxValue != null && !Number.isNaN(maxValue) && price > maxValue) return false
-      return true
-    })
-  }, [filteredPackages, priceMin, priceMax])
-
   const sortedPackages = useMemo(() => {
-    const items = [...priceFilteredPackages]
+    const items = [...filteredPackages]
 
     if (sortValue === 'price-asc')
       return items.sort((a, b) => (a.base_price ?? 0) - (b.base_price ?? 0))
     if (sortValue === 'price-desc')
       return items.sort((a, b) => (b.base_price ?? 0) - (a.base_price ?? 0))
     return items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-  }, [priceFilteredPackages, sortValue])
+  }, [filteredPackages, sortValue])
 
   const totalPages = Math.max(1, Math.ceil(sortedPackages.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
@@ -277,12 +250,6 @@ export default function ServicePackagesPageContent({
         setSortValue(value)
         setPage(1)
       }}
-      showPriceFilter={!hidePackagePrice}
-      priceMin={priceMin}
-      priceMax={priceMax}
-      priceBounds={priceBounds}
-      onPriceMinChange={setPriceMin}
-      onPriceMaxChange={setPriceMax}
       heroContent={showHero ? <PackageResultsHero /> : null}
       page={safePage}
       totalPages={totalPages}
