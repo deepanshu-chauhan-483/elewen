@@ -153,8 +153,8 @@ function CateringMenuChooseModalContent({
         <div className="flex-1 overflow-y-auto px-5 py-4 hide-scrollbar" data-lenis-prevent>
           {!dishes.length ? (
             <p className="text-[13px] text-[#591902]/60">
-              Menu items for this section are not loaded yet. Check Strapi catering-menu and Public
-              permissions.
+              No menu items found for this section yet. Refresh the page or check that the catering
+              menu library is published in Strapi.
             </p>
           ) : showSplit ? (
             <div className="space-y-5">

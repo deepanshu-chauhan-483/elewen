@@ -8,7 +8,7 @@ const CATERING_MENU_CATEGORIES = [
   {
     category_key: 'pre_plated',
     title: 'Pre plated',
-    description: 'Pre-plated bites (Level 3 packages).',
+    description: 'Pre-plated bites (Level 2–3 packages).',
     sort_order: 1,
     dishes: [
       { name: 'Spicy Madras Bhel', description: 'Crispy puffed rice layered with vibrant tangy chutneys.', dietary: 'veg', sort_order: 1 },
@@ -304,9 +304,11 @@ const CATERING_MENU_CATEGORIES = [
   },
 ];
 
-const LEVEL3_ONLY_CATEGORIES = new Set(['pre_plated', 'soup', 'live_stations']);
+// Live stations stay Level 3 only. Pre-plated + soup appear on Level 2 packages too
+// (Smart Serve, Signature Hosting, Signature Hosting 2).
+const LEVEL3_ONLY_CATEGORIES = new Set(['live_stations']);
 
-const LEVEL2_3_CATEGORIES = new Set(['raita', 'salad']);
+const LEVEL2_3_CATEGORIES = new Set(['pre_plated', 'soup', 'raita', 'salad']);
 
 const LEVEL3_ONLY_STARTER_NONVEG = new Set([
   'Cheddar Sole Fish Tikka',

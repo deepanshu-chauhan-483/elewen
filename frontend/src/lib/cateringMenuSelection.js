@@ -309,23 +309,29 @@ export function getDishesForMenuRow(row, menuByCategory = {}, vegPreference = ''
   const keys = getCategoryKeysForRow(resolvedRow, vegPreference)
   if (!keys.length) return []
 
-  const dishes = []
-  const seen = new Set()
+  const collect = ({ respectLevel }) => {
+    const dishes = []
+    const seen = new Set()
 
-  for (const key of keys) {
-    for (const dish of menuByCategory[key] ?? []) {
-      if (!dishAvailableAtPackageLevel(dish, packageLevelSlug)) continue
-      const id = `${key}-${dish.name}`
-      if (seen.has(id)) continue
-      seen.add(id)
-      dishes.push({ ...dish, categoryKey: key })
+    for (const key of keys) {
+      for (const dish of menuByCategory[key] ?? []) {
+        if (respectLevel && !dishAvailableAtPackageLevel(dish, packageLevelSlug)) continue
+        const id = `${key}-${dish.name}`
+        if (seen.has(id)) continue
+        seen.add(id)
+        dishes.push({ ...dish, categoryKey: key })
+      }
     }
+
+    return dishes.sort((left, right) => Number(left.sort_order ?? 0) - Number(right.sort_order ?? 0))
   }
 
-  return filterDishesByVegPreference(
-    dishes.sort((left, right) => Number(left.sort_order ?? 0) - Number(right.sort_order ?? 0)),
-    vegPreference
-  )
+  const levelFiltered = collect({ respectLevel: true })
+  // Package menu rows already define which sections appear. If level flags (or a
+  // stale Strapi library) wipe a section empty, still show the seeded category list.
+  const dishes = levelFiltered.length ? levelFiltered : collect({ respectLevel: false })
+
+  return filterDishesByVegPreference(dishes, vegPreference)
 }
 
 export function formatSelectionSummary(selectedNames = [], rules = {}) {

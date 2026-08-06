@@ -731,7 +731,10 @@ function normalizePackage(pkg, index = 0, options = {}) {
     theme_slugs: getPackageThemeSlugs(pkg),
     catering_level: resolveCateringLevelKey(detailSections),
     bartender_type: bartendingPresentation?.bartender_type || resolveBartenderType(detailSections),
+    // Listing Level (essentials→1 / assisted→2 / end_to_end→3). Do not use for dish filtering.
     level_slug: resolvePackageLevelSlug(pkg, detailSections, primaryBudgetLevel),
+    // Per-package budget Level 1/2/3 — used for catering menu dish availability.
+    budget_level_slug: getBudgetLevelSlug(primaryBudgetLevel) || '',
     level_id: primaryBudgetLevel?.id != null ? String(primaryBudgetLevel.id) : '',
     ...(sheeshaSizeLabel ? { sheesha_size_label: sheeshaSizeLabel } : {}),
     images: listing

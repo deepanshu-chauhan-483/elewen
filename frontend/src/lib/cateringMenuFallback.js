@@ -8,7 +8,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 1,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -17,7 +17,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 2,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -26,7 +26,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 3,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -35,7 +35,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 4,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -44,7 +44,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 5,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     }
   ],
@@ -518,7 +518,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "both",
       "sort_order": 1,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -527,7 +527,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "both",
       "sort_order": 2,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -536,7 +536,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 3,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -545,7 +545,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 4,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -554,7 +554,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 5,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -563,7 +563,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "both",
       "sort_order": 6,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -572,7 +572,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 7,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -581,7 +581,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 8,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -590,7 +590,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 9,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -599,7 +599,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "both",
       "sort_order": 10,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -608,7 +608,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 11,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     },
     {
@@ -617,7 +617,7 @@ export const CATERING_MENU_FALLBACK = {
       "dietary": "veg",
       "sort_order": 12,
       "level_1": false,
-      "level_2": false,
+      "level_2": true,
       "level_3": true
     }
   ],

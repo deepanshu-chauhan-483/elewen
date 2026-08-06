@@ -787,7 +787,7 @@ export default function CateringSinglePackagePage() {
         row={activeMenuRow}
         menuByCategory={menuByCategory}
         vegPreference={vegPreference}
-        packageLevelSlug={pkg?.level_slug ?? ''}
+        packageLevelSlug={pkg?.budget_level_slug || pkg?.level_slug || ''}
         initialSelection={activeMenuInitialValue}
         onClose={() => {
           setMenuModalOpen(false)
