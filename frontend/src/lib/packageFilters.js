@@ -411,6 +411,36 @@ export function filterPackagesByBudgetLevel(packages, { levelSlug = '', levelId 
   )
 }
 
+/** Amazon-style Min / Max price filter using package base_price. */
+export function parsePriceFilterValue(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+  const amount = Number(raw.replace(/[^\d.]/g, ''))
+  if (!Number.isFinite(amount) || amount < 0) return null
+  return amount
+}
+
+export function filterPackagesByPriceRange(packages, { minPrice = null, maxPrice = null } = {}) {
+  const hasMin = minPrice != null && Number.isFinite(minPrice)
+  const hasMax = maxPrice != null && Number.isFinite(maxPrice)
+  if (!hasMin && !hasMax) return Array.isArray(packages) ? packages : []
+
+  let low = hasMin ? minPrice : null
+  let high = hasMax ? maxPrice : null
+  if (low != null && high != null && low > high) {
+    const swap = low
+    low = high
+    high = swap
+  }
+
+  return (Array.isArray(packages) ? packages : []).filter(pkg => {
+    const price = Number(pkg?.base_price ?? 0)
+    if (low != null && price < low) return false
+    if (high != null && price > high) return false
+    return true
+  })
+}
+
 function packageHasServiceSlug(pkg, serviceSlug) {
   const normalized = normalizeServiceSlug(serviceSlug)
   if (!normalized) return false

@@ -8,7 +8,9 @@ import {
   assignDistinctCoverIndices,
   eventHasPackages,
   filterPackages,
+  filterPackagesByPriceRange,
   normalizeServiceSlug,
+  parsePriceFilterValue,
 } from '../../lib/packageFilters'
 import { filterPackagesBySearch } from '../../lib/packageSearch'
 import CmsPageLoader from '../common/CmsPageLoader'
@@ -96,6 +98,16 @@ export default function ServicePackagesPageContent({
   const levelSlug = searchParams.get('level')?.toLowerCase() ?? ''
   const searchQuery = searchParams.get('search')?.trim() ?? ''
   const flow = searchParams.get('flow') ?? ''
+  const appliedMinPrice = parsePriceFilterValue(searchParams.get('minPrice'))
+  const appliedMaxPrice = parsePriceFilterValue(searchParams.get('maxPrice'))
+  const [minPriceDraft, setMinPriceDraft] = useState(() => searchParams.get('minPrice') ?? '')
+  const [maxPriceDraft, setMaxPriceDraft] = useState(() => searchParams.get('maxPrice') ?? '')
+
+  useEffect(() => {
+    setMinPriceDraft(searchParams.get('minPrice') ?? '')
+    setMaxPriceDraft(searchParams.get('maxPrice') ?? '')
+  }, [searchParams])
+
   useEffect(() => {
     if (categorySlug) return
 
@@ -125,7 +137,7 @@ export default function ServicePackagesPageContent({
     [packages, serviceSlug]
   )
 
-  const filteredPackages = useMemo(() => {
+  const packagesBeforePriceFilter = useMemo(() => {
     const filtered = filterPackages(packagesData, {
       categorySlug: effectiveCategorySlug,
       eventSlug: effectiveEventSlug,
@@ -136,8 +148,7 @@ export default function ServicePackagesPageContent({
       levelSlug,
     })
 
-    if (!searchQuery) return filtered
-    return filterPackagesBySearch(filtered, searchQuery)
+    return searchQuery ? filterPackagesBySearch(filtered, searchQuery) : filtered
   }, [
     packagesData,
     effectiveCategorySlug,
@@ -149,6 +160,27 @@ export default function ServicePackagesPageContent({
     levelSlug,
     searchQuery,
   ])
+
+  const priceBounds = useMemo(() => {
+    const prices = packagesBeforePriceFilter
+      .map(pkg => Number(pkg?.base_price ?? 0))
+      .filter(price => Number.isFinite(price) && price > 0)
+
+    if (!prices.length) return { min: 0, max: 10000 }
+
+    const min = Math.floor(Math.min(...prices))
+    const max = Math.ceil(Math.max(...prices))
+    return { min, max: Math.max(min + 1, max) }
+  }, [packagesBeforePriceFilter])
+
+  const filteredPackages = useMemo(
+    () =>
+      filterPackagesByPriceRange(packagesBeforePriceFilter, {
+        minPrice: appliedMinPrice,
+        maxPrice: appliedMaxPrice,
+      }),
+    [packagesBeforePriceFilter, appliedMinPrice, appliedMaxPrice]
+  )
 
   useEffect(() => {
     setPage(1)
@@ -162,7 +194,39 @@ export default function ServicePackagesPageContent({
     levelSlug,
     searchQuery,
     sortValue,
+    appliedMinPrice,
+    appliedMaxPrice,
   ])
+
+  const applyPriceFilter = (options = {}) => {
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+
+        if (options.clear) {
+          nextParams.delete('minPrice')
+          nextParams.delete('maxPrice')
+          return nextParams
+        }
+
+        const nextMin = parsePriceFilterValue(minPriceDraft)
+        const nextMax = parsePriceFilterValue(maxPriceDraft)
+
+        if (nextMin == null) nextParams.delete('minPrice')
+        else nextParams.set('minPrice', String(Math.round(nextMin)))
+
+        if (nextMax == null) nextParams.delete('maxPrice')
+        else nextParams.set('maxPrice', String(Math.round(nextMax)))
+
+        return nextParams
+      },
+      { replace: true }
+    )
+    if (!options.clear) {
+      setSortValue('price-asc')
+    }
+    setPage(1)
+  }
 
   const sortedPackages = useMemo(() => {
     const items = [...filteredPackages]
@@ -250,6 +314,13 @@ export default function ServicePackagesPageContent({
         setSortValue(value)
         setPage(1)
       }}
+      minPriceValue={minPriceDraft}
+      maxPriceValue={maxPriceDraft}
+      onMinPriceChange={setMinPriceDraft}
+      onMaxPriceChange={setMaxPriceDraft}
+      onApplyPriceFilter={applyPriceFilter}
+      priceFilterActive={appliedMinPrice != null || appliedMaxPrice != null}
+      priceBounds={priceBounds}
       heroContent={showHero ? <PackageResultsHero /> : null}
       page={safePage}
       totalPages={totalPages}

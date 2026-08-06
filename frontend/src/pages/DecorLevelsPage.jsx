@@ -15,7 +15,7 @@ import {
   resolveServiceLaneId,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
-import { assignDistinctCoverIndices, filterPackages, filterPackagesByBudgetLevel, requiresDecorThemeSelection } from '../lib/packageFilters'
+import { assignDistinctCoverIndices, filterPackages, filterPackagesByBudgetLevel, filterPackagesByPriceRange, parsePriceFilterValue, requiresDecorThemeSelection } from '../lib/packageFilters'
 import { enrichPackagesWithHousePartyImages } from '../lib/housePartyPackageMedia'
 import { filterPackagesBySearch } from '../lib/packageSearch'
 import { getLocationScrollKey, readLocationScroll, scrollPageTo } from '../hooks/useScrollToTop'
@@ -159,6 +159,16 @@ export default function DecorLevelsPage() {
   const serviceIdParam = searchParams.get('serviceId') ?? ''
   const flow = searchParams.get('flow') ?? ''
   const searchQuery = searchParams.get('search')?.trim() ?? ''
+  const appliedMinPrice = parsePriceFilterValue(searchParams.get('minPrice'))
+  const appliedMaxPrice = parsePriceFilterValue(searchParams.get('maxPrice'))
+  const [minPriceDraft, setMinPriceDraft] = useState(() => searchParams.get('minPrice') ?? '')
+  const [maxPriceDraft, setMaxPriceDraft] = useState(() => searchParams.get('maxPrice') ?? '')
+
+  useEffect(() => {
+    setMinPriceDraft(searchParams.get('minPrice') ?? '')
+    setMaxPriceDraft(searchParams.get('maxPrice') ?? '')
+  }, [searchParams])
+
   const { data: serviceOptions = [] } = useFilteredServiceOptions(['decor'])
   const resolvedServiceId = useMemo(
     () =>
@@ -205,7 +215,7 @@ export default function DecorLevelsPage() {
     [packages]
   )
 
-  const filteredPackages = useMemo(() => {
+  const packagesBeforePriceFilter = useMemo(() => {
     const scoped = filterPackages(packagesData, {
       categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
       eventSlug,
@@ -215,8 +225,7 @@ export default function DecorLevelsPage() {
       themeSlug: themeParam,
     })
 
-    if (!searchQuery) return scoped
-    return filterPackagesBySearch(scoped, searchQuery)
+    return searchQuery ? filterPackagesBySearch(scoped, searchQuery) : scoped
   }, [
     packagesData,
     categorySlug,
@@ -227,6 +236,27 @@ export default function DecorLevelsPage() {
     searchQuery,
   ])
 
+  const priceBounds = useMemo(() => {
+    const prices = packagesBeforePriceFilter
+      .map(pkg => Number(pkg?.base_price ?? 0))
+      .filter(price => Number.isFinite(price) && price > 0)
+
+    if (!prices.length) return { min: 0, max: 10000 }
+
+    const min = Math.floor(Math.min(...prices))
+    const max = Math.ceil(Math.max(...prices))
+    return { min, max: Math.max(min + 1, max) }
+  }, [packagesBeforePriceFilter])
+
+  const filteredPackages = useMemo(
+    () =>
+      filterPackagesByPriceRange(packagesBeforePriceFilter, {
+        minPrice: appliedMinPrice,
+        maxPrice: appliedMaxPrice,
+      }),
+    [packagesBeforePriceFilter, appliedMinPrice, appliedMaxPrice]
+  )
+
   const sortedPackages = useMemo(() => {
     const items = [...filteredPackages]
     if (sortValue === 'price-asc')
@@ -236,7 +266,36 @@ export default function DecorLevelsPage() {
     return items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
   }, [filteredPackages, sortValue])
 
-  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${eventSlug}:${eventId}:${serviceIdParam}:${themeParam}:${searchQuery}:${sortValue}`
+  const applyPriceFilter = (options = {}) => {
+    setSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams)
+
+        if (options.clear) {
+          nextParams.delete('minPrice')
+          nextParams.delete('maxPrice')
+          return nextParams
+        }
+
+        const nextMin = parsePriceFilterValue(minPriceDraft)
+        const nextMax = parsePriceFilterValue(maxPriceDraft)
+
+        if (nextMin == null) nextParams.delete('minPrice')
+        else nextParams.set('minPrice', String(Math.round(nextMin)))
+
+        if (nextMax == null) nextParams.delete('maxPrice')
+        else nextParams.set('maxPrice', String(Math.round(nextMax)))
+
+        return nextParams
+      },
+      { replace: true }
+    )
+    if (!options.clear) {
+      setSortValue('price-asc')
+    }
+  }
+
+  const filterKey = `${categorySlug || DEFAULT_EVENT_CATEGORY_SLUG}:${eventSlug}:${eventId}:${serviceIdParam}:${themeParam}:${searchQuery}:${sortValue}:${appliedMinPrice ?? ''}:${appliedMaxPrice ?? ''}`
   const skipPaginationWriteRef = useRef(false)
   const navigationType = useNavigationType()
 
@@ -392,7 +451,14 @@ export default function DecorLevelsPage() {
     <PackageListLayout
       totalCount={sortedPackages.length}
       sortValue={sortValue}
-      onSortChange={e => setSortValue(e.target.value)}
+      onSortChange={value => setSortValue(value)}
+      minPriceValue={minPriceDraft}
+      maxPriceValue={maxPriceDraft}
+      onMinPriceChange={setMinPriceDraft}
+      onMaxPriceChange={setMaxPriceDraft}
+      onApplyPriceFilter={applyPriceFilter}
+      priceFilterActive={appliedMinPrice != null || appliedMaxPrice != null}
+      priceBounds={priceBounds}
       page={1}
       totalPages={1}
       onPrevPage={() => {}}
