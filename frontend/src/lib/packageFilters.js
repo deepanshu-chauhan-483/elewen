@@ -33,6 +33,9 @@ const CATERING_ALLOWED_SLUGS = new Set([
   'smart-serve',
   'chefs-selection',
   'chef-s-selection',
+  'chefs-choice',
+  'chef-s-choice',
+  'chef-choice',
   'easy-hosting-simply-served-1',
   'easy-hosting-simply-served-2',
   'easy-hosting',
@@ -42,6 +45,7 @@ const CATERING_ALLOWED_SLUGS = new Set([
   'easy-hosting-2',
   'effortless-hosting',
   'signature-hosting-package',
+  'signature-hosting',
   'signature-hosting-2',
   'the-full-table-experience',
   'the-social-experience',
@@ -56,6 +60,10 @@ export const CATERING_SLUG_ALIASES = {
   'smart-serve': 'close-circle-catering-2',
   'chefs-selection': 'close-circle-catering-3',
   'chef-s-selection': 'close-circle-catering-3',
+  'chefs-choice': 'close-circle-catering-3',
+  'chef-s-choice': 'close-circle-catering-3',
+  'chef-choice': 'close-circle-catering-3',
+  'signature-hosting': 'signature-hosting-package',
   'easy-hosting': 'easy-hosting-simply-served-1',
   'easy-hosting-1': 'easy-hosting-simply-served-1',
   'simply-served': 'easy-hosting-simply-served-2',
@@ -318,6 +326,10 @@ function isAllowedCateringPackage(pkg) {
     titleKey.includes('simply-served') ||
     titleKey.includes('chefs-selection') ||
     titleKey.includes('chef-s-selection') ||
+    titleKey.includes('chefs-choice') ||
+    titleKey.includes('chef-s-choice') ||
+    titleKey.includes('chef-choice') ||
+    titleKey.includes('signature-hosting') ||
     titleKey.includes('close-circle-catering')
   ) {
     return true

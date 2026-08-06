@@ -248,6 +248,12 @@ const ADDON_LIKE_MENU_TITLES = [
   'buffet',
 ]
 
+/** Level-3 packages whose CMS menu_items were polluted with add-ons — always use seeded food rows. */
+const FORCE_SEEDED_MENU_CATALOGS = new Set([
+  'signature-hosting-package',
+  'close-circle-catering-3',
+])
+
 function looksLikeAddonMenuRow(item = {}) {
   const title = String(item?.title ?? '')
     .trim()
@@ -268,14 +274,64 @@ function isUsableMenuItems(menuItems = []) {
   )
 }
 
+function resolveSeededMenuKey(pkg) {
+  const slug = String(pkg?.slug ?? '').trim()
+  const catalog = resolveCateringCatalogSlug(slug) || slug
+  if (CATERING_PACKAGE_MENU_ROWS[catalog]) return catalog
+  if (CATERING_PACKAGE_MENU_ROWS[slug]) return slug
+
+  const titleKey = String(pkg?.title ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  if (titleKey.includes('signature-hosting-2')) return 'signature-hosting-2'
+  if (titleKey.includes('signature-hosting')) return 'signature-hosting-package'
+  if (
+    titleKey.includes('chef') &&
+    (titleKey.includes('choice') || titleKey.includes('selection'))
+  ) {
+    return 'close-circle-catering-3'
+  }
+
+  return catalog
+}
+
+function shouldForceSeededCateringMenu(pkg) {
+  const menuKey = resolveSeededMenuKey(pkg)
+  if (FORCE_SEEDED_MENU_CATALOGS.has(menuKey)) return true
+
+  const titleKey = String(pkg?.title ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+
+  if (titleKey.includes('signature-hosting') && !titleKey.includes('signature-hosting-2')) {
+    return true
+  }
+  if (
+    titleKey.includes('chef') &&
+    (titleKey.includes('choice') || titleKey.includes('selection'))
+  ) {
+    return true
+  }
+  return false
+}
+
 function buildMenuRows(pkg) {
   const cateringSection = getCateringDetailSection(pkg)
   let menuItems = Array.isArray(cateringSection?.menu_items) ? cateringSection.menu_items : []
 
-  if (!isUsableMenuItems(menuItems)) {
-    const slug = String(pkg?.slug ?? '').trim()
-    const menuKey = resolveCateringCatalogSlug(slug) || slug
-    menuItems = CATERING_PACKAGE_MENU_ROWS[menuKey] ?? CATERING_PACKAGE_MENU_ROWS[slug] ?? []
+  const menuKey = resolveSeededMenuKey(pkg)
+  const seededRows = CATERING_PACKAGE_MENU_ROWS[menuKey] ?? []
+
+  // Signature Hosting + Chef's Choice/Selection: CMS mixed add-ons into menu_items.
+  // Always use the seeded food menu so dish pickers work.
+  if (shouldForceSeededCateringMenu(pkg) && seededRows.length) {
+    menuItems = seededRows
+  } else if (!isUsableMenuItems(menuItems)) {
+    menuItems = seededRows
   }
 
   if (menuItems.length) {
