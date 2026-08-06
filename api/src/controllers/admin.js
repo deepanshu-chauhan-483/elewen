@@ -970,6 +970,20 @@ function getCancellationSource(booking) {
   return 'admin'
 }
 
+function isEventWithinNextFifteenDays(booking) {
+  if (!booking?.eventDate) return false
+  const eventDate = new Date(booking.eventDate)
+  if (Number.isNaN(eventDate.getTime())) return false
+
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const nextFifteenDays = new Date(startOfToday)
+  nextFifteenDays.setDate(nextFifteenDays.getDate() + 15)
+  nextFifteenDays.setHours(23, 59, 59, 999)
+
+  return eventDate >= startOfToday && eventDate <= nextFifteenDays
+}
+
 function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = '') {
   const status = String(booking?.status ?? '').toLowerCase()
   const paid = getSuccessfulPaidAmount(booking)
@@ -981,6 +995,16 @@ function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = 
 
   if (bucket === 'live' || bucket === 'active') {
     return !['completed', 'cancelled'].includes(status) && isAdvanceSatisfied(booking)
+  }
+
+  // Upcoming = next 15 days + advance paid (Hookah COD allowed via isAdvanceSatisfied).
+  // Unpaid-advance bookings stay in Incomplete only.
+  if (bucket === 'upcoming') {
+    return (
+      !['completed', 'cancelled'].includes(status) &&
+      isAdvanceSatisfied(booking) &&
+      isEventWithinNextFifteenDays(booking)
+    )
   }
 
   if (bucket === 'incomplete') {
@@ -1005,7 +1029,14 @@ function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = 
   return true
 }
 
-const PAYMENT_AWARE_BUCKETS = new Set(['live', 'active', 'incomplete', 'cancelled', 'completed'])
+const PAYMENT_AWARE_BUCKETS = new Set([
+  'live',
+  'active',
+  'upcoming',
+  'incomplete',
+  'cancelled',
+  'completed',
+])
 
 function withCancellationSource(booking) {
   if (String(booking?.status ?? '').toLowerCase() !== 'cancelled') {
@@ -1298,7 +1329,7 @@ export async function getAdminOverview(req, res, next) {
       newBookingsCount,
       completedCandidates,
       todayBookingsCount,
-      upcomingEventsCount,
+      upcomingCandidates,
       pendingSampleCount,
       openTicketsCount,
       unresolvedAlertsCount,
@@ -1349,7 +1380,7 @@ export async function getAdminOverview(req, res, next) {
           },
         },
       }),
-      prisma.booking.count({
+      prisma.booking.findMany({
         where: {
           eventDate: {
             gte: startOfToday,
@@ -1358,6 +1389,13 @@ export async function getAdminOverview(req, res, next) {
           status: {
             notIn: ['completed', 'cancelled'],
           },
+        },
+        select: {
+          status: true,
+          eventDate: true,
+          advanceAmount: true,
+          totalPrice: true,
+          payments: { select: { status: true, amount: true } },
         },
       }),
       prisma.sampleTasteBooking.count({
@@ -1402,6 +1440,7 @@ export async function getAdminOverview(req, res, next) {
         where: {
           eventDate: {
             gte: startOfToday,
+            lte: nextFifteenDays,
           },
           status: {
             notIn: ['completed', 'cancelled'],
@@ -1415,7 +1454,7 @@ export async function getAdminOverview(req, res, next) {
           vendorAssignments: true,
         },
         orderBy: { eventDate: 'asc' },
-        take: 8,
+        take: 40,
       }),
       prisma.booking.findMany({
         where: {
@@ -1450,6 +1489,9 @@ export async function getAdminOverview(req, res, next) {
     const activeBookingsCount = liveCandidates.filter(booking =>
       bookingMatchesOperationalBucket(booking, 'live')
     ).length
+    const upcomingEventsCount = upcomingCandidates.filter(booking =>
+      bookingMatchesOperationalBucket(booking, 'upcoming')
+    ).length
     const completedBookingsCount = completedCandidates.filter(booking =>
       bookingMatchesOperationalBucket(booking, 'completed')
     ).length
@@ -1462,12 +1504,15 @@ export async function getAdminOverview(req, res, next) {
       (sum, payout) => sum + toNumber(payout.amount),
       0
     )
-    const [recent, upcoming, cancelledEnriched, allAlertUsers] = await Promise.all([
+    const [recent, upcomingEnriched, cancelledEnriched, allAlertUsers] = await Promise.all([
       enrichBookingsWithCustomer(recentBookings),
       enrichBookingsWithCustomer(upcomingBookings),
       enrichBookingsWithCustomer(cancelledBookingsRaw),
       fetchUsersByIds(alerts.map(alert => alert.resolvedBy).filter(Boolean)),
     ])
+    const upcoming = upcomingEnriched
+      .filter(booking => bookingMatchesOperationalBucket(booking, 'upcoming'))
+      .slice(0, 8)
     const customerCancelledBookings = cancelledEnriched
       .filter(booking => bookingMatchesOperationalBucket(booking, 'cancelled', 'client'))
       .slice(0, 8)

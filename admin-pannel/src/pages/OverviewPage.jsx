@@ -496,7 +496,7 @@ export default function OverviewPage() {
         <MetricCard
           label="Upcoming Events"
           value={formatCount(metrics.upcomingEventsCount)}
-          helper="Next 15 days"
+          helper="Next 15 days · advance paid"
           accent
           onClick={() => navigate(getBookingOverviewRoute('upcoming'))}
         />
@@ -565,7 +565,7 @@ export default function OverviewPage() {
 
       <Panel
         title="Upcoming Events"
-        subtitle="Next 15 days"
+        subtitle="Next 15 days · advance paid"
         action={
           <TableFilter
             active={tab}

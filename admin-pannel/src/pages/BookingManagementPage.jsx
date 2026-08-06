@@ -1681,10 +1681,11 @@ export default function BookingManagementPage() {
           </CustomSelect>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
-          Today shows events scheduled for today. Upcoming shows active events in the next 15 days.
-          Live shows advance-paid ongoing bookings. Cancelled shows advance-paid cancellations
-          (client vs admin). Incomplete shows bookings with no advance paid yet. Completed shows
-          finished bookings with full payment cleared.
+          Today shows events scheduled for today. Upcoming shows advance-paid events in the next 15
+          days (unpaid stay in Incomplete; Hookah COD allowed without advance). Live shows all
+          advance-paid ongoing bookings. Cancelled shows advance-paid cancellations (client vs
+          admin). Incomplete shows bookings with no advance paid yet. Completed shows finished
+          bookings with full payment cleared.
         </p>
       </div>
 
