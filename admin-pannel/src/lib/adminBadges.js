@@ -32,6 +32,8 @@ export const ADMIN_BADGE_PRESETS = {
     post_event: 'bg-[#DBEAFE] text-[#0383E4]',
     completed: 'bg-[#EAF8F1] text-[#238E64]',
     cancelled: 'bg-[#FFF3F3] text-[#8A1C1C]',
+    cancelled_by_client: 'bg-[#FFF3F3] text-[#8A1C1C]',
+    cancelled_by_admin: 'bg-[#F3E8FF] text-[#7C3AED]',
     pending: 'bg-[#FCE7CF] text-[#C57A1E]',
     assigned: 'bg-[#DDF7E5] text-[#16A34A]',
     failed: 'bg-[#FFF3F3] text-[#8A1C1C]',

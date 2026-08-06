@@ -880,7 +880,7 @@ async function enrichSamplesWithCustomer(samples = []) {
 }
 
 function buildBookingBucketFilter(bucket = 'all') {
-  if (bucket === 'active' || bucket === 'incomplete') {
+  if (bucket === 'live' || bucket === 'active') {
     return {
       status: {
         notIn: ['completed', 'cancelled'],
@@ -888,11 +888,23 @@ function buildBookingBucketFilter(bucket = 'all') {
     }
   }
 
-  if (bucket === 'completed') {
+  if (bucket === 'incomplete') {
     return {
       status: {
-        in: ['completed', 'cancelled'],
+        notIn: ['completed', 'cancelled'],
       },
+    }
+  }
+
+  if (bucket === 'cancelled') {
+    return {
+      status: 'cancelled',
+    }
+  }
+
+  if (bucket === 'completed') {
+    return {
+      status: 'completed',
     }
   }
 
@@ -910,6 +922,81 @@ function buildBookingBucketFilter(bucket = 'all') {
   }
 
   return {}
+}
+
+function getSuccessfulPaidAmount(booking) {
+  return (Array.isArray(booking?.payments) ? booking.payments : [])
+    .filter(payment => String(payment?.status ?? '').toLowerCase() === 'success')
+    .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+}
+
+function isAdvanceSatisfied(booking) {
+  const paid = getSuccessfulPaidAmount(booking)
+  const advanceAmount = toNumber(booking?.advanceAmount)
+  if (advanceAmount <= 0) {
+    return paid > 0 || String(booking?.status ?? '').toLowerCase() !== 'new'
+  }
+  return paid + 1e-9 >= advanceAmount
+}
+
+function getCancellationSource(booking) {
+  const requestedBy = String(booking?.cancellation?.requestedBy ?? '').trim()
+  const customerId = String(booking?.userId ?? '').trim()
+  if (requestedBy && customerId && requestedBy === customerId) return 'client'
+
+  const cancelNote = String(
+    (Array.isArray(booking?.statusLogs) ? booking.statusLogs : []).find(
+      log => String(log?.newStatus ?? '').toLowerCase() === 'cancelled'
+    )?.note ?? ''
+  ).toLowerCase()
+
+  if (cancelNote.includes('cancelled by customer')) return 'client'
+  if (requestedBy) return 'admin'
+  return 'admin'
+}
+
+function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = '') {
+  const status = String(booking?.status ?? '').toLowerCase()
+  const paid = getSuccessfulPaidAmount(booking)
+  const totalPrice = toNumber(booking?.totalPrice)
+  const advanceAmount = toNumber(booking?.advanceAmount)
+  const normalizedCancelledBy = String(cancelledBy ?? '')
+    .trim()
+    .toLowerCase()
+
+  if (bucket === 'live' || bucket === 'active') {
+    return !['completed', 'cancelled'].includes(status) && isAdvanceSatisfied(booking)
+  }
+
+  if (bucket === 'incomplete') {
+    return !['completed', 'cancelled'].includes(status) && !isAdvanceSatisfied(booking)
+  }
+
+  if (bucket === 'cancelled') {
+    if (status !== 'cancelled') return false
+    // Paid-in-advance cancels only when an advance was required.
+    if (advanceAmount > 0 && paid + 1e-9 < advanceAmount) return false
+    const source = getCancellationSource(booking)
+    if (normalizedCancelledBy === 'client' || normalizedCancelledBy === 'admin') {
+      return source === normalizedCancelledBy
+    }
+    return true
+  }
+
+  if (bucket === 'completed') {
+    return status === 'completed' && paid + 1e-9 >= totalPrice
+  }
+
+  return true
+}
+
+const PAYMENT_AWARE_BUCKETS = new Set(['live', 'active', 'incomplete', 'cancelled', 'completed'])
+
+function withCancellationSource(booking) {
+  if (String(booking?.status ?? '').toLowerCase() !== 'cancelled') {
+    return { ...booking, cancelledBy: null }
+  }
+  return { ...booking, cancelledBy: getCancellationSource(booking) }
 }
 
 function buildPaymentSummaryFromPayments(payments = []) {
@@ -1192,9 +1279,9 @@ export async function getAdminOverview(req, res, next) {
 
     const [
       totalBookings,
-      activeBookingsCount,
+      liveCandidates,
       newBookingsCount,
-      completedBookingsCount,
+      completedCandidates,
       todayBookingsCount,
       upcomingEventsCount,
       pendingSampleCount,
@@ -1209,11 +1296,18 @@ export async function getAdminOverview(req, res, next) {
       vendorsResponse,
     ] = await Promise.all([
       prisma.booking.count(),
-      prisma.booking.count({
+      prisma.booking.findMany({
         where: {
           status: {
             notIn: ['completed', 'cancelled'],
           },
+        },
+        select: {
+          status: true,
+          advanceAmount: true,
+          totalPrice: true,
+          userId: true,
+          payments: { select: { status: true, amount: true } },
         },
       }),
       prisma.booking.count({
@@ -1221,11 +1315,15 @@ export async function getAdminOverview(req, res, next) {
           status: 'new',
         },
       }),
-      prisma.booking.count({
+      prisma.booking.findMany({
         where: {
-          status: {
-            in: ['completed', 'cancelled'],
-          },
+          status: 'completed',
+        },
+        select: {
+          status: true,
+          advanceAmount: true,
+          totalPrice: true,
+          payments: { select: { status: true, amount: true } },
         },
       }),
       prisma.booking.count({
@@ -1317,7 +1415,6 @@ export async function getAdminOverview(req, res, next) {
           cancellation: true,
         },
         orderBy: { updatedAt: 'desc' },
-        take: 40,
       }),
       prisma.alert.findMany({
         where: {
@@ -1335,6 +1432,16 @@ export async function getAdminOverview(req, res, next) {
       ),
     ])
 
+    const activeBookingsCount = liveCandidates.filter(booking =>
+      bookingMatchesOperationalBucket(booking, 'live')
+    ).length
+    const completedBookingsCount = completedCandidates.filter(booking =>
+      bookingMatchesOperationalBucket(booking, 'completed')
+    ).length
+    const cancelledBookingsCount = cancelledBookingsRaw.filter(booking =>
+      bookingMatchesOperationalBucket(booking, 'cancelled')
+    ).length
+
     const paymentSummary = buildPaymentSummaryFromPayments(allPayments)
     const pendingVendorAmount = pendingPayouts.reduce(
       (sum, payout) => sum + toNumber(payout.amount),
@@ -1347,15 +1454,7 @@ export async function getAdminOverview(req, res, next) {
       fetchUsersByIds(alerts.map(alert => alert.resolvedBy).filter(Boolean)),
     ])
     const customerCancelledBookings = cancelledEnriched
-      .filter(booking => {
-        const requestedBy = String(booking.cancellation?.requestedBy ?? '')
-        const customerId = String(booking.userId ?? '')
-        if (requestedBy && customerId && requestedBy === customerId) return true
-        const cancelNote = String(
-          (booking.statusLogs ?? []).find(log => log.newStatus === 'cancelled')?.note ?? ''
-        ).toLowerCase()
-        return cancelNote.includes('cancelled by customer')
-      })
+      .filter(booking => bookingMatchesOperationalBucket(booking, 'cancelled', 'client'))
       .slice(0, 8)
     const unassignedUpcomingCount = upcoming.filter(
       booking => (booking.vendorAssignments?.length ?? 0) === 0
@@ -1424,6 +1523,7 @@ export async function getAdminOverview(req, res, next) {
           activeBookingsCount,
           newBookingsCount,
           completedBookingsCount,
+          cancelledBookingsCount,
           todayBookingsCount,
           upcomingEventsCount,
           pendingSampleCount,
@@ -1473,11 +1573,13 @@ export async function listAdminBookings(req, res, next) {
   try {
     const bucket = normalizeText(req.query.bucket || 'all').toLowerCase()
     const status = normalizeText(req.query.status).toLowerCase()
+    const cancelledBy = normalizeText(req.query.cancelledBy).toLowerCase()
     const search = normalizeText(req.query.search)
     const sortBy = normalizeText(req.query.sortBy || 'event_date').toLowerCase()
     const page = toPositiveInt(req.query.page, 1)
     const limit = Math.min(toPositiveInt(req.query.limit, 12), 50)
     const skip = (page - 1) * limit
+    const needsPaymentAwareFilter = PAYMENT_AWARE_BUCKETS.has(bucket)
 
     const bookingBucketFilter = buildBookingBucketFilter(bucket)
     const hasStatusFilter = status && BOOKING_STATUSES.includes(status)
@@ -1492,7 +1594,7 @@ export async function listAdminBookings(req, res, next) {
     const bookingInclude = {
       items: true,
       notes: true,
-      statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+      statusLogs: { orderBy: { createdAt: 'desc' }, take: 5 },
       payments: { orderBy: { createdAt: 'desc' } },
       vendorAssignments: true,
       cancellation: true,
@@ -1506,22 +1608,26 @@ export async function listAdminBookings(req, res, next) {
     }, {})
     let metrics = { total: 0, active: 0, previous: 0 }
 
-    if (search) {
+    if (search || needsPaymentAwareFilter) {
       const bookings = await prisma.booking.findMany({
-        where: bookingBucketFilter,
+        where: search ? bookingBucketFilter : baseWhere,
         include: bookingInclude,
         orderBy: orderByClause,
       })
       const enrichedCandidates = await enrichBookingsWithCustomer(bookings)
-      const matchingBookings = enrichedCandidates.filter(booking =>
-        bookingMatchesSearch(booking, search)
-      )
+      const matchingBookings = enrichedCandidates
+        .filter(booking => (search ? bookingMatchesSearch(booking, search) : true))
+        .filter(booking =>
+          needsPaymentAwareFilter
+            ? bookingMatchesOperationalBucket(booking, bucket, cancelledBy)
+            : true
+        )
       const visibleBookings = hasStatusFilter
         ? matchingBookings.filter(booking => booking.status === status)
         : matchingBookings
 
       total = visibleBookings.length
-      enrichedBookings = visibleBookings.slice(skip, skip + limit)
+      enrichedBookings = visibleBookings.slice(skip, skip + limit).map(withCancellationSource)
       statusCounts = matchingBookings.reduce((acc, booking) => {
         if (booking?.status && BOOKING_STATUSES.includes(booking.status)) {
           acc[booking.status] += 1
@@ -1555,7 +1661,7 @@ export async function listAdminBookings(req, res, next) {
         }),
       ])
 
-      enrichedBookings = await enrichBookingsWithCustomer(bookings)
+      enrichedBookings = (await enrichBookingsWithCustomer(bookings)).map(withCancellationSource)
       total = count
       statusCountRows.forEach(row => {
         if (row?.status && BOOKING_STATUSES.includes(row.status)) {
@@ -1620,7 +1726,7 @@ export async function getAdminBooking(req, res, next) {
 
     const [enrichedBooking] = await enrichBookingsWithCustomer([booking])
 
-    res.json({ booking: enrichedBooking })
+    res.json({ booking: withCancellationSource(enrichedBooking) })
   } catch (err) {
     next(err)
   }

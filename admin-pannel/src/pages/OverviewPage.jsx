@@ -383,20 +383,20 @@ const getBookingOverviewRoute = metricKey => {
     case 'today':
       return '/bookings?bucket=today'
     case 'live':
-      return '/bookings?bucket=active'
+      return '/bookings?bucket=live'
     case 'completed':
-      return '/bookings?bucket=completed&status=completed'
+      return '/bookings?bucket=completed'
     case 'upcoming':
       return '/bookings?bucket=upcoming'
     case 'cancelled':
-      return '/bookings?status=cancelled'
+      return '/bookings?bucket=cancelled'
     default:
       return '/bookings?bucket=all'
   }
 }
 
 const getBookingDetailRoute = bookingId =>
-  `/bookings?status=cancelled&open=${encodeURIComponent(bookingId)}`
+  `/bookings?bucket=cancelled&open=${encodeURIComponent(bookingId)}`
 
 const getHealthRoute = label => {
   switch (label) {
@@ -515,11 +515,11 @@ export default function OverviewPage() {
           onClick={() => navigate('/payments')}
         />
         <MetricCard
-          label="Vendor Approvals"
-          value={formatCount(metrics.pendingVendorApprovalsCount)}
-          helper="Awaiting review"
+          label="Cancelled booking"
+          value={formatCount(metrics.cancelledBookingsCount)}
+          helper="Advance paid, then cancelled"
           accent
-          onClick={() => navigate('/vendors')}
+          onClick={() => navigate(getBookingOverviewRoute('cancelled'))}
         />
       </div>
 

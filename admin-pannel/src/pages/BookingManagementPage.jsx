@@ -38,15 +38,25 @@ import {
   getBookingStatusLabel,
 } from '../lib/bookingStages'
 
-const VALID_BOOKING_BUCKETS = new Set(['all', 'active', 'today', 'upcoming', 'completed', 'incomplete'])
+const VALID_BOOKING_BUCKETS = new Set([
+  'all',
+  'today',
+  'live',
+  'active',
+  'cancelled',
+  'incomplete',
+  'upcoming',
+  'completed',
+])
 const VALID_BOOKING_STATUSES = new Set(['', ...BOOKING_STATUSES])
+const VALID_CANCELLED_BY = new Set(['', 'client', 'admin'])
 
 function normalizeBookingBucket(value) {
   const normalizedValue = String(value ?? '')
     .trim()
     .toLowerCase()
-  if (normalizedValue === 'incomplete') return 'active'
-  return VALID_BOOKING_BUCKETS.has(normalizedValue) ? normalizedValue : 'all'
+  if (normalizedValue === 'active') return 'live'
+  return VALID_BOOKING_BUCKETS.has(normalizedValue) ? normalizedValue : 'today'
 }
 
 function normalizeBookingStatus(value) {
@@ -54,6 +64,13 @@ function normalizeBookingStatus(value) {
     .trim()
     .toLowerCase()
   return VALID_BOOKING_STATUSES.has(normalizedValue) ? normalizedValue : ''
+}
+
+function normalizeCancelledBy(value) {
+  const normalizedValue = String(value ?? '')
+    .trim()
+    .toLowerCase()
+  return VALID_CANCELLED_BY.has(normalizedValue) ? normalizedValue : ''
 }
 
 function buildAdminMessageHref(bookingId = '') {
@@ -78,8 +95,10 @@ const borderColorMap = {
   pre_event: 'border-[#C57A1E]',
   execution: 'border-[#16A34A]',
   post_event: 'border-[#0383E4]',
-  completed: 'border-[#9CA3AF]',
+  completed: 'border-[#238E64]',
   cancelled: 'border-[#8A1C1C]',
+  cancelled_by_client: 'border-[#8A1C1C]',
+  cancelled_by_admin: 'border-[#7C3AED]',
 }
 
 function StatusBadge({ status, label }) {
@@ -959,7 +978,12 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
   const addNoteMutation = useAdminAddBookingNote()
   const createAssignmentMutation = useAdminCreateVendorAssignment()
 
-  const borderColor = borderColorMap[booking.status?.toLowerCase()] ?? 'border-[#CDB17E]'
+  const cancelledBadge = getCancelledBadgeMeta(booking)
+  const borderStatusKey =
+    String(booking.status ?? '').toLowerCase() === 'cancelled'
+      ? cancelledBadge.status
+      : booking.status?.toLowerCase()
+  const borderColor = borderColorMap[borderStatusKey] ?? 'border-[#CDB17E]'
   const subtitle = getSubtitle(booking)
   const bookingDetails = bookingQuery.data ?? booking
   const paymentDetailRows = useMemo(() => buildPaymentDetailRows(bookingDetails), [bookingDetails])
@@ -968,6 +992,10 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
   const internalNotes = (Array.isArray(bookingDetails?.notes) ? bookingDetails.notes : []).filter(
     entry => entry?.isInternal === true
   )
+  const statusBadge =
+    String(booking.status ?? '').toLowerCase() === 'cancelled'
+      ? cancelledBadge
+      : { status: booking.status, label: booking.statusLabel }
 
   const handleUpdateStatus = async () => {
     const remainingAmount = bookingDetails?.remainingAmount ?? 0
@@ -1045,7 +1073,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
                 {bookingTitle}
               </h3>
               <div className="shrink-0">
-                <StatusBadge status={booking.status} label={booking.statusLabel} />
+                <StatusBadge status={statusBadge.status} label={statusBadge.label} />
               </div>
               {showHookahCodBadge ? (
                 <div className="shrink-0">
@@ -1381,10 +1409,28 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
 
 const bookingBucketTabs = [
   { key: 'today', label: "Today's Bookings" },
-  { key: 'all', label: 'Total Bookings' },
-  { key: 'active', label: 'Incomplete Bookings' },
+  { key: 'live', label: 'Live Bookings' },
+  { key: 'cancelled', label: 'Cancelled Bookings' },
+  { key: 'incomplete', label: 'Incomplete Bookings' },
   { key: 'completed', label: 'Completed Bookings' },
 ]
+
+const cancelledByTabs = [
+  { key: '', label: 'All cancelled' },
+  { key: 'client', label: 'Cancelled by client' },
+  { key: 'admin', label: 'Cancelled by admin' },
+]
+
+function getCancelledBadgeMeta(booking) {
+  const source = String(booking?.cancelledBy ?? '').toLowerCase()
+  if (source === 'client') {
+    return { status: 'cancelled_by_client', label: 'Cancelled by client' }
+  }
+  if (source === 'admin') {
+    return { status: 'cancelled_by_admin', label: 'Cancelled by admin' }
+  }
+  return { status: booking.status, label: booking.statusLabel }
+}
 
 // ---------------------------------------------------------------------------
 // Page
@@ -1394,10 +1440,12 @@ export default function BookingManagementPage() {
   const [searchParams] = useSearchParams()
   const initialBucket = normalizeBookingBucket(searchParams.get('bucket'))
   const initialStatusFilter = normalizeBookingStatus(searchParams.get('status'))
+  const initialCancelledBy = normalizeCancelledBy(searchParams.get('cancelledBy'))
   const initialOpenBookingId = String(searchParams.get('open') ?? '').trim()
   const [search, setSearch] = useState('')
   const [bucket, setBucket] = useState(initialBucket)
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter)
+  const [cancelledBy, setCancelledBy] = useState(initialCancelledBy)
   const [sortBy, setSortBy] = useState('latest')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
@@ -1406,11 +1454,13 @@ export default function BookingManagementPage() {
   useEffect(() => {
     const nextBucket = normalizeBookingBucket(searchParams.get('bucket'))
     const nextStatusFilter = normalizeBookingStatus(searchParams.get('status'))
+    const nextCancelledBy = normalizeCancelledBy(searchParams.get('cancelledBy'))
     const nextOpenBookingId = String(searchParams.get('open') ?? '').trim()
 
     const timer = setTimeout(() => {
       setBucket(nextBucket)
       setStatusFilter(nextStatusFilter)
+      setCancelledBy(nextCancelledBy)
       setOpenBookingId(nextOpenBookingId)
       setCurrentPage(1)
     }, 0)
@@ -1429,6 +1479,7 @@ export default function BookingManagementPage() {
     search: debouncedSearch,
     bucket,
     status: statusFilter,
+    cancelledBy: bucket === 'cancelled' ? cancelledBy : '',
     sortBy,
     page: currentPage,
     limit: PAGE_SIZE,
@@ -1501,6 +1552,7 @@ export default function BookingManagementPage() {
               type="button"
               onClick={() => {
                 setBucket(tab.key)
+                if (tab.key !== 'cancelled') setCancelledBy('')
                 setCurrentPage(1)
               }}
               className={[
@@ -1514,6 +1566,32 @@ export default function BookingManagementPage() {
             </button>
           ))}
         </div>
+        {bucket === 'cancelled' ? (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {cancelledByTabs.map(tab => (
+              <button
+                key={tab.key || 'all-cancelled'}
+                type="button"
+                onClick={() => {
+                  setCancelledBy(tab.key)
+                  setCurrentPage(1)
+                }}
+                className={[
+                  'rounded-full border px-4 py-2 text-sm font-semibold transition',
+                  cancelledBy === tab.key
+                    ? tab.key === 'admin'
+                      ? 'border-[#7C3AED] bg-[#7C3AED] text-[#FAFAFA]'
+                      : tab.key === 'client'
+                        ? 'border-[#8A1C1C] bg-[#8A1C1C] text-[#FAFAFA]'
+                        : 'border-[#D4BA8E] bg-[#D4BA8E] text-[#FAFAFA]'
+                    : 'border-[#E4DED8] bg-white text-[#6B7280] hover:border-[#D4BA8E] hover:text-[#7A5C2E]',
+                ].join(' ')}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="grid gap-3 sm:grid-cols-4">
           <label className="flex w-full items-center gap-2.5 rounded-full bg-[#F0F0F0] focus:border-[#C6A15B] px-2.5 py-1.5 text-[#A19B94]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B8B1A8] text-[#FAFAFA]">
@@ -1536,15 +1614,16 @@ export default function BookingManagementPage() {
             value={bucket}
             onChange={value => {
               setBucket(value)
+              if (value !== 'cancelled') setCancelledBy('')
               setCurrentPage(1)
             }}
             className="min-h-10 rounded-full bg-[#F3F3F3]"
           >
-            <option value="all">All Buckets</option>
-            <option value="active">Incomplete (in progress)</option>
-            <option value="today">Today</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="completed">Completed</option>
+            <option value="today">Today's Bookings</option>
+            <option value="live">Live Bookings</option>
+            <option value="cancelled">Cancelled Bookings</option>
+            <option value="incomplete">Incomplete Bookings</option>
+            <option value="completed">Completed Bookings</option>
           </CustomSelect>
           <CustomSelect
             value={statusFilter}
@@ -1574,8 +1653,9 @@ export default function BookingManagementPage() {
           </CustomSelect>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
-          Total shows every booking. Incomplete shows in-progress bookings. Stage filters match the
-          customer timeline steps. Sort only changes the order of the results.
+          Today shows events scheduled for today. Live shows advance-paid ongoing bookings.
+          Cancelled shows advance-paid cancellations (client vs admin). Incomplete shows bookings
+          with no advance paid yet. Completed shows finished bookings with full payment cleared.
         </p>
       </div>
 
