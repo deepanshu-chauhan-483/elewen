@@ -55,7 +55,7 @@ function normalizeBookingBucket(value) {
   const normalizedValue = String(value ?? '')
     .trim()
     .toLowerCase()
-  if (normalizedValue === 'active' || normalizedValue === 'upcoming') return 'live'
+  if (normalizedValue === 'active') return 'live'
   return VALID_BOOKING_BUCKETS.has(normalizedValue) ? normalizedValue : 'today'
 }
 
@@ -1435,6 +1435,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
 
 const bookingBucketTabs = [
   { key: 'today', label: "Today's Bookings" },
+  { key: 'upcoming', label: 'Upcoming Events' },
   { key: 'live', label: 'Live Bookings' },
   { key: 'cancelled', label: 'Cancelled Bookings' },
   { key: 'incomplete', label: 'Incomplete Bookings' },
@@ -1646,6 +1647,7 @@ export default function BookingManagementPage() {
             className="min-h-10 rounded-full bg-[#F3F3F3]"
           >
             <option value="today">Today's Bookings</option>
+            <option value="upcoming">Upcoming Events</option>
             <option value="live">Live Bookings</option>
             <option value="cancelled">Cancelled Bookings</option>
             <option value="incomplete">Incomplete Bookings</option>
@@ -1679,9 +1681,10 @@ export default function BookingManagementPage() {
           </CustomSelect>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
-          Today shows events scheduled for today. Live shows advance-paid ongoing bookings.
-          Cancelled shows advance-paid cancellations (client vs admin). Incomplete shows bookings
-          with no advance paid yet. Completed shows finished bookings with full payment cleared.
+          Today shows events scheduled for today. Upcoming shows active events in the next 15 days.
+          Live shows advance-paid ongoing bookings. Cancelled shows advance-paid cancellations
+          (client vs admin). Incomplete shows bookings with no advance paid yet. Completed shows
+          finished bookings with full payment cleared.
         </p>
       </div>
 

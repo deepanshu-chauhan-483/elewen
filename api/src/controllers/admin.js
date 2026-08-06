@@ -221,6 +221,9 @@ function getDateRange(bucket = 'all') {
   const startOfTomorrow = new Date(startOfToday)
   startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
 
+  const nextFifteenDays = new Date(startOfToday)
+  nextFifteenDays.setDate(nextFifteenDays.getDate() + 15)
+
   if (bucket === 'today') {
     return {
       gte: startOfToday,
@@ -229,8 +232,10 @@ function getDateRange(bucket = 'all') {
   }
 
   if (bucket === 'upcoming') {
+    // Match Overview "Upcoming Events": next 15 days including today.
     return {
-      gte: startOfTomorrow,
+      gte: startOfToday,
+      lte: nextFifteenDays,
     }
   }
 
@@ -911,6 +916,16 @@ function buildBookingBucketFilter(bucket = 'all') {
   if (bucket === 'new') {
     return {
       status: 'new',
+    }
+  }
+
+  if (bucket === 'upcoming') {
+    const dateRange = getDateRange('upcoming')
+    return {
+      eventDate: dateRange,
+      status: {
+        notIn: ['completed', 'cancelled'],
+      },
     }
   }
 
