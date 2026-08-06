@@ -3,12 +3,14 @@
 const {
   PROPOSAL_PRICE_COVERS,
   PROPOSAL_SETUP_NEEDS_PC,
+  ensureEventDocumentId,
+  ensureThemeDocumentId,
   seedDecorPackages,
 } = require('./decor-proposal-shared');
 
 const ANNIVERSARY_EVENT_SLUG_CANDIDATES = [
-  'anniversary-evenings',
   'anniversary',
+  'anniversary-evenings',
   'anniversaries',
   'anniversary-packages',
   'still-us',
@@ -32,6 +34,12 @@ const FIRST_DATE_BEST_PLACED =
 
 const FIRST_DATE_WHY =
   "It's the perfect gift to your partner — an experience that lets you pause time and go on your first date, all over again.";
+
+const PRIVATE_CORNER_BEST_PLACED =
+  'Terraces, balconies, backyards, or any cozy corner.';
+
+const PRIVATE_CORNER_WHY =
+  "Perfect when you want privacy and comfort. It's warm, personal, and feels like a moment made just for the two of you.";
 
 const UNDER_THE_STARS_BEST_PLACED =
   'Terraces, rooftops, lawns, backyards, balconies, or even a room (if one wishes to be indoors).';
@@ -422,6 +430,213 @@ const ANNIVERSARY_PACKAGES = [
     ],
   },
   {
+    sheet: 'FD 2',
+    title: 'First Date 2',
+    slug: 'first-date-2',
+    theme_name: 'First Date',
+    theme_slug_candidates: ['first-date', 'still-us'],
+    budget_level_slug: 'level-2',
+    base_price: 19590,
+    setup_needs: ANNIVERSARY_SETUP_NEEDS,
+    best_placed_at: FIRST_DATE_BEST_PLACED,
+    why_we_love_it: FIRST_DATE_WHY,
+    description:
+      'A ready-to-go romantic setup with warm lights, candles, and a private table for two. Perfect when you want to do something special without overthinking it.',
+    key_decor_elements:
+      'A ready-to-go romantic setup with warm lights, candles, lantern accents, and a styled private table for two.',
+    price_breakdown: [
+      { label: 'Ambient lighting', amount: 5000 },
+      { label: '8–10 lanterns with candles', amount: 3000 },
+      { label: 'Walkway with candles and roses', amount: 1700 },
+      { label: 'Round table with linen and two chairs', amount: 1700 },
+      { label: 'Floral runner, candles & personal element', amount: 3500 },
+      { label: 'Platform fee', amount: 1490 },
+      { label: 'Labour & Transport', amount: 3200 },
+    ],
+    inclustions: [
+      choiceOption('fd2-lighting', 'Choose 1', 'Fairy Light Setup'),
+      whenInclusion(
+        'fd2-lighting',
+        'Fairy Light Setup',
+        '10 strings of fairy lights, each covering 10–12 ft.'
+      ),
+      choiceOption('fd2-lighting', 'Choose 1', 'Lantern Lighting Setup'),
+      whenInclusion(
+        'fd2-lighting',
+        'Lantern Lighting Setup',
+        '10–15 paper lanterns with lights'
+      ),
+      {
+        text: 'Warm-lit lanterns, roses and candles walkway leading to the setup',
+        group_title: 'Pathway Décor',
+      },
+      { text: '1 round table', group_title: 'Furniture' },
+      { text: '2 comfortable chairs', group_title: 'Furniture' },
+      { text: 'Floral table runner', group_title: 'Table Setup' },
+      { text: 'Candles', group_title: 'Table Setup' },
+      {
+        text: 'Personalised element (4–5 pictures / favourite memory highlights)',
+        group_title: 'Table Setup',
+      },
+      {
+        text: '8–10 lanterns with candles as decor accents',
+        group_title: 'Decor Elements',
+      },
+    ],
+  },
+  {
+    sheet: 'FD 3',
+    title: 'First Date 3',
+    slug: 'first-date-3',
+    theme_name: 'First Date',
+    theme_slug_candidates: ['first-date', 'still-us'],
+    budget_level_slug: 'level-3',
+    base_price: 27290,
+    setup_needs: ANNIVERSARY_SETUP_NEEDS,
+    best_placed_at: FIRST_DATE_BEST_PLACED,
+    why_we_love_it: FIRST_DATE_WHY,
+    description:
+      'A ready-to-go romantic setup with warm lights, candles, and a private table for two. Perfect when you want to do something special without overthinking it.',
+    key_decor_elements:
+      'Romantic table for two with ambient lighting, lantern accents, and a canopy-inspired drape structure.',
+    price_breakdown: [
+      { label: 'Ambient lighting', amount: 5000 },
+      { label: 'Paper lanterns with lights', amount: 1000 },
+      { label: '8–10 lanterns with candles', amount: 3000 },
+      { label: 'Walkway with candles and roses', amount: 1700 },
+      { label: 'Round table with linen and two chairs', amount: 1700 },
+      { label: 'Floral runner, candles & personal element', amount: 3500 },
+      { label: 'Tent / canopy with drapes', amount: 6000 },
+      { label: 'Platform fee', amount: 2190 },
+      { label: 'Labour & Transport', amount: 3200 },
+    ],
+    inclustions: [
+      choiceOption('fd3-lighting', 'Choose 1', 'Fairy Light Setup'),
+      whenInclusion(
+        'fd3-lighting',
+        'Fairy Light Setup',
+        '10 strings of fairy lights, each covering 10–12 ft.'
+      ),
+      choiceOption('fd3-lighting', 'Choose 1', 'Lantern Lighting Setup'),
+      whenInclusion(
+        'fd3-lighting',
+        'Lantern Lighting Setup',
+        '10–15 paper lanterns with lights'
+      ),
+      {
+        text: 'Warm-lit lanterns, roses and candles walkway leading to the setup',
+        group_title: 'Pathway Décor',
+      },
+      { text: '1 round table', group_title: 'Furniture' },
+      { text: '2 comfortable chairs', group_title: 'Furniture' },
+      { text: 'Floral table runner', group_title: 'Table Setup' },
+      { text: 'Candles', group_title: 'Table Setup' },
+      {
+        text: 'Personalised element (4–5 pictures / favourite memory highlights)',
+        group_title: 'Table Setup',
+      },
+      {
+        text: '8–10 lanterns with candles as decor accents',
+        group_title: 'Decor Elements',
+      },
+      {
+        text: 'Canopy-inspired structure with drapes, creating a cosy and intimate space',
+        group_title: 'Canopy Styling',
+      },
+    ],
+  },
+  {
+    sheet: 'PC SU 1',
+    title: 'Our Private Corner 1',
+    slug: 'still-us-our-private-corner-1',
+    theme_name: 'Our Private Corner',
+    theme_slug_candidates: ['our-private-corner', 'still-us'],
+    budget_level_slug: 'level-1',
+    base_price: 22890,
+    setup_needs: ANNIVERSARY_SETUP_NEEDS,
+    best_placed_at: PRIVATE_CORNER_BEST_PLACED,
+    why_we_love_it: PRIVATE_CORNER_WHY,
+    description:
+      'A dreamy canopy setup with soft drapes, fairy lights, cozy cushions, and candlelit details that create your own little world.',
+    key_decor_elements:
+      'A dreamy canopy setup with soft drapes, fairy lights, cozy cushions, and candlelit details.',
+    price_breakdown: [
+      { label: 'Canopy setup with fairy lights', amount: 8000 },
+      { label: 'Cushions and gadda', amount: 3000 },
+      { label: '3 small floral vases', amount: 2000 },
+      { label: '5 candles in glasses', amount: 600 },
+      { label: 'Walkway with candles and roses', amount: 1700 },
+      { label: 'Low table', amount: 1500 },
+      { label: '2 centerpieces with candles', amount: 1100 },
+      { label: 'Platform fee', amount: 1790 },
+      { label: 'Labour & Transport', amount: 3200 },
+    ],
+    inclustions: [
+      { text: 'Canopy-style setup with fairy lights', group_title: 'Canopy Styling' },
+      { text: 'Floor seating with cushions and gadda', group_title: 'Seating' },
+      { text: 'Walkway with candles and roses', group_title: 'Pathway Décor' },
+      { text: 'Low table with runner', group_title: 'Table Setup' },
+      { text: '2 centrepieces with candles', group_title: 'Table Setup' },
+      { text: '3 small floral vases', group_title: 'Floral Accents' },
+      { text: '5 candles in glass holders', group_title: 'Lighting Accents' },
+    ],
+  },
+  {
+    sheet: 'PC SU 2',
+    title: 'Our Private Corner 2',
+    slug: 'still-us-our-private-corner-2',
+    theme_name: 'Our Private Corner',
+    theme_slug_candidates: ['our-private-corner', 'still-us'],
+    budget_level_slug: 'level-2',
+    base_price: 34990,
+    setup_needs: ANNIVERSARY_SETUP_NEEDS,
+    best_placed_at: PRIVATE_CORNER_BEST_PLACED,
+    why_we_love_it: PRIVATE_CORNER_WHY,
+    description:
+      'A dreamy canopy setup with soft drapes, fairy lights, cozy cushions, and candlelit details that create your own little world.',
+    key_decor_elements:
+      'Elevated canopy styling with florals, candle accents, personalised table details, and a couple game experience.',
+    price_breakdown: [
+      { label: 'Canopy setup with fairy lights', amount: 9000 },
+      { label: 'Cushions and gadda', amount: 3000 },
+      { label: 'Ceiling hangings', amount: 800 },
+      { label: '5 small floral vases', amount: 2000 },
+      { label: '2 large vases with florals', amount: 2500 },
+      { label: '8–10 candle holders with candles', amount: 3000 },
+      { label: '10 candles in glasses', amount: 600 },
+      { label: 'Walkway with candles and roses', amount: 1700 },
+      { label: 'Low table', amount: 1500 },
+      { label: 'Table runner, florals, candles & personal element', amount: 3500 },
+      { label: 'Intimate engagement game', amount: 1300 },
+      { label: 'Platform fee', amount: 2890 },
+      { label: 'Labour & Transport', amount: 3200 },
+    ],
+    inclustions: [
+      { text: 'Canopy-style setup with fairy lights', group_title: 'Canopy Styling' },
+      { text: 'Ceiling hangings within the canopy', group_title: 'Canopy Styling' },
+      { text: 'Floor seating with cushions and gadda', group_title: 'Seating' },
+      { text: 'Walkway with candles and roses', group_title: 'Pathway Décor' },
+      { text: '5 small floral vases', group_title: 'Floral Styling' },
+      { text: '2 large floral vases', group_title: 'Floral Styling' },
+      {
+        text: '8–10 assorted candle holders with candles',
+        group_title: 'Lighting Accents',
+      },
+      { text: '10 candles in glass holders', group_title: 'Lighting Accents' },
+      { text: 'Low table with styling', group_title: 'Table Setup' },
+      { text: 'Table runner', group_title: 'Table Setup' },
+      { text: 'Florals and candles', group_title: 'Table Setup' },
+      {
+        text: 'Personalised element (pictures / favourite memory highlights)',
+        group_title: 'Table Setup',
+      },
+      {
+        text: 'Couple game with guided prompts and complete setup for a private moment together',
+        group_title: 'Experience Element',
+      },
+    ],
+  },
+  {
     sheet: 'US 1/2',
     title: 'Under the Stars 1',
     slug: 'under-the-stars-1',
@@ -765,7 +980,45 @@ const ANNIVERSARY_PACKAGES = [
   },
 ];
 
+const STILL_US_EXTRA_PACKAGE_SLUGS = [
+  'first-date-2',
+  'first-date-3',
+  'still-us-our-private-corner-1',
+  'still-us-our-private-corner-2',
+];
+
+const STILL_US_EXTRA_PACKAGES = ANNIVERSARY_PACKAGES.filter(pkg =>
+  STILL_US_EXTRA_PACKAGE_SLUGS.includes(pkg.slug)
+);
+
+async function ensureAnniversaryEvent(strapi) {
+  return ensureEventDocumentId(strapi, {
+    name: 'Anniversary',
+    slugCandidates: ANNIVERSARY_EVENT_SLUG_CANDIDATES,
+    display_order: 20,
+  });
+}
+
+async function ensureAnniversaryThemes(strapi) {
+  const themes = [
+    { name: 'Still Us', slug: 'still-us', display_order: 60 },
+    { name: 'Table Stories', slug: 'table-stories', display_order: 61 },
+    { name: 'Floating Moments', slug: 'floating-moments', display_order: 62 },
+    { name: 'First Date', slug: 'first-date', display_order: 63 },
+    { name: 'Our Private Corner', slug: 'our-private-corner', display_order: 64 },
+    { name: 'Under the Stars', slug: 'under-the-stars', display_order: 65 },
+    { name: 'All That Matters', slug: 'all-that-matters', display_order: 66 },
+    { name: 'Signature Essentials', slug: 'signature-essentials', display_order: 67 },
+  ];
+
+  for (const theme of themes) {
+    await ensureThemeDocumentId(strapi, theme);
+  }
+}
+
 async function seedDecorAnniversaryPackages(strapi) {
+  await ensureAnniversaryEvent(strapi);
+  await ensureAnniversaryThemes(strapi);
   return seedDecorPackages(strapi, ANNIVERSARY_PACKAGES, {
     eventSlugCandidates: ANNIVERSARY_EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/decor-anniversary',
@@ -773,8 +1026,26 @@ async function seedDecorAnniversaryPackages(strapi) {
   });
 }
 
+/**
+ * Seed only the 4 Still Us extras (First Date 2/3 + Still Us Private Corner 1/2).
+ * Does not touch Proposal Private Corner slugs or existing Floating Moments balloons.
+ */
+async function seedStillUsExtraPackages(strapi) {
+  await ensureAnniversaryEvent(strapi);
+  await ensureAnniversaryThemes(strapi);
+
+  return seedDecorPackages(strapi, STILL_US_EXTRA_PACKAGES, {
+    eventSlugCandidates: ANNIVERSARY_EVENT_SLUG_CANDIDATES,
+    logPrefix: 'seed/still-us-extra',
+    refreshExistingDecor: true,
+  });
+}
+
 module.exports = {
   ANNIVERSARY_PACKAGES,
   ANNIVERSARY_EVENT_SLUG_CANDIDATES,
+  STILL_US_EXTRA_PACKAGES,
+  STILL_US_EXTRA_PACKAGE_SLUGS,
   seedDecorAnniversaryPackages,
+  seedStillUsExtraPackages,
 };

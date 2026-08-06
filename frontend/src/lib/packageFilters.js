@@ -850,6 +850,7 @@ const THEME_PARENT_CHILD_SLUGS = {
     'table-stories',
     'floating-moments',
     'first-date',
+    'our-private-corner',
     'under-the-stars',
     'all-that-matters',
     'signature-essentials',

@@ -23,6 +23,7 @@
     "seed:excel-decor": "node scripts/run-excel-decor-seed.cjs",
     "seed:pastel": "node scripts/run-pastel-seed.cjs",
     "seed:bohemian": "node scripts/run-bohemian-seed.cjs",
+    "seed:still-us-extra": "node scripts/run-still-us-extra-packages-seed.cjs",
     "seed:bubbles": "node scripts/run-bubbles-seed.cjs",
     "seed:sufi": "node scripts/run-sufi-seed.cjs",
     "seed:house-party": "node scripts/run-house-party-seed.cjs",
