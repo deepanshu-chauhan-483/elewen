@@ -275,19 +275,48 @@ async function dispatchLifecycleEmail({
 const DEFAULT_PERSONALIZATION_SUBJECT = "Let's personalise your booking with Elewen"
 const DEFAULT_PERSONALIZATION_HEADLINE = "Let's personalise your booking ✨"
 
-function buildPersonalizationContext(
-  booking,
-  {
+const PERSONALIZATION_COPY_KEYS = [
+  'headline',
+  'introText',
+  'customMessage',
+  'chooseHeading',
+  'chooseSubtext',
+  'optionLabel1',
+  'optionLabel2',
+  'optionLabel3',
+  'replyPrompt',
+  'ctaLabel',
+  'textSectionHeading',
+  'textSectionBody',
+  'textExamples',
+  'anythingElseHeading',
+  'anythingElseBody',
+  'deadlineText',
+  'noReplyText',
+  'signOff',
+]
+
+function pickPersonalizationCopy(source = {}) {
+  const copy = {}
+  for (const key of PERSONALIZATION_COPY_KEYS) {
+    const value = source[key]
+    if (typeof value === 'string' && value.trim()) {
+      copy[key] = value.trim()
+    } else {
+      copy[key] = null
+    }
+  }
+  return copy
+}
+
+function buildPersonalizationContext(booking, options = {}) {
+  const {
     serviceName,
     designImage1,
     designImage2,
     designImage3,
     responseDeadline,
-    headline,
-    introText,
-    customMessage,
-  } = {}
-) {
+  } = options
   const deadlineDate = responseDeadline ? new Date(responseDeadline) : null
   const ctx = buildBookingEmailContext(booking, {
     serviceName: String(serviceName || 'decor').trim() || 'decor',
@@ -301,10 +330,7 @@ function buildPersonalizationContext(
 
   return {
     ...ctx,
-    headline: typeof headline === 'string' && headline.trim() ? headline.trim() : null,
-    introText: typeof introText === 'string' && introText.trim() ? introText.trim() : null,
-    customMessage:
-      typeof customMessage === 'string' && customMessage.trim() ? customMessage.trim() : null,
+    ...pickPersonalizationCopy(options),
   }
 }
 
@@ -314,6 +340,25 @@ function personalizationCopyDefaults(serviceName = 'decor') {
     headline: DEFAULT_PERSONALIZATION_HEADLINE,
     introText: `We're getting everything ready for your event, and it's now time to customise your ${serviceName}.`,
     customMessage: '',
+    chooseHeading: 'Please choose your preferred design',
+    chooseSubtext: '',
+    optionLabel1: 'Design Option 1',
+    optionLabel2: 'Design Option 2',
+    optionLabel3: 'Design Option 3',
+    replyPrompt: '',
+    ctaLabel: 'Open My Booking',
+    textSectionHeading: 'What would you like it to say?',
+    textSectionBody: "Please share the exact text you'd like us to use. For example:",
+    textExamples:
+      "Welcome to Aarav's First Birthday\nHappy 25th Anniversary\nCongratulations, Riya & Arjun",
+    anythingElseHeading: "Anything else you'd like us to know?",
+    anythingElseBody:
+      'If you have any special requests or instructions, you can add them while submitting your selections. We will review your request and check its feasibility.',
+    deadlineText:
+      'Please send us your selections by {{deadline}} so our team has enough time to prepare everything for your event.',
+    noReplyText:
+      "If we don't hear back by then, we'll proceed with the default option discussed during your booking.",
+    signOff: 'Team Elewen\n9810937700',
   }
 }
 
@@ -327,9 +372,7 @@ export async function previewBookingPersonalizationEmail(
     designImage3,
     responseDeadline,
     subject: subjectOverride = null,
-    headline = null,
-    introText = null,
-    customMessage = null,
+    ...copyFields
   } = {}
 ) {
   const booking = await loadBookingForEmail(bookingId)
@@ -347,9 +390,7 @@ export async function previewBookingPersonalizationEmail(
     designImage2,
     designImage3,
     responseDeadline,
-    headline,
-    introText,
-    customMessage,
+    ...copyFields,
   })
   const to = await getUserEmail(booking.userId)
   if (!to) {
@@ -363,15 +404,18 @@ export async function previewBookingPersonalizationEmail(
       : defaults.subject
   const html = templates.booking_personalization(ctx)
 
+  const resolvedCopy = {}
+  for (const key of PERSONALIZATION_COPY_KEYS) {
+    resolvedCopy[key] = ctx[key] || defaults[key] || ''
+  }
+
   return {
     ok: true,
     to,
     subject,
     html,
     serviceName: ctx.serviceName,
-    headline: ctx.headline || defaults.headline,
-    introText: ctx.introText || defaults.introText,
-    customMessage: ctx.customMessage || '',
+    ...resolvedCopy,
     defaults,
   }
 }
@@ -466,12 +510,10 @@ export async function sendBookingPersonalizationEmail(
     designImage3,
     responseDeadline,
     subject: subjectOverride = null,
-    headline = null,
-    introText = null,
-    customMessage = null,
     html: htmlOverride = null,
     channel = 'smtp',
     force = false,
+    ...copyFields
   } = {}
 ) {
   const booking = await loadBookingForEmail(bookingId)
@@ -498,9 +540,7 @@ export async function sendBookingPersonalizationEmail(
     designImage2: personalization.designImage2,
     designImage3: personalization.designImage3,
     responseDeadline: personalization.responseDeadline,
-    headline,
-    introText,
-    customMessage,
+    ...copyFields,
   })
 
   // Each admin send is logged separately so planners can re-send with new options.
@@ -540,7 +580,7 @@ export async function sendBookingPersonalizationEmail(
     message: `Please choose your preferred design options for ${ctx.serviceName}.`,
     emailData: ctx,
     force: true,
-    subjectOverride,
+    subjectOverride: finalSubject,
     htmlOverride,
   })
 

@@ -16,6 +16,8 @@ import {
   strapiServerGet,
   strapiServerPost,
   strapiServerPut,
+  strapiServerUpload,
+  strapiUpload,
 } from '../lib/strapi.js'
 import { cacheDelPattern } from '../lib/cache.js'
 import { isCodPendingPayment } from '../lib/sheeshaCheckout.js'
@@ -1921,6 +1923,27 @@ export async function updateAdminBookingStatus(req, res, next) {
 
 const MAX_EMAIL_HTML_CHARS = 200_000
 const MAX_PLAIN_COPY_CHARS = 5_000
+const MAX_DESIGN_UPLOAD_BYTES = 8 * 1024 * 1024
+const PERSONALIZATION_COPY_FIELDS = [
+  'headline',
+  'introText',
+  'customMessage',
+  'chooseHeading',
+  'chooseSubtext',
+  'optionLabel1',
+  'optionLabel2',
+  'optionLabel3',
+  'replyPrompt',
+  'ctaLabel',
+  'textSectionHeading',
+  'textSectionBody',
+  'textExamples',
+  'anythingElseHeading',
+  'anythingElseBody',
+  'deadlineText',
+  'noReplyText',
+  'signOff',
+]
 
 function readPersonalizationPayload(body = {}) {
   const readPlain = (value, max = MAX_PLAIN_COPY_CHARS) => {
@@ -1930,6 +1953,11 @@ function readPersonalizationPayload(body = {}) {
     return trimmed.slice(0, max)
   }
 
+  const copy = {}
+  for (const key of PERSONALIZATION_COPY_FIELDS) {
+    copy[key] = readPlain(body[key], key === 'headline' || key.startsWith('optionLabel') || key === 'ctaLabel' ? 200 : MAX_PLAIN_COPY_CHARS)
+  }
+
   return {
     serviceName: normalizeText(body.serviceName) || 'decor',
     designImage1: normalizeText(body.designImage1),
@@ -1937,12 +1965,75 @@ function readPersonalizationPayload(body = {}) {
     designImage3: normalizeText(body.designImage3),
     responseDeadline: normalizeText(body.responseDeadline),
     subject: readPlain(body.subject, 200),
-    headline: readPlain(body.headline, 200),
-    introText: readPlain(body.introText),
-    customMessage: readPlain(body.customMessage),
+    ...copy,
     html: typeof body.html === 'string' && body.html.trim() ? body.html.trim() : null,
     channel: normalizeText(body.channel)?.toLowerCase() === 'mailto' ? 'mailto' : 'smtp',
     force: Boolean(body.force),
+  }
+}
+
+function parseBase64Upload(file) {
+  if (!file || typeof file !== 'object') return null
+
+  const name = normalizeText(file.name) || 'design-option.jpg'
+  const type = normalizeText(file.type) || 'application/octet-stream'
+  const dataUrl = normalizeText(file.dataUrl)
+  const matches = dataUrl.match(/^data:(.+);base64,(.+)$/)
+  if (!matches) return null
+
+  const [, mimeType, base64Payload] = matches
+  const buffer = Buffer.from(base64Payload, 'base64')
+  if (!buffer.length) return null
+
+  return {
+    name,
+    type: mimeType || type,
+    size: Number(file.size) || buffer.length,
+    buffer,
+  }
+}
+
+export async function uploadAdminDesignImage(req, res, next) {
+  try {
+    const parsed = parseBase64Upload(req.body?.file)
+    if (!parsed) {
+      return res.status(400).json({ error: 'Upload a valid image file.' })
+    }
+
+    if (!String(parsed.type).startsWith('image/')) {
+      return res.status(400).json({ error: 'Only image files are allowed.' })
+    }
+
+    if (parsed.size > MAX_DESIGN_UPLOAD_BYTES) {
+      return res.status(400).json({ error: 'Image must be 8MB or smaller.' })
+    }
+
+    const formData = new FormData()
+    const blob = new Blob([parsed.buffer], { type: parsed.type })
+    formData.append('files', blob, parsed.name)
+
+    let uploaded
+    try {
+      uploaded = await strapiServerUpload('/api/upload', formData)
+    } catch (err) {
+      if (!shouldFallbackToPublicStrapi(err)) throw err
+      uploaded = await strapiUpload('/api/upload', formData)
+    }
+
+    const media = Array.isArray(uploaded) ? uploaded[0] : uploaded
+    const url = getMediaUrl(media)
+    if (!url) {
+      return res.status(502).json({ error: 'Image uploaded but no public URL was returned.' })
+    }
+
+    res.json({
+      ok: true,
+      url,
+      id: media?.id ?? null,
+      name: media?.name ?? parsed.name,
+    })
+  } catch (err) {
+    next(err)
   }
 }
 
@@ -1966,7 +2057,7 @@ export async function previewAdminBookingPersonalizationEmail(req, res, next) {
 
     if (!payload.designImage1 && !payload.designImage2 && !payload.designImage3) {
       return res.status(400).json({
-        error: 'Add at least one design image URL before previewing the personalization email.',
+        error: 'Add at least one design image before previewing the personalization email.',
       })
     }
 
@@ -1988,6 +2079,21 @@ export async function previewAdminBookingPersonalizationEmail(req, res, next) {
       headline: result.headline,
       introText: result.introText,
       customMessage: result.customMessage,
+      chooseHeading: result.chooseHeading,
+      chooseSubtext: result.chooseSubtext,
+      optionLabel1: result.optionLabel1,
+      optionLabel2: result.optionLabel2,
+      optionLabel3: result.optionLabel3,
+      replyPrompt: result.replyPrompt,
+      ctaLabel: result.ctaLabel,
+      textSectionHeading: result.textSectionHeading,
+      textSectionBody: result.textSectionBody,
+      textExamples: result.textExamples,
+      anythingElseHeading: result.anythingElseHeading,
+      anythingElseBody: result.anythingElseBody,
+      deadlineText: result.deadlineText,
+      noReplyText: result.noReplyText,
+      signOff: result.signOff,
       defaults: result.defaults,
     })
   } catch (err) {
@@ -2015,7 +2121,7 @@ export async function sendAdminBookingPersonalizationEmail(req, res, next) {
 
     if (!payload.designImage1 && !payload.designImage2 && !payload.designImage3) {
       return res.status(400).json({
-        error: 'Add at least one design image URL before sending the personalization email.',
+        error: 'Add at least one design image before sending the personalization email.',
       })
     }
 

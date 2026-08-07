@@ -479,6 +479,21 @@ export const templates = {
     headline,
     introText,
     customMessage,
+    chooseHeading,
+    chooseSubtext,
+    optionLabel1,
+    optionLabel2,
+    optionLabel3,
+    replyPrompt,
+    ctaLabel,
+    textSectionHeading,
+    textSectionBody,
+    textExamples,
+    anythingElseHeading,
+    anythingElseBody,
+    deadlineText,
+    noReplyText,
+    signOff,
   }) => {
     const escapeHtml = value =>
       String(value ?? '')
@@ -503,18 +518,66 @@ export const templates = {
       </div>`
       : ''
 
-    const designBlock = (label, url) =>
-      url
-        ? `
+    // Only render options that have an image — never show empty "shared by planner" placeholders.
+    const designOptions = [
+      { label: optionLabel1?.trim() || 'Design Option 1', url: String(designImage1 || '').trim() },
+      { label: optionLabel2?.trim() || 'Design Option 2', url: String(designImage2 || '').trim() },
+      { label: optionLabel3?.trim() || 'Design Option 3', url: String(designImage3 || '').trim() },
+    ].filter(option => option.url)
+
+    const designBlock = (label, url) => `
       <div style="margin:16px 0;padding:16px;background:#222;border-radius:8px;">
-        <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#c9a96e;">${label}</p>
-        <img src="${url}" alt="${label}" style="display:block;width:100%;max-width:520px;border-radius:8px;border:1px solid #333;" />
+        <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#c9a96e;">${escapeHtml(label)}</p>
+        <img src="${escapeHtml(url)}" alt="${escapeHtml(label)}" style="display:block;width:100%;max-width:520px;border-radius:8px;border:1px solid #333;" />
       </div>`
-        : `
-      <div style="margin:16px 0;padding:16px;background:#222;border-radius:8px;">
-        <p style="margin:0;font-size:14px;font-weight:700;color:#c9a96e;">${label}</p>
-        <p style="margin:8px 0 0;font-size:13px;color:#888;">Image will be shared by your planner.</p>
-      </div>`
+
+    const defaultReplyPrompt =
+      designOptions.length <= 1
+        ? '👉 Simply reply with Option 1 — or open your booking to share details.'
+        : designOptions.length === 2
+          ? '👉 Simply reply with Option 1 or 2 — or open your booking to share details.'
+          : '👉 Simply reply with Option 1, 2 or 3 — or open your booking to share details.'
+
+    const defaultChooseSubtext =
+      designOptions.length <= 1
+        ? "We've shortlisted an option based on your booking."
+        : "We've shortlisted a few options based on your booking."
+
+    const chooseTitle = chooseHeading?.trim()
+      ? plainToHtml(chooseHeading.trim())
+      : 'Please choose your preferred design'
+    const chooseBody = chooseSubtext?.trim()
+      ? plainToHtml(chooseSubtext.trim())
+      : defaultChooseSubtext
+    const replyBody = replyPrompt?.trim() ? plainToHtml(replyPrompt.trim()) : defaultReplyPrompt
+    const buttonLabel = ctaLabel?.trim() || 'Open My Booking'
+    const textHeading = textSectionHeading?.trim()
+      ? plainToHtml(textSectionHeading.trim())
+      : 'What would you like it to say?'
+    const textBody = textSectionBody?.trim()
+      ? plainToHtml(textSectionBody.trim())
+      : "Please share the exact text you'd like us to use. For example:"
+    const examples = textExamples?.trim()
+      ? plainToHtml(textExamples.trim())
+      : "Welcome to Aarav's First Birthday<br/>Happy 25th Anniversary<br/>Congratulations, Riya &amp; Arjun"
+    const elseHeading = anythingElseHeading?.trim()
+      ? plainToHtml(anythingElseHeading.trim())
+      : "Anything else you'd like us to know?"
+    const elseBody = anythingElseBody?.trim()
+      ? plainToHtml(anythingElseBody.trim())
+      : 'If you have any special requests or instructions, you can add them while submitting your selections. We will review your request and check its feasibility.'
+    const deadlineBody = deadlineText?.trim()
+      ? plainToHtml(deadlineText.trim()).replace(
+          /\{\{deadline\}\}/g,
+          `<strong style="color:#fff;">${escapeHtml(responseDeadline || 'the shared deadline')}</strong>`
+        )
+      : `Please send us your selections by <strong style="color:#fff;">${escapeHtml(responseDeadline || 'the shared deadline')}</strong> so our team has enough time to prepare everything for your event.`
+    const noReplyBody = noReplyText?.trim()
+      ? plainToHtml(noReplyText.trim())
+      : "If we don't hear back by then, we'll proceed with the default option discussed during your booking."
+    const signOffBody = signOff?.trim()
+      ? plainToHtml(signOff.trim())
+      : `Team Elewen<br/>${escapeHtml(supportPhone || '9810937700')}`
 
     return layout(
       "Let's personalise your booking with Elewen",
@@ -523,24 +586,22 @@ export const templates = {
       ${p(intro)}
       ${note}
       ${divider()}
-      ${p('<strong style="color:#fff;">Please choose your preferred design</strong>')}
-      ${p("We've shortlisted a few options based on your booking.")}
-      ${designBlock('Design Option 1', designImage1)}
-      ${designBlock('Design Option 2', designImage2)}
-      ${designBlock('Design Option 3', designImage3)}
-      ${p('👉 Simply reply with Option 1, 2 or 3 — or open your booking to share details.')}
-      ${ctaBtn('Open My Booking', personalizeUrl)}
+      ${p(`<strong style="color:#fff;">${chooseTitle}</strong>`)}
+      ${p(chooseBody)}
+      ${designOptions.map(option => designBlock(option.label, option.url)).join('')}
+      ${p(replyBody)}
+      ${ctaBtn(buttonLabel, personalizeUrl)}
       ${divider()}
-      ${p('<strong style="color:#fff;">What would you like it to say?</strong>')}
-      ${p('Please share the exact text you\'d like us to use. For example:')}
-      ${p('Welcome to Aarav\'s First Birthday<br/>Happy 25th Anniversary<br/>Congratulations, Riya &amp; Arjun')}
+      ${p(`<strong style="color:#fff;">${textHeading}</strong>`)}
+      ${p(textBody)}
+      ${p(examples)}
       ${divider()}
-      ${p('<strong style="color:#fff;">Anything else you\'d like us to know?</strong>')}
-      ${p('If you have any special requests or instructions, you can add them while submitting your selections. We will review your request and check its feasibility.')}
+      ${p(`<strong style="color:#fff;">${elseHeading}</strong>`)}
+      ${p(elseBody)}
       ${divider()}
-      ${p(`Please send us your selections by <strong style="color:#fff;">${responseDeadline}</strong> so our team has enough time to prepare everything for your event.`)}
-      ${p("If we don't hear back by then, we'll proceed with the default option discussed during your booking.")}
-      ${p(`Team Elewen<br/>${supportPhone || '9810937700'}`)}
+      ${p(deadlineBody)}
+      ${p(noReplyBody)}
+      ${p(signOffBody)}
     `
     )
   },

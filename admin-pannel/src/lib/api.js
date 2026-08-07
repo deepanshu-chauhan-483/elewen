@@ -193,6 +193,11 @@ export const adminPreviewPersonalizationEmail = (token, bookingId, body) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminUploadDesignImage = (token, body) =>
+  request('POST', '/admin/upload-image', body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminUpdateBookingStatus = (token, bookingId, body) =>
   request('PATCH', `/admin/bookings/${bookingId}/status`, body, {
     headers: { Authorization: `Bearer ${token}` },

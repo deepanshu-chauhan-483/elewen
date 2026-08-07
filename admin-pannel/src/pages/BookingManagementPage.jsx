@@ -18,6 +18,7 @@ import {
   useAdminSendReferralCoupon,
   useAdminPreviewPersonalizationEmail,
   useAdminSendPersonalizationEmail,
+  useAdminUploadDesignImage,
   useAdminUpdateBookingStatus,
   useAdminVendors,
 } from '../hooks/useAdminData'
@@ -332,9 +333,146 @@ const REFERRAL_TIER_OPTIONS = [
   { value: 'referral_1500', label: 'Referral — Rs 1,500 off' },
 ]
 
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(reader.error || new Error('Could not read file'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function DesignImageDropzone({
+  label,
+  optionLabel,
+  onOptionLabelChange,
+  value,
+  onChange,
+  missing,
+  uploadMutation,
+}) {
+  const [dragOver, setDragOver] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [localError, setLocalError] = useState('')
+
+  const handleFile = async file => {
+    if (!file) return
+    setLocalError('')
+    if (!String(file.type || '').startsWith('image/')) {
+      setLocalError('Please choose an image file (JPG, PNG, WebP).')
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setLocalError('Image must be 8MB or smaller.')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      const result = await uploadMutation.mutateAsync({
+        file: {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          dataUrl,
+        },
+      })
+      if (!result?.url) throw new Error('Upload did not return an image URL.')
+      onChange(result.url)
+    } catch (error) {
+      setLocalError(error?.message || 'Could not upload image. Try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2 rounded-2xl border border-[#E4DED8] bg-[#FBF8F3] p-3">
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-[10rem] flex-1">
+          <p className="mb-1.5 text-xs text-[#8F8F8F]">{label} title</p>
+          <input
+            type="text"
+            value={optionLabel}
+            onChange={event => onOptionLabelChange(event.target.value)}
+            placeholder={label}
+            className="min-h-10 w-full rounded-full bg-white px-4 text-sm text-[#2D2D2D] outline-none"
+          />
+        </div>
+        {value ? (
+          <GhostBtn
+            onClick={() => {
+              onChange('')
+              setLocalError('')
+            }}
+          >
+            Remove image
+          </GhostBtn>
+        ) : null}
+      </div>
+
+      {value ? (
+        <div className="overflow-hidden rounded-xl border border-[#E4DED8] bg-white">
+          <img src={value} alt={optionLabel || label} className="max-h-48 w-full object-cover" />
+        </div>
+      ) : (
+        <label
+          onDragEnter={event => {
+            event.preventDefault()
+            setDragOver(true)
+          }}
+          onDragOver={event => {
+            event.preventDefault()
+            setDragOver(true)
+          }}
+          onDragLeave={event => {
+            event.preventDefault()
+            setDragOver(false)
+          }}
+          onDrop={event => {
+            event.preventDefault()
+            setDragOver(false)
+            const file = event.dataTransfer?.files?.[0]
+            handleFile(file)
+          }}
+          className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-4 py-8 text-center transition ${
+            missing
+              ? 'border-[#C45C4A] bg-[#FFF1EE]'
+              : dragOver
+                ? 'border-[#C9A96E] bg-[#FFF8E8]'
+                : 'border-[#D6CFC7] bg-white'
+          }`}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading || uploadMutation.isPending}
+            onChange={event => {
+              const file = event.target.files?.[0]
+              event.target.value = ''
+              handleFile(file)
+            }}
+          />
+          <span className="text-sm font-medium text-[#2D2D2D]">
+            {uploading || uploadMutation.isPending
+              ? 'Uploading…'
+              : 'Drag & drop image here, or click to browse'}
+          </span>
+          <span className="text-xs text-[#8F8F8F]">Optional — leave empty to hide this option in the email</span>
+        </label>
+      )}
+
+      {localError ? <p className="text-xs text-[#8A1C1C]">{localError}</p> : null}
+    </div>
+  )
+}
+
 function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) {
   const previewMutation = useAdminPreviewPersonalizationEmail()
   const sendMutation = useAdminSendPersonalizationEmail()
+  const uploadMutation = useAdminUploadDesignImage()
   const [serviceName, setServiceName] = useState('decor')
   const [designImage1, setDesignImage1] = useState('')
   const [designImage2, setDesignImage2] = useState('')
@@ -343,9 +481,36 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   const [composerOpen, setComposerOpen] = useState(false)
   const [emailTo, setEmailTo] = useState(String(customerEmail ?? '').trim())
   const [emailSubject, setEmailSubject] = useState("Let's personalise your booking with Elewen")
-  const [emailHeadline, setEmailHeadline] = useState('')
+  const [emailHeadline, setEmailHeadline] = useState("Let's personalise your booking ✨")
   const [emailIntro, setEmailIntro] = useState('')
   const [emailNote, setEmailNote] = useState('')
+  const [chooseHeading, setChooseHeading] = useState('Please choose your preferred design')
+  const [chooseSubtext, setChooseSubtext] = useState('')
+  const [optionLabel1, setOptionLabel1] = useState('Design Option 1')
+  const [optionLabel2, setOptionLabel2] = useState('Design Option 2')
+  const [optionLabel3, setOptionLabel3] = useState('Design Option 3')
+  const [replyPrompt, setReplyPrompt] = useState('')
+  const [ctaLabel, setCtaLabel] = useState('Open My Booking')
+  const [textSectionHeading, setTextSectionHeading] = useState('What would you like it to say?')
+  const [textSectionBody, setTextSectionBody] = useState(
+    "Please share the exact text you'd like us to use. For example:"
+  )
+  const [textExamples, setTextExamples] = useState(
+    "Welcome to Aarav's First Birthday\nHappy 25th Anniversary\nCongratulations, Riya & Arjun"
+  )
+  const [anythingElseHeading, setAnythingElseHeading] = useState(
+    "Anything else you'd like us to know?"
+  )
+  const [anythingElseBody, setAnythingElseBody] = useState(
+    'If you have any special requests or instructions, you can add them while submitting your selections. We will review your request and check its feasibility.'
+  )
+  const [deadlineText, setDeadlineText] = useState(
+    'Please send us your selections by {{deadline}} so our team has enough time to prepare everything for your event.'
+  )
+  const [noReplyText, setNoReplyText] = useState(
+    "If we don't hear back by then, we'll proceed with the default option discussed during your booking."
+  )
+  const [signOff, setSignOff] = useState('Team Elewen\n9810937700')
   const [emailHtml, setEmailHtml] = useState('')
   const [previewStale, setPreviewStale] = useState(false)
   const [imagesMissing, setImagesMissing] = useState(false)
@@ -370,7 +535,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   const friendlyPreviewError = error => {
     const raw = String(error?.message ?? '')
     if (/design image/i.test(raw) || /at least one/i.test(raw)) {
-      return 'Please paste at least one design image link in the boxes above, then try Preview again.'
+      return 'Please upload at least one design image above, then try Preview again.'
     }
     if (/cancelled/i.test(raw)) {
       return 'This booking is cancelled, so the personalization email cannot be sent.'
@@ -378,7 +543,6 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     if (/no email|user email/i.test(raw)) {
       return 'This customer has no email on file. Add an email before sending.'
     }
-    // Never show raw "API 400 on POST ..." text to admins
     if (/^API\s+\d+/i.test(raw)) {
       return 'Something went wrong while preparing the email. Please check the details above and try again.'
     }
@@ -398,6 +562,21 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
           headline: emailHeadline.trim() || undefined,
           introText: emailIntro.trim() || undefined,
           customMessage: emailNote.trim() || undefined,
+          chooseHeading: chooseHeading.trim() || undefined,
+          chooseSubtext: chooseSubtext.trim() || undefined,
+          optionLabel1: optionLabel1.trim() || undefined,
+          optionLabel2: optionLabel2.trim() || undefined,
+          optionLabel3: optionLabel3.trim() || undefined,
+          replyPrompt: replyPrompt.trim() || undefined,
+          ctaLabel: ctaLabel.trim() || undefined,
+          textSectionHeading: textSectionHeading.trim() || undefined,
+          textSectionBody: textSectionBody.trim() || undefined,
+          textExamples: textExamples.trim() || undefined,
+          anythingElseHeading: anythingElseHeading.trim() || undefined,
+          anythingElseBody: anythingElseBody.trim() || undefined,
+          deadlineText: deadlineText.trim() || undefined,
+          noReplyText: noReplyText.trim() || undefined,
+          signOff: signOff.trim() || undefined,
         }
       : {}),
   })
@@ -406,10 +585,26 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     setEmailTo(result?.to || String(customerEmail ?? '').trim() || '')
     setEmailHtml(result?.html ?? '')
     if (seedCopy) {
-      setEmailSubject(result?.subject ?? result?.defaults?.subject ?? '')
-      setEmailHeadline(result?.headline ?? result?.defaults?.headline ?? '')
-      setEmailIntro(result?.introText ?? result?.defaults?.introText ?? '')
+      const defaults = result?.defaults ?? {}
+      setEmailSubject(result?.subject ?? defaults.subject ?? '')
+      setEmailHeadline(result?.headline ?? defaults.headline ?? '')
+      setEmailIntro(result?.introText ?? defaults.introText ?? '')
       setEmailNote(result?.customMessage ?? '')
+      setChooseHeading(result?.chooseHeading ?? defaults.chooseHeading ?? '')
+      setChooseSubtext(result?.chooseSubtext ?? defaults.chooseSubtext ?? '')
+      setOptionLabel1(result?.optionLabel1 ?? defaults.optionLabel1 ?? 'Design Option 1')
+      setOptionLabel2(result?.optionLabel2 ?? defaults.optionLabel2 ?? 'Design Option 2')
+      setOptionLabel3(result?.optionLabel3 ?? defaults.optionLabel3 ?? 'Design Option 3')
+      setReplyPrompt(result?.replyPrompt ?? defaults.replyPrompt ?? '')
+      setCtaLabel(result?.ctaLabel ?? defaults.ctaLabel ?? 'Open My Booking')
+      setTextSectionHeading(result?.textSectionHeading ?? defaults.textSectionHeading ?? '')
+      setTextSectionBody(result?.textSectionBody ?? defaults.textSectionBody ?? '')
+      setTextExamples(result?.textExamples ?? defaults.textExamples ?? '')
+      setAnythingElseHeading(result?.anythingElseHeading ?? defaults.anythingElseHeading ?? '')
+      setAnythingElseBody(result?.anythingElseBody ?? defaults.anythingElseBody ?? '')
+      setDeadlineText(result?.deadlineText ?? defaults.deadlineText ?? '')
+      setNoReplyText(result?.noReplyText ?? defaults.noReplyText ?? '')
+      setSignOff(result?.signOff ?? defaults.signOff ?? '')
     } else if (result?.subject) {
       setEmailSubject(result.subject)
     }
@@ -426,7 +621,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     setComposerOpen(false)
     setSendMessage('')
     setSendError(
-      'Add at least one design image link above (paste a photo URL for Option 1, 2, or 3), then click Preview.'
+      'Upload at least one design image above (Option 1, 2, or 3), then click Preview. Empty options are hidden in the email.'
     )
     return false
   }
@@ -439,7 +634,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     try {
       const result = await previewMutation.mutateAsync({
         bookingId,
-        body: payloadFields(composerOpen),
+        body: payloadFields(true),
       })
       applyPreviewResult(result, { seedCopy })
     } catch (error) {
@@ -456,9 +651,10 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     setPreviewStale(true)
   }
 
-  const handleImageChange = setter => event => {
-    setter(event.target.value)
+  const handleImageChange = setter => url => {
+    setter(url)
     setImagesMissing(false)
+    setPreviewStale(true)
     if (sendError) setSendError('')
   }
 
@@ -491,62 +687,91 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     }
   }
 
-  const imageInputClass = imagesMissing
-    ? 'min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none ring-1 ring-[#C45C4A]'
-    : 'min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none'
+  const fieldClass =
+    'min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none'
+  const areaClass =
+    'w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none'
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#6B7280]">
-        Paste design photo links, preview the Elewen email, edit wording if needed, then send from
-        Elewen mail.
+        Upload design photos, customise every line of the email, preview, then send. Only options
+        with an image appear in the mail.
       </p>
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Service name</p>
         <input
           type="text"
           value={serviceName}
-          onChange={event => setServiceName(event.target.value)}
+          onChange={event => {
+            setServiceName(event.target.value)
+            setPreviewStale(true)
+          }}
           placeholder="e.g. decor backdrop"
-          className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+          className={fieldClass}
         />
       </div>
+
       <div className="space-y-3">
         <p className="text-xs font-medium text-[#2D2D2D]">
-          Design photo links <span className="text-[#C45C4A]">*</span>
+          Design images <span className="text-[#C45C4A]">*</span>
           <span className="ml-1 font-normal text-[#8F8F8F]">
-            (paste at least one image link from Drive / website)
+            (upload at least one — empty slots stay hidden in the email)
           </span>
         </p>
-        {[
-          ['Design option 1 image link', designImage1, setDesignImage1],
-          ['Design option 2 image link', designImage2, setDesignImage2],
-          ['Design option 3 image link', designImage3, setDesignImage3],
-        ].map(([label, value, setter]) => (
-          <div key={label}>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">{label}</p>
-            <input
-              type="url"
-              value={value}
-              onChange={handleImageChange(setter)}
-              placeholder="https://..."
-              className={imageInputClass}
-            />
-          </div>
-        ))}
+        <DesignImageDropzone
+          label="Design Option 1"
+          optionLabel={optionLabel1}
+          onOptionLabelChange={value => {
+            setOptionLabel1(value)
+            setPreviewStale(true)
+          }}
+          value={designImage1}
+          onChange={handleImageChange(setDesignImage1)}
+          missing={imagesMissing && !hasDesignImage}
+          uploadMutation={uploadMutation}
+        />
+        <DesignImageDropzone
+          label="Design Option 2"
+          optionLabel={optionLabel2}
+          onOptionLabelChange={value => {
+            setOptionLabel2(value)
+            setPreviewStale(true)
+          }}
+          value={designImage2}
+          onChange={handleImageChange(setDesignImage2)}
+          missing={false}
+          uploadMutation={uploadMutation}
+        />
+        <DesignImageDropzone
+          label="Design Option 3"
+          optionLabel={optionLabel3}
+          onOptionLabelChange={value => {
+            setOptionLabel3(value)
+            setPreviewStale(true)
+          }}
+          value={designImage3}
+          onChange={handleImageChange(setDesignImage3)}
+          missing={false}
+          uploadMutation={uploadMutation}
+        />
         {imagesMissing ? (
           <p className="rounded-xl bg-[#FFF1EE] px-3 py-2 text-sm text-[#8A1C1C]">
-            Please add at least one design photo link above before previewing or sending.
+            Please upload at least one design photo above before previewing or sending.
           </p>
         ) : null}
       </div>
+
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Response deadline</p>
         <input
           type="date"
           value={responseDeadline}
-          onChange={event => setResponseDeadline(event.target.value)}
-          className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
+          onChange={event => {
+            setResponseDeadline(event.target.value)
+            setPreviewStale(true)
+          }}
+          className={fieldClass}
         />
       </div>
 
@@ -580,7 +805,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
           <div>
             <p className="text-sm font-semibold text-[#1C1C1C]">Elewen email preview</p>
             <p className="mt-1 text-xs text-[#8F8F8F]">
-              Same branded format the customer will receive. Edit wording below if needed — no code.
+              Edit any wording below. Empty design slots never appear in the customer email.
             </p>
           </div>
 
@@ -593,51 +818,53 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
             </p>
           </div>
 
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Email subject</p>
-            <input
-              type="text"
-              value={emailSubject}
-              onChange={markCopyChanged(setEmailSubject)}
-              className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
-            />
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Title inside email</p>
-            <input
-              type="text"
-              value={emailHeadline}
-              onChange={markCopyChanged(setEmailHeadline)}
-              className="min-h-10 w-full rounded-full bg-[#F3F3F3] px-4 text-sm text-[#2D2D2D] outline-none"
-            />
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Opening message</p>
-            <textarea
-              value={emailIntro}
-              onChange={markCopyChanged(setEmailIntro)}
-              rows={3}
-              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
-            />
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Extra note from planner (optional)</p>
-            <textarea
-              value={emailNote}
-              onChange={markCopyChanged(setEmailNote)}
-              rows={3}
-              placeholder="e.g. These are the three backdrop options we discussed on call."
-              className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-sm leading-6 text-[#2D2D2D] outline-none"
-            />
-          </div>
+          {[
+            ['Email subject', emailSubject, setEmailSubject, 'input'],
+            ['Title inside email', emailHeadline, setEmailHeadline, 'input'],
+            ['Opening message', emailIntro, setEmailIntro, 'textarea'],
+            ['Extra note from planner (optional)', emailNote, setEmailNote, 'textarea'],
+            ['Choose section heading', chooseHeading, setChooseHeading, 'input'],
+            ['Choose section subtext', chooseSubtext, setChooseSubtext, 'textarea'],
+            ['Reply prompt', replyPrompt, setReplyPrompt, 'textarea'],
+            ['Button label', ctaLabel, setCtaLabel, 'input'],
+            ['Text section heading', textSectionHeading, setTextSectionHeading, 'input'],
+            ['Text section body', textSectionBody, setTextSectionBody, 'textarea'],
+            ['Text examples (one per line)', textExamples, setTextExamples, 'textarea'],
+            ['Anything else heading', anythingElseHeading, setAnythingElseHeading, 'input'],
+            ['Anything else body', anythingElseBody, setAnythingElseBody, 'textarea'],
+            [
+              'Deadline text (use {{deadline}} for the date)',
+              deadlineText,
+              setDeadlineText,
+              'textarea',
+            ],
+            ['No-reply fallback text', noReplyText, setNoReplyText, 'textarea'],
+            ['Sign-off', signOff, setSignOff, 'textarea'],
+          ].map(([label, value, setter, kind]) => (
+            <div key={label}>
+              <p className="mb-1.5 text-xs text-[#8F8F8F]">{label}</p>
+              {kind === 'textarea' ? (
+                <textarea
+                  value={value}
+                  onChange={markCopyChanged(setter)}
+                  rows={3}
+                  className={areaClass}
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={value}
+                  onChange={markCopyChanged(setter)}
+                  className={fieldClass}
+                />
+              )}
+            </div>
+          ))}
 
           {previewStale ? (
             <p className="rounded-xl bg-[#FFF8E8] px-3 py-2 text-xs text-[#8A6A2F]">
-              Wording changed — click <strong>Refresh preview</strong> to update the mail view, or
-              send and we will refresh automatically.
+              Wording or images changed — click <strong>Refresh preview</strong> to update the mail
+              view, or send and we will refresh automatically.
             </p>
           ) : null}
 

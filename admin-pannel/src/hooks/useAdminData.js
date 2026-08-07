@@ -10,6 +10,7 @@ import {
   adminSendReferralCoupon,
   adminSendPersonalizationEmail,
   adminPreviewPersonalizationEmail,
+  adminUploadDesignImage,
   adminBookings,
   adminConsultations,
   adminCoupons,
@@ -208,6 +209,12 @@ export function useAdminPreviewPersonalizationEmail() {
   return useMutation({
     mutationFn: ({ bookingId, body }) =>
       withAdminToken(token => adminPreviewPersonalizationEmail(token, bookingId, body)),
+  })
+}
+
+export function useAdminUploadDesignImage() {
+  return useMutation({
+    mutationFn: body => withAdminToken(token => adminUploadDesignImage(token, body)),
   })
 }
 
