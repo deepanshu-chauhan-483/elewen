@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useAdminToast } from '../components/common/AdminToastProvider'
 import {
   EmptyState,
   ErrorState,
@@ -100,6 +101,7 @@ function ConsultationCard({ consultation, onStatusChange, isUpdating }) {
 
 export default function ConsultationsPage() {
   useScrollToTop()
+  const { showToast } = useAdminToast()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
@@ -123,10 +125,24 @@ export default function ConsultationsPage() {
   const total = consultationsQuery.data?.total ?? 0
 
   async function handleStatusChange(consultation, nextStatus) {
-    await updateMutation.mutateAsync({
-      consultationId: consultation.documentId || consultation.id,
-      body: { planner_lead_status: nextStatus },
-    })
+    const consultationId = consultation.id || consultation.documentId
+    if (!consultationId) {
+      showToast({ message: 'Missing consultation id — cannot update status.', tone: 'error' })
+      return
+    }
+
+    try {
+      await updateMutation.mutateAsync({
+        consultationId,
+        body: { planner_lead_status: nextStatus },
+      })
+      showToast({ message: `Marked as ${nextStatus}.`, tone: 'success' })
+    } catch (error) {
+      showToast({
+        message: error?.message || 'Could not update consultation status.',
+        tone: 'error',
+      })
+    }
   }
 
   return (

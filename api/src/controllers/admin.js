@@ -4214,11 +4214,12 @@ export async function updateAdminConsultation(req, res, next) {
       })
     }
 
+    const isNumericId = /^\d+$/.test(id)
+    const numericId = isNumericId ? Number.parseInt(id, 10) : null
     let documentId = id
-    const numericId = Number.parseInt(id, 10)
 
     try {
-      if (/^\d+$/.test(id)) {
+      if (isNumericId) {
         const found = await strapiServerGet(
           `/api/planner-leads?filters[id][$eq]=${encodeURIComponent(id)}&publicationState=preview&pagination[pageSize]=1`
         )
@@ -4230,14 +4231,17 @@ export async function updateAdminConsultation(req, res, next) {
       })
       return res.json({ consultation: mapConsultationLead(updated?.data ?? updated) })
     } catch {
-      if (!Number.isFinite(numericId)) {
-        return res.status(404).json({ error: 'Consultation not found' })
-      }
-
+      // Prefer document_id match so updates still work when the client sends a
+      // Strapi documentId and Strapi PUT is unavailable (token/draft/network).
+      const sentinelId = numericId ?? -1
       const [updated] = await prisma.$queryRaw`
         UPDATE public.planner_leads
         SET planner_lead_status = ${status}, updated_at = NOW()
-        WHERE id = ${numericId} AND lead_type = 'consultation'
+        WHERE lead_type = 'consultation'
+          AND (
+            document_id = ${id}
+            OR id = ${sentinelId}
+          )
         RETURNING
           id,
           document_id,
