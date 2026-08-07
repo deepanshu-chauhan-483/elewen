@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DashboardErrorState,
@@ -6,13 +6,18 @@ import {
 } from '../../components/dashboard/DashboardUI'
 import { useDashboardSession } from '../../hooks/useDashboardData'
 import { bookingGetInfoCollection, bookingSubmitInfoCollection } from '../../lib/api'
+import DateTimePicker from '../../components/common/DateTimePicker'
 
 function FieldLabel({ label }) {
   return <p className="text-[12px] text-[#7A7A7A]">{label}</p>
 }
 
 function inputClass() {
-  return 'w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] text-[#2D2D2D] outline-none disabled:opacity-80'
+  return 'w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none'
+}
+
+function pickerClass() {
+  return 'w-full border-b border-[#2D2D2D] bg-transparent pb-3 text-[16px] outline-none'
 }
 
 const EMPTY_FORM = {
@@ -34,15 +39,6 @@ const EMPTY_FORM = {
   specialRequest: '',
 }
 
-function normalizeForm(raw = {}) {
-  const next = { ...EMPTY_FORM }
-  for (const key of Object.keys(EMPTY_FORM)) {
-    const value = raw?.[key]
-    next[key] = value == null ? '' : String(value).trim()
-  }
-  return next
-}
-
 export default function InfoCollection() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -54,10 +50,8 @@ export default function InfoCollection() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [canEdit, setCanEdit] = useState(false)
   const [showGuestCount, setShowGuestCount] = useState(false)
   const [statusLabel, setStatusLabel] = useState('')
-  const [checkoutNotesCount, setCheckoutNotesCount] = useState(0)
   const [form, setForm] = useState(EMPTY_FORM)
 
   useEffect(() => {
@@ -74,11 +68,9 @@ export default function InfoCollection() {
       try {
         const response = await bookingGetInfoCollection(token, bookingId)
         if (cancelled) return
-        setForm(normalizeForm(response?.form))
-        setCanEdit(Boolean(response?.canEdit))
+        setForm({ ...EMPTY_FORM, ...(response?.form ?? {}) })
         setShowGuestCount(Boolean(response?.showGuestCount))
         setStatusLabel(response?.statusLabel || response?.status || '')
-        setCheckoutNotesCount(Number(response?.checkoutNotesCount ?? 0))
       } catch (err) {
         if (!cancelled) {
           setError(err?.message || 'Could not load the information form.')
@@ -96,24 +88,13 @@ export default function InfoCollection() {
 
   const setField = key => event => {
     const value = event?.target ? event.target.value : event
-    setForm(prev => ({ ...prev, [key]: value == null ? '' : String(value) }))
+    setForm(prev => ({ ...prev, [key]: value }))
     setSuccess('')
   }
 
-  const filledFromCheckout = useMemo(() => {
-    return Boolean(
-      form.fullName ||
-        form.email ||
-        form.phone ||
-        form.eventDate ||
-        form.addressLine1 ||
-        form.pinCode
-    )
-  }, [form])
-
   const handleSubmit = async event => {
     event.preventDefault()
-    if (!canEdit || !bookingId || !token) return
+    if (!bookingId || !token) return
 
     setSaving(true)
     setError('')
@@ -121,7 +102,6 @@ export default function InfoCollection() {
     try {
       await bookingSubmitInfoCollection(token, bookingId, form)
       setSuccess('Thank you — your details were saved.')
-      setCanEdit(true)
     } catch (err) {
       setError(err?.message || 'Could not save your details. Please try again.')
     } finally {
@@ -157,17 +137,11 @@ export default function InfoCollection() {
             Information Collection
           </h1>
           <p className="mt-2 text-[14px] text-[#7A7A7A]">
-            {filledFromCheckout
-              ? 'Details from checkout are filled in below. Complete only what is still missing — nothing is mandatory.'
-              : 'Enter your event details below. Fields already collected at checkout will appear here automatically when available.'}
+            Details from checkout are filled in when available. Add anything that is still missing —
+            nothing is mandatory.
           </p>
           {statusLabel ? (
             <p className="mt-2 text-[12px] text-[#957960]">Booking status: {statusLabel}</p>
-          ) : null}
-          {!filledFromCheckout && checkoutNotesCount === 0 ? (
-            <p className="mt-2 text-[12px] text-[#B42318]">
-              No checkout snapshot was found for this booking. Please fill the details once.
-            </p>
           ) : null}
         </div>
         <Link
@@ -196,7 +170,6 @@ export default function InfoCollection() {
               type="text"
               value={form.fullName}
               onChange={setField('fullName')}
-              disabled={!canEdit}
               className={inputClass()}
             />
           </div>
@@ -208,7 +181,6 @@ export default function InfoCollection() {
                 type="email"
                 value={form.email}
                 onChange={setField('email')}
-                disabled={!canEdit}
                 className={inputClass()}
               />
             </div>
@@ -218,7 +190,6 @@ export default function InfoCollection() {
                 type="tel"
                 value={form.phone}
                 onChange={setField('phone')}
-                disabled={!canEdit}
                 className={inputClass()}
               />
             </div>
@@ -235,22 +206,20 @@ export default function InfoCollection() {
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
             <FieldLabel label="Event Date" />
-            <input
+            <DateTimePicker
               type="date"
               value={form.eventDate}
               onChange={setField('eventDate')}
-              disabled={!canEdit}
-              className={inputClass()}
+              className={pickerClass()}
             />
           </div>
           <div>
             <FieldLabel label="What time does the event start" />
-            <input
+            <DateTimePicker
               type="time"
               value={form.eventTime}
               onChange={setField('eventTime')}
-              disabled={!canEdit}
-              className={inputClass()}
+              className={pickerClass()}
             />
           </div>
 
@@ -260,7 +229,6 @@ export default function InfoCollection() {
               type="text"
               value={form.addressLine1}
               onChange={setField('addressLine1')}
-              disabled={!canEdit}
               className={inputClass()}
             />
           </div>
@@ -270,7 +238,6 @@ export default function InfoCollection() {
               type="text"
               value={form.addressLine2}
               onChange={setField('addressLine2')}
-              disabled={!canEdit}
               className={inputClass()}
             />
           </div>
@@ -280,7 +247,6 @@ export default function InfoCollection() {
               type="text"
               value={form.addressFloor}
               onChange={setField('addressFloor')}
-              disabled={!canEdit}
               className={inputClass()}
             />
           </div>
@@ -292,7 +258,6 @@ export default function InfoCollection() {
               maxLength={6}
               value={form.pinCode}
               onChange={event => setField('pinCode')(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              disabled={!canEdit}
               className={inputClass()}
             />
           </div>
@@ -301,7 +266,6 @@ export default function InfoCollection() {
             <select
               value={form.hasLift}
               onChange={setField('hasLift')}
-              disabled={!canEdit}
               className={inputClass()}
             >
               <option value="">Select</option>
@@ -319,7 +283,6 @@ export default function InfoCollection() {
                 min="1"
                 value={form.guestCount}
                 onChange={setField('guestCount')}
-                disabled={!canEdit}
                 className={inputClass()}
               />
             </div>
@@ -327,12 +290,11 @@ export default function InfoCollection() {
 
           <div className="md:col-span-2">
             <FieldLabel label="What is the earliest time that our team can reach the venue for set-up" />
-            <input
+            <DateTimePicker
               type="time"
               value={form.setupArrivalTime}
               onChange={setField('setupArrivalTime')}
-              disabled={!canEdit}
-              className={inputClass()}
+              className={pickerClass()}
             />
           </div>
           <div>
@@ -341,7 +303,6 @@ export default function InfoCollection() {
               type="text"
               value={form.eventDayContactName}
               onChange={setField('eventDayContactName')}
-              disabled={!canEdit}
               className={inputClass()}
             />
           </div>
@@ -351,7 +312,6 @@ export default function InfoCollection() {
               type="tel"
               value={form.eventDayContactPhone}
               onChange={setField('eventDayContactPhone')}
-              disabled={!canEdit}
               className={inputClass()}
             />
           </div>
@@ -361,7 +321,6 @@ export default function InfoCollection() {
               type="text"
               value={form.parkingInstructions}
               onChange={setField('parkingInstructions')}
-              disabled={!canEdit}
               className={inputClass()}
             />
           </div>
@@ -371,8 +330,7 @@ export default function InfoCollection() {
               rows={3}
               value={form.specialRequest}
               onChange={setField('specialRequest')}
-              disabled={!canEdit}
-              className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] text-[#2D2D2D] outline-none disabled:opacity-80"
+              className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
             />
           </div>
         </div>
@@ -383,10 +341,10 @@ export default function InfoCollection() {
         <div className="mt-8 flex flex-wrap gap-3">
           <button
             type="submit"
-            disabled={saving || !canEdit}
+            disabled={saving}
             className="rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white hover:bg-[#C6AB7F] disabled:opacity-60"
           >
-            {saving ? 'Saving…' : 'Submit / Proceed'}
+            {saving ? 'Saving...' : 'Submit / Proceed'}
           </button>
           <button
             type="button"
@@ -396,16 +354,10 @@ export default function InfoCollection() {
             Back
           </button>
         </div>
-        {!canEdit ? (
-          <p className="mt-3 text-sm text-[#7A7A7A]">
-            Submit is available while the booking status is Information Collection.
-          </p>
-        ) : (
-          <p className="mt-3 text-sm text-[#7A7A7A]">
-            Checkout details are already filled when available. Add only what is still missing —
-            nothing is required.
-          </p>
-        )}
+        <p className="mt-3 text-sm text-[#7A7A7A]">
+          Checkout details are filled when available. Add only what is still missing — nothing is
+          required.
+        </p>
       </form>
     </div>
   )
