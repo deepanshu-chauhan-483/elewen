@@ -4,7 +4,7 @@ import AuthLayout from '../components/auth/AuthLayout'
 import { useToast } from '../components/common/useToast'
 import { getFieldErrors } from '../lib/formErrors'
 import { authLogin, authResendConfirmation, getStoredJwt, setStoredJwt } from '../lib/api'
-import { startGoogleSignIn } from '../lib/googleAuth'
+import { getGoogleAuthErrorMessage, startGoogleSignIn } from '../lib/googleAuth'
 
 function normalizeRedirectTarget(target) {
   if (!target || typeof target !== 'string') return '/'
@@ -32,6 +32,7 @@ export default function LoginPage() {
   const [resendingConfirmation, setResendingConfirmation] = useState(false)
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false)
   const hasShownVerifiedToastRef = useRef(false)
+  const googleAutoStartRef = useRef(false)
 
   useEffect(() => {
     if (!confirmed || hasShownVerifiedToastRef.current) return
@@ -44,14 +45,17 @@ export default function LoginPage() {
     navigate(redirectTarget, { replace: true })
   }, [navigate, redirectTarget])
 
-  const authErrorMessage =
-    authError === 'local_account_use_password'
-      ? 'This email is already registered with password login. Please sign in with your password.'
-      : authError === 'rate_limited'
-        ? 'Too many sign-in attempts. Please wait a minute and try Google again.'
-        : authError === 'google_failed'
-          ? 'Google sign-in could not be completed. Please try again.'
-          : ''
+  // After www → apex bounce, auto-continue Google OAuth on the apex host.
+  useEffect(() => {
+    if (searchParams.get('google') !== '1' || googleAutoStartRef.current) return
+    googleAutoStartRef.current = true
+    startGoogleSignIn(
+      `/login?redirect=${encodeURIComponent(redirectTarget)}`,
+      redirectTarget
+    )
+  }, [searchParams, redirectTarget])
+
+  const authErrorMessage = getGoogleAuthErrorMessage(authError)
 
   async function handleSubmit(e) {
     e.preventDefault()

@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useToast } from '../components/common/useToast'
 import { getFieldErrors, getGlobalErrorMessage } from '../lib/formErrors'
 import { authRegister, setStoredJwt } from '../lib/api'
-import { startGoogleSignIn } from '../lib/googleAuth'
+import { getGoogleAuthErrorMessage, startGoogleSignIn } from '../lib/googleAuth'
 
 const CheckEmailIcon = () => (
   <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -36,15 +36,15 @@ export default function SignUpPage() {
   const [emailPending, setEmailPending] = useState(false)
   const [confirmationResent, setConfirmationResent] = useState(false)
   const submittingRef = useRef(false)
+  const googleAutoStartRef = useRef(false)
   const authError = searchParams.get('authError') || ''
-  const authErrorMessage =
-    authError === 'local_account_use_password'
-      ? 'This email is already registered with password login. Please sign in with your password.'
-      : authError === 'rate_limited'
-        ? 'Too many sign-in attempts. Please wait a minute and try Google again.'
-        : authError === 'google_failed'
-          ? 'Google sign-in could not be completed. Please try again.'
-          : ''
+  const authErrorMessage = getGoogleAuthErrorMessage(authError)
+
+  useEffect(() => {
+    if (searchParams.get('google') !== '1' || googleAutoStartRef.current) return
+    googleAutoStartRef.current = true
+    startGoogleSignIn('/signup')
+  }, [searchParams])
 
   async function handleSubmit(e) {
     e.preventDefault()
