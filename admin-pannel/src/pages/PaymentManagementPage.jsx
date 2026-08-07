@@ -671,53 +671,66 @@ function VendorPayments({
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FBF7F3] p-5">
         <h3 className="mb-4 text-lg text-[#1C1C1C]">Create Vendor Payout</h3>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <CustomSelect
-            value={vendorId}
-            onChange={setVendorId}
-            placeholder="Select vendor"
-            className="min-h-10 bg-[#F3F3F3]"
-          >
-            <option value="">Select vendor…</option>
-            {(vendorsQuery.data?.vendors ?? []).map(v => (
-              <option key={v.id} value={v.id}>
-                {v.companyName}
-              </option>
-            ))}
-          </CustomSelect>
-          <CustomSelect
-            value={bookingId}
-            onChange={setBookingId}
-            placeholder="Select booking"
-            className="min-h-10 bg-[#F3F3F3]"
-          >
-            <option value="">Select booking…</option>
-            {(bookingsQuery.data?.bookings ?? []).map(b => {
-              const packageName =
-                b.package?.title || b.event?.name || b.displaySubtitle || 'Untitled package'
-              const customerName = b.customer?.name || 'Customer'
-              return (
-                <option key={b.id} value={b.id}>
-                  {packageName} — {customerName}
+          <div className="min-w-0">
+            <CustomSelect
+              value={vendorId}
+              onChange={setVendorId}
+              placeholder="Select vendor"
+              className="min-h-10 bg-[#F3F3F3]"
+            >
+              <option value="">Select vendor…</option>
+              {(vendorsQuery.data?.vendors ?? []).map(v => (
+                <option key={v.id} value={v.id}>
+                  {v.companyName}
                 </option>
-              )
-            })}
-          </CustomSelect>
-          <input
-            type="number"
-            value={payoutAmount}
-            onChange={e => setPayoutAmount(e.target.value)}
-            placeholder="Amount (₹)"
-            className="w-full rounded-full border border-[#D9D2CB] px-4 py-2 text-[15px] font-medium bg-[#FFFFFF] text-[#5B534B] placeholder:text-[#767676] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
-          />
-          <CustomSelect
-            value={paymentMethod}
-            onChange={setPaymentMethod}
-            placeholder="Select payment method"
-            className="min-h-10 bg-[#F3F3F3]"
-          >
-            <option value="offline">Offline</option>
-            <option value="portal">Portal</option>
-          </CustomSelect>
+              ))}
+            </CustomSelect>
+          </div>
+          <div className="min-w-0 overflow-hidden">
+            <CustomSelect
+              value={bookingId}
+              onChange={setBookingId}
+              placeholder="Select booking"
+              className="min-h-10 max-w-full bg-[#F3F3F3]"
+            >
+              <option value="">Select booking…</option>
+              {(bookingsQuery.data?.bookings ?? []).map(b => {
+                const packageName = String(
+                  b.package?.title || b.event?.name || b.displaySubtitle || 'Untitled package'
+                ).trim()
+                const customerName = String(b.customer?.name || 'Customer').trim()
+                const shortPackage =
+                  packageName.length > 28 ? `${packageName.slice(0, 27)}…` : packageName
+                const shortCustomer =
+                  customerName.length > 18 ? `${customerName.slice(0, 17)}…` : customerName
+                return (
+                  <option key={b.id} value={b.id} title={`${packageName} — ${customerName}`}>
+                    {shortPackage} — {shortCustomer}
+                  </option>
+                )
+              })}
+            </CustomSelect>
+          </div>
+          <div className="min-w-0">
+            <input
+              type="number"
+              value={payoutAmount}
+              onChange={e => setPayoutAmount(e.target.value)}
+              placeholder="Amount (₹)"
+              className="w-full min-w-0 rounded-full border border-[#D9D2CB] px-4 py-2 text-[15px] font-medium bg-[#FFFFFF] text-[#5B534B] placeholder:text-[#767676] outline-none transition focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
+            />
+          </div>
+          <div className="min-w-0">
+            <CustomSelect
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              placeholder="Select payment method"
+              className="min-h-10 bg-[#F3F3F3]"
+            >
+              <option value="offline">Offline</option>
+              <option value="portal">Portal</option>
+            </CustomSelect>
+          </div>
         </div>
         <div className="mt-4">
           <PrimaryBtn
