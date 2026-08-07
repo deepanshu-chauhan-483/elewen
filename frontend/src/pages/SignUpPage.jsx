@@ -36,13 +36,11 @@ export default function SignUpPage() {
   const [emailPending, setEmailPending] = useState(false)
   const [confirmationResent, setConfirmationResent] = useState(false)
   const submittingRef = useRef(false)
-  const googleAutoStartRef = useRef(false)
   const authError = searchParams.get('authError') || ''
   const authErrorMessage = getGoogleAuthErrorMessage(authError)
 
   useEffect(() => {
-    if (searchParams.get('google') !== '1' || googleAutoStartRef.current) return
-    googleAutoStartRef.current = true
+    if (searchParams.get('google') !== '1') return
     startGoogleSignIn('/signup')
   }, [searchParams])
 

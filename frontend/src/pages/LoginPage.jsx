@@ -32,7 +32,6 @@ export default function LoginPage() {
   const [resendingConfirmation, setResendingConfirmation] = useState(false)
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false)
   const hasShownVerifiedToastRef = useRef(false)
-  const googleAutoStartRef = useRef(false)
 
   useEffect(() => {
     if (!confirmed || hasShownVerifiedToastRef.current) return
@@ -40,20 +39,19 @@ export default function LoginPage() {
     showToast({ message: 'Email verified! You can now sign in.' })
   }, [confirmed, showToast])
 
+  // After www → apex canonicalize, auto-continue Google OAuth on the canonical host.
   useEffect(() => {
-    if (!getStoredJwt()) return
-    navigate(redirectTarget, { replace: true })
-  }, [navigate, redirectTarget])
-
-  // After www → apex bounce, auto-continue Google OAuth on the apex host.
-  useEffect(() => {
-    if (searchParams.get('google') !== '1' || googleAutoStartRef.current) return
-    googleAutoStartRef.current = true
+    if (searchParams.get('google') !== '1') return
     startGoogleSignIn(
       `/login?redirect=${encodeURIComponent(redirectTarget)}`,
       redirectTarget
     )
   }, [searchParams, redirectTarget])
+
+  useEffect(() => {
+    if (!getStoredJwt()) return
+    navigate(redirectTarget, { replace: true })
+  }, [navigate, redirectTarget])
 
   const authErrorMessage = getGoogleAuthErrorMessage(authError)
 

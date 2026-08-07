@@ -2,6 +2,11 @@ import { useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { authGoogleSession, setStoredJwt } from '../lib/api'
 import CmsPageLoader from '../components/common/CmsPageLoader'
+import {
+  clearStoredAuthNavigation,
+  readStoredAuthOrigin,
+  readStoredAuthRedirect,
+} from '../lib/googleAuth'
 
 function parseAuthErrorDetails(error) {
   if (error?.response?.code) {
@@ -46,11 +51,24 @@ function normalizeRedirectTarget(target) {
   return target
 }
 
+function mapProviderError(error, errorDescription) {
+  const code = String(error ?? '').toLowerCase()
+  const description = String(errorDescription ?? '').toLowerCase()
+  if (code === 'access_denied' || description.includes('access_denied')) {
+    return 'oauth_denied'
+  }
+  if (code || description) return 'oauth_error'
+  return 'google_failed'
+}
+
 /**
  * Handles the Google OAuth redirect from Strapi.
  *
  * Strapi redirects here after Google auth:
  *   /auth/callback?access_token=<strapi-jwt>
+ *
+ * This page exchanges that token for a session (refresh cookie + user),
+ * stores the JWT, then redirects to home (or wherever the user came from).
  */
 export default function AuthCallbackPage() {
   const [searchParams] = useSearchParams()
@@ -65,18 +83,23 @@ export default function AuthCallbackPage() {
     const hashValue = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash
     const hashParams = new URLSearchParams(hashValue)
     const access_token = searchParams.get('access_token') || hashParams.get('access_token')
-    const oauthError =
-      searchParams.get('error') ||
-      hashParams.get('error') ||
-      searchParams.get('error_description') ||
-      hashParams.get('error_description')
-    const origin = sessionStorage.getItem('elewen_auth_origin') || '/login'
+    const providerError = searchParams.get('error') || hashParams.get('error')
+    const errorDescription =
+      searchParams.get('error_description') || hashParams.get('error_description')
+
+    const failToOrigin = authError => {
+      const origin = readStoredAuthOrigin('/login')
+      clearStoredAuthNavigation()
+      navigate(appendAuthError(origin, authError), { replace: true })
+    }
+
+    if (providerError || errorDescription) {
+      failToOrigin(mapProviderError(providerError, errorDescription))
+      return
+    }
 
     if (!access_token) {
-      sessionStorage.removeItem('elewen_auth_origin')
-      sessionStorage.removeItem('elewen_auth_redirect')
-      const code = oauthError ? 'google_denied' : 'google_missing_token'
-      navigate(appendAuthError(origin, code), { replace: true })
+      failToOrigin('google_failed')
       return
     }
 
@@ -84,29 +107,24 @@ export default function AuthCallbackPage() {
       .then(({ jwt, user }) => {
         localStorage.setItem('elewen_user', JSON.stringify(user))
         setStoredJwt(jwt)
-        const redirect = normalizeRedirectTarget(
-          sessionStorage.getItem('elewen_auth_redirect') || '/'
-        )
-        sessionStorage.removeItem('elewen_auth_origin')
-        sessionStorage.removeItem('elewen_auth_redirect')
+        const redirect = normalizeRedirectTarget(readStoredAuthRedirect('/'))
+        clearStoredAuthNavigation()
         navigate(redirect, { replace: true })
       })
       .catch(error => {
         const { code } = parseAuthErrorDetails(error)
-        sessionStorage.removeItem('elewen_auth_origin')
-        sessionStorage.removeItem('elewen_auth_redirect')
 
         if (code === 'LOCAL_ACCOUNT_USE_PASSWORD') {
-          navigate(appendAuthError(origin, 'local_account_use_password'), { replace: true })
+          failToOrigin('local_account_use_password')
           return
         }
 
         if (code === 'RATE_LIMITED' || error?.status === 429) {
-          navigate(appendAuthError(origin, 'rate_limited'), { replace: true })
+          failToOrigin('rate_limited')
           return
         }
 
-        navigate(appendAuthError(origin, 'google_failed'), { replace: true })
+        failToOrigin('google_failed')
       })
   }, [searchParams, location.hash, navigate])
 

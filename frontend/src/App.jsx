@@ -116,6 +116,7 @@ function GoogleAuthRedirectBridge() {
       return
     }
 
+    // Provider errors without a token still need the callback page for consistent messaging.
     const nextParams = new URLSearchParams()
     if (accessToken) nextParams.set('access_token', accessToken)
     if (error) nextParams.set('error', error)
