@@ -1003,6 +1003,8 @@ function CustomerInformationSection({ booking }) {
   const files = Array.isArray(booking?.files) ? booking.files : []
   const personalizations = Array.isArray(booking?.personalizations) ? booking.personalizations : []
   const locationText = String(booking?.locationSummary ?? booking?.address?.summary ?? '').trim()
+  const info = booking?.infoCollection ?? {}
+  const customer = booking?.customer ?? {}
 
   const summaryFields = [
     {
@@ -1017,32 +1019,32 @@ function CustomerInformationSection({ booking }) {
     },
     {
       label: 'EVENT DATE',
-      value: booking?.eventDate ? formatDate(booking.eventDate) : '',
+      value: booking?.eventDate ? formatDate(booking.eventDate) : info.eventDate,
       notProvidedLabel: 'Pending',
     },
     {
       label: 'EVENT TIME',
-      value: booking?.eventTime,
+      value: booking?.eventTime || info.eventTime,
       notProvidedLabel: 'Pending',
     },
     {
       label: 'GUESTS',
-      value: booking?.guestCount ? String(booking.guestCount) : '',
+      value: booking?.guestCount ? String(booking.guestCount) : info.guestCount,
       notProvidedLabel: 'Pending',
     },
     {
       label: 'LOCATION',
-      value: locationText,
+      value: locationText || info.eventAddress,
       notProvidedLabel: 'Pending',
     },
     {
       label: 'PIN CODE',
-      value: booking?.pinCode,
+      value: booking?.pinCode || info.pinCode,
       notProvidedLabel: 'Pending',
     },
     {
       label: 'SPECIAL REQUEST',
-      value: booking?.specialRequest,
+      value: booking?.specialRequest || info.specialRequest,
       notProvidedLabel: 'Not provided',
     },
     {
@@ -1069,6 +1071,21 @@ function CustomerInformationSection({ booking }) {
     },
   ]
 
+  const infoCollectionFields = [
+    { label: 'FULL NAME', value: info.fullName || customer?.name },
+    { label: 'EMAIL', value: info.email || customer?.email },
+    { label: 'PHONE', value: info.phone || customer?.phone },
+    { label: 'ADDRESS LINE 1', value: info.addressLine1 },
+    { label: 'ADDRESS LINE 2', value: info.addressLine2 },
+    { label: 'FLOOR', value: info.addressFloor },
+    { label: 'LIFT', value: info.hasLift },
+    { label: 'SETUP ARRIVAL', value: info.setupArrivalTime },
+    { label: 'EVENT-DAY CONTACT', value: info.eventDayContactName },
+    { label: 'EVENT-DAY MOBILE', value: info.eventDayContactPhone },
+    { label: 'PARKING / LOADING', value: info.parkingInstructions },
+    { label: 'SPECIAL INSTRUCTIONS', value: info.specialRequest || booking?.specialRequest },
+  ]
+
   return (
     <div className="py-6 border-t border-[#00000033]">
       <SectionLabel>Customer Information</SectionLabel>
@@ -1082,6 +1099,22 @@ function CustomerInformationSection({ booking }) {
               </p>
             </div>
           ))}
+        </div>
+
+        <div>
+          <p className="mb-3 text-[11px] tracking-[0.16em] text-[#767676]">
+            INFO COLLECTION FORM
+          </p>
+          <div className="grid grid-cols-2 gap-5 md:grid-cols-3">
+            {infoCollectionFields.map(field => (
+              <div key={field.label}>
+                <p className="text-[11px] tracking-[0.16em] text-[#767676]">{field.label}</p>
+                <p className="mt-0.5 text-sm text-[#2D2D2D]">
+                  <PendingValue value={field.value} notProvidedLabel="Not provided" />
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div>

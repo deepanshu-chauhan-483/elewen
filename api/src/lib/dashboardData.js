@@ -385,47 +385,166 @@ function buildSelectedItemsSummary(items = []) {
   return `${uniqueItems.slice(0, 2).join(' · ')} +${uniqueItems.length - 2} more`
 }
 
-function getBookingMetaFromNotes(notes = []) {
-  const visibleNotes = (Array.isArray(notes) ? notes : [])
-    .filter(note => note && note.isInternal !== true)
-    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+const INFO_COLLECTION_MARKER = '[INFO_COLLECTION]'
 
-  for (const note of visibleNotes) {
-    const text = String(note?.note ?? '')
-    if (!text) continue
+function cleanNoteValue(value = '') {
+  const trimmed = String(value ?? '').trim()
+  if (!trimmed || /^not provided$/i.test(trimmed)) return ''
+  return trimmed
+}
 
-    const addressMatch =
-      text.match(/(?:Event|Tasting) address:\s*(.+)/i) ?? text.match(/Address:\s*(.+)/i)
-    const timeMatch = text.match(/Event time:\s*(.+)/i) ?? text.match(/Tasting time:\s*(.+)/i)
-    const pinMatch = text.match(/PIN code:\s*(.+)/i)
-    const specialRequestMatch = text.match(/Special request:\s*(.+)/i)
-    const selectedItemsMatch = text.match(/Selected items:\s*(.+)/i)
-    const checkoutModeMatch = text.match(/Checkout mode:\s*(.+)/i)
-    const tastingMarkerMatch =
-      /(?:^|\n)\s*Tasting (?:date|time|address)\s*:/i.test(text) ||
-      /(?:^|\n)\s*Checkout mode:\s*Sample tasting\s*$/im.test(text)
-    const checkoutMode =
-      checkoutModeMatch?.[1]?.trim().toLowerCase().replace(/\s+/g, '-') ??
-      (tastingMarkerMatch ? 'sample-tasting' : '')
-
-    return {
-      eventAddress: addressMatch?.[1]?.trim() ?? '',
-      eventTime: timeMatch?.[1]?.trim() ?? '',
-      pinCode: pinMatch?.[1]?.trim() ?? '',
-      specialRequest: specialRequestMatch?.[1]?.trim() ?? '',
-      selectedItemsText: selectedItemsMatch?.[1]?.trim() ?? '',
-      checkoutMode,
+function extractNoteField(text, patterns = []) {
+  for (const pattern of patterns) {
+    const match = String(text ?? '').match(pattern)
+    if (match?.[1]) {
+      const value = cleanNoteValue(match[1])
+      if (value) return value
     }
   }
+  return ''
+}
 
+function emptyInfoCollectionMeta() {
   return {
-    eventAddress: '',
+    fullName: '',
+    email: '',
+    phone: '',
+    eventDate: '',
     eventTime: '',
+    addressLine1: '',
+    addressLine2: '',
+    addressFloor: '',
+    eventAddress: '',
     pinCode: '',
+    hasLift: '',
+    guestCount: '',
+    setupArrivalTime: '',
+    eventDayContactName: '',
+    eventDayContactPhone: '',
+    parkingInstructions: '',
     specialRequest: '',
     selectedItemsText: '',
     checkoutMode: '',
+    isInfoCollectionSubmission: false,
   }
+}
+
+export function parseInfoCollectionMetaFromText(text = '') {
+  const source = String(text ?? '')
+  if (!source.trim()) return emptyInfoCollectionMeta()
+
+  const meta = emptyInfoCollectionMeta()
+  meta.isInfoCollectionSubmission = source.includes(INFO_COLLECTION_MARKER)
+  meta.fullName = extractNoteField(source, [/Contact name:\s*(.+)/i, /Full name:\s*(.+)/i])
+  meta.email = extractNoteField(source, [/Email:\s*(.+)/i, /Email address:\s*(.+)/i])
+  meta.phone = extractNoteField(source, [/Phone:\s*(.+)/i, /Phone number:\s*(.+)/i])
+  meta.eventDate = extractNoteField(source, [/Event date:\s*(.+)/i, /Tasting date:\s*(.+)/i])
+  meta.eventTime = extractNoteField(source, [/Event time:\s*(.+)/i, /Tasting time:\s*(.+)/i])
+  meta.addressLine1 = extractNoteField(source, [/Event address line 1:\s*(.+)/i])
+  meta.addressLine2 = extractNoteField(source, [/Event address line 2:\s*(.+)/i])
+  meta.addressFloor = extractNoteField(source, [/Event location floor:\s*(.+)/i])
+  meta.eventAddress =
+    extractNoteField(source, [/(?:Event|Tasting) address:\s*(.+)/i, /Address:\s*(.+)/i]) ||
+    [meta.addressLine1, meta.addressLine2, meta.addressFloor].filter(Boolean).join(', ')
+  meta.pinCode = extractNoteField(source, [/PIN code:\s*(.+)/i])
+  meta.hasLift = extractNoteField(source, [/Lift in building:\s*(.+)/i])
+  meta.guestCount = extractNoteField(source, [/Guest count:\s*(.+)/i])
+  meta.setupArrivalTime = extractNoteField(source, [
+    /Earliest setup arrival time:\s*(.+)/i,
+    /Setup arrival time:\s*(.+)/i,
+  ])
+  meta.eventDayContactName = extractNoteField(source, [/Event-day contact:\s*(.+)/i])
+  meta.eventDayContactPhone = extractNoteField(source, [/Event-day contact mobile:\s*(.+)/i])
+  meta.parkingInstructions = extractNoteField(source, [
+    /Parking or loading instructions:\s*(.+)/i,
+  ])
+  meta.specialRequest = extractNoteField(source, [
+    /Special instructions:\s*(.+)/i,
+    /Special request:\s*(.+)/i,
+  ])
+  meta.selectedItemsText = extractNoteField(source, [/Selected items:\s*(.+)/i])
+  const checkoutModeMatch = source.match(/Checkout mode:\s*(.+)/i)
+  const tastingMarkerMatch =
+    /(?:^|\n)\s*Tasting (?:date|time|address)\s*:/i.test(source) ||
+    /(?:^|\n)\s*Checkout mode:\s*Sample tasting\s*$/im.test(source)
+  meta.checkoutMode =
+    checkoutModeMatch?.[1]?.trim().toLowerCase().replace(/\s+/g, '-') ??
+    (tastingMarkerMatch ? 'sample-tasting' : '')
+
+  return meta
+}
+
+export function buildInfoCollectionNote(form = {}) {
+  const line = (label, value) => `${label}: ${cleanNoteValue(value) || 'Not provided'}`
+  const addressSummary = [form.addressLine1, form.addressLine2, form.addressFloor, form.pinCode]
+    .map(cleanNoteValue)
+    .filter(Boolean)
+    .join(', ')
+
+  return [
+    INFO_COLLECTION_MARKER,
+    line('Contact name', form.fullName),
+    line('Phone', form.phone),
+    line('Email', form.email),
+    line('Event date', form.eventDate),
+    line('Event time', form.eventTime),
+    line('Event address line 1', form.addressLine1),
+    line('Event address line 2', form.addressLine2),
+    line('Event location floor', form.addressFloor),
+    line('Event address', addressSummary || form.eventAddress),
+    line('PIN code', form.pinCode),
+    line('Lift in building', form.hasLift),
+    line('Guest count', form.guestCount),
+    line('Earliest setup arrival time', form.setupArrivalTime),
+    line('Event-day contact', form.eventDayContactName),
+    line('Event-day contact mobile', form.eventDayContactPhone),
+    line('Parking or loading instructions', form.parkingInstructions),
+    line('Special instructions', form.specialRequest),
+    line('Special request', form.specialRequest),
+  ].join('\n')
+}
+
+function mergeInfoCollectionMeta(base = emptyInfoCollectionMeta(), next = {}) {
+  const merged = { ...base }
+  for (const key of Object.keys(emptyInfoCollectionMeta())) {
+    if (key === 'isInfoCollectionSubmission') {
+      merged[key] = Boolean(base[key] || next[key])
+      continue
+    }
+    const value = cleanNoteValue(next[key])
+    if (value) merged[key] = value
+  }
+  return merged
+}
+
+function getBookingMetaFromNotes(notes = []) {
+  const visibleNotes = (Array.isArray(notes) ? notes : [])
+    .filter(note => note && note.isInternal !== true)
+    .sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt))
+
+  let meta = emptyInfoCollectionMeta()
+
+  // Apply checkout / older notes first, then info-collection submissions last so they win.
+  for (const note of visibleNotes) {
+    if (String(note?.note ?? '').includes(INFO_COLLECTION_MARKER)) continue
+    meta = mergeInfoCollectionMeta(meta, parseInfoCollectionMetaFromText(note?.note))
+  }
+
+  for (const note of visibleNotes) {
+    if (!String(note?.note ?? '').includes(INFO_COLLECTION_MARKER)) continue
+    meta = mergeInfoCollectionMeta(meta, parseInfoCollectionMetaFromText(note?.note))
+  }
+
+  return meta
+}
+
+export function isCateringPackage(packagePreview = null) {
+  const categories = Array.isArray(packagePreview?.serviceCategories)
+    ? packagePreview.serviceCategories
+    : []
+  return categories.some(category =>
+    /catering/i.test(String(category?.name ?? category?.slug ?? ''))
+  )
 }
 
 export function getBookingCategory(booking) {
@@ -547,10 +666,31 @@ export async function enrichBookings(bookings = []) {
       address: addressPreview,
       eventTime: booking?.eventTime || noteMeta.eventTime,
       bookedAt: booking?.createdAt ?? null,
-      pinCode: noteMeta.pinCode,
+      pinCode: noteMeta.pinCode || addressPreview?.pincode || '',
       specialRequest: noteMeta.specialRequest,
       checkoutMode,
       isSampleTastingBooking,
+      isCateringBooking: isCateringPackage(packagePreview),
+      infoCollection: {
+        fullName: noteMeta.fullName,
+        email: noteMeta.email,
+        phone: noteMeta.phone,
+        eventDate: noteMeta.eventDate,
+        eventTime: booking?.eventTime || noteMeta.eventTime,
+        addressLine1: noteMeta.addressLine1 || addressPreview?.line1 || '',
+        addressLine2: noteMeta.addressLine2 || addressPreview?.line2 || '',
+        addressFloor: noteMeta.addressFloor,
+        eventAddress: addressPreview?.summary || noteMeta.eventAddress || '',
+        pinCode: noteMeta.pinCode || addressPreview?.pincode || '',
+        hasLift: noteMeta.hasLift,
+        guestCount: noteMeta.guestCount || (booking?.guestCount ? String(booking.guestCount) : ''),
+        setupArrivalTime: noteMeta.setupArrivalTime,
+        eventDayContactName: noteMeta.eventDayContactName,
+        eventDayContactPhone: noteMeta.eventDayContactPhone,
+        parkingInstructions: noteMeta.parkingInstructions,
+        specialRequest: noteMeta.specialRequest,
+        submitted: noteMeta.isInfoCollectionSubmission || booking?.infoStatus === 'submitted' || booking?.infoStatus === 'verified',
+      },
       refundPreview,
       paymentSummary,
       vendorAssignments: Array.isArray(booking.vendorAssignments)

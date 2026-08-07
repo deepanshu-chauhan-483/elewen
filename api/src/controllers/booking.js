@@ -3,7 +3,7 @@ import { computeCartItemsWithDeliveryCharges } from '../lib/deliveryChargePricin
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
 import { resolveAppliedCoupon } from '../lib/coupons.js'
-import { enrichBookings, filterBookingsByType } from '../lib/dashboardData.js'
+import { enrichBookings, filterBookingsByType, buildInfoCollectionNote } from '../lib/dashboardData.js'
 import { createOperationalAlert } from '../lib/alerts.js'
 import {
   calculateBookingRefundPreview,
@@ -1049,6 +1049,194 @@ export const getNotes = async (req, res, next) => {
     })
 
     res.json({ notes })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function loadCustomerProfile(userId) {
+  const parsedId = Number.parseInt(String(userId ?? ''), 10)
+  if (!Number.isFinite(parsedId)) return null
+
+  const [row] = await prisma.$queryRaw`
+    SELECT id::text AS id, email, first_name, last_name, phone
+    FROM public.up_users
+    WHERE id = ${parsedId}
+    LIMIT 1
+  `
+
+  if (!row) return null
+  return {
+    id: String(row.id),
+    email: row.email ?? '',
+    firstName: row.first_name ?? '',
+    lastName: row.last_name ?? '',
+    phone: row.phone ?? '',
+    fullName: [row.first_name, row.last_name].filter(Boolean).join(' ').trim(),
+  }
+}
+
+function toOptionalDateOnly(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const date = new Date(`${raw}T00:00:00.000Z`)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return null
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
+
+function readInfoCollectionForm(body = {}) {
+  const read = key => String(body?.[key] ?? '').trim()
+  return {
+    fullName: read('fullName'),
+    email: read('email'),
+    phone: read('phone'),
+    eventDate: read('eventDate'),
+    eventTime: read('eventTime'),
+    addressLine1: read('addressLine1'),
+    addressLine2: read('addressLine2'),
+    addressFloor: read('addressFloor'),
+    eventAddress: read('eventAddress'),
+    pinCode: read('pinCode'),
+    hasLift: read('hasLift'),
+    guestCount: read('guestCount'),
+    setupArrivalTime: read('setupArrivalTime'),
+    eventDayContactName: read('eventDayContactName'),
+    eventDayContactPhone: read('eventDayContactPhone'),
+    parkingInstructions: read('parkingInstructions'),
+    specialRequest: read('specialRequest') || read('specialInstructions'),
+  }
+}
+
+// ─── GET /bookings/:id/info-collection ─────────────────────────────────────────
+export const getInfoCollection = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        notes: {
+          where: { isInternal: false },
+          orderBy: { createdAt: 'desc' },
+        },
+        statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+        payments: { orderBy: { createdAt: 'desc' } },
+      },
+    })
+
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    const [enriched] = await enrichBookings([booking])
+    const profile = await loadCustomerProfile(userId)
+    const info = enriched?.infoCollection ?? {}
+    const eventDateValue = booking.eventDate
+      ? new Date(booking.eventDate).toISOString().slice(0, 10)
+      : ''
+
+    res.json({
+      bookingId: booking.id,
+      status: booking.status,
+      statusLabel: enriched?.statusLabel ?? booking.status,
+      infoStatus: booking.infoStatus,
+      canEdit: String(booking.status).toLowerCase() === 'info_collection',
+      showGuestCount: Boolean(enriched?.isCateringBooking),
+      form: {
+        fullName: info.fullName || profile?.fullName || '',
+        email: info.email || profile?.email || '',
+        phone: info.phone || profile?.phone || '',
+        eventDate: info.eventDate || eventDateValue,
+        eventTime: info.eventTime || '',
+        addressLine1: info.addressLine1 || '',
+        addressLine2: info.addressLine2 || '',
+        addressFloor: info.addressFloor || '',
+        eventAddress: info.eventAddress || '',
+        pinCode: info.pinCode || '',
+        hasLift: info.hasLift || '',
+        guestCount: info.guestCount || '',
+        setupArrivalTime: info.setupArrivalTime || '',
+        eventDayContactName: info.eventDayContactName || '',
+        eventDayContactPhone: info.eventDayContactPhone || '',
+        parkingInstructions: info.parkingInstructions || '',
+        specialRequest: info.specialRequest || '',
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─── PUT /bookings/:id/info-collection ─────────────────────────────────────────
+// No fields are mandatory — customer can submit whatever they have.
+export const submitInfoCollection = async (req, res, next) => {
+  try {
+    const userId = String(req.user.id)
+    const { id } = req.params
+    const form = readInfoCollectionForm(req.body)
+
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ error: 'Booking not found' })
+    if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
+
+    if (String(booking.status).toLowerCase() !== 'info_collection') {
+      return res.status(400).json({
+        error: 'Info collection form is only available while the booking is in Information Collection.',
+      })
+    }
+
+    const noteText = buildInfoCollectionNote(form)
+    const eventDate = toOptionalDateOnly(form.eventDate)
+    const guestCount = Number.parseInt(form.guestCount, 10)
+
+    await prisma.$transaction(async tx => {
+      await tx.bookingNote.create({
+        data: {
+          bookingId: id,
+          adminId: userId,
+          note: noteText,
+          isInternal: false,
+        },
+      })
+
+      await tx.booking.update({
+        where: { id },
+        data: {
+          infoStatus: 'submitted',
+          ...(form.eventTime ? { eventTime: form.eventTime.slice(0, 20) } : {}),
+          ...(eventDate ? { eventDate } : {}),
+          ...(Number.isFinite(guestCount) && guestCount > 0 ? { guestCount } : {}),
+        },
+      })
+    })
+
+    await invalidateDashboardCache(userId).catch(() => {})
+
+    const refreshed = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        notes: {
+          where: { isInternal: false },
+          orderBy: { createdAt: 'desc' },
+        },
+        statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
+        payments: { orderBy: { createdAt: 'desc' } },
+      },
+    })
+    const [enriched] = await enrichBookings([refreshed])
+
+    res.json({
+      ok: true,
+      infoStatus: 'submitted',
+      booking: enriched,
+      form: enriched?.infoCollection ?? form,
+    })
   } catch (err) {
     next(err)
   }

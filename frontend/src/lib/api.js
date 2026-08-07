@@ -311,6 +311,16 @@ export const bookingCancel = (token, bookingId, body = {}) =>
 export const bookingAddNote = (token, bookingId, body) =>
   apiPost(`/bookings/${bookingId}/notes`, body, { headers: { Authorization: `Bearer ${token}` } })
 
+export const bookingGetInfoCollection = (token, bookingId) =>
+  apiGet(`/bookings/${bookingId}/info-collection`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const bookingSubmitInfoCollection = (token, bookingId, body) =>
+  apiPut(`/bookings/${bookingId}/info-collection`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const bookingConfirmCod = (token, bookingId, body = {}) =>
   apiPost(`/bookings/${bookingId}/confirm-cod`, body, {
     headers: { Authorization: `Bearer ${token}` },

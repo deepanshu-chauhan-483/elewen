@@ -95,6 +95,9 @@ function getSubtitle(booking) {
 }
 
 function getNextStepText(booking) {
+  if (normalizeStatus(booking?.status) === 'info_collection') {
+    return 'Please fill in your event information so we can finalise planning.'
+  }
   return booking?.latestStatusLog?.note || `Latest status: ${booking?.statusLabel || 'In Progress'}`
 }
 
@@ -190,6 +193,16 @@ function BookingCard({ booking, session }) {
                 </span>
               </Link>
 
+              {status === 'info_collection' ? (
+                <Link
+                  to={`/user-dashboard/info-collection?bookingId=${booking.id}`}
+                  className="rounded-full border border-[#CDB17E] bg-[#FFFFFF] px-4 py-2 text-sm text-[#CDB17E] hover:bg-[#FAF6F1]"
+                  onClick={event => event.stopPropagation()}
+                >
+                  Fill information
+                </Link>
+              ) : null}
+
               <button
                 type="button"
                 onClick={event => {
@@ -226,6 +239,15 @@ function BookingCard({ booking, session }) {
 
       {open ? (
         <div className="mt-6 flex flex-wrap justify-end gap-3 md:hidden">
+          {status === 'info_collection' ? (
+            <Link
+              to={`/user-dashboard/info-collection?bookingId=${booking.id}`}
+              className="rounded-full border border-[#CDB17E] px-6 py-3 text-[14px] font-medium text-[#957960]"
+              onClick={event => event.stopPropagation()}
+            >
+              Fill information
+            </Link>
+          ) : null}
           <Link
             to={`/user-dashboard/details?bookingId=${booking.id}`}
             className="flex items-center rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white"
@@ -300,9 +322,27 @@ function BookingCard({ booking, session }) {
                 {getNextStepText(booking)}
               </span>
             </div>
+            {status === 'info_collection' ? (
+              <Link
+                to={`/user-dashboard/info-collection?bookingId=${booking.id}`}
+                onClick={event => event.stopPropagation()}
+                className="mt-2 rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
+              >
+                Open information form
+              </Link>
+            ) : null}
           </div>
 
           <div className="mt-6 flex flex-wrap justify-end gap-3 md:hidden">
+            {status === 'info_collection' ? (
+              <Link
+                to={`/user-dashboard/info-collection?bookingId=${booking.id}`}
+                onClick={event => event.stopPropagation()}
+                className="rounded-full border border-[#CDB17E] px-6 py-3 text-[14px] font-medium text-[#957960]"
+              >
+                Fill information
+              </Link>
+            ) : null}
             <button
               type="button"
               onClick={event => {

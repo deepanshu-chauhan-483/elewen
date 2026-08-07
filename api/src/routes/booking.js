@@ -11,6 +11,8 @@ import {
   getTimeline,
   addNote,
   getNotes,
+  getInfoCollection,
+  submitInfoCollection,
   addFile,
   getFiles,
 } from '../controllers/booking.js'
@@ -244,6 +246,8 @@ router.get('/:id/timeline', getTimeline)
  */
 router.post('/:id/notes', addNote)
 router.get('/:id/notes', getNotes)
+router.get('/:id/info-collection', getInfoCollection)
+router.put('/:id/info-collection', submitInfoCollection)
 
 /**
  * @openapi
