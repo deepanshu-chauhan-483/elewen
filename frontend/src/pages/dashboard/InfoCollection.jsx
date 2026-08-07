@@ -53,7 +53,13 @@ const EMPTY_FORM = {
   specialRequest: '',
 }
 
-const FORMAT_FIELD_ORDER = ['email', 'phone', 'pinCode', 'eventDayContactPhone']
+const FORMAT_FIELD_ORDER = [
+  'email',
+  'phone',
+  'pinCode',
+  'eventDayContactName',
+  'eventDayContactPhone',
+]
 
 function toDateValue(value) {
   const raw = String(value ?? '').trim()
@@ -436,14 +442,16 @@ export default function InfoCollection() {
               className={pickerClass()}
             />
           </div>
-          <div>
+          <div ref={node => (fieldRefs.current.eventDayContactName = node)}>
             <FieldLabel label="Event-day contact person" />
             <input
               type="text"
               value={form.eventDayContactName}
               onChange={setField('eventDayContactName')}
-              className={inputClass()}
+              className={inputClass(Boolean(fieldErrors.eventDayContactName))}
+              aria-invalid={Boolean(fieldErrors.eventDayContactName)}
             />
+            <FieldError message={fieldErrors.eventDayContactName} />
           </div>
           <div ref={node => (fieldRefs.current.eventDayContactPhone = node)}>
             <FieldLabel label="Event-day contact mobile number" />
@@ -497,7 +505,8 @@ export default function InfoCollection() {
         </div>
         <p className="mt-3 text-sm text-[#7A7A7A]">
           Checkout details are filled when available. Add only what is still missing — nothing is
-          required. Email, phone, and PIN are checked only if you enter them.
+          required. Email, phone, PIN, and event-day contact details are checked only if you enter
+          them.
         </p>
       </form>
     </div>

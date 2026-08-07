@@ -64,6 +64,7 @@ export function validateInfoCollectionForm(form = {}) {
   const email = String(form.email ?? '').trim()
   const phone = String(form.phone ?? '').trim()
   const pinCode = String(form.pinCode ?? '').trim()
+  const eventDayContactName = String(form.eventDayContactName ?? '').trim()
   const eventDayContactPhone = String(form.eventDayContactPhone ?? '').trim()
 
   if (email && !isValidEmail(email)) {
@@ -74,6 +75,13 @@ export function validateInfoCollectionForm(form = {}) {
   }
   if (pinCode && !isValidIndianPinCode(pinCode)) {
     errors.pinCode = 'Enter a valid 6-digit PIN code.'
+  }
+  if (eventDayContactName) {
+    if (eventDayContactName.length < 2) {
+      errors.eventDayContactName = 'Enter a valid contact person name.'
+    } else if (!/^[a-zA-Z][a-zA-Z\s.'-]{0,79}$/.test(eventDayContactName)) {
+      errors.eventDayContactName = 'Contact person name can only include letters and spaces.'
+    }
   }
   if (eventDayContactPhone && !isValidRequiredIndianPhone(eventDayContactPhone)) {
     errors.eventDayContactPhone = 'Enter a valid 10-digit Indian phone number.'
