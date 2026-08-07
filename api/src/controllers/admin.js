@@ -3013,7 +3013,7 @@ export async function getAdminPaymentSummary(req, res, next) {
 export async function getAdminPaymentWorkspace(req, res, next) {
   try {
     const limit = Math.min(toPositiveInt(req.query.limit, 10), 50)
-    const customerTab = normalizeText(req.query.customerTab || 'active').toLowerCase()
+    const customerTab = normalizeText(req.query.customerTab || 'today').toLowerCase()
     const customerPage = toPositiveInt(req.query.customerPage, 1)
     const vendorTab = normalizeText(req.query.vendorTab || 'pending').toLowerCase()
     const vendorPage = toPositiveInt(req.query.vendorPage, 1)
@@ -3033,6 +3033,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           booking: true,
         },
         orderBy: { createdAt: 'desc' },
+        take: 500,
       }),
       prisma.refund.findMany({
         include: {
@@ -3043,9 +3044,11 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           },
         },
         orderBy: { createdAt: 'desc' },
+        take: 200,
       }),
       prisma.vendorPayout.findMany({
         orderBy: { createdAt: 'desc' },
+        take: 200,
       }),
       prisma.booking.findMany({
         where: {
@@ -3060,8 +3063,8 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           payments: { orderBy: { createdAt: 'desc' } },
           vendorAssignments: true,
         },
-        orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
-        take: 20,
+        orderBy: [{ createdAt: 'desc' }, { eventDate: 'asc' }],
+        take: 100,
       }),
       prisma.booking.findMany({
         where: {
@@ -3074,8 +3077,8 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           payments: { orderBy: { createdAt: 'desc' } },
           vendorAssignments: true,
         },
-        orderBy: [{ eventDate: 'asc' }, { createdAt: 'desc' }],
-        take: 20,
+        orderBy: [{ createdAt: 'desc' }, { eventDate: 'asc' }],
+        take: 100,
       }),
       prisma.booking.findMany({
         where: {
@@ -3095,7 +3098,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           vendorAssignments: true,
         },
         orderBy: [{ createdAt: 'desc' }],
-        take: 20,
+        take: 100,
       }),
       safeStrapiServerGet('/api/global-setting?publicationState=preview', { data: null }),
       safeStrapiServerGet(
@@ -3151,6 +3154,13 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       0
     )
 
+    const todayBounds = getIstDayBounds()
+    const isCreatedToday = value => {
+      const time = new Date(value).getTime()
+      if (Number.isNaN(time)) return false
+      return time >= todayBounds.gte.getTime() && time < todayBounds.lt.getTime()
+    }
+
     const activeBookingPayments = enrichedActiveBookings
       .map(buildBookingPaymentSnapshot)
       .filter(booking => isActiveBookingStatus(booking.status))
@@ -3166,6 +3176,13 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       }))
     const completedPayments = payments
       .filter(payment => ['success', 'refunded'].includes(payment.status))
+      .map(payment => ({
+        ...payment,
+        bookingSummary: bookingMap.get(String(payment.bookingId)) ?? null,
+      }))
+    // All customer payment attempts created today (IST) — success, pending, failed, refunded.
+    const todayPayments = payments
+      .filter(payment => isCreatedToday(payment.createdAt))
       .map(payment => ({
         ...payment,
         bookingSummary: bookingMap.get(String(payment.bookingId)) ?? null,
@@ -3198,6 +3215,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       }
     }
     const customerLists = {
+      today: todayPayments,
       active: activeBookingPayments,
       post_event: postEventPending,
       cancelled: cancelledRefunds,
@@ -3209,7 +3227,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       paid: paidVendorPayments,
     }
     const currentCustomer = paginateList(
-      customerLists[customerTab] ?? customerLists.active,
+      customerLists[customerTab] ?? customerLists.today,
       customerPage
     )
     const currentVendor = paginateList(vendorLists[vendorTab] ?? vendorLists.pending, vendorPage)
@@ -3221,11 +3239,13 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           refundsPendingCount,
           vendorPayoutPendingAmount: Number(vendorPayoutPendingAmount.toFixed(2)),
           totalOutstanding: Number(totalOutstanding.toFixed(2)),
+          todayPaymentsCount: todayPayments.length,
           advancePaymentPercentage: Number(
             settingsResponse?.data?.advance_payment_percentage ?? 30
           ),
         },
         customerPayments: {
+          todayPayments: customerTab === 'today' ? currentCustomer.items : [],
           activeBookings: customerTab === 'active' ? currentCustomer.items : [],
           postEventPending: customerTab === 'post_event' ? currentCustomer.items : [],
           cancelledBookings: customerTab === 'cancelled' ? currentCustomer.items : [],

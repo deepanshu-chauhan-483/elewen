@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   EmptyState,
   ErrorState,
@@ -149,7 +150,13 @@ function buildMailtoHref(to, subject, bodyLines = []) {
 
 function buildBookingWorkspaceHref(bookingId = '') {
   const id = String(bookingId ?? '').trim()
-  return id ? `/bookings?open=${encodeURIComponent(id)}` : '/bookings'
+  return id ? `/bookings?open=${encodeURIComponent(id)}&bucket=live` : '/bookings'
+}
+
+function openBookingInManagement(navigate, bookingId) {
+  const href = buildBookingWorkspaceHref(bookingId)
+  if (href === '/bookings') return
+  navigate(href)
 }
 
 function PaginationControls({ currentPage, totalPages, onPageChange }) {
@@ -217,12 +224,16 @@ function Tabs({ items, value, onChange, size = 'md' }) {
 // Row cards
 // ---------------------------------------------------------------------------
 
-function BookingPaymentRow({ booking }) {
+function BookingPaymentRow({ booking, onOpen }) {
   const showHookahCodBadge = bookingHasHookahCod(booking)
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
-      <div className="flex-1 min-w-0">
+    <button
+      type="button"
+      onClick={() => onOpen?.(booking.id)}
+      className="flex w-full flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 text-left transition hover:border-[#D4BA8E] hover:bg-[#FBF8F3]"
+    >
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-[#1C1C1C]">
           {booking?.customer?.name || 'Customer'}
           <span className="ml-2 font-normal text-[#6B7280]">
@@ -253,8 +264,11 @@ function BookingPaymentRow({ booking }) {
           status={booking.vendorAssignments?.length ? 'assigned' : 'unassigned'}
           label={booking.vendorAssignments?.length ? 'Vendor assigned' : 'No vendor'}
         />
+        <span className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]">
+          Open booking
+        </span>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -263,6 +277,7 @@ function PaymentRecordRow({
   showRefundActions = false,
   onRefundAction,
   isRefundBusy = false,
+  onOpen,
 }) {
   const refunds = Array.isArray(payment.refunds) ? payment.refunds : []
   const pendingRefund = refunds.find(r => r.status === 'requested')
@@ -270,10 +285,22 @@ function PaymentRecordRow({
     [...refunds].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0] ??
     null
   const showHookahCodBadge = isCodPayment(payment)
+  const bookingId = payment.bookingId || payment.bookingSummary?.id
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
-      <div className="flex-1 min-w-0">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen?.(bookingId)}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen?.(bookingId)
+        }
+      }}
+      className="flex w-full cursor-pointer flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 text-left transition hover:border-[#D4BA8E] hover:bg-[#FBF8F3]"
+    >
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-[#1C1C1C]">
           {payment.bookingSummary?.customer?.name || 'Customer'}
           <span className="ml-2 font-normal text-[#6B7280]">
@@ -295,20 +322,37 @@ function PaymentRecordRow({
         {showRefundActions && pendingRefund && (
           <PrimaryBtn
             disabled={isRefundBusy}
-            onClick={() => onRefundAction?.(pendingRefund.id, 'approve')}
+            onClick={event => {
+              event.stopPropagation()
+              onRefundAction?.(pendingRefund.id, 'approve')
+            }}
           >
             Pay Refund
           </PrimaryBtn>
         )}
+        <span className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]">
+          Open booking
+        </span>
       </div>
     </div>
   )
 }
 
-function PayoutRow({ payout, onMark, isBusy = false }) {
+function PayoutRow({ payout, onMark, isBusy = false, onOpen }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
-      <div className="flex-1 min-w-0">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen?.(payout.bookingId)}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen?.(payout.bookingId)
+        }
+      }}
+      className="flex w-full cursor-pointer flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 text-left transition hover:border-[#D4BA8E] hover:bg-[#FBF8F3]"
+    >
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-[#1C1C1C]">
           {payout.vendor?.companyName || payout.vendorId}
           <span className="ml-2 font-normal text-[#6B7280]">· {formatCurrency(payout.amount)}</span>
@@ -323,14 +367,29 @@ function PayoutRow({ payout, onMark, isBusy = false }) {
         <Badge status={payout.paymentMethod} label={payout.paymentMethod || 'Offline'} />
         {payout.status === 'pending' && (
           <>
-            <PrimaryBtn disabled={isBusy} onClick={() => onMark?.(payout.id, 'paid')}>
+            <PrimaryBtn
+              disabled={isBusy}
+              onClick={event => {
+                event.stopPropagation()
+                onMark?.(payout.id, 'paid')
+              }}
+            >
               Mark Paid
             </PrimaryBtn>
-            <DangerBtn disabled={isBusy} onClick={() => onMark?.(payout.id, 'failed')}>
+            <DangerBtn
+              disabled={isBusy}
+              onClick={event => {
+                event.stopPropagation()
+                onMark?.(payout.id, 'failed')
+              }}
+            >
               Mark Failed
             </DangerBtn>
           </>
         )}
+        <span className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]">
+          Open booking
+        </span>
       </div>
     </div>
   )
@@ -340,6 +399,7 @@ function PayoutRow({ payout, onMark, isBusy = false }) {
 // Section: Customer Payments
 // ---------------------------------------------------------------------------
 const customerTabs = [
+  { key: 'today', label: "Today's Payments" },
   { key: 'active', label: 'Active Bookings' },
   { key: 'post_event', label: 'Post-Event Pending' },
   { key: 'failed', label: 'Failed Payments' },
@@ -395,7 +455,8 @@ function RefundRow({ refund, processRefundMutation }) {
 }
 
 function CustomerPayments({ processRefundMutation }) {
-  const [tab, setTab] = useState('active')
+  const navigate = useNavigate()
+  const [tab, setTab] = useState('today')
   const [currentPage, setCurrentPage] = useState(1)
   const workspaceQuery = useAdminPaymentWorkspace({
     customerTab: tab,
@@ -404,6 +465,7 @@ function CustomerPayments({ processRefundMutation }) {
   })
   const customerPayments = workspaceQuery.data?.customerPayments ?? {}
   const lists = {
+    today: customerPayments.todayPayments ?? [],
     active: customerPayments.activeBookings ?? [],
     post_event: customerPayments.postEventPending ?? [],
     failed: customerPayments.failedPayments ?? [],
@@ -413,6 +475,7 @@ function CustomerPayments({ processRefundMutation }) {
   const totalPages = Math.max(1, Number(customerPayments.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
   const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
+  const openBooking = bookingId => openBookingInManagement(navigate, bookingId)
 
   useScrollToTop(currentPage)
 
@@ -422,7 +485,6 @@ function CustomerPayments({ processRefundMutation }) {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg text-[#1C1C1C]">Customer Payments</h2>
 
@@ -446,15 +508,46 @@ function CustomerPayments({ processRefundMutation }) {
       </div>
 
       {isSectionLoading ? (
-        <SectionLoadingState label="Loading customer paymentsâ€¦" />
+        <SectionLoadingState label="Loading customer payments…" />
       ) : (
         <>
-          {/* Active bookings */}
+          {tab === 'today' &&
+            (lists.today.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(p => (
+                  <PaymentRecordRow
+                    key={p.id}
+                    payment={p}
+                    onOpen={openBooking}
+                    showRefundActions
+                    isRefundBusy={processRefundMutation.isPending}
+                    onRefundAction={(refundId, action) =>
+                      refundId &&
+                      processRefundMutation.mutate({
+                        refundId,
+                        body: { action },
+                      })
+                    }
+                  />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No payments today"
+                body="Customer payment attempts made today (IST) will appear here."
+              />
+            ))}
+
           {tab === 'active' &&
             (lists.active.length ? (
               <div className="space-y-2.5">
                 {currentList.map(b => (
-                  <BookingPaymentRow key={b.id} booking={b} />
+                  <BookingPaymentRow key={b.id} booking={b} onOpen={openBooking} />
                 ))}
                 <PaginationControls
                   currentPage={visiblePage}
@@ -469,14 +562,22 @@ function CustomerPayments({ processRefundMutation }) {
               />
             ))}
 
-          {/* Post-event */}
           {tab === 'post_event' &&
             (lists.post_event.length ? (
               <div className="space-y-2.5">
                 {currentList.map(b => (
                   <div
                     key={b.id}
-                    className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openBooking(b.id)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        openBooking(b.id)
+                      }
+                    }}
+                    className="flex cursor-pointer flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 transition hover:border-[#D4BA8E] hover:bg-[#FBF8F3]"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-[#1C1C1C]">
@@ -485,7 +586,6 @@ function CustomerPayments({ processRefundMutation }) {
                           / {b.package?.title || b.id}
                         </span>
                       </p>
-
                       <p className="mt-1 text-xs text-[#8F8F8F]">
                         Balance due:{' '}
                         <span className="font-medium text-[#2D2D2D]">
@@ -493,16 +593,15 @@ function CustomerPayments({ processRefundMutation }) {
                         </span>
                       </p>
                     </div>
-
                     <div className="flex gap-2">
                       <Badge status={b.status} label={b.statusLabel} />
-
                       <Badge
                         status={b.outstandingAmount > 0 ? 'pending' : 'resolved'}
                         label={b.outstandingAmount > 0 ? 'Reminder needed' : 'Settled'}
                       />
                       <GhostBtn
-                        onClick={() =>
+                        onClick={event => {
+                          event.stopPropagation()
                           window.open(
                             buildMailtoHref(b.customer?.email, `Elewen payment reminder ${b.id}`, [
                               `Hi ${b.customer?.name || 'there'},`,
@@ -512,15 +611,18 @@ function CustomerPayments({ processRefundMutation }) {
                             ]),
                             '_self'
                           )
-                        }
+                        }}
                         disabled={!b.customer?.email || b.outstandingAmount <= 0}
                       >
                         Send Reminder
                       </GhostBtn>
                       <GhostBtn
-                        onClick={() => window.open(buildBookingWorkspaceHref(b.id), '_self')}
+                        onClick={event => {
+                          event.stopPropagation()
+                          openBooking(b.id)
+                        }}
                       >
-                        Manual Follow-up
+                        Open booking
                       </GhostBtn>
                     </div>
                   </div>
@@ -538,7 +640,6 @@ function CustomerPayments({ processRefundMutation }) {
               />
             ))}
 
-          {/* Failed */}
           {tab === 'failed' &&
             (lists.failed.length ? (
               <div className="space-y-2.5">
@@ -546,6 +647,7 @@ function CustomerPayments({ processRefundMutation }) {
                   <PaymentRecordRow
                     key={p.id}
                     payment={p}
+                    onOpen={openBooking}
                     showRefundActions
                     isRefundBusy={processRefundMutation.isPending}
                     onRefundAction={(refundId, action) =>
@@ -570,7 +672,6 @@ function CustomerPayments({ processRefundMutation }) {
               />
             ))}
 
-          {/* Completed */}
           {tab === 'completed' &&
             (lists.completed.length ? (
               <div className="space-y-2.5">
@@ -578,6 +679,7 @@ function CustomerPayments({ processRefundMutation }) {
                   <PaymentRecordRow
                     key={p.id}
                     payment={p}
+                    onOpen={openBooking}
                     showRefundActions
                     isRefundBusy={processRefundMutation.isPending}
                     onRefundAction={(refundId, action) =>
@@ -598,7 +700,7 @@ function CustomerPayments({ processRefundMutation }) {
             ) : (
               <EmptyState
                 title="No completed payments"
-                body="Successful and refunded records will appear here."
+                body="Successful customer payments will appear here."
               />
             ))}
         </>
@@ -606,13 +708,6 @@ function CustomerPayments({ processRefundMutation }) {
     </div>
   )
 }
-// ---------------------------------------------------------------------------
-// Section: Vendor Payments
-// ---------------------------------------------------------------------------
-const vendorTabs = [
-  { key: 'pending', label: 'Pending Payouts' },
-  { key: 'paid', label: 'Paid' },
-]
 
 function VendorPayments({
   vendorsQuery,
@@ -620,6 +715,7 @@ function VendorPayments({
   createVendorPayoutMutation,
   updateVendorPayoutMutation,
 }) {
+  const navigate = useNavigate()
   const [tab, setTab] = useState('pending')
   const [currentPage, setCurrentPage] = useState(1)
   const [vendorId, setVendorId] = useState('')
@@ -736,6 +832,7 @@ function VendorPayments({
                   <PayoutRow
                     key={p.id}
                     payout={p}
+                    onOpen={bookingId => openBookingInManagement(navigate, bookingId)}
                     isBusy={updateVendorPayoutMutation.isPending}
                     onMark={(id, status) =>
                       updateVendorPayoutMutation.mutate({ payoutId: id, body: { status } })
@@ -759,7 +856,7 @@ function VendorPayments({
             ((vendorPayments.paid ?? []).length ? (
               <div className="space-y-2.5">
                 {currentList.map(p => (
-                  <PayoutRow key={p.id} payout={p} />
+                  <PayoutRow key={p.id} payout={p} onOpen={bookingId => openBookingInManagement(navigate, bookingId)} />
                 ))}
                 <PaginationControls
                   currentPage={visiblePage}
