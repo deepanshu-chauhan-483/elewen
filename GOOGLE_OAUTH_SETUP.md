@@ -49,6 +49,32 @@ Restart Strapi. Test with a **local** account email on `/forgot-password`.
 
 # Google Sign-In setup (fix `redirect_uri_mismatch`)
 
+## Error 400: `This provider is disabled`
+
+Strapi users-permissions has **Google** turned off in the plugin store (often after someone disabled it in Admin → Settings → Users & Permissions → Providers).
+
+**Fix (production or local):**
+
+1. Confirm `strapi/.env` (or server env) has real values — not placeholders:
+   ```env
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   GOOGLE_REDIRECT_URI=https://strapi.elewen.co.in/api/connect/google/callback
+   FRONTEND_URL=https://elewen.co.in
+   PUBLIC_URL=https://strapi.elewen.co.in
+   ```
+2. Sync DB and verify:
+   ```bash
+   cd strapi
+   npm run sync:google
+   npm run check:google
+   ```
+3. Restart Strapi.
+
+Or in Strapi Admin: **Settings → Users & Permissions plugin → Providers → Google → Enable**, paste Client ID/Secret, save.
+
+---
+
 ## Error 400: `redirect_uri_mismatch`
 
 Google is telling you the **Authorized redirect URI** in Cloud Console does **not exactly match** what Strapi sends.

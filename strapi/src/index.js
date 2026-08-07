@@ -214,12 +214,12 @@ module.exports = {
       const frontendAuthCallback = `${frontendUrl.replace(/\/$/, '')}/auth/callback`;
       const baseGrant =
         currentGrant && typeof currentGrant === 'object' ? { ...currentGrant } : {};
-      const previousGoogle = baseGrant.google && typeof baseGrant.google === 'object' ? baseGrant.google : {};
+      const previousGoogle =
+        baseGrant.google && typeof baseGrant.google === 'object' ? baseGrant.google : {};
 
       const nextGrant = {
         ...baseGrant,
         google: {
-          enabled: true,
           icon: 'google',
           ...previousGoogle,
           key: process.env.GOOGLE_CLIENT_ID,
@@ -231,6 +231,9 @@ module.exports = {
             Array.isArray(previousGoogle.scope) && previousGoogle.scope.length
               ? previousGoogle.scope
               : ['email', 'profile'],
+          // Always force-enable when env credentials exist (do not let a prior admin
+          // "disabled" flag in DB overwrite this — causes "This provider is disabled").
+          enabled: true,
         },
       };
 
@@ -357,6 +360,18 @@ module.exports = {
         );
       } catch (error) {
         strapi.log.error('[seed/decor-anniversary] Anniversary decor seed failed:', error);
+      }
+    }
+
+    if (isSeedEnabled('SEED_INHOUSE_PLANNER')) {
+      try {
+        const { seedInhousePlannerContent } = require('./seed/inhouse-planner-content');
+        const inhouseResult = await seedInhousePlannerContent(strapi);
+        strapi.log.info(
+          `[seed/inhouse-planner] page=${inhouseResult.inhousePlannerPage.documentId}, grand=${inhouseResult.grandCelebrationsIntro.documentId}, social=${inhouseResult.celebrationEveryDay.documentId}`
+        );
+      } catch (error) {
+        strapi.log.error('[seed/inhouse-planner] In-house planner CMS seed failed:', error);
       }
     }
 

@@ -43,7 +43,6 @@ const beforeCallback = grant?.google?.callbackUrl || grant?.google?.callback || 
 const previousGoogle = grant?.google && typeof grant.google === 'object' ? grant.google : {}
 
 grant.google = {
-  enabled: true,
   icon: 'google',
   ...previousGoogle,
   key: process.env.GOOGLE_CLIENT_ID || previousGoogle.key || '',
@@ -52,6 +51,8 @@ grant.google = {
   // Grant redirects here after Google OAuth — frontend, not Strapi connect callback
   callback: FRONTEND_AUTH_CALLBACK,
   scope: previousGoogle.scope?.length ? previousGoogle.scope : ['email', 'profile'],
+  // Force-enable last so a prior admin "disabled" value cannot stick in DB
+  enabled: true,
 }
 
 await client.query('UPDATE strapi_core_store_settings SET value = $1::jsonb WHERE id = $2', [
