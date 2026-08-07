@@ -22,6 +22,8 @@ import { isCodPendingPayment } from '../lib/sheeshaCheckout.js'
 import { buildUniqueGrantCode, mapGrantForCustomer } from '../lib/coupons.js'
 import { findCustomerByEmail } from '../lib/userLookup.js'
 import {
+  addDaysToDateKey,
+  getIstDateKey,
   previewBookingPersonalizationEmail,
   sendBookingConfirmedEmail,
   sendBookingPersonalizationEmail,
@@ -214,28 +216,29 @@ function buildInFilterQuery(ids = []) {
     .join('&')
 }
 
+/** Convert YYYY-MM-DD to UTC midnight Date for Prisma @db.Date filters. */
+function dateKeyToUtcMidnight(dateKey) {
+  return new Date(`${dateKey}T00:00:00.000Z`)
+}
+
 function getDateRange(bucket = 'all') {
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
-
-  const startOfTomorrow = new Date(startOfToday)
-  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
-
-  const nextFifteenDays = new Date(startOfToday)
-  nextFifteenDays.setDate(nextFifteenDays.getDate() + 15)
+  // Use Asia/Kolkata calendar days so "today" matches India event dates on DATE columns.
+  const todayKey = getIstDateKey()
+  const tomorrowKey = addDaysToDateKey(todayKey, 1)
+  const endOfUpcomingKey = addDaysToDateKey(todayKey, 15)
 
   if (bucket === 'today') {
     return {
-      gte: startOfToday,
-      lt: startOfTomorrow,
+      gte: dateKeyToUtcMidnight(todayKey),
+      lt: dateKeyToUtcMidnight(tomorrowKey),
     }
   }
 
   if (bucket === 'upcoming') {
     // Match Overview "Upcoming Events": next 15 days including today.
     return {
-      gte: startOfToday,
-      lte: nextFifteenDays,
+      gte: dateKeyToUtcMidnight(todayKey),
+      lte: dateKeyToUtcMidnight(endOfUpcomingKey),
     }
   }
 
@@ -975,13 +978,12 @@ function isEventWithinNextFifteenDays(booking) {
   const eventDate = new Date(booking.eventDate)
   if (Number.isNaN(eventDate.getTime())) return false
 
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
-  const nextFifteenDays = new Date(startOfToday)
-  nextFifteenDays.setDate(nextFifteenDays.getDate() + 15)
-  nextFifteenDays.setHours(23, 59, 59, 999)
+  const todayKey = getIstDateKey()
+  const endOfUpcomingKey = addDaysToDateKey(todayKey, 15)
+  const startOfToday = dateKeyToUtcMidnight(todayKey)
+  const endOfUpcoming = dateKeyToUtcMidnight(endOfUpcomingKey)
 
-  return eventDate >= startOfToday && eventDate <= nextFifteenDays
+  return eventDate >= startOfToday && eventDate <= endOfUpcoming
 }
 
 function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = '') {
@@ -1314,14 +1316,10 @@ export async function getAdminSession(req, res, next) {
 
 export async function getAdminOverview(req, res, next) {
   try {
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-
-    const startOfTomorrow = new Date(startOfToday)
-    startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
-
-    const nextFifteenDays = new Date(startOfToday)
-    nextFifteenDays.setDate(nextFifteenDays.getDate() + 15)
+    const todayKey = getIstDateKey()
+    const startOfToday = dateKeyToUtcMidnight(todayKey)
+    const startOfTomorrow = dateKeyToUtcMidnight(addDaysToDateKey(todayKey, 1))
+    const nextFifteenDays = dateKeyToUtcMidnight(addDaysToDateKey(todayKey, 15))
 
     const [
       totalBookings,
