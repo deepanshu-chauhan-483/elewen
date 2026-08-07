@@ -401,7 +401,6 @@ function PayoutRow({ payout, onMark, isBusy = false, onOpen }) {
 const customerTabs = [
   { key: 'today', label: "Today's Payments" },
   { key: 'active', label: 'Active Bookings' },
-  { key: 'post_event', label: 'Post-Event Pending' },
   { key: 'failed', label: 'Failed Payments' },
   { key: 'completed', label: 'Completed' },
 ]
@@ -467,7 +466,6 @@ function CustomerPayments({ processRefundMutation }) {
   const lists = {
     today: customerPayments.todayPayments ?? [],
     active: customerPayments.activeBookings ?? [],
-    post_event: customerPayments.postEventPending ?? [],
     failed: customerPayments.failedPayments ?? [],
     completed: customerPayments.completedPayments ?? [],
   }
@@ -559,84 +557,6 @@ function CustomerPayments({ processRefundMutation }) {
               <EmptyState
                 title="No active booking balances"
                 body="Active bookings with payment context will appear here."
-              />
-            ))}
-
-          {tab === 'post_event' &&
-            (lists.post_event.length ? (
-              <div className="space-y-2.5">
-                {currentList.map(b => (
-                  <div
-                    key={b.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => openBooking(b.id)}
-                    onKeyDown={event => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        openBooking(b.id)
-                      }
-                    }}
-                    className="flex cursor-pointer flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 transition hover:border-[#D4BA8E] hover:bg-[#FBF8F3]"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-[#1C1C1C]">
-                        {b.customer?.name || 'Customer'}
-                        <span className="ml-2 font-normal text-[#6B7280]">
-                          / {b.package?.title || b.id}
-                        </span>
-                      </p>
-                      <p className="mt-1 text-xs text-[#8F8F8F]">
-                        Balance due:{' '}
-                        <span className="font-medium text-[#2D2D2D]">
-                          {formatCurrency(b.outstandingAmount)}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge status={b.status} label={b.statusLabel} />
-                      <Badge
-                        status={b.outstandingAmount > 0 ? 'pending' : 'resolved'}
-                        label={b.outstandingAmount > 0 ? 'Reminder needed' : 'Settled'}
-                      />
-                      <GhostBtn
-                        onClick={event => {
-                          event.stopPropagation()
-                          window.open(
-                            buildMailtoHref(b.customer?.email, `Elewen payment reminder ${b.id}`, [
-                              `Hi ${b.customer?.name || 'there'},`,
-                              '',
-                              `This is a reminder for the pending booking balance of ${formatCurrency(b.outstandingAmount)}.`,
-                              'Please connect with the Elewen team if you need payment assistance.',
-                            ]),
-                            '_self'
-                          )
-                        }}
-                        disabled={!b.customer?.email || b.outstandingAmount <= 0}
-                      >
-                        Send Reminder
-                      </GhostBtn>
-                      <GhostBtn
-                        onClick={event => {
-                          event.stopPropagation()
-                          openBooking(b.id)
-                        }}
-                      >
-                        Open booking
-                      </GhostBtn>
-                    </div>
-                  </div>
-                ))}
-                <PaginationControls
-                  currentPage={visiblePage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
-              </div>
-            ) : (
-              <EmptyState
-                title="No post-event pending payments"
-                body="Outstanding post-event balances will appear here."
               />
             ))}
 
