@@ -248,6 +248,7 @@ router.post('/:id/notes', addNote)
 router.get('/:id/notes', getNotes)
 router.get('/:id/info-collection', getInfoCollection)
 router.put('/:id/info-collection', submitInfoCollection)
+router.post('/:id/info-collection', submitInfoCollection)
 
 /**
  * @openapi

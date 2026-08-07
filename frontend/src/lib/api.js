@@ -317,7 +317,7 @@ export const bookingGetInfoCollection = (token, bookingId) =>
   })
 
 export const bookingSubmitInfoCollection = (token, bookingId, body) =>
-  apiPut(`/bookings/${bookingId}/info-collection`, body, {
+  apiPost(`/bookings/${bookingId}/info-collection`, body, {
     headers: { Authorization: `Bearer ${token}` },
   })
 

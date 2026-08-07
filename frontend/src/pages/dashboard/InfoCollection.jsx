@@ -5,7 +5,13 @@ import {
   DashboardLoadingState,
 } from '../../components/dashboard/DashboardUI'
 import { useDashboardSession } from '../../hooks/useDashboardData'
-import { bookingGetInfoCollection, bookingSubmitInfoCollection } from '../../lib/api'
+import {
+  bookingGet,
+  bookingGetInfoCollection,
+  bookingSubmitInfoCollection,
+  getStoredJwt,
+  getValidStoredJwt,
+} from '../../lib/api'
 import DateTimePicker from '../../components/common/DateTimePicker'
 
 function FieldLabel({ label }) {
@@ -39,12 +45,39 @@ const EMPTY_FORM = {
   specialRequest: '',
 }
 
+function toDateValue(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return ''
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10)
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) return ''
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(
+    parsed.getDate()
+  ).padStart(2, '0')}`
+}
+
+function pickFormFromSources(...sources) {
+  const next = { ...EMPTY_FORM }
+  for (const key of Object.keys(EMPTY_FORM)) {
+    for (const source of sources) {
+      const value = source?.[key]
+      if (value == null) continue
+      const text = String(value).trim()
+      if (!text || /^not provided$/i.test(text)) continue
+      next[key] = key === 'eventDate' ? toDateValue(text) || text : text
+      break
+    }
+  }
+  return next
+}
+
 export default function InfoCollection() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const bookingId = String(searchParams.get('bookingId') ?? '').trim()
   const sessionQuery = useDashboardSession()
-  const token = sessionQuery.data?.jwt || ''
+  // /auth/me does not return jwt — use the stored access token.
+  const [token, setToken] = useState(() => getStoredJwt())
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -55,22 +88,78 @@ export default function InfoCollection() {
   const [form, setForm] = useState(EMPTY_FORM)
 
   useEffect(() => {
+    let active = true
+    getValidStoredJwt().then(next => {
+      if (active && next) setToken(next)
+    })
+    const sync = () => setToken(getStoredJwt())
+    window.addEventListener('elewen-auth-change', sync)
+    return () => {
+      active = false
+      window.removeEventListener('elewen-auth-change', sync)
+    }
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
 
     async function load() {
-      if (!bookingId || !token) {
+      if (!bookingId) {
         setLoading(false)
         return
       }
 
+      const accessToken = (await getValidStoredJwt()) || getStoredJwt()
+      if (!accessToken) {
+        setLoading(false)
+        setError('Please log in again to open this form.')
+        return
+      }
+      setToken(accessToken)
+
       setLoading(true)
       setError('')
       try {
-        const response = await bookingGetInfoCollection(token, bookingId)
+        const [infoResponse, bookingResponse] = await Promise.all([
+          bookingGetInfoCollection(accessToken, bookingId).catch(() => null),
+          bookingGet(accessToken, bookingId).catch(() => null),
+        ])
         if (cancelled) return
-        setForm({ ...EMPTY_FORM, ...(response?.form ?? {}) })
-        setShowGuestCount(Boolean(response?.showGuestCount))
-        setStatusLabel(response?.statusLabel || response?.status || '')
+
+        const booking = bookingResponse?.booking ?? null
+        const info = infoResponse?.form ?? {}
+        const fromBooking = booking?.infoCollection ?? {}
+        const sessionUser = sessionQuery.data?.user ?? {}
+        const sessionProfile = sessionQuery.data?.profile ?? {}
+        const profileName = [sessionProfile.first_name, sessionProfile.last_name]
+          .filter(Boolean)
+          .join(' ')
+          .trim()
+
+        setForm(
+          pickFormFromSources(info, fromBooking, {
+            fullName: profileName || sessionUser?.username || '',
+            email: sessionUser?.email || sessionProfile?.email || '',
+            phone: sessionUser?.phone || sessionProfile?.phone || '',
+            eventDate: booking?.eventDate || '',
+            eventTime: booking?.eventTime || '',
+            addressLine1: booking?.address?.line1 || fromBooking.addressLine1 || '',
+            addressLine2: booking?.address?.line2 || fromBooking.addressLine2 || '',
+            pinCode: booking?.pinCode || booking?.address?.pincode || '',
+            guestCount: booking?.guestCount != null ? String(booking.guestCount) : '',
+            specialRequest: booking?.specialRequest || '',
+          })
+        )
+        setShowGuestCount(
+          Boolean(infoResponse?.showGuestCount ?? booking?.isCateringBooking)
+        )
+        setStatusLabel(
+          infoResponse?.statusLabel ||
+            booking?.statusLabel ||
+            infoResponse?.status ||
+            booking?.status ||
+            ''
+        )
       } catch (err) {
         if (!cancelled) {
           setError(err?.message || 'Could not load the information form.')
@@ -84,7 +173,7 @@ export default function InfoCollection() {
     return () => {
       cancelled = true
     }
-  }, [bookingId, token])
+  }, [bookingId, sessionQuery.data?.user?.id, sessionQuery.data?.profile?.first_name])
 
   const setField = key => event => {
     const value = event?.target ? event.target.value : event
@@ -94,14 +183,21 @@ export default function InfoCollection() {
 
   const handleSubmit = async event => {
     event.preventDefault()
-    if (!bookingId || !token) return
+    if (!bookingId) return
+
+    const accessToken = (await getValidStoredJwt()) || token || getStoredJwt()
+    if (!accessToken) {
+      setError('Please log in again to submit this form.')
+      return
+    }
 
     setSaving(true)
     setError('')
     setSuccess('')
     try {
-      await bookingSubmitInfoCollection(token, bookingId, form)
+      await bookingSubmitInfoCollection(accessToken, bookingId, form)
       setSuccess('Thank you — your details were saved.')
+      setTimeout(() => navigate('/user-dashboard/active-booking'), 800)
     } catch (err) {
       setError(err?.message || 'Could not save your details. Please try again.')
     } finally {
@@ -122,7 +218,7 @@ export default function InfoCollection() {
     return <DashboardLoadingState title="Loading information form..." />
   }
 
-  if (error && !form.fullName && !form.eventDate) {
+  if (error && !form.fullName && !form.eventDate && !form.email) {
     return <DashboardErrorState title="We could not load this form." body={error} />
   }
 
@@ -263,11 +359,7 @@ export default function InfoCollection() {
           </div>
           <div>
             <FieldLabel label="Is there a lift in your building?" />
-            <select
-              value={form.hasLift}
-              onChange={setField('hasLift')}
-              className={inputClass()}
-            >
+            <select value={form.hasLift} onChange={setField('hasLift')} className={inputClass()}>
               <option value="">Select</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -344,7 +436,7 @@ export default function InfoCollection() {
             disabled={saving}
             className="rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white hover:bg-[#C6AB7F] disabled:opacity-60"
           >
-            {saving ? 'Saving...' : 'Submit / Proceed'}
+            {saving ? 'Saving...' : 'Submit'}
           </button>
           <button
             type="button"
