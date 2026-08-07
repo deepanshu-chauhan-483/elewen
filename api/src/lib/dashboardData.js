@@ -518,9 +518,19 @@ function mergeInfoCollectionMeta(base = emptyInfoCollectionMeta(), next = {}) {
 }
 
 function getBookingMetaFromNotes(notes = []) {
-  const visibleNotes = (Array.isArray(notes) ? notes : [])
-    .filter(note => note && note.isInternal !== true)
+  const allNotes = (Array.isArray(notes) ? notes : [])
+    .filter(note => note && String(note?.note ?? '').trim())
     .sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt))
+
+  // Prefer customer/checkout notes, but still read internal notes that look like checkout
+  // snapshots (in case older writes used the default isInternal=true).
+  const looksLikeCheckoutOrInfo = noteText =>
+    /Contact name:|Event address line 1:|\[INFO_COLLECTION\]|Checkout mode:/i.test(noteText)
+
+  const visibleNotes = allNotes.filter(note => {
+    if (note.isInternal !== true) return true
+    return looksLikeCheckoutOrInfo(String(note?.note ?? ''))
+  })
 
   let meta = emptyInfoCollectionMeta()
 

@@ -969,33 +969,6 @@ export default function CheckoutPage() {
           ? String(cart.eventDate).slice(0, 10)
           : new Date().toISOString().slice(0, 10)
 
-      let booking = draftBookingRef.current
-
-      if (!booking?.id) {
-        const bookingResponse = await bookingCreate(
-          token,
-          isSampleTastingCheckout
-            ? {
-                checkoutMode: 'sample-tasting',
-                eventDate: sampleBookingDate,
-                eventTime: sessionDetails.timeLabel || '',
-                guestCount: 1,
-              }
-            : {
-                eventTime: eventTime || '',
-                deliveryPincode: pinCode,
-              }
-        )
-        booking = bookingResponse?.booking
-        if (booking?.id) {
-          draftBookingRef.current = booking
-        }
-      }
-
-      if (!booking?.id) {
-        throw new Error('Booking could not be created.')
-      }
-
       const tastingPackagesNote =
         Array.isArray(location.state?.sampleTasteSelections) &&
         location.state.sampleTasteSelections.length
@@ -1043,6 +1016,36 @@ export default function CheckoutPage() {
             `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
           ].join('\n')
 
+      let booking = draftBookingRef.current
+
+      if (!booking?.id) {
+        const bookingResponse = await bookingCreate(
+          token,
+          isSampleTastingCheckout
+            ? {
+                checkoutMode: 'sample-tasting',
+                eventDate: sampleBookingDate,
+                eventTime: sessionDetails.timeLabel || '',
+                guestCount: 1,
+                checkoutNote: extraDetails,
+              }
+            : {
+                eventTime: eventTime || '',
+                deliveryPincode: pinCode,
+                checkoutNote: extraDetails,
+              }
+        )
+        booking = bookingResponse?.booking
+        if (booking?.id) {
+          draftBookingRef.current = booking
+        }
+      }
+
+      if (!booking?.id) {
+        throw new Error('Booking could not be created.')
+      }
+
+      // Keep a customer-visible note even if the booking was drafted earlier without one.
       await bookingAddNote(token, booking.id, { note: extraDetails }).catch(() => {})
 
       const orderResponse = await paymentCreateOrder(token, {
@@ -1202,23 +1205,6 @@ export default function CheckoutPage() {
         guestCount: resolvedGuestCount,
       })
 
-      let booking = draftBookingRef.current
-
-      if (!booking?.id) {
-        const bookingResponse = await bookingCreate(token, {
-          eventTime: eventTime || '',
-          deliveryPincode: pinCode,
-        })
-        booking = bookingResponse?.booking
-        if (booking?.id) {
-          draftBookingRef.current = booking
-        }
-      }
-
-      if (!booking?.id) {
-        throw new Error('Booking could not be created.')
-      }
-
       const extraDetails = [
         `Contact name: ${fullName.trim()}`,
         `Phone: ${phone.trim()}`,
@@ -1240,6 +1226,24 @@ export default function CheckoutPage() {
         `Selected items: ${cartItems.map(getCartItemNoteLabel).join(' | ') || 'Not provided'}`,
         'Payment method: Pay on delivery (Hookah COD)',
       ].join('\n')
+
+      let booking = draftBookingRef.current
+
+      if (!booking?.id) {
+        const bookingResponse = await bookingCreate(token, {
+          eventTime: eventTime || '',
+          deliveryPincode: pinCode,
+          checkoutNote: extraDetails,
+        })
+        booking = bookingResponse?.booking
+        if (booking?.id) {
+          draftBookingRef.current = booking
+        }
+      }
+
+      if (!booking?.id) {
+        throw new Error('Booking could not be created.')
+      }
 
       await bookingAddNote(token, booking.id, { note: extraDetails }).catch(() => {})
 

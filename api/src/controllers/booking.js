@@ -264,7 +264,7 @@ export async function ensureBookingTimeline(tx, booking) {
   )
 }
 
-// ─── Valid status transitions (customer-facing + system) ─────────────────────
+// ??? Valid status transitions (customer-facing + system) ?????????????????????
 const ALLOWED_TRANSITIONS = {
   new: ['confirmed', 'cancelled'],
   confirmed: ['info_collection', 'cancelled'],
@@ -277,7 +277,7 @@ const ALLOWED_TRANSITIONS = {
   cancelled: [],
 }
 
-// ─── Helper: fetch advance payment percentage from Strapi global settings ─────
+// ??? Helper: fetch advance payment percentage from Strapi global settings ?????
 const getAdvancePct = async () => {
   try {
     const { data } = await strapiServerGet('/api/global-setting')
@@ -287,11 +287,11 @@ const getAdvancePct = async () => {
   }
 }
 
-// ─── Helper: re-validate coupon before booking ────────────────────────────────
+// ??? Helper: re-validate coupon before booking ????????????????????????????????
 const validateCoupon = async (couponId, subtotal, userId, couponGrantId = null) =>
   resolveAppliedCoupon({ couponId, couponGrantId, userId, subtotal })
 
-// ─── POST /bookings ────────────────────────────────────────────────────────────
+// ??? POST /bookings ????????????????????????????????????????????????????????????
 // Creates a booking from the user's current cart.
 // Cart must have at least one item and eventDate + guestCount set.
 export const createBooking = async (req, res, next) => {
@@ -300,6 +300,8 @@ export const createBooking = async (req, res, next) => {
     const isSampleTastingCheckout = String(req.body?.checkoutMode ?? '').trim() === 'sample-tasting'
     const fallbackEventDate = req.body?.eventDate ? new Date(req.body.eventDate) : null
     const fallbackGuestCount = Number(req.body?.guestCount ?? 0)
+    const eventTime = String(req.body?.eventTime ?? '').trim().slice(0, 20)
+    const checkoutNote = String(req.body?.checkoutNote ?? req.body?.note ?? '').trim()
 
     const cart = await prisma.cart.findFirst({
       where: { userId },
@@ -314,7 +316,7 @@ export const createBooking = async (req, res, next) => {
     if (cartClassification.isMixedSheeshaCart) {
       return res.status(400).json({
         error:
-          'Hookah needs a separate booking — it can’t be combined with other services in the same cart.',
+          'Hookah needs a separate booking � it can�t be combined with other services in the same cart.',
         code: 'MIXED_SHEESHA_CART',
       })
     }
@@ -329,10 +331,10 @@ export const createBooking = async (req, res, next) => {
       cart.guestCount ?? (isSampleTastingCheckout ? Math.max(1, fallbackGuestCount || 1) : null)
 
     if (!resolvedEventDate) {
-      return res.status(400).json({ error: 'Event date is required — update your cart first' })
+      return res.status(400).json({ error: 'Event date is required � update your cart first' })
     }
     if (!resolvedGuestCount) {
-      return res.status(400).json({ error: 'Guest count is required — update your cart first' })
+      return res.status(400).json({ error: 'Guest count is required � update your cart first' })
     }
 
     // Use packageId from the first cart item (primary package)
@@ -346,7 +348,7 @@ export const createBooking = async (req, res, next) => {
 
     const subtotal = pricedCart ? Number(pricedCart.subtotal) : Number(cart.subtotal)
 
-    // Re-validate coupon (race condition protection — someone else may have exhausted it)
+    // Re-validate coupon (race condition protection � someone else may have exhausted it)
     let discountAmount = 0
     let validCouponId = null
     let validCouponGrantId = null
@@ -367,7 +369,7 @@ export const createBooking = async (req, res, next) => {
     const totalPrice = Math.max(0, subtotal - discountAmount)
 
     // Fetch advance payment percentage from global settings
-    // Hookah-only COD: no advance — full amount due on delivery.
+    // Hookah-only COD: no advance � full amount due on delivery.
     const advancePct = isSheeshaOnlyBooking ? 0 : await getAdvancePct()
     const advanceAmount = (totalPrice * advancePct) / 100
     const remainingAmount = totalPrice - advanceAmount
@@ -379,6 +381,7 @@ export const createBooking = async (req, res, next) => {
           userId,
           packageId,
           eventDate: resolvedEventDate,
+          ...(eventTime ? { eventTime } : {}),
           guestCount: resolvedGuestCount,
           status: 'new',
           totalPrice: totalPrice.toFixed(2),
@@ -404,6 +407,18 @@ export const createBooking = async (req, res, next) => {
             typeof item.totalPrice === 'number' ? item.totalPrice.toFixed(2) : item.totalPrice,
         })),
       })
+
+      // Persist checkout form details with the booking so info-collection can prefill later.
+      if (checkoutNote) {
+        await tx.bookingNote.create({
+          data: {
+            bookingId: newBooking.id,
+            adminId: userId,
+            note: checkoutNote,
+            isInternal: false,
+          },
+        })
+      }
 
       // Initial status log
       await tx.bookingStatusLog.create({
@@ -474,7 +489,7 @@ export const createBooking = async (req, res, next) => {
       return newBooking
     })
 
-    // Increment coupon used_count in Strapi (outside transaction — non-critical)
+    // Increment coupon used_count in Strapi (outside transaction � non-critical)
     if (validCouponId) {
       try {
         const { data: coupons } = await strapiGet('/coupons', {
@@ -496,7 +511,7 @@ export const createBooking = async (req, res, next) => {
           })
         }
       } catch {
-        // Non-critical — coupon usage still recorded in coupon_usage table
+        // Non-critical � coupon usage still recorded in coupon_usage table
       }
     }
 
@@ -509,7 +524,7 @@ export const createBooking = async (req, res, next) => {
       },
     })
 
-    // Fire-and-forget notifications — never block the response
+    // Fire-and-forget notifications � never block the response
     notify(userId, {
       type: 'booking_update',
       title: 'Booking Placed',
@@ -538,7 +553,7 @@ export const createBooking = async (req, res, next) => {
   }
 }
 
-// ─── GET /bookings ─────────────────────────────────────────────────────────────
+// ??? GET /bookings ?????????????????????????????????????????????????????????????
 export const listBookings = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -613,7 +628,7 @@ export const listBookings = async (req, res, next) => {
   }
 }
 
-// ─── GET /bookings/:id ─────────────────────────────────────────────────────────
+// ??? GET /bookings/:id ?????????????????????????????????????????????????????????
 export const getBooking = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -651,9 +666,9 @@ export const getBooking = async (req, res, next) => {
   }
 }
 
-// ─── PATCH /bookings/:id/status ────────────────────────────────────────────────
+// ??? PATCH /bookings/:id/status ????????????????????????????????????????????????
 // Enforces state machine transitions. Customers can only cancel.
-// Full admin transitions are handled here too — role check can be layered later.
+// Full admin transitions are handled here too � role check can be layered later.
 export const updateStatus = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -758,7 +773,7 @@ export const updateStatus = async (req, res, next) => {
   }
 }
 
-// ─── POST /bookings/:id/cancel ─────────────────────────────────────────────────
+// ??? POST /bookings/:id/cancel ?????????????????????????????????????????????????
 export const cancelBooking = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -924,7 +939,7 @@ export const cancelBooking = async (req, res, next) => {
   }
 }
 
-// ─── POST /bookings/:id/timeline ───────────────────────────────────────────────
+// ??? POST /bookings/:id/timeline ???????????????????????????????????????????????
 export const addTimeline = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -953,7 +968,7 @@ export const addTimeline = async (req, res, next) => {
   }
 }
 
-// ─── GET /bookings/:id/timeline ────────────────────────────────────────────────
+// ??? GET /bookings/:id/timeline ????????????????????????????????????????????????
 export const getTimeline = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -1003,7 +1018,7 @@ export const getTimeline = async (req, res, next) => {
   }
 }
 
-// ─── POST /bookings/:id/notes ──────────────────────────────────────────────────
+// ??? POST /bookings/:id/notes ??????????????????????????????????????????????????
 // Customers submit a note (isInternal: false). Admin notes set isInternal: true.
 export const addNote = async (req, res, next) => {
   try {
@@ -1032,7 +1047,7 @@ export const addNote = async (req, res, next) => {
   }
 }
 
-// ─── GET /bookings/:id/notes ───────────────────────────────────────────────────
+// ??? GET /bookings/:id/notes ???????????????????????????????????????????????????
 // Customers see only non-internal notes.
 export const getNotes = async (req, res, next) => {
   try {
@@ -1093,11 +1108,26 @@ function toDateInputValue(value) {
   const raw = String(value ?? '').trim()
   if (!raw || /^not provided$/i.test(raw)) return ''
   if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10)
+
+  const parsedMs = Date.parse(raw)
+  if (!Number.isNaN(parsedMs)) {
+    const date = new Date(parsedMs)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+      date.getDate()
+    ).padStart(2, '0')}`
+  }
+
+  const dmy = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/)
+  if (dmy) {
+    const day = String(Number(dmy[1])).padStart(2, '0')
+    const month = String(Number(dmy[2])).padStart(2, '0')
+    return `${dmy[3]}-${month}-${day}`
+  }
+
   const parsed = toOptionalDateOnly(raw)
   return parsed ? parsed.toISOString().slice(0, 10) : ''
 }
 
-/** Normalize times like "1:30", "01:30:00", "1:30 PM" → HH:MM for time inputs. */
 function toTimeInputValue(value) {
   const raw = String(value ?? '').trim()
   if (!raw || /^not provided$/i.test(raw)) return ''
@@ -1113,6 +1143,14 @@ function toTimeInputValue(value) {
     if (meridiem === 'pm' && hours < 12) hours += 12
     if (meridiem === 'am' && hours === 12) hours = 0
     return `${String(hours).padStart(2, '0')}:${minutes}`
+  }
+  const matchHourOnly = raw.match(/^(\d{1,2})\s*(am|pm)$/i)
+  if (matchHourOnly) {
+    let hours = Number(matchHourOnly[1])
+    const meridiem = matchHourOnly[2].toLowerCase()
+    if (meridiem === 'pm' && hours < 12) hours += 12
+    if (meridiem === 'am' && hours === 12) hours = 0
+    return `${String(hours).padStart(2, '0')}:00`
   }
   return ''
 }
@@ -1146,7 +1184,7 @@ function readInfoCollectionForm(body = {}) {
   }
 }
 
-// ─── GET /bookings/:id/info-collection ─────────────────────────────────────────
+// ??? GET /bookings/:id/info-collection ?????????????????????????????????????????
 export const getInfoCollection = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -1156,9 +1194,9 @@ export const getInfoCollection = async (req, res, next) => {
       where: { id },
       include: {
         items: true,
+        // Load every note � checkout snapshots may exist with either visibility flag.
         notes: {
-          where: { isInternal: false },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: 'asc' },
         },
         statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
         payments: { orderBy: { createdAt: 'desc' } },
@@ -1176,6 +1214,7 @@ export const getInfoCollection = async (req, res, next) => {
     const eventDateValue =
       toDateInputValue(info.eventDate) ||
       (booking.eventDate ? new Date(booking.eventDate).toISOString().slice(0, 10) : '')
+    const address = enriched?.address ?? null
 
     res.json({
       bookingId: booking.id,
@@ -1190,16 +1229,17 @@ export const getInfoCollection = async (req, res, next) => {
         phone: cleanFormText(info.phone) || profile?.phone || '',
         eventDate: eventDateValue,
         eventTime: toTimeInputValue(info.eventTime) || toTimeInputValue(booking.eventTime) || '',
-        addressLine1: cleanFormText(info.addressLine1),
-        addressLine2: cleanFormText(info.addressLine2),
+        addressLine1: cleanFormText(info.addressLine1) || cleanFormText(address?.line1),
+        addressLine2: cleanFormText(info.addressLine2) || cleanFormText(address?.line2),
         addressFloor: cleanFormText(info.addressFloor),
-        eventAddress: cleanFormText(info.eventAddress),
-        pinCode: cleanFormText(info.pinCode),
+        eventAddress: cleanFormText(info.eventAddress) || cleanFormText(address?.summary),
+        pinCode: cleanFormText(info.pinCode) || cleanFormText(address?.pincode),
         hasLift: cleanFormText(info.hasLift),
         guestCount:
           cleanFormText(info.guestCount) ||
           (booking.guestCount != null ? String(booking.guestCount) : ''),
-        setupArrivalTime: toTimeInputValue(info.setupArrivalTime) || cleanFormText(info.setupArrivalTime),
+        setupArrivalTime:
+          toTimeInputValue(info.setupArrivalTime) || cleanFormText(info.setupArrivalTime),
         eventDayContactName: cleanFormText(info.eventDayContactName),
         eventDayContactPhone: cleanFormText(info.eventDayContactPhone),
         parkingInstructions: cleanFormText(info.parkingInstructions),
@@ -1211,8 +1251,8 @@ export const getInfoCollection = async (req, res, next) => {
   }
 }
 
-// ─── PUT /bookings/:id/info-collection ─────────────────────────────────────────
-// No fields are mandatory — customer can submit whatever they have.
+// ??? PUT /bookings/:id/info-collection ?????????????????????????????????????????
+// No fields are mandatory � customer can submit whatever they have.
 export const submitInfoCollection = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -1281,7 +1321,7 @@ export const submitInfoCollection = async (req, res, next) => {
   }
 }
 
-// ─── POST /bookings/:id/files ──────────────────────────────────────────────────
+// ??? POST /bookings/:id/files ??????????????????????????????????????????????????
 // Client pre-uploads to Strapi/Cloudinary and passes back the URL.
 export const addFile = async (req, res, next) => {
   try {
@@ -1315,7 +1355,7 @@ export const addFile = async (req, res, next) => {
   }
 }
 
-// ─── POST /bookings/:id/confirm-cod ───────────────────────────────────────────
+// ??? POST /bookings/:id/confirm-cod ???????????????????????????????????????????
 // Hookah-only pay-on-delivery confirmation. Never calls Cashfree.
 export const confirmCodBooking = async (req, res, next) => {
   try {
@@ -1423,7 +1463,7 @@ export const confirmCodBooking = async (req, res, next) => {
   }
 }
 
-// ─── GET /bookings/:id/files ───────────────────────────────────────────────────
+// ??? GET /bookings/:id/files ???????????????????????????????????????????????????
 export const getFiles = async (req, res, next) => {
   try {
     const userId = String(req.user.id)

@@ -103,7 +103,7 @@ export default function InfoCollection() {
     setSuccess('')
     try {
       await bookingSubmitInfoCollection(token, bookingId, form)
-      setSuccess('Thank you — your details were saved. Let it all come together!!')
+      setSuccess('Thank you — your details were saved.')
       setCanEdit(true)
     } catch (err) {
       setError(err?.message || 'Could not save your details. Please try again.')
@@ -386,8 +386,6 @@ export default function InfoCollection() {
             required.
           </p>
         )}
-
-        <p className="mt-6 text-center text-[14px] text-[#957960]">Let it all come together!!</p>
       </form>
     </div>
   )

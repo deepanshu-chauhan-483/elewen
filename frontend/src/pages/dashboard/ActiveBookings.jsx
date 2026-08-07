@@ -175,18 +175,6 @@ function BookingCard({ booking, session }) {
           </div>
 
           <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p>
-
-          {needsInfoCollection ? (
-            <div className="mt-3">
-              <Link
-                to={infoCollectionHref}
-                onClick={event => event.stopPropagation()}
-                className="inline-flex rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
-              >
-                Fill information
-              </Link>
-            </div>
-          ) : null}
         </div>
 
         <div className="hidden shrink-0 items-start gap-3 md:flex">
@@ -242,9 +230,20 @@ function BookingCard({ booking, session }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-sm">
-        <CalendarIcon />
-        <span>{formatDashboardDate(booking?.eventDate)}</span>
+      <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+        <div className="flex min-w-0 items-center gap-2">
+          <CalendarIcon />
+          <span>{formatDashboardDate(booking?.eventDate)}</span>
+        </div>
+        {needsInfoCollection ? (
+          <Link
+            to={infoCollectionHref}
+            onClick={event => event.stopPropagation()}
+            className="shrink-0 rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
+          >
+            Fill information
+          </Link>
+        ) : null}
       </div>
 
       {open ? (
