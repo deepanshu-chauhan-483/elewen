@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   EmptyState,
   ErrorState,
@@ -453,9 +453,11 @@ function RefundRow({ refund, processRefundMutation }) {
   )
 }
 
-function CustomerPayments({ processRefundMutation }) {
+function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
   const navigate = useNavigate()
-  const [tab, setTab] = useState('today')
+  const [tab, setTab] = useState(
+    customerTabs.some(item => item.key === initialTab) ? initialTab : 'today'
+  )
   const [currentPage, setCurrentPage] = useState(1)
   const workspaceQuery = useAdminPaymentWorkspace({
     customerTab: tab,
@@ -1670,7 +1672,18 @@ const mainSections = [
 // Page
 // ---------------------------------------------------------------------------
 export default function PaymentManagementPage() {
-  const [section, setSection] = useState('customer')
+  const [searchParams] = useSearchParams()
+  const sectionParam = String(searchParams.get('section') ?? '').trim()
+  const tabParam = String(searchParams.get('tab') ?? '').trim()
+  const [section, setSection] = useState(
+    mainSections.some(item => item.key === sectionParam) ? sectionParam : 'customer'
+  )
+
+  useEffect(() => {
+    if (mainSections.some(item => item.key === sectionParam)) {
+      setSection(sectionParam)
+    }
+  }, [sectionParam])
 
   const workspaceQuery = useAdminPaymentWorkspace()
   const settingsQuery = useAdminSettings()
@@ -1745,7 +1758,11 @@ export default function PaymentManagementPage() {
       {/* ── Content area ── */}
       <div>
         {section === 'customer' && (
-          <CustomerPayments processRefundMutation={processRefundMutation} />
+          <CustomerPayments
+            key={`customer-${tabParam || 'today'}`}
+            processRefundMutation={processRefundMutation}
+            initialTab={tabParam}
+          />
         )}
 
         {section === 'vendor' && (

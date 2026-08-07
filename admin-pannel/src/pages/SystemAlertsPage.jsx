@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   ErrorState,
   LoadingState,
@@ -193,11 +193,51 @@ function getTriggerReason(alert) {
 }
 
 function getActionRoute(alert) {
-  const type = String(alert.relatedEntityType ?? '').toLowerCase()
-  if (type === 'booking') return '/bookings'
-  if (type === 'payment') return '/payments'
+  const type = String(alert.relatedEntityType ?? '')
+    .toLowerCase()
+    .trim()
+  const alertType = String(alert.alertType ?? '')
+    .toLowerCase()
+    .trim()
+  const metadata = alert.metadata && typeof alert.metadata === 'object' ? alert.metadata : {}
+  const bookingId =
+    metadata.bookingId != null && String(metadata.bookingId).trim()
+      ? String(metadata.bookingId).trim()
+      : type === 'booking' && alert.relatedEntityId
+        ? String(alert.relatedEntityId)
+        : ''
+
+  if (type === 'booking' || ['booking_cancelled', 'vendor_unassigned'].includes(alertType)) {
+    return bookingId
+      ? `/bookings?open=${encodeURIComponent(bookingId)}&bucket=live`
+      : '/bookings'
+  }
+
+  if (type === 'payment' || alertType.includes('payment') || alertType.includes('refund')) {
+    if (alertType.includes('refund')) return '/payments?section=refunds'
+    if (alertType === 'failed_payment') return '/payments?section=customer&tab=failed'
+    return '/payments?section=customer'
+  }
+
   if (type === 'vendor') return '/vendors'
   return null
+}
+
+function getActionLabel(alert) {
+  const type = String(alert.relatedEntityType ?? '')
+    .toLowerCase()
+    .trim()
+  const alertType = String(alert.alertType ?? '')
+    .toLowerCase()
+    .trim()
+  if (type === 'payment' || alertType.includes('payment') || alertType.includes('refund')) {
+    return 'Payment'
+  }
+  if (type === 'vendor') return 'Vendor'
+  if (type === 'booking' || ['booking_cancelled', 'vendor_unassigned'].includes(alertType)) {
+    return 'Booking'
+  }
+  return sentenceCase(alert.relatedEntityType || 'Details')
 }
 
 // function SummaryCard({ label, value, helper, tone = 'neutral' }) {
@@ -249,7 +289,7 @@ function SummaryCard({ label, value, helper }) {
   )
 }
 
-function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
+function AlertDetailPanel({ alert, onClose, onUpdate, isBusy }) {
   const [renderedAlert, setRenderedAlert] = useState(alert)
   const [isPanelVisible, setIsPanelVisible] = useState(false)
 
@@ -378,9 +418,16 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {route ? (
-              <GhostBtn onClick={() => onNavigate(route)}>
-                Go to {sentenceCase(renderedAlert.relatedEntityType)}
-              </GhostBtn>
+              <Link
+                to={route}
+                onClick={event => {
+                  event.stopPropagation()
+                  onClose()
+                }}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-[#CDB17E] bg-[#FFFFFF] px-5 text-sm text-[#CDB17E] hover:bg-[#FAF6F1]"
+              >
+                Go to {getActionLabel(renderedAlert)}
+              </Link>
             ) : null}
             {renderedAlert.status !== 'acknowledged' ? (
               <GhostBtn
@@ -416,7 +463,6 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy, onNavigate }) {
 }
 
 export default function SystemAlertsPage() {
-  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [severity, setSeverity] = useState('')
@@ -715,7 +761,6 @@ export default function SystemAlertsPage() {
         alert={selectedAlert}
         isBusy={updateAlertMutation.isPending}
         onClose={() => setSelectedAlertId(null)}
-        onNavigate={route => navigate(route)}
         onUpdate={handleUpdate}
       />
     </div>
