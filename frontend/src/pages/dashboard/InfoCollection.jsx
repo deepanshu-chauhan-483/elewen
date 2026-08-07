@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DashboardErrorState,
@@ -12,14 +12,22 @@ import {
   getStoredJwt,
   getValidStoredJwt,
 } from '../../lib/api'
+import { validateInfoCollectionForm } from '../../lib/contactValidation'
 import DateTimePicker from '../../components/common/DateTimePicker'
 
 function FieldLabel({ label }) {
   return <p className="text-[12px] text-[#7A7A7A]">{label}</p>
 }
 
-function inputClass() {
-  return 'w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none'
+function FieldError({ message }) {
+  if (!message) return null
+  return <p className="mt-1 text-sm text-[#B42318]">{message}</p>
+}
+
+function inputClass(hasError = false) {
+  return `w-full border-b bg-transparent pb-[6px] text-[16px] outline-none ${
+    hasError ? 'border-[#B42318]' : 'border-[#2D2D2D]'
+  }`
 }
 
 function pickerClass() {
@@ -44,6 +52,8 @@ const EMPTY_FORM = {
   parkingInstructions: '',
   specialRequest: '',
 }
+
+const FORMAT_FIELD_ORDER = ['email', 'phone', 'pinCode', 'eventDayContactPhone']
 
 function toDateValue(value) {
   const raw = String(value ?? '').trim()
@@ -83,9 +93,11 @@ export default function InfoCollection() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [showGuestCount, setShowGuestCount] = useState(false)
   const [statusLabel, setStatusLabel] = useState('')
   const [form, setForm] = useState(EMPTY_FORM)
+  const fieldRefs = useRef({})
 
   useEffect(() => {
     let active = true
@@ -178,12 +190,38 @@ export default function InfoCollection() {
   const setField = key => event => {
     const value = event?.target ? event.target.value : event
     setForm(prev => ({ ...prev, [key]: value }))
+    setFieldErrors(prev => {
+      if (!prev[key]) return prev
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
     setSuccess('')
   }
 
   const handleSubmit = async event => {
     event.preventDefault()
     if (!bookingId) return
+
+    const nextFieldErrors = validateInfoCollectionForm(form)
+    setFieldErrors(nextFieldErrors)
+
+    const firstInvalid = FORMAT_FIELD_ORDER.find(key => nextFieldErrors[key])
+    if (firstInvalid) {
+      setError('Please fix the highlighted fields before submitting.')
+      const node = fieldRefs.current[firstInvalid]
+      if (node?.scrollIntoView) {
+        node.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      if (typeof node?.focus === 'function') {
+        try {
+          node.focus({ preventScroll: true })
+        } catch {
+          node.focus()
+        }
+      }
+      return
+    }
 
     const accessToken = (await getValidStoredJwt()) || token || getStoredJwt()
     if (!accessToken) {
@@ -250,6 +288,7 @@ export default function InfoCollection() {
 
       <form
         onSubmit={handleSubmit}
+        noValidate
         className="rounded-[20px] border border-[#95796066] bg-white p-6 md:p-8"
       >
         <h2
@@ -271,23 +310,27 @@ export default function InfoCollection() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div>
+            <div ref={node => (fieldRefs.current.email = node)}>
               <FieldLabel label="Email Address" />
               <input
                 type="email"
                 value={form.email}
                 onChange={setField('email')}
-                className={inputClass()}
+                className={inputClass(Boolean(fieldErrors.email))}
+                aria-invalid={Boolean(fieldErrors.email)}
               />
+              <FieldError message={fieldErrors.email} />
             </div>
-            <div>
+            <div ref={node => (fieldRefs.current.phone = node)}>
               <FieldLabel label="Phone Number" />
               <input
                 type="tel"
                 value={form.phone}
                 onChange={setField('phone')}
-                className={inputClass()}
+                className={inputClass(Boolean(fieldErrors.phone))}
+                aria-invalid={Boolean(fieldErrors.phone)}
               />
+              <FieldError message={fieldErrors.phone} />
             </div>
           </div>
         </div>
@@ -346,16 +389,20 @@ export default function InfoCollection() {
               className={inputClass()}
             />
           </div>
-          <div>
+          <div ref={node => (fieldRefs.current.pinCode = node)}>
             <FieldLabel label="PIN Code" />
             <input
               type="text"
               inputMode="numeric"
               maxLength={6}
               value={form.pinCode}
-              onChange={event => setField('pinCode')(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              className={inputClass()}
+              onChange={event =>
+                setField('pinCode')(event.target.value.replace(/\D/g, '').slice(0, 6))
+              }
+              className={inputClass(Boolean(fieldErrors.pinCode))}
+              aria-invalid={Boolean(fieldErrors.pinCode)}
             />
+            <FieldError message={fieldErrors.pinCode} />
           </div>
           <div>
             <FieldLabel label="Is there a lift in your building?" />
@@ -398,14 +445,16 @@ export default function InfoCollection() {
               className={inputClass()}
             />
           </div>
-          <div>
+          <div ref={node => (fieldRefs.current.eventDayContactPhone = node)}>
             <FieldLabel label="Event-day contact mobile number" />
             <input
               type="tel"
               value={form.eventDayContactPhone}
               onChange={setField('eventDayContactPhone')}
-              className={inputClass()}
+              className={inputClass(Boolean(fieldErrors.eventDayContactPhone))}
+              aria-invalid={Boolean(fieldErrors.eventDayContactPhone)}
             />
+            <FieldError message={fieldErrors.eventDayContactPhone} />
           </div>
           <div className="md:col-span-2">
             <FieldLabel label="Parking or loading instructions (if applicable)" />
@@ -448,7 +497,7 @@ export default function InfoCollection() {
         </div>
         <p className="mt-3 text-sm text-[#7A7A7A]">
           Checkout details are filled when available. Add only what is still missing — nothing is
-          required.
+          required. Email, phone, and PIN are checked only if you enter them.
         </p>
       </form>
     </div>

@@ -50,3 +50,34 @@ export function validateCheckoutEventDetails({ eventDate, eventTime, addressLine
 
   return errors
 }
+
+export function isValidIndianPinCode(value) {
+  return /^\d{6}$/.test(String(value ?? '').trim())
+}
+
+/**
+ * Info-collection: nothing is required.
+ * Only validate format when the customer typed a value.
+ */
+export function validateInfoCollectionForm(form = {}) {
+  const errors = {}
+  const email = String(form.email ?? '').trim()
+  const phone = String(form.phone ?? '').trim()
+  const pinCode = String(form.pinCode ?? '').trim()
+  const eventDayContactPhone = String(form.eventDayContactPhone ?? '').trim()
+
+  if (email && !isValidEmail(email)) {
+    errors.email = 'Enter a valid email address.'
+  }
+  if (phone && !isValidRequiredIndianPhone(phone)) {
+    errors.phone = 'Enter a valid 10-digit Indian phone number.'
+  }
+  if (pinCode && !isValidIndianPinCode(pinCode)) {
+    errors.pinCode = 'Enter a valid 6-digit PIN code.'
+  }
+  if (eventDayContactPhone && !isValidRequiredIndianPhone(eventDayContactPhone)) {
+    errors.eventDayContactPhone = 'Enter a valid 10-digit Indian phone number.'
+  }
+
+  return errors
+}
