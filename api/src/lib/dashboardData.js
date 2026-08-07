@@ -517,7 +517,7 @@ function mergeInfoCollectionMeta(base = emptyInfoCollectionMeta(), next = {}) {
   return merged
 }
 
-function getBookingMetaFromNotes(notes = []) {
+export function getBookingMetaFromNotes(notes = []) {
   const allNotes = (Array.isArray(notes) ? notes : [])
     .filter(note => note && String(note?.note ?? '').trim())
     .sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt))

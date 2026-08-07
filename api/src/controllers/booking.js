@@ -3,7 +3,7 @@ import { computeCartItemsWithDeliveryCharges } from '../lib/deliveryChargePricin
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify } from '../lib/notify.js'
 import { resolveAppliedCoupon } from '../lib/coupons.js'
-import { enrichBookings, filterBookingsByType, buildInfoCollectionNote } from '../lib/dashboardData.js'
+import { enrichBookings, filterBookingsByType, buildInfoCollectionNote, getBookingMetaFromNotes } from '../lib/dashboardData.js'
 import { createOperationalAlert } from '../lib/alerts.js'
 import {
   calculateBookingRefundPreview,
@@ -1041,6 +1041,16 @@ export const addNote = async (req, res, next) => {
       },
     })
 
+    // If this is a checkout snapshot, keep eventTime on the booking for form prefill.
+    const meta = getBookingMetaFromNotes([entry])
+    const nextEventTime = toTimeInputValue(meta.eventTime)
+    if (nextEventTime) {
+      await prisma.booking.update({
+        where: { id },
+        data: { eventTime: nextEventTime.slice(0, 20) },
+      })
+    }
+
     res.status(201).json({ note: entry })
   } catch (err) {
     next(err)
@@ -1105,6 +1115,12 @@ function toOptionalDateOnly(value) {
 
 /** Normalize checkout / note values into YYYY-MM-DD for date inputs. */
 function toDateInputValue(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, '0')}-${String(
+      value.getUTCDate()
+    ).padStart(2, '0')}`
+  }
+
   const raw = String(value ?? '').trim()
   if (!raw || /^not provided$/i.test(raw)) return ''
   if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10)
@@ -1208,13 +1224,24 @@ export const getInfoCollection = async (req, res, next) => {
 
     const [enriched] = await enrichBookings([booking])
     const profile = await loadCustomerProfile(userId)
-    const info = enriched?.infoCollection ?? {}
+    // Parse checkout notes directly so prefill does not depend only on enrich shape.
+    const noteMeta = getBookingMetaFromNotes(booking.notes)
+    const info = {
+      ...(enriched?.infoCollection ?? {}),
+      ...Object.fromEntries(
+        Object.entries(noteMeta).filter(([, value]) => cleanFormText(value))
+      ),
+    }
     const status = String(booking.status ?? '').toLowerCase()
     const canEdit = status === 'info_collection'
     const eventDateValue =
       toDateInputValue(info.eventDate) ||
-      (booking.eventDate ? new Date(booking.eventDate).toISOString().slice(0, 10) : '')
+      toDateInputValue(booking.eventDate) ||
+      ''
     const address = enriched?.address ?? null
+    const checkoutNotesCount = (booking.notes ?? []).filter(note =>
+      /Contact name:|Event address line 1:|\[INFO_COLLECTION\]/i.test(String(note?.note ?? ''))
+    ).length
 
     res.json({
       bookingId: booking.id,
@@ -1223,6 +1250,7 @@ export const getInfoCollection = async (req, res, next) => {
       infoStatus: booking.infoStatus,
       canEdit,
       showGuestCount: Boolean(enriched?.isCateringBooking),
+      checkoutNotesCount,
       form: {
         fullName: cleanFormText(info.fullName) || profile?.fullName || '',
         email: cleanFormText(info.email) || profile?.email || '',
