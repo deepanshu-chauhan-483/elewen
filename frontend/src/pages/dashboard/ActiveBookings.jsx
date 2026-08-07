@@ -203,16 +203,6 @@ function BookingCard({ booking, session }) {
                 Download Receipt
               </button>
 
-              {needsInfoCollection ? (
-                <Link
-                  to={infoCollectionHref}
-                  className="rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
-                  onClick={event => event.stopPropagation()}
-                >
-                  Fill information
-                </Link>
-              ) : null}
-
               <Link
                 to={`/user-dashboard/details?bookingId=${booking.id}`}
                 className="flex items-center rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-sm text-white"
@@ -237,29 +227,19 @@ function BookingCard({ booking, session }) {
                 <CloseToggleIcon />
               </button>
             </>
-          ) : needsInfoCollection ? (
-            <Link
-              to={infoCollectionHref}
-              onClick={event => event.stopPropagation()}
-              className="rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
-            >
-              Fill information
-            </Link>
-          ) : null}
+          ) : (
+            <div className="mt-2 flex shrink-0 gap-[24px] text-sm md:gap-[32px]">
+              <div className="flex flex-col">
+                <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
+                <p className="font-medium">{amountPaid}</p>
+              </div>
+              <div className="flex flex-col">
+                <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
+                <p className="font-medium">{amountDue}</p>
+              </div>
+            </div>
+          )}
         </div>
-
-        {!open && !needsInfoCollection ? (
-          <div className="mt-2 hidden shrink-0 gap-[24px] text-sm md:flex md:gap-[32px]">
-            <div className="flex flex-col">
-              <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
-              <p className="font-medium">{amountPaid}</p>
-            </div>
-            <div className="flex flex-col">
-              <p className="text-[11px] text-[#767676]">REMAINING BALANCE</p>
-              <p className="font-medium">{amountDue}</p>
-            </div>
-          </div>
-        ) : null}
       </div>
 
       <div className="mt-4 flex items-center gap-2 text-sm">
@@ -269,15 +249,6 @@ function BookingCard({ booking, session }) {
 
       {open ? (
         <div className="mt-6 flex flex-wrap justify-end gap-3 md:hidden">
-          {needsInfoCollection ? (
-            <Link
-              to={infoCollectionHref}
-              className="rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white"
-              onClick={event => event.stopPropagation()}
-            >
-              Fill information
-            </Link>
-          ) : null}
           <Link
             to={`/user-dashboard/details?bookingId=${booking.id}`}
             className="flex items-center rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white"
@@ -288,16 +259,6 @@ function BookingCard({ booking, session }) {
             <span className="pl-3">
               <DetailsArrowIcon />
             </span>
-          </Link>
-        </div>
-      ) : needsInfoCollection ? (
-        <div className="mt-4 md:hidden">
-          <Link
-            to={infoCollectionHref}
-            onClick={event => event.stopPropagation()}
-            className="inline-flex rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white"
-          >
-            Fill information
           </Link>
         </div>
       ) : null}
@@ -362,27 +323,9 @@ function BookingCard({ booking, session }) {
                 {getNextStepText(booking)}
               </span>
             </div>
-            {needsInfoCollection ? (
-              <Link
-                to={infoCollectionHref}
-                onClick={event => event.stopPropagation()}
-                className="mt-2 rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
-              >
-                Open information form
-              </Link>
-            ) : null}
           </div>
 
           <div className="mt-6 flex flex-wrap justify-end gap-3 md:hidden">
-            {needsInfoCollection ? (
-              <Link
-                to={infoCollectionHref}
-                onClick={event => event.stopPropagation()}
-                className="rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white"
-              >
-                Fill information
-              </Link>
-            ) : null}
             <button
               type="button"
               onClick={event => {

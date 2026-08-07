@@ -1088,6 +1088,41 @@ function toOptionalDateOnly(value) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
 }
 
+/** Normalize checkout / note values into YYYY-MM-DD for date inputs. */
+function toDateInputValue(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw || /^not provided$/i.test(raw)) return ''
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10)
+  const parsed = toOptionalDateOnly(raw)
+  return parsed ? parsed.toISOString().slice(0, 10) : ''
+}
+
+/** Normalize times like "1:30", "01:30:00", "1:30 PM" → HH:MM for time inputs. */
+function toTimeInputValue(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw || /^not provided$/i.test(raw)) return ''
+  const match24 = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
+  if (match24) {
+    return `${String(Number(match24[1])).padStart(2, '0')}:${match24[2]}`
+  }
+  const match12 = raw.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i)
+  if (match12) {
+    let hours = Number(match12[1])
+    const minutes = match12[2]
+    const meridiem = match12[3].toLowerCase()
+    if (meridiem === 'pm' && hours < 12) hours += 12
+    if (meridiem === 'am' && hours === 12) hours = 0
+    return `${String(hours).padStart(2, '0')}:${minutes}`
+  }
+  return ''
+}
+
+function cleanFormText(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw || /^not provided$/i.test(raw)) return ''
+  return raw
+}
+
 function readInfoCollectionForm(body = {}) {
   const read = key => String(body?.[key] ?? '').trim()
   return {
@@ -1136,35 +1171,39 @@ export const getInfoCollection = async (req, res, next) => {
     const [enriched] = await enrichBookings([booking])
     const profile = await loadCustomerProfile(userId)
     const info = enriched?.infoCollection ?? {}
-    const eventDateValue = booking.eventDate
-      ? new Date(booking.eventDate).toISOString().slice(0, 10)
-      : ''
+    const status = String(booking.status ?? '').toLowerCase()
+    const canEdit = status === 'info_collection'
+    const eventDateValue =
+      toDateInputValue(info.eventDate) ||
+      (booking.eventDate ? new Date(booking.eventDate).toISOString().slice(0, 10) : '')
 
     res.json({
       bookingId: booking.id,
       status: booking.status,
       statusLabel: enriched?.statusLabel ?? booking.status,
       infoStatus: booking.infoStatus,
-      canEdit: String(booking.status).toLowerCase() === 'info_collection',
+      canEdit,
       showGuestCount: Boolean(enriched?.isCateringBooking),
       form: {
-        fullName: info.fullName || profile?.fullName || '',
-        email: info.email || profile?.email || '',
-        phone: info.phone || profile?.phone || '',
-        eventDate: info.eventDate || eventDateValue,
-        eventTime: info.eventTime || '',
-        addressLine1: info.addressLine1 || '',
-        addressLine2: info.addressLine2 || '',
-        addressFloor: info.addressFloor || '',
-        eventAddress: info.eventAddress || '',
-        pinCode: info.pinCode || '',
-        hasLift: info.hasLift || '',
-        guestCount: info.guestCount || '',
-        setupArrivalTime: info.setupArrivalTime || '',
-        eventDayContactName: info.eventDayContactName || '',
-        eventDayContactPhone: info.eventDayContactPhone || '',
-        parkingInstructions: info.parkingInstructions || '',
-        specialRequest: info.specialRequest || '',
+        fullName: cleanFormText(info.fullName) || profile?.fullName || '',
+        email: cleanFormText(info.email) || profile?.email || '',
+        phone: cleanFormText(info.phone) || profile?.phone || '',
+        eventDate: eventDateValue,
+        eventTime: toTimeInputValue(info.eventTime) || toTimeInputValue(booking.eventTime) || '',
+        addressLine1: cleanFormText(info.addressLine1),
+        addressLine2: cleanFormText(info.addressLine2),
+        addressFloor: cleanFormText(info.addressFloor),
+        eventAddress: cleanFormText(info.eventAddress),
+        pinCode: cleanFormText(info.pinCode),
+        hasLift: cleanFormText(info.hasLift),
+        guestCount:
+          cleanFormText(info.guestCount) ||
+          (booking.guestCount != null ? String(booking.guestCount) : ''),
+        setupArrivalTime: toTimeInputValue(info.setupArrivalTime) || cleanFormText(info.setupArrivalTime),
+        eventDayContactName: cleanFormText(info.eventDayContactName),
+        eventDayContactPhone: cleanFormText(info.eventDayContactPhone),
+        parkingInstructions: cleanFormText(info.parkingInstructions),
+        specialRequest: cleanFormText(info.specialRequest),
       },
     })
   } catch (err) {

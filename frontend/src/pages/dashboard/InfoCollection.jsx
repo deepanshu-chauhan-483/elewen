@@ -361,19 +361,13 @@ export default function InfoCollection() {
         {success ? <p className="mt-6 text-sm text-[#238E64]">{success}</p> : null}
 
         <div className="mt-8 flex flex-wrap gap-3">
-          {canEdit ? (
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white hover:bg-[#C6AB7F] disabled:opacity-60"
-            >
-              {saving ? 'Saving…' : 'Submit / Proceed'}
-            </button>
-          ) : (
-            <p className="text-sm text-[#7A7A7A]">
-              This form opens for editing when the booking status is Information Collection.
-            </p>
-          )}
+          <button
+            type="submit"
+            disabled={saving || !canEdit}
+            className="rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white hover:bg-[#C6AB7F] disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Submit / Proceed'}
+          </button>
           <button
             type="button"
             onClick={() => navigate('/user-dashboard/active-booking')}
@@ -382,6 +376,16 @@ export default function InfoCollection() {
             Back
           </button>
         </div>
+        {!canEdit ? (
+          <p className="mt-3 text-sm text-[#7A7A7A]">
+            Submit is available while the booking status is Information Collection.
+          </p>
+        ) : (
+          <p className="mt-3 text-sm text-[#7A7A7A]">
+            Checkout details are already filled. Add only what is still missing — nothing is
+            required.
+          </p>
+        )}
 
         <p className="mt-6 text-center text-[14px] text-[#957960]">Let it all come together!!</p>
       </form>

@@ -1075,10 +1075,14 @@ function CustomerInformationSection({ booking }) {
     { label: 'FULL NAME', value: info.fullName || customer?.name },
     { label: 'EMAIL', value: info.email || customer?.email },
     { label: 'PHONE', value: info.phone || customer?.phone },
+    { label: 'EVENT DATE', value: info.eventDate || booking?.eventDate },
+    { label: 'EVENT TIME', value: info.eventTime || booking?.eventTime },
     { label: 'ADDRESS LINE 1', value: info.addressLine1 },
     { label: 'ADDRESS LINE 2', value: info.addressLine2 },
     { label: 'FLOOR', value: info.addressFloor },
+    { label: 'PIN CODE', value: info.pinCode || booking?.pinCode },
     { label: 'LIFT', value: info.hasLift },
+    { label: 'GUEST COUNT', value: info.guestCount || booking?.guestCount },
     { label: 'SETUP ARRIVAL', value: info.setupArrivalTime },
     { label: 'EVENT-DAY CONTACT', value: info.eventDayContactName },
     { label: 'EVENT-DAY MOBILE', value: info.eventDayContactPhone },
@@ -1104,6 +1108,11 @@ function CustomerInformationSection({ booking }) {
         <div>
           <p className="mb-3 text-[11px] tracking-[0.16em] text-[#767676]">
             INFO COLLECTION FORM
+          </p>
+          <p className="mb-3 text-xs text-[#8F8F8F]">
+            Prefills from checkout. Customer can update remaining fields on the Information
+            Collection status. Status:{' '}
+            <span className="font-medium text-[#2D2D2D]">{infoStatus.label}</span>
           </p>
           <div className="grid grid-cols-2 gap-5 md:grid-cols-3">
             {infoCollectionFields.map(field => (
