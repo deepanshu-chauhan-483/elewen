@@ -7,18 +7,27 @@ import {
 } from './customSelectPresets'
 
 function normalizeOptions(options = []) {
-  return options.map(option =>
-    typeof option === 'string' ? { value: option, label: option } : option
-  )
+  return options.map(option => {
+    if (typeof option === 'string') return { value: option, label: option }
+    return {
+      ...option,
+      value: String(option?.value ?? ''),
+      label: option?.label ?? option?.value ?? '',
+    }
+  })
 }
 
 function createOptionsFromChildren(children) {
   return Children.toArray(children)
     .filter(child => child?.type === 'option')
     .map(child => ({
-      value: child.props.value ?? '',
+      value: String(child.props.value ?? ''),
       label: child.props.children,
     }))
+}
+
+function valuesMatch(left, right) {
+  return String(left ?? '') === String(right ?? '')
 }
 
 function CustomSelect({
@@ -45,7 +54,7 @@ function CustomSelect({
     return normalizeOptions(raw)
   }, [options, children])
 
-  const selectedOption = normalizedOptions.find(option => option.value === value) ?? null
+  const selectedOption = normalizedOptions.find(option => valuesMatch(option.value, value)) ?? null
   const displayLabel = selectedOption?.label ?? placeholder
 
   const buttonClassName = `${preset.buttonClassName} ${className}`.trim()
@@ -166,7 +175,7 @@ function CustomSelect({
                 {...listProps}
               >
                 {normalizedOptions.map(option => {
-                  const isSelected = option.value === value
+                  const isSelected = valuesMatch(option.value, value)
 
                   return (
                     <li key={option.value}>

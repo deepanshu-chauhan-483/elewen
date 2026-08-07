@@ -668,11 +668,16 @@ function VendorPayments({
             className="min-h-10 bg-[#F3F3F3]"
           >
             <option value="">Select booking…</option>
-            {(bookingsQuery.data?.bookings ?? []).map(b => (
-              <option key={b.id} value={b.id}>
-                {b.package?.title || b.event?.name || b.id}
-              </option>
-            ))}
+            {(bookingsQuery.data?.bookings ?? []).map(b => {
+              const packageName =
+                b.package?.title || b.event?.name || b.displaySubtitle || 'Untitled package'
+              const customerName = b.customer?.name || 'Customer'
+              return (
+                <option key={b.id} value={b.id}>
+                  {packageName} — {customerName}
+                </option>
+              )
+            })}
           </CustomSelect>
           <input
             type="number"
