@@ -221,18 +221,19 @@ function dateKeyToUtcMidnight(dateKey) {
   return new Date(`${dateKey}T00:00:00.000Z`)
 }
 
-function getDateRange(bucket = 'all') {
-  // Use Asia/Kolkata calendar days so "today" matches India event dates on DATE columns.
-  const todayKey = getIstDateKey()
-  const tomorrowKey = addDaysToDateKey(todayKey, 1)
-  const endOfUpcomingKey = addDaysToDateKey(todayKey, 15)
-
-  if (bucket === 'today') {
-    return {
-      gte: dateKeyToUtcMidnight(todayKey),
-      lt: dateKeyToUtcMidnight(tomorrowKey),
-    }
+/** IST calendar-day bounds for timestamp fields (createdAt). Asia/Kolkata is UTC+5:30 year-round. */
+function getIstDayBounds(dateKey = getIstDateKey()) {
+  const nextKey = addDaysToDateKey(dateKey, 1)
+  return {
+    gte: new Date(`${dateKey}T00:00:00.000+05:30`),
+    lt: new Date(`${nextKey}T00:00:00.000+05:30`),
   }
+}
+
+function getDateRange(bucket = 'all') {
+  // Use Asia/Kolkata calendar days so eventDate DATE filters match India.
+  const todayKey = getIstDateKey()
+  const endOfUpcomingKey = addDaysToDateKey(todayKey, 15)
 
   if (bucket === 'upcoming') {
     // Match Overview "Upcoming Events": next 15 days including today.
@@ -932,6 +933,13 @@ function buildBookingBucketFilter(bucket = 'all') {
     }
   }
 
+  // Today's bookings = placed by customer today (createdAt), not eventDate today.
+  if (bucket === 'today') {
+    return {
+      createdAt: getIstDayBounds(),
+    }
+  }
+
   const dateRange = getDateRange(bucket)
   if (dateRange) {
     return {
@@ -1317,8 +1325,8 @@ export async function getAdminSession(req, res, next) {
 export async function getAdminOverview(req, res, next) {
   try {
     const todayKey = getIstDateKey()
+    const todayCreatedRange = getIstDayBounds(todayKey)
     const startOfToday = dateKeyToUtcMidnight(todayKey)
-    const startOfTomorrow = dateKeyToUtcMidnight(addDaysToDateKey(todayKey, 1))
     const nextFifteenDays = dateKeyToUtcMidnight(addDaysToDateKey(todayKey, 15))
 
     const [
@@ -1372,10 +1380,7 @@ export async function getAdminOverview(req, res, next) {
       }),
       prisma.booking.count({
         where: {
-          eventDate: {
-            gte: startOfToday,
-            lt: startOfTomorrow,
-          },
+          createdAt: todayCreatedRange,
         },
       }),
       prisma.booking.findMany({
@@ -1568,7 +1573,7 @@ export async function getAdminOverview(req, res, next) {
       },
       {
         label: 'Bookings per day',
-        value: `${todayBookingsCount} events today`,
+        value: `${todayBookingsCount} bookings placed today`,
         status: todayBookingsCount > 0 ? 'confirmed' : 'resolved',
         detail: `${activeBookingsCount} bookings remain active across production`,
       },

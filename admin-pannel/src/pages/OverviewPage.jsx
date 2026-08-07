@@ -472,7 +472,7 @@ export default function OverviewPage() {
         <MetricCard
           label="Today's booking"
           value={formatCount(metrics.todayBookingsCount)}
-          helper="Events today"
+          helper="Booked today"
           accent
           onClick={() => navigate(getBookingOverviewRoute('today'))}
         />
