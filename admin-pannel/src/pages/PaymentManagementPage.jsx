@@ -629,6 +629,11 @@ function CustomerPayments({ processRefundMutation }) {
   )
 }
 
+const vendorTabs = [
+  { key: 'pending', label: 'Pending Payouts' },
+  { key: 'paid', label: 'Paid' },
+]
+
 function VendorPayments({
   vendorsQuery,
   bookingsQuery,
