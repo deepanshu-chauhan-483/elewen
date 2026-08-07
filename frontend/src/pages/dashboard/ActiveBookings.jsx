@@ -94,8 +94,16 @@ function getSubtitle(booking) {
     .join(' · ')
 }
 
+function isInfoCollectionBooking(booking) {
+  const status = normalizeStatus(booking?.status)
+  const label = String(booking?.statusLabel ?? '')
+    .trim()
+    .toLowerCase()
+  return status === 'info_collection' || label.includes('information collection')
+}
+
 function getNextStepText(booking) {
-  if (normalizeStatus(booking?.status) === 'info_collection') {
+  if (isInfoCollectionBooking(booking)) {
     return 'Please fill in your event information so we can finalise planning.'
   }
   return booking?.latestStatusLog?.note || `Latest status: ${booking?.statusLabel || 'In Progress'}`
@@ -121,6 +129,8 @@ const StatusBadge = ({ status, label }) => (
 function BookingCard({ booking, session }) {
   const [open, setOpen] = useState(false)
   const status = normalizeStatus(booking?.status)
+  const needsInfoCollection = isInfoCollectionBooking(booking)
+  const infoCollectionHref = `/user-dashboard/info-collection?bookingId=${booking.id}`
   const title = getBookingPackageNamesText(booking, booking?.event?.name || 'Booking')
   const subtitle = getSubtitle(booking)
   const location = booking?.locationSummary || 'Location pending'
@@ -165,6 +175,18 @@ function BookingCard({ booking, session }) {
           </div>
 
           <p className="mt-1 text-sm text-gray-500">{subtitle || 'Active booking'}</p>
+
+          {needsInfoCollection ? (
+            <div className="mt-3">
+              <Link
+                to={infoCollectionHref}
+                onClick={event => event.stopPropagation()}
+                className="inline-flex rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
+              >
+                Fill information
+              </Link>
+            </div>
+          ) : null}
         </div>
 
         <div className="hidden shrink-0 items-start gap-3 md:flex">
@@ -181,6 +203,16 @@ function BookingCard({ booking, session }) {
                 Download Receipt
               </button>
 
+              {needsInfoCollection ? (
+                <Link
+                  to={infoCollectionHref}
+                  className="rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
+                  onClick={event => event.stopPropagation()}
+                >
+                  Fill information
+                </Link>
+              ) : null}
+
               <Link
                 to={`/user-dashboard/details?bookingId=${booking.id}`}
                 className="flex items-center rounded-full bg-[#CDB17E] hover:bg-[#C6AB7F] px-4 py-2 text-sm text-white"
@@ -192,16 +224,6 @@ function BookingCard({ booking, session }) {
                   <DetailsArrowIcon />
                 </span>
               </Link>
-
-              {status === 'info_collection' ? (
-                <Link
-                  to={`/user-dashboard/info-collection?bookingId=${booking.id}`}
-                  className="rounded-full border border-[#CDB17E] bg-[#FFFFFF] px-4 py-2 text-sm text-[#CDB17E] hover:bg-[#FAF6F1]"
-                  onClick={event => event.stopPropagation()}
-                >
-                  Fill information
-                </Link>
-              ) : null}
 
               <button
                 type="button"
@@ -215,10 +237,18 @@ function BookingCard({ booking, session }) {
                 <CloseToggleIcon />
               </button>
             </>
+          ) : needsInfoCollection ? (
+            <Link
+              to={infoCollectionHref}
+              onClick={event => event.stopPropagation()}
+              className="rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
+            >
+              Fill information
+            </Link>
           ) : null}
         </div>
 
-        {!open ? (
+        {!open && !needsInfoCollection ? (
           <div className="mt-2 hidden shrink-0 gap-[24px] text-sm md:flex md:gap-[32px]">
             <div className="flex flex-col">
               <p className="text-[11px] text-[#767676]">AMOUNT PAID</p>
@@ -239,10 +269,10 @@ function BookingCard({ booking, session }) {
 
       {open ? (
         <div className="mt-6 flex flex-wrap justify-end gap-3 md:hidden">
-          {status === 'info_collection' ? (
+          {needsInfoCollection ? (
             <Link
-              to={`/user-dashboard/info-collection?bookingId=${booking.id}`}
-              className="rounded-full border border-[#CDB17E] px-6 py-3 text-[14px] font-medium text-[#957960]"
+              to={infoCollectionHref}
+              className="rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white"
               onClick={event => event.stopPropagation()}
             >
               Fill information
@@ -258,6 +288,16 @@ function BookingCard({ booking, session }) {
             <span className="pl-3">
               <DetailsArrowIcon />
             </span>
+          </Link>
+        </div>
+      ) : needsInfoCollection ? (
+        <div className="mt-4 md:hidden">
+          <Link
+            to={infoCollectionHref}
+            onClick={event => event.stopPropagation()}
+            className="inline-flex rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white"
+          >
+            Fill information
           </Link>
         </div>
       ) : null}
@@ -322,9 +362,9 @@ function BookingCard({ booking, session }) {
                 {getNextStepText(booking)}
               </span>
             </div>
-            {status === 'info_collection' ? (
+            {needsInfoCollection ? (
               <Link
-                to={`/user-dashboard/info-collection?bookingId=${booking.id}`}
+                to={infoCollectionHref}
                 onClick={event => event.stopPropagation()}
                 className="mt-2 rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
               >
@@ -334,11 +374,11 @@ function BookingCard({ booking, session }) {
           </div>
 
           <div className="mt-6 flex flex-wrap justify-end gap-3 md:hidden">
-            {status === 'info_collection' ? (
+            {needsInfoCollection ? (
               <Link
-                to={`/user-dashboard/info-collection?bookingId=${booking.id}`}
+                to={infoCollectionHref}
                 onClick={event => event.stopPropagation()}
-                className="rounded-full border border-[#CDB17E] px-6 py-3 text-[14px] font-medium text-[#957960]"
+                className="rounded-full bg-[#CDB17E] px-6 py-3 text-[14px] font-medium text-white"
               >
                 Fill information
               </Link>
