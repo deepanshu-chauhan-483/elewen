@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Patch Signature Essentials 3 choice options with ₹5,000 price_surcharge:
- * - Single Panel Backdrop
  * - Fancy Bar
+ * - First backdrop option / Backdrop with bows / Single Panel Backdrop
  *
  * Usage:
  *   STRAPI_URL=https://strapi.elewen.co.in STRAPI_API_TOKEN=<token> node scripts/patch-se3-option-surcharges.mjs
@@ -12,7 +12,6 @@ const STRAPI_URL = (process.env.STRAPI_URL || 'http://localhost:1337').replace(/
 const TOKEN = process.env.STRAPI_API_TOKEN || process.env.STRAPI_ADMIN_TOKEN
 const PACKAGE_SLUG = 'signature-essentials-3'
 const SURCHARGE = 5000
-const TARGET_OPTIONS = new Set(['single panel backdrop', 'fancy bar'])
 
 if (!TOKEN) {
   console.error('Missing STRAPI_API_TOKEN (or STRAPI_ADMIN_TOKEN).')
@@ -36,15 +35,34 @@ async function strapiFetch(path, { method = 'GET', body } = {}) {
 }
 
 function normalizeTitle(value = '') {
-  return String(value).trim().toLowerCase()
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+}
+
+function shouldPatchChoice(row, backdropIndex) {
+  if (!row?.is_choice_group) return false
+  const title = normalizeTitle(row.text)
+  const key = normalizeTitle(row.choice_group_key)
+
+  if (key.includes('se3-bar') && title === 'fancy bar') return true
+  if (key.includes('se3-backdrop')) {
+    if (title.includes('single panel') || title.includes('backdrop with bows')) return true
+    if (backdropIndex === 0) return true
+  }
+  return false
 }
 
 function patchInclusions(inclustions = []) {
   let patched = 0
+  let backdropIndex = -1
   const next = (Array.isArray(inclustions) ? inclustions : []).map(row => {
-    if (!row?.is_choice_group) return row
-    const title = normalizeTitle(row.text)
-    if (!TARGET_OPTIONS.has(title)) return row
+    const key = normalizeTitle(row?.choice_group_key)
+    if (row?.is_choice_group && key.includes('se3-backdrop')) {
+      backdropIndex += 1
+    }
+    const indexForRow = key.includes('se3-backdrop') ? backdropIndex : null
+    if (!shouldPatchChoice(row, indexForRow)) return row
     patched += 1
     return {
       ...row,
@@ -78,7 +96,7 @@ async function main() {
   })
 
   if (!totalPatched) {
-    console.error('No matching choice options found to patch (Single Panel Backdrop / Fancy Bar).')
+    console.error('No matching choice options found to patch (Fancy Bar / backdrop 1).')
     process.exit(2)
   }
 

@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-11: SE3 Fancy Bar surcharge missing on live cart
+
+**Root cause:** Live Strapi Signature Essentials 3 had `price_surcharge: null` on Fancy Bar (and CMS backdrop titles differed from seed). Cart used stored `unitPrice` without surcharge, so Fancy Bar stayed “Included” at ₹85,000 instead of ₹90,000.
+
+**Failure symptoms:** Choosing Fancy Bar did not add ₹5,000; price summary showed Included.
+
+**Fix details:** Frontend SE3 fallback applies ₹5,000 for Fancy Bar and backdrop option 1 / bows when CMS surcharge is null. Patch script updated for live option titles. Customers must remove and re-add the package after deploy.
+
+**Consulted sources:** Live Strapi package API, `resolveDecorOptionSurcharge`, CartPage
+
+**Prevention guidance:** After changing surcharge rules, verify live inclusion `price_surcharge` and re-add cart lines so `unitPrice` recalculates.
+
 ## 2026-08-10: Signature Essentials 3 option surcharges in cart
 
 **Root cause:** SE3 seed already had `price_surcharge: 5000` on Single Panel Backdrop and Fancy Bar, but cart selected-options did not emit a Service charge line, and live CMS often lacked the field until a targeted patch. Option tags also showed the surcharge on a secondary line.

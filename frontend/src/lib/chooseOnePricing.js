@@ -23,6 +23,35 @@ export function getChoiceSurcharge(item) {
   return parseChoiceAmount(item.priceSurcharge ?? item.price_surcharge)
 }
 
+/**
+ * Prefer CMS price_surcharge. For Signature Essentials 3 only, fall back when CMS
+ * still has null: Fancy Bar and the first / bows backdrop option → ₹5,000.
+ */
+export function resolveDecorOptionSurcharge(
+  inclusion,
+  { packageSlug = '', backdropOptionIndex = null } = {}
+) {
+  const fromCms = parseChoiceAmount(inclusion?.price_surcharge ?? inclusion?.priceSurcharge)
+  if (fromCms != null) return fromCms
+
+  if (String(packageSlug).trim() !== 'signature-essentials-3') return null
+  if (!inclusion?.is_choice_group) return null
+
+  const text = String(inclusion?.text ?? '')
+    .trim()
+    .toLowerCase()
+  const key = String(inclusion?.choice_group_key ?? '').toLowerCase()
+
+  if (key.includes('se3-bar') && text === 'fancy bar') return 5000
+
+  if (key.includes('se3-backdrop')) {
+    if (text.includes('single panel') || text.includes('backdrop with bows')) return 5000
+    if (backdropOptionIndex === 0) return 5000
+  }
+
+  return null
+}
+
 export function isChooseOneSectionTitle(title = '') {
   const normalizedTitle = String(title).trim()
   if (!normalizedTitle) {

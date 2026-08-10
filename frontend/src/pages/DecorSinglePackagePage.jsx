@@ -19,6 +19,7 @@ import {
   getChoiceSurcharge,
   isServiceChargeOptionKey,
   resolveDecorDisplayPrice,
+  resolveDecorOptionSurcharge,
   shouldShowChoicePrices,
   shouldShowChoiceSurcharges,
   sumSelectedChoiceSurcharges,
@@ -895,12 +896,16 @@ function createChoiceItem({
   fallbackTitle,
   whenBullets = new Map(),
   fallbackImage = '',
+  packageSlug = '',
+  backdropOptionIndex = null,
 }) {
   const parsedLegacyTitle = parseLegacyChoiceTitle(inclusion?.text)
   const inclusionText = parsedLegacyTitle.title
   const elementTitle = cleanText(element?.title)
   const serviceName = cleanText(element?.service?.name)
-  const surchargeAmount = Number(inclusion?.price_surcharge ?? inclusion?.priceSurcharge)
+  const surchargeAmount = Number(
+    resolveDecorOptionSurcharge(inclusion, { packageSlug, backdropOptionIndex })
+  )
   const hasSurcharge = Number.isFinite(surchargeAmount) && surchargeAmount > 0
   const absoluteAmount = Number(element?.base_price)
   const hasAbsolute = Number.isFinite(absoluteAmount) && absoluteAmount > 0
@@ -1030,6 +1035,8 @@ function collectOrderedInclusionGroups(inclusions = []) {
 function buildDecorCustomizationSections(pkg, choiceImagesByGroupOption = new Map()) {
   if (!pkg) return []
 
+  const packageSlug = cleanText(pkg?.slug)
+
   return getDecorDetailSections(pkg).flatMap(section => {
     const inclusions = Array.isArray(section?.inclustions) ? section.inclustions : []
     const whenBullets = indexWhenInclusions(inclusions)
@@ -1044,6 +1051,9 @@ function buildDecorCustomizationSections(pkg, choiceImagesByGroupOption = new Ma
 
     orderedGroups.forEach(group => {
       if (group.type === 'choice') {
+        const isBackdropGroup = String(group.key ?? '')
+          .toLowerCase()
+          .includes('se3-backdrop')
         const items = group.items
           .map((item, itemIndex) => {
             const element = elements[elementCursor] ?? null
@@ -1063,6 +1073,8 @@ function buildDecorCustomizationSections(pkg, choiceImagesByGroupOption = new Ma
               fallbackTitle: `Option ${itemIndex + 1}`,
               whenBullets,
               fallbackImage,
+              packageSlug,
+              backdropOptionIndex: isBackdropGroup ? itemIndex : null,
             })
           })
           .filter(item => item.title)
