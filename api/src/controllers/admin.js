@@ -1142,22 +1142,9 @@ function isActiveBookingStatus(status) {
 
 function buildBookingPaymentSnapshot(booking) {
   const bookingPayments = Array.isArray(booking?.payments) ? booking.payments : []
-  const successfulPayments = bookingPayments.filter(payment => payment.status === 'success')
-  const successfulAmount = successfulPayments.reduce(
-    (sum, payment) => sum + toNumber(payment.amount),
-    0
-  )
-  const advanceFromPayments = successfulPayments
-    .filter(payment => String(payment.paymentType ?? '').toLowerCase() === 'advance')
+  const successfulAmount = bookingPayments
+    .filter(payment => payment.status === 'success')
     .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
-  const scheduledAdvanceAmount = toNumber(booking?.advanceAmount)
-  const advancePaidAmount = Number(
-    (
-      advanceFromPayments > 0
-        ? advanceFromPayments
-        : Math.min(successfulAmount, scheduledAdvanceAmount > 0 ? scheduledAdvanceAmount : 0)
-    ).toFixed(2)
-  )
   const failedPaymentsCount = bookingPayments.filter(payment => payment.status === 'failed').length
   const pendingPaymentsCount = bookingPayments.filter(
     payment => payment.status === 'pending'
@@ -1168,17 +1155,36 @@ function buildBookingPaymentSnapshot(booking) {
   const outstandingAmount = Number(
     Math.max(totalPrice - successfulAmount, scheduledRemainingAmount, 0).toFixed(2)
   )
+  const advancePaidAmount = Number(
+    toNumber(booking?.advancePaidAmount ?? booking?.paymentSummary?.advancePaidAmount).toFixed(2)
+  )
+  const latestManualPaymentLog = bookingPayments
+    .flatMap(payment => (Array.isArray(payment?.logs) ? payment.logs : []))
+    .filter(log => String(log?.metadata?.source ?? '') === 'admin_manual_payment')
+    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0]
 
   return {
     ...booking,
     paidAmount: Number(successfulAmount.toFixed(2)),
     advancePaidAmount,
-    scheduledAdvanceAmount: Number(scheduledAdvanceAmount.toFixed(2)),
+    totalPrice: Number(totalPrice.toFixed(2)),
     outstandingAmount,
     failedPaymentsCount,
     pendingPaymentsCount,
     latestPayment,
-    customerPhone: booking?.customer?.phone ?? booking?.meta?.phone ?? null,
+    customerName: booking?.customer?.name || booking?.infoCollection?.fullName || 'Customer',
+    customerPhone: booking?.customer?.phone || booking?.infoCollection?.phone || '',
+    latestManualPaymentNote: latestManualPaymentLog
+      ? {
+          note: String(
+            latestManualPaymentLog?.metadata?.note ||
+              latestManualPaymentLog?.metadata?.channelLabel ||
+              ''
+          ),
+          channel: String(latestManualPaymentLog?.metadata?.channel || ''),
+          createdAt: latestManualPaymentLog.createdAt,
+        }
+      : null,
   }
 }
 
@@ -1192,10 +1198,16 @@ function buildCancelledBookingRefundSnapshot(booking) {
     .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
   const latestRefund = refunds[0] ?? null
   const requestedRefundAmount = refunds.reduce((sum, refund) => sum + toNumber(refund.amount), 0)
+  const totalPrice = toNumber(booking?.totalPrice)
+  const advancePaidAmount = Number(
+    toNumber(booking?.advancePaidAmount ?? booking?.paymentSummary?.advancePaidAmount).toFixed(2)
+  )
 
   return {
     ...booking,
     paidAmount: Number(successfulAmount.toFixed(2)),
+    advancePaidAmount,
+    totalPrice: Number(totalPrice.toFixed(2)),
     outstandingAmount: 0,
     latestRefund,
     refunds,
@@ -1203,6 +1215,8 @@ function buildCancelledBookingRefundSnapshot(booking) {
     refundDueAmount: Number(
       toNumber(latestRefund?.amount ?? booking?.refundPreview?.refundableAmount ?? 0).toFixed(2)
     ),
+    customerName: booking?.customer?.name || booking?.infoCollection?.fullName || 'Customer',
+    customerPhone: booking?.customer?.phone || booking?.infoCollection?.phone || '',
   }
 }
 
@@ -2345,6 +2359,14 @@ export async function sendAdminBookingPersonalizationEmail(req, res, next) {
   }
 }
 
+const MANUAL_PAYMENT_CHANNELS = {
+  card: { paymentMethod: 'card', provider: 'manual', label: 'Card' },
+  upi: { paymentMethod: 'upi', provider: 'manual', label: 'UPI' },
+  netbanking: { paymentMethod: 'netbanking', provider: 'manual', label: 'Netbanking' },
+  cashfree: { paymentMethod: 'upi', provider: 'cashfree', label: 'Cashfree' },
+  cash: { paymentMethod: 'offline', provider: 'manual', label: 'Cash' },
+}
+
 export async function collectAdminBookingCod(req, res, next) {
   try {
     const bookingId = req.params.id
@@ -2408,35 +2430,26 @@ export async function collectAdminBookingCod(req, res, next) {
   }
 }
 
-const ADMIN_MANUAL_PAYMENT_CHANNELS = {
-  card: { provider: 'manual', paymentMethod: 'card', label: 'Card' },
-  upi: { provider: 'manual', paymentMethod: 'upi', label: 'UPI' },
-  netbanking: { provider: 'manual', paymentMethod: 'netbanking', label: 'Netbanking' },
-  cashfree: { provider: 'cashfree', paymentMethod: 'upi', label: 'Cashfree' },
-  cash: { provider: 'manual', paymentMethod: 'offline', label: 'Cash' },
-}
-
-/** Admin records final/remaining payment received offline (UPI, cash, Cashfree, etc.). */
-export async function recordAdminBookingPayment(req, res, next) {
+/**
+ * Record remaining/final payment collected offline (UPI, cash, Cashfree, etc.).
+ * Does not change booking stage — admin-only note stays internal.
+ */
+export async function recordAdminManualPayment(req, res, next) {
   try {
     const bookingId = req.params.id
     const adminId = String(req.user.id)
-    const action = normalizeText(req.body.action || 'final_payment_received').toLowerCase()
-    const channelKey = normalizeText(req.body.channel || req.body.paymentMethod).toLowerCase()
+    const channel = normalizeText(req.body.channel || req.body.method).toLowerCase()
     const note = normalizeText(req.body.note)
-    const channel = ADMIN_MANUAL_PAYMENT_CHANNELS[channelKey]
+    const action = normalizeText(req.body.action || 'final_payment_received').toLowerCase()
 
     if (action !== 'final_payment_received') {
-      return res.status(400).json({
-        error: 'action must be final_payment_received',
-        code: 'INVALID_PAYMENT_ACTION',
-      })
+      return res.status(400).json({ error: 'Unsupported payment action.' })
     }
 
-    if (!channel) {
+    const channelConfig = MANUAL_PAYMENT_CHANNELS[channel]
+    if (!channelConfig) {
       return res.status(400).json({
-        error: `channel must be one of: ${Object.keys(ADMIN_MANUAL_PAYMENT_CHANNELS).join(', ')}`,
-        code: 'INVALID_PAYMENT_CHANNEL',
+        error: `channel must be one of: ${Object.keys(MANUAL_PAYMENT_CHANNELS).join(', ')}`,
       })
     }
 
@@ -2449,63 +2462,53 @@ export async function recordAdminBookingPayment(req, res, next) {
       return res.status(404).json({ error: 'Booking not found' })
     }
 
-    if (String(booking.status).toLowerCase() === 'cancelled') {
-      return res.status(400).json({
-        error: 'Cannot record payment on a cancelled booking.',
-        code: 'BOOKING_CANCELLED',
-      })
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({ error: 'Cannot record payment on a cancelled booking.' })
     }
 
-    const successfulAmount = (booking.payments ?? [])
+    const totalPaid = (booking.payments ?? [])
       .filter(payment => payment.status === 'success')
       .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
-    const totalPrice = toNumber(booking.totalPrice)
     const outstandingAmount = Number(
-      Math.max(totalPrice - successfulAmount, toNumber(booking.remainingAmount), 0).toFixed(2)
+      Math.max(toNumber(booking.totalPrice) - totalPaid, 0).toFixed(2)
     )
 
     if (outstandingAmount <= 0) {
-      return res.status(400).json({
-        error: 'No remaining amount due on this booking.',
-        code: 'NOTHING_DUE',
-      })
+      return res.status(400).json({ error: 'No remaining amount to collect for this booking.' })
     }
 
-    const paymentType = successfulAmount > 0 ? 'remaining' : 'full'
+    const paymentType = totalPaid <= 0 ? 'full' : 'remaining'
     const internalNoteText = [
-      `Final payment received via ${channel.label}.`,
+      `Final payment received via ${channelConfig.label}`,
       note || null,
     ]
       .filter(Boolean)
-      .join(' ')
+      .join(' — ')
 
-    const result = await prisma.$transaction(async tx => {
+    const createdPayment = await prisma.$transaction(async tx => {
       const payment = await tx.payment.create({
         data: {
           bookingId,
           paymentType,
-          amount: outstandingAmount,
+          amount: outstandingAmount.toFixed(2),
           status: 'success',
-          provider: channel.provider,
-          paymentMethod: channel.paymentMethod,
-          providerOrderId: `ADMIN-MANUAL-${Date.now()}`,
-          providerPaymentId: `admin:${adminId}`,
+          provider: channelConfig.provider,
+          paymentMethod: channelConfig.paymentMethod,
         },
       })
 
       await tx.paymentLog.create({
         data: {
           paymentId: payment.id,
-          action: 'verified',
+          action: 'manual_remaining_recorded',
           performedBy: adminId,
           metadata: {
             source: 'admin_manual_payment',
-            action: 'final_payment_received',
-            channel: channelKey,
-            channelLabel: channel.label,
-            amount: outstandingAmount,
+            channel,
+            channelLabel: channelConfig.label,
             note: note || null,
-            customerVisible: false,
+            amount: outstandingAmount,
+            bookingStatusUnchanged: true,
           },
         },
       })
@@ -2517,6 +2520,7 @@ export async function recordAdminBookingPayment(req, res, next) {
         },
       })
 
+      // Internal-only — never shown on customer booking stage timeline.
       await tx.bookingNote.create({
         data: {
           bookingId,
@@ -2540,10 +2544,10 @@ export async function recordAdminBookingPayment(req, res, next) {
     invalidateDashboardCache(booking.userId).catch(() => {})
 
     res.status(201).json({
-      ok: true,
-      payment: result,
-      remainingAmount: 0,
-      channel: channelKey,
+      payment: createdPayment,
+      outstandingAmount: 0,
+      recordedAmount: outstandingAmount,
+      bookingStatus: booking.status,
     })
   } catch (err) {
     next(err)
@@ -3396,7 +3400,12 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           items: true,
           notes: true,
           statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
-          payments: { orderBy: { createdAt: 'desc' } },
+          payments: {
+            include: {
+              logs: { orderBy: { createdAt: 'desc' }, take: 5 },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
           vendorAssignments: true,
         },
         orderBy: [{ createdAt: 'desc' }, { eventDate: 'asc' }],
@@ -3410,7 +3419,12 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           items: true,
           notes: true,
           statusLogs: { orderBy: { createdAt: 'desc' }, take: 1 },
-          payments: { orderBy: { createdAt: 'desc' } },
+          payments: {
+            include: {
+              logs: { orderBy: { createdAt: 'desc' }, take: 5 },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
           vendorAssignments: true,
         },
         orderBy: [{ createdAt: 'desc' }, { eventDate: 'asc' }],
@@ -3504,25 +3518,21 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       .map(buildBookingPaymentSnapshot)
       .filter(booking => booking.outstandingAmount > 0)
     const cancelledRefunds = enrichedCancelledBookings.map(buildCancelledBookingRefundSnapshot)
+    const withPaymentBookingSummary = payment => {
+      const booking = bookingMap.get(String(payment.bookingId))
+      return {
+        ...payment,
+        bookingSummary: booking ? buildBookingPaymentSnapshot(booking) : null,
+      }
+    }
     const failedPayments = payments
       .filter(payment => payment.status === 'failed')
-      .map(payment => ({
-        ...payment,
-        bookingSummary: bookingMap.get(String(payment.bookingId)) ?? null,
-      }))
+      .map(withPaymentBookingSummary)
     const completedPayments = payments
       .filter(payment => ['success', 'refunded'].includes(payment.status))
-      .map(payment => ({
-        ...payment,
-        bookingSummary: bookingMap.get(String(payment.bookingId)) ?? null,
-      }))
+      .map(withPaymentBookingSummary)
     // All customer payment attempts created today (IST) — success, pending, failed, refunded.
-    const todayPayments = payments
-      .filter(payment => isCreatedToday(payment.createdAt))
-      .map(payment => ({
-        ...payment,
-        bookingSummary: bookingMap.get(String(payment.bookingId)) ?? null,
-      }))
+    const todayPayments = payments.filter(payment => isCreatedToday(payment.createdAt)).map(withPaymentBookingSummary)
     const pendingVendorPayments = payouts
       .filter(payout => payout.status === 'pending')
       .map(payout => ({

@@ -1,16 +1,16 @@
 # Lessons
 
-## 2026-08-10: Admin final payment recording in Customer Payments
+## 2026-08-10: Admin manual final payment in Payment Management
 
-**Root cause:** Payment Management Active Bookings was read-only. No admin API existed to record remaining balance received via UPI/cash/Cashfree/card, so remaining never cleared outside customer Cashfree or Hookah COD collect.
+**Root cause:** Customer Payments rows only linked out to Booking Management; there was no in-place way to mark remaining balance collected via UPI/cash/Cashfree without changing booking stage.
 
-**Failure symptoms:** Admin collected money offline but Remaining stayed due; no place in Customer Payments to mark final payment received.
+**Failure symptoms:** Admins could not clear remaining to ₹0 from Payment Management; notes risked being confused with customer-visible stage updates.
 
-**Fix details:** `POST /admin/bookings/:id/payments/record` creates a successful remaining/full payment, sets `remainingAmount` to 0, stores an **internal** booking note (not stage/status log). Active booking rows are expandable with name/phone/event/advance/paid/remaining plus Final payment received + channel + admin note form.
+**Fix details:** Expandable Active Booking cards show name/phone/event + advance/paid/remaining. `POST /admin/bookings/:id/payments/manual` records a successful remaining/full payment, sets `remainingAmount` to 0, stores channel + admin-only internal note (no stage change).
 
-**Consulted sources:** `PaymentManagementPage`, `recordAdminBookingPayment`, Booking UPDATE STAGE UI pattern
+**Consulted sources:** `PaymentManagementPage.jsx`, `recordAdminManualPayment`, Booking UPDATE STAGE UI pattern
 
-**Prevention guidance:** Manual money-in for customers needs a dedicated payment write path; do not overload booking stage notes (those are customer-visible).
+**Prevention guidance:** Money collection UI belongs in Payment Management; booking stage updates stay separate. Manual payment notes must use `isInternal: true`.
 
 ## 2026-08-10: Admin cancel did not create refund requests
 

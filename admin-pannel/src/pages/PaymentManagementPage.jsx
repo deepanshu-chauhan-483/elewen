@@ -17,7 +17,7 @@ import {
   useAdminShareCoupon,
   useAdminPaymentWorkspace,
   useAdminProcessRefund,
-  useAdminRecordBookingPayment,
+  useAdminRecordManualPayment,
   useAdminRefunds,
   useAdminSettings,
   useAdminUpdateCoupon,
@@ -225,22 +225,7 @@ function Tabs({ items, value, onChange, size = 'md' }) {
 // Row cards
 // ---------------------------------------------------------------------------
 
-function ChevronIcon({ open }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      className={`h-4 w-4 text-[#8F8F8F] transition-transform ${open ? 'rotate-180' : ''}`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="m5 7.5 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-const FINAL_PAYMENT_CHANNELS = [
+const MANUAL_PAYMENT_CHANNELS = [
   { value: 'upi', label: 'UPI' },
   { value: 'card', label: 'Card' },
   { value: 'netbanking', label: 'Netbanking' },
@@ -248,87 +233,239 @@ const FINAL_PAYMENT_CHANNELS = [
   { value: 'cash', label: 'Cash' },
 ]
 
-function BookingPaymentRow({ booking, onOpen, recordPaymentMutation }) {
+const PAYMENT_UPDATE_ACTIONS = [
+  { value: 'final_payment_received', label: 'Final payment received' },
+]
+
+function SectionLabel({ children }) {
+  return (
+    <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
+      {children}
+    </p>
+  )
+}
+
+function resolveBookingFinance(booking) {
+  if (!booking) {
+    return {
+      customerName: 'Customer',
+      customerPhone: '—',
+      eventDate: null,
+      totalPrice: 0,
+      advancePaidAmount: 0,
+      paidAmount: 0,
+      outstandingAmount: 0,
+      packageTitle: '',
+      locationSummary: '',
+      latestManualPaymentNote: null,
+    }
+  }
+
+  const paidAmount = Number(
+    booking.paidAmount ?? booking.amountPaid ?? booking.paymentSummary?.amountPaid ?? 0
+  )
+  const outstandingAmount = Number(
+    booking.outstandingAmount ?? booking.remainingAmount ?? booking.paymentSummary?.amountDue ?? 0
+  )
+
+  return {
+    customerName:
+      booking.customerName || booking.customer?.name || booking.infoCollection?.fullName || 'Customer',
+    customerPhone:
+      booking.customerPhone || booking.customer?.phone || booking.infoCollection?.phone || '—',
+    eventDate: booking.eventDate,
+    totalPrice: Number(booking.totalPrice ?? 0),
+    advancePaidAmount: Number(
+      booking.advancePaidAmount ?? booking.paymentSummary?.advancePaidAmount ?? 0
+    ),
+    paidAmount,
+    outstandingAmount,
+    packageTitle: booking.package?.title || booking.id || '',
+    locationSummary: booking.locationSummary || '',
+    latestManualPaymentNote: booking.latestManualPaymentNote ?? null,
+  }
+}
+
+function CustomerFinancialGrid({ booking, extraFields = [] }) {
+  const finance = resolveBookingFinance(booking)
+  const fields = [
+    { label: 'Name', value: finance.customerName },
+    { label: 'Phone', value: finance.customerPhone },
+    { label: 'Event date', value: formatDate(finance.eventDate) },
+    { label: 'Total', value: formatCurrency(finance.totalPrice) },
+    { label: 'Advance paid', value: formatCurrency(finance.advancePaidAmount) },
+    { label: 'Paid', value: formatCurrency(finance.paidAmount) },
+    { label: 'Remaining', value: formatCurrency(finance.outstandingAmount) },
+    ...extraFields,
+  ]
+
+  return (
+    <div>
+      <SectionLabel>Customer &amp; financials</SectionLabel>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {fields.map(field => (
+          <div key={field.label} className="rounded-xl border border-[#E4DED8] bg-white px-4 py-3">
+            <p className="text-[11px] tracking-[0.16em] text-[#767676]">{field.label}</p>
+            <p className="mt-0.5 text-sm text-[#2D2D2D]">{field.value || '—'}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, recordManualPaymentMutation }) {
   const toast = useAdminToast()
-  const [open, setOpen] = useState(false)
+  const [paymentAction, setPaymentAction] = useState('final_payment_received')
   const [channel, setChannel] = useState('upi')
   const [note, setNote] = useState('')
   const [formError, setFormError] = useState('')
-  const showHookahCodBadge = bookingHasHookahCod(booking)
-  const outstanding = Number(booking.outstandingAmount ?? 0)
-  const canRecordFinal = outstanding > 0 && String(booking.status).toLowerCase() !== 'cancelled'
-  const customerPhone =
-    booking.customerPhone || booking.customer?.phone || booking.meta?.phone || '—'
+  const canRecordFinal = Number(outstandingAmount) > 0
 
   const handleRecordPayment = async () => {
     setFormError('')
+    if (!bookingId) {
+      setFormError('Booking not found for this payment.')
+      return
+    }
+    if (!canRecordFinal) {
+      setFormError('No remaining amount to collect.')
+      return
+    }
+
     try {
-      await recordPaymentMutation.mutateAsync({
-        bookingId: booking.id,
+      await recordManualPaymentMutation.mutateAsync({
+        bookingId,
         body: {
-          action: 'final_payment_received',
+          action: paymentAction,
           channel,
           note: note.trim() || undefined,
         },
       })
       setNote('')
-      toast.showToast?.({
-        message: 'Final payment recorded. Remaining amount is now ₹0.',
+      toast?.showToast?.({
+        message: 'Final payment recorded. Remaining is now ₹0.',
         tone: 'success',
       })
-      setOpen(false)
     } catch (error) {
-      const raw = String(error?.message ?? '')
-      let message = 'Could not record final payment.'
-      try {
-        const jsonStart = raw.indexOf('{')
-        if (jsonStart >= 0) {
-          const parsed = JSON.parse(raw.slice(jsonStart))
-          if (parsed?.error) message = parsed.error
-        } else if (raw) {
-          message = raw
-        }
-      } catch {
-        if (raw) message = raw
-      }
-      setFormError(message)
-      toast.showToast?.({ message, tone: 'error' })
+      setFormError(error?.message || 'Could not record payment.')
+      toast?.showToast?.({
+        message: error?.message || 'Could not record payment.',
+        tone: 'error',
+      })
     }
   }
+
+  return (
+    <div>
+      <SectionLabel>Update payment</SectionLabel>
+      <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+          <div className="min-w-0 flex-1">
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Payment update</p>
+            <CustomSelect
+              value={paymentAction}
+              onChange={setPaymentAction}
+              className="min-h-10 rounded-full bg-[#F3F3F3]"
+            >
+              {PAYMENT_UPDATE_ACTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </CustomSelect>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Received via</p>
+            <CustomSelect
+              value={channel}
+              onChange={setChannel}
+              className="min-h-10 rounded-full bg-[#F3F3F3]"
+            >
+              {MANUAL_PAYMENT_CHANNELS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </CustomSelect>
+          </div>
+          <div className="min-w-0 flex-[1.4]">
+            <p className="mb-1.5 text-xs text-[#8F8F8F]">Note (admin only)</p>
+            <input
+              type="text"
+              value={note}
+              onChange={event => setNote(event.target.value)}
+              placeholder="e.g. UPI from customer at venue…"
+              className="h-10 w-full rounded-full border border-[#E4DED8] bg-white px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
+            />
+          </div>
+          <PrimaryBtn
+            disabled={recordManualPaymentMutation?.isPending || !canRecordFinal}
+            onClick={handleRecordPayment}
+          >
+            {recordManualPaymentMutation?.isPending ? 'Saving…' : 'Record payment'}
+          </PrimaryBtn>
+        </div>
+        <p className="mt-3 text-xs text-[#8F8F8F]">
+          Marks remaining as paid. Does not change booking stage. Notes stay admin-only.
+        </p>
+        {formError ? (
+          <div className="mt-3 rounded-xl border border-[#FCC5C5] bg-[#FFF3F3] px-4 py-3">
+            <p className="text-sm text-[#8A1C1C]">{formError}</p>
+          </div>
+        ) : null}
+        {!canRecordFinal ? (
+          <div className="mt-3 rounded-xl bg-white px-4 py-3">
+            <p className="text-sm text-[#2D2D2D]">No remaining balance on this booking.</p>
+          </div>
+        ) : null}
+        {latestNote?.note ? (
+          <div className="mt-3 rounded-xl bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[#8F8F8F]">
+              Latest payment note
+            </p>
+            <p className="mt-1.5 text-sm text-[#2D2D2D]">{latestNote.note}</p>
+            <p className="mt-1 text-xs text-[#8F8F8F]">
+              {latestNote.channel ? `${latestNote.channel} · ` : ''}
+              {formatDateTime(latestNote.createdAt)}
+            </p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function BookingPaymentRow({ booking, recordManualPaymentMutation }) {
+  const [expanded, setExpanded] = useState(false)
+  const showHookahCodBadge = bookingHasHookahCod(booking)
+  const finance = resolveBookingFinance(booking)
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E4DED8] bg-white">
       <button
         type="button"
-        onClick={() => setOpen(current => !current)}
+        onClick={() => setExpanded(open => !open)}
         className="flex w-full flex-wrap items-start justify-between gap-3 px-4 py-4 text-left transition hover:bg-[#FBF8F3]"
       >
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-[#1C1C1C]">
-            {booking?.customer?.name || 'Customer'}
-            <span className="ml-2 font-normal text-[#6B7280]">
-              / {booking?.package?.title || booking.id}
-            </span>
+            {finance.customerName}
+            <span className="ml-2 font-normal text-[#6B7280]">/ {finance.packageTitle}</span>
           </p>
           <p className="mt-1 text-xs text-[#8F8F8F]">
-            {formatDate(booking.eventDate)}
-            {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
+            {formatDate(finance.eventDate)}
+            {finance.locationSummary ? ` · ${finance.locationSummary}` : ''}
           </p>
           <div className="mt-2 flex flex-wrap gap-4 text-sm">
             <span>
-              <span className="text-[#8F8F8F]">Advance paid </span>
-              <span className="font-medium text-[#2D2D2D]">
-                {formatCurrency(booking.advancePaidAmount ?? 0)}
-              </span>
-            </span>
-            <span>
               <span className="text-[#8F8F8F]">Paid </span>
-              <span className="font-medium text-[#2D2D2D]">{formatCurrency(booking.paidAmount)}</span>
+              <span className="font-medium text-[#2D2D2D]">{formatCurrency(finance.paidAmount)}</span>
             </span>
             <span>
               <span className="text-[#8F8F8F]">Remaining </span>
               <span className="font-medium text-[#2D2D2D]">
-                {formatCurrency(booking.outstandingAmount)}
+                {formatCurrency(finance.outstandingAmount)}
               </span>
             </span>
           </div>
@@ -336,129 +473,30 @@ function BookingPaymentRow({ booking, onOpen, recordPaymentMutation }) {
         <div className="flex flex-wrap items-center gap-2">
           <Badge status={booking.status} label={booking.statusLabel} />
           {showHookahCodBadge ? <Badge status="pending" label="Hookah · COD" /> : null}
-          <Badge
-            status={booking.vendorAssignments?.length ? 'assigned' : 'unassigned'}
-            label={booking.vendorAssignments?.length ? 'Vendor assigned' : 'No vendor'}
-          />
-          <span
-            role="link"
-            tabIndex={0}
-            onClick={event => {
-              event.stopPropagation()
-              onOpen?.(booking.id)
-            }}
-            onKeyDown={event => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                event.stopPropagation()
-                onOpen?.(booking.id)
-              }
-            }}
-            className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]"
-          >
-            Open booking
+          <span className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]">
+            {expanded ? 'Collapse' : 'Expand'}
           </span>
-          <ChevronIcon open={open} />
         </div>
       </button>
 
-      {open ? (
-        <div className="border-t border-[#E4DED8] bg-[#FAFAFA] px-4 py-4">
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
-            Payment details
-          </p>
-          <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { label: 'Name', value: booking?.customer?.name || '—' },
-              { label: 'Phone', value: customerPhone },
-              { label: 'Event date', value: formatDate(booking.eventDate) },
-              {
-                label: 'Advance paid',
-                value: formatCurrency(booking.advancePaidAmount ?? 0),
-              },
-              { label: 'Total paid', value: formatCurrency(booking.paidAmount) },
-              { label: 'Remaining', value: formatCurrency(booking.outstandingAmount) },
-            ].map(field => (
-              <div key={field.label} className="rounded-xl bg-white px-4 py-3">
-                <p className="text-[11px] tracking-[0.16em] text-[#767676]">{field.label}</p>
-                <p className="mt-0.5 text-sm text-[#2D2D2D]">{field.value}</p>
-              </div>
-            ))}
-          </div>
-
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
-            Record final payment
-          </p>
-          <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
-            {canRecordFinal ? (
-              <>
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-1.5 text-xs text-[#8F8F8F]">Update status</p>
-                    <CustomSelect
-                      value="final_payment_received"
-                      onChange={() => {}}
-                      className="min-h-10 rounded-full bg-[#F3F3F3]"
-                    >
-                      <option value="final_payment_received">Final payment received</option>
-                    </CustomSelect>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-1.5 text-xs text-[#8F8F8F]">Received via</p>
-                    <CustomSelect
-                      value={channel}
-                      onChange={setChannel}
-                      className="min-h-10 rounded-full bg-[#F3F3F3]"
-                    >
-                      {FINAL_PAYMENT_CHANNELS.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </CustomSelect>
-                  </div>
-                  <div className="min-w-[min(100%,280px)] flex-[1.4]">
-                    <p className="mb-1.5 text-xs text-[#8F8F8F]">
-                      Note (admin only — not shown to customer)
-                    </p>
-                    <input
-                      type="text"
-                      value={note}
-                      onChange={event => setNote(event.target.value)}
-                      placeholder="e.g. UPI paid to company account…"
-                      className="h-10 w-full rounded-full border border-[#E4DED8] bg-white px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
-                    />
-                  </div>
-                  <PrimaryBtn
-                    disabled={recordPaymentMutation.isPending}
-                    onClick={handleRecordPayment}
-                  >
-                    {recordPaymentMutation.isPending ? 'Saving…' : 'Update Status'}
-                  </PrimaryBtn>
-                </div>
-                <p className="mt-3 text-xs text-[#8F8F8F]">
-                  Records ₹{Number(outstanding).toLocaleString('en-IN')} as paid and sets remaining
-                  to ₹0. Note stays internal (does not change booking stage for the customer).
-                </p>
-                {formError ? (
-                  <div className="mt-3 rounded-xl border border-[#FCC5C5] bg-[#FFF3F3] px-4 py-3">
-                    <p className="text-sm text-[#8A1C1C]">{formError}</p>
-                  </div>
-                ) : null}
-              </>
-            ) : (
-              <p className="text-sm text-[#6B7280]">
-                No remaining balance to record on this booking.
-              </p>
-            )}
-          </div>
+      {expanded ? (
+        <div className="space-y-4 border-t border-[#E4DED8] bg-[#FAFAFA] px-4 py-4">
+          <CustomerFinancialGrid booking={booking} />
+          <ManualPaymentUpdatePanel
+            bookingId={booking.id}
+            outstandingAmount={finance.outstandingAmount}
+            latestNote={finance.latestManualPaymentNote}
+            recordManualPaymentMutation={recordManualPaymentMutation}
+          />
         </div>
       ) : null}
     </div>
   )
 }
 
-function CancelledBookingRefundRow({ booking, onOpen, processRefundMutation }) {
+function CancelledBookingRefundRow({ booking, processRefundMutation }) {
+  const [expanded, setExpanded] = useState(false)
+  const finance = resolveBookingFinance(booking)
   const latestRefund = booking?.latestRefund ?? null
   const pendingRefund =
     latestRefund?.status === 'requested'
@@ -468,56 +506,77 @@ function CancelledBookingRefundRow({ booking, onOpen, processRefundMutation }) {
         ) ?? null
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
+    <div className="overflow-hidden rounded-2xl border border-[#E4DED8] bg-white">
       <button
         type="button"
-        onClick={() => onOpen?.(booking.id)}
-        className="min-w-0 flex-1 text-left"
+        onClick={() => setExpanded(open => !open)}
+        className="flex w-full flex-wrap items-start justify-between gap-3 px-4 py-4 text-left transition hover:bg-[#FBF8F3]"
       >
-        <p className="text-sm font-semibold text-[#1C1C1C]">
-          {booking?.customer?.name || 'Customer'}
-          <span className="ml-2 font-normal text-[#6B7280]">
-            / {booking?.package?.title || booking.id}
-          </span>
-        </p>
-        <p className="mt-1 text-xs text-[#8F8F8F]">
-          Cancelled booking · {formatDate(booking.eventDate)}
-          {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-4 text-sm">
-          <span>
-            <span className="text-[#8F8F8F]">Paid </span>
-            <span className="font-medium text-[#2D2D2D]">{formatCurrency(booking.paidAmount)}</span>
-          </span>
-          <span>
-            <span className="text-[#8F8F8F]">Refund due </span>
-            <span className="font-medium text-[#2D2D2D]">
-              {formatCurrency(booking.refundDueAmount ?? pendingRefund?.amount ?? 0)}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-[#1C1C1C]">
+            {finance.customerName}
+            <span className="ml-2 font-normal text-[#6B7280]">/ {finance.packageTitle}</span>
+          </p>
+          <p className="mt-1 text-xs text-[#8F8F8F]">
+            Cancelled booking · {formatDate(finance.eventDate)}
+            {finance.locationSummary ? ` · ${finance.locationSummary}` : ''}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-4 text-sm">
+            <span>
+              <span className="text-[#8F8F8F]">Paid </span>
+              <span className="font-medium text-[#2D2D2D]">{formatCurrency(finance.paidAmount)}</span>
             </span>
+            <span>
+              <span className="text-[#8F8F8F]">Refund due </span>
+              <span className="font-medium text-[#2D2D2D]">
+                {formatCurrency(booking.refundDueAmount ?? pendingRefund?.amount ?? 0)}
+              </span>
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge status={booking?.status} label={booking?.statusLabel || 'Cancelled'} />
+          {latestRefund ? (
+            <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />
+          ) : (
+            <Badge status="pending" label="No refund row" />
+          )}
+          <span className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]">
+            {expanded ? 'Collapse' : 'Expand'}
           </span>
         </div>
       </button>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge status={booking?.status} label={booking?.statusLabel || 'Cancelled'} />
-        {latestRefund ? (
-          <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />
-        ) : (
-          <Badge status="pending" label="No refund row" />
-        )}
-        {pendingRefund ? (
-          <PrimaryBtn
-            disabled={processRefundMutation.isPending}
-            onClick={() =>
-              processRefundMutation.mutate({
-                refundId: pendingRefund.id,
-                body: { action: 'approve' },
-              })
-            }
-          >
-            Pay Refund
-          </PrimaryBtn>
-        ) : null}
-      </div>
+
+      {expanded ? (
+        <div className="space-y-4 border-t border-[#E4DED8] bg-[#FAFAFA] px-4 py-4">
+          <CustomerFinancialGrid
+            booking={booking}
+            extraFields={[
+              {
+                label: 'Refund due',
+                value: formatCurrency(booking.refundDueAmount ?? pendingRefund?.amount ?? 0),
+              },
+            ]}
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            {pendingRefund ? (
+              <PrimaryBtn
+                disabled={processRefundMutation.isPending}
+                onClick={() =>
+                  processRefundMutation.mutate({
+                    refundId: pendingRefund.id,
+                    body: { action: 'approve' },
+                  })
+                }
+              >
+                Pay Refund
+              </PrimaryBtn>
+            ) : (
+              <p className="text-sm text-[#6B7280]">No pending refund to pay for this booking.</p>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -527,63 +586,99 @@ function PaymentRecordRow({
   showRefundActions = false,
   onRefundAction,
   isRefundBusy = false,
-  onOpen,
+  recordManualPaymentMutation,
+  allowManualPayment = true,
 }) {
+  const [expanded, setExpanded] = useState(false)
   const refunds = Array.isArray(payment.refunds) ? payment.refunds : []
   const pendingRefund = refunds.find(r => r.status === 'requested')
   const latestRefund =
     [...refunds].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0] ??
     null
   const showHookahCodBadge = isCodPayment(payment)
-  const bookingId = payment.bookingId || payment.bookingSummary?.id
+  const booking = payment.bookingSummary
+  const bookingId = payment.bookingId || booking?.id
+  const finance = resolveBookingFinance(booking)
+  const isCancelledBooking = String(booking?.status ?? '').toLowerCase() === 'cancelled'
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpen?.(bookingId)}
-      onKeyDown={event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          onOpen?.(bookingId)
-        }
-      }}
-      className="flex w-full cursor-pointer flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 text-left transition hover:border-[#D4BA8E] hover:bg-[#FBF8F3]"
-    >
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-[#1C1C1C]">
-          {payment.bookingSummary?.customer?.name || 'Customer'}
-          <span className="ml-2 font-normal text-[#6B7280]">
-            / {payment.bookingSummary?.package?.title || payment.bookingId}
+    <div className="overflow-hidden rounded-2xl border border-[#E4DED8] bg-white">
+      <button
+        type="button"
+        onClick={() => setExpanded(open => !open)}
+        className="flex w-full flex-wrap items-start justify-between gap-3 px-4 py-4 text-left transition hover:bg-[#FBF8F3]"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-[#1C1C1C]">
+            {finance.customerName}
+            <span className="ml-2 font-normal text-[#6B7280]">
+              / {finance.packageTitle || payment.bookingId}
+            </span>
+          </p>
+          <p className="mt-1 text-xs text-[#8F8F8F]">
+            {payment.paymentType} · {formatCurrency(payment.amount)} ·{' '}
+            {formatDateTime(payment.createdAt)}
+            {finance.eventDate ? ` · Event ${formatDate(finance.eventDate)}` : ''}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-4 text-sm">
+            <span>
+              <span className="text-[#8F8F8F]">Paid </span>
+              <span className="font-medium text-[#2D2D2D]">{formatCurrency(finance.paidAmount)}</span>
+            </span>
+            <span>
+              <span className="text-[#8F8F8F]">Remaining </span>
+              <span className="font-medium text-[#2D2D2D]">
+                {formatCurrency(finance.outstandingAmount)}
+              </span>
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge status={payment.status} />
+          {showHookahCodBadge ? <Badge status="pending" label="Hookah · COD" /> : null}
+          <Badge status={payment.paymentMethod} label={payment.paymentMethod || 'Method pending'} />
+          {latestRefund ? (
+            <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />
+          ) : null}
+          <span className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]">
+            {expanded ? 'Collapse' : 'Expand'}
           </span>
-        </p>
-        <p className="mt-1 text-xs text-[#8F8F8F]">
-          {payment.paymentType} · {formatCurrency(payment.amount)} ·{' '}
-          {formatDateTime(payment.createdAt)}
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge status={payment.status} />
-        {showHookahCodBadge ? <Badge status="pending" label="Hookah · COD" /> : null}
-        <Badge status={payment.paymentMethod} label={payment.paymentMethod || 'Method pending'} />
-        {latestRefund ? (
-          <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />
-        ) : null}
-        {showRefundActions && pendingRefund && (
-          <PrimaryBtn
-            disabled={isRefundBusy}
-            onClick={event => {
-              event.stopPropagation()
-              onRefundAction?.(pendingRefund.id, 'approve')
-            }}
-          >
-            Pay Refund
-          </PrimaryBtn>
-        )}
-        <span className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]">
-          Open booking
-        </span>
-      </div>
+        </div>
+      </button>
+
+      {expanded ? (
+        <div className="space-y-4 border-t border-[#E4DED8] bg-[#FAFAFA] px-4 py-4">
+          <CustomerFinancialGrid
+            booking={booking}
+            extraFields={[
+              { label: 'This payment', value: formatCurrency(payment.amount) },
+              { label: 'Payment type', value: payment.paymentType || '—' },
+              {
+                label: 'Method',
+                value: payment.paymentMethod || payment.provider || '—',
+              },
+            ]}
+          />
+          {showRefundActions && pendingRefund ? (
+            <div className="flex flex-wrap gap-2">
+              <PrimaryBtn
+                disabled={isRefundBusy}
+                onClick={() => onRefundAction?.(pendingRefund.id, 'approve')}
+              >
+                Pay Refund
+              </PrimaryBtn>
+            </div>
+          ) : null}
+          {allowManualPayment && !isCancelledBooking ? (
+            <ManualPaymentUpdatePanel
+              bookingId={bookingId}
+              outstandingAmount={finance.outstandingAmount}
+              latestNote={finance.latestManualPaymentNote}
+              recordManualPaymentMutation={recordManualPaymentMutation}
+            />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -705,17 +800,16 @@ function RefundRow({ refund, processRefundMutation }) {
 }
 
 function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
-  const navigate = useNavigate()
   const [tab, setTab] = useState(
     customerTabs.some(item => item.key === initialTab) ? initialTab : 'today'
   )
   const [currentPage, setCurrentPage] = useState(1)
+  const recordManualPaymentMutation = useAdminRecordManualPayment()
   const workspaceQuery = useAdminPaymentWorkspace({
     customerTab: tab,
     customerPage: currentPage,
     limit: 10,
   })
-  const recordPaymentMutation = useAdminRecordBookingPayment()
   const customerPayments = workspaceQuery.data?.customerPayments ?? {}
   const lists = {
     today: customerPayments.todayPayments ?? [],
@@ -728,7 +822,6 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
   const totalPages = Math.max(1, Number(customerPayments.pages ?? 1))
   const visiblePage = Math.min(currentPage, totalPages)
   const isSectionLoading = workspaceQuery.isFetching && !workspaceQuery.isLoading
-  const openBooking = bookingId => openBookingInManagement(navigate, bookingId)
 
   useScrollToTop(currentPage)
 
@@ -771,9 +864,9 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
                   <PaymentRecordRow
                     key={p.id}
                     payment={p}
-                    onOpen={openBooking}
                     showRefundActions
                     isRefundBusy={processRefundMutation.isPending}
+                    recordManualPaymentMutation={recordManualPaymentMutation}
                     onRefundAction={(refundId, action) =>
                       refundId &&
                       processRefundMutation.mutate({
@@ -803,8 +896,7 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
                   <BookingPaymentRow
                     key={b.id}
                     booking={b}
-                    onOpen={openBooking}
-                    recordPaymentMutation={recordPaymentMutation}
+                    recordManualPaymentMutation={recordManualPaymentMutation}
                   />
                 ))}
                 <PaginationControls
@@ -827,7 +919,6 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
                   <CancelledBookingRefundRow
                     key={b.id}
                     booking={b}
-                    onOpen={openBooking}
                     processRefundMutation={processRefundMutation}
                   />
                 ))}
@@ -851,9 +942,9 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
                   <PaymentRecordRow
                     key={p.id}
                     payment={p}
-                    onOpen={openBooking}
                     showRefundActions
                     isRefundBusy={processRefundMutation.isPending}
+                    recordManualPaymentMutation={recordManualPaymentMutation}
                     onRefundAction={(refundId, action) =>
                       refundId &&
                       processRefundMutation.mutate({
@@ -883,9 +974,9 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
                   <PaymentRecordRow
                     key={p.id}
                     payment={p}
-                    onOpen={openBooking}
                     showRefundActions
                     isRefundBusy={processRefundMutation.isPending}
+                    recordManualPaymentMutation={recordManualPaymentMutation}
                     onRefundAction={(refundId, action) =>
                       refundId &&
                       processRefundMutation.mutate({
