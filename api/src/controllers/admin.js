@@ -29,6 +29,7 @@ import {
   previewBookingPersonalizationEmail,
   sendBookingConfirmedEmail,
   sendBookingPersonalizationEmail,
+  sendFinalPaymentEmail,
   sendInfoCollectionEmail,
   sendPostEventFeedbackEmail,
 } from '../lib/bookingEmailService.js'
@@ -1881,8 +1882,8 @@ export async function updateAdminBookingStatus(req, res, next) {
       return nextBooking
     })
 
-    // Confirmed / info-collection use dedicated lifecycle emails (single in-app + email).
-    if (status !== 'confirmed' && status !== 'info_collection') {
+    // Dedicated lifecycle emails for confirmed / info-collection / pre-event (final payment).
+    if (status !== 'confirmed' && status !== 'info_collection' && status !== 'pre_event') {
       notify(booking.userId, {
         type: 'booking_update',
         title: `Booking updated to ${BOOKING_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')}`,
@@ -1912,6 +1913,18 @@ export async function updateAdminBookingStatus(req, res, next) {
         })
         .catch(err =>
           console.error('[booking-email] info-collection failed', bookingId, err?.message)
+        )
+    }
+
+    if (status === 'pre_event' && booking.status !== 'pre_event') {
+      sendFinalPaymentEmail(bookingId)
+        .then(result => {
+          if (!result?.sent) {
+            console.warn('[booking-email] final-payment email not sent:', bookingId, result)
+          }
+        })
+        .catch(err =>
+          console.error('[booking-email] final-payment failed', bookingId, err?.message)
         )
     }
 

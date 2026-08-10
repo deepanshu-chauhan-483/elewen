@@ -14,6 +14,7 @@ import { isCodPayment } from './sheeshaCheckout.js'
 export const BOOKING_EMAIL_TYPES = {
   CONFIRMED: 'booking_confirmed_lifecycle',
   INFO_COLLECTION: 'booking_info_collection',
+  FINAL_PAYMENT: 'booking_final_payment',
   PERSONALIZATION: 'booking_personalization',
   PRE_EVENT_2DAY: 'booking_pre_event_2day',
   POST_EVENT_FEEDBACK: 'booking_post_event_feedback',
@@ -457,6 +458,40 @@ export async function sendInfoCollectionEmail(bookingId, { force = false } = {})
       paymentUrl: customerBookingDetailsUrl(booking.id),
     },
     linkUrl: customerInfoCollectionPath(booking.id),
+    force,
+  })
+}
+
+/** Mail — when admin moves booking to Pre-Event (final / remaining payment). */
+export async function sendFinalPaymentEmail(bookingId, { force = false } = {}) {
+  const booking = await loadBookingForEmail(bookingId)
+  if (!booking) return { sent: false, reason: 'not_found' }
+  if (booking.status === 'cancelled') return { sent: false, reason: 'cancelled' }
+
+  const ctx = buildBookingEmailContext(booking)
+  const remainingDue = Math.max(toNumber(ctx.remainingBalanceRaw), 0)
+  const amountPaid = toNumber(ctx.amountPaidRaw)
+
+  return dispatchLifecycleEmail({
+    booking,
+    emailType: BOOKING_EMAIL_TYPES.FINAL_PAYMENT,
+    templateKey: 'booking_final_payment',
+    subject: 'Complete your final payment — Elewen',
+    title: 'Final Payment',
+    message:
+      remainingDue > 0
+        ? 'Please complete your remaining payment before the event begins.'
+        : 'Your payment is complete. Remaining due is ₹0.',
+    emailData: {
+      bookingId: booking.id,
+      eventDate: booking.eventDate,
+      guestCount: booking.guestCount,
+      totalPrice: ctx.totalAmountRaw,
+      amountPaid,
+      remainingDue,
+      paymentUrl: customerBookingDetailsUrl(booking.id),
+    },
+    linkUrl: customerBookingDetailsPath(booking.id),
     force,
   })
 }

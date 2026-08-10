@@ -277,6 +277,53 @@ export const templates = {
     )
   },
 
+  booking_final_payment: ({
+    bookingId,
+    eventDate,
+    guestCount,
+    totalPrice,
+    amountPaid,
+    remainingDue,
+    paymentUrl,
+  }) => {
+    const due = Number(remainingDue) || 0
+    const paid = Number(amountPaid) || 0
+    const remainingLabel = `₹${due.toLocaleString('en-IN')}`
+    const amountPaidLabel = `₹${paid.toLocaleString('en-IN')}`
+    const eventDateLabel =
+      eventDate instanceof Date || (typeof eventDate === 'string' && eventDate)
+        ? new Date(eventDate).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : String(eventDate ?? 'To be confirmed')
+
+    return layout(
+      'Final Payment — Elewen',
+      `
+      ${h1('Time for your final payment')}
+      ${p('Your event is approaching. Please complete any remaining balance before the event begins so our team can proceed smoothly.')}
+      ${divider()}
+      ${infoTable(`
+        ${infoRow('Event Date', eventDateLabel)}
+        ${infoRow('Guests', guestCount ?? '—')}
+        ${infoRow('Total', `₹${Number(totalPrice || 0).toLocaleString('en-IN')}`)}
+        ${infoRow('Amount Paid', amountPaidLabel)}
+        ${infoRow('Remaining Due', remainingLabel)}
+      `)}
+      ${divider()}
+      ${
+        due > 0
+          ? `${p('Please complete your final payment using the button below.')}
+             ${ctaBtn('Pay Final Amount', paymentUrl || customerBookingDetailsUrl(bookingId))}`
+          : `${p('Good news — your payment is already complete. Remaining due is ₹0.')}
+             ${ctaBtn('View Booking', paymentUrl || customerBookingDetailsUrl(bookingId))}`
+      }
+    `
+    )
+  },
+
   booking_status_update: ({ bookingId, previousStatus, newStatus, eventDate }) =>
     layout(
       'Booking Update — Elewen',
