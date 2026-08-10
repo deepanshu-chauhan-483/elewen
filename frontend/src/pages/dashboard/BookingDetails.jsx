@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '../../components/common/useToast'
 import { useDashboardSearch } from '../../components/dashboard/useDashboardSearch'
 import { DashboardEmptyState } from '../../components/dashboard/DashboardUI'
@@ -27,7 +28,37 @@ import {
   parseBookingItemTitle,
 } from '../../lib/bookingDisplay'
 import { buildReceiptData, downloadReceipt } from '../../lib/receipt'
+import { getStoredJwt, paymentCreateOrder, paymentVerify } from '../../lib/api'
+import { openCashfreeCheckout } from '../../lib/cashfreeCheckout'
 import EmptyBooking from '../../components/dashboard/EmptyBooking'
+
+function getPaymentErrorMessage(error) {
+  return (
+    error?.response?.data?.error ||
+    error?.message ||
+    'Payment could not be started. Please try again.'
+  )
+}
+
+function getOutstandingPayment(booking) {
+  const paymentSummary = booking?.paymentSummary ?? {}
+  const amountDue = Number(paymentSummary.amountDue ?? 0)
+  const amountPaid = Number(paymentSummary.amountPaid ?? 0)
+  const advanceAmount = Number(paymentSummary.advanceAmount ?? booking?.advanceAmount ?? 0)
+  const status = String(booking?.status ?? '')
+    .trim()
+    .toLowerCase()
+  const blocked = ['cancelled', 'canceled', 'completed'].includes(status)
+  const canPay = !blocked && amountDue > 0
+  const needsAdvance = advanceAmount > 0 && amountPaid + 1e-9 < advanceAmount
+
+  return {
+    canPay,
+    amountDue,
+    paymentType: needsAdvance ? 'advance' : 'remaining',
+    label: needsAdvance ? 'Pay Advance' : 'Pay Remaining',
+  }
+}
 
 function getCartItemMeta(title = '') {
   return parseBookingItemTitle(title)
@@ -469,11 +500,13 @@ const StatusBadge = ({ status }) => {
 
 function BookingAccordionCard({ booking, session, packages, defaultOpen = false }) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { showToast } = useToast()
   const [open, setOpen] = useState(defaultOpen)
   const [showCancel, setShowCancel] = useState(false)
   const [reason, setReason] = useState('')
   const [hasAcceptedPolicy, setHasAcceptedPolicy] = useState(false)
+  const [isPaying, setIsPaying] = useState(false)
   const selectedItemRows = buildSelectedItemRows(booking)
   const packageNames = getBookingPackageNames(booking)
   const packageIncludesSections = useMemo(
@@ -485,13 +518,13 @@ function BookingAccordionCard({ booking, session, packages, defaultOpen = false 
   const paymentDetailRows = useMemo(() => buildPaymentDetailRows(booking), [booking])
   const amountPaidDisplay = paymentDetailRows[0]?.amount ?? 0
   const remainingBalanceDisplay = paymentDetailRows[1]?.amount ?? 0
+  const outstandingPayment = useMemo(() => getOutstandingPayment(booking), [booking])
   const cancelMutation = useDashboardCancelBooking()
   const { data: cancellationPolicy } = useCancellationPolicy()
   const {
     data: bookingCancellationToastMessage = 'Your booking has been cancelled successfully.',
   } = useBookingCancellationToastMessage()
   const { data: timelineData = [] } = useDashboardBookingTimeline(open ? booking?.id : null)
-  // const { showToast } = useToast()
   const receiptData = buildReceiptData({
     booking,
     customer: {
@@ -525,6 +558,76 @@ function BookingAccordionCard({ booking, session, packages, defaultOpen = false 
       setOpen(false)
     })
   }, [bookingCancellationToastMessage, cancelMutation.isSuccess, showToast])
+
+  const handlePayOutstanding = async event => {
+    event.stopPropagation()
+    if (!booking?.id || isPaying || !outstandingPayment.canPay) return
+
+    const token = getStoredJwt()
+    if (!token) {
+      window.alert('Please log in again to continue payment.')
+      return
+    }
+
+    setIsPaying(true)
+    try {
+      const orderResponse = await paymentCreateOrder(token, {
+        bookingId: booking.id,
+        paymentType: outstandingPayment.paymentType,
+      })
+
+      if (orderResponse?.testMode) {
+        await paymentVerify(token, {
+          paymentId: orderResponse.paymentId,
+          gatewayOrderId: orderResponse.gatewayOrderId,
+          gatewayPaymentId: `test_payment_${orderResponse.paymentId}`,
+          paymentMethod: 'offline',
+          testBypass: true,
+        })
+      } else {
+        if (!orderResponse?.paymentSessionId) {
+          throw new Error('Cashfree payment session could not be created.')
+        }
+
+        const checkoutResult = await openCashfreeCheckout({
+          paymentSessionId: orderResponse.paymentSessionId,
+          environment: orderResponse.environment,
+        })
+
+        if (checkoutResult?.error) {
+          throw new Error(getPaymentErrorMessage(checkoutResult.error))
+        }
+
+        await paymentVerify(token, {
+          paymentId: orderResponse.paymentId,
+          gatewayOrderId: orderResponse.gatewayOrderId,
+          gatewayPaymentId:
+            checkoutResult?.paymentDetails?.paymentId ||
+            checkoutResult?.paymentDetails?.cf_payment_id ||
+            null,
+          paymentMethod: 'upi',
+        })
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'booking', booking.id],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'booking-timeline', booking.id],
+      })
+      showToast({
+        message:
+          outstandingPayment.paymentType === 'advance'
+            ? 'Advance payment received.'
+            : 'Remaining payment received.',
+      })
+    } catch (err) {
+      window.alert(getPaymentErrorMessage(err))
+    } finally {
+      setIsPaying(false)
+    }
+  }
 
   return (
     <div
@@ -765,9 +868,23 @@ function BookingAccordionCard({ booking, session, packages, defaultOpen = false 
           </div>
 
           <div className="pt-6 flex flex-wrap gap-3 justify-end">
+            {outstandingPayment.canPay ? (
+              <button
+                type="button"
+                onClick={handlePayOutstanding}
+                disabled={isPaying}
+                className="rounded-full bg-[#CDB17E] px-4 py-2 text-[#FFFFFF] transition hover:bg-[#C6AB7F] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isPaying ? 'Opening payment...' : outstandingPayment.label}
+              </button>
+            ) : null}
+
             <button
               type="button"
-              onClick={() => downloadReceipt(receiptData)}
+              onClick={event => {
+                event.stopPropagation()
+                downloadReceipt(receiptData)
+              }}
               className="rounded-full px-4 py-2 border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]"
             >
               Download Receipt
