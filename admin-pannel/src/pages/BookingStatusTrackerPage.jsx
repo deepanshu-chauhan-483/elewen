@@ -262,14 +262,14 @@ export default function BookingStatusTrackerPage() {
         <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
           Filter &amp; sort
         </p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <div className="grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
           <CustomSelect
             value={activeStage}
             onChange={value => {
               setActiveStage(value)
               setCurrentPage(1)
             }}
-            className="min-h-10 min-w-[220px] flex-1 rounded-full bg-[#F3F3F3]"
+            className="min-h-10 rounded-full bg-[#F3F3F3]"
           >
             {TRACKER_STAGES.map(stage => (
               <option key={stage.key} value={stage.key}>
@@ -286,7 +286,7 @@ export default function BookingStatusTrackerPage() {
               setSortBy(value)
               setCurrentPage(1)
             }}
-            className="min-h-10 min-w-[180px] rounded-full bg-[#F3F3F3]"
+            className="min-h-10 rounded-full bg-[#F3F3F3]"
           >
             <option value="latest">Latest First</option>
             <option value="event_date">By Event Date</option>
