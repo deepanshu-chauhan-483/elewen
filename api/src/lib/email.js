@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import {
   customerBookingDetailsUrl,
+  customerInfoCollectionUrl,
   customerProfileCouponsUrl,
 } from './customerUrls.js'
 
@@ -190,7 +191,7 @@ const couponCodeBlock = code => `
 export const templates = {
   booking_created: ({ bookingId, totalPrice, advanceAmount, eventDate, guestCount }) =>
     layout(
-      'Booking Created — Elewen',
+      'One Step Away from a Stress-Free Event ✨',
       `
       ${h1('One Step Away from a Stress-Free Event ✨')}
       ${p('Thank you for choosing Elewen. Your booking has been received and is awaiting advance payment.')}
@@ -226,6 +227,55 @@ export const templates = {
       ${ctaBtn('View Booking', customerBookingDetailsUrl(bookingId))}
     `
     ),
+
+  booking_info_collection: ({
+    bookingId,
+    eventDate,
+    guestCount,
+    totalPrice,
+    advanceDue,
+    amountPaid,
+    formUrl,
+    paymentUrl,
+  }) => {
+    const due = Number(advanceDue) || 0
+    const paid = Number(amountPaid) || 0
+    const advanceDueLabel = `₹${due.toLocaleString('en-IN')}`
+    const amountPaidLabel = `₹${paid.toLocaleString('en-IN')}`
+    const eventDateLabel =
+      eventDate instanceof Date || (typeof eventDate === 'string' && eventDate)
+        ? new Date(eventDate).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : String(eventDate ?? 'To be confirmed')
+
+    return layout(
+      'Information Collection — Elewen',
+      `
+      ${h1('Almost there — a few details & your advance')}
+      ${p('Your booking is in Information Collection. Please fill the event form first, then complete the advance payment if any amount is still due.')}
+      ${divider()}
+      ${infoTable(`
+        ${infoRow('Event Date', eventDateLabel)}
+        ${infoRow('Guests', guestCount ?? '—')}
+        ${infoRow('Total', `₹${Number(totalPrice || 0).toLocaleString('en-IN')}`)}
+        ${infoRow('Amount Paid', amountPaidLabel)}
+        ${infoRow('Advance Due', advanceDueLabel)}
+      `)}
+      ${divider()}
+      ${p('<strong style="color:#ffffff;">Step 1:</strong> Fill your event information form.')}
+      ${ctaBtn('Fill Information Form', formUrl || customerInfoCollectionUrl(bookingId))}
+      ${
+        due > 0
+          ? `${p('<strong style="color:#ffffff;">Step 2:</strong> Pay the advance to confirm planning can begin.')}
+             ${ctaBtn('Pay Advance', paymentUrl || customerBookingDetailsUrl(bookingId))}`
+          : `${p('<strong style="color:#ffffff;">Advance:</strong> No advance is due — your payment is already complete (₹0 remaining).')}`
+      }
+    `
+    )
+  },
 
   booking_status_update: ({ bookingId, previousStatus, newStatus, eventDate }) =>
     layout(

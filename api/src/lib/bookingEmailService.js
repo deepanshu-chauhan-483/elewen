@@ -6,11 +6,14 @@ import {
   appBaseUrl,
   customerBookingDetailsPath,
   customerBookingDetailsUrl,
+  customerInfoCollectionPath,
+  customerInfoCollectionUrl,
 } from './customerUrls.js'
 import { isCodPayment } from './sheeshaCheckout.js'
 
 export const BOOKING_EMAIL_TYPES = {
   CONFIRMED: 'booking_confirmed_lifecycle',
+  INFO_COLLECTION: 'booking_info_collection',
   PERSONALIZATION: 'booking_personalization',
   PRE_EVENT_2DAY: 'booking_pre_event_2day',
   POST_EVENT_FEEDBACK: 'booking_post_event_feedback',
@@ -229,6 +232,7 @@ async function dispatchLifecycleEmail({
   force = false,
   subjectOverride = null,
   htmlOverride = null,
+  linkUrl = null,
 }) {
   if (!booking?.id || !booking?.userId) {
     return { sent: false, reason: 'missing_booking' }
@@ -266,7 +270,7 @@ async function dispatchLifecycleEmail({
     type: 'booking_update',
     title,
     message,
-    linkUrl: customerBookingDetailsPath(booking.id),
+    linkUrl: linkUrl || customerBookingDetailsPath(booking.id),
   }).catch(() => {})
 
   return { sent: true, emailType, subject: finalSubject }
@@ -418,6 +422,43 @@ export async function previewBookingPersonalizationEmail(
     ...resolvedCopy,
     defaults,
   }
+}
+
+/** Mail — when admin moves booking to Information Collection. */
+export async function sendInfoCollectionEmail(bookingId, { force = false } = {}) {
+  const booking = await loadBookingForEmail(bookingId)
+  if (!booking) return { sent: false, reason: 'not_found' }
+  if (booking.status === 'cancelled') return { sent: false, reason: 'cancelled' }
+
+  const ctx = buildBookingEmailContext(booking)
+  const advanceRequired = toNumber(ctx.advanceAmountRaw)
+  const amountPaid = toNumber(ctx.amountPaidRaw)
+  // If customer already paid advance (or more), show ₹0 due.
+  const advanceDue = Math.max(advanceRequired - amountPaid, 0)
+
+  return dispatchLifecycleEmail({
+    booking,
+    emailType: BOOKING_EMAIL_TYPES.INFO_COLLECTION,
+    templateKey: 'booking_info_collection',
+    subject: 'Fill your event details & complete advance — Elewen',
+    title: 'Information Collection',
+    message:
+      advanceDue > 0
+        ? 'Please fill your event information form, then complete the advance payment.'
+        : 'Please fill your event information form. Your advance is already paid.',
+    emailData: {
+      bookingId: booking.id,
+      eventDate: booking.eventDate,
+      guestCount: booking.guestCount,
+      totalPrice: ctx.totalAmountRaw,
+      advanceDue,
+      amountPaid,
+      formUrl: customerInfoCollectionUrl(booking.id),
+      paymentUrl: customerBookingDetailsUrl(booking.id),
+    },
+    linkUrl: customerInfoCollectionPath(booking.id),
+    force,
+  })
 }
 
 /** Mail 1 — when admin confirms booking (after advance paid, or Hookah COD). */

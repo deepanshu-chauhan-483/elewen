@@ -29,6 +29,7 @@ import {
   previewBookingPersonalizationEmail,
   sendBookingConfirmedEmail,
   sendBookingPersonalizationEmail,
+  sendInfoCollectionEmail,
   sendPostEventFeedbackEmail,
 } from '../lib/bookingEmailService.js'
 import {
@@ -1880,8 +1881,8 @@ export async function updateAdminBookingStatus(req, res, next) {
       return nextBooking
     })
 
-    // Confirmed uses sendBookingConfirmedEmail only (single in-app + email notification).
-    if (status !== 'confirmed') {
+    // Confirmed / info-collection use dedicated lifecycle emails (single in-app + email).
+    if (status !== 'confirmed' && status !== 'info_collection') {
       notify(booking.userId, {
         type: 'booking_update',
         title: `Booking updated to ${BOOKING_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')}`,
@@ -1900,6 +1901,18 @@ export async function updateAdminBookingStatus(req, res, next) {
           }
         })
         .catch(err => console.error('[booking-email] confirmed failed', bookingId, err?.message))
+    }
+
+    if (status === 'info_collection' && booking.status !== 'info_collection') {
+      sendInfoCollectionEmail(bookingId)
+        .then(result => {
+          if (!result?.sent) {
+            console.warn('[booking-email] info-collection email not sent:', bookingId, result)
+          }
+        })
+        .catch(err =>
+          console.error('[booking-email] info-collection failed', bookingId, err?.message)
+        )
     }
 
     if (

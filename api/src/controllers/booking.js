@@ -316,7 +316,7 @@ export const createBooking = async (req, res, next) => {
     if (cartClassification.isMixedSheeshaCart) {
       return res.status(400).json({
         error:
-          'Hookah needs a separate booking  it cant be combined with other services in the same cart.',
+          'Hookah needs a separate booking ï¿½ it canï¿½t be combined with other services in the same cart.',
         code: 'MIXED_SHEESHA_CART',
       })
     }
@@ -331,10 +331,10 @@ export const createBooking = async (req, res, next) => {
       cart.guestCount ?? (isSampleTastingCheckout ? Math.max(1, fallbackGuestCount || 1) : null)
 
     if (!resolvedEventDate) {
-      return res.status(400).json({ error: 'Event date is required  update your cart first' })
+      return res.status(400).json({ error: 'Event date is required ï¿½ update your cart first' })
     }
     if (!resolvedGuestCount) {
-      return res.status(400).json({ error: 'Guest count is required  update your cart first' })
+      return res.status(400).json({ error: 'Guest count is required ï¿½ update your cart first' })
     }
 
     // Use packageId from the first cart item (primary package)
@@ -348,7 +348,7 @@ export const createBooking = async (req, res, next) => {
 
     const subtotal = pricedCart ? Number(pricedCart.subtotal) : Number(cart.subtotal)
 
-    // Re-validate coupon (race condition protection  someone else may have exhausted it)
+    // Re-validate coupon (race condition protection ï¿½ someone else may have exhausted it)
     let discountAmount = 0
     let validCouponId = null
     let validCouponGrantId = null
@@ -369,7 +369,7 @@ export const createBooking = async (req, res, next) => {
     const totalPrice = Math.max(0, subtotal - discountAmount)
 
     // Fetch advance payment percentage from global settings
-    // Hookah-only COD: no advance  full amount due on delivery.
+    // Hookah-only COD: no advance ï¿½ full amount due on delivery.
     const advancePct = isSheeshaOnlyBooking ? 0 : await getAdvancePct()
     const advanceAmount = (totalPrice * advancePct) / 100
     const remainingAmount = totalPrice - advanceAmount
@@ -489,7 +489,7 @@ export const createBooking = async (req, res, next) => {
       return newBooking
     })
 
-    // Increment coupon used_count in Strapi (outside transaction  non-critical)
+    // Increment coupon used_count in Strapi (outside transaction ï¿½ non-critical)
     if (validCouponId) {
       try {
         const { data: coupons } = await strapiGet('/coupons', {
@@ -511,7 +511,7 @@ export const createBooking = async (req, res, next) => {
           })
         }
       } catch {
-        // Non-critical  coupon usage still recorded in coupon_usage table
+        // Non-critical ï¿½ coupon usage still recorded in coupon_usage table
       }
     }
 
@@ -524,7 +524,7 @@ export const createBooking = async (req, res, next) => {
       },
     })
 
-    // Fire-and-forget notifications  never block the response
+    // Fire-and-forget notifications â€” never block the response
     notify(userId, {
       type: 'booking_update',
       title: 'Booking Placed',
@@ -536,6 +536,7 @@ export const createBooking = async (req, res, next) => {
         ? {}
         : {
             emailTemplate: 'booking_created',
+            emailSubject: 'One Step Away from a Stress-Free Event âœ¨',
             emailData: {
               bookingId: booking.id,
               totalPrice: booking.totalPrice,
@@ -668,7 +669,7 @@ export const getBooking = async (req, res, next) => {
 
 // ??? PATCH /bookings/:id/status ????????????????????????????????????????????????
 // Enforces state machine transitions. Customers can only cancel.
-// Full admin transitions are handled here too  role check can be layered later.
+// Full admin transitions are handled here too ï¿½ role check can be layered later.
 export const updateStatus = async (req, res, next) => {
   try {
     const userId = String(req.user.id)
@@ -1210,7 +1211,7 @@ export const getInfoCollection = async (req, res, next) => {
       where: { id },
       include: {
         items: true,
-        // Load every note  checkout snapshots may exist with either visibility flag.
+        // Load every note ï¿½ checkout snapshots may exist with either visibility flag.
         notes: {
           orderBy: { createdAt: 'asc' },
         },
@@ -1279,8 +1280,8 @@ export const getInfoCollection = async (req, res, next) => {
   }
 }
 
-// ??? PUT /bookings/:id/info-collection ?????????????????????????????????????????
-// No fields are mandatory  customer can submit whatever they have.
+// ??? PUT /bookings/:id/info-collection ???????????????????????????????????????
+// Customer submits event logistics. Frontend requires core fields; extras stay optional.
 export const submitInfoCollection = async (req, res, next) => {
   try {
     const userId = String(req.user.id)

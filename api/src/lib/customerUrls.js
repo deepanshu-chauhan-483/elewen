@@ -8,6 +8,12 @@ export const customerBookingDetailsPath = bookingId =>
 export const customerBookingDetailsUrl = bookingId =>
   `${appBaseUrl()}${customerBookingDetailsPath(bookingId)}`
 
+export const customerInfoCollectionPath = bookingId =>
+  `/user-dashboard/info-collection?bookingId=${encodeURIComponent(String(bookingId ?? ''))}`
+
+export const customerInfoCollectionUrl = bookingId =>
+  `${appBaseUrl()}${customerInfoCollectionPath(bookingId)}`
+
 export const customerProfileCouponsPath = () => '/user-dashboard/profile#my-coupons'
 
 export const customerProfileCouponsUrl = () => `${appBaseUrl()}${customerProfileCouponsPath()}`
