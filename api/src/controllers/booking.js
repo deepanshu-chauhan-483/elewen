@@ -1,7 +1,7 @@
 import prisma from '../lib/prisma.js'
 import { computeCartItemsWithDeliveryCharges } from '../lib/deliveryChargePricing.js'
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
-import { notify } from '../lib/notify.js'
+import { notify, notifyRefund } from '../lib/notify.js'
 import { resolveAppliedCoupon } from '../lib/coupons.js'
 import { enrichBookings, filterBookingsByType, buildInfoCollectionNote, getBookingMetaFromNotes } from '../lib/dashboardData.js'
 import { createOperationalAlert } from '../lib/alerts.js'
@@ -926,6 +926,16 @@ export const cancelBooking = async (req, res, next) => {
       emailTemplate: 'booking_cancelled',
       emailData: { bookingId: id, reason },
     }).catch(() => {})
+
+    if (refundEntries.length > 0) {
+      const totalRefund = refundEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0)
+      notifyRefund(userId, {
+        kind: 'requested',
+        bookingId: id,
+        amount: totalRefund,
+        reason: reason ?? 'Booking cancellation',
+      }).catch(() => {})
+    }
 
     invalidateDashboardCache(userId).catch(() => {})
 

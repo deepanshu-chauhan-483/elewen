@@ -11,7 +11,7 @@ import {
   verifyCashfreeWebhookSignature,
 } from '../lib/cashfree.js'
 import { createOperationalAlert } from '../lib/alerts.js'
-import { notify } from '../lib/notify.js'
+import { notify, notifyRefund } from '../lib/notify.js'
 import { invalidateDashboardCache } from './dashboard.js'
 import {
   classifyCartItems,
@@ -776,6 +776,13 @@ export const requestRefund = async (req, res, next) => {
       relatedEntityId: payment.bookingId,
     })
 
+    notifyRefund(userId, {
+      kind: 'requested',
+      bookingId: payment.bookingId,
+      amount: refund.amount,
+      reason,
+    }).catch(() => {})
+
     res.status(201).json({ refund })
   } catch (err) {
     next(err)
@@ -872,17 +879,14 @@ export const processRefund = async (req, res, next) => {
       },
     })
 
-    // Notify user when refund is approved and being processed
+    // Notify customer + admin when refund is approved and being processed
     if (normalizedAction !== 'reject') {
       const refundBooking = await prisma.booking.findUnique({ where: { id: updated.bookingId } })
       if (refundBooking) {
-        notify(refundBooking.userId, {
-          type: 'payment',
-          title: 'Refund Initiated',
-          message: `₹${(updated.amount.toNumber?.() ?? Number(updated.amount)).toLocaleString('en-IN')} refund has been processed and will reflect in 5–7 business days.`,
-          linkUrl: `/dashboard/bookings/${updated.bookingId}`,
-          emailTemplate: 'refund_processed',
-          emailData: { bookingId: updated.bookingId, amount: updated.amount },
+        notifyRefund(refundBooking.userId, {
+          kind: 'processed',
+          bookingId: updated.bookingId,
+          amount: updated.amount,
         }).catch(() => {})
       }
     }

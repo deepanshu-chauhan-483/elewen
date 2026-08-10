@@ -20,7 +20,7 @@ import {
   strapiUpload,
 } from '../lib/strapi.js'
 import { cacheDelPattern } from '../lib/cache.js'
-import { isCodPendingPayment } from '../lib/sheeshaCheckout.js'
+import { isCodPayment, isCodPendingPayment } from '../lib/sheeshaCheckout.js'
 import { buildUniqueGrantCode, mapGrantForCustomer } from '../lib/coupons.js'
 import { findCustomerByEmail } from '../lib/userLookup.js'
 import {
@@ -944,9 +944,11 @@ function buildBookingBucketFilter(bucket = 'all') {
   }
 
   // Today's bookings = placed by customer today (createdAt), not eventDate today.
+  // Cancelled bookings leave Today and appear under Cancelled.
   if (bucket === 'today') {
     return {
       createdAt: getIstDayBounds(),
+      status: { notIn: ['cancelled'] },
     }
   }
 
@@ -966,7 +968,14 @@ function getSuccessfulPaidAmount(booking) {
     .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
 }
 
+function bookingHasHookahCod(booking) {
+  return (Array.isArray(booking?.payments) ? booking.payments : []).some(isCodPayment)
+}
+
 function isAdvanceSatisfied(booking) {
+  // Hookah COD bookings are allowed with ₹0 online payment.
+  if (bookingHasHookahCod(booking)) return true
+
   const paid = getSuccessfulPaidAmount(booking)
   const advanceAmount = toNumber(booking?.advanceAmount)
   if (advanceAmount <= 0) {
@@ -1013,6 +1022,12 @@ function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = 
     .trim()
     .toLowerCase()
 
+  // Today = created today + advance paid (or Hookah COD). Unpaid non-Hookah → Incomplete.
+  // Cancelled never stay in Today.
+  if (bucket === 'today') {
+    return status !== 'cancelled' && isAdvanceSatisfied(booking)
+  }
+
   if (bucket === 'live' || bucket === 'active') {
     return !['completed', 'cancelled'].includes(status) && isAdvanceSatisfied(booking)
   }
@@ -1033,11 +1048,13 @@ function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = 
 
   if (bucket === 'cancelled') {
     if (status !== 'cancelled') return false
-    // Paid-in-advance cancels only when an advance was required.
-    if (advanceAmount > 0 && paid + 1e-9 < advanceAmount) return false
     const source = getCancellationSource(booking)
     if (normalizedCancelledBy === 'client' || normalizedCancelledBy === 'admin') {
-      return source === normalizedCancelledBy
+      if (source !== normalizedCancelledBy) return false
+    }
+    // Unpaid client cancels stay out of Cancelled; admin cancels always appear here.
+    if (advanceAmount > 0 && paid + 1e-9 < advanceAmount) {
+      return source === 'admin'
     }
     return true
   }
@@ -1050,6 +1067,7 @@ function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = 
 }
 
 const PAYMENT_AWARE_BUCKETS = new Set([
+  'today',
   'live',
   'active',
   'upcoming',
@@ -1344,7 +1362,7 @@ export async function getAdminOverview(req, res, next) {
       liveCandidates,
       newBookingsCount,
       completedCandidates,
-      todayBookingsCount,
+      todayCandidates,
       upcomingCandidates,
       pendingSampleCount,
       openTicketsCount,
@@ -1369,7 +1387,15 @@ export async function getAdminOverview(req, res, next) {
           advanceAmount: true,
           totalPrice: true,
           userId: true,
-          payments: { select: { status: true, amount: true } },
+          payments: {
+            select: {
+              status: true,
+              amount: true,
+              provider: true,
+              paymentMethod: true,
+              providerOrderId: true,
+            },
+          },
         },
       }),
       prisma.booking.count({
@@ -1385,12 +1411,35 @@ export async function getAdminOverview(req, res, next) {
           status: true,
           advanceAmount: true,
           totalPrice: true,
-          payments: { select: { status: true, amount: true } },
+          payments: {
+            select: {
+              status: true,
+              amount: true,
+              provider: true,
+              paymentMethod: true,
+              providerOrderId: true,
+            },
+          },
         },
       }),
-      prisma.booking.count({
+      prisma.booking.findMany({
         where: {
           createdAt: todayCreatedRange,
+          status: { notIn: ['cancelled'] },
+        },
+        select: {
+          status: true,
+          advanceAmount: true,
+          totalPrice: true,
+          payments: {
+            select: {
+              status: true,
+              amount: true,
+              provider: true,
+              paymentMethod: true,
+              providerOrderId: true,
+            },
+          },
         },
       }),
       prisma.booking.findMany({
@@ -1408,7 +1457,15 @@ export async function getAdminOverview(req, res, next) {
           eventDate: true,
           advanceAmount: true,
           totalPrice: true,
-          payments: { select: { status: true, amount: true } },
+          payments: {
+            select: {
+              status: true,
+              amount: true,
+              provider: true,
+              paymentMethod: true,
+              providerOrderId: true,
+            },
+          },
         },
       }),
       prisma.sampleTasteBooking.count({
@@ -1501,6 +1558,9 @@ export async function getAdminOverview(req, res, next) {
 
     const activeBookingsCount = liveCandidates.filter(booking =>
       bookingMatchesOperationalBucket(booking, 'live')
+    ).length
+    const todayBookingsCount = todayCandidates.filter(booking =>
+      bookingMatchesOperationalBucket(booking, 'today')
     ).length
     const upcomingEventsCount = upcomingCandidates.filter(booking =>
       bookingMatchesOperationalBucket(booking, 'upcoming')

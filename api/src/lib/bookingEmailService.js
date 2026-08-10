@@ -439,20 +439,24 @@ export async function sendInfoCollectionEmail(bookingId, { force = false } = {})
   const advanceDue = Math.max(advanceRequired - amountPaid, 0)
 
   let message = 'Please fill your event information form.'
+  let subject = 'Fill your event details — Elewen'
   if (advanceDue > 0) {
     message = 'Please fill your event information form, then complete the advance payment.'
+    subject = 'Fill your event details & pay advance — Elewen'
   } else if (remainingDue > 0) {
     message =
       'Please fill your event information form. Advance is paid; remaining balance is still pending.'
+    subject = 'Fill your event details & pay remaining — Elewen'
   } else {
     message = 'Please fill your event information form. Your booking payment is fully complete.'
+    subject = 'Fill your event details — Elewen'
   }
 
   return dispatchLifecycleEmail({
     booking,
     emailType: BOOKING_EMAIL_TYPES.INFO_COLLECTION,
     templateKey: 'booking_info_collection',
-    subject: 'Fill your event details & complete payment — Elewen',
+    subject,
     title: 'Information Collection',
     message,
     emailData: {

@@ -1,5 +1,5 @@
 import prisma from './prisma.js'
-import { sendEmail, templates } from './email.js'
+import { sendAdminEmails, sendEmail, templates } from './email.js'
 
 const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337'
 
@@ -60,6 +60,64 @@ export const notify = async (
       const subject = emailSubject || title
       const html = templates[emailTemplate](emailData || {})
       await sendEmail(email, subject, html)
+    }
+  }
+}
+
+/** Email customer + admin for refund request or processed refund. */
+export const notifyRefund = async (
+  userId,
+  { kind, bookingId, amount, reason = null }
+) => {
+  const amountNum = Number(amount?.toNumber?.() ?? amount ?? 0)
+  const shortId = String(bookingId).slice(0, 8).toUpperCase()
+  const customerEmail = userId ? await getUserEmail(userId) : null
+
+  if (kind === 'requested') {
+    if (userId) {
+      await notify(userId, {
+        type: 'payment',
+        title: 'Refund Requested',
+        message: `₹${amountNum.toLocaleString('en-IN')} refund request has been recorded for booking #${shortId}.`,
+        linkUrl: `/dashboard/bookings/${bookingId}`,
+        emailTemplate: 'refund_requested',
+        emailData: { bookingId, amount: amountNum, reason },
+      })
+    }
+    if (templates.refund_requested_admin) {
+      await sendAdminEmails(
+        `Refund requested — #${shortId}`,
+        templates.refund_requested_admin({
+          bookingId,
+          amount: amountNum,
+          reason,
+          customerEmail,
+        })
+      )
+    }
+    return
+  }
+
+  if (kind === 'processed') {
+    if (userId) {
+      await notify(userId, {
+        type: 'payment',
+        title: 'Refund Initiated',
+        message: `₹${amountNum.toLocaleString('en-IN')} refund has been processed and will reflect in 5–7 business days.`,
+        linkUrl: `/dashboard/bookings/${bookingId}`,
+        emailTemplate: 'refund_processed',
+        emailData: { bookingId, amount: amountNum },
+      })
+    }
+    if (templates.refund_processed_admin) {
+      await sendAdminEmails(
+        `Refund processed — #${shortId}`,
+        templates.refund_processed_admin({
+          bookingId,
+          amount: amountNum,
+          customerEmail,
+        })
+      )
     }
   }
 }

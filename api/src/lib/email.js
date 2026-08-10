@@ -264,19 +264,39 @@ export const templates = {
              ${ctaBtn('Pay Remaining Amount', paymentUrl || customerBookingDetailsUrl(bookingId))}`
           : `${p('<strong style="color:#ffffff;">Payment:</strong> Fully paid. Remaining due is ₹0.')}`
 
+    const headline =
+      advanceLeft > 0
+        ? 'Almost there — a few details & your advance'
+        : remainingLeft > 0
+          ? 'Almost there — details & remaining payment'
+          : 'Almost there — a few event details'
+
+    const intro =
+      advanceLeft > 0
+        ? 'Your booking is in Information Collection. Please fill the event form first, then complete the advance payment.'
+        : remainingLeft > 0
+          ? 'Your booking is in Information Collection. Advance is already paid — fill the event form, then complete the remaining balance.'
+          : 'Your booking is in Information Collection. Please fill the event form. Your payment is already complete.'
+
+    const amountRows =
+      advanceLeft > 0
+        ? `${infoRow('Amount Paid', amountPaidLabel)}
+        ${infoRow('Advance Due', advanceDueLabel)}
+        ${infoRow('Remaining Due', remainingLabel)}`
+        : `${infoRow('Amount Paid', amountPaidLabel)}
+        ${infoRow('Remaining Due', remainingLabel)}`
+
     return layout(
       'Information Collection — Elewen',
       `
-      ${h1('Almost there — a few details & your advance')}
-      ${p('Your booking is in Information Collection. Please fill the event form first, then complete any pending payment.')}
+      ${h1(headline)}
+      ${p(intro)}
       ${divider()}
       ${infoTable(`
         ${infoRow('Event Date', eventDateLabel)}
         ${infoRow('Guests', guestCount ?? '—')}
         ${infoRow('Total', `₹${Number(totalPrice || 0).toLocaleString('en-IN')}`)}
-        ${infoRow('Amount Paid', amountPaidLabel)}
-        ${infoRow('Advance Due', advanceDueLabel)}
-        ${infoRow('Remaining Due', remainingLabel)}
+        ${amountRows}
       `)}
       ${divider()}
       ${p('<strong style="color:#ffffff;">Step 1:</strong> Fill your event information form.')}
@@ -401,6 +421,40 @@ export const templates = {
     `
     ),
 
+  refund_requested: ({ bookingId, amount, reason }) =>
+    layout(
+      'Refund Requested — Elewen',
+      `
+      <div style="margin-bottom:20px;">${badge('Refund Requested', '#f59e0b')}</div>
+      ${h1('Refund request received')}
+      ${p('We have recorded your refund request. Our team will review and process it shortly.')}
+      ${divider()}
+      ${infoTable(`
+        ${infoRow('Booking ID', `#${String(bookingId).slice(0, 8).toUpperCase()}`)}
+        ${infoRow('Refund Amount', `₹${Number(amount || 0).toLocaleString('en-IN')}`)}
+        ${reason ? infoRow('Reason', reason) : ''}
+      `)}
+      ${ctaBtn('View Booking', customerBookingDetailsUrl(bookingId))}
+    `
+    ),
+
+  refund_requested_admin: ({ bookingId, amount, reason, customerEmail }) =>
+    layout(
+      'Admin — Refund Requested',
+      `
+      <div style="margin-bottom:20px;">${badge('Action Needed', '#f59e0b')}</div>
+      ${h1('New refund request')}
+      ${p('A customer refund request needs review in the admin panel.')}
+      ${divider()}
+      ${infoTable(`
+        ${infoRow('Booking ID', `#${String(bookingId).slice(0, 8).toUpperCase()}`)}
+        ${infoRow('Refund Amount', `₹${Number(amount || 0).toLocaleString('en-IN')}`)}
+        ${customerEmail ? infoRow('Customer', customerEmail) : ''}
+        ${reason ? infoRow('Reason', reason) : ''}
+      `)}
+    `
+    ),
+
   refund_processed: ({ bookingId, amount }) =>
     layout(
       'Refund Processed — Elewen',
@@ -410,8 +464,25 @@ export const templates = {
       ${p('Your refund has been processed and will reflect in your account within 5–7 business days.')}
       ${divider()}
       ${infoTable(`
-        ${infoRow('Booking ID', `#${bookingId.slice(0, 8).toUpperCase()}`)}
+        ${infoRow('Booking ID', `#${String(bookingId).slice(0, 8).toUpperCase()}`)}
         ${infoRow('Refund Amount', `₹${Number(amount).toLocaleString('en-IN')}`)}
+      `)}
+      ${ctaBtn('View Booking', customerBookingDetailsUrl(bookingId))}
+    `
+    ),
+
+  refund_processed_admin: ({ bookingId, amount, customerEmail }) =>
+    layout(
+      'Admin — Refund Processed',
+      `
+      <div style="margin-bottom:20px;">${badge('Refund Processed', '#3b82f6')}</div>
+      ${h1(`₹${Number(amount).toLocaleString('en-IN')} refund initiated`)}
+      ${p('A refund has been approved and sent to Cashfree for processing.')}
+      ${divider()}
+      ${infoTable(`
+        ${infoRow('Booking ID', `#${String(bookingId).slice(0, 8).toUpperCase()}`)}
+        ${infoRow('Refund Amount', `₹${Number(amount).toLocaleString('en-IN')}`)}
+        ${customerEmail ? infoRow('Customer', customerEmail) : ''}
       `)}
     `
     ),
@@ -781,6 +852,34 @@ const sendEmailWithSmtp = async (to, subject, html) => {
   } catch (err) {
     console.error('[email] Failed to send to', to, err?.message)
   }
+}
+
+/** Admin inboxes from ADMIN_EMAILS (comma-separated) and SUPPORT_EMAIL. */
+export function getAdminNotificationEmails() {
+  const emails = new Set()
+  String(process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map(value => value.trim().toLowerCase())
+    .filter(Boolean)
+    .forEach(email => emails.add(email))
+
+  const support = String(process.env.SUPPORT_EMAIL || SUPPORT_EMAIL || '')
+    .trim()
+    .toLowerCase()
+  if (support) emails.add(support)
+
+  return [...emails]
+}
+
+export async function sendAdminEmails(subject, html) {
+  const recipients = getAdminNotificationEmails()
+  if (!recipients.length) {
+    console.warn('[email] No ADMIN_EMAILS/SUPPORT_EMAIL configured — skipping admin email')
+    return { sent: false, reason: 'no_admin_emails' }
+  }
+
+  await Promise.all(recipients.map(to => sendEmail(to, subject, html)))
+  return { sent: true, recipients }
 }
 
 export const sendEmail = async (to, subject, html) => {
