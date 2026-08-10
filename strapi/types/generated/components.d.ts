@@ -65,6 +65,7 @@ export interface PackageCategoryItem extends Struct.ComponentSchema {
     displayName: 'category_item'
   }
   attributes: {
+    category: Schema.Attribute.String
     description: Schema.Attribute.Text
     image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios', true>
     label: Schema.Attribute.String
@@ -290,6 +291,7 @@ export interface PackageInclusions extends Struct.ComponentSchema {
     group_title: Schema.Attribute.String
     images: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios', true>
     is_choice_group: Schema.Attribute.Boolean
+    price_surcharge: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>
     text: Schema.Attribute.String
   }
 }

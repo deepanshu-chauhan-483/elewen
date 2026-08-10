@@ -2,6 +2,8 @@
 
 /**
  * Strip seed-only fields before persisting inclusions to Strapi.
+ * Keeps `price_surcharge` (CMS-editable delta). Drops `_choice_amount`
+ * (seed-only absolute price that is mirrored onto elements).
  */
 function stripSeedOnlyInclusionFields(inclustions = []) {
   return inclustions.map(item => {
@@ -17,6 +19,7 @@ function stripSeedOnlyInclusionFields(inclustions = []) {
 /**
  * Build package elements (one per choice option) from seed inclusion rows.
  * Elements are consumed in the same order as choice-group inclusions on the frontend.
+ * Absolute `_choice_amount` path only — surcharges live on inclusion.price_surcharge.
  */
 function buildChoiceElementsFromInclusions(inclustions = []) {
   return inclustions

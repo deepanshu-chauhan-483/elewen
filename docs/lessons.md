@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Decor option price surcharge (price may vary)
+
+**Root cause:** Choose 1 options had no CMS money field; optional absolute prices lived only on parallel `elements` via seed-only `_choice_amount`, and cart ignored selection deltas.
+
+**Failure symptoms:** Signature Essentials 3 Fancy Bar / Single Panel Backdrop could not show `+₹5,000` on tags or change package/cart total.
+
+**Fix details:** Added `price_surcharge` on `package.inclusions`; SE3 seed sets 5000 on those two options; frontend shows `+₹…` on tags and charges `base + selected surcharges` via `unitPrice`.
+
+**Consulted sources:** `inclusions.json`, `chooseOnePricing.js`, `DecorSinglePackagePage.jsx`, Decor client handover
+
+**Prevention guidance:** Per-option extras belong on the inclusion choice row as deltas, not as absolute replacement package prices (keep `elements` path for legacy absolute choose-1 packages).
+
 ## 2026-08-10: Cart not emptied in UI after booking
 
 **Root cause:** API cleared cart items after payment/COD confirm, but the React cart context kept the previous items until a full remount/sync. Confirmation page never refreshed or re-cleared the cart.

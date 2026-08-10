@@ -83,6 +83,13 @@ function choiceOption(groupKey, label, optionTitle, options = {}) {
     row._choice_amount = options.amount;
   }
 
+  if (options.surcharge != null) {
+    const surcharge = Number(options.surcharge);
+    if (Number.isFinite(surcharge) && surcharge > 0) {
+      row.price_surcharge = surcharge;
+    }
+  }
+
   return row;
 }
 
@@ -957,14 +964,16 @@ const ANNIVERSARY_PACKAGES = [
       whenInclusion('se3-entrance', 'Mirror Entrance', 'Mirror with florals and carpet'),
       choiceOption('se3-entrance', 'Entrance Setup (choose 1)', 'Crates Entrance'),
       whenInclusion('se3-entrance', 'Crates Entrance', 'Styled crates with florals and balloons'),
-      choiceOption('se3-backdrop', 'Backdrop (choose 1)', 'Single Panel Backdrop'),
+      choiceOption('se3-backdrop', 'Backdrop (choose 1)', 'Single Panel Backdrop', {
+        surcharge: 5000,
+      }),
       choiceOption('se3-backdrop', 'Backdrop (choose 1)', 'Shimmer Wall Backdrop'),
       choiceOption('se3-backdrop', 'Backdrop (choose 1)', 'Double Panel Backdrop'),
       { text: '2–3 quotes with easel stands', group_title: 'Printables' },
       choiceOption('se3-bar', 'Bar Setup (choose 1)', 'Basic Bar'),
       whenInclusion('se3-bar', 'Basic Bar', 'Takhat bar with black masking'),
       whenInclusion('se3-bar', 'Basic Bar', 'Bar menu display and neon sign'),
-      choiceOption('se3-bar', 'Bar Setup (choose 1)', 'Fancy Bar'),
+      choiceOption('se3-bar', 'Bar Setup (choose 1)', 'Fancy Bar', { surcharge: 5000 }),
       whenInclusion('se3-bar', 'Fancy Bar', 'Fancy bar with premium décor styling'),
       {
         text: 'Candles, ladder with memory lane, mirrors and frames',

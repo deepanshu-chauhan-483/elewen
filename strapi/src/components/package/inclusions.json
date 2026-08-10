@@ -20,6 +20,10 @@
     "is_choice_group": {
       "type": "boolean"
     },
+    "price_surcharge": {
+      "type": "decimal",
+      "default": 0
+    },
     "images": {
       "type": "media",
       "multiple": true,

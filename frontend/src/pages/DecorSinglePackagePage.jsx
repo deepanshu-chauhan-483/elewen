@@ -12,7 +12,12 @@ import { usePackageReviews } from '../hooks/usePackageReviews'
 import { getRelatedPackages, normalizeServiceSlug } from '../lib/packageFilters'
 import { isCorporateCategory } from '../lib/serviceFlow'
 import { withHousePartyPackageImages } from '../lib/housePartyPackageMedia'
-import { resolveChooseOneDisplayPrice, shouldShowChoicePrices } from '../lib/chooseOnePricing'
+import {
+  formatSurchargePrice,
+  resolveChooseOneDisplayPrice,
+  resolveChooseOneUnitPrice,
+  shouldShowChoicePrices,
+} from '../lib/chooseOnePricing'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -889,8 +894,16 @@ function createChoiceItem({
   const inclusionText = parsedLegacyTitle.title
   const elementTitle = cleanText(element?.title)
   const serviceName = cleanText(element?.service?.name)
-  const price = formatPrice(element?.base_price)
-  const priceAmount = Number(element?.base_price)
+  const surchargeAmount = Number(inclusion?.price_surcharge)
+  const hasSurcharge = Number.isFinite(surchargeAmount) && surchargeAmount > 0
+  const absolutePriceAmount = Number(element?.base_price)
+  const hasAbsolutePrice = Number.isFinite(absolutePriceAmount) && absolutePriceAmount > 0
+  const price = hasSurcharge
+    ? formatSurchargePrice(surchargeAmount)
+    : hasAbsolutePrice
+      ? formatPrice(absolutePriceAmount)
+      : ''
+  const priceAmount = hasAbsolutePrice ? absolutePriceAmount : null
   const groupKey = cleanText(inclusion?._choice_group_key)
   const bulletKey = groupKey && inclusionText ? `${groupKey}::${inclusionText}` : ''
   const scopedBullets = bulletKey ? (whenBullets.get(bulletKey) ?? []) : []
@@ -922,7 +935,8 @@ function createChoiceItem({
     bullets,
     description: bullets.length ? bullets.join('\n') : descriptionParts.join('\n'),
     price,
-    priceAmount: Number.isFinite(priceAmount) && priceAmount > 0 ? priceAmount : null,
+    priceAmount,
+    surcharge: hasSurcharge ? surchargeAmount : null,
     images,
     selected: false,
   }
@@ -1168,6 +1182,7 @@ function serializeSections(sections = []) {
               images: Array.isArray(item.images) ? item.images : [],
               price: item.price,
               priceAmount: item.priceAmount ?? null,
+              surcharge: item.surcharge ?? null,
               selected: Boolean(item.selected),
             }
       ),
@@ -1826,11 +1841,16 @@ export default function DecorSinglePackagePage() {
       : baseSelectedOpts
 
     try {
+      const visibleSections = filterVisibleDecorSections(sections)
+      const unitPrice = resolveChooseOneUnitPrice(visibleSections, pkg.base_price ?? 0)
+      const lineTotal = unitPrice * quantity
+
       if (cartItemId) {
         await updateCartItemDetails({
           itemId: cartItemId,
           quantity,
           selectedOptions: selectedOpts,
+          ...(unitPrice > 0 && { unitPrice, lineTotal }),
         })
         showToast({ message: cartToastMessage })
       } else {
@@ -1838,6 +1858,7 @@ export default function DecorSinglePackagePage() {
           packageId: Number(pkg.id),
           quantity,
           selectedOptions: selectedOpts,
+          ...(unitPrice > 0 && { unitPrice, lineTotal }),
         })
         showToast({ message: cartToastMessage })
       }
