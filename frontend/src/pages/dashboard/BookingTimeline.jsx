@@ -122,7 +122,6 @@ function normalizeTimelineItem(item) {
     description: item?.description ?? '',
     stageNote: String(item?.stageNote ?? '').trim(),
     stageNoteDate: item?.stageNoteCreatedAt ? formatDashboardDate(item.stageNoteCreatedAt) : '',
-    date: item?.timelineDate ? formatDashboardDate(item.timelineDate) : '-',
     status,
   }
 }
@@ -517,7 +516,6 @@ export default function BookingTimeline() {
 
                   <div className="flex-shrink-0 text-right">
                     <StatusPill status={item.status} />
-                    <p className="mt-1 text-xs text-[#A89080]">{item.date}</p>
                   </div>
                 </div>
               </div>
