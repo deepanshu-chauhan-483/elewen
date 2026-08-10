@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Mobile inclusion preview was a fixed tiny toast
+
+**Root cause:** `InclusionImageToast` used `fixed bottom-4` with a 200×150 cropped frame, so mobile users only saw a small cropped chip, not the full inclusion photo.
+
+**Failure symptoms:** Tapping inclusion options on mobile opened a small fixed bottom popup instead of a full image.
+
+**Fix details:** Replaced with a full-screen mobile lightbox (`object-contain`, max 90vh) matching the package gallery lightbox pattern; no auto-dismiss crop toast.
+
+**Consulted sources:** `InclusionImageToast.jsx`, `PackageImageLightbox`
+
+**Prevention guidance:** Mobile media previews should be full-viewport contain lightboxes, not fixed thumbnail toasts.
+
 ## 2026-08-10: Bartending addon cards used preview-only action
 
 **Root cause:** Addon cards used a full-width eye/preview control; purchase only happened later via package Add to cart with selected add-ons.
