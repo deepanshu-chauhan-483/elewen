@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Bartending addon cards used preview-only action
+
+**Root cause:** Addon cards used a full-width eye/preview control; purchase only happened later via package Add to cart with selected add-ons.
+
+**Failure symptoms:** Customers could preview add-ons but had no clear per-addon Add to cart path.
+
+**Fix details:** Card now shows a preview eye icon above an Add to cart button that calls `addPackage({ addon })`. Detail page also has Add to cart + image preview lightbox.
+
+**Consulted sources:** `BartendingSinglePackagePage.jsx`, `BartendingAddonDetailPage.jsx`, `useCart.addPackage`
+
+**Prevention guidance:** Sellable add-on tiles should expose purchase CTA directly; keep preview as a secondary icon.
+
 ## 2026-08-10: Key Decor Elements moved into accordion above Nitty-Gritty
 
 **Root cause:** Key Decor Elements was rendered as always-open copy above “What’s included”, separate from accordion sections that already use the `+` expand pattern.

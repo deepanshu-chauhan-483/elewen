@@ -211,9 +211,9 @@ function getSectionExclusionTexts(section) {
     .filter(Boolean)
 }
 
-function AddonEyeIcon() {
+function AddonEyeIcon({ size = 16 }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
         d="M1.5 8C2.55 5.67 4.86 4 8 4s5.45 1.67 6.5 4c-1.05 2.33-3.36 4-6.5 4S2.55 10.33 1.5 8Z"
         stroke="currentColor"
@@ -226,7 +226,14 @@ function AddonEyeIcon() {
   )
 }
 
-function BartendingAddonCard({ addon, isSelected = false, onToggle, onViewDetails }) {
+function BartendingAddonCard({
+  addon,
+  isSelected = false,
+  isAdding = false,
+  onToggle,
+  onViewDetails,
+  onAddToCart,
+}) {
   return (
     <article
       onClick={() => onToggle?.(addon)}
@@ -245,30 +252,51 @@ function BartendingAddonCard({ addon, isSelected = false, onToggle, onViewDetail
         />
       </div>
 
-      <div className="mx-auto flex h-[90px] w-[96px] flex-col gap-2">
+      <div className="mx-auto flex h-[78px] w-[96px] flex-col gap-2">
         <p className={`text-[12px] font-semibold ${isSelected ? 'text-white' : 'text-[#7B330B]'}`}>
           {formatCurrency(addon.price)}
         </p>
         <p
-          className={`line-clamp-4 text-[11px] leading-[1.45] ${isSelected ? 'text-white' : 'text-[#9D7B58]'}`}
+          className={`line-clamp-3 text-[11px] leading-[1.45] ${isSelected ? 'text-white' : 'text-[#9D7B58]'}`}
         >
           {addon.name}
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={e => {
-          e.stopPropagation()
-          onViewDetails?.(addon)
-        }}
-        className={`flex h-8 w-full items-center justify-center rounded-full text-white transition-colors ${
-          isSelected ? 'bg-[#591902] hover:bg-[#4B1501]' : 'bg-[#D4B173] hover:bg-[#C5A365]'
-        }`}
-        aria-label={`View ${addon.name} details`}
-      >
-        <AddonEyeIcon />
-      </button>
+      {/* Same bottom spot as old Preview: tiny eye above, Add to cart in Preview’s place */}
+      <div className="flex flex-col items-center gap-1">
+        <button
+          type="button"
+          onClick={e => {
+            e.stopPropagation()
+            onViewDetails?.(addon)
+          }}
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+            isSelected
+              ? 'bg-white/25 text-white hover:bg-white/35'
+              : 'bg-[#F0E5D8] text-[#7B330B] hover:bg-[#E4D5C4]'
+          }`}
+          aria-label={`Preview ${addon.name}`}
+          title="Preview"
+        >
+          <AddonEyeIcon size={13} />
+        </button>
+
+        <button
+          type="button"
+          disabled={isAdding}
+          onClick={e => {
+            e.stopPropagation()
+            onAddToCart?.(addon)
+          }}
+          className={`flex h-8 w-full items-center justify-center rounded-full text-[11px] font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${
+            isSelected ? 'bg-[#591902] hover:bg-[#4B1501]' : 'bg-[#D4B173] hover:bg-[#C5A365]'
+          }`}
+          aria-label={`Add ${addon.name} to cart`}
+        >
+          {isAdding ? 'Adding...' : 'Add to cart'}
+        </button>
+      </div>
     </article>
   )
 }
@@ -348,7 +376,14 @@ function BartendingBeforePriceContent({ intro, pkg, selectedHours, onSelectHours
   )
 }
 
-function BartendingCustomContent({ pkg, selectedAddonIds, onToggleAddon, onViewAddon }) {
+function BartendingCustomContent({
+  pkg,
+  selectedAddonIds,
+  addingAddonId = null,
+  onToggleAddon,
+  onViewAddon,
+  onAddAddonToCart,
+}) {
   const primarySection = Array.isArray(pkg?.detail_sections)
     ? (pkg.detail_sections[0] ?? null)
     : null
@@ -370,15 +405,20 @@ function BartendingCustomContent({ pkg, selectedAddonIds, onToggleAddon, onViewA
           <p className="text-[16px] font-semibold text-[#2D2D2D]">Add on services</p>
           <div className="mt-4 rounded-[10px] border border-[#591902] bg-[#F8F4ED] p-3">
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {addons.map(addon => (
-                <BartendingAddonCard
-                  key={addon.id || addon.name}
-                  addon={addon}
-                  isSelected={selectedAddonIds.includes(String(addon.id ?? addon.name))}
-                  onToggle={onToggleAddon}
-                  onViewDetails={onViewAddon}
-                />
-              ))}
+              {addons.map(addon => {
+                const addonKey = String(addon.id ?? addon.name)
+                return (
+                  <BartendingAddonCard
+                    key={addon.id || addon.name}
+                    addon={addon}
+                    isSelected={selectedAddonIds.includes(addonKey)}
+                    isAdding={addingAddonId === addonKey}
+                    onToggle={onToggleAddon}
+                    onViewDetails={onViewAddon}
+                    onAddToCart={onAddAddonToCart}
+                  />
+                )
+              })}
             </div>
           </div>
         </div>
@@ -421,6 +461,7 @@ export default function BartendingSinglePackagePage() {
     }),
   })
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [addingAddonId, setAddingAddonId] = useState(null)
   const [addToCartMessage, setAddToCartMessage] = useState('')
 
   const packagesData = useMemo(
@@ -595,6 +636,43 @@ export default function BartendingSinglePackagePage() {
     navigate(`/packages/bartending-addon/${pkgId}/${addon.id}`)
   }
 
+  const handleAddAddonToCart = async addon => {
+    const numericPackageId = Number(pkg?.id)
+    if (!Number.isFinite(numericPackageId)) {
+      setAddToCartMessage('This package is missing its cart ID. Please refresh and try again.')
+      return
+    }
+
+    const addonKey = String(addon?.id ?? addon?.name ?? '').trim()
+    if (!addonKey) return
+
+    setAddToCartMessage('')
+    setAddingAddonId(addonKey)
+
+    try {
+      await addPackage({
+        packageId: numericPackageId,
+        quantity: 1,
+        addon,
+      })
+
+      // Keep package customization selection in sync when purchased from the card.
+      updateActiveCustomization(data => {
+        const currentAddons = Array.isArray(data?.selectedAddons) ? data.selectedAddons : []
+        const addonName = String(addon?.name ?? '').trim()
+        if (!addonName || currentAddons.includes(addonName)) return data
+        return { ...data, selectedAddons: [...currentAddons, addonName] }
+      })
+
+      showToast({ message: `${addon.name} added to cart.` })
+    } catch (err) {
+      console.error('[bartending-addon] add to cart failed', err)
+      setAddToCartMessage('Could not add this add-on to cart. Please try again.')
+    } finally {
+      setAddingAddonId(null)
+    }
+  }
+
   const handleRepeatCustomization = () => {
     setAddToCartMessage('')
     handleRepeat()
@@ -688,8 +766,10 @@ export default function BartendingSinglePackagePage() {
         <BartendingCustomContent
           pkg={pkg}
           selectedAddonIds={selectedAddonIds}
+          addingAddonId={addingAddonId}
           onToggleAddon={handleToggleAddon}
           onViewAddon={handleViewAddon}
+          onAddAddonToCart={handleAddAddonToCart}
         />
       }
       accordionSections={accordionSections}
