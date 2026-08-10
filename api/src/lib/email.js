@@ -235,12 +235,15 @@ export const templates = {
     totalPrice,
     advanceDue,
     amountPaid,
+    remainingDue,
     formUrl,
     paymentUrl,
   }) => {
-    const due = Number(advanceDue) || 0
+    const advanceLeft = Number(advanceDue) || 0
+    const remainingLeft = Number(remainingDue) || 0
     const paid = Number(amountPaid) || 0
-    const advanceDueLabel = `₹${due.toLocaleString('en-IN')}`
+    const advanceDueLabel = `₹${advanceLeft.toLocaleString('en-IN')}`
+    const remainingLabel = `₹${remainingLeft.toLocaleString('en-IN')}`
     const amountPaidLabel = `₹${paid.toLocaleString('en-IN')}`
     const eventDateLabel =
       eventDate instanceof Date || (typeof eventDate === 'string' && eventDate)
@@ -251,11 +254,21 @@ export const templates = {
           })
         : String(eventDate ?? 'To be confirmed')
 
+    const paymentSection =
+      advanceLeft > 0
+        ? `${p('<strong style="color:#ffffff;">Step 2:</strong> Pay the advance (typically 30%) to confirm planning can begin.')}
+           ${ctaBtn('Pay Advance', paymentUrl || customerBookingDetailsUrl(bookingId))}`
+        : remainingLeft > 0
+          ? `${p('<strong style="color:#ffffff;">Step 2:</strong> Your advance is paid. Remaining balance is still pending — please pay the remaining amount.')}
+             ${infoTable(`${infoRow('Remaining Due', remainingLabel)}`)}
+             ${ctaBtn('Pay Remaining Amount', paymentUrl || customerBookingDetailsUrl(bookingId))}`
+          : `${p('<strong style="color:#ffffff;">Payment:</strong> Fully paid. Remaining due is ₹0.')}`
+
     return layout(
       'Information Collection — Elewen',
       `
       ${h1('Almost there — a few details & your advance')}
-      ${p('Your booking is in Information Collection. Please fill the event form first, then complete the advance payment if any amount is still due.')}
+      ${p('Your booking is in Information Collection. Please fill the event form first, then complete any pending payment.')}
       ${divider()}
       ${infoTable(`
         ${infoRow('Event Date', eventDateLabel)}
@@ -263,16 +276,12 @@ export const templates = {
         ${infoRow('Total', `₹${Number(totalPrice || 0).toLocaleString('en-IN')}`)}
         ${infoRow('Amount Paid', amountPaidLabel)}
         ${infoRow('Advance Due', advanceDueLabel)}
+        ${infoRow('Remaining Due', remainingLabel)}
       `)}
       ${divider()}
       ${p('<strong style="color:#ffffff;">Step 1:</strong> Fill your event information form.')}
       ${ctaBtn('Fill Information Form', formUrl || customerInfoCollectionUrl(bookingId))}
-      ${
-        due > 0
-          ? `${p('<strong style="color:#ffffff;">Step 2:</strong> Pay the advance to confirm planning can begin.')}
-             ${ctaBtn('Pay Advance', paymentUrl || customerBookingDetailsUrl(bookingId))}`
-          : `${p('<strong style="color:#ffffff;">Advance:</strong> No advance is due — your payment is already complete (₹0 remaining).')}`
-      }
+      ${paymentSection}
     `
     )
   },

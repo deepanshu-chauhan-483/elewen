@@ -434,19 +434,27 @@ export async function sendInfoCollectionEmail(bookingId, { force = false } = {})
   const ctx = buildBookingEmailContext(booking)
   const advanceRequired = toNumber(ctx.advanceAmountRaw)
   const amountPaid = toNumber(ctx.amountPaidRaw)
-  // If customer already paid advance (or more), show ₹0 due.
+  const remainingDue = Math.max(toNumber(ctx.remainingBalanceRaw), 0)
+  // Advance due is only the unpaid part of the required advance (not full remaining).
   const advanceDue = Math.max(advanceRequired - amountPaid, 0)
+
+  let message = 'Please fill your event information form.'
+  if (advanceDue > 0) {
+    message = 'Please fill your event information form, then complete the advance payment.'
+  } else if (remainingDue > 0) {
+    message =
+      'Please fill your event information form. Advance is paid; remaining balance is still pending.'
+  } else {
+    message = 'Please fill your event information form. Your booking payment is fully complete.'
+  }
 
   return dispatchLifecycleEmail({
     booking,
     emailType: BOOKING_EMAIL_TYPES.INFO_COLLECTION,
     templateKey: 'booking_info_collection',
-    subject: 'Fill your event details & complete advance — Elewen',
+    subject: 'Fill your event details & complete payment — Elewen',
     title: 'Information Collection',
-    message:
-      advanceDue > 0
-        ? 'Please fill your event information form, then complete the advance payment.'
-        : 'Please fill your event information form. Your advance is already paid.',
+    message,
     emailData: {
       bookingId: booking.id,
       eventDate: booking.eventDate,
@@ -454,6 +462,7 @@ export async function sendInfoCollectionEmail(bookingId, { force = false } = {})
       totalPrice: ctx.totalAmountRaw,
       advanceDue,
       amountPaid,
+      remainingDue,
       formUrl: customerInfoCollectionUrl(booking.id),
       paymentUrl: customerBookingDetailsUrl(booking.id),
     },
