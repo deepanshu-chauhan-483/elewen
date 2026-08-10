@@ -430,7 +430,7 @@ function CancellationPolicyModal({
             htmlFor="dashboard-cancel-reason"
             className="mb-2 block text-sm font-medium text-[#2E2E2E]"
           >
-            Reason for cancellation
+            Reason for cancellation <span className="text-[#B42318]">*</span>
           </label>
           <textarea
             id="dashboard-cancel-reason"
