@@ -207,12 +207,14 @@ function BookingCard({ booking }) {
 
 export default function BookingStatusTrackerPage() {
   const [activeStage, setActiveStage] = useState('all')
+  const [sortBy, setSortBy] = useState('latest')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
   const trackerBucket = resolveTrackerBucket(activeStage)
   const bookingsQuery = useAdminBookings({
     bucket: trackerBucket,
     status: activeStage === 'all' ? '' : activeStage,
+    sortBy,
     page: currentPage,
     limit: PAGE_SIZE,
   })
@@ -258,25 +260,42 @@ export default function BookingStatusTrackerPage() {
 
       <div className="rounded-2xl border border-[#E4DED8] bg-[#FAFAFA] p-4">
         <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
-          Filter by Stage
+          Filter &amp; sort
         </p>
-        <CustomSelect
-          value={activeStage}
-          onChange={value => {
-            setActiveStage(value)
-            setCurrentPage(1)
-          }}
-          className="min-h-10 rounded-full bg-[#F3F3F3]"
-        >
-          {TRACKER_STAGES.map(stage => (
-            <option key={stage.key} value={stage.key}>
-              {stage.label}
-              {stage.key === 'all'
-                ? ` (${counts.all})`
-                : ` (${counts[stage.key] ?? 0})`}
-            </option>
-          ))}
-        </CustomSelect>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <CustomSelect
+            value={activeStage}
+            onChange={value => {
+              setActiveStage(value)
+              setCurrentPage(1)
+            }}
+            className="min-h-10 min-w-[220px] flex-1 rounded-full bg-[#F3F3F3]"
+          >
+            {TRACKER_STAGES.map(stage => (
+              <option key={stage.key} value={stage.key}>
+                {stage.label}
+                {stage.key === 'all'
+                  ? ` (${counts.all})`
+                  : ` (${counts[stage.key] ?? 0})`}
+              </option>
+            ))}
+          </CustomSelect>
+          <CustomSelect
+            value={sortBy}
+            onChange={value => {
+              setSortBy(value)
+              setCurrentPage(1)
+            }}
+            className="min-h-10 min-w-[180px] rounded-full bg-[#F3F3F3]"
+          >
+            <option value="latest">Latest First</option>
+            <option value="event_date">By Event Date</option>
+          </CustomSelect>
+        </div>
+        <p className="mt-3 text-xs text-[#8F8F8F]">
+          Latest First shows newest bookings at the top (best after you confirm a stage). By Event
+          Date sorts by event day ascending.
+        </p>
       </div>
 
       <div className="flex items-baseline gap-2">

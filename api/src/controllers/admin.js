@@ -1708,7 +1708,7 @@ export async function listAdminBookings(req, res, next) {
     const status = normalizeText(req.query.status).toLowerCase()
     const cancelledBy = normalizeText(req.query.cancelledBy).toLowerCase()
     const search = normalizeText(req.query.search)
-    const sortBy = normalizeText(req.query.sortBy || 'event_date').toLowerCase()
+    const sortBy = normalizeText(req.query.sortBy || 'latest').toLowerCase()
     const page = toPositiveInt(req.query.page, 1)
     const limit = Math.min(toPositiveInt(req.query.limit, 12), 50)
     const skip = (page - 1) * limit

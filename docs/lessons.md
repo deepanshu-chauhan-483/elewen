@@ -2,15 +2,15 @@
 
 ## 2026-08-10: Booking Status Tracker stage filter hid confirmed bookings
 
-**Root cause:** Tracker mapped most stages to API `bucket=active`, and `active` is payment-aware (`isAdvanceSatisfied`). Confirmed bookings without recorded advance (or non-COD unpaid) were filtered out even when `status=confirmed`.
+**Root cause:** Tracker mapped most stages to API `bucket=active`, and `active` is payment-aware (`isAdvanceSatisfied`). Confirmed bookings without recorded advance (or non-COD unpaid) were filtered out even when `status=confirmed`. Default API sort was also `event_date` ascending, so newly confirmed bookings could sit past page 1.
 
-**Failure symptoms:** Admin confirmed bookings; Booking Status Tracker filter for Confirmed / other stages showed empty or wrong counts.
+**Failure symptoms:** Admin confirmed bookings; Booking Status Tracker filter for Confirmed / other stages showed empty or wrong counts; just-confirmed packages not visible.
 
-**Fix details:** `resolveTrackerBucket` always returns `all` so the tracker filters by `status` only, not operational payment buckets.
+**Fix details:** `resolveTrackerBucket` always returns `all` so the tracker filters by `status` only. Added Latest First / By Event Date sort (default Latest First). API admin bookings default sort is `latest`.
 
 **Consulted sources:** `BookingStatusTrackerPage.jsx`, `listAdminBookings`, `bookingMatchesOperationalBucket`
 
-**Prevention guidance:** Stage pipeline UI must not reuse payment-bucket filters (Today/Active/Incomplete); keep those on Booking Management only.
+**Prevention guidance:** Stage pipeline UI must not reuse payment-bucket filters (Today/Active/Incomplete); keep those on Booking Management only. Default list sort for ops screens should be latest-first.
 
 ## 2026-08-10: Admin stage updates blocked by event-date rules
 
