@@ -272,6 +272,70 @@ function BookingPaymentRow({ booking, onOpen }) {
   )
 }
 
+function CancelledBookingRefundRow({ booking, onOpen, processRefundMutation }) {
+  const latestRefund = booking?.latestRefund ?? null
+  const pendingRefund =
+    latestRefund?.status === 'requested'
+      ? latestRefund
+      : (Array.isArray(booking?.refunds) ? booking.refunds : []).find(
+          refund => refund.status === 'requested'
+        ) ?? null
+
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4">
+      <button
+        type="button"
+        onClick={() => onOpen?.(booking.id)}
+        className="min-w-0 flex-1 text-left"
+      >
+        <p className="text-sm font-semibold text-[#1C1C1C]">
+          {booking?.customer?.name || 'Customer'}
+          <span className="ml-2 font-normal text-[#6B7280]">
+            / {booking?.package?.title || booking.id}
+          </span>
+        </p>
+        <p className="mt-1 text-xs text-[#8F8F8F]">
+          Cancelled booking · {formatDate(booking.eventDate)}
+          {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-4 text-sm">
+          <span>
+            <span className="text-[#8F8F8F]">Paid </span>
+            <span className="font-medium text-[#2D2D2D]">{formatCurrency(booking.paidAmount)}</span>
+          </span>
+          <span>
+            <span className="text-[#8F8F8F]">Refund due </span>
+            <span className="font-medium text-[#2D2D2D]">
+              {formatCurrency(booking.refundDueAmount ?? pendingRefund?.amount ?? 0)}
+            </span>
+          </span>
+        </div>
+      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge status={booking?.status} label={booking?.statusLabel || 'Cancelled'} />
+        {latestRefund ? (
+          <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />
+        ) : (
+          <Badge status="pending" label="No refund row" />
+        )}
+        {pendingRefund ? (
+          <PrimaryBtn
+            disabled={processRefundMutation.isPending}
+            onClick={() =>
+              processRefundMutation.mutate({
+                refundId: pendingRefund.id,
+                body: { action: 'approve' },
+              })
+            }
+          >
+            Pay Refund
+          </PrimaryBtn>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function PaymentRecordRow({
   payment,
   showRefundActions = false,
@@ -401,6 +465,7 @@ function PayoutRow({ payout, onMark, isBusy = false, onOpen }) {
 const customerTabs = [
   { key: 'today', label: "Today's Payments" },
   { key: 'active', label: 'Active Bookings' },
+  { key: 'cancelled', label: 'Cancelled / Refunds' },
   { key: 'failed', label: 'Failed Payments' },
   { key: 'completed', label: 'Completed' },
 ]
@@ -468,6 +533,7 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
   const lists = {
     today: customerPayments.todayPayments ?? [],
     active: customerPayments.activeBookings ?? [],
+    cancelled: customerPayments.cancelledBookings ?? [],
     failed: customerPayments.failedPayments ?? [],
     completed: customerPayments.completedPayments ?? [],
   }
@@ -559,6 +625,30 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
               <EmptyState
                 title="No active booking balances"
                 body="Active bookings with payment context will appear here."
+              />
+            ))}
+
+          {tab === 'cancelled' &&
+            (lists.cancelled.length ? (
+              <div className="space-y-2.5">
+                {currentList.map(b => (
+                  <CancelledBookingRefundRow
+                    key={b.id}
+                    booking={b}
+                    onOpen={openBooking}
+                    processRefundMutation={processRefundMutation}
+                  />
+                ))}
+                <PaginationControls
+                  currentPage={visiblePage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <EmptyState
+                title="No cancelled booking refunds"
+                body="Admin or customer cancellations with paid amounts appear here for Pay Refund."
               />
             ))}
 

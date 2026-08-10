@@ -1,7 +1,14 @@
 import { Prisma } from '@prisma/client'
 import { randomUUID } from 'crypto'
 import prisma from '../lib/prisma.js'
-import { notify } from '../lib/notify.js'
+import { notify, notifyRefund } from '../lib/notify.js'
+import {
+  buildCancellationRefundEntries,
+  persistCancellationRefunds,
+  roundRefundCurrency,
+} from '../lib/cancellationRefunds.js'
+import { createOperationalAlert } from '../lib/alerts.js'
+import { invalidateDashboardCache } from './dashboard.js'
 import { sendEmail, templates } from '../lib/email.js'
 import {
   enrichBookings,
@@ -1881,13 +1888,22 @@ export async function updateAdminBookingStatus(req, res, next) {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
-        payments: true,
+        payments: {
+          include: {
+            refunds: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
         cancellation: true,
       },
     })
 
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (status === 'cancelled' && booking.status === 'cancelled') {
+      return res.status(400).json({ error: 'Booking is already cancelled' })
     }
 
     // Calculate remaining amount
@@ -1912,6 +1928,18 @@ export async function updateAdminBookingStatus(req, res, next) {
       }
     }
 
+    const cancelReason = note || 'Cancelled by admin'
+    const isAdminCancelling = status === 'cancelled'
+    const refundEntries = isAdminCancelling
+      ? buildCancellationRefundEntries({
+          bookingId,
+          payments: booking.payments,
+          // Admin cancel: refund the full amount the customer has already paid.
+          refundableAmount: totalPaid,
+          reason: `${cancelReason} — full refund of paid amount`,
+        })
+      : []
+
     const updatedBooking = await prisma.$transaction(async tx => {
       const nextBooking = await tx.booking.update({
         where: { id: bookingId },
@@ -1928,15 +1956,42 @@ export async function updateAdminBookingStatus(req, res, next) {
         },
       })
 
-      if (status === 'cancelled' && !booking.cancellation) {
+      if (isAdminCancelling && !booking.cancellation) {
         await tx.cancellation.create({
           data: {
             bookingId,
             requestedBy: adminId,
-            reason: note || 'Cancelled by admin',
+            reason: cancelReason,
             policyAcknowledged: true,
             status: 'approved',
           },
+        })
+      }
+
+      if (isAdminCancelling) {
+        await createOperationalAlert(tx, {
+          alertType: 'booking_cancelled',
+          severity: refundEntries.length > 0 ? 'medium' : 'low',
+          message:
+            refundEntries.length > 0
+              ? `Booking #${String(bookingId).slice(0, 8).toUpperCase()} was cancelled by admin and has ${refundEntries.length} refund request${refundEntries.length === 1 ? '' : 's'} pending.`
+              : `Booking #${String(bookingId).slice(0, 8).toUpperCase()} was cancelled by admin.`,
+          metadata: {
+            bookingId,
+            reason: cancelReason,
+            refundsCreated: refundEntries.length,
+            source: 'admin_cancellation',
+          },
+          relatedEntityType: 'booking',
+          relatedEntityId: bookingId,
+        })
+
+        await persistCancellationRefunds(tx, {
+          refundEntries,
+          performedBy: adminId,
+          source: 'admin_cancellation',
+          refundWindow: null,
+          bookingId,
         })
       }
 
@@ -1952,12 +2007,40 @@ export async function updateAdminBookingStatus(req, res, next) {
     if (status !== 'confirmed' && status !== 'info_collection' && status !== 'pre_event') {
       notify(booking.userId, {
         type: 'booking_update',
-        title: `Booking updated to ${BOOKING_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')}`,
-        message:
-          note ||
-          `Your booking status is now ${BOOKING_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')}.`,
+        title: isAdminCancelling
+          ? 'Booking Cancelled'
+          : `Booking updated to ${BOOKING_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')}`,
+        message: isAdminCancelling
+          ? refundEntries.length > 0
+            ? 'Your booking was cancelled by Elewen and the refund request is ready for processing.'
+            : note || 'Your booking was cancelled by Elewen.'
+          : note ||
+            `Your booking status is now ${BOOKING_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')}.`,
         linkUrl: `/dashboard/bookings/${bookingId}`,
+        ...(isAdminCancelling
+          ? {
+              emailTemplate: 'booking_cancelled',
+              emailData: { bookingId, reason: cancelReason },
+            }
+          : {}),
       }).catch(() => {})
+    }
+
+    if (isAdminCancelling && refundEntries.length > 0) {
+      const totalRefund = refundEntries.reduce(
+        (sum, entry) => sum + roundRefundCurrency(entry.amount),
+        0
+      )
+      notifyRefund(booking.userId, {
+        kind: 'requested',
+        bookingId,
+        amount: totalRefund,
+        reason: cancelReason,
+      }).catch(() => {})
+    }
+
+    if (isAdminCancelling) {
+      invalidateDashboardCache(booking.userId).catch(() => {})
     }
 
     if (status === 'confirmed' && booking.status !== 'confirmed') {
@@ -2007,7 +2090,10 @@ export async function updateAdminBookingStatus(req, res, next) {
         .catch(err => console.error('[booking-email] post-event failed', bookingId, err?.message))
     }
 
-    res.json({ booking: updatedBooking })
+    res.json({
+      booking: updatedBooking,
+      refundsCreated: refundEntries.length,
+    })
   } catch (err) {
     next(err)
   }

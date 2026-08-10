@@ -241,6 +241,11 @@ export function useAdminUpdateBookingStatus() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'refunds'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payments'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payment-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payments', 'workspace'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payment-workspace'] })
     },
   })
 }

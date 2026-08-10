@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Admin cancel did not create refund requests
+
+**Root cause:** Customer cancel created `Refund` rows (`requested`); admin `updateAdminBookingStatus` → `cancelled` only wrote Cancellation + status. Payment Management Refunds lists `Refund` records only, so admin-cancelled paid bookings never appeared for Pay Refund. Customer Payments also omitted the API `cancelled` tab.
+
+**Failure symptoms:** Admin cancelled a booking; Refunds section stayed empty; no Pay Refund action despite successful payments.
+
+**Fix details:** Shared `cancellationRefunds.js` builds/persists refund entries. Admin cancel creates full-paid-amount `requested` refunds, alerts, and customer notify. Restored Customer Payments **Cancelled / Refunds** tab. Status update invalidates refunds + payment workspace queries.
+
+**Consulted sources:** `cancelBooking`, `updateAdminBookingStatus`, `listAdminRefunds`, `PaymentManagementPage`
+
+**Prevention guidance:** Any cancel path that ends in `cancelled` with successful payments must create the same refund request rows the Refunds UI reads — do not treat Cancellation alone as enough.
+
 ## 2026-08-10: Booking Status Tracker stage filter hid confirmed bookings
 
 **Root cause:** Tracker mapped most stages to API `bucket=active`, and `active` is payment-aware (`isAdvanceSatisfied`). Confirmed bookings without recorded advance (or non-COD unpaid) were filtered out even when `status=confirmed`. Default API sort was also `event_date` ascending, so newly confirmed bookings could sit past page 1.

@@ -9,6 +9,10 @@ import {
   calculateBookingRefundPreview,
   getCancellationPolicyData,
 } from '../lib/cancellationPolicy.js'
+import {
+  buildCancellationRefundEntries,
+  persistCancellationRefunds,
+} from '../lib/cancellationRefunds.js'
 import { invalidateDashboardCache } from './dashboard.js'
 import { sendHookahBookingPlacedEmail } from '../lib/bookingEmailService.js'
 import {
@@ -805,34 +809,14 @@ export const cancelBooking = async (req, res, next) => {
 
     const cancellationPolicy = await getCancellationPolicyData()
     const refundPreview = calculateBookingRefundPreview(booking, cancellationPolicy)
-    const successfulPayments = (Array.isArray(booking.payments) ? booking.payments : []).filter(
-      payment => payment?.status === 'success'
-    )
-    let remainingRefundAmount = roundCurrency(refundPreview.refundableAmount)
-    const refundEntries = []
-
-    for (const payment of successfulPayments) {
-      if (remainingRefundAmount <= 0) break
-
-      const hasOpenRefund = (Array.isArray(payment.refunds) ? payment.refunds : []).some(refund =>
-        ['requested', 'processing', 'completed'].includes(String(refund?.status ?? ''))
-      )
-      if (hasOpenRefund) continue
-
-      const paymentAmount = roundCurrency(payment.amount)
-      const refundAmount = roundCurrency(Math.min(paymentAmount, remainingRefundAmount))
-      if (refundAmount <= 0) continue
-
-      refundEntries.push({
-        paymentId: payment.id,
-        bookingId: id,
-        amount: refundAmount,
-        reason:
-          reason ??
-          `Auto-created from cancellation policy (${refundPreview.windowLabel || 'booking cancellation'})`,
-      })
-      remainingRefundAmount = roundCurrency(remainingRefundAmount - refundAmount)
-    }
+    const refundEntries = buildCancellationRefundEntries({
+      bookingId: id,
+      payments: booking.payments,
+      refundableAmount: refundPreview.refundableAmount,
+      reason:
+        reason ??
+        `Auto-created from cancellation policy (${refundPreview.windowLabel || 'booking cancellation'})`,
+    })
 
     await prisma.$transaction(async tx => {
       await tx.cancellation.create({
@@ -872,47 +856,13 @@ export const cancelBooking = async (req, res, next) => {
         relatedEntityId: id,
       })
 
-      for (const refundEntry of refundEntries) {
-        const refund = await tx.refund.create({
-          data: {
-            paymentId: refundEntry.paymentId,
-            bookingId: refundEntry.bookingId,
-            amount: refundEntry.amount,
-            reason: refundEntry.reason,
-            status: 'requested',
-          },
-        })
-
-        await tx.paymentLog.create({
-          data: {
-            paymentId: refundEntry.paymentId,
-            action: 'refund_requested',
-            performedBy: userId,
-            metadata: {
-              refundId: refund.id,
-              reason: refundEntry.reason,
-              source: 'booking_cancellation',
-              refundWindow: refundPreview.windowKey || null,
-            },
-          },
-        })
-
-        await createOperationalAlert(tx, {
-          alertType: 'refund_requested',
-          severity: 'medium',
-          message: `Refund requested from cancellation for booking #${String(id).slice(0, 8).toUpperCase()}.`,
-          metadata: {
-            bookingId: id,
-            paymentId: refundEntry.paymentId,
-            refundId: refund.id,
-            reason: refundEntry.reason,
-            source: 'booking_cancellation',
-            refundWindow: refundPreview.windowKey || null,
-          },
-          relatedEntityType: 'booking',
-          relatedEntityId: id,
-        })
-      }
+      await persistCancellationRefunds(tx, {
+        refundEntries,
+        performedBy: userId,
+        source: 'booking_cancellation',
+        refundWindow: refundPreview.windowKey || null,
+        bookingId: id,
+      })
     })
 
     notify(userId, {
