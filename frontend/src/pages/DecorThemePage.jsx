@@ -130,18 +130,19 @@ function ThemeCard({
   return (
     <Link
       to={`/packages/decor-levels?${params.toString()}`}
-      className="group flex h-full max-h-[424px] w-full max-w-[298px] min-w-0 flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px]"
+      className="group flex h-auto w-full max-w-[298px] min-w-0 flex-col overflow-hidden rounded-[18px] border border-[#F0E6DA] bg-white p-[10px] shadow-[0_10px_24px_rgba(117,72,33,0.05)] transition-transform hover:-translate-y-1 md:h-[424px] md:max-h-[424px]"
     >
-      <div className="relative mb-2 min-h-0 flex-1 overflow-hidden rounded-[12px] bg-[#F4EEE6]">
+      {/* Mobile: fixed aspect so every theme frame is the same height (desktop uses flex-1 in 424px card). */}
+      <div className="relative mb-2 aspect-[278/356] w-full shrink-0 overflow-hidden rounded-[12px] bg-[#F4EEE6] md:aspect-auto md:min-h-0 md:flex-1 md:h-auto">
         {image ? (
           <BrandedImage
             src={image}
             alt={theme.label}
-            className="h-full w-full"
+            className="absolute inset-0 h-full w-full"
             imgClassName="object-cover object-center"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#E8DDD1] px-4 text-center text-[13px] text-[#7C7065] md:text-[14px]">
+          <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-[#E8DDD1] px-4 text-center text-[13px] text-[#7C7065] md:text-[14px]">
             {theme.label}
           </div>
         )}

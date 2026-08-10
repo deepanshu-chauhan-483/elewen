@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Theme cards uneven height on mobile
+
+**Root cause:** `ThemeCard` used `h-full` + image `flex-1` without a fixed mobile height; only desktop set `md:h-[424px]`. On phones the image frame collapsed to each photo’s intrinsic size, so some themes looked short and others taller.
+
+**Failure symptoms:** Decor theme images inconsistent length/height on mobile only; desktop looked fine.
+
+**Fix details:** Mobile image area uses fixed `aspect-[278/356]` and absolute-fill `BrandedImage`; desktop keeps flex-1 inside 424px card.
+
+**Consulted sources:** `DecorThemePage.jsx` ThemeCard
+
+**Prevention guidance:** Flow cards that share one grid must use aspect-ratio or fixed height on mobile — never `h-full`/`flex-1` alone without a sized parent.
+
 ## 2026-08-10: Hero mobile cards + one-scroll video
 
 **Root cause:** Mobile footer still showed W + “ork made easy” taglines; hero scroll track was 300–420vh with scrub 3.5, so several wheel/swipes were needed before the video moved to the next section.
