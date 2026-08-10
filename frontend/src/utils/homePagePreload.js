@@ -17,10 +17,13 @@ export function preloadVideo(url) {
     video.preload = 'auto'
     video.muted = true
     video.playsInline = true
+    video.setAttribute('playsinline', '')
+    video.setAttribute('webkit-playsinline', '')
 
     const finish = () => {
+      // Keep the element out of the DOM; do not call load() after clearing src —
+      // that pattern can stall the same URL on iOS Safari for the real <video>.
       video.removeAttribute('src')
-      video.load()
       resolve()
     }
 
@@ -40,7 +43,6 @@ export function preloadVideo(url) {
     }
 
     video.src = url
-    video.load()
   })
 }
 

@@ -82,6 +82,18 @@ const STRAPI_BASE = import.meta.env.VITE_STRAPI_URL ?? 'http://localhost:1337'
 const hasSeenHeroPreloader = () =>
   typeof window !== 'undefined' && window.__elewenHeroPreloaderSeen === true
 
+/** iOS Safari often ignores autoPlay when the video starts off-screen (Low Power Mode too). */
+const ensureHeroVideoPlaying = videoEl => {
+  if (!videoEl) return
+  videoEl.muted = true
+  videoEl.defaultMuted = true
+  videoEl.setAttribute('muted', '')
+  videoEl.setAttribute('playsinline', '')
+  videoEl.setAttribute('webkit-playsinline', '')
+  const playAttempt = videoEl.play()
+  if (playAttempt?.catch) playAttempt.catch(() => {})
+}
+
 // Use a Vite import so the URL is generated correctly.
 const HERO_VIDEO_SRC = HeroVideo
 const HERO_LEFT_TAGLINES_FALLBACK = ['Work made easy', 'Worth the spend', 'Well-vetted Vendors']
@@ -102,7 +114,10 @@ const HERO_RIGHT_CARDS_FALLBACK = [
     href: '/event-flow/service?category=social&event=house-parties&eventId=188',
   },
 ]
-const getTrailingWWord = (value, fallback) => String(value ?? fallback).replace(/^[Ww]/, '')
+const getTrailingWWord = (value, fallback) =>
+  String(value ?? fallback)
+    .trim()
+    .replace(/^[Ww]\s*/, '')
 
 const toAbsoluteMediaUrl = url => {
   const value = String(url ?? '').trim()
@@ -319,6 +334,7 @@ const HeroSection = () => {
             isCmsReady: () => !!cms.hero,
             onProgress: v => preloaderRef.current?.setProgress(v),
           }).then(() => {
+            ensureHeroVideoPlaying(videoRef.current)
             setTimeout(() => tl.play(), 300)
           })
 
@@ -339,9 +355,19 @@ const HeroSection = () => {
             )
           tl.to(
             s,
-            { vidTop: 0, vidTopR: 0, vidScale: 1, duration: durLayoutLg, ease: easeEnter },
+            {
+              vidTop: 0,
+              vidTopR: 0,
+              vidScale: 1,
+              duration: durLayoutLg,
+              ease: easeEnter,
+              onStart: () => ensureHeroVideoPlaying(videoRef.current),
+              onComplete: () => ensureHeroVideoPlaying(videoRef.current),
+            },
             1.0
           )
+        } else {
+          ensureHeroVideoPlaying(videoRef.current)
         }
 
         // Content stagger per motion template (delays in seconds)
@@ -453,7 +479,8 @@ const HeroSection = () => {
       }
 
       // ── ScrollTrigger: phases 2-3 ───────────────────────────────────────────
-      const scrubSmooth = 3.5
+      // Low scrub lag + shorter wrapper height ≈ one wheel/swipe to next section.
+      const scrubSmooth = true
       const textCardsEnd = 0.125
       ScrollTrigger.create({
         trigger: wrapperRef.current,
@@ -593,6 +620,17 @@ const HeroSection = () => {
     }
   }, [])
 
+  // Low Power Mode / failed autoplay: first touch unlocks muted inline playback on iPhone.
+  useEffect(() => {
+    const unlock = () => ensureHeroVideoPlaying(videoRef.current)
+    window.addEventListener('touchstart', unlock, { once: true, passive: true })
+    window.addEventListener('pointerdown', unlock, { once: true })
+    return () => {
+      window.removeEventListener('touchstart', unlock)
+      window.removeEventListener('pointerdown', unlock)
+    }
+  }, [heroVideoSrc])
+
   useEffect(() => {
     const isReturningViaBack =
       navigationType === 'POP' || peekSkipHeroScrollTop() || shouldPreserveHomeScroll()
@@ -680,7 +718,7 @@ const HeroSection = () => {
       data-nav-theme="glass"
       data-nav-surface="transparent"
       className="hero-scroll-wrapper"
-      style={{ height: useMobileHeroLayout ? '300vh' : '420vh' }}
+      style={{ height: useMobileHeroLayout ? '145vh' : '160vh' }}
     >
       <div
         className="hero-sticky-viewport hero-desktop-scale-shell h-[100dvh] md:h-screen"
@@ -744,10 +782,13 @@ const HeroSection = () => {
             playsInline
             preload="auto"
             src={heroVideoSrc}
+            disablePictureInPicture
             onLoadedMetadata={e => {
               const v = e.currentTarget
               videoNaturalRef.current = { w: v.videoWidth || 0, h: v.videoHeight || 0 }
+              ensureHeroVideoPlaying(v)
             }}
+            onCanPlay={e => ensureHeroVideoPlaying(e.currentTarget)}
             onError={() => {
               // Helps diagnose "video not showing" vs "video offscreen" during hero animations.
               console.error('Hero video failed to load:', heroVideoSrc)
@@ -844,7 +885,7 @@ const HeroSection = () => {
           </main>
 
           <footer className="hero-compact-footer absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20 pointer-events-auto">
-            {/* Mobile: Birthday / Anniversary / House Party (W + taglines stay desktop-only) */}
+            {/* Mobile only: Birthday / Anniversary / House Party (no Work made easy) */}
             <div className="hero-mobile-footer z-20 flex w-full items-stretch border-t border-white/20 bg-black/20 backdrop-blur-md md:hidden">
               {rightCards.map((card, i) => {
                 const resolvedLabel = card.label ? String(card.label).trim() : ''
@@ -906,7 +947,7 @@ const HeroSection = () => {
               })}
             </div>
 
-            {/* Desktop W Left Block */}
+            {/* Desktop W Left Block — no gap between W and ork/orth/ell */}
             <div className="hero-desktop-w-footer hero-desktop-footer hidden shrink-0 md:flex md:items-center md:px-[clamp(0.75rem,2vw,2.5rem)] md:pb-[clamp(1rem,2.5vw,3rem)]">
               <span
                 ref={el => (leftWRefs.current[0] = el)}
@@ -916,7 +957,7 @@ const HeroSection = () => {
                 W
               </span>
               <div
-                className="hero-desktop-w-lines flex flex-col justify-center overflow-hidden whitespace-nowrap text-[#FFFFFF] md:text-[clamp(0.375rem,calc(-0.5rem+1.67vw),1rem)] md:font-medium md:leading-[1.5] md:tracking-normal md:space-y-[clamp(0.0625rem,calc(-0.125rem+0.35vw),0.25rem)] md:mb-[clamp(0.125rem,calc(-0.5rem+1.04vw),0.75rem)]"
+                className="hero-desktop-w-lines flex flex-col justify-center overflow-hidden whitespace-nowrap text-[#FFFFFF] md:-ml-[0.12em] md:text-[clamp(0.375rem,calc(-0.5rem+1.67vw),1rem)] md:font-medium md:leading-[1.5] md:tracking-normal md:space-y-[clamp(0.0625rem,calc(-0.125rem+0.35vw),0.25rem)] md:mb-[clamp(0.125rem,calc(-0.5rem+1.04vw),0.75rem)]"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
                 <p ref={el => (leftLine1Refs.current[0] = el)} className="m-0">
