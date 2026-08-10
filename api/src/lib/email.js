@@ -192,11 +192,10 @@ export const templates = {
     layout(
       'Booking Created — Elewen',
       `
-      ${h1('Booking Placed')}
+      ${h1('One Step Away from a Stress-Free Event ✨')}
       ${p('Thank you for choosing Elewen. Your booking has been received and is awaiting advance payment.')}
       ${divider()}
       ${infoTable(`
-        ${infoRow('Booking ID', `#${bookingId.slice(0, 8).toUpperCase()}`)}
         ${infoRow('Event Date', new Date(eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }))}
         ${infoRow('Guests', guestCount)}
         ${infoRow('Total', `₹${(Number(totalPrice) || totalPrice.toNumber?.()).toLocaleString('en-IN')}`)}
