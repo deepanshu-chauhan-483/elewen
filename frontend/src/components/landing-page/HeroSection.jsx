@@ -910,7 +910,7 @@ const HeroSection = () => {
             <div className="hero-desktop-w-footer hero-desktop-footer hidden shrink-0 md:flex md:items-center md:px-[clamp(0.75rem,2vw,2.5rem)] md:pb-[clamp(1rem,2.5vw,3rem)]">
               <span
                 ref={el => (leftWRefs.current[0] = el)}
-                className="hero-desktop-w-letter font-serif leading-[0.7] text-[#FFFFFF] md:mr-[clamp(0.25rem,0.5vw,0.5rem)] md:text-[clamp(2.5rem,calc(-2.625rem+9.17vw),5.625rem)]"
+                className="hero-desktop-w-letter font-serif leading-[0.7] text-[#FFFFFF] md:mr-0 md:text-[clamp(2.5rem,calc(-2.625rem+9.17vw),5.625rem)]"
                 style={{ fontFamily: "'Malgin', serif" }}
               >
                 W
