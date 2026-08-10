@@ -7,7 +7,6 @@ import { useCart } from '../hooks/useCart'
 import {
   useCartToastMessage,
   useCheckoutToastMessage,
-  useCouponToastMessage,
 } from '../hooks/useMessagingContent'
 import { useCartPackagePricingLookup, usePackages } from '../hooks/usePackages'
 import { useWishlist } from '../hooks/useWishlist'
@@ -18,6 +17,7 @@ import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDispl
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
+import CheckoutCouponSection from '../components/checkout/CheckoutCouponSection'
 import { aggregateAppliedGuestDiscounts, aggregateTransportAddonTotal, getCartItemSummary } from '../lib/cartItemPricing'
 import { normalizeServiceSlug } from '../lib/packageFilters'
 import { classifyCartPackages, isSheeshaCartItem, MIXED_HOOKAH_CART_MESSAGE, MIXED_HOOKAH_ITEM_HINT } from '../lib/sheeshaCheckout'
@@ -32,14 +32,6 @@ function formatCurrency(value) {
   return `Rs${amount.toLocaleString('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`
-}
-
-function formatCompactCurrency(value) {
-  const amount = Number(value ?? 0)
-  return `₹${amount.toLocaleString('en-IN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
   })}`
 }
 
@@ -555,70 +547,6 @@ function PincodeCard({
           {message}
         </p>
       ) : null}
-    </form>
-  )
-}
-
-function CouponCard({
-  couponCode,
-  couponMessage,
-  cart,
-  isApplyingCoupon,
-  onCouponChange,
-  onApplyCoupon,
-  onRemoveCoupon,
-}) {
-  const isCouponApplied =
-    Boolean(cart?.couponId || cart?.couponGrantId) || Number(cart?.discountAmount ?? 0) > 0
-
-  return (
-    <form onSubmit={onApplyCoupon} className="rounded-xl border border-[#95796066] p-5">
-      <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
-        Apply Coupon
-      </h2>
-      <p className="mb-4 mt-1 text-sm text-gray-500">
-        Have a code? Apply it here to unlock savings.
-      </p>
-
-      <div className="flex items-end gap-3">
-        <input
-          type="text"
-          value={couponCode}
-          onChange={event => onCouponChange(event.target.value.toUpperCase())}
-          placeholder="Enter coupon code"
-          className="min-w-0 flex-1 border-b border-[#2D2D2D] bg-transparent py-2 text-[14px] text-[#2C2C2C] focus:outline-none"
-        />
-        <button
-          type="submit"
-          disabled={isApplyingCoupon || !couponCode.trim()}
-          className="shrink-0 rounded-full bg-[#364022] px-5 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isApplyingCoupon ? 'Applying...' : 'Apply'}
-        </button>
-      </div>
-
-      {isCouponApplied ? (
-        <div className="mt-4 flex items-start justify-between rounded-xl bg-[#F3F3F3] p-4">
-          <div>
-            <p className="text-sm font-medium text-[#2C2C2C]">
-              Coupon Applied: {cart?.couponCode ?? couponCode ?? '—'}
-            </p>
-            <p className="text-sm text-gray-500">
-              {formatCompactCurrency(cart.discountAmount)} has been deducted from your total
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onRemoveCoupon}
-            className="text-lg leading-none text-[#2C2C2C]"
-            aria-label="Remove coupon"
-          >
-            ✕
-          </button>
-        </div>
-      ) : null}
-      <p className="mt-2 text-xs text-gray-500">Only one coupon can be applied at a time</p>
-      {couponMessage ? <p className="mt-2 text-sm text-[#5A1E0E]">{couponMessage}</p> : null}
     </form>
   )
 }
@@ -1270,7 +1198,6 @@ function PriceSummaryCard({
   onCheckout,
   onSampleTasteBooking,
   showSampleTasteBooking = false,
-  pincodeCard = null,
   isCheckoutDisabled = false,
   checkoutDisabledMessage = 'Enter your pincode to enable checkout.',
   cateringDiscountSettings = null,
@@ -1309,8 +1236,6 @@ function PriceSummaryCard({
 
   return (
     <div className="space-y-4">
-      {pincodeCard}
-
       <div className="overflow-hidden rounded-[16px] border border-[#E5E5E5] bg-white">
         <div className="flex items-center justify-between bg-[#1F2A14] px-5 py-4 text-white">
           <h2 className="text-[16px] font-medium" style={{ fontFamily: "'Poppins'" }}>
@@ -1578,7 +1503,6 @@ export default function CartPage() {
   )
 
   const { data: cartToastMessage = 'Package added to cart successfully.' } = useCartToastMessage()
-  const { data: couponToastMessage = 'Coupon applied successfully.' } = useCouponToastMessage()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
 
@@ -1595,10 +1519,14 @@ export default function CartPage() {
     addPackage,
   } = useCart()
 
-  const [couponCode, setCouponCode] = useState('')
-  const [couponMessage, setCouponMessage] = useState('')
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
-  const [pincode, setPincode] = useState('')
+  const [pincode, setPincode] = useState(() => {
+    try {
+      return normalizePincode(localStorage.getItem(CART_PIN_CODE_KEY) || '')
+    } catch {
+      return ''
+    }
+  })
   const [pincodeMessage, setPincodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [isPincodeValid, setIsPincodeValid] = useState(false)
@@ -1736,12 +1664,17 @@ export default function CartPage() {
   }, [cart?.eventDate, cart?.eventCity, cart?.guestCount])
 
   useEffect(() => {
+    const normalized = normalizePincode(pincode)
     try {
-      localStorage.removeItem(CART_PIN_CODE_KEY)
+      if (isPincodeValid && normalized.length === 6) {
+        localStorage.setItem(CART_PIN_CODE_KEY, normalized)
+      } else if (!normalized) {
+        localStorage.removeItem(CART_PIN_CODE_KEY)
+      }
     } catch {
       // Ignore storage failures and keep the page usable.
     }
-  }, [])
+  }, [isPincodeValid, pincode])
 
   useEffect(() => {
     const nextState = getPincodeValidationState(pincode, serviceAreas, isLoadingServiceAreas)
@@ -1837,37 +1770,9 @@ export default function CartPage() {
     }
   }
 
-  const handleApplyCoupon = async event => {
-    event.preventDefault()
-    if (!couponCode.trim() || isApplyingCoupon) return
+  const handleApplyCoupon = async code => applyCoupon(code)
 
-    setIsApplyingCoupon(true)
-    setCouponMessage('')
-    try {
-      await applyCoupon(couponCode.trim())
-      setCouponCode('')
-      setCouponMessage('')
-      showToast({ message: couponToastMessage })
-    } catch (err) {
-      setCouponMessage(parseApiError(err))
-    } finally {
-      setIsApplyingCoupon(false)
-    }
-  }
-
-  const handleRemoveCoupon = async () => {
-    if (isApplyingCoupon) return
-    setIsApplyingCoupon(true)
-    setCouponMessage('')
-    try {
-      await clearCoupon()
-      setCouponMessage('Coupon removed')
-    } catch (err) {
-      setCouponMessage(parseApiError(err))
-    } finally {
-      setIsApplyingCoupon(false)
-    }
-  }
+  const handleRemoveCoupon = async () => clearCoupon()
 
   const validatePincode = value => {
     const nextState = getPincodeValidationState(value, serviceAreas, isLoadingServiceAreas)
@@ -1975,18 +1880,15 @@ export default function CartPage() {
               highlightMessage={checkoutPincodePrompt}
             />
 
-            {/* Mobile Coupon Card for both single + multi package */}
-            <div className="md:hidden">
-              <CouponCard
-                couponCode={couponCode}
-                couponMessage={couponMessage}
-                cart={cart}
-                isApplyingCoupon={isApplyingCoupon}
-                onCouponChange={setCouponCode}
-                onApplyCoupon={handleApplyCoupon}
-                onRemoveCoupon={handleRemoveCoupon}
-              />
-            </div>
+            <CheckoutCouponSection
+              cart={cart}
+              isLoggedIn={isLoggedIn}
+              isApplyingCoupon={isApplyingCoupon}
+              onApplyCoupon={handleApplyCoupon}
+              onRemoveCoupon={handleRemoveCoupon}
+              onApplyingChange={setIsApplyingCoupon}
+              showToast={showToast}
+            />
 
             {hasSingleItem ? (
               <SinglePackageCard
@@ -2037,20 +1939,6 @@ export default function CartPage() {
               checkoutDisabledMessage={checkoutDisabledMessage}
               cateringDiscountSettings={cateringDiscountSettings}
               deliveryCharge={activeDeliveryCharge}
-              pincodeCard={
-                /* Desktop only */
-                <div className="hidden md:block">
-                  <CouponCard
-                    couponCode={couponCode}
-                    couponMessage={couponMessage}
-                    cart={cart}
-                    isApplyingCoupon={isApplyingCoupon}
-                    onCouponChange={setCouponCode}
-                    onApplyCoupon={handleApplyCoupon}
-                    onRemoveCoupon={handleRemoveCoupon}
-                  />
-                </div>
-              }
             />
             <TrustBadges />
           </div>

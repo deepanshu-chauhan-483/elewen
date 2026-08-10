@@ -16,7 +16,6 @@ import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
-import CheckoutCouponSection from '../components/checkout/CheckoutCouponSection'
 import BrandedImage from '../components/common/BrandedImage'
 import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
 import { aggregateAppliedGuestDiscounts, aggregateTransportAddonTotal, getCartItemSummary } from '../lib/cartItemPricing'
@@ -652,7 +651,7 @@ export default function CheckoutPage() {
     deliveryChargesQuery
   )
 
-  const { cart, loading, isLoggedIn, updateCartDetails, applyCoupon, clearCoupon } = useCart()
+  const { cart, loading, isLoggedIn, updateCartDetails } = useCart()
   const { data: checkoutToastMessage = 'Checkout is ready. Review your details and continue.' } =
     useCheckoutToastMessage()
   const {
@@ -687,7 +686,13 @@ export default function CheckoutPage() {
   const [addressLine2, setAddressLine2] = useState('')
   const [addressFloor, setAddressFloor] = useState('')
   const [hasLift, setHasLift] = useState('')
-  const [pinCode, setPinCode] = useState('')
+  const [pinCode] = useState(() => {
+    try {
+      return normalizePincode(localStorage.getItem(CART_PIN_CODE_KEY) || '')
+    } catch {
+      return ''
+    }
+  })
   const [pinCodeMessage, setPinCodeMessage] = useState('')
   const [isCheckingPincode, setIsCheckingPincode] = useState(false)
   const [isPincodeValid, setIsPincodeValid] = useState(false)
@@ -704,7 +709,6 @@ export default function CheckoutPage() {
   const [formError, setFormError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
   const fullNameRef = useRef(null)
   const emailRef = useRef(null)
@@ -874,14 +878,6 @@ export default function CheckoutPage() {
   ])
 
   useEffect(() => {
-    try {
-      localStorage.removeItem(CART_PIN_CODE_KEY)
-    } catch {
-      // Ignore storage failures and keep the page usable.
-    }
-  }, [])
-
-  useEffect(() => {
     if (hasAutoFilledGuestCountRef.current) return
 
     const fromCart = Number(cart?.guestCount ?? 0)
@@ -947,7 +943,8 @@ export default function CheckoutPage() {
       const pincodeState = getPincodeValidationState(pinCode, serviceAreas, isLoadingServiceAreas)
       if (!pincodeState.isValid) {
         nextFieldErrors.pinCode =
-          pincodeState.message || 'Please enter a valid serviceable pincode.'
+          pincodeState.message ||
+          'Set a valid serviceable pincode on your cart before checkout.'
       }
     }
 
@@ -1425,16 +1422,6 @@ export default function CheckoutPage() {
             />
           )}
 
-          <CheckoutCouponSection
-            cart={cart}
-            isLoggedIn={isLoggedIn}
-            isApplyingCoupon={isApplyingCoupon}
-            onApplyCoupon={applyCoupon}
-            onRemoveCoupon={clearCoupon}
-            onApplyingChange={setIsApplyingCoupon}
-            showToast={showToast}
-          />
-
           <div className="overflow-hidden rounded-xl border border-[#95796066]">
             <div className="bg-[#1F2A16] px-5 py-3 text-white">
               <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
@@ -1559,6 +1546,17 @@ export default function CheckoutPage() {
               Fields marked with <span className="text-[#B42318]">*</span> are required. Others are
               optional.
             </p>
+
+            <div ref={pinCodeRef}>
+              {fieldErrors.pinCode ? (
+                <p className="mt-3 text-sm text-[#B42318]">
+                  {fieldErrors.pinCode}{' '}
+                  <Link to="/cart" className="font-medium underline underline-offset-2">
+                    Back to cart
+                  </Link>
+                </p>
+              ) : null}
+            </div>
 
             <div className="mt-10 space-y-4">
               <h3
@@ -1724,23 +1722,6 @@ export default function CheckoutPage() {
                       <p className="mt-1 text-sm text-[#B42318]">{fieldErrors.addressFloor}</p>
                     ) : null}
                   </div>
-                  <div>
-                    <CheckoutFieldLabel label="PIN Code" required />
-                    <input
-                      ref={pinCodeRef}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={pinCode}
-                      onChange={event => {
-                        setFormError('')
-                        setFieldErrors(prev => ({ ...prev, pinCode: '' }))
-                        setPinCode(normalizePincode(event.target.value))
-                      }}
-                      placeholder="Enter 6-digit pincode"
-                      className={checkoutInputClass(Boolean(fieldErrors.pinCode))}
-                    />
-                  </div>
                   <div className="space-y-2">
                     <CheckoutFieldLabel label="Is there a lift in your building?" />
                     <select
@@ -1753,17 +1734,6 @@ export default function CheckoutPage() {
                       <option value="no">No</option>
                     </select>
                   </div>
-                  {fieldErrors.pinCode ? (
-                    <p className="text-[12px] text-[#B42318] md:col-span-2">{fieldErrors.pinCode}</p>
-                  ) : pinCodeMessage ? (
-                    <p
-                      className={`text-[12px] md:col-span-2 ${
-                        isPincodeValid ? 'text-[#2E7D32]' : 'text-[#B42318]'
-                      }`}
-                    >
-                      {isCheckingPincode ? 'Checking availability...' : pinCodeMessage}
-                    </p>
-                  ) : null}
                   <div>
                     <CheckoutFieldLabel label="Guest Count" />
                     <input

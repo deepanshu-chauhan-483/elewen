@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Pincode and coupon only on cart (not checkout)
+
+**Root cause:** Cart rendered coupon twice (mobile + desktop slots) and checkout asked for pincode + coupon again after cart already collected them. Checkout also cleared `elewen_cart_pin_code` on mount so the cart pin never carried over.
+
+**Failure symptoms:** Users entered pincode and applied coupon twice across `/cart` → `/checkout`; coupon used a manual code field instead of account dropdown on cart.
+
+**Fix details:** Single pincode + dropdown-only coupon on cart; persist valid pin to `elewen_cart_pin_code`; checkout reads that pin for booking/validation with no pin input or coupon UI.
+
+**Consulted sources:** `CartPage.jsx`, `CheckoutPage.jsx`, `CheckoutCouponSection.jsx`
+
+**Prevention guidance:** Collect service pin and coupons once on cart; checkout should consume cart pin storage, not re-ask.
+
 ## 2026-08-10: Guest cart merge inflated totals after login
 
 **Root cause:** `migrateGuestCartToServer` POSTed guest items onto the existing account cart. Server `addItem` also increments quantity when the same package already exists, so old cart lines + guest lines stacked (e.g. guest qty 1 + account qty 4 → 5).
