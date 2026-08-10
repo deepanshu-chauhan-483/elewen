@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Cart not emptied in UI after booking
+
+**Root cause:** API cleared cart items after payment/COD confirm, but the React cart context kept the previous items until a full remount/sync. Confirmation page never refreshed or re-cleared the cart.
+
+**Failure symptoms:** After booking, `/cart` still showed the booked packages until hard refresh.
+
+**Fix details:** `emptyCartAfterBooking` clears guest storage + pin + server items and refreshes cart state; booking confirmation page calls it once per booking id.
+
+**Consulted sources:** `useCart.js`, `BookingConfirmation.jsx`, `api` `clearUserCart`
+
+**Prevention guidance:** After successful checkout navigation, always sync/empty client cart state — do not rely on server clear alone for the badge/UI.
+
 ## 2026-08-10: Pincode and coupon only on cart (not checkout)
 
 **Root cause:** Cart rendered coupon twice (mobile + desktop slots) and checkout asked for pincode + coupon again after cart already collected them. Checkout also cleared `elewen_cart_pin_code` on mount so the cart pin never carried over.

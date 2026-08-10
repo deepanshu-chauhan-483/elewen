@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useToast } from '../components/common/useToast'
+import { useCart } from '../hooks/useCart'
 import { useBookingConfirmationToastMessage } from '../hooks/useMessagingContent'
 import { useDashboardBooking, useDashboardSession } from '../hooks/useDashboardData'
 import {
@@ -201,6 +202,7 @@ const SAMPLE_TASTING_STEPS = [
 export default function BookingConfirmation() {
   const { state } = useLocation()
   const { showToast } = useToast()
+  const { emptyCartAfterBooking } = useCart()
   const bookingIdFromQuery = new URLSearchParams(window.location.search).get('bookingId')
   const bookingId = state?.booking?.id ?? bookingIdFromQuery ?? ''
   const { data: dashboardBooking } = useDashboardBooking(bookingId)
@@ -209,6 +211,7 @@ export default function BookingConfirmation() {
     data: bookingConfirmationToastMessage = 'Your booking has been confirmed successfully.',
   } = useBookingConfirmationToastMessage()
   const hasShownToastRef = useRef(false)
+  const hasClearedCartRef = useRef(false)
   const booking = dashboardBooking ?? state?.booking ?? null
   const payment = state?.payment ?? null
   const checkoutInfo = state?.checkoutInfo ?? {}
@@ -346,6 +349,16 @@ export default function BookingConfirmation() {
     showToast,
     state?.checkoutInfo?.showBookingConfirmationToast,
   ])
+
+  useEffect(() => {
+    if (!bookingId || hasClearedCartRef.current) return
+    hasClearedCartRef.current = true
+    emptyCartAfterBooking().catch(err => {
+      if (import.meta.env.DEV) {
+        console.warn('[booking-confirmation] cart clear failed', err)
+      }
+    })
+  }, [bookingId, emptyCartAfterBooking])
 
   if (isSheeshaCodBooking) {
     return (

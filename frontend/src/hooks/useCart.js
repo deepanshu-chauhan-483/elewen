@@ -1054,6 +1054,54 @@ function useCartController() {
     return nextCart
   }
 
+  // After a successful booking, empty local + server cart so /cart is clean.
+  const emptyCartAfterBooking = async () => {
+    clearGuestCartStorage()
+    try {
+      localStorage.removeItem('elewen_cart_pin_code')
+    } catch {
+      // Ignore storage failures.
+    }
+
+    const token = await getServerToken()
+    if (!token) {
+      const nextCart = writeGuestCart(buildEmptyGuestCart())
+      setCart(nextCart)
+      setItemCount(0)
+      setError('')
+      dispatchCartChange(nextCart)
+      return nextCart
+    }
+
+    try {
+      await clearServerCartItems(token)
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn('[cart] empty after booking: clear items failed', err)
+      }
+    }
+
+    try {
+      const data = await cartGet(token)
+      const nextCart = data.cart ?? null
+      setCart(nextCart)
+      setItemCount(getItemCount(nextCart))
+      setError('')
+      dispatchCartChange(nextCart)
+      return nextCart
+    } catch (err) {
+      const nextCart = buildEmptyGuestCart()
+      setCart(nextCart)
+      setItemCount(0)
+      setError('')
+      dispatchCartChange(nextCart)
+      if (import.meta.env.DEV) {
+        console.warn('[cart] empty after booking: refresh failed', err)
+      }
+      return nextCart
+    }
+  }
+
   return {
     cart,
     itemCount,
@@ -1068,6 +1116,7 @@ function useCartController() {
     applyCoupon,
     debouncedApplyCoupon,
     clearCoupon,
+    emptyCartAfterBooking,
   }
 }
 
