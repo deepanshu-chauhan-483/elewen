@@ -1019,10 +1019,11 @@ async function ensureAnniversaryThemes(strapi) {
 async function seedDecorAnniversaryPackages(strapi) {
   await ensureAnniversaryEvent(strapi);
   await ensureAnniversaryThemes(strapi);
+  // Do not force refreshExistingDecor — CMS edits (e.g. Signature Essentials 3) must survive
+  // Strapi restarts. Opt in with SEED_DECOR_REFRESH_EXISTING=true when intentionally re-syncing.
   return seedDecorPackages(strapi, ANNIVERSARY_PACKAGES, {
     eventSlugCandidates: ANNIVERSARY_EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/decor-anniversary',
-    refreshExistingDecor: true,
   });
 }
 
@@ -1037,7 +1038,6 @@ async function seedStillUsExtraPackages(strapi) {
   return seedDecorPackages(strapi, STILL_US_EXTRA_PACKAGES, {
     eventSlugCandidates: ANNIVERSARY_EVENT_SLUG_CANDIDATES,
     logPrefix: 'seed/still-us-extra',
-    refreshExistingDecor: true,
   });
 }
 

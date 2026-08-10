@@ -78,7 +78,17 @@ Find existing record → skip, update, or create once. No blind bulk insert.
 SEED_DECOR_REFRESH_EXISTING=true
 ```
 
-When set, decor seeds **update** packages that already have a decor block (title, description, base_price, inclusions, elements). **Does not touch images.** Still no duplicates — updates in place.
+When set, decor seeds that defer to `shouldRefreshExistingDecor()` **update** packages that already have a decor block (title, description, base_price, inclusions, elements). **Does not touch images.** Still no duplicates — updates in place.
+
+**Anniversary / Still Us** (`SEED_DECOR_ANNIVERSARY_PACKAGES`, including Signature Essentials 1–3) no longer hard-force this refresh. Existing CMS edits survive Strapi restarts. Set `SEED_DECOR_REFRESH_EXISTING=true` only when you intentionally want seed text/pricing to overwrite admin edits.
+
+After packages exist in a shared DB, prefer:
+
+```env
+SEED_DECOR_ANNIVERSARY_PACKAGES=false
+```
+
+so bootstrap does not re-run anniversary seed at all.
 
 ### Excel-import decor (Bubbles & Black Tie, Sufi Night, House Party)
 
@@ -196,6 +206,7 @@ Seeds do **not** dedupe by title — only by slug (and type-specific checks for 
 - [ ] Spot-check Strapi admin: one row per package slug
 - [ ] Frontend: package listing and a few detail pages load correctly
 - [ ] Only set `SEED_DECOR_REFRESH_EXISTING=true` when intentionally updating seed text/pricing on existing packages
+- [ ] After CMS edits to Anniversary packages (e.g. Signature Essentials), keep `SEED_DECOR_ANNIVERSARY_PACKAGES=false` and do not enable refresh unless you mean to wipe those edits
 
 ---
 
