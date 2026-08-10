@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Signature Essentials 3 option surcharges in cart
+
+**Root cause:** SE3 seed already had `price_surcharge: 5000` on Single Panel Backdrop and Fancy Bar, but cart selected-options did not emit a Service charge line, and live CMS often lacked the field until a targeted patch. Option tags also showed the surcharge on a secondary line.
+
+**Failure symptoms:** Customers did not clearly see +₹5,000 on the option chip or a Service charge line after choosing those ups; price could stay base-only if CMS surcharge was missing.
+
+**Fix details:** Option tag shows title + `+₹5,000` inline. Selected options store `Service charge — …` rows for cart/summary. Patch script `scripts/patch-se3-option-surcharges.mjs` sets live Strapi surcharges.
+
+**Consulted sources:** `DecorSinglePackagePage.jsx`, `chooseOnePricing.js`, `CartPage.jsx`, SE3 seed
+
+**Prevention guidance:** Additive decor ups belong on inclusion `price_surcharge`; cart must persist service-charge lines beside the chosen option title.
+
 ## 2026-08-10: Cart/checkout showed inflated decor package price
 
 **Root cause:** `getCartItemSummary` preferred `sum(price_breakdown)` over cart `totalPrice`. Decor seeds like Raise the Bar 3 list component line items **and** a “Package Price” rollup, so the sum (₹56,500) exceeded `base_price` (₹30,200). Payment QR used booking/`totalPrice` and stayed correct. API delivery reprice had the same sum-all-rows bug.

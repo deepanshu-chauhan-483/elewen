@@ -80,6 +80,20 @@ export function formatInrSurcharge(amount) {
   return `+${formatInrPrice(numericValue)}`
 }
 
+export const SERVICE_CHARGE_OPTION_PREFIX = 'Service charge — '
+
+export function isServiceChargeOptionKey(key = '') {
+  return String(key ?? '')
+    .trim()
+    .toLowerCase()
+    .startsWith(SERVICE_CHARGE_OPTION_PREFIX.trim().toLowerCase())
+}
+
+export function buildServiceChargeOptionKey(optionTitle = '', index = 0) {
+  const title = String(optionTitle ?? '').trim() || 'Option'
+  return `${SERVICE_CHARGE_OPTION_PREFIX}${title}_${index}`
+}
+
 export function sumSelectedChoiceSurcharges(sections = []) {
   return (Array.isArray(sections) ? sections : []).reduce((sum, section) => {
     if (section?.type !== 'choice-row') return sum

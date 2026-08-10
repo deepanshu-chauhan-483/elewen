@@ -13,7 +13,11 @@ import { getRelatedPackages, normalizeServiceSlug } from '../lib/packageFilters'
 import { isCorporateCategory } from '../lib/serviceFlow'
 import { withHousePartyPackageImages } from '../lib/housePartyPackageMedia'
 import {
+  buildServiceChargeOptionKey,
+  formatInrPrice,
   formatInrSurcharge,
+  getChoiceSurcharge,
+  isServiceChargeOptionKey,
   resolveDecorDisplayPrice,
   shouldShowChoicePrices,
   shouldShowChoiceSurcharges,
@@ -1287,26 +1291,27 @@ function buildDecorSelectedOptions(customization, { useFirstChoiceFallback = fal
     section => section?.type === 'choice-row'
   )
 
-  const result = normalizeSelectedOptions(
-    Object.fromEntries(
-      selectedSections
-        .map((section, idx) => {
-          const selectedItem = (section.items ?? []).find(
-            item => typeof item !== 'string' && item.selected
-          )
-          const fallbackItem = useFirstChoiceFallback
-            ? (section.items ?? []).find(item => typeof item !== 'string')
-            : null
-          const resolvedItem = selectedItem ?? fallbackItem
+  const pairs = []
 
-          const key = `${section.title}_${idx}`
-          return [key, resolvedItem?.title ?? '']
-        })
-        .filter(([, value]) => Boolean(value))
+  selectedSections.forEach((section, idx) => {
+    const selectedItem = (section.items ?? []).find(
+      item => typeof item !== 'string' && item.selected
     )
-  )
+    const fallbackItem = useFirstChoiceFallback
+      ? (section.items ?? []).find(item => typeof item !== 'string')
+      : null
+    const resolvedItem = selectedItem ?? fallbackItem
+    if (!resolvedItem?.title) return
 
-  return result
+    pairs.push([`${section.title}_${idx}`, resolvedItem.title])
+
+    const surcharge = getChoiceSurcharge(resolvedItem)
+    if (surcharge != null) {
+      pairs.push([buildServiceChargeOptionKey(resolvedItem.title, idx), formatInrPrice(surcharge)])
+    }
+  })
+
+  return normalizeSelectedOptions(Object.fromEntries(pairs))
 }
 
 function applySelectedOptionsToSections(sections = [], selectedOptions = {}) {
@@ -1319,7 +1324,7 @@ function applySelectedOptionsToSections(sections = [], selectedOptions = {}) {
 
     const selectedTitle =
       selectedOptions?.[`${section.title}_${choiceIndex}`] ?? selectedOptions?.[section.title]
-    if (!selectedTitle) return section
+    if (!selectedTitle || isServiceChargeOptionKey(selectedTitle)) return section
 
     return {
       ...section,
@@ -1347,6 +1352,7 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
     : splitInclusionDetailText(item.description)
 
   const selected = Boolean(item.selected)
+  const priceLabel = showPrice && item.price ? item.price : ''
 
   return (
     <button
@@ -1360,14 +1366,11 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
           : 'border-[#D9D0C5] bg-white text-[#591902]'
       }`}
     >
-      {item.title && !bullets.length ? (
-        <p className="text-[12px] font-semibold leading-[1.35] text-[#591902]">{item.title}</p>
-      ) : null}
-      {item.title && bullets.length ? (
-        <p className="text-[12px] font-semibold leading-[1.35] text-[#591902]">{item.title}</p>
-      ) : null}
-      {showPrice && item.price ? (
-        <p className="mt-1 text-[11px] font-medium text-[#591902]">{item.price}</p>
+      {item.title ? (
+        <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[12px] font-semibold leading-[1.35] text-[#591902]">
+          <span>{item.title}</span>
+          {priceLabel ? <span className="font-medium">{priceLabel}</span> : null}
+        </p>
       ) : null}
       {bullets.length ? (
         <ul className={`${item.title ? 'mt-2' : ''} space-y-1`}>

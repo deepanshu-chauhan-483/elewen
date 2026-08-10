@@ -171,8 +171,13 @@ function getSummaryIncludedItems(item) {
   if (item?.itemType === 'addon') return []
 
   return getSelectedElements(item)
-    .map(element => String(element?.value ?? '').trim())
-    .filter(Boolean)
+    .map(element => ({
+      label: String(element?.value ?? '').trim(),
+      isServiceCharge: Boolean(element?.isServiceCharge),
+      amountLabel: element?.isServiceCharge ? String(element?.value ?? '').trim() : null,
+      optionLabel: String(element?.label ?? '').trim(),
+    }))
+    .filter(row => row.label)
 }
 
 function getCartGroupLabel(item) {
@@ -278,10 +283,15 @@ function getSelectedElements(item) {
   const selectedOptions = getDisplaySelectedOptions(item)
   if (Object.keys(selectedOptions).length > 0) {
     const selected = Object.entries(selectedOptions)
-      .map(([label, value]) => ({
-        label: label.replace(/_\d+$/, ''),
-        value,
-      }))
+      .map(([label, value]) => {
+        const cleanLabel = label.replace(/_\d+$/, '')
+        const isServiceCharge = /^service charge/i.test(cleanLabel)
+        return {
+          label: isServiceCharge ? 'Service charge' : cleanLabel,
+          value,
+          isServiceCharge,
+        }
+      })
       .filter(element => element.label && element.value)
 
     if (selected.length) {
@@ -1275,11 +1285,19 @@ function PriceSummaryCard({
                         ))
                       : getSummaryIncludedItems(item).map(selectedItem => (
                           <div
-                            key={`${item.id}-${selectedItem}`}
+                            key={`${item.id}-${selectedItem.optionLabel}-${selectedItem.label}`}
                             className="flex justify-between text-[#767676]"
                           >
-                            <span>{selectedItem}</span>
-                            <span className="text-[#1C1C1C]">Included</span>
+                            <span>
+                              {selectedItem.isServiceCharge
+                                ? selectedItem.optionLabel
+                                : selectedItem.label}
+                            </span>
+                            <span className="text-[#1C1C1C]">
+                              {selectedItem.isServiceCharge
+                                ? selectedItem.amountLabel || selectedItem.label
+                                : 'Included'}
+                            </span>
                           </div>
                         ))}
                   </div>
