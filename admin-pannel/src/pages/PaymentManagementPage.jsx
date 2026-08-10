@@ -695,17 +695,16 @@ function VendorPayments({
             >
               <option value="">Select booking…</option>
               {(bookingsQuery.data?.bookings ?? []).map(b => {
-                const packageName = String(
-                  b.package?.title || b.event?.name || b.displaySubtitle || 'Untitled package'
-                ).trim()
+                const bookingId = String(b.id ?? '').trim()
+                const shortId = bookingId
+                  ? `#${bookingId.slice(0, 8).toUpperCase()}`
+                  : 'Unknown booking'
                 const customerName = String(b.customer?.name || 'Customer').trim()
-                const shortPackage =
-                  packageName.length > 28 ? `${packageName.slice(0, 27)}…` : packageName
                 const shortCustomer =
-                  customerName.length > 18 ? `${customerName.slice(0, 17)}…` : customerName
+                  customerName.length > 22 ? `${customerName.slice(0, 21)}…` : customerName
                 return (
-                  <option key={b.id} value={b.id} title={`${packageName} — ${customerName}`}>
-                    {shortPackage} — {shortCustomer}
+                  <option key={b.id} value={b.id} title={`${bookingId} — ${customerName}`}>
+                    {shortId} — {shortCustomer}
                   </option>
                 )
               })}

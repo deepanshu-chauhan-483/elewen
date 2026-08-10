@@ -629,14 +629,14 @@ export const handleWebhook = async (req, res) => {
           await createOperationalAlert(prisma, {
             alertType: 'failed_payment',
             severity: 'high',
-            message: `Payment failed for booking ${payment.bookingId}. Reason: ${errorDescription || 'Unknown'}`,
+            message: `Payment failed for booking #${String(payment.bookingId).slice(0, 8).toUpperCase()}. Reason: ${errorDescription || 'Unknown'}`,
             metadata: {
               bookingId: payment.bookingId,
               paymentId: payment.id,
               reason: errorDescription,
             },
-            relatedEntityType: 'payment',
-            relatedEntityId: payment.id,
+            relatedEntityType: 'booking',
+            relatedEntityId: payment.bookingId,
           })
         }
       }
@@ -765,15 +765,15 @@ export const requestRefund = async (req, res, next) => {
     await createOperationalAlert(prisma, {
       alertType: 'refund_requested',
       severity: 'medium',
-      message: `Refund requested for booking ${payment.bookingId}. Review payment ${paymentId}.`,
+      message: `Refund requested for booking #${String(payment.bookingId).slice(0, 8).toUpperCase()}.`,
       metadata: {
         bookingId: payment.bookingId,
         paymentId,
         refundId: refund.id,
         reason,
       },
-      relatedEntityType: 'payment',
-      relatedEntityId: paymentId,
+      relatedEntityType: 'booking',
+      relatedEntityId: payment.bookingId,
     })
 
     res.status(201).json({ refund })

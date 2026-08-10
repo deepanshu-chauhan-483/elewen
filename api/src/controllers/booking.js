@@ -860,8 +860,8 @@ export const cancelBooking = async (req, res, next) => {
         severity: refundEntries.length > 0 ? 'medium' : 'low',
         message:
           refundEntries.length > 0
-            ? `Booking ${id} was cancelled and has ${refundEntries.length} refund request${refundEntries.length === 1 ? '' : 's'} pending.`
-            : `Booking ${id} was cancelled by the customer.`,
+            ? `Booking #${String(id).slice(0, 8).toUpperCase()} was cancelled and has ${refundEntries.length} refund request${refundEntries.length === 1 ? '' : 's'} pending.`
+            : `Booking #${String(id).slice(0, 8).toUpperCase()} was cancelled by the customer.`,
         metadata: {
           bookingId: id,
           reason,
@@ -900,7 +900,7 @@ export const cancelBooking = async (req, res, next) => {
         await createOperationalAlert(tx, {
           alertType: 'refund_requested',
           severity: 'medium',
-          message: `Refund requested from cancellation for booking ${id}. Review payment ${refundEntry.paymentId}.`,
+          message: `Refund requested from cancellation for booking #${String(id).slice(0, 8).toUpperCase()}.`,
           metadata: {
             bookingId: id,
             paymentId: refundEntry.paymentId,
@@ -909,8 +909,8 @@ export const cancelBooking = async (req, res, next) => {
             source: 'booking_cancellation',
             refundWindow: refundPreview.windowKey || null,
           },
-          relatedEntityType: 'payment',
-          relatedEntityId: refundEntry.paymentId,
+          relatedEntityType: 'booking',
+          relatedEntityId: id,
         })
       }
     })

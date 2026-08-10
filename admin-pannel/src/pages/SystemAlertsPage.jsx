@@ -144,7 +144,7 @@ function AlertCard({ alert, checked, onToggleCheck, onReview }) {
             <StatusBadge status={alert.status} />
           </div>
           <p className="mt-1 text-xs text-[#8F8F8F]">{getEntityLabel(alert)}</p>
-          <p className="mt-2 text-sm leading-relaxed text-[#4B5563]">{alert.message}</p>
+          <p className="mt-2 text-sm leading-relaxed text-[#4B5563]">{getDisplayMessage(alert)}</p>
           <div className="mt-3 text-xs text-[#8F8F8F]">
             <p>{formatDateTime(alert.createdAt)}</p>
             <p className="mt-0.5">{getAgeLabel(alert.createdAt)}</p>
@@ -164,9 +164,59 @@ function sentenceCase(value) {
     .replace(/\b\w/g, character => character.toUpperCase())
 }
 
+function formatShortEntityId(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return ''
+  const compact = raw.replace(/^#/, '')
+  return `#${compact.slice(0, 8).toUpperCase()}`
+}
+
+function getAlertMetadata(alert) {
+  return alert?.metadata && typeof alert.metadata === 'object' ? alert.metadata : {}
+}
+
+/** Prefer bookingId from metadata so payment/refund alerts still show the booking. */
+function getAlertBookingId(alert) {
+  const metadata = getAlertMetadata(alert)
+  if (metadata.bookingId != null && String(metadata.bookingId).trim()) {
+    return String(metadata.bookingId).trim()
+  }
+  if (String(alert?.relatedEntityType ?? '').toLowerCase() === 'booking' && alert?.relatedEntityId) {
+    return String(alert.relatedEntityId).trim()
+  }
+  return ''
+}
+
 function getEntityLabel(alert) {
+  const bookingId = getAlertBookingId(alert)
+  if (bookingId) return `Booking ${formatShortEntityId(bookingId)}`
+
   const type = sentenceCase(alert.relatedEntityType || 'System')
-  return alert.relatedEntityId ? `${type} ${alert.relatedEntityId}` : type
+  if (!alert.relatedEntityId) return type
+  return `${type} ${formatShortEntityId(alert.relatedEntityId)}`
+}
+
+function getDisplayMessage(alert) {
+  let message = String(alert?.message ?? '')
+  if (!message) return ''
+
+  const bookingId = getAlertBookingId(alert)
+  if (bookingId) {
+    message = message.split(bookingId).join(formatShortEntityId(bookingId))
+  }
+
+  const relatedId = String(alert?.relatedEntityId ?? '').trim()
+  if (relatedId && relatedId !== bookingId) {
+    message = message.split(relatedId).join(formatShortEntityId(relatedId))
+  }
+
+  const metadata = getAlertMetadata(alert)
+  for (const key of ['paymentId', 'refundId']) {
+    const value = metadata[key] != null ? String(metadata[key]).trim() : ''
+    if (value) message = message.split(value).join(formatShortEntityId(value))
+  }
+
+  return message
 }
 
 function getAgeLabel(createdAt) {
@@ -365,7 +415,7 @@ function AlertDetailPanel({ alert, onClose, onUpdate, isBusy }) {
         </div>
 
         <div className="mt-6 rounded-[8px] border border-[#E4DED8] bg-white p-4">
-          <p className="text-sm font-semibold text-[#1C1C1C]">{renderedAlert.message}</p>
+          <p className="text-sm font-semibold text-[#1C1C1C]">{getDisplayMessage(renderedAlert)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <StatusBadge status={renderedAlert.severity} />
             <StatusBadge status={renderedAlert.status} />
@@ -686,7 +736,9 @@ export default function SystemAlertsPage() {
                         <StatusBadge status={alert.severity} />
                       </td>
                       <td className="px-4 py-4 text-[#4B5563]">{getEntityLabel(alert)}</td>
-                      <td className="max-w-[320px] px-4 py-4 text-[#4B5563]">{alert.message}</td>
+                      <td className="max-w-[320px] px-4 py-4 text-[#4B5563]">
+                        {getDisplayMessage(alert)}
+                      </td>
                       <td className="px-4 py-4 text-[#4B5563]">
                         <div>{formatDateTime(alert.createdAt)}</div>
                         <div className="mt-1 text-xs text-[#8F8F8F]">

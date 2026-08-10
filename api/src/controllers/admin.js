@@ -126,10 +126,16 @@ function textMatchesSearch(value, searchValue) {
 }
 
 function bookingMatchesSearch(booking, search) {
-  const searchValue = normalizeSearchValue(search)
+  const searchValue = normalizeSearchValue(search).replace(/^#/, '')
   if (!searchValue) return true
 
-  return textMatchesSearch(booking?.package?.title, searchValue)
+  const bookingId = normalizeSearchValue(booking?.id).replace(/^#/, '')
+  if (!bookingId) return false
+
+  const compactId = bookingId.replace(/-/g, '')
+  const compactSearch = searchValue.replace(/-/g, '')
+
+  return bookingId.includes(searchValue) || compactId.includes(compactSearch)
 }
 
 function sampleMatchesSearch(sample, search) {
