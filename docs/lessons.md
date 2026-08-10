@@ -1,5 +1,29 @@
 # Lessons
 
+## 2026-08-10: Key Decor Elements moved into accordion above Nitty-Gritty
+
+**Root cause:** Key Decor Elements was rendered as always-open copy above “What’s included”, separate from accordion sections that already use the `+` expand pattern.
+
+**Failure symptoms:** Key Decor sat in the wrong place; users wanted it expandable with `+` directly above The Nitty-Gritty.
+
+**Fix details:** Removed the inline Key Decor block from `DecorPackageSections`. Inject `Key Decor Elements` into accordion lists above `The Nitty-Gritty` via `buildDecorAccordionSections` and `buildAccordionSections` in `usePackages.js`.
+
+**Consulted sources:** `DecorSinglePackagePage.jsx`, `usePackages.js`, `AccordionSection` in `SingleProductPageContent.jsx`
+
+**Prevention guidance:** Package narrative fields that share the accordion UX should be built into accordion sections, not duplicated as static blocks above inclusions.
+
+## 2026-08-10: Package gallery main image only updated on thumb click
+
+**Root cause:** Side thumbnail strip required an explicit click to call `setSelectedOverride`. Scrolling the strip alone did not change the main image (desktop or mobile).
+
+**Failure symptoms:** User scrolled thumbnails then still had to click; main image stayed on the previous photo until click.
+
+**Fix details:** Scroll listener on the thumb strip picks the thumb nearest the top focus line and updates the main image automatically; click still works. Applied in shared `SingleProductPageContent` for all packages.
+
+**Consulted sources:** `SingleProductPageContent.jsx` ProductImageLayout
+
+**Prevention guidance:** Gallery strips that show a large preview must sync on scroll (scroll-spy), not click-only.
+
 ## 2026-08-10: Golden Touch 1 card had no mobile image arrows
 
 **Root cause:** Listing cover builder returned only `pkg.images` when present. Golden Touch 1 has one cover (`gt1.png`) plus two inclusion photos, so the card saw `images.length === 1` and hid left/right controls / swipe carousel.

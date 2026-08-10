@@ -435,6 +435,9 @@ function buildAccordionSections(pkg) {
 
   return sections
     .flatMap(section => [
+      section?.key_decor_elements && String(section.key_decor_elements).trim()
+        ? { title: 'Key Decor Elements', body: String(section.key_decor_elements).trim() }
+        : null,
       section?.nitty_gritty
         ? { title: 'The Nitty-Gritty', body: clarifyPriceMayVaryCopy(section.nitty_gritty) }
         : null,

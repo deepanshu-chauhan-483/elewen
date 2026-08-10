@@ -42,6 +42,10 @@ const DECOR_CONTENT = {
     'An intimate, beautifully styled setup designed for slow conversations, shared laughs, and a hands-on painting experience. Think soft florals, cozy seating, and a table that invites you to sit, sip, and spill everything.',
   accordionSections: [
     {
+      title: 'Key Decor Elements',
+      body: 'An intimate, beautifully styled setup designed for slow conversations, shared laughs, and a hands-on painting experience. Think soft florals, cozy seating, and a table that invites you to sit, sip, and spill everything.',
+    },
+    {
       title: 'The Nitty-Gritty',
       body: 'Setup timing, load-in, teardown, and venue coordination details are confirmed with you before the event date.',
     },
@@ -135,9 +139,30 @@ function getDecorDetailSections(pkg) {
 }
 
 function buildDecorAccordionSections(pkg) {
-  return Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
-    ? pkg.detail_accordion_sections
-    : DECOR_CONTENT.accordionSections
+  const keyDecorText = buildKeyDecorText(pkg)
+  const keyDecorSection = keyDecorText
+    ? { title: 'Key Decor Elements', body: keyDecorText }
+    : null
+
+  const baseSections =
+    Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
+      ? pkg.detail_accordion_sections
+      : DECOR_CONTENT.accordionSections
+
+  const withoutKeyDecor = (Array.isArray(baseSections) ? baseSections : []).filter(
+    section => section?.title !== 'Key Decor Elements'
+  )
+
+  if (!keyDecorSection) return withoutKeyDecor
+
+  const nittyIndex = withoutKeyDecor.findIndex(section => section?.title === 'The Nitty-Gritty')
+  if (nittyIndex < 0) return [keyDecorSection, ...withoutKeyDecor]
+
+  return [
+    ...withoutKeyDecor.slice(0, nittyIndex),
+    keyDecorSection,
+    ...withoutKeyDecor.slice(nittyIndex),
+  ]
 }
 
 function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancellationSection) {
@@ -1414,7 +1439,6 @@ function DecorMessageField({ value, onChange }) {
 }
 
 function DecorPackageSections({
-  keyDecorText,
   sections,
   message,
   onMessageChange,
@@ -1427,22 +1451,13 @@ function DecorPackageSections({
 
   return (
     <div className="text-left">
-      {keyDecorText ? (
-        <div className="border-b border-[#E5E0D8] pb-5">
-          <p className="text-[13px] font-semibold text-[#2D2D2D]">Key Decor Elements</p>
-          <p className="mt-3 text-[13px] leading-[1.7] text-[#591902] opacity-70">{keyDecorText}</p>
-        </div>
-      ) : null}
-
       {hasInclusionSections ? (
-        <p
-          className={`text-left text-[16px] font-semibold text-[#2D2D2D] ${keyDecorText ? 'pt-5' : ''}`}
-        >
+        <p className="text-left text-[16px] font-semibold text-[#2D2D2D]">
           What&apos;s included:
         </p>
       ) : null}
 
-      <div className={`space-y-6 text-left ${hasInclusionSections ? 'mt-5' : keyDecorText ? 'pt-5' : ''}`}>
+      <div className={`space-y-6 text-left ${hasInclusionSections ? 'mt-5' : ''}`}>
         {visibleSections.map((section, index) => {
           if (section.type === 'text-row') {
             return (
@@ -1845,7 +1860,6 @@ export default function DecorSinglePackagePage() {
   const packageOriginalPrice = pkg.compare_at_price || ''
   const packageDiscountBadge = pkg.discount_badge || ''
   const packageIntro = buildDecorIntro(pkg)
-  const keyDecorText = buildKeyDecorText(pkg)
   const accordionSections = mergeAccordionSections(
     buildDecorAccordionSections(pkg),
     cancellationPolicy,
@@ -1862,7 +1876,6 @@ export default function DecorSinglePackagePage() {
         intro={packageIntro}
         customContent={
           <DecorPackageSections
-            keyDecorText={keyDecorText}
             sections={sections}
             message={message}
             onMessageChange={handleMessageChange}
