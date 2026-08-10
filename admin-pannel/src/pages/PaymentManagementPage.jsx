@@ -17,6 +17,7 @@ import {
   useAdminShareCoupon,
   useAdminPaymentWorkspace,
   useAdminProcessRefund,
+  useAdminRecordBookingPayment,
   useAdminRefunds,
   useAdminSettings,
   useAdminUpdateCoupon,
@@ -224,51 +225,236 @@ function Tabs({ items, value, onChange, size = 'md' }) {
 // Row cards
 // ---------------------------------------------------------------------------
 
-function BookingPaymentRow({ booking, onOpen }) {
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      className={`h-4 w-4 text-[#8F8F8F] transition-transform ${open ? 'rotate-180' : ''}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
+      <path d="m5 7.5 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+const FINAL_PAYMENT_CHANNELS = [
+  { value: 'upi', label: 'UPI' },
+  { value: 'card', label: 'Card' },
+  { value: 'netbanking', label: 'Netbanking' },
+  { value: 'cashfree', label: 'Cashfree' },
+  { value: 'cash', label: 'Cash' },
+]
+
+function BookingPaymentRow({ booking, onOpen, recordPaymentMutation }) {
+  const toast = useAdminToast()
+  const [open, setOpen] = useState(false)
+  const [channel, setChannel] = useState('upi')
+  const [note, setNote] = useState('')
+  const [formError, setFormError] = useState('')
   const showHookahCodBadge = bookingHasHookahCod(booking)
+  const outstanding = Number(booking.outstandingAmount ?? 0)
+  const canRecordFinal = outstanding > 0 && String(booking.status).toLowerCase() !== 'cancelled'
+  const customerPhone =
+    booking.customerPhone || booking.customer?.phone || booking.meta?.phone || '—'
+
+  const handleRecordPayment = async () => {
+    setFormError('')
+    try {
+      await recordPaymentMutation.mutateAsync({
+        bookingId: booking.id,
+        body: {
+          action: 'final_payment_received',
+          channel,
+          note: note.trim() || undefined,
+        },
+      })
+      setNote('')
+      toast.showToast?.({
+        message: 'Final payment recorded. Remaining amount is now ₹0.',
+        tone: 'success',
+      })
+      setOpen(false)
+    } catch (error) {
+      const raw = String(error?.message ?? '')
+      let message = 'Could not record final payment.'
+      try {
+        const jsonStart = raw.indexOf('{')
+        if (jsonStart >= 0) {
+          const parsed = JSON.parse(raw.slice(jsonStart))
+          if (parsed?.error) message = parsed.error
+        } else if (raw) {
+          message = raw
+        }
+      } catch {
+        if (raw) message = raw
+      }
+      setFormError(message)
+      toast.showToast?.({ message, tone: 'error' })
+    }
+  }
 
   return (
-    <button
-      type="button"
-      onClick={() => onOpen?.(booking.id)}
-      className="flex w-full flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#E4DED8] bg-white px-4 py-4 text-left transition hover:border-[#D4BA8E] hover:bg-[#FBF8F3]"
-    >
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-[#1C1C1C]">
-          {booking?.customer?.name || 'Customer'}
-          <span className="ml-2 font-normal text-[#6B7280]">
-            / {booking?.package?.title || booking.id}
-          </span>
-        </p>
-        <p className="mt-1 text-xs text-[#8F8F8F]">
-          {formatDate(booking.eventDate)}
-          {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
-        </p>
-        <div className="mt-2 flex gap-4 text-sm">
-          <span>
-            <span className="text-[#8F8F8F]">Paid </span>
-            <span className="font-medium text-[#2D2D2D]">{formatCurrency(booking.paidAmount)}</span>
-          </span>
-          <span>
-            <span className="text-[#8F8F8F]">Remaining </span>
-            <span className="font-medium text-[#2D2D2D]">
-              {formatCurrency(booking.outstandingAmount)}
+    <div className="overflow-hidden rounded-2xl border border-[#E4DED8] bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen(current => !current)}
+        className="flex w-full flex-wrap items-start justify-between gap-3 px-4 py-4 text-left transition hover:bg-[#FBF8F3]"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-[#1C1C1C]">
+            {booking?.customer?.name || 'Customer'}
+            <span className="ml-2 font-normal text-[#6B7280]">
+              / {booking?.package?.title || booking.id}
             </span>
-          </span>
+          </p>
+          <p className="mt-1 text-xs text-[#8F8F8F]">
+            {formatDate(booking.eventDate)}
+            {booking.locationSummary ? ` · ${booking.locationSummary}` : ''}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-4 text-sm">
+            <span>
+              <span className="text-[#8F8F8F]">Advance paid </span>
+              <span className="font-medium text-[#2D2D2D]">
+                {formatCurrency(booking.advancePaidAmount ?? 0)}
+              </span>
+            </span>
+            <span>
+              <span className="text-[#8F8F8F]">Paid </span>
+              <span className="font-medium text-[#2D2D2D]">{formatCurrency(booking.paidAmount)}</span>
+            </span>
+            <span>
+              <span className="text-[#8F8F8F]">Remaining </span>
+              <span className="font-medium text-[#2D2D2D]">
+                {formatCurrency(booking.outstandingAmount)}
+              </span>
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Badge status={booking.status} label={booking.statusLabel} />
-        {showHookahCodBadge ? <Badge status="pending" label="Hookah · COD" /> : null}
-        <Badge
-          status={booking.vendorAssignments?.length ? 'assigned' : 'unassigned'}
-          label={booking.vendorAssignments?.length ? 'Vendor assigned' : 'No vendor'}
-        />
-        <span className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]">
-          Open booking
-        </span>
-      </div>
-    </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge status={booking.status} label={booking.statusLabel} />
+          {showHookahCodBadge ? <Badge status="pending" label="Hookah · COD" /> : null}
+          <Badge
+            status={booking.vendorAssignments?.length ? 'assigned' : 'unassigned'}
+            label={booking.vendorAssignments?.length ? 'Vendor assigned' : 'No vendor'}
+          />
+          <span
+            role="link"
+            tabIndex={0}
+            onClick={event => {
+              event.stopPropagation()
+              onOpen?.(booking.id)
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                event.stopPropagation()
+                onOpen?.(booking.id)
+              }
+            }}
+            className="rounded-full border border-[#E4DED8] px-3 py-1 text-xs font-medium text-[#7A5C2E]"
+          >
+            Open booking
+          </span>
+          <ChevronIcon open={open} />
+        </div>
+      </button>
+
+      {open ? (
+        <div className="border-t border-[#E4DED8] bg-[#FAFAFA] px-4 py-4">
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
+            Payment details
+          </p>
+          <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { label: 'Name', value: booking?.customer?.name || '—' },
+              { label: 'Phone', value: customerPhone },
+              { label: 'Event date', value: formatDate(booking.eventDate) },
+              {
+                label: 'Advance paid',
+                value: formatCurrency(booking.advancePaidAmount ?? 0),
+              },
+              { label: 'Total paid', value: formatCurrency(booking.paidAmount) },
+              { label: 'Remaining', value: formatCurrency(booking.outstandingAmount) },
+            ].map(field => (
+              <div key={field.label} className="rounded-xl bg-white px-4 py-3">
+                <p className="text-[11px] tracking-[0.16em] text-[#767676]">{field.label}</p>
+                <p className="mt-0.5 text-sm text-[#2D2D2D]">{field.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#767676]">
+            Record final payment
+          </p>
+          <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
+            {canRecordFinal ? (
+              <>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-1.5 text-xs text-[#8F8F8F]">Update status</p>
+                    <CustomSelect
+                      value="final_payment_received"
+                      onChange={() => {}}
+                      className="min-h-10 rounded-full bg-[#F3F3F3]"
+                    >
+                      <option value="final_payment_received">Final payment received</option>
+                    </CustomSelect>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-1.5 text-xs text-[#8F8F8F]">Received via</p>
+                    <CustomSelect
+                      value={channel}
+                      onChange={setChannel}
+                      className="min-h-10 rounded-full bg-[#F3F3F3]"
+                    >
+                      {FINAL_PAYMENT_CHANNELS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </CustomSelect>
+                  </div>
+                  <div className="min-w-[min(100%,280px)] flex-[1.4]">
+                    <p className="mb-1.5 text-xs text-[#8F8F8F]">
+                      Note (admin only — not shown to customer)
+                    </p>
+                    <input
+                      type="text"
+                      value={note}
+                      onChange={event => setNote(event.target.value)}
+                      placeholder="e.g. UPI paid to company account…"
+                      className="h-10 w-full rounded-full border border-[#E4DED8] bg-white px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E] transition"
+                    />
+                  </div>
+                  <PrimaryBtn
+                    disabled={recordPaymentMutation.isPending}
+                    onClick={handleRecordPayment}
+                  >
+                    {recordPaymentMutation.isPending ? 'Saving…' : 'Update Status'}
+                  </PrimaryBtn>
+                </div>
+                <p className="mt-3 text-xs text-[#8F8F8F]">
+                  Records ₹{Number(outstanding).toLocaleString('en-IN')} as paid and sets remaining
+                  to ₹0. Note stays internal (does not change booking stage for the customer).
+                </p>
+                {formError ? (
+                  <div className="mt-3 rounded-xl border border-[#FCC5C5] bg-[#FFF3F3] px-4 py-3">
+                    <p className="text-sm text-[#8A1C1C]">{formError}</p>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-sm text-[#6B7280]">
+                No remaining balance to record on this booking.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -529,6 +715,7 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
     customerPage: currentPage,
     limit: 10,
   })
+  const recordPaymentMutation = useAdminRecordBookingPayment()
   const customerPayments = workspaceQuery.data?.customerPayments ?? {}
   const lists = {
     today: customerPayments.todayPayments ?? [],
@@ -613,7 +800,12 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
             (lists.active.length ? (
               <div className="space-y-2.5">
                 {currentList.map(b => (
-                  <BookingPaymentRow key={b.id} booking={b} onOpen={openBooking} />
+                  <BookingPaymentRow
+                    key={b.id}
+                    booking={b}
+                    onOpen={openBooking}
+                    recordPaymentMutation={recordPaymentMutation}
+                  />
                 ))}
                 <PaginationControls
                   currentPage={visiblePage}

@@ -1142,9 +1142,22 @@ function isActiveBookingStatus(status) {
 
 function buildBookingPaymentSnapshot(booking) {
   const bookingPayments = Array.isArray(booking?.payments) ? booking.payments : []
-  const successfulAmount = bookingPayments
-    .filter(payment => payment.status === 'success')
+  const successfulPayments = bookingPayments.filter(payment => payment.status === 'success')
+  const successfulAmount = successfulPayments.reduce(
+    (sum, payment) => sum + toNumber(payment.amount),
+    0
+  )
+  const advanceFromPayments = successfulPayments
+    .filter(payment => String(payment.paymentType ?? '').toLowerCase() === 'advance')
     .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+  const scheduledAdvanceAmount = toNumber(booking?.advanceAmount)
+  const advancePaidAmount = Number(
+    (
+      advanceFromPayments > 0
+        ? advanceFromPayments
+        : Math.min(successfulAmount, scheduledAdvanceAmount > 0 ? scheduledAdvanceAmount : 0)
+    ).toFixed(2)
+  )
   const failedPaymentsCount = bookingPayments.filter(payment => payment.status === 'failed').length
   const pendingPaymentsCount = bookingPayments.filter(
     payment => payment.status === 'pending'
@@ -1159,10 +1172,13 @@ function buildBookingPaymentSnapshot(booking) {
   return {
     ...booking,
     paidAmount: Number(successfulAmount.toFixed(2)),
+    advancePaidAmount,
+    scheduledAdvanceAmount: Number(scheduledAdvanceAmount.toFixed(2)),
     outstandingAmount,
     failedPaymentsCount,
     pendingPaymentsCount,
     latestPayment,
+    customerPhone: booking?.customer?.phone ?? booking?.meta?.phone ?? null,
   }
 }
 
@@ -2387,6 +2403,148 @@ export async function collectAdminBookingCod(req, res, next) {
     await cacheDelPattern(`dashboard:summary:${booking.userId}`)
 
     res.json({ booking, payment: updatedPayment })
+  } catch (err) {
+    next(err)
+  }
+}
+
+const ADMIN_MANUAL_PAYMENT_CHANNELS = {
+  card: { provider: 'manual', paymentMethod: 'card', label: 'Card' },
+  upi: { provider: 'manual', paymentMethod: 'upi', label: 'UPI' },
+  netbanking: { provider: 'manual', paymentMethod: 'netbanking', label: 'Netbanking' },
+  cashfree: { provider: 'cashfree', paymentMethod: 'upi', label: 'Cashfree' },
+  cash: { provider: 'manual', paymentMethod: 'offline', label: 'Cash' },
+}
+
+/** Admin records final/remaining payment received offline (UPI, cash, Cashfree, etc.). */
+export async function recordAdminBookingPayment(req, res, next) {
+  try {
+    const bookingId = req.params.id
+    const adminId = String(req.user.id)
+    const action = normalizeText(req.body.action || 'final_payment_received').toLowerCase()
+    const channelKey = normalizeText(req.body.channel || req.body.paymentMethod).toLowerCase()
+    const note = normalizeText(req.body.note)
+    const channel = ADMIN_MANUAL_PAYMENT_CHANNELS[channelKey]
+
+    if (action !== 'final_payment_received') {
+      return res.status(400).json({
+        error: 'action must be final_payment_received',
+        code: 'INVALID_PAYMENT_ACTION',
+      })
+    }
+
+    if (!channel) {
+      return res.status(400).json({
+        error: `channel must be one of: ${Object.keys(ADMIN_MANUAL_PAYMENT_CHANNELS).join(', ')}`,
+        code: 'INVALID_PAYMENT_CHANNEL',
+      })
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { payments: true },
+    })
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (String(booking.status).toLowerCase() === 'cancelled') {
+      return res.status(400).json({
+        error: 'Cannot record payment on a cancelled booking.',
+        code: 'BOOKING_CANCELLED',
+      })
+    }
+
+    const successfulAmount = (booking.payments ?? [])
+      .filter(payment => payment.status === 'success')
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+    const totalPrice = toNumber(booking.totalPrice)
+    const outstandingAmount = Number(
+      Math.max(totalPrice - successfulAmount, toNumber(booking.remainingAmount), 0).toFixed(2)
+    )
+
+    if (outstandingAmount <= 0) {
+      return res.status(400).json({
+        error: 'No remaining amount due on this booking.',
+        code: 'NOTHING_DUE',
+      })
+    }
+
+    const paymentType = successfulAmount > 0 ? 'remaining' : 'full'
+    const internalNoteText = [
+      `Final payment received via ${channel.label}.`,
+      note || null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    const result = await prisma.$transaction(async tx => {
+      const payment = await tx.payment.create({
+        data: {
+          bookingId,
+          paymentType,
+          amount: outstandingAmount,
+          status: 'success',
+          provider: channel.provider,
+          paymentMethod: channel.paymentMethod,
+          providerOrderId: `ADMIN-MANUAL-${Date.now()}`,
+          providerPaymentId: `admin:${adminId}`,
+        },
+      })
+
+      await tx.paymentLog.create({
+        data: {
+          paymentId: payment.id,
+          action: 'verified',
+          performedBy: adminId,
+          metadata: {
+            source: 'admin_manual_payment',
+            action: 'final_payment_received',
+            channel: channelKey,
+            channelLabel: channel.label,
+            amount: outstandingAmount,
+            note: note || null,
+            customerVisible: false,
+          },
+        },
+      })
+
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          remainingAmount: '0.00',
+        },
+      })
+
+      await tx.bookingNote.create({
+        data: {
+          bookingId,
+          adminId,
+          note: internalNoteText,
+          isInternal: true,
+        },
+      })
+
+      return payment
+    })
+
+    notify(booking.userId, {
+      type: 'payment_update',
+      title: 'Payment received',
+      message: 'Your remaining payment has been recorded. Thank you!',
+      linkUrl: `/dashboard/bookings/${bookingId}`,
+    }).catch(() => {})
+
+    await cacheDelPattern(`dashboard:summary:${booking.userId}`)
+    invalidateDashboardCache(booking.userId).catch(() => {})
+
+    res.status(201).json({
+      ok: true,
+      payment: result,
+      remainingAmount: 0,
+      channel: channelKey,
+    })
   } catch (err) {
     next(err)
   }

@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   adminAddBookingNote,
   adminCollectBookingCod,
+  adminRecordBookingPayment,
   adminAddSupportMessage,
   adminAlerts,
   adminBooking,
@@ -274,6 +275,24 @@ export function useAdminCollectBookingCod() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'payments'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'payment-workspace'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })
+    },
+  })
+}
+
+export function useAdminRecordBookingPayment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ bookingId, body }) =>
+      withAdminToken(token => adminRecordBookingPayment(token, bookingId, body)),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payments'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payments', 'workspace'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payment-workspace'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payment-summary'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })
     },
   })

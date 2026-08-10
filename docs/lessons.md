@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Admin final payment recording in Customer Payments
+
+**Root cause:** Payment Management Active Bookings was read-only. No admin API existed to record remaining balance received via UPI/cash/Cashfree/card, so remaining never cleared outside customer Cashfree or Hookah COD collect.
+
+**Failure symptoms:** Admin collected money offline but Remaining stayed due; no place in Customer Payments to mark final payment received.
+
+**Fix details:** `POST /admin/bookings/:id/payments/record` creates a successful remaining/full payment, sets `remainingAmount` to 0, stores an **internal** booking note (not stage/status log). Active booking rows are expandable with name/phone/event/advance/paid/remaining plus Final payment received + channel + admin note form.
+
+**Consulted sources:** `PaymentManagementPage`, `recordAdminBookingPayment`, Booking UPDATE STAGE UI pattern
+
+**Prevention guidance:** Manual money-in for customers needs a dedicated payment write path; do not overload booking stage notes (those are customer-visible).
+
 ## 2026-08-10: Admin cancel did not create refund requests
 
 **Root cause:** Customer cancel created `Refund` rows (`requested`); admin `updateAdminBookingStatus` → `cancelled` only wrote Cancellation + status. Payment Management Refunds lists `Refund` records only, so admin-cancelled paid bookings never appeared for Pay Refund. Customer Payments also omitted the API `cancelled` tab.

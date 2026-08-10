@@ -213,6 +213,11 @@ export const adminCollectBookingCod = (token, bookingId) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminRecordBookingPayment = (token, bookingId, body) =>
+  request('POST', `/admin/bookings/${bookingId}/payments/record`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminSampleTastes = (token, params = {}) =>
   request('GET', withQuery('/admin/sample-taste', params), null, {
     headers: { Authorization: `Bearer ${token}` },
