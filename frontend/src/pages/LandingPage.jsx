@@ -23,6 +23,7 @@ import BrandedImage from '../components/common/BrandedImage'
 import CelebrationDoor from '../components/landing-page/CelebrationDoor'
 import HeroSection from '../components/landing-page/HeroSection'
 import DiscountBannerCarousel from '../components/landing-page/DiscountBannerCarousel'
+import WhatsAppHoverButton from '../components/landing-page/WhatsAppHoverButton'
 import { usePackages } from '../hooks/usePackages'
 import { useEventCategories, useEventCards, useServiceCards } from '../hooks/useEventTypes'
 import {
@@ -4853,6 +4854,7 @@ export default function LandingPage() {
       <PlanningGuidesSection />
       <TestimonialsSection />
       <SplitInfoSection />
+      <WhatsAppHoverButton />
     </div>
   )
 }
