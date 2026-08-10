@@ -209,6 +209,16 @@ function mapMediaToAssets(media) {
 
 function buildListingCoverImages(pkg, detailSections = []) {
   const packageImages = mapMediaToUrls(pkg?.images)
+  const slug = String(pkg?.slug ?? '')
+    .trim()
+    .toLowerCase()
+
+  // Golden Touch 1 only stores one cover on `images`, but inclusion photos exist.
+  // Merge them so mobile PackageCard can show left/right image controls like siblings.
+  if (slug === 'golden-touch-1') {
+    return buildPackageImageUrls(pkg, detailSections)
+  }
+
   if (packageImages.length) return packageImages
 
   return buildPackageImageUrls(pkg, detailSections)

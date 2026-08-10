@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Golden Touch 1 card had no mobile image arrows
+
+**Root cause:** Listing cover builder returned only `pkg.images` when present. Golden Touch 1 has one cover (`gt1.png`) plus two inclusion photos, so the card saw `images.length === 1` and hid left/right controls / swipe carousel.
+
+**Failure symptoms:** On mobile decor levels, Golden Touch 1 image was not scrollable and had no left/right buttons; other multi-image packages worked.
+
+**Fix details:** For slug `golden-touch-1`, `buildListingCoverImages` uses full `buildPackageImageUrls` (cover + inclusion/backdrop/element images).
+
+**Consulted sources:** Live Strapi package `golden-touch-1`, `usePackages.js`, `PackageCard.jsx`
+
+**Prevention guidance:** If a package should carousel on listing cards, either upload multiple `images` or include inclusion media in the listing cover merge for that slug/pattern.
+
 ## 2026-08-10: Theme cards uneven height on mobile
 
 **Root cause:** `ThemeCard` used `h-full` + image `flex-1` without a fixed mobile height; only desktop set `md:h-[424px]`. On phones the image frame collapsed to each photo’s intrinsic size, so some themes looked short and others taller.
