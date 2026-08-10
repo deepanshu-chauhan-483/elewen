@@ -1296,8 +1296,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
     const validation = canProgressToStage(
       booking.status,
       statusInput,
-      remainingForValidation,
-      bookingDetails?.eventDate ?? booking?.eventDate
+      remainingForValidation
     )
 
     if (!validation.allowed) {
@@ -1318,8 +1317,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
     const validation = canProgressToStage(
       booking.status,
       newStatus,
-      remainingForValidation,
-      bookingDetails?.eventDate ?? booking?.eventDate
+      remainingForValidation
     )
     if (!validation.allowed) {
       setStatusError(validation.message || 'Invalid stage transition.')
@@ -1341,8 +1339,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
     const validation = canProgressToStage(
       booking.status,
       optionStatus,
-      remainingForValidation,
-      bookingDetails?.eventDate ?? booking?.eventDate
+      remainingForValidation
     )
     return validation.allowed
   }

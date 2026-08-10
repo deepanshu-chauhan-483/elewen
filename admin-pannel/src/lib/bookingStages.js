@@ -65,22 +65,6 @@ export const TRACKER_STAGES = [
   { key: 'cancelled', label: BOOKING_STATUS_LABELS.cancelled },
 ]
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000
-
-function startOfDay(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  date.setHours(0, 0, 0, 0)
-  return date
-}
-
-function getDaysSinceEvent(eventDate) {
-  const eventDay = startOfDay(eventDate)
-  const today = startOfDay(new Date())
-  if (!eventDay || !today) return null
-  return Math.floor((today.getTime() - eventDay.getTime()) / MS_PER_DAY)
-}
-
 export function getBookingStatusLabel(status = '') {
   const key = String(status ?? '').toLowerCase()
   return BOOKING_STATUS_LABELS[key] ?? key
@@ -95,7 +79,11 @@ export function resolveTrackerBucket(stageKey = 'all') {
   return 'active'
 }
 
-export function canProgressToStage(currentStatus, newStatus, remainingAmount = 0, eventDate = null) {
+/**
+ * Admin stage transitions: forward-only (or cancel). No event-date gates —
+ * admin may move to Review / Setup / Dismantling whenever needed.
+ */
+export function canProgressToStage(currentStatus, newStatus, remainingAmount = 0) {
   if (newStatus === 'cancelled') return { allowed: true }
 
   if (currentStatus === newStatus) {
@@ -117,36 +105,6 @@ export function canProgressToStage(currentStatus, newStatus, remainingAmount = 0
     return {
       allowed: false,
       message: `Cannot move to "${BOOKING_STATUS_LABELS.execution}". Remaining payment: ₹${remainingAmount.toLocaleString()}. Clear full payment first.`,
-    }
-  }
-
-  const daysSinceEvent = getDaysSinceEvent(eventDate)
-  if (['execution', 'post_event', 'completed'].includes(newStatus) && daysSinceEvent == null) {
-    return {
-      allowed: false,
-      message:
-        'Event date is required before using setup, review, or dismantling stages.',
-    }
-  }
-
-  if (newStatus === 'execution' && daysSinceEvent !== 0) {
-    return {
-      allowed: false,
-      message: 'Setup completed and styled is only available on the booking event date.',
-    }
-  }
-
-  if (newStatus === 'post_event' && !(daysSinceEvent >= 1)) {
-    return {
-      allowed: false,
-      message: 'Review stage becomes available after the event date has passed.',
-    }
-  }
-
-  if (newStatus === 'completed' && !(daysSinceEvent >= 2)) {
-    return {
-      allowed: false,
-      message: 'Dismantling stage becomes available two days after the event date.',
     }
   }
 

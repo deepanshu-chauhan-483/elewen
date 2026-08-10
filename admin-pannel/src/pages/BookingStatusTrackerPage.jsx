@@ -114,8 +114,7 @@ function BookingCard({ booking }) {
     canProgressToStage(
       booking.status,
       nextStage,
-      remainingAmount,
-      booking?.eventDate
+      remainingAmount
     )
 
   return (

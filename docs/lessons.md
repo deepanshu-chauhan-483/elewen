@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Admin stage updates blocked by event-date rules
+
+**Root cause:** Admin `canProgressToStage` required event-day / post-event day offsets before Setup, Review, and Dismantling, so admins could not advance stages when needed.
+
+**Failure symptoms:** Message like “Review stage becomes available after the event date has passed” blocked Admin status updates.
+
+**Fix details:** Removed all event-date gates from admin `bookingStages.js`. Forward progression (and cancel) remains; execution still requires remaining payment cleared.
+
+**Consulted sources:** `admin-pannel/src/lib/bookingStages.js`, BookingManagementPage
+
+**Prevention guidance:** Customer timeline may show dates for display; admin stage control must not be gated on calendar day unless product explicitly asks.
+
 ## 2026-08-10: Decor option surcharges via Strapi price_surcharge
 
 **Root cause:** Option prices lived on ordered `elements.base_price` as absolute package amounts, and cart ignored them. “Base + ₹5,000 on Fancy Bar” could not be edited next to the inclusion option.
