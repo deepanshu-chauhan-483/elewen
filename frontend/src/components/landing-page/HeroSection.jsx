@@ -844,35 +844,66 @@ const HeroSection = () => {
           </main>
 
           <footer className="hero-compact-footer absolute bottom-0 w-full flex flex-col md:flex-row items-end justify-between z-20 pointer-events-auto">
-            {/* Mobile EXACT Bottom-Left 'W' Block extracted from center */}
-            <div className="hero-mobile-footer z-20 flex w-full items-stretch justify-start gap-2 pl-[clamp(1rem,4vw,1.25rem)] pr-3 pb-[clamp(1rem,4vw,1.25rem)] min-[360px]:gap-3 min-[360px]:pl-5 min-[360px]:pr-4 md:hidden">
-              <span
-                ref={el => (leftWRefs.current[1] = el)}
-                className="hero-compact-w flex shrink-0 items-center justify-center font-serif text-[#FFFFFF]"
-                style={{
-                  fontFamily: "'Malgin', serif",
-                  fontSize: 'clamp(3rem, 18vw, 4.4375rem)',
-                  lineHeight: 1,
-                  width: 'clamp(4rem, 22vw, 5rem)',
-                  height: 'clamp(3.5rem, 18vw, 4.4375rem)',
-                }}
-              >
-                W
-              </span>
-              <div
-                className="hero-compact-w-lines flex min-w-0 flex-1 flex-col justify-start gap-1 text-[clamp(0.75rem,3.2vw,0.875rem)] font-medium leading-[1.35] tracking-normal text-[#FFFFFF]"
-                style={{ fontFamily: "'Poppins', sans-serif", maxWidth: 'min(131px, 42vw)' }}
-              >
-                <p ref={el => (leftLine1Refs.current[1] = el)} className="m-0">
-                  {getTrailingWWord(leftTaglines[0], 'Work made easy')}
-                </p>
-                <p ref={el => (leftLine2Refs.current[1] = el)} className="m-0">
-                  {getTrailingWWord(leftTaglines[1], 'Worth the spend')}
-                </p>
-                <p ref={el => (leftLine3Refs.current[1] = el)} className="m-0">
-                  {getTrailingWWord(leftTaglines[2], 'Well-vetted Vendors')}
-                </p>
-              </div>
+            {/* Mobile: Birthday / Anniversary / House Party (W + taglines stay desktop-only) */}
+            <div className="hero-mobile-footer z-20 flex w-full items-stretch border-t border-white/20 bg-black/20 backdrop-blur-md md:hidden">
+              {rightCards.map((card, i) => {
+                const resolvedLabel = card.label ? String(card.label).trim() : ''
+                const cardHref =
+                  card.href ||
+                  `/event-flow/service?category=social&event=${resolvedLabel.toLowerCase().replace(/\s+/g, '-')}`
+                const lineRefAssigners = [
+                  el => {
+                    leftLine1Refs.current[1] = el
+                  },
+                  el => {
+                    leftLine2Refs.current[1] = el
+                  },
+                  el => {
+                    leftLine3Refs.current[1] = el
+                  },
+                ]
+
+                return (
+                  <div
+                    key={resolvedLabel || `mobile-card-${i}`}
+                    ref={lineRefAssigners[i]}
+                    onClick={() => {
+                      rememberHomeScroll(lenisRef?.current)
+                      navigate(cardHref, {
+                        state: {
+                          from: '/',
+                          fromLanding: true,
+                          scrollY: getWindowScrollY(lenisRef?.current),
+                        },
+                      })
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        rememberHomeScroll(lenisRef?.current)
+                        navigate(cardHref, {
+                          state: {
+                            from: '/',
+                            fromLanding: true,
+                            scrollY: getWindowScrollY(lenisRef?.current),
+                          },
+                        })
+                      }
+                    }}
+                    className={`hero-mobile-event-card relative flex min-h-[4.5rem] min-w-0 flex-1 cursor-pointer flex-col justify-center gap-1 px-2.5 py-3 transition-colors duration-300 hover:bg-[#591902]/40 ${
+                      i < rightCards.length - 1 ? 'border-r border-white/20' : ''
+                    }`}
+                  >
+                    <h3
+                      className="m-0 text-[clamp(0.625rem,3.2vw,0.75rem)] font-normal uppercase leading-[1.2] tracking-[0.08em] text-[#FAFAFA]"
+                      style={{ fontFamily: "'Malgin', serif" }}
+                    >
+                      {resolvedLabel}
+                    </h3>
+                  </div>
+                )
+              })}
             </div>
 
             {/* Desktop W Left Block */}
