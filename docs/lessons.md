@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Cart/checkout showed inflated decor package price
+
+**Root cause:** `getCartItemSummary` preferred `sum(price_breakdown)` over cart `totalPrice`. Decor seeds like Raise the Bar 3 list component line items **and** a “Package Price” rollup, so the sum (₹56,500) exceeded `base_price` (₹30,200). Payment QR used booking/`totalPrice` and stayed correct. API delivery reprice had the same sum-all-rows bug.
+
+**Failure symptoms:** Cart and checkout Base Package / Total showed ~₹56,500; Cashfree QR and post-booking amounts showed ₹30,200.
+
+**Fix details:** Cart summary total always uses `item.totalPrice` (+ transport addon only when pincode applies). Display rows drop component lines when a Package Price rollup exists. `computeCartItemsWithDeliveryCharges` adds transport addon onto cart total instead of replacing with breakdown sum.
+
+**Consulted sources:** `cartItemPricing.js`, `deliveryChargePricing.js`, `decor-general-pack-packages.js` Raise the Bar 3
+
+**Prevention guidance:** Treat cart/`base_price` as money authority; use `price_breakdown` for labels and transport-tier mutation only — never as the line total when a Package Price rollup is present.
+
 ## 2026-08-10: Admin manual final payment in Payment Management
 
 **Root cause:** Customer Payments rows only linked out to Booking Management; there was no in-place way to mark remaining balance collected via UPI/cash/Cashfree without changing booking stage.

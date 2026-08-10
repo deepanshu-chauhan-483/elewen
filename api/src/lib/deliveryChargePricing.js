@@ -245,12 +245,16 @@ export async function computeCartItemsWithDeliveryCharges(items = [], pincode = 
     }
 
     const adjusted = applyDeliveryChargesToBreakdown(breakdownRows, deliveryCharge, quantity)
-    const totalPrice = adjusted.total
+    const baseTotal = Number(item.totalPrice ?? 0)
+    const transportAddonTotal = Number(adjusted.transportAddonTotal ?? 0)
+    // Cart line already holds package sale price; only add pincode transport delta.
+    // Never replace with sum(breakdown) — component + "Package Price" rows double-count.
+    const totalPrice = baseTotal + transportAddonTotal
 
     adjustedItems.push({
       ...item,
       totalPrice,
-      transportAddonTotal: adjusted.transportAddonTotal,
+      transportAddonTotal,
     })
     subtotal += totalPrice
   }

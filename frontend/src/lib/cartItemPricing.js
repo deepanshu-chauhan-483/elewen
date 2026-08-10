@@ -1,6 +1,9 @@
 import { resolveCateringAddonCartItemTotal } from './cateringAddonPricing'
 import { resolveCateringCartItemTotal } from './cateringCartPricing'
-import { applyDeliveryChargesToBreakdown } from './deliveryChargePricing'
+import {
+  applyDeliveryChargesToBreakdown,
+  isLabourTransportLabel,
+} from './deliveryChargePricing'
 
 function getBreakdownLabel(entry) {
   return (
@@ -36,6 +39,32 @@ function getPackageBreakdownRows(pkg) {
       return label && amount > 0 ? { label, amount } : null
     })
     .filter(Boolean)
+}
+
+function isPackagePriceRollupLabel(label = '') {
+  return /package\s*price/i.test(String(label))
+}
+
+function isPlatformFeeLabel(label = '') {
+  const normalized = String(label).toLowerCase()
+  return normalized.includes('platform') || /\bfee\b/.test(normalized)
+}
+
+/**
+ * When seed lists component lines AND a "Package Price" rollup, summing all rows
+ * double-counts. Prefer rollup + transport + platform for display.
+ */
+export function selectDisplayBreakdownRows(rows = []) {
+  const list = Array.isArray(rows) ? rows : []
+  const hasPackagePrice = list.some(row => isPackagePriceRollupLabel(row?.label))
+  if (!hasPackagePrice) return list
+
+  return list.filter(row => {
+    if (isPackagePriceRollupLabel(row?.label)) return true
+    if (isLabourTransportLabel(row?.label, row?.amount ?? row?.baseAmount)) return true
+    if (isPlatformFeeLabel(row?.label)) return true
+    return false
+  })
 }
 
 export function aggregateAppliedGuestDiscounts(itemSummaries = []) {
@@ -132,34 +161,59 @@ export function getCartItemSummary(
   }
 
   const quantity = Math.max(1, Number(item?.quantity ?? 1))
+  const cartTotal = Number(item?.totalPrice ?? 0)
   const breakdownRows = getPackageBreakdownRows(item?.packageData)
+  const displaySourceRows = selectDisplayBreakdownRows(breakdownRows)
 
-  if (!breakdownRows.length) {
+  if (!displaySourceRows.length) {
     return {
       rows: [],
-      total: Number(item?.totalPrice ?? 0),
+      total: cartTotal,
     }
   }
 
-  const baseRows = breakdownRows.map(row => ({
+  if (deliveryCharge) {
+    const adjusted = applyDeliveryChargesToBreakdown(displaySourceRows, deliveryCharge, quantity)
+    const transportAddonTotal = Number(adjusted.transportAddonTotal ?? 0)
+    // Cart line already includes package base (sale + surcharges + included transport).
+    // Only add the pincode transport-tier delta — never re-sum breakdown components.
+    return {
+      rows: adjusted.rows,
+      total: cartTotal + transportAddonTotal,
+      transportAddonTotal,
+    }
+  }
+
+  const baseRows = displaySourceRows.map(row => ({
     ...row,
     total: row.amount * quantity,
   }))
 
-  if (deliveryCharge) {
-    const adjusted = applyDeliveryChargesToBreakdown(breakdownRows, deliveryCharge, quantity)
-    return {
-      rows: adjusted.rows,
-      total: adjusted.total,
-      transportAddonTotal: adjusted.transportAddonTotal,
-    }
-  }
-
-  const cartTotal = Number(item?.totalPrice ?? 0)
-  const breakdownTotal = baseRows.reduce((sum, row) => sum + row.total, 0)
-
   return {
     rows: baseRows,
-    total: breakdownTotal > 0 ? breakdownTotal : cartTotal,
+    total: cartTotal,
   }
+}
+
+// ponytail: Raise the Bar–style seed must not inflate cart total via component+rollup sum
+if (import.meta.env?.DEV) {
+  const sampleItem = {
+    quantity: 1,
+    totalPrice: 30200,
+    packageData: {
+      detail_price_breakdown: [
+        { label: 'Fancy Bar (cart)', amount: 7000 },
+        { label: '20 fancy chairs', amount: 10000 },
+        { label: 'Package Price', amount: 26500 },
+        { label: 'Transport and Labour', amount: 3200 },
+        { label: 'Platform fee', amount: 500 },
+      ],
+    },
+  }
+  const summary = getCartItemSummary(sampleItem)
+  console.assert(summary.total === 30200, 'cart summary must use cart totalPrice, not breakdown sum')
+  console.assert(
+    summary.rows.length === 3,
+    'display rows should drop component lines when Package Price exists'
+  )
 }
