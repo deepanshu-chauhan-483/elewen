@@ -1,16 +1,16 @@
 # Lessons
 
-## 2026-08-10: Decor option price surcharge (price may vary)
+## 2026-08-10: Decor option surcharges via Strapi price_surcharge
 
-**Root cause:** Choose 1 options had no CMS money field; optional absolute prices lived only on parallel `elements` via seed-only `_choice_amount`, and cart ignored selection deltas.
+**Root cause:** Option prices lived on ordered `elements.base_price` as absolute package amounts, and cart ignored them. “Base + ₹5,000 on Fancy Bar” could not be edited next to the inclusion option.
 
-**Failure symptoms:** Signature Essentials 3 Fancy Bar / Single Panel Backdrop could not show `+₹5,000` on tags or change package/cart total.
+**Failure symptoms:** SE3 Backdrop / Fancy Bar choices had no tag surcharge and cart stayed at base price.
 
-**Fix details:** Added `price_surcharge` on `package.inclusions`; SE3 seed sets 5000 on those two options; frontend shows `+₹…` on tags and charges `base + selected surcharges` via `unitPrice`.
+**Fix details:** Added optional `price_surcharge` on `package.inclusions`; frontend shows `+₹…` on tags and adds selected surcharges to display + cart `unitPrice`. Seeded SE3 Single Panel Backdrop and Fancy Bar at 5000.
 
-**Consulted sources:** `inclusions.json`, `chooseOnePricing.js`, `DecorSinglePackagePage.jsx`, Decor client handover
+**Consulted sources:** `inclusions.json`, `chooseOnePricing.js`, `DecorSinglePackagePage.jsx`
 
-**Prevention guidance:** Per-option extras belong on the inclusion choice row as deltas, not as absolute replacement package prices (keep `elements` path for legacy absolute choose-1 packages).
+**Prevention guidance:** Use inclusion `price_surcharge` for additive ups; keep `elements.base_price` for absolute choose-1 package pricing only.
 
 ## 2026-08-10: Cart not emptied in UI after booking
 

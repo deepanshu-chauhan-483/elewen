@@ -284,17 +284,28 @@ For every option the customer can pick:
 4. Set:
    - **Text** → option name (example: `Floral Easel Entrance`)
    - **Images** → photos for this option
-   - **Price surcharge** (optional) → extra INR on top of the package base price when this option is selected (example: `5000`). Leave blank or `0` if the option does not change the price. The website shows `+₹5,000` on that option tag and adds it to the package total and cart.
 5. **Save** → **Publish**
 
 Repeat for every option in that group.
 
-**Price surcharge rules**
+---
 
-- Only fill **Price surcharge** on Choose 1 **option** rows (`Is choice group` ON) that cost extra.
-- Amount is a **delta** added to the package base price (not a full replacement price).
-- Example (Signature Essentials 3): `Single Panel Backdrop` = `5000`, `Fancy Bar` = `5000`. Other options in those groups stay at `0`.
-- Packages with no surcharges behave as before.
+### Optional — Price surcharge (price may vary on some options)
+
+Use this when selecting an option should **add extra ₹ on top of Base price** (example: Fancy Bar +₹5,000).
+
+1. Open the **option** inclusion row (Is choice group **ON**)
+2. Set **Price surcharge** → example `5000`
+3. Leave empty (or 0) on options with no extra cost
+4. **Save** → **Publish**
+
+Website behaviour:
+
+- Option tag shows `+₹5,000` when a surcharge is set
+- Package price = Base price (after sale discount) + sum of **selected** surcharges
+- Cart and checkout use that same total
+
+Do **not** use Elements `base price` for this — that path is for packages where the choose-1 amount **replaces** the package price (older Absolute choose-1 setups).
 
 ---
 
@@ -445,7 +456,7 @@ Leave these alone unless support asks:
 | Change theme | Decor → **Theme** | Save → Publish |
 | Edit bullets | Decor → **Inclustions** | One idea per **Text** line |
 | Edit Choose 1 | Same inclusions + **same group key** | Heading + options share key |
-| Option price may vary | Inclustions → **Price surcharge** | Extra ₹ on that option tag + total |
+| Add option price up (+₹) | Decor → Inclustions → **Price surcharge** | Empty = no extra; Save → Publish |
 | Edit add-ons | **Addon** and/or Package **Reusable addons** / Decor **Addons** | Save → Publish |
 | Edit “price covers” | Decor → **Price covers** | Save → Publish |
 | Check live site | Decor listing + package page | Hard refresh if needed |

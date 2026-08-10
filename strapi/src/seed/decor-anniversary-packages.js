@@ -84,10 +84,7 @@ function choiceOption(groupKey, label, optionTitle, options = {}) {
   }
 
   if (options.surcharge != null) {
-    const surcharge = Number(options.surcharge);
-    if (Number.isFinite(surcharge) && surcharge > 0) {
-      row.price_surcharge = surcharge;
-    }
+    row.price_surcharge = options.surcharge;
   }
 
   return row;

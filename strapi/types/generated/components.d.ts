@@ -291,7 +291,7 @@ export interface PackageInclusions extends Struct.ComponentSchema {
     group_title: Schema.Attribute.String
     images: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios', true>
     is_choice_group: Schema.Attribute.Boolean
-    price_surcharge: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>
+    price_surcharge: Schema.Attribute.Decimal
     text: Schema.Attribute.String
   }
 }

@@ -13,11 +13,13 @@ import { getRelatedPackages, normalizeServiceSlug } from '../lib/packageFilters'
 import { isCorporateCategory } from '../lib/serviceFlow'
 import { withHousePartyPackageImages } from '../lib/housePartyPackageMedia'
 import {
-  formatSurchargePrice,
-  resolveChooseOneDisplayPrice,
-  resolveChooseOneUnitPrice,
+  formatInrSurcharge,
+  resolveDecorDisplayPrice,
   shouldShowChoicePrices,
+  shouldShowChoiceSurcharges,
+  sumSelectedChoiceSurcharges,
 } from '../lib/chooseOnePricing'
+import { applyPackageDiscount } from '../lib/packageDiscount'
 import pkgImg1 from '../assets/images/IMG_3903.jpg'
 import pkgImg2 from '../assets/images/IMG_7768.jpg'
 import pkgImg3 from '../assets/images/IMG_0749.jpg'
@@ -894,16 +896,17 @@ function createChoiceItem({
   const inclusionText = parsedLegacyTitle.title
   const elementTitle = cleanText(element?.title)
   const serviceName = cleanText(element?.service?.name)
-  const surchargeAmount = Number(inclusion?.price_surcharge)
+  const surchargeAmount = Number(inclusion?.price_surcharge ?? inclusion?.priceSurcharge)
   const hasSurcharge = Number.isFinite(surchargeAmount) && surchargeAmount > 0
-  const absolutePriceAmount = Number(element?.base_price)
-  const hasAbsolutePrice = Number.isFinite(absolutePriceAmount) && absolutePriceAmount > 0
+  const absoluteAmount = Number(element?.base_price)
+  const hasAbsolute = Number.isFinite(absoluteAmount) && absoluteAmount > 0
   const price = hasSurcharge
-    ? formatSurchargePrice(surchargeAmount)
-    : hasAbsolutePrice
-      ? formatPrice(absolutePriceAmount)
+    ? formatInrSurcharge(surchargeAmount)
+    : hasAbsolute
+      ? formatPrice(element?.base_price)
       : ''
-  const priceAmount = hasAbsolutePrice ? absolutePriceAmount : null
+  const priceAmount = hasAbsolute ? absoluteAmount : null
+  const priceSurcharge = hasSurcharge ? surchargeAmount : null
   const groupKey = cleanText(inclusion?._choice_group_key)
   const bulletKey = groupKey && inclusionText ? `${groupKey}::${inclusionText}` : ''
   const scopedBullets = bulletKey ? (whenBullets.get(bulletKey) ?? []) : []
@@ -936,7 +939,7 @@ function createChoiceItem({
     description: bullets.length ? bullets.join('\n') : descriptionParts.join('\n'),
     price,
     priceAmount,
-    surcharge: hasSurcharge ? surchargeAmount : null,
+    priceSurcharge,
     images,
     selected: false,
   }
@@ -1182,7 +1185,7 @@ function serializeSections(sections = []) {
               images: Array.isArray(item.images) ? item.images : [],
               price: item.price,
               priceAmount: item.priceAmount ?? null,
-              surcharge: item.surcharge ?? null,
+              priceSurcharge: item.priceSurcharge ?? null,
               selected: Boolean(item.selected),
             }
       ),
@@ -1507,7 +1510,10 @@ function DecorPackageSections({
                     key={`${sectionKey}-${item.title}-${(item.bullets ?? []).join('|')}`}
                     item={item}
                     wide={useWideCards}
-                    showPrice={!hidePrices && shouldShowChoicePrices(section)}
+                    showPrice={
+                      !hidePrices &&
+                      (shouldShowChoiceSurcharges(section) || shouldShowChoicePrices(section))
+                    }
                     onClick={() => onSelect(sectionKey, item.title)}
                   />
                 ))}
@@ -1840,17 +1846,19 @@ export default function DecorSinglePackagePage() {
         }
       : baseSelectedOpts
 
-    try {
-      const visibleSections = filterVisibleDecorSections(sections)
-      const unitPrice = resolveChooseOneUnitPrice(visibleSections, pkg.base_price ?? 0)
-      const lineTotal = unitPrice * quantity
+    const visibleSections = filterVisibleDecorSections(activeCustomization?.data?.sections ?? [])
+    const saleBase = applyPackageDiscount(Number(pkg.base_price ?? 0), pkg)
+    const unitPrice = saleBase + sumSelectedChoiceSurcharges(visibleSections)
+    const lineTotal = unitPrice * Math.max(1, Number(quantity) || 1)
 
+    try {
       if (cartItemId) {
         await updateCartItemDetails({
           itemId: cartItemId,
           quantity,
           selectedOptions: selectedOpts,
-          ...(unitPrice > 0 && { unitPrice, lineTotal }),
+          unitPrice,
+          lineTotal,
         })
         showToast({ message: cartToastMessage })
       } else {
@@ -1858,7 +1866,8 @@ export default function DecorSinglePackagePage() {
           packageId: Number(pkg.id),
           quantity,
           selectedOptions: selectedOpts,
-          ...(unitPrice > 0 && { unitPrice, lineTotal }),
+          unitPrice,
+          lineTotal,
         })
         showToast({ message: cartToastMessage })
       }
@@ -1873,9 +1882,10 @@ export default function DecorSinglePackagePage() {
   const isDisabled = isAddingToCart
   const packageTitle =
     pkg.title || getDecorDetailSections(pkg)[0]?.theme_name || DECOR_CONTENT.title
-  const packagePrice = resolveChooseOneDisplayPrice(
+  const saleBasePrice = applyPackageDiscount(Number(pkg.base_price ?? 0), pkg)
+  const packagePrice = resolveDecorDisplayPrice(
     filterVisibleDecorSections(sections),
-    pkg.base_price ?? 0,
+    saleBasePrice,
     pkg.price || DECOR_CONTENT.price
   )
   const packageOriginalPrice = pkg.compare_at_price || ''

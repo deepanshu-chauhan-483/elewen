@@ -15,12 +15,12 @@ export function getChoiceItemAmount(item) {
   return parseChoiceAmount(item.priceAmount ?? item.base_price ?? item.price)
 }
 
-export function getChoiceItemSurcharge(item) {
+export function getChoiceSurcharge(item) {
   if (!item || typeof item === 'string') {
     return null
   }
 
-  return parseChoiceAmount(item.surcharge ?? item.price_surcharge)
+  return parseChoiceAmount(item.priceSurcharge ?? item.price_surcharge)
 }
 
 export function isChooseOneSectionTitle(title = '') {
@@ -44,25 +44,22 @@ export function sectionHasVariableChoicePrices(items = []) {
   return new Set(amounts).size > 1
 }
 
-export function sectionHasSurchargePrices(items = []) {
-  return (Array.isArray(items) ? items : []).some(item => getChoiceItemSurcharge(item) != null)
+export function sectionHasChoiceSurcharges(section) {
+  return (Array.isArray(section?.items) ? section.items : []).some(
+    item => getChoiceSurcharge(item) != null
+  )
 }
 
 export function shouldShowChoicePrices(section) {
-  if (section?.type !== 'choice-row' || !isChooseOneSectionTitle(section.title)) {
-    return false
-  }
-
-  return sectionHasSurchargePrices(section.items) || sectionHasVariableChoicePrices(section.items)
+  return (
+    section?.type === 'choice-row' &&
+    isChooseOneSectionTitle(section.title) &&
+    sectionHasVariableChoicePrices(section.items)
+  )
 }
 
-export function sectionsUseSurchargePricing(sections = []) {
-  return (Array.isArray(sections) ? sections : []).some(
-    section =>
-      section?.type === 'choice-row' &&
-      isChooseOneSectionTitle(section.title) &&
-      sectionHasSurchargePrices(section.items)
-  )
+export function shouldShowChoiceSurcharges(section) {
+  return section?.type === 'choice-row' && sectionHasChoiceSurcharges(section)
 }
 
 export function formatInrPrice(amount) {
@@ -74,65 +71,25 @@ export function formatInrPrice(amount) {
   return `₹${numericValue.toLocaleString('en-IN')}`
 }
 
-export function formatSurchargePrice(amount) {
+export function formatInrSurcharge(amount) {
   const numericValue = Number(amount)
   if (!Number.isFinite(numericValue) || numericValue <= 0) {
     return ''
   }
 
-  return `+₹${numericValue.toLocaleString('en-IN')}`
+  return `+${formatInrPrice(numericValue)}`
 }
 
-function sumSelectedSurcharges(sections = []) {
+export function sumSelectedChoiceSurcharges(sections = []) {
   return (Array.isArray(sections) ? sections : []).reduce((sum, section) => {
-    if (section?.type !== 'choice-row' || !isChooseOneSectionTitle(section.title)) {
-      return sum
-    }
-
-    if (!sectionHasSurchargePrices(section.items)) {
-      return sum
-    }
+    if (section?.type !== 'choice-row') return sum
 
     const selectedItem = (section.items ?? []).find(
       item => typeof item !== 'string' && item.selected
     )
-    const surcharge = getChoiceItemSurcharge(selectedItem) ?? 0
-    return sum + surcharge
+    const surcharge = getChoiceSurcharge(selectedItem)
+    return sum + (surcharge ?? 0)
   }, 0)
-}
-
-/**
- * Numeric unit price for cart / header.
- * Surcharge mode: package base + selected option deltas.
- * Absolute mode: sum of selected absolute amounts when every variable section is selected.
- */
-export function resolveChooseOneUnitPrice(sections = [], fallbackBasePrice = 0) {
-  const fallbackAmount = parseChoiceAmount(fallbackBasePrice) ?? 0
-
-  if (sectionsUseSurchargePricing(sections)) {
-    return fallbackAmount + sumSelectedSurcharges(sections)
-  }
-
-  const variableSections = (Array.isArray(sections) ? sections : []).filter(shouldShowChoicePrices)
-
-  if (!variableSections.length) {
-    return fallbackAmount
-  }
-
-  const selectedAmounts = variableSections
-    .map(section => {
-      const selectedItem = (section.items ?? []).find(
-        item => typeof item !== 'string' && item.selected
-      )
-      return getChoiceItemAmount(selectedItem)
-    })
-    .filter(amount => amount != null)
-
-  if (selectedAmounts.length === variableSections.length) {
-    return selectedAmounts.reduce((sum, amount) => sum + amount, 0)
-  }
-
-  return fallbackAmount
 }
 
 export function resolveChooseOneDisplayPrice(
@@ -140,11 +97,6 @@ export function resolveChooseOneDisplayPrice(
   fallbackBasePrice = 0,
   fallbackLabel = ''
 ) {
-  if (sectionsUseSurchargePricing(sections)) {
-    const unitPrice = resolveChooseOneUnitPrice(sections, fallbackBasePrice)
-    return formatInrPrice(unitPrice) || fallbackLabel || ''
-  }
-
   const variableSections = (Array.isArray(sections) ? sections : []).filter(shouldShowChoicePrices)
 
   if (!variableSections.length) {
@@ -186,4 +138,31 @@ export function resolveChooseOneDisplayPrice(
   }
 
   return `${formatInrPrice(minAmount)} – ${formatInrPrice(maxAmount)}`
+}
+
+/**
+ * Prefer base + selected surcharges when any choice has price_surcharge.
+ * Otherwise keep absolute choose-1 pricing (Floating Moments style).
+ */
+export function resolveDecorDisplayPrice(
+  sections = [],
+  fallbackBasePrice = 0,
+  fallbackLabel = ''
+) {
+  const list = Array.isArray(sections) ? sections : []
+  const hasSurcharges = list.some(sectionHasChoiceSurcharges)
+
+  if (!hasSurcharges) {
+    return resolveChooseOneDisplayPrice(sections, fallbackBasePrice, fallbackLabel)
+  }
+
+  const baseAmount = parseChoiceAmount(fallbackBasePrice) ?? 0
+  const surchargeTotal = sumSelectedChoiceSurcharges(list)
+  const total = baseAmount + surchargeTotal
+
+  if (total > 0) {
+    return formatInrPrice(total)
+  }
+
+  return fallbackLabel || ''
 }
