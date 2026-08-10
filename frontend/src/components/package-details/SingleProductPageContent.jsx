@@ -1,4 +1,4 @@
-import { cloneElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { cloneElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import NavHeader from '../NavHeader'
 import Footer from '../Footer'
@@ -530,6 +530,18 @@ function ProductImageLayout({
   const [trackedMainImage, setTrackedMainImage] = useState(normalizedMainImage)
   const [isCartOptionsOpen, setIsCartOptionsOpen] = useState(false)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+  const sideStripRef = useRef(null)
+
+  const thumbImages = useMemo(() => {
+    const seen = new Set()
+    const urls = []
+    for (const url of [mainImage, ...sideImages]) {
+      if (!url || seen.has(url)) continue
+      seen.add(url)
+      urls.push(url)
+    }
+    return urls
+  }, [mainImage, sideImages])
 
   const stickyAddToCartLabel = isAddingToCart
     ? 'Adding...'
@@ -554,12 +566,37 @@ function ProductImageLayout({
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
+  const syncMainImageFromThumbScroll = useCallback(() => {
+    const root = sideStripRef.current
+    if (!root || thumbImages.length === 0) return
+
+    const rootTop = root.getBoundingClientRect().top
+    const focusY = rootTop + Math.min(40, root.clientHeight * 0.2)
+    let bestUrl = null
+    let bestDist = Number.POSITIVE_INFINITY
+
+    root.querySelectorAll('[data-gallery-thumb]').forEach(el => {
+      const rect = el.getBoundingClientRect()
+      if (rect.bottom < rootTop || rect.top > rootTop + root.clientHeight) return
+      const mid = (rect.top + rect.bottom) / 2
+      const dist = Math.abs(mid - focusY)
+      if (dist < bestDist) {
+        bestDist = dist
+        bestUrl = el.getAttribute('data-gallery-thumb')
+      }
+    })
+
+    if (bestUrl) {
+      setSelectedOverride(prev => (prev === bestUrl ? prev : bestUrl))
+    }
+  }, [thumbImages])
+
   if (trackedMainImage !== normalizedMainImage) {
     setTrackedMainImage(normalizedMainImage)
     setSelectedOverride(null)
   }
 
-  const galleryUrls = [mainImage, ...sideImages].filter(Boolean)
+  const galleryUrls = thumbImages
   const activeImage =
     selectedOverride && galleryUrls.includes(selectedOverride)
       ? selectedOverride
@@ -571,9 +608,19 @@ function ProductImageLayout({
   }, [activeImage])
 
   useEffect(() => {
-    const urls = [mainImage, ...sideImages].filter(Boolean)
-    preloadImages(urls)
-  }, [mainImage, sideImages])
+    preloadImages(thumbImages)
+  }, [thumbImages])
+
+  useEffect(() => {
+    const root = sideStripRef.current
+    if (!root || thumbImages.length <= 1) return undefined
+
+    const onScroll = () => syncMainImageFromThumbScroll()
+    root.addEventListener('scroll', onScroll, { passive: true })
+    syncMainImageFromThumbScroll()
+
+    return () => root.removeEventListener('scroll', onScroll)
+  }, [syncMainImageFromThumbScroll, thumbImages])
 
   return (
     <main className="min-h-screen bg-[#F2F2F2] text-[#E8D2B1]">
@@ -622,18 +669,24 @@ function ProductImageLayout({
                 <PackageImageDisclaimer className="mt-1.5 text-center" />
               </div>
 
-              {/* Side Images */}
-              {sideImages.length > 0 ? (
+              {/* Side Images — scroll updates main image automatically (desktop + mobile) */}
+              {thumbImages.length > 0 ? (
                 <div
-                  className={`order-1 flex w-[4.25rem] min-w-[4.25rem] shrink-0 flex-col items-stretch gap-2 overflow-y-auto pb-0 pt-0 md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:gap-2 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_SCROLL_CLASS}`}
+                  ref={sideStripRef}
+                  className={`order-1 flex w-[4.25rem] min-w-[4.25rem] shrink-0 snap-y snap-mandatory flex-col items-stretch gap-2 overflow-y-auto overscroll-contain pb-0 pt-0 md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:gap-2 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_SCROLL_CLASS}`}
                   data-lenis-prevent
+                  aria-label={`${title} image gallery`}
                 >
-                  {sideImages.map((image, index) => (
+                  {thumbImages.map((image, index) => (
                     <button
                       type="button"
                       key={`${image}-${index}`}
-                      onClick={() => setSelectedOverride(image)}
-                      className={`${SIDE_THUMB_BUTTON_CLASS} ${
+                      data-gallery-thumb={image}
+                      onClick={event => {
+                        setSelectedOverride(image)
+                        event.currentTarget.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+                      }}
+                      className={`${SIDE_THUMB_BUTTON_CLASS} snap-start ${
                         activeImage === image ? 'opacity-100' : 'opacity-40'
                       }`}
                       aria-label={`Show ${title} preview ${index + 1}`}
