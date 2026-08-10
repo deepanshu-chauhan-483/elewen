@@ -354,9 +354,35 @@ async function addPackageToGuestCart({
   return writeGuestCart({ ...guestCart, items: nextItems })
 }
 
+async function clearServerCartItems(token) {
+  const data = await cartGet(token)
+  const items = data?.cart?.items ?? []
+  for (const item of items) {
+    const itemId = item?.id
+    if (!itemId) continue
+    try {
+      await cartRemoveItem(token, itemId)
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn('[cart] failed to clear server item before guest migrate', itemId, err)
+      }
+    }
+  }
+}
+
 async function migrateGuestCartToServer(token) {
   const guestCart = readGuestCart()
   if (!guestCart.items.length) return null
+
+  // Guest cart wins on login: replace account cart so old server lines do not
+  // stack with the package the customer just added (e.g. qty 1 → qty 5).
+  try {
+    await clearServerCartItems(token)
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.warn('[cart] could not clear server cart before guest migrate', err)
+    }
+  }
 
   for (const item of guestCart.items) {
     const rawTitle = String(item?.title ?? '')
@@ -378,17 +404,23 @@ async function migrateGuestCartToServer(token) {
       continue
     }
 
+    const quantity = Math.max(1, Number(item.quantity ?? 1) || 1)
+    const unitPrice = Number(item?.unitPrice ?? 0)
+    const lineTotal = Number(item?.totalPrice ?? 0)
+
     try {
       await cartAddItem(token, {
         packageId: resolvedPackageId,
-        quantity: Number(item.quantity ?? 1),
+        quantity,
         selectedOptions: parsedMeta?.selectedOptions ?? undefined,
+        ...(Number.isFinite(unitPrice) && unitPrice > 0 && { unitPrice }),
+        ...(Number.isFinite(lineTotal) && lineTotal > 0 && { totalPrice: lineTotal }),
         addon:
           parsedMeta?.itemType === 'addon'
             ? {
                 id: parsedMeta?.addonId,
                 name: parsedMeta?.addonTitle,
-                price: Number(item?.unitPrice ?? 0),
+                price: Number.isFinite(unitPrice) && unitPrice > 0 ? unitPrice : 0,
               }
             : undefined,
       })

@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Guest cart merge inflated totals after login
+
+**Root cause:** `migrateGuestCartToServer` POSTed guest items onto the existing account cart. Server `addItem` also increments quantity when the same package already exists, so old cart lines + guest lines stacked (e.g. guest qty 1 + account qty 4 → 5).
+
+**Failure symptoms:** Customer added one package as guest, went to checkout, logged in, and checkout showed ~5× package cost / quantity.
+
+**Fix details:** Before pushing guest items, clear all server cart items so the guest cart replaces the account cart on login. Also forward guest `unitPrice` / `totalPrice` on migrate.
+
+**Consulted sources:** `frontend/src/hooks/useCart.js`, `api/src/controllers/cart.js` `addItem`
+
+**Prevention guidance:** Guest→auth cart migration must define replace vs merge explicitly; default merge silently doubles checkout totals for returning accounts.
+
 ## 2026-08-10: Mobile inclusion preview was a fixed tiny toast
 
 **Root cause:** `InclusionImageToast` used `fixed bottom-4` with a 200×150 cropped frame, so mobile users only saw a small cropped chip, not the full inclusion photo.
