@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-10: Booking Status Tracker stage filter hid confirmed bookings
+
+**Root cause:** Tracker mapped most stages to API `bucket=active`, and `active` is payment-aware (`isAdvanceSatisfied`). Confirmed bookings without recorded advance (or non-COD unpaid) were filtered out even when `status=confirmed`.
+
+**Failure symptoms:** Admin confirmed bookings; Booking Status Tracker filter for Confirmed / other stages showed empty or wrong counts.
+
+**Fix details:** `resolveTrackerBucket` always returns `all` so the tracker filters by `status` only, not operational payment buckets.
+
+**Consulted sources:** `BookingStatusTrackerPage.jsx`, `listAdminBookings`, `bookingMatchesOperationalBucket`
+
+**Prevention guidance:** Stage pipeline UI must not reuse payment-bucket filters (Today/Active/Incomplete); keep those on Booking Management only.
+
 ## 2026-08-10: Admin stage updates blocked by event-date rules
 
 **Root cause:** Admin `canProgressToStage` required event-day / post-event day offsets before Setup, Review, and Dismantling, so admins could not advance stages when needed.

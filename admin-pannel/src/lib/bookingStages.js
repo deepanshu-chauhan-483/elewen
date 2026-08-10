@@ -70,13 +70,11 @@ export function getBookingStatusLabel(status = '') {
   return BOOKING_STATUS_LABELS[key] ?? key
 }
 
-export function resolveTrackerBucket(stageKey = 'all') {
-  const normalizedStage = String(stageKey ?? 'all').toLowerCase()
-  if (normalizedStage === 'completed') return 'completed'
-  if (normalizedStage === 'cancelled') return 'all'
-  if (normalizedStage === 'all') return 'all'
-  if (normalizedStage === 'new') return 'all'
-  return 'active'
+export function resolveTrackerBucket(_stageKey = 'all') {
+  // Status tracker must filter by booking.status only.
+  // Mapping stages onto payment-aware buckets (active/today/…) hid confirmed
+  // bookings that were not yet advance-paid, so the stage filter looked broken.
+  return 'all'
 }
 
 /**
