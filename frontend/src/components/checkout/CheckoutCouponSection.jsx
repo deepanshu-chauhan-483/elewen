@@ -26,6 +26,14 @@ function parseApiError(error) {
   return String(message)
 }
 
+function formatCouponOptionLabel(coupon) {
+  const title = coupon.title || formatCouponDiscount(coupon)
+  const min = coupon.min_order_value
+    ? ` · Min ${formatCompactCurrency(coupon.min_order_value)}`
+    : ''
+  return `${coupon.code} — ${title} (${formatCouponDiscount(coupon)}${min})`
+}
+
 export default function CheckoutCouponSection({
   cart,
   isLoggedIn,
@@ -39,6 +47,7 @@ export default function CheckoutCouponSection({
   const { data: couponToastMessage = 'Coupon applied successfully.' } = useCouponToastMessage()
 
   const [couponCode, setCouponCode] = useState('')
+  const [selectedAccountCode, setSelectedAccountCode] = useState('')
   const [couponMessage, setCouponMessage] = useState('')
 
   const isCouponApplied =
@@ -60,6 +69,7 @@ export default function CheckoutCouponSection({
     try {
       await onApplyCoupon(normalized)
       setCouponCode('')
+      setSelectedAccountCode('')
       setCouponMessage('')
       showToast?.({ message: couponToastMessage })
     } catch (err) {
@@ -74,12 +84,18 @@ export default function CheckoutCouponSection({
     await runApply(couponCode)
   }
 
+  const handleApplySelected = async () => {
+    if (!selectedAccountCode) return
+    await runApply(selectedAccountCode)
+  }
+
   const handleRemove = async () => {
     if (isApplyingCoupon) return
     onApplyingChange(true)
     setCouponMessage('')
     try {
       await onRemoveCoupon()
+      setSelectedAccountCode('')
       setCouponMessage('Coupon removed')
     } catch (err) {
       setCouponMessage(parseApiError(err))
@@ -102,60 +118,39 @@ export default function CheckoutCouponSection({
           <p className="text-sm text-[#7A7A7A]">Loading your available coupons…</p>
         ) : null}
 
-        {isLoggedIn && selectableCoupons.length > 0 ? (
-          <div className="space-y-2">
+        {isLoggedIn && selectableCoupons.length > 0 && !isCouponApplied ? (
+          <div className="space-y-3">
             <p className="text-xs font-medium uppercase tracking-[0.12em] text-[#8F8F8F]">
               Your available coupons
             </p>
-            <div className="space-y-2">
-              {selectableCoupons.map(coupon => {
-                const isApplied = isCouponApplied && appliedCode === coupon.code
-                const isDisabled = isApplyingCoupon || (isCouponApplied && !isApplied)
-
-                return (
-                  <div
-                    key={coupon.id}
-                    className={`flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
-                      isApplied
-                        ? 'border-[#364022] bg-[#F3F6EE]'
-                        : 'border-[#EDE8E1] bg-[#FAFAFA]'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#2C2C2C]">
-                        {coupon.title || formatCouponDiscount(coupon)}
-                      </p>
-                      <p className="mt-1 font-mono text-sm tracking-wide text-[#591902]">
-                        {coupon.code}
-                      </p>
-                      <p className="mt-1 text-xs text-[#7A7A7A]">
-                        {formatCouponDiscount(coupon)}
-                        {coupon.min_order_value
-                          ? ` · Min order ${formatCompactCurrency(coupon.min_order_value)}`
-                          : ''}
-                      </p>
-                    </div>
-
-                    {isApplied ? (
-                      <span className="shrink-0 rounded-full bg-[#364022] px-4 py-2 text-xs font-medium text-white">
-                        Applied
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={isDisabled}
-                        onClick={() => runApply(coupon.code)}
-                        className="shrink-0 rounded-full bg-[#364022] px-4 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Apply
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <label className="min-w-0 flex-1">
+                <span className="sr-only">Select a coupon</span>
+                <select
+                  value={selectedAccountCode}
+                  onChange={event => setSelectedAccountCode(event.target.value)}
+                  disabled={isApplyingCoupon}
+                  className="w-full appearance-none rounded-lg border border-[#EDE8E1] bg-[#FAFAFA] px-3 py-2.5 text-sm text-[#2C2C2C] outline-none focus:border-[#957960] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">Select a coupon</option>
+                  {selectableCoupons.map(coupon => (
+                    <option key={coupon.id} value={coupon.code}>
+                      {formatCouponOptionLabel(coupon)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                disabled={isApplyingCoupon || !selectedAccountCode}
+                onClick={handleApplySelected}
+                className="shrink-0 rounded-full bg-[#364022] px-5 py-2.5 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isApplyingCoupon ? 'Applying…' : 'Apply'}
+              </button>
             </div>
           </div>
-        ) : isLoggedIn && !couponsLoading ? (
+        ) : isLoggedIn && !couponsLoading && !isCouponApplied ? (
           <p className="text-sm text-[#7A7A7A]">
             No coupons in your account right now. Enter a code below if you have one.
           </p>
