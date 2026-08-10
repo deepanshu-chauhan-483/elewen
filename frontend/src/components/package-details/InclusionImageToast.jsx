@@ -66,7 +66,7 @@ export default function InclusionImageToast({ image, onClose }) {
           fill={false}
           cropWatermark={false}
           className="max-h-[90vh] max-w-full"
-          imgClassName="max-h-[90vh] max-w-full object-contain"
+          imgClassName="max-h-[90vh] max-w-full object-contain opacity-100"
         />
       </div>
     </div>

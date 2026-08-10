@@ -246,19 +246,28 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
                 </div>
 
                 {visibleTooltipFlavor === flavor.title && getSheeshaFlavorDescription(flavor) ? (
-                  <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-[142px] -translate-y-[100%]">
-                    <div className="relative rounded-[12px] bg-black px-4 py-2">
-                      <p className="max-w-[110px] text-center text-[9px] font-medium leading-[1.3] text-white">
-                        {getSheeshaFlavorDescription(flavor)}
-                      </p>
-                      <div
-                        className="absolute bottom-[-1.5px] right-33 h-[9px] w-[10px] bg-black"
-                        style={{
-                          clipPath: 'polygon(0% 100%, 35% 0%, 100% 70.23%)',
-                        }}
-                      />
+                  <>
+                    <div className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-[min(220px,calc(100vw-3rem))] md:hidden">
+                      <div className="rounded-[10px] bg-[#2D2D2D] px-3 py-2 shadow-lg">
+                        <p className="text-[11px] font-medium leading-[1.35] text-white">
+                          {getSheeshaFlavorDescription(flavor)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                    <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 hidden w-[142px] -translate-y-[100%] md:block">
+                      <div className="relative rounded-[12px] bg-black px-4 py-2">
+                        <p className="max-w-[110px] text-center text-[9px] font-medium leading-[1.3] text-white">
+                          {getSheeshaFlavorDescription(flavor)}
+                        </p>
+                        <div
+                          className="absolute bottom-[-1.5px] right-33 h-[9px] w-[10px] bg-black"
+                          style={{
+                            clipPath: 'polygon(0% 100%, 35% 0%, 100% 70.23%)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </>
                 ) : null}
               </label>
             ))}
@@ -283,19 +292,28 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
                 </div>
 
                 {visibleTooltipFlavor === flavor.title && getSheeshaFlavorDescription(flavor) ? (
-                  <div className="pointer-events-none absolute right-full top-1/2 z-20 mr-2 w-[142px] -translate-y-[100%]">
-                    <div className="relative rounded-[12px] bg-black px-4 py-2">
-                      <p className="max-w-[110px] text-center text-[9px] font-medium leading-[1.3] text-white">
-                        {getSheeshaFlavorDescription(flavor)}
-                      </p>
-                      <div
-                        className="absolute bottom-[-1px] left-33.5 h-[9px] w-[10px] bg-black"
-                        style={{
-                          clipPath: 'polygon(100% 100%, 65% 0%, 0% 70.23%)',
-                        }}
-                      />
+                  <>
+                    <div className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-[min(220px,calc(100vw-3rem))] md:hidden">
+                      <div className="rounded-[10px] bg-[#2D2D2D] px-3 py-2 shadow-lg">
+                        <p className="text-[11px] font-medium leading-[1.35] text-white">
+                          {getSheeshaFlavorDescription(flavor)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                    <div className="pointer-events-none absolute right-full top-1/2 z-20 mr-2 hidden w-[142px] -translate-y-[100%] md:block">
+                      <div className="relative rounded-[12px] bg-black px-4 py-2">
+                        <p className="max-w-[110px] text-center text-[9px] font-medium leading-[1.3] text-white">
+                          {getSheeshaFlavorDescription(flavor)}
+                        </p>
+                        <div
+                          className="absolute bottom-[-1px] left-33.5 h-[9px] w-[10px] bg-black"
+                          style={{
+                            clipPath: 'polygon(100% 100%, 65% 0%, 0% 70.23%)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </>
                 ) : null}
               </label>
             ))}

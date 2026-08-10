@@ -17,6 +17,7 @@ import { useServiceAreas } from '../hooks/useServiceAreas'
 import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
 import CheckoutCouponSection from '../components/checkout/CheckoutCouponSection'
+import BrandedImage from '../components/common/BrandedImage'
 import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
 import { aggregateAppliedGuestDiscounts, aggregateTransportAddonTotal, getCartItemSummary } from '../lib/cartItemPricing'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
@@ -233,6 +234,41 @@ function SummaryRow({ label, value }) {
     <div className="flex items-center justify-between gap-4">
       <span className="text-[#767676]">{label}</span>
       <span className="text-[#1C1C1C] font-medium">{value}</span>
+    </div>
+  )
+}
+
+function getCartItemImage(item) {
+  const images = item?.packageData?.images
+  if (Array.isArray(images) && images[0]) return images[0]
+  if (typeof item?.image === 'string' && item.image) return item.image
+  if (typeof item?.packageData?.image === 'string' && item.packageData.image) {
+    return item.packageData.image
+  }
+  return ''
+}
+
+function CheckoutItemRow({ image, title, meta, value }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[#E8E2DA] sm:h-16 sm:w-16">
+        {image ? (
+          <BrandedImage
+            src={image}
+            alt={title}
+            eager
+            className="h-full w-full"
+            imgClassName="object-cover object-center"
+          />
+        ) : null}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-[13px] font-medium leading-[1.35] text-[#1C1C1C] sm:text-sm">{title}</p>
+          <p className="shrink-0 text-[13px] font-medium text-[#1C1C1C] sm:text-sm">{value}</p>
+        </div>
+        {meta ? <p className="mt-1 text-xs text-[#767676]">{meta}</p> : null}
+      </div>
     </div>
   )
 }
@@ -1421,12 +1457,14 @@ export default function CheckoutPage() {
 
                       return (
                         <div key={item.id}>
-                          <SummaryRow
-                            label={`Add-on - ${getCartItemDisplayName(item)}${addonGuestLabel}${quantityLabel}`}
+                          <CheckoutItemRow
+                            image={getCartItemImage(item)}
+                            title={`Add-on - ${getCartItemDisplayName(item)}${quantityLabel}`}
+                            meta={addonGuestLabel.replace(/^ · /, '') || item?.additionalInfo || ''}
                             value={formatCurrency(summary.total)}
                           />
-                          {item?.additionalInfo ? (
-                            <p className="mt-1 text-xs text-[#767676]">
+                          {item?.additionalInfo && !addonGuestLabel ? (
+                            <p className="mt-1 pl-[4.25rem] text-xs text-[#767676] sm:pl-[4.75rem]">
                               Additional Info: {item.additionalInfo}
                             </p>
                           ) : null}
@@ -1437,23 +1475,21 @@ export default function CheckoutPage() {
                     const packageName = getCartItemDisplayName(item)
                     const packageLineLabel = getPackageLineLabel(item?.title, packageName)
                     const optionsText = getSelectedOptionsText(getDisplaySelectedOptions(item))
-                    const labelWithOptions = optionsText
-                      ? `${packageLineLabel} (${optionsText})`
-                      : packageLineLabel
                     const quantityLabel =
                       getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''
 
                     return (
                       <div key={item.id}>
-                        <SummaryRow
-                          label={`${labelWithOptions}${quantityLabel}`}
+                        <CheckoutItemRow
+                          image={getCartItemImage(item)}
+                          title={`${packageLineLabel}${quantityLabel}`}
+                          meta={
+                            [optionsText, item?.additionalInfo ? `Additional Info: ${item.additionalInfo}` : '']
+                              .filter(Boolean)
+                              .join(' · ')
+                          }
                           value={formatCurrency(summary.total)}
                         />
-                        {item?.additionalInfo ? (
-                          <p className="mt-1 text-xs text-[#767676]">
-                            Additional Info: {item.additionalInfo}
-                          </p>
-                        ) : null}
                       </div>
                     )
                   })}
