@@ -154,7 +154,7 @@ function TimelineDot({ status, isLast }) {
     <div className="flex flex-shrink-0 flex-col items-center">
       <div
         className={`
-          z-10 flex h-9 w-9 items-center justify-center rounded-full border-2
+          z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 md:h-9 md:w-9
           ${
             status === 'completed'
               ? 'border-[#C6A15B] bg-[#C6A15B]'
@@ -369,25 +369,26 @@ export default function BookingTimeline() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
+    <div className="min-w-0">
+      <div className="mb-5 md:mb-8">
         <div className="mb-1.5 flex items-center gap-2.5">
-          <h1 className="text-2xl text-[#2E2E2E]">Booking Timeline</h1>
+          <h1 className="text-xl text-[#2E2E2E] md:text-2xl">Booking Timeline</h1>
         </div>
-        <p className="text-sm text-[#8C7B6B]">
+        <p className="text-sm leading-5 text-[#8C7B6B]">
           Follow the milestones and key updates for each booking - {filteredOrderBookings.length}{' '}
           bookings
         </p>
       </div>
 
-      <div className="mb-8 flex flex-wrap gap-3">
+      {/* Mobile: horizontal chip scroll. Desktop: wrapped chips (unchanged). */}
+      <div className="-mx-1 mb-5 flex gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] md:mx-0 md:mb-8 md:flex-wrap md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden">
         {filteredOrderBookings.map(booking => (
           <button
             key={booking.id}
             type="button"
             onClick={() => setSelectedId(booking.id)}
             className={`
-              min-w-[180px] cursor-pointer rounded-xl border-[1.5px] px-4 py-2.5 text-left transition-all duration-150
+              w-[min(220px,78vw)] shrink-0 cursor-pointer rounded-xl border-[1.5px] px-3.5 py-2.5 text-left transition-all duration-150 md:min-w-[180px] md:w-auto md:shrink md:px-4
               ${
                 selectedBooking?.id === booking.id
                   ? 'border-[#591902] bg-[#591902] text-[#F5E6CC]'
@@ -395,9 +396,11 @@ export default function BookingTimeline() {
               }
             `}
           >
-            <p className="mb-0.5 text-sm font-semibold">{getBookingDisplayTitle(booking)}</p>
+            <p className="mb-0.5 truncate text-sm font-semibold">
+              {getBookingDisplayTitle(booking)}
+            </p>
             <p
-              className={`text-xs ${
+              className={`truncate text-xs ${
                 selectedBooking?.id === booking.id ? 'text-[#F5E6CC]/75' : 'text-[#8C7B6B]'
               }`}
             >
@@ -408,26 +411,28 @@ export default function BookingTimeline() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-[#E8E0D8] bg-white shadow-[0_2px_16px_rgba(89,25,2,0.06)]">
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-br from-[#591902] to-[#7A2408] px-7 py-6">
-          <div>
+        <div className="flex flex-col gap-3 bg-gradient-to-br from-[#591902] to-[#7A2408] px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 md:px-7 md:py-6">
+          <div className="min-w-0 flex-1">
             <h2
-              className="mb-1 text-lg font-semibold tracking-tight text-[#F5E6CC]"
+              className="mb-1 text-base font-semibold tracking-tight break-words text-[#F5E6CC] md:text-lg"
               style={{ fontFamily: 'poppins' }}
             >
               {getBookingDisplayTitle(activeBooking)}
             </h2>
-            <p className="text-sm text-[#D4A96A]">
+            <p className="text-xs leading-5 text-[#D4A96A] md:text-sm">
               {activeBooking?.displaySubtitle || activeBooking?.event?.name || 'Event'} -{' '}
               {formatDashboardDate(activeBooking?.eventDate)}
             </p>
           </div>
-          <StatusPill status={activeBooking?.status} label={activeBooking?.statusLabel} />
+          <div className="shrink-0 self-start sm:self-auto">
+            <StatusPill status={activeBooking?.status} label={activeBooking?.statusLabel} />
+          </div>
         </div>
 
-        <div className="border-b border-[#F0EBE4] bg-[#FDFAF7] px-7 py-4">
-          <div className="mb-2 flex items-center justify-between font-sans">
+        <div className="border-b border-[#F0EBE4] bg-[#FDFAF7] px-4 py-3.5 md:px-7 md:py-4">
+          <div className="mb-2 flex items-center justify-between gap-3 font-sans">
             <span className="text-xs text-[#8C7B6B]">Overall progress</span>
-            <span className="text-xs font-semibold text-[#591902]">
+            <span className="shrink-0 text-xs font-semibold text-[#591902]">
               {done}/{timeline.length} milestones
             </span>
           </div>
@@ -439,25 +444,29 @@ export default function BookingTimeline() {
           </div>
         </div>
 
-        <div className="px-7 py-7">
+        <div className="px-4 py-5 md:px-7 md:py-7">
           {timeline.map((item, idx) => (
-            <div key={item.id} className="flex gap-4">
+            <div key={item.id} className="flex gap-3 md:gap-4">
               <TimelineDot status={item.status} isLast={idx === timeline.length - 1} />
 
-              <div className={`flex-1 pt-1 ${idx < timeline.length - 1 ? 'pb-6' : 'pb-0'}`}>
+              <div
+                className={`min-w-0 flex-1 pt-0.5 md:pt-1 ${
+                  idx < timeline.length - 1 ? 'pb-4 md:pb-6' : 'pb-0'
+                }`}
+              >
                 <div
                   className={`
-                      flex flex-wrap items-start justify-between gap-2.5 rounded-2xl border px-4 py-3.5
+                      flex flex-col gap-2.5 rounded-2xl border px-3 py-3 md:flex-row md:flex-wrap md:items-start md:justify-between md:px-4 md:py-3.5
                       ${CARD_BG[item.status] || CARD_BG.pending}
                     `}
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="text-xs font-semibold text-[#C6A15B]">
                         Step {String(idx + 1).padStart(2, '0')}
                       </span>
                       <h3
-                        className="text-sm font-semibold text-[#2E2E2E]"
+                        className="text-sm font-semibold leading-5 break-words text-[#2E2E2E]"
                         style={{ fontFamily: 'poppins' }}
                       >
                         {item.title}
@@ -481,8 +490,8 @@ export default function BookingTimeline() {
                     {activeBooking?.status === 'pre_event' &&
                     item.title === 'Final payment' &&
                     item.status === 'blocked' ? (
-                      <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-4 py-3">
-                        <div className="flex flex-wrap gap-6">
+                      <div className="mt-4 flex flex-col gap-3 rounded-[18px] border border-[#F2D4CF] bg-white/80 px-3 py-3 md:flex-row md:flex-wrap md:items-end md:justify-between md:gap-4 md:px-4">
+                        <div className="flex flex-wrap gap-4 md:gap-6">
                           <div>
                             <p className="text-[11px] text-[#A16255]">AMOUNT PAID</p>
                             <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
@@ -504,7 +513,7 @@ export default function BookingTimeline() {
                             payingBookingId === activeBooking?.id ||
                             Number(activeBooking?.paymentSummary?.amountDue ?? 0) <= 0
                           }
-                          className="rounded-full bg-[#CDB17E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#c3a66f] disabled:cursor-not-allowed disabled:opacity-60"
+                          className="w-full rounded-full bg-[#CDB17E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#c3a66f] disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
                         >
                           {payingBookingId === activeBooking?.id
                             ? 'Opening payment...'
@@ -514,7 +523,7 @@ export default function BookingTimeline() {
                     ) : null}
                   </div>
 
-                  <div className="flex-shrink-0 text-right">
+                  <div className="shrink-0 self-start md:text-right">
                     <StatusPill status={item.status} />
                   </div>
                 </div>
