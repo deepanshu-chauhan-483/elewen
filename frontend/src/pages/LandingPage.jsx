@@ -3095,35 +3095,38 @@ const PackagesSection = () => {
   }, [])
 
   // CMS: Strapi `packages` with elements, addons, images — fallback when Strapi is off/empty
+  // Most Loved only: hide corporate packages (they still appear under Corporate listings).
   const { data: cmsPackages = [] } = usePackages()
   const packagesData = useMemo(() => {
     const sourcePackages = cmsPackages.length > 0 ? cmsPackages : PACKAGES_FALLBACK
 
-    return sourcePackages.map((pkg, i) => {
-      const { images, fallbackImages } = resolvePackageImages(pkg, i)
-      const includes = (pkg.includes ?? pkg.tags ?? []).filter(Boolean)
-      const price =
-        typeof pkg.price === 'string' && pkg.price.trim()
-          ? pkg.price.trim()
-          : pkg.base_price
-            ? `₹${Number(pkg.base_price).toLocaleString('en-IN')}`
-            : ''
+    return sourcePackages
+      .filter(pkg => !isCorporatePackage(pkg))
+      .map((pkg, i) => {
+        const { images, fallbackImages } = resolvePackageImages(pkg, i)
+        const includes = (pkg.includes ?? pkg.tags ?? []).filter(Boolean)
+        const price =
+          typeof pkg.price === 'string' && pkg.price.trim()
+            ? pkg.price.trim()
+            : pkg.base_price
+              ? `₹${Number(pkg.base_price).toLocaleString('en-IN')}`
+              : ''
 
-      return {
-        ...pkg,
-        desc:
-          typeof pkg.description === 'string'
-            ? pkg.description
-            : typeof pkg.desc === 'string'
-              ? pkg.desc
-              : '',
-        price,
-        includes,
-        tags: includes,
-        images,
-        fallbackImages,
-      }
-    })
+        return {
+          ...pkg,
+          desc:
+            typeof pkg.description === 'string'
+              ? pkg.description
+              : typeof pkg.desc === 'string'
+                ? pkg.desc
+                : '',
+          price,
+          includes,
+          tags: includes,
+          images,
+          fallbackImages,
+        }
+      })
   }, [cmsPackages])
 
   const count = packagesData.length
