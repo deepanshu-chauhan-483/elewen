@@ -1056,6 +1056,11 @@ function isTodayUnseen(booking) {
   return isCreatedWithinUnseenTodayWindow(booking)
 }
 
+/** Prior-day backlog only — today's placed bookings stay unhighlighted. */
+function isTodayBacklogUnseen(booking) {
+  return isTodayUnseen(booking) && !isCreatedOnIstDay(booking)
+}
+
 function isCancelUnseen(booking) {
   return String(booking?.status ?? '').toLowerCase() === 'cancelled' && !booking?.adminCancelSeenAt
 }
@@ -1190,7 +1195,8 @@ function withAdminUnseenFlags(booking, bucket = '') {
   if (normalizedBucket === 'today') {
     return {
       ...withSource,
-      unseen: !withSource.adminNewSeenAt && String(withSource.status ?? '').toLowerCase() !== 'cancelled',
+      // Highlight only unopened prior-day backlog, not bookings placed today.
+      unseen: isTodayBacklogUnseen(withSource),
     }
   }
   return { ...withSource, unseen: false }
@@ -1535,6 +1541,7 @@ export async function getAdminOverview(req, res, next) {
       newBookingsCount,
       completedCandidates,
       todayCandidates,
+      todayBacklogCandidates,
       upcomingCandidates,
       pendingSampleCount,
       openTicketsCount,
@@ -1601,6 +1608,27 @@ export async function getAdminOverview(req, res, next) {
         },
         select: {
           status: true,
+          createdAt: true,
+          adminNewSeenAt: true,
+          advanceAmount: true,
+          totalPrice: true,
+          payments: {
+            select: {
+              status: true,
+              amount: true,
+              provider: true,
+              paymentMethod: true,
+              providerOrderId: true,
+            },
+          },
+        },
+      }),
+      prisma.booking.findMany({
+        where: buildBookingBucketFilter('today'),
+        select: {
+          status: true,
+          createdAt: true,
+          adminNewSeenAt: true,
           advanceAmount: true,
           totalPrice: true,
           payments: {
@@ -1734,6 +1762,9 @@ export async function getAdminOverview(req, res, next) {
     const todayBookingsCount = todayCandidates.filter(booking =>
       bookingMatchesOperationalBucket(booking, 'today')
     ).length
+    const todayUnseenCount = todayBacklogCandidates
+      .filter(booking => bookingMatchesOperationalBucket(booking, 'today'))
+      .filter(booking => isTodayBacklogUnseen(booking)).length
     const upcomingEventsCount = upcomingCandidates.filter(booking =>
       bookingMatchesOperationalBucket(booking, 'upcoming')
     ).length
@@ -1830,6 +1861,7 @@ export async function getAdminOverview(req, res, next) {
           completedBookingsCount,
           cancelledBookingsCount,
           todayBookingsCount,
+          todayUnseenCount,
           upcomingEventsCount,
           pendingSampleCount,
           openTicketsCount,
@@ -1941,12 +1973,7 @@ export async function listAdminBookings(req, res, next) {
 
       total = visibleBookings.length
       if (bucket === 'today') {
-        unseenCount = visibleBookings.filter(
-          booking =>
-            !booking.adminNewSeenAt &&
-            String(booking?.status ?? '').toLowerCase() !== 'cancelled' &&
-            isAdvanceSatisfied(booking)
-        ).length
+        unseenCount = visibleBookings.filter(booking => isTodayBacklogUnseen(booking)).length
       } else if (bucket === 'cancelled') {
         unseenCount = visibleBookings.filter(booking => isCancelUnseen(booking)).length
       } else {
@@ -2040,14 +2067,9 @@ export async function getAdminBookingUnseenCounts(req, res, next) {
       }),
     ])
 
-    const today = todayCandidates.filter(booking =>
-      bookingMatchesOperationalBucket(booking, 'today')
-    ).filter(
-      booking =>
-        !booking.adminNewSeenAt &&
-        String(booking?.status ?? '').toLowerCase() !== 'cancelled' &&
-        isAdvanceSatisfied(booking)
-    ).length
+    const today = todayCandidates
+      .filter(booking => bookingMatchesOperationalBucket(booking, 'today'))
+      .filter(booking => isTodayBacklogUnseen(booking)).length
 
     const cancelled = cancelledCandidates
       .filter(booking => bookingMatchesCancelledList(booking))

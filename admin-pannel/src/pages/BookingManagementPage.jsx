@@ -1936,9 +1936,16 @@ export default function BookingManagementPage() {
   const cancelledUnseenCount = Number(unseenCountsQuery.data?.cancelled ?? 0)
 
   const markBookingSeen = booking => {
-    if (!booking?.id || !booking.unseen || clearedUnseenIds.has(booking.id)) return
-    const kind =
-      String(booking.status ?? '').toLowerCase() === 'cancelled' ? 'cancelled' : 'new'
+    if (!booking?.id || clearedUnseenIds.has(booking.id)) return
+    const status = String(booking.status ?? '').toLowerCase()
+    const kind = status === 'cancelled' ? 'cancelled' : 'new'
+    // Cancelled: ack only highlighted unseen. Today: ack any not-yet-seen so today's
+    // opens do not reappear as highlighted backlog tomorrow.
+    if (kind === 'cancelled') {
+      if (!booking.unseen) return
+    } else if (booking.adminNewSeenAt && !booking.unseen) {
+      return
+    }
 
     setClearedUnseenIds(current => {
       const next = new Set(current)
@@ -2157,8 +2164,9 @@ export default function BookingManagementPage() {
           </CustomSelect>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
-          Today shows bookings placed today with advance paid (Hookah COD allowed at ₹0), plus any
-          unopened advance-paid bookings from the last 7 days. Open a card to clear its badge.
+          Today shows bookings placed today with advance paid (Hookah COD allowed at ₹0), plus
+          unopened prior-day bookings from the last 7 days. Only those prior-day unopened rows get
+          the highlight and tab badge — today's new bookings stay normal. Open a card to clear it.
           Unpaid non-Hookah stay in Incomplete. Admin/customer cancels leave Today and appear under
           Cancelled (newest cancellations first; unopened cancels stay highlighted). Upcoming shows
           advance-paid events in the next 15 days. Live shows all advance-paid ongoing bookings.
@@ -2206,7 +2214,7 @@ export default function BookingManagementPage() {
                 onToggle={() => {
                   const nextOpenId = openBookingId === booking.id ? '' : booking.id
                   setOpenBookingId(nextOpenId)
-                  if (nextOpenId && isUnseen) {
+                  if (nextOpenId) {
                     markBookingSeen(booking)
                   }
                 }}

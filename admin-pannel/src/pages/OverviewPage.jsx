@@ -88,15 +88,20 @@ function ClickableContainer({ children, onClick, className = '', style }) {
 // ---------------------------------------------------------------------------
 // MetricCard
 // ---------------------------------------------------------------------------
-function MetricCard({ label, value, helper, accent = false, onClick }) {
+function MetricCard({ label, value, helper, accent = false, onClick, badge = 0 }) {
   return (
     <ClickableContainer
       onClick={onClick}
       className={[
-        'flex flex-col gap-1 rounded-2xl border border-[#F0EBE3] bg-white px-5 py-5',
+        'relative flex flex-col gap-1 rounded-2xl border border-[#F0EBE3] bg-white px-5 py-5',
         accent ? 'border-t-[3px] border-t-[#D4BA8E]' : '',
       ].join(' ')}
     >
+      {Number(badge) > 0 ? (
+        <span className="absolute top-3 right-3 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#C07318] px-1.5 py-0.5 text-[11px] font-bold text-white">
+          {Number(badge) > 99 ? '99+' : Number(badge)}
+        </span>
+      ) : null}
       <span className="text-[11px] font-normal uppercase tracking-widest text-gray-400">
         {label}
       </span>
@@ -472,7 +477,12 @@ export default function OverviewPage() {
         <MetricCard
           label="Today's booking"
           value={formatCount(metrics.todayBookingsCount)}
-          helper="Booked today"
+          helper={
+            Number(metrics.todayUnseenCount) > 0
+              ? `Booked today · ${formatCount(metrics.todayUnseenCount)} unopened from earlier`
+              : 'Booked today'
+          }
+          badge={Number(metrics.todayUnseenCount) || 0}
           accent
           onClick={() => navigate(getBookingOverviewRoute('today'))}
         />
