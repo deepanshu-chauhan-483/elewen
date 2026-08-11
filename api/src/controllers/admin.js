@@ -137,12 +137,30 @@ function bookingMatchesSearch(booking, search) {
   if (!searchValue) return true
 
   const bookingId = normalizeSearchValue(booking?.id).replace(/^#/, '')
-  if (!bookingId) return false
-
   const compactId = bookingId.replace(/-/g, '')
   const compactSearch = searchValue.replace(/-/g, '')
+  if (bookingId && (bookingId.includes(searchValue) || compactId.includes(compactSearch))) {
+    return true
+  }
 
-  return bookingId.includes(searchValue) || compactId.includes(compactSearch)
+  const haystack = [
+    booking?.customer?.name,
+    booking?.customerName,
+    booking?.infoCollection?.fullName,
+    booking?.customer?.email,
+    booking?.infoCollection?.email,
+    booking?.customer?.phone,
+    booking?.infoCollection?.phone,
+    booking?.package?.title,
+    booking?.event?.name,
+    booking?.displaySubtitle,
+    booking?.detailSubtitle,
+    booking?.selectedItemsSummary,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  return textMatchesSearch(haystack, searchValue)
 }
 
 function sampleMatchesSearch(sample, search) {

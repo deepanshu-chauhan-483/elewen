@@ -2116,7 +2116,7 @@ export default function BookingManagementPage() {
                 setSearch(e.target.value)
                 setCurrentPage(1)
               }}
-              placeholder="Search by booking ID..."
+              placeholder="Search by booking ID or customer name..."
               className="w-full bg-transparent text-[15px] font-medium tracking-wide text-[#5B534B] placeholder:text-[#B0AAA4] focus:outline-none"
             />
           </label>
