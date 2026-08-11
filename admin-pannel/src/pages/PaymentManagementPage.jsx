@@ -17,7 +17,6 @@ import {
   useAdminShareCoupon,
   useAdminPaymentWorkspace,
   useAdminProcessRefund,
-  useAdminRecordManualPayment,
   useAdminRefunds,
   useAdminSettings,
   useAdminUpdateCoupon,
@@ -226,17 +225,6 @@ function Tabs({ items, value, onChange, size = 'md' }) {
 // Row cards
 // ---------------------------------------------------------------------------
 
-const MANUAL_PAYMENT_CHANNELS = [
-  { value: 'upi', label: 'UPI (manual)' },
-  { value: 'card', label: 'Card (manual)' },
-  { value: 'netbanking', label: 'Netbanking (manual)' },
-  { value: 'cash', label: 'Cash (manual)' },
-]
-
-const PAYMENT_UPDATE_ACTIONS = [
-  { value: 'final_payment_received', label: 'Record remaining collected offline' },
-]
-
 function formatPaymentMethodLabel(method = '') {
   const key = String(method ?? '')
     .trim()
@@ -421,130 +409,7 @@ function BookingPaymentHistory({ payments = [], highlightPaymentId = '' }) {
   )
 }
 
-function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, recordManualPaymentMutation }) {
-  const toast = useAdminToast()
-  const [paymentAction, setPaymentAction] = useState('final_payment_received')
-  const [channel, setChannel] = useState('cash')
-  const [note, setNote] = useState('')
-  const [formError, setFormError] = useState('')
-  const canRecordFinal = Number(outstandingAmount) > 0
-
-  const handleRecordPayment = async () => {
-    setFormError('')
-    if (!bookingId) {
-      setFormError('Booking not found for this payment.')
-      return
-    }
-    if (!canRecordFinal) {
-      setFormError('No remaining amount to collect.')
-      return
-    }
-
-    try {
-      await recordManualPaymentMutation.mutateAsync({
-        bookingId,
-        body: {
-          action: paymentAction,
-          channel,
-          note: note.trim() || undefined,
-        },
-      })
-      setNote('')
-      toast?.showToast?.({
-        message: 'Offline remaining payment recorded. Remaining is now ₹0.',
-        tone: 'success',
-      })
-    } catch (error) {
-      setFormError(error?.message || 'Could not record payment.')
-      toast?.showToast?.({
-        message: error?.message || 'Could not record payment.',
-        tone: 'error',
-      })
-    }
-  }
-
-  return (
-    <div>
-      <SectionLabel>Record offline payment</SectionLabel>
-      <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <div className="min-w-0 flex-1">
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Payment update</p>
-            <CustomSelect
-              value={paymentAction}
-              onChange={setPaymentAction}
-              className="min-h-10 rounded-full bg-[#F3F3F3]"
-            >
-              {PAYMENT_UPDATE_ACTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </CustomSelect>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Received via</p>
-            <CustomSelect
-              value={channel}
-              onChange={setChannel}
-              className="min-h-10 rounded-full bg-[#F3F3F3]"
-            >
-              {MANUAL_PAYMENT_CHANNELS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </CustomSelect>
-          </div>
-          <div className="min-w-0 flex-[1.4]">
-            <p className="mb-1.5 text-xs text-[#8F8F8F]">Note (admin only)</p>
-            <input
-              type="text"
-              value={note}
-              onChange={event => setNote(event.target.value)}
-              placeholder="e.g. Cash collected at venue…"
-              className="h-10 w-full rounded-full border border-[#E4DED8] bg-white px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
-            />
-          </div>
-          <PrimaryBtn
-            disabled={recordManualPaymentMutation?.isPending || !canRecordFinal}
-            onClick={handleRecordPayment}
-          >
-            {recordManualPaymentMutation?.isPending ? 'Saving…' : 'Record payment'}
-          </PrimaryBtn>
-        </div>
-        <p className="mt-3 text-xs text-[#8F8F8F]">
-          Only for money you collected yourself (cash / UPI at venue). Cashfree online payments
-          appear automatically in Payment history — do not record them here.
-        </p>
-        {formError ? (
-          <div className="mt-3 rounded-xl border border-[#FCC5C5] bg-[#FFF3F3] px-4 py-3">
-            <p className="text-sm text-[#8A1C1C]">{formError}</p>
-          </div>
-        ) : null}
-        {!canRecordFinal ? (
-          <div className="mt-3 rounded-xl bg-white px-4 py-3">
-            <p className="text-sm text-[#2D2D2D]">No remaining balance on this booking.</p>
-          </div>
-        ) : null}
-        {latestNote?.note ? (
-          <div className="mt-3 rounded-xl bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-[#8F8F8F]">
-              Latest payment note
-            </p>
-            <p className="mt-1.5 text-sm text-[#2D2D2D]">{latestNote.note}</p>
-            <p className="mt-1 text-xs text-[#8F8F8F]">
-              {latestNote.channel ? `${latestNote.channel} · ` : ''}
-              {formatDateTime(latestNote.createdAt)}
-            </p>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
-function BookingPaymentRow({ booking, recordManualPaymentMutation }) {
+function BookingPaymentRow({ booking }) {
   const [expanded, setExpanded] = useState(false)
   const showHookahCodBadge = bookingHasHookahCod(booking)
   const finance = resolveBookingFinance(booking)
@@ -591,12 +456,6 @@ function BookingPaymentRow({ booking, recordManualPaymentMutation }) {
         <div className="space-y-4 border-t border-[#E4DED8] bg-[#FAFAFA] px-4 py-4">
           <CustomerFinancialGrid booking={booking} />
           <BookingPaymentHistory payments={booking?.payments} />
-          <ManualPaymentUpdatePanel
-            bookingId={booking.id}
-            outstandingAmount={finance.outstandingAmount}
-            latestNote={finance.latestManualPaymentNote}
-            recordManualPaymentMutation={recordManualPaymentMutation}
-          />
         </div>
       ) : null}
     </div>
@@ -695,8 +554,6 @@ function PaymentRecordRow({
   showRefundActions = false,
   onRefundAction,
   isRefundBusy = false,
-  recordManualPaymentMutation,
-  allowManualPayment = true,
 }) {
   const [expanded, setExpanded] = useState(false)
   const refunds = Array.isArray(payment.refunds) ? payment.refunds : []
@@ -706,9 +563,7 @@ function PaymentRecordRow({
     null
   const showHookahCodBadge = isCodPayment(payment)
   const booking = payment.bookingSummary
-  const bookingId = payment.bookingId || booking?.id
   const finance = resolveBookingFinance(booking)
-  const isCancelledBooking = String(booking?.status ?? '').toLowerCase() === 'cancelled'
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E4DED8] bg-white">
@@ -784,14 +639,6 @@ function PaymentRecordRow({
                 Pay Refund
               </PrimaryBtn>
             </div>
-          ) : null}
-          {allowManualPayment && !isCancelledBooking ? (
-            <ManualPaymentUpdatePanel
-              bookingId={bookingId}
-              outstandingAmount={finance.outstandingAmount}
-              latestNote={finance.latestManualPaymentNote}
-              recordManualPaymentMutation={recordManualPaymentMutation}
-            />
           ) : null}
         </div>
       ) : null}
@@ -920,7 +767,6 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
     customerTabs.some(item => item.key === initialTab) ? initialTab : 'today'
   )
   const [currentPage, setCurrentPage] = useState(1)
-  const recordManualPaymentMutation = useAdminRecordManualPayment()
   const workspaceQuery = useAdminPaymentWorkspace({
     customerTab: tab,
     customerPage: currentPage,
@@ -982,7 +828,6 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
                     payment={p}
                     showRefundActions
                     isRefundBusy={processRefundMutation.isPending}
-                    recordManualPaymentMutation={recordManualPaymentMutation}
                     onRefundAction={(refundId, action) =>
                       refundId &&
                       processRefundMutation.mutate({
@@ -1009,11 +854,7 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
             (lists.active.length ? (
               <div className="space-y-2.5">
                 {currentList.map(b => (
-                  <BookingPaymentRow
-                    key={b.id}
-                    booking={b}
-                    recordManualPaymentMutation={recordManualPaymentMutation}
-                  />
+                  <BookingPaymentRow key={b.id} booking={b} />
                 ))}
                 <PaginationControls
                   currentPage={visiblePage}
@@ -1060,7 +901,6 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
                     payment={p}
                     showRefundActions
                     isRefundBusy={processRefundMutation.isPending}
-                    recordManualPaymentMutation={recordManualPaymentMutation}
                     onRefundAction={(refundId, action) =>
                       refundId &&
                       processRefundMutation.mutate({
@@ -1092,7 +932,6 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
                     payment={p}
                     showRefundActions
                     isRefundBusy={processRefundMutation.isPending}
-                    recordManualPaymentMutation={recordManualPaymentMutation}
                     onRefundAction={(refundId, action) =>
                       refundId &&
                       processRefundMutation.mutate({
