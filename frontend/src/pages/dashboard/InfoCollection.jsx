@@ -253,7 +253,7 @@ export default function InfoCollection() {
     return (
       <DashboardErrorState
         title="Booking not found"
-        body="Open this form from an active booking that is in Information Collection."
+        body="Open this form from an active booking."
       />
     )
   }

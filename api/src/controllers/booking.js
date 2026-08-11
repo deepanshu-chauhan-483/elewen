@@ -1194,7 +1194,7 @@ export const getInfoCollection = async (req, res, next) => {
       ),
     }
     const status = String(booking.status ?? '').toLowerCase()
-    const canEdit = status === 'info_collection'
+    const canEdit = Boolean(status) && status !== 'cancelled' && status !== 'completed'
     const eventDateValue =
       toDateInputValue(info.eventDate) ||
       toDateInputValue(booking.eventDate) ||
@@ -1252,9 +1252,10 @@ export const submitInfoCollection = async (req, res, next) => {
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
-    if (String(booking.status).toLowerCase() !== 'info_collection') {
+    const status = String(booking.status ?? '').toLowerCase()
+    if (!status || status === 'cancelled' || status === 'completed') {
       return res.status(400).json({
-        error: 'Info collection form is only available while the booking is in Information Collection.',
+        error: 'Info collection is not available for cancelled or completed bookings.',
       })
     }
 

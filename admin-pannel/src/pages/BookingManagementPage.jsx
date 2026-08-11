@@ -30,6 +30,7 @@ import {
   buildSelectedItemRows,
   formatInfoStatus,
   getBookingAdditionalInfoText,
+  getBookingCustomerPhone,
   getBookingPackageNamesText,
 } from '../lib/bookingDisplay'
 import {
@@ -1074,7 +1075,7 @@ function CustomerInformationSection({ booking }) {
   const infoCollectionFields = [
     { label: 'FULL NAME', value: info.fullName || customer?.name },
     { label: 'EMAIL', value: info.email || customer?.email },
-    { label: 'PHONE', value: info.phone || customer?.phone },
+    { label: 'PHONE', value: info.phone || getBookingCustomerPhone(booking) },
     { label: 'EVENT DATE', value: info.eventDate || booking?.eventDate },
     { label: 'EVENT TIME', value: info.eventTime || booking?.eventTime },
     { label: 'ADDRESS LINE 1', value: info.addressLine1 },
@@ -1424,7 +1425,7 @@ function BookingAccordionCard({ booking, open = false, onToggle, onStatusUpdated
             {[
               { label: 'CUSTOMER', value: bookingDetails.customer?.name },
               { label: 'EMAIL', value: bookingDetails.customer?.email },
-              { label: 'PHONE', value: bookingDetails.customer?.phone },
+              { label: 'PHONE', value: getBookingCustomerPhone(bookingDetails) },
               {
                 label: 'GUESTS',
                 value: bookingDetails.guestCount ? String(bookingDetails.guestCount) : 'Pending',

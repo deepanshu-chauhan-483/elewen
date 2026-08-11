@@ -117,6 +117,21 @@ export function getBookingAdditionalInfoText(booking = null) {
   return uniqueValues.join(' · ')
 }
 
+export function getBookingCustomerPhone(booking = null) {
+  const candidates = [
+    booking?.customer?.phone,
+    booking?.infoCollection?.phone,
+    booking?.infoCollection?.eventDayContactPhone,
+  ]
+
+  for (const value of candidates) {
+    const phone = String(value ?? '').trim()
+    if (phone && !/^not provided$/i.test(phone) && phone !== '—') return phone
+  }
+
+  return ''
+}
+
 export function formatInfoStatus(status = '') {
   switch (String(status ?? '').toLowerCase()) {
     case 'waiting':

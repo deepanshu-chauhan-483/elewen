@@ -102,7 +102,15 @@ function isInfoCollectionBooking(booking) {
   return status === 'info_collection' || label.includes('information collection')
 }
 
+function canFillInfoCollection(booking) {
+  const status = normalizeStatus(booking?.status)
+  return Boolean(status) && status !== 'cancelled' && status !== 'completed'
+}
+
 function getNextStepText(booking) {
+  if (canFillInfoCollection(booking) && String(booking?.infoStatus ?? '').toLowerCase() !== 'submitted' && String(booking?.infoStatus ?? '').toLowerCase() !== 'verified') {
+    return 'Please fill in your event information so we can finalise planning.'
+  }
   if (isInfoCollectionBooking(booking)) {
     return 'Please fill in your event information so we can finalise planning.'
   }
@@ -129,7 +137,10 @@ const StatusBadge = ({ status, label }) => (
 function BookingCard({ booking, session }) {
   const [open, setOpen] = useState(false)
   const status = normalizeStatus(booking?.status)
-  const needsInfoCollection = isInfoCollectionBooking(booking)
+  const needsInfoCollection = canFillInfoCollection(booking)
+  const infoAlreadySubmitted = ['submitted', 'verified'].includes(
+    String(booking?.infoStatus ?? '').toLowerCase()
+  )
   const infoCollectionHref = `/user-dashboard/info-collection?bookingId=${booking.id}`
   const title = getBookingPackageNamesText(booking, booking?.event?.name || 'Booking')
   const subtitle = getSubtitle(booking)
@@ -241,7 +252,7 @@ function BookingCard({ booking, session }) {
             onClick={event => event.stopPropagation()}
             className="shrink-0 rounded-full bg-[#CDB17E] px-4 py-2 text-sm text-white hover:bg-[#C6AB7F]"
           >
-            Fill information
+            {infoAlreadySubmitted ? 'Update information' : 'Fill information'}
           </Link>
         ) : null}
       </div>
