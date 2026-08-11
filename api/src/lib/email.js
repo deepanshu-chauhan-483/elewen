@@ -574,6 +574,7 @@ export const templates = {
     ),
 
   booking_confirmed_lifecycle: ({
+    bookingId,
     bookingIdShort,
     eventType,
     eventDate,
@@ -630,7 +631,7 @@ export const templates = {
       ${divider()}
       ${p('<strong style="color:#fff;">📝 Action Required (IMPORTANT)</strong>')}
       ${p('To help our team prepare for your event, please make sure the following details are updated in your booking (if you haven\'t already):')}
-      ${ctaBtn('Update Event Details', updateDetailsUrl)}
+      ${ctaBtn('Update Event Details', updateDetailsUrl || customerInfoCollectionUrl(bookingId))}
       ${divider()}
       ${p('<strong style="color:#fff;">What Happens Next?</strong>')}
       ${p("We've got things covered from here.")}

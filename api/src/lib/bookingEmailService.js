@@ -170,7 +170,7 @@ export function buildBookingEmailContext(booking, extras = {}) {
     advanceAmountRaw: advanceAmount,
     isCodBooking,
     isFullyPaid: remainingBalance <= 0,
-    updateDetailsUrl: `${appUrl}${bookingPath}`,
+    updateDetailsUrl: customerInfoCollectionUrl(booking.id),
     paymentUrl: `${appUrl}${bookingPath}`,
     feedbackUrl: `${appUrl}${bookingPath}`,
     bookingUrl: `${appUrl}${bookingPath}`,
