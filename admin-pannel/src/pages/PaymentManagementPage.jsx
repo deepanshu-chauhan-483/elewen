@@ -1043,7 +1043,7 @@ function CustomerPayments({ processRefundMutation, initialTab = 'today' }) {
             ) : (
               <EmptyState
                 title="No active booking balances"
-                body="Active bookings with payment context will appear here."
+                body="Active bookings with an outstanding balance appear here. Failed-only attempts are under Failed Payments."
               />
             ))}
 

@@ -1270,6 +1270,32 @@ function isActiveBookingStatus(status) {
   return !['completed', 'cancelled'].includes(String(status ?? '').toLowerCase())
 }
 
+/** Active tab = bookings that still owe money, not failed-only payment attempts. */
+function belongsInActiveBookingPayments(booking) {
+  if (!isActiveBookingStatus(booking?.status)) return false
+  if (toNumber(booking?.outstandingAmount) <= 0) return false
+
+  const payments = Array.isArray(booking?.payments) ? booking.payments : []
+  const hasSuccess = payments.some(payment => String(payment?.status ?? '').toLowerCase() === 'success')
+  const hasPending = payments.some(payment => String(payment?.status ?? '').toLowerCase() === 'pending')
+  const hasFailed = payments.some(payment => String(payment?.status ?? '').toLowerCase() === 'failed')
+
+  // Failed-only attempts belong under Failed Payments, not Active Bookings.
+  if (hasFailed && !hasSuccess && !hasPending) return false
+
+  return true
+}
+
+/** Cancelled / Refunds = cancelled bookings with money collected or a refund row. */
+function belongsInCancelledRefundList(booking) {
+  if (String(booking?.status ?? '').toLowerCase() !== 'cancelled') return false
+  if (toNumber(booking?.paidAmount) > 0) return true
+  if (toNumber(booking?.requestedRefundAmount) > 0) return true
+  if (toNumber(booking?.refundDueAmount) > 0) return true
+  if (Array.isArray(booking?.refunds) && booking.refunds.length > 0) return true
+  return false
+}
+
 function looksLikeEmail(value) {
   return /@/.test(String(value ?? '').trim())
 }
@@ -3875,13 +3901,13 @@ export async function getAdminPaymentWorkspace(req, res, next) {
 
     const activeBookingPayments = enrichedActiveBookings
       .map(buildBookingPaymentSnapshot)
-      .filter(booking => isActiveBookingStatus(booking.status))
+      .filter(booking => belongsInActiveBookingPayments(booking))
     const postEventPending = enrichedPostEventBookings
       .map(buildBookingPaymentSnapshot)
       .filter(booking => booking.outstandingAmount > 0)
-    const cancelledRefunds = sortBookingsByCancellationTimeDesc(enrichedCancelledBookings).map(
-      buildCancelledBookingRefundSnapshot
-    )
+    const cancelledRefunds = sortBookingsByCancellationTimeDesc(enrichedCancelledBookings)
+      .map(buildCancelledBookingRefundSnapshot)
+      .filter(booking => belongsInCancelledRefundList(booking))
     const withPaymentBookingSummary = payment => {
       const booking = bookingMap.get(String(payment.bookingId))
       return {
@@ -3890,13 +3916,15 @@ export async function getAdminPaymentWorkspace(req, res, next) {
       }
     }
     const failedPayments = payments
-      .filter(payment => payment.status === 'failed')
+      .filter(payment => String(payment.status ?? '').toLowerCase() === 'failed')
       .map(withPaymentBookingSummary)
     const completedPayments = payments
-      .filter(payment => ['success', 'refunded'].includes(payment.status))
+      .filter(payment => ['success', 'refunded'].includes(String(payment.status ?? '').toLowerCase()))
       .map(withPaymentBookingSummary)
-    // All customer payment attempts created today (IST) — success, pending, failed, refunded.
-    const todayPayments = payments.filter(payment => isCreatedToday(payment.createdAt)).map(withPaymentBookingSummary)
+    // Today's Payments = payment attempts created today (any status).
+    const todayPayments = payments
+      .filter(payment => isCreatedToday(payment.createdAt))
+      .map(withPaymentBookingSummary)
     const pendingVendorPayments = payouts
       .filter(payout => payout.status === 'pending')
       .map(payout => ({

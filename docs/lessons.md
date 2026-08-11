@@ -312,6 +312,18 @@
 
 **Prevention guidance:** Do not hard-force `refreshExistingDecor: true` on seeds for packages that editors maintain in Strapi. Prefer create-once + skip; use `SEED_DECOR_REFRESH_EXISTING` for intentional re-sync. Always Save → Publish; remember frontend package `staleTime` is 5 minutes.
 
+## 2026-08-11: Payment Management Active tab showed failed-only bookings
+
+**Root cause:** `activeBookingPayments` included every non-completed/non-cancelled booking. A live booking with only failed payment attempts still had `outstandingAmount > 0`, so it appeared under Active Bookings as well as Failed Payments.
+
+**Failure symptoms:** Customer Payments → Active Bookings listed a booking whose only payment was failed; operator expected it only under Failed Payments.
+
+**Fix details:** `belongsInActiveBookingPayments` requires outstanding balance and excludes failed-only (no success/pending). `belongsInCancelledRefundList` keeps Cancelled/Refunds to cancelled bookings with paid amount or refund rows. Payment status filters use case-insensitive compares.
+
+**Consulted sources:** `api/src/controllers/admin.js` (`getAdminPaymentWorkspace`), `admin-pannel/src/pages/PaymentManagementPage.jsx`.
+
+**Prevention guidance:** Booking-centric Active tabs must filter on balance + meaningful payment state; payment-attempt tabs (Today/Failed/Completed) stay payment-row based. Do not treat “any live booking” as Active payments.
+
 ## 2026-08-11: Admin booking tabs showed stale package after cancel
 
 **Root cause:** Two stacked bugs. (1) `placeholderData: keepPreviousData` reused the previous bucket list while switching tabs. (2) `displayBookings` always prepended the currently opened booking (`openBookingId` / `?open=`) even when that booking no longer belonged in the active bucket. After cancel, Today/Upcoming still showed the same "Cancelled by admin" card until the browser tab was closed (which cleared React Query + open state).
