@@ -3224,6 +3224,7 @@ export async function listAdminMessageThreads(req, res, next) {
       const haystack = [
         thread.bookingId,
         booking?.customer?.name,
+        booking?.infoCollection?.fullName,
         booking?.customer?.email,
         booking?.package?.title,
         booking?.event?.name,

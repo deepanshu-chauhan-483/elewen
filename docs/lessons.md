@@ -1,5 +1,29 @@
 # Lessons
 
+## 2026-08-11: Message Box showed email instead of customer name
+
+**Root cause:** `MessageBoxPage.getCustomerDisplay` used only `booking.customer.name` from profile/`up_users`. Email-signup users often have empty profile names, so the thread title fell back to email (e.g. `bansalgauri23@gmail.com`) while Swati-style accounts with profile names looked correct.
+
+**Failure symptoms:** Message list/header showed email as the title instead of Name + email like other chats.
+
+**Fix details:** Reuse `resolveCustomerDisplayName` (checkout `infoCollection.fullName` → profile → customer.name). Include `infoCollection.fullName` in message-thread search haystack.
+
+**Consulted sources:** `MessageBoxPage.jsx`, `bookingDisplay.js`, `docs/lessons.md` booking CUSTOMER name entry
+
+**Prevention guidance:** Any admin surface that shows a customer label must use `resolveCustomerDisplayName`, not raw `customer.name` alone.
+
+## 2026-08-11: Info collection allowed editing checkout-filled fields
+
+**Root cause:** Customer Information Collection form prefills checkout note values but left every input editable.
+
+**Failure symptoms:** Customers could change name/email/address/etc. already captured at checkout.
+
+**Fix details:** API returns `lockedFields` from checkout notes only (`buildCheckoutLockedFields`); form uses `readOnly`/`disabled`; submit merges locked checkout values server-side.
+
+**Consulted sources:** `InfoCollection.jsx`, `booking.js` get/submit info-collection, `dashboardData.js`
+
+**Prevention guidance:** Treat checkout-captured contact/event fields as immutable on the later info-collection form; only unlock empty optional logistics fields.
+
 ## 2026-08-11: Confirm email Update Event Details wrong URL
 
 **Root cause:** `updateDetailsUrl` in `buildBookingEmailContext` pointed at booking details (`/user-dashboard/details`), not the customer info-collection form.

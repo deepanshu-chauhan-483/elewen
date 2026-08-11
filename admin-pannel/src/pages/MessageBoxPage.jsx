@@ -13,6 +13,7 @@ import {
   useAdminSendMessage,
 } from '../hooks/useAdminData'
 import { formatDate } from '../lib/formatters'
+import { resolveCustomerDisplayName } from '../lib/bookingDisplay'
 
 const PAGE_SIZE = 10
 
@@ -87,10 +88,14 @@ function getBookingSubtitle(booking) {
 
 function getCustomerDisplay(booking) {
   const customer = booking?.customer ?? {}
-  const name = String(customer.name ?? '').trim()
-  const email = String(customer.email ?? '').trim()
-  const phone = String(customer.phone ?? '').trim()
-  const displayName = name || email || 'Customer'
+  const email = String(
+    customer.email ?? booking?.infoCollection?.email ?? ''
+  ).trim()
+  const phone = String(
+    customer.phone ?? booking?.infoCollection?.phone ?? ''
+  ).trim()
+  const resolvedName = resolveCustomerDisplayName(booking, '')
+  const displayName = resolvedName || email || 'Customer'
 
   return {
     displayName,

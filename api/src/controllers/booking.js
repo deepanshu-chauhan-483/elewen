@@ -3,7 +3,14 @@ import { computeCartItemsWithDeliveryCharges } from '../lib/deliveryChargePricin
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
 import { notify, notifyRefund } from '../lib/notify.js'
 import { resolveAppliedCoupon } from '../lib/coupons.js'
-import { enrichBookings, filterBookingsByType, buildInfoCollectionNote, getBookingMetaFromNotes } from '../lib/dashboardData.js'
+import {
+  enrichBookings,
+  filterBookingsByType,
+  buildInfoCollectionNote,
+  getBookingMetaFromNotes,
+  getCheckoutMetaFromNotes,
+  buildCheckoutLockedFields,
+} from '../lib/dashboardData.js'
 import { createOperationalAlert } from '../lib/alerts.js'
 import {
   calculateBookingRefundPreview,
@@ -1204,6 +1211,7 @@ export const getInfoCollection = async (req, res, next) => {
     const checkoutNotesCount = (booking.notes ?? []).filter(note =>
       /Contact name:|Event address line 1:|\[INFO_COLLECTION\]/i.test(String(note?.note ?? ''))
     ).length
+    const lockedFields = buildCheckoutLockedFields(booking.notes)
 
     res.json({
       bookingId: booking.id,
@@ -1213,6 +1221,7 @@ export const getInfoCollection = async (req, res, next) => {
       canEdit,
       showGuestCount: Boolean(enriched?.isCateringBooking),
       checkoutNotesCount,
+      lockedFields,
       form: {
         fullName: cleanFormText(info.fullName) || profile?.fullName || '',
         email: cleanFormText(info.email) || profile?.email || '',
@@ -1249,13 +1258,31 @@ export const submitInfoCollection = async (req, res, next) => {
     const { id } = req.params
     const form = readInfoCollectionForm(req.body)
 
-    const booking = await prisma.booking.findUnique({ where: { id } })
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { notes: { orderBy: { createdAt: 'asc' } } },
+    })
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
 
-    const noteText = buildInfoCollectionNote(form)
-    const eventDate = toOptionalDateOnly(form.eventDate)
-    const guestCount = Number.parseInt(form.guestCount, 10)
+    // Keep checkout-provided fields immutable even if the client tampers with the form.
+    const checkoutMeta = getCheckoutMetaFromNotes(booking.notes)
+    const lockedFields = buildCheckoutLockedFields(booking.notes)
+    const lockedForm = { ...form }
+    for (const key of Object.keys(lockedFields)) {
+      const lockedValue = cleanFormText(checkoutMeta[key])
+      if (!lockedValue) continue
+      lockedForm[key] =
+        key === 'eventDate'
+          ? toDateInputValue(lockedValue) || lockedValue
+          : key === 'eventTime' || key === 'setupArrivalTime'
+            ? toTimeInputValue(lockedValue) || lockedValue
+            : lockedValue
+    }
+
+    const noteText = buildInfoCollectionNote(lockedForm)
+    const eventDate = toOptionalDateOnly(lockedForm.eventDate)
+    const guestCount = Number.parseInt(lockedForm.guestCount, 10)
 
     await prisma.$transaction(async tx => {
       await tx.bookingNote.create({
@@ -1271,7 +1298,7 @@ export const submitInfoCollection = async (req, res, next) => {
         where: { id },
         data: {
           infoStatus: 'submitted',
-          ...(form.eventTime ? { eventTime: form.eventTime.slice(0, 20) } : {}),
+          ...(lockedForm.eventTime ? { eventTime: lockedForm.eventTime.slice(0, 20) } : {}),
           ...(eventDate ? { eventDate } : {}),
           ...(Number.isFinite(guestCount) && guestCount > 0 ? { guestCount } : {}),
         },
@@ -1298,7 +1325,7 @@ export const submitInfoCollection = async (req, res, next) => {
       ok: true,
       infoStatus: 'submitted',
       booking: enriched,
-      form: enriched?.infoCollection ?? form,
+      form: enriched?.infoCollection ?? lockedForm,
     })
   } catch (err) {
     next(err)

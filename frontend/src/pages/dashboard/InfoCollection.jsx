@@ -103,6 +103,7 @@ export default function InfoCollection() {
   const [showGuestCount, setShowGuestCount] = useState(false)
   const [statusLabel, setStatusLabel] = useState('')
   const [form, setForm] = useState(EMPTY_FORM)
+  const [lockedFields, setLockedFields] = useState({})
   const fieldRefs = useRef({})
 
   useEffect(() => {
@@ -168,6 +169,11 @@ export default function InfoCollection() {
             specialRequest: booking?.specialRequest || '',
           })
         )
+        setLockedFields(
+          infoResponse?.lockedFields && typeof infoResponse.lockedFields === 'object'
+            ? infoResponse.lockedFields
+            : {}
+        )
         setShowGuestCount(
           Boolean(infoResponse?.showGuestCount ?? booking?.isCateringBooking)
         )
@@ -193,7 +199,10 @@ export default function InfoCollection() {
     }
   }, [bookingId, sessionQuery.data?.user?.id, sessionQuery.data?.profile?.first_name])
 
+  const isLocked = key => Boolean(lockedFields?.[key])
+
   const setField = key => event => {
+    if (isLocked(key)) return
     const value = event?.target ? event.target.value : event
     setForm(prev => ({ ...prev, [key]: value }))
     setFieldErrors(prev => {
@@ -277,8 +286,8 @@ export default function InfoCollection() {
             Information Collection
           </h1>
           <p className="mt-2 text-[14px] text-[#7A7A7A]">
-            Details from checkout are filled in when available. Add anything that is still missing —
-            nothing is mandatory.
+            Details from checkout are filled in when available and cannot be changed here. Add
+            anything that is still missing — nothing is mandatory.
           </p>
           {statusLabel ? (
             <p className="mt-2 text-[12px] text-[#957960]">Booking status: {statusLabel}</p>
@@ -311,6 +320,7 @@ export default function InfoCollection() {
               type="text"
               value={form.fullName}
               onChange={setField('fullName')}
+              readOnly={isLocked('fullName')}
               className={inputClass()}
             />
           </div>
@@ -322,6 +332,7 @@ export default function InfoCollection() {
                 type="email"
                 value={form.email}
                 onChange={setField('email')}
+                readOnly={isLocked('email')}
                 className={inputClass(Boolean(fieldErrors.email))}
                 aria-invalid={Boolean(fieldErrors.email)}
               />
@@ -333,6 +344,7 @@ export default function InfoCollection() {
                 type="tel"
                 value={form.phone}
                 onChange={setField('phone')}
+                readOnly={isLocked('phone')}
                 className={inputClass(Boolean(fieldErrors.phone))}
                 aria-invalid={Boolean(fieldErrors.phone)}
               />
@@ -355,6 +367,7 @@ export default function InfoCollection() {
               type="date"
               value={form.eventDate}
               onChange={setField('eventDate')}
+              disabled={isLocked('eventDate')}
               className={pickerClass()}
             />
           </div>
@@ -364,6 +377,7 @@ export default function InfoCollection() {
               type="time"
               value={form.eventTime}
               onChange={setField('eventTime')}
+              disabled={isLocked('eventTime')}
               className={pickerClass()}
             />
           </div>
@@ -374,6 +388,7 @@ export default function InfoCollection() {
               type="text"
               value={form.addressLine1}
               onChange={setField('addressLine1')}
+              readOnly={isLocked('addressLine1')}
               className={inputClass()}
             />
           </div>
@@ -383,6 +398,7 @@ export default function InfoCollection() {
               type="text"
               value={form.addressLine2}
               onChange={setField('addressLine2')}
+              readOnly={isLocked('addressLine2')}
               className={inputClass()}
             />
           </div>
@@ -392,6 +408,7 @@ export default function InfoCollection() {
               type="text"
               value={form.addressFloor}
               onChange={setField('addressFloor')}
+              readOnly={isLocked('addressFloor')}
               className={inputClass()}
             />
           </div>
@@ -405,6 +422,7 @@ export default function InfoCollection() {
               onChange={event =>
                 setField('pinCode')(event.target.value.replace(/\D/g, '').slice(0, 6))
               }
+              readOnly={isLocked('pinCode')}
               className={inputClass(Boolean(fieldErrors.pinCode))}
               aria-invalid={Boolean(fieldErrors.pinCode)}
             />
@@ -412,7 +430,12 @@ export default function InfoCollection() {
           </div>
           <div>
             <FieldLabel label="Is there a lift in your building?" />
-            <select value={form.hasLift} onChange={setField('hasLift')} className={inputClass()}>
+            <select
+              value={form.hasLift}
+              onChange={setField('hasLift')}
+              disabled={isLocked('hasLift')}
+              className={inputClass()}
+            >
               <option value="">Select</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -428,6 +451,7 @@ export default function InfoCollection() {
                 min="1"
                 value={form.guestCount}
                 onChange={setField('guestCount')}
+                readOnly={isLocked('guestCount')}
                 className={inputClass()}
               />
             </div>
@@ -439,6 +463,7 @@ export default function InfoCollection() {
               type="time"
               value={form.setupArrivalTime}
               onChange={setField('setupArrivalTime')}
+              disabled={isLocked('setupArrivalTime')}
               className={pickerClass()}
             />
           </div>
@@ -448,6 +473,7 @@ export default function InfoCollection() {
               type="text"
               value={form.eventDayContactName}
               onChange={setField('eventDayContactName')}
+              readOnly={isLocked('eventDayContactName')}
               className={inputClass(Boolean(fieldErrors.eventDayContactName))}
               aria-invalid={Boolean(fieldErrors.eventDayContactName)}
             />
@@ -459,6 +485,7 @@ export default function InfoCollection() {
               type="tel"
               value={form.eventDayContactPhone}
               onChange={setField('eventDayContactPhone')}
+              readOnly={isLocked('eventDayContactPhone')}
               className={inputClass(Boolean(fieldErrors.eventDayContactPhone))}
               aria-invalid={Boolean(fieldErrors.eventDayContactPhone)}
             />
@@ -470,6 +497,7 @@ export default function InfoCollection() {
               type="text"
               value={form.parkingInstructions}
               onChange={setField('parkingInstructions')}
+              readOnly={isLocked('parkingInstructions')}
               className={inputClass()}
             />
           </div>
@@ -479,6 +507,7 @@ export default function InfoCollection() {
               rows={3}
               value={form.specialRequest}
               onChange={setField('specialRequest')}
+              readOnly={isLocked('specialRequest')}
               className="w-full border-b border-[#2D2D2D] bg-transparent pb-[6px] text-[16px] outline-none"
             />
           </div>
@@ -504,9 +533,9 @@ export default function InfoCollection() {
           </button>
         </div>
         <p className="mt-3 text-sm text-[#7A7A7A]">
-          Checkout details are filled when available. Add only what is still missing — nothing is
-          required. Email, phone, PIN, and event-day contact details are checked only if you enter
-          them.
+          Checkout details are filled when available and locked. Add only what is still missing —
+          nothing is required. Email, phone, PIN, and event-day contact details are checked only if
+          you enter them.
         </p>
       </form>
     </div>

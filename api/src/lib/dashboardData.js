@@ -517,6 +517,46 @@ function mergeInfoCollectionMeta(base = emptyInfoCollectionMeta(), next = {}) {
   return merged
 }
 
+const CHECKOUT_LOCKABLE_FORM_KEYS = [
+  'fullName',
+  'email',
+  'phone',
+  'eventDate',
+  'eventTime',
+  'addressLine1',
+  'addressLine2',
+  'addressFloor',
+  'pinCode',
+  'hasLift',
+  'guestCount',
+  'setupArrivalTime',
+  'eventDayContactName',
+  'eventDayContactPhone',
+  'parkingInstructions',
+  'specialRequest',
+]
+
+/** Checkout snapshot only — excludes later [INFO_COLLECTION] submissions. */
+export function getCheckoutMetaFromNotes(notes = []) {
+  const checkoutOnly = (Array.isArray(notes) ? notes : []).filter(note => {
+    const text = String(note?.note ?? '')
+    if (!text.trim()) return false
+    if (text.includes(INFO_COLLECTION_MARKER)) return false
+    return /Contact name:|Event address line 1:|Checkout mode:/i.test(text)
+  })
+  return getBookingMetaFromNotes(checkoutOnly)
+}
+
+/** Fields the customer already provided at checkout — lock on the info-collection form. */
+export function buildCheckoutLockedFields(notes = []) {
+  const meta = getCheckoutMetaFromNotes(notes)
+  const lockedFields = {}
+  for (const key of CHECKOUT_LOCKABLE_FORM_KEYS) {
+    if (cleanNoteValue(meta[key])) lockedFields[key] = true
+  }
+  return lockedFields
+}
+
 export function getBookingMetaFromNotes(notes = []) {
   const allNotes = (Array.isArray(notes) ? notes : [])
     .filter(note => note && String(note?.note ?? '').trim())
