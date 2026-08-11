@@ -1822,6 +1822,7 @@ function BookingAccordionCard({ booking, open = false, onToggle, onStatusUpdated
 }
 
 const bookingBucketTabs = [
+  { key: 'all', label: 'All Bookings' },
   { key: 'today', label: "Today's Bookings" },
   { key: 'upcoming', label: 'Upcoming Events' },
   { key: 'live', label: 'Live Bookings' },
@@ -2163,16 +2164,6 @@ export default function BookingManagementPage() {
             <option value="event_date">By Event Date</option>
           </CustomSelect>
         </div>
-        <p className="mt-3 text-xs text-[#8F8F8F]">
-          Today shows bookings placed today with advance paid (Hookah COD allowed at ₹0), plus
-          unopened prior-day bookings from the last 7 days. Only those prior-day unopened rows get
-          the highlight and tab badge — today's new bookings stay normal. Open a card to clear it.
-          Unpaid non-Hookah stay in Incomplete. Admin/customer cancels leave Today and appear under
-          Cancelled (newest cancellations first; unopened cancels stay highlighted). Upcoming shows
-          advance-paid events in the next 15 days. Live shows all advance-paid ongoing bookings.
-          Incomplete shows bookings with no advance paid yet. Completed shows finished bookings with
-          full payment cleared.
-        </p>
       </div>
 
       {/* ── Results count ── */}

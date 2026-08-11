@@ -473,7 +473,14 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="All bookings"
+          value={formatCount(metrics.totalBookings)}
+          helper="Every booking · including cancels & refunds"
+          accent
+          onClick={() => navigate(getBookingOverviewRoute('total'))}
+        />
         <MetricCard
           label="Today's booking"
           value={formatCount(metrics.todayBookingsCount)}

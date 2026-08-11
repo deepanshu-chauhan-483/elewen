@@ -1932,6 +1932,9 @@ export async function listAdminBookings(req, res, next) {
     const orderByClause =
       bucket === 'cancelled'
         ? [{ cancellation: { createdAt: 'desc' } }, { updatedAt: 'desc' }, { createdAt: 'desc' }]
+        : bucket === 'all' && sortBy === 'latest'
+          ? // Recent activity first so a 10-day-old booking cancelled today still rises.
+            [{ updatedAt: 'desc' }, { createdAt: 'desc' }]
         : sortBy === 'latest'
           ? [{ createdAt: 'desc' }]
           : [{ eventDate: 'asc' }, { createdAt: 'desc' }]
