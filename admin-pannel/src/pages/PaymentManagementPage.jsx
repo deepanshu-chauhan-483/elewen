@@ -373,6 +373,70 @@ function CustomerFinancialGrid({ booking, extraFields = [] }) {
   )
 }
 
+function paymentTypeLabel(paymentType = '') {
+  const key = String(paymentType ?? '')
+    .trim()
+    .toLowerCase()
+  if (key === 'advance') return 'Advance payment'
+  if (key === 'remaining') return 'Remaining payment'
+  if (key === 'full') return 'Full payment'
+  if (key === 'cod') return 'COD payment'
+  return key ? key.charAt(0).toUpperCase() + key.slice(1) : 'Payment'
+}
+
+function BookingPaymentHistory({ payments = [], highlightPaymentId = '' }) {
+  const rows = [...(Array.isArray(payments) ? payments : [])].sort(
+    (left, right) => new Date(right.createdAt) - new Date(left.createdAt)
+  )
+
+  if (!rows.length) {
+    return (
+      <div>
+        <SectionLabel>Payment history</SectionLabel>
+        <p className="text-sm text-[#8F8F8F]">
+          No payments recorded yet. Cashfree advance/remaining will show here when paid online.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <SectionLabel>Payment history</SectionLabel>
+      <p className="mb-3 text-xs text-[#8F8F8F]">
+        See how advance and remaining were paid (Cashfree auto / UPI-Cash manual).
+      </p>
+      <div className="space-y-2">
+        {rows.map(entry => {
+          const isHighlight = String(entry.id) === String(highlightPaymentId)
+          return (
+            <div
+              key={entry.id}
+              className={[
+                'flex flex-wrap items-start justify-between gap-2 rounded-xl border px-4 py-3',
+                isHighlight
+                  ? 'border-[#D4BA8E] bg-[#FFF9F0]'
+                  : 'border-[#E4DED8] bg-white',
+              ].join(' ')}
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[#2D2D2D]">
+                  {paymentTypeLabel(entry.paymentType)} · {formatCurrency(entry.amount)}
+                </p>
+                <p className="mt-1 text-xs text-[#8F8F8F]">
+                  {formatPaymentChannelLabel(entry)}
+                  {entry.createdAt ? ` · ${formatDateTime(entry.createdAt)}` : ''}
+                </p>
+              </div>
+              <Badge status={entry.status} />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, recordManualPaymentMutation }) {
   const toast = useAdminToast()
   const [paymentAction, setPaymentAction] = useState('final_payment_received')
@@ -466,8 +530,8 @@ function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, re
           </PrimaryBtn>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
-          Record remaining balance only when admin confirms money received (UPI / Cash / Cashfree /
-          Card). Does not change booking stage.
+          Use only for remaining collected offline (UPI / Cash). If Cashfree already paid advance
+          or remaining, it shows in Payment history above — do not record it again here.
         </p>
         {formError ? (
           <div className="mt-3 rounded-xl border border-[#FCC5C5] bg-[#FFF3F3] px-4 py-3">
@@ -542,6 +606,7 @@ function BookingPaymentRow({ booking, recordManualPaymentMutation }) {
       {expanded ? (
         <div className="space-y-4 border-t border-[#E4DED8] bg-[#FAFAFA] px-4 py-4">
           <CustomerFinancialGrid booking={booking} />
+          <BookingPaymentHistory payments={booking?.payments} />
           <ManualPaymentUpdatePanel
             bookingId={booking.id}
             outstandingAmount={finance.outstandingAmount}
@@ -720,6 +785,10 @@ function PaymentRecordRow({
                 value: formatPaymentChannelLabel(payment),
               },
             ]}
+          />
+          <BookingPaymentHistory
+            payments={booking?.payments}
+            highlightPaymentId={payment.id}
           />
           {showRefundActions && pendingRefund ? (
             <div className="flex flex-wrap gap-2">
