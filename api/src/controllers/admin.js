@@ -1189,10 +1189,6 @@ function buildBookingPaymentSnapshot(booking) {
   ).length
   const latestPayment = bookingPayments[0] ?? null
   const totalPrice = toNumber(booking?.totalPrice)
-  const scheduledRemainingAmount = toNumber(booking?.remainingAmount)
-  const outstandingAmount = Number(
-    Math.max(totalPrice - successfulAmount, scheduledRemainingAmount, 0).toFixed(2)
-  )
   const advancePaidAmount = Number(
     toNumber(booking?.advancePaidAmount ?? booking?.paymentSummary?.advancePaidAmount).toFixed(2)
   )
@@ -1201,12 +1197,17 @@ function buildBookingPaymentSnapshot(booking) {
     .filter(log => String(log?.metadata?.source ?? '') === 'admin_manual_payment')
     .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0]
 
+  // Live balance from successful payments only — do not Math.max with a stale
+  // booking.remainingAmount column (Cashfree remaining would still look unpaid).
+  const outstandingAmount = Number(Math.max(totalPrice - successfulAmount, 0).toFixed(2))
+
   return {
     ...booking,
     paidAmount: Number(successfulAmount.toFixed(2)),
     advancePaidAmount,
     totalPrice: Number(totalPrice.toFixed(2)),
     outstandingAmount,
+    remainingAmount: outstandingAmount,
     failedPaymentsCount,
     pendingPaymentsCount,
     latestPayment,

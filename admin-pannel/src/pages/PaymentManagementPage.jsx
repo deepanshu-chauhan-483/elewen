@@ -227,16 +227,45 @@ function Tabs({ items, value, onChange, size = 'md' }) {
 // ---------------------------------------------------------------------------
 
 const MANUAL_PAYMENT_CHANNELS = [
-  { value: 'upi', label: 'UPI' },
-  { value: 'card', label: 'Card' },
-  { value: 'netbanking', label: 'Netbanking' },
-  { value: 'cashfree', label: 'Cashfree' },
-  { value: 'cash', label: 'Cash' },
+  { value: 'upi', label: 'UPI (manual)' },
+  { value: 'card', label: 'Card (manual)' },
+  { value: 'netbanking', label: 'Netbanking (manual)' },
+  { value: 'cash', label: 'Cash (manual)' },
 ]
 
 const PAYMENT_UPDATE_ACTIONS = [
-  { value: 'final_payment_received', label: 'Final payment received' },
+  { value: 'final_payment_received', label: 'Record remaining collected offline' },
 ]
+
+function formatPaymentMethodLabel(method = '') {
+  const key = String(method ?? '')
+    .trim()
+    .toLowerCase()
+  if (!key) return ''
+  if (key === 'offline') return 'Cash/offline'
+  return key.charAt(0).toUpperCase() + key.slice(1)
+}
+
+function formatPaymentChannelLabel(payment) {
+  const provider = String(payment?.provider ?? '')
+    .trim()
+    .toLowerCase()
+  const method = formatPaymentMethodLabel(payment?.paymentMethod)
+  const isManual =
+    provider === 'manual' ||
+    provider === 'offline' ||
+    String(payment?.logs?.[0]?.metadata?.source ?? '') === 'admin_manual_payment'
+
+  if (provider === 'cashfree' || (!isManual && provider && provider !== 'test')) {
+    return method ? `Cashfree · ${method}` : 'Cashfree'
+  }
+
+  if (isManual || provider === 'manual') {
+    return method ? `Manual · ${method}` : 'Manual'
+  }
+
+  return method || provider || 'Method pending'
+}
 
 function SectionLabel({ children }) {
   return (
@@ -344,10 +373,58 @@ function CustomerFinancialGrid({ booking, extraFields = [] }) {
   )
 }
 
+function BookingPaymentHistory({ payments = [], highlightPaymentId = '' }) {
+  const rows = [...(Array.isArray(payments) ? payments : [])].sort(
+    (left, right) => new Date(right.createdAt) - new Date(left.createdAt)
+  )
+
+  if (!rows.length) {
+    return (
+      <div>
+        <SectionLabel>Payment history</SectionLabel>
+        <p className="text-sm text-[#8F8F8F]">No payments recorded for this booking yet.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <SectionLabel>Payment history</SectionLabel>
+      <div className="space-y-2">
+        {rows.map(entry => {
+          const isHighlight = String(entry.id) === String(highlightPaymentId)
+          return (
+            <div
+              key={entry.id}
+              className={[
+                'flex flex-wrap items-start justify-between gap-2 rounded-xl border px-4 py-3',
+                isHighlight
+                  ? 'border-[#D4BA8E] bg-[#FFF9F0]'
+                  : 'border-[#E4DED8] bg-white',
+              ].join(' ')}
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[#2D2D2D]">
+                  {entry.paymentType || 'payment'} · {formatCurrency(entry.amount)}
+                </p>
+                <p className="mt-1 text-xs text-[#8F8F8F]">
+                  {formatPaymentChannelLabel(entry)}
+                  {entry.createdAt ? ` · ${formatDateTime(entry.createdAt)}` : ''}
+                </p>
+              </div>
+              <Badge status={entry.status} />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, recordManualPaymentMutation }) {
   const toast = useAdminToast()
   const [paymentAction, setPaymentAction] = useState('final_payment_received')
-  const [channel, setChannel] = useState('upi')
+  const [channel, setChannel] = useState('cash')
   const [note, setNote] = useState('')
   const [formError, setFormError] = useState('')
   const canRecordFinal = Number(outstandingAmount) > 0
@@ -374,7 +451,7 @@ function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, re
       })
       setNote('')
       toast?.showToast?.({
-        message: 'Final payment recorded. Remaining is now ₹0.',
+        message: 'Offline remaining payment recorded. Remaining is now ₹0.',
         tone: 'success',
       })
     } catch (error) {
@@ -388,7 +465,7 @@ function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, re
 
   return (
     <div>
-      <SectionLabel>Update payment</SectionLabel>
+      <SectionLabel>Record offline payment</SectionLabel>
       <div className="rounded-xl border border-[#E4DED8] bg-[#FBF7F3] p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
           <div className="min-w-0 flex-1">
@@ -425,7 +502,7 @@ function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, re
               type="text"
               value={note}
               onChange={event => setNote(event.target.value)}
-              placeholder="e.g. UPI from customer at venue…"
+              placeholder="e.g. Cash collected at venue…"
               className="h-10 w-full rounded-full border border-[#E4DED8] bg-white px-4 text-sm text-[#2D2D2D] placeholder:text-[#8F8F8F] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
             />
           </div>
@@ -437,7 +514,8 @@ function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, re
           </PrimaryBtn>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
-          Marks remaining as paid. Does not change booking stage. Notes stay admin-only.
+          Only for money you collected yourself (cash / UPI at venue). Cashfree online payments
+          appear automatically in Payment history — do not record them here.
         </p>
         {formError ? (
           <div className="mt-3 rounded-xl border border-[#FCC5C5] bg-[#FFF3F3] px-4 py-3">
@@ -512,6 +590,7 @@ function BookingPaymentRow({ booking, recordManualPaymentMutation }) {
       {expanded ? (
         <div className="space-y-4 border-t border-[#E4DED8] bg-[#FAFAFA] px-4 py-4">
           <CustomerFinancialGrid booking={booking} />
+          <BookingPaymentHistory payments={booking?.payments} />
           <ManualPaymentUpdatePanel
             bookingId={booking.id}
             outstandingAmount={finance.outstandingAmount}
@@ -647,7 +726,7 @@ function PaymentRecordRow({
           </p>
           <p className="mt-1 text-xs text-[#8F8F8F]">
             {payment.paymentType} · {formatCurrency(payment.amount)} ·{' '}
-            {formatDateTime(payment.createdAt)}
+            {formatPaymentChannelLabel(payment)} · {formatDateTime(payment.createdAt)}
             {finance.eventDate ? ` · Event ${formatDate(finance.eventDate)}` : ''}
           </p>
           <div className="mt-2 flex flex-wrap gap-4 text-sm">
@@ -666,7 +745,10 @@ function PaymentRecordRow({
         <div className="flex flex-wrap items-center gap-2">
           <Badge status={payment.status} />
           {showHookahCodBadge ? <Badge status="pending" label="Hookah · COD" /> : null}
-          <Badge status={payment.paymentMethod} label={payment.paymentMethod || 'Method pending'} />
+          <Badge
+            status={payment.provider === 'cashfree' ? 'success' : payment.paymentMethod}
+            label={formatPaymentChannelLabel(payment)}
+          />
           {latestRefund ? (
             <Badge status={latestRefund.status} label={`Refund ${latestRefund.status}`} />
           ) : null}
@@ -684,10 +766,14 @@ function PaymentRecordRow({
               { label: 'This payment', value: formatCurrency(payment.amount) },
               { label: 'Payment type', value: payment.paymentType || '—' },
               {
-                label: 'Method',
-                value: payment.paymentMethod || payment.provider || '—',
+                label: 'Channel',
+                value: formatPaymentChannelLabel(payment),
               },
             ]}
+          />
+          <BookingPaymentHistory
+            payments={booking?.payments}
+            highlightPaymentId={payment.id}
           />
           {showRefundActions && pendingRefund ? (
             <div className="flex flex-wrap gap-2">

@@ -44,6 +44,23 @@ const getSuccessfulPaidAmount = booking =>
         .reduce((sum, payment) => sum + toNumberAmount(payment.amount), 0)
     : 0
 
+async function syncBookingRemainingAmount(bookingId) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { payments: true },
+  })
+  if (!booking) return null
+
+  const totalPrice = toNumberAmount(booking.totalPrice)
+  const paid = getSuccessfulPaidAmount(booking)
+  const remainingAmount = Math.max(totalPrice - paid, 0).toFixed(2)
+
+  return prisma.booking.update({
+    where: { id: bookingId },
+    data: { remainingAmount },
+  })
+}
+
 async function clearUserCart(userId) {
   if (!userId) return
 
@@ -480,6 +497,10 @@ export const verifyPayment = async (req, res, next) => {
         : 'Auto-confirmed after full payment received'
     )
 
+    await syncBookingRemainingAmount(payment.bookingId).catch(err =>
+      console.error('[payment] remaining sync failed', payment.bookingId, err?.message)
+    )
+
     // Notify on successful payment
     notify(payment.booking.userId, {
       type: 'payment',
@@ -564,6 +585,10 @@ export const handleWebhook = async (req, res) => {
             },
           })
           const booking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
+
+          await syncBookingRemainingAmount(payment.bookingId).catch(err =>
+            console.error('[webhook] remaining sync failed', payment.bookingId, err?.message)
+          )
 
           if (payment.paymentType === 'advance' && booking) {
             notify(booking.userId, {
