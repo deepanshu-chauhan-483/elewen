@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-11: Personalization email — multi images + attachments
+
+**Root cause:** Admin UI forced three labeled “Design Option 1/2/3” slots; payload only supported `designImage1..3`.
+
+**Failure symptoms:** Planners could not drag multiple designs (4+) or share PDF/docs in the personalization mail.
+
+**Fix details:** One multi-image dropzone + attachment dropzone; API accepts `designImages[]` and `attachments[]`; email embeds all images and download links; first three images still stored in existing DB columns.
+
+**Consulted sources:** `BookingManagementPage.jsx`, `bookingEmailService.js`, `email.js`, `admin.js` upload/personalization handlers
+
+**Prevention guidance:** Prefer open-ended media lists over fixed option slots for planner-shared assets.
+
 ## 2026-08-11: Admin booking CUSTOMER name showed dash
 
 **Root cause:** Booking Management header used only `booking.customer.name` from `up_users` / `customer_profiles` first+last. Accounts with email/phone but empty names (common after signup) rendered "—". Checkout contact name lives on notes → `infoCollection.fullName`, which Payment Management already resolved and Booking Management ignored.

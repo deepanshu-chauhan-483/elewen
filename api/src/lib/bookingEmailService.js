@@ -181,6 +181,8 @@ export function buildBookingEmailContext(booking, extras = {}) {
     designImage1: extras.designImage1 || '',
     designImage2: extras.designImage2 || '',
     designImage3: extras.designImage3 || '',
+    designImages: Array.isArray(extras.designImages) ? extras.designImages : [],
+    attachments: Array.isArray(extras.attachments) ? extras.attachments : [],
     responseDeadline: extras.responseDeadline
       ? formatEventDate(extras.responseDeadline)
       : 'the shared deadline',
@@ -286,9 +288,6 @@ const PERSONALIZATION_COPY_KEYS = [
   'customMessage',
   'chooseHeading',
   'chooseSubtext',
-  'optionLabel1',
-  'optionLabel2',
-  'optionLabel3',
   'replyPrompt',
   'ctaLabel',
   'textSectionHeading',
@@ -300,6 +299,33 @@ const PERSONALIZATION_COPY_KEYS = [
   'noReplyText',
   'signOff',
 ]
+
+const MAX_PERSONALIZATION_IMAGES = 12
+const MAX_PERSONALIZATION_ATTACHMENTS = 10
+
+function normalizeDesignImageList({ designImages, designImage1, designImage2, designImage3 } = {}) {
+  const fromArray = Array.isArray(designImages)
+    ? designImages.map(url => String(url ?? '').trim()).filter(Boolean)
+    : []
+  if (fromArray.length) return [...new Set(fromArray)].slice(0, MAX_PERSONALIZATION_IMAGES)
+
+  return [designImage1, designImage2, designImage3]
+    .map(url => String(url ?? '').trim())
+    .filter(Boolean)
+    .slice(0, MAX_PERSONALIZATION_IMAGES)
+}
+
+function normalizeAttachmentList(attachments = []) {
+  if (!Array.isArray(attachments)) return []
+  return attachments
+    .map(item => ({
+      name: String(item?.name ?? 'Attachment').trim() || 'Attachment',
+      url: String(item?.url ?? '').trim(),
+      type: String(item?.type ?? '').trim(),
+    }))
+    .filter(item => item.url)
+    .slice(0, MAX_PERSONALIZATION_ATTACHMENTS)
+}
 
 function pickPersonalizationCopy(source = {}) {
   const copy = {}
@@ -317,17 +343,28 @@ function pickPersonalizationCopy(source = {}) {
 function buildPersonalizationContext(booking, options = {}) {
   const {
     serviceName,
+    designImages,
     designImage1,
     designImage2,
     designImage3,
+    attachments,
     responseDeadline,
   } = options
+  const imageList = normalizeDesignImageList({
+    designImages,
+    designImage1,
+    designImage2,
+    designImage3,
+  })
+  const attachmentList = normalizeAttachmentList(attachments)
   const deadlineDate = responseDeadline ? new Date(responseDeadline) : null
   const ctx = buildBookingEmailContext(booking, {
     serviceName: String(serviceName || 'decor').trim() || 'decor',
-    designImage1: designImage1 || null,
-    designImage2: designImage2 || null,
-    designImage3: designImage3 || null,
+    designImage1: imageList[0] || null,
+    designImage2: imageList[1] || null,
+    designImage3: imageList[2] || null,
+    designImages: imageList,
+    attachments: attachmentList,
     responseDeadline:
       deadlineDate && !Number.isNaN(deadlineDate.getTime()) ? deadlineDate : null,
     personalizeUrl: customerBookingDetailsUrl(booking.id),
@@ -335,6 +372,8 @@ function buildPersonalizationContext(booking, options = {}) {
 
   return {
     ...ctx,
+    designImages: imageList,
+    attachments: attachmentList,
     ...pickPersonalizationCopy(options),
   }
 }
@@ -345,11 +384,8 @@ function personalizationCopyDefaults(serviceName = 'decor') {
     headline: DEFAULT_PERSONALIZATION_HEADLINE,
     introText: `We're getting everything ready for your event, and it's now time to customise your ${serviceName}.`,
     customMessage: '',
-    chooseHeading: 'Please choose your preferred design',
+    chooseHeading: 'Design references from your planner',
     chooseSubtext: '',
-    optionLabel1: 'Design Option 1',
-    optionLabel2: 'Design Option 2',
-    optionLabel3: 'Design Option 3',
     replyPrompt: '',
     ctaLabel: 'Open My Booking',
     textSectionHeading: 'What would you like it to say?',
@@ -372,9 +408,11 @@ export async function previewBookingPersonalizationEmail(
   bookingId,
   {
     serviceName,
+    designImages,
     designImage1,
     designImage2,
     designImage3,
+    attachments,
     responseDeadline,
     subject: subjectOverride = null,
     ...copyFields
@@ -391,9 +429,11 @@ export async function previewBookingPersonalizationEmail(
 
   const ctx = buildPersonalizationContext(booking, {
     serviceName,
+    designImages,
     designImage1,
     designImage2,
     designImage3,
+    attachments,
     responseDeadline,
     ...copyFields,
   })
@@ -420,6 +460,8 @@ export async function previewBookingPersonalizationEmail(
     subject,
     html,
     serviceName: ctx.serviceName,
+    designImages: ctx.designImages,
+    attachments: ctx.attachments,
     ...resolvedCopy,
     defaults,
   }
@@ -594,9 +636,11 @@ export async function sendBookingPersonalizationEmail(
   bookingId,
   {
     serviceName,
+    designImages,
     designImage1,
     designImage2,
     designImage3,
+    attachments,
     responseDeadline,
     subject: subjectOverride = null,
     html: htmlOverride = null,
@@ -608,14 +652,21 @@ export async function sendBookingPersonalizationEmail(
   const booking = await loadBookingForEmail(bookingId)
   if (!booking) return { sent: false, reason: 'not_found' }
 
+  const imageList = normalizeDesignImageList({
+    designImages,
+    designImage1,
+    designImage2,
+    designImage3,
+  })
+  const attachmentList = normalizeAttachmentList(attachments)
   const deadlineDate = responseDeadline ? new Date(responseDeadline) : null
   const personalization = await prisma.bookingPersonalization.create({
     data: {
       bookingId,
       serviceName: String(serviceName || 'decor').trim() || 'decor',
-      designImage1: designImage1 || null,
-      designImage2: designImage2 || null,
-      designImage3: designImage3 || null,
+      designImage1: imageList[0] || null,
+      designImage2: imageList[1] || null,
+      designImage3: imageList[2] || null,
       responseDeadline:
         deadlineDate && !Number.isNaN(deadlineDate.getTime()) ? deadlineDate : null,
       status: 'sent',
@@ -625,9 +676,11 @@ export async function sendBookingPersonalizationEmail(
 
   const ctx = buildPersonalizationContext(booking, {
     serviceName: personalization.serviceName,
+    designImages: imageList,
     designImage1: personalization.designImage1,
     designImage2: personalization.designImage2,
     designImage3: personalization.designImage3,
+    attachments: attachmentList,
     responseDeadline: personalization.responseDeadline,
     ...copyFields,
   })
@@ -646,7 +699,7 @@ export async function sendBookingPersonalizationEmail(
     await notify(booking.userId, {
       type: 'booking_update',
       title: "Let's personalise your booking",
-      message: `Please choose your preferred design options for ${ctx.serviceName}.`,
+      message: `Please review the design references shared for ${ctx.serviceName}.`,
       linkUrl: customerBookingDetailsPath(booking.id),
     }).catch(() => {})
 
@@ -666,7 +719,7 @@ export async function sendBookingPersonalizationEmail(
     templateKey: 'booking_personalization',
     subject: DEFAULT_PERSONALIZATION_SUBJECT,
     title: "Let's personalise your booking",
-    message: `Please choose your preferred design options for ${ctx.serviceName}.`,
+    message: `Please review the design references shared for ${ctx.serviceName}.`,
     emailData: ctx,
     force: true,
     subjectOverride: finalSubject,

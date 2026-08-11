@@ -344,44 +344,56 @@ function readFileAsDataUrl(file) {
   })
 }
 
-function DesignImageDropzone({
-  label,
-  optionLabel,
-  onOptionLabelChange,
-  value,
-  onChange,
-  missing,
-  uploadMutation,
-}) {
+const MAX_PERSONALIZATION_IMAGES = 12
+const MAX_PERSONALIZATION_ATTACHMENTS = 10
+
+function MultiImageDropzone({ images, onChange, missing, uploadMutation }) {
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [localError, setLocalError] = useState('')
 
-  const handleFile = async file => {
-    if (!file) return
+  const handleFiles = async fileList => {
+    const files = Array.from(fileList || []).filter(Boolean)
+    if (!files.length) return
+
     setLocalError('')
-    if (!String(file.type || '').startsWith('image/')) {
-      setLocalError('Please choose an image file (JPG, PNG, WebP).')
-      return
-    }
-    if (file.size > 8 * 1024 * 1024) {
-      setLocalError('Image must be 8MB or smaller.')
+    const remaining = MAX_PERSONALIZATION_IMAGES - images.length
+    if (remaining <= 0) {
+      setLocalError(`You can upload up to ${MAX_PERSONALIZATION_IMAGES} images.`)
       return
     }
 
+    const batch = files.slice(0, remaining)
     setUploading(true)
+    const uploadedUrls = []
+
     try {
-      const dataUrl = await readFileAsDataUrl(file)
-      const result = await uploadMutation.mutateAsync({
-        file: {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          dataUrl,
-        },
-      })
-      if (!result?.url) throw new Error('Upload did not return an image URL.')
-      onChange(result.url)
+      for (const file of batch) {
+        if (!String(file.type || '').startsWith('image/')) {
+          setLocalError('Design uploads must be images (JPG, PNG, WebP).')
+          continue
+        }
+        if (file.size > 8 * 1024 * 1024) {
+          setLocalError('Each image must be 8MB or smaller.')
+          continue
+        }
+
+        const dataUrl = await readFileAsDataUrl(file)
+        const result = await uploadMutation.mutateAsync({
+          file: {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            dataUrl,
+          },
+        })
+        if (!result?.url) throw new Error('Upload did not return an image URL.')
+        uploadedUrls.push(result.url)
+      }
+
+      if (uploadedUrls.length) {
+        onChange([...images, ...uploadedUrls].slice(0, MAX_PERSONALIZATION_IMAGES))
+      }
     } catch (error) {
       setLocalError(error?.message || 'Could not upload image. Try again.')
     } finally {
@@ -390,81 +402,218 @@ function DesignImageDropzone({
   }
 
   return (
-    <div className="space-y-2 rounded-2xl border border-[#E4DED8] bg-[#FBF8F3] p-3">
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="min-w-[10rem] flex-1">
-          <p className="mb-1.5 text-xs text-[#8F8F8F]">{label} title</p>
-          <input
-            type="text"
-            value={optionLabel}
-            onChange={event => onOptionLabelChange(event.target.value)}
-            placeholder={label}
-            className="min-h-10 w-full rounded-full bg-white px-4 text-sm text-[#2D2D2D] outline-none"
-          />
-        </div>
-        {value ? (
-          <GhostBtn
-            onClick={() => {
-              onChange('')
-              setLocalError('')
-            }}
-          >
-            Remove image
-          </GhostBtn>
-        ) : null}
-      </div>
+    <div className="space-y-3 rounded-2xl border border-[#E4DED8] bg-[#FBF8F3] p-3">
+      <p className="text-xs font-medium text-[#2D2D2D]">
+        Design images
+        <span className="ml-1 font-normal text-[#8F8F8F]">
+          (drag & drop any number — shown in the email)
+        </span>
+      </p>
 
-      {value ? (
-        <div className="overflow-hidden rounded-xl border border-[#E4DED8] bg-white">
-          <img src={value} alt={optionLabel || label} className="max-h-48 w-full object-cover" />
+      {images.length ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {images.map((url, index) => (
+            <div
+              key={`${url}-${index}`}
+              className="relative overflow-hidden rounded-xl border border-[#E4DED8] bg-white"
+            >
+              <img src={url} alt={`Design ${index + 1}`} className="h-28 w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => onChange(images.filter((_, i) => i !== index))}
+                className="absolute right-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[11px] text-[#8A1C1C]"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
         </div>
-      ) : (
-        <label
-          onDragEnter={event => {
-            event.preventDefault()
-            setDragOver(true)
+      ) : null}
+
+      <label
+        onDragEnter={event => {
+          event.preventDefault()
+          setDragOver(true)
+        }}
+        onDragOver={event => {
+          event.preventDefault()
+          setDragOver(true)
+        }}
+        onDragLeave={event => {
+          event.preventDefault()
+          setDragOver(false)
+        }}
+        onDrop={event => {
+          event.preventDefault()
+          setDragOver(false)
+          handleFiles(event.dataTransfer?.files)
+        }}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-4 py-8 text-center transition ${
+          missing
+            ? 'border-[#C45C4A] bg-[#FFF1EE]'
+            : dragOver
+              ? 'border-[#C9A96E] bg-[#FFF8E8]'
+              : 'border-[#D6CFC7] bg-white'
+        }`}
+      >
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          disabled={uploading || uploadMutation.isPending}
+          onChange={event => {
+            handleFiles(event.target.files)
+            event.target.value = ''
           }}
-          onDragOver={event => {
-            event.preventDefault()
-            setDragOver(true)
+        />
+        <span className="text-sm font-medium text-[#2D2D2D]">
+          {uploading || uploadMutation.isPending
+            ? 'Uploading…'
+            : 'Drag & drop images here, or click to browse'}
+        </span>
+        <span className="text-xs text-[#8F8F8F]">
+          Up to {MAX_PERSONALIZATION_IMAGES} images · JPG / PNG / WebP · 8MB each
+        </span>
+      </label>
+
+      {localError ? <p className="text-xs text-[#8A1C1C]">{localError}</p> : null}
+    </div>
+  )
+}
+
+function AttachmentDropzone({ attachments, onChange, uploadMutation }) {
+  const [dragOver, setDragOver] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [localError, setLocalError] = useState('')
+
+  const handleFiles = async fileList => {
+    const files = Array.from(fileList || []).filter(Boolean)
+    if (!files.length) return
+
+    setLocalError('')
+    const remaining = MAX_PERSONALIZATION_ATTACHMENTS - attachments.length
+    if (remaining <= 0) {
+      setLocalError(`You can share up to ${MAX_PERSONALIZATION_ATTACHMENTS} attachments.`)
+      return
+    }
+
+    const batch = files.slice(0, remaining)
+    setUploading(true)
+    const uploaded = []
+
+    try {
+      for (const file of batch) {
+        if (file.size > 8 * 1024 * 1024) {
+          setLocalError('Each file must be 8MB or smaller.')
+          continue
+        }
+
+        const dataUrl = await readFileAsDataUrl(file)
+        const result = await uploadMutation.mutateAsync({
+          file: {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            dataUrl,
+          },
+        })
+        if (!result?.url) throw new Error('Upload did not return a file URL.')
+        uploaded.push({
+          name: result.name || file.name,
+          url: result.url,
+          type: result.type || file.type,
+        })
+      }
+
+      if (uploaded.length) {
+        onChange([...attachments, ...uploaded].slice(0, MAX_PERSONALIZATION_ATTACHMENTS))
+      }
+    } catch (error) {
+      setLocalError(error?.message || 'Could not upload file. Try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-2xl border border-[#E4DED8] bg-[#FBF8F3] p-3">
+      <p className="text-xs font-medium text-[#2D2D2D]">
+        Attachments
+        <span className="ml-1 font-normal text-[#8F8F8F]">
+          (optional — shared as download links in the email)
+        </span>
+      </p>
+
+      {attachments.length ? (
+        <div className="space-y-2">
+          {attachments.map((file, index) => (
+            <div
+              key={`${file.url}-${index}`}
+              className="flex items-center justify-between gap-3 rounded-xl border border-[#E4DED8] bg-white px-3 py-2"
+            >
+              <a
+                href={file.url}
+                target="_blank"
+                rel="noreferrer"
+                className="min-w-0 truncate text-sm text-[#7A5C2E] underline-offset-2 hover:underline"
+              >
+                {file.name || `Attachment ${index + 1}`}
+              </a>
+              <button
+                type="button"
+                onClick={() => onChange(attachments.filter((_, i) => i !== index))}
+                className="shrink-0 text-xs text-[#8A1C1C]"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <label
+        onDragEnter={event => {
+          event.preventDefault()
+          setDragOver(true)
+        }}
+        onDragOver={event => {
+          event.preventDefault()
+          setDragOver(true)
+        }}
+        onDragLeave={event => {
+          event.preventDefault()
+          setDragOver(false)
+        }}
+        onDrop={event => {
+          event.preventDefault()
+          setDragOver(false)
+          handleFiles(event.dataTransfer?.files)
+        }}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-4 py-6 text-center transition ${
+          dragOver ? 'border-[#C9A96E] bg-[#FFF8E8]' : 'border-[#D6CFC7] bg-white'
+        }`}
+      >
+        <input
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.txt,image/*,application/pdf"
+          className="hidden"
+          disabled={uploading || uploadMutation.isPending}
+          onChange={event => {
+            handleFiles(event.target.files)
+            event.target.value = ''
           }}
-          onDragLeave={event => {
-            event.preventDefault()
-            setDragOver(false)
-          }}
-          onDrop={event => {
-            event.preventDefault()
-            setDragOver(false)
-            const file = event.dataTransfer?.files?.[0]
-            handleFile(file)
-          }}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-4 py-8 text-center transition ${
-            missing
-              ? 'border-[#C45C4A] bg-[#FFF1EE]'
-              : dragOver
-                ? 'border-[#C9A96E] bg-[#FFF8E8]'
-                : 'border-[#D6CFC7] bg-white'
-          }`}
-        >
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={uploading || uploadMutation.isPending}
-            onChange={event => {
-              const file = event.target.files?.[0]
-              event.target.value = ''
-              handleFile(file)
-            }}
-          />
-          <span className="text-sm font-medium text-[#2D2D2D]">
-            {uploading || uploadMutation.isPending
-              ? 'Uploading…'
-              : 'Drag & drop image here, or click to browse'}
-          </span>
-          <span className="text-xs text-[#8F8F8F]">Optional — leave empty to hide this option in the email</span>
-        </label>
-      )}
+        />
+        <span className="text-sm font-medium text-[#2D2D2D]">
+          {uploading || uploadMutation.isPending
+            ? 'Uploading…'
+            : 'Drag & drop files here, or click to browse'}
+        </span>
+        <span className="text-xs text-[#8F8F8F]">
+          PDF, Word, Excel, ZIP, text, or images · 8MB each
+        </span>
+      </label>
 
       {localError ? <p className="text-xs text-[#8A1C1C]">{localError}</p> : null}
     </div>
@@ -476,9 +625,8 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   const sendMutation = useAdminSendPersonalizationEmail()
   const uploadMutation = useAdminUploadDesignImage()
   const [serviceName, setServiceName] = useState('decor')
-  const [designImage1, setDesignImage1] = useState('')
-  const [designImage2, setDesignImage2] = useState('')
-  const [designImage3, setDesignImage3] = useState('')
+  const [designImages, setDesignImages] = useState([])
+  const [attachments, setAttachments] = useState([])
   const [responseDeadline, setResponseDeadline] = useState('')
   const [composerOpen, setComposerOpen] = useState(false)
   const [emailTo, setEmailTo] = useState(String(customerEmail ?? '').trim())
@@ -486,11 +634,8 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   const [emailHeadline, setEmailHeadline] = useState("Let's personalise your booking ✨")
   const [emailIntro, setEmailIntro] = useState('')
   const [emailNote, setEmailNote] = useState('')
-  const [chooseHeading, setChooseHeading] = useState('Please choose your preferred design')
+  const [chooseHeading, setChooseHeading] = useState('Design references from your planner')
   const [chooseSubtext, setChooseSubtext] = useState('')
-  const [optionLabel1, setOptionLabel1] = useState('Design Option 1')
-  const [optionLabel2, setOptionLabel2] = useState('Design Option 2')
-  const [optionLabel3, setOptionLabel3] = useState('Design Option 3')
   const [replyPrompt, setReplyPrompt] = useState('')
   const [ctaLabel, setCtaLabel] = useState('Open My Booking')
   const [textSectionHeading, setTextSectionHeading] = useState('What would you like it to say?')
@@ -525,19 +670,17 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   if (!canSend) {
     return (
       <p className="text-sm text-[#8F8F8F]">
-        Confirm the booking first, then send design / text / colour options to the customer.
+        Confirm the booking first, then send design references and files to the customer.
       </p>
     )
   }
 
-  const hasDesignImage = Boolean(
-    designImage1.trim() || designImage2.trim() || designImage3.trim()
-  )
+  const hasShareableContent = designImages.length > 0 || attachments.length > 0
 
   const friendlyPreviewError = error => {
     const raw = String(error?.message ?? '')
-    if (/design image/i.test(raw) || /at least one/i.test(raw)) {
-      return 'Please upload at least one design image above, then try Preview again.'
+    if (/design image|at least one|attachment/i.test(raw)) {
+      return 'Please upload at least one design image or attachment above, then try Preview again.'
     }
     if (/cancelled/i.test(raw)) {
       return 'This booking is cancelled, so the personalization email cannot be sent.'
@@ -553,9 +696,8 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
 
   const payloadFields = (includeCopy = true) => ({
     serviceName: serviceName.trim() || 'decor',
-    designImage1: designImage1.trim(),
-    designImage2: designImage2.trim(),
-    designImage3: designImage3.trim(),
+    designImages,
+    attachments,
     responseDeadline: responseDeadline || undefined,
     channel: 'smtp',
     ...(includeCopy
@@ -566,9 +708,6 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
           customMessage: emailNote.trim() || undefined,
           chooseHeading: chooseHeading.trim() || undefined,
           chooseSubtext: chooseSubtext.trim() || undefined,
-          optionLabel1: optionLabel1.trim() || undefined,
-          optionLabel2: optionLabel2.trim() || undefined,
-          optionLabel3: optionLabel3.trim() || undefined,
           replyPrompt: replyPrompt.trim() || undefined,
           ctaLabel: ctaLabel.trim() || undefined,
           textSectionHeading: textSectionHeading.trim() || undefined,
@@ -594,9 +733,6 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
       setEmailNote(result?.customMessage ?? '')
       setChooseHeading(result?.chooseHeading ?? defaults.chooseHeading ?? '')
       setChooseSubtext(result?.chooseSubtext ?? defaults.chooseSubtext ?? '')
-      setOptionLabel1(result?.optionLabel1 ?? defaults.optionLabel1 ?? 'Design Option 1')
-      setOptionLabel2(result?.optionLabel2 ?? defaults.optionLabel2 ?? 'Design Option 2')
-      setOptionLabel3(result?.optionLabel3 ?? defaults.optionLabel3 ?? 'Design Option 3')
       setReplyPrompt(result?.replyPrompt ?? defaults.replyPrompt ?? '')
       setCtaLabel(result?.ctaLabel ?? defaults.ctaLabel ?? 'Open My Booking')
       setTextSectionHeading(result?.textSectionHeading ?? defaults.textSectionHeading ?? '')
@@ -614,8 +750,8 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     setComposerOpen(true)
   }
 
-  const ensureDesignImages = () => {
-    if (hasDesignImage) {
+  const ensureShareableContent = () => {
+    if (hasShareableContent) {
       setImagesMissing(false)
       return true
     }
@@ -623,7 +759,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     setComposerOpen(false)
     setSendMessage('')
     setSendError(
-      'Upload at least one design image above (Option 1, 2, or 3), then click Preview. Empty options are hidden in the email.'
+      'Upload at least one design image or attachment above, then click Preview.'
     )
     return false
   }
@@ -631,7 +767,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   const handlePreview = async ({ seedCopy = !composerOpen } = {}) => {
     setSendError('')
     setSendMessage('')
-    if (!ensureDesignImages()) return
+    if (!ensureShareableContent()) return
 
     try {
       const result = await previewMutation.mutateAsync({
@@ -641,7 +777,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
       applyPreviewResult(result, { seedCopy })
     } catch (error) {
       if (!composerOpen) setComposerOpen(false)
-      if (/design image|at least one/i.test(String(error?.message ?? ''))) {
+      if (/design image|at least one|attachment/i.test(String(error?.message ?? ''))) {
         setImagesMissing(true)
       }
       setSendError(friendlyPreviewError(error))
@@ -653,8 +789,15 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
     setPreviewStale(true)
   }
 
-  const handleImageChange = setter => url => {
-    setter(url)
+  const handleImagesChange = nextImages => {
+    setDesignImages(nextImages)
+    setImagesMissing(false)
+    setPreviewStale(true)
+    if (sendError) setSendError('')
+  }
+
+  const handleAttachmentsChange = nextAttachments => {
+    setAttachments(nextAttachments)
     setImagesMissing(false)
     setPreviewStale(true)
     if (sendError) setSendError('')
@@ -663,7 +806,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   const handleSend = async () => {
     setSendError('')
     setSendMessage('')
-    if (!ensureDesignImages()) return
+    if (!ensureShareableContent()) return
 
     try {
       if (previewStale) {
@@ -682,7 +825,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
       setComposerOpen(false)
       setPreviewStale(false)
     } catch (error) {
-      if (/design image|at least one/i.test(String(error?.message ?? ''))) {
+      if (/design image|at least one|attachment/i.test(String(error?.message ?? ''))) {
         setImagesMissing(true)
       }
       setSendError(friendlyPreviewError(error))
@@ -697,8 +840,8 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#6B7280]">
-        Upload design photos, customise every line of the email, preview, then send. Only options
-        with an image appear in the mail.
+        Upload any number of design photos and optional files (need at least one of either), customise
+        the email, preview, then send.
       </p>
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Service name</p>
@@ -714,55 +857,24 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
         />
       </div>
 
-      <div className="space-y-3">
-        <p className="text-xs font-medium text-[#2D2D2D]">
-          Design images <span className="text-[#C45C4A]">*</span>
-          <span className="ml-1 font-normal text-[#8F8F8F]">
-            (upload at least one — empty slots stay hidden in the email)
-          </span>
+      <MultiImageDropzone
+        images={designImages}
+        onChange={handleImagesChange}
+        missing={imagesMissing && !hasShareableContent}
+        uploadMutation={uploadMutation}
+      />
+
+      <AttachmentDropzone
+        attachments={attachments}
+        onChange={handleAttachmentsChange}
+        uploadMutation={uploadMutation}
+      />
+
+      {imagesMissing ? (
+        <p className="rounded-xl bg-[#FFF1EE] px-3 py-2 text-sm text-[#8A1C1C]">
+          Please upload at least one design photo or attachment before previewing or sending.
         </p>
-        <DesignImageDropzone
-          label="Design Option 1"
-          optionLabel={optionLabel1}
-          onOptionLabelChange={value => {
-            setOptionLabel1(value)
-            setPreviewStale(true)
-          }}
-          value={designImage1}
-          onChange={handleImageChange(setDesignImage1)}
-          missing={imagesMissing && !hasDesignImage}
-          uploadMutation={uploadMutation}
-        />
-        <DesignImageDropzone
-          label="Design Option 2"
-          optionLabel={optionLabel2}
-          onOptionLabelChange={value => {
-            setOptionLabel2(value)
-            setPreviewStale(true)
-          }}
-          value={designImage2}
-          onChange={handleImageChange(setDesignImage2)}
-          missing={false}
-          uploadMutation={uploadMutation}
-        />
-        <DesignImageDropzone
-          label="Design Option 3"
-          optionLabel={optionLabel3}
-          onOptionLabelChange={value => {
-            setOptionLabel3(value)
-            setPreviewStale(true)
-          }}
-          value={designImage3}
-          onChange={handleImageChange(setDesignImage3)}
-          missing={false}
-          uploadMutation={uploadMutation}
-        />
-        {imagesMissing ? (
-          <p className="rounded-xl bg-[#FFF1EE] px-3 py-2 text-sm text-[#8A1C1C]">
-            Please upload at least one design photo above before previewing or sending.
-          </p>
-        ) : null}
-      </div>
+      ) : null}
 
       <div>
         <p className="mb-1.5 text-xs text-[#8F8F8F]">Response deadline</p>
@@ -807,7 +919,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
           <div>
             <p className="text-sm font-semibold text-[#1C1C1C]">Elewen email preview</p>
             <p className="mt-1 text-xs text-[#8F8F8F]">
-              Edit any wording below. Empty design slots never appear in the customer email.
+              Edit any wording below. Uploaded images and attachments appear in the customer email.
             </p>
           </div>
 
@@ -825,8 +937,8 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
             ['Title inside email', emailHeadline, setEmailHeadline, 'input'],
             ['Opening message', emailIntro, setEmailIntro, 'textarea'],
             ['Extra note from planner (optional)', emailNote, setEmailNote, 'textarea'],
-            ['Choose section heading', chooseHeading, setChooseHeading, 'input'],
-            ['Choose section subtext', chooseSubtext, setChooseSubtext, 'textarea'],
+            ['Design section heading', chooseHeading, setChooseHeading, 'input'],
+            ['Design section subtext', chooseSubtext, setChooseSubtext, 'textarea'],
             ['Reply prompt', replyPrompt, setReplyPrompt, 'textarea'],
             ['Button label', ctaLabel, setCtaLabel, 'input'],
             ['Text section heading', textSectionHeading, setTextSectionHeading, 'input'],
@@ -865,7 +977,7 @@ function PersonalizationEmailPanel({ bookingId, bookingStatus, customerEmail }) 
 
           {previewStale ? (
             <p className="rounded-xl bg-[#FFF8E8] px-3 py-2 text-xs text-[#8A6A2F]">
-              Wording or images changed — click <strong>Refresh preview</strong> to update the mail
+              Wording or files changed — click <strong>Refresh preview</strong> to update the mail
               view, or send and we will refresh automatically.
             </p>
           ) : null}

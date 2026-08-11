@@ -649,6 +649,8 @@ export const templates = {
     designImage1,
     designImage2,
     designImage3,
+    designImages,
+    attachments,
     responseDeadline,
     personalizeUrl,
     supportPhone,
@@ -657,9 +659,6 @@ export const templates = {
     customMessage,
     chooseHeading,
     chooseSubtext,
-    optionLabel1,
-    optionLabel2,
-    optionLabel3,
     replyPrompt,
     ctaLabel,
     textSectionHeading,
@@ -694,34 +693,51 @@ export const templates = {
       </div>`
       : ''
 
-    // Only render options that have an image — never show empty "shared by planner" placeholders.
-    const designOptions = [
-      { label: optionLabel1?.trim() || 'Design Option 1', url: String(designImage1 || '').trim() },
-      { label: optionLabel2?.trim() || 'Design Option 2', url: String(designImage2 || '').trim() },
-      { label: optionLabel3?.trim() || 'Design Option 3', url: String(designImage3 || '').trim() },
-    ].filter(option => option.url)
+    const imageUrls = (
+      Array.isArray(designImages) && designImages.length
+        ? designImages
+        : [designImage1, designImage2, designImage3]
+    )
+      .map(url => String(url ?? '').trim())
+      .filter(Boolean)
 
-    const designBlock = (label, url) => `
+    const attachmentList = (Array.isArray(attachments) ? attachments : [])
+      .map(item => ({
+        name: String(item?.name ?? 'Attachment').trim() || 'Attachment',
+        url: String(item?.url ?? '').trim(),
+      }))
+      .filter(item => item.url)
+
+    const designBlock = (url, index) => `
       <div style="margin:16px 0;padding:16px;background:#222;border-radius:8px;">
-        <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#c9a96e;">${escapeHtml(label)}</p>
-        <img src="${escapeHtml(url)}" alt="${escapeHtml(label)}" style="display:block;width:100%;max-width:520px;border-radius:8px;border:1px solid #333;" />
+        <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#c9a96e;">Design ${index + 1}</p>
+        <img src="${escapeHtml(url)}" alt="Design ${index + 1}" style="display:block;width:100%;max-width:520px;border-radius:8px;border:1px solid #333;" />
       </div>`
 
-    const defaultReplyPrompt =
-      designOptions.length <= 1
-        ? '👉 Simply reply with Option 1 — or open your booking to share details.'
-        : designOptions.length === 2
-          ? '👉 Simply reply with Option 1 or 2 — or open your booking to share details.'
-          : '👉 Simply reply with Option 1, 2 or 3 — or open your booking to share details.'
+    const attachmentBlock =
+      attachmentList.length > 0
+        ? `
+      <div style="margin:16px 0;padding:16px;background:#222;border-radius:8px;">
+        <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#c9a96e;">Shared files</p>
+        ${attachmentList
+          .map(
+            item =>
+              `<p style="margin:0 0 8px;font-size:15px;line-height:1.6;"><a href="${escapeHtml(item.url)}" style="color:#c9a96e;text-decoration:underline;">${escapeHtml(item.name)}</a></p>`
+          )
+          .join('')}
+      </div>`
+        : ''
 
+    const defaultReplyPrompt =
+      '👉 Reply to this email with your feedback, or open your booking to share details.'
     const defaultChooseSubtext =
-      designOptions.length <= 1
-        ? "We've shortlisted an option based on your booking."
-        : "We've shortlisted a few options based on your booking."
+      imageUrls.length <= 1
+        ? "We've shared a design reference based on your booking."
+        : "We've shared a few design references based on your booking."
 
     const chooseTitle = chooseHeading?.trim()
       ? plainToHtml(chooseHeading.trim())
-      : 'Please choose your preferred design'
+      : 'Design references from your planner'
     const chooseBody = chooseSubtext?.trim()
       ? plainToHtml(chooseSubtext.trim())
       : defaultChooseSubtext
@@ -764,7 +780,8 @@ export const templates = {
       ${divider()}
       ${p(`<strong style="color:#fff;">${chooseTitle}</strong>`)}
       ${p(chooseBody)}
-      ${designOptions.map(option => designBlock(option.label, option.url)).join('')}
+      ${imageUrls.map((url, index) => designBlock(url, index)).join('')}
+      ${attachmentBlock}
       ${p(replyBody)}
       ${ctaBtn(buttonLabel, personalizeUrl)}
       ${divider()}

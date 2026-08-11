@@ -2183,15 +2183,14 @@ export async function updateAdminBookingStatus(req, res, next) {
 const MAX_EMAIL_HTML_CHARS = 200_000
 const MAX_PLAIN_COPY_CHARS = 5_000
 const MAX_DESIGN_UPLOAD_BYTES = 8 * 1024 * 1024
+const MAX_PERSONALIZATION_IMAGES = 12
+const MAX_PERSONALIZATION_ATTACHMENTS = 10
 const PERSONALIZATION_COPY_FIELDS = [
   'headline',
   'introText',
   'customMessage',
   'chooseHeading',
   'chooseSubtext',
-  'optionLabel1',
-  'optionLabel2',
-  'optionLabel3',
   'replyPrompt',
   'ctaLabel',
   'textSectionHeading',
@@ -2204,6 +2203,40 @@ const PERSONALIZATION_COPY_FIELDS = [
   'signOff',
 ]
 
+const ALLOWED_ATTACHMENT_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/zip',
+  'text/plain',
+])
+
+function normalizePersonalizationImages(body = {}) {
+  const fromArray = Array.isArray(body.designImages)
+    ? body.designImages.map(value => normalizeText(value)).filter(Boolean)
+    : []
+  if (fromArray.length) return [...new Set(fromArray)].slice(0, MAX_PERSONALIZATION_IMAGES)
+
+  return [body.designImage1, body.designImage2, body.designImage3]
+    .map(value => normalizeText(value))
+    .filter(Boolean)
+    .slice(0, MAX_PERSONALIZATION_IMAGES)
+}
+
+function normalizePersonalizationAttachments(body = {}) {
+  if (!Array.isArray(body.attachments)) return []
+  return body.attachments
+    .map(item => ({
+      name: normalizeText(item?.name) || 'Attachment',
+      url: normalizeText(item?.url),
+      type: normalizeText(item?.type),
+    }))
+    .filter(item => item.url)
+    .slice(0, MAX_PERSONALIZATION_ATTACHMENTS)
+}
+
 function readPersonalizationPayload(body = {}) {
   const readPlain = (value, max = MAX_PLAIN_COPY_CHARS) => {
     if (typeof value !== 'string') return null
@@ -2214,14 +2247,21 @@ function readPersonalizationPayload(body = {}) {
 
   const copy = {}
   for (const key of PERSONALIZATION_COPY_FIELDS) {
-    copy[key] = readPlain(body[key], key === 'headline' || key.startsWith('optionLabel') || key === 'ctaLabel' ? 200 : MAX_PLAIN_COPY_CHARS)
+    copy[key] = readPlain(
+      body[key],
+      key === 'headline' || key === 'ctaLabel' ? 200 : MAX_PLAIN_COPY_CHARS
+    )
   }
+
+  const designImages = normalizePersonalizationImages(body)
 
   return {
     serviceName: normalizeText(body.serviceName) || 'decor',
-    designImage1: normalizeText(body.designImage1),
-    designImage2: normalizeText(body.designImage2),
-    designImage3: normalizeText(body.designImage3),
+    designImages,
+    designImage1: designImages[0] || '',
+    designImage2: designImages[1] || '',
+    designImage3: designImages[2] || '',
+    attachments: normalizePersonalizationAttachments(body),
     responseDeadline: normalizeText(body.responseDeadline),
     subject: readPlain(body.subject, 200),
     ...copy,
@@ -2234,7 +2274,7 @@ function readPersonalizationPayload(body = {}) {
 function parseBase64Upload(file) {
   if (!file || typeof file !== 'object') return null
 
-  const name = normalizeText(file.name) || 'design-option.jpg'
+  const name = normalizeText(file.name) || 'upload.bin'
   const type = normalizeText(file.type) || 'application/octet-stream'
   const dataUrl = normalizeText(file.dataUrl)
   const matches = dataUrl.match(/^data:(.+);base64,(.+)$/)
@@ -2256,15 +2296,20 @@ export async function uploadAdminDesignImage(req, res, next) {
   try {
     const parsed = parseBase64Upload(req.body?.file)
     if (!parsed) {
-      return res.status(400).json({ error: 'Upload a valid image file.' })
+      return res.status(400).json({ error: 'Upload a valid file.' })
     }
 
-    if (!String(parsed.type).startsWith('image/')) {
-      return res.status(400).json({ error: 'Only image files are allowed.' })
+    const mime = String(parsed.type || '').toLowerCase()
+    const isImage = mime.startsWith('image/')
+    const isAllowedAttachment = ALLOWED_ATTACHMENT_TYPES.has(mime)
+    if (!isImage && !isAllowedAttachment) {
+      return res.status(400).json({
+        error: 'Allowed: images, PDF, Word, Excel, ZIP, or plain text.',
+      })
     }
 
     if (parsed.size > MAX_DESIGN_UPLOAD_BYTES) {
-      return res.status(400).json({ error: 'Image must be 8MB or smaller.' })
+      return res.status(400).json({ error: 'File must be 8MB or smaller.' })
     }
 
     const formData = new FormData()
@@ -2282,7 +2327,7 @@ export async function uploadAdminDesignImage(req, res, next) {
     const media = Array.isArray(uploaded) ? uploaded[0] : uploaded
     const url = getMediaUrl(media)
     if (!url) {
-      return res.status(502).json({ error: 'Image uploaded but no public URL was returned.' })
+      return res.status(502).json({ error: 'File uploaded but no public URL was returned.' })
     }
 
     res.json({
@@ -2290,6 +2335,8 @@ export async function uploadAdminDesignImage(req, res, next) {
       url,
       id: media?.id ?? null,
       name: media?.name ?? parsed.name,
+      type: parsed.type,
+      kind: isImage ? 'image' : 'attachment',
     })
   } catch (err) {
     next(err)
@@ -2314,9 +2361,9 @@ export async function previewAdminBookingPersonalizationEmail(req, res, next) {
       return res.status(400).json({ error: 'Cannot preview personalization email for a cancelled booking.' })
     }
 
-    if (!payload.designImage1 && !payload.designImage2 && !payload.designImage3) {
+    if (!payload.designImages.length && !payload.attachments.length) {
       return res.status(400).json({
-        error: 'Add at least one design image before previewing the personalization email.',
+        error: 'Add at least one design image or attachment before previewing the personalization email.',
       })
     }
 
@@ -2335,14 +2382,13 @@ export async function previewAdminBookingPersonalizationEmail(req, res, next) {
       subject: result.subject,
       html: result.html,
       serviceName: result.serviceName,
+      designImages: result.designImages,
+      attachments: result.attachments,
       headline: result.headline,
       introText: result.introText,
       customMessage: result.customMessage,
       chooseHeading: result.chooseHeading,
       chooseSubtext: result.chooseSubtext,
-      optionLabel1: result.optionLabel1,
-      optionLabel2: result.optionLabel2,
-      optionLabel3: result.optionLabel3,
       replyPrompt: result.replyPrompt,
       ctaLabel: result.ctaLabel,
       textSectionHeading: result.textSectionHeading,
@@ -2378,9 +2424,9 @@ export async function sendAdminBookingPersonalizationEmail(req, res, next) {
       return res.status(400).json({ error: 'Cannot send personalization email for a cancelled booking.' })
     }
 
-    if (!payload.designImage1 && !payload.designImage2 && !payload.designImage3) {
+    if (!payload.designImages.length && !payload.attachments.length) {
       return res.status(400).json({
-        error: 'Add at least one design image before sending the personalization email.',
+        error: 'Add at least one design image or attachment before sending the personalization email.',
       })
     }
 
