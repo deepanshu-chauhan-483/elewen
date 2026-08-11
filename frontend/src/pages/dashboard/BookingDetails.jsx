@@ -40,6 +40,48 @@ function getPaymentErrorMessage(error) {
   )
 }
 
+function getCancelErrorMessage(error) {
+  const candidates = [
+    error?.response?.error,
+    error?.response?.data?.error,
+    error?.message,
+    error?.rawMessage,
+  ]
+
+  for (const candidate of candidates) {
+    const text = String(candidate ?? '').trim()
+    if (!text) continue
+
+    if (/already cancelled/i.test(text)) {
+      return 'Booking is already cancelled'
+    }
+
+    try {
+      const parsed = JSON.parse(text)
+      if (typeof parsed?.error === 'string' && parsed.error.trim()) {
+        if (/already cancelled/i.test(parsed.error)) {
+          return 'Booking is already cancelled'
+        }
+        return parsed.error.trim()
+      }
+    } catch {
+      // Not JSON — use plain text below.
+    }
+
+    const jsonMatch = text.match(/\{[\s\S]*"error"\s*:\s*"([^"]+)"/)
+    if (jsonMatch?.[1]) {
+      if (/already cancelled/i.test(jsonMatch[1])) {
+        return 'Booking is already cancelled'
+      }
+      return jsonMatch[1]
+    }
+
+    return text
+  }
+
+  return 'Could not cancel this booking. Please try again.'
+}
+
 function getOutstandingPayment(booking) {
   const paymentSummary = booking?.paymentSummary ?? {}
   const amountDue = Number(paymentSummary.amountDue ?? 0)
@@ -933,10 +975,26 @@ function BookingAccordionCard({ booking, session, packages, defaultOpen = false 
           setHasAcceptedPolicy(false)
         }}
         onConfirm={() => {
-          cancelMutation.mutate({
-            bookingId: booking.id,
-            body: { reason: reason.trim(), policyAcknowledged: true },
-          })
+          cancelMutation.mutate(
+            {
+              bookingId: booking.id,
+              body: { reason: reason.trim(), policyAcknowledged: true },
+            },
+            {
+              onError: error => {
+                const message = getCancelErrorMessage(error)
+                showToast({ message })
+                if (/already cancelled/i.test(message)) {
+                  queryClient.invalidateQueries({ queryKey: ['dashboard', 'bookings'] })
+                  queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
+                  setShowCancel(false)
+                  setReason('')
+                  setHasAcceptedPolicy(false)
+                  setOpen(false)
+                }
+              },
+            }
+          )
         }}
       />
     </div>
