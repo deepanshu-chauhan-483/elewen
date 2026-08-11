@@ -818,7 +818,7 @@ export const templates = {
       ${p('<strong style="color:#fff;">Remaining Payment</strong>')}
       ${
         Number(remainingBalanceRaw) > 0
-          ? `${p(`If your balance payment is still pending (${remainingBalance}), please keep it ready. As per our payment policy, the remaining amount will be collected before the event begins.`)}${ctaBtn('Complete Payment', paymentUrl)}`
+          ? `${p(`If your balance payment is still pending (${remainingBalance}), please keep it ready. As per our payment policy, the remaining amount will be collected before the event begins or complete your payment now.`)}${ctaBtn('Complete Payment', paymentUrl)}`
           : p('Your payment is complete — no remaining balance due. Thank you!')
       }
       ${divider()}

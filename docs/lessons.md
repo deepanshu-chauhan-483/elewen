@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-11: Confirm email Update Event Details wrong URL
+
+**Root cause:** `updateDetailsUrl` in `buildBookingEmailContext` pointed at booking details (`/user-dashboard/details`), not the customer info-collection form.
+
+**Failure symptoms:** "Update Event Details" in the confirmed booking email did not open the customer form.
+
+**Fix details:** Point `updateDetailsUrl` at `customerInfoCollectionUrl(booking.id)`; template falls back to the same helper.
+
+**Consulted sources:** Google Doc "Elewen Website changes", `bookingEmailService.js`, `customerUrls.js`
+
+**Prevention guidance:** CTAs that ask customers to fill event details must use `customerInfoCollectionUrl`, not booking details.
+
 ## 2026-08-11: Personalization email — multi images + attachments
 
 **Root cause:** Admin UI forced three labeled “Design Option 1/2/3” slots; payload only supported `designImage1..3`.
