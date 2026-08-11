@@ -103,8 +103,9 @@ function isInfoCollectionBooking(booking) {
 }
 
 function canFillInfoCollection(booking) {
-  const status = normalizeStatus(booking?.status)
-  return Boolean(status) && status !== 'cancelled' && status !== 'completed'
+  // Form is available from the customer dashboard/email for any owned booking.
+  // Submit is gated only by ownership on the API.
+  return Boolean(booking?.id)
 }
 
 function getNextStepText(booking) {

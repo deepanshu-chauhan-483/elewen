@@ -2081,6 +2081,18 @@ export async function updateAdminBookingStatus(req, res, next) {
           }
         })
         .catch(err => console.error('[booking-email] confirmed failed', bookingId, err?.message))
+
+      // Send info-collection form link on confirm so the customer can fill without
+      // admin moving the booking into the Information Collection stage.
+      sendInfoCollectionEmail(bookingId)
+        .then(result => {
+          if (!result?.sent) {
+            console.warn('[booking-email] info-collection email not sent:', bookingId, result)
+          }
+        })
+        .catch(err =>
+          console.error('[booking-email] info-collection failed', bookingId, err?.message)
+        )
     }
 
     if (status === 'info_collection' && booking.status !== 'info_collection') {

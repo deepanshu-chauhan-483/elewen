@@ -1193,8 +1193,9 @@ export const getInfoCollection = async (req, res, next) => {
         Object.entries(noteMeta).filter(([, value]) => cleanFormText(value))
       ),
     }
-    const status = String(booking.status ?? '').toLowerCase()
-    const canEdit = Boolean(status) && status !== 'cancelled' && status !== 'completed'
+    // Customer may fill anytime from email/dashboard — admin does not need to move
+    // the booking into the Information Collection stage first.
+    const canEdit = true
     const eventDateValue =
       toDateInputValue(info.eventDate) ||
       toDateInputValue(booking.eventDate) ||
@@ -1251,13 +1252,6 @@ export const submitInfoCollection = async (req, res, next) => {
     const booking = await prisma.booking.findUnique({ where: { id } })
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
     if (booking.userId !== userId) return res.status(403).json({ error: 'Forbidden' })
-
-    const status = String(booking.status ?? '').toLowerCase()
-    if (!status || status === 'cancelled' || status === 'completed') {
-      return res.status(400).json({
-        error: 'Info collection is not available for cancelled or completed bookings.',
-      })
-    }
 
     const noteText = buildInfoCollectionNote(form)
     const eventDate = toOptionalDateOnly(form.eventDate)
