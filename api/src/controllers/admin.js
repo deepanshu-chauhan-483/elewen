@@ -272,22 +272,32 @@ async function fetchUsersByIds(ids = []) {
     return new Map()
   }
 
+  // Prefer customer_profiles name (Google/signup) over up_users — never use email as name.
   const rows = await prisma.$queryRaw`
-    SELECT
+    SELECT DISTINCT ON (u.id)
       u.id::text AS id,
       u.email,
-      u.first_name,
-      u.last_name,
-      u.phone
+      u.phone,
+      COALESCE(
+        NULLIF(TRIM(CONCAT_WS(' ', cp.first_name, cp.last_name)), ''),
+        NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), '')
+      ) AS full_name,
+      COALESCE(NULLIF(TRIM(cp.first_name), ''), NULLIF(TRIM(u.first_name), '')) AS first_name,
+      COALESCE(NULLIF(TRIM(cp.last_name), ''), NULLIF(TRIM(u.last_name), '')) AS last_name
     FROM public.up_users u
+    LEFT JOIN public.customer_profiles_user_lnk lnk
+      ON lnk.user_id = u.id
+    LEFT JOIN public.customer_profiles cp
+      ON cp.id = lnk.customer_profile_id
     WHERE u.id IN (${Prisma.join(parsedIds)})
+    ORDER BY u.id, cp.id DESC NULLS LAST
   `
 
   return new Map(
     rows.map(row => {
       const firstName = normalizeText(row.first_name)
       const lastName = normalizeText(row.last_name)
-      const fullName = [firstName, lastName].filter(Boolean).join(' ')
+      const fullName = normalizeText(row.full_name) || [firstName, lastName].filter(Boolean).join(' ')
 
       return [
         String(row.id),
@@ -297,7 +307,7 @@ async function fetchUsersByIds(ids = []) {
           first_name: firstName || null,
           last_name: lastName || null,
           phone: row.phone ?? null,
-          name: fullName || row.email || `User ${row.id}`,
+          name: fullName || null,
         },
       ]
     })
@@ -1140,6 +1150,34 @@ function isActiveBookingStatus(status) {
   return !['completed', 'cancelled'].includes(String(status ?? '').toLowerCase())
 }
 
+function looksLikeEmail(value) {
+  return /@/.test(String(value ?? '').trim())
+}
+
+function resolveCustomerDisplayName(booking) {
+  const fromProfile = [booking?.customer?.first_name, booking?.customer?.last_name]
+    .map(part => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' ')
+  const candidates = [
+    booking?.infoCollection?.fullName,
+    fromProfile,
+    booking?.customerName,
+    booking?.customer?.name,
+  ]
+
+  for (const candidate of candidates) {
+    const text = String(candidate ?? '').trim()
+    if (!text) continue
+    if (looksLikeEmail(text)) continue
+    if (/^customer$/i.test(text)) continue
+    if (/^user\s+\d+$/i.test(text)) continue
+    return text
+  }
+
+  return 'Customer'
+}
+
 function buildBookingPaymentSnapshot(booking) {
   const bookingPayments = Array.isArray(booking?.payments) ? booking.payments : []
   const successfulAmount = bookingPayments
@@ -1172,7 +1210,7 @@ function buildBookingPaymentSnapshot(booking) {
     failedPaymentsCount,
     pendingPaymentsCount,
     latestPayment,
-    customerName: booking?.customer?.name || booking?.infoCollection?.fullName || 'Customer',
+    customerName: resolveCustomerDisplayName(booking),
     customerPhone: booking?.customer?.phone || booking?.infoCollection?.phone || '',
     latestManualPaymentNote: latestManualPaymentLog
       ? {
@@ -1215,7 +1253,7 @@ function buildCancelledBookingRefundSnapshot(booking) {
     refundDueAmount: Number(
       toNumber(latestRefund?.amount ?? booking?.refundPreview?.refundableAmount ?? 0).toFixed(2)
     ),
-    customerName: booking?.customer?.name || booking?.infoCollection?.fullName || 'Customer',
+    customerName: resolveCustomerDisplayName(booking),
     customerPhone: booking?.customer?.phone || booking?.infoCollection?.phone || '',
   }
 }

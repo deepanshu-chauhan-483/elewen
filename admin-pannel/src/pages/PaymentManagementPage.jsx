@@ -27,6 +27,7 @@ import {
 } from '../hooks/useAdminData'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { getAdminBadgeClass } from '../lib/adminBadges'
+import { getBookingCustomerPhone, getBookingPackageNamesText } from '../lib/bookingDisplay'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
 import { bookingHasHookahCod, isCodPayment } from '../lib/sheeshaCheckout'
 
@@ -245,6 +246,34 @@ function SectionLabel({ children }) {
   )
 }
 
+function looksLikeEmail(value) {
+  return /@/.test(String(value ?? '').trim())
+}
+
+function resolveCustomerDisplayName(booking) {
+  const fromProfile = [booking?.customer?.first_name, booking?.customer?.last_name]
+    .map(part => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' ')
+  const candidates = [
+    booking?.infoCollection?.fullName,
+    fromProfile,
+    booking?.customerName,
+    booking?.customer?.name,
+  ]
+
+  for (const candidate of candidates) {
+    const text = String(candidate ?? '').trim()
+    if (!text) continue
+    if (looksLikeEmail(text)) continue
+    if (/^customer$/i.test(text)) continue
+    if (/^user\s+\d+$/i.test(text)) continue
+    return text
+  }
+
+  return 'Customer'
+}
+
 function resolveBookingFinance(booking) {
   if (!booking) {
     return {
@@ -269,10 +298,8 @@ function resolveBookingFinance(booking) {
   )
 
   return {
-    customerName:
-      booking.customerName || booking.customer?.name || booking.infoCollection?.fullName || 'Customer',
-    customerPhone:
-      booking.customerPhone || booking.customer?.phone || booking.infoCollection?.phone || '—',
+    customerName: resolveCustomerDisplayName(booking),
+    customerPhone: booking.customerPhone || getBookingCustomerPhone(booking) || '—',
     eventDate: booking.eventDate,
     totalPrice: Number(booking.totalPrice ?? 0),
     advancePaidAmount: Number(
@@ -280,7 +307,10 @@ function resolveBookingFinance(booking) {
     ),
     paidAmount,
     outstandingAmount,
-    packageTitle: booking.package?.title || booking.id || '',
+    packageTitle: getBookingPackageNamesText(
+      booking,
+      booking.package?.title || booking.displaySubtitle || ''
+    ),
     locationSummary: booking.locationSummary || '',
     latestManualPaymentNote: booking.latestManualPaymentNote ?? null,
   }
