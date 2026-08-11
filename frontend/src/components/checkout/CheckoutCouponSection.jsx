@@ -105,11 +105,11 @@ export default function CheckoutCouponSection({
   }
 
   return (
-    <div className="rounded-xl border border-[#95796066] bg-white p-5">
-      <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+    <div className="rounded-xl border border-[#95796066] bg-white p-4 md:p-5">
+      <h2 className="text-base font-medium text-[#2C2C2C] md:text-lg" style={{ fontFamily: "'Poppins'" }}>
         Apply Coupon
       </h2>
-      <p className="mb-4 mt-1 text-sm text-gray-500">
+      <p className="mb-3 mt-1 text-sm text-gray-500 md:mb-4">
         Select a coupon from your account. Only one coupon can be applied at a time.
       </p>
 

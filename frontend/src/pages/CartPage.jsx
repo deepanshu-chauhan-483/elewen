@@ -187,14 +187,14 @@ function getCartGroupLabel(item) {
 
 function EmptyCart() {
   return (
-    <div className="rounded-2xl border border-[#95796066] bg-white p-8 text-center">
-      <p className="text-[24px] font-semibold text-[#1C1C1C]">Your cart is empty</p>
-      <p className="mt-2 text-gray-500">
+    <div className="rounded-2xl border border-[#95796066] bg-white p-5 text-center md:p-8">
+      <p className="text-[20px] font-semibold text-[#1C1C1C] md:text-[24px]">Your cart is empty</p>
+      <p className="mt-2 text-sm text-gray-500 md:text-base">
         Add a package from the product pages and it will appear here.
       </p>
       <Link
         to="/package-listing"
-        className="mx-auto mt-6 flex w-fit items-center rounded-full bg-[#D4BA8E] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#C6AB7F]"
+        className="mx-auto mt-5 flex w-fit items-center rounded-full bg-[#D4BA8E] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#C6AB7F] md:mt-6 md:px-6 md:py-3"
       >
         Browse Packages
       </Link>
@@ -469,15 +469,15 @@ function PincodeCard({
     <form
       ref={sectionRef}
       onSubmit={onSubmit}
-      className={`rounded-xl border p-5 ${
+      className={`rounded-xl border p-4 md:p-5 ${
         highlightRequired ? 'border-[#8F2D1F] ring-1 ring-[#8F2D1F]/25' : 'border-[#95796066]'
       }`}
     >
-      <h2 className="text-lg font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+      <h2 className="text-base font-medium text-[#2C2C2C] md:text-lg" style={{ fontFamily: "'Poppins'" }}>
         Enter Pincode
       </h2>
 
-      <p className="mb-4 mt-1 text-sm text-gray-500">
+      <p className="mb-3 mt-1 text-sm text-gray-500 md:mb-4">
         Enter your pincode to check service availability and charges.
       </p>
 
@@ -602,10 +602,10 @@ function SinglePackageCard({
   const additionalInfo = String(item?.additionalInfo ?? '').trim()
 
   return (
-    <div className="space-y-6">
-      <div className="relative flex gap-4 overflow-hidden rounded-xl border border-[#95796066] p-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="relative flex gap-3 overflow-hidden rounded-xl border border-[#95796066] p-3 md:gap-4 md:p-4">
         <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
-        <div className="ml-2 h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+        <div className="ml-1.5 h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-200 md:ml-2 md:h-20 md:w-20">
           {packageImage ? (
             <BrandedImage
               src={packageImage}
@@ -638,11 +638,11 @@ function SinglePackageCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 w-full sm:grid-cols-2">
+      <div className="grid w-full grid-cols-2 gap-2">
         {packageHref ? (
           <Link
             to={packageHref}
-            className="flex h-[40px] w-full items-center justify-center gap-2 rounded-full bg-[#2E3A1F] text-[13px] font-medium text-white"
+            className="flex h-[36px] w-full items-center justify-center gap-2 rounded-full bg-[#2E3A1F] text-[12px] font-medium text-white md:h-[40px] md:text-[13px]"
           >
             <EditIcon />
             Edit Package
@@ -650,7 +650,7 @@ function SinglePackageCard({
         ) : (
           <button
             type="button"
-            className="flex h-[40px] w-full items-center justify-center gap-2 rounded-full bg-[#2E3A1F] text-[13px] font-medium text-white"
+            className="flex h-[36px] w-full items-center justify-center gap-2 rounded-full bg-[#2E3A1F] text-[12px] font-medium text-white md:h-[40px] md:text-[13px]"
           >
             <EditIcon />
             Edit Package
@@ -661,7 +661,7 @@ function SinglePackageCard({
           type="button"
           onClick={() => onRemoveItem(item.id)}
           disabled={isPending}
-          className="flex h-[40px] w-full items-center justify-center gap-2 rounded-full bg-[#6B1D0C] text-[13px] font-medium text-white disabled:opacity-60"
+          className="flex h-[36px] w-full items-center justify-center gap-2 rounded-full bg-[#6B1D0C] text-[12px] font-medium text-white disabled:opacity-60 md:h-[40px] md:text-[13px]"
         >
           <DeleteIcon />
           {isPending ? 'Updating...' : 'Delete Package'}
@@ -669,14 +669,14 @@ function SinglePackageCard({
       </div>
 
       <div className="overflow-hidden rounded-xl border border-[#95796066]">
-        <div className="flex justify-between bg-[#F8F4ED] px-4 py-3">
-          <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+        <div className="flex justify-between bg-[#F8F4ED] px-3 py-2.5 md:px-4 md:py-3">
+          <h3 className="text-sm font-medium md:text-base" style={{ fontFamily: "'Poppins'" }}>
             Selected Elements
           </h3>
           <span className="text-sm text-gray-500">{selectedElements.length} elements</span>
         </div>
 
-        <div className="space-y-4 p-4">
+        <div className="space-y-3 p-3 md:space-y-4 md:p-4">
           {selectedElements.length ? (
             selectedElements.map(element => (
               <div
@@ -1150,10 +1150,10 @@ function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
   if (!packages.length) return null
 
   return (
-    <div className="rounded-[16px] border border-[#E5E5E5] bg-white p-5">
-      <div className="mb-5">
+    <div className="rounded-[16px] border border-[#E5E5E5] bg-white p-4 md:p-5">
+      <div className="mb-3 md:mb-5">
         <h2
-          className="text-[20px] font-semibold text-[#2C2C2C]"
+          className="text-[17px] font-semibold text-[#2C2C2C] md:text-[20px]"
           style={{ fontFamily: "'Poppins'" }}
         >
           Suggested Add-ons
@@ -1162,17 +1162,17 @@ function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
       </div>
 
       <div
-        className="hide-scrollbar max-h-[432px] overflow-y-auto lg:max-h-[235px]"
+        className="hide-scrollbar max-h-[220px] overflow-y-auto md:max-h-[280px] lg:max-h-[235px]"
         data-lenis-prevent
       >
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-2">
           {packages.map(pkg => {
             const isAdding = addingAddonId === pkg.id
 
             return (
               <div
                 key={pkg.id}
-                className="flex items-center justify-between gap-3 rounded-[16px] bg-[#F5F5F5] px-3 py-4"
+                className="flex items-center justify-between gap-3 rounded-[16px] bg-[#F5F5F5] px-3 py-3 md:py-4"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-medium leading-snug text-[#2C2C2C] sm:text-[15px]">
@@ -1181,14 +1181,16 @@ function SuggestedPackages({ packages = [], onAdd, addingAddonId = '' }) {
                   <p className="text-sm leading-snug text-gray-500">
                     {pkg.subtitle || 'Perfect add-on for your package'}
                   </p>
-                  <p className="mt-2 text-[16px] font-semibold text-[#957960]">{pkg.price}</p>
+                  <p className="mt-1.5 text-[15px] font-semibold text-[#957960] md:mt-2 md:text-[16px]">
+                    {pkg.price}
+                  </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => onAdd(pkg)}
                   disabled={isAdding || !pkg.packageId}
-                  className="shrink-0 whitespace-nowrap rounded-full bg-[#957960] px-5 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="shrink-0 whitespace-nowrap rounded-full bg-[#957960] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 md:px-5"
                 >
                   {isAdding ? 'Adding...' : '+ Add'}
                 </button>
@@ -1247,14 +1249,14 @@ function PriceSummaryCard({
   return (
     <div className="space-y-4">
       <div className="overflow-hidden rounded-[16px] border border-[#E5E5E5] bg-white">
-        <div className="flex items-center justify-between bg-[#1F2A14] px-5 py-4 text-white">
-          <h2 className="text-[16px] font-medium" style={{ fontFamily: "'Poppins'" }}>
+        <div className="flex items-center justify-between bg-[#1F2A14] px-4 py-3 text-white md:px-5 md:py-4">
+          <h2 className="text-[15px] font-medium md:text-[16px]" style={{ fontFamily: "'Poppins'" }}>
             Price Summary
           </h2>
           <span className="text-sm">{totalPackageCount} packages</span>
         </div>
 
-        <div className="space-y-4 p-5">
+        <div className="space-y-3 p-4 md:space-y-4 md:p-5">
           <div className="space-y-2">
             {singleItem
               ? itemSummaries.map(({ item, summary }) => (
@@ -1862,30 +1864,32 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 pb-10 pt-24 md:px-8 lg:px-16">
-      <div className="mb-6">
-        <h2 className="text-[24px] text-[#1C1C1C] md:text-[36px]">Review Your Event</h2>
-        <p className="text-gray-500">Check your selections and confirm details before checkout.</p>
+    <div className="min-h-screen bg-white px-3 pb-8 pt-20 md:px-8 md:pb-10 md:pt-24 lg:px-16">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-[20px] text-[#1C1C1C] md:text-[36px]">Review Your Event</h2>
+        <p className="text-sm text-gray-500 md:text-base">
+          Check your selections and confirm details before checkout.
+        </p>
       </div>
 
       {isMixedSheeshaCart ? (
         <div
           role="alert"
-          className="mb-6 rounded-[12px] border border-[#D4A574] bg-[#FFF8F0] px-4 py-3 text-[13px] leading-[1.55] text-[#591902] md:text-[14px]"
+          className="mb-4 rounded-[12px] border border-[#D4A574] bg-[#FFF8F0] px-3 py-2.5 text-[13px] leading-[1.55] text-[#591902] md:mb-6 md:px-4 md:py-3 md:text-[14px]"
         >
           {MIXED_HOOKAH_CART_MESSAGE}
         </div>
       ) : null}
 
       {loading ? (
-        <div className="rounded-2xl border border-[#95796066] bg-white p-8 text-center text-gray-500">
+        <div className="rounded-2xl border border-[#95796066] bg-white p-5 text-center text-gray-500 md:p-8">
           Loading your cart...
         </div>
       ) : !hasItems ? (
         <EmptyCart />
       ) : (
-        <div className="flex flex-col items-stretch gap-[clamp(24px,5vw,100px)] md:flex-row">
-          <div className="flex-1 space-y-6">
+        <div className="flex flex-col items-stretch gap-5 md:flex-row md:gap-[clamp(24px,5vw,100px)]">
+          <div className="w-full min-w-0 space-y-4 md:flex-1 md:space-y-6">
             <PincodeCard
               pincode={pincode}
               message={pincodeMessage}
@@ -1945,7 +1949,7 @@ export default function CartPage() {
             ) : null}
           </div>
 
-          <div className="flex-1 w-full">
+          <div className="w-full min-w-0 md:flex-1">
             <PriceSummaryCard
               cartItems={cartItems}
               cart={cart}
