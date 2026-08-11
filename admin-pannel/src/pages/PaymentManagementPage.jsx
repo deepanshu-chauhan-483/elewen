@@ -479,6 +479,39 @@ function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, re
     }
   }
 
+  // Fully paid — show clear done state. Does not change booking stage.
+  if (!canRecordFinal) {
+    return (
+      <div>
+        <SectionLabel>Payment status</SectionLabel>
+        <div className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge status="success" label="Payment complete" />
+            <p className="text-sm font-medium text-[#166534]">
+              Advance and remaining are fully paid (₹0 left).
+            </p>
+          </div>
+          <p className="mt-2 text-xs text-[#15803D]">
+            Booking stage is unchanged — check Payment history above for Cashfree / UPI / Cash
+            details.
+          </p>
+          {latestNote?.note ? (
+            <div className="mt-3 rounded-xl border border-[#BBF7D0] bg-white px-4 py-3">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-[#8F8F8F]">
+                Latest payment note
+              </p>
+              <p className="mt-1.5 text-sm text-[#2D2D2D]">{latestNote.note}</p>
+              <p className="mt-1 text-xs text-[#8F8F8F]">
+                {latestNote.channel ? `${latestNote.channel} · ` : ''}
+                {formatDateTime(latestNote.createdAt)}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <SectionLabel>Mark payment (admin check)</SectionLabel>
@@ -523,7 +556,7 @@ function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, re
             />
           </div>
           <PrimaryBtn
-            disabled={recordManualPaymentMutation?.isPending || !canRecordFinal}
+            disabled={recordManualPaymentMutation?.isPending}
             onClick={handleRecordPayment}
           >
             {recordManualPaymentMutation?.isPending ? 'Saving…' : 'Record payment'}
@@ -536,11 +569,6 @@ function ManualPaymentUpdatePanel({ bookingId, outstandingAmount, latestNote, re
         {formError ? (
           <div className="mt-3 rounded-xl border border-[#FCC5C5] bg-[#FFF3F3] px-4 py-3">
             <p className="text-sm text-[#8A1C1C]">{formError}</p>
-          </div>
-        ) : null}
-        {!canRecordFinal ? (
-          <div className="mt-3 rounded-xl bg-white px-4 py-3">
-            <p className="text-sm text-[#2D2D2D]">No remaining balance on this booking.</p>
           </div>
         ) : null}
         {latestNote?.note ? (
