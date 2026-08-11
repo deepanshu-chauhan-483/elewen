@@ -527,7 +527,12 @@ export default function OverviewPage() {
         <MetricCard
           label="Cancelled booking"
           value={formatCount(metrics.cancelledBookingsCount)}
-          helper="Advance paid, then cancelled"
+          helper={
+            Number(metrics.cancelledUnseenCount) > 0
+              ? `Advance paid, then cancelled · ${formatCount(metrics.cancelledUnseenCount)} unopened`
+              : 'Advance paid, then cancelled'
+          }
+          badge={Number(metrics.cancelledUnseenCount) || 0}
           accent
           onClick={() => navigate(getBookingOverviewRoute('cancelled'))}
         />

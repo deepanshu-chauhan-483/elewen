@@ -1774,6 +1774,9 @@ export async function getAdminOverview(req, res, next) {
     const cancelledBookingsCount = cancelledBookingsRaw.filter(booking =>
       bookingMatchesOperationalBucket(booking, 'cancelled')
     ).length
+    const cancelledUnseenCount = cancelledBookingsRaw
+      .filter(booking => bookingMatchesOperationalBucket(booking, 'cancelled'))
+      .filter(booking => isCancelUnseen(booking)).length
 
     const paymentSummary = buildPaymentSummaryFromPayments(allPayments)
     const pendingVendorAmount = pendingPayouts.reduce(
@@ -1862,6 +1865,7 @@ export async function getAdminOverview(req, res, next) {
           cancelledBookingsCount,
           todayBookingsCount,
           todayUnseenCount,
+          cancelledUnseenCount,
           upcomingEventsCount,
           pendingSampleCount,
           openTicketsCount,
