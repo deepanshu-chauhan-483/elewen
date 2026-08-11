@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   adminAddBookingNote,
   adminCollectBookingCod,
@@ -108,7 +108,6 @@ function useAuthedAdminQuery({ queryKey, queryFn, enabled = true, staleTime = 30
     enabled: enabled && Boolean(token),
     retry: false,
     staleTime,
-    placeholderData: keepPreviousData,
     queryFn: () => withAdminToken(queryFn),
   })
 }
@@ -239,7 +238,8 @@ export function useAdminUpdateBookingStatus() {
     mutationFn: ({ bookingId, body }) =>
       withAdminToken(token => adminUpdateBookingStatus(token, bookingId, body)),
     onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
+      // Drop every bucket cache so Upcoming/Cancelled never keep a pre-cancel list.
+      queryClient.removeQueries({ queryKey: ['admin', 'bookings'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'booking', variables?.bookingId] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'refunds'] })

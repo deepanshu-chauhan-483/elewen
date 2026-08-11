@@ -1249,7 +1249,7 @@ function CustomerInformationSection({ booking }) {
 // ---------------------------------------------------------------------------
 // Admin Booking Accordion Card
 // ---------------------------------------------------------------------------
-function BookingAccordionCard({ booking, open = false, onToggle }) {
+function BookingAccordionCard({ booking, open = false, onToggle, onStatusUpdated }) {
   const [statusInput, setStatusInput] = useState(booking.status ?? '')
   const [statusNote, setStatusNote] = useState('')
   const [internalNote, setInternalNote] = useState('')
@@ -1310,6 +1310,7 @@ function BookingAccordionCard({ booking, open = false, onToggle }) {
       body: { status: statusInput, note: statusNote },
     })
     setStatusNote('')
+    onStatusUpdated?.(booking.id, statusInput)
   }
 
   const handleStatusInputChange = newStatus => {
@@ -1725,6 +1726,30 @@ function getCancelledBadgeMeta(booking) {
   return { status: booking.status, label: booking.statusLabel }
 }
 
+// Deep-link open must not pin a booking into the wrong bucket (e.g. cancelled on Today).
+function bookingBelongsInBucket(booking, bucket, cancelledBy = '') {
+  const status = String(booking?.status ?? '').toLowerCase()
+  const source = String(booking?.cancelledBy ?? '').toLowerCase()
+
+  if (bucket === 'cancelled') {
+    if (status !== 'cancelled') return false
+    if (cancelledBy === 'client' || cancelledBy === 'admin') {
+      return source === cancelledBy
+    }
+    return true
+  }
+
+  if (bucket === 'completed') {
+    return status === 'completed'
+  }
+
+  if (bucket === 'today' || bucket === 'live' || bucket === 'active' || bucket === 'upcoming' || bucket === 'incomplete') {
+    return status !== 'cancelled' && status !== 'completed'
+  }
+
+  return true
+}
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -1781,23 +1806,45 @@ export default function BookingManagementPage() {
   const totalBookings = Number(bookingsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
   const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
-  const linkedOpenBookingId = String(openBookingId || initialOpenBookingId || '').trim()
+  const linkedOpenBookingId = String(openBookingId || '').trim()
   const openedBookingQuery = useAdminBooking(linkedOpenBookingId || null)
 
-  const displayBookings = useMemo(() => {
-    if (!linkedOpenBookingId) return bookings
+  // Drop deep-link pin once the open booking no longer belongs in this bucket
+  // (cancel on Today must not keep showing "Cancelled by admin" here).
+  useEffect(() => {
+    if (!linkedOpenBookingId) return
+    const openedBooking = openedBookingQuery.data
+    if (!openedBooking || openedBooking.id !== linkedOpenBookingId) return
+    if (bookingBelongsInBucket(openedBooking, bucket, cancelledBy)) return
+    setOpenBookingId('')
+  }, [linkedOpenBookingId, openedBookingQuery.data, bucket, cancelledBy])
 
-    if (bookings.some(booking => booking.id === linkedOpenBookingId)) {
-      return bookings
+  const displayBookings = useMemo(() => {
+    const bucketBookings = bookings.filter(booking =>
+      bookingBelongsInBucket(booking, bucket, cancelledBy)
+    )
+
+    if (!linkedOpenBookingId) return bucketBookings
+
+    if (bucketBookings.some(booking => booking.id === linkedOpenBookingId)) {
+      return bucketBookings
     }
 
     const openedBooking = openedBookingQuery.data
-    if (openedBooking?.id === linkedOpenBookingId) {
-      return [openedBooking, ...bookings]
+    if (
+      openedBooking?.id === linkedOpenBookingId &&
+      bookingBelongsInBucket(openedBooking, bucket, cancelledBy)
+    ) {
+      return [openedBooking, ...bucketBookings]
     }
 
-    return bookings
-  }, [bookings, linkedOpenBookingId, openedBookingQuery.data])
+    return bucketBookings
+  }, [bookings, linkedOpenBookingId, openedBookingQuery.data, bucket, cancelledBy])
+
+  const filteredOutCount = bookings.filter(
+    booking => !bookingBelongsInBucket(booking, bucket, cancelledBy)
+  ).length
+  const shownBookingTotal = Math.max(0, totalBookings - filteredOutCount)
 
   useEffect(() => {
     if (!linkedOpenBookingId) return undefined
@@ -1846,6 +1893,7 @@ export default function BookingManagementPage() {
               onClick={() => {
                 setBucket(tab.key)
                 if (tab.key !== 'cancelled') setCancelledBy('')
+                setOpenBookingId('')
                 setCurrentPage(1)
               }}
               className={[
@@ -1908,6 +1956,7 @@ export default function BookingManagementPage() {
             onChange={value => {
               setBucket(value)
               if (value !== 'cancelled') setCancelledBy('')
+              setOpenBookingId('')
               setCurrentPage(1)
             }}
             className="min-h-10 rounded-full bg-[#F3F3F3]"
@@ -1958,7 +2007,7 @@ export default function BookingManagementPage() {
       {/* ── Results count ── */}
       <div className="flex items-baseline gap-2">
         <span className="text-base font-semibold text-[#1C1C1C]">
-          {totalBookings} booking{totalBookings !== 1 ? 's' : ''}
+          {shownBookingTotal} booking{shownBookingTotal !== 1 ? 's' : ''}
         </span>
 
         {statusFilter && (
@@ -1990,6 +2039,16 @@ export default function BookingManagementPage() {
                 onToggle={() =>
                   setOpenBookingId(current => (current === booking.id ? '' : booking.id))
                 }
+                onStatusUpdated={(_bookingId, nextStatus) => {
+                  const preview = {
+                    ...booking,
+                    status: nextStatus,
+                    cancelledBy: nextStatus === 'cancelled' ? booking.cancelledBy || 'admin' : null,
+                  }
+                  if (!bookingBelongsInBucket(preview, bucket, cancelledBy)) {
+                    setOpenBookingId('')
+                  }
+                }}
               />
             ))}
           </div>

@@ -239,3 +239,15 @@
 **Consulted sources:** `strapi/src/seed/decor-anniversary-packages.js`, `strapi/src/seed/decor-proposal-shared.js` (`ensureProposalPackage`), `frontend/src/hooks/usePackages.js` (publish + `is_active`/`visibility` filters).
 
 **Prevention guidance:** Do not hard-force `refreshExistingDecor: true` on seeds for packages that editors maintain in Strapi. Prefer create-once + skip; use `SEED_DECOR_REFRESH_EXISTING` for intentional re-sync. Always Save → Publish; remember frontend package `staleTime` is 5 minutes.
+
+## 2026-08-11: Admin booking tabs showed stale package after cancel
+
+**Root cause:** Two stacked bugs. (1) `placeholderData: keepPreviousData` reused the previous bucket list while switching tabs. (2) `displayBookings` always prepended the currently opened booking (`openBookingId` / `?open=`) even when that booking no longer belonged in the active bucket. After cancel, Today/Upcoming still showed the same "Cancelled by admin" card until the browser tab was closed (which cleared React Query + open state).
+
+**Failure symptoms:** Cancel a booking on Today → switch Upcoming/Cancelled (or stay on Today) → same cancelled package still on screen. Close tab / hard refresh → correct empty Today and cancelled under Cancelled.
+
+**Fix details:** Removed `keepPreviousData`. On status update, `removeQueries` for `['admin', 'bookings']`. Stop pinning opened bookings into the wrong bucket via `bookingBelongsInBucket`; clear `openBookingId` on tab change and when a status update moves the row out of the current bucket; client-filter list rows that do not belong.
+
+**Consulted sources:** `admin-pannel/src/pages/BookingManagementPage.jsx`, `admin-pannel/src/hooks/useAdminData.js`, `api/src/controllers/admin.js` (`buildBookingBucketFilter` / `bookingMatchesOperationalBucket`).
+
+**Prevention guidance:** Deep-link "open this booking" helpers must respect the active filter/bucket. Never use `keepPreviousData` across filter keys. After mutations that move rows between lists, clear open/pin state and reset list caches.
